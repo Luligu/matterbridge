@@ -1,3 +1,19 @@
+# Dependencies
+node_modules/
+
+# Compiled output
+dist/
+tsconfig.tsbuildinfo
+
+# VSC
+.vscode
+
+# Output of 'npm pack'
+*.tgz
+
+# Npm install
+package-lock.json
+
 # Compiled class file
 *.class
 

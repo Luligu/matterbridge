@@ -1,0 +1,50 @@
+{
+  "name": "matterbridge",
+  "version": "1.0.0",
+  "description": "Matterbridge",
+  "author": "https://github.com/Luligu",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Luligu/matterbridge"
+  },
+  "bugs": {
+    "url": "https://github.com/Luligu/matterbridge/issues"
+  },
+  "keywords": [
+    "matterbridge",
+    "homebridge",
+    "matter",
+    "matter.js"
+  ],
+  "engines": {
+    "node": "^18.19.0 || ^20.11.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "start": "node ./dist/index.js",
+    "test": "jest",
+    "test:verbose": "jest --verbose",
+    "test:watch": "jest --watch",
+    "lint": "eslint src/**.ts",
+    "lint:fix": "eslint src/**.ts --fix",
+    "clean": "rimraf tsconfig.tsbuildinfo ./dist",
+    "cleanBuild": "npm run clean && tsc",
+    "deepClean": "rimraf tsconfig.tsbuildinfo package-lock.json ./dist ./node_modules",
+    "prepublishOnly": "npm run lint && npm run cleanBuild",
+    "checkDependencies": "npx npm-check-updates",
+    "updateDependencies": "npx npm-check-updates -u"
+  },
+  "devDependencies": {
+    "@tsconfig/node-lts": "^20.1.1",
+    "@types/node": "^20.11.19",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "node-ansi-logger": "^1.9.1"
+  }
+}
