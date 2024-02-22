@@ -1,0 +1,46 @@
+{
+ "matterbridge": {
+  "vendorId": 65521,
+  "productId": 32768,
+  "uniqueId": "19b2bb1406bb9d36",
+  "passcode": 20232024,
+  "discriminator": 3940,
+  "port": 5500,
+  "qrPairingCode": "MT:Y.K904QI144Y7I39G00",
+  "manualPairingCode": "36332012344"
+ },
+ "0.EndpointStructure": {
+  "unique_19b2bb1406bb9d36-index_0": 1,
+  "nextEndpointId": 2
+ },
+ "0.Cluster-0-29": {
+  "_clusterDataVersion": 1135609873
+ },
+ "0.Cluster-0-40": {
+  "_clusterDataVersion": 3254827375
+ },
+ "0.Cluster-0-62": {
+  "_clusterDataVersion": 1628737181
+ },
+ "0.Cluster-0-48": {
+  "_clusterDataVersion": 87788093
+ },
+ "0.Cluster-0-31": {
+  "_clusterDataVersion": 2976899354
+ },
+ "0.Cluster-0-63": {
+  "_clusterDataVersion": 1082676432
+ },
+ "0.Cluster-0-51": {
+  "_clusterDataVersion": 1663438488
+ },
+ "0.Cluster-0-60": {
+  "_clusterDataVersion": 1562627091
+ },
+ "0.Cluster-1-29": {
+  "_clusterDataVersion": 1035376823
+ },
+ "0.EventHandler": {
+  "lastEventNumber": 4
+ }
+}

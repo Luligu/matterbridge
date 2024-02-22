@@ -1,14 +1,45 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NodeStorageManager, NodeStorage, NodeStorageKey, NodeStorageName } from 'node-persist-manager';
-import { AnsiLogger, TimestampFormat, dn, gn, db, wr, zb } from 'node-ansi-logger';
+import { AnsiLogger, TimestampFormat, dn, gn, db, wr, zb, stringify } from 'node-ansi-logger';
 import { fileURLToPath } from 'url';
+import { promises as fs } from 'fs';
 import EventEmitter from 'events';
 import os from 'os';
 import path from 'path';
 
-export class MatterBridge extends EventEmitter {
-  private log: AnsiLogger;
+import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
+import { EndpointNumber, NodeId, VendorId } from '@project-chip/matter-node.js/datatype';
+import { Aggregator, DeviceTypes, NodeStateInformation, PairedNode } from '@project-chip/matter-node.js/device';
+import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
+import { ManualPairingCodeCodec, QrCodeSchema } from '@project-chip/matter-node.js/schema';
+import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageManager } from '@project-chip/matter-node.js/storage';
+import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter, singleton } from '@project-chip/matter-node.js/util';
+import { logEndpoint } from '@project-chip/matter-node.js/device';
+import { CryptoNode } from '@project-chip/matter-node.js/crypto';
+import { CommissioningOptions } from '@project-chip/matter.js/protocol';
+import { AllClustersMap, BasicInformationCluster, GeneralCommissioning, PowerSourceCluster, PowerSourceConfigurationCluster, ThreadNetworkDiagnosticsCluster, 
+  getClusterNameById } from '@project-chip/matter-node.js/cluster';
+import { Ble } from '@project-chip/matter-node.js/ble';
+import { BleNode, BleScanner } from '@project-chip/matter-node-ble.js/ble';
 
+// Define an interface for the event map
+export interface MatterBridgeEvents {
+  shutdown: (reason: string) => void;
+}
+
+export class MatterBridge extends EventEmitter {
+  public log: AnsiLogger;  
+  private hasCleanupStarted = false;
+
+  private storageManager!: StorageManager;
+  private matterbridgeContext!: StorageContext;
+  private mattercontrollerContext!: StorageContext;
+
+  private matterServer!: MatterServer;
+  private matterAggregator!: Aggregator;
+  private commissioningServer!: CommissioningServer;
+  private commissioningController!: CommissioningController;
+    
   constructor() {
     super();
     this.log = new AnsiLogger({ logName: 'MatterBridge', logTimestampFormat: TimestampFormat.TIME_MILLIS });
@@ -16,9 +47,253 @@ export class MatterBridge extends EventEmitter {
     this.log.info('MatterBridge is running...');
 
     this.logNodeAndSystemInfo();
+
+    // check node version and throw error
+    requireMinNodeVersion(18);
+
+    this.registerSignalHandlers();
+
+    // set matter.js logger 
+    Logger.defaultLogLevel = Level.DEBUG;
+    Logger.format = Format.ANSI;
+    const logger = Logger.get('Matterbridge');
+    logger.debug('Internal matter.js logger started');
+    
+    this.startStorage('json', '.matterbridge.json').then(() => this.startMatterBridge());
+
   }
 
-  logNodeAndSystemInfo() { 
+  // Typed method for emitting events
+  override emit<Event extends keyof MatterBridgeEvents>(
+    event: Event,
+    ...args: Parameters<MatterBridgeEvents[Event]>
+  ): boolean {
+    return super.emit(event, ...args);
+  }
+
+  // Typed method for listening to events
+  override on<Event extends keyof MatterBridgeEvents>(
+    event: Event,
+    listener: MatterBridgeEvents[Event]
+  ): this {
+    super.on(event, listener);
+    return this;
+  }
+
+  private async loadPlugin(packageJsonPath: string) {
+    try {
+      // Load the package.json of the plugin
+      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+      // Resolve the main module path relative to package.json
+      const pluginPath = path.resolve(path.dirname(packageJsonPath), packageJson.main);
+      // Dynamically import the plugin
+      const plugin = await import(pluginPath);
+      // Call the default export function of the plugin, passing this MatterBridge instance
+      if (plugin.default) {
+        plugin.default(this);
+        this.log.info(`Plugin loaded from ${pluginPath}`);
+      } else {
+        this.log.warn(`Plugin at ${pluginPath} does not provide a default export`);
+      }
+    } catch (err) {
+      this.log.error(`Failed to load plugin from ${packageJsonPath}: ${err}`);
+    }
+  }
+
+  private registerSignalHandlers() {
+    process.on('SIGINT', async () => {
+      if (!this.hasCleanupStarted) {
+        this.hasCleanupStarted = true;
+        this.log.debug('SIGINT received, cleaning up...');
+        await this.cleanup();
+        process.exit(0);
+      }
+    });
+
+    process.on('SIGTERM', async () => {
+      if (!this.hasCleanupStarted) {
+        this.hasCleanupStarted = true;
+        this.log.debug('SIGTERM received, cleaning up...');
+        await this.cleanup();
+        process.exit(0);
+      }
+    });
+  }
+
+  private async cleanup() {
+    this.log.debug('Starting cleanup...');
+    await this.stopStorage();
+    this.log.debug('Cleanup completed.');
+  }
+
+  private async startStorage(storageType: string, storageName: string) {
+    if (!storageName.endsWith('.json')) {
+      storageName += '.json';
+    }
+    this.log.debug(`Starting storage ${storageType} ${storageName}`);
+    if (storageType === 'disk') {
+      const storageDisk = new StorageBackendDisk(storageName);
+      this.storageManager = new StorageManager(storageDisk);
+    }
+    if (storageType === 'json') {
+      const storageJson = new StorageBackendJsonFile(storageName);
+      this.storageManager = new StorageManager(storageJson);
+    }
+    try {
+      await this.storageManager.initialize();
+      this.log.debug('Storage initialized');
+      if (storageType === 'json') {
+        this.backupJsonStorage(storageName, storageName.replace('.json', '') + '.backup.json');
+      }
+    }
+    catch (error) {
+      this.log.error('Storage initialize() error!');
+      process.exit(1);
+    }
+  }
+  
+  private async  backupJsonStorage(storageName: string, backupName: string) {
+    try {
+      this.log.debug(`Making backup copy of ${storageName}`);
+      await fs.copyFile(storageName, backupName);
+      this.log.debug(`Successfully backed up ${storageName} to ${backupName}`);
+    } catch (err) {
+      if (err instanceof Error && 'code' in err) {
+        if (err.code === 'ENOENT') {
+          this.log.info(`No existing file to back up for ${storageName}. This is expected on the first run.`);
+        } else {
+          this.log.error(`Error making backup copy of ${storageName}: ${err.message}`);
+        }
+      } else {
+        this.log.error(`An unexpected error occurred during the backup of ${storageName}: ${String(err)}`);
+      }
+    }
+  }
+  
+  private async  stopStorage() {
+    this.log.debug('Stopping storage');
+    await this.storageManager?.close();
+    this.log.debug('Storage closed');
+  }
+  
+  private async  startMatterBridge() {
+    this.log.info('Creating matterbridgeContext: matterbridge');
+    this.matterbridgeContext = this.storageManager.createContext('matterbridge');
+    this.matterbridgeContext.set('vendorId', 0xfff1);
+    this.matterbridgeContext.set('productId', 0x8000);
+    this.matterbridgeContext.set('uniqueId', this.matterbridgeContext.get('uniqueId', CryptoNode.getRandomData(8).toHex()));
+    this.matterbridgeContext.set('passcode', 20232024);
+    this.matterbridgeContext.set('discriminator', 3940);
+    this.matterbridgeContext.set('port', 5500);
+  
+    await this.createMatterServer(this.storageManager);
+  
+    const deviceName = 'matterbridge aggregator';
+    const deviceType = DeviceTypes.AGGREGATOR.code;
+    const productName = 'node-matter bridge'; // Home app = Model
+    const vendorName = 'matterbridge'; // Home app = Manufacturer
+  
+    const vendorId = this.matterbridgeContext.get('vendorId') as number;
+    const productId = this.matterbridgeContext.get('productId') as number;
+    const uniqueId = this.matterbridgeContext.get('uniqueId') as string;
+    const passcode = this.matterbridgeContext.get('passcode') as number;
+    const discriminator = this.matterbridgeContext.get('discriminator') as number;
+    const port = this.matterbridgeContext.get('port') as number;
+  
+    this.log.info(`Creating matter commissioning server with port ${port} passcode ${passcode} discriminator ${discriminator} deviceName ${deviceName} deviceType ${deviceType}`);
+    this.commissioningServer = new CommissioningServer({
+      port,
+      passcode,
+      discriminator,
+      deviceName,
+      deviceType,
+      basicInformation: {
+        vendorId: VendorId(vendorId),
+        vendorName,
+        productId,
+        productName,
+        nodeLabel: productName,
+        productLabel: productName,
+        softwareVersion: 0,
+        softwareVersionString: '0.0.13', // Home app = Firmware Revision
+        uniqueId,
+        serialNumber: `matterbridge-${uniqueId}`,
+      },
+      activeSessionsChangedCallback: fabricIndex => {
+        const info = this.commissioningServer.getActiveSessionInformation(fabricIndex);
+        this.log.info(`Active sessions changed on Fabric ${fabricIndex}`, stringify(info, true));
+        if (info && info[0]?.isPeerActive === true && info[0]?.secure === true && info[0]?.numberOfActiveSubscriptions >= 1) {
+          this.log.warn(`activeSessionsChangedCallback ready to start...`);
+          Logger.defaultLogLevel = Level.INFO;
+          //platform.startZigbee();
+        }
+      },
+      commissioningChangedCallback: fabricIndex => {
+        const info = this.commissioningServer.getCommissionedFabricInformation(fabricIndex);
+        this.log.info(`Commissioning changed on Fabric ${fabricIndex}`, stringify(info, true));
+      },
+    });
+    this.commissioningServer.addCommandHandler('testEventTrigger', async ({ request: { enableKey, eventTrigger } }) =>
+      this.log.warn(`testEventTrigger called on GeneralDiagnostic cluster: ${enableKey} ${eventTrigger}`),
+    );
+  
+    this.createMatterAggregator();
+  
+    this.commissioningServer.addDevice(this.matterAggregator);
+    this.matterServer.addCommissioningServer(this.commissioningServer);
+    await this.matterServer.start();
+    this.log.info('Started matter server');
+  
+    if (!this.commissioningServer.isCommissioned()) {
+      this.log.info('The bridge is not commissioned. Pair the bridge and restart the process to run matterbridge.');
+      const pairingData = this.commissioningServer.getPairingCode();
+      const { qrPairingCode, manualPairingCode } = pairingData;
+      this.matterbridgeContext.set('qrPairingCode', qrPairingCode);
+      this.matterbridgeContext.set('manualPairingCode', manualPairingCode);
+  
+      const QrCode = new QrCodeSchema();
+      this.log.debug('Pairing code\n', '\n' + QrCode.encode(qrPairingCode));
+      this.log.debug(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
+      this.log.debug(`Manual pairing code: ${manualPairingCode}`);
+    } else {
+      this.log.info('The bridge is already commissioned. Waiting for controllers to connect ...');
+  
+      setTimeout(() => {
+        Logger.defaultLogLevel = Level.DEBUG;
+        const childs = this.matterAggregator.getBridgedDevices();
+        this.log.debug(`Aggregator has ${childs.length} childs:`)
+        for (const child of childs) {
+          this.log.debug(`--child: ID: ${child.id} name: ${child.name} `);
+        }
+        //logEndpoint(commissioningServer.getRootEndpoint());
+        //logEndpoint(matterAggregator);
+        //platform.unregisterAll();
+      }, 120 * 1000);
+  
+    }
+  }
+  
+  private async   createMatterServer(storageManager: StorageManager) {
+    this.log.info('Creating matter server');
+    this.matterServer = new MatterServer(storageManager, { mdnsAnnounceInterface: undefined });
+  }
+  
+  private async   createMatterAggregator() {
+    this.log.info('Creating matter aggregator');
+    this.matterAggregator = new Aggregator();
+  }
+  
+  private async   stopMatter() {
+    this.log.debug('Stopping matter commissioningServer');
+    await this.commissioningServer?.close();
+    this.log.debug('Stopping matter commissioningController');
+    await this.commissioningController?.close();
+    this.log.debug('Stopping matter server');
+    await this.matterServer?.close();
+    this.log.debug('Matter server closed');
+  }
+  
+  private logNodeAndSystemInfo() { 
 
     // Node information
     const version = process.versions.node;
@@ -29,7 +304,7 @@ export class MatterBridge extends EventEmitter {
     // Host system information
     const osType = os.type(); // "Windows_NT", "Darwin", etc.
     const osRelease = os.release(); // Kernel version
-    const osPlatform = os.platform(); // "win32", "linux", "darwin", etc.
+    const osPlatform = os.platform(); // "win32", "linux", "darwin", etc. 
     const osArch = os.arch(); // "x64", "arm", etc.
     const totalMemory = os.totalmem() / 1024 / 1024 / 1024; // Convert to GB
     const freeMemory = os.freemem() / 1024 / 1024 / 1024; // Convert to GB
@@ -48,7 +323,7 @@ export class MatterBridge extends EventEmitter {
 
     // Command line arguments (excluding 'node' and the script name)
     const cmdArgs = process.argv.slice(2).join(' ');
-    this.log.debug(`Command Line Arguments: ${cmdArgs}`);
+    this.log.debug(`Command Line Arguments: ${cmdArgs}`); 
 
     // Current working directory
     const currentDir = process.cwd();

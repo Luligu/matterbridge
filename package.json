@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Matterbridge",
   "author": "https://github.com/Luligu",
   "license": "MIT",
@@ -37,14 +37,22 @@
     "deepClean": "rimraf tsconfig.tsbuildinfo package-lock.json ./dist ./node_modules",
     "prepublishOnly": "npm run lint && npm run cleanBuild",
     "checkDependencies": "npx npm-check-updates",
-    "updateDependencies": "npx npm-check-updates -u"
+    "updateDependencies": "npx npm-check-updates -u",
+    "updateMatter": "npm install @project-chip/matter.js@dev && npm install @project-chip/matter-node.js@dev && npm install @project-chip/matter.js-tools@dev && npm install @project-chip/matter-node-ble.js@dev"
   },
   "devDependencies": {
+    "@stylistic/eslint-plugin": "^1.6.2",
     "@tsconfig/node-lts": "^20.1.1",
     "@types/node": "^20.11.19",
+    "@typescript-eslint/eslint-plugin": "^7.0.2",
+    "@typescript-eslint/parser": "^7.0.2",
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@project-chip/matter-node-ble.js": "^0.7.5-alpha.0-20240222-8696097f",
+    "@project-chip/matter-node.js": "^0.7.5-alpha.0-20240222-8696097f",
+    "@project-chip/matter.js": "^0.7.5-alpha.0-20240222-8696097f",
+    "@project-chip/matter.js-tools": "^0.7.5-alpha.0-20240222-8696097f",
     "node-ansi-logger": "^1.9.1",
     "node-persist-manager": "^1.0.3"
   }
