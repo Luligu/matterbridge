@@ -26,7 +26,9 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
-    "start": "node ./dist/index.js",
+    "start": "node ./dist/index.js -bridge",
+    "start:help": "node ./dist/index.js -help",
+    "start:add": "node ./dist/index.js -add ../matterbridge-example",
     "test": "jest",
     "test:verbose": "jest --verbose",
     "test:watch": "jest --watch",

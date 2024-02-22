@@ -19,8 +19,24 @@
         "plugin:@typescript-eslint/recommended" 
       ],
     "rules": {
-        "@stylistic/indent": ["error", 2],
+        "indent": ["error", 2],
         "max-len": ["warn", 180],
-        "no-console": ["warn"]
-      }
+        "no-console": ["warn"],
+        "quotes": ["error", "single", { "avoidEscape": true, "allowTemplateLiterals": false }],
+        "comma-spacing": ["error", { "before": false, "after": true }],
+        "space-before-function-paren": ["error", { "anonymous": "never", "named": "never", "asyncArrow": "always" }],
+        "keyword-spacing": ["error", { "before": true, "after": true }],
+        "no-multi-spaces": "error",
+        "object-curly-spacing": ["error", "always"],
+        "@typescript-eslint/type-annotation-spacing": ["error", {
+            "before": false,
+            "after": true,
+            "overrides": {
+              "arrow": {
+                "before": true,
+                "after": true
+              }
+            }
+          }]
+    }
 }

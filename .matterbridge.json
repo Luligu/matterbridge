@@ -41,6 +41,9 @@
   "_clusterDataVersion": 1035376823
  },
  "0.EventHandler": {
-  "lastEventNumber": 6
+  "lastEventNumber": 28
+ },
+ "0.SessionManager": {
+  "resumptionRecords": []
  }
 }

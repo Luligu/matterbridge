@@ -1,3 +1,3 @@
-import { MatterBridge } from "./matterBridge.js";
+import { Matterbridge } from './matterBridge.js';
 
-new MatterBridge();
+new Matterbridge(); 
