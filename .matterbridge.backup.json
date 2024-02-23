@@ -2,7 +2,7 @@
  "matterbridge": {
   "vendorId": 65521,
   "productId": 32768,
-  "uniqueId": "19b2bb1406bb9d36",
+  "uniqueId": "181bf01e9bcf270c",
   "passcode": 20232024,
   "discriminator": 3940,
   "port": 5500,
@@ -10,40 +10,182 @@
   "manualPairingCode": "36332012344"
  },
  "0.EndpointStructure": {
-  "unique_19b2bb1406bb9d36-index_0": 1,
-  "nextEndpointId": 2
+  "nextEndpointId": 7,
+  "unique_181bf01e9bcf270c-index_0": 1,
+  "unique_181bf01e9bcf270c-index_0-unique_Device1 0x01020304": 2,
+  "unique_181bf01e9bcf270c-index_0-unique_Device2 0x01450304": 3,
+  "unique_181bf01e9bcf270c-index_1": 4,
+  "unique_181bf01e9bcf270c-index_1-unique_Device2 0x01450304": 5,
+  "unique_181bf01e9bcf270c-unique_Device1 0x01020304": 6
  },
  "0.Cluster-0-29": {
-  "_clusterDataVersion": 1135609873
+  "_clusterDataVersion": 2919241323
  },
  "0.Cluster-0-40": {
-  "_clusterDataVersion": 3254827375
+  "_clusterDataVersion": 1487308820,
+  "location": "MC"
  },
  "0.Cluster-0-62": {
-  "_clusterDataVersion": 1628737181
+  "_clusterDataVersion": 3220735281
  },
  "0.Cluster-0-48": {
-  "_clusterDataVersion": 87788093
+  "_clusterDataVersion": 1692021985,
+  "breadcrumb": "{\"__object__\":\"BigInt\",\"__value__\":\"0\"}"
  },
  "0.Cluster-0-31": {
-  "_clusterDataVersion": 2976899354
+  "_clusterDataVersion": 2825161305
  },
  "0.Cluster-0-63": {
-  "_clusterDataVersion": 1082676432
+  "_clusterDataVersion": 1354172725
  },
  "0.Cluster-0-51": {
-  "_clusterDataVersion": 1663438488
+  "_clusterDataVersion": 69629564
  },
  "0.Cluster-0-60": {
-  "_clusterDataVersion": 1562627091
- },
- "0.Cluster-1-29": {
-  "_clusterDataVersion": 1035376823
+  "_clusterDataVersion": 2875383126
  },
  "0.EventHandler": {
-  "lastEventNumber": 26
+  "lastEventNumber": 36
+ },
+ "0.Cluster-1-29": {
+  "_clusterDataVersion": 2818986515
+ },
+ "0.Cluster-2-29": {
+  "_clusterDataVersion": 507648626
+ },
+ "0.Cluster-2-30": {
+  "_clusterDataVersion": 3013828343
+ },
+ "0.Cluster-2-3": {
+  "_clusterDataVersion": 4116198237
+ },
+ "0.Cluster-2-40": {
+  "_clusterDataVersion": 3795181088
+ },
+ "0.Cluster-2-258": {
+  "_clusterDataVersion": 2680958115,
+  "currentPositionLiftPercent100ths": 10000
+ },
+ "0.Cluster-3-29": {
+  "_clusterDataVersion": 2719108945
+ },
+ "0.Cluster-3-30": {
+  "_clusterDataVersion": 2555414091
+ },
+ "0.Cluster-3-3": {
+  "_clusterDataVersion": 4044444273
+ },
+ "0.Cluster-3-40": {
+  "_clusterDataVersion": 4216387343
+ },
+ "0.Cluster-3-69": {
+  "_clusterDataVersion": 664122149
+ },
+ "0.FabricManager": {
+  "fabrics": [
+   {
+    "fabricIndex": 1,
+    "fabricId": "{\"__object__\":\"BigInt\",\"__value__\":\"3376205764\"}",
+    "nodeId": "{\"__object__\":\"BigInt\",\"__value__\":\"3452752101\"}",
+    "rootNodeId": "{\"__object__\":\"BigInt\",\"__value__\":\"1348858990\"}",
+    "operationalId": "{\"__object__\":\"Uint8Array\",\"__value__\":\"d8af82c938450b66\"}",
+    "rootPublicKey": "{\"__object__\":\"Uint8Array\",\"__value__\":\"04793f2eddb7da807d74b55934ff3283b64ebb3eaaaea2626cb4d26d9277d6e528f4960dae9e7973b116c07995b55d875ff0cd606955e51b4ad8a1da751cf09782\"}",
+    "keyPair": {
+     "publicKey": "{\"__object__\":\"Uint8Array\",\"__value__\":\"042582e2247c59a1e385c2143ffbc29b640712d065e0a59b909dcc91e16c7a4f51e310be2569d46e2d4f2b9102a86f43b428e75c3ea8aa0ed573a3f31a43c5b23a\"}",
+     "privateKey": "{\"__object__\":\"Uint8Array\",\"__value__\":\"30a696f928eb938766f7bbaee30f2d57056ce955602da55d27c761d34391bbb2\"}"
+    },
+    "rootVendorId": 4937,
+    "rootCert": "{\"__object__\":\"Uint8Array\",\"__value__\":\"15300101002402013703261402cb090d2615c4cf3cc9182604f5fa9c2c2405003706261402cb090d2615c4cf3cc91824070124080130094104793f2eddb7da807d74b55934ff3283b64ebb3eaaaea2626cb4d26d9277d6e528f4960dae9e7973b116c07995b55d875ff0cd606955e51b4ad8a1da751cf09782370a3501290118240260300414ce73a3707cc55f957e92ea8ca7033c43633a33a3300514ce73a3707cc55f957e92ea8ca7033c43633a33a318300b40573afcdd08edccab3114f8d25d7ae01952dbc0792b41b76f93c464de0574efd88885db65dd3bd4df61677823edac04aefbd989d7ea5a82225de669e07f2e56f218\"}",
+    "identityProtectionKey": "{\"__object__\":\"Uint8Array\",\"__value__\":\"971b4f2e013d9c1697036475d079c93b\"}",
+    "operationalIdentityProtectionKey": "{\"__object__\":\"Uint8Array\",\"__value__\":\"8cfcc73dfddf8fb78d6676651c45d1d0\"}",
+    "operationalCert": "{\"__object__\":\"Uint8Array\",\"__value__\":\"15300101012402013703261402cb090d2615c4cf3cc9182604c37f6b2d24050037062615c4cf3cc92611e5d0cccd18240701240801300941042582e2247c59a1e385c2143ffbc29b640712d065e0a59b909dcc91e16c7a4f51e310be2569d46e2d4f2b9102a86f43b428e75c3ea8aa0ed573a3f31a43c5b23a370a3501280118240201360304020401183004142652fea8f358fa620c0f64680eddcefcfb54b958300514ce73a3707cc55f957e92ea8ca7033c43633a33a318300b402197b7ec6802e10937c85099e0ffae18fd403ad39ceb058a80a1f75efff57a5bbf3e1750065f93e6eab016a9c2ca54964e3eccc57ba45637d298c3100f6be4da18\"}",
+    "label": "Windows",
+    "caseAuthenticatedTags": [],
+    "scopedClusterData": "{\"__object__\":\"Map\",\"__value__\":\"[[31,\\\"{\\\\\\\"__object__\\\\\\\":\\\\\\\"Map\\\\\\\",\\\\\\\"__value__\\\\\\\":\\\\\\\"[[\\\\\\\\\\\\\\\"acl\\\\\\\\\\\\\\\",{\\\\\\\\\\\\\\\"value\\\\\\\\\\\\\\\":[{\\\\\\\\\\\\\\\"privilege\\\\\\\\\\\\\\\":5,\\\\\\\\\\\\\\\"authMode\\\\\\\\\\\\\\\":2,\\\\\\\\\\\\\\\"subjects\\\\\\\\\\\\\\\":[\\\\\\\\\\\\\\\"{\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"__object__\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\":\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"BigInt\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"__value__\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\":\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"1348858990\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"}\\\\\\\\\\\\\\\"],\\\\\\\\\\\\\\\"targets\\\\\\\\\\\\\\\":null,\\\\\\\\\\\\\\\"fabricIndex\\\\\\\\\\\\\\\":1}]}]]\\\\\\\"}\\\"]]\"}"
+   },
+   {
+    "fabricIndex": 2,
+    "fabricId": "{\"__object__\":\"BigInt\",\"__value__\":\"3568318277\"}",
+    "nodeId": "{\"__object__\":\"BigInt\",\"__value__\":\"1420531082\"}",
+    "rootNodeId": "{\"__object__\":\"BigInt\",\"__value__\":\"779884599248957022\"}",
+    "operationalId": "{\"__object__\":\"Uint8Array\",\"__value__\":\"7bb8aa786be1cc63\"}",
+    "rootPublicKey": "{\"__object__\":\"Uint8Array\",\"__value__\":\"04f4658bf6cb747c1a71f51da1ca4ecf5b55ce50445d2e3fc92f6619ad6605a6d919f6f16c23aba5f135c83955d773bc5eb95d24caca8ab794418e4cd6557422fb\"}",
+    "keyPair": {
+     "publicKey": "{\"__object__\":\"Uint8Array\",\"__value__\":\"044195e1323dd2ac425a223ca96f99152cbdb00a6a8c8547a613811a82fcae28456ed0511e65159e1c4f354c8446c010583b52e27c3ee4ac5114b3d7ab4f57ae46\"}",
+     "privateKey": "{\"__object__\":\"Uint8Array\",\"__value__\":\"2578876f4aee62ab23468b06f36492b63322d8c40eb85a2908191b80611777be\"}"
+    },
+    "rootVendorId": 4996,
+    "rootCert": "{\"__object__\":\"Uint8Array\",\"__value__\":\"153001010024020137032714f3388f0337298f5f26154537b0d418260409e7ba2c24050037062714f3388f0337298f5f26154537b0d41824070124080130094104f4658bf6cb747c1a71f51da1ca4ecf5b55ce50445d2e3fc92f6619ad6605a6d919f6f16c23aba5f135c83955d773bc5eb95d24caca8ab794418e4cd6557422fb370a3501290118240260300414084f1831267fe99eb605e37cb58a3de036902f54300514084f1831267fe99eb605e37cb58a3de036902f5418300b40b8fa74606910e507c0efde852981d3fc7aa55589a15a2dfc6def2e17930e5fe9fe70cc4ee088594a2c9d697c821cc916678dcd54b2ba6757d83c3ca5d455bf1f18\"}",
+    "identityProtectionKey": "{\"__object__\":\"Uint8Array\",\"__value__\":\"d39a4df871bcce97b9a0c73ba2a7027a\"}",
+    "operationalIdentityProtectionKey": "{\"__object__\":\"Uint8Array\",\"__value__\":\"1e47949616dbbd8c612e72a3fe2a1023\"}",
+    "operationalCert": "{\"__object__\":\"Uint8Array\",\"__value__\":\"153001010124020137032714f3388f0337298f5f26154537b0d4182604c47f6b2d240500370626154537b0d426118a95ab5418240701240801300941044195e1323dd2ac425a223ca96f99152cbdb00a6a8c8547a613811a82fcae28456ed0511e65159e1c4f354c8446c010583b52e27c3ee4ac5114b3d7ab4f57ae46370a3501280118240201360304020401183004141a0f87fd6ebb6f58c111bc8c94ce39f399afd85b300514084f1831267fe99eb605e37cb58a3de036902f5418300b405fe398e07a6353447aff039b6ec15986ea2123abf93291c6ed4f21adb9c0b18d73ddca020b2a8cb67e6851a76183790f725622b9700e90cf572e9312cdcde9f418\"}",
+    "label": "",
+    "caseAuthenticatedTags": [],
+    "scopedClusterData": "{\"__object__\":\"Map\",\"__value__\":\"[]\"}"
+   }
+  ],
+  "nextFabricIndex": 3
  },
  "0.SessionManager": {
-  "resumptionRecords": []
+  "resumptionRecords": [
+   {
+    "nodeId": "{\"__object__\":\"BigInt\",\"__value__\":\"1348858990\"}",
+    "sharedSecret": "{\"__object__\":\"Uint8Array\",\"__value__\":\"0fd19f598929abe45a5f0f593ee5f8cb60c8dac5a640e005aa9967463b0b1566\"}",
+    "resumptionId": "{\"__object__\":\"Uint8Array\",\"__value__\":\"9979843f64c6bfac16a2963aae7f627b\"}",
+    "fabricId": "{\"__object__\":\"BigInt\",\"__value__\":\"3376205764\"}",
+    "peerNodeId": "{\"__object__\":\"BigInt\",\"__value__\":\"1348858990\"}",
+    "sessionParameters": {
+     "idleIntervalMs": 300,
+     "activeIntervalMs": 500,
+     "activeThresholdMs": 4000
+    }
+   },
+   {
+    "nodeId": "{\"__object__\":\"BigInt\",\"__value__\":\"779884599248957022\"}",
+    "sharedSecret": "{\"__object__\":\"Uint8Array\",\"__value__\":\"f65652f03b9cb064658ef58f73605db2f3eab8f53bda3b45174ed3d3f5c19795\"}",
+    "resumptionId": "{\"__object__\":\"Uint8Array\",\"__value__\":\"6a8a52e52b2201c3d4bc526a03a189ed\"}",
+    "fabricId": "{\"__object__\":\"BigInt\",\"__value__\":\"3568318277\"}",
+    "peerNodeId": "{\"__object__\":\"BigInt\",\"__value__\":\"779884599248957022\"}",
+    "sessionParameters": {
+     "idleIntervalMs": 300,
+     "activeIntervalMs": 500,
+     "activeThresholdMs": 4000
+    }
+   }
+  ]
+ },
+ "0.Cluster-4-29": {
+  "_clusterDataVersion": 1267917082
+ },
+ "0.Cluster-5-29": {
+  "_clusterDataVersion": 1427976703
+ },
+ "0.Cluster-5-30": {
+  "_clusterDataVersion": 2076215306
+ },
+ "0.Cluster-5-3": {
+  "_clusterDataVersion": 361966517
+ },
+ "0.Cluster-5-40": {
+  "_clusterDataVersion": 1947912851
+ },
+ "0.Cluster-5-69": {
+  "_clusterDataVersion": 3414767861
+ },
+ "0.Cluster-6-29": {
+  "_clusterDataVersion": 4283228777
+ },
+ "0.Cluster-6-30": {
+  "_clusterDataVersion": 2766151159
+ },
+ "0.Cluster-6-3": {
+  "_clusterDataVersion": 2548343247
+ },
+ "0.Cluster-6-40": {
+  "_clusterDataVersion": 196245902
+ },
+ "0.Cluster-6-258": {
+  "_clusterDataVersion": 177663635,
+  "currentPositionLiftPercent100ths": 3100
  }
 }
