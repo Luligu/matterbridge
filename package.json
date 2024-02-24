@@ -55,6 +55,7 @@
     "@project-chip/matter-node.js": "^0.7.5",
     "@project-chip/matter.js": "^0.7.5",
     "@project-chip/matter.js-tools": "^0.7.5",
+    "express": "^4.18.2",
     "node-ansi-logger": "^1.9.1",
     "node-persist-manager": "^1.0.3"
   }

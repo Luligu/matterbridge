@@ -22,6 +22,7 @@ import { AllClustersMap, BasicInformationCluster, GeneralCommissioning, PowerSou
   getClusterNameById } from '@project-chip/matter-node.js/cluster';
 import { Ble } from '@project-chip/matter-node.js/ble';
 import { BleNode, BleScanner } from '@project-chip/matter-node-ble.js/ble';
+import express from 'express';
 
 // Define an interface for storing the plugins
 interface MatterbridgePlugins {
@@ -45,6 +46,8 @@ export interface MatterbridgeEvents {
 export class Matterbridge extends EventEmitter {
   public nodeVersion = '';
   public mode: 'bridge' | 'childbridge' | '' = '';
+
+  private app!: express.Express;
 
   private log: AnsiLogger;  
   private hasCleanupStarted = false;
@@ -89,6 +92,9 @@ export class Matterbridge extends EventEmitter {
     this.context = await this.storage.createStorage('matterbridge');
     this.plugins = await this.context?.get<MatterbridgePlugins[]>('plugins', []);
 
+    // Initialize frontend
+    this.initializeFrontend();
+    
     // Parse command line
     await this.parseCommandLine();
   }
@@ -471,5 +477,21 @@ matterbridge -help -bridge -add <plugin path> -remove <plugin path>
     const currentFileDirectory = path.dirname(fileURLToPath(import.meta.url));
     const packageRootDirectory = path.resolve(currentFileDirectory, '../');
     this.log.debug(`Package Root Directory: ${packageRootDirectory}`);
+  }
+
+  async initializeFrontend(port: number = 3000) {
+    // Initialize the Express server
+    this.log.debug('Initializing the web server on port ', port);
+    this.app = express();
+
+    // Serve static files
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    this.log.debug('Express static dir:', path.join(__dirname, '..', 'public'));
+    this.app.use(express.static(path.join(__dirname, '..', 'public')));
+
+    this.app.listen(port, () => {
+      this.log.debug(`Server is running on http://localhost:${port}`);
+    });
   }
 }
