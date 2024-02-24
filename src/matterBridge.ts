@@ -480,18 +480,90 @@ matterbridge -help -bridge -add <plugin path> -remove <plugin path>
   }
 
   async initializeFrontend(port: number = 3000) {
-    // Initialize the Express server
     this.log.debug('Initializing the web server on port ', port);
     this.app = express();
-
-    // Serve static files
+  
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
-    this.log.debug('Express static dir:', path.join(__dirname, '..', 'public'));
-    this.app.use(express.static(path.join(__dirname, '..', 'public')));
-
+    this.log.debug('Express static dir:', path.join(__dirname, '..', 'frontend/build'));
+  
+    // Serve React build directory
+    this.app.use(express.static(path.join(__dirname, '..', 'frontend/build')));
+  
+    // Fallback for SPA routing
+    this.app.get('*', (req, res) => {
+      res.sendFile(path.join(__dirname, '..', 'frontend/build/index.html'));
+    });
+  
     this.app.listen(port, () => {
       this.log.debug(`Server is running on http://localhost:${port}`);
     });
   }
 }
+
+
+/*
+Success! Created frontend at C:\Users\lligu\OneDrive\GitHub\matterbridge\frontend
+Inside that directory, you can run several commands:
+
+  npm start
+    Starts the development server.
+
+  npm run build
+    Bundles the app into static files for production.
+
+  npm test
+    Starts the test runner.
+
+  npm run eject
+    Removes this tool and copies build dependencies, configuration files
+    and scripts into the app directory. If you do this, you can’t go back!
+
+We suggest that you begin by typing:
+
+  cd frontend
+  npm start
+
+Happy hacking!
+PS C:\Users\lligu\OneDrive\GitHub\matterbridge> cd frontend
+PS C:\Users\lligu\OneDrive\GitHub\matterbridge\frontend> npm run build
+
+> frontend@0.1.0 build
+> react-scripts build
+
+Creating an optimized production build...
+One of your dependencies, babel-preset-react-app, is importing the
+"@babel/plugin-proposal-private-property-in-object" package without
+declaring it in its dependencies. This is currently working because
+"@babel/plugin-proposal-private-property-in-object" is already in your
+node_modules folder for unrelated reasons, but it may break at any time.
+
+babel-preset-react-app is part of the create-react-app project, which
+is not maintianed anymore. It is thus unlikely that this bug will
+ever be fixed. Add "@babel/plugin-proposal-private-property-in-object" to
+your devDependencies to work around this error. This will make this message
+go away.
+
+Compiled successfully.
+
+File sizes after gzip:
+
+  46.65 kB  build\static\js\main.9b7ec296.js
+  1.77 kB   build\static\js\453.8ab44547.chunk.js
+  513 B     build\static\css\main.f855e6bc.css
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  npm install -g serve
+  serve -s build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+
+PS C:\Users\lligu\OneDrive\GitHub\matterbridge\frontend> 
+*/

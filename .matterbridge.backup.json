@@ -18,7 +18,7 @@
   "unique_c5eee61c46a89ebe-index_0-unique_Device1 0x01020304": 5
  },
  "0.Cluster-0-29": {
-  "_clusterDataVersion": 346205514
+  "_clusterDataVersion": 346205523
  },
  "0.Cluster-0-40": {
   "_clusterDataVersion": 2782993701,
@@ -44,10 +44,10 @@
   "_clusterDataVersion": 76346025
  },
  "0.Cluster-1-29": {
-  "_clusterDataVersion": 3744969838
+  "_clusterDataVersion": 3744969847
  },
  "0.EventHandler": {
-  "lastEventNumber": 70
+  "lastEventNumber": 82
  },
  "0.FabricManager": {
   "fabrics": [
@@ -99,7 +99,7 @@
    {
     "nodeId": "{\"__object__\":\"BigInt\",\"__value__\":\"1348858990\"}",
     "sharedSecret": "{\"__object__\":\"Uint8Array\",\"__value__\":\"4a2a3d768b6dc3217becde07c693a1603ffef4633df221bbf49efc763570cbf4\"}",
-    "resumptionId": "{\"__object__\":\"Uint8Array\",\"__value__\":\"17f012bcd7051c4e2845634aadbf2154\"}",
+    "resumptionId": "{\"__object__\":\"Uint8Array\",\"__value__\":\"3e7efff5a04f00eafffa6dd024b2c18b\"}",
     "fabricId": "{\"__object__\":\"BigInt\",\"__value__\":\"3376205764\"}",
     "peerNodeId": "{\"__object__\":\"BigInt\",\"__value__\":\"1348858990\"}",
     "sessionParameters": {
