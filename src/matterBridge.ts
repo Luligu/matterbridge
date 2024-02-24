@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { NodeStorageManager, NodeStorage, NodeStorageKey, NodeStorageName } from 'node-persist-manager';
-import { AnsiLogger, TimestampFormat, stringify } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, BRIGHT, DIM, GREEN, RESET, REVERSE, REVERSEOFF, TimestampFormat, UNDERLINE, UNDERLINEOFF, nf, stringify } from 'node-ansi-logger';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { promises as fs } from 'fs';
 import EventEmitter from 'events';
@@ -25,6 +26,7 @@ import { BleNode, BleScanner } from '@project-chip/matter-node-ble.js/ble';
 // Define an interface for storing the plugins
 interface MatterbridgePlugins {
   path: string,
+  type: string
   name: string,
   version: string,
   description: string,
@@ -36,10 +38,13 @@ export interface MatterbridgeEvents {
   shutdown: (reason: string) => void;
   startPlatform: (reason: string) => void;
   startDynamicPlatform: (reason: string) => void;
+  registerDevicePlatform: (device: MatterbridgeDevice) => void;
+  registerDeviceDynamicPlatform: (device: MatterbridgeDevice) => void;
 }
 
 export class Matterbridge extends EventEmitter {
   public nodeVersion = '';
+  public mode: 'bridge' | 'childbridge' | '' = '';
 
   private log: AnsiLogger;  
   private hasCleanupStarted = false;
@@ -95,26 +100,43 @@ export class Matterbridge extends EventEmitter {
 matterbridge -help -bridge -add <plugin path> -remove <plugin path>
       - help:                 show the help
       - bridge:               start the bridge
+      - list:                 list the registered plugin
       - add <plugin path>:    register the plugin
       - remove <plugin path>: remove the plugin\n`);
       process.exit(0);
     }
 
-    if (hasParameter('add') && getParameter('add')) { 
+    if (hasParameter('list')) { 
+      this.log.info('Registered plugins:');
+      this.plugins.forEach(plugin => {
+        this.log.info(`- ${BLUE}${plugin.name}${nf} '${BLUE}${BRIGHT}${plugin.description}${RESET}${nf}' type: ${GREEN}${plugin.type}${nf}`);
+      });
+      process.exit(0);
+    }
+    if (getParameter('add')) { 
       this.log.debug(`Registering plugin ${getParameter('add')}`);
       await this.loadPlugin(getParameter('add')!, 'add');
       process.exit(0);
     }
+    if (getParameter('remove')) { 
+      this.log.debug(`Unregistering plugin ${getParameter('remove')}`);
+      await this.loadPlugin(getParameter('remove')!, 'remove');
+      process.exit(0);
+    }
 
     if (hasParameter('bridge')) {
+      this.mode = 'bridge';
       await this.startStorage('json', '.matterbridge.json');
-      await this.startMatterBridge();
+      await this.startMatterBridge('bridge');
       this.plugins.forEach(plugin => {
+        this.log.info(`Loading plugin ${BLUE}${plugin.name}${nf} type ${GREEN}${plugin.type}${nf}`);
         this.loadPlugin(plugin.path, 'load');
       });
+      /*
       setTimeout(() => {
         this.emit('startPlatform', 'Matterbridge is loading');
       }, 1000);
+      */
     }
   }
 
@@ -135,7 +157,7 @@ matterbridge -help -bridge -add <plugin path> -remove <plugin path>
     return this;
   }
 
-  private async loadPlugin(packageJsonPath: string, strategy = 'load') {
+  private async loadPlugin(packageJsonPath: string, mode = 'load') {
     if (!packageJsonPath.endsWith('package.json')) packageJsonPath = path.join(packageJsonPath, 'package.json');
     try {
       // Load the package.json of the plugin
@@ -145,23 +167,42 @@ matterbridge -help -bridge -add <plugin path> -remove <plugin path>
       // Convert the file path to a URL
       const pluginUrl = pathToFileURL(pluginPath);
       // Dynamically import the plugin
-      const plugin = await import(pluginUrl.href );
+      const plugin = await import(pluginUrl.href);
       // Call the default export function of the plugin, passing this MatterBridge instance
       if (plugin.default ) { 
-        plugin.default(this, new AnsiLogger({ logName: packageJson.description, logTimestampFormat: TimestampFormat.TIME_MILLIS }));
-        if (strategy==='load'){
-          this.log.info(`Plugin ${packageJsonPath} loaded (entrypoint ${pluginPath})`);
-        } else if (strategy==='add'){
+        const platform = plugin.default(this, new AnsiLogger({ logName: packageJson.description, logTimestampFormat: TimestampFormat.TIME_MILLIS }));
+        if (mode==='load'){
+          this.log.info(`Plugin ${BLUE}${packageJsonPath}${RESET} type ${GREEN}${platform.type}${RESET} loaded (entrypoint ${UNDERLINE}${pluginPath}${UNDERLINEOFF})`);
+          // Register handlers
+          if (platform.type==='MatterbridgePlatform') {
+            platform.on('registerDevicePlatform', (device: MatterbridgeDevice) => {
+              this.log.debug(`Received ${REVERSE}registerDevicePlatform${REVERSEOFF} for device ${device.name}`);
+            });
+          } else if (platform.type==='MatterbridgeDynamicPlatform') {
+            platform.on('registerDeviceDynamicPlatform', (device: MatterbridgeDevice) => {
+              this.log.debug(`Received ${REVERSE}registerDeviceDynamicPlatform${REVERSEOFF} for device ${device.name}`);
+            });
+          }
+        } else if (mode==='add'){
           if (!this.plugins.find(plugin => plugin.name === packageJson.name)) {
-            this.plugins.push({ path: packageJsonPath, name: packageJson.name, version: packageJson.version, description: packageJson.description, author: packageJson.author });
-            this.context?.set<MatterbridgePlugins[]>('plugins', this.plugins);
-            this.log.info(`Plugin ${packageJsonPath} added to matterbridge`);
+            this.plugins.push({ path: packageJsonPath, type: platform.type, name: packageJson.name, version: packageJson.version, description: 
+              packageJson.description, author: packageJson.author });
+            await this.context?.set<MatterbridgePlugins[]>('plugins', this.plugins);
+            this.log.info(`Plugin ${packageJsonPath} type ${platform.type} added to matterbridge`);
           } else {
             this.log.warn(`Plugin ${packageJsonPath} already added to matterbridge`);
           }
+        } else if (mode==='remove'){
+          if (this.plugins.find(plugin => plugin.name === packageJson.name)) {
+            this.plugins.splice(this.plugins.findIndex(plugin => plugin.name === packageJson.name));
+            await this.context?.set<MatterbridgePlugins[]>('plugins', this.plugins);
+            this.log.info(`Plugin ${packageJsonPath} removed from matterbridge`);
+          } else {
+            this.log.warn(`Plugin ${packageJsonPath} not registerd in matterbridge`);
+          }
         }
       } else {
-        this.log.warn(`Plugin at ${pluginPath} does not provide a default export`);
+        this.log.error(`Plugin at ${pluginPath} does not provide a default export`);
       }
     } catch (err) {
       this.log.error(`Failed to load plugin from ${packageJsonPath}: ${err}`);
@@ -196,12 +237,26 @@ matterbridge -help -bridge -add <plugin path> -remove <plugin path>
     }
   }
 
-  async addDevice(device: Device | Aggregator) {
-    this.commissioningServer.addDevice(device);
+  async addDevice(device: MatterbridgeDevice) {
+    if (this.mode === 'bridge') {
+      const basic = device.getClusterServerById(BasicInformationCluster.id);
+      if (!basic) {
+        this.log.error('addDevice error: cannot find the BasicInformationCluster');
+        return;
+      }
+      device.createDefaultBridgedDeviceBasicInformationClusterServer(
+        basic.getNodeLabelAttribute(), 
+        basic.getUniqueIdAttribute(), 
+        basic.getVendorIdAttribute(), 
+        basic.getVendorNameAttribute(), 
+        basic.getProductNameAttribute(), 
+      );
+      this.matterAggregator.addBridgedDevice(device);
+    }
   }
 
-  async addBridgedDevice(device: Device | ComposedDevice) {
-    this.matterAggregator.addBridgedDevice(device);
+  async addBridgedDevice(device: MatterbridgeDevice) {
+    if (this.mode === 'bridge') this.matterAggregator.addBridgedDevice(device);
   }
   
   private async startStorage(storageType: string, storageName: string) {
@@ -254,7 +309,7 @@ matterbridge -help -bridge -add <plugin path> -remove <plugin path>
     this.log.debug('Storage closed');
   }
   
-  private async startMatterBridge(enableAggregator = false) {
+  private async startMatterBridge(mode: 'bridge' | 'childbridge') {
     this.log.debug('Creating matterbridge context: matterbridge');
     this.matterbridgeContext = this.storageManager.createContext('matterbridge');
     this.matterbridgeContext.set('vendorId', 0xfff1);
@@ -293,7 +348,7 @@ matterbridge -help -bridge -add <plugin path> -remove <plugin path>
         nodeLabel: productName,
         productLabel: productName,
         softwareVersion: 0,
-        softwareVersionString: '0.0.13', // Home app = Firmware Revision
+        softwareVersionString: '0.0.2', // Home app = Firmware Revision
         uniqueId,
         serialNumber: `matterbridge-${uniqueId}`,
       },
@@ -302,9 +357,10 @@ matterbridge -help -bridge -add <plugin path> -remove <plugin path>
         this.log.info(`Active sessions changed on fabric ${fabricIndex}`, stringify(info, true));
         if (info && info[0]?.isPeerActive === true && info[0]?.secure === true && info[0]?.numberOfActiveSubscriptions >= 1) {
           this.log.info('activeSessionsChangedCallback ready to start...');
-          this.emit('startDynamicPlatform', 'Matterbridge is commissioned and controllers are connected');
-          //Logger.defaultLogLevel = Level.INFO;
-          //platform.startZigbee();
+          setTimeout(() => {
+            this.emit('startPlatform', 'Matterbridge is commissioned and controllers are connected');
+            this.emit('startDynamicPlatform', 'Matterbridge is commissioned and controllers are connected');
+          }, 2000);
         }
       },
       commissioningChangedCallback: fabricIndex => {
@@ -316,10 +372,12 @@ matterbridge -help -bridge -add <plugin path> -remove <plugin path>
       this.log.info(`testEventTrigger called on GeneralDiagnostic cluster: ${enableKey} ${eventTrigger}`),
     );
   
-    if (enableAggregator) this.createMatterAggregator();
-  
-    this.log.debug('Adding matter aggregator to commissioning server');
-    if (enableAggregator) this.commissioningServer.addDevice(this.matterAggregator);
+    if (mode==='bridge') {
+      this.createMatterAggregator();
+      this.log.debug('Adding matter aggregator to commissioning server');
+      this.commissioningServer.addDevice(this.matterAggregator);
+    }
+
     this.matterServer.addCommissioningServer(this.commissioningServer);
     await this.matterServer.start();
     this.log.debug('Started matter server');
@@ -340,7 +398,7 @@ matterbridge -help -bridge -add <plugin path> -remove <plugin path>
   
       setTimeout(() => {
         Logger.defaultLogLevel = Level.DEBUG;
-        if (enableAggregator) {
+        if (mode==='bridge') {
           const childs = this.matterAggregator.getBridgedDevices();
           this.log.debug(`Aggregator has ${childs.length} childs:`)
           for (const child of childs) {

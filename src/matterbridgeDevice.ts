@@ -2,10 +2,13 @@
 /* eslint-disable max-len */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-console */
-import { AttributeInitialValues, BasicInformationCluster, BooleanStateCluster, BridgedDeviceBasicInformationCluster, ClusterServer, ClusterServerHandlers, ColorControl, Identify, IdentifyCluster, IlluminanceMeasurementCluster, LevelControl, OccupancySensing, OccupancySensingCluster, OnOff, OnOffCluster, PowerSource, PowerSourceCluster, PowerSourceConfigurationCluster, PressureMeasurementCluster, RelativeHumidityMeasurementCluster, TemperatureMeasurementCluster, ThreadNetworkDiagnostics, ThreadNetworkDiagnosticsCluster, WindowCovering, WindowCoveringCluster } from '@project-chip/matter-node.js/cluster';
-import { ClusterId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
+import { AttributeInitialValues, BasicInformationCluster, BooleanStateCluster, BridgedDeviceBasicInformationCluster, ClusterServer, ClusterServerHandlers, ColorControl, 
+  Identify, IdentifyCluster, IlluminanceMeasurementCluster, LevelControl, OccupancySensing, OccupancySensingCluster, OnOff, OnOffCluster, PowerSource, PowerSourceCluster, 
+  PowerSourceConfigurationCluster, PressureMeasurementCluster, RelativeHumidityMeasurementCluster, TemperatureMeasurementCluster, ThreadNetworkDiagnostics, 
+  ThreadNetworkDiagnosticsCluster, WindowCovering, WindowCoveringCluster, createDefaultGroupsClusterServer, createDefaultScenesClusterServer } from '@project-chip/matter-node.js/cluster';
+import { EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Device, DeviceTypeDefinition, EndpointOptions } from '@project-chip/matter-node.js/device';
-import { NamedHandler, extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
+import { extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
 import { AirQuality, AirQualityCluster } from './AirQualityCluster.js';
 
 type MakeMandatory<T> = Exclude<T, undefined>;
@@ -64,8 +67,16 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     ));  
   }
 
+  createDefaultGroupsClusterServer() {
+    this.addClusterServer(createDefaultGroupsClusterServer());  
+  }
+
+  createDefaultScenesClusterServer() {
+    this.addClusterServer(createDefaultScenesClusterServer());  
+  }
+
   createDefaultBridgedDeviceBasicInformationClusterServer(deviceName: string, uniqueId: string, vendorId: number, vendorName: string, productName: string) {
-    return ClusterServer(
+    this.addClusterServer(ClusterServer(
       BridgedDeviceBasicInformationCluster,
       {
         vendorId: VendorId(vendorId), // 4874
@@ -85,11 +96,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         reachableChanged: true,
       },
-    );
+    ));
   }
 
   createDefaultBasicInformationClusterServer(deviceName: string, uniqueId: string, vendorId: number, vendorName: string, productId: number, productName: string) {
-    return ClusterServer(
+    this.addClusterServer(ClusterServer(
       BasicInformationCluster,
       {
         dataModelRevision: 1,
@@ -115,11 +126,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         leave: true,
         reachableChanged: true,
       }
-    );
+    ));
   }
 
   createDefaultThreadNetworkDiagnosticsClusterServer() {
-    return ClusterServer(
+    this.addClusterServer(ClusterServer(
       ThreadNetworkDiagnosticsCluster.with(ThreadNetworkDiagnostics.Feature.PacketCounts, ThreadNetworkDiagnostics.Feature.ErrorCounts),
       {
         channel: 1,
@@ -148,11 +159,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         }
       },
       {},
-    );
+    ));
   }
   
   createDefaultOnOffClusterServer(onOff = false) {
-    return ClusterServer(
+    this.addClusterServer(ClusterServer(
       OnOffCluster,
       {
         onOff,
@@ -172,11 +183,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         },
       },
       {},
-    );
+    ));
   }
 
   createDefaultWindowCoveringClusterServer(positionPercent100ths?: number) {
-    return ClusterServer(
+    this.addClusterServer(ClusterServer(
       WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift),
       {
         type: WindowCovering.WindowCoveringType.Shutter,
@@ -209,12 +220,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         }
       },
       {},
-    );
+    ));
 
   }
 
   createDefaultOccupancySensingClusterServer(occupied = false) {
-    return ClusterServer(
+    this.addClusterServer(ClusterServer(
       OccupancySensingCluster,
       {
         occupancy: { occupied },
@@ -223,11 +234,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         pirOccupiedToUnoccupiedDelay: 30
       },
       {},
-    );
+    ));
   }
 
   createDefaultIlluminanceMeasurementClusterServer(measuredValue: number = 0) {
-    return ClusterServer(
+    this.addClusterServer(ClusterServer(
       IlluminanceMeasurementCluster,
       {
         measuredValue,
@@ -237,11 +248,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {},
       {},
-    );
+    ));
   }
 
   createDefaultTemperatureMeasurementClusterServer(measuredValue: number = 0) {
-    return ClusterServer(
+    this.addClusterServer(ClusterServer(
       TemperatureMeasurementCluster,
       {
         measuredValue,
@@ -251,11 +262,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {},
       {},
-    );
+    ));
   }
 
   createDefaultRelativeHumidityMeasurementClusterServer(measuredValue: number = 0) {
-    return ClusterServer(
+    this.addClusterServer(ClusterServer(
       RelativeHumidityMeasurementCluster,
       {
         measuredValue,
@@ -265,11 +276,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {},
       {},
-    );
+    ));
   }
 
   createDefaultPressureMeasurementClusterServer(measuredValue: number = 0) {
-    return ClusterServer(
+    this.addClusterServer(ClusterServer(
       PressureMeasurementCluster,
       {
         measuredValue,
@@ -279,11 +290,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {},
       {},
-    );
+    ));
   }
 
   createDefaultBooleanStateClusterServer(contact?: boolean) {
-    return ClusterServer(
+    this.addClusterServer(ClusterServer(
       BooleanStateCluster,
       {
         stateValue: contact ?? true // true=contact false=no_contact
@@ -292,11 +303,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         stateChange: true,
       },
-    );
+    ));
   }
 
   createDefaultPowerSourceReplaceableBatteryClusterServer(batPercentRemaining: number = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage: number = 1500) {
-    return ClusterServer(
+    this.addClusterServer(ClusterServer(
       PowerSourceCluster.with(PowerSource.Feature.Battery, PowerSource.Feature.Replaceable),
       {
         status: PowerSource.PowerSourceStatus.Active,
@@ -313,11 +324,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {},
       {},
-    );
+    ));
   }
 
   createDefaultPowerSourceRechargableBatteryClusterServer(batPercentRemaining: number = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage: number = 1500) {
-    return ClusterServer(
+    this.addClusterServer(ClusterServer(
       PowerSourceCluster.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable),
       {
         status: PowerSource.PowerSourceStatus.Active,
@@ -335,11 +346,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {},
       {},
-    );
+    ));
   }
 
   createDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerSource.WiredCurrentType = PowerSource.WiredCurrentType.Ac) {
-    return ClusterServer(
+    this.addClusterServer(ClusterServer(
       PowerSourceCluster.with(PowerSource.Feature.Wired),
       {
         wiredCurrentType,
@@ -349,28 +360,28 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {},
       {},
-    );
+    ));
   }
 
   createDefaultPowerSourceConfigurationClusterServer(endpointNumber: number) {
-    return ClusterServer(
+    this.addClusterServer(ClusterServer(
       PowerSourceConfigurationCluster,
       {
         sources: [EndpointNumber(endpointNumber)],
       },
       {},
       {},
-    );
+    ));
   }
 
   createDefaultAirQualityClusterServer() {
-    return ClusterServer(
+    this.addClusterServer(ClusterServer(
       AirQualityCluster.with(AirQuality.Feature.FairAirQuality, AirQuality.Feature.ModerateAirQuality, AirQuality.Feature.VeryPoorAirQuality),
       {
         airQuality: AirQuality.AirQualityType.Good,
       },
       {},
       {},
-    );
+    ));
   }
 }
