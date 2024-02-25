@@ -19,7 +19,7 @@ export class MatterbridgeDynamicPlatform extends EventEmitter {
       log.info(`Received ${REVERSE}startDynamicPlatform${REVERSEOFF} reason: ${reason}`);
       this.onStartDynamicPlatform();
     });
-  
+
     matterbridge.on('shutdown', (reason: string) => {
       log.info(`Received ${REVERSE}shutdown${REVERSEOFF} reason: ${reason}`);
       this.onShutdown();
@@ -30,7 +30,7 @@ export class MatterbridgeDynamicPlatform extends EventEmitter {
   onStartDynamicPlatform() {
     // Plugin initialization logic here
   }
-  
+
   // This method must be overriden in the extended class
   onShutdown() {
     // Plugin cleanup logic here

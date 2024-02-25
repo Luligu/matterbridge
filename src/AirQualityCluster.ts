@@ -7,12 +7,11 @@ import { BitFlag, BitFlags, TypeFromPartialBitSchema } from '@project-chip/matte
 import { TlvUInt8, TlvBitmap, TlvEnum, TlvUInt16, TlvNullable } from '@project-chip/matter-node.js/tlv';
 
 export namespace AirQuality {
-
   export enum Feature {
     FairAirQuality = 'FairAirQuality',
     ModerateAirQuality = 'ModerateAirQuality',
     VeryPoorAirQuality = 'VeryPoorAirQuality',
-    ExtremelyPoorAirQuality = 'ExtremelyPoorAirQuality'
+    ExtremelyPoorAirQuality = 'ExtremelyPoorAirQuality',
   }
 
   export enum AirQualityType {
@@ -22,11 +21,11 @@ export namespace AirQuality {
     Moderate = 3,
     Poor = 4,
     VeryPoor = 5,
-    ExtremelyPoor = 6
+    ExtremelyPoor = 6,
   }
 
   export const Base = ClusterFactory.Definition({
-    id: 0x5B,
+    id: 0x5b,
     name: 'AirQuality',
     revision: 1,
 
@@ -39,17 +38,13 @@ export namespace AirQuality {
 
     attributes: {
       airQuality: Attribute(0x0, TlvEnum<AirQualityType>()),
-    }
+    },
   });
 
-  export const FairAirQualityComponent = ClusterFactory.Component({
-  });
-  export const ModerateAirQualityComponent = ClusterFactory.Component({
-  });
-  export const VeryPoorAirQualityComponent = ClusterFactory.Component({
-  });
-  export const ExtremelyPoorAirQualityComponent = ClusterFactory.Component({
-  });
+  export const FairAirQualityComponent = ClusterFactory.Component({});
+  export const ModerateAirQualityComponent = ClusterFactory.Component({});
+  export const VeryPoorAirQualityComponent = ClusterFactory.Component({});
+  export const ExtremelyPoorAirQualityComponent = ClusterFactory.Component({});
 
   export const Cluster = ClusterFactory.Extensible(
     Base,
@@ -66,23 +61,24 @@ export namespace AirQuality {
       ClusterFactory.validateFeatureSelection(features, Feature);
       const cluster = ClusterFactory.Definition({
         ...Base,
-        supportedFeatures: BitFlags(Base.features, ...features)
+        supportedFeatures: BitFlags(Base.features, ...features),
       });
       ClusterFactory.extend(cluster, FairAirQualityComponent, { fairAirQuality: true });
       ClusterFactory.extend(cluster, ModerateAirQualityComponent, { moderateAirQuality: true });
       ClusterFactory.extend(cluster, VeryPoorAirQualityComponent, { veryPoorAirQuality: true });
       ClusterFactory.extend(cluster, ExtremelyPoorAirQualityComponent, { extremelyPoorAirQuality: true });
       return cluster as unknown as Extension<BitFlags<typeof Base.features, T>>;
-    }
+    },
   );
 
-  export type Extension<SF extends TypeFromPartialBitSchema<typeof Base.features>> =
-    Omit<typeof Base, 'supportedFeatures'>
-    & { supportedFeatures: SF }
-    & (SF extends { fairAirQuality: true } ? typeof FairAirQualityComponent : {})
-    & (SF extends { moderateAirQuality: true } ? typeof ModerateAirQualityComponent : {})
-    & (SF extends { veryPoorAirQuality: true } ? typeof VeryPoorAirQualityComponent : {})
-    & (SF extends { extremelyPoorAirQuality: true } ? typeof ExtremelyPoorAirQualityComponent : {});
+  export type Extension<SF extends TypeFromPartialBitSchema<typeof Base.features>> = Omit<typeof Base, 'supportedFeatures'> & { supportedFeatures: SF } & (SF extends {
+      fairAirQuality: true;
+    }
+      ? typeof FairAirQualityComponent
+      : {}) &
+    (SF extends { moderateAirQuality: true } ? typeof ModerateAirQualityComponent : {}) &
+    (SF extends { veryPoorAirQuality: true } ? typeof VeryPoorAirQualityComponent : {}) &
+    (SF extends { extremelyPoorAirQuality: true } ? typeof ExtremelyPoorAirQualityComponent : {});
 
   const MSM = { momentarySwitchMultiPress: true };
   const LS = { latchingSwitch: true };

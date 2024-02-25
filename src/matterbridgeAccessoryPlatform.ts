@@ -19,7 +19,7 @@ export class MatterbridgeAccessoryPlatform extends EventEmitter {
       log.info(`Received ${REVERSE}startPlatform${REVERSEOFF} reason: ${reason}`);
       this.onStartPlatform();
     });
-  
+
     matterbridge.on('shutdown', (reason: string) => {
       log.info(`Received ${REVERSE}shutdown${REVERSEOFF} reason: ${reason}`);
       this.onShutdown();
@@ -38,7 +38,7 @@ export class MatterbridgeAccessoryPlatform extends EventEmitter {
 
   registerDevice(device: MatterbridgeDevice) {
     this.log.debug(`Send ${REVERSE}registerDevicePlatform${REVERSEOFF}`);
-    this.emit('registerDevicePlatform', device)
+    this.emit('registerDevicePlatform', device);
     this.matterbridge.addDevice(device);
   }
 }
