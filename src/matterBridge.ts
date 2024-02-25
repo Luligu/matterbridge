@@ -5,31 +5,20 @@ import { AnsiLogger, BLUE, BRIGHT, DIM, GREEN, RESET, REVERSE, REVERSEOFF, Times
 import { fileURLToPath, pathToFileURL } from 'url';
 import { promises as fs } from 'fs';
 import EventEmitter from 'events';
+import express from 'express';
 import os from 'os';
 import path from 'path';
 
-import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
-import { EndpointNumber, NodeId, VendorId } from '@project-chip/matter-node.js/datatype';
-import { Aggregator, ComposedDevice, Device, DeviceTypes, NodeStateInformation, PairedNode } from '@project-chip/matter-node.js/device';
+import { CommissioningController, CommissioningServer, MatterServer } from '@project-chip/matter-node.js';
+import { VendorId } from '@project-chip/matter-node.js/datatype';
+import { Aggregator, DeviceTypes } from '@project-chip/matter-node.js/device';
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
-import { ManualPairingCodeCodec, QrCodeSchema } from '@project-chip/matter-node.js/schema';
+import { QrCodeSchema } from '@project-chip/matter-node.js/schema';
 import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageManager } from '@project-chip/matter-node.js/storage';
 import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } from '@project-chip/matter-node.js/util';
 import { logEndpoint } from '@project-chip/matter-node.js/device';
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
-import { CommissioningOptions } from '@project-chip/matter.js/protocol';
-import {
-  AllClustersMap,
-  BasicInformationCluster,
-  GeneralCommissioning,
-  PowerSourceCluster,
-  PowerSourceConfigurationCluster,
-  ThreadNetworkDiagnosticsCluster,
-  getClusterNameById,
-} from '@project-chip/matter-node.js/cluster';
-import { Ble } from '@project-chip/matter-node.js/ble';
-import { BleNode, BleScanner } from '@project-chip/matter-node-ble.js/ble';
-import express from 'express';
+import { BasicInformationCluster } from '@project-chip/matter-node.js/cluster';
 
 // Define an interface for storing the plugins
 interface MatterbridgePlugins {
@@ -44,9 +33,9 @@ interface MatterbridgePlugins {
 // Define an interface for the event map
 export interface MatterbridgeEvents {
   shutdown: (reason: string) => void;
-  startPlatform: (reason: string) => void;
+  startAccessoryPlatform: (reason: string) => void;
   startDynamicPlatform: (reason: string) => void;
-  registerDevicePlatform: (device: MatterbridgeDevice) => void;
+  registerDeviceAccessoryPlatform: (device: MatterbridgeDevice) => void;
   registerDeviceDynamicPlatform: (device: MatterbridgeDevice) => void;
 }
 
@@ -108,8 +97,7 @@ export class Matterbridge extends EventEmitter {
 
   private async parseCommandLine() {
     if (hasParameter('help')) {
-      this.log.info(`\n
-matterbridge -help -bridge -add <plugin path> -remove <plugin path>
+      this.log.info(`\nmatterbridge -help -bridge -add <plugin path> -remove <plugin path>
       - help:                 show the help
       - bridge:               start the bridge
       - list:                 list the registered plugin
@@ -369,7 +357,7 @@ matterbridge -help -bridge -add <plugin path> -remove <plugin path>
         if (info && info[0]?.isPeerActive === true && info[0]?.secure === true && info[0]?.numberOfActiveSubscriptions >= 1) {
           this.log.info('activeSessionsChangedCallback ready to start...');
           setTimeout(() => {
-            this.emit('startPlatform', 'Matterbridge is commissioned and controllers are connected');
+            this.emit('startAccessoryPlatform', 'Matterbridge is commissioned and controllers are connected');
             this.emit('startDynamicPlatform', 'Matterbridge is commissioned and controllers are connected');
           }, 2000);
         }
@@ -517,14 +505,14 @@ matterbridge -help -bridge -add <plugin path> -remove <plugin path>
 
     // Endpoint to provide QR pairing code
     this.app.get('/api/qr-code', (req, res) => {
-      this.log.warn('this.app.get: /api/qr-code')
+      this.log.warn('this.app.get: /api/qr-code');
       const qrData = { qrPairingCode: 'MT:Y.K904QI144Y7I39G00' };
       res.json(qrData);
     });
 
     // Endpoint to provide system information
     this.app.get('/api/system-info', (req, res) => {
-      this.log.warn('this.app.get: /api/system-info')
+      this.log.warn('this.app.get: /api/system-info');
       const systemInfo = {
         NodeJs: this.nodeVersion,
         platform: os.platform(),
@@ -532,8 +520,8 @@ matterbridge -help -bridge -add <plugin path> -remove <plugin path>
         osPlatform: os.platform(), // "win32", "linux", "darwin", etc.
         osArch: os.arch(), // "x64", "arm", etc.
         totalMemory: `${(os.totalmem() / 1024 / 1024 / 1024).toFixed(2)} GB`,
-        freeMemory: `${(os.freemem() / 1024 / 1024 / 1024).toFixed(2)} GB`, 
-        systemUptime: `${(os.uptime() / 60 / 60).toFixed(2)} hours`, 
+        freeMemory: `${(os.freemem() / 1024 / 1024 / 1024).toFixed(2)} GB`,
+        systemUptime: `${(os.uptime() / 60 / 60).toFixed(2)} hours`,
         //rootDirectory: this.rootDirectory,
       };
       res.json(systemInfo);
@@ -541,7 +529,7 @@ matterbridge -help -bridge -add <plugin path> -remove <plugin path>
 
     // Fallback for SPA routing
     this.app.get('*', (req, res) => {
-      this.log.warn('this.app.get: *')
+      this.log.warn('this.app.get: *');
       res.sendFile(path.join(__dirname, '..', 'frontend/build/index.html'));
     });
 
@@ -552,6 +540,10 @@ matterbridge -help -bridge -add <plugin path> -remove <plugin path>
 }
 
 /*
+npx create-react-app matterbridge-frontend
+cd matterbridge-frontend
+npm install react-router-dom 
+
 Success! Created frontend at C:\Users\lligu\OneDrive\GitHub\matterbridge\frontend
 Inside that directory, you can run several commands:
 

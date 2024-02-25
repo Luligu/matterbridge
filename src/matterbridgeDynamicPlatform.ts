@@ -1,4 +1,4 @@
-import { Matterbridge } from './matterbridge.js';
+import { Matterbridge, MatterbridgeEvents } from './matterbridge.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { AnsiLogger, REVERSE, REVERSEOFF } from 'node-ansi-logger';
 import EventEmitter from 'events';
@@ -26,12 +26,23 @@ export class MatterbridgeDynamicPlatform extends EventEmitter {
     });
   }
 
-  // This method must be overriden in the extended class
+  // Typed method for emitting events
+  override emit<Event extends keyof MatterbridgeEvents>(event: Event, ...args: Parameters<MatterbridgeEvents[Event]>): boolean {
+    return super.emit(event, ...args);
+  }
+
+  // Typed method for listening to events
+  override on<Event extends keyof MatterbridgeEvents>(event: Event, listener: MatterbridgeEvents[Event]): this {
+    super.on(event, listener);
+    return this;
+  }
+
+  // This method must be overridden in the extended class
   onStartDynamicPlatform() {
     // Plugin initialization logic here
   }
 
-  // This method must be overriden in the extended class
+  // This method must be overridden in the extended class
   onShutdown() {
     // Plugin cleanup logic here
   }

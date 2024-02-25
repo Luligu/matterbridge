@@ -28,7 +28,7 @@
     "watch": "tsc --watch",
     "start": "node ./dist/index.js -bridge",
     "start:help": "node ./dist/index.js -help",
-    "start:add": "node ./dist/index.js -add ../matterbridge-example",
+    "start:add": "node ./dist/index.js -add ../matterbridge-example-accessory-platform && node ./dist/index.js -add ../matterbridge-example-dynamic-platform",
     "test": "jest",
     "test:verbose": "jest --verbose",
     "test:watch": "jest --watch",
@@ -47,6 +47,7 @@
   "devDependencies": {
     "@stylistic/eslint-plugin": "^1.6.2",
     "@tsconfig/node-lts": "^20.1.1",
+    "@types/express": "^4.17.21",
     "@types/node": "^20.11.20",
     "@typescript-eslint/eslint-plugin": "^7.0.2",
     "@typescript-eslint/parser": "^7.0.2",
@@ -56,10 +57,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@project-chip/matter-node-ble.js": "^0.7.5",
     "@project-chip/matter-node.js": "^0.7.5",
-    "@project-chip/matter.js": "^0.7.5",
-    "@project-chip/matter.js-tools": "^0.7.5",
     "express": "^4.18.2",
     "node-ansi-logger": "^1.9.1",
     "node-persist-manager": "^1.0.3"

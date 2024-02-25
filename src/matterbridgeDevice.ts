@@ -1,9 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable max-len */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-console */
 import {
-  AttributeInitialValues,
   BasicInformationCluster,
   BooleanStateCluster,
   BridgedDeviceBasicInformationCluster,
@@ -255,12 +251,14 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           },
           goToLiftPercentage: async (data) => {
             console.log(
-              `*goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()}`,
+              `*goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
+                `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()}`,
             );
             data.attributes.currentPositionLiftPercent100ths?.setLocal(data.request.liftPercent100thsValue);
             data.attributes.targetPositionLiftPercent100ths?.setLocal(data.request.liftPercent100thsValue);
             console.log(
-              `*goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()}`,
+              `*goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
+                `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()}`,
             );
             await this.commandHandler.executeHandler('goToLiftPercentage', data);
           },

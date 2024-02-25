@@ -1,7 +1,8 @@
 {
     "plugins": [
         "@typescript-eslint",
-        "@stylistic"
+        "@stylistic",
+        "prettier"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
@@ -16,9 +17,11 @@
     "extends": [
         "eslint:recommended",
         "plugin:@typescript-eslint/eslint-recommended",
-        "plugin:@typescript-eslint/recommended" 
+        "plugin:@typescript-eslint/recommended",
+        "prettier" 
       ],
     "rules": {
+        "prettier/prettier": ["error"],
         "indent": ["error", 2],
         "max-len": ["warn", 180],
         "no-console": ["warn"],

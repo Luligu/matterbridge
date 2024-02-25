@@ -1,8 +1,8 @@
 # Dependencies
-node_modules/
+node_modules
 
 # Compiled output
-dist/
+dist
 tsconfig.tsbuildinfo
 
 # VSC
@@ -24,7 +24,7 @@ package-lock.json
 *.ctxt
 
 # Mobile Tools for Java (J2ME)
-.mtj.tmp/
+.mtj.tmp
 
 # Package Files #
 *.jar
@@ -38,3 +38,8 @@ package-lock.json
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# zigbee2mqtt
+bridge-info.json
+bridge-devices.json
+bridge-groups.json
