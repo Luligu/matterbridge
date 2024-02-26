@@ -6,6 +6,7 @@ import {
   ClusterServer,
   ClusterServerHandlers,
   ColorControl,
+  Groups,
   Identify,
   IdentifyCluster,
   IlluminanceMeasurementCluster,
@@ -18,7 +19,10 @@ import {
   PowerSourceCluster,
   PowerSourceConfigurationCluster,
   PressureMeasurementCluster,
+  RelativeHumidityMeasurement,
   RelativeHumidityMeasurementCluster,
+  Scenes,
+  TemperatureMeasurement,
   TemperatureMeasurementCluster,
   ThreadNetworkDiagnostics,
   ThreadNetworkDiagnosticsCluster,
@@ -28,7 +32,7 @@ import {
   createDefaultScenesClusterServer,
 } from '@project-chip/matter-node.js/cluster';
 import { EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
-import { Device, DeviceTypeDefinition, EndpointOptions } from '@project-chip/matter-node.js/device';
+import { Device, DeviceClasses, DeviceTypeDefinition, EndpointOptions } from '@project-chip/matter-node.js/device';
 import { extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
 import { AirQuality, AirQualityCluster } from './AirQualityCluster.js';
 
@@ -59,6 +63,43 @@ type MatterbridgeDeviceCommands = {
   stopMotion: MakeMandatory<ClusterServerHandlers<typeof WindowCovering.Complete>['stopMotion']>;
   goToLiftPercentage: MakeMandatory<ClusterServerHandlers<typeof WindowCovering.Complete>['goToLiftPercentage']>;
 };
+
+// Custom device types
+export const onOffSwitch = DeviceTypeDefinition({
+  name: 'MA-onoffswitch',
+  code: 0x0103,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, Scenes.Cluster.id, OnOff.Cluster.id],
+  optionalServerClusters: [LevelControl.Cluster.id],
+});
+
+export const dimmableSwitch = DeviceTypeDefinition({
+  name: 'MA-dimmableswitch',
+  code: 0x0104,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, Scenes.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id],
+  optionalServerClusters: [],
+});
+
+export const colorTemperatureSwitch = DeviceTypeDefinition({
+  name: 'MA-colortemperatureswitch',
+  code: 0x0105,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, Scenes.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
+  optionalServerClusters: [],
+});
+
+export const airQualitySensor = DeviceTypeDefinition({
+  name: 'MA-airqualitysensor',
+  code: 0x002c,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [Identify.Cluster.id, AirQuality.Cluster.id],
+  optionalServerClusters: [TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id],
+});
 
 export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device, MatterbridgeDeviceCommands>(Device) {
   constructor(
@@ -96,22 +137,22 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     this.addClusterServer(createDefaultScenesClusterServer());
   }
 
-  createDefaultBridgedDeviceBasicInformationClusterServer(deviceName: string, uniqueId: string, vendorId: number, vendorName: string, productName: string) {
+  createDefaultBridgedDeviceBasicInformationClusterServer(deviceName: string, uniqueId: string, vendorId?: number, vendorName?: string, productName?: string) {
     this.addClusterServer(
       ClusterServer(
         BridgedDeviceBasicInformationCluster,
         {
-          vendorId: VendorId(vendorId), // 4874
+          vendorId: vendorId !== undefined ? VendorId(vendorId) : undefined, // 4874
           vendorName: vendorName,
           productName: productName,
           productLabel: deviceName,
           nodeLabel: deviceName,
           serialNumber: uniqueId,
           uniqueId: uniqueId,
-          softwareVersion: 6650,
-          softwareVersionString: '3.2.1',
+          softwareVersion: 1,
+          softwareVersionString: 'v.1.0',
           hardwareVersion: 1,
-          hardwareVersionString: '1.1',
+          hardwareVersionString: 'v.1.0',
           reachable: true,
         },
         {},

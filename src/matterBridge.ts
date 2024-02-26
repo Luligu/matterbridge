@@ -63,11 +63,12 @@ export class Matterbridge extends EventEmitter {
 
   constructor() {
     super();
-    // set Matterbridge
-    this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS });
 
+    // set Matterbridge logger
+    this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS });
     this.log.info('Matterbridge is running...');
 
+    // log system info
     this.logNodeAndSystemInfo();
 
     // check node version and throw error
@@ -506,7 +507,7 @@ export class Matterbridge extends EventEmitter {
     // Endpoint to provide QR pairing code
     this.app.get('/api/qr-code', (req, res) => {
       this.log.warn('this.app.get: /api/qr-code');
-      const qrData = { qrPairingCode: 'MT:Y.K904QI144Y7I39G00' };
+      const qrData = { qrPairingCode: this.matterbridgeContext.get('qrPairingCode') };
       res.json(qrData);
     });
 
@@ -525,6 +526,16 @@ export class Matterbridge extends EventEmitter {
         //rootDirectory: this.rootDirectory,
       };
       res.json(systemInfo);
+    });
+
+    // Endpoint to provide plugins
+    this.app.get('/api/plugins', (req, res) => {
+      this.log.warn('this.app.get: /api/plugins');
+      const data: { name: string; description: string; version: string; author: string; type: string }[] = [];
+      this.plugins.forEach((plugin) => {
+        data.push({ name: plugin.name, description: plugin.description, version: plugin.version, author: plugin.author, type: plugin.type });
+      });
+      res.json(data);
     });
 
     // Fallback for SPA routing

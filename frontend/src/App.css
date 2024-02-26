@@ -1,4 +1,36 @@
+/* Navigation in Header.js style */
 .nav-link {
   margin: 0 10px;
   font-size: 20px;
+}
+
+/* QR code style 
+.QRCode {
+  border: 5px solid #000;
+  margin: 40px;
+  box-shadow: 5px 5px 10px #888; 
+}
+*/
+
+/* Table style */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  box-shadow: 5px 5px 10px #888; 
+  
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+
+th {
+  background-color: #4CAF50;
+  color: white;
+}
+
+tr:nth-child(even) {
+  background-color: #f2f2f2;
 }

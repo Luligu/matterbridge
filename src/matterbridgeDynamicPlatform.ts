@@ -6,7 +6,7 @@ import EventEmitter from 'events';
 export class MatterbridgeDynamicPlatform extends EventEmitter {
   protected matterbridge: Matterbridge;
   protected log: AnsiLogger;
-  private type = 'MatterbridgeDynamicPlatform';
+  private type = 'DynamicPlatform';
 
   constructor(matterbridge: Matterbridge, log: AnsiLogger) {
     super();
