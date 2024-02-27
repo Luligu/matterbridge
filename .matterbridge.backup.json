@@ -151,7 +151,7 @@
   "unique_c5eee61c46a89ebe-index_0-unique_group-6_1.0.5_Laptop5_Luca": 138
  },
  "0.Cluster-0-29": {
-  "_clusterDataVersion": 346206022
+  "_clusterDataVersion": 346206863
  },
  "0.Cluster-0-40": {
   "_clusterDataVersion": 2782993701,
@@ -177,10 +177,10 @@
   "_clusterDataVersion": 76346025
  },
  "0.Cluster-1-29": {
-  "_clusterDataVersion": 3744970346
+  "_clusterDataVersion": 3744971187
  },
  "0.EventHandler": {
-  "lastEventNumber": 216
+  "lastEventNumber": 326
  },
  "0.FabricManager": {
   "fabrics": [
@@ -231,8 +231,8 @@
   "resumptionRecords": [
    {
     "nodeId": "{\"__object__\":\"BigInt\",\"__value__\":\"1348858990\"}",
-    "sharedSecret": "{\"__object__\":\"Uint8Array\",\"__value__\":\"4a2a3d768b6dc3217becde07c693a1603ffef4633df221bbf49efc763570cbf4\"}",
-    "resumptionId": "{\"__object__\":\"Uint8Array\",\"__value__\":\"0e814d3f735a20980fbbd7bfcba6a93e\"}",
+    "sharedSecret": "{\"__object__\":\"Uint8Array\",\"__value__\":\"b6fbcba8260d38bb55edbdf47863693542738ed876f9f3bc6d1d1aa913b1091c\"}",
+    "resumptionId": "{\"__object__\":\"Uint8Array\",\"__value__\":\"d4d9698893cb1a92597336d5d499a835\"}",
     "fabricId": "{\"__object__\":\"BigInt\",\"__value__\":\"3376205764\"}",
     "peerNodeId": "{\"__object__\":\"BigInt\",\"__value__\":\"1348858990\"}",
     "sessionParameters": {
@@ -2816,7 +2816,8 @@
   "_clusterDataVersion": 3916764023
  },
  "0.Cluster-112-258": {
-  "_clusterDataVersion": 1288928923
+  "_clusterDataVersion": 1288937554,
+  "currentPositionLiftPercent100ths": 1000
  },
  "0.Cluster-112-57": {
   "_clusterDataVersion": 2025789221
@@ -2837,13 +2838,13 @@
   "_clusterDataVersion": 2224883461
  },
  "0.Cluster-113-1026": {
-  "_clusterDataVersion": 1098880146
+  "_clusterDataVersion": 1098880224
  },
  "0.Cluster-113-1029": {
-  "_clusterDataVersion": 2045231712
+  "_clusterDataVersion": 2045231793
  },
  "0.Cluster-113-1027": {
-  "_clusterDataVersion": 1606851628
+  "_clusterDataVersion": 1606851660
  },
  "0.Cluster-114-29": {
   "_clusterDataVersion": 700531963
@@ -2861,7 +2862,7 @@
   "_clusterDataVersion": 2197977610
  },
  "0.Cluster-114-69": {
-  "_clusterDataVersion": 4218047311
+  "_clusterDataVersion": 4218047322
  },
  "0.Cluster-115-29": {
   "_clusterDataVersion": 4193554543
@@ -2879,7 +2880,7 @@
   "_clusterDataVersion": 2086372389
  },
  "0.Cluster-115-1024": {
-  "_clusterDataVersion": 3985733432
+  "_clusterDataVersion": 3985733434
  },
  "0.Cluster-116-29": {
   "_clusterDataVersion": 4275283158
@@ -2897,7 +2898,7 @@
   "_clusterDataVersion": 35236258
  },
  "0.Cluster-116-1030": {
-  "_clusterDataVersion": 4025949549
+  "_clusterDataVersion": 4025949553
  },
  "0.Cluster-117-29": {
   "_clusterDataVersion": 1140373703
@@ -2918,7 +2919,7 @@
   "_clusterDataVersion": 3769948806
  },
  "0.Cluster-117-1024": {
-  "_clusterDataVersion": 2738810028
+  "_clusterDataVersion": 2738810038
  },
  "0.Cluster-118-29": {
   "_clusterDataVersion": 1672998038
@@ -2936,10 +2937,10 @@
   "_clusterDataVersion": 4239878215
  },
  "0.Cluster-118-1030": {
-  "_clusterDataVersion": 644682405
+  "_clusterDataVersion": 644682407
  },
  "0.Cluster-118-1024": {
-  "_clusterDataVersion": 516010160
+  "_clusterDataVersion": 516010173
  },
  "0.Cluster-119-29": {
   "_clusterDataVersion": 4203197462
@@ -3122,10 +3123,10 @@
   "_clusterDataVersion": 2225922347
  },
  "0.Cluster-126-1026": {
-  "_clusterDataVersion": 1260721266
+  "_clusterDataVersion": 1260721606
  },
  "0.Cluster-126-1029": {
-  "_clusterDataVersion": 1004039199
+  "_clusterDataVersion": 1004039281
  },
  "0.Cluster-127-29": {
   "_clusterDataVersion": 1484167606
@@ -3167,10 +3168,10 @@
   "_clusterDataVersion": 353956186
  },
  "0.Cluster-128-1030": {
-  "_clusterDataVersion": 139508827
+  "_clusterDataVersion": 139508829
  },
  "0.Cluster-128-1024": {
-  "_clusterDataVersion": 1042685385
+  "_clusterDataVersion": 1042685387
  },
  "0.Cluster-129-29": {
   "_clusterDataVersion": 2982378041
@@ -3350,8 +3351,8 @@
   "_clusterDataVersion": 2771780899
  },
  "0.Cluster-135-6": {
-  "_clusterDataVersion": 81041382,
-  "onOff": false
+  "_clusterDataVersion": 81041383,
+  "onOff": true
  },
  "0.Cluster-136-29": {
   "_clusterDataVersion": 786272579
@@ -3423,7 +3424,7 @@
   "_clusterDataVersion": 3338902206
  },
  "0.Cluster-138-6": {
-  "_clusterDataVersion": 3551276128,
+  "_clusterDataVersion": 3551276132,
   "onOff": false
  }
 }

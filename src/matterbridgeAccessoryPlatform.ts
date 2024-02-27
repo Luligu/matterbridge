@@ -6,6 +6,7 @@ import EventEmitter from 'events';
 export class MatterbridgeAccessoryPlatform extends EventEmitter {
   protected matterbridge: Matterbridge;
   protected log: AnsiLogger;
+  private name = '';
   private type = 'AccessoryPlatform';
 
   constructor(matterbridge: Matterbridge, log: AnsiLogger) {
@@ -50,6 +51,6 @@ export class MatterbridgeAccessoryPlatform extends EventEmitter {
   registerDevice(device: MatterbridgeDevice) {
     this.log.debug(`Send ${REVERSE}registerDeviceAccessoryPlatform${REVERSEOFF}`);
     this.emit('registerDeviceAccessoryPlatform', device);
-    this.matterbridge.addDevice(device);
+    this.matterbridge.addDevice(this.name, device);
   }
 }

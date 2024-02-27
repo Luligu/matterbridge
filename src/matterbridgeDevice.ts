@@ -265,7 +265,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           configStatus: {
             operational: true,
             onlineReserved: false,
-            liftMovementReversed: false,
+            liftMovementReversed: true,
             liftPositionAware: true,
             tiltPositionAware: false,
             liftEncoderControlled: false,

@@ -20,7 +20,7 @@ function Home() {
       .then(data => { setSystemInfo(data); console.log('QR code:', data) })
       .catch(error => console.error('Error fetching system info:', error));
 
-    // Fetch Plugin
+    // Fetch Plugins
     fetch('/api/plugins')
       .then(response => response.json())
       .then(data => setPlugins(data))
@@ -32,34 +32,33 @@ function Home() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row' }}>
-      <div style={{ flex: 1, flexBasis: 'auto', flexdirection: 'column', margin: 20, minWidth: '256px', maxWidth: '256px' }}>
-        {qrCode && <QRCode value={qrCode} includeMargin={false} size={256}/>}
-        <p style={{ textAlign: 'center', marginBottom: '40px' }}>Scan me to pair matterbridge</p>
+      <div style={{ display: 'flex', flexDirection: 'column', width: '310px', margin: 20 }}>
+        {qrCode && <QRDiv qrText={qrCode} qrWidth={256} topText="QRCode" bottomText="Scan me to pair matterbridge" />}
         <table>
           <thead>
             <tr>
-              <th colSpan="2">System Information</th>
+              <th colSpan="2" className="table-header">System Information</th>
             </tr>
           </thead>
           <tbody>
             {Object.entries(systemInfo).map(([key, value]) => (
               <tr key={key}>
-                <td>{key}</td>
-                <td>{value}</td>
+                <td style={{ fontSize: '12px' }}>{key}</td>
+                <td style={{ fontSize: '12px' }}>{value}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <div style={{ flex: 2, flexGrow: 1, margin: 20  }}>
+      <div style={{ flex: 2, width: '310px', margin: 20  }}>
         <table>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Description</th>
-              <th>Version</th>
-              <th>Author</th>
-              <th>Type</th>
+              <th className="table-header">Name</th>
+              <th className="table-header">Description</th>
+              <th className="table-header">Version</th>
+              <th className="table-header">Author</th>
+              <th className="table-header">Type</th>
             </tr>
           </thead>
           <tbody>
@@ -78,4 +77,62 @@ function Home() {
     </div>
   );}
 
+  
+  // This function takes four parameters: qrText, qrWidth, topText, and bottomText
+  // It returns a div element with a rectangle, a QR code, and two texts
+  function QRDiv({ qrText, qrWidth, topText, bottomText }) {
+    // Define the style for the div element
+    const divStyle = {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      boxShadow: '5px 5px 10px #888',
+      marginBottom: '40px',
+      border: '1px solid #ddd',
+      backgroundColor: 'lightgray'
+    };
+  
+    // Define the style for the text element
+    const textStyle = {
+      fontWeight: 'bold',
+      color: 'white'
+    };
+  
+    // Define the style for the header element
+    const headerStyle = {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: '100%',
+      height: '30px',
+      backgroundColor: '#4CAF50',
+      color: 'white',
+      border: '1px solid #ddd'
+    };
+
+    // Define the style for the header element
+    const footerStyle = {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: '100%',
+      height: '30px',
+      color: 'black',
+    };
+  
+    // Return the JSX code for the div element
+    return (
+      <div style={divStyle}>
+        <div style={headerStyle}>
+          <p style={textStyle}>{topText}</p>
+        </div>
+        <QRCode value={qrText} size={qrWidth} bgColor={divStyle.backgroundColor} style={{ marginTop: '20px', marginBottom: '0px' }}/>
+        <div style={footerStyle}>
+          <p>{bottomText}</p>
+        </div>
+      </div>
+    );
+  }
+  
+  
 export default Home;

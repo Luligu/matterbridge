@@ -10,7 +10,7 @@ import os from 'os';
 import path from 'path';
 
 import { CommissioningController, CommissioningServer, MatterServer } from '@project-chip/matter-node.js';
-import { VendorId } from '@project-chip/matter-node.js/datatype';
+import { EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Aggregator, DeviceTypes } from '@project-chip/matter-node.js/device';
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
 import { QrCodeSchema } from '@project-chip/matter-node.js/schema';
@@ -18,16 +18,37 @@ import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageMana
 import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } from '@project-chip/matter-node.js/util';
 import { logEndpoint } from '@project-chip/matter-node.js/device';
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
-import { BasicInformationCluster } from '@project-chip/matter-node.js/cluster';
+import { BasicInformationCluster, BridgedDeviceBasicInformationCluster } from '@project-chip/matter-node.js/cluster';
 
 // Define an interface for storing the plugins
-interface MatterbridgePlugins {
+interface RegisteredPlugin {
   path: string;
   type: string;
   name: string;
   version: string;
   description: string;
   author: string;
+}
+
+// Define an interface for storing the devices
+interface RegisteredDevice {
+  plugin: string;
+  device: MatterbridgeDevice;
+}
+
+// Define an interface for storing the system information
+interface SystemInformation {
+  ipv4Address: string;
+  ipv6Address: string;
+  nodeVersion: string;
+  hostname: string;
+  osType: string;
+  osRelease: string;
+  osPlatform: string;
+  osArch: string;
+  totalMemory: string;
+  freeMemory: string;
+  systemUptime: string;
 }
 
 // Define an interface for the event map
@@ -40,17 +61,29 @@ export interface MatterbridgeEvents {
 }
 
 export class Matterbridge extends EventEmitter {
-  public nodeVersion = '';
-  public rootDirectory = '';
+  public systemInformation: SystemInformation = {
+    ipv4Address: '',
+    ipv6Address: '',
+    nodeVersion: '',
+    hostname: '',
+    osType: '',
+    osRelease: '',
+    osPlatform: '',
+    osArch: '',
+    totalMemory: '',
+    freeMemory: '',
+    systemUptime: '',
+  };
+  public rootDirectory!: string;
   public mode: 'bridge' | 'childbridge' | '' = '';
-
-  private app!: express.Express;
 
   private log: AnsiLogger;
   private hasCleanupStarted = false;
-  private plugins: MatterbridgePlugins[] = [];
+  private plugins: RegisteredPlugin[] = [];
+  private devices: RegisteredDevice[] = [];
   private storage: NodeStorageManager | undefined = undefined;
   private context: NodeStorage | undefined = undefined;
+  private app!: express.Express;
 
   private storageManager!: StorageManager;
   private matterbridgeContext!: StorageContext;
@@ -87,7 +120,7 @@ export class Matterbridge extends EventEmitter {
     // Initialize NodeStorage
     this.storage = new NodeStorageManager();
     this.context = await this.storage.createStorage('matterbridge');
-    this.plugins = await this.context?.get<MatterbridgePlugins[]>('plugins', []);
+    this.plugins = await this.context?.get<RegisteredPlugin[]>('plugins', []);
 
     // Initialize frontend
     this.initializeFrontend();
@@ -166,8 +199,20 @@ export class Matterbridge extends EventEmitter {
       // Call the default export function of the plugin, passing this MatterBridge instance
       if (plugin.default) {
         const platform = plugin.default(this, new AnsiLogger({ logName: packageJson.description, logTimestampFormat: TimestampFormat.TIME_MILLIS }));
+        platform.name = packageJson.name;
         if (mode === 'load') {
           this.log.info(`Plugin ${BLUE}${packageJsonPath}${RESET} type ${GREEN}${platform.type}${RESET} loaded (entrypoint ${UNDERLINE}${pluginPath}${UNDERLINEOFF})`);
+          // Update plugin info
+          const plugin = this.plugins.find((plugin) => plugin.name === packageJson.name);
+          if (plugin) {
+            plugin.name = packageJson.name;
+            plugin.description = packageJson.description;
+            plugin.version = packageJson.version;
+            plugin.author = packageJson.author;
+            plugin.type = platform.type;
+          } else {
+            this.log.error(`Plugin ${packageJson.name} not found`);
+          }
           // Register handlers
           if (platform.type === 'MatterbridgePlatform') {
             platform.on('registerDevicePlatform', (device: MatterbridgeDevice) => {
@@ -188,7 +233,7 @@ export class Matterbridge extends EventEmitter {
               description: packageJson.description,
               author: packageJson.author,
             });
-            await this.context?.set<MatterbridgePlugins[]>('plugins', this.plugins);
+            await this.context?.set<RegisteredPlugin[]>('plugins', this.plugins);
             this.log.info(`Plugin ${packageJsonPath} type ${platform.type} added to matterbridge`);
           } else {
             this.log.warn(`Plugin ${packageJsonPath} already added to matterbridge`);
@@ -196,7 +241,7 @@ export class Matterbridge extends EventEmitter {
         } else if (mode === 'remove') {
           if (this.plugins.find((plugin) => plugin.name === packageJson.name)) {
             this.plugins.splice(this.plugins.findIndex((plugin) => plugin.name === packageJson.name));
-            await this.context?.set<MatterbridgePlugins[]>('plugins', this.plugins);
+            await this.context?.set<RegisteredPlugin[]>('plugins', this.plugins);
             this.log.info(`Plugin ${packageJsonPath} removed from matterbridge`);
           } else {
             this.log.warn(`Plugin ${packageJsonPath} not registerd in matterbridge`);
@@ -238,7 +283,7 @@ export class Matterbridge extends EventEmitter {
     }
   }
 
-  async addDevice(device: MatterbridgeDevice) {
+  async addDevice(pluginName: string, device: MatterbridgeDevice) {
     if (this.mode === 'bridge') {
       const basic = device.getClusterServerById(BasicInformationCluster.id);
       if (!basic) {
@@ -253,11 +298,15 @@ export class Matterbridge extends EventEmitter {
         basic.getProductNameAttribute(),
       );
       this.matterAggregator.addBridgedDevice(device);
+      this.devices.push({ plugin: pluginName, device });
     }
   }
 
-  async addBridgedDevice(device: MatterbridgeDevice) {
-    if (this.mode === 'bridge') this.matterAggregator.addBridgedDevice(device);
+  async addBridgedDevice(pluginName: string, device: MatterbridgeDevice) {
+    if (this.mode === 'bridge') {
+      this.matterAggregator.addBridgedDevice(device);
+      this.devices.push({ plugin: pluginName, device });
+    }
   }
 
   private async startStorage(storageType: string, storageName: string) {
@@ -357,6 +406,7 @@ export class Matterbridge extends EventEmitter {
         this.log.info(`Active sessions changed on fabric ${fabricIndex}`, stringify(info, true));
         if (info && info[0]?.isPeerActive === true && info[0]?.secure === true && info[0]?.numberOfActiveSubscriptions >= 1) {
           this.log.info('activeSessionsChangedCallback ready to start...');
+          Logger.defaultLogLevel = Level.INFO;
           setTimeout(() => {
             this.emit('startAccessoryPlatform', 'Matterbridge is commissioned and controllers are connected');
             this.emit('startDynamicPlatform', 'Matterbridge is commissioned and controllers are connected');
@@ -405,7 +455,7 @@ export class Matterbridge extends EventEmitter {
             this.log.debug(`--child: ID: ${child.id} name: ${child.name} `);
           }
         }
-        logEndpoint(this.commissioningServer.getRootEndpoint());
+        //logEndpoint(this.commissioningServer.getRootEndpoint());
       }, 60 * 1000);
     }
   }
@@ -433,52 +483,54 @@ export class Matterbridge extends EventEmitter {
   private logNodeAndSystemInfo() {
     // IP address information
     const networkInterfaces = os.networkInterfaces();
-    let ipv4Address = 'Not found';
-    let ipv6Address = 'Not found';
+    this.systemInformation.ipv4Address = 'Not found';
+    this.systemInformation.ipv6Address = 'Not found';
     for (const interfaceDetails of Object.values(networkInterfaces)) {
       if (!interfaceDetails) {
         break;
       }
       for (const detail of interfaceDetails) {
-        if (detail.family === 'IPv4' && !detail.internal && ipv4Address === 'Not found') {
-          ipv4Address = detail.address;
-        } else if (detail.family === 'IPv6' && !detail.internal && ipv6Address === 'Not found') {
-          ipv6Address = detail.address;
+        if (detail.family === 'IPv4' && !detail.internal && this.systemInformation.ipv4Address === 'Not found') {
+          this.systemInformation.ipv4Address = detail.address;
+        } else if (detail.family === 'IPv6' && !detail.internal && this.systemInformation.ipv6Address === 'Not found') {
+          this.systemInformation.ipv6Address = detail.address;
         }
       }
       // Break if both addresses are found to improve efficiency
-      if (ipv4Address !== 'Not found' && ipv6Address !== 'Not found') {
+      if (this.systemInformation.ipv4Address !== 'Not found' && this.systemInformation.ipv6Address !== 'Not found') {
         break;
       }
     }
 
     // Node information
-    this.nodeVersion = process.versions.node;
-    const versionMajor = parseInt(this.nodeVersion.split('.')[0]);
-    const versionMinor = parseInt(this.nodeVersion.split('.')[1]);
-    const versionPatch = parseInt(this.nodeVersion.split('.')[2]);
+    this.systemInformation.nodeVersion = process.versions.node;
+    const versionMajor = parseInt(this.systemInformation.nodeVersion.split('.')[0]);
+    const versionMinor = parseInt(this.systemInformation.nodeVersion.split('.')[1]);
+    const versionPatch = parseInt(this.systemInformation.nodeVersion.split('.')[2]);
 
     // Host system information
-    const osType = os.type(); // "Windows_NT", "Darwin", etc.
-    const osRelease = os.release(); // Kernel version
-    const osPlatform = os.platform(); // "win32", "linux", "darwin", etc.
-    const osArch = os.arch(); // "x64", "arm", etc.
-    const totalMemory = os.totalmem() / 1024 / 1024 / 1024; // Convert to GB
-    const freeMemory = os.freemem() / 1024 / 1024 / 1024; // Convert to GB
-    const systemUptime = os.uptime() / 60 / 60; // Convert to hours
+    this.systemInformation.hostname = os.hostname();
+    this.systemInformation.osType = os.type(); // "Windows_NT", "Darwin", etc.
+    this.systemInformation.osRelease = os.release(); // Kernel version
+    this.systemInformation.osPlatform = os.platform(); // "win32", "linux", "darwin", etc.
+    this.systemInformation.osArch = os.arch(); // "x64", "arm", etc.
+    this.systemInformation.totalMemory = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2) + ' GB'; // Convert to GB
+    this.systemInformation.freeMemory = (os.freemem() / 1024 / 1024 / 1024).toFixed(2) + ' GB'; // Convert to GB
+    this.systemInformation.systemUptime = (os.uptime() / 60 / 60).toFixed(2) + ' hours'; // Convert to hours
 
     // Log the system information
     this.log.debug('Host System Information:');
-    this.log.debug(`- IPv4 Address: ${ipv4Address}`);
-    this.log.debug(`- IPv6 Address: ${ipv6Address}`);
+    this.log.debug(`- Hostname: ${this.systemInformation.hostname}`);
+    this.log.debug(`- IPv4 Address: ${this.systemInformation.ipv4Address}`);
+    this.log.debug(`- IPv6 Address: ${this.systemInformation.ipv6Address}`);
     this.log.debug(`- Node.js: ${versionMajor}.${versionMinor}.${versionPatch}`);
-    this.log.debug(`- OS Type: ${osType}`);
-    this.log.debug(`- OS Release: ${osRelease}`);
-    this.log.debug(`- Platform: ${osPlatform}`);
-    this.log.debug(`- Architecture: ${osArch}`);
-    this.log.debug(`- Total Memory: ${totalMemory.toFixed(2)} GB`);
-    this.log.debug(`- Free Memory: ${freeMemory.toFixed(2)} GB`);
-    this.log.debug(`- System Uptime: ${systemUptime.toFixed(2)} hours`);
+    this.log.debug(`- OS Type: ${this.systemInformation.osType}`);
+    this.log.debug(`- OS Release: ${this.systemInformation.osRelease}`);
+    this.log.debug(`- Platform: ${this.systemInformation.osPlatform}`);
+    this.log.debug(`- Architecture: ${this.systemInformation.osArch}`);
+    this.log.debug(`- Total Memory: ${this.systemInformation.totalMemory}`);
+    this.log.debug(`- Free Memory: ${this.systemInformation.freeMemory}`);
+    this.log.debug(`- System Uptime: ${this.systemInformation.systemUptime}`);
 
     // Command line arguments (excluding 'node' and the script name)
     const cmdArgs = process.argv.slice(2).join(' ');
@@ -494,6 +546,11 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Package Root Directory: ${this.rootDirectory}`);
   }
 
+  /**
+   * Initializes the frontend of Matterbridge.
+   *
+   * @param port The port number to run the frontend server on. Default is 3000.
+   */
   async initializeFrontend(port: number = 3000) {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
@@ -514,18 +571,7 @@ export class Matterbridge extends EventEmitter {
     // Endpoint to provide system information
     this.app.get('/api/system-info', (req, res) => {
       this.log.warn('this.app.get: /api/system-info');
-      const systemInfo = {
-        NodeJs: this.nodeVersion,
-        platform: os.platform(),
-        release: os.release(),
-        osPlatform: os.platform(), // "win32", "linux", "darwin", etc.
-        osArch: os.arch(), // "x64", "arm", etc.
-        totalMemory: `${(os.totalmem() / 1024 / 1024 / 1024).toFixed(2)} GB`,
-        freeMemory: `${(os.freemem() / 1024 / 1024 / 1024).toFixed(2)} GB`,
-        systemUptime: `${(os.uptime() / 60 / 60).toFixed(2)} hours`,
-        //rootDirectory: this.rootDirectory,
-      };
-      res.json(systemInfo);
+      res.json(this.systemInformation);
     });
 
     // Endpoint to provide plugins
@@ -534,6 +580,21 @@ export class Matterbridge extends EventEmitter {
       const data: { name: string; description: string; version: string; author: string; type: string }[] = [];
       this.plugins.forEach((plugin) => {
         data.push({ name: plugin.name, description: plugin.description, version: plugin.version, author: plugin.author, type: plugin.type });
+      });
+      res.json(data);
+    });
+
+    // Endpoint to provide devices
+    this.app.get('/api/devices', (req, res) => {
+      this.log.warn('this.app.get: /api/devices');
+      const data: { pluginName: string; type: string; endpoint: EndpointNumber | undefined; name: string; cluster: string }[] = [];
+      this.devices.forEach((device) => {
+        let name = device.device.getClusterServer(BasicInformationCluster)?.getNodeLabelAttribute();
+        if (!name && device.device.getClusterServer(BridgedDeviceBasicInformationCluster)) {
+          const bridgeInfo = device.device.getClusterServer(BridgedDeviceBasicInformationCluster);
+          if (bridgeInfo && bridgeInfo.getNodeLabelAttribute) name = bridgeInfo.getNodeLabelAttribute();
+        }
+        data.push({ pluginName: device.plugin, type: device.device.name, endpoint: device.device.id, name: name ?? 'Unknown', cluster: 'Unknown' });
       });
       res.json(data);
     });
