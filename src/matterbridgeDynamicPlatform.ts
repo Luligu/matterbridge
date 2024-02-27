@@ -14,7 +14,7 @@ export class MatterbridgeDynamicPlatform extends EventEmitter {
     this.matterbridge = matterbridge;
     this.log = log;
 
-    log.debug(`MatterbridgeDynamicPlatform loaded (matterbridge is running on node v${matterbridge.nodeVersion})`);
+    log.debug('MatterbridgeDynamicPlatform loaded');
 
     matterbridge.on('startDynamicPlatform', (reason: string) => {
       log.info(`Received ${REVERSE}startDynamicPlatform${REVERSEOFF} reason: ${reason}`);

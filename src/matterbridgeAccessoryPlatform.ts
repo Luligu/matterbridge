@@ -14,7 +14,7 @@ export class MatterbridgeAccessoryPlatform extends EventEmitter {
     this.matterbridge = matterbridge;
     this.log = log;
 
-    log.debug(`MatterbridgePlatform loaded (matterbridge is running on node v${matterbridge.nodeVersion})`);
+    log.debug('MatterbridgePlatform loaded');
 
     matterbridge.on('startAccessoryPlatform', (reason: string) => {
       log.info(`Received ${REVERSE}startPlatform${REVERSEOFF} reason: ${reason}`);
