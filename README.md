@@ -5,9 +5,9 @@ Matterbridge is a Matter.js plugin manager.
 It allows you to have all your Matter devices up and running in a couple of minutes without
 having to deal with the pairing process of each single device. 
 
-The developer just focuses on the device development.
+The developer just focuses on the device development extending the provided classes.
 
-You just pair Matterbridge once, and it will load all your registered plugins.
+Just pair Matterbridge once, and it will load all your registered plugins.
 
 This project aims to allow the porting of homebridge plugins to matterbridge plugins without recoding everything.
 
