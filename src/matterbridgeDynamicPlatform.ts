@@ -8,6 +8,8 @@ export class MatterbridgeDynamicPlatform extends EventEmitter {
   protected log: AnsiLogger;
   private name = '';
   private type = 'DynamicPlatform';
+  private started = false;
+  private stopped = false;
 
   constructor(matterbridge: Matterbridge, log: AnsiLogger) {
     super();
@@ -17,11 +19,15 @@ export class MatterbridgeDynamicPlatform extends EventEmitter {
     log.debug('MatterbridgeDynamicPlatform loaded');
 
     matterbridge.on('startDynamicPlatform', (reason: string) => {
+      if (this.started) return;
+      this.started = true;
       log.info(`Received ${REVERSE}startDynamicPlatform${REVERSEOFF} reason: ${reason}`);
       this.onStartDynamicPlatform();
     });
 
     matterbridge.on('shutdown', (reason: string) => {
+      if (this.stopped) return;
+      this.stopped = true;
       log.info(`Received ${REVERSE}shutdown${REVERSEOFF} reason: ${reason}`);
       this.onShutdown();
     });

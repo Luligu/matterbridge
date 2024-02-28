@@ -31,8 +31,8 @@ function Home() {
 */
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'row' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', width: '310px', margin: 20 }}>
+    <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 80px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0', padding: '20px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', width: '310px', gap: '20px' }}>
         {qrCode && <QRDiv qrText={qrCode} qrWidth={256} topText="QRCode" bottomText="Scan me to pair matterbridge" />}
         <table>
           <thead>
@@ -50,7 +50,7 @@ function Home() {
           </tbody>
         </table>
       </div>
-      <div style={{ flex: 2, width: '310px', margin: 20  }}>
+      <div style={{ flex: 2 }}>
         <table>
           <thead>
             <tr>
@@ -79,6 +79,7 @@ function Home() {
 
   
   // This function takes four parameters: qrText, qrWidth, topText, and bottomText
+  // backgroundColor: '#bdbdbd'
   // It returns a div element with a rectangle, a QR code, and two texts
   function QRDiv({ qrText, qrWidth, topText, bottomText }) {
     // Define the style for the div element
@@ -87,9 +88,8 @@ function Home() {
       flexDirection: 'column',
       alignItems: 'center',
       boxShadow: '5px 5px 10px #888',
-      marginBottom: '40px',
       border: '1px solid #ddd',
-      backgroundColor: 'lightgray'
+      backgroundColor: '#9e9e9e'
     };
   
     // Define the style for the text element
@@ -122,11 +122,11 @@ function Home() {
   
     // Return the JSX code for the div element
     return (
-      <div style={divStyle}>
+      <div className="main-background" style={divStyle}>
         <div style={headerStyle}>
           <p style={textStyle}>{topText}</p>
         </div>
-        <QRCode value={qrText} size={qrWidth} bgColor={divStyle.backgroundColor} style={{ marginTop: '20px', marginBottom: '0px' }}/>
+        <QRCode value={qrText} size={qrWidth} bgColor={divStyle.backgroundColor} style={{ marginTop: '20px', marginBottom: '20px' }}/>
         <div style={footerStyle}>
           <p>{bottomText}</p>
         </div>

@@ -35,7 +35,7 @@ function Devices() {
   })
 
   return (
-    <div style={{ flex: 1, flexBasis: 'auto', flexDirection: 'column', margin: 20 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0', padding: '20px' }}>
         <table>
           <thead>
             <tr>

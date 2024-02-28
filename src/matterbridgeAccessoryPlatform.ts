@@ -8,20 +8,26 @@ export class MatterbridgeAccessoryPlatform extends EventEmitter {
   protected log: AnsiLogger;
   private name = '';
   private type = 'AccessoryPlatform';
+  private started = false;
+  private stopped = false;
 
   constructor(matterbridge: Matterbridge, log: AnsiLogger) {
     super();
     this.matterbridge = matterbridge;
     this.log = log;
 
-    log.debug('MatterbridgePlatform loaded');
+    log.debug('MatterbridgeAccessoryPlatform loaded');
 
     matterbridge.on('startAccessoryPlatform', (reason: string) => {
-      log.info(`Received ${REVERSE}startPlatform${REVERSEOFF} reason: ${reason}`);
+      if (this.started) return;
+      this.started = true;
+      log.info(`Received ${REVERSE}startAccessoryPlatform${REVERSEOFF} reason: ${reason}`);
       this.onStartAccessoryPlatform();
     });
 
     matterbridge.on('shutdown', (reason: string) => {
+      if (this.stopped) return;
+      this.stopped = true;
       log.info(`Received ${REVERSE}shutdown${REVERSEOFF} reason: ${reason}`);
       this.onShutdown();
     });

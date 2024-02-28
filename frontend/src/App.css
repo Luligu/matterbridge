@@ -1,5 +1,10 @@
 /* App.css */
 
+/* Table header style */
+.main-background {
+  background-color: #9e9e9e;
+}
+
 /* Navigation in Header.js style */
 .nav-link {
   margin: 0 10px;
@@ -32,6 +37,11 @@ th {
   color: white;
 }
 
-tr:nth-child(even) {
-  background-color: #f2f2f2;
+tr:nth-child(odd) {
+  background-color: #9e9e9e;
 }
+
+tr:nth-child(even) {
+  background-color: #bdbdbd;
+}
+

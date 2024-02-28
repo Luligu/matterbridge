@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 
 function Header() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '20px', marginLeft: 20 }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '20px', margin: '0', padding: '20px', height: '40px' }}>
       <img src="favicon.ico" alt="Matter Logo" style={{ height: '30px' }} />
       <h2>Matterbridge</h2>
       <nav>
