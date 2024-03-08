@@ -48,3 +48,14 @@ matterbridge -childbridge
 ```
 
 Matterbridge exposes each registered plugins and you have to pair each plugin scanning the QR code showed in the frontend or in the console.
+
+## Frontend
+
+Matterbridge has a frontend (under development) available http://localhost:3000
+
+It is possible to change the port adding the parameter frontend
+```
+matterbridge -frontend [port number]
+```
+
+[See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/Screenshot home page.png)
