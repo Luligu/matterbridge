@@ -47,4 +47,4 @@ Matterbridge exposes only itself and you have to pair it scanning the QR code sh
 matterbridge -childbridge
 ```
 
-Matterbridge exposes all registered plugins singularly and you have to pair each plugin scanning the QR code showed in the frontend or in the console.
+Matterbridge exposes each registered plugins and you have to pair each plugin scanning the QR code showed in the frontend or in the console.
