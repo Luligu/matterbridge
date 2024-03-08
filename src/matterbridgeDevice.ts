@@ -30,6 +30,7 @@ import {
   ClusterServer,
   ClusterServerHandlers,
   ColorControl,
+  ElectricalMeasurementCluster,
   Groups,
   Identify,
   IdentifyCluster,
@@ -682,6 +683,22 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         {
           reachableChanged: true,
         },
+      ),
+    );
+  }
+
+  createDefaultElectricalMeasurementClusterServer(voltage = 0, current = 0, power = 0, consumption = 0) {
+    this.addClusterServer(
+      ClusterServer(
+        ElectricalMeasurementCluster,
+        {
+          rmsVoltage: voltage,
+          rmsCurrent: current,
+          activePower: power,
+          totalActivePower: consumption,
+        },
+        {},
+        {},
       ),
     );
   }

@@ -62,6 +62,22 @@ Read attribute from udp://fe80::1440:2ed8:12e9:abaa%9:53296 on session secure/50
 2024-03-02 16:56:36.529 DEBUG CommissioningServer  No unique id found for endpoint on index 0 / device MA-aggregator - using index as unique identifier!
 2024-03-02 16:56:36.530 DEBUG CommissioningServer  Restored endpoint id 1 for endpoint with unique_7ceafd7c19bea5f3-index_0 / device MA-aggregator from storage
 2024-03-02 16:56:36.530 DEBUG CommissioningServer  Restored endpoint id 2 for endpoint with unique_7ceafd7c19bea5f3-index_0-unique_BridgedDevice1 0x01020564 / device MA-windowcovering from stora
+
+2024-03-08 13:42:47.547 DEBUG InteractionServer    
+Received read request from udp://fe80::1c57:1ab7:fc98:4c20%9:62577 on session secure/52121: attributes:unknown(0x2)/0x2f/0xfffd, events:none isFabricFiltered=true
+2024-03-08 13:42:47.547 DEBUG InteractionServer    
+Read attribute from udp://fe80::1c57:1ab7:fc98:4c20%9:62577 on session secure/52121: unknown(0x2)/0x2f/0xfffd: unsupported path: Status=127
+
+2024-03-08 13:42:47.410 DEBUG InteractionServer    
+Received read request from udp://fe80::1c57:1ab7:fc98:4c20%9:62577 on session secure/52121: attributes:unknown(0x2)/0x1d/0xfffa, events:none isFabricFiltered=true
+2024-03-08 13:42:47.410 DEBUG InteractionServer    
+Read attribute from udp://fe80::1c57:1ab7:fc98:4c20%9:62577 on session secure/52121: unknown(0x2)/0x1d/0xfffa: unsupported path: Status=127
+
+2024-03-08 13:52:48.894 DEBUG InteractionServer    
+Received read request from udp://fe80::1c57:1ab7:fc98:4c20%9:62577 on session secure/25044: attributes:MA-contactsensor(0x1)/BooleanState(0x45)/unknown(0xfe), events:none isFabricFiltered=true
+2024-03-08 13:52:48.895 DEBUG InteractionServer    
+Read attribute from udp://fe80::1c57:1ab7:fc98:4c20%9:62577 on session secure/25044: MA-contactsensor(0x1)/BooleanState(0x45)/unknown(0xfe): unsupported path: Status=134
+
 */
 
 // Define an interface of common elements from MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform
@@ -820,7 +836,10 @@ export class Matterbridge extends EventEmitter {
           this.log.info(`***Controller connected to ${plg}${name}${nf} ready to start...`);
           if (this.bridgeMode === 'childbridge') {
             const plugin = this.findPlugin(name);
-            if (plugin) plugin.connected = true;
+            if (plugin) {
+              if (plugin.connected === true) return; // Only once cause the devices are already added to the plugins aggregator
+              plugin.connected = true;
+            }
           }
 
           setTimeout(() => {
