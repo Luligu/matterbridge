@@ -58,4 +58,4 @@ It is possible to change the port adding the parameter frontend
 matterbridge -frontend [port number]
 ```
 
-[See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/Screenshot home page.png)
+[See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/Screenshot%20home%20page.png)
