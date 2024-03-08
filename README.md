@@ -49,6 +49,13 @@ matterbridge -childbridge
 
 Matterbridge exposes each registered plugins and you have to pair each plugin scanning the QR code showed in the frontend or in the console.
 
+### command line syntax 
+
+```
+matterbridge -help
+```
+
+
 ## Frontend
 
 Matterbridge has a frontend (under development) available http://localhost:3000
