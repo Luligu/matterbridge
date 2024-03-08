@@ -39,7 +39,7 @@ Now it is possible to open the frontend at the link provided (default: http://lo
 matterbridge -bridge
 ```
 
-Matterbridge exposes only itself and you have to pair it scanning the QR code shown in the frontend or in the console.
+Matterbridge only exposes itself, and you have to pair it scanning the QR code shown in the frontend or in the console.
 
 ### mode childbridge
 
@@ -69,8 +69,26 @@ matterbridge -bridge -frontend [port number]
 matterbridge -childbridge -frontend [port number]
 ```
 
-Home page
+Home page:
 ![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/Screenshot%20home%20page.png)
 
-Devices page
+Devices page:
 ![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/Screenshot%20devices%20page.png)
+
+## Plugins
+
+### Accessory platform example
+
+This an example of an accessory platform plugin.
+
+Accessory platform plugins only expose one device.
+
+[See the homepage here](https://github.com/Luligu/matterbridge-example-accessory-platform)
+
+### Dynamic platform example
+
+This an example of a dynamic platform plugin.
+
+Dynamic platform plugins expose as many devices as you need (The limit for the Home app is 150 accessories for bridge).
+
+[See the homepage here](https://github.com/Luligu/matterbridge-example-dynamic-platform)
