@@ -39,7 +39,7 @@ Now it is possible to open the frontend at the link provided (default: http://lo
 matterbridge -bridge
 ```
 
-Matterbridge exposes only itself and you have to pair it scanning the QR code showed in the frontend or in the console.
+Matterbridge exposes only itself and you have to pair it scanning the QR code shown in the frontend or in the console.
 
 ### mode childbridge
 
@@ -47,9 +47,9 @@ Matterbridge exposes only itself and you have to pair it scanning the QR code sh
 matterbridge -childbridge
 ```
 
-Matterbridge exposes each registered plugins and you have to pair each plugin scanning the QR code showed in the frontend or in the console.
+Matterbridge exposes each registered plugins, and you have to pair each one by scanning the QR code shown in the frontend or in the console.
 
-### command line syntax 
+### Use matterbridge -help to see the command line syntax 
 
 ```
 matterbridge -help
@@ -58,11 +58,15 @@ matterbridge -help
 
 ## Frontend
 
-Matterbridge has a frontend (under development) available http://localhost:3000
+Matterbridge has a frontend (currently under development) available http://localhost:3000
 
-It is possible to change the port adding the parameter frontend
+You can change the port by adding the frontend parameter when you launch it.
+Here's how to specify a different port number:
 ```
-matterbridge -frontend [port number]
+matterbridge -bridge -frontend [port number]
+```
+```
+matterbridge -childbridge -frontend [port number]
 ```
 
 Home page
