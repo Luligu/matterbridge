@@ -83,7 +83,7 @@ This an example of an accessory platform plugin.
 
 Accessory platform plugins only expose one device.
 
-[See the homepage here](https://github.com/Luligu/matterbridge-example-accessory-platform)
+[See the plugin homepage here](https://github.com/Luligu/matterbridge-example-accessory-platform)
 
 ### Dynamic platform example
 
@@ -91,7 +91,9 @@ This an example of a dynamic platform plugin.
 
 Dynamic platform plugins expose as many devices as you need (the limit for the Home app is 150 accessories for bridge).
 
-[See the homepage here](https://github.com/Luligu/matterbridge-example-dynamic-platform)
+Matterbridge can run as many plugins as you want.
+
+[See the plugin homepage here](https://github.com/Luligu/matterbridge-example-dynamic-platform)
 
 ### Example plugins to show the usage of history
 
