@@ -1,4 +1,4 @@
-# matterbridge
+# Matterbridge
 
 Matterbridge is a Matter.js plugin manager. 
 
@@ -21,28 +21,30 @@ A special thank to Apollon77 for is incredible work.
 ## Installation
 
 Follow these steps to install Matterbridge:
-´´´
+```
 npm install -g matterbridge
-´´´
+```
 
 Test the installation with:
-´´´
+```
 matterbridge
-´´´
+```
 Now it is possible to open the frontend at the link provided (default: http://localhost:3000)
 
 ## Usage
 
 ### mode bridge
 
-´´´
+```
 matterbridge -bridge
-´´´
+```
+
 Matterbridge exposes only itself and you have to pair it scanning the QR code showed in the frontend or in the console.
 
 ### mode childbridge
 
-´´´
+```
 matterbridge -childbridge
-´´´
+```
+
 Matterbridge exposes all registered plugins singularly and you have to pair each plugin scanning the QR code showed in the frontend or in the console.
