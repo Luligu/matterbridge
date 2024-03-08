@@ -89,6 +89,14 @@ Accessory platform plugins only expose one device.
 
 This an example of a dynamic platform plugin.
 
-Dynamic platform plugins expose as many devices as you need (The limit for the Home app is 150 accessories for bridge).
+Dynamic platform plugins expose as many devices as you need (the limit for the Home app is 150 accessories for bridge).
 
 [See the homepage here](https://github.com/Luligu/matterbridge-example-dynamic-platform)
+
+### Example plugins to show the usage of history
+
+[Contact plugin with history](https://github.com/Luligu/matterbridge-eve-door)
+
+[Motion plugin with history](https://github.com/Luligu/matterbridge-eve-motion)
+
+[Energy plugin with history](https://github.com/Luligu/matterbridge-eve-energy)
