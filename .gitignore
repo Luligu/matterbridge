@@ -48,3 +48,5 @@ bridge-groups.json
 .matterbridge.json
 .matterbridge.backup.json
 node_storage
+
+Eve door_history.json

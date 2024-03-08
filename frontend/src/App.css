@@ -5,18 +5,104 @@
   background-color: #9e9e9e;
 }
 
+/* Header style */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* Distribute items evenly */
+  gap: 20px;
+  margin: 0;
+  padding: 20px;
+  height: 40px; /* Increase height for a more modern look */
+}
+
+/* Navigation style */
+nav {
+  display: flex;
+  align-items: center;
+}
+
 /* Navigation in Header.js style */
 .nav-link {
   margin: 0 10px;
   font-size: 20px;
+  text-decoration: none; /* Remove underline from links */
+  color: #333; /* Dark gray color for the links */
+  transition: color 0.3s ease; /* Smooth color transition */
+}
+
+.nav-link:hover {
+  color: #007BFF; /* Change color to blue when hovering */
 }
 
 /* Table header style */
 .table-header {
-  height: 30px;
-  padding: 0px;
+  border: 1px solid #ddd;
+  padding: 5px;
   padding-right: 10px;
   padding-left: 10px;
+  background-color: #4CAF50;
+  color: white;
+  text-align: left;
+}
+
+/* Table footer style */
+.table-footer {
+  border: 1px solid #ddd;
+  padding: 5px;
+  padding-right: 10px;
+  padding-left: 10px;
+  background-color: #7dac7f;
+  color: white;
+  text-align: left;
+}
+
+/* Table content style */
+.table-content {
+  border: 1px solid #ddd;
+  padding: 5px;
+  padding-right: 10px;
+  padding-left: 10px;
+  text-align: left;
+  font-size: 14px;
+}
+
+/* Table content style */
+.table-content-even {
+  background-color: #bdbdbd;
+}
+
+/* Table content style */
+.table-content-odd {
+  background-color: #9e9e9e;
+}
+
+/* Table content style for selected rows*/
+.table-content-selected {
+  background-color: #a5a74a;
+}
+
+.status-enabled {
+  background-color: green;
+  color: white;
+  padding: 0.2rem;
+  border-radius: 0.25rem;
+  text-align: center;
+  font-size: 12px;
+}
+
+.status-disabled {
+  background-color: red;
+  color: white;
+  padding: 0.2rem;
+  border-radius: 0.25rem;
+  text-align: center;
+  font-size: 12px;
+}
+
+/* Table style */
+h3 {
+  margin: 0;
 }
 
 /* Table style */
@@ -26,6 +112,16 @@ table {
   box-shadow: 5px 5px 10px #888; 
 }
 
+@media (max-width: 600px) {
+  .header {
+    flex-direction: column;
+  }
+
+  nav {
+    margin-top: 20px;
+  }
+}
+/*
 th, td {
   border: 1px solid #ddd;
   padding: 5px;
@@ -45,3 +141,4 @@ tr:nth-child(even) {
   background-color: #bdbdbd;
 }
 
+*/

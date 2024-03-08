@@ -11,9 +11,38 @@ Just pair Matterbridge once, and it will load all your registered plugins.
 
 This project aims to allow the porting of homebridge plugins to matterbridge plugins without recoding everything.
 
-It creates a MatterBridge device to pair in any ecosystem like Apple Home, Google Home, Amazon Alexa, or 
-any other ecosystem supporting matter.
+It creates a device to pair in any ecosystem like Apple Home, Google Home, Amazon Alexa, or 
+any other ecosystem supporting Matter.
 
-The project is build on https://github.com/project-chip/matter.js. 
+The project is build on top of https://github.com/project-chip/matter.js. 
 
 A special thank to Apollon77 for is incredible work.
+
+## Installation
+
+Follow these steps to install Matterbridge:
+´´´
+npm install -g matterbridge
+´´´
+
+Test the installation with:
+´´´
+matterbridge
+´´´
+Now it is possible to open the frontend at the link provided (default: http://localhost:3000)
+
+## Usage
+
+### mode bridge
+
+´´´
+matterbridge -bridge
+´´´
+Matterbridge exposes only itself and you have to pair it scanning the QR code showed in the frontend or in the console.
+
+### mode childbridge
+
+´´´
+matterbridge -childbridge
+´´´
+Matterbridge exposes all registered plugins singularly and you have to pair each plugin scanning the QR code showed in the frontend or in the console.

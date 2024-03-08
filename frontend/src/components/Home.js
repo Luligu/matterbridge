@@ -1,38 +1,86 @@
 // Home.js
 import React, { useEffect, useState } from 'react';
 import QRCode from 'qrcode.react';
+import { StatusIndicator } from './StatusIndicator';
 
 function Home() {
   const [qrCode, setQrCode] = useState('');
   const [systemInfo, setSystemInfo] = useState({});
   const [plugins, setPlugins] = useState([]);
+  const columns = React.useMemo( () => [
+      {
+        Header: 'Name',
+        accessor: 'name',
+      },
+      {
+        Header: 'Description',
+        accessor: 'description',
+      },
+      {
+        Header: 'Version',
+        accessor: 'version',
+      },
+      {
+        Header: 'Author',
+        accessor: 'author',
+      },
+      {
+        Header: 'Type',
+        accessor: 'type',
+      },
+      {
+        Header: 'Devices',
+        accessor: 'devices',
+      },
+      {
+        Header: 'Status',
+        accessor: 'status',
+        Cell: ({ value }) => <StatusIndicator status={value} />,
+      },
+    ],
+    []
+  );
 
+  /*
+  useEffect(() => {
+    const interval = setInterval(() => {
+
+      // Fetch Plugins
+      fetch('/api/plugins')
+        .then(response => response.json())
+        .then(data => { setPlugins(data); console.log('/api/plugins:', data)})
+        .catch(error => console.error('Error fetching plugins:', error));
+  
+      // Clear interval on component unmount
+      return () => clearInterval(interval);
+    }, 2000);
+  }, []); 
+  */
+ 
   useEffect(() => {
     // Fetch QR Code
     fetch('/api/qr-code')
       .then(response => response.json())
-      .then(data => { setQrCode(data.qrPairingCode); console.log('QR code:', data.qrPairingCode) })
+      .then(data => { setQrCode(data.qrPairingCode); console.log('/api/qr-code:', data.qrPairingCode) })
       .catch(error => console.error('Error fetching QR code:', error));
 
     // Fetch System Info
     fetch('/api/system-info')
       .then(response => response.json())
-      .then(data => { setSystemInfo(data); console.log('QR code:', data) })
+      .then(data => { setSystemInfo(data); console.log('/api/system-info:', data) })
       .catch(error => console.error('Error fetching system info:', error));
 
     // Fetch Plugins
     fetch('/api/plugins')
       .then(response => response.json())
-      .then(data => setPlugins(data))
+      .then(data => { setPlugins(data); console.log('/api/plugins:', data)})
       .catch(error => console.error('Error fetching plugins:', error));
 
-  }, []);
-/*
-*/
+  }, []); // The empty array causes this effect to run only once
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 80px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0', padding: '20px' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', width: '310px', gap: '20px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: '0 1 auto'/*, width: '310px'*/, gap: '20px' }}>
         {qrCode && <QRDiv qrText={qrCode} qrWidth={256} topText="QRCode" bottomText="Scan me to pair matterbridge" />}
         <table>
           <thead>
@@ -41,34 +89,45 @@ function Home() {
             </tr>
           </thead>
           <tbody>
-            {Object.entries(systemInfo).map(([key, value]) => (
-              <tr key={key}>
-                <td style={{ fontSize: '12px' }}>{key}</td>
-                <td style={{ fontSize: '12px' }}>{value}</td>
+            {Object.entries(systemInfo).map(([key, value], index) => (
+              <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
+                <td className="table-content">{key}</td>
+                <td className="table-content">{value}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <div style={{ flex: 2 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto' }}>
         <table>
           <thead>
             <tr>
-              <th className="table-header">Name</th>
-              <th className="table-header">Description</th>
-              <th className="table-header">Version</th>
-              <th className="table-header">Author</th>
-              <th className="table-header">Type</th>
+              <th className="table-header" colSpan="7">Registered plugins</th>
+            </tr>
+            <tr>
+              {columns.map((column, index) => (
+                <th className="table-header" key={index}>{column.Header}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {plugins.map((plugin, index) => (
-              <tr key={index}>
-                <td>{plugin.name}</td>
-                <td>{plugin.description}</td>
-                <td>{plugin.version}</td>
-                <td>{plugin.author}</td>
-                <td>{plugin.type}</td>
+              <tr key={index} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
+                <td className="table-content">{plugin.name}</td>
+                <td className="table-content">{plugin.description}</td>
+                <td className="table-content">{plugin.version}</td>
+                <td className="table-content">{plugin.author}</td>
+                <td className="table-content">{plugin.type}</td>
+                <td className="table-content">{plugin.registeredDevices}</td>
+                <td className="table-content">
+                  <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', gap: '5px' }}>
+                    <StatusIndicator status={plugin.enabled}/>
+                    <StatusIndicator status={plugin.loaded} enabledText = 'L'/>
+                    <StatusIndicator status={plugin.started} enabledText = 'S'/>
+                    <StatusIndicator status={plugin.paired} enabledText = 'P'/>
+                    <StatusIndicator status={plugin.connected} enabledText = 'C'/>
+                  </div> 
+                </td>
               </tr>
             ))}
           </tbody>
@@ -77,9 +136,9 @@ function Home() {
     </div>
   );}
 
+  //data.push({ name: plugin.name, description: plugin.description, version: plugin.version, author: plugin.author, type: plugin.type, devices: count, status: plugin.enabled! });
   
   // This function takes four parameters: qrText, qrWidth, topText, and bottomText
-  // backgroundColor: '#bdbdbd'
   // It returns a div element with a rectangle, a QR code, and two texts
   function QRDiv({ qrText, qrWidth, topText, bottomText }) {
     // Define the style for the div element
@@ -133,6 +192,5 @@ function Home() {
       </div>
     );
   }
-  
-  
+
 export default Home;

@@ -4,8 +4,9 @@ src
 
 # ------------- Defaults ------------- #
 
-# gitHub actions
+# github 
 .github
+.gitattributes
 
 # eslint
 .eslintrc
@@ -142,9 +143,20 @@ __test__
 
 # eslint
 .eslintrc
+.eslintrc.json
 .eslintignore
 
+# prettier
+.prettierignore
+.prettierrc.json
+
 Screenshot.png
+
+# frontend
+frontend/public
+frontend/package.*
+frontend/package-lock.json
+frontend/README.md
 
 # zigbee2mqtt
 bridge-info.json

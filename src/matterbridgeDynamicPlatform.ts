@@ -1,6 +1,29 @@
+/**
+ * This file contains the class MatterbridgeDynamicPlatform.
+ *
+ * @file matterbridgeDynamicPlatform.ts
+ * @author Luca Liguori
+ * @date 2023-12-29
+ * @version 1.0.5
+ *
+ * Copyright 2023, 2024 Luca Liguori.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License. *
+ */
+
 import { Matterbridge, MatterbridgeEvents } from './matterbridge.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
-import { AnsiLogger, REVERSE, REVERSEOFF } from 'node-ansi-logger';
+import { AnsiLogger } from 'node-ansi-logger';
 import EventEmitter from 'events';
 
 export class MatterbridgeDynamicPlatform extends EventEmitter {
@@ -8,8 +31,6 @@ export class MatterbridgeDynamicPlatform extends EventEmitter {
   protected log: AnsiLogger;
   private name = '';
   private type = 'DynamicPlatform';
-  private started = false;
-  private stopped = false;
 
   constructor(matterbridge: Matterbridge, log: AnsiLogger) {
     super();
@@ -17,20 +38,6 @@ export class MatterbridgeDynamicPlatform extends EventEmitter {
     this.log = log;
 
     log.debug('MatterbridgeDynamicPlatform loaded');
-
-    matterbridge.on('startDynamicPlatform', (reason: string) => {
-      if (this.started) return;
-      this.started = true;
-      log.info(`Received ${REVERSE}startDynamicPlatform${REVERSEOFF} reason: ${reason}`);
-      this.onStartDynamicPlatform();
-    });
-
-    matterbridge.on('shutdown', (reason: string) => {
-      if (this.stopped) return;
-      this.stopped = true;
-      log.info(`Received ${REVERSE}shutdown${REVERSEOFF} reason: ${reason}`);
-      this.onShutdown();
-    });
   }
 
   // Typed method for emitting events
@@ -45,18 +52,18 @@ export class MatterbridgeDynamicPlatform extends EventEmitter {
   }
 
   // This method must be overridden in the extended class
-  onStartDynamicPlatform() {
-    // Plugin initialization logic here
+  async onStart(reason?: string) {
+    this.log.error('Plugins must override onStart.', reason);
+    throw new Error('Plugins must override onStart.');
   }
 
   // This method must be overridden in the extended class
-  onShutdown() {
-    // Plugin cleanup logic here
+  async onShutdown(reason?: string) {
+    this.log.error('Plugins must override onShutdown.', reason);
+    throw new Error('Plugins must override onShutdown.');
   }
 
-  registerDevice(device: MatterbridgeDevice) {
-    this.log.debug(`Send ${REVERSE}registerDeviceDynamicPlatform${REVERSEOFF}`);
-    this.emit('registerDeviceDynamicPlatform', device);
-    this.matterbridge.addBridgedDevice(this.name, device);
+  async registerDevice(device: MatterbridgeDevice) {
+    await this.matterbridge.addBridgedDevice(this.name, device);
   }
 }

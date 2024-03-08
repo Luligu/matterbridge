@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-namespace */
 import { ClusterFactory } from '@project-chip/matter-node.js/cluster';
-import { Attribute, OptionalWritableAttribute, AccessLevel } from '@project-chip/matter-node.js/cluster';
+import { Attribute } from '@project-chip/matter-node.js/cluster';
 import { BitFlag, BitFlags, TypeFromPartialBitSchema } from '@project-chip/matter-node.js/schema';
-import { TlvUInt8, TlvBitmap, TlvEnum, TlvUInt16, TlvNullable } from '@project-chip/matter-node.js/tlv';
+import { TlvEnum } from '@project-chip/matter-node.js/tlv';
 
 export namespace AirQuality {
   export enum Feature {
