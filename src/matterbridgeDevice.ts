@@ -21,8 +21,6 @@
  * limitations under the License. *
  */
 
-/* eslint-disable max-len */
-/* eslint-disable no-console */
 import {
   BasicInformationCluster,
   BooleanStateCluster,
@@ -60,11 +58,12 @@ import { EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype'
 import { Device, DeviceClasses, DeviceTypeDefinition, EndpointOptions } from '@project-chip/matter-node.js/device';
 import { extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
 
-import { MatterHistory, Sensitivity, EveHistoryCluster } from 'matter-history';
+import { MatterHistory, Sensitivity, EveHistoryCluster, WeatherTrend, TemperatureDisplayUnits } from 'matter-history';
 
 import { AirQuality, AirQualityCluster } from './AirQualityCluster.js';
 import { AnsiLogger } from 'node-ansi-logger';
 import { createHash } from 'crypto';
+import { TvocMeasurement, TvocMeasurementCluster } from './TvocCluster.js';
 
 type MakeMandatory<T> = Exclude<T, undefined>;
 
@@ -128,7 +127,7 @@ export const airQualitySensor = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 1,
   requiredServerClusters: [Identify.Cluster.id, AirQuality.Cluster.id],
-  optionalServerClusters: [TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id],
+  optionalServerClusters: [TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id, TvocMeasurement.Cluster.id],
 });
 
 export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device, MatterbridgeDeviceCommands>(Device) {
@@ -151,199 +150,164 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
   */
 
-  /*
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // attributeInitialValues?: { [key: ClusterId]: AttributeInitialValues<any> },
-  
-  createDefaultEveHistoryClusterServer(matterType: string) {
-    this.matterType = matterType;
-    let attributesInitialValues: AttributeInitialValues<typeof EveHistoryCluster.attributes>;
-    if (this.matterType === 'energy') {
-      this.configData = Buffer.from(
-        '0001500b0200000302fb19040c525631354d314d30363931389c0100ff04010200b4f90101600164d00400000000450505000000004609050000000e000042064906050c081080014411051c0005033c00000075df36428199de404711052a21fc2196226823780000003c00000048060500000000004a06050000000000',
-        'hex',
-      );
-      attributesInitialValues = {
-        ConfigDataGet: Uint8Array.fromHex(''),
-        ConfigDataSet: Uint8Array.fromHex(''),
-        HistoryStatus: Uint8Array.fromHex(''),
-        HistoryEntries: Uint8Array.fromHex(''),
-        HistoryRequest: Uint8Array.fromHex(''),
-        HistorySetTime: Uint8Array.fromHex(''),
-        LastEvent: 0,
-        Voltage: 220,
-        Current: 1,
-        Consumption: 2,
-        TotalConsumption: 3,
-        EnergyUnknown: 1,
-        ResetTotal: 0,
-        ChildLock: false,
-        RLoc: 46080,
-      };
-    } else if (this.matterType === 'motion') {
-      this.configData = Buffer.from('0001590b0200000302fa19040c5a5633384c314131313937349c0100ff040102012cf901017001017102090072040000ffff', 'hex');
-      attributesInitialValues = {
-        ConfigDataGet: Uint8Array.fromHex(''),
-        ConfigDataSet: Uint8Array.fromHex(''),
-        HistoryStatus: Uint8Array.fromHex(''),
-        HistoryEntries: Uint8Array.fromHex(''),
-        HistoryRequest: Uint8Array.fromHex(''),
-        HistorySetTime: Uint8Array.fromHex(''),
-        LastEvent: 0,
-        MotionSensitivity: Sensitivity.HIGH,
-        RLoc: 46080,
-      };
-    } else if (this.matterType === 'door') {
-      this.configData = Buffer.from('00014d0b0200000302fa19040c515632324d314d30313139329c0100ff04010207c4f90101', 'hex');
-      attributesInitialValues = {
-        ConfigDataGet: Uint8Array.fromHex(''),
-        ConfigDataSet: Uint8Array.fromHex(''),
-        HistoryStatus: Uint8Array.fromHex(''),
-        HistoryEntries: Uint8Array.fromHex(''),
-        HistoryRequest: Uint8Array.fromHex(''),
-        HistorySetTime: Uint8Array.fromHex(''),
-        TimesOpened: this.getTimesOpened(),
-        LastEvent: 0,
-        ResetTotal: 0,
-        RLoc: 46080,
-      };
-    } else if (this.matterType === 'weather') {
-      this.configData = Buffer.from('0001010b0200000302fa19040c515632324d314d30313139329c0100ff04010207c4f901014b04ffffffff', 'hex'); //From door but 01
-      attributesInitialValues = {
-        ConfigDataGet: Uint8Array.fromHex(''),
-        ConfigDataSet: Uint8Array.fromHex(''),
-        HistoryStatus: Uint8Array.fromHex(''),
-        HistoryEntries: Uint8Array.fromHex(''),
-        HistoryRequest: Uint8Array.fromHex(''),
-        HistorySetTime: Uint8Array.fromHex(''),
-        RLoc: 46080,
-        Elevation: 150, // on Weather
-        LastPressure: 999, // on Weather in the summary
-        WeatherTrend: WeatherTrend.SUN,
-        TemperatureDisplayUnits: TemperatureDisplayUnits.CELSIUS,
-      };
-    } else if (this.matterType === 'room') {
-      this.configData = Buffer.from('0001020b0200000302fa19040c515632324d314d30313139329c0100ff04010207c4f90101', 'hex'); //From door but 02
-      attributesInitialValues = {
-        ConfigDataGet: Uint8Array.fromHex(''),
-        ConfigDataSet: Uint8Array.fromHex(''),
-        HistoryStatus: Uint8Array.fromHex(''),
-        HistoryEntries: Uint8Array.fromHex(''),
-        HistoryRequest: Uint8Array.fromHex(''),
-        HistorySetTime: Uint8Array.fromHex(''),
-        RLoc: 46080,
-      };
-    } else {
-      this.log.error('MatterHistory error: matterType not found!');
-      this.configData = Buffer.from('00014d0b0200000302fa19040c515632324d314d30313139329c0100ff04010207c4f90101', 'hex');
-      attributesInitialValues = {
-        ConfigDataGet: Uint8Array.fromHex(''),
-        ConfigDataSet: Uint8Array.fromHex(''),
-        HistoryStatus: Uint8Array.fromHex(''),
-        HistoryEntries: Uint8Array.fromHex(''),
-        HistoryRequest: Uint8Array.fromHex(''),
-        HistorySetTime: Uint8Array.fromHex(''),
-        TimesOpened: this.getTimesOpened(),
-        LastEvent: 0,
-        ResetTotal: 0,
-        RLoc: 46080,
-      };
-    }
-    const eveHistoryCluster = ClusterServer(
-      EveHistoryCluster,
-      attributesInitialValues!,
-      {
-        LogHistory: () => {
-          this.log.debug('LogHistory command');
+  /**
+   * Creates a room Eve History Cluster Server.
+   *
+   * @param history - The MatterHistory object.
+   * @param log - The AnsiLogger object.
+   */
+  createRoomEveHistoryClusterServer(history: MatterHistory, log: AnsiLogger) {
+    history.setMatterHystoryType('room');
+    this.addClusterServer(
+      ClusterServer(
+        EveHistoryCluster,
+        {
+          // Dynamic attributes
+          ConfigDataGet: Uint8Array.fromHex(''),
+          ConfigDataSet: Uint8Array.fromHex(''),
+          HistoryStatus: Uint8Array.fromHex(''),
+          HistoryEntries: Uint8Array.fromHex(''),
+          HistoryRequest: Uint8Array.fromHex(''),
+          HistorySetTime: Uint8Array.fromHex(''),
+          // Normal attributes
+          TemperatureDisplayUnits: TemperatureDisplayUnits.CELSIUS,
+          RLoc: 46080,
         },
+        {
+          ConfigDataGetAttributeGetter: ({ session, isFabricFiltered }) => {
+            log.debug(`ConfigDataGetAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
+            return history.OnGetConfigData(isFabricFiltered);
+          },
 
-        LastEventAttributeGetter: ({ session, isFabricFiltered }) => {
-          this.log.debug(`LastEventAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-          return this.OnGetLastEvent();
-        },
+          ConfigDataSetAttributeGetter: ({ session, isFabricFiltered }) => {
+            log.debug(`ConfigDataSetAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
+            return Uint8Array.fromHex('');
+          },
+          ConfigDataSetAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
+            log.debug(`ConfigDataSetAttributeSetter [${value.toHex()}] ${attributes.ConfigDataSet} endpoint: ${endpoint?.name} session: ${session?.name}`);
+            return history.OnSetConfigData(value);
+          },
 
-        TimesOpenedAttributeGetter: ({ session, isFabricFiltered }) => {
-          this.log.debug(`TimesOpenedAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-          return this.OnGetimesOpened();
-        },
+          HistoryStatusAttributeGetter: ({ session, isFabricFiltered }) => {
+            log.debug(`HistoryStatusAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
+            return history.OnGetHistoryStatus(isFabricFiltered);
+          },
 
-        ResetTotalAttributeGetter: ({ session, isFabricFiltered }) => {
-          this.log.debug(`LastResetTotalAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-          return this.OnGetLastReset();
-        },
-        ResetTotalAttributeSetter: (value: number, { attributes, endpoint, session }) => {
-          this.log.debug(`LastResetTotalAttributeSetter ${value} ${attributes} endpoint: ${endpoint?.name} session: ${session?.name}`);
-          return this.OnSetLastReset(value);
-        },
+          HistoryEntriesAttributeGetter: ({ session, isFabricFiltered }) => {
+            log.debug(`HistoryEntriesAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
+            return history.OnGetHistoryEntries();
+          },
 
-        LastPressureAttributeGetter: ({ session, isFabricFiltered }) => {
-          this.log.debug(`LastPressureAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-          return this.lastPressure;
-        },
+          HistorySetTimeAttributeGetter: ({ session, isFabricFiltered }) => {
+            log.debug(`HistorySetTimeAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
+            return Uint8Array.fromHex('');
+          },
+          HistorySetTimeAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
+            log.debug(`HistorySetTimeAttributeSetter ${value.toHex()} ${attributes.HistorySetTime} endpoint: ${endpoint?.name} session: ${session?.name}`);
+            return history.OnSetHistorySetTime(value);
+          },
 
-        ConfigDataGetAttributeGetter: ({ session, isFabricFiltered }) => {
-          this.log.debug(`ConfigDataGetAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-          return this.OnGetConfigData(isFabricFiltered);
+          HistoryRequestAttributeGetter: ({ session, isFabricFiltered }) => {
+            log.debug(`HistoryRequestAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
+            return Uint8Array.fromHex('');
+          },
+          HistoryRequestAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
+            log.debug(`HistoryRequestAttributeSetter ${value.toHex()} ${attributes.HistoryRequest} endpoint: ${endpoint?.name} session: ${session?.name}`);
+            return history.OnSetHistoryRequest(value);
+          },
         },
-
-        ConfigDataSetAttributeGetter: ({ session, isFabricFiltered }) => {
-          this.log.debug(`ConfigDataSetAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-          return Uint8Array.fromHex('');
-        },
-        ConfigDataSetAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
-          this.log.debug(`ConfigDataSetAttributeSetter [${value.toHex()}] ${attributes} endpoint: ${endpoint?.name} session: ${session?.name}`);
-          return this.OnSetConfigData(value);
-        },
-
-        HistoryStatusAttributeGetter: ({ session, isFabricFiltered }) => {
-          this.log.debug(`HistoryStatusAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-          return this.OnGetHistoryStatus(isFabricFiltered);
-        },
-
-        HistoryEntriesAttributeGetter: ({ session, isFabricFiltered }) => {
-          this.log.debug(`HistoryEntriesAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-          return this.OnGetHistoryEntries();
-        },
-
-        HistorySetTimeAttributeGetter: ({ session, isFabricFiltered }) => {
-          this.log.debug(`HistorySetTimeAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-          return Uint8Array.fromHex('');
-        },
-        HistorySetTimeAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
-          this.log.debug(`HistorySetTimeAttributeSetter ${value.toHex()} ${attributes} endpoint: ${endpoint?.name} session: ${session?.name}`);
-          return this.OnSetHistorySetTime(value);
-        },
-
-        HistoryRequestAttributeGetter: ({ session, isFabricFiltered }) => {
-          this.log.debug(`HistoryRequestAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-          return Uint8Array.fromHex('');
-        },
-        HistoryRequestAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
-          this.log.debug(`HistoryRequestAttributeSetter ${value.toHex()} ${attributes} endpoint: ${endpoint?.name} session: ${session?.name}`);
-          return this.OnSetHistoryRequest(value);
-        },
-
-        MotionSensitivityAttributeGetter: ({ session, isFabricFiltered }) => {
-          this.log.debug(`MotionSensitivityAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-          return this.motionSensitivity;
-        },
-        MotionSensitivityAttributeSetter: (value: number, { attributes, endpoint, session }) => {
-          this.log.warn(`MotionSensitivityAttributeSetter ${value} (0=High 4=Medium 7=Low) ${attributes} endpoint: ${endpoint?.name} session: ${session?.name}`);
-          this.motionSensitivity = value;
-          return true;
-        },
-      },
-      {},
+        {},
+      ),
     );
-    return eveHistoryCluster;
   }
-  */
+
+  /**
+   * Creates a Weather Eve History Cluster Server.
+   *
+   * @param history - The MatterHistory instance.
+   * @param log - The AnsiLogger instance.
+   */
+  createWeatherEveHistoryClusterServer(history: MatterHistory, log: AnsiLogger) {
+    history.setMatterHystoryType('weather');
+    this.addClusterServer(
+      ClusterServer(
+        EveHistoryCluster,
+        {
+          // Dynamic attributes
+          ConfigDataGet: Uint8Array.fromHex(''),
+          ConfigDataSet: Uint8Array.fromHex(''),
+          HistoryStatus: Uint8Array.fromHex(''),
+          HistoryEntries: Uint8Array.fromHex(''),
+          HistoryRequest: Uint8Array.fromHex(''),
+          HistorySetTime: Uint8Array.fromHex(''),
+          // Normal attributes
+          Elevation: 0,
+          LastPressure: 1000,
+          WeatherTrend: WeatherTrend.SUN,
+          TemperatureDisplayUnits: TemperatureDisplayUnits.CELSIUS,
+          RLoc: 46080,
+        },
+        {
+          ConfigDataGetAttributeGetter: ({ session, isFabricFiltered }) => {
+            log.debug(`ConfigDataGetAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
+            return history.OnGetConfigData(isFabricFiltered);
+          },
+
+          ConfigDataSetAttributeGetter: ({ session, isFabricFiltered }) => {
+            log.debug(`ConfigDataSetAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
+            return Uint8Array.fromHex('');
+          },
+          ConfigDataSetAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
+            log.debug(`ConfigDataSetAttributeSetter [${value.toHex()}] ${attributes.ConfigDataSet} endpoint: ${endpoint?.name} session: ${session?.name}`);
+            return history.OnSetConfigData(value);
+          },
+
+          HistoryStatusAttributeGetter: ({ session, isFabricFiltered }) => {
+            log.debug(`HistoryStatusAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
+            return history.OnGetHistoryStatus(isFabricFiltered);
+          },
+
+          HistoryEntriesAttributeGetter: ({ session, isFabricFiltered }) => {
+            log.debug(`HistoryEntriesAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
+            return history.OnGetHistoryEntries();
+          },
+
+          HistorySetTimeAttributeGetter: ({ session, isFabricFiltered }) => {
+            log.debug(`HistorySetTimeAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
+            return Uint8Array.fromHex('');
+          },
+          HistorySetTimeAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
+            log.debug(`HistorySetTimeAttributeSetter ${value.toHex()} ${attributes.HistorySetTime} endpoint: ${endpoint?.name} session: ${session?.name}`);
+            return history.OnSetHistorySetTime(value);
+          },
+
+          HistoryRequestAttributeGetter: ({ session, isFabricFiltered }) => {
+            log.debug(`HistoryRequestAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
+            return Uint8Array.fromHex('');
+          },
+          HistoryRequestAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
+            log.debug(`HistoryRequestAttributeSetter ${value.toHex()} ${attributes.HistoryRequest} endpoint: ${endpoint?.name} session: ${session?.name}`);
+            return history.OnSetHistoryRequest(value);
+          },
+        },
+        {},
+      ),
+    );
+  }
+
+  /**
+   * Creates an Energy Eve History Cluster Server.
+   *
+   * @param history - The MatterHistory object.
+   * @param log - The AnsiLogger object.
+   */
   createEnergyEveHistoryClusterServer(history: MatterHistory, log: AnsiLogger) {
     history.setMatterHystoryType('energy');
     this.addClusterServer(
       ClusterServer(
         EveHistoryCluster,
         {
+          // Dynamic attributes
           ConfigDataGet: Uint8Array.fromHex(''),
           ConfigDataSet: Uint8Array.fromHex(''),
           HistoryStatus: Uint8Array.fromHex(''),
@@ -351,12 +315,13 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           HistoryRequest: Uint8Array.fromHex(''),
           HistorySetTime: Uint8Array.fromHex(''),
           LastEvent: 0,
+          ResetTotal: 0,
+          // Normal attributes
           Voltage: 0,
           Current: 0,
           Consumption: 0,
           TotalConsumption: 0,
           EnergyUnknown: 1,
-          ResetTotal: 0,
           ChildLock: false,
           RLoc: 46080,
         },
@@ -422,12 +387,19 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a Motion Eve History Cluster Server.
+   *
+   * @param history - The MatterHistory object.
+   * @param log - The AnsiLogger object.
+   */
   createMotionEveHistoryClusterServer(history: MatterHistory, log: AnsiLogger) {
     history.setMatterHystoryType('motion');
     this.addClusterServer(
       ClusterServer(
         EveHistoryCluster,
         {
+          // Dynamic attributes
           ConfigDataGet: Uint8Array.fromHex(''),
           ConfigDataSet: Uint8Array.fromHex(''),
           HistoryStatus: Uint8Array.fromHex(''),
@@ -435,6 +407,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           HistoryRequest: Uint8Array.fromHex(''),
           HistorySetTime: Uint8Array.fromHex(''),
           LastEvent: 0,
+          // Normal attributes
           MotionSensitivity: Sensitivity.HIGH,
           RLoc: 46080,
         },
@@ -491,12 +464,19 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a door EveHistoryCluster server.
+   *
+   * @param history - The MatterHistory instance.
+   * @param log - The AnsiLogger instance.
+   */
   createDoorEveHistoryClusterServer(history: MatterHistory, log: AnsiLogger) {
     history.setMatterHystoryType('door');
     this.addClusterServer(
       ClusterServer(
         EveHistoryCluster,
         {
+          // Dynamic attributes
           ConfigDataGet: Uint8Array.fromHex(''),
           ConfigDataSet: Uint8Array.fromHex(''),
           HistoryStatus: Uint8Array.fromHex(''),
@@ -506,6 +486,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           TimesOpened: 0,
           LastEvent: 0,
           ResetTotal: 0,
+          // Normal attributes
           RLoc: 46080,
         },
         {
@@ -575,6 +556,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a default IdentifyCluster server.
+   */
   createDefaultIdentifyClusterServer() {
     this.addClusterServer(
       ClusterServer(
@@ -585,7 +569,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         },
         {
           identify: async (data) => {
-            console.log('*Identify');
+            // eslint-disable-next-line no-console
+            console.log('Identify');
             await this.commandHandler.executeHandler('identify', data);
           },
         },
@@ -593,20 +578,48 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a default groups cluster server and adds it to the device.
+   */
   createDefaultGroupsClusterServer() {
     this.addClusterServer(createDefaultGroupsClusterServer());
   }
 
+  /**
+   * Creates a default scenes cluster server and adds it to the current instance.
+   */
   createDefaultScenesClusterServer() {
     this.addClusterServer(createDefaultScenesClusterServer());
   }
 
+  /**
+   * Creates a unique identifier based on the provided parameters.
+   * @param param1 - The first parameter.
+   * @param param2 - The second parameter.
+   * @param param3 - The third parameter.
+   * @param param4 - The fourth parameter.
+   * @returns A unique identifier generated using the MD5 hash algorithm.
+   */
   private createUniqueId(param1: string, param2: string, param3: string, param4: string) {
     const hash = createHash('md5');
     hash.update(param1 + param2 + param3 + param4);
     return hash.digest('hex');
   }
 
+  /**
+   * Creates a default Basic Information Cluster Server.
+   *
+   * @param deviceName - The name of the device.
+   * @param serialNumber - The serial number of the device.
+   * @param vendorId - The vendor ID of the device.
+   * @param vendorName - The vendor name of the device.
+   * @param productId - The product ID of the device.
+   * @param productName - The product name of the device.
+   * @param softwareVersion - The software version of the device. Default is 1.
+   * @param softwareVersionString - The software version string of the device. Default is 'v.1.0.0'.
+   * @param hardwareVersion - The hardware version of the device. Default is 1.
+   * @param hardwareVersionString - The hardware version string of the device. Default is 'v.1.0.0'.
+   */
   createDefaultBasicInformationClusterServer(
     deviceName: string,
     serialNumber: string,
@@ -651,6 +664,19 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a default BridgedDeviceBasicInformationClusterServer.
+   *
+   * @param deviceName - The name of the device.
+   * @param serialNumber - The serial number of the device.
+   * @param vendorId - The vendor ID of the device.
+   * @param vendorName - The name of the vendor.
+   * @param productName - The name of the product.
+   * @param softwareVersion - The software version of the device. Default is 1.
+   * @param softwareVersionString - The software version string of the device. Default is 'v.1.0.0'.
+   * @param hardwareVersion - The hardware version of the device. Default is 1.
+   * @param hardwareVersionString - The hardware version string of the device. Default is 'v.1.0.0'.
+   */
   createDefaultBridgedDeviceBasicInformationClusterServer(
     deviceName: string,
     serialNumber: string,
@@ -687,6 +713,14 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a default Electrical Measurement Cluster Server.
+   *
+   * @param voltage - The RMS voltage value.
+   * @param current - The RMS current value.
+   * @param power - The active power value.
+   * @param consumption - The total active power consumption value.
+   */
   createDefaultElectricalMeasurementClusterServer(voltage = 0, current = 0, power = 0, consumption = 0) {
     this.addClusterServer(
       ClusterServer(
@@ -703,6 +737,14 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a default Thread Network Diagnostics Cluster server.
+   *
+   * @remarks
+   * This method adds a cluster server used only to give the networkName to Eve app.
+   *
+   * @returns void
+   */
   createDefaultThreadNetworkDiagnosticsClusterServer() {
     this.addClusterServer(
       ClusterServer(
@@ -729,6 +771,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         },
         {
           resetCounts: async (data) => {
+            // eslint-disable-next-line no-console
             console.log('resetCounts');
             await this.commandHandler.executeHandler('resetCounts', data);
           },
@@ -738,6 +781,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a default OnOff cluster server.
+   *
+   * @param onOff - The initial state of the OnOff cluster (default: false).
+   */
   createDefaultOnOffClusterServer(onOff = false) {
     this.addClusterServer(
       ClusterServer(
@@ -747,15 +795,18 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         },
         {
           on: async (data) => {
-            console.log('*on');
+            // eslint-disable-next-line no-console
+            console.log('on');
             await this.commandHandler.executeHandler('on', data);
           },
           off: async (data) => {
-            console.log('*off');
+            // eslint-disable-next-line no-console
+            console.log('off');
             await this.commandHandler.executeHandler('off', data);
           },
           toggle: async (data) => {
-            console.log('*toggle');
+            // eslint-disable-next-line no-console
+            console.log('toggle');
             await this.commandHandler.executeHandler('toggle', data);
           },
         },
@@ -764,6 +815,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a default window covering cluster server.
+   *
+   * @param positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0.
+   */
   createDefaultWindowCoveringClusterServer(positionPercent100ths?: number) {
     this.addClusterServer(
       ClusterServer(
@@ -787,20 +843,24 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         },
         {
           upOrOpen: async (data) => {
-            console.log('*upOrOpen');
+            // eslint-disable-next-line no-console
+            console.log('upOrOpen');
             await this.commandHandler.executeHandler('upOrOpen', data);
           },
           downOrClose: async (data) => {
-            console.log('*downOrClose');
+            // eslint-disable-next-line no-console
+            console.log('downOrClose');
             await this.commandHandler.executeHandler('downOrClose', data);
           },
           stopMotion: async (data) => {
-            console.log('*stopMotion');
+            // eslint-disable-next-line no-console
+            console.log('stopMotion');
             await this.commandHandler.executeHandler('stopMotion', data);
           },
           goToLiftPercentage: async (data) => {
+            // eslint-disable-next-line no-console
             console.log(
-              `*goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
+              `goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
                 `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()}`,
             );
             await this.commandHandler.executeHandler('goToLiftPercentage', data);
@@ -811,6 +871,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a default occupancy sensing cluster server.
+   *
+   * @param occupied - A boolean indicating whether the occupancy is occupied or not. Default is false.
+   */
   createDefaultOccupancySensingClusterServer(occupied = false) {
     this.addClusterServer(
       ClusterServer(
@@ -826,6 +891,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a default Illuminance Measurement Cluster Server.
+   *
+   * @param measuredValue - The measured value of illuminance.
+   */
   createDefaultIlluminanceMeasurementClusterServer(measuredValue: number = 0) {
     this.addClusterServer(
       ClusterServer(
@@ -842,6 +912,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a default temperature measurement cluster server.
+   *
+   * @param measuredValue - The measured value of the temperature.
+   */
   createDefaultTemperatureMeasurementClusterServer(measuredValue: number = 0) {
     this.addClusterServer(
       ClusterServer(
@@ -858,6 +933,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a default RelativeHumidityMeasurementCluster server.
+   *
+   * @param measuredValue - The measured value of the relative humidity.
+   */
   createDefaultRelativeHumidityMeasurementClusterServer(measuredValue: number = 0) {
     this.addClusterServer(
       ClusterServer(
@@ -874,7 +954,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
-  createDefaultPressureMeasurementClusterServer(measuredValue: number = 0) {
+  /**
+   * Creates a default Pressure Measurement Cluster Server.
+   *
+   * @param measuredValue - The measured value for the pressure.
+   */
+  createDefaultPressureMeasurementClusterServer(measuredValue: number = 1000) {
     this.addClusterServer(
       ClusterServer(
         PressureMeasurementCluster,
@@ -890,6 +975,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a default boolean state cluster server.
+   *
+   * @param contact - Optional boolean value indicating the contact state. Defaults to `true` if not provided.
+   */
   createDefaultBooleanStateClusterServer(contact?: boolean) {
     this.addClusterServer(
       ClusterServer(
@@ -905,7 +995,22 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
-  createDefaultPowerSourceReplaceableBatteryClusterServer(batPercentRemaining: number = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage: number = 1500) {
+  /**
+   * Creates a default power source replaceable battery cluster server.
+   *
+   * @param batPercentRemaining - The remaining battery percentage (default: 100).
+   * @param batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
+   * @param batVoltage - The battery voltage (default: 1500).
+   * @param batReplacementDescription - The battery replacement description (default: 'Battery type').
+   * @param batQuantity - The battery quantity (default: 1).
+   */
+  createDefaultPowerSourceReplaceableBatteryClusterServer(
+    batPercentRemaining: number = 100,
+    batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
+    batVoltage: number = 1500,
+    batReplacementDescription: string = 'Battery type',
+    batQuantity: number = 1,
+  ) {
     this.addClusterServer(
       ClusterServer(
         PowerSourceCluster.with(PowerSource.Feature.Battery, PowerSource.Feature.Replaceable),
@@ -919,8 +1024,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           batReplacementNeeded: false,
           batReplaceability: PowerSource.BatReplaceability.UserReplaceable,
           activeBatFaults: undefined,
-          batReplacementDescription: 'AA battery',
-          batQuantity: 1,
+          batReplacementDescription,
+          batQuantity,
         },
         {},
         {},
@@ -928,6 +1033,13 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a default power source rechargeable battery cluster server.
+   *
+   * @param batPercentRemaining - The remaining battery percentage (default: 100).
+   * @param batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
+   * @param batVoltage - The battery voltage (default: 1500).
+   */
   createDefaultPowerSourceRechargableBatteryClusterServer(batPercentRemaining: number = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage: number = 1500) {
     this.addClusterServer(
       ClusterServer(
@@ -952,6 +1064,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a default power source wired cluster server.
+   *
+   * @param wiredCurrentType - The type of wired current (default: PowerSource.WiredCurrentType.Ac)
+   */
   createDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerSource.WiredCurrentType = PowerSource.WiredCurrentType.Ac) {
     this.addClusterServer(
       ClusterServer(
@@ -968,6 +1085,16 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a default power source configuration cluster server.
+   *
+   * @remarks
+   * The endpoint at this time is only known for Accessory Platforms.
+   * Don't use it in Dynamic Platforms.
+   *
+   *
+   * @param endpointNumber - The endpoint number where to find the PowerSourceCluster.
+   */
   createDefaultPowerSourceConfigurationClusterServer(endpointNumber: number) {
     this.addClusterServer(
       ClusterServer(
@@ -981,12 +1108,37 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
-  createDefaultAirQualityClusterServer() {
+  /**
+   * Creates a default air quality cluster server.
+   *
+   * @param airQuality The air quality type. Defaults to `AirQuality.AirQualityType.Unknown`.
+   */
+  createDefaultAirQualityClusterServer(airQuality = AirQuality.AirQualityType.Unknown) {
     this.addClusterServer(
       ClusterServer(
         AirQualityCluster.with(AirQuality.Feature.FairAirQuality, AirQuality.Feature.ModerateAirQuality, AirQuality.Feature.VeryPoorAirQuality),
         {
-          airQuality: AirQuality.AirQualityType.Good,
+          airQuality,
+        },
+        {},
+        {},
+      ),
+    );
+  }
+
+  /**
+   * Creates a default TVOC measurement cluster server.
+   *
+   * @param measuredValue - The measured value for TVOC.
+   */
+  createDefaultTvocMeasurementClusterServer(measuredValue: number = 0) {
+    this.addClusterServer(
+      ClusterServer(
+        TvocMeasurementCluster.with(TvocMeasurement.Feature.NumericMeasurement),
+        {
+          measuredValue,
+          minMeasuredValue: null,
+          maxMeasuredValue: null,
         },
         {},
         {},

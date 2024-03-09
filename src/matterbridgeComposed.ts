@@ -27,6 +27,10 @@
 import { CommissioningServer, CommissioningServerOptions } from '@project-chip/matter-node.js';
 import { Device } from '@project-chip/matter-node.js/device';
 
+/**
+ * @deprecated This class is deprecated and will be removed in future versions.
+ * Use the MatterbridgeDevice class instead.
+ */
 export class MatterbridgeComposed extends CommissioningServer {
   /**
    * Create a new Aggregator instance and optionally directly add devices to it. If this is used the devices must

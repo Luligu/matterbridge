@@ -38,6 +38,7 @@ export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
 export * from './AirQualityCluster.js';
 export * from './ColorControlServer.js';
+export * from './TvocCluster.js';
 
 async function main() {
   await Matterbridge.loadInstance();
