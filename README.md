@@ -102,7 +102,7 @@ Matterbridge can run as many plugins as you want.
 
 [See the plugin homepage here](https://github.com/Luligu/matterbridge-example-dynamic-platform)
 
-### Example plugins to show the usage of history
+### Example plugins to show the usage of history in matter
 
 [Contact plugin with history](https://github.com/Luligu/matterbridge-eve-door)
 
@@ -145,12 +145,16 @@ matterbridge -enable .\
 
 ## How to create your plugin
 
-The easiest way is to clone 
+The easiest way is to clone:
 
-https://github.com/Luligu/matterbridge-example-accessory-platform if you want to create an Accessory Platform Plugin.
+- https://github.com/Luligu/matterbridge-example-accessory-platform if you want to create an Accessory Platform Plugin.
 
-or
 
-https://github.com/Luligu/matterbridge-example-dynamic-platform if you want to create a Dynamic Platform Plugin.
+- https://github.com/Luligu/matterbridge-example-dynamic-platform if you want to create a Dynamic Platform Plugin.
 
 Then change the name, version, description and author in the package.json.
+
+Add your plugin logic in platform.ts:
+- override async onStart(reason?: string) is where you have to create your MatterbridgeDevice and add all needed clusters and command handlers.
+- override async onShutdown(reason?: string) is where you have to eventually cleanup some resources.
+- override async onConfigure() is where you can configure or initialize your device. The method is called when the platform is already commissioned.
