@@ -62,8 +62,8 @@
   "dependencies": {
     "@project-chip/matter-node.js": "^0.7.5",
     "express": "^4.18.3",
-    "matter-history": "^1.0.8",
-    "node-ansi-logger": "^1.9.1",
+    "matter-history": "^1.0.9",
+    "node-ansi-logger": "^1.9.2",
     "node-persist-manager": "^1.0.4"
   }
 }
