@@ -125,22 +125,22 @@ npm install
 
 Then add the plugin to Matterbridge
 ```
-matterbrige -add .\
+matterbridge -add .\
 ```
 
 If you want to remove the plugin from Matterbridge
 ```
-matterbrige -remove .\
+matterbridge -remove .\
 ```
 
 If you want to disable the plugin
 ```
-matterbrige -disable .\
+matterbridge -disable .\
 ```
 
 If you want to enable the plugin
 ```
-matterbrige -enable .\
+matterbridge -enable .\
 ```
 
 ## How to create your plugin
