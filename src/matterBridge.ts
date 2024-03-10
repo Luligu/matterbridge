@@ -50,6 +50,8 @@ import { logEndpoint } from '@project-chip/matter-node.js/device';
 // Define an interface of common elements from MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform
 interface MatterbridgePlatform {
   onStart(reason?: string): Promise<this>;
+  onMatterStarted(): Promise<this>;
+  onConfigure(): Promise<this>;
   onShutdown(reason?: string): Promise<this>;
   matterbridge: Matterbridge;
   log: AnsiLogger;
@@ -270,6 +272,8 @@ export class Matterbridge {
 
     // Start the storage (we need it now for frontend and later for matterbridge)
     await this.startStorage('json', path.join(this.matterbridgeDirectory, 'matterbridge.json'));
+    this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
+    this.matterbridgeContext = this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
 
     // Initialize frontend
     await this.initializeFrontend(getIntParameter('frontend'));
@@ -630,7 +634,7 @@ export class Matterbridge {
       // Plugins are loaded by loadPlugin on startup and plugin.loaded is set to true
       // Plugins are started by callback when Matterbridge is commissioned and plugin.started is set to true
       this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
-      this.matterbridgeContext = this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggragator');
+      this.matterbridgeContext = this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
       this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
       this.commissioningServer = this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
       this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
@@ -641,6 +645,9 @@ export class Matterbridge {
       await this.matterServer.addCommissioningServer(this.commissioningServer, { uniqueStorageKey: 'Matterbridge' });
       this.log.debug('Starting matter server');
       await this.startMatterServer();
+      this.registeredPlugins.forEach(async (plugin) => {
+        if (plugin.platform) await plugin.platform.onMatterStarted();
+      });
       this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, 'Matterbridge');
     }
 
@@ -731,7 +738,8 @@ export class Matterbridge {
         });
         this.log.debug('Starting matter server');
         await this.startMatterServer();
-        this.registeredPlugins.forEach((plugin) => {
+        this.registeredPlugins.forEach(async (plugin) => {
+          if (plugin.platform) await plugin.platform.onMatterStarted();
           this.showCommissioningQRCode(plugin.commissioningServer, plugin.storageContext, plugin.name);
         });
         Logger.defaultLogLevel = Level.DEBUG;
@@ -967,6 +975,9 @@ export class Matterbridge {
               });
               Logger.defaultLogLevel = Level.DEBUG;
             }
+            this.registeredPlugins.forEach(async (plugin) => {
+              if (plugin.name === name && plugin.platform) plugin.platform.onConfigure();
+            });
             //logEndpoint(commissioningServer.getRootEndpoint());
           }, 2000);
         }
@@ -1167,6 +1178,8 @@ export class Matterbridge {
     // Endpoint to provide QR pairing code
     this.app.get('/api/qr-code', (req, res) => {
       this.log.debug('The frontend sent /api/qr-code');
+      if (!this.matterbridgeContext)
+        this.matterbridgeContext = this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
       try {
         const qrData = { qrPairingCode: this.matterbridgeContext.get('qrPairingCode'), manualPairingCode: this.matterbridgeContext.get('manualPairingCode') };
         res.json(qrData);

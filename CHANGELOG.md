@@ -4,9 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [1.1.3] - 2024-03-10
 
+### Added
+
+- [onMatterStarted]: onMatterStarted() is called after matter server started. 
+- [onConfigure]: onConfigure() is called after the platform controller is commissioned. 
+
 ### Changed
 
-- [dependencies]: Update dependencies.
+- [dependencies]: Updated dependencies.
 
 ## [1.1.2] - 2024-03-08
 
