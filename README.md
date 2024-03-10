@@ -27,7 +27,7 @@ any other ecosystem supporting Matter.
 
 The project is build on top of https://github.com/project-chip/matter.js. 
 
-A special thank to Apollon77 for is incredible work.
+A special thank to Apollon77 for his incredible work.
 
 ## Installation
 
