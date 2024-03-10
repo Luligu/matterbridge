@@ -165,7 +165,10 @@ export class Matterbridge {
       Matterbridge.instance = new Matterbridge();
       await Matterbridge.instance.initialize();
     } else {
-      throw new Error('Matterbridge instance already exists');
+      console.error('Matterbridge instance already exists');
+      console.error('Matterbridge instance already exists');
+      console.error('Matterbridge instance already exists');
+      //throw new Error('Matterbridge instance already exists');
     }
     return Matterbridge.instance;
   }

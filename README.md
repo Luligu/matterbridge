@@ -129,24 +129,34 @@ To install i.e. https://github.com/Luligu/matterbridge-example-accessory-platfor
 git clone https://github.com/Luligu/matterbridge-example-accessory-platform
 cd matterbridge-example-accessory-platform
 npm install
+npm link matterbridge
+npm run build
 ```
-
 Then add the plugin to Matterbridge
 ```
 matterbridge -add .\
 ```
 
-If you want to remove the plugin from Matterbridge
+### How to add a plugin to Matterbridge
+
+```
+matterbridge -add .\
+```
+
+### How to remove a plugin from Matterbridge
+
 ```
 matterbridge -remove .\
 ```
 
-If you want to disable the plugin
+### How to disable a registerd plugin 
+
 ```
 matterbridge -disable .\
 ```
 
-If you want to enable the plugin
+### How to enable a registerd plugin 
+
 ```
 matterbridge -enable .\
 ```
