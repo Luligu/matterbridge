@@ -99,7 +99,7 @@ function Devices() {
         <table>
           <thead>
             <tr>
-              <th className="table-header" colSpan="2">Cluster servers of {selectedPluginName==='none'?'(select a device)':selectedPluginName}</th>
+              <th className="table-header" colSpan="2">{selectedRow>=0?'Cluster servers of '+sortedDevices[selectedRow].name:'(select a device)'}</th>
               <th className="table-header" colSpan="3">Attributes</th>
             </tr>
             <tr>
