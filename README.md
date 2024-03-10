@@ -27,6 +27,10 @@ Follow these steps to install Matterbridge:
 ```
 npm install -g matterbridge
 ```
+or
+```
+sudo npm install -g matterbridge
+```
 
 Test the installation with:
 ```
@@ -63,7 +67,7 @@ matterbridge -help
 
 Matterbridge has a frontend (currently under development) available http://localhost:3000
 
-You can change the port by adding the frontend parameter when you launch it.
+You can change the default port by adding the frontend parameter when you launch it.
 Here's how to specify a different port number:
 ```
 matterbridge -bridge -frontend [port number]
@@ -109,3 +113,34 @@ Matterbridge can run as many plugins as you want.
 [Weather plugin with history](https://github.com/Luligu/matterbridge-eve-weather)
 
 [Room plugin with history](https://github.com/Luligu/matterbridge-eve-room)
+
+## How to install a plugin
+
+To install i.e. https://github.com/Luligu/matterbridge-example-accessory-platform
+```
+git clone https://github.com/Luligu/matterbridge-example-accessory-platform
+cd matterbridge-example-accessory-platform
+npm install
+```
+
+Then add the plugin to Matterbridge
+```
+matterbrige -add .\
+```
+
+If you want to remove the plugin from Matterbridge
+```
+matterbrige -remove .\
+```
+
+If you want to disable the plugin
+```
+matterbrige -disable .\
+```
+
+If you want to enable the plugin
+```
+matterbrige -enable .\
+```
+
+## How to create your plugin
