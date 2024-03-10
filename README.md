@@ -144,3 +144,13 @@ matterbridge -enable .\
 ```
 
 ## How to create your plugin
+
+The easiest way is to clone 
+
+https://github.com/Luligu/matterbridge-example-accessory-platform if you want to create an Accessory Platform Plugin.
+
+or
+
+https://github.com/Luligu/matterbridge-example-dynamic-platform if you want to create a Dynamic Platform Plugin.
+
+Then change the name, version, description and author in the package.json.
