@@ -7,6 +7,7 @@ function Devices() {
   const [sortDirection, setSortDirection] = useState(undefined); // true for ascending, false for descending
   const [selectedRow, setSelectedRow] = useState(-1); // -1 no selection, 0 or greater for selected row
   const [selectedPluginName, setSelectedPluginName] = useState('none'); // -1 no selection, 0 or greater for selected row
+  const [selectedDeviceEndpoint, setSelectedDeviceEndpoint] = useState('none'); // -1 no selection, 0 or greater for selected row
   const [clusters, setClusters] = useState([]);
 
   useEffect(() => {
@@ -20,12 +21,12 @@ function Devices() {
 
   useEffect(() => {
     // Fetch Devices
-    fetch(`/api/devices_clusters/${selectedPluginName}`)
+    fetch(`/api/devices_clusters/${selectedPluginName}/${selectedDeviceEndpoint}`)
       .then(response => response.json())
       .then(data => setClusters(data))
       .catch(error => console.error('Error fetching devices_clusters:', error));
 
-  }, [selectedPluginName]);
+  }, [selectedDeviceEndpoint, selectedPluginName]);
   
   const handleSort = (column) => {
     if (sortColumn === column) {
@@ -40,12 +41,15 @@ function Devices() {
     if (selectedRow === row) {
       setSelectedRow(-1);
       setSelectedPluginName('none');
+      setSelectedDeviceEndpoint('none');
     } else {
       setSelectedRow(row);
       setSelectedPluginName(sortedDevices[row].pluginName);
+      setSelectedDeviceEndpoint(sortedDevices[row].endpoint);
     }
     console.log('Selected row:', row);
     console.log('Selected plugin:', sortedDevices[row].pluginName);
+    console.log('Selected endpoint:', sortedDevices[row].endpoint);
   };
 
   const sortedDevices = [...devices].sort((a, b) => {

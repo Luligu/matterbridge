@@ -1231,8 +1231,8 @@ export class Matterbridge {
     this.app.get('/api/devices_clusters/:selectedPluginName/:selectedDeviceEndpoint', (req, res) => {
       const selectedPluginName = req.params.selectedPluginName;
       const selectedDeviceEndpoint = req.params.selectedDeviceEndpoint;
-      this.log.debug('The frontend sent /api/devices_clusters', selectedPluginName, selectedDeviceEndpoint);
-      if (selectedPluginName === 'none' || selectedDeviceEndpoint === 'none') {
+      this.log.debug(`The frontend sent /api/devices_clusters plugin:${selectedPluginName} endpoint:${selectedDeviceEndpoint}`);
+      if (selectedPluginName === 'none' /* || selectedDeviceEndpoint === 'none'*/) {
         res.json([]);
         return;
       }
