@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * This file contains the entry point of Matterbridge.
  *
@@ -41,6 +40,8 @@ export * from './ColorControlServer.js';
 export * from './TvocCluster.js';
 
 async function main() {
+  // eslint-disable-next-line no-console
+  console.log('Loading Matterbridge instance');
   await Matterbridge.loadInstance();
 }
 

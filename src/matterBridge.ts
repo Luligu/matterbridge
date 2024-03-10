@@ -158,17 +158,18 @@ export class Matterbridge {
    * Loads an instance of the Matterbridge class.
    * If an instance already exists, an error will be thrown.
    * @returns The loaded instance of the Matterbridge class.
-   * @throws Error if an instance of Matterbridge already exists.
    */
-  static async loadInstance() {
+  static async loadInstance(cli = false) {
+    // eslint-disable-next-line no-console
+    console.error('loadInstance cli:', cli);
     if (!Matterbridge.instance) {
+      // eslint-disable-next-line no-console
+      console.error('Matterbridge instance does not exists');
       Matterbridge.instance = new Matterbridge();
-      await Matterbridge.instance.initialize();
+      if (cli) await Matterbridge.instance.initialize();
     } else {
+      // eslint-disable-next-line no-console
       console.error('Matterbridge instance already exists');
-      console.error('Matterbridge instance already exists');
-      console.error('Matterbridge instance already exists');
-      //throw new Error('Matterbridge instance already exists');
     }
     return Matterbridge.instance;
   }

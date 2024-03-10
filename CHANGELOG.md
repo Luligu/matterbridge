@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.4] - 2024-03-10
+
+### Changed
+
+- [cli]: Updated the loading from cli.
+
+
 ## [1.1.3] - 2024-03-10
 
 ### Added
