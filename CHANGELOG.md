@@ -13,6 +13,10 @@ All notable changes to this project will be documented in this file.
 
 - [dependencies]: Updated dependencies.
 
+### Fixed
+
+- [Plugin route]: Fixed the plugin device route in frontend.
+
 ## [1.1.2] - 2024-03-08
 
 ### Added
