@@ -175,10 +175,16 @@ Then change the name, version, description and author in the package.json.
 Add your plugin logic in platform.ts:
 
 ### onStart(reason?: string)
-The method onStart() is where you have to create your MatterbridgeDevice and add all needed clusters and command handlers. The method is called when Matterbridge load the plugin.
+The method onStart() is where you have to create your MatterbridgeDevice and add all needed clusters and command handlers. 
+
+The method is called when Matterbridge load the plugin.
 
 ### onConfigure()
-The method onConfigure() is where you can configure or initialize your device. The method is called when the platform is already commissioned.
+The method onConfigure() is where you can configure or initialize your device. 
+
+The method is called when the platform is commissioned.
 
 ### onShutdown(reason?: string)
-The method onShutdown() is where you have to eventually cleanup some resources. The method is called when Matterbridge is shutting down.
+The method onShutdown() is where you have to eventually cleanup some resources. 
+
+The method is called when Matterbridge is shutting down.
