@@ -1,4 +1,5 @@
-# Matterbridge
+[![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
+[![npm downloads](https://img.shields.io/npm/dt/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
 
 Matterbridge is a Matter.js plugin manager. 
 
@@ -27,7 +28,7 @@ npm install -g matterbridge
 
 Test the installation with:
 ```
-matterbridge
+matterbridge -bridge
 ```
 Now it is possible to open the frontend at the link provided (default: http://localhost:3000)
 
@@ -102,3 +103,7 @@ Matterbridge can run as many plugins as you want.
 [Motion plugin with history](https://github.com/Luligu/matterbridge-eve-motion)
 
 [Energy plugin with history](https://github.com/Luligu/matterbridge-eve-energy)
+
+[Weather plugin with history](https://github.com/Luligu/matterbridge-eve-weather)
+
+[Room plugin with history](https://github.com/Luligu/matterbridge-eve-room)

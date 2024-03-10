@@ -44,41 +44,6 @@ import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { logEndpoint } from '@project-chip/matter-node.js/device';
 
 /*
-2024-03-01 10:37:00.103 DEBUG InteractionServer    Read attribute from udp://fe80::1440:2ed8:12e9:abaa%9:53296 on session secure/13065: unknown(0x3)/0x39/0x11: unsupported path: Status=127      
-2024-03-01 10:37:00.100 DEBUG InteractionServer    Read attribute from udp://fe80::1440:2ed8:12e9:abaa%9:53296 on session secure/13065: unknown(0x3)/0x2f/0xc: unsupported path: Status=127       
-2024-03-01 10:37:00.235 DEBUG InteractionServer    Read attribute from udp://fe80::1440:2ed8:12e9:abaa%9:53296 on session secure/13065: unknown(0x2)/0x39/0x11: unsupported path: Status=127      
-2024-03-01 10:36:37.934 DEBUG InteractionServer    Read attribute from udp://fe80::1440:2ed8:12e9:abaa%9:53296 on session secure/13065: unknown(0x3)/0x2f/0xc: unsupported path: Status=127       
-2024-03-01 10:36:38.085 DEBUG InteractionServer    Read attribute from udp://fe80::1440:2ed8:12e9:abaa%9:53296 on session secure/13065: unknown(0x3)/0x39/0x11: unsupported path: Status=127      
-2024-03-01 11:18:09.605 DEBUG InteractionServer    
-Read attribute from udp://fe80::1440:2ed8:12e9:abaa%9:53296 on session secure/22668: MA-rootdevice(0x0)/unknown(0x2f)/0xf: unsupported path: Status=195
-2024-03-01 11:18:09.477 DEBUG InteractionServer    Read attribute from udp://fe80::1440:2ed8:12e9:abaa%9:53296 on session secure/22668: MA-rootdevice(0x0)/unknown(0x2f)/0xc: unsupported path: St
-
-2024-03-01 11:26:37.414 DEBUG InteractionServer    
-Read attribute from udp://fe80::1440:2ed8:12e9:abaa%9:53296 on session secure/50514: MA-rootdevice(0x0)/unknown(0x2f)/0xc: unsupported path: Status=195
-2024-03-01 11:26:37.981 DEBUG InteractionServer    
-Read attribute from udp://fe80::1440:2ed8:12e9:abaa%9:53296 on session secure/50514: MA-rootdevice(0x0)/unknown(0x2f)/0xf: unsupported path: Status=195
-
-2024-03-02 16:56:36.529 DEBUG CommissioningServer  No unique id found for endpoint on index 0 / device MA-aggregator - using index as unique identifier!
-2024-03-02 16:56:36.530 DEBUG CommissioningServer  Restored endpoint id 1 for endpoint with unique_7ceafd7c19bea5f3-index_0 / device MA-aggregator from storage
-2024-03-02 16:56:36.530 DEBUG CommissioningServer  Restored endpoint id 2 for endpoint with unique_7ceafd7c19bea5f3-index_0-unique_BridgedDevice1 0x01020564 / device MA-windowcovering from stora
-
-2024-03-08 13:42:47.547 DEBUG InteractionServer    
-Received read request from udp://fe80::1c57:1ab7:fc98:4c20%9:62577 on session secure/52121: attributes:unknown(0x2)/0x2f/0xfffd, events:none isFabricFiltered=true
-2024-03-08 13:42:47.547 DEBUG InteractionServer    
-Read attribute from udp://fe80::1c57:1ab7:fc98:4c20%9:62577 on session secure/52121: unknown(0x2)/0x2f/0xfffd: unsupported path: Status=127
-
-2024-03-08 13:42:47.410 DEBUG InteractionServer    
-Received read request from udp://fe80::1c57:1ab7:fc98:4c20%9:62577 on session secure/52121: attributes:unknown(0x2)/0x1d/0xfffa, events:none isFabricFiltered=true
-2024-03-08 13:42:47.410 DEBUG InteractionServer    
-Read attribute from udp://fe80::1c57:1ab7:fc98:4c20%9:62577 on session secure/52121: unknown(0x2)/0x1d/0xfffa: unsupported path: Status=127
-
-2024-03-08 13:52:48.894 DEBUG InteractionServer    
-Received read request from udp://fe80::1c57:1ab7:fc98:4c20%9:62577 on session secure/25044: attributes:MA-contactsensor(0x1)/BooleanState(0x45)/unknown(0xfe), events:none isFabricFiltered=true
-2024-03-08 13:52:48.895 DEBUG InteractionServer    
-Read attribute from udp://fe80::1c57:1ab7:fc98:4c20%9:62577 on session secure/25044: MA-contactsensor(0x1)/BooleanState(0x45)/unknown(0xfe): unsupported path: Status=134
-
-[15:26:27.965] [Matterbridge] Commissioning changed on fabric 1 for matterbridge-eve-room [  ]
-[15:26:27.966] [Matterbridge] Commissioning removed from fabric 1 for matterbridge-eve-room
 
 */
 
@@ -659,24 +624,23 @@ export class Matterbridge {
    */
   private async startMatterBridge(): Promise<void> {
     this.log.debug('Starting matterbridge in mode', this.bridgeMode);
-    await this.createMatterServer(this.storageManager);
+    this.createMatterServer(this.storageManager);
 
     if (this.bridgeMode === 'bridge') {
       // Plugins are loaded by loadPlugin on startup and plugin.loaded is set to true
       // Plugins are started by callback when Matterbridge is commissioned and plugin.started is set to true
-      this.log.debug('Creating commissioning server context for Matterbridge');
+      this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
       this.matterbridgeContext = this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggragator');
-      this.log.debug('Creating commissioning server for Matterbridge');
+      this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
       this.commissioningServer = this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
-      this.log.debug('Creating matter aggregator for matterbridge');
+      this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
       this.matterAggregator = this.createMatterAggregator(this.matterbridgeContext);
-      this.log.debug('Adding matterbridge aggregator to matterbridge commissioning server');
+      this.log.debug('Adding matterbridge aggregator to commissioning server');
       this.commissioningServer.addDevice(this.matterAggregator);
       this.log.debug('Adding matterbridge commissioning server to matter server');
       await this.matterServer.addCommissioningServer(this.commissioningServer, { uniqueStorageKey: 'Matterbridge' });
       this.log.debug('Starting matter server');
-      await this.matterServer.start();
-      this.log.debug('Started matter server');
+      await this.startMatterServer();
       this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, 'Matterbridge');
     }
 
@@ -766,9 +730,8 @@ export class Matterbridge {
           });
         });
         this.log.debug('Starting matter server');
-        await this.matterServer.start();
-        this.log.debug('Started matter server');
-        this.registeredPlugins.forEach(async (plugin) => {
+        await this.startMatterServer();
+        this.registeredPlugins.forEach((plugin) => {
           this.showCommissioningQRCode(plugin.commissioningServer, plugin.storageContext, plugin.name);
         });
         Logger.defaultLogLevel = Level.DEBUG;
@@ -776,6 +739,11 @@ export class Matterbridge {
       }, 1000);
       return;
     }
+  }
+
+  private async startMatterServer() {
+    await this.matterServer.start();
+    this.log.debug('Started matter server');
   }
 
   /**
@@ -1190,7 +1158,7 @@ export class Matterbridge {
    * @param port The port number to run the frontend server on. Default is 3000.
    */
   async initializeFrontend(port: number = 3000): Promise<void> {
-    this.log.debug(`Initializing the frontend on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${rs}`);
+    this.log.debug(`Initializing the frontend on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
     this.app = express();
 
     // Serve React build directory
@@ -1199,16 +1167,11 @@ export class Matterbridge {
     // Endpoint to provide QR pairing code
     this.app.get('/api/qr-code', (req, res) => {
       this.log.debug('The frontend sent /api/qr-code');
-      if (this.bridgeMode === 'childbridge') {
-        this.log.debug('qrPairingCode for /api/qr-code not available in childbridge mode');
-        res.json({});
-        return;
-      }
       try {
         const qrData = { qrPairingCode: this.matterbridgeContext.get('qrPairingCode'), manualPairingCode: this.matterbridgeContext.get('manualPairingCode') };
         res.json(qrData);
       } catch (error) {
-        this.log.error('qrPairingCode for /api/qr-code not found');
+        if (this.bridgeMode === 'bridge') this.log.error('qrPairingCode for /api/qr-code not found');
         res.json({});
       }
     });
@@ -1252,10 +1215,11 @@ export class Matterbridge {
     });
 
     // Endpoint to provide the cluster servers of the devices
-    this.app.get('/api/devices_clusters/:selectedPluginName', (req, res) => {
+    this.app.get('/api/devices_clusters/:selectedPluginName/:selectedDeviceEndpoint', (req, res) => {
       const selectedPluginName = req.params.selectedPluginName;
-      this.log.debug('The frontend sent /api/devices_clusters', selectedPluginName);
-      if (selectedPluginName === 'none') {
+      const selectedDeviceEndpoint = req.params.selectedDeviceEndpoint;
+      this.log.debug('The frontend sent /api/devices_clusters', selectedPluginName, selectedDeviceEndpoint);
+      if (selectedPluginName === 'none' || selectedDeviceEndpoint === 'none') {
         res.json([]);
         return;
       }
@@ -1297,10 +1261,10 @@ export class Matterbridge {
     });
 
     this.app.listen(port, () => {
-      this.log.info(`The frontend is running on ${UNDERLINE}http://localhost:${port}${rs}`);
+      this.log.info(`The frontend is running on ${UNDERLINE}http://localhost:${port}${UNDERLINEOFF}${rs}`);
     });
 
-    this.log.debug(`Frontend initialized on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${rs}`);
+    this.log.debug(`Frontend initialized on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
   }
 
   /**
@@ -1331,7 +1295,28 @@ export class Matterbridge {
     return attributes;
   }
 }
+/*
+TO IMPLEMENT
+import * as WebSocket from 'ws';
 
+const wss = new WebSocket.Server({ port: 8080 });
+
+wss.on('connection', ws => {
+  ws.on('message', message => {
+    console.log(`Received message => ${message}`)
+  });
+
+  // Send a message to the frontend
+  ws.send('Hello from backend!');
+});
+
+const ws = new WebSocket('ws://localhost:8080');
+
+ws.onmessage = (event) => {
+  console.log(`Received message => ${event.data}`);
+};
+
+*/
 /*
 npx create-react-app matterbridge-frontend
 cd matterbridge-frontend
