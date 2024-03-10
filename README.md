@@ -177,6 +177,8 @@ Add your plugin logic in platform.ts:
 ### onStart(reason?: string)
 The method onStart() is where you have to create your MatterbridgeDevice and add all needed clusters and command handlers. 
 
+The MatterbridgeDevice class has the create cluster methods already done and all command handlers needed (see plugin examples).
+
 The method is called when Matterbridge load the plugin.
 
 ### onConfigure()
