@@ -76,7 +76,7 @@ export class MatterbridgeDynamicPlatform {
    * It is called after matter server started.
    */
   async onMatterStarted() {
-    this.log.debug('The plugin can override onMatterStarted.');
+    this.log.debug("The plugin doesn't override onMatterStarted.");
   }
 
   /**
@@ -85,7 +85,7 @@ export class MatterbridgeDynamicPlatform {
    * Use this method to perform any configuration of your devices.
    */
   async onConfigure() {
-    this.log.debug('The plugin can override onConfigure.');
+    this.log.debug("The plugin doesn't override onConfigure.");
   }
 
   /**

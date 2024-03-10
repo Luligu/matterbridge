@@ -155,6 +155,12 @@ The easiest way is to clone:
 Then change the name, version, description and author in the package.json.
 
 Add your plugin logic in platform.ts:
-- override async onStart(reason?: string) is where you have to create your MatterbridgeDevice and add all needed clusters and command handlers.
-- override async onShutdown(reason?: string) is where you have to eventually cleanup some resources.
-- override async onConfigure() is where you can configure or initialize your device. The method is called when the platform is already commissioned.
+
+### onStart()
+The method onStart() is where you have to create your MatterbridgeDevice and add all needed clusters and command handlers.
+
+### onConfigure()
+The method onConfigure() is where you can configure or initialize your device. The method is called when the platform is already commissioned.
+
+### onShutdown()
+The method onShutdown() is where you have to eventually cleanup some resources. The method is called when Matterbridge is shutting down.
