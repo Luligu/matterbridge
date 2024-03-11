@@ -195,6 +195,7 @@ export class Matterbridge {
       - bridge:                start Matterbridge in bridge mode
       - childbridge:           start Matterbridge in childbridge mode
       - frontend [port]:       start the frontend on the given port (default 3000)
+      - debug:                 enable debug mode (default false)
       - list:                  list the registered plugins
       - add [plugin path]:     register the plugin
       - remove [plugin path]:  remove the plugin
@@ -204,6 +205,7 @@ export class Matterbridge {
     }
 
     // set Matterbridge logger
+    if (hasParameter('debug')) this.debugEnabled = true;
     this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled });
     this.log.info('Matterbridge is running...');
 
@@ -217,7 +219,7 @@ export class Matterbridge {
     this.registerSignalHandlers();
 
     // set matter.js logger level and format
-    Logger.defaultLogLevel = Level.DEBUG;
+    Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
     Logger.format = Format.ANSI;
 
     // Initialize NodeStorage
@@ -330,7 +332,10 @@ export class Matterbridge {
       this.log.debug(`Imported plugin ${plg}${plugin?.name}${db} from ${pluginUrl.href}`);
       // Call the default export function of the plugin, passing this MatterBridge instance
       if (pluginInstance.default) {
-        const platform: MatterbridgePlatform = pluginInstance.default(this, new AnsiLogger({ logName: packageJson.description, logTimestampFormat: TimestampFormat.TIME_MILLIS }));
+        const platform: MatterbridgePlatform = pluginInstance.default(
+          this,
+          new AnsiLogger({ logName: packageJson.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled }),
+        );
         platform.name = packageJson.name;
         if (mode === 'load') {
           this.log.info(`Plugin ${plg}${plugin?.name}${nf} type ${GREEN}${platform.type}${nf} loaded (entrypoint ${UNDERLINE}${pluginPath}${UNDERLINEOFF})`);
@@ -422,7 +427,7 @@ export class Matterbridge {
   private async cleanup(message: string) {
     if (!this.hasCleanupStarted) {
       this.hasCleanupStarted = true;
-      this.log.debug(message);
+      this.log.info(message);
 
       // Callint the shutdown functions with a reason
       this.registeredPlugins.forEach((plugin) => {
@@ -458,7 +463,7 @@ export class Matterbridge {
 
         //await this.context?.set<RegisteredDevice[]>('plugins', this.registeredDevices);
 
-        this.log.debug('Cleanup completed.');
+        this.log.info('Cleanup completed.');
         process.exit(0);
       }, 2 * 1000);
     }
@@ -747,7 +752,7 @@ export class Matterbridge {
           if (plugin.platform) await plugin.platform.onMatterStarted();
           this.showCommissioningQRCode(plugin.commissioningServer, plugin.storageContext, plugin.name);
         });
-        Logger.defaultLogLevel = Level.DEBUG;
+        Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
         clearInterval(startMatterInterval);
       }, 1000);
       return;
@@ -971,7 +976,7 @@ export class Matterbridge {
                   this.log.error(`***Platform not found for plugin ${plg}${plugin.name}${er}`);
                 }
               });
-              Logger.defaultLogLevel = Level.DEBUG;
+              Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
             }
             if (this.bridgeMode === 'childbridge') {
               //Logger.defaultLogLevel = Level.INFO;
@@ -988,7 +993,7 @@ export class Matterbridge {
                 if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
                 registeredDevice.added = true;
               });
-              Logger.defaultLogLevel = Level.DEBUG;
+              Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
             }
             this.registeredPlugins.forEach(async (plugin) => {
               if (plugin.name === name && plugin.platform) plugin.platform.onConfigure();

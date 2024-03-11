@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.5] - 2024-03-11
+
+### Added
+
+- [debug]: Added public property enableDebug to Matterbridge. 
+- [debug]: Added parameter -debug to the command line. 
+
+### Fixed
+
+- [plugin]: Fixed the plugin.paired and plugin.commissioned in bridge mode.
+
 ## [1.1.4] - 2024-03-10
 
 ### Changed
