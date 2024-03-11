@@ -32,11 +32,14 @@ A special thank to Apollon77 for his incredible work.
 ## Installation
 
 Follow these steps to install Matterbridge:
-```
+
+on Windows
+``` powershell
 npm install -g matterbridge
 ```
-or if you don't have the necessary permissions
-```
+
+on Linux (you need the necessary permissions)
+``` bash
 sudo npm install -g matterbridge
 ```
 
@@ -128,15 +131,15 @@ To install i.e. https://github.com/Luligu/matterbridge-example-accessory-platfor
 
 on Windows
 
-```powershell
+``` powershell
 git clone https://github.com/Luligu/matterbridge-example-accessory-platform
 cd matterbridge-example-accessory-platform
 npm install
 ```
 
-or on Linux
+on Linux
 
-```bash
+```  bash
 git clone https://github.com/Luligu/matterbridge-example-accessory-platform
 cd matterbridge-example-accessory-platform
 sudo npm install
