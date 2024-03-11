@@ -208,10 +208,14 @@ export class Matterbridge {
     // set Matterbridge logger
     if (hasParameter('debug')) this.debugEnabled = true;
     this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled });
-    this.log.info('Matterbridge is running...');
+    this.log.debug('Matterbridge is starting...');
 
     // log system info and create .matterbridge directory
     await this.logNodeAndSystemInfo();
+    this.log.info(
+      // eslint-disable-next-line max-len
+      `Matterbridge version ${this.matterbridgeVersion} running on ${this.systemInformation.osType} ${this.systemInformation.osRelease} ${this.systemInformation.osPlatform} ${this.systemInformation.osArch}`,
+    );
 
     // check node version and throw error
     requireMinNodeVersion(18);
@@ -948,7 +952,7 @@ export class Matterbridge {
         const info = commissioningServer.getActiveSessionInformation(fabricIndex);
         this.log.debug(`***Active sessions changed on fabric ${fabricIndex} for ${plg}${name}${nf}`, debugStringify(info));
         if (info && info[0]?.isPeerActive === true && info[0]?.secure === true && info[0]?.numberOfActiveSubscriptions >= 1) {
-          this.log.info(`***Controller connected to ${plg}${name}${nf} ready to start...`);
+          this.log.info(`***Controller connected to ${plg}${name}${nf}`);
           if (this.bridgeMode === 'bridge') {
             this.registeredPlugins.forEach((plugin) => {
               if (plugin.enabled) plugin.connected = true;
