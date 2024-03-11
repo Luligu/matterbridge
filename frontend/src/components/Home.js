@@ -122,10 +122,16 @@ function Home() {
                 <td className="table-content">
                   <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', gap: '5px' }}>
                     <StatusIndicator status={plugin.enabled}/>
-                    <StatusIndicator status={plugin.loaded} enabledText = 'L'/>
-                    <StatusIndicator status={plugin.started} enabledText = 'S'/>
-                    <StatusIndicator status={plugin.paired} enabledText = 'P'/>
-                    <StatusIndicator status={plugin.connected} enabledText = 'C'/>
+                    {plugin.loaded && plugin.started && plugin.paired && plugin.connected ? 
+                      <>
+                        <StatusIndicator status={true} enabledText = 'Running'/>
+                      </> : 
+                      <>
+                        <StatusIndicator status={plugin.loaded} enabledText='Loaded'/>
+                        <StatusIndicator status={plugin.started} enabledText='Started'/>
+                        <StatusIndicator status={plugin.paired} enabledText='Paired'/>
+                        <StatusIndicator status={plugin.connected} enabledText='Connected'/>
+                      </>}
                   </div> 
                 </td>
               </tr>
