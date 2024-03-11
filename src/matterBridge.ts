@@ -130,13 +130,14 @@ export class Matterbridge {
   public matterbridgeDirectory!: string;
 
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
+  public debugEnabled = false;
 
   private log!: AnsiLogger;
   private hasCleanupStarted = false;
   private registeredPlugins: RegisteredPlugin[] = [];
   private registeredDevices: RegisteredDevice[] = [];
-  private nodeStorage: NodeStorageManager | undefined = undefined;
-  private nodeContext: NodeStorage | undefined = undefined;
+  private nodeStorage: NodeStorageManager | undefined;
+  private nodeContext: NodeStorage | undefined;
   private app!: express.Express;
 
   private storageManager!: StorageManager;
@@ -203,7 +204,7 @@ export class Matterbridge {
     }
 
     // set Matterbridge logger
-    this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS });
+    this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled });
     this.log.info('Matterbridge is running...');
 
     // log system info and create .matterbridge directory
@@ -864,6 +865,11 @@ export class Matterbridge {
       this.log.debug(`Pairing code\n\n${QrCode.encode(qrPairingCode)}\nManual pairing code: ${manualPairingCode}\n`);
     } else {
       this.log.info(`***The commissioning server for ${plg}${name}${nf} is already commissioned. Waiting for controllers to connect ...`);
+      if (this.bridgeMode === 'bridge') {
+        this.registeredPlugins.forEach((plugin) => {
+          if (plugin.enabled) plugin.paired = true;
+        });
+      }
       if (this.bridgeMode === 'childbridge') {
         const plugin = this.findPlugin(name);
         if (plugin) plugin.paired = true;
@@ -937,6 +943,11 @@ export class Matterbridge {
         this.log.debug(`***Active sessions changed on fabric ${fabricIndex} for ${plg}${name}${nf}`, debugStringify(info));
         if (info && info[0]?.isPeerActive === true && info[0]?.secure === true && info[0]?.numberOfActiveSubscriptions >= 1) {
           this.log.info(`***Controller connected to ${plg}${name}${nf} ready to start...`);
+          if (this.bridgeMode === 'bridge') {
+            this.registeredPlugins.forEach((plugin) => {
+              if (plugin.enabled) plugin.connected = true;
+            });
+          }
           if (this.bridgeMode === 'childbridge') {
             const plugin = this.findPlugin(name);
             if (plugin) {

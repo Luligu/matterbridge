@@ -130,6 +130,13 @@ git clone https://github.com/Luligu/matterbridge-example-accessory-platform
 cd matterbridge-example-accessory-platform
 npm install
 ```
+or
+```
+git clone https://github.com/Luligu/matterbridge-example-accessory-platform
+cd matterbridge-example-accessory-platform
+sudo npm install
+```
+
 Then add the plugin to Matterbridge
 ```
 matterbridge -add .\
