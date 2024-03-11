@@ -294,8 +294,9 @@ export class Matterbridge {
       this.bridgeMode = 'childbridge';
       this.registeredPlugins.forEach(async (plugin) => {
         if (!plugin.enabled) return;
-        this.log.info(`Loading registered plugin ${plg}${plugin.name}${nf} type ${GREEN}${plugin.type}${nf}`);
+        this.log.info(`Loading plugin ${plg}${plugin.name}${nf} type ${GREEN}${plugin.type}${nf}`);
         await this.loadPlugin(plugin.path, 'load');
+        this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${GREEN}${plugin.type}${nf}`);
       });
       await this.startMatterBridge();
     }
@@ -303,8 +304,9 @@ export class Matterbridge {
       this.bridgeMode = 'bridge';
       this.registeredPlugins.forEach(async (plugin) => {
         if (!plugin.enabled) return;
-        this.log.info(`Loading registered plugin ${plg}${plugin.name}${nf} type ${GREEN}${plugin.type}${nf}`);
+        this.log.info(`Loading plugin ${plg}${plugin.name}${nf} type ${GREEN}${plugin.type}${nf}`);
         await this.loadPlugin(plugin.path, 'load');
+        this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${GREEN}${plugin.type}${nf}`);
       });
       await this.startMatterBridge();
     }
@@ -343,7 +345,7 @@ export class Matterbridge {
         );
         platform.name = packageJson.name;
         if (mode === 'load') {
-          this.log.info(`Plugin ${plg}${plugin?.name}${nf} type ${GREEN}${platform.type}${nf} loaded (entrypoint ${UNDERLINE}${pluginPath}${UNDERLINEOFF})`);
+          this.log.debug(`Plugin ${plg}${plugin?.name}${db} type ${GREEN}${platform.type}${db} loaded (entrypoint ${UNDERLINE}${pluginPath}${UNDERLINEOFF})`);
           // Update plugin info
           if (plugin) {
             plugin.path = packageJsonPath;
