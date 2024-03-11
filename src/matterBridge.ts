@@ -525,7 +525,8 @@ export class Matterbridge {
       //console.log(basic.getSoftwareVersionAttribute(), basic.getSoftwareVersionStringAttribute());
       this.matterAggregator.addBridgedDevice(device);
       this.registeredDevices.push({ plugin: pluginName, device, added: true });
-      this.log.info(`Added and registered device ${dev}${device.name}${nf} for plugin ${plg}${pluginName}${nf}`);
+      if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
+      this.log.info(`Added and registered device(#${plugin.registeredDevices}) ${dev}${device.name}${nf} for plugin ${plg}${pluginName}${nf}`);
     }
 
     // Only register the device in childbridge mode
@@ -554,7 +555,8 @@ export class Matterbridge {
     if (this.bridgeMode === 'bridge') {
       this.matterAggregator.addBridgedDevice(device);
       this.registeredDevices.push({ plugin: pluginName, device, added: true });
-      this.log.info(`Added and registered bridged device ${dev}${device.name}${nf} for plugin ${plg}${pluginName}${nf}`);
+      if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
+      this.log.info(`Added and registered bridged device(#${plugin.registeredDevices}) ${dev}${device.name}${nf} for plugin ${plg}${pluginName}${nf}`);
     }
 
     // Only register the device in childbridge mode
@@ -875,11 +877,13 @@ export class Matterbridge {
       this.log.debug(`Pairing code\n\n${QrCode.encode(qrPairingCode)}\nManual pairing code: ${manualPairingCode}\n`);
     } else {
       this.log.info(`***The commissioning server for ${plg}${name}${nf} is already commissioned. Waiting for controllers to connect ...`);
+      /* No sense
       if (this.bridgeMode === 'bridge') {
         this.registeredPlugins.forEach((plugin) => {
           if (plugin.enabled) plugin.paired = true;
         });
       }
+      */
       if (this.bridgeMode === 'childbridge') {
         const plugin = this.findPlugin(name);
         if (plugin) plugin.paired = true;
@@ -953,11 +957,13 @@ export class Matterbridge {
         this.log.debug(`***Active sessions changed on fabric ${fabricIndex} for ${plg}${name}${nf}`, debugStringify(info));
         if (info && info[0]?.isPeerActive === true && info[0]?.secure === true && info[0]?.numberOfActiveSubscriptions >= 1) {
           this.log.info(`***Controller connected to ${plg}${name}${nf}`);
+          /* No sense
           if (this.bridgeMode === 'bridge') {
             this.registeredPlugins.forEach((plugin) => {
-              if (plugin.enabled) plugin.connected = true;
+              //if (plugin.enabled) plugin.connected = true;
             });
           }
+          */
           if (this.bridgeMode === 'childbridge') {
             const plugin = this.findPlugin(name);
             if (plugin) {
@@ -974,6 +980,7 @@ export class Matterbridge {
                 if (!plugin.enabled) return;
                 if (plugin.platform && !plugin.started) {
                   this.log.info(`***Starting plugin ${plg}${plugin.name}${nf}`);
+                  plugin.registeredDevices = 0;
                   await plugin.platform.onStart('Matterbridge is commissioned and controllers are connected');
                   plugin.started = true;
                   this.log.info(`***Started plugin ${plg}${plugin.name}${nf}`);
