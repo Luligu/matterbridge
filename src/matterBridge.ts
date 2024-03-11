@@ -125,9 +125,10 @@ export class Matterbridge {
     freeMemory: '',
     systemUptime: '',
   };
-  public homeDirectory!: string;
-  public rootDirectory!: string;
-  public matterbridgeDirectory!: string;
+  public homeDirectory: string = '';
+  public rootDirectory: string = '';
+  public matterbridgeDirectory: string = '';
+  public matterbridgeVersion: string = '';
 
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public debugEnabled = false;
@@ -1155,6 +1156,11 @@ export class Matterbridge {
       await fs.mkdir(this.matterbridgeDirectory);
     }
     this.log.debug(`Matterbridge Directory: ${this.matterbridgeDirectory}`);
+
+    // Matterbridge version
+    const packageJson = JSON.parse(await fs.readFile(path.join(this.rootDirectory, 'package.json'), 'utf-8'));
+    this.matterbridgeVersion = packageJson.version;
+    this.log.debug(`Matterbridge Version: ${this.matterbridgeVersion}`);
 
     // Current working directory
     const currentDir = process.cwd();
