@@ -129,20 +129,10 @@ Matterbridge can run as many plugins as you want.
 
 To install i.e. https://github.com/Luligu/matterbridge-example-accessory-platform
 
-on Windows:
-
-``` powershell
+```
 git clone https://github.com/Luligu/matterbridge-example-accessory-platform
 cd matterbridge-example-accessory-platform
 npm install
-```
-
-on Linux (you need the necessary permissions):
-
-```  bash
-git clone https://github.com/Luligu/matterbridge-example-accessory-platform
-cd matterbridge-example-accessory-platform
-sudo npm install
 ```
 
 Then add the plugin to Matterbridge
