@@ -1335,6 +1335,13 @@ ws.onmessage = (event) => {
 
 */
 /*
+// In Matterbridge
+global.matterbridgeInstance = Matterbridge.loadInstance();
+
+// In plugins
+const matterbridge = global.matterbridgeInstance;
+*/
+/*
 npx create-react-app matterbridge-frontend
 cd matterbridge-frontend
 npm install react-router-dom 

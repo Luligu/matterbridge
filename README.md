@@ -129,7 +129,6 @@ To install i.e. https://github.com/Luligu/matterbridge-example-accessory-platfor
 git clone https://github.com/Luligu/matterbridge-example-accessory-platform
 cd matterbridge-example-accessory-platform
 npm install
-npm run build
 ```
 Then add the plugin to Matterbridge
 ```
