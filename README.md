@@ -35,7 +35,7 @@ Follow these steps to install Matterbridge:
 ```
 npm install -g matterbridge
 ```
-or
+or if you don't have the necessary permissions
 ```
 sudo npm install -g matterbridge
 ```
@@ -130,7 +130,7 @@ git clone https://github.com/Luligu/matterbridge-example-accessory-platform
 cd matterbridge-example-accessory-platform
 npm install
 ```
-or
+or if you don't have the necessary permissions
 ```
 git clone https://github.com/Luligu/matterbridge-example-accessory-platform
 cd matterbridge-example-accessory-platform
