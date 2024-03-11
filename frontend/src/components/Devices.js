@@ -30,7 +30,11 @@ function Devices() {
   
   const handleSort = (column) => {
     if (sortColumn === column) {
-      setSortDirection(!sortDirection);
+      if(sortDirection===undefined) setSortDirection(true);
+      if(sortDirection===true) setSortDirection(false);
+      if(sortDirection===false) setSortColumn(undefined);
+      if(sortDirection===false) setSortDirection(undefined);
+      //setSortDirection(!sortDirection);
     } else {
       setSortColumn(column);
       setSortDirection(true);
@@ -71,13 +75,13 @@ function Devices() {
               <th className="table-header" colSpan="7">Registered devices</th>
             </tr>
             <tr>
-            <th className="table-header" onClick={() => handleSort('pluginName')}>Plugin name {sortColumn === 'pluginName' ? (sortDirection ? ' 🔼' : ' 🔽') : ''}</th>
-            <th className="table-header" onClick={() => handleSort('type')}>Device type {sortColumn === 'type' ? (sortDirection ? ' 🔼' : ' 🔽') : ''}</th>
-            <th className="table-header" onClick={() => handleSort('endpoint')}>Endpoint {sortColumn === 'endpoint' ? (sortDirection ? ' 🔼' : ' 🔽') : ''}</th>
-            <th className="table-header" onClick={() => handleSort('name')}>Name {sortColumn === 'name' ? (sortDirection ? ' 🔼' : ' 🔽') : ''}</th>
-            <th className="table-header" onClick={() => handleSort('serial')}>Serial number {sortColumn === 'serial' ? (sortDirection ? ' 🔼' : ' 🔽') : ''}</th>
-            <th className="table-header" onClick={() => handleSort('uniqueId')}>Unique ID {sortColumn === 'uniqueId' ? (sortDirection ? ' 🔼' : ' 🔽') : ''}</th>
-            <th className="table-header" onClick={() => handleSort('cluster')}>Cluster {sortColumn === 'cluster' ? (sortDirection ? ' 🔼' : ' 🔽') : ''}</th>
+            <th className="table-header" onClick={() => handleSort('pluginName')}>Plugin name {sortColumn === 'pluginName' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
+            <th className="table-header" onClick={() => handleSort('type')}>Device type {sortColumn === 'type' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
+            <th className="table-header" onClick={() => handleSort('endpoint')}>Endpoint {sortColumn === 'endpoint' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
+            <th className="table-header" onClick={() => handleSort('name')}>Name {sortColumn === 'name' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
+            <th className="table-header" onClick={() => handleSort('serial')}>Serial number {sortColumn === 'serial' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
+            <th className="table-header" onClick={() => handleSort('uniqueId')}>Unique ID {sortColumn === 'uniqueId' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
+            <th className="table-header" onClick={() => handleSort('cluster')}>Cluster {sortColumn === 'cluster' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
             </tr>
           </thead>
           <tbody>

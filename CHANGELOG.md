@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - [plugin]: Fixed the plugin.paired and plugin.commissioned in bridge mode.
+- [routes]: Fixed the plugin devices route.
+- [bridge]: Fixed the BasicInformationCluster in bridge mode.
 
 ## [1.1.4] - 2024-03-10
 

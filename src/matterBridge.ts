@@ -24,7 +24,7 @@
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
-import { AnsiLogger, BRIGHT, GREEN, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr } from 'node-ansi-logger';
+import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr } from 'node-ansi-logger';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { promises as fs } from 'fs';
 import express from 'express';
@@ -107,6 +107,7 @@ interface SystemInformation {
 
 const plg = '\u001B[38;5;33m';
 const dev = '\u001B[38;5;79m';
+const typ = '\u001B[38;5;207m';
 
 /**
  * Represents the Matterbridge application.
@@ -255,7 +256,7 @@ export class Matterbridge {
       this.registeredPlugins.forEach((plugin) => {
         this.log.info(
           `- ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" version: ${plugin.version}` +
-            ` author: "${plugin.author}" type: ${GREEN}${plugin.type}${nf} ${YELLOW}${plugin.enabled ? 'enabled' : 'disabled'}${nf}`,
+            ` author: "${plugin.author}" type: ${typ}${plugin.type}${nf} ${YELLOW}${plugin.enabled ? 'enabled' : 'disabled'}${nf}`,
         );
         //  loaded: ${plugin.loaded} started: ${plugin.started} paired: ${plugin.paired} connected: ${plugin.connected}
       });
@@ -292,21 +293,23 @@ export class Matterbridge {
 
     if (hasParameter('childbridge')) {
       this.bridgeMode = 'childbridge';
+      MatterbridgeDevice.bridgeMode = 'childbridge';
       this.registeredPlugins.forEach(async (plugin) => {
         if (!plugin.enabled) return;
-        this.log.info(`Loading plugin ${plg}${plugin.name}${nf} type ${GREEN}${plugin.type}${nf}`);
+        this.log.info(`Loading plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
         await this.loadPlugin(plugin.path, 'load');
-        this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${GREEN}${plugin.type}${nf}`);
+        this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
       });
       await this.startMatterBridge();
     }
     if (hasParameter('bridge')) {
       this.bridgeMode = 'bridge';
+      MatterbridgeDevice.bridgeMode = 'bridge';
       this.registeredPlugins.forEach(async (plugin) => {
         if (!plugin.enabled) return;
-        this.log.info(`Loading plugin ${plg}${plugin.name}${nf} type ${GREEN}${plugin.type}${nf}`);
+        this.log.info(`Loading plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
         await this.loadPlugin(plugin.path, 'load');
-        this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${GREEN}${plugin.type}${nf}`);
+        this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
       });
       await this.startMatterBridge();
     }
@@ -345,7 +348,7 @@ export class Matterbridge {
         );
         platform.name = packageJson.name;
         if (mode === 'load') {
-          this.log.debug(`Plugin ${plg}${plugin?.name}${db} type ${GREEN}${platform.type}${db} loaded (entrypoint ${UNDERLINE}${pluginPath}${UNDERLINEOFF})`);
+          this.log.debug(`Plugin ${plg}${plugin?.name}${db} type ${typ}${platform.type}${db} loaded (entrypoint ${UNDERLINE}${pluginPath}${UNDERLINEOFF})`);
           // Update plugin info
           if (plugin) {
             plugin.path = packageJsonPath;
@@ -495,8 +498,9 @@ export class Matterbridge {
    * Adds a device to the Matterbridge.
    * @param pluginName - The name of the plugin.
    * @param device - The device to be added.
+   * @returns A Promise that resolves when the device is added successfully.
    */
-  async addDevice(pluginName: string, device: MatterbridgeDevice) {
+  async addDevice(pluginName: string, device: MatterbridgeDevice): Promise<void> {
     this.log.info(`Adding device ${dev}${device.name}${nf} for plugin ${plg}${pluginName}${nf}`);
 
     // Check if the plugin is registered
@@ -508,23 +512,6 @@ export class Matterbridge {
 
     // Add and register the device to the matterbridge in bridge mode
     if (this.bridgeMode === 'bridge') {
-      const basic = device.getClusterServerById(BasicInformationCluster.id);
-      if (!basic) {
-        this.log.error(`addDevice error: cannot find the BasicInformationCluster device ${dev}${device.name}${nf} plugin ${plg}${pluginName}${nf}`);
-        return;
-      }
-      device.createDefaultBridgedDeviceBasicInformationClusterServer(
-        basic.getNodeLabelAttribute(),
-        basic.getSerialNumberAttribute(),
-        basic.getVendorIdAttribute(),
-        basic.getVendorNameAttribute(),
-        basic.getProductNameAttribute(),
-        basic.getSoftwareVersionAttribute(),
-        basic.getSoftwareVersionStringAttribute(),
-        basic.getHardwareVersionAttribute(),
-        basic.getHardwareVersionStringAttribute(),
-      );
-      //console.log(basic.getSoftwareVersionAttribute(), basic.getSoftwareVersionStringAttribute());
       this.matterAggregator.addBridgedDevice(device);
       this.registeredDevices.push({ plugin: pluginName, device, added: true });
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
@@ -542,8 +529,9 @@ export class Matterbridge {
    * Adds a bridged device to the Matterbridge.
    * @param pluginName - The name of the plugin.
    * @param device - The bridged device to add.
+   * @returns {Promise<void>} - A promise that resolves when the storage process is started.
    */
-  async addBridgedDevice(pluginName: string, device: MatterbridgeDevice) {
+  async addBridgedDevice(pluginName: string, device: MatterbridgeDevice): Promise<void> {
     this.log.info(`Adding bridged device ${dev}${device.name}${nf} for plugin ${plg}${pluginName}${nf}`);
 
     // Check if the plugin is registered
@@ -565,9 +553,6 @@ export class Matterbridge {
     if (this.bridgeMode === 'childbridge') {
       this.registeredDevices.push({ plugin: pluginName, device, added: false });
       this.log.info(`Registered bridged device ${dev}${device.name}${nf} for plugin ${plg}${pluginName}${nf}`);
-
-      //const basic = device.getClusterServerById(BridgedDeviceBasicInformationCluster.id);
-      //console.log(JSON.stringify(basic, null, 2));
     }
   }
 
@@ -986,6 +971,7 @@ export class Matterbridge {
                   await plugin.platform.onStart('Matterbridge is commissioned and controllers are connected');
                   plugin.started = true;
                   this.log.info(`***Started plugin ${plg}${plugin.name}${nf}`);
+                  plugin.platform.onConfigure();
                 } else {
                   this.log.error(`***Platform not found for plugin ${plg}${plugin.name}${er}`);
                 }
@@ -1269,15 +1255,15 @@ export class Matterbridge {
     // Endpoint to provide the cluster servers of the devices
     this.app.get('/api/devices_clusters/:selectedPluginName/:selectedDeviceEndpoint', (req, res) => {
       const selectedPluginName = req.params.selectedPluginName;
-      const selectedDeviceEndpoint = req.params.selectedDeviceEndpoint;
+      const selectedDeviceEndpoint: number = parseInt(req.params.selectedDeviceEndpoint, 10);
       this.log.debug(`The frontend sent /api/devices_clusters plugin:${selectedPluginName} endpoint:${selectedDeviceEndpoint}`);
-      if (selectedPluginName === 'none' /* || selectedDeviceEndpoint === 'none'*/) {
+      if (selectedPluginName === 'none') {
         res.json([]);
         return;
       }
       const data: { clusterName: string; clusterId: string; attributeName: string; attributeId: string; attributeValue: string }[] = [];
       this.registeredDevices.forEach((registeredDevice) => {
-        if (registeredDevice.plugin === selectedPluginName) {
+        if (registeredDevice.plugin === selectedPluginName && registeredDevice.device.id === selectedDeviceEndpoint) {
           const clusterServers = registeredDevice.device.getAllClusterServers();
           clusterServers.forEach((clusterServer) => {
             Object.entries(clusterServer.attributes).forEach(([key, value]) => {

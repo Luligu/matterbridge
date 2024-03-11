@@ -131,6 +131,8 @@ export const airQualitySensor = DeviceTypeDefinition({
 });
 
 export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device, MatterbridgeDeviceCommands>(Device) {
+  public static bridgeMode = '';
+
   constructor(definition: DeviceTypeDefinition, options: EndpointOptions = {}) {
     super(definition, options);
   }
@@ -632,6 +634,20 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     hardwareVersion = 1,
     hardwareVersionString = 'v.1.0.0',
   ) {
+    if (MatterbridgeDevice.bridgeMode === 'bridge') {
+      this.createDefaultBridgedDeviceBasicInformationClusterServer(
+        deviceName,
+        serialNumber,
+        vendorId,
+        vendorName,
+        productName,
+        softwareVersion,
+        softwareVersionString,
+        hardwareVersion,
+        hardwareVersionString,
+      );
+      return;
+    }
     this.addClusterServer(
       ClusterServer(
         BasicInformationCluster,
