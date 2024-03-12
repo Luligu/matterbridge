@@ -61,14 +61,6 @@ export class MatterbridgeAccessoryPlatform {
 
   /**
    * This method can be overridden in the extended class.
-   * It is called after matter server started.
-   */
-  async onMatterStarted() {
-    this.log.debug("The plugin doesn't override onMatterStarted.");
-  }
-
-  /**
-   * This method can be overridden in the extended class.
    * It is called after the platform has been commissioned.
    * Use this method to perform any configuration of your devices.
    */

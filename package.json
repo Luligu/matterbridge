@@ -29,6 +29,7 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
+    "start:test": "node ./dist/cli.js -test",
     "start:bridge": "node ./dist/index.js -bridge",
     "start:childbridge": "node ./dist/index.js -childbridge",
     "start:help": "node ./dist/index.js -help",

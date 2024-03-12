@@ -127,11 +127,19 @@ function Home() {
                         <StatusIndicator status={true} enabledText = 'Running'/>
                       </> : 
                       <>
-                        <StatusIndicator status={plugin.loaded} enabledText='Loaded'/>
-                        <StatusIndicator status={plugin.started} enabledText='Started'/>
-                        <StatusIndicator status={plugin.paired} enabledText='Paired'/>
-                        <StatusIndicator status={plugin.connected} enabledText='Connected'/>
-                      </>}
+                        {plugin.loaded && plugin.started && plugin.paired===undefined && plugin.connected===undefined ? 
+                          <>
+                            <StatusIndicator status={true} enabledText = 'Running'/>
+                          </> : 
+                          <>
+                            <StatusIndicator status={plugin.loaded} enabledText='Loaded'/>
+                            <StatusIndicator status={plugin.started} enabledText='Started'/>
+                            <StatusIndicator status={plugin.paired} enabledText='Paired'/>
+                            <StatusIndicator status={plugin.connected} enabledText='Connected'/>
+                          </>
+                        }
+                      </>
+                    }
                   </div> 
                 </td>
               </tr>
