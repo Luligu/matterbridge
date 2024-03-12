@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 function Header() {
   return (
     <div className="header">
-      <img src="favicon.ico" alt="Matter Logo" style={{ height: '30px' }} />
+      <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '30px' }} />
       <h2>Matterbridge</h2>
       <nav>
         <Link to="/" className="nav-link">Home</Link>
