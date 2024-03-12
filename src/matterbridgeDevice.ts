@@ -847,10 +847,10 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       ClusterServer(
         WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift),
         {
-          type: WindowCovering.WindowCoveringType.Shutter,
+          type: WindowCovering.WindowCoveringType.Rollershade,
           configStatus: {
             operational: true,
-            onlineReserved: false,
+            onlineReserved: true,
             liftMovementReversed: false,
             liftPositionAware: true,
             tiltPositionAware: false,
@@ -858,7 +858,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
             tiltEncoderControlled: false,
           },
           operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
-          endProductType: WindowCovering.EndProductType.SlidingShutter,
+          endProductType: WindowCovering.EndProductType.RollerShade,
           mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false },
           targetPositionLiftPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
           currentPositionLiftPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
