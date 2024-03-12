@@ -1,6 +1,9 @@
 # Matterbridge
 
-# Matterbridge <img src="https://github.com/Luligu/matterbridge/blob/main/frontend/public/matterbridge%2064x64.png" alt="Matterbridge Logo" width="64px" height="64px">
+<div style="display: flex; align-items: center;">
+  <img src="https://github.com/Luligu/matterbridge/blob/main/frontend/public/matterbridge%2064x64.png" alt="Matterbridge Logo" width="64px" height="64px">
+  <h1 style="margin-left: 10px;">Matterbridge</h1>
+</div>
 
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
