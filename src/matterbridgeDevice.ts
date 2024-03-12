@@ -54,9 +54,9 @@ import {
   createDefaultGroupsClusterServer,
   createDefaultScenesClusterServer,
 } from '@project-chip/matter-node.js/cluster';
-import { EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
+import { ClusterId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Device, DeviceClasses, DeviceTypeDefinition, EndpointOptions } from '@project-chip/matter-node.js/device';
-import { extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
+import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
 
 import { MatterHistory, Sensitivity, EveHistoryCluster, WeatherTrend, TemperatureDisplayUnits } from 'matter-history';
 
@@ -130,6 +130,13 @@ export const airQualitySensor = DeviceTypeDefinition({
   optionalServerClusters: [TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id, TvocMeasurement.Cluster.id],
 });
 
+export interface SerializedMatterbridgeDevice {
+  pluginName: string;
+  deviceType: AtLeastOne<DeviceTypeDefinition>;
+  name: string;
+  clusterServersId: ClusterId[];
+}
+
 export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device, MatterbridgeDeviceCommands>(Device) {
   public static bridgeMode = '';
 
@@ -143,14 +150,13 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     this.setDeviceTypes(deviceTypes);
   }
 
-  /*
-  removeClusterServer<A extends Attributes, E extends Events>(cluster: ClusterServerObj<A, E>) {
-    const currentCluster = this.clusterServers.get(cluster.id);
-    if (currentCluster !== undefined) {
-        asClusterServerInternal(currentCluster)._destroy();
-    }
+  serialize(pluginName: string) {
+    const serialized: SerializedMatterbridgeDevice = { pluginName, deviceType: this.getDeviceTypes(), name: this.name, clusterServersId: [] };
+    this.getAllClusterServers().forEach((clusterServer) => {
+      serialized.clusterServersId.push(clusterServer.id);
+    });
+    return serialized;
   }
-  */
 
   /**
    * Creates a room Eve History Cluster Server.
