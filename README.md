@@ -1,6 +1,6 @@
 # Matterbridge
 
-<div style="display: flex; align-items: center;">
+<div style="display: flex; align-items: center; flex-direction: row;">
   <img src="https://github.com/Luligu/matterbridge/blob/main/frontend/public/matterbridge%2064x64.png" alt="Matterbridge Logo" width="64px" height="64px">
   <h1 style="margin-left: 10px;">Matterbridge</h1>
 </div>
