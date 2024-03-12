@@ -1,7 +1,7 @@
 # Matterbridge
 
 <p align="center">
-  <img src="https://github.com/Luligu/matterbridge/blob/main/frontend/public/matterbridge%2064x64.png" alt="Matterbridge Logo" width="64px" height="64px">
+  <img src="https://github.com/Luligu/matterbridge/blob/main/frontend/public/matterbridge%2064x64.png" alt="Matterbridge Logo" width="64px" height="64px"># Matterbridge
 </p>
 
 
