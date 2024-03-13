@@ -306,7 +306,7 @@ export class Matterbridge {
         plugin.loaded = false;
         plugin.started = false;
         plugin.configured = false;
-        plugin.connected = false;
+        plugin.connected = undefined;
         this.loadPlugin(plugin); // No await do it asyncronously
       }
       await this.startMatterBridge();
@@ -443,6 +443,7 @@ export class Matterbridge {
         // Closing storage
         await this.stopStorage();
 
+        // Serialize registeredDevices
         const serializedRegisteredDevices: SerializedMatterbridgeDevice[] = [];
         this.registeredDevices.forEach((registeredDevice) => {
           serializedRegisteredDevices.push(registeredDevice.device.serialize(registeredDevice.plugin));
@@ -450,8 +451,10 @@ export class Matterbridge {
         //console.log('serializedRegisteredDevices:', serializedRegisteredDevices);
         await this.nodeContext?.set<SerializedMatterbridgeDevice[]>('devices', serializedRegisteredDevices);
 
-        this.log.info('Cleanup completed.');
-        process.exit(0);
+        setTimeout(() => {
+          this.log.info('Cleanup completed.');
+          process.exit(0);
+        }, 2 * 1000);
       }, 3 * 1000);
     }
   }
