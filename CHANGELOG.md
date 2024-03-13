@@ -2,7 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.1.5] - 2024-03-11
+## [1.1.6] - 2024-03-12
+
+### Added
+
+- [async]: Plugins are loaded started configured fully asyncronously.
+- [frontend]: Added configured button.
+
+## [1.1.5] - 2024-03-12
 
 ### Added
 

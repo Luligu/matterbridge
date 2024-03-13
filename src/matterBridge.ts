@@ -303,6 +303,10 @@ export class Matterbridge {
       MatterbridgeDevice.bridgeMode = 'bridge';
       for (const plugin of this.registeredPlugins) {
         if (!plugin.enabled) continue;
+        plugin.loaded = false;
+        plugin.started = false;
+        plugin.configured = false;
+        plugin.connected = false;
         this.loadPlugin(plugin); // No await do it asyncronously
       }
       await this.startMatterBridge();
@@ -313,7 +317,11 @@ export class Matterbridge {
       MatterbridgeDevice.bridgeMode = 'childbridge';
       for (const plugin of this.registeredPlugins) {
         if (!plugin.enabled) continue;
-        this.loadPlugin(plugin); // No await do it asyncronously
+        plugin.loaded = false;
+        plugin.started = false;
+        plugin.configured = false;
+        plugin.connected = false;
+        this.loadPlugin(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
       }
       await this.startMatterBridge();
     }
@@ -682,7 +690,7 @@ export class Matterbridge {
     }
   }
 
-  private async loadPlugin(plugin: RegisteredPlugin): Promise<MatterbridgePlatform> {
+  private async loadPlugin(plugin: RegisteredPlugin, start = false, message = ''): Promise<MatterbridgePlatform> {
     if (!plugin.enabled) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} not enabled`);
       return Promise.reject(new Error(`Plugin ${plg}${plugin.name}${er} not enabled`));
@@ -718,6 +726,7 @@ export class Matterbridge {
         plugin.addedDevices = 0;
         await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
         this.log.info(`Loaded plugin ${plg}${plugin.name}${db} type ${typ}${platform.type}${db} (entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
+        if (start) this.startPlugin(plugin, message); // No await do it asyncronously
         return Promise.resolve(platform);
       } else {
         this.log.error(`Plugin ${plg}${plugin.name}${er} does not provide a default export`);
@@ -760,32 +769,35 @@ export class Matterbridge {
     }
 
     if (this.bridgeMode === 'childbridge') {
-      // Plugins are loaded by loadPlugin on startup and plugin.loaded is set to true
-      // Plugins are started here and plugin.started is set to true.
+      // Plugins are loaded and started by loadPlugin on startup and plugin.loaded is set to true and plugin.started is set to true
       // addDevice and addBridgedDeevice just register the devices that are added here to the plugin commissioning server for Accessory Platform
       // or to the plugin aggregator for Dynamic Platform after the commissioning is done
+      // Plugins are configured by callback when the plugin is commissioned
       this.registeredPlugins.forEach(async (plugin) => {
         if (!plugin.enabled) return;
 
         // Start the interval to check if the plugins is started
+        // TODO set a counter or a timeout
+        this.log.info(`**Starting startMatterBridge interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
         const startInterval = setInterval(async () => {
-          this.log.debug(`Waiting in start interval for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) and send devices ...`);
-          if (!plugin.loaded) return;
+          if (!plugin.loaded || !plugin.started) {
+            this.log.info(`***Returning in startMatterBridge interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
+            return;
+          }
+
           if (plugin.type === 'AccessoryPlatform') {
-            await this.startPlugin(plugin, 'Matterbridge Accessory platform has started');
-            this.registeredDevices.forEach(async (registeredDevice) => {
-              if (registeredDevice.plugin === plugin.name) {
-                plugin.storageContext = this.importCommissioningServerContext(plugin.name, registeredDevice.device); // Generate serialNumber and uniqueId
-                plugin.commissioningServer = this.createCommisioningServer(plugin.storageContext, plugin.name);
+            this.registeredDevices
+              .filter((registeredDevice) => registeredDevice.plugin === plugin.name)
+              .forEach((registeredDevice) => {
+                if (!plugin.storageContext) plugin.storageContext = this.importCommissioningServerContext(plugin.name, registeredDevice.device); // Generate serialNumber and uniqueId
+                if (!plugin.commissioningServer) plugin.commissioningServer = this.createCommisioningServer(plugin.storageContext, plugin.name);
                 this.log.debug(`Adding device ${dev}${registeredDevice.device.name}${db} to commissioning server for plugin ${plg}${plugin.name}${db}`);
                 plugin.commissioningServer.addDevice(registeredDevice.device);
-                if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
-                this.log.debug(`Adding commissioning server to matter server for plugin ${plg}${plugin.name}${db} `);
-                await this.matterServer.addCommissioningServer(plugin.commissioningServer, { uniqueStorageKey: plugin.name });
-                return;
-              }
-            });
+              });
+            this.log.debug(`Adding commissioning server to matter server for plugin ${plg}${plugin.name}${db}`);
+            await this.matterServer.addCommissioningServer(plugin.commissioningServer!, { uniqueStorageKey: plugin.name });
           }
+
           if (plugin.type === 'DynamicPlatform') {
             plugin.storageContext = this.createCommissioningServerContext(
               // Generate serialNumber and uniqueId
@@ -800,25 +812,28 @@ export class Matterbridge {
             plugin.commissioningServer = this.createCommisioningServer(plugin.storageContext, plugin.name);
             this.log.debug(`Creating aggregator for plugin ${plg}${plugin.name}${db}`);
             plugin.aggregator = this.createMatterAggregator(plugin.storageContext); // Generate serialNumber and uniqueId
-            await this.startPlugin(plugin, 'Matterbridge Dynamic platform has started');
             this.log.debug(`Adding matter aggregator to commissioning server for plugin ${plg}${plugin.name}${db}`);
             plugin.commissioningServer.addDevice(plugin.aggregator);
             this.log.debug(`Adding commissioning server to matter server for plugin ${plg}${plugin.name}${db}`);
             await this.matterServer.addCommissioningServer(plugin.commissioningServer, { uniqueStorageKey: plugin.name });
           }
+
           clearInterval(startInterval);
         }, 1000);
       });
 
       // Start the interval to check if all plugins are loaded and started and so start the matter server
+      // TODO set a counter or a timeout
+      this.log.info('**Starting start matter interval...');
       const startMatterInterval = setInterval(async () => {
         let allStarted = true;
         this.registeredPlugins.forEach((plugin) => {
           if (!plugin.enabled) return;
-          this.log.debug(`Waiting in start matter server interval for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) and send devices ...`);
+          this.log.info(`**Waiting in start matter server interval for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
           if (plugin.enabled && (!plugin.loaded || !plugin.started)) allStarted = false;
         });
         if (!allStarted) return;
+        this.log.info('**Starting matter server in start matter server interval...');
 
         // Setting reachability to true
         this.registeredPlugins.forEach((plugin) => {
@@ -942,22 +957,32 @@ export class Matterbridge {
    *
    * @param commissioningServer - The commissioning server to show the QR code for.
    * @param storageContext - The storage context to store the pairing codes.
-   * @param name - The name of the commissioning server.
+   * @param pluginName - The name of the commissioning server.
    */
-  private showCommissioningQRCode(commissioningServer?: CommissioningServer, storageContext?: StorageContext, name?: string) {
-    if (!commissioningServer || !storageContext || !name) return;
+  private async showCommissioningQRCode(commissioningServer?: CommissioningServer, storageContext?: StorageContext, pluginName?: string) {
+    if (!commissioningServer || !storageContext || !pluginName) return;
     if (!commissioningServer.isCommissioned()) {
-      this.log.info(`***The commissioning server for ${plg}${name}${nf} is not commissioned. Pair it scanning the QR code ...`);
+      this.log.info(`***The commissioning server for ${plg}${pluginName}${nf} is not commissioned. Pair it scanning the QR code ...`);
       const { qrPairingCode, manualPairingCode } = commissioningServer.getPairingCode();
       storageContext.set('qrPairingCode', qrPairingCode);
       storageContext.set('manualPairingCode', manualPairingCode);
       const QrCode = new QrCodeSchema();
-      this.log.debug(`Pairing code\n\n${QrCode.encode(qrPairingCode)}\nManual pairing code: ${manualPairingCode}\n`);
-    } else {
-      this.log.info(`***The commissioning server for ${plg}${name}${nf} is already commissioned. Waiting for controllers to connect ...`);
+      this.log.info(`Pairing code:\n\n${QrCode.encode(qrPairingCode)}\nManual pairing code: ${manualPairingCode}\n`);
       if (this.bridgeMode === 'childbridge') {
-        const plugin = this.findPlugin(name);
-        if (plugin) plugin.paired = true;
+        const plugin = this.findPlugin(pluginName);
+        if (plugin) {
+          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+          plugin.paired = false;
+        }
+      }
+    } else {
+      this.log.info(`***The commissioning server for ${plg}${pluginName}${nf} is already commissioned. Waiting for controllers to connect ...`);
+      if (this.bridgeMode === 'childbridge') {
+        const plugin = this.findPlugin(pluginName);
+        if (plugin) {
+          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+          plugin.paired = true;
+        }
       }
     }
   }
@@ -1260,6 +1285,7 @@ export class Matterbridge {
       enabled: plugin.enabled,
       loaded: plugin.loaded,
       started: plugin.started,
+      configured: plugin.configured,
       paired: plugin.paired,
       connected: plugin.connected,
       registeredDevices: plugin.registeredDevices,

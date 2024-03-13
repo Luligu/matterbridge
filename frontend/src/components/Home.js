@@ -122,20 +122,21 @@ function Home() {
                 <td className="table-content">
                   <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', gap: '5px' }}>
                     <StatusIndicator status={plugin.enabled}/>
-                    {plugin.loaded && plugin.started && plugin.paired && plugin.connected ? 
+                    {plugin.loaded && plugin.started && plugin.configured && plugin.paired && plugin.connected ? 
                       <>
                         <StatusIndicator status={true} enabledText = 'Running'/>
                       </> : 
                       <>
-                        {plugin.loaded && plugin.started && plugin.paired===undefined && plugin.connected===undefined ? 
+                        {plugin.loaded && plugin.started && plugin.configured && plugin.paired===undefined && plugin.connected===undefined ? 
                           <>
                             <StatusIndicator status={true} enabledText = 'Running'/>
                           </> : 
                           <>
-                            <StatusIndicator status={plugin.loaded} enabledText='Loaded'/>
-                            <StatusIndicator status={plugin.started} enabledText='Started'/>
-                            <StatusIndicator status={plugin.paired} enabledText='Paired'/>
-                            <StatusIndicator status={plugin.connected} enabledText='Connected'/>
+                            <StatusIndicator status={plugin.loaded} enabledText='Loaded' disabledText='Loaded'/>
+                            <StatusIndicator status={plugin.started} enabledText='Started' disabledText='Started'/>
+                            <StatusIndicator status={plugin.configured} enabledText='Configured' disabledText='Configured'/>
+                            <StatusIndicator status={plugin.paired} enabledText='Paired' disabledText='Paired'/>
+                            <StatusIndicator status={plugin.connected} enabledText='Connected' disabledText='Connected'/>
                           </>
                         }
                       </>
