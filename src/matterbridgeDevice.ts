@@ -132,14 +132,19 @@ export const airQualitySensor = DeviceTypeDefinition({
 
 export interface SerializedMatterbridgeDevice {
   pluginName: string;
+  serialNumber: string;
+  deviceName: string;
+  uniqueId: string;
   deviceType: AtLeastOne<DeviceTypeDefinition>;
-  name: string;
+  endpointName: string;
   clusterServersId: ClusterId[];
 }
 
 export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device, MatterbridgeDeviceCommands>(Device) {
   public static bridgeMode = '';
-  private serialNumber: string | undefined = undefined;
+  serialNumber: string | undefined = undefined;
+  deviceName: string | undefined = undefined;
+  uniqueId: string | undefined = undefined;
 
   constructor(definition: DeviceTypeDefinition, options: EndpointOptions = {}) {
     super(definition, options);
@@ -152,7 +157,15 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   serialize(pluginName: string) {
-    const serialized: SerializedMatterbridgeDevice = { pluginName, deviceType: this.getDeviceTypes(), name: this.name, clusterServersId: [] };
+    const serialized: SerializedMatterbridgeDevice = {
+      pluginName,
+      serialNumber: this.serialNumber!,
+      deviceName: this.deviceName!,
+      uniqueId: this.uniqueId!,
+      deviceType: this.getDeviceTypes(),
+      endpointName: this.name,
+      clusterServersId: [],
+    };
     this.getAllClusterServers().forEach((clusterServer) => {
       serialized.clusterServersId.push(clusterServer.id);
     });
@@ -166,7 +179,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param log - The AnsiLogger object.
    */
   createRoomEveHistoryClusterServer(history: MatterHistory, log: AnsiLogger) {
-    history.setMatterHystoryType('room');
+    history.setMatterHystoryType('room', this.serialNumber);
     this.addClusterServer(
       ClusterServer(
         EveHistoryCluster,
@@ -641,7 +654,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     hardwareVersion = 1,
     hardwareVersionString = 'v.1.0.0',
   ) {
+    this.deviceName = deviceName;
     this.serialNumber = serialNumber;
+    this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
     if (MatterbridgeDevice.bridgeMode === 'bridge') {
       this.createDefaultBridgedDeviceBasicInformationClusterServer(
         deviceName,
@@ -712,7 +727,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     hardwareVersion = 1,
     hardwareVersionString = 'v.1.0.0',
   ) {
+    this.deviceName = deviceName;
     this.serialNumber = serialNumber;
+    this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
     this.addClusterServer(
       ClusterServer(
         BridgedDeviceBasicInformationCluster,

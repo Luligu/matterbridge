@@ -1122,7 +1122,7 @@ export class Matterbridge {
         this.log.debug(`***Commissioning changed on fabric ${fabricIndex} for ${plg}${name}${nf}`, debugStringify(info));
         if (info.length === 0) {
           this.log.warn(`***Commissioning removed from fabric ${fabricIndex} for ${plg}${name}${nf}. Resetting the commissioning server ...`);
-          commissioningServer.factoryReset();
+          commissioningServer.factoryReset(); // TODO delete from storage also "matterbridge-eve-weather.EndpointStructure"
         }
       },
     });
