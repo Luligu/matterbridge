@@ -21,13 +21,12 @@
  * limitations under the License. *
  */
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-namespace */
+/* eslint-disable @typescript-eslint/ban-types */
 import { ClusterFactory, OptionalAttribute } from '@project-chip/matter-node.js/cluster';
 import { Attribute } from '@project-chip/matter-node.js/cluster';
 import { BitFlag, BitFlags, TypeFromPartialBitSchema } from '@project-chip/matter-node.js/schema';
-import { TlvEnum, TlvInt16, TlvNullable, TlvUInt16 } from '@project-chip/matter-node.js/tlv';
+import { TlvEnum, TlvNullable, TlvUInt16 } from '@project-chip/matter-node.js/tlv';
 
 export namespace TvocMeasurement {
   export enum Feature {

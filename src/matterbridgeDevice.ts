@@ -264,7 +264,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           HistorySetTime: Uint8Array.fromHex(''),
           // Normal attributes
           Elevation: 0,
-          LastPressure: 1000,
+          AirPressure: 1000,
           WeatherTrend: WeatherTrend.SUN,
           TemperatureDisplayUnits: TemperatureDisplayUnits.CELSIUS,
           RLoc: 46080,

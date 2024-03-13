@@ -21,9 +21,8 @@
  * limitations under the License. *
  */
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-namespace */
+/* eslint-disable @typescript-eslint/ban-types */
 import { ClusterFactory } from '@project-chip/matter-node.js/cluster';
 import { Attribute } from '@project-chip/matter-node.js/cluster';
 import { BitFlag, BitFlags, TypeFromPartialBitSchema } from '@project-chip/matter-node.js/schema';
@@ -102,12 +101,6 @@ export namespace AirQuality {
     (SF extends { moderateAirQuality: true } ? typeof ModerateAirQualityComponent : {}) &
     (SF extends { veryPoorAirQuality: true } ? typeof VeryPoorAirQualityComponent : {}) &
     (SF extends { extremelyPoorAirQuality: true } ? typeof ExtremelyPoorAirQualityComponent : {});
-
-  const MSM = { momentarySwitchMultiPress: true };
-  const LS = { latchingSwitch: true };
-  const MS = { momentarySwitch: true };
-  const MSL = { momentarySwitchLongPress: true };
-  const MSR = { momentarySwitchRelease: true };
 }
 
 export type AirQualityCluster = typeof AirQuality.Cluster;
