@@ -369,6 +369,10 @@ export class Matterbridge {
         const plugin = this.registeredPlugins.find((registeredPlugin) => registeredPlugin.name === packageJson.name);
         if (plugin) {
           plugin.enabled = true;
+          plugin.loaded = undefined;
+          plugin.started = undefined;
+          plugin.configured = undefined;
+          plugin.connected = undefined;
           await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
           this.log.info(`Plugin ${plg}${packageJsonPath}${nf} enabled`);
         } else {
@@ -378,6 +382,10 @@ export class Matterbridge {
         const plugin = this.registeredPlugins.find((registeredPlugin) => registeredPlugin.name === packageJson.name);
         if (plugin) {
           plugin.enabled = false;
+          plugin.loaded = undefined;
+          plugin.started = undefined;
+          plugin.configured = undefined;
+          plugin.connected = undefined;
           await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
           this.log.info(`Plugin ${plg}${packageJsonPath}${nf} disabled`);
         } else {
@@ -1113,7 +1121,8 @@ export class Matterbridge {
         const info = commissioningServer.getCommissionedFabricInformation(fabricIndex);
         this.log.debug(`***Commissioning changed on fabric ${fabricIndex} for ${plg}${name}${nf}`, debugStringify(info));
         if (info.length === 0) {
-          this.log.warn(`***Commissioning removed from fabric ${fabricIndex} for ${plg}${name}${nf}`);
+          this.log.warn(`***Commissioning removed from fabric ${fabricIndex} for ${plg}${name}${nf}. Resetting the commissioning server ...`);
+          commissioningServer.factoryReset();
         }
       },
     });

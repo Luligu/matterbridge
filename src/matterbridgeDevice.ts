@@ -139,6 +139,7 @@ export interface SerializedMatterbridgeDevice {
 
 export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device, MatterbridgeDeviceCommands>(Device) {
   public static bridgeMode = '';
+  private serialNumber: string | undefined = undefined;
 
   constructor(definition: DeviceTypeDefinition, options: EndpointOptions = {}) {
     super(definition, options);
@@ -236,7 +237,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param log - The AnsiLogger instance.
    */
   createWeatherEveHistoryClusterServer(history: MatterHistory, log: AnsiLogger) {
-    history.setMatterHystoryType('weather');
+    history.setMatterHystoryType('weather', this.serialNumber);
     this.addClusterServer(
       ClusterServer(
         EveHistoryCluster,
@@ -640,6 +641,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     hardwareVersion = 1,
     hardwareVersionString = 'v.1.0.0',
   ) {
+    this.serialNumber = serialNumber;
     if (MatterbridgeDevice.bridgeMode === 'bridge') {
       this.createDefaultBridgedDeviceBasicInformationClusterServer(
         deviceName,
@@ -710,6 +712,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     hardwareVersion = 1,
     hardwareVersionString = 'v.1.0.0',
   ) {
+    this.serialNumber = serialNumber;
     this.addClusterServer(
       ClusterServer(
         BridgedDeviceBasicInformationCluster,
