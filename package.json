@@ -53,7 +53,7 @@
     "@stylistic/eslint-plugin": "^1.6.3",
     "@tsconfig/node-lts": "^20.1.1",
     "@types/express": "^4.17.21",
-    "@types/node": "^20.11.26",
+    "@types/node": "^20.11.27",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
     "@typescript-eslint/parser": "^7.2.0",
     "eslint-config-prettier": "^9.1.0",

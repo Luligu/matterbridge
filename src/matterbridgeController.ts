@@ -23,6 +23,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-console */
+/*
 import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
 
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
@@ -42,11 +43,9 @@ import { QrCodeSchema } from '@project-chip/matter-node.js/schema';
 import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageManager } from '@project-chip/matter-node.js/storage';
 import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } from '@project-chip/matter-node.js/util';
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { logEndpoint } from '@project-chip/matter-node.js/device';
 import { Matterbridge } from './matterbridge.js';
-/* eslint-disable max-len */
-
+*/
 export function startController() {
   //const log: AnsiLogger;
   /*
