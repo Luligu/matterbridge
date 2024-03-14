@@ -351,9 +351,9 @@ export class Matterbridge {
     }
     if (!packageJsonExists) {
       this.log.debug(`Package.json not found at ${packageJsonPath}`);
-      const globalModulesDir = execSync('npm config get prefix').toString().trim();
+      const globalModulesDir = execSync('npm root -g').toString().trim();
       this.log.debug(`Trying at ${globalModulesDir}`);
-      packageJsonPath = path.join(globalModulesDir, 'node_modules', pluginPath);
+      packageJsonPath = path.join(globalModulesDir, pluginPath);
       this.log.debug(`Got ${packageJsonPath}`);
     }
     try {
@@ -363,7 +363,7 @@ export class Matterbridge {
         this.log.debug(`Package.json name not found at ${packageJsonPath}`);
         return null;
       }
-      this.log.debug(`Package.json name ${packageJson.name} found at ${packageJsonPath}`);
+      this.log.debug(`Package.json name ${plg}${packageJson.name}${db} "${nf}${packageJson.description}${db}" found at ${packageJsonPath}`);
       return packageJsonPath;
     } catch (err) {
       this.log.debug(`Failed to load plugin from ${plg}${packageJsonPath}${er}: ${err}`);
