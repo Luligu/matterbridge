@@ -202,10 +202,14 @@ export class Matterbridge {
       - frontend [port]:       start the frontend on the given port (default 3000)
       - debug:                 enable debug mode (default false)
       - list:                  list the registered plugins
-      - add [plugin path]:     register the plugin
-      - remove [plugin path]:  remove the plugin
-      - enable [plugin path]:  enable the plugin
-      - disable [plugin path]: disable the plugin\n`);
+      - add [plugin path]:     register the plugin from the given absolute or relative path
+      - add [plugin name]:     register the globally installed plugin with the given name
+      - remove [plugin path]:  remove the plugin from the given absolute or relative path
+      - remove [plugin name]:  remove the globally installed plugin with the given name
+      - enable [plugin path]:  enable the plugin from the given absolute or relative path
+      - enable [plugin name]:  enable the globally installed plugin with the given name
+      - disable [plugin path]: disable the plugin from the given absolute or relative path
+      - disable [plugin name]: disable the globally installed plugin with the given name\n`);
       process.exit(0);
     }
 
@@ -363,7 +367,7 @@ export class Matterbridge {
         this.log.debug(`Package.json name not found at ${packageJsonPath}`);
         return null;
       }
-      this.log.debug(`Package.json name ${plg}${packageJson.name}${db} "${nf}${packageJson.description}${db}" found at ${packageJsonPath}`);
+      this.log.debug(`Package.json name: ${plg}${packageJson.name}${db} description: "${nf}${packageJson.description}${db}" found at "${nf}${packageJsonPath}${db}"`);
       return packageJsonPath;
     } catch (err) {
       this.log.debug(`Failed to load plugin from ${plg}${packageJsonPath}${er}: ${err}`);
