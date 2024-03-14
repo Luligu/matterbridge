@@ -132,6 +132,7 @@ export class Matterbridge {
   public rootDirectory: string = '';
   public matterbridgeDirectory: string = '';
   public matterbridgeVersion: string = '';
+  public globalModulesDir: string = '';
 
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public debugEnabled = false;
@@ -1307,6 +1308,10 @@ export class Matterbridge {
     const currentFileDirectory = path.dirname(fileURLToPath(import.meta.url));
     this.rootDirectory = path.resolve(currentFileDirectory, '../');
     this.log.debug(`Root Directory: ${this.rootDirectory}`);
+
+    // Global node_modules directory
+    this.globalModulesDir = execSync('npm root -g').toString().trim();
+    this.log.debug(`Global node_modules directory: ${this.globalModulesDir}`);
 
     // Create the data directory .matterbridge in the home directory
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
