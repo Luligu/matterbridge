@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.7] - 2024-03-14
+
+### Fixed
+
+- [install]: Fixed the install error.
+
 ## [1.1.6] - 2024-03-14
 
 ### Added

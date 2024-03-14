@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "description": "Matterbridge",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -43,14 +43,14 @@
     "clean": "rimraf tsconfig.tsbuildinfo ./dist",
     "cleanBuild": "npm run clean && tsc",
     "deepClean": "rimraf tsconfig.tsbuildinfo package-lock.json ./dist ./node_modules",
-    "prepublishOnly": "npm run lint && npm run cleanBuild",
+    "prepublishOnly": "npm install matter-history && npm run lint && npm run cleanBuild",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u",
     "updateMatter:latest": "npm run deepClean && npm install @project-chip/matter-node.js@latest && npm install && npm run build",
     "updateMatter:dev": "npm run deepClean && npm install @project-chip/matter-node.js@dev && npm install && npm run build"
   },
   "devDependencies": {
-    "@stylistic/eslint-plugin": "^1.6.3",
+    "@stylistic/eslint-plugin": "^1.7.0",
     "@tsconfig/node-lts": "^20.1.1",
     "@types/express": "^4.17.21",
     "@types/node": "^20.11.27",
