@@ -258,8 +258,14 @@ export class Matterbridge {
   private async parseCommandLine(): Promise<void> {
     if (hasParameter('list')) {
       this.log.info('Registered plugins:');
-      this.registeredPlugins.forEach((plugin) => {
-        this.log.info(`- ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${YELLOW}${plugin.enabled ? 'enabled' : 'disabled'}${nf}`);
+      this.registeredPlugins.forEach((plugin, index) => {
+        if (index === this.registeredPlugins.length - 1) {
+          this.log.info(`└─┬─ ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${YELLOW}${plugin.enabled ? 'enabled' : 'disabled'}${nf}`);
+          this.log.info(`  └─ ${db}${plugin.path}${db}`);
+        } else {
+          this.log.info(`├─┬─ ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${YELLOW}${plugin.enabled ? 'enabled' : 'disabled'}${nf}`);
+          this.log.info(`│ └─ ${db}${plugin.path}${db}`);
+        }
       });
       process.exit(0);
     }
