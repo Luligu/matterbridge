@@ -352,9 +352,8 @@ export class Matterbridge {
     }
     if (!packageJsonExists) {
       this.log.debug(`Package.json not found at ${packageJsonPath}`);
-      const globalModulesDir = execSync('npm root -g').toString().trim();
-      this.log.debug(`Trying at ${globalModulesDir}`);
-      packageJsonPath = path.join(globalModulesDir, pluginPath);
+      this.log.debug(`Trying at ${this.globalModulesDir}`);
+      packageJsonPath = path.join(this.globalModulesDir, pluginPath);
       this.log.debug(`Got ${packageJsonPath}`);
     }
     try {
@@ -1311,7 +1310,7 @@ export class Matterbridge {
 
     // Global node_modules directory
     this.globalModulesDir = execSync('npm root -g').toString().trim();
-    this.log.debug(`Global node_modules directory: ${this.globalModulesDir}`);
+    this.log.debug(`Global node_modules Directory: ${this.globalModulesDir}`);
 
     // Create the data directory .matterbridge in the home directory
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
