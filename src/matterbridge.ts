@@ -27,6 +27,7 @@ import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr } from 'node-ansi-logger';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { promises as fs } from 'fs';
+import { execSync } from 'child_process';
 import express from 'express';
 import os from 'os';
 import path from 'path';
@@ -333,6 +334,43 @@ export class Matterbridge {
     }
   }
 
+  private async resolvePluginName(pluginPath: string): Promise<string | null> {
+    if (!pluginPath.endsWith('package.json')) pluginPath = path.join(pluginPath, 'package.json');
+
+    // Resolve the package.json of the plugin
+    let packageJsonPath = path.resolve(pluginPath);
+    this.log.debug(`Loading plugin from ${plg}${packageJsonPath}${db}`);
+
+    // Check if the package.json file exists
+    let packageJsonExists = false;
+    try {
+      await fs.access(packageJsonPath);
+      packageJsonExists = true;
+    } catch {
+      packageJsonExists = false;
+    }
+    if (!packageJsonExists) {
+      this.log.debug(`Package.json not found at ${packageJsonPath}`);
+      const globalModulesDir = execSync('npm config get prefix').toString().trim();
+      this.log.debug(`Trying at ${globalModulesDir}`);
+      packageJsonPath = path.join(globalModulesDir, 'node_modules', pluginPath);
+      this.log.debug(`Got ${packageJsonPath}`);
+    }
+    try {
+      // Load the package.json of the plugin
+      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+      if (!packageJson.name) {
+        this.log.debug(`Package.json name not found at ${packageJsonPath}`);
+        return null;
+      }
+      this.log.debug(`Package.json name ${packageJson.name} found at ${packageJsonPath}`);
+      return packageJsonPath;
+    } catch (err) {
+      this.log.debug(`Failed to load plugin from ${plg}${packageJsonPath}${er}: ${err}`);
+      return null;
+    }
+  }
+
   /**
    * Loads a plugin from the specified package.json file path.
    * @param packageJsonPath - The path to the package.json file of the plugin.
@@ -340,6 +378,7 @@ export class Matterbridge {
    * @returns A Promise that resolves when the plugin is loaded successfully, or rejects with an error if loading fails.
    */
   private async executeCommandLine(packageJsonPath: string, mode: string) {
+    await this.resolvePluginName(packageJsonPath);
     if (!packageJsonPath.endsWith('package.json')) packageJsonPath = path.join(packageJsonPath, 'package.json');
     // Resolve the package.json of the plugin
     packageJsonPath = path.resolve(packageJsonPath);
@@ -1476,6 +1515,7 @@ export class Matterbridge {
 /*
 TO IMPLEMENT
 import * as WebSocket from 'ws';
+const globalModulesDir = require('global-modules');
 
 const wss = new WebSocket.Server({ port: 8080 });
 
