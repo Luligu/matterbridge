@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- [install]: Fixed the install error.
+- [install]: Fixed the install error (thanks https://github.com/khaidakin).
 
 ## [1.1.6] - 2024-03-14
 

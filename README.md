@@ -114,7 +114,7 @@ Matterbridge can run as many plugins as you want.
 
 ### Example plugins to show the usage of history in matter
 
-[Contact plugin with history](https://github.com/Luligu/matterbridge-eve-door)
+[Door plugin with history](https://github.com/Luligu/matterbridge-eve-door)
 
 [Motion plugin with history](https://github.com/Luligu/matterbridge-eve-motion)
 
