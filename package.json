@@ -62,7 +62,7 @@
     "typescript": "^5.4.2"
   },
   "dependencies": {
-    "@project-chip/matter-node.js": "^0.7.5",
+    "@project-chip/matter-node.js": "^0.8.0-alpha.0-20240314-ed7b831b",
     "express": "^4.18.3",
     "matter-history": "file:../matter-history",
     "node-ansi-logger": "^1.9.2",
