@@ -29,6 +29,26 @@ import { TlvUInt32, TlvBoolean, TlvFloat, TlvByteString } from '@project-chip/ma
 import { Identity } from '@project-chip/matter-node.js/util';
 
 export namespace EveHistory {
+  export const enum WeatherTrend {
+    // on Weather 1-9=Sun 3-4-11=CloudSun 5-6-7=Rain 12-13-14-15=RainWind 0-2-8-10=Empty
+    BLANK = 0,
+    SUN = 1,
+    CLOUDS_SUN = 3,
+    RAIN = 5,
+    RAIN_WIND = 12,
+  }
+
+  export const enum Sensitivity {
+    HIGH = 0,
+    MEDIUM = 4,
+    LOW = 7,
+  }
+
+  export const enum TemperatureDisplayUnits {
+    CELSIUS = 0,
+    FAHRENHEIT = 1,
+  }
+
   export const EveDoorComponent = MutableCluster.Component({
     attributes: {
       ConfigDataGet: Attribute(0x130a0000, TlvByteString),

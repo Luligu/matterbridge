@@ -58,12 +58,13 @@ import { ClusterId, EndpointNumber, VendorId } from '@project-chip/matter-node.j
 import { Device, DeviceClasses, DeviceTypeDefinition, EndpointOptions } from '@project-chip/matter-node.js/device';
 import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
 
-import { MatterHistory, Sensitivity, EveHistoryCluster, WeatherTrend, TemperatureDisplayUnits } from 'matter-history';
+import { MatterHistory, Sensitivity, WeatherTrend, TemperatureDisplayUnits } from 'matter-history';
 
 import { AirQuality, AirQualityCluster } from './AirQualityCluster.js';
 import { AnsiLogger } from 'node-ansi-logger';
 import { createHash } from 'crypto';
 import { TvocMeasurement, TvocMeasurementCluster } from './TvocCluster.js';
+import { EveHistory, EveHistoryCluster } from './EveHistoryCluster.js';
 
 type MakeMandatory<T> = Exclude<T, undefined>;
 
@@ -182,7 +183,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     history.setMatterHystoryType('room', this.serialNumber);
     this.addClusterServer(
       ClusterServer(
-        EveHistoryCluster,
+        EveHistoryCluster.with(EveHistory.Feature.EveRoom),
         {
           // Dynamic attributes
           ConfigDataGet: Uint8Array.fromHex(''),
@@ -253,7 +254,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     history.setMatterHystoryType('weather', this.serialNumber);
     this.addClusterServer(
       ClusterServer(
-        EveHistoryCluster,
+        EveHistoryCluster.with(EveHistory.Feature.EveWeather),
         {
           // Dynamic attributes
           ConfigDataGet: Uint8Array.fromHex(''),
@@ -327,7 +328,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     history.setMatterHystoryType('energy');
     this.addClusterServer(
       ClusterServer(
-        EveHistoryCluster,
+        EveHistoryCluster.with(EveHistory.Feature.EveEnergy),
         {
           // Dynamic attributes
           ConfigDataGet: Uint8Array.fromHex(''),
@@ -419,7 +420,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     history.setMatterHystoryType('motion');
     this.addClusterServer(
       ClusterServer(
-        EveHistoryCluster,
+        EveHistoryCluster.with(EveHistory.Feature.EveMotion),
         {
           // Dynamic attributes
           ConfigDataGet: Uint8Array.fromHex(''),
@@ -496,7 +497,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     history.setMatterHystoryType('door');
     this.addClusterServer(
       ClusterServer(
-        EveHistoryCluster,
+        EveHistoryCluster.with(EveHistory.Feature.EveDoor),
         {
           // Dynamic attributes
           ConfigDataGet: Uint8Array.fromHex(''),
