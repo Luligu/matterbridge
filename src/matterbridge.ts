@@ -1382,7 +1382,7 @@ export class Matterbridge {
         data.push({
           pluginName: registeredDevice.plugin,
           type: registeredDevice.device.name + ' (0x' + registeredDevice.device.deviceType.toString(16).padStart(4, '0') + ')',
-          endpoint: registeredDevice.device.id,
+          endpoint: registeredDevice.device.getNumber(),
           name,
           serial,
           uniqueId,
@@ -1403,7 +1403,7 @@ export class Matterbridge {
       }
       const data: { clusterName: string; clusterId: string; attributeName: string; attributeId: string; attributeValue: string }[] = [];
       this.registeredDevices.forEach((registeredDevice) => {
-        if (registeredDevice.plugin === selectedPluginName && registeredDevice.device.id === selectedDeviceEndpoint) {
+        if (registeredDevice.plugin === selectedPluginName && registeredDevice.device.getNumber() === selectedDeviceEndpoint) {
           const clusterServers = registeredDevice.device.getAllClusterServers();
           clusterServers.forEach((clusterServer) => {
             Object.entries(clusterServer.attributes).forEach(([key, value]) => {
