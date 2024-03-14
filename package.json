@@ -46,8 +46,8 @@
     "prepublishOnly": "npm run lint && npm run cleanBuild",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u",
-    "updateMatter:latest": "npm install @project-chip/matter-node.js@latest",
-    "updateMatter:dev": "npm install @project-chip/matter-node.js@dev"
+    "updateMatter:latest": "npm run deepClean && npm install @project-chip/matter-node.js@latest && npm install && npm run build",
+    "updateMatter:dev": "npm run deepClean && npm install @project-chip/matter-node.js@dev && npm install && npm run build"
   },
   "devDependencies": {
     "@stylistic/eslint-plugin": "^1.6.3",
