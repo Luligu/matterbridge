@@ -307,7 +307,7 @@ export class Matterbridge {
     if (hasParameter('test')) {
       this.bridgeMode = 'childbridge';
       MatterbridgeDevice.bridgeMode = 'childbridge';
-      this.testStartMatterBridge(); // No await do it asyncronously
+      await this.testStartMatterBridge(); // No await do it asyncronously
     }
 
     if (hasParameter('bridge')) {
@@ -663,6 +663,19 @@ export class Matterbridge {
   }
 
   private async testStartMatterBridge(): Promise<void> {
+    this.log.error('****Start forEach registeredPlugin');
+    this.registeredPlugins
+      .filter((plugin) => plugin.enabled === true)
+      .forEach(async (plugin) => {
+        plugin.loaded = false;
+        plugin.started = false;
+        plugin.configured = false;
+        plugin.connected = undefined;
+        this.log.error(`****Starting registeredPlugin ${plugin.name}`);
+        this.loadPlugin(plugin, true, 'Matterbridge is starting');
+      });
+    this.log.error('****Stop forEach registeredPlugin');
+    /*  
     for (const plugin of this.registeredPlugins) {
       if (!plugin.enabled) continue;
       // No await do it asyncronously
@@ -691,6 +704,7 @@ export class Matterbridge {
         clearInterval(interval);
       }, 1000);
     }
+    */
   }
 
   private async startPlugin(plugin: RegisteredPlugin, message?: string, configure = false): Promise<void> {
@@ -1132,7 +1146,7 @@ export class Matterbridge {
               //Logger.defaultLogLevel = Level.INFO;
               for (const plugin of this.registeredPlugins) {
                 if (!plugin.enabled) continue;
-                this.startPlugin(plugin, 'Matterbridge is commissioned and controllers are connected', true); // No await do it asyncronously
+                this.startPlugin(plugin, 'Matterbridge is commissioned and controllers are connected', true); // No await do it asyncronously with also configurePlugin
                 //this.configurePlugin(plugin); // No await do it asyncronously
               }
               Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
@@ -1140,7 +1154,7 @@ export class Matterbridge {
             if (this.bridgeMode === 'childbridge') {
               //Logger.defaultLogLevel = Level.INFO;
               const plugin = this.findPlugin(name);
-              if (plugin && plugin.type === 'DynamicPlatform') {
+              if (plugin && plugin.type === 'DynamicPlatform' && plugin.configured !== true) {
                 for (const registeredDevice of this.registeredDevices) {
                   if (registeredDevice.plugin === name) {
                     this.log.info(`Adding bridged device ${dev}${registeredDevice.device.name}${nf} to aggregator for plugin ${plg}${plugin.name}${db}`);
@@ -1156,7 +1170,7 @@ export class Matterbridge {
                 }
               }
               for (const plugin of this.registeredPlugins) {
-                if (plugin.name === name && plugin.platform) {
+                if (plugin.name === name && plugin.platform && plugin.configured !== true) {
                   this.configurePlugin(plugin); // No await do it asyncronously
                 }
               }

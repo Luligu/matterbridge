@@ -1,5 +1,12 @@
 /* App.css */
 
+/* In your CSS file */
+.PluginsIconButton {
+  color: #000000;
+  padding: 0;
+  gap: 0;
+}
+
 /* Table header style */
 .main-background {
   background-color: #9e9e9e;
