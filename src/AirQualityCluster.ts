@@ -22,20 +22,13 @@
  */
 
 /* eslint-disable @typescript-eslint/no-namespace */
-/* eslint-disable @typescript-eslint/ban-types */
-import { ClusterFactory } from '@project-chip/matter-node.js/cluster';
+import { ClusterRegistry, MutableCluster } from '@project-chip/matter-node.js/cluster';
 import { Attribute } from '@project-chip/matter-node.js/cluster';
-import { BitFlag, BitFlags, TypeFromPartialBitSchema } from '@project-chip/matter-node.js/schema';
+import { BitFlag } from '@project-chip/matter-node.js/schema';
 import { TlvEnum } from '@project-chip/matter-node.js/tlv';
+import { Identity } from '@project-chip/matter-node.js/util';
 
 export namespace AirQuality {
-  export enum Feature {
-    FairAirQuality = 'FairAirQuality',
-    ModerateAirQuality = 'ModerateAirQuality',
-    VeryPoorAirQuality = 'VeryPoorAirQuality',
-    ExtremelyPoorAirQuality = 'ExtremelyPoorAirQuality',
-  }
-
   export enum AirQualityType {
     Unknown = 0,
     Good = 1,
@@ -46,7 +39,35 @@ export namespace AirQuality {
     ExtremelyPoor = 6,
   }
 
-  export const Base = ClusterFactory.Definition({
+  export const FairAirQualityComponent = MutableCluster.Component({
+    attributes: {
+      airQuality: Attribute(0x0, TlvEnum<AirQualityType>()),
+    },
+  });
+  export const ModerateAirQualityComponent = MutableCluster.Component({
+    attributes: {
+      airQuality: Attribute(0x0, TlvEnum<AirQualityType>()),
+    },
+  });
+  export const VeryPoorAirQualityComponent = MutableCluster.Component({
+    attributes: {
+      airQuality: Attribute(0x0, TlvEnum<AirQualityType>()),
+    },
+  });
+  export const ExtremelyPoorAirQualityComponent = MutableCluster.Component({
+    attributes: {
+      airQuality: Attribute(0x0, TlvEnum<AirQualityType>()),
+    },
+  });
+
+  export enum Feature {
+    FairAirQuality = 'FairAirQuality',
+    ModerateAirQuality = 'ModerateAirQuality',
+    VeryPoorAirQuality = 'VeryPoorAirQuality',
+    ExtremelyPoorAirQuality = 'ExtremelyPoorAirQuality',
+  }
+
+  export const Base = MutableCluster.Component({
     id: 0x5b,
     name: 'AirQuality',
     revision: 1,
@@ -61,47 +82,37 @@ export namespace AirQuality {
     attributes: {
       airQuality: Attribute(0x0, TlvEnum<AirQualityType>()),
     },
+
+    extensions: MutableCluster.Extensions(
+      { flags: { fairAirQuality: true }, component: FairAirQualityComponent },
+      { flags: { ModerateAirQuality: true }, component: ModerateAirQualityComponent },
+      { flags: { VeryPoorAirQuality: true }, component: VeryPoorAirQualityComponent },
+      { flags: { ExtremelyPoorAirQuality: true }, component: ExtremelyPoorAirQualityComponent },
+    ),
   });
 
-  export const FairAirQualityComponent = ClusterFactory.Component({});
-  export const ModerateAirQualityComponent = ClusterFactory.Component({});
-  export const VeryPoorAirQualityComponent = ClusterFactory.Component({});
-  export const ExtremelyPoorAirQualityComponent = ClusterFactory.Component({});
+  export const ClusterInstance = MutableCluster.ExtensibleOnly(Base);
 
-  export const Cluster = ClusterFactory.Extensible(
-    Base,
+  export interface Cluster extends Identity<typeof ClusterInstance> {}
 
-    /**
-     * Use this factory method to create a Switch cluster with support for optional features. Include each
-     * {@link Feature} you wish to support.
-     *
-     * @param features the optional features to support
-     * @returns a Switch cluster with specified features enabled
-     * @throws {IllegalClusterError} if the feature combination is disallowed by the Matter specification
-     */
-    <T extends `${Feature}`[]>(...features: [...T]) => {
-      ClusterFactory.validateFeatureSelection(features, Feature);
-      const cluster = ClusterFactory.Definition({
-        ...Base,
-        supportedFeatures: BitFlags(Base.features, ...features),
-      });
-      ClusterFactory.extend(cluster, FairAirQualityComponent, { fairAirQuality: true });
-      ClusterFactory.extend(cluster, ModerateAirQualityComponent, { moderateAirQuality: true });
-      ClusterFactory.extend(cluster, VeryPoorAirQualityComponent, { veryPoorAirQuality: true });
-      ClusterFactory.extend(cluster, ExtremelyPoorAirQualityComponent, { extremelyPoorAirQuality: true });
-      return cluster as unknown as Extension<BitFlags<typeof Base.features, T>>;
+  export const Cluster: Cluster = ClusterInstance;
+
+  export const CompleteInstance = MutableCluster({
+    id: Base.id,
+    name: Base.name,
+    revision: Base.revision,
+    features: Base.features,
+
+    attributes: {
+      ...Base.attributes,
     },
-  );
+  });
 
-  export type Extension<SF extends TypeFromPartialBitSchema<typeof Base.features>> = Omit<typeof Base, 'supportedFeatures'> & { supportedFeatures: SF } & (SF extends {
-      fairAirQuality: true;
-    }
-      ? typeof FairAirQualityComponent
-      : {}) &
-    (SF extends { moderateAirQuality: true } ? typeof ModerateAirQualityComponent : {}) &
-    (SF extends { veryPoorAirQuality: true } ? typeof VeryPoorAirQualityComponent : {}) &
-    (SF extends { extremelyPoorAirQuality: true } ? typeof ExtremelyPoorAirQualityComponent : {});
+  export interface Complete extends Identity<typeof CompleteInstance> {}
+
+  export const Complete: Complete = CompleteInstance;
 }
 
 export type AirQualityCluster = typeof AirQuality.Cluster;
 export const AirQualityCluster = AirQuality.Cluster;
+ClusterRegistry.register(AirQuality.Complete);
