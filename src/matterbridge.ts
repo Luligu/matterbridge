@@ -83,6 +83,8 @@ interface BaseRegisteredPlugin {
   connected?: boolean;
   registeredDevices?: number;
   addedDevices?: number;
+  qrPairingCode?: string;
+  manualPairingCode?: string;
 }
 
 // Define an interface for storing the devices
@@ -319,6 +321,8 @@ export class Matterbridge {
         plugin.started = false;
         plugin.configured = false;
         plugin.connected = undefined;
+        plugin.qrPairingCode = undefined;
+        plugin.manualPairingCode = undefined;
         this.loadPlugin(plugin); // No await do it asyncronously
       }
       await this.startMatterBridge();
@@ -333,6 +337,8 @@ export class Matterbridge {
         plugin.started = false;
         plugin.configured = false;
         plugin.connected = false;
+        plugin.qrPairingCode = plugin.storageContext?.get('qrPairingCode', undefined);
+        plugin.manualPairingCode = plugin.storageContext?.get('manualPairingCode', undefined);
         this.loadPlugin(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
       }
       await this.startMatterBridge();
@@ -1367,6 +1373,8 @@ export class Matterbridge {
       paired: plugin.paired,
       connected: plugin.connected,
       registeredDevices: plugin.registeredDevices,
+      qrPairingCode: plugin.qrPairingCode,
+      manualPairingCode: plugin.manualPairingCode,
     }));
     return baseRegisteredPlugins;
   }
