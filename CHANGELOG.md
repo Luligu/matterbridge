@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.8] - 2024-03-15
+
+### Added
+
+- [cli]: Resolve the plugin name from absolute or relative path or from globally installed modules (see the help).
+
+### Fixed
+
+- [install]: Fixed the error caused when the controllers disconnect and connect again.
+
 ## [1.1.7] - 2024-03-14
 
 ### Fixed

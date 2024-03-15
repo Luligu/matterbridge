@@ -382,10 +382,7 @@ export class Matterbridge {
    * @returns A Promise that resolves when the plugin is loaded successfully, or rejects with an error if loading fails.
    */
   private async executeCommandLine(packageJsonPath: string, mode: string) {
-    await this.resolvePluginName(packageJsonPath);
-    if (!packageJsonPath.endsWith('package.json')) packageJsonPath = path.join(packageJsonPath, 'package.json');
-    // Resolve the package.json of the plugin
-    packageJsonPath = path.resolve(packageJsonPath);
+    packageJsonPath = (await this.resolvePluginName(packageJsonPath)) ?? packageJsonPath;
     this.log.debug(`Loading plugin from ${plg}${packageJsonPath}${db}`);
     try {
       // Load the package.json of the plugin
@@ -538,7 +535,7 @@ export class Matterbridge {
    * @returns A Promise that resolves when the device is added successfully.
    */
   async addDevice(pluginName: string, device: MatterbridgeDevice): Promise<void> {
-    this.log.info(`Adding device ${dev}${device.name}${nf} for plugin ${plg}${pluginName}${nf}`);
+    this.log.debug(`Adding device ${dev}${device.name}${db} for plugin ${plg}${pluginName}${db}`);
 
     // Check if the plugin is registered
     const plugin = this.registeredPlugins.find((plugin) => plugin.name === pluginName);
@@ -547,7 +544,7 @@ export class Matterbridge {
       return;
     }
 
-    // Add and register the device to the matterbridge in bridge mode
+    // Register and add the device to matterbridge aggregator in bridge mode
     if (this.bridgeMode === 'bridge') {
       this.matterAggregator.addBridgedDevice(device);
       this.registeredDevices.push({ plugin: pluginName, device, added: true });
@@ -571,7 +568,7 @@ export class Matterbridge {
    * @returns {Promise<void>} - A promise that resolves when the storage process is started.
    */
   async addBridgedDevice(pluginName: string, device: MatterbridgeDevice): Promise<void> {
-    this.log.info(`Adding bridged device ${dev}${device.name}${nf} for plugin ${plg}${pluginName}${nf}`);
+    this.log.debug(`Adding bridged device ${db}${device.name}${nf} for plugin ${plg}${pluginName}${db}`);
 
     // Check if the plugin is registered
     const plugin = this.registeredPlugins.find((plugin) => plugin.name === pluginName);
@@ -580,7 +577,7 @@ export class Matterbridge {
       return;
     }
 
-    // Add and register the device to the matterbridge in bridge mode
+    // Register and add the device to matterbridge aggregator in bridge mode
     if (this.bridgeMode === 'bridge') {
       this.matterAggregator.addBridgedDevice(device);
       this.registeredDevices.push({ plugin: pluginName, device, added: true });
@@ -663,6 +660,7 @@ export class Matterbridge {
   }
 
   private async testStartMatterBridge(): Promise<void> {
+    /*
     this.log.error('****Start forEach registeredPlugin');
     this.registeredPlugins
       .filter((plugin) => plugin.enabled === true)
@@ -675,6 +673,7 @@ export class Matterbridge {
         this.loadPlugin(plugin, true, 'Matterbridge is starting');
       });
     this.log.error('****Stop forEach registeredPlugin');
+    */
     /*  
     for (const plugin of this.registeredPlugins) {
       if (!plugin.enabled) continue;
