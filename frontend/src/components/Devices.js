@@ -67,8 +67,8 @@ function Devices() {
   })
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0px', padding: '20px' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', flex: '0 0 auto', maxHeight: 'calc(50vh - 60px)', width: '100%', gap: '5px', overflow: 'auto', paddingBottom: '10px', paddingRight: '10px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0px', padding: '0px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: '0 0 auto', maxHeight: 'calc(50vh - 40px)', width: '100%', gap: '5px', overflow: 'auto', paddingBottom: '10px', paddingRight: '10px' }}>
         <table>
           <thead>
             <tr>

@@ -7,9 +7,13 @@
   gap: 0;
 }
 
+.HeaderButton {
+  color: #4CAF50;
+}
+
 /* Table header style */
 .main-background {
-  background-color: #9e9e9e;
+  background-color: #c4c2c2;
 }
 
 /* Header style */
@@ -19,7 +23,7 @@
   justify-content: flex-start; /* Distribute items evenly */
   gap: 20px;
   margin: 0;
-  padding: 20px;
+  padding: 0;  /* 20px */
   height: 40px; /* Increase height for a more modern look */
 }
 

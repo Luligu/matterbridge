@@ -1,4 +1,4 @@
-export function StatusIndicator({ status, enabledText = 'Enabled', disabledText = 'Disabled' }) {
+export function StatusIndicator({ status, enabledText = 'Enabled', disabledText = undefined }) {
   if (status === undefined) {
     return (
       <div style={{ margin: '-2.5px' }}>

@@ -83,7 +83,7 @@ function Home() {
   }, []); // The empty array causes this effect to run only once
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 80px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0', padding: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0', padding: '0' }}>
       <div style={{ display: 'flex', flexDirection: 'column', flex: '0 1 auto'/*, width: '310px'*/, gap: '20px' }}>
         {qrCode && <QRDiv qrText={qrCode} qrWidth={256} topText="QRCode" bottomText="Scan me to pair matterbridge" />}
         <table>
@@ -128,7 +128,7 @@ function Home() {
                     {plugin.qrPairingCode ?  <>
                         <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" size="small"><QrCode2Icon /></IconButton></Tooltip>
                       </> : <></>}
-                    <StatusIndicator status={plugin.enabled}/>
+                    <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled'/>
                     {plugin.loaded && plugin.started && plugin.configured && plugin.paired && plugin.connected ? 
                       <>
                         <StatusIndicator status={true} enabledText = 'Running'/>
@@ -139,11 +139,11 @@ function Home() {
                             <StatusIndicator status={true} enabledText = 'Running'/>
                           </> : 
                           <>
-                            <StatusIndicator status={plugin.loaded} enabledText='Loaded' disabledText='Loaded'/>
-                            <StatusIndicator status={plugin.started} enabledText='Started' disabledText='Started'/>
-                            <StatusIndicator status={plugin.configured} enabledText='Configured' disabledText='Configured'/>
-                            <StatusIndicator status={plugin.paired} enabledText='Paired' disabledText='Paired'/>
-                            <StatusIndicator status={plugin.connected} enabledText='Connected' disabledText='Connected'/>
+                            <StatusIndicator status={plugin.loaded} enabledText='Loaded'/>
+                            <StatusIndicator status={plugin.started} enabledText='Started'/>
+                            <StatusIndicator status={plugin.configured} enabledText='Configured'/>
+                            <StatusIndicator status={plugin.paired} enabledText='Paired'/>
+                            <StatusIndicator status={plugin.connected} enabledText='Connected'/>
                           </>
                         }
                       </>
