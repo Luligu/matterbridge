@@ -857,10 +857,10 @@ export class Matterbridge {
 
         // Start the interval to check if the plugins is started
         // TODO set a counter or a timeout
-        this.log.info(`**Starting startMatterBridge interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
+        this.log.debug(`*Starting startMatterBridge interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
         const startInterval = setInterval(async () => {
           if (!plugin.loaded || !plugin.started) {
-            this.log.info(`***Returning in startMatterBridge interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
+            this.log.info(`**Waiting in startMatterBridge interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
             return;
           }
 
@@ -903,16 +903,16 @@ export class Matterbridge {
 
       // Start the interval to check if all plugins are loaded and started and so start the matter server
       // TODO set a counter or a timeout
-      this.log.info('**Starting start matter interval...');
+      this.log.debug('*Starting start matter interval...');
       const startMatterInterval = setInterval(async () => {
         let allStarted = true;
         this.registeredPlugins.forEach((plugin) => {
           if (!plugin.enabled) return;
-          this.log.info(`**Waiting in start matter server interval for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
           if (plugin.enabled && (!plugin.loaded || !plugin.started)) allStarted = false;
+          if (!allStarted) this.log.info(`**Waiting in start matter server interval for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
         });
         if (!allStarted) return;
-        this.log.info('**Starting matter server in start matter server interval...');
+        this.log.info('Starting matter server ...');
 
         // Setting reachability to true
         this.registeredPlugins.forEach((plugin) => {
