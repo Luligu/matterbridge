@@ -337,8 +337,8 @@ export class Matterbridge {
         plugin.started = false;
         plugin.configured = false;
         plugin.connected = false;
-        plugin.qrPairingCode = plugin.storageContext?.get('qrPairingCode', undefined);
-        plugin.manualPairingCode = plugin.storageContext?.get('manualPairingCode', undefined);
+        plugin.qrPairingCode = (await plugin.nodeContext?.get<string>('qrPairingCode', undefined)) ?? undefined;
+        plugin.manualPairingCode = (await plugin.nodeContext?.get<string>('manualPairingCode', undefined)) ?? undefined;
         this.loadPlugin(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
       }
       await this.startMatterBridge();
@@ -1047,18 +1047,34 @@ export class Matterbridge {
       storageContext.set('manualPairingCode', manualPairingCode);
       const QrCode = new QrCodeSchema();
       this.log.info(`Pairing code:\n\n${QrCode.encode(qrPairingCode)}\nManual pairing code: ${manualPairingCode}\n`);
+      if (this.bridgeMode === 'bridge') {
+        await this.nodeContext?.set<string>('qrPairingCode', qrPairingCode);
+        await this.nodeContext?.set<string>('manualPairingCode', manualPairingCode);
+      }
       if (this.bridgeMode === 'childbridge') {
         const plugin = this.findPlugin(pluginName);
         if (plugin) {
+          await plugin.nodeContext?.set<string>('qrPairingCode', qrPairingCode);
+          await plugin.nodeContext?.set<string>('manualPairingCode', manualPairingCode);
           await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
           plugin.paired = false;
         }
       }
     } else {
       this.log.info(`***The commissioning server for ${plg}${pluginName}${nf} is already commissioned. Waiting for controllers to connect ...`);
+      if (this.bridgeMode === 'bridge') {
+        const qrPairingCode = storageContext.get('qrPairingCode', '');
+        const manualPairingCode = storageContext.get('manualPairingCode', '');
+        await this.nodeContext?.set<string>('qrPairingCode', qrPairingCode);
+        await this.nodeContext?.set<string>('manualPairingCode', manualPairingCode);
+      }
       if (this.bridgeMode === 'childbridge') {
         const plugin = this.findPlugin(pluginName);
-        if (plugin) {
+        if (plugin && plugin.storageContext && plugin.nodeContext) {
+          const qrPairingCode = plugin.storageContext.get('qrPairingCode', '');
+          const manualPairingCode = plugin.storageContext.get('manualPairingCode', '');
+          await plugin.nodeContext.set<string>('qrPairingCode', qrPairingCode);
+          await plugin.nodeContext.set<string>('manualPairingCode', manualPairingCode);
           await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
           plugin.paired = true;
         }

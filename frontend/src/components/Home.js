@@ -125,7 +125,9 @@ function Home() {
                 <td className="table-content">{plugin.registeredDevices}</td>
                 <td className="table-content">
                   <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', gap: '5px' }}>
-                    <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" size="small"><QrCode2Icon /></IconButton></Tooltip>
+                    {plugin.qrPairingCode ?  <>
+                        <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" size="small"><QrCode2Icon /></IconButton></Tooltip>
+                      </> : <></>}
                     <StatusIndicator status={plugin.enabled}/>
                     {plugin.loaded && plugin.started && plugin.configured && plugin.paired && plugin.connected ? 
                       <>
