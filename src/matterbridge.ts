@@ -1559,6 +1559,23 @@ export class Matterbridge {
 }
 /*
 TO IMPLEMENT
+
+import { spawn } from 'child_process';
+
+function restartProcess() {
+  // Spawn a new process
+  const newProcess = spawn(process.argv[0], process.argv.slice(1), {
+    detached: true,
+    stdio: 'inherit',
+  });
+
+  // Unreference the new process so that the current process can exit
+  newProcess.unref();
+
+  // Exit the current process
+  process.exit();
+}
+
 import * as WebSocket from 'ws';
 const globalModulesDir = require('global-modules');
 

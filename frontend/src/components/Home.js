@@ -5,12 +5,15 @@ import { StatusIndicator } from './StatusIndicator';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import { Tooltip, IconButton } from '@mui/material';
 // npm install @mui/material @emotion/react @emotion/styled
-// npm install @mui/material @emotion/react @emotion/styled
+// npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
 
 function Home() {
   const [qrCode, setQrCode] = useState('');
   const [systemInfo, setSystemInfo] = useState({});
   const [plugins, setPlugins] = useState([]);
+  const [selectedRow, setSelectedRow] = useState(-1); // -1 no selection, 0 or greater for selected row
+  const [selectedPluginName, setSelectedPluginName] = useState('none'); // -1 no selection, 0 or greater for selected row
+
   const columns = React.useMemo( () => [
       {
         Header: 'Name',
@@ -60,12 +63,20 @@ function Home() {
     }, 2000);
   }, []); 
   */
- 
+ /*
+  <StatusIndicator status={true} enabledText = 'Running' tooltipText='The plugin is loaded, started and configured'/>
+                <tr key={index} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
+
+ */
   useEffect(() => {
     // Fetch QR Code
     fetch('/api/qr-code')
       .then(response => response.json())
-      .then(data => { setQrCode(data.qrPairingCode); console.log('/api/qr-code:', data.qrPairingCode) })
+      .then(data => { 
+      setQrCode(data.qrPairingCode); 
+      console.log('/api/qr-code:', data.qrPairingCode);
+      localStorage.setItem('qrCode', data.qrPairingCode); // Save the QR code in localStorage
+      })
       .catch(error => console.error('Error fetching QR code:', error));
 
     // Fetch System Info
@@ -82,10 +93,23 @@ function Home() {
 
   }, []); // The empty array causes this effect to run only once
 
+  const handleSelect = (row) => {
+    if (selectedRow === row) {
+      setSelectedRow(-1);
+      setSelectedPluginName('none');
+      setQrCode(localStorage.getItem('qrCode'));
+    } else {
+      setSelectedRow(row);
+      setSelectedPluginName(plugins[row].name);
+      setQrCode(plugins[row].qrPairingCode);
+    }
+    console.log('Selected row:', row, 'plugin:', plugins[row].name, 'qrcode:', plugins[row].qrPairingCode);
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0', padding: '0' }}>
       <div style={{ display: 'flex', flexDirection: 'column', flex: '0 1 auto'/*, width: '310px'*/, gap: '20px' }}>
-        {qrCode && <QRDiv qrText={qrCode} qrWidth={256} topText="QRCode" bottomText="Scan me to pair matterbridge" />}
+        {qrCode && <QRDiv qrText={qrCode} qrWidth={256} topText="QRCode" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName} />}
         <table>
           <thead>
             <tr>
@@ -116,7 +140,9 @@ function Home() {
           </thead>
           <tbody>
             {plugins.map((plugin, index) => (
-              <tr key={index} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
+
+              <tr key={index} onClick={() => handleSelect(index)} className={selectedRow === index ? 'table-content-selected' : index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
+
                 <td className="table-content">{plugin.name}</td>
                 <td className="table-content">{plugin.description}</td>
                 <td className="table-content">{plugin.version}</td>
@@ -128,15 +154,13 @@ function Home() {
                     {plugin.qrPairingCode ?  <>
                         <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" size="small"><QrCode2Icon /></IconButton></Tooltip>
                       </> : <></>}
-                    <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled'/>
+                    <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Enable or disable the plugin'/>
                     {plugin.loaded && plugin.started && plugin.configured && plugin.paired && plugin.connected ? 
                       <>
-                        <StatusIndicator status={true} enabledText = 'Running'/>
                       </> : 
                       <>
                         {plugin.loaded && plugin.started && plugin.configured && plugin.paired===undefined && plugin.connected===undefined ? 
                           <>
-                            <StatusIndicator status={true} enabledText = 'Running'/>
                           </> : 
                           <>
                             <StatusIndicator status={plugin.loaded} enabledText='Loaded'/>
@@ -196,9 +220,12 @@ function Home() {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      width: '100%',
+      //width: '100%',
       height: '30px',
       color: 'black',
+      margin: '0px',
+      padding: '10px',
+      paddingTop: '0px',
     };
   
     // Return the JSX code for the div element
@@ -209,7 +236,7 @@ function Home() {
         </div>
         <QRCode value={qrText} size={qrWidth} bgColor={divStyle.backgroundColor} style={{ marginTop: '20px', marginBottom: '20px' }}/>
         <div style={footerStyle}>
-          <p>{bottomText}</p>
+          <p>Scan me to pair: {bottomText}</p>
         </div>
       </div>
     );

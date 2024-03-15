@@ -1,6 +1,66 @@
 /* App.css */
 
-/* In your CSS file */
+/* Tooltip style */
+.tooltip-container {
+  position: relative;
+  display: inline-block;
+}
+
+/*
+width: 120px;
+*/
+.tooltip-text {
+  visibility: hidden;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  padding: 5px 5px;
+  border-radius: 6px;
+
+  position: absolute;
+  z-index: 1;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  margin-left: -60px;
+
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 12px;
+}
+
+.tooltip-container:hover {
+  cursor: pointer;
+}
+
+.tooltip-container:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* StatusIndicator style */
+.status-enabled {
+  background-color: green;
+  color: white;
+  padding: 0.2rem;
+  border-radius: 0.25rem;
+  text-align: center;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.status-disabled {
+  background-color: red;
+  color: white;
+  padding: 0.2rem;
+  border-radius: 0.25rem;
+  text-align: center;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+
+/* Home page style */
+
 .PluginsIconButton {
   color: #000000;
   padding: 0;
@@ -91,24 +151,6 @@ nav {
 /* Table content style for selected rows*/
 .table-content-selected {
   background-color: #a5a74a;
-}
-
-.status-enabled {
-  background-color: green;
-  color: white;
-  padding: 0.2rem;
-  border-radius: 0.25rem;
-  text-align: center;
-  font-size: 12px;
-}
-
-.status-disabled {
-  background-color: red;
-  color: white;
-  padding: 0.2rem;
-  border-radius: 0.25rem;
-  text-align: center;
-  font-size: 12px;
 }
 
 /* Table style */

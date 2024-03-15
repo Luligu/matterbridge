@@ -1,7 +1,7 @@
 // Header.js
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Tooltip, IconButton, Button, ThemeProvider, createTheme } from '@mui/material';
+import { Tooltip, IconButton, Button, createTheme } from '@mui/material';
 import RestartAlt from '@mui/icons-material/RestartAlt';
 
 /*
