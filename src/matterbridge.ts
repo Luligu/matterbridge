@@ -1071,10 +1071,10 @@ export class Matterbridge {
       if (this.bridgeMode === 'childbridge') {
         const plugin = this.findPlugin(pluginName);
         if (plugin && plugin.storageContext && plugin.nodeContext) {
-          const qrPairingCode = plugin.storageContext.get('qrPairingCode', '');
-          const manualPairingCode = plugin.storageContext.get('manualPairingCode', '');
-          await plugin.nodeContext.set<string>('qrPairingCode', qrPairingCode);
-          await plugin.nodeContext.set<string>('manualPairingCode', manualPairingCode);
+          plugin.qrPairingCode = plugin.storageContext.get('qrPairingCode', '');
+          plugin.manualPairingCode = plugin.storageContext.get('manualPairingCode', '');
+          await plugin.nodeContext.set<string>('qrPairingCode', plugin.qrPairingCode);
+          await plugin.nodeContext.set<string>('manualPairingCode', plugin.manualPairingCode);
           await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
           plugin.paired = true;
         }
