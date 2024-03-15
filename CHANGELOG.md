@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - [cli]: Resolve the plugin name from absolute or relative path or from globally installed modules (see the help).
+- [frontend]: Added some fancy stuff still not visible.
 
 ### Fixed
 

@@ -912,7 +912,7 @@ export class Matterbridge {
           if (!allStarted) this.log.info(`**Waiting in start matter server interval for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
         });
         if (!allStarted) return;
-        this.log.info('Starting matter server ...');
+        this.log.info('Starting matter server');
 
         // Setting reachability to true
         this.registeredPlugins.forEach((plugin) => {
