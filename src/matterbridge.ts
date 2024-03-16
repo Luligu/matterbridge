@@ -470,9 +470,8 @@ export class Matterbridge {
    * Restarts the process by spawning a new process and exiting the current process.
    */
   private async restartProcess() {
-    this.log.info('Restarting still not implemented');
+    //this.log.info('Restarting still not implemented');
     //return;
-    this.log.info('Matterbridge is restarting...');
 
     await this.cleanup('Matterbridge is restarting...', true);
     this.hasCleanupStarted = false;
@@ -551,8 +550,7 @@ export class Matterbridge {
 
         setTimeout(async () => {
           this.log.info('Cleanup completed.');
-          //this.log = undefined;
-          if (restart) console.log(this);
+          //if (restart) console.log(this);
           if (restart) await this.initialize();
           else process.exit(0);
         }, 2 * 1000);
@@ -1372,10 +1370,15 @@ export class Matterbridge {
     this.log.debug('Matter server closed');
     this.commissioningController = undefined;
     this.commissioningServer = undefined;
+    this.matterAggregator = undefined;
     this.matterServer = undefined;
   }
 
-  // Matterbridge version
+  /**
+   * Retrieves the latest version of a package from the npm registry.
+   * @param packageName - The name of the package.
+   * @returns A Promise that resolves to the latest version of the package.
+   */
   private async getLatestVersion(packageName: string): Promise<string> {
     return new Promise((resolve, reject) => {
       exec(`npm view ${packageName} version`, (error, stdout) => {
