@@ -44,7 +44,7 @@ async function main() {
   console.log('MAIN: Matterbridge.loadInstance() called');
   await Matterbridge.loadInstance();
   // eslint-disable-next-line no-console
-  console.log('MAIN: Matterbridge.loadInstance() called');
+  console.log('MAIN: Matterbridge.loadInstance() exited');
 }
 
 main().catch((error) => {
