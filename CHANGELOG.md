@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - [frontend]: Enable and disable plugin are now available. The process restart.
+- [frontend]: Frontend got updated to 0.8.2.
 
 ## [1.1.9] - 2024-03-15
 

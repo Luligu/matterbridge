@@ -27,8 +27,7 @@ import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr } from 'node-ansi-logger';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { promises as fs } from 'fs';
-import { ExecException, exec } from 'child_process';
-//import { spawn } from 'child_process';
+import { ExecException, exec, spawn } from 'child_process';
 import { Server } from 'http';
 import express from 'express';
 import os from 'os';
@@ -196,6 +195,11 @@ export class Matterbridge {
    * @returns A Promise that resolves when the initialization is complete.
    */
   public async initialize() {
+    /*
+    const wtf = await import('wtfnode');
+    wtf.dump();
+    */
+
     // Display the help
     if (hasParameter('help')) {
       // eslint-disable-next-line no-console
@@ -259,6 +263,47 @@ export class Matterbridge {
 
     // Parse command line
     this.parseCommandLine();
+  }
+
+  /**
+   * Spawns a child process with the given command and arguments.
+   * @param command - The command to execute.
+   * @param args - The arguments to pass to the command (default: []).
+   * @returns A promise that resolves when the child process exits successfully, or rejects if there is an error.
+   */
+  private async spawnCommand(command: string, args: string[] = []): Promise<void> {
+    /*
+    npm > npm.cmd on windows
+    */
+    return new Promise((resolve, reject) => {
+      const childProcess = spawn(command, args, {
+        stdio: 'inherit',
+      });
+
+      childProcess.on('error', (err) => {
+        this.log.error(`Failed to start child process: ${err.message}`);
+        reject(err); // Reject the promise on error
+      });
+
+      childProcess.on('close', (code) => {
+        if (code === 0) {
+          this.log.info(`Child process stdio streams have closed with code ${code}`);
+          resolve();
+        } else {
+          this.log.error(`Child process stdio streams have closed with code ${code}`);
+          reject(new Error(`Process exited with code ${code}`));
+        }
+      });
+
+      // The 'exit' event might be redundant here since 'close' is also being handled
+      childProcess.on('exit', (code, signal) => {
+        this.log.info(`Child process exited with code ${code} and signal ${signal}`);
+      });
+
+      childProcess.on('disconnect', () => {
+        this.log.info('Child process has been disconnected from the parent');
+      });
+    });
   }
 
   /**

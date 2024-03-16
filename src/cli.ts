@@ -22,6 +22,7 @@
  * limitations under the License. *
  */
 
+//import 'wtfnode';
 import { Matterbridge } from './matterbridge.js';
 
 async function main() {

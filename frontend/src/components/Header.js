@@ -1,10 +1,13 @@
 // Header.js
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Tooltip, IconButton, Button, createTheme } from '@mui/material';
+import { Tooltip, Button, createTheme } from '@mui/material';
 import DriveFolderUploadIcon from '@mui/icons-material/DriveFolderUpload';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
+
 /*
     <div className="header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '20px', margin: '0', padding: '20px', height: '40px' }}>
         <Link to="/test" className="nav-link">Test</Link>
@@ -43,17 +46,34 @@ export function sendCommandToMatterbridge(command, param) {
 }
 
 function Header() {
+  const [open, setOpen] = React.useState(false);
+  const handleClose = () => {
+    setOpen(false);
+  };
+
   // Define the function that sends the "restart" command
   const handleAddPluginClick = () => {
     sendCommandToMatterbridge('addplugin','xxxx');
+    setOpen(true);
+    setTimeout(() => {
+      setOpen(false);
+    }, 5000);
   };
 
   const handleUpdateClick = () => {
     sendCommandToMatterbridge('update','now');
+    setOpen(true);
+    setTimeout(() => {
+      setOpen(false);
+    }, 5000);
   };
 
   const handleRestartClick = () => {
     sendCommandToMatterbridge('restart','now');
+    setOpen(true);
+    setTimeout(() => {
+      setOpen(false);
+    }, 5000);
   };
 
   return (
@@ -66,9 +86,12 @@ function Header() {
         <Link to="/settings" className="nav-link">Settings</Link>
       </nav>
       <div className="header" style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
-        <Tooltip title="Add plugin"><Button theme={theme} color="primary" variant="contained" size="small" endIcon={<DriveFolderUploadIcon />} style={{ color: '#ffffff' }} onClick={handleAddPluginClick}>Add plugin</Button></Tooltip>        
-        <Tooltip title="Update matterbridge"><Button theme={theme} color="primary" variant="contained" size="small" endIcon={<SystemUpdateAltIcon />} style={{ color: '#ffffff' }} onClick={handleUpdateClick}>Update</Button></Tooltip>        
+        <Tooltip title="Add plugin"><Button disabled theme={theme} color="primary" variant="contained" size="small" endIcon={<DriveFolderUploadIcon />} style={{ color: '#ffffff' }} onClick={handleAddPluginClick}>Add plugin</Button></Tooltip>        
+        <Tooltip title="Update matterbridge"><Button disabled theme={theme} color="primary" variant="contained" size="small" endIcon={<SystemUpdateAltIcon />} style={{ color: '#ffffff' }} onClick={handleUpdateClick}>Update</Button></Tooltip>        
         <Tooltip title="Restart matterbridge"><Button theme={theme} color="primary" variant="contained" size="small" endIcon={<RestartAltIcon />} style={{ color: '#ffffff' }} onClick={handleRestartClick}>Restart</Button></Tooltip>        
+        <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open} onClick={handleClose}>
+          <CircularProgress color="inherit" />
+        </Backdrop>
       </div>
     </div>
   );
