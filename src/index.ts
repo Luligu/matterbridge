@@ -41,11 +41,13 @@ export * from './TvocCluster.js';
 
 async function main() {
   // eslint-disable-next-line no-console
-  console.log('Loading Matterbridge instance');
+  console.log('MAIN: Matterbridge.loadInstance() called');
   await Matterbridge.loadInstance();
+  // eslint-disable-next-line no-console
+  console.log('MAIN: Matterbridge.loadInstance() called');
 }
 
 main().catch((error) => {
   // eslint-disable-next-line no-console
-  console.error(`Failed to initialize Matterbridge: ${error}`);
+  console.error(`MAIN: Matterbridge.loadInstance() failed with error: ${error}`);
 });

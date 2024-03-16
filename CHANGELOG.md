@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- [frontend]: Settings page now controll the global logger level.
 - [frontend]: Frontend got updated to 0.8.1.
 
 ## [1.1.8] - 2024-03-15

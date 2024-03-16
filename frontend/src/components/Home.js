@@ -236,7 +236,10 @@ function Home() {
         </div>
         <QRCode value={qrText} size={qrWidth} bgColor={divStyle.backgroundColor} style={{ marginTop: '20px', marginBottom: '20px' }}/>
         <div style={footerStyle}>
-          <p>Scan me to pair: {bottomText}</p>
+          <div>
+            <p style={{ margin: 0, textAlign: 'center' }}>Scan me to pair</p>
+            <p style={{ margin: 0, textAlign: 'center' }}>{bottomText}</p>
+          </div>
         </div>
       </div>
     );
