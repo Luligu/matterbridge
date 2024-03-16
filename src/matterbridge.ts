@@ -27,7 +27,7 @@ import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr } from 'node-ansi-logger';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { promises as fs } from 'fs';
-import { exec, execSync } from 'child_process';
+import { ExecException, exec } from 'child_process';
 //import { spawn } from 'child_process';
 import { Server } from 'http';
 import express from 'express';
@@ -1381,7 +1381,23 @@ export class Matterbridge {
    */
   private async getLatestVersion(packageName: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      exec(`npm view ${packageName} version`, (error, stdout) => {
+      exec(`npm view ${packageName} version`, (error: ExecException | null, stdout: string) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(stdout.trim());
+        }
+      });
+    });
+  }
+
+  /**
+   * Retrieves the path to the global Node.js modules directory.
+   * @returns A promise that resolves to the path of the global Node.js modules directory.
+   */
+  private async getGlobalNodeModules(): Promise<string> {
+    return new Promise((resolve, reject) => {
+      exec('npm root -g', (error: ExecException | null, stdout: string) => {
         if (error) {
           reject(error);
         } else {
@@ -1456,7 +1472,7 @@ export class Matterbridge {
     this.log.debug(`Root Directory: ${this.rootDirectory}`);
 
     // Global node_modules directory
-    this.globalModulesDir = execSync('npm root -g').toString().trim();
+    this.globalModulesDir = await this.getGlobalNodeModules();
     this.log.debug(`Global node_modules Directory: ${this.globalModulesDir}`);
 
     // Create the data directory .matterbridge in the home directory
@@ -1667,7 +1683,7 @@ export class Matterbridge {
     });
 
     // Endpoint to receive commands
-    this.expressApp.post('/api/command/:command/:param', (req, res) => {
+    this.expressApp.post('/api/command/:command/:param', async (req, res) => {
       const command = req.params.command;
       const param = req.params.param;
       this.log.debug(`The frontend sent /api/command/${command}/${param}`);
@@ -1679,7 +1695,7 @@ export class Matterbridge {
 
       this.log.info(`***Received command: ${command}:${param}`);
 
-      // Handle the command debugLevel
+      // Handle the command debugLevel from Settings
       if (command === 'setloglevel') {
         if (param === 'Debug') {
           this.log.setLogDebug(true);
@@ -1699,9 +1715,47 @@ export class Matterbridge {
         });
       }
 
-      // Handle the command debugLevel
+      // Handle the command debugLevel from Header
       if (command === 'restart') {
         this.restartProcess();
+      }
+      // Handle the command update from Header
+      if (command === 'update') {
+        this.log.warn(`The /api/command/${command} is not yet implemented`);
+      }
+      // Handle the command addplugin from Header
+      if (command === 'addplugin') {
+        this.log.warn(`The /api/command/${command}/${param} is not yet implemented`);
+      }
+      // Handle the command enableplugin from Home
+      if (command === 'enableplugin') {
+        //this.log.warn(`The /api/command/${command}/${param} is not yet implemented`);
+        const plugin = this.findPlugin(param);
+        if (plugin) {
+          plugin.enabled = true;
+          plugin.loaded = undefined;
+          plugin.started = undefined;
+          plugin.configured = undefined;
+          plugin.connected = undefined;
+          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+          this.log.info(`Enabled plugin ${plg}${param}${nf}`);
+          this.restartProcess();
+        }
+      }
+      // Handle the command disableplugin from Home
+      if (command === 'disableplugin') {
+        //this.log.warn(`The /api/command/${command}/${param} is not yet implemented`);
+        const plugin = this.findPlugin(param);
+        if (plugin) {
+          plugin.enabled = false;
+          plugin.loaded = undefined;
+          plugin.started = undefined;
+          plugin.configured = undefined;
+          plugin.connected = undefined;
+          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+          this.log.info(`Disabled plugin ${plg}${param}${nf}`);
+          this.restartProcess();
+        }
       }
 
       res.json({ message: 'Command received' });

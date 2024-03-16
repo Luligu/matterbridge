@@ -4,6 +4,7 @@ import QRCode from 'qrcode.react';
 import { StatusIndicator } from './StatusIndicator';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import { Tooltip, IconButton } from '@mui/material';
+import { sendCommandToMatterbridge } from './Header';
 // npm install @mui/material @emotion/react @emotion/styled
 // npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
 
@@ -38,6 +39,10 @@ function Home() {
       {
         Header: 'Devices',
         accessor: 'devices',
+      },
+      {
+        Header: 'QR',
+        accessor: 'qrcode',
       },
       {
         Header: 'Status',
@@ -106,6 +111,26 @@ function Home() {
     console.log('Selected row:', row, 'plugin:', plugins[row].name, 'qrcode:', plugins[row].qrPairingCode);
   };
 
+  const handleEnableDisable = (row) => {
+    console.log('Selected row:', row, 'plugin:', plugins[row].name, 'enabled:', plugins[row].enabled);
+    if(plugins[row].enabled===true) {
+      plugins[row].enabled=false;
+      sendCommandToMatterbridge('disableplugin', plugins[row].name);
+    }
+    else {
+      plugins[row].enabled=true;
+      sendCommandToMatterbridge('enableplugin', plugins[row].name);
+    }
+    console.log('Updating page');
+    setPlugins(prevPlugins => [...prevPlugins]);
+    // Set a timeout to update the page after 5 seconds
+    setTimeout(() => {
+      // Trigger a state update
+      console.log('Updating page after 5 seconds');
+      setPlugins(prevPlugins => [...prevPlugins]);
+    }, 5000);
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0', padding: '0' }}>
       <div style={{ display: 'flex', flexDirection: 'column', flex: '0 1 auto'/*, width: '310px'*/, gap: '20px' }}>
@@ -130,7 +155,7 @@ function Home() {
         <table>
           <thead>
             <tr>
-              <th className="table-header" colSpan="7">Registered plugins</th>
+              <th className="table-header" colSpan="8">Registered plugins</th>
             </tr>
             <tr>
               {columns.map((column, index) => (
@@ -149,12 +174,13 @@ function Home() {
                 <td className="table-content">{plugin.author}</td>
                 <td className="table-content">{plugin.type}</td>
                 <td className="table-content">{plugin.registeredDevices}</td>
+                <td className="table-content">{plugin.qrPairingCode ?  <>
+                  <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" size="small"><QrCode2Icon /></IconButton></Tooltip>
+                  </> : <></>}
+                </td>
                 <td className="table-content">
                   <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', gap: '5px' }}>
-                    {plugin.qrPairingCode ?  <>
-                        <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" size="small"><QrCode2Icon /></IconButton></Tooltip>
-                      </> : <></>}
-                    <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Enable or disable the plugin'/>
+                    <StatusIndicator status={plugin.enabled} onClick={() => handleEnableDisable(index)} enabledText='Enabled' disabledText='Disabled' tooltipText='Enable or disable the plugin'/>
                     {plugin.loaded && plugin.started && plugin.configured && plugin.paired && plugin.connected ? 
                       <>
                       </> : 
@@ -238,7 +264,7 @@ function Home() {
         <div style={footerStyle}>
           <div>
             <p style={{ margin: 0, textAlign: 'center' }}>Scan me to pair</p>
-            <p style={{ margin: 0, textAlign: 'center' }}>{bottomText}</p>
+            <p className="text-color-selected" style={{ margin: 0, textAlign: 'center' }}>{bottomText}</p>
           </div>
         </div>
       </div>

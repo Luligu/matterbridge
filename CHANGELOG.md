@@ -2,11 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.10] - 2024-03-15
+
+### Added
+
+- [frontend]: Enable and disable plugin are now available. The process restart.
+
 ## [1.1.9] - 2024-03-15
 
 ### Added
 
+- [frontend]: Selecting a plugin in the home page show the corresponding QR code.
 - [frontend]: Settings page now controll the global logger level.
+- [frontend]: Restart from the header is available.
 - [frontend]: Frontend got updated to 0.8.1.
 
 ## [1.1.8] - 2024-03-15
