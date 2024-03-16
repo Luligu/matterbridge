@@ -27,7 +27,7 @@ import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr } from 'node-ansi-logger';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { promises as fs } from 'fs';
-import { execSync } from 'child_process';
+import { exec, execSync } from 'child_process';
 //import { spawn } from 'child_process';
 import { Server } from 'http';
 import express from 'express';
@@ -137,6 +137,7 @@ export class Matterbridge {
   public matterbridgeDirectory: string = '';
   public matterbridgePluginDirectory: string = '';
   public matterbridgeVersion: string = '';
+  public matterbridgeLatestVersion: string = '';
   public globalModulesDir: string = '';
 
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
@@ -163,7 +164,7 @@ export class Matterbridge {
   private static instance: Matterbridge;
 
   private constructor() {
-    // we load asynchroneously the instance
+    // We load asyncronously
   }
 
   /**
@@ -470,8 +471,8 @@ export class Matterbridge {
    */
   private async restartProcess() {
     this.log.info('Restarting still not implemented');
-    return;
-    this.log.info('Matterbridge is restarting...', process.argv, process.argv.slice(2));
+    //return;
+    this.log.info('Matterbridge is restarting...');
 
     await this.cleanup('Matterbridge is restarting...', true);
     this.hasCleanupStarted = false;
@@ -485,6 +486,9 @@ export class Matterbridge {
     if (!this.hasCleanupStarted) {
       this.hasCleanupStarted = true;
       this.log.info(message);
+
+      process.removeAllListeners('SIGINT');
+      process.removeAllListeners('SIGTERM');
 
       // Callint the shutdown functions with a reason
       for (const plugin of this.registeredPlugins) {
@@ -509,11 +513,16 @@ export class Matterbridge {
       });
       */
 
+      // Close the express server
       if (this.expressServer) {
         this.expressServer.close();
         this.expressServer = undefined;
       }
-
+      // Remove listeners
+      if (this.expressApp) {
+        this.expressApp.removeAllListeners();
+        this.expressApp = undefined;
+      }
       setTimeout(async () => {
         // Closing matter
         await this.stopMatter();
@@ -531,13 +540,20 @@ export class Matterbridge {
           //console.log('serializedRegisteredDevices:', serializedRegisteredDevices);
           await this.nodeContext.set<SerializedMatterbridgeDevice[]>('devices', serializedRegisteredDevices);
           this.log.info('Saved registered devices');
+          // Clear nodeContext and nodeStorage (they just need 1000ms to write the data to disk)
+          this.nodeContext = undefined;
+          this.nodeStorage = undefined;
         } else {
           this.log.error('Error saving registered devices: nodeContext not found!');
         }
+        this.registeredPlugins = [];
+        this.registeredDevices = [];
 
-        setTimeout(() => {
+        setTimeout(async () => {
           this.log.info('Cleanup completed.');
-          if (restart) this.initialize();
+          //this.log = undefined;
+          if (restart) console.log(this);
+          if (restart) await this.initialize();
           else process.exit(0);
         }, 2 * 1000);
       }, 3 * 1000);
@@ -698,6 +714,8 @@ export class Matterbridge {
     await this.storageManager?.close();
     this.log.debug('Storage closed');
     this.storageManager = undefined;
+    this.matterbridgeContext = undefined;
+    this.mattercontrollerContext = undefined;
   }
 
   private async testStartMatterBridge(): Promise<void> {
@@ -1357,6 +1375,19 @@ export class Matterbridge {
     this.matterServer = undefined;
   }
 
+  // Matterbridge version
+  private async getLatestVersion(packageName: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      exec(`npm view ${packageName} version`, (error, stdout) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(stdout.trim());
+        }
+      });
+    });
+  }
+
   /**
    * Logs the node and system information.
    */
@@ -1471,6 +1502,13 @@ export class Matterbridge {
     const packageJson = JSON.parse(await fs.readFile(path.join(this.rootDirectory, 'package.json'), 'utf-8'));
     this.matterbridgeVersion = packageJson.version;
     this.log.debug(`Matterbridge Version: ${this.matterbridgeVersion}`);
+
+    this.matterbridgeLatestVersion = await this.getLatestVersion('matterbridge');
+    this.log.debug(`Matterbridge Latest Version: ${this.matterbridgeLatestVersion}`);
+
+    if (this.matterbridgeVersion !== this.matterbridgeLatestVersion) {
+      this.log.warn(`Matterbridge is out of date. Current version: ${this.matterbridgeVersion}, Latest version: ${this.matterbridgeLatestVersion}`);
+    }
 
     // Current working directory
     const currentDir = process.cwd();

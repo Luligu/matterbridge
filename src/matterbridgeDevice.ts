@@ -28,6 +28,7 @@ import {
   ClusterServer,
   ClusterServerHandlers,
   ColorControl,
+  ColorControlCluster,
   ElectricalMeasurementCluster,
   Groups,
   Identify,
@@ -52,6 +53,7 @@ import {
   WindowCovering,
   WindowCoveringCluster,
   createDefaultGroupsClusterServer,
+  createDefaultLevelControlClusterServer,
   createDefaultScenesClusterServer,
 } from '@project-chip/matter-node.js/cluster';
 import { ClusterId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
@@ -850,6 +852,88 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
             // eslint-disable-next-line no-console
             console.log('toggle');
             await this.commandHandler.executeHandler('toggle', data);
+          },
+        },
+        {},
+      ),
+    );
+  }
+
+  createDefaultLevelControlClusterServer() {
+    this.addClusterServer(createDefaultLevelControlClusterServer(this.commandHandler));
+  }
+
+  createDefaultColorControlClusterServer() {
+    this.addClusterServer(
+      ClusterServer(
+        ColorControlCluster.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature),
+        {
+          colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
+          options: {
+            executeIfOff: false,
+          },
+          numberOfPrimaries: null,
+          enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
+          colorCapabilities: { xy: false, hs: true, cl: false, ehue: false, ct: true },
+          currentHue: 0,
+          currentSaturation: 0,
+          colorTemperatureMireds: 500,
+          colorTempPhysicalMinMireds: 147,
+          colorTempPhysicalMaxMireds: 500,
+        },
+        {
+          moveToHue: async ({ request: request, attributes: attributes }) => {
+            // eslint-disable-next-line no-console
+            console.log('Command moveToHue request:', request /*, 'attributes:', attributes*/);
+            attributes.currentHue.setLocal(request.hue);
+            this.commandHandler.executeHandler('moveToHue', { request: request, attributes: attributes });
+          },
+          moveHue: async () => {
+            // eslint-disable-next-line no-console
+            console.error('Not implemented');
+          },
+          stepHue: async () => {
+            // eslint-disable-next-line no-console
+            console.error('Not implemented');
+          },
+          moveToSaturation: async ({ request: request, attributes: attributes }) => {
+            // eslint-disable-next-line no-console
+            console.log('Command moveToSaturation request:', request /*, 'attributes:', attributes*/);
+            attributes.currentSaturation.setLocal(request.saturation);
+            this.commandHandler.executeHandler('moveToSaturation', { request: request, attributes: attributes });
+          },
+          moveSaturation: async () => {
+            // eslint-disable-next-line no-console
+            console.error('Not implemented');
+          },
+          stepSaturation: async () => {
+            // eslint-disable-next-line no-console
+            console.error('Not implemented');
+          },
+          moveToHueAndSaturation: async ({ request: request, attributes: attributes }) => {
+            // eslint-disable-next-line no-console
+            console.log('Command moveToHueAndSaturation request:', request /*, 'attributes:', attributes*/);
+            attributes.currentHue.setLocal(request.hue);
+            attributes.currentSaturation.setLocal(request.saturation);
+            this.commandHandler.executeHandler('moveToHueAndSaturation', { request: request, attributes: attributes });
+          },
+          stopMoveStep: async () => {
+            // eslint-disable-next-line no-console
+            console.error('Not implemented');
+          },
+          moveToColorTemperature: async ({ request: request, attributes: attributes }) => {
+            // eslint-disable-next-line no-console
+            console.log('Command moveToColorTemperature request:', request /*, 'attributes:', attributes*/);
+            attributes.colorTemperatureMireds.setLocal(request.colorTemperatureMireds);
+            this.commandHandler.executeHandler('moveToColorTemperature', { request: request, attributes: attributes });
+          },
+          moveColorTemperature: async () => {
+            // eslint-disable-next-line no-console
+            console.error('Not implemented');
+          },
+          stepColorTemperature: async () => {
+            // eslint-disable-next-line no-console
+            console.error('Not implemented');
           },
         },
         {},
