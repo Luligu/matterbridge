@@ -57,7 +57,7 @@ function Header() {
     setOpen(true);
     setTimeout(() => {
       setOpen(false);
-    }, 5000);
+    }, 20000);
   };
 
   const handleUpdateClick = () => {
@@ -65,7 +65,7 @@ function Header() {
     setOpen(true);
     setTimeout(() => {
       setOpen(false);
-    }, 5000);
+    }, 20000);
   };
 
   const handleRestartClick = () => {
@@ -73,7 +73,7 @@ function Header() {
     setOpen(true);
     setTimeout(() => {
       setOpen(false);
-    }, 5000);
+    }, 20000);
   };
 
   return (

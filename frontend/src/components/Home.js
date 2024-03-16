@@ -53,25 +53,7 @@ function Home() {
     []
   );
 
-  /*
-  useEffect(() => {
-    const interval = setInterval(() => {
-
-      // Fetch Plugins
-      fetch('/api/plugins')
-        .then(response => response.json())
-        .then(data => { setPlugins(data); console.log('/api/plugins:', data)})
-        .catch(error => console.error('Error fetching plugins:', error));
-  
-      // Clear interval on component unmount
-      return () => clearInterval(interval);
-    }, 2000);
-  }, []); 
-  */
  /*
-  <StatusIndicator status={true} enabledText = 'Running' tooltipText='The plugin is loaded, started and configured'/>
-                <tr key={index} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
-
  */
   useEffect(() => {
     // Fetch QR Code
@@ -126,9 +108,10 @@ function Home() {
     // Set a timeout to update the page after 5 seconds
     setTimeout(() => {
       // Trigger a state update
-      console.log('Updating page after 5 seconds');
+      console.log('Updating page after 20 seconds');
       setPlugins(prevPlugins => [...prevPlugins]);
-    }, 5000);
+      window.location.reload();
+    }, 20000);
   };
 
   return (
