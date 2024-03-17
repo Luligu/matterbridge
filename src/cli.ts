@@ -22,20 +22,39 @@
  * limitations under the License. *
  */
 
-//import 'wtfnode';
+/* eslint-disable no-console */
+import wtf from 'wtfnode';
 import { Matterbridge } from './matterbridge.js';
 
+let instance: Matterbridge | undefined;
+
 async function main() {
-  // eslint-disable-next-line no-console
   console.log('CLI: Matterbridge.loadInstance() called');
-  await Matterbridge.loadInstance(true);
-  // eslint-disable-next-line no-console
+  instance = await Matterbridge.loadInstance(true);
+  registerHandlers();
   console.log('CLI: Matterbridge.loadInstance() exited');
+}
+
+function registerHandlers() {
+  instance!.on('shutdown', async () => shutdown());
+  instance!.on('restart', async () => restart());
+}
+
+async function shutdown() {
+  console.log('CLI: received shutdown event, exiting...');
+  wtf.dump();
+  process.exit(0);
+}
+
+async function restart() {
+  console.log('CLI: received restart event, loading...');
+  wtf.dump();
+  instance = await Matterbridge.loadInstance(true);
+  registerHandlers();
 }
 
 process.title = 'matterbridge';
 
 main().catch((error) => {
-  // eslint-disable-next-line no-console
   console.error(`CLI: Matterbridge.loadInstance() failed with error: ${error}`);
 });

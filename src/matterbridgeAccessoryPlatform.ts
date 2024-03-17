@@ -85,4 +85,19 @@ export class MatterbridgeAccessoryPlatform {
   async registerDevice(device: MatterbridgeDevice) {
     await this.matterbridge.addDevice(this.name, device);
   }
+  /**
+   * Unegisters a device registered with the Matterbridge platform.
+   * @param {MatterbridgeDevice} device - The device to unregister.
+   */
+
+  async unregisterDevice(device: MatterbridgeDevice) {
+    await this.matterbridge.removeBridgedDevice(this.name, device);
+  }
+
+  /**
+   * Unegisters all devices registered with the Matterbridge platform.
+   */
+  async unregisterAllDevices() {
+    await this.matterbridge.removeAllBridgedDevices(this.name);
+  }
 }

@@ -44,6 +44,7 @@ import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } fr
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { logEndpoint } from '@project-chip/matter-node.js/device';
+import EventEmitter from 'events';
 
 /*
 
@@ -117,7 +118,7 @@ const typ = '\u001B[38;5;207m';
 /**
  * Represents the Matterbridge application.
  */
-export class Matterbridge {
+export class Matterbridge extends EventEmitter {
   public systemInformation: SystemInformation = {
     ipv4Address: '',
     ipv6Address: '',
@@ -160,9 +161,10 @@ export class Matterbridge {
   private commissioningServer: CommissioningServer | undefined;
   private commissioningController: CommissioningController | undefined;
 
-  private static instance: Matterbridge;
+  private static instance: Matterbridge | undefined;
 
   private constructor() {
+    super();
     // We load asyncronously
   }
 
@@ -323,26 +325,31 @@ export class Matterbridge {
           this.log.info(`│ └─ ${db}${plugin.path}${db}`);
         }
       });
+      this.emit('shutdown');
       process.exit(0);
     }
     if (getParameter('add')) {
       this.log.debug(`Registering plugin ${getParameter('add')}`);
       await this.executeCommandLine(getParameter('add')!, 'add');
+      this.emit('shutdown');
       process.exit(0);
     }
     if (getParameter('remove')) {
       this.log.debug(`Unregistering plugin ${getParameter('remove')}`);
       await this.executeCommandLine(getParameter('remove')!, 'remove');
+      this.emit('shutdown');
       process.exit(0);
     }
     if (getParameter('enable')) {
       this.log.debug(`Enable plugin ${getParameter('enable')}`);
       await this.executeCommandLine(getParameter('enable')!, 'enable');
+      this.emit('shutdown');
       process.exit(0);
     }
     if (getParameter('disable')) {
       this.log.debug(`Disable plugin ${getParameter('disable')}`);
       await this.executeCommandLine(getParameter('disable')!, 'disable');
+      this.emit('shutdown');
       process.exit(0);
     }
 
@@ -364,7 +371,10 @@ export class Matterbridge {
       this.bridgeMode = 'bridge';
       MatterbridgeDevice.bridgeMode = 'bridge';
       for (const plugin of this.registeredPlugins) {
-        if (!plugin.enabled) continue;
+        if (!plugin.enabled) {
+          this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
+          continue;
+        }
         plugin.loaded = false;
         plugin.started = false;
         plugin.configured = false;
@@ -380,7 +390,10 @@ export class Matterbridge {
       this.bridgeMode = 'childbridge';
       MatterbridgeDevice.bridgeMode = 'childbridge';
       for (const plugin of this.registeredPlugins) {
-        if (!plugin.enabled) continue;
+        if (!plugin.enabled) {
+          this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
+          continue;
+        }
         plugin.loaded = false;
         plugin.started = false;
         plugin.configured = false;
@@ -518,7 +531,7 @@ export class Matterbridge {
     //this.log.info('Restarting still not implemented');
     //return;
 
-    await this.cleanup('Matterbridge is restarting...', true);
+    await this.cleanup('restarting...', true);
     this.hasCleanupStarted = false;
   }
 
@@ -567,7 +580,7 @@ export class Matterbridge {
         this.expressApp.removeAllListeners();
         this.expressApp = undefined;
       }
-      setTimeout(async () => {
+      const cleanupTimeout1 = setTimeout(async () => {
         // Closing matter
         await this.stopMatter();
 
@@ -593,13 +606,20 @@ export class Matterbridge {
         this.registeredPlugins = [];
         this.registeredDevices = [];
 
-        setTimeout(async () => {
-          this.log.info('Cleanup completed.');
-          //if (restart) console.log(this);
-          if (restart) await this.initialize();
-          else process.exit(0);
+        const cleanupTimeout2 = setTimeout(async () => {
+          if (restart) {
+            this.log.info('Cleanup completed. Restarting...');
+            Matterbridge.instance = undefined;
+            this.emit('restart');
+          } else {
+            this.log.info('Cleanup completed. Shutting down...');
+            Matterbridge.instance = undefined;
+            this.emit('shutdown');
+          }
         }, 2 * 1000);
+        cleanupTimeout2.unref();
       }, 3 * 1000);
+      cleanupTimeout1.unref();
     }
   }
 
@@ -626,15 +646,15 @@ export class Matterbridge {
    */
   async addDevice(pluginName: string, device: MatterbridgeDevice): Promise<void> {
     if (this.bridgeMode === 'bridge' && !this.matterAggregator) {
-      this.log.error(`Adding device ${dev}${device.name}${er} for plugin ${plg}${pluginName}${er} error: matterAggregator not found`);
+      this.log.error(`Adding device ${dev}${device.name}-${device.deviceName}${er} for plugin ${plg}${pluginName}${er} error: matterAggregator not found`);
       return;
     }
-    this.log.debug(`Adding device ${dev}${device.name}${db} for plugin ${plg}${pluginName}${db}`);
+    this.log.debug(`Adding device ${dev}${device.name}-${device.deviceName}${db} for plugin ${plg}${pluginName}${db}`);
 
     // Check if the plugin is registered
     const plugin = this.registeredPlugins.find((plugin) => plugin.name === pluginName);
     if (!plugin) {
-      this.log.error(`Error adding device ${dev}${device.name}${er} plugin ${plg}${pluginName}${er} not found`);
+      this.log.error(`Error adding device ${dev}${device.name}-${device.deviceName}${er} plugin ${plg}${pluginName}${er} not found`);
       return;
     }
 
@@ -644,14 +664,14 @@ export class Matterbridge {
       this.registeredDevices.push({ plugin: pluginName, device, added: true });
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
       if (plugin.addedDevices !== undefined) plugin.addedDevices++;
-      this.log.info(`Added and registered device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.name}${nf} for plugin ${plg}${pluginName}${nf}`);
+      this.log.info(`Added and registered device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.name}-${device.deviceName}${nf} for plugin ${plg}${pluginName}${nf}`);
     }
 
     // Only register the device in childbridge mode
     if (this.bridgeMode === 'childbridge') {
       this.registeredDevices.push({ plugin: pluginName, device, added: false });
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
-      this.log.info(`Registered device ${dev}${device.name}${nf} for plugin ${plg}${pluginName}${nf}`);
+      this.log.info(`Registered device ${dev}${device.name}-${device.deviceName}${nf} for plugin ${plg}${pluginName}${nf}`);
     }
   }
 
@@ -663,15 +683,15 @@ export class Matterbridge {
    */
   async addBridgedDevice(pluginName: string, device: MatterbridgeDevice): Promise<void> {
     if (this.bridgeMode === 'bridge' && !this.matterAggregator) {
-      this.log.error(`Adding bridged device ${dev}${device.name}${er} for plugin ${plg}${pluginName}${er} error: matterAggregator not found`);
+      this.log.error(`Adding bridged device ${dev}${device.name}-${device.deviceName}${er} for plugin ${plg}${pluginName}${er} error: matterAggregator not found`);
       return;
     }
-    this.log.debug(`Adding bridged device ${db}${device.name}${nf} for plugin ${plg}${pluginName}${db}`);
+    this.log.debug(`Adding bridged device ${db}${device.name}-${device.deviceName}${nf} for plugin ${plg}${pluginName}${db}`);
 
     // Check if the plugin is registered
     const plugin = this.registeredPlugins.find((plugin) => plugin.name === pluginName);
     if (!plugin) {
-      this.log.error(`Error adding bridged device ${dev}${device.name}${er} plugin ${plg}${pluginName}${er} not found`);
+      this.log.error(`Error adding bridged device ${dev}${device.name}-${device.deviceName}${er} plugin ${plg}${pluginName}${er} not found`);
       return;
     }
 
@@ -681,17 +701,94 @@ export class Matterbridge {
       this.registeredDevices.push({ plugin: pluginName, device, added: true });
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
       if (plugin.addedDevices !== undefined) plugin.addedDevices++;
-      this.log.info(`Added and registered bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.name}${nf} for plugin ${plg}${pluginName}${nf}`);
+      this.log.info(`Added and registered bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.name}-${device.deviceName}${nf} for plugin ${plg}${pluginName}${nf}`);
     }
 
     // Only register the device in childbridge mode
     if (this.bridgeMode === 'childbridge') {
       this.registeredDevices.push({ plugin: pluginName, device, added: false });
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
-      this.log.info(`Registered bridged device ${dev}${device.name}${nf} for plugin ${plg}${pluginName}${nf}`);
+      this.log.info(`Registered bridged device ${dev}${device.name}-${device.deviceName}${nf} for plugin ${plg}${pluginName}${nf}`);
     }
   }
 
+  async removeBridgedDevice(pluginName: string, device: MatterbridgeDevice): Promise<void> {
+    if (this.bridgeMode === 'bridge' && !this.matterAggregator) {
+      this.log.error(`Removing bridged device ${dev}${device.name}-${device.deviceName}${er} for plugin ${plg}${pluginName}${er} error: matterAggregator not found`);
+      return;
+    }
+    this.log.debug(`Removing bridged device ${db}${device.name}-${device.deviceName}${nf} for plugin ${plg}${pluginName}${db}`);
+
+    // Check if the plugin is registered
+    const plugin = this.findPlugin(pluginName);
+    if (!plugin) {
+      this.log.error(`Error removing bridged device ${dev}${device.name}-${device.deviceName}${er} plugin ${plg}${pluginName}${er} not found`);
+      return;
+    }
+    if (this.bridgeMode === 'childbridge' && !plugin.aggregator) {
+      this.log.error(`Error removing bridged device ${dev}${device.name}-${device.deviceName}${er} plugin ${plg}${pluginName}${er} aggregator not found`);
+      return;
+    }
+    if (this.bridgeMode === 'childbridge' && !plugin.connected) {
+      this.log.error(`Error removing bridged device ${dev}${device.name}-${device.deviceName}${er} plugin ${plg}${pluginName}${er} not connected`);
+      return;
+    }
+
+    // Register and add the device to matterbridge aggregator in bridge mode
+    if (this.bridgeMode === 'bridge') {
+      this.matterAggregator!.removeBridgedDevice(device);
+      this.registeredDevices.forEach((registeredDevice, index) => {
+        if (registeredDevice.device === device) {
+          this.registeredDevices.splice(index, 1);
+          return;
+        }
+      });
+      if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
+      if (plugin.addedDevices !== undefined) plugin.addedDevices--;
+      this.log.info(`Rmoved bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.name}-${device.deviceName}${nf} for plugin ${plg}${pluginName}${nf}`);
+    }
+
+    // Only register the device in childbridge mode
+    if (this.bridgeMode === 'childbridge') {
+      if (plugin.type === 'AccessoryPlatform') {
+        this.log.warn(`Removing bridged device ${dev}${device.name}-${device.deviceName}${wr} for plugin ${plg}${pluginName}${wr} error: AccessoryPlatform not supported in childbridge mode`);
+      } else if (plugin.type === 'DynamicPlatform') {
+        this.registeredDevices.forEach((registeredDevice, index) => {
+          if (registeredDevice.device === device) {
+            this.registeredDevices.splice(index, 1);
+            return;
+          }
+        });
+        plugin.aggregator!.removeBridgedDevice(device);
+      }
+      if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
+      if (plugin.addedDevices !== undefined) plugin.addedDevices--;
+      this.log.info(`Removed bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.name}-${device.deviceName}${nf} for plugin ${plg}${pluginName}${nf}`);
+    }
+  }
+
+  /**
+   * Removes all bridged devices associated with a specific plugin.
+   *
+   * @param pluginName - The name of the plugin.
+   * @returns A promise that resolves when all devices have been removed.
+   */
+  async removeAllBridgedDevices(pluginName: string): Promise<void> {
+    const plugin = this.findPlugin(pluginName);
+    if (this.bridgeMode === 'childbridge' && plugin?.type === 'AccessoryPlatform') {
+      this.log.warn(`Removing devices for plugin ${plg}${pluginName}${wr} error: AccessoryPlatform not supported in childbridge mode`);
+      return;
+    }
+    const devicesToRemove: RegisteredDevice[] = [];
+    for (const registeredDevice of this.registeredDevices) {
+      if (registeredDevice.plugin === pluginName) {
+        devicesToRemove.push(registeredDevice);
+      }
+    }
+    for (const registeredDevice of devicesToRemove) {
+      this.removeBridgedDevice(pluginName, registeredDevice.device);
+    }
+  }
   /**
    * Starts the storage process based on the specified storage type and name.
    * @param {string} storageType - The type of storage to start (e.g., 'disk', 'json').
@@ -984,10 +1081,6 @@ export class Matterbridge {
               .filter((registeredDevice) => registeredDevice.plugin === plugin.name)
               .forEach((registeredDevice) => {
                 if (!plugin.storageContext) plugin.storageContext = this.importCommissioningServerContext(plugin.name, registeredDevice.device);
-                if (!plugin.storageContext) {
-                  this.log.error(`Error importing storage context for plugin ${plg}${plugin.name}${er}`);
-                  return;
-                }
                 if (!plugin.commissioningServer) plugin.commissioningServer = this.createCommisioningServer(plugin.storageContext, plugin.name);
                 this.log.debug(`Adding device ${dev}${registeredDevice.device.name}${db} to commissioning server for plugin ${plg}${plugin.name}${db}`);
                 plugin.commissioningServer.addDevice(registeredDevice.device);
@@ -1006,10 +1099,6 @@ export class Matterbridge {
               0x8000,
               'Dynamic Platform',
             );
-            if (!plugin.storageContext) {
-              this.log.error(`Error creating storage context for plugin ${plg}${plugin.name}${er}`);
-              return;
-            }
             plugin.commissioningServer = this.createCommisioningServer(plugin.storageContext, plugin.name);
             this.log.debug(`Creating aggregator for plugin ${plg}${plugin.name}${db}`);
             plugin.aggregator = this.createMatterAggregator(plugin.storageContext); // Generate serialNumber and uniqueId
@@ -1309,14 +1398,17 @@ export class Matterbridge {
               if (plugin && plugin.type === 'DynamicPlatform' && plugin.configured !== true) {
                 for (const registeredDevice of this.registeredDevices) {
                   if (registeredDevice.plugin === name) {
-                    this.log.info(`Adding bridged device ${dev}${registeredDevice.device.name}${nf} to aggregator for plugin ${plg}${plugin.name}${db}`);
+                    this.log.info(`Adding bridged device ${dev}${registeredDevice.device.name}-${registeredDevice.device.deviceName}${nf} to aggregator for plugin ${plg}${plugin.name}${db}`);
                     if (!plugin.aggregator) {
                       this.log.error(`****Aggregator not found for plugin ${plg}${plugin.name}${er}`);
                       continue;
                     }
                     plugin.aggregator.addBridgedDevice(registeredDevice.device);
                     if (plugin.addedDevices !== undefined) plugin.addedDevices++;
-                    this.log.info(`Added bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${registeredDevice.device.name}${nf} for plugin ${plg}${plugin.name}${nf}`);
+                    this.log.info(
+                      // eslint-disable-next-line max-len
+                      `Added bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${registeredDevice.device.name}-${registeredDevice.device.deviceName}${nf} for plugin ${plg}${plugin.name}${nf}`,
+                    );
                     registeredDevice.added = true;
                   }
                 }
@@ -1774,7 +1866,6 @@ export class Matterbridge {
       }
       // Handle the command enableplugin from Home
       if (command === 'enableplugin') {
-        //this.log.warn(`The /api/command/${command}/${param} is not yet implemented`);
         const plugin = this.findPlugin(param);
         if (plugin) {
           plugin.enabled = true;
@@ -1784,12 +1875,10 @@ export class Matterbridge {
           plugin.connected = undefined;
           await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
           this.log.info(`Enabled plugin ${plg}${param}${nf}`);
-          this.restartProcess();
         }
       }
       // Handle the command disableplugin from Home
       if (command === 'disableplugin') {
-        //this.log.warn(`The /api/command/${command}/${param} is not yet implemented`);
         const plugin = this.findPlugin(param);
         if (plugin) {
           plugin.enabled = false;
@@ -1799,7 +1888,6 @@ export class Matterbridge {
           plugin.connected = undefined;
           await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
           this.log.info(`Disabled plugin ${plg}${param}${nf}`);
-          this.restartProcess();
         }
       }
 

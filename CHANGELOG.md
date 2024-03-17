@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- [matterbridge]: added unregisterAllDevices() to the platforms 
+- [matterbridge]: added unregisterDevice(device: MatterbridgeDevice) to the platforms
 - [frontend]: Enable and disable plugin are now available. The process restart.
 - [frontend]: Frontend got updated to 0.8.2.
 

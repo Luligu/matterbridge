@@ -35,6 +35,7 @@ import {
   IdentifyCluster,
   IlluminanceMeasurementCluster,
   LevelControl,
+  LevelControlCluster,
   OccupancySensing,
   OccupancySensingCluster,
   OnOff,
@@ -46,6 +47,8 @@ import {
   RelativeHumidityMeasurement,
   RelativeHumidityMeasurementCluster,
   Scenes,
+  Switch,
+  SwitchCluster,
   TemperatureMeasurement,
   TemperatureMeasurementCluster,
   ThreadNetworkDiagnostics,
@@ -53,7 +56,6 @@ import {
   WindowCovering,
   WindowCoveringCluster,
   createDefaultGroupsClusterServer,
-  createDefaultLevelControlClusterServer,
   createDefaultScenesClusterServer,
 } from '@project-chip/matter-node.js/cluster';
 import { ClusterId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
@@ -652,9 +654,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     productId: number,
     productName: string,
     softwareVersion = 1,
-    softwareVersionString = 'v.1.0.0',
+    softwareVersionString = '1.0',
     hardwareVersion = 1,
-    hardwareVersionString = 'v.1.0.0',
+    hardwareVersionString = '1.0',
   ) {
     this.deviceName = deviceName;
     this.serialNumber = serialNumber;
@@ -725,9 +727,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     vendorName: string,
     productName: string,
     softwareVersion = 1,
-    softwareVersionString = 'v.1.0.0',
+    softwareVersionString = '1.0',
     hardwareVersion = 1,
-    hardwareVersionString = 'v.1.0.0',
+    hardwareVersionString = '1.0',
   ) {
     this.deviceName = deviceName;
     this.serialNumber = serialNumber;
@@ -840,17 +842,17 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         {
           on: async (data) => {
             // eslint-disable-next-line no-console
-            console.log('on');
+            console.log('on onOff:', data.attributes.onOff.getLocal());
             await this.commandHandler.executeHandler('on', data);
           },
           off: async (data) => {
             // eslint-disable-next-line no-console
-            console.log('off');
+            console.log('off onOff:', data.attributes.onOff.getLocal());
             await this.commandHandler.executeHandler('off', data);
           },
           toggle: async (data) => {
             // eslint-disable-next-line no-console
-            console.log('toggle');
+            console.log('toggle onOff:', data.attributes.onOff.getLocal());
             await this.commandHandler.executeHandler('toggle', data);
           },
         },
@@ -860,7 +862,57 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   createDefaultLevelControlClusterServer() {
-    this.addClusterServer(createDefaultLevelControlClusterServer(this.commandHandler));
+    this.addClusterServer(
+      ClusterServer(
+        LevelControlCluster.with(LevelControl.Feature.OnOff),
+        {
+          currentLevel: 0,
+          onLevel: 0,
+          options: {
+            executeIfOff: false,
+            coupleColorTempToLevel: false,
+          },
+        },
+        {
+          moveToLevel: async ({ request, attributes }) => {
+            // eslint-disable-next-line no-console
+            console.log('moveToLevel request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
+            attributes.currentLevel.setLocal(request.level);
+            await this.commandHandler.executeHandler('moveToLevel', { request: request, attributes: attributes });
+          },
+          move: async () => {
+            // eslint-disable-next-line no-console
+            console.error('Not implemented');
+          },
+          step: async () => {
+            // eslint-disable-next-line no-console
+            console.error('Not implemented');
+          },
+          stop: async () => {
+            // eslint-disable-next-line no-console
+            console.error('Not implemented');
+          },
+          moveToLevelWithOnOff: async ({ request, attributes }) => {
+            // eslint-disable-next-line no-console
+            console.log('moveToLevelWithOnOff request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
+            attributes.currentLevel.setLocal(request.level);
+            await this.commandHandler.executeHandler('moveToLevelWithOnOff', { request: request, attributes: attributes });
+          },
+          moveWithOnOff: async () => {
+            // eslint-disable-next-line no-console
+            console.error('Not implemented');
+          },
+          stepWithOnOff: async () => {
+            // eslint-disable-next-line no-console
+            console.error('Not implemented');
+          },
+          stopWithOnOff: async () => {
+            // eslint-disable-next-line no-console
+            console.error('Not implemented');
+          },
+        },
+      ),
+    );
   }
 
   createDefaultColorControlClusterServer() {
@@ -884,7 +936,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         {
           moveToHue: async ({ request: request, attributes: attributes }) => {
             // eslint-disable-next-line no-console
-            console.log('Command moveToHue request:', request /*, 'attributes:', attributes*/);
+            console.log('Command moveToHue request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal());
             attributes.currentHue.setLocal(request.hue);
             this.commandHandler.executeHandler('moveToHue', { request: request, attributes: attributes });
           },
@@ -898,7 +950,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           },
           moveToSaturation: async ({ request: request, attributes: attributes }) => {
             // eslint-disable-next-line no-console
-            console.log('Command moveToSaturation request:', request /*, 'attributes:', attributes*/);
+            console.log('Command moveToSaturation request:', request, 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
             attributes.currentSaturation.setLocal(request.saturation);
             this.commandHandler.executeHandler('moveToSaturation', { request: request, attributes: attributes });
           },
@@ -912,7 +964,14 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           },
           moveToHueAndSaturation: async ({ request: request, attributes: attributes }) => {
             // eslint-disable-next-line no-console
-            console.log('Command moveToHueAndSaturation request:', request /*, 'attributes:', attributes*/);
+            console.log(
+              'Command moveToHueAndSaturation request:',
+              request,
+              'attributes.currentHue:',
+              attributes.currentHue.getLocal(),
+              'attributes.currentSaturation:',
+              attributes.currentSaturation.getLocal(),
+            );
             attributes.currentHue.setLocal(request.hue);
             attributes.currentSaturation.setLocal(request.saturation);
             this.commandHandler.executeHandler('moveToHueAndSaturation', { request: request, attributes: attributes });
@@ -923,7 +982,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           },
           moveToColorTemperature: async ({ request: request, attributes: attributes }) => {
             // eslint-disable-next-line no-console
-            console.log('Command moveToColorTemperature request:', request /*, 'attributes:', attributes*/);
+            console.log('Command moveToColorTemperature request:', request, 'attributes.colorTemperatureMireds:', attributes.colorTemperatureMireds.getLocal());
             attributes.colorTemperatureMireds.setLocal(request.colorTemperatureMireds);
             this.commandHandler.executeHandler('moveToColorTemperature', { request: request, attributes: attributes });
           },
@@ -993,6 +1052,28 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           },
         },
         {},
+      ),
+    );
+  }
+
+  createDefaultSwitchClusterServer() {
+    this.addClusterServer(
+      ClusterServer(
+        SwitchCluster.with(Switch.Feature.MomentarySwitch, Switch.Feature.MomentarySwitchRelease, Switch.Feature.MomentarySwitchLongPress, Switch.Feature.MomentarySwitchMultiPress),
+        {
+          numberOfPositions: 2,
+          currentPosition: 0,
+          multiPressMax: 2,
+        },
+        {},
+        {
+          initialPress: true,
+          longPress: true,
+          shortRelease: true,
+          longRelease: true,
+          multiPressOngoing: true,
+          multiPressComplete: true,
+        },
       ),
     );
   }
