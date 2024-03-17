@@ -5,6 +5,9 @@ import { StatusIndicator } from './StatusIndicator';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import { Tooltip, IconButton } from '@mui/material';
 import { sendCommandToMatterbridge } from './Header';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+
 // npm install @mui/material @emotion/react @emotion/styled
 // npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
 
@@ -14,6 +17,16 @@ function Home() {
   const [plugins, setPlugins] = useState([]);
   const [selectedRow, setSelectedRow] = useState(-1); // -1 no selection, 0 or greater for selected row
   const [selectedPluginName, setSelectedPluginName] = useState('none'); // -1 no selection, 0 or greater for selected row
+
+  const [open, setSnack] = React.useState(false);
+
+  const handleSnackOpen = () => () => {
+    setSnack(true);
+  };
+
+  const handleSnackClose = () => {
+    setSnack(false);
+  };
 
   const columns = React.useMemo( () => [
       {
@@ -103,15 +116,19 @@ function Home() {
       plugins[row].enabled=true;
       sendCommandToMatterbridge('enableplugin', plugins[row].name);
     }
+    setSnack(true);
     console.log('Updating page');
     setPlugins(prevPlugins => [...prevPlugins]);
+    //handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
     // Set a timeout to update the page after 5 seconds
+    /*
     setTimeout(() => {
       // Trigger a state update
       console.log('Updating page after 20 seconds');
       setPlugins(prevPlugins => [...prevPlugins]);
       window.location.reload();
     }, 20000);
+    */
   };
 
   return (
@@ -163,6 +180,11 @@ function Home() {
                 </td>
                 <td className="table-content">
                   <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', gap: '5px' }}>
+
+                    <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={open} onClose={handleSnackClose} autoHideDuration={10000}>
+                      <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart needed!</Alert>
+                    </Snackbar>
+
                     <StatusIndicator status={plugin.enabled} onClick={() => handleEnableDisable(index)} enabledText='Enabled' disabledText='Disabled' tooltipText='Enable or disable the plugin'/>
                     {plugin.loaded && plugin.started && plugin.configured && plugin.paired && plugin.connected ? 
                       <>
@@ -172,11 +194,11 @@ function Home() {
                           <>
                           </> : 
                           <>
-                            <StatusIndicator status={plugin.loaded} enabledText='Loaded'/>
-                            <StatusIndicator status={plugin.started} enabledText='Started'/>
-                            <StatusIndicator status={plugin.configured} enabledText='Configured'/>
-                            <StatusIndicator status={plugin.paired} enabledText='Paired'/>
-                            <StatusIndicator status={plugin.connected} enabledText='Connected'/>
+                            <StatusIndicator status={plugin.loaded} enabledText='Loaded' tooltipText='Whether the plugin has been loaded'/>
+                            <StatusIndicator status={plugin.started} enabledText='Started' tooltipText='Whether the plugin started'/>
+                            <StatusIndicator status={plugin.configured} enabledText='Configured' tooltipText='Whether the plugin has been configured'/>
+                            <StatusIndicator status={plugin.paired} enabledText='Paired' tooltipText='Whether the plugin has been paired'/>
+                            <StatusIndicator status={plugin.connected} enabledText='Connected' tooltipText='Whether the controller connected'/>
                           </>
                         }
                       </>

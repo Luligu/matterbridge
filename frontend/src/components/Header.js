@@ -73,6 +73,7 @@ function Header() {
     setOpen(true);
     setTimeout(() => {
       setOpen(false);
+      window.location.reload();
     }, 20000);
   };
 
