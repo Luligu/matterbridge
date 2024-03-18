@@ -586,17 +586,20 @@ export class Matterbridge extends EventEmitter {
         await this.stopStorage();
 
         // Serialize registeredDevices
-        if (this.nodeContext) {
+        if (this.nodeStorage && this.nodeContext) {
           this.log.info('Saving registered devices...');
           const serializedRegisteredDevices: SerializedMatterbridgeDevice[] = [];
           this.registeredDevices.forEach((registeredDevice) => {
             serializedRegisteredDevices.push(registeredDevice.device.serialize(registeredDevice.plugin));
           });
-          //console.log('serializedRegisteredDevices:', serializedRegisteredDevices);
           await this.nodeContext.set<SerializedMatterbridgeDevice[]>('devices', serializedRegisteredDevices);
           this.log.info('Saved registered devices');
           // Clear nodeContext and nodeStorage (they just need 1000ms to write the data to disk)
+          this.log.debug('Closing node storage context...');
+          this.nodeContext.close();
           this.nodeContext = undefined;
+          this.log.debug('Closing node storage manager...');
+          this.nodeStorage.close();
           this.nodeStorage = undefined;
         } else {
           this.log.error('Error saving registered devices: nodeContext not found!');
@@ -604,6 +607,7 @@ export class Matterbridge extends EventEmitter {
         this.registeredPlugins = [];
         this.registeredDevices = [];
 
+        this.log.info('Waiting for last messages...');
         const cleanupTimeout2 = setTimeout(async () => {
           if (restart) {
             this.log.info('Cleanup completed. Restarting...');

@@ -43,18 +43,19 @@
     "clean": "rimraf tsconfig.tsbuildinfo ./dist",
     "cleanBuild": "npm run clean && tsc",
     "deepClean": "rimraf tsconfig.tsbuildinfo package-lock.json ./dist ./node_modules",
-    "prepublishOnly": "npm uninstall matter-history && npm install matter-history && npm run lint && npm run cleanBuild",
+    "prepublishOnly": "npm run wtf:uninstall && npm uninstall matter-history && npm install matter-history && npm run lint && npm run cleanBuild",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u",
     "updateMatter:latest": "npm run deepClean && npm install @project-chip/matter-node.js@latest && npm install && npm run build",
-    "updateMatter:dev": "npm run deepClean && npm install @project-chip/matter-node.js@dev && npm install && npm run build"
+    "updateMatter:dev": "npm run deepClean && npm install @project-chip/matter-node.js@dev && npm install && npm run build",
+    "wtf:install": "npm install wtfnode && npm install @types/wtfnode",
+    "wtf:uninstall": "npm uninstall wtfnode && npm uninstall @types/wtfnode"
   },
   "devDependencies": {
     "@stylistic/eslint-plugin": "^1.7.0",
     "@tsconfig/node-lts": "^20.1.1",
     "@types/express": "^4.17.21",
-    "@types/node": "^20.11.27",
-    "@types/wtfnode": "^0.7.3",
+    "@types/node": "^20.11.28",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
     "@typescript-eslint/parser": "^7.2.0",
     "eslint-config-prettier": "^9.1.0",
@@ -64,9 +65,11 @@
   },
   "dependencies": {
     "@project-chip/matter-node.js": "^0.7.5",
+    "@types/wtfnode": "^0.7.3",
     "express": "^4.18.3",
-    "matter-history": "^1.0.11",
+    "matter-history": "^1.0.12",
     "node-ansi-logger": "^1.9.2",
-    "node-persist-manager": "^1.0.4"
+    "node-persist-manager": "^1.0.5",
+    "wtfnode": "^0.9.1"
   }
 }
