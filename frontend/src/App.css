@@ -130,6 +130,11 @@ nav {
   text-align: left;
 }
 
+.table-body {
+  max-height: 100px; /* Replace with your desired maximum height */
+  overflow-y: auto;
+}
+
 /* Table content style */
 .table-content {
   border: 1px solid #ddd;

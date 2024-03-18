@@ -29,6 +29,7 @@ import { fileURLToPath, pathToFileURL } from 'url';
 import { promises as fs } from 'fs';
 import { ExecException, exec, spawn } from 'child_process';
 import { Server } from 'http';
+import EventEmitter from 'events';
 import express from 'express';
 import os from 'os';
 import path from 'path';
@@ -42,9 +43,6 @@ import { QrCodeSchema } from '@project-chip/matter-node.js/schema';
 import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageManager } from '@project-chip/matter-node.js/storage';
 import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } from '@project-chip/matter-node.js/util';
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { logEndpoint } from '@project-chip/matter-node.js/device';
-import EventEmitter from 'events';
 
 /*
 
