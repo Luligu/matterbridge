@@ -165,6 +165,21 @@ nav {
   color: #09516d;
 }
 
+/* Color for field text */
+.label-color-selected {
+  color: #000000;
+}
+
+/* Color for field text */
+.field-color-selected {
+  color: #000000;
+  font-size: 16px;
+  margin: 0;
+  margin-top: 5px;
+  margin-bottom: 20px;
+  font-weight: 400;
+}
+
 /* Table style */
 h3 {
   margin: 0;

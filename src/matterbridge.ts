@@ -130,13 +130,26 @@ export class Matterbridge extends EventEmitter {
     freeMemory: '',
     systemUptime: '',
   };
+
+  public matterbridgeInformation = {
+    homeDirectory: '',
+    rootDirectory: '',
+    matterbridgeDirectory: '',
+    matterbridgePluginDirectory: '',
+    globalModulesDirectory: '',
+    matterbridgeVersion: '',
+    matterbridgeLatestVersion: '',
+    bridgeMode: '',
+    debugEnabled: false,
+  };
+
   public homeDirectory: string = '';
   public rootDirectory: string = '';
   public matterbridgeDirectory: string = '';
   public matterbridgePluginDirectory: string = '';
+  public globalModulesDirectory: string = '';
   public matterbridgeVersion: string = '';
   public matterbridgeLatestVersion: string = '';
-  public globalModulesDir: string = '';
 
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public debugEnabled = false;
@@ -365,6 +378,12 @@ export class Matterbridge extends EventEmitter {
       await this.testStartMatterBridge(); // No await do it asyncronously
     }
 
+    if (hasParameter('controller')) {
+      this.bridgeMode = 'controller';
+      this.log.info('Creating mattercontrollerContext: mattercontrollerContext');
+      this.mattercontrollerContext = this.storageManager?.createContext('mattercontrollerContext');
+    }
+
     if (hasParameter('bridge')) {
       this.bridgeMode = 'bridge';
       MatterbridgeDevice.bridgeMode = 'bridge';
@@ -421,8 +440,8 @@ export class Matterbridge extends EventEmitter {
     }
     if (!packageJsonExists) {
       this.log.debug(`Package.json not found at ${packageJsonPath}`);
-      this.log.debug(`Trying at ${this.globalModulesDir}`);
-      packageJsonPath = path.join(this.globalModulesDir, pluginPath);
+      this.log.debug(`Trying at ${this.globalModulesDirectory}`);
+      packageJsonPath = path.join(this.globalModulesDirectory, pluginPath);
       //this.log.debug(`Got ${packageJsonPath}`);
     }
     try {
@@ -545,7 +564,7 @@ export class Matterbridge extends EventEmitter {
       process.removeAllListeners('SIGINT');
       process.removeAllListeners('SIGTERM');
 
-      // Callint the shutdown functions with a reason
+      // Calling the shutdown functions with a reason
       for (const plugin of this.registeredPlugins) {
         if (plugin.platform) await plugin.platform.onShutdown('Matterbridge is closing: ' + message);
       }
@@ -1603,19 +1622,23 @@ export class Matterbridge extends EventEmitter {
 
     // Home directory
     this.homeDirectory = os.homedir();
+    this.matterbridgeInformation.homeDirectory = this.homeDirectory;
     this.log.debug(`Home Directory: ${this.homeDirectory}`);
 
     // Package root directory
     const currentFileDirectory = path.dirname(fileURLToPath(import.meta.url));
     this.rootDirectory = path.resolve(currentFileDirectory, '../');
+    this.matterbridgeInformation.rootDirectory = this.rootDirectory;
     this.log.debug(`Root Directory: ${this.rootDirectory}`);
 
     // Global node_modules directory
-    this.globalModulesDir = await this.getGlobalNodeModules();
-    this.log.debug(`Global node_modules Directory: ${this.globalModulesDir}`);
+    this.globalModulesDirectory = await this.getGlobalNodeModules();
+    this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory;
+    this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
 
     // Create the data directory .matterbridge in the home directory
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
+    this.matterbridgeInformation.matterbridgeDirectory = this.matterbridgeDirectory;
     try {
       await fs.access(this.matterbridgeDirectory);
     } catch (err) {
@@ -1637,6 +1660,7 @@ export class Matterbridge extends EventEmitter {
 
     // Create the data directory .matterbridge in the home directory
     this.matterbridgePluginDirectory = path.join(this.homeDirectory, 'Matterbridge');
+    this.matterbridgeInformation.matterbridgePluginDirectory = this.matterbridgePluginDirectory;
     try {
       await fs.access(this.matterbridgePluginDirectory);
     } catch (err) {
@@ -1659,9 +1683,11 @@ export class Matterbridge extends EventEmitter {
     // Matterbridge version
     const packageJson = JSON.parse(await fs.readFile(path.join(this.rootDirectory, 'package.json'), 'utf-8'));
     this.matterbridgeVersion = packageJson.version;
+    this.matterbridgeInformation.matterbridgeVersion = this.matterbridgeVersion;
     this.log.debug(`Matterbridge Version: ${this.matterbridgeVersion}`);
 
     this.matterbridgeLatestVersion = await this.getLatestVersion('matterbridge');
+    this.matterbridgeInformation.matterbridgeLatestVersion = this.matterbridgeLatestVersion;
     this.log.debug(`Matterbridge Latest Version: ${this.matterbridgeLatestVersion}`);
 
     if (this.matterbridgeVersion !== this.matterbridgeLatestVersion) {
@@ -1748,6 +1774,14 @@ export class Matterbridge extends EventEmitter {
     this.expressApp.get('/api/system-info', (req, res) => {
       this.log.debug('The frontend sent /api/system-info');
       res.json(this.systemInformation);
+    });
+
+    // Endpoint to provide matterbridge information
+    this.expressApp.get('/api/matterbridge-info', (req, res) => {
+      this.log.debug('The frontend sent /api/matterbridge-info');
+      this.matterbridgeInformation.bridgeMode = this.bridgeMode;
+      this.matterbridgeInformation.debugEnabled = this.debugEnabled;
+      res.json(this.matterbridgeInformation);
     });
 
     // Endpoint to provide plugins

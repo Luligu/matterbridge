@@ -65,11 +65,9 @@
   },
   "dependencies": {
     "@project-chip/matter-node.js": "^0.7.5",
-    "@types/wtfnode": "^0.7.3",
     "express": "^4.18.3",
     "matter-history": "^1.0.12",
     "node-ansi-logger": "^1.9.2",
-    "node-persist-manager": "^1.0.5",
-    "wtfnode": "^0.9.1"
+    "node-persist-manager": "^1.0.5"
   }
 }

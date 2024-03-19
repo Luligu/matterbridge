@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.11] - 2024-03-15
+
+### Added
+
+- [frontend]: Frontend got updated to 0.8.3.
+
 ## [1.1.10] - 2024-03-15
 
 ### Added
