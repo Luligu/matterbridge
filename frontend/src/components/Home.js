@@ -29,39 +29,14 @@ function Home() {
   };
 
   const columns = React.useMemo( () => [
-      {
-        Header: 'Name',
-        accessor: 'name',
-      },
-      {
-        Header: 'Description',
-        accessor: 'description',
-      },
-      {
-        Header: 'Version',
-        accessor: 'version',
-      },
-      {
-        Header: 'Author',
-        accessor: 'author',
-      },
-      {
-        Header: 'Type',
-        accessor: 'type',
-      },
-      {
-        Header: 'Devices',
-        accessor: 'devices',
-      },
-      {
-        Header: 'QR',
-        accessor: 'qrcode',
-      },
-      {
-        Header: 'Status',
-        accessor: 'status',
-        Cell: ({ value }) => <StatusIndicator status={value} />,
-      },
+      { Header: 'Name', accessor: 'name' },
+      { Header: 'Description', accessor: 'description' },
+      { Header: 'Version', accessor: 'version' },
+      { Header: 'Author', accessor: 'author' },
+      { Header: 'Type', accessor: 'type' },
+      { Header: 'Devices', accessor: 'devices'},
+      { Header: 'QR', accessor: 'qrcode' },
+      { Header: 'Status', accessor: 'status', Cell: ({ value }) => <StatusIndicator status={value} /> },
     ],
     []
   );
@@ -119,7 +94,7 @@ function Home() {
     setSnack(true);
     console.log('Updating page');
     setPlugins(prevPlugins => [...prevPlugins]);
-    //handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
+    handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
     // Set a timeout to update the page after 5 seconds
     /*
     setTimeout(() => {
