@@ -626,7 +626,7 @@ export class Matterbridge extends EventEmitter {
         this.registeredPlugins = [];
         this.registeredDevices = [];
 
-        this.log.info('Waiting for last messages...');
+        this.log.info('Waiting for matter to deliver last messages...');
         const cleanupTimeout2 = setTimeout(async () => {
           if (restart) {
             this.log.info('Cleanup completed. Restarting...');
@@ -1070,8 +1070,9 @@ export class Matterbridge extends EventEmitter {
       this.commissioningServer.addDevice(this.matterAggregator);
       this.log.debug('Adding matterbridge commissioning server to matter server');
       await this.matterServer.addCommissioningServer(this.commissioningServer, { uniqueStorageKey: 'Matterbridge' });
-      this.log.debug('Starting matter server');
+      this.log.debug('Starting matter server...');
       await this.startMatterServer();
+      this.log.info('Matter server started');
       this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, 'Matterbridge');
     }
 
@@ -1144,7 +1145,7 @@ export class Matterbridge extends EventEmitter {
           if (!allStarted) this.log.info(`**Waiting in start matter server interval for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
         });
         if (!allStarted) return;
-        this.log.info('Starting matter server');
+        this.log.info('Starting matter server...');
 
         // Setting reachability to true
         this.registeredPlugins.forEach((plugin) => {
@@ -1159,6 +1160,7 @@ export class Matterbridge extends EventEmitter {
           });
         });
         await this.startMatterServer();
+        this.log.info('Matter server started');
         for (const plugin of this.registeredPlugins) {
           this.showCommissioningQRCode(plugin.commissioningServer, plugin.storageContext, plugin.name);
         }
@@ -1902,27 +1904,31 @@ export class Matterbridge extends EventEmitter {
       }
       // Handle the command enableplugin from Home
       if (command === 'enableplugin') {
-        const plugin = this.findPlugin(param);
+        const plugins = await this.nodeContext?.get<RegisteredPlugin[]>('plugins');
+        if (!plugins) return;
+        const plugin = plugins.find((plugin) => plugin.name === param);
         if (plugin) {
           plugin.enabled = true;
           plugin.loaded = undefined;
           plugin.started = undefined;
           plugin.configured = undefined;
           plugin.connected = undefined;
-          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', plugins);
           this.log.info(`Enabled plugin ${plg}${param}${nf}`);
         }
       }
       // Handle the command disableplugin from Home
       if (command === 'disableplugin') {
-        const plugin = this.findPlugin(param);
+        const plugins = await this.nodeContext?.get<RegisteredPlugin[]>('plugins');
+        if (!plugins) return;
+        const plugin = plugins.find((plugin) => plugin.name === param);
         if (plugin) {
           plugin.enabled = false;
           plugin.loaded = undefined;
           plugin.started = undefined;
           plugin.configured = undefined;
           plugin.connected = undefined;
-          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', plugins);
           this.log.info(`Disabled plugin ${plg}${param}${nf}`);
         }
       }

@@ -156,8 +156,10 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   addDeviceType(deviceType: DeviceTypeDefinition) {
     const deviceTypes = this.getDeviceTypes();
-    deviceTypes.push(deviceType);
-    this.setDeviceTypes(deviceTypes);
+    if (!deviceTypes.includes(deviceType)) {
+      deviceTypes.push(deviceType);
+      this.setDeviceTypes(deviceTypes);
+    }
   }
 
   serialize(pluginName: string) {
@@ -861,12 +863,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
-  createDefaultLevelControlClusterServer() {
+  createDefaultLevelControlClusterServer(currentLevel = 0) {
     this.addClusterServer(
       ClusterServer(
         LevelControlCluster.with(LevelControl.Feature.OnOff),
         {
-          currentLevel: 0,
+          currentLevel,
           onLevel: 0,
           options: {
             executeIfOff: false,
@@ -915,7 +917,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
-  createDefaultColorControlClusterServer() {
+  createDefaultColorControlClusterServer(currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     this.addClusterServer(
       ClusterServer(
         ColorControlCluster.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature),
@@ -927,11 +929,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           numberOfPrimaries: null,
           enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
           colorCapabilities: { xy: false, hs: true, cl: false, ehue: false, ct: true },
-          currentHue: 0,
-          currentSaturation: 0,
-          colorTemperatureMireds: 500,
-          colorTempPhysicalMinMireds: 147,
-          colorTempPhysicalMaxMireds: 500,
+          currentHue,
+          currentSaturation,
+          colorTemperatureMireds,
+          colorTempPhysicalMinMireds,
+          colorTempPhysicalMaxMireds,
         },
         {
           moveToHue: async ({ request: request, attributes: attributes }) => {
