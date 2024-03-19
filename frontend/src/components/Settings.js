@@ -40,7 +40,12 @@ function MatterbridgeInfo() {
     // Fetch System Info
     fetch('/api/matterbridge-info')
       .then(response => response.json())
-      .then(data => { setMatterbridgeInfo(data); setSelectedModeValue(data.bridgeMode==='bridge'?'bridge':'childbridge'); setSelectedDebugValue(data.debugEnabled?'Debug':'Info'); info = data; console.log('/api/matterbridge-info:', info) })
+      .then(data => { 
+        setMatterbridgeInfo(data); 
+        setSelectedModeValue(data.bridgeMode==='bridge'?'bridge':'childbridge'); 
+        setSelectedDebugValue(data.debugEnabled?'Debug':'Info'); 
+        info = data; 
+        console.log('/api/matterbridge-info:', info) })
       .catch(error => console.error('Error fetching matterbridge info:', error));
   }, []); // The empty array causes this effect to run only once
 

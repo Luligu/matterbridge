@@ -7,6 +7,7 @@ import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
+import info from './Settings';
 
 /*
     <div className="header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '20px', margin: '0', padding: '20px', height: '40px' }}>
@@ -80,7 +81,7 @@ function Header() {
   return (
     <div className="header">
       <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '30px' }} />
-      <h2>Matterbridge</h2>
+      <h2>Matterbridge {info.matterbridgeVersion}</h2>
       <nav>
         <Link to="/" className="nav-link">Home</Link>
         <Link to="/devices" className="nav-link">Devices</Link>
