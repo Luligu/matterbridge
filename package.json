@@ -62,11 +62,11 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.3",
     "prettier": "^3.2.5",
-    "typescript": "^5.4.2"
+    "typescript": "^5.4.3"
   },
   "dependencies": {
     "@project-chip/matter-node.js": "^0.7.5",
-    "express": "^4.18.3",
+    "express": "^4.19.0",
     "matter-history": "^1.0.12",
     "node-ansi-logger": "^1.9.2",
     "node-persist-manager": "^1.0.5"
