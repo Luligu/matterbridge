@@ -88,7 +88,6 @@ function Header() {
         <Link to="/settings" className="nav-link">Settings</Link>
       </nav>
       <div className="header" style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
-        <Tooltip title="Add plugin"><Button disabled theme={theme} color="primary" variant="contained" size="small" endIcon={<DriveFolderUploadIcon />} style={{ color: '#ffffff' }} onClick={handleAddPluginClick}>Add plugin</Button></Tooltip>        
         <Tooltip title="Update matterbridge"><Button disabled theme={theme} color="primary" variant="contained" size="small" endIcon={<SystemUpdateAltIcon />} style={{ color: '#ffffff' }} onClick={handleUpdateClick}>Update</Button></Tooltip>        
         <Tooltip title="Restart matterbridge"><Button theme={theme} color="primary" variant="contained" size="small" endIcon={<RestartAltIcon />} style={{ color: '#ffffff' }} onClick={handleRestartClick}>Restart</Button></Tooltip>        
         <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open} onClick={handleClose}>

@@ -382,6 +382,7 @@ export class Matterbridge extends EventEmitter {
       this.bridgeMode = 'controller';
       this.log.info('Creating mattercontrollerContext: mattercontrollerContext');
       this.mattercontrollerContext = this.storageManager?.createContext('mattercontrollerContext');
+      await this.startMatterBridge();
     }
 
     if (hasParameter('bridge')) {
@@ -1053,13 +1054,37 @@ export class Matterbridge extends EventEmitter {
       return;
     }
 
+    if (this.bridgeMode === 'controller') {
+      this.log.info('Creating matter commissioning controller');
+      this.commissioningController = new CommissioningController({
+        autoConnect: false,
+      });
+      this.log.info('Adding matter commissioning controller to matter server');
+      await this.matterServer.addCommissioningController(this.commissioningController);
+
+      this.log.info('Starting matter server');
+      await this.matterServer.start();
+      this.log.info('Matter server started');
+
+      if (hasParameter('discover')) {
+        const discover = await this.commissioningController.discoverCommissionableDevices({ productId: 0x8000, deviceType: 0xfff1 });
+        console.log(discover);
+      }
+
+      this.log.info(`Commissioning controller is already commisioned: ${this.commissioningController.isCommissioned()}`);
+      const nodes = this.commissioningController.getCommissionedNodes();
+      nodes.forEach(async (nodeId) => {
+        this.log.warn(`Connecting to commissioned node: ${nodeId}`);
+      });
+    }
+
     if (this.bridgeMode === 'bridge') {
       // Plugins are loaded by loadPlugin on startup and plugin.loaded is set to true
       // Plugins are started and configured by callback when Matterbridge is commissioned
       this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
       this.matterbridgeContext = this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
       if (!this.matterbridgeContext) {
-        this.log.error(`Error creating storage context${er}`);
+        this.log.error(`Error creating storage context for ${plg}Matterbridge${er}`);
         return;
       }
       this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
@@ -1167,7 +1192,6 @@ export class Matterbridge extends EventEmitter {
         Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
         clearInterval(startMatterInterval);
       }, 1000);
-      return;
     }
   }
 
@@ -1264,9 +1288,9 @@ export class Matterbridge extends EventEmitter {
     storageContext.set('serialNumber', storageContext.get('serialNumber', random));
     storageContext.set('uniqueId', storageContext.get('uniqueId', random));
     storageContext.set('softwareVersion', softwareVersion ?? 1);
-    storageContext.set('softwareVersionString', softwareVersionString ?? '1.0.0');
+    storageContext.set('softwareVersionString', softwareVersionString ?? '1.0');
     storageContext.set('hardwareVersion', hardwareVersion ?? 1);
-    storageContext.set('hardwareVersionString', hardwareVersionString ?? '1.0.0');
+    storageContext.set('hardwareVersionString', hardwareVersionString ?? '1.0');
     return storageContext;
   }
 
