@@ -2,6 +2,47 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.11] - 2024-03-15
+
+### Added
+
+- [frontend]: Frontend got updated to 0.8.3.
+
+## [1.1.10] - 2024-03-15
+
+### Added
+
+- [matterbridge]: added unregisterAllDevices() to the platforms 
+- [matterbridge]: added unregisterDevice(device: MatterbridgeDevice) to the platforms
+- [frontend]: Enable and disable plugin are now available. Restart Matteerbridge after.
+- [frontend]: Frontend got updated to 0.8.2.
+
+## [1.1.9] - 2024-03-15
+
+### Added
+
+- [frontend]: Selecting a plugin in the home page show the corresponding QR code.
+- [frontend]: Settings page now controll the global logger level.
+- [frontend]: Restart from the header is available.
+- [frontend]: Frontend got updated to 0.8.1.
+
+## [1.1.8] - 2024-03-15
+
+### Added
+
+- [cli]: Resolve the plugin name from absolute or relative path or from globally installed modules (see the help).
+- [frontend]: Added some fancy stuff still not visible.
+
+### Fixed
+
+- [install]: Fixed the error caused when the controllers disconnect and connect again.
+
+## [1.1.7] - 2024-03-14
+
+### Fixed
+
+- [install]: Fixed the install error (thanks https://github.com/khaidakin).
+
 ## [1.1.6] - 2024-03-14
 
 ### Added
