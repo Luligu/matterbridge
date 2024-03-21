@@ -2,13 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.1.11] - 2024-03-15
+## [1.1.12] - 2024-03-21
+
+### Added
+
+- [platform]: Added async getConfig() and async setConfig() to store plugin config.
+
+## [1.1.11] - 2024-03-19
 
 ### Added
 
 - [frontend]: Frontend got updated to 0.8.3.
 
-## [1.1.10] - 2024-03-15
+## [1.1.10] - 2024-03-17
 
 ### Added
 
@@ -17,7 +23,7 @@ All notable changes to this project will be documented in this file.
 - [frontend]: Enable and disable plugin are now available. Restart Matteerbridge after.
 - [frontend]: Frontend got updated to 0.8.2.
 
-## [1.1.9] - 2024-03-15
+## [1.1.9] - 2024-03-16
 
 ### Added
 

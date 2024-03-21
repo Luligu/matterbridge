@@ -96,9 +96,11 @@ Devices page:
 
 ### Accessory platform example
 
-This an example of an accessory platform plugin.
+This an example of an accessory platform plugin. 
 
-Accessory platform plugins only expose one device.
+It exposes a cover device that continouosly moves position and shows how to use the command handlers (you can control the device).
+
+An Accessory platform plugin only exposes one device.
 
 [See the plugin homepage here](https://github.com/Luligu/matterbridge-example-accessory-platform)
 
@@ -106,7 +108,11 @@ Accessory platform plugins only expose one device.
 
 This an example of a dynamic platform plugin.
 
-Dynamic platform plugins expose as many devices as you need (the limit for the Home app is 150 accessories for bridge).
+It exposes a switch with onOff, a light with onOff-levelControl-colorControl, an outlet with onOff and a cover device.
+
+All these devices continouosly change state and position. The plugin also shows how to use all the command handlers (you can control all the devices).
+
+A Dynamic platform plugin exposes as many devices as you need (the limit for the Home app is 150 accessories for bridge).
 
 Matterbridge can run as many plugins as you want.
 
@@ -124,9 +130,39 @@ Matterbridge can run as many plugins as you want.
 
 [Room plugin with history](https://github.com/Luligu/matterbridge-eve-room)
 
-## How to install a plugin
+## How to install and register a production-level plugin (from npm)
+
+To install i.e. https://github.com/Luligu/matterbridge-zigbee2mqtt
+
+On windows:
+```
+cd $HOME\Matterbridge
+npm install -g matterbridge-zigbee2mqtt
+matterbridge -add matterbridge-zigbee2mqtt
+```
+
+On linux:
+```
+cd ~/Matterbridge
+sudo npm install -g matterbridge-zigbee2mqtt
+matterbridge -add matterbridge-zigbee2mqtt
+```
+
+## How to install and register a plugin for development (from git)
 
 To install i.e. https://github.com/Luligu/matterbridge-example-accessory-platform
+
+On windows:
+```
+cd $HOME\Matterbridge
+```
+
+On linux:
+```
+cd ~/Matterbridge
+```
+
+then
 
 ```
 git clone https://github.com/Luligu/matterbridge-example-accessory-platform
@@ -139,28 +175,28 @@ Then add the plugin to Matterbridge
 matterbridge -add .\
 ```
 
-### How to add a plugin to Matterbridge
+## How to add a plugin to Matterbridge
 
 ```
-matterbridge -add .\
+matterbridge -add [plugin path]
 ```
 
-### How to remove a plugin from Matterbridge
+## How to remove a plugin from Matterbridge
 
 ```
-matterbridge -remove .\
+matterbridge -remove [plugin path]
 ```
 
-### How to disable a registerd plugin 
+## How to disable a registered plugin 
 
 ```
-matterbridge -disable .\
+matterbridge -disable [plugin path]
 ```
 
-### How to enable a registerd plugin 
+## How to enable a registered plugin 
 
 ```
-matterbridge -enable .\
+matterbridge -enable [plugin path]
 ```
 
 ## How to create your plugin
@@ -204,7 +240,7 @@ You can unregister one or more device.
 ### async unregisterAllDevices()
 You can unregister all devices you added.
 
-It can me be useful to call this method from onShutdown if you don't want to keep all the devices.
+It can be useful to call this method from onShutdown() if you don't want to keep all the devices during development.
 
 ## MatterbridgeDevice api
 

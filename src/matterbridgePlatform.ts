@@ -49,7 +49,7 @@ export class MatterbridgePlatform {
   }
 
   async getConfig(): Promise<Config> {
-    const configFile = path.join(this.matterbridge.matterbridgePluginDirectory, 'config.json');
+    const configFile = path.join(this.matterbridge.matterbridgeDirectory, `${this.name}.config.json`);
     try {
       await fs.access(configFile);
       this.log.debug(`Config file found: ${configFile}.`);
@@ -77,7 +77,7 @@ export class MatterbridgePlatform {
   }
 
   async setConfig(config: Config): Promise<void> {
-    const configFile = path.join(this.matterbridge.matterbridgeDirectory, 'config.json');
+    const configFile = path.join(this.matterbridge.matterbridgeDirectory, `${this.name}.config.json`);
     try {
       await this.writeFile(configFile, JSON.stringify(config));
     } catch (err) {
