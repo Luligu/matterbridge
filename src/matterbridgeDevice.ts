@@ -1058,6 +1058,38 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  setWindowCoveringTargetAsCurrentAndStopped() {
+    const windowCoveringCluster = this.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift));
+    if (windowCoveringCluster) {
+      const position = windowCoveringCluster.getCurrentPositionLiftPercent100thsAttribute();
+      if (position !== null) {
+        windowCoveringCluster.setTargetPositionLiftPercent100thsAttribute(position);
+        windowCoveringCluster.setOperationalStatusAttribute({
+          global: WindowCovering.MovementStatus.Stopped,
+          lift: WindowCovering.MovementStatus.Stopped,
+          tilt: WindowCovering.MovementStatus.Stopped,
+        });
+      }
+      // eslint-disable-next-line no-console
+      console.log(`Set WindowCovering initial currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
+    }
+  }
+
+  setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus) {
+    const windowCoveringCluster = this.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift));
+    if (windowCoveringCluster) {
+      windowCoveringCluster.setCurrentPositionLiftPercent100thsAttribute(current);
+      windowCoveringCluster.setTargetPositionLiftPercent100thsAttribute(target);
+      windowCoveringCluster.setOperationalStatusAttribute({
+        global: status,
+        lift: status,
+        tilt: status,
+      });
+    }
+    // eslint-disable-next-line no-console
+    console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
+  }
+
   createDefaultSwitchClusterServer() {
     this.addClusterServer(
       ClusterServer(

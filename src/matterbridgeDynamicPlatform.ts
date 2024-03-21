@@ -22,6 +22,7 @@
  */
 
 import { Matterbridge } from './matterbridge.js';
+import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { AnsiLogger } from 'node-ansi-logger';
 
@@ -29,20 +30,16 @@ import { AnsiLogger } from 'node-ansi-logger';
  * Represents a dynamic platform for Matterbridge.
  *
  */
-export class MatterbridgeDynamicPlatform {
-  protected matterbridge: Matterbridge;
-  protected log: AnsiLogger;
-  private name = ''; // Will be set by the loadPlugin() method using the package.json value.
-  private type = 'DynamicPlatform';
-
+export class MatterbridgeDynamicPlatform extends MatterbridgePlatform {
   /**
    * Creates an instance of MatterbridgeDynamicPlatform.
    * @param {Matterbridge} matterbridge - The Matterbridge instance.
    * @param {AnsiLogger} log - The logger instance.
    */
   constructor(matterbridge: Matterbridge, log: AnsiLogger) {
-    this.matterbridge = matterbridge;
-    this.log = log;
+    super(matterbridge, log);
+
+    this.type = 'DynamicPlatform';
 
     this.log.debug(`Matterbridge${this.type} loaded`);
   }

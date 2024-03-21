@@ -1074,8 +1074,8 @@ export class Matterbridge extends EventEmitter {
       this.log.info('Matter server started');
 
       if (hasParameter('discover')) {
-        const discover = await this.commissioningController.discoverCommissionableDevices({ productId: 0x8000, deviceType: 0xfff1 });
-        console.log(discover);
+        //const discover = await this.commissioningController.discoverCommissionableDevices({ productId: 0x8000, deviceType: 0xfff1 });
+        //console.log(discover);
       }
 
       this.log.info(`Commissioning controller is already commisioned: ${this.commissioningController.isCommissioned()}`);
@@ -1447,7 +1447,6 @@ export class Matterbridge extends EventEmitter {
               for (const plugin of this.registeredPlugins) {
                 if (!plugin.enabled) continue;
                 this.startPlugin(plugin, 'Matterbridge is commissioned and controllers are connected', true); // No await do it asyncronously with also configurePlugin
-                //this.configurePlugin(plugin); // No await do it asyncronously
               }
               Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
             }
