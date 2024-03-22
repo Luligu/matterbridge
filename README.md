@@ -98,7 +98,7 @@ Devices page:
 
 This an example of an accessory platform plugin. 
 
-It exposes a cover device that continouosly moves position and shows how to use the command handlers (you can control the device).
+It exposes a cover device that continuously moves position and shows how to use the command handlers (you can control the device).
 
 An Accessory platform plugin only exposes one device.
 
@@ -110,7 +110,7 @@ This an example of a dynamic platform plugin.
 
 It exposes a switch with onOff, a light with onOff-levelControl-colorControl, an outlet with onOff and a cover device.
 
-All these devices continouosly change state and position. The plugin also shows how to use all the command handlers (you can control all the devices).
+All these devices continuously change state and position. The plugin also shows how to use all the command handlers (you can control all the devices).
 
 A Dynamic platform plugin exposes as many devices as you need (the limit for the Home app is 150 accessories for bridge).
 
