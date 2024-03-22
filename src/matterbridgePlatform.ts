@@ -82,7 +82,7 @@ export class MatterbridgePlatform {
   private async saveConfig(): Promise<void> {
     const configFile = path.join(this.matterbridge.matterbridgeDirectory, `${this.name}.config.json`);
     try {
-      await this.writeFile(configFile, JSON.stringify(this.config));
+      await this.writeFile(configFile, JSON.stringify(this.config, null, 2));
     } catch (err) {
       this.log.error(`Error setting config: ${err}`);
       return Promise.reject(err);

@@ -10,7 +10,7 @@
 ---
 
 
-Matterbridge is a Matter.js plugin manager. 
+Matterbridge is a matter.js plugin manager. 
 
 It allows you to have all your Matter devices up and running in a couple of minutes without
 having to deal with the pairing process of each single device. 
@@ -221,7 +221,7 @@ The plugin name.
 The plugin platform type.
 
 ### config: object
-The plugin config (loaded before onStart() is called and save after onShutdown() is called).
+The plugin config (loaded before onStart() is called and saved after onShutdown() is called).
 
 ### async onStart(reason?: string)
 The method onStart() is where you have to create your MatterbridgeDevice and add all needed clusters and command handlers. 
