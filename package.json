@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.1.11",
+  "version": "1.1.12",
   "description": "Matterbridge",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -66,7 +66,7 @@
   },
   "dependencies": {
     "@project-chip/matter-node.js": "^0.7.5",
-    "express": "^4.19.0",
+    "express": "^4.19.1",
     "matter-history": "^1.0.12",
     "node-ansi-logger": "^1.9.2",
     "node-persist-manager": "^1.0.5"

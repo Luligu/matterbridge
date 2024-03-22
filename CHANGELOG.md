@@ -6,7 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- [platform]: Added async getConfig() and async setConfig() to store plugin config.
+- [platform]: Added async loadConfig() and async saveConfig() to store plugin config.
+- [platform]: Added a config (JSON) property to platforms to store plugin config.
 
 ## [1.1.11] - 2024-03-19
 

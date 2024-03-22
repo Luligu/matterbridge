@@ -214,6 +214,15 @@ Add your plugin logic in platform.ts.
 
 ## MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform api
 
+### name: string
+The plugin name.
+
+### type: string
+The plugin platform type.
+
+### config: object
+The plugin config (loaded before onStart() is called and save after onShutdown() is called).
+
 ### async onStart(reason?: string)
 The method onStart() is where you have to create your MatterbridgeDevice and add all needed clusters and command handlers. 
 

@@ -42,19 +42,21 @@ export class MatterbridgePlatform {
   protected log: AnsiLogger;
   protected name = ''; // Will be set by the loadPlugin() method using the package.json value.
   protected type = ''; // Will be set by the extending classes.
+  protected config: Config = {};
 
   constructor(matterbridge: Matterbridge, log: AnsiLogger) {
     this.matterbridge = matterbridge;
     this.log = log;
   }
 
-  async getConfig(): Promise<Config> {
+  private async loadConfig(): Promise<void> {
     const configFile = path.join(this.matterbridge.matterbridgeDirectory, `${this.name}.config.json`);
     try {
       await fs.access(configFile);
       this.log.debug(`Config file found: ${configFile}.`);
       const data = await fs.readFile(configFile, 'utf8');
-      return JSON.parse(data) as Config;
+      this.config = JSON.parse(data) as Config;
+      return;
     } catch (err) {
       if (err instanceof Error) {
         const nodeErr = err as NodeJS.ErrnoException;
@@ -62,7 +64,8 @@ export class MatterbridgePlatform {
           try {
             await this.writeFile(configFile, JSON.stringify({ name: this.name, type: this.type }, null, 2));
             this.log.info(`Created config file: ${configFile}.`);
-            return { name: this.name, type: this.type };
+            this.config = { name: this.name, type: this.type };
+            return;
           } catch (err) {
             this.log.error(`Error creating config file ${configFile}: ${err}`);
             return Promise.reject(err);
@@ -76,10 +79,10 @@ export class MatterbridgePlatform {
     }
   }
 
-  async setConfig(config: Config): Promise<void> {
+  private async saveConfig(): Promise<void> {
     const configFile = path.join(this.matterbridge.matterbridgeDirectory, `${this.name}.config.json`);
     try {
-      await this.writeFile(configFile, JSON.stringify(config));
+      await this.writeFile(configFile, JSON.stringify(this.config));
     } catch (err) {
       this.log.error(`Error setting config: ${err}`);
       return Promise.reject(err);

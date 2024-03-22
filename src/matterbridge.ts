@@ -53,6 +53,8 @@ interface MatterbridgePlatform {
   onStart(reason?: string): Promise<this>;
   onConfigure(): Promise<this>;
   onShutdown(reason?: string): Promise<this>;
+  loadConfig(): Promise<void>;
+  saveConfig(): Promise<void>;
   matterbridge: Matterbridge;
   log: AnsiLogger;
   name: string;
@@ -568,6 +570,7 @@ export class Matterbridge extends EventEmitter {
       // Calling the shutdown functions with a reason
       for (const plugin of this.registeredPlugins) {
         if (plugin.platform) await plugin.platform.onShutdown('Matterbridge is closing: ' + message);
+        if (plugin.platform) await plugin.platform.saveConfig();
       }
 
       // Set reachability to false
@@ -1026,6 +1029,7 @@ export class Matterbridge extends EventEmitter {
         plugin.registeredDevices = 0;
         plugin.addedDevices = 0;
         await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+        await platform.loadConfig();
         this.log.info(`Loaded plugin ${plg}${plugin.name}${db} type ${typ}${platform.type}${db} (entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
         if (start) this.startPlugin(plugin, message); // No await do it asyncronously
         return Promise.resolve(platform);
