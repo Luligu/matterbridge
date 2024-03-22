@@ -2,12 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.1.12] - 2024-03-21
+## [1.1.12] - 2024-03-22
 
 ### Added
 
 - [platform]: Added async loadConfig() and async saveConfig() to store plugin config.
-- [platform]: Added a config (JSON) property to platforms to store plugin config.
+- [platform]: Added a config: Config (JSON) property to platforms to store plugin config.
+
+### Changed
+
+- [dependencies]: Updated dependencies.
 
 ## [1.1.11] - 2024-03-19
 
