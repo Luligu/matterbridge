@@ -2,12 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.1.12] - 2024-03-22
+## [1.2.0] - 2024-03-22
+
+### Breaking change on plugin default entry point and platform constructor!
+- [plugin default entry point]: export default function initializePlugin(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig)
+- [platform constructor]: constructor(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig)
+
 
 ### Added
 
-- [platform]: Added async loadConfig() and async saveConfig() to store plugin config.
-- [platform]: Added a config: Config (JSON) property to platforms to store plugin config.
+- [platform]: Added async loadPluginConfig() and async savePluginConfig() to store plugin config.
+- [platform]: Added: config: PlatformConfig (JSON) property to platforms to store plugin config.
 
 ### Changed
 

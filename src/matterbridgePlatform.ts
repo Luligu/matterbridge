@@ -21,82 +21,29 @@
  * limitations under the License. *
  */
 
-import { Matterbridge } from './matterbridge.js';
+import { Matterbridge, PlatformConfig } from './matterbridge.js';
 import { AnsiLogger } from 'node-ansi-logger';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { writeFile } from 'fs/promises';
-
-export type ConfigValue = string | number | boolean | bigint | object | undefined | null;
-
-export type Config = {
-  [key: string]: ConfigValue; // This allows any string as a key, and the value can be ConfigValue.
-};
 
 /**
- * Represents a Matterbridge accessory platform.
+ * Represents the base Matterbridge platform.
  *
  */
 export class MatterbridgePlatform {
   protected matterbridge: Matterbridge;
   protected log: AnsiLogger;
+  protected config: PlatformConfig = {};
   protected name = ''; // Will be set by the loadPlugin() method using the package.json value.
   protected type = ''; // Will be set by the extending classes.
-  protected config: Config = {};
 
-  constructor(matterbridge: Matterbridge, log: AnsiLogger) {
+  /**
+   * Creates an instance of the base MatterbridgePlatform.
+   * @param {Matterbridge} matterbridge - The Matterbridge instance.
+   * @param {AnsiLogger} log - The logger instance.
+   * @param {PlatformConfig} config - The platform configuration.
+   */
+  constructor(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig) {
     this.matterbridge = matterbridge;
     this.log = log;
-  }
-
-  private async loadConfig(): Promise<void> {
-    const configFile = path.join(this.matterbridge.matterbridgeDirectory, `${this.name}.config.json`);
-    try {
-      await fs.access(configFile);
-      this.log.debug(`Config file found: ${configFile}.`);
-      const data = await fs.readFile(configFile, 'utf8');
-      this.config = JSON.parse(data) as Config;
-      return;
-    } catch (err) {
-      if (err instanceof Error) {
-        const nodeErr = err as NodeJS.ErrnoException;
-        if (nodeErr.code === 'ENOENT') {
-          try {
-            await this.writeFile(configFile, JSON.stringify({ name: this.name, type: this.type }, null, 2));
-            this.log.info(`Created config file: ${configFile}.`);
-            this.config = { name: this.name, type: this.type };
-            return;
-          } catch (err) {
-            this.log.error(`Error creating config file ${configFile}: ${err}`);
-            return Promise.reject(err);
-          }
-        } else {
-          this.log.error(`Error accessing config file ${configFile}: ${err}`);
-          return Promise.reject(err);
-        }
-      }
-      return Promise.reject(err);
-    }
-  }
-
-  private async saveConfig(): Promise<void> {
-    const configFile = path.join(this.matterbridge.matterbridgeDirectory, `${this.name}.config.json`);
-    try {
-      await this.writeFile(configFile, JSON.stringify(this.config, null, 2));
-    } catch (err) {
-      this.log.error(`Error setting config: ${err}`);
-      return Promise.reject(err);
-    }
-  }
-
-  private async writeFile(filePath: string, data: string) {
-    // Write the data to a file
-    await writeFile(`${filePath}`, data, 'utf8')
-      .then(() => {
-        this.log.debug(`Successfully wrote to ${filePath}`);
-      })
-      .catch((error) => {
-        this.log.error(`Error writing to ${filePath}:`, error);
-      });
+    this.config = config;
   }
 }

@@ -21,7 +21,7 @@
  * limitations under the License. *
  */
 
-import { Matterbridge } from './matterbridge.js';
+import { Matterbridge, PlatformConfig } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { AnsiLogger } from 'node-ansi-logger';
@@ -35,9 +35,10 @@ export class MatterbridgeAccessoryPlatform extends MatterbridgePlatform {
    * Creates an instance of MatterbridgeAccessoryPlatform.
    * @param {Matterbridge} matterbridge - The Matterbridge instance.
    * @param {AnsiLogger} log - The logger instance.
+   * @param {PlatformConfig} config - The platform configuration.
    */
-  constructor(matterbridge: Matterbridge, log: AnsiLogger) {
-    super(matterbridge, log);
+  constructor(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig) {
+    super(matterbridge, log, config);
 
     this.type = 'AccessoryPlatform';
 

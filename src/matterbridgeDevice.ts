@@ -150,10 +150,22 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   deviceName: string | undefined = undefined;
   uniqueId: string | undefined = undefined;
 
+  /**
+   * Represents a Matterbridge device.
+   * @constructor
+   * @param {DeviceTypeDefinition} definition - The definition of the device.
+   * @param {EndpointOptions} [options={}] - The options for the device.
+   */
   constructor(definition: DeviceTypeDefinition, options: EndpointOptions = {}) {
     super(definition, options);
   }
 
+  /**
+   * Adds a device type to the list of device types.
+   * If the device type is not already present in the list, it will be added.
+   *
+   * @param {DeviceTypeDefinition} deviceType - The device type to add.
+   */
   addDeviceType(deviceType: DeviceTypeDefinition) {
     const deviceTypes = this.getDeviceTypes();
     if (!deviceTypes.includes(deviceType)) {
@@ -162,6 +174,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     }
   }
 
+  /**
+   * Serializes the Matterbridge device into a serialized object.
+   *
+   * @param pluginName - The name of the plugin.
+   * @returns The serialized Matterbridge device object.
+   */
   serialize(pluginName: string) {
     const serialized: SerializedMatterbridgeDevice = {
       pluginName,
@@ -863,6 +881,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a default level control cluster server.
+   *
+   * @param currentLevel - The current level (default: 0).
+   */
   createDefaultLevelControlClusterServer(currentLevel = 0) {
     this.addClusterServer(
       ClusterServer(
@@ -917,6 +940,15 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Creates a default color control cluster server.
+   *
+   * @param currentHue - The current hue value.
+   * @param currentSaturation - The current saturation value.
+   * @param colorTemperatureMireds - The color temperature in mireds.
+   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
+   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   */
   createDefaultColorControlClusterServer(currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     this.addClusterServer(
       ClusterServer(
@@ -1060,6 +1092,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Sets the window covering target position as the current position and stops the movement.
+   */
   setWindowCoveringTargetAsCurrentAndStopped() {
     const windowCoveringCluster = this.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (windowCoveringCluster) {
@@ -1077,6 +1112,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     }
   }
 
+  /**
+   * Sets the current and target status of a window covering.
+   * @param current - The current position of the window covering.
+   * @param target - The target position of the window covering.
+   * @param status - The movement status of the window covering.
+   */
   setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus) {
     const windowCoveringCluster = this.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (windowCoveringCluster) {
@@ -1092,6 +1133,10 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
   }
 
+  /**
+   * Sets the status of the window covering.
+   * @param {WindowCovering.MovementStatus} status - The movement status to set.
+   */
   setWindowCoveringStatus(status: WindowCovering.MovementStatus) {
     const windowCovering = this.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (!windowCovering) return;
@@ -1100,6 +1145,10 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     console.log(`Set WindowCovering operationalStatus: ${status}`);
   }
 
+  /**
+   * Retrieves the status of the window covering.
+   * @returns The global operational status of the window covering.
+   */
   getWindowCoveringStatus() {
     const windowCovering = this.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (!windowCovering) return undefined;
@@ -1108,6 +1157,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     console.log(`Get WindowCovering operationalStatus: ${status.global}`);
     return status.global;
   }
+
+  /**
+   * Sets the target and current position of the window covering.
+   *
+   * @param position - The position to set, specified as a number.
+   */
   setWindowCoveringTargetAndCurrentPosition(position: number) {
     const windowCovering = this.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift));
     if (!windowCovering) return;
@@ -1117,6 +1172,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
   }
 
+  /**
+   * Creates a default switch cluster server.
+   *
+   * @remarks
+   * This method adds a cluster server with default switch features and configurations.
+   */
   createDefaultSwitchClusterServer() {
     this.addClusterServer(
       ClusterServer(

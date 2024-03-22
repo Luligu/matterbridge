@@ -4,7 +4,7 @@
  * @file matterbridge.ts
  * @author Luca Liguori
  * @date 2023-12-29
- * @version 1.1.1
+ * @version 1.2.0
  *
  * Copyright 2023, 2024 Luca Liguori.
  *
@@ -44,22 +44,24 @@ import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageMana
 import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } from '@project-chip/matter-node.js/util';
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 
-/*
-
-*/
-
 // Define an interface of common elements from MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform
 interface MatterbridgePlatform {
-  onStart(reason?: string): Promise<this>;
-  onConfigure(): Promise<this>;
-  onShutdown(reason?: string): Promise<this>;
-  loadConfig(): Promise<void>;
-  saveConfig(): Promise<void>;
+  onStart(reason?: string): Promise<void>;
+  onConfigure(): Promise<void>;
+  onShutdown(reason?: string): Promise<void>;
   matterbridge: Matterbridge;
   log: AnsiLogger;
+  config: PlatformConfig;
   name: string;
   type: string;
 }
+
+// PlatformConfig types
+export type PlatformConfigValue = string | number | boolean | bigint | object | undefined | null;
+
+export type PlatformConfig = {
+  [key: string]: PlatformConfigValue; // This allows any string as a key, and the value can be ConfigValue.
+};
 
 // Define an interface for storing the plugins
 interface RegisteredPlugin extends BaseRegisteredPlugin {
@@ -70,6 +72,7 @@ interface RegisteredPlugin extends BaseRegisteredPlugin {
   platform?: MatterbridgePlatform;
 }
 
+// Simplified interface for saving the plugins in node storage
 interface BaseRegisteredPlugin {
   path: string;
   type: string;
@@ -184,7 +187,9 @@ export class Matterbridge extends EventEmitter {
   /**
    * Loads an instance of the Matterbridge class.
    * If an instance already exists, return that instance.
-   * @returns The loaded instance of the Matterbridge class.
+   *
+   * @param initialize - Whether to initialize the Matterbridge instance after loading.
+   * @returns The loaded Matterbridge instance.
    */
   static async loadInstance(initialize = false) {
     if (!Matterbridge.instance) {
@@ -210,11 +215,6 @@ export class Matterbridge extends EventEmitter {
    * @returns A Promise that resolves when the initialization is complete.
    */
   public async initialize() {
-    /*
-    const wtf = await import('wtfnode');
-    wtf.dump();
-    */
-
     // Display the help
     if (hasParameter('help')) {
       // eslint-disable-next-line no-console
@@ -246,7 +246,7 @@ export class Matterbridge extends EventEmitter {
     await this.logNodeAndSystemInfo();
     this.log.info(
       // eslint-disable-next-line max-len
-      `Matterbridge version ${this.matterbridgeVersion} mode ${hasParameter('bridge') ? 'bridge' : ''}${hasParameter('childbridge') ? 'childbridge' : ''} running on ${this.systemInformation.osType} ${this.systemInformation.osRelease} ${this.systemInformation.osPlatform} ${this.systemInformation.osArch}`,
+      `Matterbridge version ${this.matterbridgeVersion} mode ${hasParameter('bridge') ? 'bridge' : ''}${hasParameter('childbridge') ? 'childbridge' : ''}${hasParameter('controller') ? 'controller' : ''} running on ${this.systemInformation.osType} ${this.systemInformation.osRelease} ${this.systemInformation.osPlatform} ${this.systemInformation.osArch}`,
     );
 
     // check node version and throw error
@@ -378,6 +378,7 @@ export class Matterbridge extends EventEmitter {
       this.bridgeMode = 'childbridge';
       MatterbridgeDevice.bridgeMode = 'childbridge';
       await this.testStartMatterBridge(); // No await do it asyncronously
+      return;
     }
 
     if (hasParameter('controller')) {
@@ -385,6 +386,7 @@ export class Matterbridge extends EventEmitter {
       this.log.info('Creating mattercontrollerContext: mattercontrollerContext');
       this.mattercontrollerContext = this.storageManager?.createContext('mattercontrollerContext');
       await this.startMatterBridge();
+      return;
     }
 
     if (hasParameter('bridge')) {
@@ -404,6 +406,7 @@ export class Matterbridge extends EventEmitter {
         this.loadPlugin(plugin); // No await do it asyncronously
       }
       await this.startMatterBridge();
+      return;
     }
 
     if (hasParameter('childbridge')) {
@@ -423,9 +426,15 @@ export class Matterbridge extends EventEmitter {
         this.loadPlugin(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
       }
       await this.startMatterBridge();
+      return;
     }
   }
 
+  /**
+   * Resolves the name of a plugin by loading and parsing its package.json file.
+   * @param pluginPath - The path to the plugin or the path to the plugin's package.json file.
+   * @returns The path to the resolved package.json file, or null if the package.json file is not found or does not contain a name.
+   */
   private async resolvePluginName(pluginPath: string): Promise<string | null> {
     if (!pluginPath.endsWith('package.json')) pluginPath = path.join(pluginPath, 'package.json');
 
@@ -548,16 +557,15 @@ export class Matterbridge extends EventEmitter {
    * Restarts the process by spawning a new process and exiting the current process.
    */
   private async restartProcess() {
-    //this.log.info('Restarting still not implemented');
-    //return;
-
     await this.cleanup('restarting...', true);
     this.hasCleanupStarted = false;
   }
 
   /**
-   * Performs cleanup operations before shutting down Matterbridge.
-   * @param message - The reason for the cleanup.
+   * Cleans up the Matterbridge instance.
+   * @param message - The cleanup message.
+   * @param restart - Indicates whether to restart the instance after cleanup. Default is `false`.
+   * @returns A promise that resolves when the cleanup is completed.
    */
   private async cleanup(message: string, restart = false) {
     if (!this.hasCleanupStarted) {
@@ -569,8 +577,10 @@ export class Matterbridge extends EventEmitter {
 
       // Calling the shutdown functions with a reason
       for (const plugin of this.registeredPlugins) {
-        if (plugin.platform) await plugin.platform.onShutdown('Matterbridge is closing: ' + message);
-        if (plugin.platform) await plugin.platform.saveConfig();
+        if (plugin.platform) {
+          await plugin.platform.onShutdown('Matterbridge is closing: ' + message);
+          await this.savePluginConfig(plugin);
+        }
       }
 
       // Set reachability to false
@@ -739,6 +749,12 @@ export class Matterbridge extends EventEmitter {
     }
   }
 
+  /**
+   * Removes a bridged device from the Matterbridge.
+   * @param pluginName - The name of the plugin.
+   * @param device - The device to be removed.
+   * @returns A Promise that resolves when the device is successfully removed.
+   */
   async removeBridgedDevice(pluginName: string, device: MatterbridgeDevice): Promise<void> {
     if (this.bridgeMode === 'bridge' && !this.matterAggregator) {
       this.log.error(`Removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er} error: matterAggregator not found`);
@@ -937,6 +953,91 @@ export class Matterbridge extends EventEmitter {
     */
   }
 
+  /**
+   * Loads the configuration for a plugin.
+   * If the configuration file exists, it reads the file and returns the parsed JSON data.
+   * If the configuration file does not exist, it creates a new file with default configuration and returns it.
+   * If any error occurs during file access or creation, it logs an error and rejects the promise with the error.
+   *
+   * @param plugin - The plugin for which to load the configuration.
+   * @returns A promise that resolves to the loaded or created configuration.
+   */
+  private async loadPluginConfig(plugin: RegisteredPlugin): Promise<PlatformConfig> {
+    const configFile = path.join(this.matterbridgeDirectory, `${plugin.name}.config.json`);
+    try {
+      await fs.access(configFile);
+      const data = await fs.readFile(configFile, 'utf8');
+      this.log.info(`Config file found: ${configFile}.\nConfig:${rs}\n`, JSON.parse(data));
+      return JSON.parse(data) as PlatformConfig;
+    } catch (err) {
+      if (err instanceof Error) {
+        const nodeErr = err as NodeJS.ErrnoException;
+        if (nodeErr.code === 'ENOENT') {
+          try {
+            await this.writeFile(configFile, JSON.stringify({ name: plugin.name, type: plugin.type }, null, 2));
+            this.log.info(`Created config file: ${configFile}.\nConfig:${rs}\n`, { name: plugin.name, type: plugin.type });
+            return { name: plugin.name, type: plugin.type };
+          } catch (err) {
+            this.log.error(`Error creating config file ${configFile}: ${err}`);
+            return Promise.reject(err);
+          }
+        } else {
+          this.log.error(`Error accessing config file ${configFile}: ${err}`);
+          return Promise.reject(err);
+        }
+      }
+      return Promise.reject(err);
+    }
+  }
+
+  /**
+   * Saves the configuration of a registered plugin.
+   * @param {RegisteredPlugin} plugin - The plugin whose configuration needs to be saved.
+   * @returns {Promise<void>} - A promise that resolves when the configuration is successfully saved.
+   * @throws {Error} - If the plugin's configuration is not found or if there is an error while saving the configuration.
+   */
+  private async savePluginConfig(plugin: RegisteredPlugin): Promise<void> {
+    if (!plugin.platform?.config) {
+      this.log.error(`Error saving plugin ${plg}${plugin.name}${er} config: config not found`);
+      return Promise.reject(new Error(`Error saving plugin ${plg}${plugin.name}${er} config: config not found`));
+    }
+    const configFile = path.join(this.matterbridgeDirectory, `${plugin.name}.config.json`);
+    try {
+      await this.writeFile(configFile, JSON.stringify(plugin.platform.config, null, 2));
+      this.log.info(`Saved config file: ${configFile}.\nConfig:${rs}\n`, plugin.platform.config);
+    } catch (err) {
+      this.log.error(`Error saving plugin ${plg}${plugin.name}${er} config: ${err}`);
+      return Promise.reject(err);
+    }
+  }
+
+  /**
+   * Writes data to a file.
+   *
+   * @param {string} filePath - The path of the file to write to.
+   * @param {string} data - The data to write to the file.
+   * @returns {Promise<void>} - A promise that resolves when the data is successfully written to the file.
+   */
+  private async writeFile(filePath: string, data: string) {
+    // Write the data to a file
+    await fs
+      .writeFile(`${filePath}`, data, 'utf8')
+      .then(() => {
+        this.log.debug(`Successfully wrote to ${filePath}`);
+      })
+      .catch((error) => {
+        this.log.error(`Error writing to ${filePath}:`, error);
+      });
+  }
+
+  /**
+   * Starts a plugin.
+   *
+   * @param {RegisteredPlugin} plugin - The plugin to start.
+   * @param {string} [message] - Optional message to pass to the plugin's onStart method.
+   * @param {boolean} [configure=false] - Indicates whether to configure the plugin after starting.
+   * @returns {Promise<void>} A promise that resolves when the plugin is started successfully, or rejects with an error if starting the plugin fails.
+   */
   private async startPlugin(plugin: RegisteredPlugin, message?: string, configure = false): Promise<void> {
     if (!plugin.loaded || !plugin.platform) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} not loaded or no platform`);
@@ -966,6 +1067,12 @@ export class Matterbridge extends EventEmitter {
     }
   }
 
+  /**
+   * Configures a plugin.
+   *
+   * @param {RegisteredPlugin} plugin - The plugin to configure.
+   * @returns {Promise<void>} A promise that resolves when the plugin is configured successfully, or rejects with an error if configuration fails.
+   */
   private async configurePlugin(plugin: RegisteredPlugin): Promise<void> {
     if (!plugin.loaded || !plugin.started || !plugin.platform) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} not loaded or not started or not platform`);
@@ -994,6 +1101,14 @@ export class Matterbridge extends EventEmitter {
     }
   }
 
+  /**
+   * Loads a plugin and returns the corresponding MatterbridgePlatform instance.
+   * @param plugin - The plugin to load.
+   * @param start - Optional flag indicating whether to start the plugin after loading. Default is false.
+   * @param message - Optional message to pass to the plugin when starting.
+   * @returns A Promise that resolves to the loaded MatterbridgePlatform instance.
+   * @throws An error if the plugin is not enabled, already loaded, or fails to load.
+   */
   private async loadPlugin(plugin: RegisteredPlugin, start = false, message = ''): Promise<MatterbridgePlatform> {
     if (!plugin.enabled) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} not enabled`);
@@ -1017,8 +1132,14 @@ export class Matterbridge extends EventEmitter {
 
       // Call the default export function of the plugin, passing this MatterBridge instance
       if (pluginInstance.default) {
-        const platform = pluginInstance.default(this, new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled }));
+        const config: PlatformConfig = await this.loadPluginConfig(plugin);
+        const platform = pluginInstance.default(
+          this,
+          new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled }),
+          config,
+        ) as MatterbridgePlatform;
         platform.name = packageJson.name;
+        platform.config = config;
         plugin.name = packageJson.name;
         plugin.description = packageJson.description;
         plugin.version = packageJson.version;
@@ -1029,7 +1150,6 @@ export class Matterbridge extends EventEmitter {
         plugin.registeredDevices = 0;
         plugin.addedDevices = 0;
         await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
-        await platform.loadConfig();
         this.log.info(`Loaded plugin ${plg}${plugin.name}${db} type ${typ}${platform.type}${db} (entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
         if (start) this.startPlugin(plugin, message); // No await do it asyncronously
         return Promise.resolve(platform);
@@ -1219,6 +1339,10 @@ export class Matterbridge extends EventEmitter {
     }
   }
 
+  /**
+   * Starts the Matter server.
+   * If the Matter server is not initialized, it logs an error and performs cleanup.
+   */
   private async startMatterServer() {
     if (!this.matterServer) {
       this.log.error('No matter server initialized');
@@ -1319,15 +1443,12 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Shows the commissioning QR code for a given commissioning server, storage context, and name.
-   * If any of the parameters are missing, the method returns early.
-   * If the commissioning server is not commissioned, it logs the QR code and pairing code.
-   * If the commissioning server is already commissioned, it waits for controllers to connect.
-   * If the bridge mode is 'childbridge', it sets the 'paired' property of the plugin to true.
-   *
-   * @param commissioningServer - The commissioning server to show the QR code for.
-   * @param storageContext - The storage context to store the pairing codes.
-   * @param pluginName - The name of the commissioning server.
+   * Shows the commissioning QR code for a given plugin.
+   * @param {CommissioningServer} commissioningServer - The commissioning server instance.
+   * @param {StorageContext} storageContext - The storage context instance.
+   * @param {NodeStorage} nodeContext - The node storage instance.
+   * @param {string} pluginName - The name of the plugin.
+   * @returns {Promise<void>} - A promise that resolves when the QR code is shown.
    */
   private async showCommissioningQRCode(commissioningServer: CommissioningServer, storageContext: StorageContext, nodeContext: NodeStorage, pluginName: string) {
     if (!commissioningServer || !storageContext || !pluginName) return;
@@ -1760,6 +1881,11 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Command Line Arguments: ${cmdArgs}`);
   }
 
+  /**
+   * Retrieves an array of base registered plugins.
+   *
+   * @returns {BaseRegisteredPlugin[]} An array of base registered plugins.
+   */
   private getBaseRegisteredPlugins() {
     const baseRegisteredPlugins: BaseRegisteredPlugin[] = this.registeredPlugins.map((plugin) => ({
       path: plugin.path,
@@ -1781,6 +1907,10 @@ export class Matterbridge extends EventEmitter {
     return baseRegisteredPlugins;
   }
 
+  /**
+   * Retrieves an array of base registered devices from the registered plugins.
+   * @returns {BaseRegisteredPlugin[]} An array of base registered devices.
+   */
   private getBaseRegisteredDevices() {
     const baseRegisteredPlugins: BaseRegisteredPlugin[] = this.registeredPlugins.map((plugin) => ({
       path: plugin.path,
