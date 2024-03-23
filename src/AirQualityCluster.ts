@@ -71,14 +71,6 @@ export namespace AirQuality {
   export const Cluster = ClusterFactory.Extensible(
     Base,
 
-    /**
-     * Use this factory method to create a Switch cluster with support for optional features. Include each
-     * {@link Feature} you wish to support.
-     *
-     * @param features the optional features to support
-     * @returns a Switch cluster with specified features enabled
-     * @throws {IllegalClusterError} if the feature combination is disallowed by the Matter specification
-     */
     <T extends `${Feature}`[]>(...features: [...T]) => {
       ClusterFactory.validateFeatureSelection(features, Feature);
       const cluster = ClusterFactory.Definition({

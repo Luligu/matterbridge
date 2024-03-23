@@ -14,17 +14,19 @@ import Alert from '@mui/material/Alert';
 function Home() {
   const [qrCode, setQrCode] = useState('');
   const [systemInfo, setSystemInfo] = useState({});
+  const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
   const [plugins, setPlugins] = useState([]);
   const [selectedRow, setSelectedRow] = useState(-1); // -1 no selection, 0 or greater for selected row
   const [selectedPluginName, setSelectedPluginName] = useState('none'); // -1 no selection, 0 or greater for selected row
-
   const [open, setSnack] = React.useState(false);
 
-  const handleSnackOpen = () => () => {
+  const handleSnackOpen = () => {
+    console.log('handleSnackOpen');
     setSnack(true);
   };
 
   const handleSnackClose = () => {
+    console.log('handleSnackClose');
     setSnack(false);
   };
 
@@ -36,7 +38,7 @@ function Home() {
       { Header: 'Type', accessor: 'type' },
       { Header: 'Devices', accessor: 'devices'},
       { Header: 'QR', accessor: 'qrcode' },
-      { Header: 'Status', accessor: 'status', Cell: ({ value }) => <StatusIndicator status={value} /> },
+      { Header: 'Status', accessor: 'status'/*, Cell: ({ value }) => <StatusIndicator status={value} /> */},
     ],
     []
   );
@@ -59,6 +61,12 @@ function Home() {
       .then(response => response.json())
       .then(data => { setSystemInfo(data); console.log('/api/system-info:', data) })
       .catch(error => console.error('Error fetching system info:', error));
+
+      // Fetch Matterbridge Info
+    fetch('/api/matterbridge-info')
+      .then(response => response.json())
+      .then(data => { setMatterbridgeInfo(data); console.log('/api/matterbridge-info:', data) })
+      .catch(error => console.error('Error fetching matterbridge info:', error));
 
     // Fetch Plugins
     fetch('/api/plugins')
@@ -91,42 +99,21 @@ function Home() {
       plugins[row].enabled=true;
       sendCommandToMatterbridge('enableplugin', plugins[row].name);
     }
-    setSnack(true);
     console.log('Updating page');
     setPlugins(prevPlugins => [...prevPlugins]);
     handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
-    // Set a timeout to update the page after 5 seconds
-    /*
-    setTimeout(() => {
-      // Trigger a state update
-      console.log('Updating page after 20 seconds');
-      setPlugins(prevPlugins => [...prevPlugins]);
-      window.location.reload();
-    }, 20000);
-    */
   };
 
+  /*
+        {matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
+  */
   return (
     <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0', padding: '0' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', flex: '0 1 auto'/*, width: '310px'*/, gap: '20px' }}>
-        {qrCode && <QRDiv qrText={qrCode} qrWidth={256} topText="QRCode" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName} />}
-        <table>
-          <thead>
-            <tr>
-              <th colSpan="2" className="table-header">System Information</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.entries(systemInfo).map(([key, value], index) => (
-              <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
-                <td className="table-content">{key}</td>
-                <td className="table-content">{value}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: '0 1 auto', gap: '20px' }}>
+        {qrCode && <QRDiv qrText={qrCode} qrWidth={256} topText="QRCode" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName}/>}
+        {systemInfo && <SystemInfoTable systemInfo={systemInfo}/>}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', gap: '20px' }}>
         <table>
           <thead>
             <tr>
@@ -163,10 +150,12 @@ function Home() {
                     <StatusIndicator status={plugin.enabled} onClick={() => handleEnableDisable(index)} enabledText='Enabled' disabledText='Disabled' tooltipText='Enable or disable the plugin'/>
                     {plugin.loaded && plugin.started && plugin.configured && plugin.paired && plugin.connected ? 
                       <>
+                        <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running'/>
                       </> : 
                       <>
                         {plugin.loaded && plugin.started && plugin.configured && plugin.paired===undefined && plugin.connected===undefined ? 
                           <>
+                            <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running'/>
                           </> : 
                           <>
                             <StatusIndicator status={plugin.loaded} enabledText='Loaded' tooltipText='Whether the plugin has been loaded'/>
@@ -188,8 +177,50 @@ function Home() {
     </div>
   );}
 
-  //data.push({ name: plugin.name, description: plugin.description, version: plugin.version, author: plugin.author, type: plugin.type, devices: count, status: plugin.enabled! });
-  
+  // This function takes systemInfo as a parameter
+  // It returns a table element with the systemInfo
+  function SystemInfoTable({ systemInfo }) {
+    return (
+      <table>
+        <thead>
+          <tr>
+            <th colSpan="2" className="table-header">System Information</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(systemInfo).map(([key, value], index) => (
+            <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
+              <td className="table-content">{key}</td>
+              <td className="table-content">{value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  }
+
+  // This function takes systemInfo as a parameter
+  // It returns a table element with the systemInfo
+  function MatterbridgeInfoTable({ matterbridgeInfo }) {
+    return (
+      <table>
+        <thead>
+          <tr>
+            <th colSpan="2" className="table-header">Matterbridge Information</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(matterbridgeInfo).map(([key, value], index) => (
+            <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
+              <td className="table-content">{key}</td>
+              <td className="table-content">{value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  }
+
   // This function takes four parameters: qrText, qrWidth, topText, and bottomText
   // It returns a div element with a rectangle, a QR code, and two texts
   function QRDiv({ qrText, qrWidth, topText, bottomText }) {
@@ -240,7 +271,7 @@ function Home() {
         <div style={headerStyle}>
           <p style={textStyle}>{topText}</p>
         </div>
-        <QRCode value={qrText} size={qrWidth} bgColor={divStyle.backgroundColor} style={{ marginTop: '20px', marginBottom: '20px' }}/>
+        <QRCode value={qrText} size={qrWidth} bgColor={divStyle.backgroundColor} style={{ margin: '20px' }}/>
         <div style={footerStyle}>
           <div>
             <p style={{ margin: 0, textAlign: 'center' }}>Scan me to pair</p>

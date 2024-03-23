@@ -772,12 +772,10 @@ export class Matterbridge extends EventEmitter {
       this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) plugin ${plg}${pluginName}${er} aggregator not found`);
       return;
     }
-    /*
     if (this.bridgeMode === 'childbridge' && !plugin.connected) {
-      this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) plugin ${plg}${pluginName}${er} not connected`);
+      this.log.warn(`Not removing bridged device ${dev}${device.deviceName}${wr} (${dev}${device.name}${wr}) plugin ${plg}${pluginName}${wr} not connected`);
       return;
     }
-    */
 
     // Register and add the device to matterbridge aggregator in bridge mode
     if (this.bridgeMode === 'bridge') {
@@ -967,7 +965,7 @@ export class Matterbridge extends EventEmitter {
     try {
       await fs.access(configFile);
       const data = await fs.readFile(configFile, 'utf8');
-      this.log.info(`Config file found: ${configFile}.\nConfig:${rs}\n`, JSON.parse(data));
+      this.log.debug(`Config file found: ${configFile}.\nConfig:${rs}\n`, JSON.parse(data));
       return JSON.parse(data) as PlatformConfig;
     } catch (err) {
       if (err instanceof Error) {
@@ -975,7 +973,7 @@ export class Matterbridge extends EventEmitter {
         if (nodeErr.code === 'ENOENT') {
           try {
             await this.writeFile(configFile, JSON.stringify({ name: plugin.name, type: plugin.type }, null, 2));
-            this.log.info(`Created config file: ${configFile}.\nConfig:${rs}\n`, { name: plugin.name, type: plugin.type });
+            this.log.debug(`Created config file: ${configFile}.\nConfig:${rs}\n`, { name: plugin.name, type: plugin.type });
             return { name: plugin.name, type: plugin.type };
           } catch (err) {
             this.log.error(`Error creating config file ${configFile}: ${err}`);
@@ -1004,7 +1002,7 @@ export class Matterbridge extends EventEmitter {
     const configFile = path.join(this.matterbridgeDirectory, `${plugin.name}.config.json`);
     try {
       await this.writeFile(configFile, JSON.stringify(plugin.platform.config, null, 2));
-      this.log.info(`Saved config file: ${configFile}.\nConfig:${rs}\n`, plugin.platform.config);
+      this.log.debug(`Saved config file: ${configFile}.\nConfig:${rs}\n`, plugin.platform.config);
     } catch (err) {
       this.log.error(`Error saving plugin ${plg}${plugin.name}${er} config: ${err}`);
       return Promise.reject(err);
@@ -1464,6 +1462,8 @@ export class Matterbridge extends EventEmitter {
       if (pluginName !== 'Matterbridge') {
         const plugin = this.findPlugin(pluginName);
         if (plugin) {
+          plugin.qrPairingCode = qrPairingCode;
+          plugin.manualPairingCode = manualPairingCode;
           plugin.paired = false;
         }
       }
@@ -1945,6 +1945,7 @@ export class Matterbridge extends EventEmitter {
     this.expressApp.get('/api/qr-code', (req, res) => {
       this.log.debug('The frontend sent /api/qr-code');
       if (!this.matterbridgeContext) {
+        this.log.error('/api/qr-code matterbridgeContext not found');
         res.json([]);
         return;
       }

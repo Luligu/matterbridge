@@ -191,7 +191,7 @@ table {
   width: 100%;
   box-shadow: 5px 5px 10px #888; 
 }
-
+/*
 @media (max-width: 600px) {
   .header {
     flex-direction: column;
@@ -201,6 +201,7 @@ table {
     margin-top: 20px;
   }
 }
+*/
 /*
 th, td {
   border: 1px solid #ddd;

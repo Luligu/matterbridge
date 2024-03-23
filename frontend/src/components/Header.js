@@ -2,7 +2,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Tooltip, Button, createTheme } from '@mui/material';
-import DriveFolderUploadIcon from '@mui/icons-material/DriveFolderUpload';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import Backdrop from '@mui/material/Backdrop';

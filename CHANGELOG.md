@@ -8,7 +8,6 @@ All notable changes to this project will be documented in this file.
 - [plugin default entry point]: export default function initializePlugin(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig)
 - [platform constructor]: constructor(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig)
 
-
 ### Added
 
 - [platform]: Added async loadPluginConfig() and async savePluginConfig() to store plugin config.
