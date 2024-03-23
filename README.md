@@ -130,6 +130,10 @@ Matterbridge can run as many plugins as you want.
 
 [Room plugin with history](https://github.com/Luligu/matterbridge-eve-room)
 
+### Production-level plugins
+
+[zigbee2mqtt](https://github.com/Luligu/matterbridge-zigbee2mqtt)
+
 ## How to install and register a production-level plugin (from npm)
 
 To install i.e. https://github.com/Luligu/matterbridge-zigbee2mqtt
@@ -162,7 +166,7 @@ On linux:
 cd ~/Matterbridge
 ```
 
-then
+then clone the plugin
 
 ```
 git clone https://github.com/Luligu/matterbridge-example-accessory-platform
