@@ -773,7 +773,7 @@ export class Matterbridge extends EventEmitter {
       return;
     }
     if (this.bridgeMode === 'childbridge' && !plugin.connected) {
-      this.log.warn(`Not removing bridged device ${dev}${device.deviceName}${wr} (${dev}${device.name}${wr}) plugin ${plg}${pluginName}${wr} not connected`);
+      this.log.warn(`Error removing bridged device ${dev}${device.deviceName}${wr} (${dev}${device.name}${wr}) plugin ${plg}${pluginName}${wr} not connected`);
       return;
     }
 
