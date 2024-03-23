@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.0] - 2024-03-22
+## [1.2.0] - 2024-03-23
 
 ### Breaking change on plugin default entry point and platform constructor!
 - [plugin default entry point]: export default function initializePlugin(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig)
