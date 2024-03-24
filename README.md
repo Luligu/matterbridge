@@ -260,3 +260,35 @@ It can be useful to call this method from onShutdown() if you don't want to keep
 
 ## MatterbridgeDevice api
 
+
+# Contribution Guidelines
+
+Thank you for your interest in contributing to my project! 
+
+I warmly welcome contributions to this project! Whether it's reporting bugs, proposing new features, updating documentation, or writing code, your help is greatly appreciated.
+
+## Getting Started
+
+- Fork this repository to your own GitHub account and clone it to your local device.
+- Make the necessary changes and test them out
+- Commit your changes and push to your forked repository
+
+## Submitting Changes
+
+- Create a new pull request from my repository and I'll be glad to check it out
+- Be sure to follow the existing code style
+- Add unit tests for any new or changed functionality if possible
+- In your pull request, do describe what your changes do and how they work
+
+## Code of Conduct
+
+We believe in a welcoming and respectful community for all. Please make sure to follow our [Code of Conduct](LINK_TO_CODE_OF_CONDUCT) in all your interactions with the project.
+
+## Support
+
+If you find this project helpful and you wish to support the ongoing development, you can do so by buying me a coffee. 
+Click on the badge below to get started:
+
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee--yellow.svg?style=social&logo=buy-me-a-coffee)](https://www.buymeacoffee.com/luligugithub)
+
+Thank you for your support!
