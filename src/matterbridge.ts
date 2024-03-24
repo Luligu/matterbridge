@@ -194,7 +194,7 @@ export class Matterbridge extends EventEmitter {
   static async loadInstance(initialize = false) {
     if (!Matterbridge.instance) {
       // eslint-disable-next-line no-console
-      console.log(wr, 'Matterbridge instance does not exists!', initialize ? 'Initializing...' : 'Not initializing...', rs);
+      console.log(wr + 'Matterbridge instance does not exists!', initialize ? 'Initializing...' : 'Not initializing...', rs);
       Matterbridge.instance = new Matterbridge();
       if (initialize) await Matterbridge.instance.initialize();
     }
@@ -234,33 +234,19 @@ export class Matterbridge extends EventEmitter {
       process.exit(0);
     }
 
-    // set Matterbridge logger
+    // Set Matterbridge logger
     if (hasParameter('debug')) this.debugEnabled = true;
     this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled });
     this.log.debug('Matterbridge is starting...');
 
-    // log system info and create .matterbridge directory
-    await this.logNodeAndSystemInfo();
-    this.log.info(
-      // eslint-disable-next-line max-len
-      `Matterbridge version ${this.matterbridgeVersion} mode ${hasParameter('bridge') ? 'bridge' : ''}${hasParameter('childbridge') ? 'childbridge' : ''}${hasParameter('controller') ? 'controller' : ''} running on ${this.systemInformation.osType} ${this.systemInformation.osRelease} ${this.systemInformation.osPlatform} ${this.systemInformation.osArch}`,
-    );
-
-    // check node version and throw error
-    requireMinNodeVersion(18);
-
-    // register SIGINT SIGTERM signal handlers
-    this.registerSignalHandlers();
-
-    // set matter.js logger level and format
-    Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
-    Logger.format = Format.ANSI;
-
     // Initialize NodeStorage
+    this.homeDirectory = os.homedir();
+    this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
     this.log.debug('Creating node storage manager');
     this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, 'storage'), logging: false });
     this.log.debug('Creating node storage context for matterbridge');
     this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
+    // Get the plugins from node storage
     this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
     for (const plugin of this.registeredPlugins) {
       this.log.debug(`Creating node storage context for plugin ${plugin.name}`);
@@ -272,6 +258,49 @@ export class Matterbridge extends EventEmitter {
       await plugin.nodeContext.set<string>('description', plugin.description);
       await plugin.nodeContext.set<string>('author', plugin.author);
     }
+    if (hasParameter('logstorage')) {
+      await this.nodeContext.logStorage();
+      for (const plugin of this.registeredPlugins) {
+        await plugin.nodeContext?.logStorage();
+      }
+    }
+
+    // Log system info and create .matterbridge directory
+    await this.logNodeAndSystemInfo();
+    this.log.info(
+      // eslint-disable-next-line max-len
+      `Matterbridge version ${this.matterbridgeVersion} mode ${hasParameter('bridge') ? 'bridge' : ''}${hasParameter('childbridge') ? 'childbridge' : ''}${hasParameter('controller') ? 'controller' : ''} running on ${this.systemInformation.osType} ${this.systemInformation.osRelease} ${this.systemInformation.osPlatform} ${this.systemInformation.osArch}`,
+    );
+
+    // Check node version and throw error
+    requireMinNodeVersion(18);
+
+    // Register SIGINT SIGTERM signal handlers
+    this.registerSignalHandlers();
+
+    // Set matter.js logger level and format
+    Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
+    Logger.format = Format.ANSI;
+
+    // Initialize NodeStorage
+    /*
+    this.log.debug('Creating node storage manager');
+    this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, 'storage'), logging: false });
+    this.log.debug('Creating node storage context for matterbridge');
+    this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
+    // Get the plugins from node storage
+    this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
+    for (const plugin of this.registeredPlugins) {
+      this.log.debug(`Creating node storage context for plugin ${plugin.name}`);
+      plugin.nodeContext = await this.nodeStorage.createStorage(plugin.name);
+      await plugin.nodeContext.set<string>('name', plugin.name);
+      await plugin.nodeContext.set<string>('type', plugin.type);
+      await plugin.nodeContext.set<string>('path', plugin.path);
+      await plugin.nodeContext.set<string>('version', plugin.version);
+      await plugin.nodeContext.set<string>('description', plugin.description);
+      await plugin.nodeContext.set<string>('author', plugin.author);
+    }
+    */
 
     // Parse command line
     this.parseCommandLine();
@@ -783,9 +812,9 @@ export class Matterbridge extends EventEmitter {
           return;
         }
       });
+      this.log.info(`Removed bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
       if (plugin.addedDevices !== undefined) plugin.addedDevices--;
-      this.log.info(`Removed bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
     }
 
     // Only register the device in childbridge mode
@@ -1807,9 +1836,23 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Root Directory: ${this.rootDirectory}`);
 
     // Global node_modules directory
+    /*
     this.globalModulesDirectory = await this.getGlobalNodeModules();
     this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory;
     this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
+    */
+    if (this.nodeContext) this.globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
+    this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
+    this.getGlobalNodeModules()
+      .then(async (globalModulesDirectory) => {
+        this.globalModulesDirectory = globalModulesDirectory;
+        this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory;
+        this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
+        await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
+      })
+      .catch((error) => {
+        this.log.error(`Error getting global node_modules directory: ${error}`);
+      });
 
     // Create the data directory .matterbridge in the home directory
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
@@ -1861,13 +1904,27 @@ export class Matterbridge extends EventEmitter {
     this.matterbridgeInformation.matterbridgeVersion = this.matterbridgeVersion;
     this.log.debug(`Matterbridge Version: ${this.matterbridgeVersion}`);
 
+    // Matterbridge latest version
+    /*
     this.matterbridgeLatestVersion = await this.getLatestVersion('matterbridge');
     this.matterbridgeInformation.matterbridgeLatestVersion = this.matterbridgeLatestVersion;
     this.log.debug(`Matterbridge Latest Version: ${this.matterbridgeLatestVersion}`);
-
-    if (this.matterbridgeVersion !== this.matterbridgeLatestVersion) {
-      this.log.warn(`Matterbridge is out of date. Current version: ${this.matterbridgeVersion}, Latest version: ${this.matterbridgeLatestVersion}`);
-    }
+    */
+    if (this.nodeContext) this.matterbridgeLatestVersion = await this.nodeContext.get<string>('matterbridgeLatestVersion', '');
+    this.log.debug(`Matterbridge Latest Version: ${this.matterbridgeLatestVersion}`);
+    this.getLatestVersion('matterbridge')
+      .then(async (matterbridgeLatestVersion) => {
+        this.matterbridgeLatestVersion = matterbridgeLatestVersion;
+        this.matterbridgeInformation.matterbridgeLatestVersion = this.matterbridgeLatestVersion;
+        this.log.debug(`Matterbridge Latest Version: ${this.matterbridgeLatestVersion}`);
+        await this.nodeContext?.set<string>('matterbridgeLatestVersion', this.matterbridgeLatestVersion);
+        if (this.matterbridgeVersion !== this.matterbridgeLatestVersion) {
+          this.log.warn(`Matterbridge is out of date. Current version: ${this.matterbridgeVersion}, Latest version: ${this.matterbridgeLatestVersion}`);
+        }
+      })
+      .catch((error) => {
+        this.log.error(`Error getting Matterbridge latest version: ${error}`);
+      });
 
     // Current working directory
     const currentDir = process.cwd();

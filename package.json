@@ -72,6 +72,6 @@
     "express": "^4.19.1",
     "matter-history": "^1.0.12",
     "node-ansi-logger": "^1.9.2",
-    "node-persist-manager": "^1.0.5"
+    "node-persist-manager": "^1.0.6"
   }
 }

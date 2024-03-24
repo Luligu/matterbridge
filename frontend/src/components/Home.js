@@ -3,10 +3,14 @@ import React, { useEffect, useState } from 'react';
 import QRCode from 'qrcode.react';
 import { StatusIndicator } from './StatusIndicator';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
-import { Tooltip, IconButton } from '@mui/material';
+import { Tooltip, IconButton, Button, createTheme } from '@mui/material';
 import { sendCommandToMatterbridge } from './Header';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
+import TextField from '@mui/material/TextField';
+import Fab from '@mui/material/Fab';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 
 // npm install @mui/material @emotion/react @emotion/styled
 // npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
@@ -114,6 +118,7 @@ function Home() {
         {systemInfo && <SystemInfoTable systemInfo={systemInfo}/>}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', gap: '20px' }}>
+        <AddRemovePluginsDiv systemInfo={systemInfo}/>
         <table>
           <thead>
             <tr>
@@ -177,6 +182,41 @@ function Home() {
     </div>
   );}
 
+  function AddRemovePluginsDiv({ systemInfo }) {
+    const theme = createTheme({
+      palette: {
+        primary: {
+          main: '#4CAF50', // your custom primary color
+        },
+      },
+    });
+
+    // Define the style for the header element
+    const bodyStyle = {
+      display: 'flex',
+      flexDirection: 'row', 
+      flex: '1 1 auto',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      margin: '0px',
+      padding: '10px',
+      gap: '20px',
+    };
+
+    return (
+      <div className="MbfWindowDiv">
+        <div className="MbfWindowHeader">
+          <p className="MbfWindowHeaderText">Add remove plugin</p>
+        </div>
+        <div style={bodyStyle}>
+          <TextField size="small" id="plugin-name" label="Plugin" variant="outlined" fullWidth/>
+          <Button disabled theme={theme} color="primary" variant='contained' size="small" aria-label="add" endIcon={<AddIcon />} style={{ color: '#ffffff', height: '30px' }}>Add</Button>
+          <Button disabled theme={theme} color="primary" variant='contained' size="small" aria-label="remove" endIcon={<RemoveIcon />} style={{ color: '#ffffff', height: '30px' }}>Remove</Button>
+        </div>
+      </div>
+    );
+  }
+
   // This function takes systemInfo as a parameter
   // It returns a table element with the systemInfo
   function SystemInfoTable({ systemInfo }) {
@@ -224,55 +264,13 @@ function Home() {
   // This function takes four parameters: qrText, qrWidth, topText, and bottomText
   // It returns a div element with a rectangle, a QR code, and two texts
   function QRDiv({ qrText, qrWidth, topText, bottomText }) {
-    // Define the style for the div element
-    const divStyle = {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      boxShadow: '5px 5px 10px #888',
-      border: '1px solid #ddd',
-      backgroundColor: '#9e9e9e'
-    };
-  
-    // Define the style for the text element
-    const textStyle = {
-      fontWeight: 'bold',
-      color: 'white'
-    };
-  
-    // Define the style for the header element
-    const headerStyle = {
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      width: '100%',
-      height: '30px',
-      backgroundColor: '#4CAF50',
-      color: 'white',
-      border: '1px solid #ddd'
-    };
-
-    // Define the style for the header element
-    const footerStyle = {
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      //width: '100%',
-      height: '30px',
-      color: 'black',
-      margin: '0px',
-      padding: '10px',
-      paddingTop: '0px',
-    };
-  
-    // Return the JSX code for the div element
     return (
-      <div className="main-background" style={divStyle}>
-        <div style={headerStyle}>
-          <p style={textStyle}>{topText}</p>
+      <div className="MbfWindowDiv" style={{alignItems: 'center'}}>
+        <div className="MbfWindowHeader">
+          <p className="MbfWindowHeaderText" style={{textAlign: 'center'}}>{topText}</p>
         </div>
-        <QRCode value={qrText} size={qrWidth} bgColor={divStyle.backgroundColor} style={{ margin: '20px' }}/>
-        <div style={footerStyle}>
+        <QRCode value={qrText} size={qrWidth} bgColor='#9e9e9e' style={{ margin: '20px' }}/>
+        <div  className="MbfWindowFooter">
           <div>
             <p style={{ margin: 0, textAlign: 'center' }}>Scan me to pair</p>
             <p className="text-color-selected" style={{ margin: 0, textAlign: 'center' }}>{bottomText}</p>
