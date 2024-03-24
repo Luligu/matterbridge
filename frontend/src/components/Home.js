@@ -153,7 +153,7 @@ function Home() {
                         <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running'/>
                       </> : 
                       <>
-                        {plugin.loaded && plugin.started && plugin.configured && plugin.paired===undefined && plugin.connected===undefined ? 
+                        {plugin.loaded && plugin.started && plugin.configured && plugin.connected===undefined ? 
                           <>
                             <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running'/>
                           </> : 

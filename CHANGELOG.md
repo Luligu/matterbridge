@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.1] - 2024-03-24
+
+### Added
+
+- [frontend]: Frontend got updated to 0.8.4.
+
 ## [1.2.0] - 2024-03-23
 
 ### Breaking change on plugin default entry point and platform constructor!

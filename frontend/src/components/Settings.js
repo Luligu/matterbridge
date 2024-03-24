@@ -72,8 +72,8 @@ function MatterbridgeInfo() {
           value={selectedModeValue} // Use the selectedValue state variable
           onChange={handleChangeMode} // Handle changes with the handleChange function
       >
-        <FormControlLabel value="bridge" control={<Radio />} label="Bridge" />
-        <FormControlLabel value="childbridge" control={<Radio />} label="Childbridge" />
+        <FormControlLabel value="bridge" disabled control={<Radio />} label="Bridge" />
+        <FormControlLabel value="childbridge" disabled control={<Radio />} label="Childbridge" />
       </RadioGroup>
       <FormLabel id="matterbridgeInfo">Logger level</FormLabel>
       <RadioGroup
@@ -95,22 +95,22 @@ function MatterbridgeInfo() {
       </FormLabel>
       <FormLabel>Home Directory
         <div className="field-color-selected">{matterbridgeInfo.homeDirectory}</div>
-        </FormLabel>
+      </FormLabel>
       <FormLabel>Root Directory: 
         <div className="field-color-selected">{matterbridgeInfo.rootDirectory}</div>
-        </FormLabel>
+      </FormLabel>
       <FormLabel>Matterbridge Directory
         <div className="field-color-selected">{matterbridgeInfo.matterbridgeDirectory}</div>
-        </FormLabel>
+      </FormLabel>
       <FormLabel>Matterbridge Plugin Directory
         <div className="field-color-selected">{matterbridgeInfo.matterbridgePluginDirectory}</div>
-        </FormLabel>
+      </FormLabel>
       <FormLabel>Global Module Directory
         <div className="field-color-selected">{matterbridgeInfo.globalModulesDirectory}</div>
       </FormLabel>
       </MatterbridgeInfoContext.Provider>
-        </FormControl>
-      );
+    </FormControl>
+  );
 }
 
 export default Settings;

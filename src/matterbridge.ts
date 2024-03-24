@@ -194,12 +194,9 @@ export class Matterbridge extends EventEmitter {
   static async loadInstance(initialize = false) {
     if (!Matterbridge.instance) {
       // eslint-disable-next-line no-console
-      console.log('Matterbridge instance does not exists');
+      console.log(wr, 'Matterbridge instance does not exists!', initialize ? 'Initializing...' : 'Not initializing...', rs);
       Matterbridge.instance = new Matterbridge();
       if (initialize) await Matterbridge.instance.initialize();
-    } else {
-      // eslint-disable-next-line no-console
-      console.log('Matterbridge instance already exists');
     }
     return Matterbridge.instance;
   }

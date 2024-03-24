@@ -152,7 +152,7 @@ sudo npm install -g matterbridge-zigbee2mqtt
 matterbridge -add matterbridge-zigbee2mqtt
 ```
 
-## How to install and register a plugin for development (from git)
+## How to install and register a plugin for development (from github)
 
 To install i.e. https://github.com/Luligu/matterbridge-example-accessory-platform
 
@@ -172,9 +172,10 @@ then clone the plugin
 git clone https://github.com/Luligu/matterbridge-example-accessory-platform
 cd matterbridge-example-accessory-platform
 npm install
+npm run build
 ```
 
-Then add the plugin to Matterbridge
+then add the plugin to Matterbridge
 ```
 matterbridge -add .\
 ```
