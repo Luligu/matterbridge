@@ -33,12 +33,12 @@ A special thank to Apollon77 for his incredible work.
 Follow these steps to install Matterbridge:
 
 on Windows:
-``` powershell
+```
 npm install -g matterbridge
 ```
 
 on Linux (you need the necessary permissions):
-``` bash
+```
 sudo npm install -g matterbridge
 ```
 
@@ -46,6 +46,7 @@ Test the installation with:
 ```
 matterbridge -bridge
 ```
+
 Now it is possible to open the frontend at the link provided (default: http://localhost:3000)
 
 ## Usage
@@ -226,7 +227,8 @@ The plugin name.
 The plugin platform type.
 
 ### config: object
-The plugin config (loaded before onStart() is called and saved after onShutdown() is called).
+The plugin config (loaded before the platform constructor is called and saved after onShutdown() is called).
+Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for example)
 
 ### async onStart(reason?: string)
 The method onStart() is where you have to create your MatterbridgeDevice and add all needed clusters and command handlers. 
