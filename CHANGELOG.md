@@ -9,6 +9,11 @@ All notable changes to this project will be documented in this file.
 - [workflow]: All packages now have a workflow on GitHub.
 - [frontend]: Frontend got updated to 0.8.4.
 
+### Fixed
+
+- [matterbridge]: Fixed the delay of loading from the cli.
+- [matterbridge]: Fixed the count of devices removed.
+
 ## [1.2.0] - 2024-03-23
 
 ### Breaking change on plugin default entry point and platform constructor!
