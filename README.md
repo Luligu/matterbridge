@@ -289,6 +289,8 @@ We believe in a welcoming and respectful community for all. Please make sure to 
 If you find this project helpful and you wish to support the ongoing development, you can do so by buying me a coffee. 
 Click on the badge below to get started:
 
-[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee--yellow.svg?style=social&logo=buy-me-a-coffee)](https://www.buymeacoffee.com/luligugithub)
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
 
 Thank you for your support!
