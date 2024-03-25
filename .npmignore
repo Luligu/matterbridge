@@ -150,7 +150,8 @@ __test__
 .prettierignore
 .prettierrc.json
 
-Screenshot.png
+Screenshot*.jpg
+yellow-button.png
 
 # frontend
 frontend/public
