@@ -88,10 +88,10 @@ matterbridge -childbridge -frontend [port number]
 ```
 
 Home page:
-![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/Screenshot%20home%20page.png)
+![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/Screenshot%20home.jpg)
 
 Devices page:
-![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/Screenshot%20devices%20page.png)
+![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/Screenshot%20devices.jpg)
 
 ## Plugins
 
