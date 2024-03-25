@@ -3,7 +3,7 @@ import React, { useEffect, useState, ChangeEvent } from 'react';
 import QRCode from 'qrcode.react';
 import { StatusIndicator } from './StatusIndicator';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
-import { Tooltip, IconButton, Button, createTheme } from '@mui/material';
+import { Tooltip, IconButton, Button, createTheme,  } from '@mui/material';
 import { sendCommandToMatterbridge } from './Header';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
@@ -11,6 +11,7 @@ import TextField from '@mui/material/TextField';
 import Fab from '@mui/material/Fab';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
+import DownloadIcon from '@mui/icons-material/Download';
 
 // npm install @mui/material @emotion/react @emotion/styled
 // npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
@@ -22,15 +23,16 @@ function Home() {
   const [plugins, setPlugins] = useState([]);
   const [selectedRow, setSelectedRow] = useState(-1); // -1 no selection, 0 or greater for selected row
   const [selectedPluginName, setSelectedPluginName] = useState('none'); // -1 no selection, 0 or greater for selected row
-  const [open, setSnack] = React.useState(false);
+  const [open, setSnack] = useState(false);
 
   const handleSnackOpen = () => {
     console.log('handleSnackOpen');
     setSnack(true);
   };
 
-  const handleSnackClose = () => {
-    console.log('handleSnackClose');
+  const handleSnackClose = (event, reason) => {
+    console.log('handleSnackClose:', reason);
+    if (reason === 'clickaway') return;
     setSnack(false);
   };
 
@@ -184,15 +186,38 @@ function Home() {
 
   function AddRemovePluginsDiv({ plugins }) {
     const [pluginName, setPluginName] = useState('matterbridge-');
+    const [open, setSnack] = useState(false);
+
+    const handleSnackOpen = () => {
+      console.log('handleSnackOpen');
+      setSnack(true);
+      setTimeout(() => {
+        window.location.reload();
+      }, 5000);
+    };
+  
+    const handleSnackClose = (event, reason) => {
+      console.log('handleSnackClose:', reason);
+      if (reason === 'clickaway') return;
+      setSnack(false);
+    };
+  
+    // Function that sends the "addplugin" command
+    const handleInstallPluginClick = () => {
+      console.log('handleAddPluginClick', pluginName);
+      sendCommandToMatterbridge('install', pluginName);
+    };
 
     // Function that sends the "addplugin" command
     const handleAddPluginClick = () => {
+      handleSnackOpen();
       console.log('handleAddPluginClick', pluginName);
       sendCommandToMatterbridge('addplugin', pluginName);
     };
 
     // Function that sends the "removeplugin" command
     const handleRemovePluginClick = () => {
+      handleSnackOpen();
       console.log('handleRemovePluginClick', pluginName);
       sendCommandToMatterbridge('removeplugin', pluginName);
     };
@@ -211,11 +236,17 @@ function Home() {
           <p className="MbfWindowHeaderText">Add remove plugin</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '10px', gap: '20px' }}>
+          <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={open} onClose={handleSnackClose} autoHideDuration={5000}>
+            <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart needed!</Alert>
+          </Snackbar>
           <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth/>
-          <Tooltip title="Add a plugin">
+          <Tooltip title="Install a plugin from npm">
+            <Button disabled onClick={handleInstallPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="install" endIcon={<DownloadIcon />} style={{ color: '#ffffff', height: '30px' }}> Install</Button>
+          </Tooltip>        
+          <Tooltip title="Add an installed plugin">
             <Button onClick={handleAddPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="add" endIcon={<AddIcon />} style={{ color: '#ffffff', height: '30px' }}> Add</Button>
           </Tooltip>        
-          <Tooltip title="Remove a plugin">
+          <Tooltip title="Remove a registered plugin">
             <Button onClick={handleRemovePluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="remove" endIcon={<RemoveIcon />} style={{ color: '#ffffff', height: '30px' }}> Remove</Button>
           </Tooltip>        
         </div>

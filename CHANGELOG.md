@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- [frontend]: Fixed the restart needed message.
 - [matterbridge]: Fixed the delay of loading from the cli.
 - [matterbridge]: Fixed the count of devices removed.
 

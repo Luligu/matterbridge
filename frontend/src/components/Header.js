@@ -9,9 +9,6 @@ import CircularProgress from '@mui/material/CircularProgress';
 import info from './Settings';
 
 /*
-    <div className="header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '20px', margin: '0', padding: '20px', height: '40px' }}>
-        <Link to="/test" className="nav-link">Test</Link>
-        <Tooltip title="Restart matterbridge"><IconButton style={{padding: 0}} className="PluginsIconButton" size="small"><RestartAlt /></IconButton></Tooltip>        
 */
 
 const theme = createTheme({
