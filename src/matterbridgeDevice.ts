@@ -29,6 +29,8 @@ import {
   ClusterServerHandlers,
   ColorControl,
   ColorControlCluster,
+  DoorLock,
+  DoorLockCluster,
   ElectricalMeasurementCluster,
   Groups,
   Identify,
@@ -95,6 +97,9 @@ type MatterbridgeDeviceCommands = {
   downOrClose: MakeMandatory<ClusterServerHandlers<typeof WindowCovering.Complete>['downOrClose']>;
   stopMotion: MakeMandatory<ClusterServerHandlers<typeof WindowCovering.Complete>['stopMotion']>;
   goToLiftPercentage: MakeMandatory<ClusterServerHandlers<typeof WindowCovering.Complete>['goToLiftPercentage']>;
+
+  lockDoor: MakeMandatory<ClusterServerHandlers<typeof DoorLock.Complete>['lockDoor']>;
+  unlockDoor: MakeMandatory<ClusterServerHandlers<typeof DoorLock.Complete>['unlockDoor']>;
 };
 
 // Custom device types
@@ -1170,6 +1175,40 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     windowCovering.setTargetPositionLiftPercent100thsAttribute(position);
     // eslint-disable-next-line no-console
     console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
+  }
+
+  createDefaultDoorLockClusterServer() {
+    this.addClusterServer(
+      ClusterServer(
+        DoorLockCluster.with(DoorLock.Feature.DoorPositionSensor),
+        {
+          doorState: DoorLock.DoorState.DoorClosed,
+          operatingMode: DoorLock.OperatingMode.Normal,
+          lockState: DoorLock.LockState.Locked,
+          lockType: DoorLock.LockType.Other,
+          actuatorEnabled: true,
+          supportedOperatingModes: { normal: true, vacation: false, privacy: false, noRemoteLockUnlock: false, passage: false },
+        },
+        {
+          lockDoor: async (data) => {
+            // eslint-disable-next-line no-console
+            console.log('lockDoor');
+            await this.commandHandler.executeHandler('lockDoor', data);
+          },
+          unlockDoor: async (data) => {
+            // eslint-disable-next-line no-console
+            console.log('unlockDoor');
+            await this.commandHandler.executeHandler('unlockDoor', data);
+          },
+        },
+        {
+          doorStateChange: true,
+          doorLockAlarm: true,
+          lockOperation: true,
+          lockOperationError: true,
+        },
+      ),
+    );
   }
 
   /**
