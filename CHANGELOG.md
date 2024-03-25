@@ -2,10 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.1] - 2024-03-24
+## [1.2.1] - 2024-03-25
 
 ### Added
 
+- [frontend]: Remove plugin from frontend.
+- [frontend]: Add plugin from frontend.
 - [workflow]: All packages now have a workflow on GitHub.
 - [frontend]: Frontend got updated to 0.8.4.
 

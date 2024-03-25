@@ -1,5 +1,5 @@
 // Home.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, ChangeEvent } from 'react';
 import QRCode from 'qrcode.react';
 import { StatusIndicator } from './StatusIndicator';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
@@ -118,7 +118,7 @@ function Home() {
         {systemInfo && <SystemInfoTable systemInfo={systemInfo}/>}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', gap: '20px' }}>
-        <AddRemovePluginsDiv systemInfo={systemInfo}/>
+        <AddRemovePluginsDiv plugins={plugins}/>
         <table>
           <thead>
             <tr>
@@ -182,7 +182,21 @@ function Home() {
     </div>
   );}
 
-  function AddRemovePluginsDiv({ systemInfo }) {
+  function AddRemovePluginsDiv({ plugins }) {
+    const [pluginName, setPluginName] = useState('matterbridge-');
+
+    // Function that sends the "addplugin" command
+    const handleAddPluginClick = () => {
+      console.log('handleAddPluginClick', pluginName);
+      sendCommandToMatterbridge('addplugin', pluginName);
+    };
+
+    // Function that sends the "removeplugin" command
+    const handleRemovePluginClick = () => {
+      console.log('handleRemovePluginClick', pluginName);
+      sendCommandToMatterbridge('removeplugin', pluginName);
+    };
+
     const theme = createTheme({
       palette: {
         primary: {
@@ -191,27 +205,19 @@ function Home() {
       },
     });
 
-    // Define the style for the header element
-    const bodyStyle = {
-      display: 'flex',
-      flexDirection: 'row', 
-      flex: '1 1 auto',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      margin: '0px',
-      padding: '10px',
-      gap: '20px',
-    };
-
     return (
       <div className="MbfWindowDiv">
         <div className="MbfWindowHeader">
           <p className="MbfWindowHeaderText">Add remove plugin</p>
         </div>
-        <div style={bodyStyle}>
-          <TextField size="small" id="plugin-name" label="Plugin" variant="outlined" fullWidth/>
-          <Button disabled theme={theme} color="primary" variant='contained' size="small" aria-label="add" endIcon={<AddIcon />} style={{ color: '#ffffff', height: '30px' }}>Add</Button>
-          <Button disabled theme={theme} color="primary" variant='contained' size="small" aria-label="remove" endIcon={<RemoveIcon />} style={{ color: '#ffffff', height: '30px' }}>Remove</Button>
+        <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '10px', gap: '20px' }}>
+          <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth/>
+          <Tooltip title="Add a plugin">
+            <Button onClick={handleAddPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="add" endIcon={<AddIcon />} style={{ color: '#ffffff', height: '30px' }}> Add</Button>
+          </Tooltip>        
+          <Tooltip title="Remove a plugin">
+            <Button onClick={handleRemovePluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="remove" endIcon={<RemoveIcon />} style={{ color: '#ffffff', height: '30px' }}> Remove</Button>
+          </Tooltip>        
         </div>
       </div>
     );

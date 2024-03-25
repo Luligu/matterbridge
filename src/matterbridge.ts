@@ -2100,7 +2100,7 @@ export class Matterbridge extends EventEmitter {
     // Endpoint to receive commands
     this.expressApp.post('/api/command/:command/:param', async (req, res) => {
       const command = req.params.command;
-      const param = req.params.param;
+      let param = req.params.param;
       this.log.debug(`The frontend sent /api/command/${command}/${param}`);
 
       if (!command) {
@@ -2138,9 +2138,52 @@ export class Matterbridge extends EventEmitter {
       if (command === 'update') {
         this.log.warn(`The /api/command/${command} is not yet implemented`);
       }
-      // Handle the command addplugin from Header
+      // Handle the command addplugin from Home C:\Users\lligu\GitHub\matterbridge-example-accessory-platform
       if (command === 'addplugin') {
-        this.log.warn(`The /api/command/${command}/${param} is not yet implemented`);
+        param = param.replace(/\*/g, '\\');
+        if (this.registeredPlugins.find((plugin) => plugin.name === param)) {
+          this.log.warn(`Plugin ${plg}${param}${wr} already added to matterbridge`);
+          res.json({ message: 'Command received' });
+          return;
+        }
+        const packageJsonPath = await this.resolvePluginName(param);
+        if (!packageJsonPath) {
+          this.log.error(`Error resolving plugin ${plg}${param}${er}`);
+          res.json({ message: 'Command received' });
+          return;
+        }
+        this.log.debug(`Loading plugin from ${plg}${packageJsonPath}${db}`);
+        try {
+          // Load the package.json of the plugin
+          const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+          const plugin = { path: packageJsonPath, type: '', name: packageJson.name, version: packageJson.version, description: packageJson.description, author: packageJson.author, enabled: true };
+          if (await this.loadPlugin(plugin)) {
+            this.registeredPlugins.push(plugin);
+            await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+            this.log.info(`Plugin ${plg}${packageJsonPath}${nf} type ${plugin.type} added to matterbridge. Restart required.`);
+          } else {
+            this.log.error(`Error adding plugin ${plg}${packageJsonPath}${er}`);
+          }
+        } catch (error) {
+          this.log.error(`Error adding plugin ${plg}${packageJsonPath}${er}`);
+          res.json({ message: 'Command received' });
+          return;
+        }
+      }
+      // Handle the command removeplugin from Home
+      if (command === 'removeplugin') {
+        const index = this.registeredPlugins.findIndex((registeredPlugin) => registeredPlugin.name === param);
+        if (index !== -1) {
+          if (this.registeredPlugins[index].platform) {
+            await this.registeredPlugins[index].platform?.onShutdown('The plugin has been removed.');
+            await this.savePluginConfig(this.registeredPlugins[index]);
+          }
+          this.registeredPlugins.splice(index, 1);
+          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+          this.log.info(`Plugin ${plg}${param}${nf} removed from matterbridge`);
+        } else {
+          this.log.warn(`Plugin ${plg}${param}${wr} not registered in matterbridge`);
+        }
       }
       // Handle the command enableplugin from Home
       if (command === 'enableplugin') {

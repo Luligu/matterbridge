@@ -23,9 +23,10 @@ const theme = createTheme({
 });
 
 export function sendCommandToMatterbridge(command, param) {
-  console.log('sendCommandToMatterbridge:', command, param);
+  const sanitizedParam = param.replace(/\\/g, '*');
+  console.log('sendCommandToMatterbridge:', command, param, sanitizedParam);
   // Send a POST request to the Matterbridge API
-  fetch(`/api/command/${command}/${param}`, {
+  fetch(`/api/command/${command}/${sanitizedParam}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -49,15 +50,6 @@ function Header() {
   const [open, setOpen] = React.useState(false);
   const handleClose = () => {
     setOpen(false);
-  };
-
-  // Define the function that sends the "restart" command
-  const handleAddPluginClick = () => {
-    sendCommandToMatterbridge('addplugin','xxxx');
-    setOpen(true);
-    setTimeout(() => {
-      setOpen(false);
-    }, 20000);
   };
 
   const handleUpdateClick = () => {
@@ -87,8 +79,12 @@ function Header() {
         <Link to="/settings" className="nav-link">Settings</Link>
       </nav>
       <div className="header" style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
-        <Tooltip title="Update matterbridge"><Button disabled theme={theme} color="primary" variant="contained" size="small" endIcon={<SystemUpdateAltIcon />} style={{ color: '#ffffff' }} onClick={handleUpdateClick}>Update</Button></Tooltip>        
-        <Tooltip title="Restart matterbridge"><Button theme={theme} color="primary" variant="contained" size="small" endIcon={<RestartAltIcon />} style={{ color: '#ffffff' }} onClick={handleRestartClick}>Restart</Button></Tooltip>        
+        <Tooltip title="Update matterbridge">
+          <Button disabled theme={theme} color="primary" variant="contained" size="small" endIcon={<SystemUpdateAltIcon />} style={{ color: '#ffffff' }} onClick={handleUpdateClick}>Update</Button>
+        </Tooltip>        
+        <Tooltip title="Restart matterbridge">
+          <Button theme={theme} color="primary" variant="contained" size="small" endIcon={<RestartAltIcon />} style={{ color: '#ffffff' }} onClick={handleRestartClick}>Restart</Button>
+        </Tooltip>        
         <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open} onClick={handleClose}>
           <CircularProgress color="inherit" />
         </Backdrop>
