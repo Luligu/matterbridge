@@ -1177,32 +1177,41 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
   }
 
+  /**
+   * Creates a default door lock cluster server.
+   *
+   * @remarks
+   * This method adds a cluster server for a door lock cluster with default settings.
+   *
+   * @example
+   * ```typescript
+   * createDefaultDoorLockClusterServer();
+   * ```
+   */
   createDefaultDoorLockClusterServer() {
     this.addClusterServer(
       ClusterServer(
-        DoorLockCluster.with(DoorLock.Feature.DoorPositionSensor),
+        DoorLockCluster,
         {
-          doorState: DoorLock.DoorState.DoorClosed,
           operatingMode: DoorLock.OperatingMode.Normal,
           lockState: DoorLock.LockState.Locked,
-          lockType: DoorLock.LockType.Other,
-          actuatorEnabled: true,
+          lockType: DoorLock.LockType.Deadbolt,
+          actuatorEnabled: false,
           supportedOperatingModes: { normal: true, vacation: false, privacy: false, noRemoteLockUnlock: false, passage: false },
         },
         {
           lockDoor: async (data) => {
             // eslint-disable-next-line no-console
-            console.log('lockDoor');
+            console.log('lockDoor', data.request);
             await this.commandHandler.executeHandler('lockDoor', data);
           },
           unlockDoor: async (data) => {
             // eslint-disable-next-line no-console
-            console.log('unlockDoor');
+            console.log('unlockDoor', data.request);
             await this.commandHandler.executeHandler('unlockDoor', data);
           },
         },
         {
-          doorStateChange: true,
           doorLockAlarm: true,
           lockOperation: true,
           lockOperationError: true,

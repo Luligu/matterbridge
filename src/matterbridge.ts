@@ -34,15 +34,23 @@ import express from 'express';
 import os from 'os';
 import path from 'path';
 
-import { CommissioningController, CommissioningServer, MatterServer } from '@project-chip/matter-node.js';
-import { BasicInformationCluster, BridgedDeviceBasicInformationCluster, ClusterServer } from '@project-chip/matter-node.js/cluster';
+import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
+import {
+  BasicInformationCluster,
+  BridgedDeviceBasicInformationCluster,
+  ClusterServer,
+  GeneralCommissioning,
+  PowerSourceCluster,
+  ThreadNetworkDiagnosticsCluster,
+} from '@project-chip/matter-node.js/cluster';
 import { DeviceTypeId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
-import { Aggregator, Device, DeviceTypes } from '@project-chip/matter-node.js/device';
+import { Aggregator, Device, DeviceTypes, NodeStateInformation } from '@project-chip/matter-node.js/device';
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
-import { QrCodeSchema } from '@project-chip/matter-node.js/schema';
+import { ManualPairingCodeCodec, QrCodeSchema } from '@project-chip/matter-node.js/schema';
 import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageManager } from '@project-chip/matter-node.js/storage';
 import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } from '@project-chip/matter-node.js/util';
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
+import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
 
 // Define an interface of common elements from MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform
 interface MatterbridgePlatform {
@@ -603,9 +611,13 @@ export class Matterbridge extends EventEmitter {
 
       // Calling the shutdown functions with a reason
       for (const plugin of this.registeredPlugins) {
+        if (!plugin.enabled) continue;
+        this.log.info(`*Shutting down plugin ${plg}${plugin.name}${nf}`);
         if (plugin.platform) {
           await plugin.platform.onShutdown('Matterbridge is closing: ' + message);
           await this.savePluginConfig(plugin);
+        } else {
+          this.log.warn(`Plugin ${plg}${plugin.name}${er} platform not found`);
         }
       }
 
@@ -620,7 +632,6 @@ export class Matterbridge extends EventEmitter {
         }
         this.log.debug(`*-- device: ${dev}${registeredDevice.device.name}${db} plugin ${plg}${registeredDevice.plugin}${db} type ${GREEN}${plugin.type}${db}`);
         if (this.bridgeMode === 'bridge') registeredDevice.device.setBridgedDeviceReachability(false);
-        if (this.bridgeMode === 'childbridge' && plugin.type === 'DynamicPlatform') plugin.aggregator?.removeBridgedDevice(registeredDevice.device);
         if (this.bridgeMode === 'childbridge') plugin.commissioningServer?.setReachability(false);
         if (this.bridgeMode === 'childbridge' && plugin.type === 'AccessoryPlatform') this.setReachableAttribute(registeredDevice.device, false);
         if (this.bridgeMode === 'childbridge' && plugin.type === 'DynamicPlatform') registeredDevice.device.setBridgedDeviceReachability(false);
@@ -732,7 +743,7 @@ export class Matterbridge extends EventEmitter {
     if (this.bridgeMode === 'childbridge') {
       this.registeredDevices.push({ plugin: pluginName, device, added: false });
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
-      this.log.info(`Registered device ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
+      this.log.info(`Registered device (${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
     }
   }
 
@@ -771,7 +782,7 @@ export class Matterbridge extends EventEmitter {
     if (this.bridgeMode === 'childbridge') {
       this.registeredDevices.push({ plugin: pluginName, device, added: false });
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
-      this.log.info(`Registered bridged device ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
+      this.log.info(`Registered bridged device (${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
     }
   }
 
@@ -799,7 +810,7 @@ export class Matterbridge extends EventEmitter {
       return;
     }
     if (this.bridgeMode === 'childbridge' && !plugin.connected) {
-      this.log.warn(`Error removing bridged device ${dev}${device.deviceName}${wr} (${dev}${device.name}${wr}) plugin ${plg}${pluginName}${wr} not connected`);
+      this.log.warn(`Removing bridged device ${dev}${device.deviceName}${wr} (${dev}${device.name}${wr}) plugin ${plg}${pluginName}${wr} not connected`);
       return;
     }
 
@@ -1210,6 +1221,11 @@ export class Matterbridge extends EventEmitter {
     }
 
     if (this.bridgeMode === 'controller') {
+      if (!this.mattercontrollerContext) {
+        this.log.error('No matter controller context initialized');
+        await this.cleanup('No matter controller context initialized');
+        return;
+      }
       this.log.info('Creating matter commissioning controller');
       this.commissioningController = new CommissioningController({
         autoConnect: false,
@@ -1221,16 +1237,134 @@ export class Matterbridge extends EventEmitter {
       await this.matterServer.start();
       this.log.info('Matter server started');
 
+      if (hasParameter('pairingcode')) {
+        const pairingCode = getParameter('pairingcode');
+        const ip = this.mattercontrollerContext.has('ip') ? this.mattercontrollerContext.get<string>('ip') : undefined;
+        const port = this.mattercontrollerContext.has('port') ? this.mattercontrollerContext.get<number>('port') : undefined;
+
+        let longDiscriminator, setupPin, shortDiscriminator;
+        if (pairingCode !== undefined) {
+          const pairingCodeCodec = ManualPairingCodeCodec.decode(pairingCode);
+          shortDiscriminator = pairingCodeCodec.shortDiscriminator;
+          longDiscriminator = undefined;
+          setupPin = pairingCodeCodec.passcode;
+          this.log.info(`Data extracted from pairing code: ${Logger.toJSON(pairingCodeCodec)}`);
+        } else {
+          longDiscriminator = this.mattercontrollerContext.get('longDiscriminator', 3840);
+          if (longDiscriminator > 4095) throw new Error('Discriminator value must be less than 4096');
+          setupPin = this.mattercontrollerContext.get('pin', 20202021);
+        }
+        if ((shortDiscriminator === undefined && longDiscriminator === undefined) || setupPin === undefined) {
+          throw new Error('Please specify the longDiscriminator of the device to commission with -longDiscriminator or provide a valid passcode with -passcode');
+        }
+
+        const commissioningOptions: CommissioningOptions = {
+          regulatoryLocation: GeneralCommissioning.RegulatoryLocationType.IndoorOutdoor,
+          regulatoryCountryCode: 'XX',
+        };
+        const options = {
+          commissioning: commissioningOptions,
+          discovery: {
+            knownAddress: ip !== undefined && port !== undefined ? { ip, port, type: 'udp' } : undefined,
+            identifierData: longDiscriminator !== undefined ? { longDiscriminator } : shortDiscriminator !== undefined ? { shortDiscriminator } : {},
+          },
+          passcode: setupPin,
+        } as NodeCommissioningOptions;
+        //this.log.info(`Commissioning ... ${JSON.stringify(options)}`);
+        this.log.info('Commissioning ...', options);
+        const nodeId = await this.commissioningController.commissionNode(options);
+        this.mattercontrollerContext.set('nodeId', nodeId.nodeId);
+        this.log.info(`Commissioning successfully done with nodeId: ${nodeId.nodeId}`);
+        // eslint-disable-next-line no-console
+        this.log.info('ActiveSessionInformation:', this.commissioningController.getActiveSessionInformation());
+      } // (hasParameter('pairingcode'))
+
       if (hasParameter('discover')) {
         //const discover = await this.commissioningController.discoverCommissionableDevices({ productId: 0x8000, deviceType: 0xfff1 });
         //console.log(discover);
       }
 
-      this.log.info(`Commissioning controller is already commisioned: ${this.commissioningController.isCommissioned()}`);
-      const nodes = this.commissioningController.getCommissionedNodes();
-      nodes.forEach(async (nodeId) => {
-        this.log.warn(`Connecting to commissioned node: ${nodeId}`);
-      });
+      const nodeIds = this.commissioningController.getCommissionedNodes();
+      this.log.info(`***Commissioning controller has ${nodeIds.length} nodes commisioned: ${this.commissioningController.isCommissioned()}`);
+      for (const nodeId of nodeIds) {
+        this.log.info(`***Connecting to commissioned node: ${nodeId}`);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const node = await this.commissioningController.connectNode(nodeId, {
+          attributeChangedCallback: (peerNodeId, { path: { nodeId, clusterId, endpointId, attributeName }, value }) =>
+            this.log.info(`***mattributeChangedCallback ${peerNodeId}: Attribute ${nodeId}/${endpointId}/${clusterId}/${attributeName} changed to ${Logger.toJSON(value)}`),
+          eventTriggeredCallback: (peerNodeId, { path: { nodeId, clusterId, endpointId, eventName }, events }) =>
+            this.log.info(`***eventTriggeredCallback ${peerNodeId}: Event ${nodeId}/${endpointId}/${clusterId}/${eventName} triggered with ${Logger.toJSON(events)}`),
+          stateInformationCallback: (peerNodeId, info) => {
+            switch (info) {
+              case NodeStateInformation.Connected:
+                this.log.info(`***stateInformationCallback ${peerNodeId}: Node ${nodeId} connected`);
+                break;
+              case NodeStateInformation.Disconnected:
+                this.log.info(`***stateInformationCallback ${peerNodeId}: Node ${nodeId} disconnected`);
+                break;
+              case NodeStateInformation.Reconnecting:
+                this.log.info(`***stateInformationCallback ${peerNodeId}: Node ${nodeId} reconnecting`);
+                break;
+              case NodeStateInformation.WaitingForDeviceDiscovery:
+                this.log.info(`***stateInformationCallback ${peerNodeId}: Node ${nodeId} waiting for device discovery`);
+                break;
+              case NodeStateInformation.StructureChanged:
+                this.log.info(`***stateInformationCallback ${peerNodeId}: Node ${nodeId} structure changed`);
+                break;
+              case NodeStateInformation.Decommissioned:
+                this.log.info(`***stateInformationCallback ${peerNodeId}: Node ${nodeId} decommissioned`);
+                break;
+              default:
+                this.log.info(`***stateInformationCallback ${peerNodeId}: Node ${nodeId} NodeStateInformation.${info}`);
+                break;
+            }
+          },
+        });
+
+        node.logStructure();
+
+        // Get the interaction client
+        const interactionClient = await node.getInteractionClient();
+        let cluster;
+        let attributes;
+
+        // Log BasicInformationCluster
+        cluster = BasicInformationCluster;
+        attributes = await interactionClient.getMultipleAttributes({
+          attributes: [{ clusterId: cluster.id }],
+        });
+        this.log.warn(`Cluster: ${cluster.name} attributes:`);
+        attributes.forEach((attribute) => {
+          this.log.info(
+            // eslint-disable-next-line max-len
+            `- endpoint: ${attribute.path.endpointId} clusterId: ${attribute.path.clusterId} id: ${attribute.path.attributeId} name: ${attribute.path.attributeName}: ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
+          );
+        });
+        // Log PowerSourceCluster
+        cluster = PowerSourceCluster;
+        attributes = await interactionClient.getMultipleAttributes({
+          attributes: [{ clusterId: cluster.id }],
+        });
+        this.log.warn(`Cluster: ${cluster.name} attributes:`);
+        attributes.forEach((attribute) => {
+          this.log.info(
+            // eslint-disable-next-line max-len
+            `- endpoint: ${attribute.path.endpointId} clusterId: ${attribute.path.clusterId} id: ${attribute.path.attributeId} name: ${attribute.path.attributeName}: ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
+          );
+        });
+        // Log ThreadNetworkDiagnostics
+        cluster = ThreadNetworkDiagnosticsCluster;
+        attributes = await interactionClient.getMultipleAttributes({
+          attributes: [{ clusterId: cluster.id }],
+        });
+        this.log.warn(`Cluster: ${cluster.name} attributes:`);
+        attributes.forEach((attribute) => {
+          this.log.info(
+            // eslint-disable-next-line max-len
+            `- endpoint: ${attribute.path.endpointId} clusterId: ${attribute.path.clusterId} id: ${attribute.path.attributeId} name: ${attribute.path.attributeName}: ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
+          );
+        });
+      }
     }
 
     if (this.bridgeMode === 'bridge') {
@@ -2246,8 +2380,9 @@ export class Matterbridge extends EventEmitter {
       if (clusterServer.name === 'OnOff') attributes += `OnOff: ${clusterServer.getOnOffAttribute()} `;
       if (clusterServer.name === 'Switch') attributes += `Position: ${clusterServer.getCurrentPositionAttribute()} `;
       if (clusterServer.name === 'WindowCovering') attributes += `Cover position: ${clusterServer.attributes.currentPositionLiftPercent100ths.getLocal() / 100}% `;
+      if (clusterServer.name === 'DoorLock') attributes += `State: ${clusterServer.attributes.lockState.getLocal() === 1 ? 'Locked' : 'Not locked'} `;
       if (clusterServer.name === 'LevelControl') attributes += `Level: ${clusterServer.getCurrentLevelAttribute()}% `;
-      if (clusterServer.name === 'ColorControl') attributes += `Hue: ${clusterServer.getCurrentHueAttribute()} Saturation: ${clusterServer.getCurrentSaturationAttribute()}% `;
+      if (clusterServer.name === 'ColorControl') attributes += `Hue: ${Math.round(clusterServer.getCurrentHueAttribute())} Saturation: ${Math.round(clusterServer.getCurrentSaturationAttribute())}% `;
       if (clusterServer.name === 'BooleanState') attributes += `Contact: ${clusterServer.getStateValueAttribute()} `;
       if (clusterServer.name === 'OccupancySensing') attributes += `Occupancy: ${clusterServer.getOccupancyAttribute().occupied} `;
       if (clusterServer.name === 'IlluminanceMeasurement') attributes += `Illuminance: ${clusterServer.getMeasuredValueAttribute()} `;
