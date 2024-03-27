@@ -1110,7 +1110,7 @@ export class Matterbridge extends EventEmitter {
    */
   private async configurePlugin(plugin: RegisteredPlugin): Promise<void> {
     if (!plugin.loaded || !plugin.started || !plugin.platform) {
-      this.log.error(`Plugin ${plg}${plugin.name}${er} not loaded or not started or not platform`);
+      this.log.error(`Plugin ${plg}${plugin.name}${er} not loaded (${plugin.loaded}) or not started (${plugin.started}) or not platform (${plugin.platform?.name})`);
       return Promise.reject(new Error(`Plugin ${plg}${plugin.name}${er} not loaded or not started or not platform`));
     }
     if (plugin.configured) {
@@ -2332,6 +2332,14 @@ export class Matterbridge extends EventEmitter {
           plugin.connected = undefined;
           await this.nodeContext?.set<RegisteredPlugin[]>('plugins', plugins);
           this.log.info(`Enabled plugin ${plg}${param}${nf}`);
+        }
+        if (this.bridgeMode === 'bridge') {
+          const pluginToEnable = this.findPlugin(param);
+          if (pluginToEnable) {
+            pluginToEnable.enabled = true;
+            pluginToEnable.platform = await this.loadPlugin(pluginToEnable);
+            await this.startPlugin(pluginToEnable, 'The plugin has been enabled', true);
+          }
         }
       }
       // Handle the command disableplugin from Home

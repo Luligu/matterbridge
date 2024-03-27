@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- [Matterbridge]: Enable plugin now start the plugin (no need to restart in bridge mode).
 - [Matterbridge]: Disable plugin now shutdown the plugin (no need to restart).
 
 ## [1.2.2] - 2024-03-26
