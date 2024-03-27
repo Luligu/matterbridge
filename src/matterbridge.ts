@@ -2336,17 +2336,31 @@ export class Matterbridge extends EventEmitter {
       }
       // Handle the command disableplugin from Home
       if (command === 'disableplugin') {
-        const plugins = await this.nodeContext?.get<RegisteredPlugin[]>('plugins');
-        if (!plugins) return;
-        const plugin = plugins.find((plugin) => plugin.name === param);
-        if (plugin) {
-          plugin.enabled = false;
-          plugin.loaded = undefined;
-          plugin.started = undefined;
-          plugin.configured = undefined;
-          plugin.connected = undefined;
-          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', plugins);
-          this.log.info(`Disabled plugin ${plg}${param}${nf}`);
+        const pluginToDisable = this.findPlugin(param);
+        if (pluginToDisable) {
+          if (pluginToDisable.platform) {
+            await pluginToDisable.platform.onShutdown('The plugin has been removed.');
+            await this.savePluginConfig(pluginToDisable);
+          }
+          pluginToDisable.enabled = false;
+          pluginToDisable.loaded = undefined;
+          pluginToDisable.started = undefined;
+          pluginToDisable.configured = undefined;
+          pluginToDisable.connected = undefined;
+          pluginToDisable.platform = undefined;
+
+          const plugins = await this.nodeContext?.get<RegisteredPlugin[]>('plugins');
+          if (!plugins) return;
+          const plugin = plugins.find((plugin) => plugin.name === param);
+          if (plugin) {
+            plugin.enabled = false;
+            plugin.loaded = undefined;
+            plugin.started = undefined;
+            plugin.configured = undefined;
+            plugin.connected = undefined;
+            await this.nodeContext?.set<RegisteredPlugin[]>('plugins', plugins);
+            this.log.info(`Disabled plugin ${plg}${param}${nf}`);
+          }
         }
       }
 
