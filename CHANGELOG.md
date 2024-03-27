@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- [MatterbridgeDevice]: Disable plugin now shutdown the plugin (no need to restart).
+- [Matterbridge]: Disable plugin now shutdown the plugin (no need to restart).
 
 ## [1.2.2] - 2024-03-26
 
