@@ -5,9 +5,6 @@
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
   "homepage": "https://github.com/Luligu/matterbridge/blob/main/README.md",
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Luligu/matterbridge.git"
@@ -29,6 +26,9 @@
     "matter-node.js",
     "plugin"
   ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.js",
   "bin": {
     "matterbridge": "dist/cli.js"
   },
