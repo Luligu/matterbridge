@@ -53,6 +53,8 @@ import {
   SwitchCluster,
   TemperatureMeasurement,
   TemperatureMeasurementCluster,
+  Thermostat,
+  ThermostatCluster,
   ThreadNetworkDiagnostics,
   ThreadNetworkDiagnosticsCluster,
   WindowCovering,
@@ -1159,6 +1161,29 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     windowCovering.setTargetPositionLiftPercent100thsAttribute(position);
     // eslint-disable-next-line no-console
     console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
+  }
+
+  createDefaultThermostatClusterServer() {
+    this.addClusterServer(
+      ClusterServer(
+        ThermostatCluster.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling),
+        {
+          localTemperature: 20,
+          occupiedHeatingSetpoint: 22,
+          occupiedCoolingSetpoint: 18,
+          systemMode: Thermostat.SystemMode.Off,
+          controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingOnly,
+        },
+        {
+          setpointRaiseLower: async ({ request, attributes }) => {
+            // eslint-disable-next-line no-console
+            console.log('setpointRaiseLower', request);
+            await this.commandHandler.executeHandler('setpointRaiseLower', { request, attributes });
+          },
+        },
+        {},
+      ),
+    );
   }
 
   /**
