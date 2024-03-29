@@ -688,17 +688,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     this.serialNumber = serialNumber;
     this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
     if (MatterbridgeDevice.bridgeMode === 'bridge') {
-      this.createDefaultBridgedDeviceBasicInformationClusterServer(
-        deviceName,
-        serialNumber,
-        vendorId,
-        vendorName,
-        productName,
-        softwareVersion,
-        softwareVersionString,
-        hardwareVersion,
-        hardwareVersionString,
-      );
+      this.createDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString);
       return;
     }
     this.addClusterServer(
@@ -1004,14 +994,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           },
           moveToHueAndSaturation: async ({ request: request, attributes: attributes }) => {
             // eslint-disable-next-line no-console
-            console.log(
-              'Command moveToHueAndSaturation request:',
-              request,
-              'attributes.currentHue:',
-              attributes.currentHue.getLocal(),
-              'attributes.currentSaturation:',
-              attributes.currentSaturation.getLocal(),
-            );
+            console.log('Command moveToHueAndSaturation request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal(), 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
             //attributes.currentHue.setLocal(request.hue);
             //attributes.currentSaturation.setLocal(request.saturation);
             this.commandHandler.executeHandler('moveToHueAndSaturation', { request: request, attributes: attributes });

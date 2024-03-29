@@ -35,14 +35,7 @@ import os from 'os';
 import path from 'path';
 
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
-import {
-  BasicInformationCluster,
-  BridgedDeviceBasicInformationCluster,
-  ClusterServer,
-  GeneralCommissioning,
-  PowerSourceCluster,
-  ThreadNetworkDiagnosticsCluster,
-} from '@project-chip/matter-node.js/cluster';
+import { BasicInformationCluster, BridgedDeviceBasicInformationCluster, ClusterServer, GeneralCommissioning, PowerSourceCluster, ThreadNetworkDiagnosticsCluster } from '@project-chip/matter-node.js/cluster';
 import { DeviceTypeId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Aggregator, Device, DeviceTypes, NodeStateInformation } from '@project-chip/matter-node.js/device';
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
@@ -773,9 +766,7 @@ export class Matterbridge extends EventEmitter {
       this.registeredDevices.push({ plugin: pluginName, device, added: true });
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
       if (plugin.addedDevices !== undefined) plugin.addedDevices++;
-      this.log.info(
-        `Added and registered bridged device (${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`,
-      );
+      this.log.info(`Added and registered bridged device (${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
     }
 
     // Only register the device in childbridge mode
@@ -831,9 +822,7 @@ export class Matterbridge extends EventEmitter {
     // Only register the device in childbridge mode
     if (this.bridgeMode === 'childbridge') {
       if (plugin.type === 'AccessoryPlatform') {
-        this.log.warn(
-          `Removing bridged device ${dev}${device.deviceName}${wr} (${dev}${device.name}${wr}) for plugin ${plg}${pluginName}${wr} error: AccessoryPlatform not supported in childbridge mode`,
-        );
+        this.log.warn(`Removing bridged device ${dev}${device.deviceName}${wr} (${dev}${device.name}${wr}) for plugin ${plg}${pluginName}${wr} error: AccessoryPlatform not supported in childbridge mode`);
       } else if (plugin.type === 'DynamicPlatform') {
         this.registeredDevices.forEach((registeredDevice, index) => {
           if (registeredDevice.device === device) {
@@ -1173,11 +1162,7 @@ export class Matterbridge extends EventEmitter {
       // Call the default export function of the plugin, passing this MatterBridge instance
       if (pluginInstance.default) {
         const config: PlatformConfig = await this.loadPluginConfig(plugin);
-        const platform = pluginInstance.default(
-          this,
-          new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled }),
-          config,
-        ) as MatterbridgePlatform;
+        const platform = pluginInstance.default(this, new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled }), config) as MatterbridgePlatform;
         platform.name = packageJson.name;
         platform.config = config;
         plugin.name = packageJson.name;
@@ -1385,8 +1370,8 @@ export class Matterbridge extends EventEmitter {
         this.log.error(`Node storage context undefined for ${plg}Matterbridge${er}`);
         return;
       }
-      this.matterbridgeContext.set('softwareVersion', 1);
-      this.matterbridgeContext.set('softwareVersionString', this.matterbridgeVersion);
+      await this.matterbridgeContext.set('softwareVersion', 1);
+      await this.matterbridgeContext.set('softwareVersionString', this.matterbridgeVersion);
       this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
       this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
       this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
@@ -1437,17 +1422,9 @@ export class Matterbridge extends EventEmitter {
 
           if (plugin.type === 'DynamicPlatform') {
             // eslint-disable-next-line max-len
-            plugin.storageContext = await this.createCommissioningServerContext(
-              plugin.name,
-              'Matterbridge',
-              DeviceTypes.AGGREGATOR.code,
-              0xfff1,
-              'Matterbridge',
-              0x8000,
-              'Matterbridge Dynamic Platform',
-            );
-            plugin.storageContext.set('softwareVersion', 1);
-            plugin.storageContext.set('softwareVersionString', this.matterbridgeVersion);
+            plugin.storageContext = await this.createCommissioningServerContext(plugin.name, 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Dynamic Platform');
+            await plugin.storageContext.set('softwareVersion', 1);
+            await plugin.storageContext.set('softwareVersionString', this.matterbridgeVersion);
             plugin.commissioningServer = await this.createCommisioningServer(plugin.storageContext, plugin.name);
             this.log.debug(`Creating aggregator for plugin ${plg}${plugin.name}${db}`);
             plugin.aggregator = await this.createMatterAggregator(plugin.storageContext); // Generate serialNumber and uniqueId
@@ -1805,9 +1782,7 @@ export class Matterbridge extends EventEmitter {
         }
       },
     });
-    commissioningServer.addCommandHandler('testEventTrigger', async ({ request: { enableKey, eventTrigger } }) =>
-      this.log.info(`testEventTrigger called on GeneralDiagnostic cluster: ${enableKey} ${eventTrigger}`),
-    );
+    commissioningServer.addCommandHandler('testEventTrigger', async ({ request: { enableKey, eventTrigger } }) => this.log.info(`testEventTrigger called on GeneralDiagnostic cluster: ${enableKey} ${eventTrigger}`));
     return commissioningServer;
   }
 
