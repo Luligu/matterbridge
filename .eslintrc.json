@@ -23,7 +23,7 @@
     "rules": {
         "prettier/prettier": ["error"],
         "indent": ["error", 2, { "SwitchCase": 1 }],
-        "max-len": ["warn", 200],
+        "max-len": ["warn", 250],
         "no-console": ["warn"],
         "quotes": ["error", "single", { "avoidEscape": true, "allowTemplateLiterals": false }],
         "comma-spacing": ["error", { "before": false, "after": true }],

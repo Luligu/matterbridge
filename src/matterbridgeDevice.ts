@@ -54,6 +54,7 @@ import {
   TemperatureMeasurement,
   TemperatureMeasurementCluster,
   Thermostat,
+  ThermostatCluster,
   ThreadNetworkDiagnostics,
   ThreadNetworkDiagnosticsCluster,
   WindowCovering,
@@ -65,7 +66,8 @@ import { ClusterId, EndpointNumber, VendorId } from '@project-chip/matter-node.j
 import { Device, DeviceClasses, DeviceTypeDefinition, EndpointOptions } from '@project-chip/matter-node.js/device';
 import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
 
-import { MatterHistory, Sensitivity, EveHistoryCluster, WeatherTrend, TemperatureDisplayUnits } from 'matter-history';
+import { MatterHistory, Sensitivity, WeatherTrend, TemperatureDisplayUnits } from 'matter-history';
+import { EveHistory, EveHistoryCluster } from './EveHistoryCluster.js';
 
 import { AirQuality, AirQualityCluster } from './AirQualityCluster.js';
 import { AnsiLogger } from 'node-ansi-logger';
@@ -214,7 +216,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     history.setMatterHystoryType('room', this.serialNumber);
     this.addClusterServer(
       ClusterServer(
-        EveHistoryCluster,
+        EveHistoryCluster.with(EveHistory.Feature.EveRoom),
         {
           // Dynamic attributes
           ConfigDataGet: Uint8Array.fromHex(''),
@@ -285,7 +287,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     history.setMatterHystoryType('weather', this.serialNumber);
     this.addClusterServer(
       ClusterServer(
-        EveHistoryCluster,
+        EveHistoryCluster.with(EveHistory.Feature.EveWeather),
         {
           // Dynamic attributes
           ConfigDataGet: Uint8Array.fromHex(''),
@@ -359,7 +361,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     history.setMatterHystoryType('energy');
     this.addClusterServer(
       ClusterServer(
-        EveHistoryCluster,
+        EveHistoryCluster.with(EveHistory.Feature.EveEnergy),
         {
           // Dynamic attributes
           ConfigDataGet: Uint8Array.fromHex(''),
@@ -451,7 +453,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     history.setMatterHystoryType('motion');
     this.addClusterServer(
       ClusterServer(
-        EveHistoryCluster,
+        EveHistoryCluster.with(EveHistory.Feature.EveMotion),
         {
           // Dynamic attributes
           ConfigDataGet: Uint8Array.fromHex(''),
@@ -528,7 +530,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     history.setMatterHystoryType('door');
     this.addClusterServer(
       ClusterServer(
-        EveHistoryCluster,
+        EveHistoryCluster.with(EveHistory.Feature.EveDoor),
         {
           // Dynamic attributes
           ConfigDataGet: Uint8Array.fromHex(''),
@@ -690,17 +692,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     this.serialNumber = serialNumber;
     this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
     if (MatterbridgeDevice.bridgeMode === 'bridge') {
-      this.createDefaultBridgedDeviceBasicInformationClusterServer(
-        deviceName,
-        serialNumber,
-        vendorId,
-        vendorName,
-        productName,
-        softwareVersion,
-        softwareVersionString,
-        hardwareVersion,
-        hardwareVersionString,
-      );
+      this.createDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString);
       return;
     }
     this.addClusterServer(
@@ -1006,14 +998,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           },
           moveToHueAndSaturation: async ({ request: request, attributes: attributes }) => {
             // eslint-disable-next-line no-console
-            console.log(
-              'Command moveToHueAndSaturation request:',
-              request,
-              'attributes.currentHue:',
-              attributes.currentHue.getLocal(),
-              'attributes.currentSaturation:',
-              attributes.currentSaturation.getLocal(),
-            );
+            console.log('Command moveToHueAndSaturation request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal(), 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
             //attributes.currentHue.setLocal(request.hue);
             //attributes.currentSaturation.setLocal(request.saturation);
             this.commandHandler.executeHandler('moveToHueAndSaturation', { request: request, attributes: attributes });
@@ -1178,6 +1163,29 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     windowCovering.setTargetPositionLiftPercent100thsAttribute(position);
     // eslint-disable-next-line no-console
     console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
+  }
+
+  createDefaultThermostatClusterServer() {
+    this.addClusterServer(
+      ClusterServer(
+        ThermostatCluster.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling),
+        {
+          localTemperature: 20,
+          occupiedHeatingSetpoint: 22,
+          occupiedCoolingSetpoint: 18,
+          systemMode: Thermostat.SystemMode.Off,
+          controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingOnly,
+        },
+        {
+          setpointRaiseLower: async ({ request, attributes }) => {
+            // eslint-disable-next-line no-console
+            console.log('setpointRaiseLower', request);
+            await this.commandHandler.executeHandler('setpointRaiseLower', { request, attributes });
+          },
+        },
+        {},
+      ),
+    );
   }
 
   /**
