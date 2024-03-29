@@ -22,22 +22,13 @@
  */
 
 /* eslint-disable @typescript-eslint/no-namespace */
-/* eslint-disable @typescript-eslint/ban-types */
-import { ClusterFactory, OptionalAttribute } from '@project-chip/matter-node.js/cluster';
+import { ClusterRegistry, MutableCluster, OptionalAttribute } from '@project-chip/matter-node.js/cluster';
 import { Attribute } from '@project-chip/matter-node.js/cluster';
-import { BitFlag, BitFlags, TypeFromPartialBitSchema } from '@project-chip/matter-node.js/schema';
+import { BitFlag } from '@project-chip/matter-node.js/schema';
 import { TlvEnum, TlvNullable, TlvUInt16 } from '@project-chip/matter-node.js/tlv';
+import { Identity } from '@project-chip/matter-node.js/util';
 
 export namespace TvocMeasurement {
-  export enum Feature {
-    NumericMeasurement = 'NumericMeasurement',
-    LevelIndication = 'LevelIndication',
-    MediumLevel = 'MediumLevel',
-    CriticalLevel = 'CriticalLevel',
-    PeakMeasurement = 'PeakMeasurement',
-    AverageMeasurement = 'AverageMeasurement',
-  }
-
   export enum MeasurementUnitType {
     PPM = 0,
     PPB = 1,
@@ -63,7 +54,112 @@ export namespace TvocMeasurement {
     Critical = 4,
   }
 
-  export const Base = ClusterFactory.Definition({
+  export const NumericMeasurementComponent = MutableCluster.Component({
+    attributes: {
+      measuredValue: Attribute(0x0, TlvNullable(TlvUInt16), { default: 0 }),
+      minMeasuredValue: Attribute(0x1, TlvNullable(TlvUInt16), { default: 0 }),
+      maxMeasuredValue: Attribute(0x2, TlvNullable(TlvUInt16), { default: 0 }),
+      peakMeasuredValue: OptionalAttribute(0x3, TlvNullable(TlvUInt16), { default: 0 }),
+      peakMeasuredValueWindow: OptionalAttribute(0x4, TlvUInt16, { default: 1 }),
+      averageMeasuredValue: OptionalAttribute(0x5, TlvNullable(TlvUInt16), { default: 0 }),
+      averageMeasuredValueWindow: OptionalAttribute(0x6, TlvUInt16, { default: 1 }),
+      uncertainty: OptionalAttribute(0x7, TlvUInt16),
+      measurementUnit: OptionalAttribute(0x8, TlvEnum<MeasurementUnitType>()),
+      measurementMedium: OptionalAttribute(0x9, TlvEnum<MeasurementMediumType>()),
+      levelValue: OptionalAttribute(0xa, TlvEnum<LevelValueType>()),
+    },
+  });
+
+  export const LevelIndicationComponent = MutableCluster.Component({
+    attributes: {
+      measuredValue: Attribute(0x0, TlvNullable(TlvUInt16), { default: 0 }),
+      minMeasuredValue: Attribute(0x1, TlvNullable(TlvUInt16), { default: 0 }),
+      maxMeasuredValue: Attribute(0x2, TlvNullable(TlvUInt16), { default: 0 }),
+      peakMeasuredValue: OptionalAttribute(0x3, TlvNullable(TlvUInt16), { default: 0 }),
+      peakMeasuredValueWindow: OptionalAttribute(0x4, TlvUInt16, { default: 1 }),
+      averageMeasuredValue: OptionalAttribute(0x5, TlvNullable(TlvUInt16), { default: 0 }),
+      averageMeasuredValueWindow: OptionalAttribute(0x6, TlvUInt16, { default: 1 }),
+      uncertainty: OptionalAttribute(0x7, TlvUInt16),
+      measurementUnit: OptionalAttribute(0x8, TlvEnum<MeasurementUnitType>()),
+      measurementMedium: OptionalAttribute(0x9, TlvEnum<MeasurementMediumType>()),
+      levelValue: OptionalAttribute(0xa, TlvEnum<LevelValueType>()),
+    },
+  });
+
+  export const MediumLevelComponent = MutableCluster.Component({
+    attributes: {
+      measuredValue: Attribute(0x0, TlvNullable(TlvUInt16), { default: 0 }),
+      minMeasuredValue: Attribute(0x1, TlvNullable(TlvUInt16), { default: 0 }),
+      maxMeasuredValue: Attribute(0x2, TlvNullable(TlvUInt16), { default: 0 }),
+      peakMeasuredValue: OptionalAttribute(0x3, TlvNullable(TlvUInt16), { default: 0 }),
+      peakMeasuredValueWindow: OptionalAttribute(0x4, TlvUInt16, { default: 1 }),
+      averageMeasuredValue: OptionalAttribute(0x5, TlvNullable(TlvUInt16), { default: 0 }),
+      averageMeasuredValueWindow: OptionalAttribute(0x6, TlvUInt16, { default: 1 }),
+      uncertainty: OptionalAttribute(0x7, TlvUInt16),
+      measurementUnit: OptionalAttribute(0x8, TlvEnum<MeasurementUnitType>()),
+      measurementMedium: OptionalAttribute(0x9, TlvEnum<MeasurementMediumType>()),
+      levelValue: OptionalAttribute(0xa, TlvEnum<LevelValueType>()),
+    },
+  });
+
+  export const CriticalLevelComponent = MutableCluster.Component({
+    attributes: {
+      measuredValue: Attribute(0x0, TlvNullable(TlvUInt16), { default: 0 }),
+      minMeasuredValue: Attribute(0x1, TlvNullable(TlvUInt16), { default: 0 }),
+      maxMeasuredValue: Attribute(0x2, TlvNullable(TlvUInt16), { default: 0 }),
+      peakMeasuredValue: OptionalAttribute(0x3, TlvNullable(TlvUInt16), { default: 0 }),
+      peakMeasuredValueWindow: OptionalAttribute(0x4, TlvUInt16, { default: 1 }),
+      averageMeasuredValue: OptionalAttribute(0x5, TlvNullable(TlvUInt16), { default: 0 }),
+      averageMeasuredValueWindow: OptionalAttribute(0x6, TlvUInt16, { default: 1 }),
+      uncertainty: OptionalAttribute(0x7, TlvUInt16),
+      measurementUnit: OptionalAttribute(0x8, TlvEnum<MeasurementUnitType>()),
+      measurementMedium: OptionalAttribute(0x9, TlvEnum<MeasurementMediumType>()),
+      levelValue: OptionalAttribute(0xa, TlvEnum<LevelValueType>()),
+    },
+  });
+
+  export const PeakMeasurementComponent = MutableCluster.Component({
+    attributes: {
+      measuredValue: Attribute(0x0, TlvNullable(TlvUInt16), { default: 0 }),
+      minMeasuredValue: Attribute(0x1, TlvNullable(TlvUInt16), { default: 0 }),
+      maxMeasuredValue: Attribute(0x2, TlvNullable(TlvUInt16), { default: 0 }),
+      peakMeasuredValue: OptionalAttribute(0x3, TlvNullable(TlvUInt16), { default: 0 }),
+      peakMeasuredValueWindow: OptionalAttribute(0x4, TlvUInt16, { default: 1 }),
+      averageMeasuredValue: OptionalAttribute(0x5, TlvNullable(TlvUInt16), { default: 0 }),
+      averageMeasuredValueWindow: OptionalAttribute(0x6, TlvUInt16, { default: 1 }),
+      uncertainty: OptionalAttribute(0x7, TlvUInt16),
+      measurementUnit: OptionalAttribute(0x8, TlvEnum<MeasurementUnitType>()),
+      measurementMedium: OptionalAttribute(0x9, TlvEnum<MeasurementMediumType>()),
+      levelValue: OptionalAttribute(0xa, TlvEnum<LevelValueType>()),
+    },
+  });
+
+  export const AverageMeasurementComponent = MutableCluster.Component({
+    attributes: {
+      measuredValue: Attribute(0x0, TlvNullable(TlvUInt16), { default: 0 }),
+      minMeasuredValue: Attribute(0x1, TlvNullable(TlvUInt16), { default: 0 }),
+      maxMeasuredValue: Attribute(0x2, TlvNullable(TlvUInt16), { default: 0 }),
+      peakMeasuredValue: OptionalAttribute(0x3, TlvNullable(TlvUInt16), { default: 0 }),
+      peakMeasuredValueWindow: OptionalAttribute(0x4, TlvUInt16, { default: 1 }),
+      averageMeasuredValue: OptionalAttribute(0x5, TlvNullable(TlvUInt16), { default: 0 }),
+      averageMeasuredValueWindow: OptionalAttribute(0x6, TlvUInt16, { default: 1 }),
+      uncertainty: OptionalAttribute(0x7, TlvUInt16),
+      measurementUnit: OptionalAttribute(0x8, TlvEnum<MeasurementUnitType>()),
+      measurementMedium: OptionalAttribute(0x9, TlvEnum<MeasurementMediumType>()),
+      levelValue: OptionalAttribute(0xa, TlvEnum<LevelValueType>()),
+    },
+  });
+
+  export enum Feature {
+    NumericMeasurement = 'NumericMeasurement',
+    LevelIndication = 'LevelIndication',
+    MediumLevel = 'MediumLevel',
+    CriticalLevel = 'CriticalLevel',
+    PeakMeasurement = 'PeakMeasurement',
+    AverageMeasurement = 'AverageMeasurement',
+  }
+
+  export const Base = MutableCluster.Component({
     id: 0x042e,
     name: 'TvocMeasurement',
     revision: 3,
@@ -90,43 +186,39 @@ export namespace TvocMeasurement {
       measurementMedium: OptionalAttribute(0x9, TlvEnum<MeasurementMediumType>()),
       levelValue: OptionalAttribute(0xa, TlvEnum<LevelValueType>()),
     },
+
+    extensions: MutableCluster.Extensions(
+      { flags: { numericMeasurement: true }, component: NumericMeasurementComponent },
+      { flags: { levelIndication: true }, component: LevelIndicationComponent },
+      { flags: { mediumLevel: true }, component: MediumLevelComponent },
+      { flags: { criticalLevel: true }, component: CriticalLevelComponent },
+      { flags: { peakMeasurement: true }, component: PeakMeasurementComponent },
+      { flags: { averageMeasurement: true }, component: AverageMeasurementComponent },
+    ),
   });
 
-  export const NumericMeasurement = ClusterFactory.Component({});
-  export const LevelIndication = ClusterFactory.Component({});
-  export const MediumLevel = ClusterFactory.Component({});
-  export const CriticalLevel = ClusterFactory.Component({});
-  export const PeakMeasurement = ClusterFactory.Component({});
-  export const AverageMeasurement = ClusterFactory.Component({});
+  export const ClusterInstance = MutableCluster.ExtensibleOnly(Base);
 
-  export const Cluster = ClusterFactory.Extensible(
-    Base,
+  export interface Cluster extends Identity<typeof ClusterInstance> {}
 
-    <T extends `${Feature}`[]>(...features: [...T]) => {
-      ClusterFactory.validateFeatureSelection(features, Feature);
-      const cluster = ClusterFactory.Definition({
-        ...Base,
-        supportedFeatures: BitFlags(Base.features, ...features),
-      });
-      ClusterFactory.extend(cluster, NumericMeasurement, { numericMeasurement: true });
-      ClusterFactory.extend(cluster, LevelIndication, { levelIndication: true });
-      ClusterFactory.extend(cluster, MediumLevel, { mediumLevel: true });
-      ClusterFactory.extend(cluster, CriticalLevel, { criticalLevel: true });
-      ClusterFactory.extend(cluster, PeakMeasurement, { peakMeasurement: true });
-      ClusterFactory.extend(cluster, AverageMeasurement, { averageMeasurement: true });
-      return cluster as unknown as Extension<BitFlags<typeof Base.features, T>>;
+  export const Cluster: Cluster = ClusterInstance;
+
+  export const CompleteInstance = MutableCluster({
+    id: Base.id,
+    name: Base.name,
+    revision: Base.revision,
+    features: Base.features,
+
+    attributes: {
+      ...Base.attributes,
     },
-  );
+  });
 
-  export type Extension<SF extends TypeFromPartialBitSchema<typeof Base.features>> = Omit<typeof Base, 'supportedFeatures'> & { supportedFeatures: SF } & (SF extends { numericMeasurement: true }
-      ? typeof NumericMeasurement
-      : {}) &
-    (SF extends { levelIndication: true } ? typeof LevelIndication : {}) &
-    (SF extends { mediumLevel: true } ? typeof MediumLevel : {}) &
-    (SF extends { criticalLevel: true } ? typeof CriticalLevel : {}) &
-    (SF extends { peakMeasurement: true } ? typeof PeakMeasurement : {}) &
-    (SF extends { averageMeasurement: true } ? typeof AverageMeasurement : {});
+  export interface Complete extends Identity<typeof CompleteInstance> {}
+
+  export const Complete: Complete = CompleteInstance;
 }
 
 export type TvocMeasurementCluster = typeof TvocMeasurement.Cluster;
 export const TvocMeasurementCluster = TvocMeasurement.Cluster;
+ClusterRegistry.register(TvocMeasurement.Complete);
