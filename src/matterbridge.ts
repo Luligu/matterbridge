@@ -1549,10 +1549,10 @@ export class Matterbridge extends EventEmitter {
       basic.getProductNameAttribute(),
       basic.attributes.serialNumber?.getLocal(),
       basic.attributes.uniqueId?.getLocal(),
-      basic.attributes.softwareVersion?.getLocal(),
-      basic.attributes.softwareVersionString?.getLocal(),
-      basic.attributes.hardwareVersion?.getLocal(),
-      basic.attributes.hardwareVersionString?.getLocal(),
+      basic.getSoftwareVersionAttribute(),
+      basic.getSoftwareVersionStringAttribute(),
+      basic.getHardwareVersionAttribute(),
+      basic.getHardwareVersionStringAttribute(),
     );
   }
 
@@ -1607,9 +1607,9 @@ export class Matterbridge extends EventEmitter {
     await storageContext.set('serialNumber', await storageContext.get('serialNumber', random));
     await storageContext.set('uniqueId', await storageContext.get('uniqueId', random));
     await storageContext.set('softwareVersion', softwareVersion ?? 1);
-    await storageContext.set('softwareVersionString', softwareVersionString ?? '1.0');
+    await storageContext.set('softwareVersionString', softwareVersionString ?? '1.0.0');
     await storageContext.set('hardwareVersion', hardwareVersion ?? 1);
-    await storageContext.set('hardwareVersionString', hardwareVersionString ?? '1.0');
+    await storageContext.set('hardwareVersionString', hardwareVersionString ?? '1.0.0');
     return storageContext;
   }
 
