@@ -53,6 +53,7 @@ import {
   SwitchCluster,
   TemperatureMeasurement,
   TemperatureMeasurementCluster,
+  Thermostat,
   ThreadNetworkDiagnostics,
   ThreadNetworkDiagnosticsCluster,
   WindowCovering,
@@ -100,6 +101,8 @@ type MatterbridgeDeviceCommands = {
 
   lockDoor: MakeMandatory<ClusterServerHandlers<typeof DoorLock.Complete>['lockDoor']>;
   unlockDoor: MakeMandatory<ClusterServerHandlers<typeof DoorLock.Complete>['unlockDoor']>;
+
+  setpointRaiseLower: MakeMandatory<ClusterServerHandlers<typeof Thermostat.Complete>['setpointRaiseLower']>;
 };
 
 // Custom device types
