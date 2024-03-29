@@ -1412,6 +1412,8 @@ export class Matterbridge extends EventEmitter {
             for (const registeredDevice of this.registeredDevices) {
               if (registeredDevice.plugin !== plugin.name) continue;
               if (!plugin.storageContext) plugin.storageContext = await this.importCommissioningServerContext(plugin.name, registeredDevice.device);
+              await plugin.storageContext.set('softwareVersion', 1);
+              await plugin.storageContext.set('softwareVersionString', this.matterbridgeVersion);
               if (!plugin.commissioningServer) plugin.commissioningServer = await this.createCommisioningServer(plugin.storageContext, plugin.name);
               this.log.debug(`Adding device ${dev}${registeredDevice.device.name}${db} to commissioning server for plugin ${plg}${plugin.name}${db}`);
               plugin.commissioningServer.addDevice(registeredDevice.device);
@@ -1587,6 +1589,9 @@ export class Matterbridge extends EventEmitter {
     await storageContext.set('softwareVersionString', softwareVersionString ?? '1.0.0');
     await storageContext.set('hardwareVersion', hardwareVersion ?? 1);
     await storageContext.set('hardwareVersionString', hardwareVersionString ?? '1.0.0');
+    this.log.debug(`**Created commissioning server storage context for ${plg}${pluginName}${db}`);
+    this.log.debug(`**- softwareVersion: ${await storageContext.get('softwareVersion')} softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
+    this.log.debug(`**- hardwareVersion: ${await storageContext.get('hardwareVersion')} hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
     return storageContext;
   }
 
