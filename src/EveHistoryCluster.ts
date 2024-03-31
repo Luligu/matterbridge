@@ -193,20 +193,20 @@ export namespace EveHistory {
     ),
   });
 
-  export const ClusterInstance = MutableCluster.ExtensibleOnly(Base);
+  export const ClusterInstance = MutableCluster({ ...Base });
 
   export interface Cluster extends Identity<typeof ClusterInstance> {}
 
   export const Cluster: Cluster = ClusterInstance;
 
   export const CompleteInstance = MutableCluster({
-    id: Base.id,
-    name: Base.name,
-    revision: Base.revision,
-    features: Base.features,
+    id: Cluster.id,
+    name: Cluster.name,
+    revision: Cluster.revision,
+    features: Cluster.features,
 
     attributes: {
-      ...Base.attributes,
+      ...Cluster.attributes,
     },
   });
 

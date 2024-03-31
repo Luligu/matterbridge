@@ -77,7 +77,7 @@ import { TvocMeasurement, TvocMeasurementCluster } from './TvocCluster.js';
 type MakeMandatory<T> = Exclude<T, undefined>;
 
 type MatterbridgeDeviceCommands = {
-  identify: MakeMandatory<ClusterServerHandlers<typeof Identify.Cluster>['identify']>;
+  identify: MakeMandatory<ClusterServerHandlers<typeof Identify.Complete>['identify']>;
 
   on: MakeMandatory<ClusterServerHandlers<typeof OnOff.Complete>['on']>;
   off: MakeMandatory<ClusterServerHandlers<typeof OnOff.Complete>['off']>;
@@ -684,9 +684,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     productId: number,
     productName: string,
     softwareVersion = 1,
-    softwareVersionString = '1.0',
+    softwareVersionString = '1.0.0',
     hardwareVersion = 1,
-    hardwareVersionString = '1.0',
+    hardwareVersionString = '1.0.0',
   ) {
     this.deviceName = deviceName;
     this.serialNumber = serialNumber;
@@ -747,9 +747,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     vendorName: string,
     productName: string,
     softwareVersion = 1,
-    softwareVersionString = '1.0',
+    softwareVersionString = '1.0.0',
     hardwareVersion = 1,
-    hardwareVersionString = '1.0',
+    hardwareVersionString = '1.0.0',
   ) {
     this.deviceName = deviceName;
     this.serialNumber = serialNumber;
@@ -1257,6 +1257,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         },
       ),
     );
+    this.addFixedLabel('orientation', 'Switch');
+    this.addFixedLabel('label', 'Switch');
   }
 
   /**
@@ -1483,12 +1485,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param endpointNumber - The endpoint number where to find the PowerSourceCluster.
    */
-  createDefaultPowerSourceConfigurationClusterServer(endpointNumber: number) {
+  createDefaultPowerSourceConfigurationClusterServer(endpointNumber?: number) {
     this.addClusterServer(
       ClusterServer(
         PowerSourceConfigurationCluster,
         {
-          sources: [EndpointNumber(endpointNumber)],
+          sources: endpointNumber ? [EndpointNumber(endpointNumber)] : [],
         },
         {},
         {},

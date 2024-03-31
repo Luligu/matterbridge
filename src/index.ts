@@ -28,6 +28,7 @@ export * from '@project-chip/matter-node.js/device';
 export * from '@project-chip/matter-node.js/cluster';
 export * from '@project-chip/matter-node.js/log';
 export * from '@project-chip/matter-node.js/datatype';
+export * from '@project-chip/matter.js/util';
 
 export * from 'matter-history';
 
