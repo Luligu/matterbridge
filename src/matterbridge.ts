@@ -1046,10 +1046,11 @@ export class Matterbridge extends EventEmitter {
       const data = await fs.readFile(configFile, 'utf8');
       const config = JSON.parse(data) as PlatformConfig;
       this.log.debug(`Config file found: ${configFile}.\nConfig:${rs}\n`, config);
-      if (config.name !== plugin.name || config.type !== plugin.type) {
-        this.log.error(`Config file ${configFile} does not match plugin ${plg}${plugin.name}${er} type ${typ}${plugin.type}${er}`);
-        return config;
-      }
+      //if (config.name !== plugin.name || config.type !== plugin.type) {
+      //this.log.warn(`Config file ${configFile} does not match plugin ${plg}${plugin.name}${wr} type ${typ}${plugin.type}${wr}`);
+      config.name = plugin.name;
+      config.type = plugin.type;
+      //}
       return config;
     } catch (err) {
       if (err instanceof Error) {
