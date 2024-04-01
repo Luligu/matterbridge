@@ -57,6 +57,8 @@ import {
   ThermostatCluster,
   ThreadNetworkDiagnostics,
   ThreadNetworkDiagnosticsCluster,
+  TimeSync,
+  TimeSyncCluster,
   WindowCovering,
   WindowCoveringCluster,
   createDefaultGroupsClusterServer,
@@ -1165,29 +1167,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
   }
 
-  createDefaultThermostatClusterServer() {
-    this.addClusterServer(
-      ClusterServer(
-        ThermostatCluster.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling),
-        {
-          localTemperature: 20,
-          occupiedHeatingSetpoint: 22,
-          occupiedCoolingSetpoint: 18,
-          systemMode: Thermostat.SystemMode.Off,
-          controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingOnly,
-        },
-        {
-          setpointRaiseLower: async ({ request, attributes }) => {
-            // eslint-disable-next-line no-console
-            console.log('setpointRaiseLower', request);
-            await this.commandHandler.executeHandler('setpointRaiseLower', { request, attributes });
-          },
-        },
-        {},
-      ),
-    );
-  }
-
   /**
    * Creates a default door lock cluster server.
    *
@@ -1532,6 +1511,78 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         },
         {},
         {},
+      ),
+    );
+  }
+
+  /**
+   * Creates a default thermostat cluster server with the specified parameters.
+   *
+   * @param localTemperature - The local temperature value in degrees Celsius. Defaults to 23.
+   * @param occupiedHeatingSetpoint - The occupied heating setpoint value in degrees Celsius. Defaults to 21.
+   * @param occupiedCoolingSetpoint - The occupied cooling setpoint value in degrees Celsius. Defaults to 25.
+   */
+  createDefaultThermostatClusterServer(localTemperature: number = 23, occupiedHeatingSetpoint: number = 21, occupiedCoolingSetpoint: number = 25) {
+    this.addClusterServer(
+      ClusterServer(
+        ThermostatCluster.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling /*, Thermostat.Feature.AutoMode*/),
+        {
+          localTemperature: localTemperature * 100,
+          occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
+          occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
+          minHeatSetpointLimit: 0,
+          maxHeatSetpointLimit: 5000,
+          absMinHeatSetpointLimit: 0,
+          absMaxHeatSetpointLimit: 5000,
+          minCoolSetpointLimit: 0,
+          maxCoolSetpointLimit: 5000,
+          absMinCoolSetpointLimit: 0,
+          absMaxCoolSetpointLimit: 5000,
+          //minSetpointDeadBand: 1,
+          systemMode: Thermostat.SystemMode.Off,
+          controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
+          //thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
+        },
+        {
+          setpointRaiseLower: async ({ request, attributes }) => {
+            // eslint-disable-next-line no-console
+            console.log('setpointRaiseLower', request);
+            await this.commandHandler.executeHandler('setpointRaiseLower', { request, attributes });
+          },
+        },
+        {},
+      ),
+    );
+  }
+
+  /**
+   * Creates a default dummy time sync cluster server. Only needed to create a thermostat.
+   */
+  createDefaultDummyTimeSyncClusterServer() {
+    this.addClusterServer(
+      ClusterServer(
+        TimeSyncCluster.with(TimeSync.Feature.TimeZone),
+        {
+          utcTime: null,
+          granularity: TimeSync.Granularity.NoTimeGranularity,
+          timeZone: [{ offset: 0, validAt: 0 }],
+          trustedTimeNodeId: null,
+          dstOffset: [],
+          localTime: null,
+          timeZoneDatabase: true,
+        },
+        {
+          setUtcTime: async ({ request, attributes }) => {
+            // eslint-disable-next-line no-console
+            console.log('setUtcTime', request);
+            await this.commandHandler.executeHandler('setUtcTime', { request, attributes });
+          },
+        },
+        {
+          dstTableEmpty: true,
+          dstStatus: true,
+          timeZoneStatus: true,
+        },
       ),
     );
   }

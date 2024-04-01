@@ -24,7 +24,12 @@ Just pair Matterbridge once, and it will load all your registered plugins.
 This project aims to allow the porting of homebridge plugins to matterbridge plugins without recoding everything.
 
 It creates a device to pair in any ecosystem like Apple Home, Google Home, Amazon Alexa, or 
-any other ecosystem supporting Matter.
+any other ecosystem supporting Matter like Home Assistant.
+
+Matterbridge is light weight and run also on slow Linux machine with 512MB of memory. 
+You don't need a dedicated new machine.
+
+It runs perfectly on Windows too.
 
 The project is build on top of https://github.com/project-chip/matter.js. 
 
@@ -111,7 +116,7 @@ An Accessory platform plugin only exposes one device.
 
 This an example of a dynamic platform plugin.
 
-It exposes a switch with onOff, a light with onOff-levelControl-colorControl, an outlet with onOff and a cover device.
+It exposes a switch with onOff, a light with onOff-levelControl-colorControl, an outlet with onOff and a WindoweCovering device.
 
 All these devices continuously change state and position. The plugin also shows how to use all the command handlers (you can control all the devices).
 
@@ -132,6 +137,9 @@ Matterbridge can run as many plugins as you want.
 [Weather plugin with history](https://github.com/Luligu/matterbridge-eve-weather)
 
 [Room plugin with history](https://github.com/Luligu/matterbridge-eve-room)
+
+The history works in both bridge and childbridge mode. 
+The Eve app only shows the history when the plugins run like an AccessoryPlatform in childbridge mode.
 
 ### Production-level plugins
 
@@ -179,6 +187,7 @@ npm run build
 ```
 
 then add the plugin to Matterbridge
+
 ```
 matterbridge -add .\
 ```
@@ -186,25 +195,25 @@ matterbridge -add .\
 ## How to add a plugin to Matterbridge
 
 ```
-matterbridge -add [plugin path]
+matterbridge -add [plugin path or plugin name]
 ```
 
 ## How to remove a plugin from Matterbridge
 
 ```
-matterbridge -remove [plugin path]
+matterbridge -remove [plugin path or plugin name]
 ```
 
 ## How to disable a registered plugin 
 
 ```
-matterbridge -disable [plugin path]
+matterbridge -disable [plugin path or plugin name]
 ```
 
 ## How to enable a registered plugin 
 
 ```
-matterbridge -enable [plugin path]
+matterbridge -enable [plugin path or plugin name]
 ```
 
 ## How to create your plugin
