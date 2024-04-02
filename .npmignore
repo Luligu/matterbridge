@@ -151,6 +151,7 @@ __test__
 .prettierrc.json
 
 Screenshot*.jpg
+Screenshot*.png
 yellow-button.png
 
 # frontend
