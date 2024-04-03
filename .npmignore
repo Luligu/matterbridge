@@ -169,3 +169,5 @@ bridge-groups.json
 .matterbridge.json
 .matterbridge.backup.json
 node_storage
+
+Dockerfile

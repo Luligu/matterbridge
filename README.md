@@ -26,8 +26,11 @@ This project aims to allow the porting of homebridge plugins to matterbridge plu
 It creates a device to pair in any ecosystem like Apple Home, Google Home, Amazon Alexa, or 
 any other ecosystem supporting Matter like Home Assistant.
 
+You don't need a hub or a dedicated new machine.
+
+No complex setup just copa paste the installation scripts.
+
 Matterbridge is light weight and run also on slow Linux machine with 512MB of memory. 
-You don't need a dedicated new machine.
 
 It runs perfectly on Windows too.
 
@@ -86,10 +89,12 @@ matterbridge -help
 Matterbridge has a frontend available on http://localhost:3000
 
 You can change the default port by adding the frontend parameter when you launch it.
+
 Here's how to specify a different port number:
 ```
 matterbridge -bridge -frontend [port number]
 ```
+
 ```
 matterbridge -childbridge -frontend [port number]
 ```
@@ -106,7 +111,7 @@ Devices page:
 
 This an example of an accessory platform plugin. 
 
-It exposes a cover device that continuously moves position and shows how to use the command handlers (you can control the device).
+It exposes a virtual cover device that continuously moves position and shows how to use the command handlers (you can control the device).
 
 An Accessory platform plugin only exposes one device.
 
@@ -118,7 +123,7 @@ This an example of a dynamic platform plugin.
 
 It exposes a switch with onOff, a light with onOff-levelControl-colorControl, an outlet with onOff and a WindoweCovering device.
 
-All these devices continuously change state and position. The plugin also shows how to use all the command handlers (you can control all the devices).
+All these virtual devices continuously change state and position. The plugin also shows how to use all the command handlers (you can control all the devices).
 
 A Dynamic platform plugin exposes as many devices as you need (the limit for the Home app is 150 accessories for bridge).
 
@@ -139,7 +144,8 @@ Matterbridge can run as many plugins as you want.
 [Room plugin with history](https://github.com/Luligu/matterbridge-eve-room)
 
 The history works in both bridge and childbridge mode. 
-The Eve app only shows the history when the plugins run like an AccessoryPlatform in childbridge mode.
+
+The Eve app only shows the history when the plugins run like an AccessoryPlatform in childbridge mode (this means the plugin is paired directly).
 
 ### Production-level plugins
 
