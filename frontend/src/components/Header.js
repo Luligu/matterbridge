@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Tooltip, Button, createTheme } from '@mui/material';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import info from './Settings';
@@ -66,6 +67,15 @@ function Header() {
     }, 20000);
   };
 
+  const handleShutdownClick = () => {
+    sendCommandToMatterbridge('shutdown','now');
+    setOpen(true);
+    setTimeout(() => {
+      setOpen(false);
+      window.location.reload();
+    }, 20000);
+  };
+
   return (
     <div className="header">
       <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '30px' }} />
@@ -81,6 +91,9 @@ function Header() {
         </Tooltip>        
         <Tooltip title="Restart matterbridge">
           <Button theme={theme} color="primary" variant="contained" size="small" endIcon={<RestartAltIcon />} style={{ color: '#ffffff' }} onClick={handleRestartClick}>Restart</Button>
+        </Tooltip>        
+        <Tooltip title="Shut down matterbridge">
+          <Button theme={theme} color="primary" variant="contained" size="small" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff' }} onClick={handleShutdownClick}>Shutdown</Button>
         </Tooltip>        
         <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open} onClick={handleClose}>
           <CircularProgress color="inherit" />

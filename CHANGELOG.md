@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.5] - 2024-04-05
+
+### Added
+- [frontend]: Added shutdown button  
+- [frontend]: Added login with password (default no password) 
+- [Matterbridge]: Added configuration and guidelines in the readme to run Matterbridge like a daemon with systemctl on Linux machine.
+
 ## [1.2.4] - 2024-04-01
 
 ### Changed

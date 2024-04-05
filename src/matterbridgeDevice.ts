@@ -209,6 +209,42 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Returns a default static EveHistoryClusterServer object with the specified voltage, current, power, and consumption values.
+   * This shows up in HA as a static sensor!
+   * @param voltage - The voltage value (default: 0).
+   * @param current - The current value (default: 0).
+   * @param power - The power value (default: 0).
+   * @param consumption - The consumption value (default: 0).
+   * @returns The default static EveHistoryClusterServer object.
+   */
+  getDefaultStaticEveHistoryClusterServer(voltage = 0, current = 0, power = 0, consumption = 0) {
+    return ClusterServer(
+      EveHistoryCluster.with(EveHistory.Feature.EveEnergy),
+      {
+        // Dynamic attributes
+        ConfigDataGet: Uint8Array.fromHex(''),
+        ConfigDataSet: Uint8Array.fromHex(''),
+        HistoryStatus: Uint8Array.fromHex(''),
+        HistoryEntries: Uint8Array.fromHex(''),
+        HistoryRequest: Uint8Array.fromHex(''),
+        HistorySetTime: Uint8Array.fromHex(''),
+        LastEvent: 0,
+        ResetTotal: 0,
+        // Normal attributes
+        Voltage: voltage,
+        Current: current,
+        Consumption: power,
+        TotalConsumption: consumption,
+        EnergyUnknown: 1,
+        ChildLock: false,
+        RLoc: 46080,
+      },
+      {},
+      {},
+    );
+  }
+
+  /**
    * Creates a room Eve History Cluster Server.
    *
    * @param history - The MatterHistory object.
@@ -615,39 +651,58 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Get a default IdentifyCluster server.
+   */
+  getDefaultIdentifyClusterServer() {
+    return ClusterServer(
+      IdentifyCluster,
+      {
+        identifyTime: 0,
+        identifyType: Identify.IdentifyType.None,
+      },
+      {
+        identify: async (data) => {
+          // eslint-disable-next-line no-console
+          console.log('Identify');
+          await this.commandHandler.executeHandler('identify', data);
+        },
+      },
+    );
+  }
+
+  /**
    * Creates a default IdentifyCluster server.
    */
   createDefaultIdentifyClusterServer() {
-    this.addClusterServer(
-      ClusterServer(
-        IdentifyCluster,
-        {
-          identifyTime: 0,
-          identifyType: Identify.IdentifyType.None,
-        },
-        {
-          identify: async (data) => {
-            // eslint-disable-next-line no-console
-            console.log('Identify');
-            await this.commandHandler.executeHandler('identify', data);
-          },
-        },
-      ),
-    );
+    this.addClusterServer(this.getDefaultIdentifyClusterServer());
+  }
+
+  /**
+   * Get a default IdentifyCluster server.
+   */
+  getDefaultGroupsClusterServer() {
+    return createDefaultGroupsClusterServer();
   }
 
   /**
    * Creates a default groups cluster server and adds it to the device.
    */
   createDefaultGroupsClusterServer() {
-    this.addClusterServer(createDefaultGroupsClusterServer());
+    this.addClusterServer(this.getDefaultGroupsClusterServer());
+  }
+
+  /**
+   * Get a default scenes cluster server and adds it to the current instance.
+   */
+  getDefaultScenesClusterServer() {
+    return createDefaultScenesClusterServer();
   }
 
   /**
    * Creates a default scenes cluster server and adds it to the current instance.
    */
   createDefaultScenesClusterServer() {
-    this.addClusterServer(createDefaultScenesClusterServer());
+    this.addClusterServer(this.getDefaultScenesClusterServer());
   }
 
   /**
@@ -782,6 +837,28 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Get a default Electrical Measurement Cluster Server.
+   *
+   * @param voltage - The RMS voltage value.
+   * @param current - The RMS current value.
+   * @param power - The active power value.
+   * @param consumption - The total active power consumption value.
+   */
+  getDefaultElectricalMeasurementClusterServer(voltage = 0, current = 0, power = 0, consumption = 0) {
+    return ClusterServer(
+      ElectricalMeasurementCluster,
+      {
+        rmsVoltage: voltage,
+        rmsCurrent: current,
+        activePower: power,
+        totalActivePower: consumption,
+      },
+      {},
+      {},
+    );
+  }
+
+  /**
    * Creates a default Electrical Measurement Cluster Server.
    *
    * @param voltage - The RMS voltage value.
@@ -790,19 +867,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param consumption - The total active power consumption value.
    */
   createDefaultElectricalMeasurementClusterServer(voltage = 0, current = 0, power = 0, consumption = 0) {
-    this.addClusterServer(
-      ClusterServer(
-        ElectricalMeasurementCluster,
-        {
-          rmsVoltage: voltage,
-          rmsCurrent: current,
-          activePower: power,
-          totalActivePower: consumption,
-        },
-        {},
-        {},
-      ),
-    );
+    this.addClusterServer(this.getDefaultElectricalMeasurementClusterServer(voltage, current, power, consumption));
   }
 
   /**
@@ -813,7 +878,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @returns void
    */
-  createDefaultThreadNetworkDiagnosticsClusterServer() {
+  createDefaultDummyThreadNetworkDiagnosticsClusterServer() {
     this.addClusterServer(
       ClusterServer(
         ThreadNetworkDiagnosticsCluster.with(ThreadNetworkDiagnostics.Feature.PacketCounts, ThreadNetworkDiagnostics.Feature.ErrorCounts),
@@ -850,37 +915,44 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Get a default OnOff cluster server.
+   *
+   * @param onOff - The initial state of the OnOff cluster (default: false).
+   */
+  getDefaultOnOffClusterServer(onOff = false) {
+    return ClusterServer(
+      OnOffCluster,
+      {
+        onOff,
+      },
+      {
+        on: async (data) => {
+          // eslint-disable-next-line no-console
+          console.log('on onOff:', data.attributes.onOff.getLocal());
+          await this.commandHandler.executeHandler('on', data);
+        },
+        off: async (data) => {
+          // eslint-disable-next-line no-console
+          console.log('off onOff:', data.attributes.onOff.getLocal());
+          await this.commandHandler.executeHandler('off', data);
+        },
+        toggle: async (data) => {
+          // eslint-disable-next-line no-console
+          console.log('toggle onOff:', data.attributes.onOff.getLocal());
+          await this.commandHandler.executeHandler('toggle', data);
+        },
+      },
+      {},
+    );
+  }
+
+  /**
    * Creates a default OnOff cluster server.
    *
    * @param onOff - The initial state of the OnOff cluster (default: false).
    */
   createDefaultOnOffClusterServer(onOff = false) {
-    this.addClusterServer(
-      ClusterServer(
-        OnOffCluster,
-        {
-          onOff,
-        },
-        {
-          on: async (data) => {
-            // eslint-disable-next-line no-console
-            console.log('on onOff:', data.attributes.onOff.getLocal());
-            await this.commandHandler.executeHandler('on', data);
-          },
-          off: async (data) => {
-            // eslint-disable-next-line no-console
-            console.log('off onOff:', data.attributes.onOff.getLocal());
-            await this.commandHandler.executeHandler('off', data);
-          },
-          toggle: async (data) => {
-            // eslint-disable-next-line no-console
-            console.log('toggle onOff:', data.attributes.onOff.getLocal());
-            await this.commandHandler.executeHandler('toggle', data);
-          },
-        },
-        {},
-      ),
-    );
+    this.addClusterServer(this.getDefaultOnOffClusterServer(onOff));
   }
 
   /**
@@ -1282,24 +1354,31 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Get a default temperature measurement cluster server.
+   *
+   * @param measuredValue - The measured value of the temperature.
+   */
+  getDefaultTemperatureMeasurementClusterServer(measuredValue: number = 0) {
+    return ClusterServer(
+      TemperatureMeasurementCluster,
+      {
+        measuredValue,
+        minMeasuredValue: null,
+        maxMeasuredValue: null,
+        tolerance: 0,
+      },
+      {},
+      {},
+    );
+  }
+
+  /**
    * Creates a default temperature measurement cluster server.
    *
    * @param measuredValue - The measured value of the temperature.
    */
   createDefaultTemperatureMeasurementClusterServer(measuredValue: number = 0) {
-    this.addClusterServer(
-      ClusterServer(
-        TemperatureMeasurementCluster,
-        {
-          measuredValue,
-          minMeasuredValue: null,
-          maxMeasuredValue: null,
-          tolerance: 0,
-        },
-        {},
-        {},
-      ),
-    );
+    this.addClusterServer(this.getDefaultTemperatureMeasurementClusterServer(measuredValue));
   }
 
   /**
@@ -1345,23 +1424,30 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Get a default boolean state cluster server.
+   *
+   * @param contact - Optional boolean value indicating the contact state. Defaults to `true` if not provided.
+   */
+  getDefaultBooleanStateClusterServer(contact?: boolean) {
+    return ClusterServer(
+      BooleanStateCluster,
+      {
+        stateValue: contact ?? true, // true=contact false=no_contact
+      },
+      {},
+      {
+        stateChange: true,
+      },
+    );
+  }
+
+  /**
    * Creates a default boolean state cluster server.
    *
    * @param contact - Optional boolean value indicating the contact state. Defaults to `true` if not provided.
    */
   createDefaultBooleanStateClusterServer(contact?: boolean) {
-    this.addClusterServer(
-      ClusterServer(
-        BooleanStateCluster,
-        {
-          stateValue: contact ?? true, // true=contact false=no_contact
-        },
-        {},
-        {
-          stateChange: true,
-        },
-      ),
-    );
+    this.addClusterServer(this.getDefaultBooleanStateClusterServer(contact));
   }
 
   /**

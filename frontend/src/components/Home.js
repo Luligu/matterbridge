@@ -204,7 +204,7 @@ function Home() {
   
     // Function that sends the "addplugin" command
     const handleInstallPluginClick = () => {
-      console.log('handleAddPluginClick', pluginName);
+      console.log('handleInstallPluginClick', pluginName);
       sendCommandToMatterbridge('install', pluginName);
     };
 

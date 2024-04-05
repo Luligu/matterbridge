@@ -582,10 +582,26 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
+   * Update matterbridge.
+   */
+  private async updateProcess() {
+    await this.cleanup('updating...', true);
+    this.hasCleanupStarted = false;
+  }
+
+  /**
    * Restarts the process by spawning a new process and exiting the current process.
    */
   private async restartProcess() {
     await this.cleanup('restarting...', true);
+    this.hasCleanupStarted = false;
+  }
+
+  /**
+   * Shut down the process by exiting the current process.
+   */
+  private async shutdownProcess() {
+    await this.cleanup('shutting down...', false);
     this.hasCleanupStarted = false;
   }
 
@@ -642,7 +658,7 @@ export class Matterbridge extends EventEmitter {
         this.expressApp.removeAllListeners();
         this.expressApp = undefined;
       }
-      const cleanupTimeout1 = setTimeout(async () => {
+      /*const cleanupTimeout1 =*/ setTimeout(async () => {
         // Closing matter
         await this.stopMatter();
 
@@ -672,20 +688,26 @@ export class Matterbridge extends EventEmitter {
         this.registeredDevices = [];
 
         this.log.info('Waiting for matter to deliver last messages...');
-        const cleanupTimeout2 = setTimeout(async () => {
+        /*const cleanupTimeout2 =*/ setTimeout(async () => {
           if (restart) {
-            this.log.info('Cleanup completed. Restarting...');
-            Matterbridge.instance = undefined;
-            this.emit('restart');
+            if (message === 'updating...') {
+              this.log.info('Cleanup completed. Updating...');
+              Matterbridge.instance = undefined;
+              this.emit('update');
+            } else if (message === 'restarting...') {
+              this.log.info('Cleanup completed. Restarting...');
+              Matterbridge.instance = undefined;
+              this.emit('restart');
+            }
           } else {
             this.log.info('Cleanup completed. Shutting down...');
             Matterbridge.instance = undefined;
             this.emit('shutdown');
           }
-        }, 2 * 1000);
-        cleanupTimeout2.unref();
+        }, 1 * 1000);
+        //cleanupTimeout2.unref();
       }, 3 * 1000);
-      cleanupTimeout1.unref();
+      //cleanupTimeout1.unref();
     }
   }
 
@@ -2210,6 +2232,24 @@ export class Matterbridge extends EventEmitter {
     // Serve React build directory
     this.expressApp.use(express.static(path.join(this.rootDirectory, 'frontend/build')));
 
+    // Endpoint to provide login code
+    this.expressApp.post('/api/login', express.json(), async (req, res) => {
+      const { password } = req.body;
+      this.log.debug('The frontend sent /api/login', password);
+      if (!this.nodeContext) {
+        this.log.error('/api/login matterbridgeContext not found');
+        res.json({ valid: false });
+        return;
+      }
+      try {
+        const storedPassword = await this.nodeContext.get('password', '');
+        if (storedPassword === '' || password === storedPassword) res.json({ valid: true });
+        else res.json({ valid: false });
+      } catch (error) {
+        res.json({ valid: false });
+      }
+    });
+
     // Endpoint to provide QR pairing code
     this.expressApp.get('/api/qr-code', (req, res) => {
       this.log.debug('The frontend sent /api/qr-code');
@@ -2345,9 +2385,17 @@ export class Matterbridge extends EventEmitter {
         });
       }
 
-      // Handle the command debugLevel from Header
+      // Handle the command shutdown from Header
+      if (command === 'shutdown') {
+        this.shutdownProcess();
+      }
+      // Handle the command restart from Header
       if (command === 'restart') {
         this.restartProcess();
+      }
+      // Handle the command update from Header
+      if (command === 'update') {
+        this.updateProcess();
       }
       // Handle the command update from Header
       if (command === 'update') {

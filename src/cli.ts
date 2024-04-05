@@ -38,6 +38,7 @@ async function main() {
 function registerHandlers() {
   instance!.on('shutdown', async () => shutdown());
   instance!.on('restart', async () => restart());
+  instance!.on('update', async () => update());
 }
 
 async function shutdown() {
@@ -48,7 +49,12 @@ async function shutdown() {
 
 async function restart() {
   console.log('CLI: received restart event, loading...');
-  //wtf.dump();
+  instance = await Matterbridge.loadInstance(true);
+  registerHandlers();
+}
+
+async function update() {
+  console.log('CLI: received update event, updating...');
   instance = await Matterbridge.loadInstance(true);
   registerHandlers();
 }

@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -79,6 +79,7 @@
   },
   "dependencies": {
     "@project-chip/matter-node.js": "^0.8.0",
+    "body-parser": "^1.20.2",
     "express": "^4.19.2",
     "matter-history": "^1.0.13",
     "node-ansi-logger": "^1.9.3",

@@ -83,7 +83,6 @@ Matterbridge exposes each registered plugins, and you have to pair each one by s
 matterbridge -help
 ```
 
-
 ## Frontend
 
 Matterbridge has a frontend available on http://localhost:3000
@@ -277,6 +276,74 @@ It can be useful to call this method from onShutdown() if you don't want to keep
 
 ## MatterbridgeDevice api
 
+# Advanced configuration
+
+## Run matterbridge as a daemon with systemctl (Linux only)
+
+Create a systemctl configuration file for Matterbridge
+
+```
+sudo nano /etc/systemd/system/matterbridge.service
+```
+
+Add the following to this file, replacing twice USER with your user name (e.g. pi):
+
+```
+[Unit]
+Description=matterbridge
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/matterbridge -bridge
+WorkingDirectory=/home/<USER>/Matterbridge
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+RestartSec=10s
+TimeoutStopSec=30s
+User=<USER>
+
+[Install]
+WantedBy=multi-user.target
+```
+
+If you modify it after, then run:
+```
+sudo systemctl daemon-reload
+```
+
+### Start Matterbridge
+```
+sudo systemctl start matterbridge
+```
+
+### Stop Matterbridge
+```
+sudo systemctl stop matterbridge
+```
+
+### Show Matterbridge status
+```
+sudo systemctl status matterbridge.service
+```
+
+### View the log of Matterbridge (this will keep the log colors)
+```
+sudo journalctl -u matterbridge.service -f --output cat
+```
+
+### Enable Matterbridge to start automatically on boot
+
+```
+sudo systemctl enable matterbridge.service
+```
+
+### Disable Matterbridge to start automatically on boot
+
+```
+sudo systemctl disable matterbridge.service
+```
 
 # Contribution Guidelines
 
