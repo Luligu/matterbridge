@@ -18,6 +18,7 @@ const AuthContext = createContext();
 // Create a provider component for the authentication state
 function AuthProvider({ children }) {
   const [loggedIn, setLoggedIn] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const logIn = async password => {
     try {
@@ -33,7 +34,7 @@ function AuthProvider({ children }) {
         if (valid) {
           setLoggedIn(true);
         } else {
-          alert('Incorrect password.');
+          setErrorMessage('Incorrect password!');
         }
       } else {
         console.error('Failed to log in:', response.statusText);
@@ -44,7 +45,7 @@ function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ loggedIn, logIn }}>
+    <AuthContext.Provider value={{ loggedIn, logIn, errorMessage }}>
       {children}
     </AuthContext.Provider>
   );
@@ -53,7 +54,7 @@ function AuthProvider({ children }) {
 // Create a component for the login form
 function LoginForm() {
   const [password, setPassword] = useState('');
-  const { loggedIn, logIn } = useContext(AuthContext);
+  const { loggedIn, logIn, errorMessage  } = useContext(AuthContext);
 
   const handleSubmit = event => {
     event.preventDefault();
@@ -71,9 +72,10 @@ function LoginForm() {
   const formStyle = {
     display: 'flex',
     flexDirection: 'column',
-    maxWidth: '300px',
+    maxWidth: '400px',
     margin: '0 auto',
     padding: '20px',
+    gap: '20px',
     border: '1px solid #ccc',
     borderRadius: '10px',
     boxShadow: '2px 2px 5px rgba(0,0,0,0.3)',
@@ -84,6 +86,7 @@ function LoginForm() {
     margin: '10px 0',
     padding: '3px 3px',
     fontSize: '14px',
+    width: '230px',
   };
 
   if (loggedIn) {
@@ -104,15 +107,23 @@ function LoginForm() {
     return (
       <div style={containerStyle}>
         <form onSubmit={handleSubmit} style={formStyle}>
-          <h3>Welcome to Matterbridge</h3>
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            style={inputStyle}
-            placeholder="password"
-          />
-          <button type="submit">Log in</button>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
+            <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
+            <h3>Welcome to Matterbridge</h3>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              style={inputStyle}
+              placeholder="password"
+            />
+            <button type="submit">Log in</button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', margin: 0, height: '30px' }}>
+            {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
+          </div>
         </form>
       </div>
     );

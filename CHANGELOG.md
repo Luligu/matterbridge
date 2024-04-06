@@ -5,8 +5,11 @@ All notable changes to this project will be documented in this file.
 ## [1.2.5] - 2024-04-05
 
 ### Added
-- [frontend]: Added shutdown button  
-- [frontend]: Added login with password (default no password) 
+- [frontend]: Added update Matterbridge (spawn the command: 'npm -install -g matterbridge'). The console inherit the the spawned process running so you can check.
+- [frontend]: Added install plugin (spawn the command: 'npm -install -g plugin-name'). The console inherit the the spawned process running so you can check.
+- [frontend]: Added shutdown button.
+- [frontend]: Added login with password (default no password). Change the password in the Settings page of frontend.
+- [frontend]: Frontend got updated to 0.8.5.
 - [Matterbridge]: Added configuration and guidelines in the readme to run Matterbridge like a daemon with systemctl on Linux machine.
 
 ## [1.2.4] - 2024-04-01

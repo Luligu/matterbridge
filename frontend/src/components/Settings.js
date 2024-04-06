@@ -6,6 +6,7 @@ import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
+import TextField from '@mui/material/TextField';
 
 import { sendCommandToMatterbridge } from './Header';
 
@@ -33,6 +34,7 @@ function MatterbridgeInfo() {
   const [selectedModeValue, setSelectedModeValue] = useState('bridge'); 
   const [selectedDebugValue, setSelectedDebugValue] = useState('Info'); 
   const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
+  const [password, setPassword] = useState('');
 
   useEffect(() => {
     // Fetch System Info
@@ -47,18 +49,25 @@ function MatterbridgeInfo() {
       .catch(error => console.error('Error fetching matterbridge info:', error));
   }, []); // The empty array causes this effect to run only once
 
-  // Define a function to handle changes to the selected value
+  // Define a function to handle change mode 
   const handleChangeMode = (event) => {
     console.log('handleChangeMode called with value:', event.target.value);
     setSelectedModeValue(event.target.value);
     sendCommandToMatterbridge('setbridgemode', event.target.value);
   };
 
-  // Define a function to handle changes to the selected value
+  // Define a function to handle change debug level
   const handleChangeDebug = (event) => {
     console.log('handleChangeDebug called with value:', event.target.value);
     setSelectedDebugValue(event.target.value);
     sendCommandToMatterbridge('setloglevel', event.target.value);
+  };
+
+  // Define a function to handle change password
+  const handleChangePassword = (event) => {
+    console.log('handleChangePassword called with value:', event.target.value);
+    setPassword(event.target.value);
+    sendCommandToMatterbridge('setpassword', '*'+event.target.value+'*');
   };
 
   return (
@@ -87,6 +96,9 @@ function MatterbridgeInfo() {
         <FormControlLabel value="Info" control={<Radio />} label="Info" />
         <FormControlLabel value="Warn" control={<Radio />} label="Warn" />
       </RadioGroup>
+      <FormLabel style={{ marginBottom: '10px', marginTop: '5px' }}>Password
+        <TextField style={{ marginTop: '10px' }} value={password} onChange={handleChangePassword} size="small" id="standard-password-input" label="Matterbridge password" type="password" autoComplete="current-password" variant="outlined" fullWidth/>
+      </FormLabel>
       <FormLabel>Current Version
         <div className="field-color-selected">{matterbridgeInfo.matterbridgeVersion}</div>
       </FormLabel>

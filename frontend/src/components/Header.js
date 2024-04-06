@@ -55,6 +55,7 @@ function Header() {
     setOpen(true);
     setTimeout(() => {
       setOpen(false);
+      window.location.reload();
     }, 20000);
   };
 
@@ -87,7 +88,7 @@ function Header() {
       </nav>
       <div className="header" style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
         <Tooltip title="Update matterbridge">
-          <Button disabled theme={theme} color="primary" variant="contained" size="small" endIcon={<SystemUpdateAltIcon />} style={{ color: '#ffffff' }} onClick={handleUpdateClick}>Update</Button>
+          <Button theme={theme} color="primary" variant="contained" size="small" endIcon={<SystemUpdateAltIcon />} style={{ color: '#ffffff' }} onClick={handleUpdateClick}>Update</Button>
         </Tooltip>        
         <Tooltip title="Restart matterbridge">
           <Button theme={theme} color="primary" variant="contained" size="small" endIcon={<RestartAltIcon />} style={{ color: '#ffffff' }} onClick={handleRestartClick}>Restart</Button>

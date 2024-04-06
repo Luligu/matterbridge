@@ -318,6 +318,9 @@ export class Matterbridge extends EventEmitter {
     /*
     npm > npm.cmd on windows
     */
+    if (process.platform === 'win32' && command === 'npm') {
+      command = command + '.cmd';
+    }
     return new Promise((resolve, reject) => {
       const childProcess = spawn(command, args, {
         stdio: 'inherit',
@@ -585,7 +588,7 @@ export class Matterbridge extends EventEmitter {
    * Update matterbridge.
    */
   private async updateProcess() {
-    await this.cleanup('updating...', true);
+    await this.cleanup('updating...', false);
     this.hasCleanupStarted = false;
   }
 
@@ -2237,7 +2240,7 @@ export class Matterbridge extends EventEmitter {
       const { password } = req.body;
       this.log.debug('The frontend sent /api/login', password);
       if (!this.nodeContext) {
-        this.log.error('/api/login matterbridgeContext not found');
+        this.log.error('/api/login nodeContext not found');
         res.json({ valid: false });
         return;
       }
@@ -2363,7 +2366,14 @@ export class Matterbridge extends EventEmitter {
         return;
       }
 
-      this.log.info(`***Received command: ${command}:${param}`);
+      this.log.debug(`*Received frontend command: ${command}:${param}`);
+
+      // Handle the command setpassword from Settings
+      if (command === 'setpassword') {
+        const password = param.slice(1, -1); // Remove the first and last characters
+        this.log.info('setpassword', param, password);
+        await this.nodeContext?.set('password', password);
+      }
 
       // Handle the command debugLevel from Settings
       if (command === 'setloglevel') {
@@ -2395,13 +2405,35 @@ export class Matterbridge extends EventEmitter {
       }
       // Handle the command update from Header
       if (command === 'update') {
+        this.log.warn(`***Updating matterbridge ${plg}${param}${db}`);
+        try {
+          await this.spawnCommand('npm', ['install', '-g', 'matterbridge']);
+          this.log.info('Matterbridge has been updated. Full restart required.');
+        } catch (error) {
+          this.log.error('Error updating matterbridge');
+          res.json({ message: 'Command received' });
+          return;
+        }
         this.updateProcess();
       }
       // Handle the command update from Header
       if (command === 'update') {
         this.log.warn(`The /api/command/${command} is not yet implemented`);
       }
-      // Handle the command addplugin from Home C:\Users\lligu\GitHub\matterbridge-example-accessory-platform
+      // Handle the command installplugin from Home
+      if (command === 'installplugin') {
+        param = param.replace(/\*/g, '\\');
+        this.log.warn(`***Installing plugin ${plg}${param}${db}`);
+        try {
+          await this.spawnCommand('npm', ['install', '-g', param]);
+          this.log.info(`Plugin ${plg}${param}${nf} installed. Restart required.`);
+        } catch (error) {
+          this.log.error(`Error installing plugin ${plg}${param}${er}`);
+          res.json({ message: 'Command received' });
+          return;
+        }
+      }
+      // Handle the command addplugin from Home
       if (command === 'addplugin') {
         param = param.replace(/\*/g, '\\');
         if (this.registeredPlugins.find((plugin) => plugin.name === param)) {

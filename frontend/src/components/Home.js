@@ -205,7 +205,7 @@ function Home() {
     // Function that sends the "addplugin" command
     const handleInstallPluginClick = () => {
       console.log('handleInstallPluginClick', pluginName);
-      sendCommandToMatterbridge('install', pluginName);
+      sendCommandToMatterbridge('installplugin', pluginName);
     };
 
     // Function that sends the "addplugin" command
@@ -237,11 +237,11 @@ function Home() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '10px', gap: '20px' }}>
           <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={open} onClose={handleSnackClose} autoHideDuration={5000}>
-            <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart needed!</Alert>
+            <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart required</Alert>
           </Snackbar>
           <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth/>
           <Tooltip title="Install a plugin from npm">
-            <Button disabled onClick={handleInstallPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="install" endIcon={<DownloadIcon />} style={{ color: '#ffffff', height: '30px' }}> Install</Button>
+            <Button onClick={handleInstallPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="install" endIcon={<DownloadIcon />} style={{ color: '#ffffff', height: '30px' }}> Install</Button>
           </Tooltip>        
           <Tooltip title="Add an installed plugin">
             <Button onClick={handleAddPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="add" endIcon={<AddIcon />} style={{ color: '#ffffff', height: '30px' }}> Add</Button>

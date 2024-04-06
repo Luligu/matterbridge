@@ -49,6 +49,15 @@ import { logEndpoint } from '@project-chip/matter-node.js/device';
 import { Matterbridge } from './matterbridge.js';
 */
 export function startController() {
+  /*
+   npm run  matter-controller -- --log-level=debug --storage-clear --pairingcode=05410803219
+   -- undefined-0-53 id: 0 name: channel: 25
+-- undefined-0-53 id: 1 name: routingRole: 5
+-- undefined-0-53 id: 2 name: networkName: MyHome32
+-- undefined-0-53 id: 3 name: panId: 32477
+-- undefined-0-53 id: 4 name: extendedPanId: 8704323698196694754
+-- undefined-0-53 id: 5 name: meshLocalPrefix: "40fd78cbf849390000"
+*/
   //const log: AnsiLogger;
   /*
   async startController() {
