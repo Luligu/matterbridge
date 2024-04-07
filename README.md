@@ -236,13 +236,13 @@ Add your plugin logic in platform.ts.
 
 ## MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform api
 
-### name: string
+### public name: string
 The plugin name.
 
-### type: string
+### public type: string
 The plugin platform type.
 
-### config: object
+### public config: object
 The plugin config (loaded before the platform constructor is called and saved after onShutdown() is called).
 Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for example)
 
