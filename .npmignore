@@ -159,6 +159,8 @@ frontend/public
 frontend/package.*
 frontend/package-lock.json
 frontend/README.md
+frontend/build/matterbridge 624x624.png
+frontend/build/matterbridge 1250x1250.png
 
 # zigbee2mqtt
 bridge-info.json

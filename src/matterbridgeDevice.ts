@@ -720,6 +720,61 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Get a default Basic Information Cluster Server.
+   *
+   * @param deviceName - The name of the device.
+   * @param serialNumber - The serial number of the device.
+   * @param vendorId - The vendor ID of the device.
+   * @param vendorName - The vendor name of the device.
+   * @param productId - The product ID of the device.
+   * @param productName - The product name of the device.
+   * @param softwareVersion - The software version of the device. Default is 1.
+   * @param softwareVersionString - The software version string of the device. Default is 'v.1.0.0'.
+   * @param hardwareVersion - The hardware version of the device. Default is 1.
+   * @param hardwareVersionString - The hardware version string of the device. Default is 'v.1.0.0'.
+   */
+  getDefaultBasicInformationClusterServer(
+    deviceName: string,
+    serialNumber: string,
+    vendorId: number,
+    vendorName: string,
+    productId: number,
+    productName: string,
+    softwareVersion = 1,
+    softwareVersionString = '1.0.0',
+    hardwareVersion = 1,
+    hardwareVersionString = '1.0.0',
+  ) {
+    return ClusterServer(
+      BasicInformationCluster,
+      {
+        dataModelRevision: 1,
+        location: 'XX',
+        vendorId: VendorId(vendorId),
+        vendorName: vendorName,
+        productId: productId,
+        productName: productName,
+        productLabel: deviceName,
+        nodeLabel: deviceName,
+        serialNumber,
+        uniqueId: this.createUniqueId(deviceName, serialNumber, vendorName, productName),
+        softwareVersion,
+        softwareVersionString,
+        hardwareVersion,
+        hardwareVersionString,
+        reachable: true,
+        capabilityMinima: { caseSessionsPerFabric: 3, subscriptionsPerFabric: 3 },
+      },
+      {},
+      {
+        startUp: true,
+        shutDown: true,
+        leave: true,
+        reachableChanged: true,
+      },
+    );
+  }
+  /**
    * Creates a default Basic Information Cluster Server.
    *
    * @param deviceName - The name of the device.
@@ -752,35 +807,53 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       this.createDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString);
       return;
     }
-    this.addClusterServer(
-      ClusterServer(
-        BasicInformationCluster,
-        {
-          dataModelRevision: 1,
-          location: 'XX',
-          vendorId: VendorId(vendorId),
-          vendorName: vendorName,
-          productId: productId,
-          productName: productName,
-          productLabel: deviceName,
-          nodeLabel: deviceName,
-          serialNumber,
-          uniqueId: this.createUniqueId(deviceName, serialNumber, vendorName, productName),
-          softwareVersion,
-          softwareVersionString,
-          hardwareVersion,
-          hardwareVersionString,
-          reachable: true,
-          capabilityMinima: { caseSessionsPerFabric: 3, subscriptionsPerFabric: 3 },
-        },
-        {},
-        {
-          startUp: true,
-          shutDown: true,
-          leave: true,
-          reachableChanged: true,
-        },
-      ),
+    this.addClusterServer(this.getDefaultBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productId, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString));
+  }
+
+  /**
+   * Get a default BridgedDeviceBasicInformationClusterServer.
+   *
+   * @param deviceName - The name of the device.
+   * @param serialNumber - The serial number of the device.
+   * @param vendorId - The vendor ID of the device.
+   * @param vendorName - The name of the vendor.
+   * @param productName - The name of the product.
+   * @param softwareVersion - The software version of the device. Default is 1.
+   * @param softwareVersionString - The software version string of the device. Default is 'v.1.0.0'.
+   * @param hardwareVersion - The hardware version of the device. Default is 1.
+   * @param hardwareVersionString - The hardware version string of the device. Default is 'v.1.0.0'.
+   */
+  getDefaultBridgedDeviceBasicInformationClusterServer(
+    deviceName: string,
+    serialNumber: string,
+    vendorId: number,
+    vendorName: string,
+    productName: string,
+    softwareVersion = 1,
+    softwareVersionString = '1.0.0',
+    hardwareVersion = 1,
+    hardwareVersionString = '1.0.0',
+  ) {
+    return ClusterServer(
+      BridgedDeviceBasicInformationCluster,
+      {
+        vendorId: vendorId !== undefined ? VendorId(vendorId) : undefined, // 4874
+        vendorName: vendorName,
+        productName: productName,
+        productLabel: deviceName,
+        nodeLabel: deviceName,
+        serialNumber,
+        uniqueId: this.createUniqueId(deviceName, serialNumber, vendorName, productName),
+        softwareVersion,
+        softwareVersionString,
+        hardwareVersion,
+        hardwareVersionString,
+        reachable: true,
+      },
+      {},
+      {
+        reachableChanged: true,
+      },
     );
   }
 
@@ -811,29 +884,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     this.deviceName = deviceName;
     this.serialNumber = serialNumber;
     this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
-    this.addClusterServer(
-      ClusterServer(
-        BridgedDeviceBasicInformationCluster,
-        {
-          vendorId: vendorId !== undefined ? VendorId(vendorId) : undefined, // 4874
-          vendorName: vendorName,
-          productName: productName,
-          productLabel: deviceName,
-          nodeLabel: deviceName,
-          serialNumber,
-          uniqueId: this.createUniqueId(deviceName, serialNumber, vendorName, productName),
-          softwareVersion,
-          softwareVersionString,
-          hardwareVersion,
-          hardwareVersionString,
-          reachable: true,
-        },
-        {},
-        {
-          reachableChanged: true,
-        },
-      ),
-    );
+    this.addClusterServer(this.getDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString));
   }
 
   /**
@@ -956,64 +1007,154 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Get a default level control cluster server.
+   *
+   * @param currentLevel - The current level (default: 0).
+   */
+  getDefaultLevelControlClusterServer(currentLevel = 0) {
+    return ClusterServer(
+      LevelControlCluster.with(LevelControl.Feature.OnOff),
+      {
+        currentLevel,
+        onLevel: 0,
+        options: {
+          executeIfOff: false,
+          coupleColorTempToLevel: false,
+        },
+      },
+      {
+        moveToLevel: async ({ request, attributes }) => {
+          // eslint-disable-next-line no-console
+          console.log('moveToLevel request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
+          //attributes.currentLevel.setLocal(request.level);
+          await this.commandHandler.executeHandler('moveToLevel', { request: request, attributes: attributes });
+        },
+        move: async () => {
+          // eslint-disable-next-line no-console
+          console.error('Not implemented');
+        },
+        step: async () => {
+          // eslint-disable-next-line no-console
+          console.error('Not implemented');
+        },
+        stop: async () => {
+          // eslint-disable-next-line no-console
+          console.error('Not implemented');
+        },
+        moveToLevelWithOnOff: async ({ request, attributes }) => {
+          // eslint-disable-next-line no-console
+          console.log('moveToLevelWithOnOff request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
+          //attributes.currentLevel.setLocal(request.level);
+          await this.commandHandler.executeHandler('moveToLevelWithOnOff', { request: request, attributes: attributes });
+        },
+        moveWithOnOff: async () => {
+          // eslint-disable-next-line no-console
+          console.error('Not implemented');
+        },
+        stepWithOnOff: async () => {
+          // eslint-disable-next-line no-console
+          console.error('Not implemented');
+        },
+        stopWithOnOff: async () => {
+          // eslint-disable-next-line no-console
+          console.error('Not implemented');
+        },
+      },
+    );
+  }
+  /**
    * Creates a default level control cluster server.
    *
    * @param currentLevel - The current level (default: 0).
    */
   createDefaultLevelControlClusterServer(currentLevel = 0) {
-    this.addClusterServer(
-      ClusterServer(
-        LevelControlCluster.with(LevelControl.Feature.OnOff),
-        {
-          currentLevel,
-          onLevel: 0,
-          options: {
-            executeIfOff: false,
-            coupleColorTempToLevel: false,
-          },
-        },
-        {
-          moveToLevel: async ({ request, attributes }) => {
-            // eslint-disable-next-line no-console
-            console.log('moveToLevel request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
-            //attributes.currentLevel.setLocal(request.level);
-            await this.commandHandler.executeHandler('moveToLevel', { request: request, attributes: attributes });
-          },
-          move: async () => {
-            // eslint-disable-next-line no-console
-            console.error('Not implemented');
-          },
-          step: async () => {
-            // eslint-disable-next-line no-console
-            console.error('Not implemented');
-          },
-          stop: async () => {
-            // eslint-disable-next-line no-console
-            console.error('Not implemented');
-          },
-          moveToLevelWithOnOff: async ({ request, attributes }) => {
-            // eslint-disable-next-line no-console
-            console.log('moveToLevelWithOnOff request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
-            //attributes.currentLevel.setLocal(request.level);
-            await this.commandHandler.executeHandler('moveToLevelWithOnOff', { request: request, attributes: attributes });
-          },
-          moveWithOnOff: async () => {
-            // eslint-disable-next-line no-console
-            console.error('Not implemented');
-          },
-          stepWithOnOff: async () => {
-            // eslint-disable-next-line no-console
-            console.error('Not implemented');
-          },
-          stopWithOnOff: async () => {
-            // eslint-disable-next-line no-console
-            console.error('Not implemented');
-          },
-        },
-      ),
-    );
+    this.addClusterServer(this.getDefaultLevelControlClusterServer(currentLevel));
   }
 
+  /**
+   * Get a default color control cluster server.
+   *
+   * @param currentHue - The current hue value.
+   * @param currentSaturation - The current saturation value.
+   * @param colorTemperatureMireds - The color temperature in mireds.
+   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
+   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   */
+  getDefaultColorControlClusterServer(currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+    return ClusterServer(
+      ColorControlCluster.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature),
+      {
+        colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
+        options: {
+          executeIfOff: false,
+        },
+        numberOfPrimaries: null,
+        enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
+        colorCapabilities: { xy: false, hs: true, cl: false, ehue: false, ct: true },
+        currentHue,
+        currentSaturation,
+        colorTemperatureMireds,
+        colorTempPhysicalMinMireds,
+        colorTempPhysicalMaxMireds,
+      },
+      {
+        moveToHue: async ({ request: request, attributes: attributes }) => {
+          // eslint-disable-next-line no-console
+          console.log('Command moveToHue request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal());
+          //attributes.currentHue.setLocal(request.hue);
+          this.commandHandler.executeHandler('moveToHue', { request: request, attributes: attributes });
+        },
+        moveHue: async () => {
+          // eslint-disable-next-line no-console
+          console.error('Not implemented');
+        },
+        stepHue: async () => {
+          // eslint-disable-next-line no-console
+          console.error('Not implemented');
+        },
+        moveToSaturation: async ({ request: request, attributes: attributes }) => {
+          // eslint-disable-next-line no-console
+          console.log('Command moveToSaturation request:', request, 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
+          //attributes.currentSaturation.setLocal(request.saturation);
+          this.commandHandler.executeHandler('moveToSaturation', { request: request, attributes: attributes });
+        },
+        moveSaturation: async () => {
+          // eslint-disable-next-line no-console
+          console.error('Not implemented');
+        },
+        stepSaturation: async () => {
+          // eslint-disable-next-line no-console
+          console.error('Not implemented');
+        },
+        moveToHueAndSaturation: async ({ request: request, attributes: attributes }) => {
+          // eslint-disable-next-line no-console
+          console.log('Command moveToHueAndSaturation request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal(), 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
+          //attributes.currentHue.setLocal(request.hue);
+          //attributes.currentSaturation.setLocal(request.saturation);
+          this.commandHandler.executeHandler('moveToHueAndSaturation', { request: request, attributes: attributes });
+        },
+        stopMoveStep: async () => {
+          // eslint-disable-next-line no-console
+          console.error('Not implemented');
+        },
+        moveToColorTemperature: async ({ request: request, attributes: attributes }) => {
+          // eslint-disable-next-line no-console
+          console.log('Command moveToColorTemperature request:', request, 'attributes.colorTemperatureMireds:', attributes.colorTemperatureMireds.getLocal());
+          //attributes.colorTemperatureMireds.setLocal(request.colorTemperatureMireds);
+          this.commandHandler.executeHandler('moveToColorTemperature', { request: request, attributes: attributes });
+        },
+        moveColorTemperature: async () => {
+          // eslint-disable-next-line no-console
+          console.error('Not implemented');
+        },
+        stepColorTemperature: async () => {
+          // eslint-disable-next-line no-console
+          console.error('Not implemented');
+        },
+      },
+      {},
+    );
+  }
   /**
    * Creates a default color control cluster server.
    *
@@ -1024,139 +1165,71 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
    */
   createDefaultColorControlClusterServer(currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
-    this.addClusterServer(
-      ClusterServer(
-        ColorControlCluster.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature),
-        {
-          colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
-          options: {
-            executeIfOff: false,
-          },
-          numberOfPrimaries: null,
-          enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
-          colorCapabilities: { xy: false, hs: true, cl: false, ehue: false, ct: true },
-          currentHue,
-          currentSaturation,
-          colorTemperatureMireds,
-          colorTempPhysicalMinMireds,
-          colorTempPhysicalMaxMireds,
-        },
-        {
-          moveToHue: async ({ request: request, attributes: attributes }) => {
-            // eslint-disable-next-line no-console
-            console.log('Command moveToHue request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal());
-            //attributes.currentHue.setLocal(request.hue);
-            this.commandHandler.executeHandler('moveToHue', { request: request, attributes: attributes });
-          },
-          moveHue: async () => {
-            // eslint-disable-next-line no-console
-            console.error('Not implemented');
-          },
-          stepHue: async () => {
-            // eslint-disable-next-line no-console
-            console.error('Not implemented');
-          },
-          moveToSaturation: async ({ request: request, attributes: attributes }) => {
-            // eslint-disable-next-line no-console
-            console.log('Command moveToSaturation request:', request, 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
-            //attributes.currentSaturation.setLocal(request.saturation);
-            this.commandHandler.executeHandler('moveToSaturation', { request: request, attributes: attributes });
-          },
-          moveSaturation: async () => {
-            // eslint-disable-next-line no-console
-            console.error('Not implemented');
-          },
-          stepSaturation: async () => {
-            // eslint-disable-next-line no-console
-            console.error('Not implemented');
-          },
-          moveToHueAndSaturation: async ({ request: request, attributes: attributes }) => {
-            // eslint-disable-next-line no-console
-            console.log('Command moveToHueAndSaturation request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal(), 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
-            //attributes.currentHue.setLocal(request.hue);
-            //attributes.currentSaturation.setLocal(request.saturation);
-            this.commandHandler.executeHandler('moveToHueAndSaturation', { request: request, attributes: attributes });
-          },
-          stopMoveStep: async () => {
-            // eslint-disable-next-line no-console
-            console.error('Not implemented');
-          },
-          moveToColorTemperature: async ({ request: request, attributes: attributes }) => {
-            // eslint-disable-next-line no-console
-            console.log('Command moveToColorTemperature request:', request, 'attributes.colorTemperatureMireds:', attributes.colorTemperatureMireds.getLocal());
-            //attributes.colorTemperatureMireds.setLocal(request.colorTemperatureMireds);
-            this.commandHandler.executeHandler('moveToColorTemperature', { request: request, attributes: attributes });
-          },
-          moveColorTemperature: async () => {
-            // eslint-disable-next-line no-console
-            console.error('Not implemented');
-          },
-          stepColorTemperature: async () => {
-            // eslint-disable-next-line no-console
-            console.error('Not implemented');
-          },
-        },
-        {},
-      ),
-    );
+    this.addClusterServer(this.getDefaultColorControlClusterServer(currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
   }
 
+  /**
+   * Get a default window covering cluster server.
+   *
+   * @param positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0.
+   */
+  getDefaultWindowCoveringClusterServer(positionPercent100ths?: number) {
+    return ClusterServer(
+      WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition),
+      {
+        type: WindowCovering.WindowCoveringType.Rollershade,
+        configStatus: {
+          operational: true,
+          onlineReserved: true,
+          liftMovementReversed: false,
+          liftPositionAware: true,
+          tiltPositionAware: false,
+          liftEncoderControlled: false,
+          tiltEncoderControlled: false,
+        },
+        operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
+        endProductType: WindowCovering.EndProductType.RollerShade,
+        mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false },
+        targetPositionLiftPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+        currentPositionLiftPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+        installedClosedLimitLift: 10000,
+        installedOpenLimitLift: 0,
+      },
+      {
+        upOrOpen: async (data) => {
+          // eslint-disable-next-line no-console
+          console.log('upOrOpen');
+          await this.commandHandler.executeHandler('upOrOpen', data);
+        },
+        downOrClose: async (data) => {
+          // eslint-disable-next-line no-console
+          console.log('downOrClose');
+          await this.commandHandler.executeHandler('downOrClose', data);
+        },
+        stopMotion: async (data) => {
+          // eslint-disable-next-line no-console
+          console.log('stopMotion');
+          await this.commandHandler.executeHandler('stopMotion', data);
+        },
+        goToLiftPercentage: async (data) => {
+          // eslint-disable-next-line no-console
+          console.log(
+            `goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
+              `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
+          );
+          await this.commandHandler.executeHandler('goToLiftPercentage', data);
+        },
+      },
+      {},
+    );
+  }
   /**
    * Creates a default window covering cluster server.
    *
    * @param positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0.
    */
   createDefaultWindowCoveringClusterServer(positionPercent100ths?: number) {
-    this.addClusterServer(
-      ClusterServer(
-        WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition),
-        {
-          type: WindowCovering.WindowCoveringType.Rollershade,
-          configStatus: {
-            operational: true,
-            onlineReserved: true,
-            liftMovementReversed: false,
-            liftPositionAware: true,
-            tiltPositionAware: false,
-            liftEncoderControlled: false,
-            tiltEncoderControlled: false,
-          },
-          operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
-          endProductType: WindowCovering.EndProductType.RollerShade,
-          mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false },
-          targetPositionLiftPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
-          currentPositionLiftPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
-          installedClosedLimitLift: 10000,
-          installedOpenLimitLift: 0,
-        },
-        {
-          upOrOpen: async (data) => {
-            // eslint-disable-next-line no-console
-            console.log('upOrOpen');
-            await this.commandHandler.executeHandler('upOrOpen', data);
-          },
-          downOrClose: async (data) => {
-            // eslint-disable-next-line no-console
-            console.log('downOrClose');
-            await this.commandHandler.executeHandler('downOrClose', data);
-          },
-          stopMotion: async (data) => {
-            // eslint-disable-next-line no-console
-            console.log('stopMotion');
-            await this.commandHandler.executeHandler('stopMotion', data);
-          },
-          goToLiftPercentage: async (data) => {
-            // eslint-disable-next-line no-console
-            console.log(
-              `goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
-                `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
-            );
-            await this.commandHandler.executeHandler('goToLiftPercentage', data);
-          },
-        },
-        {},
-      ),
-    );
+    this.addClusterServer(this.getDefaultWindowCoveringClusterServer(positionPercent100ths));
   }
 
   /**
@@ -1240,48 +1313,77 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Get a default door lock cluster server.
+   *
+   * @remarks
+   * This method adds a cluster server for a door lock cluster with default settings.
+   *
+   */
+  getDefaultDoorLockClusterServer() {
+    return ClusterServer(
+      DoorLockCluster,
+      {
+        operatingMode: DoorLock.OperatingMode.Normal,
+        lockState: DoorLock.LockState.Locked,
+        lockType: DoorLock.LockType.Deadbolt,
+        actuatorEnabled: false,
+        supportedOperatingModes: { normal: true, vacation: false, privacy: false, noRemoteLockUnlock: false, passage: false },
+      },
+      {
+        lockDoor: async (data) => {
+          // eslint-disable-next-line no-console
+          console.log('lockDoor', data.request);
+          await this.commandHandler.executeHandler('lockDoor', data);
+        },
+        unlockDoor: async (data) => {
+          // eslint-disable-next-line no-console
+          console.log('unlockDoor', data.request);
+          await this.commandHandler.executeHandler('unlockDoor', data);
+        },
+      },
+      {
+        doorLockAlarm: true,
+        lockOperation: true,
+        lockOperationError: true,
+      },
+    );
+  }
+  /**
    * Creates a default door lock cluster server.
    *
    * @remarks
    * This method adds a cluster server for a door lock cluster with default settings.
    *
-   * @example
-   * ```typescript
-   * createDefaultDoorLockClusterServer();
-   * ```
    */
   createDefaultDoorLockClusterServer() {
-    this.addClusterServer(
-      ClusterServer(
-        DoorLockCluster,
-        {
-          operatingMode: DoorLock.OperatingMode.Normal,
-          lockState: DoorLock.LockState.Locked,
-          lockType: DoorLock.LockType.Deadbolt,
-          actuatorEnabled: false,
-          supportedOperatingModes: { normal: true, vacation: false, privacy: false, noRemoteLockUnlock: false, passage: false },
-        },
-        {
-          lockDoor: async (data) => {
-            // eslint-disable-next-line no-console
-            console.log('lockDoor', data.request);
-            await this.commandHandler.executeHandler('lockDoor', data);
-          },
-          unlockDoor: async (data) => {
-            // eslint-disable-next-line no-console
-            console.log('unlockDoor', data.request);
-            await this.commandHandler.executeHandler('unlockDoor', data);
-          },
-        },
-        {
-          doorLockAlarm: true,
-          lockOperation: true,
-          lockOperationError: true,
-        },
-      ),
-    );
+    this.addClusterServer(this.getDefaultDoorLockClusterServer());
   }
 
+  /**
+   * Get a default switch cluster server.
+   *
+   * @remarks
+   * This method adds a cluster server with default switch features and configurations.
+   */
+  getDefaultSwitchClusterServer() {
+    return ClusterServer(
+      SwitchCluster.with(Switch.Feature.MomentarySwitch, Switch.Feature.MomentarySwitchRelease, Switch.Feature.MomentarySwitchLongPress, Switch.Feature.MomentarySwitchMultiPress),
+      {
+        numberOfPositions: 2,
+        currentPosition: 0,
+        multiPressMax: 2,
+      },
+      {},
+      {
+        initialPress: true,
+        longPress: true,
+        shortRelease: true,
+        longRelease: true,
+        multiPressOngoing: true,
+        multiPressComplete: true,
+      },
+    );
+  }
   /**
    * Creates a default switch cluster server.
    *
@@ -1289,68 +1391,62 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * This method adds a cluster server with default switch features and configurations.
    */
   createDefaultSwitchClusterServer() {
-    this.addClusterServer(
-      ClusterServer(
-        SwitchCluster.with(Switch.Feature.MomentarySwitch, Switch.Feature.MomentarySwitchRelease, Switch.Feature.MomentarySwitchLongPress, Switch.Feature.MomentarySwitchMultiPress),
-        {
-          numberOfPositions: 2,
-          currentPosition: 0,
-          multiPressMax: 2,
-        },
-        {},
-        {
-          initialPress: true,
-          longPress: true,
-          shortRelease: true,
-          longRelease: true,
-          multiPressOngoing: true,
-          multiPressComplete: true,
-        },
-      ),
-    );
+    this.addClusterServer(this.getDefaultSwitchClusterServer());
     this.addFixedLabel('orientation', 'Switch');
     this.addFixedLabel('label', 'Switch');
   }
 
+  /**
+   * Get a default occupancy sensing cluster server.
+   *
+   * @param occupied - A boolean indicating whether the occupancy is occupied or not. Default is false.
+   */
+  getDefaultOccupancySensingClusterServer(occupied = false) {
+    return ClusterServer(
+      OccupancySensingCluster,
+      {
+        occupancy: { occupied },
+        occupancySensorType: OccupancySensing.OccupancySensorType.Pir,
+        occupancySensorTypeBitmap: { pir: true, ultrasonic: false, physicalContact: false },
+        pirOccupiedToUnoccupiedDelay: 30,
+      },
+      {},
+    );
+  }
   /**
    * Creates a default occupancy sensing cluster server.
    *
    * @param occupied - A boolean indicating whether the occupancy is occupied or not. Default is false.
    */
   createDefaultOccupancySensingClusterServer(occupied = false) {
-    this.addClusterServer(
-      ClusterServer(
-        OccupancySensingCluster,
-        {
-          occupancy: { occupied },
-          occupancySensorType: OccupancySensing.OccupancySensorType.Pir,
-          occupancySensorTypeBitmap: { pir: true, ultrasonic: false, physicalContact: false },
-          pirOccupiedToUnoccupiedDelay: 30,
-        },
-        {},
-      ),
-    );
+    this.addClusterServer(this.getDefaultOccupancySensingClusterServer(occupied));
   }
 
+  /**
+   * Get a default Illuminance Measurement Cluster Server.
+   *
+   * @param measuredValue - The measured value of illuminance.
+   */
+  getDefaultIlluminanceMeasurementClusterServer(measuredValue: number = 0) {
+    return ClusterServer(
+      IlluminanceMeasurementCluster,
+      {
+        measuredValue,
+        minMeasuredValue: null,
+        maxMeasuredValue: null,
+        tolerance: 0,
+      },
+      {},
+      {},
+    );
+  }
   /**
    * Creates a default Illuminance Measurement Cluster Server.
    *
    * @param measuredValue - The measured value of illuminance.
    */
   createDefaultIlluminanceMeasurementClusterServer(measuredValue: number = 0) {
-    this.addClusterServer(
-      ClusterServer(
-        IlluminanceMeasurementCluster,
-        {
-          measuredValue,
-          minMeasuredValue: null,
-          maxMeasuredValue: null,
-          tolerance: 0,
-        },
-        {},
-        {},
-      ),
-    );
+    this.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer(measuredValue));
   }
 
   /**
@@ -1382,45 +1478,57 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Get a default RelativeHumidityMeasurementCluster server.
+   *
+   * @param measuredValue - The measured value of the relative humidity.
+   */
+  getDefaultRelativeHumidityMeasurementClusterServer(measuredValue: number = 0) {
+    return ClusterServer(
+      RelativeHumidityMeasurementCluster,
+      {
+        measuredValue,
+        minMeasuredValue: null,
+        maxMeasuredValue: null,
+        tolerance: 0,
+      },
+      {},
+      {},
+    );
+  }
+  /**
    * Creates a default RelativeHumidityMeasurementCluster server.
    *
    * @param measuredValue - The measured value of the relative humidity.
    */
   createDefaultRelativeHumidityMeasurementClusterServer(measuredValue: number = 0) {
-    this.addClusterServer(
-      ClusterServer(
-        RelativeHumidityMeasurementCluster,
-        {
-          measuredValue,
-          minMeasuredValue: null,
-          maxMeasuredValue: null,
-          tolerance: 0,
-        },
-        {},
-        {},
-      ),
-    );
+    this.addClusterServer(this.getDefaultRelativeHumidityMeasurementClusterServer(measuredValue));
   }
 
+  /**
+   * Get a default Pressure Measurement Cluster Server.
+   *
+   * @param measuredValue - The measured value for the pressure.
+   */
+  getDefaultPressureMeasurementClusterServer(measuredValue: number = 1000) {
+    return ClusterServer(
+      PressureMeasurementCluster,
+      {
+        measuredValue,
+        minMeasuredValue: null,
+        maxMeasuredValue: null,
+        tolerance: 0,
+      },
+      {},
+      {},
+    );
+  }
   /**
    * Creates a default Pressure Measurement Cluster Server.
    *
    * @param measuredValue - The measured value for the pressure.
    */
   createDefaultPressureMeasurementClusterServer(measuredValue: number = 1000) {
-    this.addClusterServer(
-      ClusterServer(
-        PressureMeasurementCluster,
-        {
-          measuredValue,
-          minMeasuredValue: null,
-          maxMeasuredValue: null,
-          tolerance: 0,
-        },
-        {},
-        {},
-      ),
-    );
+    this.addClusterServer(this.getDefaultPressureMeasurementClusterServer(measuredValue));
   }
 
   /**
@@ -1564,43 +1672,92 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Get a default air quality cluster server.
+   *
+   * @param airQuality The air quality type. Defaults to `AirQuality.AirQualityType.Unknown`.
+   */
+  getDefaultAirQualityClusterServer(airQuality = AirQuality.AirQualityType.Unknown) {
+    return ClusterServer(
+      AirQualityCluster.with(AirQuality.Feature.FairAirQuality, AirQuality.Feature.ModerateAirQuality, AirQuality.Feature.VeryPoorAirQuality),
+      {
+        airQuality,
+      },
+      {},
+      {},
+    );
+  }
+  /**
    * Creates a default air quality cluster server.
    *
    * @param airQuality The air quality type. Defaults to `AirQuality.AirQualityType.Unknown`.
    */
   createDefaultAirQualityClusterServer(airQuality = AirQuality.AirQualityType.Unknown) {
-    this.addClusterServer(
-      ClusterServer(
-        AirQualityCluster.with(AirQuality.Feature.FairAirQuality, AirQuality.Feature.ModerateAirQuality, AirQuality.Feature.VeryPoorAirQuality),
-        {
-          airQuality,
-        },
-        {},
-        {},
-      ),
-    );
+    this.addClusterServer(this.getDefaultAirQualityClusterServer(airQuality));
   }
 
+  /**
+   * Get a default TVOC measurement cluster server.
+   *
+   * @param measuredValue - The measured value for TVOC.
+   */
+  getDefaultTvocMeasurementClusterServer(measuredValue: number = 0) {
+    return ClusterServer(
+      TvocMeasurementCluster.with(TvocMeasurement.Feature.NumericMeasurement),
+      {
+        measuredValue,
+        minMeasuredValue: null,
+        maxMeasuredValue: null,
+      },
+      {},
+      {},
+    );
+  }
   /**
    * Creates a default TVOC measurement cluster server.
    *
    * @param measuredValue - The measured value for TVOC.
    */
   createDefaultTvocMeasurementClusterServer(measuredValue: number = 0) {
-    this.addClusterServer(
-      ClusterServer(
-        TvocMeasurementCluster.with(TvocMeasurement.Feature.NumericMeasurement),
-        {
-          measuredValue,
-          minMeasuredValue: null,
-          maxMeasuredValue: null,
-        },
-        {},
-        {},
-      ),
-    );
+    this.addClusterServer(this.getDefaultTvocMeasurementClusterServer(measuredValue));
   }
 
+  /**
+   * Get a default thermostat cluster server with the specified parameters.
+   *
+   * @param localTemperature - The local temperature value in degrees Celsius. Defaults to 23.
+   * @param occupiedHeatingSetpoint - The occupied heating setpoint value in degrees Celsius. Defaults to 21.
+   * @param occupiedCoolingSetpoint - The occupied cooling setpoint value in degrees Celsius. Defaults to 25.
+   */
+  getDefaultThermostatClusterServer(localTemperature: number = 23, occupiedHeatingSetpoint: number = 21, occupiedCoolingSetpoint: number = 25) {
+    return ClusterServer(
+      ThermostatCluster.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling /*, Thermostat.Feature.AutoMode*/),
+      {
+        localTemperature: localTemperature * 100,
+        occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
+        occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
+        minHeatSetpointLimit: 0,
+        maxHeatSetpointLimit: 5000,
+        absMinHeatSetpointLimit: 0,
+        absMaxHeatSetpointLimit: 5000,
+        minCoolSetpointLimit: 0,
+        maxCoolSetpointLimit: 5000,
+        absMinCoolSetpointLimit: 0,
+        absMaxCoolSetpointLimit: 5000,
+        //minSetpointDeadBand: 1,
+        systemMode: Thermostat.SystemMode.Off,
+        controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
+        //thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
+      },
+      {
+        setpointRaiseLower: async ({ request, attributes }) => {
+          // eslint-disable-next-line no-console
+          console.log('setpointRaiseLower', request);
+          await this.commandHandler.executeHandler('setpointRaiseLower', { request, attributes });
+        },
+      },
+      {},
+    );
+  }
   /**
    * Creates a default thermostat cluster server with the specified parameters.
    *
@@ -1609,67 +1766,42 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param occupiedCoolingSetpoint - The occupied cooling setpoint value in degrees Celsius. Defaults to 25.
    */
   createDefaultThermostatClusterServer(localTemperature: number = 23, occupiedHeatingSetpoint: number = 21, occupiedCoolingSetpoint: number = 25) {
-    this.addClusterServer(
-      ClusterServer(
-        ThermostatCluster.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling /*, Thermostat.Feature.AutoMode*/),
-        {
-          localTemperature: localTemperature * 100,
-          occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
-          occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
-          minHeatSetpointLimit: 0,
-          maxHeatSetpointLimit: 5000,
-          absMinHeatSetpointLimit: 0,
-          absMaxHeatSetpointLimit: 5000,
-          minCoolSetpointLimit: 0,
-          maxCoolSetpointLimit: 5000,
-          absMinCoolSetpointLimit: 0,
-          absMaxCoolSetpointLimit: 5000,
-          //minSetpointDeadBand: 1,
-          systemMode: Thermostat.SystemMode.Off,
-          controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
-          //thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
-        },
-        {
-          setpointRaiseLower: async ({ request, attributes }) => {
-            // eslint-disable-next-line no-console
-            console.log('setpointRaiseLower', request);
-            await this.commandHandler.executeHandler('setpointRaiseLower', { request, attributes });
-          },
-        },
-        {},
-      ),
-    );
+    this.addClusterServer(this.getDefaultThermostatClusterServer(localTemperature, occupiedHeatingSetpoint, occupiedCoolingSetpoint));
   }
 
   /**
-   * Creates a default dummy time sync cluster server. Only needed to create a thermostat.
+   * Get a default time sync cluster server. Only needed to create a thermostat.
    */
-  createDefaultDummyTimeSyncClusterServer() {
-    this.addClusterServer(
-      ClusterServer(
-        TimeSyncCluster.with(TimeSync.Feature.TimeZone),
-        {
-          utcTime: null,
-          granularity: TimeSync.Granularity.NoTimeGranularity,
-          timeZone: [{ offset: 0, validAt: 0 }],
-          trustedTimeNodeId: null,
-          dstOffset: [],
-          localTime: null,
-          timeZoneDatabase: true,
+  getDefaultTimeSyncClusterServer() {
+    return ClusterServer(
+      TimeSyncCluster.with(TimeSync.Feature.TimeZone),
+      {
+        utcTime: null,
+        granularity: TimeSync.Granularity.NoTimeGranularity,
+        timeZone: [{ offset: 0, validAt: 0 }],
+        trustedTimeNodeId: null,
+        dstOffset: [],
+        localTime: null,
+        timeZoneDatabase: true,
+      },
+      {
+        setUtcTime: async ({ request, attributes }) => {
+          // eslint-disable-next-line no-console
+          console.log('setUtcTime', request);
+          await this.commandHandler.executeHandler('setUtcTime', { request, attributes });
         },
-        {
-          setUtcTime: async ({ request, attributes }) => {
-            // eslint-disable-next-line no-console
-            console.log('setUtcTime', request);
-            await this.commandHandler.executeHandler('setUtcTime', { request, attributes });
-          },
-        },
-        {
-          dstTableEmpty: true,
-          dstStatus: true,
-          timeZoneStatus: true,
-        },
-      ),
+      },
+      {
+        dstTableEmpty: true,
+        dstStatus: true,
+        timeZoneStatus: true,
+      },
     );
+  }
+  /**
+   * Creates a default time sync cluster server. Only needed to create a thermostat.
+   */
+  createDefaultTimeSyncClusterServer() {
+    this.addClusterServer(this.getDefaultTimeSyncClusterServer());
   }
 }

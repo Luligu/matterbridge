@@ -2545,7 +2545,7 @@ export class Matterbridge extends EventEmitter {
 
     // Fallback for routing
     this.expressApp.get('*', (req, res) => {
-      this.log.warn('The frontend sent *', req.url);
+      this.log.debug('The frontend sent *', req.url);
       res.sendFile(path.join(this.rootDirectory, 'frontend/build/index.html'));
     });
 
