@@ -129,21 +129,9 @@ export namespace EveHistory {
 
   export enum Feature {
     EveDoor = 'EveDoor',
-  }
-
-  export enum Feature {
     EveMotion = 'EveMotion',
-  }
-
-  export enum Feature {
     EveEnergy = 'EveEnergy',
-  }
-
-  export enum Feature {
     EveWeather = 'EveWeather',
-  }
-
-  export enum Feature {
     EveRoom = 'EveRoom',
   }
 
@@ -193,20 +181,20 @@ export namespace EveHistory {
     ),
   });
 
-  export const ClusterInstance = MutableCluster({ ...Base });
+  export const ClusterInstance = MutableCluster.ExtensibleOnly(Base);
 
   export interface Cluster extends Identity<typeof ClusterInstance> {}
 
   export const Cluster: Cluster = ClusterInstance;
 
   export const CompleteInstance = MutableCluster({
-    id: Cluster.id,
-    name: Cluster.name,
-    revision: Cluster.revision,
-    features: Cluster.features,
+    id: Base.id,
+    name: Base.name,
+    revision: Base.revision,
+    features: Base.features,
 
     attributes: {
-      ...Cluster.attributes,
+      ...Base.attributes,
     },
   });
 

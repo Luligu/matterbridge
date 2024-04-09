@@ -2,11 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.6] - 2024-04-08
+## [1.2.6] - 2024-04-09
+
+### Changed
+
+- [matterbridge.service]: Updated instructions that fix network start issue.
 
 ### Fixed
 
-- [frontend]: Added sudo to the spawned command to execute update and install from frontend for Linux if needed.
+- [frontend]: Added sudo to the spawned command to execute update and install from frontend (for Linux if needed).
 
 ## [1.2.5] - 2024-04-08
 

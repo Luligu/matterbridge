@@ -69,7 +69,7 @@ import { Device, DeviceClasses, DeviceTypeDefinition, EndpointOptions } from '@p
 import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
 
 import { MatterHistory, Sensitivity, WeatherTrend, TemperatureDisplayUnits } from 'matter-history';
-import { EveHistory, EveHistoryCluster } from './EveHistoryCluster.js';
+import { EveHistory, EveHistoryCluster } from 'matter-history'; //'./EveHistoryCluster.js';
 
 import { AirQuality, AirQualityCluster } from './AirQualityCluster.js';
 import { AnsiLogger } from 'node-ansi-logger';

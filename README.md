@@ -28,7 +28,7 @@ any other ecosystem supporting Matter like Home Assistant.
 
 You don't need a hub or a dedicated new machine.
 
-No complex setup just copa paste the installation scripts.
+No complex setup just copy paste the installation scripts.
 
 Matterbridge is light weight and run also on slow Linux machine with 512MB of memory. 
 
@@ -291,7 +291,7 @@ Add the following to this file, replacing twice USER with your user name (e.g. p
 ```
 [Unit]
 Description=matterbridge
-After=network.target
+After=network-online.target
 
 [Service]
 Type=simple
@@ -328,9 +328,14 @@ sudo systemctl stop matterbridge
 sudo systemctl status matterbridge.service
 ```
 
-### View the log of Matterbridge (this will keep the log colors)
+### View the log of Matterbridge in real time (this will show the log with colors)
 ```
 sudo journalctl -u matterbridge.service -f --output cat
+```
+
+### Delete the logs older then 3 days (all of them not only the ones of Matterbridge!)
+```
+sudo journalctl --vacuum-time=3d
 ```
 
 ### Enable Matterbridge to start automatically on boot

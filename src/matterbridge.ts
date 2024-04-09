@@ -35,7 +35,7 @@ import os from 'os';
 import path from 'path';
 
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
-import { BasicInformationCluster, BooleanStateCluster, BridgedDeviceBasicInformationCluster, ClusterServer, GeneralCommissioning, PowerSourceCluster, ThreadNetworkDiagnosticsCluster } from '@project-chip/matter-node.js/cluster';
+import { BasicInformationCluster, BooleanStateCluster, BridgedDeviceBasicInformationCluster, ClusterServer, GeneralCommissioning, PowerSourceCluster, ThreadNetworkDiagnosticsCluster, getClusterNameById } from '@project-chip/matter-node.js/cluster';
 import { DeviceTypeId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Aggregator, Device, DeviceTypes, NodeStateInformation } from '@project-chip/matter-node.js/device';
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
@@ -401,7 +401,7 @@ export class Matterbridge extends EventEmitter {
       process.exit(0);
     }
 
-    // Start the storage (we need it now for frontend and later for matterbridge)
+    // Start the storage and create matterbridgeContext (we need it now for frontend and later for matterbridge)
     await this.startStorage('json', path.join(this.matterbridgeDirectory, 'matterbridge.json'));
     this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
     this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
@@ -418,9 +418,7 @@ export class Matterbridge extends EventEmitter {
 
     if (hasParameter('controller')) {
       this.bridgeMode = 'controller';
-      this.log.info('Creating mattercontrollerContext: mattercontrollerContext');
-      this.mattercontrollerContext = this.storageManager?.createContext('mattercontrollerContext');
-      await this.startMatterbridge();
+      await this.startMattercontroller();
       return;
     }
 
@@ -1270,6 +1268,189 @@ export class Matterbridge extends EventEmitter {
       //return Promise.reject(new Error(`Failed to load plugin ${plg}${plugin.name}${er}: ${err}`));
     }
   }
+
+  /**
+   * Starts the Matterbridge controller.
+   * @private
+   * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
+   */
+  private async startMattercontroller(): Promise<void> {
+    if (!this.storageManager) {
+      this.log.error('No storage manager initialized');
+      await this.cleanup('No storage manager initialized');
+      return;
+    }
+    this.log.info('Creating context: mattercontrollerContext');
+    this.mattercontrollerContext = this.storageManager.createContext('mattercontrollerContext');
+    if (!this.mattercontrollerContext) {
+      this.log.error('No storage context mattercontrollerContext initialized');
+      await this.cleanup('No storage context mattercontrollerContext initialized');
+      return;
+    }
+
+    this.log.debug('Starting matterbridge in mode', this.bridgeMode);
+    this.createMatterServer(this.storageManager);
+    if (!this.matterServer) {
+      this.log.error('No matter server initialized');
+      await this.cleanup('No matter server initialized');
+      return;
+    }
+
+    this.log.info('Creating matter commissioning controller');
+    this.commissioningController = new CommissioningController({
+      autoConnect: false,
+    });
+    this.log.info('Adding matter commissioning controller to matter server');
+    await this.matterServer.addCommissioningController(this.commissioningController);
+
+    this.log.info('Starting matter server');
+    await this.matterServer.start();
+    this.log.info('Matter server started');
+
+    if (hasParameter('pairingcode')) {
+      this.log.info('Pairing device with pairingcode:', getParameter('pairingcode'));
+      const pairingCode = getParameter('pairingcode');
+      const ip = this.mattercontrollerContext.has('ip') ? this.mattercontrollerContext.get<string>('ip') : undefined;
+      const port = this.mattercontrollerContext.has('port') ? this.mattercontrollerContext.get<number>('port') : undefined;
+
+      let longDiscriminator, setupPin, shortDiscriminator;
+      if (pairingCode !== undefined) {
+        const pairingCodeCodec = ManualPairingCodeCodec.decode(pairingCode);
+        shortDiscriminator = pairingCodeCodec.shortDiscriminator;
+        longDiscriminator = undefined;
+        setupPin = pairingCodeCodec.passcode;
+        this.log.info(`Data extracted from pairing code: ${Logger.toJSON(pairingCodeCodec)}`);
+      } else {
+        longDiscriminator = await this.mattercontrollerContext.get('longDiscriminator', 3840);
+        if (longDiscriminator > 4095) throw new Error('Discriminator value must be less than 4096');
+        setupPin = this.mattercontrollerContext.get('pin', 20202021);
+      }
+      if ((shortDiscriminator === undefined && longDiscriminator === undefined) || setupPin === undefined) {
+        throw new Error('Please specify the longDiscriminator of the device to commission with -longDiscriminator or provide a valid passcode with -passcode');
+      }
+
+      const commissioningOptions: CommissioningOptions = {
+        regulatoryLocation: GeneralCommissioning.RegulatoryLocationType.IndoorOutdoor,
+        regulatoryCountryCode: 'XX',
+      };
+      const options = {
+        commissioning: commissioningOptions,
+        discovery: {
+          knownAddress: ip !== undefined && port !== undefined ? { ip, port, type: 'udp' } : undefined,
+          identifierData: longDiscriminator !== undefined ? { longDiscriminator } : shortDiscriminator !== undefined ? { shortDiscriminator } : {},
+        },
+        passcode: setupPin,
+      } as NodeCommissioningOptions;
+      this.log.info('Commissioning with options:', options);
+      const nodeId = await this.commissioningController.commissionNode(options);
+      this.log.info(`Commissioning successfully done with nodeId: ${nodeId.nodeId}`);
+      this.log.info('ActiveSessionInformation:', this.commissioningController.getActiveSessionInformation());
+    } // (hasParameter('pairingcode'))
+
+    if (hasParameter('unpairall')) {
+      this.log.info('***Commissioning controller unpairing all nodes...');
+      const nodeIds = this.commissioningController.getCommissionedNodes();
+      for (const nodeId of nodeIds) {
+        this.log.info('***Commissioning controller unpairing node:', nodeId);
+        await this.commissioningController.removeNode(nodeId);
+      }
+      return;
+    }
+
+    if (hasParameter('discover')) {
+      //const discover = await this.commissioningController.discoverCommissionableDevices({ productId: 0x8000, deviceType: 0xfff1 });
+      //console.log(discover);
+    }
+
+    if (!this.commissioningController.isCommissioned()) {
+      this.log.info('***Commissioning controller is not commissioned: use matterbridge -controller -pairingcode [pairingcode] to commission a device');
+      return;
+    }
+
+    const nodeIds = this.commissioningController.getCommissionedNodes();
+    this.log.info(`***Commissioning controller is commissioned ${this.commissioningController.isCommissioned()} and has ${nodeIds.length} nodes commisioned: `);
+    for (const nodeId of nodeIds) {
+      this.log.info(`***Connecting to commissioned node: ${nodeId}`);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const node = await this.commissioningController.connectNode(nodeId, {
+        attributeChangedCallback: (peerNodeId, { path: { nodeId, clusterId, endpointId, attributeName }, value }) =>
+          this.log.info(`***Commissioning controller attributeChangedCallback ${peerNodeId}: attribute ${nodeId}/${endpointId}/${clusterId}/${attributeName} changed to ${Logger.toJSON(value)}`),
+        eventTriggeredCallback: (peerNodeId, { path: { nodeId, clusterId, endpointId, eventName }, events }) =>
+          this.log.info(`***Commissioning controller eventTriggeredCallback ${peerNodeId}: Event ${nodeId}/${endpointId}/${clusterId}/${eventName} triggered with ${Logger.toJSON(events)}`),
+        stateInformationCallback: (peerNodeId, info) => {
+          switch (info) {
+            case NodeStateInformation.Connected:
+              this.log.info(`***Commissioning controller stateInformationCallback ${peerNodeId}: Node ${nodeId} connected`);
+              break;
+            case NodeStateInformation.Disconnected:
+              this.log.info(`***Commissioning controller stateInformationCallback ${peerNodeId}: Node ${nodeId} disconnected`);
+              break;
+            case NodeStateInformation.Reconnecting:
+              this.log.info(`***Commissioning controller stateInformationCallback ${peerNodeId}: Node ${nodeId} reconnecting`);
+              break;
+            case NodeStateInformation.WaitingForDeviceDiscovery:
+              this.log.info(`***Commissioning controller stateInformationCallback ${peerNodeId}: Node ${nodeId} waiting for device discovery`);
+              break;
+            case NodeStateInformation.StructureChanged:
+              this.log.info(`***Commissioning controller stateInformationCallback ${peerNodeId}: Node ${nodeId} structure changed`);
+              break;
+            case NodeStateInformation.Decommissioned:
+              this.log.info(`***Commissioning controller stateInformationCallback ${peerNodeId}: Node ${nodeId} decommissioned`);
+              break;
+            default:
+              this.log.info(`***Commissioning controller stateInformationCallback ${peerNodeId}: Node ${nodeId} NodeStateInformation.${info}`);
+              break;
+          }
+        },
+      });
+
+      //node.logStructure();
+
+      // Get the interaction client
+      this.log.info('Getting the interaction client');
+      const interactionClient = await node.getInteractionClient();
+      let cluster;
+      let attributes;
+
+      // Log BasicInformationCluster
+      cluster = BasicInformationCluster;
+      attributes = await interactionClient.getMultipleAttributes({
+        attributes: [{ clusterId: cluster.id }],
+      });
+      this.log.warn(`Cluster: ${cluster.name} attributes:`);
+      attributes.forEach((attribute) => {
+        this.log.info(
+          // eslint-disable-next-line max-len
+          `- endpoint ${attribute.path.endpointId} cluster ${getClusterNameById(attribute.path.clusterId)} (${attribute.path.clusterId}) attribute ${attribute.path.attributeName} (${attribute.path.attributeId}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
+        );
+      });
+      // Log PowerSourceCluster
+      cluster = PowerSourceCluster;
+      attributes = await interactionClient.getMultipleAttributes({
+        attributes: [{ clusterId: cluster.id }],
+      });
+      this.log.warn(`Cluster: ${cluster.name} attributes:`);
+      attributes.forEach((attribute) => {
+        this.log.info(
+          // eslint-disable-next-line max-len
+          `- endpoint ${attribute.path.endpointId} cluster ${getClusterNameById(attribute.path.clusterId)} (${attribute.path.clusterId}) attribute ${attribute.path.attributeName} (${attribute.path.attributeId}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
+        );
+      });
+      // Log ThreadNetworkDiagnostics
+      cluster = ThreadNetworkDiagnosticsCluster;
+      attributes = await interactionClient.getMultipleAttributes({
+        attributes: [{ clusterId: cluster.id }],
+      });
+      this.log.warn(`Cluster: ${cluster.name} attributes:`);
+      attributes.forEach((attribute) => {
+        this.log.info(
+          // eslint-disable-next-line max-len
+          `- endpoint ${attribute.path.endpointId} cluster ${getClusterNameById(attribute.path.clusterId)} (${attribute.path.clusterId}) attribute ${attribute.path.attributeName} (${attribute.path.attributeId}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
+        );
+      });
+    }
+  }
+
   /**
    * Starts the Matterbridge based on the bridge mode.
    * If the bridge mode is 'bridge', it creates a commissioning server, matter aggregator,
@@ -1291,153 +1472,6 @@ export class Matterbridge extends EventEmitter {
       this.log.error('No matter server initialized');
       await this.cleanup('No matter server initialized');
       return;
-    }
-
-    if (this.bridgeMode === 'controller') {
-      if (!this.mattercontrollerContext) {
-        this.log.error('No matter controller context initialized');
-        await this.cleanup('No matter controller context initialized');
-        return;
-      }
-      this.log.info('Creating matter commissioning controller');
-      this.commissioningController = new CommissioningController({
-        autoConnect: false,
-      });
-      this.log.info('Adding matter commissioning controller to matter server');
-      await this.matterServer.addCommissioningController(this.commissioningController);
-
-      this.log.info('Starting matter server');
-      await this.matterServer.start();
-      this.log.info('Matter server started');
-
-      if (hasParameter('pairingcode')) {
-        const pairingCode = getParameter('pairingcode');
-        const ip = this.mattercontrollerContext.has('ip') ? this.mattercontrollerContext.get<string>('ip') : undefined;
-        const port = this.mattercontrollerContext.has('port') ? this.mattercontrollerContext.get<number>('port') : undefined;
-
-        let longDiscriminator, setupPin, shortDiscriminator;
-        if (pairingCode !== undefined) {
-          const pairingCodeCodec = ManualPairingCodeCodec.decode(pairingCode);
-          shortDiscriminator = pairingCodeCodec.shortDiscriminator;
-          longDiscriminator = undefined;
-          setupPin = pairingCodeCodec.passcode;
-          this.log.info(`Data extracted from pairing code: ${Logger.toJSON(pairingCodeCodec)}`);
-        } else {
-          longDiscriminator = await this.mattercontrollerContext.get('longDiscriminator', 3840);
-          if (longDiscriminator > 4095) throw new Error('Discriminator value must be less than 4096');
-          setupPin = this.mattercontrollerContext.get('pin', 20202021);
-        }
-        if ((shortDiscriminator === undefined && longDiscriminator === undefined) || setupPin === undefined) {
-          throw new Error('Please specify the longDiscriminator of the device to commission with -longDiscriminator or provide a valid passcode with -passcode');
-        }
-
-        const commissioningOptions: CommissioningOptions = {
-          regulatoryLocation: GeneralCommissioning.RegulatoryLocationType.IndoorOutdoor,
-          regulatoryCountryCode: 'XX',
-        };
-        const options = {
-          commissioning: commissioningOptions,
-          discovery: {
-            knownAddress: ip !== undefined && port !== undefined ? { ip, port, type: 'udp' } : undefined,
-            identifierData: longDiscriminator !== undefined ? { longDiscriminator } : shortDiscriminator !== undefined ? { shortDiscriminator } : {},
-          },
-          passcode: setupPin,
-        } as NodeCommissioningOptions;
-        //this.log.info(`Commissioning ... ${JSON.stringify(options)}`);
-        this.log.info('Commissioning ...', options);
-        const nodeId = await this.commissioningController.commissionNode(options);
-        this.mattercontrollerContext.set('nodeId', nodeId.nodeId);
-        this.log.info(`Commissioning successfully done with nodeId: ${nodeId.nodeId}`);
-        // eslint-disable-next-line no-console
-        this.log.info('ActiveSessionInformation:', this.commissioningController.getActiveSessionInformation());
-      } // (hasParameter('pairingcode'))
-
-      if (hasParameter('discover')) {
-        //const discover = await this.commissioningController.discoverCommissionableDevices({ productId: 0x8000, deviceType: 0xfff1 });
-        //console.log(discover);
-      }
-
-      const nodeIds = this.commissioningController.getCommissionedNodes();
-      this.log.info(`***Commissioning controller has ${nodeIds.length} nodes commisioned: ${this.commissioningController.isCommissioned()}`);
-      for (const nodeId of nodeIds) {
-        this.log.info(`***Connecting to commissioned node: ${nodeId}`);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const node = await this.commissioningController.connectNode(nodeId, {
-          attributeChangedCallback: (peerNodeId, { path: { nodeId, clusterId, endpointId, attributeName }, value }) =>
-            this.log.info(`***mattributeChangedCallback ${peerNodeId}: Attribute ${nodeId}/${endpointId}/${clusterId}/${attributeName} changed to ${Logger.toJSON(value)}`),
-          eventTriggeredCallback: (peerNodeId, { path: { nodeId, clusterId, endpointId, eventName }, events }) =>
-            this.log.info(`***eventTriggeredCallback ${peerNodeId}: Event ${nodeId}/${endpointId}/${clusterId}/${eventName} triggered with ${Logger.toJSON(events)}`),
-          stateInformationCallback: (peerNodeId, info) => {
-            switch (info) {
-              case NodeStateInformation.Connected:
-                this.log.info(`***stateInformationCallback ${peerNodeId}: Node ${nodeId} connected`);
-                break;
-              case NodeStateInformation.Disconnected:
-                this.log.info(`***stateInformationCallback ${peerNodeId}: Node ${nodeId} disconnected`);
-                break;
-              case NodeStateInformation.Reconnecting:
-                this.log.info(`***stateInformationCallback ${peerNodeId}: Node ${nodeId} reconnecting`);
-                break;
-              case NodeStateInformation.WaitingForDeviceDiscovery:
-                this.log.info(`***stateInformationCallback ${peerNodeId}: Node ${nodeId} waiting for device discovery`);
-                break;
-              case NodeStateInformation.StructureChanged:
-                this.log.info(`***stateInformationCallback ${peerNodeId}: Node ${nodeId} structure changed`);
-                break;
-              case NodeStateInformation.Decommissioned:
-                this.log.info(`***stateInformationCallback ${peerNodeId}: Node ${nodeId} decommissioned`);
-                break;
-              default:
-                this.log.info(`***stateInformationCallback ${peerNodeId}: Node ${nodeId} NodeStateInformation.${info}`);
-                break;
-            }
-          },
-        });
-
-        node.logStructure();
-
-        // Get the interaction client
-        const interactionClient = await node.getInteractionClient();
-        let cluster;
-        let attributes;
-
-        // Log BasicInformationCluster
-        cluster = BasicInformationCluster;
-        attributes = await interactionClient.getMultipleAttributes({
-          attributes: [{ clusterId: cluster.id }],
-        });
-        this.log.warn(`Cluster: ${cluster.name} attributes:`);
-        attributes.forEach((attribute) => {
-          this.log.info(
-            // eslint-disable-next-line max-len
-            `- endpoint: ${attribute.path.endpointId} clusterId: ${attribute.path.clusterId} id: ${attribute.path.attributeId} name: ${attribute.path.attributeName}: ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
-          );
-        });
-        // Log PowerSourceCluster
-        cluster = PowerSourceCluster;
-        attributes = await interactionClient.getMultipleAttributes({
-          attributes: [{ clusterId: cluster.id }],
-        });
-        this.log.warn(`Cluster: ${cluster.name} attributes:`);
-        attributes.forEach((attribute) => {
-          this.log.info(
-            // eslint-disable-next-line max-len
-            `- endpoint: ${attribute.path.endpointId} clusterId: ${attribute.path.clusterId} id: ${attribute.path.attributeId} name: ${attribute.path.attributeName}: ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
-          );
-        });
-        // Log ThreadNetworkDiagnostics
-        cluster = ThreadNetworkDiagnosticsCluster;
-        attributes = await interactionClient.getMultipleAttributes({
-          attributes: [{ clusterId: cluster.id }],
-        });
-        this.log.warn(`Cluster: ${cluster.name} attributes:`);
-        attributes.forEach((attribute) => {
-          this.log.info(
-            // eslint-disable-next-line max-len
-            `- endpoint: ${attribute.path.endpointId} clusterId: ${attribute.path.clusterId} id: ${attribute.path.attributeId} name: ${attribute.path.attributeName}: ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
-          );
-        });
-      }
     }
 
     if (this.bridgeMode === 'bridge') {
@@ -1488,6 +1522,7 @@ export class Matterbridge extends EventEmitter {
         await this.startMatterServer();
         this.log.info('Matter server started');
         await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
+        //if (hasParameter('advertise')) await this.commissioningServer.advertise();
         /*
         setInterval(() => {
           this.matterAggregator?.getBridgedDevices().forEach((device) => {
@@ -1723,7 +1758,7 @@ export class Matterbridge extends EventEmitter {
   private async showCommissioningQRCode(commissioningServer: CommissioningServer, storageContext: StorageContext, nodeContext: NodeStorage, pluginName: string) {
     if (!commissioningServer || !storageContext || !pluginName) return;
     if (!commissioningServer.isCommissioned()) {
-      this.log.info(`***The commissioning server for ${plg}${pluginName}${nf} is not commissioned. Pair it scanning the QR code ...`);
+      this.log.info(`***The commissioning server on port ${commissioningServer.getPort()} for ${plg}${pluginName}${nf} is not commissioned. Pair it scanning the QR code ...`);
       const { qrPairingCode, manualPairingCode } = commissioningServer.getPairingCode();
       storageContext.set('qrPairingCode', qrPairingCode);
       storageContext.set('manualPairingCode', manualPairingCode);
@@ -1741,7 +1776,7 @@ export class Matterbridge extends EventEmitter {
       }
       await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
     } else {
-      this.log.info(`***The commissioning server for ${plg}${pluginName}${nf} is already commissioned. Waiting for controllers to connect ...`);
+      this.log.info(`***The commissioning server on port ${commissioningServer.getPort()} for ${plg}${pluginName}${nf} is already commissioned . Waiting for controllers to connect ...`);
       if (pluginName !== 'Matterbridge') {
         const plugin = this.findPlugin(pluginName);
         if (plugin) {

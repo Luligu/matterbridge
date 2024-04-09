@@ -91,20 +91,20 @@ export namespace AirQuality {
     ),
   });
 
-  export const ClusterInstance = MutableCluster({ ...Base });
+  export const ClusterInstance = MutableCluster.ExtensibleOnly(Base);
 
   export interface Cluster extends Identity<typeof ClusterInstance> {}
 
   export const Cluster: Cluster = ClusterInstance;
 
   export const CompleteInstance = MutableCluster({
-    id: Cluster.id,
-    name: Cluster.name,
-    revision: Cluster.revision,
-    features: Cluster.features,
+    id: Base.id,
+    name: Base.name,
+    revision: Base.revision,
+    features: Base.features,
 
     attributes: {
-      ...Cluster.attributes,
+      ...Base.attributes,
     },
   });
 
