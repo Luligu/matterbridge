@@ -321,6 +321,10 @@ export class Matterbridge extends EventEmitter {
     if (process.platform === 'win32' && command === 'npm') {
       command = command + '.cmd';
     }
+    if (process.platform === 'linux' && command === 'npm') {
+      args.unshift(command);
+      command = 'sudo';
+    }
     return new Promise((resolve, reject) => {
       const childProcess = spawn(command, args, {
         stdio: 'inherit',
