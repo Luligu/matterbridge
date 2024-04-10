@@ -225,7 +225,7 @@ export class Matterbridge extends EventEmitter {
       - childbridge:           start Matterbridge in childbridge mode
       - frontend [port]:       start the frontend on the given port (default 3000)
       - debug:                 enable debug mode (default false)
-      - factoryreset:          remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
+      - reset:                 remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
       - list:                  list the registered plugins
       - add [plugin path]:     register the plugin from the given absolute or relative path
       - add [plugin name]:     register the globally installed plugin with the given name
@@ -411,22 +411,20 @@ export class Matterbridge extends EventEmitter {
 
     // Start the storage and create matterbridgeContext (we need it now for frontend and later for matterbridge)
     await this.startStorage('json', path.join(this.matterbridgeDirectory, 'matterbridge.json'));
-    this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
     this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
 
-    if (getParameter('reset')) {
-      this.log.debug(`Reset plugin ${getParameter('reset')}`);
-      await this.executeCommandLine(getParameter('reset')!, 'reset');
-      // Closing storage
+    if (hasParameter('reset') && getParameter('reset') === undefined) {
+      this.log.info('Resetting Matterbridge commissioning information...');
+      await this.matterbridgeContext?.clearAll();
       await this.stopStorage();
+      this.log.info('Factory reset done! Remove the device from the controller.');
       this.emit('shutdown');
       process.exit(0);
     }
 
-    if (getParameter('factoryreset')) {
-      this.log.info('Reset Matterbridge commissioning information...');
-      await this.matterbridgeContext?.clearAll();
-      // Closing storage
+    if (getParameter('reset') && getParameter('reset') !== undefined) {
+      this.log.debug(`Reset plugin ${getParameter('reset')}`);
+      await this.executeCommandLine(getParameter('reset')!, 'reset');
       await this.stopStorage();
       this.emit('shutdown');
       process.exit(0);
@@ -676,7 +674,7 @@ export class Matterbridge extends EventEmitter {
           await plugin.platform.onShutdown('Matterbridge is closing: ' + message);
           await this.savePluginConfig(plugin);
         } else {
-          this.log.warn(`Plugin ${plg}${plugin.name}${er} platform not found`);
+          this.log.warn(`Plugin ${plg}${plugin.name}${wr} platform not found`);
         }
       }
 

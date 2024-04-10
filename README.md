@@ -221,7 +221,13 @@ matterbridge -disable [plugin path or plugin name]
 matterbridge -enable [plugin path or plugin name]
 ```
 
-## How to remove the commissioning information for a registered plugin so you can pair it again
+## How to remove the commissioning information for Matterbridge so you can pair it again (bridge mode)
+
+```
+matterbridge -reset
+```
+
+## How to remove the commissioning information for a registered plugin so you can pair it again (childbridge mode)
 
 ```
 matterbridge -reset [plugin path or plugin name]
