@@ -35,7 +35,20 @@ import os from 'os';
 import path from 'path';
 
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
-import { BasicInformationCluster, BooleanStateCluster, BridgedDeviceBasicInformationCluster, ClusterServer, GeneralCommissioning, PowerSourceCluster, ThreadNetworkDiagnosticsCluster, getClusterNameById } from '@project-chip/matter-node.js/cluster';
+import {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  BasicInformation,
+  BasicInformationCluster,
+  BooleanStateCluster,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  BridgedDeviceBasicInformation,
+  BridgedDeviceBasicInformationCluster,
+  ClusterServer,
+  GeneralCommissioning,
+  PowerSourceCluster,
+  ThreadNetworkDiagnosticsCluster,
+  getClusterNameById,
+} from '@project-chip/matter-node.js/cluster';
 import { DeviceTypeId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Aggregator, Device, DeviceTypes, NodeStateInformation } from '@project-chip/matter-node.js/device';
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
@@ -226,6 +239,7 @@ export class Matterbridge extends EventEmitter {
       - frontend [port]:       start the frontend on the given port (default 3000)
       - debug:                 enable debug mode (default false)
       - reset:                 remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
+      - factoryreset:          remove all commissioning information and reset all internal storages. Shutdown Matterbridge before using it!
       - list:                  list the registered plugins
       - add [plugin path]:     register the plugin from the given absolute or relative path
       - add [plugin name]:     register the globally installed plugin with the given name
@@ -409,6 +423,16 @@ export class Matterbridge extends EventEmitter {
       process.exit(0);
     }
 
+    if (hasParameter('factoryreset')) {
+      // Delete matter storage file
+      await fs.unlink(path.join(this.matterbridgeDirectory, 'matterbridge.json'));
+      // Delete node storage directory with its subdirectories
+      await fs.rmdir(path.join(this.matterbridgeDirectory, 'storage'), { recursive: true });
+      this.log.info('Factory reset done! Remove all paired devices from the controllers.');
+      this.emit('shutdown');
+      process.exit(0);
+    }
+
     // Start the storage and create matterbridgeContext (we need it now for frontend and later for matterbridge)
     await this.startStorage('json', path.join(this.matterbridgeDirectory, 'matterbridge.json'));
     this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
@@ -417,7 +441,7 @@ export class Matterbridge extends EventEmitter {
       this.log.info('Resetting Matterbridge commissioning information...');
       await this.matterbridgeContext?.clearAll();
       await this.stopStorage();
-      this.log.info('Factory reset done! Remove the device from the controller.');
+      this.log.info('Reset done! Remove the device from the controller.');
       this.emit('shutdown');
       process.exit(0);
     }
@@ -687,12 +711,34 @@ export class Matterbridge extends EventEmitter {
           this.log.error(`Plugin ${plg}${registeredDevice.plugin}${er} not found`);
           return;
         }
-        this.log.debug(`*-- device: ${dev}${registeredDevice.device.name}${db} plugin ${plg}${registeredDevice.plugin}${db} type ${GREEN}${plugin.type}${db}`);
-        if (this.bridgeMode === 'bridge') registeredDevice.device.setBridgedDeviceReachability(false);
-        if (this.bridgeMode === 'childbridge') plugin.commissioningServer?.setReachability(false);
-        if (this.bridgeMode === 'childbridge' && plugin.type === 'AccessoryPlatform') this.setReachableAttribute(registeredDevice.device, false);
-        if (this.bridgeMode === 'childbridge' && plugin.type === 'DynamicPlatform') registeredDevice.device.setBridgedDeviceReachability(false);
+        if (this.bridgeMode === 'bridge' && registeredDevice.device.number) {
+          this.log.debug(`*-- device: ${dev}${registeredDevice.device.name}${db} plugin ${plg}${registeredDevice.plugin}${db} type ${plugin.type}${db}`);
+          registeredDevice.device.setBridgedDeviceReachability(false);
+          registeredDevice.device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
+        }
+        if (this.bridgeMode === 'childbridge') {
+          if (plugin.type === 'DynamicPlatform' && registeredDevice.device.number) {
+            this.log.debug(`*-- device: ${dev}${registeredDevice.device.name}${db} plugin ${plg}${registeredDevice.plugin}${db} type ${plugin.type}${db}`);
+            registeredDevice.device.setBridgedDeviceReachability(false);
+            registeredDevice.device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
+          }
+        }
       });
+      if (this.bridgeMode === 'bridge') {
+        this.log.debug('*Changing reachability to false for Matterbridge');
+        this.matterAggregator?.getClusterServerById(BasicInformation.Cluster.id)?.setReachableAttribute(false);
+        this.matterAggregator?.getClusterServerById(BasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
+        this.commissioningServer?.setReachability(false);
+      }
+      if (this.bridgeMode === 'childbridge') {
+        for (const plugin of this.registeredPlugins) {
+          if (!plugin.enabled || plugin.error) continue;
+          this.log.debug(`*Changing reachability to false for plugin ${plg}${plugin.name}${db} type ${plugin.type}`);
+          plugin.aggregator?.getClusterServerById(BasicInformation.Cluster.id)?.setReachableAttribute(false);
+          plugin.aggregator?.getClusterServerById(BasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
+          plugin.commissioningServer?.setReachability(false);
+        }
+      }
       */
 
       // Close the express server

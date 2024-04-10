@@ -221,17 +221,25 @@ matterbridge -disable [plugin path or plugin name]
 matterbridge -enable [plugin path or plugin name]
 ```
 
-## How to remove the commissioning information for Matterbridge so you can pair it again (bridge mode)
+## How to remove the commissioning information for Matterbridge so you can pair it again (bridge mode). Shutdown Matterbridge before!
 
 ```
 matterbridge -reset
 ```
 
-## How to remove the commissioning information for a registered plugin so you can pair it again (childbridge mode)
+## How to remove the commissioning information for a registered plugin so you can pair it again (childbridge mode). Shutdown Matterbridge before!
 
 ```
 matterbridge -reset [plugin path or plugin name]
 ```
+
+## How to factory reset Matterbridge. Shutdown Matterbridge before!
+
+```
+matterbridge -factoryreset
+```
+
+This will remove the internal starages. All commissioning information will be lost. All plugins will be unregistered.
 
 ## How to create your plugin
 

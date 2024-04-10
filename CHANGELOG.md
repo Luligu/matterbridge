@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- [matterbridge]: Added -factoryreset parameter to factory reset Matterbridge (see the readme.md for more explanations).
 - [matterbridge]: Added -reset parameter to reset the commissioning of Matterbridge (bridge mode).
 - [matterbridge]: Added -reset [plugin] parameter to reset the commissioning of a plugin (childbridge mode).
 - [matterbridge]: Added -port [port] parameter to set the starting port for the commissioning servers (both bridge and childbridge modes).
