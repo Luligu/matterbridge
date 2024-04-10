@@ -233,12 +233,15 @@ export class Matterbridge extends EventEmitter {
       - enable [plugin path]:  enable the plugin from the given absolute or relative path
       - enable [plugin name]:  enable the globally installed plugin with the given name
       - disable [plugin path]: disable the plugin from the given absolute or relative path
-      - disable [plugin name]: disable the globally installed plugin with the given name\n`);
+      - disable [plugin name]: disable the globally installed plugin with the given name
+      - reset [plugin path]:   remove the commissioning for the plugin from the given absolute or relative path
+      - reset [plugin name]:   remove the commissioning for the globally installed plugin\n`);
       process.exit(0);
     }
 
     // Set the first port to use
     this.port = getIntParameter('port') ?? 5540;
+
     // Set Matterbridge logger
     if (hasParameter('debug')) this.debugEnabled = true;
     this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled });
@@ -251,6 +254,7 @@ export class Matterbridge extends EventEmitter {
     this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, 'storage'), logging: false });
     this.log.debug('Creating node storage context for matterbridge');
     this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
+
     // Get the plugins from node storage
     this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
     for (const plugin of this.registeredPlugins) {
@@ -409,6 +413,15 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
     this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
 
+    if (getParameter('reset')) {
+      this.log.debug(`Reset plugin ${getParameter('reset')}`);
+      await this.executeCommandLine(getParameter('reset')!, 'reset');
+      // Closing storage
+      await this.stopStorage();
+      this.emit('shutdown');
+      process.exit(0);
+    }
+
     // Initialize frontend
     await this.initializeFrontend(getIntParameter('frontend'));
 
@@ -566,6 +579,24 @@ export class Matterbridge extends EventEmitter {
           plugin.connected = undefined;
           await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
           this.log.info(`Plugin ${plg}${packageJsonPath}${nf} disabled`);
+        } else {
+          this.log.warn(`Plugin ${plg}${packageJsonPath}${wr} not registerd in matterbridge`);
+        }
+      } else if (mode === 'reset') {
+        const plugin = this.registeredPlugins.find((registeredPlugin) => registeredPlugin.name === packageJson.name);
+        if (plugin) {
+          plugin.loaded = undefined;
+          plugin.started = undefined;
+          plugin.configured = undefined;
+          plugin.connected = undefined;
+          plugin.paired = undefined;
+          plugin.connected = undefined;
+          if (!this.storageManager) this.log.error(`Plugin ${plg}${plugin.name}${er} storageManager not found`);
+          const context = this.storageManager?.createContext(plugin.name);
+          if (!context) this.log.error(`Plugin ${plg}${plugin.name}${er} context not found`);
+          await context?.clearAll();
+          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+          this.log.info(`Reset commissionig for plugin ${plg}${plugin.name}${nf} done! Remove the device from the controller.`);
         } else {
           this.log.warn(`Plugin ${plg}${packageJsonPath}${wr} not registerd in matterbridge`);
         }
@@ -1925,18 +1956,14 @@ export class Matterbridge extends EventEmitter {
           this.log.warn(`***Commissioning removed from fabric ${fabricIndex} for ${plg}${pluginName}${nf}. Resetting the commissioning server ...`);
           await commissioningServer.factoryReset();
           if (pluginName === 'Matterbridge') {
-            this.matterbridgeContext?.delete(`${pluginName}.EndpointStructure`);
-            this.matterbridgeContext?.delete(`${pluginName}.EventHandler`);
-            this.matterbridgeContext?.delete(`${pluginName}.SessionManager`);
+            await this.matterbridgeContext?.clearAll();
           } else {
             for (const plugin of this.registeredPlugins) {
               if (plugin.name === pluginName) {
                 await plugin.platform?.onShutdown('Commissioning removed by the controller');
                 plugin.paired = false;
                 plugin.connected = false;
-                plugin.storageContext?.delete(`${pluginName}.EndpointStructure`);
-                plugin.storageContext?.delete(`${pluginName}.EventHandler`);
-                plugin.storageContext?.delete(`${pluginName}.SessionManager`);
+                await plugin.storageContext?.clearAll();
               }
             }
           }
