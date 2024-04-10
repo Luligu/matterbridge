@@ -4,13 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [1.2.6] - 2024-04-09
 
+### Added
+
+- [matterbridge]: Added -port [port] cli parameter to set the starting port for the commissioning servers (both bridge and childbridge modes).
+
 ### Changed
 
-- [matterbridge.service]: Updated instructions that fix network start issue.
+- [matterbridge.service]: Updated instructions that fix network start issue with systemctl on Linux.
 
 ### Fixed
 
 - [frontend]: Added sudo to the spawned command to execute update and install from frontend (for Linux if needed).
+- [childbridge mode]: Fixed a syncronize issue on the start.
+
 
 ## [1.2.5] - 2024-04-08
 
