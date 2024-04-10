@@ -221,6 +221,12 @@ matterbridge -disable [plugin path or plugin name]
 matterbridge -enable [plugin path or plugin name]
 ```
 
+## How to remove the commissioning information for a registered plugin so you can pair it again
+
+```
+matterbridge -reset [plugin path or plugin name]
+```
+
 ## How to create your plugin
 
 The easiest way is to clone:
@@ -344,7 +350,7 @@ sudo journalctl --vacuum-time=3d
 sudo systemctl enable matterbridge.service
 ```
 
-### Disable Matterbridge to start automatically on boot
+### Disable Matterbridge from starting automatically on boot
 
 ```
 sudo systemctl disable matterbridge.service

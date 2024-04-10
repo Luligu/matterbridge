@@ -1,18 +1,17 @@
 [Unit]
 Description=matterbridge
-After=network.target
+After=network-online.target
 
 [Service]
-Type=notify
-ExecStart=/usr/bin/matterbridge
-WorkingDirectory=/home/pi/Matterbridge
+Type=simple
+ExecStart=/usr/bin/matterbridge -bridge
+WorkingDirectory=/home/<USER>/Matterbridge
 StandardOutput=inherit
 StandardError=inherit
-WatchdogSec=10s
 Restart=always
 RestartSec=10s
 TimeoutStopSec=30s
-User=pi
+User=<USER>
 
 [Install]
 WantedBy=multi-user.target

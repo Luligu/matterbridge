@@ -225,6 +225,7 @@ export class Matterbridge extends EventEmitter {
       - childbridge:           start Matterbridge in childbridge mode
       - frontend [port]:       start the frontend on the given port (default 3000)
       - debug:                 enable debug mode (default false)
+      - factoryreset:          remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
       - list:                  list the registered plugins
       - add [plugin path]:     register the plugin from the given absolute or relative path
       - add [plugin name]:     register the globally installed plugin with the given name
@@ -234,8 +235,8 @@ export class Matterbridge extends EventEmitter {
       - enable [plugin name]:  enable the globally installed plugin with the given name
       - disable [plugin path]: disable the plugin from the given absolute or relative path
       - disable [plugin name]: disable the globally installed plugin with the given name
-      - reset [plugin path]:   remove the commissioning for the plugin from the given absolute or relative path
-      - reset [plugin name]:   remove the commissioning for the globally installed plugin\n`);
+      - reset [plugin path]:   remove the commissioning for the plugin from the given absolute or relative path (childbridge mode). Shutdown Matterbridge before using it!
+      - reset [plugin name]:   remove the commissioning for the globally installed plugin (childbridge mode). Shutdown Matterbridge before using it!\n`);
       process.exit(0);
     }
 
@@ -416,6 +417,15 @@ export class Matterbridge extends EventEmitter {
     if (getParameter('reset')) {
       this.log.debug(`Reset plugin ${getParameter('reset')}`);
       await this.executeCommandLine(getParameter('reset')!, 'reset');
+      // Closing storage
+      await this.stopStorage();
+      this.emit('shutdown');
+      process.exit(0);
+    }
+
+    if (getParameter('factoryreset')) {
+      this.log.info('Reset Matterbridge commissioning information...');
+      await this.matterbridgeContext?.clearAll();
       // Closing storage
       await this.stopStorage();
       this.emit('shutdown');
