@@ -161,6 +161,7 @@ export class Matterbridge extends EventEmitter {
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public debugEnabled = false;
 
+  private port = 5540;
   private log!: AnsiLogger;
   private hasCleanupStarted = false;
   private registeredPlugins: RegisteredPlugin[] = [];
@@ -236,6 +237,8 @@ export class Matterbridge extends EventEmitter {
       process.exit(0);
     }
 
+    // Set the first port to use
+    this.port = getIntParameter('port') ?? 5540;
     // Set Matterbridge logger
     if (hasParameter('debug')) this.debugEnabled = true;
     this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled });
@@ -1603,6 +1606,7 @@ export class Matterbridge extends EventEmitter {
           if (!allStarted) this.log.info(`***Waiting in start matter server interval for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
         });
         if (!allStarted) return;
+        clearInterval(startMatterInterval);
         this.log.info('Starting matter server...');
 
         // Setting reachability to true
@@ -1636,7 +1640,7 @@ export class Matterbridge extends EventEmitter {
           await this.showCommissioningQRCode(plugin.commissioningServer, plugin.storageContext, plugin.nodeContext, plugin.name);
         }
         Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
-        clearInterval(startMatterInterval);
+        //clearInterval(startMatterInterval);
       }, 1000);
     }
   }
@@ -1834,7 +1838,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with softwareVersion ${softwareVersion} softwareVersionString ${softwareVersionString}`);
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with hardwareVersion ${hardwareVersion} hardwareVersionString ${hardwareVersionString}`);
     const commissioningServer = new CommissioningServer({
-      port: undefined,
+      port: this.port++,
       passcode: undefined,
       discriminator: undefined,
       deviceName,
