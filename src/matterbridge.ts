@@ -921,8 +921,10 @@ export class Matterbridge extends EventEmitter {
       return;
     }
 
-    // Register and add the device to matterbridge aggregator in bridge mode
+    // Remove the device from matterbridge aggregator in bridge mode
     if (this.bridgeMode === 'bridge') {
+      device.setBridgedDeviceReachability(false);
+      device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
       this.matterAggregator!.removeBridgedDevice(device);
       this.registeredDevices.forEach((registeredDevice, index) => {
         if (registeredDevice.device === device) {
@@ -938,7 +940,7 @@ export class Matterbridge extends EventEmitter {
     // Only register the device in childbridge mode
     if (this.bridgeMode === 'childbridge') {
       if (plugin.type === 'AccessoryPlatform') {
-        this.log.warn(`Removing bridged device ${dev}${device.deviceName}${wr} (${dev}${device.name}${wr}) for plugin ${plg}${pluginName}${wr} error: AccessoryPlatform not supported in childbridge mode`);
+        this.log.warn(`Removing bridged device ${dev}${device.deviceName}${wr} (${dev}${device.name}${wr}) for plugin ${plg}${pluginName}${wr}: AccessoryPlatform not supported in childbridge mode`);
       } else if (plugin.type === 'DynamicPlatform') {
         this.registeredDevices.forEach((registeredDevice, index) => {
           if (registeredDevice.device === device) {
@@ -946,6 +948,8 @@ export class Matterbridge extends EventEmitter {
             return;
           }
         });
+        device.setBridgedDeviceReachability(false);
+        device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
         plugin.aggregator!.removeBridgedDevice(device);
       }
       this.log.info(`Removed bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
@@ -1830,9 +1834,9 @@ export class Matterbridge extends EventEmitter {
     await storageContext.set('softwareVersionString', softwareVersionString ?? '1.0.0');
     await storageContext.set('hardwareVersion', hardwareVersion ?? 1);
     await storageContext.set('hardwareVersionString', hardwareVersionString ?? '1.0.0');
-    this.log.debug(`**Created commissioning server storage context for ${plg}${pluginName}${db}`);
-    this.log.debug(`**- softwareVersion: ${await storageContext.get('softwareVersion')} softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
-    this.log.debug(`**- hardwareVersion: ${await storageContext.get('hardwareVersion')} hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
+    this.log.debug(`Created commissioning server storage context for ${plg}${pluginName}${db}`);
+    this.log.debug(`- softwareVersion: ${await storageContext.get('softwareVersion')} softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
+    this.log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')} hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
     return storageContext;
   }
 
