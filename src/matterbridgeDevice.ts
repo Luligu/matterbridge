@@ -1319,13 +1319,13 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * This method adds a cluster server for a door lock cluster with default settings.
    *
    */
-  getDefaultDoorLockClusterServer() {
+  getDefaultDoorLockClusterServer(lockState = DoorLock.LockState.Locked, lockType = DoorLock.LockType.Deadbolt) {
     return ClusterServer(
       DoorLockCluster,
       {
         operatingMode: DoorLock.OperatingMode.Normal,
-        lockState: DoorLock.LockState.Locked,
-        lockType: DoorLock.LockType.Deadbolt,
+        lockState,
+        lockType,
         actuatorEnabled: false,
         supportedOperatingModes: { normal: true, vacation: false, privacy: false, noRemoteLockUnlock: false, passage: false },
       },
@@ -1355,8 +1355,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * This method adds a cluster server for a door lock cluster with default settings.
    *
    */
-  createDefaultDoorLockClusterServer() {
-    this.addClusterServer(this.getDefaultDoorLockClusterServer());
+  createDefaultDoorLockClusterServer(lockState = DoorLock.LockState.Locked, lockType = DoorLock.LockType.Deadbolt) {
+    this.addClusterServer(this.getDefaultDoorLockClusterServer(lockState, lockType));
   }
 
   /**
