@@ -2494,7 +2494,7 @@ export class Matterbridge extends EventEmitter {
         return;
       }
 
-      this.log.debug(`*Received frontend command: ${command}:${param}`);
+      this.log.info(`*Received frontend command: ${command}:${param}`);
 
       // Handle the command setpassword from Settings
       if (command === 'setpassword') {
@@ -2543,10 +2543,6 @@ export class Matterbridge extends EventEmitter {
           return;
         }
         this.updateProcess();
-      }
-      // Handle the command update from Header
-      if (command === 'update') {
-        this.log.warn(`The /api/command/${command} is not yet implemented`);
       }
       // Handle the command installplugin from Home
       if (command === 'installplugin') {
