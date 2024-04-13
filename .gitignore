@@ -52,3 +52,4 @@ node_storage
 Eve door_history.json
 
 Dockerfile
+docker-compose.yml

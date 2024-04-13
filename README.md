@@ -239,7 +239,7 @@ matterbridge -reset [plugin path or plugin name]
 matterbridge -factoryreset
 ```
 
-This will remove the internal starages. All commissioning information will be lost. All plugins will be unregistered.
+This will reset the internal starages. All commissioning informations will be lost. All plugins will be unregistered.
 
 ## How to create your plugin
 
@@ -315,7 +315,7 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/matterbridge -bridge
+ExecStart=/usr/bin/matterbridge -bridge -service
 WorkingDirectory=/home/<USER>/Matterbridge
 StandardOutput=inherit
 StandardError=inherit

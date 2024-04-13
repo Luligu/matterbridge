@@ -173,3 +173,4 @@ bridge-groups.json
 node_storage
 
 Dockerfile
+docker-compose.yml

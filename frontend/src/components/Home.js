@@ -1,5 +1,5 @@
 // Home.js
-import React, { useEffect, useState, ChangeEvent } from 'react';
+import React, { useEffect, useState } from 'react';
 import QRCode from 'qrcode.react';
 import { StatusIndicator } from './StatusIndicator';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
@@ -8,7 +8,6 @@ import { sendCommandToMatterbridge } from './Header';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import TextField from '@mui/material/TextField';
-import Fab from '@mui/material/Fab';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -18,6 +17,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 
 function Home() {
   const [qrCode, setQrCode] = useState('');
+  const [pairingCode, setPairingCode] = useState('');
   const [systemInfo, setSystemInfo] = useState({});
   const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
   const [plugins, setPlugins] = useState([]);
@@ -52,13 +52,23 @@ function Home() {
  /*
  */
   useEffect(() => {
+    // Fetch manual pairingCode
+    fetch('/api/pairing-code')
+      .then(response => response.json())
+      .then(data => { 
+        setPairingCode(data.manualPairingCode); 
+        console.log('/api/pairing-code:', data.manualPairingCode);
+        localStorage.setItem('pairingCode', data.manualPairingCode); // Save the QR code in localStorage
+      })
+      .catch(error => console.error('Error fetching QR code:', error));
+
     // Fetch QR Code
     fetch('/api/qr-code')
       .then(response => response.json())
       .then(data => { 
-      setQrCode(data.qrPairingCode); 
-      console.log('/api/qr-code:', data.qrPairingCode);
-      localStorage.setItem('qrCode', data.qrPairingCode); // Save the QR code in localStorage
+        setQrCode(data.qrPairingCode); 
+        console.log('/api/qr-code:', data.qrPairingCode);
+        localStorage.setItem('qrCode', data.qrPairingCode); // Save the QR code in localStorage
       })
       .catch(error => console.error('Error fetching QR code:', error));
 
@@ -87,10 +97,12 @@ function Home() {
       setSelectedRow(-1);
       setSelectedPluginName('none');
       setQrCode(localStorage.getItem('qrCode'));
+      setPairingCode(localStorage.getItem('pairingCode'));
     } else {
       setSelectedRow(row);
       setSelectedPluginName(plugins[row].name);
       setQrCode(plugins[row].qrPairingCode);
+      setPairingCode(plugins[row].manualPairingCode);
     }
     console.log('Selected row:', row, 'plugin:', plugins[row].name, 'qrcode:', plugins[row].qrPairingCode);
   };
@@ -116,7 +128,7 @@ function Home() {
   return (
     <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0', padding: '0' }}>
       <div style={{ display: 'flex', flexDirection: 'column', flex: '0 1 auto', gap: '20px' }}>
-        {qrCode && <QRDiv qrText={qrCode} qrWidth={256} topText="QRCode" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName}/>}
+        {qrCode && <QRDiv qrText={qrCode} pairingText={pairingCode} qrWidth={256} topText="QRCode" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName}/>}
         {systemInfo && <SystemInfoTable systemInfo={systemInfo}/>}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', gap: '20px' }}>
@@ -300,7 +312,7 @@ function Home() {
 
   // This function takes four parameters: qrText, qrWidth, topText, and bottomText
   // It returns a div element with a rectangle, a QR code, and two texts
-  function QRDiv({ qrText, qrWidth, topText, bottomText }) {
+  function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText }) {
     return (
       <div className="MbfWindowDiv" style={{alignItems: 'center'}}>
         <div className="MbfWindowHeader">
@@ -309,7 +321,7 @@ function Home() {
         <QRCode value={qrText} size={qrWidth} bgColor='#9e9e9e' style={{ margin: '20px' }}/>
         <div  className="MbfWindowFooter">
           <div>
-            <p style={{ margin: 0, textAlign: 'center' }}>Scan me to pair</p>
+            <p style={{ margin: 0, textAlign: 'center' }}>Use {pairingText} or scan the QR to pair</p>
             <p className="text-color-selected" style={{ margin: 0, textAlign: 'center' }}>{bottomText}</p>
           </div>
         </div>

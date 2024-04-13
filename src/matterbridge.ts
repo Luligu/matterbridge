@@ -323,13 +323,13 @@ export class Matterbridge extends EventEmitter {
     if (process.platform === 'win32' && command === 'npm') {
       command = command + '.cmd';
     }
-    if (process.platform === 'linux' && command === 'npm') {
+    if (process.platform === 'linux' && command === 'npm' && !hasParameter('docker')) {
       args.unshift(command);
       command = 'sudo';
     }
     return new Promise((resolve, reject) => {
       const childProcess = spawn(command, args, {
-        stdio: 'inherit',
+        stdio: ['inherit', 'pipe', 'pipe'],
       });
 
       childProcess.on('error', (err) => {
@@ -355,6 +355,24 @@ export class Matterbridge extends EventEmitter {
       childProcess.on('disconnect', () => {
         this.log.info('Child process has been disconnected from the parent');
       });
+
+      if (childProcess.stdout) {
+        childProcess.stdout.on('data', (data) => {
+          // Convert the Buffer data to a string.
+          const message = data.toString();
+          this.log.info(message);
+          // TODO: Send this message to the frontend.
+        });
+      }
+
+      if (childProcess.stderr) {
+        childProcess.stderr.on('data', (data) => {
+          // Convert the Buffer data to a string.
+          const message = data.toString();
+          this.log.error(message);
+          // TODO: Handle the error message.
+        });
+      }
     });
   }
 
@@ -2349,7 +2367,7 @@ export class Matterbridge extends EventEmitter {
    *
    * @param port The port number to run the frontend server on. Default is 3000.
    */
-  async initializeFrontend(port: number = 3000): Promise<void> {
+  async initializeFrontend(port: number = 8283): Promise<void> {
     this.log.debug(`Initializing the frontend on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
     this.expressApp = express();
 
@@ -2371,6 +2389,23 @@ export class Matterbridge extends EventEmitter {
         else res.json({ valid: false });
       } catch (error) {
         res.json({ valid: false });
+      }
+    });
+
+    // Endpoint to provide manual pairing code
+    this.expressApp.get('/api/pairing-code', (req, res) => {
+      this.log.debug('The frontend sent /api/pairing-code');
+      if (!this.matterbridgeContext) {
+        this.log.error('/api/pairing-code matterbridgeContext not found');
+        res.json([]);
+        return;
+      }
+      try {
+        const qrData = { qrPairingCode: this.matterbridgeContext.get('qrPairingCode'), manualPairingCode: this.matterbridgeContext.get('manualPairingCode') };
+        res.json(qrData);
+      } catch (error) {
+        if (this.bridgeMode === 'bridge') this.log.error('qrPairingCode for /api/qr-code not found');
+        res.json({});
       }
     });
 

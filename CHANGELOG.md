@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.7] - 2024-04-14
+
+### Changed
+
+- [matterbridge]: The default frontend port is now 8283!.
+- [matterbridge.service]: Updated matterbridge.service instructions to fix restart when Matterbridge runs as a daemon with systemctl.
+
+### Added
+
+- [frontend]: Added manual pairing code. Allows to pair Matterbridge without using the phone.
+- [MatterbridgeDevice]: Added api to create child endpoints (see matterbridge-example-dynamic-platform).
+- [MatterbridgeDevice]: Added FlowMeasurement cluster.
+
 ## [1.2.6] - 2024-04-11
 
 ### Added
