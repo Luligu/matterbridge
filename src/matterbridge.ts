@@ -24,7 +24,7 @@
 import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
 
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
-import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr } from 'node-ansi-logger';
+import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr, RED, GREEN } from 'node-ansi-logger';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { promises as fs } from 'fs';
 import { ExecException, exec, spawn } from 'child_process';
@@ -306,26 +306,6 @@ export class Matterbridge extends EventEmitter {
     Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
     Logger.format = Format.ANSI;
 
-    // Initialize NodeStorage
-    /*
-    this.log.debug('Creating node storage manager');
-    this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, 'storage'), logging: false });
-    this.log.debug('Creating node storage context for matterbridge');
-    this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
-    // Get the plugins from node storage
-    this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
-    for (const plugin of this.registeredPlugins) {
-      this.log.debug(`Creating node storage context for plugin ${plugin.name}`);
-      plugin.nodeContext = await this.nodeStorage.createStorage(plugin.name);
-      await plugin.nodeContext.set<string>('name', plugin.name);
-      await plugin.nodeContext.set<string>('type', plugin.type);
-      await plugin.nodeContext.set<string>('path', plugin.path);
-      await plugin.nodeContext.set<string>('version', plugin.version);
-      await plugin.nodeContext.set<string>('description', plugin.description);
-      await plugin.nodeContext.set<string>('author', plugin.author);
-    }
-    */
-
     // Parse command line
     this.parseCommandLine();
   }
@@ -385,14 +365,25 @@ export class Matterbridge extends EventEmitter {
    */
   private async parseCommandLine(): Promise<void> {
     if (hasParameter('list')) {
-      this.log.info('Registered plugins:');
+      this.log.info('│ Registered plugins');
       this.registeredPlugins.forEach((plugin, index) => {
-        if (index === this.registeredPlugins.length - 1) {
-          this.log.info(`└─┬─ ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${YELLOW}${plugin.enabled ? 'enabled' : 'disabled'}${nf}`);
-          this.log.info(`  └─ ${db}${plugin.path}${db}`);
+        if (index !== this.registeredPlugins.length - 1) {
+          this.log.info(`├─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${plugin.enabled ? GREEN : RED}enabled ${plugin.paired ? GREEN : RED}paired${nf}`);
+          this.log.info(`│ └─ entry ${UNDERLINE}${db}${plugin.path}${UNDERLINEOFF}${db}`);
         } else {
-          this.log.info(`├─┬─ ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${YELLOW}${plugin.enabled ? 'enabled' : 'disabled'}${nf}`);
-          this.log.info(`│ └─ ${db}${plugin.path}${db}`);
+          this.log.info(`└─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${plugin.enabled ? GREEN : RED}enabled ${plugin.paired ? GREEN : RED}paired${nf}`);
+          this.log.info(`  └─ entry ${UNDERLINE}${db}${plugin.path}${UNDERLINEOFF}${db}`);
+        }
+      });
+      const serializedRegisteredDevices = await this.nodeContext?.get<SerializedMatterbridgeDevice[]>('devices', []);
+      this.log.info('│ Registered devices');
+      serializedRegisteredDevices?.forEach((device, index) => {
+        if (index !== serializedRegisteredDevices.length - 1) {
+          this.log.info(`├─┬─ plugin ${plg}${device.pluginName}${nf} device: ${dev}${device.deviceName}${nf} uniqueId: ${YELLOW}${device.uniqueId}${nf}`);
+          this.log.info(`│ └─ endpoint ${RED}${device.endpoint}${nf} ${typ}${device.endpointName}${nf} ${debugStringify(device.clusterServersId)}`);
+        } else {
+          this.log.info(`└─┬─ plugin ${plg}${device.pluginName}${nf} device: ${dev}${device.deviceName}${nf} uniqueId: ${YELLOW}${device.uniqueId}${nf}`);
+          this.log.info(`  └─ endpoint ${RED}${device.endpoint}${nf} ${typ}${device.endpointName}${nf} ${debugStringify(device.clusterServersId)}`);
         }
       });
       this.emit('shutdown');
@@ -763,7 +754,9 @@ export class Matterbridge extends EventEmitter {
           this.log.info('Saving registered devices...');
           const serializedRegisteredDevices: SerializedMatterbridgeDevice[] = [];
           this.registeredDevices.forEach((registeredDevice) => {
-            serializedRegisteredDevices.push(registeredDevice.device.serialize(registeredDevice.plugin));
+            const serializedMatterbridgeDevice = registeredDevice.device.serialize(registeredDevice.plugin);
+            //this.log.info(`- ${serializedMatterbridgeDevice.deviceName}${rs}\n`, serializedMatterbridgeDevice);
+            serializedRegisteredDevices.push(serializedMatterbridgeDevice);
           });
           await this.nodeContext.set<SerializedMatterbridgeDevice[]>('devices', serializedRegisteredDevices);
           this.log.info('Saved registered devices');
@@ -937,10 +930,10 @@ export class Matterbridge extends EventEmitter {
       if (plugin.addedDevices !== undefined) plugin.addedDevices--;
     }
 
-    // Only register the device in childbridge mode
+    // Remove the device in childbridge mode
     if (this.bridgeMode === 'childbridge') {
       if (plugin.type === 'AccessoryPlatform') {
-        this.log.warn(`Removing bridged device ${dev}${device.deviceName}${wr} (${dev}${device.name}${wr}) for plugin ${plg}${pluginName}${wr}: AccessoryPlatform not supported in childbridge mode`);
+        this.log.info(`Removing bridged device ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}: AccessoryPlatform not supported in childbridge mode`);
       } else if (plugin.type === 'DynamicPlatform') {
         this.registeredDevices.forEach((registeredDevice, index) => {
           if (registeredDevice.device === device) {
@@ -967,7 +960,7 @@ export class Matterbridge extends EventEmitter {
   async removeAllBridgedDevices(pluginName: string): Promise<void> {
     const plugin = this.findPlugin(pluginName);
     if (this.bridgeMode === 'childbridge' && plugin?.type === 'AccessoryPlatform') {
-      this.log.warn(`Removing devices for plugin ${plg}${pluginName}${wr} error: AccessoryPlatform not supported in childbridge mode`);
+      this.log.info(`Removing devices for plugin ${plg}${pluginName}${nf}: AccessoryPlatform not supported in childbridge mode`);
       return;
     }
     const devicesToRemove: RegisteredDevice[] = [];
@@ -2494,7 +2487,7 @@ export class Matterbridge extends EventEmitter {
         return;
       }
 
-      this.log.info(`*Received frontend command: ${command}:${param}`);
+      this.log.info(`Received frontend command: ${command}:${param}`);
 
       // Handle the command setpassword from Settings
       if (command === 'setpassword') {

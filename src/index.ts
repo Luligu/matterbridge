@@ -40,6 +40,7 @@ export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
 export * from './AirQualityCluster.js';
 export * from './TvocCluster.js';
+export * from './utils.js';
 
 async function main() {
   // eslint-disable-next-line no-console

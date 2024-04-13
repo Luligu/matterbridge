@@ -23,6 +23,7 @@
 
 import {
   BasicInformationCluster,
+  BooleanState,
   BooleanStateCluster,
   BridgedDeviceBasicInformationCluster,
   ClusterServer,
@@ -31,10 +32,14 @@ import {
   ColorControlCluster,
   DoorLock,
   DoorLockCluster,
+  ElectricalMeasurement,
   ElectricalMeasurementCluster,
+  FlowMeasurement,
+  FlowMeasurementCluster,
   Groups,
   Identify,
   IdentifyCluster,
+  IlluminanceMeasurement,
   IlluminanceMeasurementCluster,
   LevelControl,
   LevelControlCluster,
@@ -45,6 +50,7 @@ import {
   PowerSource,
   PowerSourceCluster,
   PowerSourceConfigurationCluster,
+  PressureMeasurement,
   PressureMeasurementCluster,
   RelativeHumidityMeasurement,
   RelativeHumidityMeasurementCluster,
@@ -63,16 +69,17 @@ import {
   WindowCoveringCluster,
   createDefaultGroupsClusterServer,
   createDefaultScenesClusterServer,
+  getClusterNameById,
 } from '@project-chip/matter-node.js/cluster';
 import { ClusterId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
-import { Device, DeviceClasses, DeviceTypeDefinition, EndpointOptions } from '@project-chip/matter-node.js/device';
+import { Device, DeviceClasses, DeviceTypeDefinition, Endpoint, EndpointOptions } from '@project-chip/matter-node.js/device';
 import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
 
 import { MatterHistory, Sensitivity, WeatherTrend, TemperatureDisplayUnits } from 'matter-history';
 import { EveHistory, EveHistoryCluster } from 'matter-history'; //'./EveHistoryCluster.js';
 
 import { AirQuality, AirQualityCluster } from './AirQualityCluster.js';
-import { AnsiLogger } from 'node-ansi-logger';
+import { AnsiLogger, TimestampFormat } from 'node-ansi-logger';
 import { createHash } from 'crypto';
 import { TvocMeasurement, TvocMeasurementCluster } from './TvocCluster.js';
 
@@ -148,16 +155,18 @@ export const airQualitySensor = DeviceTypeDefinition({
 
 export interface SerializedMatterbridgeDevice {
   pluginName: string;
-  serialNumber: string;
   deviceName: string;
+  serialNumber: string;
   uniqueId: string;
   deviceType: AtLeastOne<DeviceTypeDefinition>;
+  endpoint: EndpointNumber | undefined;
   endpointName: string;
   clusterServersId: ClusterId[];
 }
 
 export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device, MatterbridgeDeviceCommands>(Device) {
   public static bridgeMode = '';
+  log: AnsiLogger;
   serialNumber: string | undefined = undefined;
   deviceName: string | undefined = undefined;
   uniqueId: string | undefined = undefined;
@@ -170,6 +179,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   constructor(definition: DeviceTypeDefinition, options: EndpointOptions = {}) {
     super(definition, options);
+    this.log = new AnsiLogger({ logName: 'MatterbridgeDevice', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: true });
   }
 
   /**
@@ -186,6 +196,62 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     }
   }
 
+  public addChildDeviceTypeWithClusterServer(deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]) {
+    this.log.debug('addChildDeviceTypeWithClusterServer:');
+    const child = new Endpoint(deviceTypes);
+    deviceTypes.forEach((deviceType) => {
+      this.log.debug(`- with deviceType: ${deviceType.code}-${deviceType.name}`);
+      deviceType.requiredServerClusters.forEach((clusterId) => {
+        if (!includeServerList.includes(clusterId)) includeServerList.push(clusterId);
+      });
+    });
+    includeServerList.forEach((clusterId) => {
+      this.log.debug(`- with cluster: ${clusterId}-${getClusterNameById(clusterId)}`);
+    });
+
+    if (includeServerList.includes(Identify.Cluster.id)) {
+      child.addClusterServer(this.getDefaultIdentifyClusterServer());
+    }
+    if (includeServerList.includes(Groups.Cluster.id)) {
+      child.addClusterServer(this.getDefaultGroupsClusterServer());
+    }
+    if (includeServerList.includes(Scenes.Cluster.id)) {
+      child.addClusterServer(this.getDefaultScenesClusterServer());
+    }
+    if (includeServerList.includes(OnOff.Cluster.id)) {
+      child.addClusterServer(this.getDefaultOnOffClusterServer());
+    }
+    if (includeServerList.includes(TemperatureMeasurement.Cluster.id)) {
+      child.addClusterServer(this.getDefaultTemperatureMeasurementClusterServer());
+    }
+    if (includeServerList.includes(RelativeHumidityMeasurement.Cluster.id)) {
+      child.addClusterServer(this.getDefaultRelativeHumidityMeasurementClusterServer());
+    }
+    if (includeServerList.includes(PressureMeasurement.Cluster.id)) {
+      child.addClusterServer(this.getDefaultPressureMeasurementClusterServer());
+    }
+    if (includeServerList.includes(FlowMeasurement.Cluster.id)) {
+      child.addClusterServer(this.getDefaultFlowMeasurementClusterServer());
+    }
+    if (includeServerList.includes(BooleanState.Cluster.id)) {
+      child.addClusterServer(this.getDefaultBooleanStateClusterServer());
+    }
+    if (includeServerList.includes(OccupancySensing.Cluster.id)) {
+      child.addClusterServer(this.getDefaultOccupancySensingClusterServer());
+    }
+    if (includeServerList.includes(IlluminanceMeasurement.Cluster.id)) {
+      child.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer());
+    }
+    if (includeServerList.includes(EveHistory.Cluster.id) && !this.hasClusterServer(EveHistory.Cluster)) {
+      child.addClusterServer(this.getDefaultStaticEveHistoryClusterServer());
+    }
+    if (includeServerList.includes(ElectricalMeasurement.Cluster.id) && !this.hasClusterServer(ElectricalMeasurement.Cluster)) {
+      child.addClusterServer(this.getDefaultElectricalMeasurementClusterServer());
+    }
+    this.addChildEndpoint(child);
+    return child;
+  }
+
   /**
    * Serializes the Matterbridge device into a serialized object.
    *
@@ -199,6 +265,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       deviceName: this.deviceName!,
       uniqueId: this.uniqueId!,
       deviceType: this.getDeviceTypes(),
+      endpoint: this.number,
       endpointName: this.name,
       clusterServersId: [],
     };
@@ -1450,6 +1517,34 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Get a default flow measurement cluster server.
+   *
+   * @param measuredValue - The measured value of the temperature.
+   */
+  getDefaultFlowMeasurementClusterServer(measuredValue: number = 0) {
+    return ClusterServer(
+      FlowMeasurementCluster,
+      {
+        measuredValue,
+        minMeasuredValue: null,
+        maxMeasuredValue: null,
+        tolerance: 0,
+      },
+      {},
+      {},
+    );
+  }
+
+  /**
+   * Creates a default flow measurement cluster server.
+   *
+   * @param measuredValue - The measured value of the temperature.
+   */
+  createDefaultFlowMeasurementClusterServer(measuredValue: number = 0) {
+    this.addClusterServer(this.getDefaultFlowMeasurementClusterServer(measuredValue));
+  }
+
+  /**
    * Get a default temperature measurement cluster server.
    *
    * @param measuredValue - The measured value of the temperature.
@@ -1727,10 +1822,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param localTemperature - The local temperature value in degrees Celsius. Defaults to 23.
    * @param occupiedHeatingSetpoint - The occupied heating setpoint value in degrees Celsius. Defaults to 21.
    * @param occupiedCoolingSetpoint - The occupied cooling setpoint value in degrees Celsius. Defaults to 25.
+   * @param minSetpointDeadBand - The minimum setpoint dead band value.
    */
-  getDefaultThermostatClusterServer(localTemperature: number = 23, occupiedHeatingSetpoint: number = 21, occupiedCoolingSetpoint: number = 25) {
+  getDefaultThermostatClusterServer(localTemperature: number = 23, occupiedHeatingSetpoint: number = 21, occupiedCoolingSetpoint: number = 25, minSetpointDeadBand: number = 1) {
     return ClusterServer(
-      ThermostatCluster.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling /*, Thermostat.Feature.AutoMode*/),
+      ThermostatCluster.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode),
       {
         localTemperature: localTemperature * 100,
         occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
@@ -1743,10 +1839,10 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         maxCoolSetpointLimit: 5000,
         absMinCoolSetpointLimit: 0,
         absMaxCoolSetpointLimit: 5000,
-        //minSetpointDeadBand: 1,
+        minSetpointDeadBand,
         systemMode: Thermostat.SystemMode.Off,
         controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
-        //thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
+        thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
       },
       {
         setpointRaiseLower: async ({ request, attributes }) => {
@@ -1758,15 +1854,17 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {},
     );
   }
+
   /**
-   * Creates a default thermostat cluster server with the specified parameters.
+   * Creates and adds a default thermostat cluster server to the device.
    *
-   * @param localTemperature - The local temperature value in degrees Celsius. Defaults to 23.
-   * @param occupiedHeatingSetpoint - The occupied heating setpoint value in degrees Celsius. Defaults to 21.
-   * @param occupiedCoolingSetpoint - The occupied cooling setpoint value in degrees Celsius. Defaults to 25.
+   * @param localTemperature - The local temperature value.
+   * @param occupiedHeatingSetpoint - The occupied heating setpoint value.
+   * @param occupiedCoolingSetpoint - The occupied cooling setpoint value.
+   * @param minSetpointDeadBand - The minimum setpoint dead band value.
    */
-  createDefaultThermostatClusterServer(localTemperature: number = 23, occupiedHeatingSetpoint: number = 21, occupiedCoolingSetpoint: number = 25) {
-    this.addClusterServer(this.getDefaultThermostatClusterServer(localTemperature, occupiedHeatingSetpoint, occupiedCoolingSetpoint));
+  createDefaultThermostatClusterServer(localTemperature: number = 23, occupiedHeatingSetpoint: number = 21, occupiedCoolingSetpoint: number = 25, minSetpointDeadBand: number = 1) {
+    this.addClusterServer(this.getDefaultThermostatClusterServer(localTemperature, occupiedHeatingSetpoint, occupiedCoolingSetpoint, minSetpointDeadBand));
   }
 
   /**
