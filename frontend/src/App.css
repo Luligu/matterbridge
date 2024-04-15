@@ -250,6 +250,14 @@ table {
   gap: 20px;
 };
 
+/* Define the style for the body element */
+.MbfWindowBody2 {
+  align-items: left;
+  margin: 0px;
+  padding: 10px;
+  gap: 20px;
+};
+
 /*
 @media (max-width: 600px) {
   .header {

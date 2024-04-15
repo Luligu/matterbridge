@@ -113,6 +113,6 @@ export namespace AirQuality {
   export const Complete: Complete = CompleteInstance;
 }
 
-export type AirQualityCluster = typeof AirQuality.Cluster;
+export type AirQualityCluster = AirQuality.Cluster;
 export const AirQualityCluster = AirQuality.Cluster;
 ClusterRegistry.register(AirQuality.Complete);

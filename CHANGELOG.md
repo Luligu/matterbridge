@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.8] - 2024-04-15
+
+### Changed
+- [matter.js]: Update to @project-chip/matter-node.js v. 0.8.1
+
+### Added
+
+- [frontend]: Added log for update and plugin install (soon the full log).
+- [extension]: Started implementation of zigbee2MQTT internal extension.
+
+### Fixed
+
+- [spawn]: Fixed under windows.
+
 ## [1.2.7] - 2024-04-14
 
 ### Changed

@@ -5,6 +5,8 @@ import { StatusIndicator } from './StatusIndicator';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import { Tooltip, IconButton, Button, createTheme,  } from '@mui/material';
 import { sendCommandToMatterbridge } from './Header';
+import WebSocketComponent from './WebSocketComponent';
+
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import TextField from '@mui/material/TextField';
@@ -192,6 +194,16 @@ function Home() {
             ))}
           </tbody>
         </table>
+
+        <div className="MbfWindowDiv" style={{alignItems: 'left', flex: '1 1 auto', overflow: 'auto'}}>
+          <div className="MbfWindowHeader">
+            <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>Log</p>
+          </div>
+          <div style={{ margin: '0px', padding: '0px', alignItems: 'left'}}>
+            <WebSocketComponent/>
+          </div>
+        </div>
+
       </div>
     </div>
   );}

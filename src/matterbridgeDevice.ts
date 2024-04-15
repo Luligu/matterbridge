@@ -76,7 +76,7 @@ import { Device, DeviceClasses, DeviceTypeDefinition, Endpoint, EndpointOptions 
 import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
 
 import { MatterHistory, Sensitivity, WeatherTrend, TemperatureDisplayUnits } from 'matter-history';
-import { EveHistory, EveHistoryCluster } from 'matter-history'; //'./EveHistoryCluster.js';
+import { EveHistory, EveHistoryCluster } from 'matter-history';
 
 import { AirQuality, AirQualityCluster } from './AirQualityCluster.js';
 import { AnsiLogger, TimestampFormat } from 'node-ansi-logger';
@@ -242,10 +242,10 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(IlluminanceMeasurement.Cluster.id)) {
       child.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer());
     }
-    if (includeServerList.includes(EveHistory.Cluster.id) && !this.hasClusterServer(EveHistory.Cluster)) {
+    if (includeServerList.includes(EveHistory.Cluster.id) && !this.hasClusterServer(EveHistory.Complete)) {
       child.addClusterServer(this.getDefaultStaticEveHistoryClusterServer());
     }
-    if (includeServerList.includes(ElectricalMeasurement.Cluster.id) && !this.hasClusterServer(ElectricalMeasurement.Cluster)) {
+    if (includeServerList.includes(ElectricalMeasurement.Cluster.id) && !this.hasClusterServer(ElectricalMeasurement.Complete)) {
       child.addClusterServer(this.getDefaultElectricalMeasurementClusterServer());
     }
     this.addChildEndpoint(child);

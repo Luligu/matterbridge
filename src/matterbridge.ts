@@ -33,6 +33,7 @@ import EventEmitter from 'events';
 import express from 'express';
 import os from 'os';
 import path from 'path';
+import WebSocket, { WebSocketServer } from 'ws';
 
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
 import {
@@ -183,6 +184,7 @@ export class Matterbridge extends EventEmitter {
   private nodeContext: NodeStorage | undefined;
   private expressApp: express.Express | undefined;
   private expressServer: Server | undefined;
+  private webSocketServer: WebSocketServer | undefined;
 
   private storageManager: StorageManager | undefined;
   private matterbridgeContext: StorageContext | undefined;
@@ -210,11 +212,78 @@ export class Matterbridge extends EventEmitter {
   static async loadInstance(initialize = false) {
     if (!Matterbridge.instance) {
       // eslint-disable-next-line no-console
-      console.log(wr + 'Matterbridge instance does not exists!', initialize ? 'Initializing...' : 'Not initializing...', rs);
+      if (hasParameter('debug')) console.log(wr + 'Creating a new instance of Matterbridge.', initialize ? 'Initializing...' : 'Not initializing...', rs);
       Matterbridge.instance = new Matterbridge();
       if (initialize) await Matterbridge.instance.initialize();
     }
     return Matterbridge.instance;
+  }
+
+  /**
+   * Initializes the Matterbridge instance as extension for zigbee2mqtt.
+   *
+   * @returns A Promise that resolves when the initialization is complete.
+   */
+  public async initializeAsExtension(dataPath: string, debugEnabled: boolean) {
+    // Set the first port to use
+    this.port = 5560;
+
+    // Set Matterbridge logger
+    this.debugEnabled = debugEnabled;
+    this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled });
+    this.log.debug('Matterbridge extension is starting...');
+
+    // Initialize NodeStorage
+    this.matterbridgeDirectory = dataPath;
+    this.log.debug('Creating node storage manager dir: ' + path.join(this.matterbridgeDirectory, 'node_storage'));
+    this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, 'node_storage'), logging: false });
+    this.log.debug('Creating node storage context for matterbridge: matterbridge');
+    this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
+
+    // Log system info and create .matterbridge directory
+    await this.logNodeAndSystemInfo();
+    this.matterbridgeDirectory = dataPath;
+
+    // Set matter.js logger level and format
+    Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
+    Logger.format = Format.ANSI;
+
+    // Start the storage and create matterbridgeContext
+    await this.startStorage('json', path.join(this.matterbridgeDirectory, 'matterbridge.json'));
+    this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
+    if (!this.storageManager || !this.matterbridgeContext) return;
+    await this.matterbridgeContext.set('softwareVersion', 1);
+    await this.matterbridgeContext.set('softwareVersionString', this.matterbridgeVersion);
+    await this.matterbridgeContext.set('hardwareVersion', 0);
+    await this.matterbridgeContext.set('hardwareVersionString', '0.0.1');
+    this.createMatterServer(this.storageManager);
+    this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
+    this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
+    this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
+    this.matterAggregator = await this.createMatterAggregator(this.matterbridgeContext);
+    this.log.debug('Adding matterbridge aggregator to commissioning server');
+    this.commissioningServer.addDevice(this.matterAggregator);
+    this.log.debug('Adding matterbridge commissioning server to matter server');
+    await this.matterServer?.addCommissioningServer(this.commissioningServer, { uniqueStorageKey: 'Matterbridge' });
+    this.log.debug(`Setting reachability to true for ${plg}Matterbridge${db}`);
+    this.commissioningServer.setReachability(true);
+    this.log.debug('Starting matter server...');
+    await this.startMatterServer();
+    this.log.info('Matter server started');
+    await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
+  }
+
+  /**
+   * Close the Matterbridge instance as extension for zigbee2mqtt.
+   *
+   * @returns A Promise that resolves when the initialization is complete.
+   */
+  public async closeAsExtension() {
+    // Closing matter
+    await this.stopMatter();
+
+    // Closing storage
+    await this.stopStorage();
   }
 
   /**
@@ -308,72 +377,6 @@ export class Matterbridge extends EventEmitter {
 
     // Parse command line
     this.parseCommandLine();
-  }
-
-  /**
-   * Spawns a child process with the given command and arguments.
-   * @param command - The command to execute.
-   * @param args - The arguments to pass to the command (default: []).
-   * @returns A promise that resolves when the child process exits successfully, or rejects if there is an error.
-   */
-  private async spawnCommand(command: string, args: string[] = []): Promise<void> {
-    /*
-    npm > npm.cmd on windows
-    */
-    if (process.platform === 'win32' && command === 'npm') {
-      command = command + '.cmd';
-    }
-    if (process.platform === 'linux' && command === 'npm' && !hasParameter('docker')) {
-      args.unshift(command);
-      command = 'sudo';
-    }
-    return new Promise((resolve, reject) => {
-      const childProcess = spawn(command, args, {
-        stdio: ['inherit', 'pipe', 'pipe'],
-      });
-
-      childProcess.on('error', (err) => {
-        this.log.error(`Failed to start child process: ${err.message}`);
-        reject(err); // Reject the promise on error
-      });
-
-      childProcess.on('close', (code) => {
-        if (code === 0) {
-          this.log.info(`Child process stdio streams have closed with code ${code}`);
-          resolve();
-        } else {
-          this.log.error(`Child process stdio streams have closed with code ${code}`);
-          reject(new Error(`Process exited with code ${code}`));
-        }
-      });
-
-      // The 'exit' event might be redundant here since 'close' is also being handled
-      childProcess.on('exit', (code, signal) => {
-        this.log.info(`Child process exited with code ${code} and signal ${signal}`);
-      });
-
-      childProcess.on('disconnect', () => {
-        this.log.info('Child process has been disconnected from the parent');
-      });
-
-      if (childProcess.stdout) {
-        childProcess.stdout.on('data', (data) => {
-          // Convert the Buffer data to a string.
-          const message = data.toString();
-          this.log.info(message);
-          // TODO: Send this message to the frontend.
-        });
-      }
-
-      if (childProcess.stderr) {
-        childProcess.stderr.on('data', (data) => {
-          // Convert the Buffer data to a string.
-          const message = data.toString();
-          this.log.error(message);
-          // TODO: Handle the error message.
-        });
-      }
-    });
   }
 
   /**
@@ -760,6 +763,24 @@ export class Matterbridge extends EventEmitter {
         this.expressApp.removeAllListeners();
         this.expressApp = undefined;
       }
+      // Close the WebSocket server
+      if (this.webSocketServer) {
+        // Close all active connections
+        this.webSocketServer.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.close();
+          }
+        });
+        this.webSocketServer.close((error) => {
+          if (error) {
+            this.log.error(`Error closing WebSocket server: ${error}`);
+          } else {
+            this.log.debug('WebSocket server closed successfully');
+          }
+        });
+        this.webSocketServer = undefined;
+      }
+
       /*const cleanupTimeout1 =*/ setTimeout(async () => {
         // Closing matter
         await this.stopMatter();
@@ -808,7 +829,7 @@ export class Matterbridge extends EventEmitter {
             Matterbridge.instance = undefined;
             this.emit('shutdown');
           }
-        }, 1 * 1000);
+        }, 2 * 1000);
         //cleanupTimeout2.unref();
       }, 3 * 1000);
       //cleanupTimeout1.unref();
@@ -2215,11 +2236,6 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Root Directory: ${this.rootDirectory}`);
 
     // Global node_modules directory
-    /*
-    this.globalModulesDirectory = await this.getGlobalNodeModules();
-    this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory;
-    this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
-    */
     if (this.nodeContext) this.globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
     this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
     this.getGlobalNodeModules()
@@ -2284,11 +2300,6 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Matterbridge Version: ${this.matterbridgeVersion}`);
 
     // Matterbridge latest version
-    /*
-    this.matterbridgeLatestVersion = await this.getLatestVersion('matterbridge');
-    this.matterbridgeInformation.matterbridgeLatestVersion = this.matterbridgeLatestVersion;
-    this.log.debug(`Matterbridge Latest Version: ${this.matterbridgeLatestVersion}`);
-    */
     if (this.nodeContext) this.matterbridgeLatestVersion = await this.nodeContext.get<string>('matterbridgeLatestVersion', '');
     this.log.debug(`Matterbridge Latest Version: ${this.matterbridgeLatestVersion}`);
     this.getLatestVersion('matterbridge')
@@ -2363,15 +2374,123 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
+   * Spawns a child process with the given command and arguments.
+   * @param command - The command to execute.
+   * @param args - The arguments to pass to the command (default: []).
+   * @returns A promise that resolves when the child process exits successfully, or rejects if there is an error.
+   */
+  private async spawnCommand(command: string, args: string[] = []): Promise<void> {
+    /*
+    npm > npm.cmd on windows
+    cmd.exe ['dir'] on windows
+    await this.spawnCommand('npm', ['install', '-g', 'matterbridge']);
+    process.on('unhandledRejection', (reason, promise) => {
+      this.log.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    });
+    */
+
+    if (process.platform === 'win32' && command === 'npm') {
+      // Must be spawn('cmd.exe', ['/c', 'npm -g install <package>']);
+      const argstring = 'npm ' + args.join(' ');
+      args.splice(0, args.length, '/c', argstring);
+      command = 'cmd.exe';
+    }
+    if (process.platform === 'linux' && command === 'npm' && !hasParameter('docker')) {
+      args.unshift(command);
+      command = 'sudo';
+    }
+    this.log.debug(`Spawning command ${command} with ${debugStringify(args)}`);
+    return new Promise((resolve, reject) => {
+      const childProcess = spawn(command, args, {
+        stdio: ['inherit', 'pipe', 'pipe'],
+      });
+
+      childProcess.on('error', (err) => {
+        this.log.error(`Failed to start child process: ${err.message}`);
+        reject(err); // Reject the promise on error
+      });
+
+      childProcess.on('close', (code) => {
+        if (code === 0) {
+          this.log.debug(`Child process stdio streams have closed with code ${code}`);
+          resolve();
+        } else {
+          this.log.error(`Child process stdio streams have closed with code ${code}`);
+          reject(new Error(`Child process stdio streams have closed with code  ${code}`));
+        }
+      });
+
+      childProcess.on('exit', (code, signal) => {
+        if (code === 0) {
+          this.log.debug(`Child process exited with code ${code} and signal ${signal}`);
+          resolve();
+        } else {
+          this.log.error(`Child process exited with code ${code} and signal ${signal}`);
+          reject(new Error(`Child process exited with code ${code} and signal ${signal}`));
+        }
+      });
+
+      childProcess.on('disconnect', () => {
+        this.log.debug('Child process has been disconnected from the parent');
+        resolve();
+      });
+
+      if (childProcess.stdout) {
+        childProcess.stdout.on('data', (data: Buffer) => {
+          const message = data.toString().trim();
+          this.log.info('\n' + message);
+          this.wssSendMessage('spawn', 'stdout', message);
+        });
+      }
+
+      if (childProcess.stderr) {
+        childProcess.stderr.on('data', (data: Buffer) => {
+          const message = data.toString().trim();
+          this.log.debug('\n' + message);
+          this.wssSendMessage('spawn', 'stderr', message);
+        });
+      }
+    });
+  }
+
+  private wssSendMessage(type: string, subType: string, message: string) {
+    this.webSocketServer?.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ type, subType, message }));
+      }
+    });
+  }
+
+  /**
    * Initializes the frontend of Matterbridge.
    *
    * @param port The port number to run the frontend server on. Default is 3000.
    */
   async initializeFrontend(port: number = 8283): Promise<void> {
     this.log.debug(`Initializing the frontend on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
-    this.expressApp = express();
+
+    // Create a WebSocket server
+    this.webSocketServer = new WebSocketServer({ port: 8284 });
+
+    this.webSocketServer.on('connection', (ws: WebSocket) => {
+      this.log.info('**WebSocketServer client connected');
+      ws.send(JSON.stringify({ type: 'wss', subType: 'connect', message: 'Client connected' }));
+
+      ws.on('message', (message) => {
+        this.log.info(`**WebSocketServer received message => ${message}`);
+      });
+
+      ws.on('close', () => {
+        this.log.info('**WebSocketServer client disconnected');
+      });
+
+      ws.on('error', (error: Error) => {
+        this.log.error(`***WebSocketServer error: ${error}`);
+      });
+    });
 
     // Serve React build directory
+    this.expressApp = express();
     this.expressApp.use(express.static(path.join(this.rootDirectory, 'frontend/build')));
 
     // Endpoint to provide login code
@@ -2522,7 +2641,7 @@ export class Matterbridge extends EventEmitter {
         return;
       }
 
-      this.log.info(`Received frontend command: ${command}:${param}`);
+      this.log.debug(`Received frontend command: ${command}:${param}`);
 
       // Handle the command setpassword from Settings
       if (command === 'setpassword') {
@@ -2561,12 +2680,15 @@ export class Matterbridge extends EventEmitter {
       }
       // Handle the command update from Header
       if (command === 'update') {
-        this.log.warn(`***Updating matterbridge ${plg}${param}${db}`);
+        this.log.info('Updating matterbridge...');
+        this.wssSendMessage('cmd', 'update', 'Updating matterbridge');
         try {
-          await this.spawnCommand('npm', ['install', '-g', 'matterbridge']);
+          await this.spawnCommand('npm', ['install', '-g', 'matterbridge', '--loglevel=verbose']);
           this.log.info('Matterbridge has been updated. Full restart required.');
+          this.wssSendMessage('cmd', 'update', 'Matterbridge has been updated. Full restart required.');
         } catch (error) {
           this.log.error('Error updating matterbridge');
+          this.wssSendMessage('cmd', 'update', 'Error updating matterbridge');
           res.json({ message: 'Command received' });
           return;
         }
@@ -2575,12 +2697,15 @@ export class Matterbridge extends EventEmitter {
       // Handle the command installplugin from Home
       if (command === 'installplugin') {
         param = param.replace(/\*/g, '\\');
-        this.log.warn(`***Installing plugin ${plg}${param}${db}`);
+        this.log.info(`Installing plugin ${plg}${param}${db}...`);
+        this.wssSendMessage('cmd', 'installplugin', `Installing plugin ${param}`);
         try {
-          await this.spawnCommand('npm', ['install', '-g', param]);
-          this.log.info(`Plugin ${plg}${param}${nf} installed. Restart required.`);
+          await this.spawnCommand('npm', ['install', '-g', param, '--loglevel=verbose']);
+          this.log.info(`Plugin ${plg}${param}${nf} installed. Full restart required.`);
+          this.wssSendMessage('cmd', 'installplugin', `Plugin ${param} installed. Full restart required.`);
         } catch (error) {
           this.log.error(`Error installing plugin ${plg}${param}${er}`);
+          this.wssSendMessage('cmd', 'installplugin', `Error installing plugin${param}`);
           res.json({ message: 'Command received' });
           return;
         }
@@ -2758,7 +2883,6 @@ function restartProcess() {
 }
 
 import * as WebSocket from 'ws';
-const globalModulesDir = require('global-modules');
 
 const wss = new WebSocket.Server({ port: 8080 });
 
@@ -2778,13 +2902,7 @@ ws.onmessage = (event) => {
 };
 
 */
-/*
-// In Matterbridge
-global.matterbridgeInstance = Matterbridge.loadInstance();
 
-// In plugins
-const matterbridge = global.matterbridgeInstance;
-*/
 /*
 npx create-react-app matterbridge-frontend
 cd matterbridge-frontend

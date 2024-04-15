@@ -219,6 +219,6 @@ export namespace TvocMeasurement {
   export const Complete: Complete = CompleteInstance;
 }
 
-export type TvocMeasurementCluster = typeof TvocMeasurement.Cluster;
+export type TvocMeasurementCluster = TvocMeasurement.Cluster;
 export const TvocMeasurementCluster = TvocMeasurement.Cluster;
 ClusterRegistry.register(TvocMeasurement.Complete);
