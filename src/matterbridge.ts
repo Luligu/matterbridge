@@ -1365,7 +1365,9 @@ export class Matterbridge extends EventEmitter {
       // Call the default export function of the plugin, passing this MatterBridge instance
       if (pluginInstance.default) {
         const config: PlatformConfig = await this.loadPluginConfig(plugin);
-        const platform = pluginInstance.default(this, new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled }), config) as MatterbridgePlatform;
+        const log = new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled });
+        //log.setCallback(this.wssSendMessage.bind(this));
+        const platform = pluginInstance.default(this, log, config) as MatterbridgePlatform;
         platform.name = packageJson.name;
         platform.config = config;
         plugin.name = packageJson.name;
@@ -2438,7 +2440,7 @@ export class Matterbridge extends EventEmitter {
       if (childProcess.stdout) {
         childProcess.stdout.on('data', (data: Buffer) => {
           const message = data.toString().trim();
-          this.log.info('\n' + message);
+          //this.log.info('\n' + message);
           this.wssSendMessage('spawn', 'stdout', message);
         });
       }
@@ -2446,7 +2448,7 @@ export class Matterbridge extends EventEmitter {
       if (childProcess.stderr) {
         childProcess.stderr.on('data', (data: Buffer) => {
           const message = data.toString().trim();
-          this.log.debug('\n' + message);
+          //this.log.debug('\n' + message);
           this.wssSendMessage('spawn', 'stderr', message);
         });
       }
@@ -2454,9 +2456,15 @@ export class Matterbridge extends EventEmitter {
   }
 
   private wssSendMessage(type: string, subType: string, message: string) {
+    // Remove ANSI escape codes from the message
+    // eslint-disable-next-line no-control-regex
+    const cleanMessage = message.replace(/\x1B\[[0-9;]*[m|s|u|K]/g, '');
+    // Remove leading asterisks from the message
+    const finalMessage = cleanMessage.replace(/^\*+/, '');
+
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ type, subType, message }));
+        client.send(JSON.stringify({ type, subType, message: finalMessage }));
       }
     });
   }
@@ -2473,19 +2481,24 @@ export class Matterbridge extends EventEmitter {
     this.webSocketServer = new WebSocketServer({ port: 8284 });
 
     this.webSocketServer.on('connection', (ws: WebSocket) => {
-      this.log.info('**WebSocketServer client connected');
-      ws.send(JSON.stringify({ type: 'wss', subType: 'connect', message: 'Client connected' }));
+      this.log.debug('WebSocketServer client connected');
+      this.log.setGlobalCallback(this.wssSendMessage.bind(this));
+      this.log.debug('WebSocketServer activated logger callback');
 
       ws.on('message', (message) => {
-        this.log.info(`**WebSocketServer received message => ${message}`);
+        this.log.debug(`WebSocketServer received message => ${message}`);
       });
 
       ws.on('close', () => {
-        this.log.info('**WebSocketServer client disconnected');
+        this.log.debug('WebSocketServer client disconnected');
+        if (this.webSocketServer?.clients.size === 0) {
+          this.log.setGlobalCallback(undefined);
+          this.log.debug('WebSocketServer deactivated logger callback');
+        }
       });
 
       ws.on('error', (error: Error) => {
-        this.log.error(`***WebSocketServer error: ${error}`);
+        this.log.error(`WebSocketServer error: ${error}`);
       });
     });
 
@@ -2509,6 +2522,18 @@ export class Matterbridge extends EventEmitter {
       } catch (error) {
         res.json({ valid: false });
       }
+    });
+
+    // Endpoint to provide host
+    this.expressApp.get('/api/wsshost', express.json(), async (req, res) => {
+      this.log.debug('The frontend sent /api/wsshost');
+      res.json({ host: os.hostname() });
+    });
+
+    // Endpoint to provide port
+    this.expressApp.get('/api/wssport', express.json(), async (req, res) => {
+      this.log.debug('The frontend sent /api/wssport');
+      res.json({ port: 8284 });
     });
 
     // Endpoint to provide manual pairing code
@@ -2681,14 +2706,14 @@ export class Matterbridge extends EventEmitter {
       // Handle the command update from Header
       if (command === 'update') {
         this.log.info('Updating matterbridge...');
-        this.wssSendMessage('cmd', 'update', 'Updating matterbridge');
+        //this.wssSendMessage('cmd', 'update', 'Updating matterbridge');
         try {
           await this.spawnCommand('npm', ['install', '-g', 'matterbridge', '--loglevel=verbose']);
           this.log.info('Matterbridge has been updated. Full restart required.');
-          this.wssSendMessage('cmd', 'update', 'Matterbridge has been updated. Full restart required.');
+          //this.wssSendMessage('cmd', 'update', 'Matterbridge has been updated. Full restart required.');
         } catch (error) {
           this.log.error('Error updating matterbridge');
-          this.wssSendMessage('cmd', 'update', 'Error updating matterbridge');
+          //this.wssSendMessage('cmd', 'update', 'Error updating matterbridge');
           res.json({ message: 'Command received' });
           return;
         }
@@ -2698,14 +2723,14 @@ export class Matterbridge extends EventEmitter {
       if (command === 'installplugin') {
         param = param.replace(/\*/g, '\\');
         this.log.info(`Installing plugin ${plg}${param}${db}...`);
-        this.wssSendMessage('cmd', 'installplugin', `Installing plugin ${param}`);
+        //this.wssSendMessage('cmd', 'installplugin', `Installing plugin ${param}`);
         try {
           await this.spawnCommand('npm', ['install', '-g', param, '--loglevel=verbose']);
           this.log.info(`Plugin ${plg}${param}${nf} installed. Full restart required.`);
-          this.wssSendMessage('cmd', 'installplugin', `Plugin ${param} installed. Full restart required.`);
+          //this.wssSendMessage('cmd', 'installplugin', `Plugin ${param} installed. Full restart required.`);
         } catch (error) {
           this.log.error(`Error installing plugin ${plg}${param}${er}`);
-          this.wssSendMessage('cmd', 'installplugin', `Error installing plugin${param}`);
+          //this.wssSendMessage('cmd', 'installplugin', `Error installing plugin${param}`);
           res.json({ message: 'Command received' });
           return;
         }

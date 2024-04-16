@@ -11,7 +11,7 @@ function useWebSocket(url) {
             const msg = JSON.parse(event.data);
             setMessages(prevMessages => {
                 // Create new array with new message
-                const newMessages = [...prevMessages, `${msg.type}: ${msg.message}`];
+                const newMessages = [...prevMessages, `${msg.subType}-[${msg.type}]: ${msg.message}`];
                 // Check if the new array length exceeds the maximum allowed
                 if (newMessages.length > maxMessages) {
                     // Remove the oldest messages to maintain maxMessages count

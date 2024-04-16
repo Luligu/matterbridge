@@ -1,5 +1,5 @@
 // Home.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import QRCode from 'qrcode.react';
 import { StatusIndicator } from './StatusIndicator';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
@@ -18,6 +18,8 @@ import DownloadIcon from '@mui/icons-material/Download';
 // npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
 
 function Home() {
+  const [host, setHost] = useState(null);
+  const [port, setPort] = useState(null);
   const [qrCode, setQrCode] = useState('');
   const [pairingCode, setPairingCode] = useState('');
   const [systemInfo, setSystemInfo] = useState({});
@@ -26,6 +28,9 @@ function Home() {
   const [selectedRow, setSelectedRow] = useState(-1); // -1 no selection, 0 or greater for selected row
   const [selectedPluginName, setSelectedPluginName] = useState('none'); // -1 no selection, 0 or greater for selected row
   const [open, setSnack] = useState(false);
+
+  const refAddRemove = useRef(null);
+  const refRegisteredPlugins = useRef(null);
 
   const handleSnackOpen = () => {
     console.log('handleSnackOpen');
@@ -54,7 +59,19 @@ function Home() {
  /*
  */
   useEffect(() => {
-    // Fetch manual pairingCode
+    // Fetch wss host
+    fetch('/api/wsshost')
+      .then(response => response.json())
+      .then(data => { console.log('/api/wsshost:', data.host); setHost(data.host); localStorage.setItem('host', data.host); })
+      .catch(error => console.error('Error fetching wsshost:', error));
+
+    // Fetch wss port
+    fetch('/api/wssport')
+      .then(response => response.json())
+      .then(data => { console.log('/api/wssport:', data.port); setPort(data.port); localStorage.setItem('port', data.port); })
+      .catch(error => console.error('Error fetching wssport:', error));
+
+      // Fetch manual pairingCode
     fetch('/api/pairing-code')
       .then(response => response.json())
       .then(data => { 
@@ -92,6 +109,9 @@ function Home() {
       .then(data => { setPlugins(data); console.log('/api/plugins:', data)})
       .catch(error => console.error('Error fetching plugins:', error));
 
+      //if(refAddRemove && refRegisteredPlugins)
+        //console.log(`refAddRemove ${refAddRemove} refRegisteredPlugins ${refRegisteredPlugins}`, refAddRemove, refRegisteredPlugins);
+
   }, []); // The empty array causes this effect to run only once
 
   const handleSelect = (row) => {
@@ -127,15 +147,19 @@ function Home() {
   /*
         {matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
   */
+
+  if (host === null || port === null) {
+    return <div>Loading...</div>;
+  }
   return (
     <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0', padding: '0' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', flex: '0 1 auto', gap: '20px' }}>
+      <div  style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', flex: '0 1 auto', gap: '20px' }}>
         {qrCode && <QRDiv qrText={qrCode} pairingText={pairingCode} qrWidth={256} topText="QRCode" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName}/>}
         {systemInfo && <SystemInfoTable systemInfo={systemInfo}/>}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', gap: '20px' }}>
-        <AddRemovePluginsDiv plugins={plugins}/>
-        <table>
+      <div  style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', flex: '0 1 auto', width: '100%', gap: '20px' }}>
+        <AddRemovePluginsDiv ref={refAddRemove} plugins={plugins}/>
+        <table ref={refRegisteredPlugins}>
           <thead>
             <tr>
               <th className="table-header" colSpan="8">Registered plugins</th>
@@ -195,18 +219,33 @@ function Home() {
           </tbody>
         </table>
 
-        <div className="MbfWindowDiv" style={{alignItems: 'left', flex: '1 1 auto', overflow: 'auto'}}>
+        <div className="MbfWindowDiv" style={{display: 'flex', flexDirection: 'column', flex: '0 1 auto'}}>
           <div className="MbfWindowHeader">
             <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>Log</p>
           </div>
-          <div style={{ margin: '0px', padding: '0px', alignItems: 'left'}}>
-            <WebSocketComponent/>
+          <div style={{ margin: '5px', padding: '5px', height: '200px', maxHeight: '200px', overflow: 'auto'}}>
+            <WebSocketComponent host={host} port={port} height="100%"/>
           </div>
         </div>
 
       </div>
     </div>
   );}
+  /*
+        Working
+        <div className="MbfWindowDiv" style={{display: 'flex', flexDirection: 'column', flex: '0 1 auto'}}>
+          <div className="MbfWindowHeader">
+            <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>Log</p>
+          </div>
+          <div style={{ margin: '5px', padding: '5px', height: '200px', maxHeight: '200px', overflow: 'auto'}}>
+            <WebSocketComponent host={host} port={port} height="100%"/>
+          </div>
+        </div>
+
+        <div style={{ margin: '0px', padding: '0px', maxHeight: '200px', overflow: 'auto'}}>
+    style={{flex: '1 1 auto'}}
+    height: '200px'
+  */
 
   function AddRemovePluginsDiv({ plugins }) {
     const [pluginName, setPluginName] = useState('matterbridge-');

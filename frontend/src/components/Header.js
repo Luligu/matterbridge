@@ -84,6 +84,7 @@ function Header() {
       <nav>
         <Link to="/" className="nav-link">Home</Link>
         <Link to="/devices" className="nav-link">Devices</Link>
+        <Link to="/log" className="nav-link">Log</Link>
         <Link to="/settings" className="nav-link">Settings</Link>
       </nav>
       <div className="header" style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
