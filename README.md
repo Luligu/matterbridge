@@ -104,6 +104,9 @@ Home page:
 Devices page:
 ![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/Screenshot%20devices.jpg)
 
+Logs page:
+![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/Screenshot%20logs.jpg)
+
 ## Plugins
 
 ### Accessory platform example
