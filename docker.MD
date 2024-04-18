@@ -59,7 +59,7 @@ docker exec matterbridge matterbridge -add matterbridge-eve-room
 docker exec matterbridge matterbridge -add matterbridge-eve-weather
 ```
 
-### Run the Docker container and start it in detached mode (this is not working due to mdns)
+### Run the Docker container and start it (this is not working due to mdns)
 ```
 docker run --name matterbridge -p 8283:8283 -p 5353:5353 -p 5550:5550 --restart always -d luligu/matterbridge
 ```
@@ -91,7 +91,7 @@ docker logs matterbridge
 
 ### Shows the logs real time (tail)
 ```
-docker logs --tail 100 -f matterbridge
+docker logs --tail 1000 -f matterbridge
 ```
 
 ### Execute a command inside the container
