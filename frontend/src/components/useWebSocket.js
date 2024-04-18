@@ -24,6 +24,8 @@ function useWebSocket(url) {
                             return 'yellow';
                         case 'error':
                             return 'red';
+                        case 'spawn':
+                            return '#ff00d0';
                         default:
                             return 'lightblue'; // Default color if none of the cases match
                     }

@@ -2458,7 +2458,7 @@ export class Matterbridge extends EventEmitter {
         childProcess.stdout.on('data', (data: Buffer) => {
           const message = data.toString().trim();
           //this.log.info('\n' + message);
-          this.wssSendMessage('spawn', 'stdout', message);
+          this.wssSendMessage('Matterbridge:spawn', 'spawn', message);
         });
       }
 
@@ -2466,12 +2466,19 @@ export class Matterbridge extends EventEmitter {
         childProcess.stderr.on('data', (data: Buffer) => {
           const message = data.toString().trim();
           //this.log.debug('\n' + message);
-          this.wssSendMessage('spawn', 'stderr', message);
+          this.wssSendMessage('Matterbridge:spawn', 'spawn', message);
         });
       }
     });
   }
 
+  /**
+   * Sends a WebSocket message to all connected clients.
+   *
+   * @param {string} type - The type of the message: Matterbridge, Plugin, Device, ...
+   * @param {string} subType - The subtype of the message: debug info warn error ....
+   * @param {string} message - The content of the message.
+   */
   private wssSendMessage(type: string, subType: string, message: string) {
     // Remove ANSI escape codes from the message
     // eslint-disable-next-line no-control-regex
