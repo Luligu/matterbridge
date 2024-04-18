@@ -2,36 +2,33 @@ import React, { useState, useEffect, useRef } from 'react';
 import useWebSocket from './useWebSocket';
 
 function WebSocketComponent(props) {
-    const { host, port, height } = props;
-    const [message, setMessage] = useState('');
-    const { messages, sendMessage } = useWebSocket(`ws://${host}:${port}`);
+    const { wssHost } = props;
+    const [ message, setMessage ] = useState('');
+    const { messages, sendMessage } = useWebSocket(wssHost);
     const endOfMessagesRef = useRef(null); // Create a ref for scrolling purposes
-    const messageListRef = useRef(null); // Ref for the message list container
-    console.log(`WebSocketComponent host: ${host}, port: ${port}, height: ${height}`);
+    const [isHovering, setIsHovering] = useState(false); // State to track mouse hover
+
+    // console.log(`WebSocketComponent: ${wssHost}`);
 
     // Scroll to the bottom of the message list on every update, only if already at bottom
     useEffect(() => {
-        const messageList = messageListRef.current;
-        if (messageList) {
-            const { scrollHeight, scrollTop, clientHeight } = messageList;
-            const isAtBottom = scrollHeight - scrollTop <= clientHeight; 
-            //console.log(`ScrollHeight: ${scrollHeight}, ScrollTop: ${scrollTop}, Difference:${scrollHeight - scrollTop} ,ClientHeight: ${clientHeight}, isAtBottom: ${isAtBottom}`);
-            if (isAtBottom) {
-                //console.log('User is at bottom, scrolling to bottom.');
-                endOfMessagesRef.current.scrollIntoView({ behavior: 'smooth' });
-            } else {
-                //console.log('User is not at bottom, not scrolling.');
-            }
+        if (!isHovering) {
+            // console.log(`isHovering: ${isHovering}`);
+            endOfMessagesRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [messages]);
+    }, [messages, isHovering]);
 
     return (
-            <ul ref={messageListRef} style={{ margin: '10px', padding: '10px' }}>
+        <div>
+            <ul style={{ margin: '10px', padding: '10px' }}
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}>
                 {messages.map((msg, index) => (
-                    <li key={index}>{msg}</li>
+                    <li key={index} dangerouslySetInnerHTML={{ __html: msg }} />
                 ))}
                 <div ref={endOfMessagesRef} /> {/* Invisible element to mark the end */}
             </ul>
+        </div>
     );
 }
 
@@ -39,20 +36,16 @@ export default WebSocketComponent;
 
     /*
         <div>
-            <ul ref={messageListRef}>
+            <ul style={{ margin: '10px', padding: '10px' }}
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}>
                 {messages.map((msg, index) => (
                     <li key={index}>{msg}</li>
                 ))}
-                <div ref={endOfMessagesRef} /> {}
+                <div ref={endOfMessagesRef} /> {// Invisible element to mark the end }
                 </ul>
                 </div>
-            // Scroll to the bottom of the message list on every update
-    useEffect(() => {
-        if (endOfMessagesRef.current) {
-            endOfMessagesRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [messages]);
-
+                        
             <input
                 type="text"
                 value={message}

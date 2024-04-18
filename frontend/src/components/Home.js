@@ -18,8 +18,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 // npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
 
 function Home() {
-  const [host, setHost] = useState(null);
-  const [port, setPort] = useState(null);
+  const [wssHost, setWssHost] = useState(null);
   const [qrCode, setQrCode] = useState('');
   const [pairingCode, setPairingCode] = useState('');
   const [systemInfo, setSystemInfo] = useState({});
@@ -59,49 +58,24 @@ function Home() {
  /*
  */
   useEffect(() => {
-    // Fetch wss host
-    fetch('/api/wsshost')
-      .then(response => response.json())
-      .then(data => { console.log('/api/wsshost:', data.host); setHost(data.host); localStorage.setItem('host', data.host); })
-      .catch(error => console.error('Error fetching wsshost:', error));
-
-    // Fetch wss port
-    fetch('/api/wssport')
-      .then(response => response.json())
-      .then(data => { console.log('/api/wssport:', data.port); setPort(data.port); localStorage.setItem('port', data.port); })
-      .catch(error => console.error('Error fetching wssport:', error));
-
-      // Fetch manual pairingCode
-    fetch('/api/pairing-code')
+    // Fetch settinggs from the backend
+    fetch('/api/settings')
       .then(response => response.json())
       .then(data => { 
-        setPairingCode(data.manualPairingCode); 
-        console.log('/api/pairing-code:', data.manualPairingCode);
-        localStorage.setItem('pairingCode', data.manualPairingCode); // Save the QR code in localStorage
-      })
-      .catch(error => console.error('Error fetching QR code:', error));
-
-    // Fetch QR Code
-    fetch('/api/qr-code')
-      .then(response => response.json())
-      .then(data => { 
+        console.log('/api/settings:', data); 
+        setWssHost(data.wssHost); 
         setQrCode(data.qrPairingCode); 
-        console.log('/api/qr-code:', data.qrPairingCode);
-        localStorage.setItem('qrCode', data.qrPairingCode); // Save the QR code in localStorage
+        setPairingCode(data.manualPairingCode);
+        setSystemInfo(data.systemInformation);
+        setMatterbridgeInfo(data.matterbridgeInformation);
+        localStorage.setItem('wssHost', data.wssHost);
+        localStorage.setItem('manualPairingCode', data.manualPairingCode); 
+        localStorage.setItem('qrPairingCode', data.qrPairingCode); 
+        localStorage.setItem('systemInformation', data.systemInformation); 
+        localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
       })
-      .catch(error => console.error('Error fetching QR code:', error));
+      .catch(error => console.error('Error fetching settings:', error));
 
-    // Fetch System Info
-    fetch('/api/system-info')
-      .then(response => response.json())
-      .then(data => { setSystemInfo(data); console.log('/api/system-info:', data) })
-      .catch(error => console.error('Error fetching system info:', error));
-
-      // Fetch Matterbridge Info
-    fetch('/api/matterbridge-info')
-      .then(response => response.json())
-      .then(data => { setMatterbridgeInfo(data); console.log('/api/matterbridge-info:', data) })
-      .catch(error => console.error('Error fetching matterbridge info:', error));
 
     // Fetch Plugins
     fetch('/api/plugins')
@@ -118,8 +92,8 @@ function Home() {
     if (selectedRow === row) {
       setSelectedRow(-1);
       setSelectedPluginName('none');
-      setQrCode(localStorage.getItem('qrCode'));
-      setPairingCode(localStorage.getItem('pairingCode'));
+      setQrCode(localStorage.getItem('qrPairingCode'));
+      setPairingCode(localStorage.getItem('manualPairingCode'));
     } else {
       setSelectedRow(row);
       setSelectedPluginName(plugins[row].name);
@@ -148,8 +122,8 @@ function Home() {
         {matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
   */
 
-  if (host === null || port === null) {
-    return <div>Loading...</div>;
+  if (wssHost === null) {
+    return <div>Loading settings...</div>;
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0', padding: '0' }}>
@@ -223,8 +197,8 @@ function Home() {
           <div className="MbfWindowHeader">
             <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>Log</p>
           </div>
-          <div style={{ margin: '5px', padding: '5px', height: '200px', maxHeight: '200px', overflow: 'auto'}}>
-            <WebSocketComponent host={host} port={port} height="100%"/>
+          <div style={{ flex: '1', margin: '5px', padding: '5px', height: '200px', maxHeight: '200px', overflow: 'auto'}}>
+            <WebSocketComponent wssHost={wssHost}/>
           </div>
         </div>
 
@@ -237,14 +211,10 @@ function Home() {
           <div className="MbfWindowHeader">
             <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>Log</p>
           </div>
-          <div style={{ margin: '5px', padding: '5px', height: '200px', maxHeight: '200px', overflow: 'auto'}}>
-            <WebSocketComponent host={host} port={port} height="100%"/>
+          <div style={{ flex: '1', margin: '5px', padding: '5px', height: '200px', maxHeight: '200px', overflow: 'auto'}}>
+            <WebSocketComponent wssHost={wssHost}/>
           </div>
         </div>
-
-        <div style={{ margin: '0px', padding: '0px', maxHeight: '200px', overflow: 'auto'}}>
-    style={{flex: '1 1 auto'}}
-    height: '200px'
   */
 
   function AddRemovePluginsDiv({ plugins }) {

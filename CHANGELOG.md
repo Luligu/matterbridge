@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.9] - 2024-04-18
+
+### Added
+
+- [frontend]: Added colors to the logs in the Home page and in the Log page.
+
+### Fixed
+
+- [logs]: Fixed wss for some browser that didn't connect to wss.
+
 ## [1.2.8] - 2024-04-16
 
 ### Changed

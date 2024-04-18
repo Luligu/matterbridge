@@ -29,6 +29,7 @@ import { fileURLToPath, pathToFileURL } from 'url';
 import { promises as fs } from 'fs';
 import { ExecException, exec, spawn } from 'child_process';
 import { Server } from 'http';
+import https from 'https';
 import EventEmitter from 'events';
 import express from 'express';
 import os from 'os';
@@ -225,6 +226,9 @@ export class Matterbridge extends EventEmitter {
    * @returns A Promise that resolves when the initialization is complete.
    */
   public async initializeAsExtension(dataPath: string, debugEnabled: boolean) {
+    // Set the bridge mode
+    this.bridgeMode = 'bridge';
+
     // Set the first port to use
     this.port = 5560;
 
@@ -239,6 +243,20 @@ export class Matterbridge extends EventEmitter {
     this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, 'node_storage'), logging: false });
     this.log.debug('Creating node storage context for matterbridge: matterbridge');
     this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
+
+    const plugin: RegisteredPlugin = {
+      path: '',
+      type: 'DynamicPlatform',
+      name: 'MatterbridgeExtension',
+      version: '1.0.0',
+      description: 'Matterbridge extension',
+      author: 'https://github.com/Luligu',
+      enabled: false,
+      registeredDevices: 0,
+      addedDevices: 0,
+    };
+    this.registeredPlugins.push(plugin);
+    await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
 
     // Log system info and create .matterbridge directory
     await this.logNodeAndSystemInfo();
@@ -255,7 +273,7 @@ export class Matterbridge extends EventEmitter {
     await this.matterbridgeContext.set('softwareVersion', 1);
     await this.matterbridgeContext.set('softwareVersionString', this.matterbridgeVersion);
     await this.matterbridgeContext.set('hardwareVersion', 0);
-    await this.matterbridgeContext.set('hardwareVersionString', '0.0.1');
+    await this.matterbridgeContext.set('hardwareVersionString', '1.0.0');
     this.createMatterServer(this.storageManager);
     this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
     this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
@@ -267,7 +285,6 @@ export class Matterbridge extends EventEmitter {
     await this.matterServer?.addCommissioningServer(this.commissioningServer, { uniqueStorageKey: 'Matterbridge' });
     this.log.debug(`Setting reachability to true for ${plg}Matterbridge${db}`);
     this.commissioningServer.setReachability(true);
-    this.log.debug('Starting matter server...');
     await this.startMatterServer();
     this.log.info('Matter server started');
     await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
@@ -1778,7 +1795,7 @@ export class Matterbridge extends EventEmitter {
       await this.cleanup('No matter server initialized');
       return;
     }
-    this.log.debug('Starting matter server');
+    this.log.debug('Starting matter server...');
     await this.matterServer.start();
     this.log.debug('Started matter server');
   }
@@ -2477,20 +2494,47 @@ export class Matterbridge extends EventEmitter {
   async initializeFrontend(port: number = 8283): Promise<void> {
     this.log.debug(`Initializing the frontend on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
 
-    // Create a WebSocket server
-    this.webSocketServer = new WebSocketServer({ port: 8284 });
+    const wssPort = 8284;
+    const useHttps = false;
+    //const wssHost = (useHttps ? 'wss://' : 'ws://') + `${os.hostname().toLowerCase()}:${wssPort}`;
+    const wssHost = (useHttps ? 'wss://' : 'ws://') + `${this.systemInformation.ipv4Address}:${wssPort}`;
+    if (!useHttps) {
+      // Create a WebSocket server no certificate required
+      this.webSocketServer = new WebSocketServer({ port: wssPort });
+      this.log.info(`WebSocket server listening on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
+    } else {
+      // Define the options for HTTPS server
+      // openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout mykey.key -out mycert.pem -config openssl.cnf
+      // For wss connect the browser to https://laptop5_luca:8284/ https://192.168.1.189/log and accept the certificate
+      const serverOptions: https.ServerOptions = {
+        // cert: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/mycert.pem')), // Ensure the path is correct
+        // key: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/mykey.key')), // Ensure the path is correct
+        cert: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/laptop5_luca.pem')), // Ensure the path is correct
+        key: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/laptop5_luca.key')), // Ensure the path is correct
+      };
+      // Create an HTTPS server
+      const httpsServer = https.createServer(serverOptions);
+      // Attach WebSocket server to HTTPS server
+      this.webSocketServer = new WebSocketServer({ server: httpsServer });
+
+      // Listen on a specific port
+      httpsServer.listen(wssPort, () => {
+        this.log.info(`WebSocket server listening on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
+      });
+    }
 
     this.webSocketServer.on('connection', (ws: WebSocket) => {
-      this.log.debug('WebSocketServer client connected');
+      this.log.info('WebSocketServer client connected');
       this.log.setGlobalCallback(this.wssSendMessage.bind(this));
       this.log.debug('WebSocketServer activated logger callback');
+      this.wssSendMessage('Matterbridge', 'info', 'WebSocketServer client connected to Matterbridge');
 
       ws.on('message', (message) => {
-        this.log.debug(`WebSocketServer received message => ${message}`);
+        this.log.info(`WebSocketServer received message => ${message}`);
       });
 
       ws.on('close', () => {
-        this.log.debug('WebSocketServer client disconnected');
+        this.log.info('WebSocketServer client disconnected');
         if (this.webSocketServer?.clients.size === 0) {
           this.log.setGlobalCallback(undefined);
           this.log.debug('WebSocketServer deactivated logger callback');
@@ -2506,7 +2550,7 @@ export class Matterbridge extends EventEmitter {
     this.expressApp = express();
     this.expressApp.use(express.static(path.join(this.rootDirectory, 'frontend/build')));
 
-    // Endpoint to provide login code
+    // Endpoint to validate login code
     this.expressApp.post('/api/login', express.json(), async (req, res) => {
       const { password } = req.body;
       this.log.debug('The frontend sent /api/login', password);
@@ -2524,64 +2568,28 @@ export class Matterbridge extends EventEmitter {
       }
     });
 
-    // Endpoint to provide host
-    this.expressApp.get('/api/wsshost', express.json(), async (req, res) => {
-      this.log.debug('The frontend sent /api/wsshost');
-      res.json({ host: os.hostname() });
-    });
-
-    // Endpoint to provide port
-    this.expressApp.get('/api/wssport', express.json(), async (req, res) => {
-      this.log.debug('The frontend sent /api/wssport');
-      res.json({ port: 8284 });
-    });
-
-    // Endpoint to provide manual pairing code
-    this.expressApp.get('/api/pairing-code', (req, res) => {
-      this.log.debug('The frontend sent /api/pairing-code');
+    // Endpoint to provide settings
+    this.expressApp.get('/api/settings', express.json(), async (req, res) => {
       if (!this.matterbridgeContext) {
-        this.log.error('/api/pairing-code matterbridgeContext not found');
-        res.json([]);
+        this.log.error('/api/settings matterbridgeContext not found');
+        res.json({});
         return;
       }
+      let qrPairingCode = '';
+      let manualPairingCode = '';
       try {
-        const qrData = { qrPairingCode: this.matterbridgeContext.get('qrPairingCode'), manualPairingCode: this.matterbridgeContext.get('manualPairingCode') };
-        res.json(qrData);
+        qrPairingCode = await this.matterbridgeContext.get('qrPairingCode');
+        manualPairingCode = await this.matterbridgeContext.get('manualPairingCode');
       } catch (error) {
-        if (this.bridgeMode === 'bridge') this.log.error('qrPairingCode for /api/qr-code not found');
+        if (this.bridgeMode === 'bridge') this.log.error('pairingCode for /api/settings not found');
         res.json({});
       }
-    });
-
-    // Endpoint to provide QR pairing code
-    this.expressApp.get('/api/qr-code', (req, res) => {
-      this.log.debug('The frontend sent /api/qr-code');
-      if (!this.matterbridgeContext) {
-        this.log.error('/api/qr-code matterbridgeContext not found');
-        res.json([]);
-        return;
-      }
-      try {
-        const qrData = { qrPairingCode: this.matterbridgeContext.get('qrPairingCode'), manualPairingCode: this.matterbridgeContext.get('manualPairingCode') };
-        res.json(qrData);
-      } catch (error) {
-        if (this.bridgeMode === 'bridge') this.log.error('qrPairingCode for /api/qr-code not found');
-        res.json({});
-      }
-    });
-
-    // Endpoint to provide system information
-    this.expressApp.get('/api/system-info', (req, res) => {
-      this.log.debug('The frontend sent /api/system-info');
-      res.json(this.systemInformation);
-    });
-
-    // Endpoint to provide matterbridge information
-    this.expressApp.get('/api/matterbridge-info', (req, res) => {
-      this.log.debug('The frontend sent /api/matterbridge-info');
       this.matterbridgeInformation.bridgeMode = this.bridgeMode;
       this.matterbridgeInformation.debugEnabled = this.debugEnabled;
-      res.json(this.matterbridgeInformation);
+      const response = { wssHost, qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
+      this.log.debug('The frontend sent /api/settings');
+      this.log.debug('Response:', debugStringify(response));
+      res.json(response);
     });
 
     // Endpoint to provide plugins
@@ -2671,7 +2679,7 @@ export class Matterbridge extends EventEmitter {
       // Handle the command setpassword from Settings
       if (command === 'setpassword') {
         const password = param.slice(1, -1); // Remove the first and last characters
-        this.log.info('setpassword', param, password);
+        this.log.debug('setpassword', param, password);
         await this.nodeContext?.set('password', password);
       }
 
@@ -2706,14 +2714,11 @@ export class Matterbridge extends EventEmitter {
       // Handle the command update from Header
       if (command === 'update') {
         this.log.info('Updating matterbridge...');
-        //this.wssSendMessage('cmd', 'update', 'Updating matterbridge');
         try {
           await this.spawnCommand('npm', ['install', '-g', 'matterbridge', '--loglevel=verbose']);
           this.log.info('Matterbridge has been updated. Full restart required.');
-          //this.wssSendMessage('cmd', 'update', 'Matterbridge has been updated. Full restart required.');
         } catch (error) {
           this.log.error('Error updating matterbridge');
-          //this.wssSendMessage('cmd', 'update', 'Error updating matterbridge');
           res.json({ message: 'Command received' });
           return;
         }
@@ -2723,14 +2728,11 @@ export class Matterbridge extends EventEmitter {
       if (command === 'installplugin') {
         param = param.replace(/\*/g, '\\');
         this.log.info(`Installing plugin ${plg}${param}${db}...`);
-        //this.wssSendMessage('cmd', 'installplugin', `Installing plugin ${param}`);
         try {
           await this.spawnCommand('npm', ['install', '-g', param, '--loglevel=verbose']);
           this.log.info(`Plugin ${plg}${param}${nf} installed. Full restart required.`);
-          //this.wssSendMessage('cmd', 'installplugin', `Plugin ${param} installed. Full restart required.`);
         } catch (error) {
           this.log.error(`Error installing plugin ${plg}${param}${er}`);
-          //this.wssSendMessage('cmd', 'installplugin', `Error installing plugin${param}`);
           res.json({ message: 'Command received' });
           return;
         }
@@ -2851,9 +2853,25 @@ export class Matterbridge extends EventEmitter {
       res.sendFile(path.join(this.rootDirectory, 'frontend/build/index.html'));
     });
 
-    this.expressServer = this.expressApp.listen(port, () => {
-      this.log.info(`The frontend is running on ${UNDERLINE}http://localhost:${port}${UNDERLINEOFF}${rs}`);
-    });
+    if (!useHttps) {
+      // Listen on HTTP
+      this.expressServer = this.expressApp.listen(port, () => {
+        this.log.info(`The frontend is running on ${UNDERLINE}http://localhost:${port}${UNDERLINEOFF}${rs}`);
+      });
+    } else {
+      // SSL certificate and private key paths
+      const options = {
+        cert: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/laptop5_luca.pem')), // Ensure the path is correct
+        key: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/laptop5_luca.key')), // Ensure the path is correct
+      };
+      // Create HTTPS server
+      const httpsServer = https.createServer(options, this.expressApp);
+      // Specify the port to listen on, for example 443 for default HTTPS
+      const PORT = 443;
+      httpsServer.listen(PORT, () => {
+        this.log.info(`The frontend is running on ${UNDERLINE}https://localhost:${PORT}${UNDERLINEOFF}${rs}`);
+      });
+    }
 
     this.log.debug(`Frontend initialized on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
   }

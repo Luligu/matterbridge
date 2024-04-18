@@ -183,6 +183,16 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Loads an instance of the MatterbridgeDevice class.
+   *
+   * @param {DeviceTypeDefinition} definition - The DeviceTypeDefinition of the device.
+   * @returns MatterbridgeDevice instance.
+   */
+  static async loadInstance(definition: DeviceTypeDefinition) {
+    return new MatterbridgeDevice(definition);
+  }
+
+  /**
    * Adds a device type to the list of device types.
    * If the device type is not already present in the list, it will be added.
    *

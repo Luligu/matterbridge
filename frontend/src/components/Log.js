@@ -1,34 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import WebSocketComponent from './WebSocketComponent';
 
 export const MatterbridgeInfoContext = React.createContext();
 
 function Log() {
-  const [host, setHost] = useState(null);
-  const [port, setPort] = useState(null);
+  const [wssHost, setWssHost] = useState(null);
 
   useEffect(() => {
-    // Fetch wss host
-    fetch('/api/wsshost')
+    // Fetch settinggs from the backend
+    fetch('/api/settings')
       .then(response => response.json())
-      .then(data => { console.log('/api/wsshost:', data.host); setHost(data.host); localStorage.setItem('host', data.host); })
-      .catch(error => console.error('Error fetching wsshost:', error));
+      .then(data => { console.log('/api/settings:', data); setWssHost(data.wssHost); localStorage.setItem('wssHost', data.wssHost); })
+      .catch(error => console.error('Error fetching settings:', error));
 
-    // Fetch wss port
-    fetch('/api/wssport')
-      .then(response => response.json())
-      .then(data => { console.log('/api/wssport:', data.port); setPort(data.port); localStorage.setItem('port', data.port); })
-      .catch(error => console.error('Error fetching wssport:', error));
   }, []); // The empty array causes this effect to run only once
 
-  if (host === null || port === null) {
-    return <div>Loading...</div>;
+  if (wssHost === null) {
+    return <div>Loading settings...</div>;
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '10px' , margin: '0', padding: '0' }}>
       <h3>Logs:</h3>
       <div style={{ flex: '1', overflow: 'auto', margin: '0px', padding: '0px' }}>
-        <WebSocketComponent host={host} port={port} height={300}/>
+        <WebSocketComponent wssHost={wssHost}/>
       </div>  
     </div>
   );
