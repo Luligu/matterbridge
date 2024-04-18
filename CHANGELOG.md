@@ -6,7 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- [frontend]: Added colors to the logs in the Home page and in the Log page.
+- [frontend]: Added filter for log level and search criteria in the Logs page.
+- [frontend]: Added colors to the logs in the Home page and in the Logs page.
 - [frontend]: Frontend updated to 0.8.7.
 
 ### Fixed

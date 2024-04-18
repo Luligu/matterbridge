@@ -1,14 +1,26 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 
-function useWebSocket(url) {
+function useWebSocket(wssHost, debugLevel, searchCriteria) {
     const [messages, setMessages] = useState([]);
     const ws = useRef(null);
     const maxMessages = 500;
 
+    // console.log(`useWebSocket: wssHost: ${wssHost} debugLevel: ${debugLevel} searchCriteria: ${searchCriteria}`);
+
     useEffect(() => {
-        ws.current = new WebSocket(url);
+        ws.current = new WebSocket(wssHost);
         ws.current.onmessage = (event) => {
             const msg = JSON.parse(event.data);
+            // console.log(`useWebSocket prefilter: debugLevel: '${debugLevel}'-'${msg.subType}' searchCriteria: '${searchCriteria}'`);
+            const normalSubTypes = ['debug', 'info', 'warn', 'error'];
+            if(normalSubTypes.includes(msg.subType)) {
+                if(debugLevel === 'info' && msg.subType === 'debug') return;
+                if(debugLevel === 'warn' && (msg.subType === 'debug' || msg.subType === 'info')) return;
+                if(debugLevel === 'error' && (msg.subType === 'debug' || msg.subType === 'info' || msg.subType === 'warn')) return;
+            }
+            if( searchCriteria !== '*' && !msg.message.toLowerCase().includes(searchCriteria.toLowerCase()) && !msg.type.toLowerCase().includes(searchCriteria.toLowerCase()) ) return;
+            // console.log(`useWebSocket afterfilter: debugLevel: '${debugLevel}'-'${msg.subType}' searchCriteria: '${searchCriteria}'`);
+
             setMessages(prevMessages => {
                 // Create new array with new message
                 const now = new Date();
@@ -49,14 +61,14 @@ function useWebSocket(url) {
                 return newMessages;
             });
         };
-        ws.current.onopen = () => { console.log("connected to WebSocket:", url); ws.current.send(`Connected to WebSocket: ${url}`) };
-        ws.current.onclose = () => { console.log("disconnected from WebSocket", url); };
+        ws.current.onopen = () => { console.log("connected to WebSocket:", wssHost); ws.current.send(`Connected to WebSocket: ${wssHost}`) };
+        ws.current.onclose = () => { console.log("disconnected from WebSocket", wssHost); };
         ws.current.onerror = (error) => console.error("WebSocket error: ", error);
 
         return () => {
             ws.current.close();
         };
-    }, [url]);
+    }, [wssHost, debugLevel, searchCriteria]);
 
     const sendMessage = useCallback((message) => {
         if (ws.current.readyState === WebSocket.OPEN) {

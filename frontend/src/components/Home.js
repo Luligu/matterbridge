@@ -195,9 +195,9 @@ function Home() {
 
         <div className="MbfWindowDiv" style={{display: 'flex', flexDirection: 'column', flex: '0 1 auto'}}>
           <div className="MbfWindowHeader">
-            <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>Log</p>
+            <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>Logs</p>
           </div>
-          <div style={{ flex: '1', margin: '5px', padding: '5px', height: '200px', maxHeight: '200px', overflow: 'auto'}}>
+          <div style={{ flex: '1 1', margin: '5px', padding: '5px', height: '200px', maxHeight: '200px', overflow: 'auto'}}>
             <WebSocketComponent wssHost={wssHost}/>
           </div>
         </div>

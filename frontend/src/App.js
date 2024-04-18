@@ -7,7 +7,7 @@ import Home from './components/Home';
 import Devices from './components/Devices';
 import Settings from './components/Settings';
 import Test from './components/Test';
-import Log from './components/Log';
+import Logs from './components/Logs';
 
 /*
       <div style={{backgroundColor: 'lightgray'}} >
@@ -98,7 +98,7 @@ function LoginForm() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/devices" element={<Devices />} />
-            <Route path="/log" element={<Log />} />
+            <Route path="/log" element={<Logs />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/test" element={<Test />} />
           </Routes>
@@ -163,7 +163,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/devices" element={<Devices />} />
-          <Route path="/log" element={<Log />} />
+          <Route path="/log" element={<Logs />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/test" element={<Test />} />
         </Routes>

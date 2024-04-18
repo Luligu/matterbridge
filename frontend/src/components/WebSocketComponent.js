@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import useWebSocket from './useWebSocket';
 
 function WebSocketComponent(props) {
-    const { wssHost } = props;
+    const { wssHost, debugLevel, searchCriteria } = props;
     const [ message, setMessage ] = useState('');
-    const { messages, sendMessage } = useWebSocket(wssHost);
+    const { messages, sendMessage } = useWebSocket(wssHost, debugLevel, searchCriteria);
     const endOfMessagesRef = useRef(null); // Create a ref for scrolling purposes
     const [isHovering, setIsHovering] = useState(false); // State to track mouse hover
 
-    // console.log(`WebSocketComponent: ${wssHost}`);
+    // console.log(`WebSocketComponent: wssHost: ${wssHost} debugLevel: ${debugLevel} searchCriteria: ${searchCriteria}`);
 
     // Scroll to the bottom of the message list on every update, only if already at bottom
     useEffect(() => {
