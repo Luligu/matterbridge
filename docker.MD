@@ -6,15 +6,24 @@
 sudo usermod -aG docker $USER
 ```
 
+### Login to docker hub
+```
+docker login
+```
+
 ### Build the Docker image
 ```
+git pull
+npm run deepClean
+npm install
+npm run build
 docker build -t luligu/matterbridge:latest .
 docker push luligu/matterbridge:latest
 ```
 or
 ```
-docker build -t luligu/matterbridge:v1.2.7 .
-docker tag luligu/matterbridge:v1.2.7 luligu/matterbridge:latest
+docker build -t luligu/matterbridge:v1.2.9 .
+docker tag luligu/matterbridge:v1.2.9 luligu/matterbridge:latest
 docker push luligu/matterbridge:latest
 ```
 
