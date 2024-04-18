@@ -1675,20 +1675,15 @@ export class Matterbridge extends EventEmitter {
         await this.matterServer?.addCommissioningServer(this.commissioningServer, { uniqueStorageKey: 'Matterbridge' });
         this.log.debug(`Setting reachability to true for ${plg}Matterbridge${db}`);
         this.commissioningServer.setReachability(true);
-        this.log.debug('Starting matter server...');
         await this.startMatterServer();
         this.log.info('Matter server started');
         await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
         //if (hasParameter('advertise')) await this.commissioningServer.advertise();
-        /*
-        setInterval(() => {
-          this.matterAggregator?.getBridgedDevices().forEach((device) => {
-            this.log.info(`Bridged device: ${dev}${device.name}${nf}`);
-            device.getClusterServer(BridgedDeviceBasicInformationCluster)?.setReachableAttribute(true);
-            device.getClusterServer(BridgedDeviceBasicInformationCluster)?.triggerReachableChangedEvent({ reachableNewValue: true });
-          });
-        }, 30 * 1000);
-        */
+        setTimeout(() => {
+          this.log.info(`*Setting reachability to true for ${plg}Matterbridge${db}`);
+          if (this.commissioningServer) this.setCommissioningServerReachability(this.commissioningServer, true);
+          if (this.matterAggregator) this.setAggregatorReachability(this.matterAggregator, true);
+        }, 60 * 1000);
       }, 1000);
     }
 
@@ -1958,6 +1953,23 @@ export class Matterbridge extends EventEmitter {
       return;
     }
     return plugin;
+  }
+
+  private setCommissioningServerReachability(commissioningServer: CommissioningServer, reachable: boolean) {
+    const basicInformationCluster = commissioningServer?.getRootClusterServer(BasicInformationCluster);
+    if (basicInformationCluster && basicInformationCluster.attributes.reachable !== undefined) basicInformationCluster.setReachableAttribute(reachable);
+    if (basicInformationCluster && basicInformationCluster.triggerReachableChangedEvent) basicInformationCluster.triggerReachableChangedEvent({ reachableNewValue: reachable });
+  }
+
+  private setAggregatorReachability(matterAggregator: Aggregator, reachable: boolean) {
+    const basicInformationCluster = matterAggregator.getClusterServer(BasicInformationCluster);
+    if (basicInformationCluster && basicInformationCluster.attributes.reachable !== undefined) basicInformationCluster.setReachableAttribute(reachable);
+    if (basicInformationCluster && basicInformationCluster.triggerReachableChangedEvent) basicInformationCluster.triggerReachableChangedEvent({ reachableNewValue: reachable });
+    matterAggregator.getBridgedDevices().forEach((device) => {
+      this.log.info(`*Setting reachability to true for bridged device: ${dev}${device.name}${nf}`);
+      device.getClusterServer(BridgedDeviceBasicInformationCluster)?.setReachableAttribute(reachable);
+      device.getClusterServer(BridgedDeviceBasicInformationCluster)?.triggerReachableChangedEvent({ reachableNewValue: reachable });
+    });
   }
 
   /**
