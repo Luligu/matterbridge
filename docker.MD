@@ -1,0 +1,137 @@
+# Give docker permissions as the current user
+```
+sudo usermod -aG docker $USER
+```
+
+# Build the Docker image
+```
+docker build -t luligu/matterbridge:latest .
+docker push luligu/matterbridge:latest
+```
+or
+```
+docker build -t luligu/matterbridge:v1.2.7 .
+docker tag luligu/matterbridge:v1.2.7 luligu/matterbridge:latest
+docker push luligu/matterbridge:latest
+```
+
+# Run the Docker container and start it in detached mode (this is not working due to mdns)
+```
+docker run --name matterbridge -p 8283:8283 -p 5353:5353 -p 5550:5550 --restart always -d matterbridge
+```
+
+# Run the Docker container with full access to the host network (this is working)
+```
+docker run --name matterbridge --network host --restart always -d matterbridge
+```
+
+# Start the Docker container
+```
+docker start matterbridge
+```
+
+# Stop the Docker container
+```
+docker stop matterbridge
+```
+
+# Shows the logs
+```
+docker logs matterbridge
+```
+
+# Shows the logs real time (tail)
+```
+docker logs --tail 100 -f matterbridge
+```
+
+# Execute a command inside the container
+```
+docker exec matterbridge dir
+docker exec matterbridge npm -g install matterbridge
+docker exec matterbridge npm -g install matterbridge-example-accessory-platform
+docker exec matterbridge npm -g install matterbridge-example-dynamic-platform
+docker exec matterbridge npm -g install matterbridge-zigbee2mqtt
+docker exec matterbridge npm -g install matterbridge-somfy-tahoma
+docker exec matterbridge npm -g install matterbridge-eve-door
+docker exec matterbridge npm -g install matterbridge-eve-motion
+docker exec matterbridge npm -g install matterbridge-eve-energy
+docker exec matterbridge npm -g install matterbridge-eve-room
+docker exec matterbridge npm -g install matterbridge-eve-weather
+docker exec matterbridge matterbridge -add matterbridge-example-accessory-platform
+docker exec matterbridge matterbridge -add matterbridge-example-dynamic-platform
+docker exec matterbridge matterbridge -add matterbridge-zigbee2mqtt
+docker exec matterbridge matterbridge -add matterbridge-somfy-tahoma
+docker exec matterbridge matterbridge -add matterbridge-eve-door
+docker exec matterbridge matterbridge -add matterbridge-eve-motion
+docker exec matterbridge matterbridge -add matterbridge-eve-energy
+docker exec matterbridge matterbridge -add matterbridge-eve-room
+docker exec matterbridge matterbridge -add matterbridge-eve-weather
+```
+
+# Remove the Docker container
+```
+docker rm matterbridge
+```
+
+# Remove the Docker image
+```
+docker rmi matterbridge
+```
+
+# Here are some additional Docker commands that you might find useful:
+
+Lists all running Docker containers.
+```
+docker ps
+```
+
+Lists all Docker containers, both running and stopped.
+```
+docker ps -a 
+```
+
+Lists all Docker images on your system.
+```
+docker images
+```
+
+Shows the logs for a specific Docker container.
+```
+docker logs <container_name>
+```
+
+Opens a bash shell inside a running Docker container. Replace /bin/bash with /bin/sh if bash is not available.
+```
+docker exec -it <container_name> /bin/bash
+```
+
+Downloads a Docker image from Docker Hub.
+```
+docker pull <image_name>
+```
+
+Uploads a Docker image to Docker Hub.
+```
+docker push <image_name>
+```
+
+Exports a Docker image to a tar file.
+```
+docker save -o <path_for_exported_file> <image_name>
+```
+
+Imports a Docker image from a tar file.
+```
+docker load -i <path_to_exported_file>
+```
+
+Lists all Docker networks.
+```
+docker network ls
+```
+
+Lists all Docker volumes.
+```
+docker volume ls
+```
