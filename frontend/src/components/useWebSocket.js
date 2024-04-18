@@ -33,11 +33,11 @@ function useWebSocket(url) {
                         case 'warn':
                             return 'black';
                         default:
-                            return 'white'; // Default color if none of the cases match
+                            return 'white'; // Default color if none of the cases match#27509b 09516d
                     }
                 };                
                 const coloredSubType = `<span style="background-color: ${getsubTypeMessageBgColor(msg.subType)}; color: ${getsubTypeMessageColor(msg.subType)}; padding: 1px 5px; font-size: 12px; border-radius: 3px;">${msg.subType}</span>`;
-                const newMessage = `${coloredSubType} - ${timeString} <span style="color: #27509b;">[${msg.type}]</span>: ${msg.message}`;
+                const newMessage = `${coloredSubType} - ${timeString} <span style="color: #09516d;">[${msg.type}]</span>: ${msg.message}`;
                 const newMessages = [...prevMessages, newMessage];
                 // Check if the new array length exceeds the maximum allowed
                 if (newMessages.length > maxMessages) {

@@ -2507,10 +2507,10 @@ export class Matterbridge extends EventEmitter {
       // openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout mykey.key -out mycert.pem -config openssl.cnf
       // For wss connect the browser to https://laptop5_luca:8284/ https://192.168.1.189/log and accept the certificate
       const serverOptions: https.ServerOptions = {
-        // cert: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/mycert.pem')), // Ensure the path is correct
-        // key: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/mykey.key')), // Ensure the path is correct
-        cert: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/laptop5_luca.pem')), // Ensure the path is correct
-        key: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/laptop5_luca.key')), // Ensure the path is correct
+        cert: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/mycert.pem')), // Ensure the path is correct
+        key: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/mykey.key')), // Ensure the path is correct
+        // cert: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/laptop5_luca.pem')), // Ensure the path is correct
+        // key: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/laptop5_luca.key')), // Ensure the path is correct
       };
       // Create an HTTPS server
       const httpsServer = https.createServer(serverOptions);

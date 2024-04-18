@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - [frontend]: Added colors to the logs in the Home page and in the Log page.
+- [frontend]: Frontend updated to 0.8.7.
 
 ### Fixed
 
@@ -20,7 +21,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - [frontend]: Added logs in the Home page and in the Log page.
-- [frontend]: Frontend got updated to 0.8.5.
+- [frontend]: Frontend got updated to 0.8.6.
 - [frontend]: Added log for update and plugin install.
 - [extension]: Started implementation of zigbee2MQTT internal extension.
 
