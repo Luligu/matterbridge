@@ -96,6 +96,7 @@ interface BaseRegisteredPlugin {
   version: string;
   description: string;
   author: string;
+  latestVersion?: string;
   error?: boolean;
   enabled?: boolean;
   loaded?: boolean;
@@ -131,6 +132,19 @@ interface SystemInformation {
   systemUptime: string;
 }
 
+// Define an interface for storing the matterbridge information
+interface MatterbridgeInformation {
+  homeDirectory: string;
+  rootDirectory: string;
+  matterbridgeDirectory: string;
+  matterbridgePluginDirectory: string;
+  globalModulesDirectory: string;
+  matterbridgeVersion: string;
+  matterbridgeLatestVersion: string;
+  bridgeMode: string;
+  debugEnabled: boolean;
+}
+
 const plg = '\u001B[38;5;33m';
 const dev = '\u001B[38;5;79m';
 const typ = '\u001B[38;5;207m';
@@ -153,7 +167,7 @@ export class Matterbridge extends EventEmitter {
     systemUptime: '',
   };
 
-  public matterbridgeInformation = {
+  public matterbridgeInformation: MatterbridgeInformation = {
     homeDirectory: '',
     rootDirectory: '',
     matterbridgeDirectory: '',

@@ -198,7 +198,7 @@ function Home() {
             <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>Logs</p>
           </div>
           <div style={{ flex: '1 1', margin: '5px', padding: '5px', height: '200px', maxHeight: '200px', overflow: 'auto'}}>
-            <WebSocketComponent wssHost={wssHost}/>
+            <WebSocketComponent wssHost={wssHost} debugLevel='debug' searchCriteria='*'/>
           </div>
         </div>
 
