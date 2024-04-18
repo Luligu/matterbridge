@@ -22,9 +22,14 @@ docker push luligu/matterbridge:latest
 ```
 or
 ```
-docker build -t luligu/matterbridge:v1.2.9 .
-docker tag luligu/matterbridge:v1.2.9 luligu/matterbridge:latest
+git pull
+npm run deepClean
+npm install
+npm run build
+docker build -t luligu/matterbridge:latest .
 docker push luligu/matterbridge:latest
+docker build -t luligu/matterbridge:v1.2.9 .
+docker push luligu/matterbridge:v1.2.9
 ```
 
 ### Install all plugins inside the container
@@ -56,12 +61,12 @@ docker exec matterbridge matterbridge -add matterbridge-eve-weather
 
 ### Run the Docker container and start it in detached mode (this is not working due to mdns)
 ```
-docker run --name matterbridge -p 8283:8283 -p 5353:5353 -p 5550:5550 --restart always -d matterbridge
+docker run --name matterbridge -p 8283:8283 -p 5353:5353 -p 5550:5550 --restart always -d luligu/matterbridge
 ```
 
-### Run the Docker container with full access to the host network (this is working)
+### Run the Docker container and start it with full access to the host network (this is working)
 ```
-docker run --name matterbridge --network host --restart always -d matterbridge
+docker run --name matterbridge --network host --restart always -d luligu/matterbridge
 ```
 
 ### Start the Docker container
@@ -72,6 +77,11 @@ docker start matterbridge
 ### Stop the Docker container
 ```
 docker stop matterbridge
+```
+
+### Restart the Docker container
+```
+docker restart matterbridge
 ```
 
 ### Shows the logs
