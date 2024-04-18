@@ -1,9 +1,12 @@
-# Give docker permissions as the current user
+## Docker commands
+
+
+### Give docker permissions as the current user
 ```
 sudo usermod -aG docker $USER
 ```
 
-# Build the Docker image
+### Build the Docker image
 ```
 docker build -t luligu/matterbridge:latest .
 docker push luligu/matterbridge:latest
@@ -15,39 +18,8 @@ docker tag luligu/matterbridge:v1.2.7 luligu/matterbridge:latest
 docker push luligu/matterbridge:latest
 ```
 
-# Run the Docker container and start it in detached mode (this is not working due to mdns)
+### Install all plugins inside the container
 ```
-docker run --name matterbridge -p 8283:8283 -p 5353:5353 -p 5550:5550 --restart always -d matterbridge
-```
-
-# Run the Docker container with full access to the host network (this is working)
-```
-docker run --name matterbridge --network host --restart always -d matterbridge
-```
-
-# Start the Docker container
-```
-docker start matterbridge
-```
-
-# Stop the Docker container
-```
-docker stop matterbridge
-```
-
-# Shows the logs
-```
-docker logs matterbridge
-```
-
-# Shows the logs real time (tail)
-```
-docker logs --tail 100 -f matterbridge
-```
-
-# Execute a command inside the container
-```
-docker exec matterbridge dir
 docker exec matterbridge npm -g install matterbridge
 docker exec matterbridge npm -g install matterbridge-example-accessory-platform
 docker exec matterbridge npm -g install matterbridge-example-dynamic-platform
@@ -58,6 +30,10 @@ docker exec matterbridge npm -g install matterbridge-eve-motion
 docker exec matterbridge npm -g install matterbridge-eve-energy
 docker exec matterbridge npm -g install matterbridge-eve-room
 docker exec matterbridge npm -g install matterbridge-eve-weather
+```
+
+### Add all plugins inside the container
+```
 docker exec matterbridge matterbridge -add matterbridge-example-accessory-platform
 docker exec matterbridge matterbridge -add matterbridge-example-dynamic-platform
 docker exec matterbridge matterbridge -add matterbridge-zigbee2mqtt
@@ -69,17 +45,52 @@ docker exec matterbridge matterbridge -add matterbridge-eve-room
 docker exec matterbridge matterbridge -add matterbridge-eve-weather
 ```
 
-# Remove the Docker container
+### Run the Docker container and start it in detached mode (this is not working due to mdns)
+```
+docker run --name matterbridge -p 8283:8283 -p 5353:5353 -p 5550:5550 --restart always -d matterbridge
+```
+
+### Run the Docker container with full access to the host network (this is working)
+```
+docker run --name matterbridge --network host --restart always -d matterbridge
+```
+
+### Start the Docker container
+```
+docker start matterbridge
+```
+
+### Stop the Docker container
+```
+docker stop matterbridge
+```
+
+### Shows the logs
+```
+docker logs matterbridge
+```
+
+### Shows the logs real time (tail)
+```
+docker logs --tail 100 -f matterbridge
+```
+
+### Execute a command inside the container
+```
+docker exec matterbridge <COMMAND>
+```
+
+### Remove the Docker container
 ```
 docker rm matterbridge
 ```
 
-# Remove the Docker image
+### Remove the Docker image
 ```
 docker rmi matterbridge
 ```
 
-# Here are some additional Docker commands that you might find useful:
+### Here are some additional Docker commands that you might find useful:
 
 Lists all running Docker containers.
 ```
