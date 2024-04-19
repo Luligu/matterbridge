@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- [Matterbridge]: Added call to set reachability at start.
 - [frontend]: Added filter for log level and search criteria in the Logs page.
 - [frontend]: Added colors to the logs in the Home page and in the Logs page.
 - [frontend]: Frontend updated to 0.8.7.

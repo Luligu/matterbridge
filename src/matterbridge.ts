@@ -52,7 +52,7 @@ import {
   getClusterNameById,
 } from '@project-chip/matter-node.js/cluster';
 import { DeviceTypeId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
-import { Aggregator, Device, DeviceTypes, NodeStateInformation } from '@project-chip/matter-node.js/device';
+import { Aggregator, DeviceTypes, NodeStateInformation } from '@project-chip/matter-node.js/device';
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
 import { ManualPairingCodeCodec, QrCodeSchema } from '@project-chip/matter-node.js/schema';
 import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageManager } from '@project-chip/matter-node.js/storage';
@@ -85,6 +85,7 @@ interface RegisteredPlugin extends BaseRegisteredPlugin {
   storageContext?: StorageContext;
   commissioningServer?: CommissioningServer;
   aggregator?: Aggregator;
+  device?: MatterbridgeDevice;
   platform?: MatterbridgePlatform;
 }
 
@@ -287,7 +288,7 @@ export class Matterbridge extends EventEmitter {
     await this.matterbridgeContext.set('softwareVersion', 1);
     await this.matterbridgeContext.set('softwareVersionString', this.matterbridgeVersion);
     await this.matterbridgeContext.set('hardwareVersion', 0);
-    await this.matterbridgeContext.set('hardwareVersionString', '1.0.0');
+    await this.matterbridgeContext.set('hardwareVersionString', '1.0.0'); // Update with the extension version
     this.createMatterServer(this.storageManager);
     this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
     this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
@@ -302,6 +303,12 @@ export class Matterbridge extends EventEmitter {
     await this.startMatterServer();
     this.log.info('Matter server started');
     await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
+    // Set reachability to true and trigger event after 60 seconds
+    setTimeout(() => {
+      this.log.info(`*Setting reachability to true for ${plg}Matterbridge${db}`);
+      if (this.commissioningServer) this.setCommissioningServerReachability(this.commissioningServer, true);
+      if (this.matterAggregator) this.setAggregatorReachability(this.matterAggregator, true);
+    }, 60 * 1000);
   }
 
   /**
@@ -732,6 +739,7 @@ export class Matterbridge extends EventEmitter {
 
       process.removeAllListeners('SIGINT');
       process.removeAllListeners('SIGTERM');
+      this.log.debug('All listeners removed');
 
       // Calling the shutdown functions with a reason
       for (const plugin of this.registeredPlugins) {
@@ -788,11 +796,13 @@ export class Matterbridge extends EventEmitter {
       if (this.expressServer) {
         this.expressServer.close();
         this.expressServer = undefined;
+        this.log.debug('Express server closed successfully');
       }
       // Remove listeners
       if (this.expressApp) {
         this.expressApp.removeAllListeners();
         this.expressApp = undefined;
+        this.log.debug('Frontend closed successfully');
       }
       // Close the WebSocket server
       if (this.webSocketServer) {
@@ -865,21 +875,6 @@ export class Matterbridge extends EventEmitter {
       }, 3 * 1000);
       //cleanupTimeout1.unref();
     }
-  }
-
-  /**
-   * Sets the reachable attribute of a device.
-   *
-   * @param device - The device for which to set the reachable attribute.
-   * @param reachable - The value to set for the reachable attribute.
-   */
-  private setReachableAttribute(device: Device, reachable: boolean) {
-    const basicInformationCluster = device.getClusterServer(BasicInformationCluster);
-    if (!basicInformationCluster) {
-      this.log.error('setReachableAttribute BasicInformationCluster needs to be set!');
-      return;
-    }
-    basicInformationCluster.setReachableAttribute(reachable);
   }
 
   /**
@@ -980,7 +975,7 @@ export class Matterbridge extends EventEmitter {
       return;
     }
     if (this.bridgeMode === 'childbridge' && !plugin.connected) {
-      this.log.warn(`Removing bridged device ${dev}${device.deviceName}${wr} (${dev}${device.name}${wr}) plugin ${plg}${pluginName}${wr} not connected`);
+      this.log.info(`Removing bridged device ${dev}${device.deviceName}${wr} (${dev}${device.name}${wr}) plugin ${plg}${pluginName}${wr} not connected`);
       return;
     }
 
@@ -1719,6 +1714,7 @@ export class Matterbridge extends EventEmitter {
               if (!plugin.commissioningServer) plugin.commissioningServer = await this.createCommisioningServer(plugin.storageContext, plugin.name);
               this.log.debug(`Adding device ${dev}${registeredDevice.device.name}${db} to commissioning server for plugin ${plg}${plugin.name}${db}`);
               plugin.commissioningServer.addDevice(registeredDevice.device);
+              if (!plugin.device) plugin.device = registeredDevice.device;
             }
             this.log.debug(`Adding commissioning server to matter server for plugin ${plg}${plugin.name}${db}`);
             await this.matterServer?.addCommissioningServer(plugin.commissioningServer!, { uniqueStorageKey: plugin.name });
@@ -1778,7 +1774,7 @@ export class Matterbridge extends EventEmitter {
           // Setting reachability to true
           this.log.info(`*Setting reachability to true for ${plg}${plugin.name}${db}`);
           if (plugin.commissioningServer) this.setCommissioningServerReachability(plugin.commissioningServer, true);
-          //if (plugin.type === 'AccessoryPlatform' && plugin.registeredDevices && plugin.registeredDevices[0]) this.setDeviceReachability(plugin.registeredDevices[0], true);
+          if (plugin.type === 'AccessoryPlatform' && plugin.device) this.setDeviceReachability(plugin.device, true);
           if (plugin.type === 'DynamicPlatform' && plugin.aggregator) this.setAggregatorReachability(plugin.aggregator, true);
         }
         Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
@@ -1948,12 +1944,23 @@ export class Matterbridge extends EventEmitter {
     return plugin;
   }
 
+  /**
+   * Sets the reachability of a commissioning server and trigger.
+   *
+   * @param {CommissioningServer} commissioningServer - The commissioning server to set the reachability for.
+   * @param {boolean} reachable - The new reachability status.
+   */
   private setCommissioningServerReachability(commissioningServer: CommissioningServer, reachable: boolean) {
     const basicInformationCluster = commissioningServer?.getRootClusterServer(BasicInformationCluster);
     if (basicInformationCluster && basicInformationCluster.attributes.reachable !== undefined) basicInformationCluster.setReachableAttribute(reachable);
     if (basicInformationCluster && basicInformationCluster.triggerReachableChangedEvent) basicInformationCluster.triggerReachableChangedEvent({ reachableNewValue: reachable });
   }
 
+  /**
+   * Sets the reachability of the specified matter aggregator and its bridged devices and trigger.
+   * @param {Aggregator} matterAggregator - The matter aggregator to set the reachability for.
+   * @param {boolean} reachable - A boolean indicating the reachability status to set.
+   */
   private setAggregatorReachability(matterAggregator: Aggregator, reachable: boolean) {
     const basicInformationCluster = matterAggregator.getClusterServer(BasicInformationCluster);
     if (basicInformationCluster && basicInformationCluster.attributes.reachable !== undefined) basicInformationCluster.setReachableAttribute(reachable);
@@ -1964,6 +1971,13 @@ export class Matterbridge extends EventEmitter {
       device.getClusterServer(BridgedDeviceBasicInformationCluster)?.triggerReachableChangedEvent({ reachableNewValue: reachable });
     });
   }
+
+  /**
+   * Sets the reachability of a device and trigger.
+   *
+   * @param {MatterbridgeDevice} device - The device to set the reachability for.
+   * @param {boolean} reachable - The new reachability status of the device.
+   */
   private setDeviceReachability(device: MatterbridgeDevice, reachable: boolean) {
     const basicInformationCluster = device.getClusterServer(BasicInformationCluster);
     if (basicInformationCluster && basicInformationCluster.attributes.reachable !== undefined) basicInformationCluster.setReachableAttribute(reachable);
@@ -2028,7 +2042,11 @@ export class Matterbridge extends EventEmitter {
         info.forEach((session) => {
           this.log.debug(`***Active session changed on fabric ${fabricIndex} ${session.fabric?.rootVendorId}/${session.fabric?.label} for ${plg}${pluginName}${nf}`, debugStringify(session));
           if (session.isPeerActive === true && session.secure === true && session.numberOfActiveSubscriptions >= 1) {
-            this.log.info(`***Controller ${session.fabric?.rootVendorId}/${session.fabric?.label} connected to ${plg}${pluginName}${nf}`);
+            let controllerName = '';
+            if (session.fabric?.rootVendorId === 4937) controllerName = 'AppleHome';
+            if (session.fabric?.rootVendorId === 4362) controllerName = 'SmartThings';
+            if (session.fabric?.rootVendorId === 4939) controllerName = 'HomeAssistant';
+            this.log.info(`***Controller ${session.fabric?.rootVendorId}${controllerName !== '' ? '(' + controllerName + ')' : ''}/${session.fabric?.label} connected to ${plg}${pluginName}${nf}`);
             connected = true;
           }
         });

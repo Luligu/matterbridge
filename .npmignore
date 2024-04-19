@@ -172,5 +172,8 @@ bridge-groups.json
 .matterbridge.backup.json
 node_storage
 
+TODO.md
+matterbridge.service
+docker.MD
 Dockerfile
 docker-compose.yml
