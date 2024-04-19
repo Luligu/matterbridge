@@ -32,8 +32,9 @@ docker build -t luligu/matterbridge:v1.2.9 .
 docker push luligu/matterbridge:v1.2.9
 ```
 
-### Install all plugins inside the container
+### Install or update all plugins inside the container
 ```
+docker stop matterbridge
 docker exec matterbridge npm -g install matterbridge
 docker exec matterbridge npm -g install matterbridge-example-accessory-platform
 docker exec matterbridge npm -g install matterbridge-example-dynamic-platform
@@ -44,10 +45,12 @@ docker exec matterbridge npm -g install matterbridge-eve-motion
 docker exec matterbridge npm -g install matterbridge-eve-energy
 docker exec matterbridge npm -g install matterbridge-eve-room
 docker exec matterbridge npm -g install matterbridge-eve-weather
+docker start matterbridge
 ```
 
 ### Add all plugins inside the container
 ```
+docker stop matterbridge
 docker exec matterbridge matterbridge -add matterbridge-example-accessory-platform
 docker exec matterbridge matterbridge -add matterbridge-example-dynamic-platform
 docker exec matterbridge matterbridge -add matterbridge-zigbee2mqtt
@@ -57,6 +60,7 @@ docker exec matterbridge matterbridge -add matterbridge-eve-motion
 docker exec matterbridge matterbridge -add matterbridge-eve-energy
 docker exec matterbridge matterbridge -add matterbridge-eve-room
 docker exec matterbridge matterbridge -add matterbridge-eve-weather
+docker start matterbridge
 ```
 
 ### Run the Docker container and start it (this is not working due to mdns)
@@ -64,9 +68,19 @@ docker exec matterbridge matterbridge -add matterbridge-eve-weather
 docker run --name matterbridge -p 8283:8283 -p 5353:5353 -p 5550:5550 --restart always -d luligu/matterbridge
 ```
 
-### Run the Docker container and start it with full access to the host network (this is working)
+### Run the Docker container and start it with full access to the host network
 ```
-docker run --name matterbridge --network host --restart always -d luligu/matterbridge
+docker run --name matterbridge --network host --restart always -d luligu/matterbridge:latest
+```
+
+### Run the Docker container and start it with full access to the host network and the data directory
+```
+docker volume create matterbridge_data
+docker volume create matterbridge_storage
+docker run --name matterbridge \
+  -v matterbridge_data:/root/Matterbridge \
+  -v matterbridge_storage:/root/.matterbridge \
+  --network host --restart always -d luligu/matterbridge
 ```
 
 ### Start the Docker container
@@ -92,6 +106,16 @@ docker logs matterbridge
 ### Shows the logs real time (tail)
 ```
 docker logs --tail 1000 -f matterbridge
+```
+
+### Inspect the Matterbridge data volume
+```
+docker volume inspect matterbridge_data
+```
+
+### Inspect the Matterbridge storage volume
+```
+docker volume inspect matterbridge_storage
 ```
 
 ### Execute a command inside the container

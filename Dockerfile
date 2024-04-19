@@ -5,7 +5,10 @@ FROM node:latest
 WORKDIR /usr/src/app
 
 # Copy the current directory contents into the container at /usr/src/app
-COPY . .
+# COPY . .
+COPY package.json tsconfig.json ./
+COPY src ./src
+COPY frontend/build ./frontend/build
 
 # Install any needed packages specified in package.json
 RUN npm install
