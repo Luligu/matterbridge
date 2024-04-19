@@ -63,6 +63,13 @@ docker exec matterbridge matterbridge -add matterbridge-eve-weather
 docker start matterbridge
 ```
 
+### Remove the matterbridge container and the matterbridge image
+```
+docker stop matterbridge
+docker rm matterbridge
+docker rmi luligu/matterbridge
+```
+
 ### Run the Docker container and start it (this is not working due to mdns)
 ```
 docker run --name matterbridge -p 8283:8283 -p 5353:5353 -p 5550:5550 --restart always -d luligu/matterbridge
@@ -80,7 +87,7 @@ docker volume create matterbridge_storage
 docker run --name matterbridge \
   -v matterbridge_data:/root/Matterbridge \
   -v matterbridge_storage:/root/.matterbridge \
-  --network host --restart always -d luligu/matterbridge
+  --network host --restart always -d luligu/matterbridge:latest
 ```
 
 ### Start the Docker container

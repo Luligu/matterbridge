@@ -19,17 +19,6 @@ RUN npm run build
 # Link Matterbridge
 RUN npm link
 
-# Install the examples plugins
-RUN npm -g install matterbridge-example-accessory-platform
-RUN npm -g install matterbridge-example-dynamic-platform
-RUN npm -g install matterbridge-zigbee2mqtt
-RUN npm -g install matterbridge-somfy-tahoma
-RUN npm -g install matterbridge-eve-door
-RUN npm -g install matterbridge-eve-motion
-RUN npm -g install matterbridge-eve-energy
-RUN npm -g install matterbridge-eve-room
-RUN npm -g install matterbridge-eve-weather
-
 # Make port available to the world outside this container, if your app needs it
 EXPOSE 8283 
 EXPOSE 8284

@@ -1758,18 +1758,6 @@ export class Matterbridge extends EventEmitter {
         clearInterval(startMatterInterval);
         this.log.info('Starting matter server...');
 
-        // Setting reachability to true
-        this.registeredPlugins.forEach((plugin) => {
-          if (!plugin.enabled) return;
-          this.log.debug(`Setting reachability to true for ${plg}${plugin.name}${db}`);
-          plugin.commissioningServer?.setReachability(true);
-          this.registeredDevices.forEach((registeredDevice) => {
-            if (registeredDevice.plugin === plugin.name) {
-              if (plugin.type === 'AccessoryPlatform') this.setReachableAttribute(registeredDevice.device, true);
-              if (plugin.type === 'DynamicPlatform') registeredDevice.device.setBridgedDeviceReachability(true);
-            }
-          });
-        });
         await this.startMatterServer();
         this.log.info('Matter server started');
         for (const plugin of this.registeredPlugins) {
@@ -1787,6 +1775,11 @@ export class Matterbridge extends EventEmitter {
             continue;
           }
           await this.showCommissioningQRCode(plugin.commissioningServer, plugin.storageContext, plugin.nodeContext, plugin.name);
+          // Setting reachability to true
+          this.log.info(`*Setting reachability to true for ${plg}${plugin.name}${db}`);
+          if (plugin.commissioningServer) this.setCommissioningServerReachability(plugin.commissioningServer, true);
+          //if (plugin.type === 'AccessoryPlatform' && plugin.registeredDevices && plugin.registeredDevices[0]) this.setDeviceReachability(plugin.registeredDevices[0], true);
+          if (plugin.type === 'DynamicPlatform' && plugin.aggregator) this.setAggregatorReachability(plugin.aggregator, true);
         }
         Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
         //clearInterval(startMatterInterval);
@@ -1966,10 +1959,15 @@ export class Matterbridge extends EventEmitter {
     if (basicInformationCluster && basicInformationCluster.attributes.reachable !== undefined) basicInformationCluster.setReachableAttribute(reachable);
     if (basicInformationCluster && basicInformationCluster.triggerReachableChangedEvent) basicInformationCluster.triggerReachableChangedEvent({ reachableNewValue: reachable });
     matterAggregator.getBridgedDevices().forEach((device) => {
-      this.log.info(`*Setting reachability to true for bridged device: ${dev}${device.name}${nf}`);
+      this.log.debug(`*Setting reachability to true for bridged device: ${dev}${device.name}${nf}`);
       device.getClusterServer(BridgedDeviceBasicInformationCluster)?.setReachableAttribute(reachable);
       device.getClusterServer(BridgedDeviceBasicInformationCluster)?.triggerReachableChangedEvent({ reachableNewValue: reachable });
     });
+  }
+  private setDeviceReachability(device: MatterbridgeDevice, reachable: boolean) {
+    const basicInformationCluster = device.getClusterServer(BasicInformationCluster);
+    if (basicInformationCluster && basicInformationCluster.attributes.reachable !== undefined) basicInformationCluster.setReachableAttribute(reachable);
+    if (basicInformationCluster && basicInformationCluster.triggerReachableChangedEvent) basicInformationCluster.triggerReachableChangedEvent({ reachableNewValue: reachable });
   }
 
   /**
