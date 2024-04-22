@@ -2,7 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.10] - 2024-04-21
+
+### Added
+
+- [extension]: Finalized implementation of zigbee2MQTT internal extension v. 1.0.0.
+
+
 ## [1.2.9] - 2024-04-19
+
+### Added
+
+- [Matterbridge]: Added call to set reachability at start.
 
 ### Added
 

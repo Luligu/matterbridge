@@ -85,7 +85,7 @@ matterbridge -help
 
 ## Frontend
 
-Matterbridge has a frontend available on http://localhost:3000
+Matterbridge has a frontend available on http://localhost:8283
 
 You can change the default port by adding the frontend parameter when you launch it.
 

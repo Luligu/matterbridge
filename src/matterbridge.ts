@@ -189,6 +189,7 @@ export class Matterbridge extends EventEmitter {
   public matterbridgeLatestVersion: string = '';
 
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
+  public restartMode: 'service' | 'docker' | '' = '';
   public debugEnabled = false;
 
   private port = 5540;
@@ -240,12 +241,12 @@ export class Matterbridge extends EventEmitter {
    *
    * @returns A Promise that resolves when the initialization is complete.
    */
-  public async initializeAsExtension(dataPath: string, debugEnabled: boolean) {
+  public async startExtension(dataPath: string, debugEnabled: boolean, extensionVersion: string, port = 5560): Promise<boolean> {
     // Set the bridge mode
     this.bridgeMode = 'bridge';
 
     // Set the first port to use
-    this.port = 5560;
+    this.port = port;
 
     // Set Matterbridge logger
     this.debugEnabled = debugEnabled;
@@ -283,13 +284,14 @@ export class Matterbridge extends EventEmitter {
 
     // Start the storage and create matterbridgeContext
     await this.startStorage('json', path.join(this.matterbridgeDirectory, 'matterbridge.json'));
-    this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
-    if (!this.storageManager || !this.matterbridgeContext) return;
+    if (!this.storageManager) return false;
+    this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge zigbee2MQTT', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'zigbee2MQTT Matter extension');
+    if (!this.matterbridgeContext) return false;
     await this.matterbridgeContext.set('softwareVersion', 1);
     await this.matterbridgeContext.set('softwareVersionString', this.matterbridgeVersion);
-    await this.matterbridgeContext.set('hardwareVersion', 0);
-    await this.matterbridgeContext.set('hardwareVersionString', '1.0.0'); // Update with the extension version
-    this.createMatterServer(this.storageManager);
+    await this.matterbridgeContext.set('hardwareVersion', 1);
+    await this.matterbridgeContext.set('hardwareVersionString', extensionVersion); // Update with the extension version
+    this.matterServer = this.createMatterServer(this.storageManager);
     this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
     this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
     this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
@@ -297,9 +299,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug('Adding matterbridge aggregator to commissioning server');
     this.commissioningServer.addDevice(this.matterAggregator);
     this.log.debug('Adding matterbridge commissioning server to matter server');
-    await this.matterServer?.addCommissioningServer(this.commissioningServer, { uniqueStorageKey: 'Matterbridge' });
-    this.log.debug(`Setting reachability to true for ${plg}Matterbridge${db}`);
-    this.commissioningServer.setReachability(true);
+    await this.matterServer.addCommissioningServer(this.commissioningServer, { uniqueStorageKey: 'Matterbridge' });
     await this.startMatterServer();
     this.log.info('Matter server started');
     await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
@@ -309,6 +309,7 @@ export class Matterbridge extends EventEmitter {
       if (this.commissioningServer) this.setCommissioningServerReachability(this.commissioningServer, true);
       if (this.matterAggregator) this.setAggregatorReachability(this.matterAggregator, true);
     }, 60 * 1000);
+    return this.commissioningServer.isCommissioned();
   }
 
   /**
@@ -316,12 +317,22 @@ export class Matterbridge extends EventEmitter {
    *
    * @returns A Promise that resolves when the initialization is complete.
    */
-  public async closeAsExtension() {
+  public async stopExtension() {
     // Closing matter
     await this.stopMatter();
 
+    // Clearing the session manager
+    // this.matterbridgeContext?.createContext('SessionManager').clear();
+
     // Closing storage
     await this.stopStorage();
+
+    this.log.info('Matter server stopped');
+  }
+
+  public isExtensionCommissioned(): boolean {
+    if (!this.commissioningServer) return false;
+    return this.commissioningServer.isCommissioned();
   }
 
   /**
@@ -364,6 +375,10 @@ export class Matterbridge extends EventEmitter {
     // Set the first port to use
     this.port = getIntParameter('port') ?? 5540;
 
+    // Set the restart mode
+    if (hasParameter('service')) this.restartMode = 'service';
+    if (hasParameter('docker')) this.restartMode = 'docker';
+
     // Set Matterbridge logger
     if (hasParameter('debug')) this.debugEnabled = true;
     this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled });
@@ -400,7 +415,8 @@ export class Matterbridge extends EventEmitter {
     await this.logNodeAndSystemInfo();
     this.log.info(
       // eslint-disable-next-line max-len
-      `Matterbridge version ${this.matterbridgeVersion} mode ${hasParameter('bridge') ? 'bridge' : ''}${hasParameter('childbridge') ? 'childbridge' : ''}${hasParameter('controller') ? 'controller' : ''} running on ${this.systemInformation.osType} ${this.systemInformation.osRelease} ${this.systemInformation.osPlatform} ${this.systemInformation.osArch}`,
+      `Matterbridge version ${this.matterbridgeVersion} mode ${hasParameter('bridge') ? 'bridge' : ''}${hasParameter('childbridge') ? 'childbridge' : ''}${hasParameter('controller') ? 'controller' : ''} ` +
+        `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}running on ${this.systemInformation.osType} ${this.systemInformation.osRelease} ${this.systemInformation.osPlatform} ${this.systemInformation.osArch}`,
     );
 
     // Check node version and throw error
@@ -1117,12 +1133,7 @@ export class Matterbridge extends EventEmitter {
       return;
     }
     this.log.debug('Starting matterbridge in mode', this.bridgeMode);
-    this.createMatterServer(this.storageManager);
-    if (!this.matterServer) {
-      this.log.error('No matter server initialized');
-      await this.cleanup('No matter server initialized');
-      return;
-    }
+    this.matterServer = this.createMatterServer(this.storageManager);
 
     this.log.debug('***Starting startMatterbridge interval for Matterbridge');
     let failCount = 0;
@@ -1302,7 +1313,7 @@ export class Matterbridge extends EventEmitter {
       return Promise.reject(new Error(`Plugin ${plg}${plugin.name}${er} not loaded or no platform`));
     }
     if (plugin.started) {
-      this.log.warn(`Plugin ${plg}${plugin.name}${wr} already started`);
+      this.log.debug(`Plugin ${plg}${plugin.name}${db} already started`);
       return Promise.resolve();
     }
     this.log.info(`Starting plugin ${plg}${plugin.name}${db} type ${typ}${plugin.type}${db}`);
@@ -1441,13 +1452,7 @@ export class Matterbridge extends EventEmitter {
     }
 
     this.log.debug('Starting matterbridge in mode', this.bridgeMode);
-    this.createMatterServer(this.storageManager);
-    if (!this.matterServer) {
-      this.log.error('No matter server initialized');
-      await this.cleanup('No matter server initialized');
-      return;
-    }
-
+    this.matterServer = this.createMatterServer(this.storageManager);
     this.log.info('Creating matter commissioning controller');
     this.commissioningController = new CommissioningController({
       autoConnect: false,
@@ -1619,12 +1624,7 @@ export class Matterbridge extends EventEmitter {
       return;
     }
     this.log.debug('Starting matterbridge in mode', this.bridgeMode);
-    this.createMatterServer(this.storageManager);
-    if (!this.matterServer) {
-      this.log.error('No matter server initialized');
-      await this.cleanup('No matter server initialized');
-      return;
-    }
+    this.matterServer = this.createMatterServer(this.storageManager);
 
     if (this.bridgeMode === 'bridge') {
       // Plugins are loaded by loadPlugin on startup and plugin.loaded is set to true
@@ -1668,8 +1668,6 @@ export class Matterbridge extends EventEmitter {
         this.commissioningServer.addDevice(this.matterAggregator);
         this.log.debug('Adding matterbridge commissioning server to matter server');
         await this.matterServer?.addCommissioningServer(this.commissioningServer, { uniqueStorageKey: 'Matterbridge' });
-        this.log.debug(`Setting reachability to true for ${plg}Matterbridge${db}`);
-        this.commissioningServer.setReachability(true);
         await this.startMatterServer();
         this.log.info('Matter server started');
         await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
@@ -1902,8 +1900,8 @@ export class Matterbridge extends EventEmitter {
     if (!commissioningServer.isCommissioned()) {
       this.log.info(`***The commissioning server on port ${commissioningServer.getPort()} for ${plg}${pluginName}${nf} is not commissioned. Pair it scanning the QR code ...`);
       const { qrPairingCode, manualPairingCode } = commissioningServer.getPairingCode();
-      storageContext.set('qrPairingCode', qrPairingCode);
-      storageContext.set('manualPairingCode', manualPairingCode);
+      await storageContext.set('qrPairingCode', qrPairingCode);
+      await storageContext.set('manualPairingCode', manualPairingCode);
       await nodeContext.set<string>('qrPairingCode', qrPairingCode);
       await nodeContext.set<string>('manualPairingCode', manualPairingCode);
       const QrCode = new QrCodeSchema();
@@ -2040,13 +2038,13 @@ export class Matterbridge extends EventEmitter {
         const info = commissioningServer.getActiveSessionInformation(fabricIndex);
         let connected = false;
         info.forEach((session) => {
-          this.log.debug(`***Active session changed on fabric ${fabricIndex} ${session.fabric?.rootVendorId}/${session.fabric?.label} for ${plg}${pluginName}${nf}`, debugStringify(session));
+          this.log.info(`***Active session changed on fabric ${fabricIndex} ${session.fabric?.rootVendorId}/${session.fabric?.label} for ${plg}${pluginName}${nf}`, debugStringify(session));
           if (session.isPeerActive === true && session.secure === true && session.numberOfActiveSubscriptions >= 1) {
             let controllerName = '';
             if (session.fabric?.rootVendorId === 4937) controllerName = 'AppleHome';
             if (session.fabric?.rootVendorId === 4362) controllerName = 'SmartThings';
             if (session.fabric?.rootVendorId === 4939) controllerName = 'HomeAssistant';
-            this.log.info(`***Controller ${session.fabric?.rootVendorId}${controllerName !== '' ? '(' + controllerName + ')' : ''}/${session.fabric?.label} connected to ${plg}${pluginName}${nf}`);
+            this.log.info(`***Controller ${session.fabric?.rootVendorId}${controllerName !== '' ? '(' + controllerName + ')' : ''}/${session.fabric?.label} connected to ${plg}${pluginName}${nf} on session ${session.name}`);
             connected = true;
           }
         });
@@ -2104,7 +2102,7 @@ export class Matterbridge extends EventEmitter {
         const info = commissioningServer.getCommissionedFabricInformation(fabricIndex);
         this.log.debug(`***Commissioning changed on fabric ${fabricIndex} for ${plg}${pluginName}${nf}`, debugStringify(info));
         if (info.length === 0) {
-          this.log.warn(`***Commissioning removed from fabric ${fabricIndex} for ${plg}${pluginName}${nf}. Resetting the commissioning server ...`);
+          this.log.warn(`***Commissioning removed from fabric ${fabricIndex} for ${plg}${pluginName}${wr}. Resetting the commissioning server ...`);
           await commissioningServer.factoryReset();
           if (pluginName === 'Matterbridge') {
             await this.matterbridgeContext?.clearAll();
@@ -2118,6 +2116,7 @@ export class Matterbridge extends EventEmitter {
               }
             }
           }
+          this.log.warn(`***Restart to activate the pairing for ${plg}${pluginName}${wr}`);
         }
       },
     });
@@ -2130,10 +2129,11 @@ export class Matterbridge extends EventEmitter {
    * @param storageManager The storage manager to be used by the Matter server.
    *
    */
-  private createMatterServer(storageManager: StorageManager) {
+  private createMatterServer(storageManager: StorageManager): MatterServer {
     this.log.debug('Creating matter server');
-    this.matterServer = new MatterServer(storageManager, { mdnsAnnounceInterface: undefined });
+    const matterServer = new MatterServer(storageManager, { mdnsAnnounceInterface: undefined });
     this.log.debug('Created matter server');
+    return matterServer;
   }
 
   /**
