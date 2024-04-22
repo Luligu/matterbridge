@@ -79,7 +79,7 @@ import { MatterHistory, Sensitivity, WeatherTrend, TemperatureDisplayUnits } fro
 import { EveHistory, EveHistoryCluster } from 'matter-history';
 
 import { AirQuality, AirQualityCluster } from './AirQualityCluster.js';
-import { AnsiLogger, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, TimestampFormat, db, hk, zb } from 'node-ansi-logger';
 import { createHash } from 'crypto';
 import { TvocMeasurement, TvocMeasurementCluster } from './TvocCluster.js';
 
@@ -206,17 +206,24 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     }
   }
 
-  public addChildDeviceTypeWithClusterServer(deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]) {
+  /**
+   * Adds a child device type with cluster server.
+   *
+   * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
+   * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
+   * @returns {Endpoint} - The child endpoint that was added.
+   */
+  public addChildDeviceTypeWithClusterServer(deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]): Endpoint {
     this.log.debug('addChildDeviceTypeWithClusterServer:');
     const child = new Endpoint(deviceTypes);
     deviceTypes.forEach((deviceType) => {
-      this.log.debug(`- with deviceType: ${deviceType.code}-${deviceType.name}`);
+      this.log.debug(`- with deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
       deviceType.requiredServerClusters.forEach((clusterId) => {
         if (!includeServerList.includes(clusterId)) includeServerList.push(clusterId);
       });
     });
     includeServerList.forEach((clusterId) => {
-      this.log.debug(`- with cluster: ${clusterId}-${getClusterNameById(clusterId)}`);
+      this.log.debug(`- with cluster: ${hk}${clusterId}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
     });
 
     if (includeServerList.includes(Identify.Cluster.id)) {

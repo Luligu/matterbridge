@@ -2695,7 +2695,7 @@ export class Matterbridge extends EventEmitter {
                 else attributeValue = value.getLocal().toString();
               } catch (error) {
                 attributeValue = 'Unavailable';
-                this.log.debug(`****${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
+                this.log.debug(`GetLocal value ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
                 //console.log(error);
               }
               data.push({
