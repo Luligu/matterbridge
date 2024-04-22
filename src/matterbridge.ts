@@ -2951,6 +2951,7 @@ export class Matterbridge extends EventEmitter {
       if (clusterServer.name === 'TemperatureMeasurement') attributes += `Temperature: ${clusterServer.getMeasuredValueAttribute() / 100}°C `;
       if (clusterServer.name === 'RelativeHumidityMeasurement') attributes += `Humidity: ${clusterServer.getMeasuredValueAttribute() / 100}% `;
       if (clusterServer.name === 'PressureMeasurement') attributes += `Pressure: ${clusterServer.getMeasuredValueAttribute()} `;
+      if (clusterServer.name === 'FlowMeasurement') attributes += `Pressure: ${clusterServer.getMeasuredValueAttribute()} `;
     });
     return attributes;
   }
@@ -2967,35 +2968,22 @@ function restartProcess() {
     stdio: 'inherit',
   });
 
+  // Handle errors
+  newProcess.on('error', (err) => {
+    console.error('Failed to start new process:', err);
+  });
+
   // Unreference the new process so that the current process can exit
   newProcess.unref();
 
   // Exit the current process
+  cleanup();
   process.exit();
 }
 
-import * as WebSocket from 'ws';
-
-const wss = new WebSocket.Server({ port: 8080 });
-
-wss.on('connection', ws => {
-  ws.on('message', message => {
-    console.log(`Received message => ${message}`)
-  });
-
-  // Send a message to the frontend
-  ws.send('Hello from backend!');
-});
-
-const ws = new WebSocket('ws://localhost:8080');
-
-ws.onmessage = (event) => {
-  console.log(`Received message => ${event.data}`);
-};
-
-*/
 
 /*
+How frontend was created
 npx create-react-app matterbridge-frontend
 cd matterbridge-frontend
 npm install react-router-dom 
