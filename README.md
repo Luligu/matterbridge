@@ -57,7 +57,7 @@ Test the installation with:
 matterbridge -bridge
 ```
 
-Now it is possible to open the frontend at the link provided (default: http://localhost:3000)
+Now it is possible to open the frontend at the link provided (default: http://localhost:8283)
 
 ## Usage
 
@@ -152,6 +152,10 @@ The Eve app only shows the history when the plugins run like an AccessoryPlatfor
 ### Production-level plugins
 
 [zigbee2mqtt](https://github.com/Luligu/matterbridge-zigbee2mqtt)
+
+Matterbridge zigbee2mqtt is a matterbridge production-level plugin that expose all zigbee2mqtt devices and groups to Matter.
+
+No hub or dedicated hardware needed.
 
 ## How to install and register a production-level plugin (from npm)
 
