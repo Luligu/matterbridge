@@ -24,6 +24,10 @@
     "matter",
     "matter.js",
     "matter-node.js",
+    "matterprotocol",
+    "iot",
+    "smarthome",
+    "connectedthings",
     "plugin"
   ],
   "type": "module",
