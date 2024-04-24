@@ -401,12 +401,32 @@ docker run --name matterbridge \
   --network host --restart always -d luligu/matterbridge:latest
 ```
 
-### Run with docker-compose
+### Run with docker compose
+
+The docker-compose.yml file is available in the root of the package
+
+```
+services:
+  matterbridge:
+    container_name: matterbridge
+    image: luligu/matterbridge:latest # Matterbridge image with the latest tag
+    network_mode: host # Ensures the Matter mdns works
+    restart: always # Ensures the container always restarts automatically
+    volumes:
+      - plugin:/root/Matterbridge
+      - storage:/root/.matterbridge
+
+volumes:
+  plugin:
+  storage:
+```
+Run with docker compose
+
 ```
 docker compose up -d
 ```
 
-### Stop with docker-compose
+### Stop with docker compose
 ```
 docker compose down
 ```

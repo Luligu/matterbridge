@@ -6,8 +6,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- [docker]: See the guidelines on https://github.com/Luligu/matterbridge?tab=readme-ov-file#Run-the-Docker-container-and-start-it.
 - [docker]: Added support for docker. The Matterbridge image is published on the docker hub.
+- [docker]: See the guidelines on https://github.com/Luligu/matterbridge?tab=readme-ov-file#Run-the-Docker-container-and-start-it.
+- [docker compose]: See the guidelines on https://github.com/Luligu/matterbridge?tab=readme-ov-file#Run-with-docker-compose.
 
 ### Fixed
 
