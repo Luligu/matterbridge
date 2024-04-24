@@ -381,7 +381,8 @@ sudo systemctl enable matterbridge.service
 sudo systemctl disable matterbridge.service
 ```
 
-## Run matterbridge with docker
+## Run matterbridge with docker (Linux only)
+
 The Matterbridge docker image is published on the docker hub.
 
 ### Run the Docker container and start it
@@ -398,6 +399,11 @@ docker run --name matterbridge \
   -v matterbridge_plugin:/root/Matterbridge \
   -v matterbridge_storage:/root/.matterbridge \
   --network host --restart always -d luligu/matterbridge:latest
+```
+
+### Run with docker-compose
+```
+docker-compose up -d
 ```
 
 ### Start the Docker container

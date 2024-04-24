@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  matterbridge:
+    image: luligu/matterbridge:latest # Matterbridge image with the latest tag
+    network_mode: host # Ensures the Matter mdns works
+    restart: always # Ensures the container always restarts automatically
+    volumes:
+      - matterbridge_plugin:/root/Matterbridge
+      - matterbridge_storage:/root/.matterbridge
+      
+volumes:
+  matterbridge_plugin:
+  matterbridge_storage:
