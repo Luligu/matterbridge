@@ -72,7 +72,7 @@ docker rmi luligu/matterbridge
 
 ### Run the Docker container and start it (this is not working due to mdns)
 ```
-docker run --name matterbridge -p 8283:8283 -p 5353:5353 -p 5550:5550 --restart always -d luligu/matterbridge
+docker run --name matterbridge -p 8283:8283 -p 8284:8284 -p 5353:5353 -p 5550:5550 --restart always -d luligu/matterbridge
 ```
 
 ### Run the Docker container and start it with full access to the host network
@@ -82,10 +82,10 @@ docker run --name matterbridge --network host --restart always -d luligu/matterb
 
 ### Run the Docker container and start it with full access to the host network and the data directory
 ```
-docker volume create matterbridge_data
+docker volume create matterbridge_plugin
 docker volume create matterbridge_storage
 docker run --name matterbridge \
-  -v matterbridge_data:/root/Matterbridge \
+  -v matterbridge_plugin:/root/Matterbridge \
   -v matterbridge_storage:/root/.matterbridge \
   --network host --restart always -d luligu/matterbridge:latest
 ```
@@ -115,9 +115,9 @@ docker logs matterbridge
 docker logs --tail 1000 -f matterbridge
 ```
 
-### Inspect the Matterbridge data volume
+### Inspect the Matterbridge plugin volume
 ```
-docker volume inspect matterbridge_data
+docker volume inspect matterbridge_plugin
 ```
 
 ### Inspect the Matterbridge storage volume
@@ -138,6 +138,12 @@ docker rm matterbridge
 ### Remove the Docker image
 ```
 docker rmi matterbridge
+```
+
+### Remove the Docker volumes
+```
+docker volume rm matterbridge_plugin
+docker volume rm matterbridge_storage
 ```
 
 ### Here are some additional Docker commands that you might find useful:
