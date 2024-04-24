@@ -403,7 +403,12 @@ docker run --name matterbridge \
 
 ### Run with docker-compose
 ```
-docker-compose up -d
+docker compose up -d
+```
+
+### Stop with docker-compose
+```
+docker compose down
 ```
 
 ### Start the Docker container
