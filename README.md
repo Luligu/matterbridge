@@ -386,8 +386,10 @@ The Matterbridge docker image is published on the docker hub.
 
 ### Run the Docker container and start it
 The container has full access to the host network (needed for mdns).
-The volume matterbridge_plugin connects to the Matterbridge plugin directory (Matterbridge).
-The volume matterbridge_storage connects to the Matterbridge storage directory (.matterbridge).
+
+The volume matterbridge_plugin connects to the internal Matterbridge plugin directory (Matterbridge).
+
+The volume matterbridge_storage connects to the internal Matterbridge storage directory (.matterbridge).
 
 ```
 docker volume create matterbridge_plugin
