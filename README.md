@@ -261,7 +261,7 @@ The easiest way is to clone:
 
 - https://github.com/Luligu/matterbridge-example-dynamic-platform if you want to create a Dynamic Platform Plugin.
 
-Then change the name, version, description and author in the package.json.
+Then change the name (keep matterbridge- at the beginning of the name), version, description and author in the package.json.
 
 Add your plugin logic in platform.ts.
 
@@ -317,7 +317,7 @@ Create a systemctl configuration file for Matterbridge
 sudo nano /etc/systemd/system/matterbridge.service
 ```
 
-Add the following to this file, replacing twice USER with your user name (e.g. pi):
+Add the following to this file, replacing twice (!) USER with your user name (e.g. WorkingDirectory=/home/pi/Matterbridge and User=pi):
 
 ```
 [Unit]
@@ -379,6 +379,54 @@ sudo systemctl enable matterbridge.service
 
 ```
 sudo systemctl disable matterbridge.service
+```
+
+## Run matterbridge with docker
+The Matterbridge docker image is published on the docker hub.
+
+### Run the Docker container and start it with full access to the host network and with volume for the plugin and data directory
+```
+docker volume create matterbridge_plugin
+docker volume create matterbridge_storage
+docker run --name matterbridge \
+  -v matterbridge_plugin:/root/Matterbridge \
+  -v matterbridge_storage:/root/.matterbridge \
+  --network host --restart always -d luligu/matterbridge:latest
+```
+
+### Start the Docker container
+```
+docker start matterbridge
+```
+
+### Stop the Docker container
+```
+docker stop matterbridge
+```
+
+### Restart the Docker container
+```
+docker restart matterbridge
+```
+
+### Shows the logs
+```
+docker logs matterbridge
+```
+
+### Shows the logs real time (tail)
+```
+docker logs --tail 1000 -f matterbridge
+```
+
+### Inspect the Matterbridge plugin volume
+```
+docker volume inspect matterbridge_plugin
+```
+
+### Inspect the Matterbridge storage volume
+```
+docker volume inspect matterbridge_storage
 ```
 
 # Contribution Guidelines

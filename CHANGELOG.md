@@ -4,9 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [1.2.11] - 2024-04-24
 
+### Added
+
+- [docker]: See the guidelines on https://github.com/Luligu/matterbridge?tab=readme-ov-file#Run-the-Docker-container-and-start-it-with-full-access-to-the-host-network-and-with-volume-for-the-plugin-and-data-directory.
+- [docker]: Added support for docker. The Matterbridge image is published on the docker hub.
+
 ### Fixed
 
-- [start]: Fixed the error loading plugins that trow error.
+- [matterbridge]: Fixed the case when a bad plugin throws errors.
 
 
 ## [1.2.10] - 2024-04-23

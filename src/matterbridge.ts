@@ -759,11 +759,15 @@ export class Matterbridge extends EventEmitter {
 
       // Calling the shutdown functions with a reason
       for (const plugin of this.registeredPlugins) {
-        if (!plugin.enabled) continue;
+        if (!plugin.enabled || plugin.error) continue;
         this.log.info(`*Shutting down plugin ${plg}${plugin.name}${nf}`);
         if (plugin.platform) {
-          await plugin.platform.onShutdown('Matterbridge is closing: ' + message);
-          await this.savePluginConfig(plugin);
+          try {
+            await plugin.platform.onShutdown('Matterbridge is closing: ' + message);
+            await this.savePluginConfig(plugin);
+          } catch (error) {
+            this.log.error(`Plugin ${plg}${plugin.name}${er} shutting down error: ${error}`);
+          }
         } else {
           this.log.warn(`Plugin ${plg}${plugin.name}${wr} platform not found`);
         }
@@ -1639,9 +1643,9 @@ export class Matterbridge extends EventEmitter {
       let failCount = 0;
       const startInterval = setInterval(async () => {
         for (const plugin of this.registeredPlugins) {
-          if (!plugin.enabled) continue;
+          if (!plugin.enabled || plugin.error) continue;
           if (!plugin.loaded) {
-            this.log.info(`***Waiting (failSafeCount=${failCount}/30) in startMatterbridge interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded}...`);
+            this.log.debug(`***Waiting (failSafeCount=${failCount}/30) in startMatterbridge interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded}...`);
             failCount++;
             if (failCount > 30) {
               this.log.error(`***Failed to load plugin ${plg}${plugin.name}${er}`);
@@ -1699,7 +1703,7 @@ export class Matterbridge extends EventEmitter {
         let failCount = 0;
         const startInterval = setInterval(async () => {
           if (!plugin.loaded || !plugin.started /* || !plugin.configured*/) {
-            this.log.info(`***Waiting (failSafeCount=${failCount}/30) in startMatterbridge interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
+            this.log.debug(`***Waiting (failSafeCount=${failCount}/30) in startMatterbridge interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
             failCount++;
             if (failCount > 30) {
               this.log.error(`***Failed to load plugin ${plg}${plugin.name}${er}`);

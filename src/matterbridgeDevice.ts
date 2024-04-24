@@ -158,7 +158,7 @@ export interface SerializedMatterbridgeDevice {
   deviceName: string;
   serialNumber: string;
   uniqueId: string;
-  deviceType: AtLeastOne<DeviceTypeDefinition>;
+  deviceTypes: AtLeastOne<DeviceTypeDefinition>;
   endpoint: EndpointNumber | undefined;
   endpointName: string;
   clusterServersId: ClusterId[];
@@ -212,9 +212,10 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
    * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
    */
-  public addDeviceTypeWithClusterServer(deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]) {
+  addDeviceTypeWithClusterServer(deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]) {
     this.log.debug('addDeviceTypeWithClusterServer:');
     deviceTypes.forEach((deviceType) => {
+      this.addDeviceType(deviceType);
       this.log.debug(`- with deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
       deviceType.requiredServerClusters.forEach((clusterId) => {
         if (!includeServerList.includes(clusterId)) includeServerList.push(clusterId);
@@ -245,7 +246,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
    * @returns {Endpoint} - The child endpoint that was added.
    */
-  public addChildDeviceTypeWithClusterServer(deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]): Endpoint {
+  addChildDeviceTypeWithClusterServer(deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]): Endpoint {
     this.log.debug('addChildDeviceTypeWithClusterServer:');
     const child = new Endpoint(deviceTypes);
     deviceTypes.forEach((deviceType) => {
@@ -287,7 +288,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       serialNumber: this.serialNumber!,
       deviceName: this.deviceName!,
       uniqueId: this.uniqueId!,
-      deviceType: this.getDeviceTypes(),
+      deviceTypes: this.getDeviceTypes(),
       endpoint: this.number,
       endpointName: this.name,
       clusterServersId: [],
