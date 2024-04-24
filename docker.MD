@@ -28,8 +28,8 @@ npm install
 npm run build
 docker build -t luligu/matterbridge:latest .
 docker push luligu/matterbridge:latest
-docker build -t luligu/matterbridge:v1.2.9 .
-docker push luligu/matterbridge:v1.2.9
+docker build -t luligu/matterbridge:v1.2.11 .
+docker push luligu/matterbridge:v1.2.11
 ```
 
 ### Install or update all plugins inside the container
@@ -72,7 +72,14 @@ docker rmi luligu/matterbridge
 
 ### Run the Docker container and start it (this is not working due to mdns)
 ```
-docker run --name matterbridge -p 8283:8283 -p 8284:8284 -p 5353:5353 -p 5550:5550 --restart always -d luligu/matterbridge
+docker run --name matterbridge -p 8283:8283 -p 8284:8284 -p 5353:5353/tcp -p 5353:5353/udp -p 5550:5550 --restart always -d luligu/matterbridge
+```
+If this fails check who is using the ports:
+```
+sudo netstat -lunp | grep 8283
+sudo netstat -lunp | grep 8284
+sudo netstat -lunp | grep 5350
+sudo netstat -lunp | grep 5353
 ```
 
 ### Run the Docker container and start it with full access to the host network
@@ -80,7 +87,7 @@ docker run --name matterbridge -p 8283:8283 -p 8284:8284 -p 5353:5353 -p 5550:55
 docker run --name matterbridge --network host --restart always -d luligu/matterbridge:latest
 ```
 
-### Run the Docker container and start it with full access to the host network and the data directory
+### Run the Docker container and start it with full access to the host network and with volume for the plugin and data directory
 ```
 docker volume create matterbridge_plugin
 docker volume create matterbridge_storage
