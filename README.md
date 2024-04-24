@@ -326,7 +326,7 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/matterbridge -bridge -service
+ExecStart=/usr/bin/matterbridge -bridge -service -port 5550
 WorkingDirectory=/home/<USER>/Matterbridge
 StandardOutput=inherit
 StandardError=inherit

@@ -2,21 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.11] - 2024-04-24
+## [1.2.11] - 2024-04-25
 
 ### Added
 
+- [matterbridge]: Added user to system information.
 - [frontend]: Persist the filter selection (debug level and search criteria) in the Logs route.
 - [frontend]: Added version and two badges for bridgeMode and restartMode.
 - [frontend]: Frontend updated to 0.8.8.
-- [docker]: Added support for docker. The Matterbridge image is published on the docker hub.
+- [docker]: Added support for docker (BETA). The Matterbridge image is published on the docker hub.
 - [docker]: See the guidelines on https://github.com/Luligu/matterbridge?tab=readme-ov-file#Run-the-Docker-container-and-start-it.
 - [docker compose]: See the guidelines on https://github.com/Luligu/matterbridge?tab=readme-ov-file#Run-with-docker-compose.
 
 ### Fixed
 
-- [matterbridge]: Fixed the case when a bad plugin throws errors.
+- [matterbridge]: Fixed the case when a plugin throws errors.
 
+### New plugin
+
+- Matterbridge Somfy Tahoma https://github.com/Luligu/matterbridge-somfy-tahoma
 
 ## [1.2.10] - 2024-04-23
 
