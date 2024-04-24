@@ -2,7 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.10] - 2024-04-22
+## [1.2.11] - 2024-04-25
+
+### Fixed
+
+- [start]: Fixed the error loading plugins that trow error.
+
+
+## [1.2.10] - 2024-04-23
 
 ### Added
 

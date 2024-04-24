@@ -188,8 +188,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {DeviceTypeDefinition} definition - The DeviceTypeDefinition of the device.
    * @returns MatterbridgeDevice instance.
    */
-  static async loadInstance(definition: DeviceTypeDefinition) {
-    return new MatterbridgeDevice(definition);
+  static async loadInstance(definition: DeviceTypeDefinition, options: EndpointOptions) {
+    return new MatterbridgeDevice(definition, options);
   }
 
   /**
@@ -204,6 +204,38 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       deviceTypes.push(deviceType);
       this.setDeviceTypes(deviceTypes);
     }
+  }
+
+  /**
+   * Adds one or more device types with the required cluster servers and the specified cluster servers.
+   *
+   * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
+   * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
+   */
+  public addDeviceTypeWithClusterServer(deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]) {
+    this.log.debug('addDeviceTypeWithClusterServer:');
+    deviceTypes.forEach((deviceType) => {
+      this.log.debug(`- with deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
+      deviceType.requiredServerClusters.forEach((clusterId) => {
+        if (!includeServerList.includes(clusterId)) includeServerList.push(clusterId);
+      });
+    });
+    includeServerList.forEach((clusterId) => {
+      this.log.debug(`- with cluster: ${hk}${clusterId}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
+    });
+    if (includeServerList.includes(Identify.Cluster.id)) this.addClusterServer(this.getDefaultIdentifyClusterServer());
+    if (includeServerList.includes(Groups.Cluster.id)) this.addClusterServer(this.getDefaultGroupsClusterServer());
+    if (includeServerList.includes(Scenes.Cluster.id)) this.addClusterServer(this.getDefaultScenesClusterServer());
+    if (includeServerList.includes(OnOff.Cluster.id)) this.addClusterServer(this.getDefaultOnOffClusterServer());
+    if (includeServerList.includes(TemperatureMeasurement.Cluster.id)) this.addClusterServer(this.getDefaultTemperatureMeasurementClusterServer());
+    if (includeServerList.includes(RelativeHumidityMeasurement.Cluster.id)) this.addClusterServer(this.getDefaultRelativeHumidityMeasurementClusterServer());
+    if (includeServerList.includes(PressureMeasurement.Cluster.id)) this.addClusterServer(this.getDefaultPressureMeasurementClusterServer());
+    if (includeServerList.includes(FlowMeasurement.Cluster.id)) this.addClusterServer(this.getDefaultFlowMeasurementClusterServer());
+    if (includeServerList.includes(BooleanState.Cluster.id)) this.addClusterServer(this.getDefaultBooleanStateClusterServer());
+    if (includeServerList.includes(OccupancySensing.Cluster.id)) this.addClusterServer(this.getDefaultOccupancySensingClusterServer());
+    if (includeServerList.includes(IlluminanceMeasurement.Cluster.id)) this.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer());
+    if (includeServerList.includes(EveHistory.Cluster.id)) this.addClusterServer(this.getDefaultStaticEveHistoryClusterServer());
+    if (includeServerList.includes(ElectricalMeasurement.Cluster.id)) this.addClusterServer(this.getDefaultElectricalMeasurementClusterServer());
   }
 
   /**
@@ -226,45 +258,19 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       this.log.debug(`- with cluster: ${hk}${clusterId}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
     });
 
-    if (includeServerList.includes(Identify.Cluster.id)) {
-      child.addClusterServer(this.getDefaultIdentifyClusterServer());
-    }
-    if (includeServerList.includes(Groups.Cluster.id)) {
-      child.addClusterServer(this.getDefaultGroupsClusterServer());
-    }
-    if (includeServerList.includes(Scenes.Cluster.id)) {
-      child.addClusterServer(this.getDefaultScenesClusterServer());
-    }
-    if (includeServerList.includes(OnOff.Cluster.id)) {
-      child.addClusterServer(this.getDefaultOnOffClusterServer());
-    }
-    if (includeServerList.includes(TemperatureMeasurement.Cluster.id)) {
-      child.addClusterServer(this.getDefaultTemperatureMeasurementClusterServer());
-    }
-    if (includeServerList.includes(RelativeHumidityMeasurement.Cluster.id)) {
-      child.addClusterServer(this.getDefaultRelativeHumidityMeasurementClusterServer());
-    }
-    if (includeServerList.includes(PressureMeasurement.Cluster.id)) {
-      child.addClusterServer(this.getDefaultPressureMeasurementClusterServer());
-    }
-    if (includeServerList.includes(FlowMeasurement.Cluster.id)) {
-      child.addClusterServer(this.getDefaultFlowMeasurementClusterServer());
-    }
-    if (includeServerList.includes(BooleanState.Cluster.id)) {
-      child.addClusterServer(this.getDefaultBooleanStateClusterServer());
-    }
-    if (includeServerList.includes(OccupancySensing.Cluster.id)) {
-      child.addClusterServer(this.getDefaultOccupancySensingClusterServer());
-    }
-    if (includeServerList.includes(IlluminanceMeasurement.Cluster.id)) {
-      child.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer());
-    }
-    if (includeServerList.includes(EveHistory.Cluster.id) && !this.hasClusterServer(EveHistory.Complete)) {
-      child.addClusterServer(this.getDefaultStaticEveHistoryClusterServer());
-    }
-    if (includeServerList.includes(ElectricalMeasurement.Cluster.id) && !this.hasClusterServer(ElectricalMeasurement.Complete)) {
-      child.addClusterServer(this.getDefaultElectricalMeasurementClusterServer());
-    }
+    if (includeServerList.includes(Identify.Cluster.id)) child.addClusterServer(this.getDefaultIdentifyClusterServer());
+    if (includeServerList.includes(Groups.Cluster.id)) child.addClusterServer(this.getDefaultGroupsClusterServer());
+    if (includeServerList.includes(Scenes.Cluster.id)) child.addClusterServer(this.getDefaultScenesClusterServer());
+    if (includeServerList.includes(OnOff.Cluster.id)) child.addClusterServer(this.getDefaultOnOffClusterServer());
+    if (includeServerList.includes(TemperatureMeasurement.Cluster.id)) child.addClusterServer(this.getDefaultTemperatureMeasurementClusterServer());
+    if (includeServerList.includes(RelativeHumidityMeasurement.Cluster.id)) child.addClusterServer(this.getDefaultRelativeHumidityMeasurementClusterServer());
+    if (includeServerList.includes(PressureMeasurement.Cluster.id)) child.addClusterServer(this.getDefaultPressureMeasurementClusterServer());
+    if (includeServerList.includes(FlowMeasurement.Cluster.id)) child.addClusterServer(this.getDefaultFlowMeasurementClusterServer());
+    if (includeServerList.includes(BooleanState.Cluster.id)) child.addClusterServer(this.getDefaultBooleanStateClusterServer());
+    if (includeServerList.includes(OccupancySensing.Cluster.id)) child.addClusterServer(this.getDefaultOccupancySensingClusterServer());
+    if (includeServerList.includes(IlluminanceMeasurement.Cluster.id)) child.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer());
+    if (includeServerList.includes(EveHistory.Cluster.id) && !this.hasClusterServer(EveHistory.Complete)) child.addClusterServer(this.getDefaultStaticEveHistoryClusterServer());
+    if (includeServerList.includes(ElectricalMeasurement.Cluster.id) && !this.hasClusterServer(ElectricalMeasurement.Complete)) child.addClusterServer(this.getDefaultElectricalMeasurementClusterServer());
     this.addChildEndpoint(child);
     return child;
   }
@@ -835,17 +841,17 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         dataModelRevision: 1,
         location: 'XX',
         vendorId: VendorId(vendorId),
-        vendorName: vendorName,
+        vendorName: vendorName.slice(0, 32),
         productId: productId,
-        productName: productName,
-        productLabel: deviceName,
-        nodeLabel: deviceName,
-        serialNumber,
+        productName: productName.slice(0, 32),
+        productLabel: deviceName.slice(0, 64),
+        nodeLabel: deviceName.slice(0, 32),
+        serialNumber: serialNumber.slice(0, 32),
         uniqueId: this.createUniqueId(deviceName, serialNumber, vendorName, productName),
         softwareVersion,
-        softwareVersionString,
+        softwareVersionString: softwareVersionString.slice(0, 64),
         hardwareVersion,
-        hardwareVersionString,
+        hardwareVersionString: hardwareVersionString.slice(0, 64),
         reachable: true,
         capabilityMinima: { caseSessionsPerFabric: 3, subscriptionsPerFabric: 3 },
       },
@@ -922,16 +928,16 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       BridgedDeviceBasicInformationCluster,
       {
         vendorId: vendorId !== undefined ? VendorId(vendorId) : undefined, // 4874
-        vendorName: vendorName,
-        productName: productName,
-        productLabel: deviceName,
-        nodeLabel: deviceName,
-        serialNumber,
+        vendorName: vendorName.slice(0, 32),
+        productName: productName.slice(0, 32),
+        productLabel: deviceName.slice(0, 64),
+        nodeLabel: deviceName.slice(0, 32),
+        serialNumber: serialNumber.slice(0, 32),
         uniqueId: this.createUniqueId(deviceName, serialNumber, vendorName, productName),
         softwareVersion,
-        softwareVersionString,
+        softwareVersionString: softwareVersionString.slice(0, 64),
         hardwareVersion,
-        hardwareVersionString,
+        hardwareVersionString: hardwareVersionString.slice(0, 64),
         reachable: true,
       },
       {},
@@ -1332,7 +1338,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         });
       }
       // eslint-disable-next-line no-console
-      console.log(`Set WindowCovering initial currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
+      // console.log(`Set WindowCovering initial currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
     }
   }
 
@@ -1354,7 +1360,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       });
     }
     // eslint-disable-next-line no-console
-    console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
+    // console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
   }
 
   /**
@@ -1366,7 +1372,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (!windowCovering) return;
     windowCovering.setOperationalStatusAttribute({ global: status, lift: status, tilt: 0 });
     // eslint-disable-next-line no-console
-    console.log(`Set WindowCovering operationalStatus: ${status}`);
+    // console.log(`Set WindowCovering operationalStatus: ${status}`);
   }
 
   /**
@@ -1378,7 +1384,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (!windowCovering) return undefined;
     const status = windowCovering.getOperationalStatusAttribute();
     // eslint-disable-next-line no-console
-    console.log(`Get WindowCovering operationalStatus: ${status.global}`);
+    // console.log(`Get WindowCovering operationalStatus: ${status.global}`);
     return status.global;
   }
 
@@ -1393,7 +1399,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     windowCovering.setCurrentPositionLiftPercent100thsAttribute(position);
     windowCovering.setTargetPositionLiftPercent100thsAttribute(position);
     // eslint-disable-next-line no-console
-    console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
+    // console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
   }
 
   /**

@@ -1327,12 +1327,14 @@ export class Matterbridge extends EventEmitter {
           return Promise.resolve();
         })
         .catch((err) => {
+          plugin.error = true;
           this.log.error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err}`);
-          return Promise.reject(new Error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err}`));
+          // return Promise.reject(new Error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err}`));
         });
     } catch (err) {
+      plugin.error = true;
       this.log.error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err}`);
-      return Promise.reject(new Error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err}`));
+      // return Promise.reject(new Error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err}`));
     }
   }
 
@@ -1361,12 +1363,14 @@ export class Matterbridge extends EventEmitter {
           return Promise.resolve();
         })
         .catch((err) => {
+          plugin.error = true;
           this.log.error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`);
-          return Promise.reject(new Error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`));
+          // return Promise.reject(new Error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`));
         });
     } catch (err) {
+      plugin.error = true;
       this.log.error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`);
-      return Promise.reject(new Error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`));
+      // return Promise.reject(new Error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`));
     }
   }
 
@@ -1422,11 +1426,13 @@ export class Matterbridge extends EventEmitter {
         return Promise.resolve(platform);
       } else {
         this.log.error(`Plugin ${plg}${plugin.name}${er} does not provide a default export`);
+        plugin.error = true;
         return;
         //return Promise.reject(new Error(`Plugin ${plg}${plugin.name}${er} does not provide a default export`));
       }
     } catch (err) {
       this.log.error(`Failed to load plugin ${plg}${plugin.name}${er}: ${err}`);
+      plugin.error = true;
       return;
       //return Promise.reject(new Error(`Failed to load plugin ${plg}${plugin.name}${er}: ${err}`));
     }
@@ -2061,8 +2067,13 @@ export class Matterbridge extends EventEmitter {
             if (this.bridgeMode === 'bridge') {
               //Logger.defaultLogLevel = Level.INFO;
               for (const plugin of this.registeredPlugins) {
-                if (!plugin.enabled) continue;
-                this.startPlugin(plugin, 'Matterbridge is commissioned and controllers are connected', true); // No await do it asyncronously with also configurePlugin
+                if (!plugin.enabled || !plugin.loaded || plugin.error) continue;
+                try {
+                  this.startPlugin(plugin, 'Matterbridge is commissioned and controllers are connected', true); // No await do it asyncronously with also configurePlugin
+                } catch (error) {
+                  plugin.error = true;
+                  this.log.error(`Error starting plugin ${plg}${plugin.name}${er}`, error);
+                }
               }
               Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
             }
