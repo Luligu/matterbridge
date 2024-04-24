@@ -2475,7 +2475,7 @@ export class Matterbridge extends EventEmitter {
       args.unshift(command);
       command = 'sudo';
     }
-    this.log.debug(`Spawning command ${command} with ${debugStringify(args)}`);
+    this.log.debug(`Spawn command ${command} with ${debugStringify(args)}`);
     return new Promise((resolve, reject) => {
       const childProcess = spawn(command, args, {
         stdio: ['inherit', 'pipe', 'pipe'],

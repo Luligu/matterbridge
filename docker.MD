@@ -73,7 +73,7 @@ docker volume rm matterbridge_storage
 
 ```
 
-### Run the Docker container and start it (this is not working due to mdns)
+### Run the Docker container and start it (this is currently not working due to mdns)
 ```
 docker run --name matterbridge -p 8283:8283 -p 8284:8284 -p 5353:5353/tcp -p 5353:5353/udp -p 5550:5550 --restart always -d luligu/matterbridge
 ```

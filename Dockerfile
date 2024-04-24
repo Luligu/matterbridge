@@ -43,4 +43,4 @@ EXPOSE 5550/udp
 # ENV NAME Value
 
 # Run dist/cli.js when the container launches
-CMD ["node", "dist/cli.js", "-bridge", "-debug", "-docker", "-frontend", "8283", "-port", "5550"]
+CMD ["node", "dist/cli.js", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
