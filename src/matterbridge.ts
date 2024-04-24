@@ -124,6 +124,7 @@ interface SystemInformation {
   ipv6Address: string;
   nodeVersion: string;
   hostname: string;
+  user: string;
   osType: string;
   osRelease: string;
   osPlatform: string;
@@ -160,6 +161,7 @@ export class Matterbridge extends EventEmitter {
     ipv6Address: '',
     nodeVersion: '',
     hostname: '',
+    user: '',
     osType: '',
     osRelease: '',
     osPlatform: '',
@@ -2280,6 +2282,7 @@ export class Matterbridge extends EventEmitter {
 
     // Host system information
     this.systemInformation.hostname = os.hostname();
+    this.systemInformation.user = os.userInfo().username;
     this.systemInformation.osType = os.type(); // "Windows_NT", "Darwin", etc.
     this.systemInformation.osRelease = os.release(); // Kernel version
     this.systemInformation.osPlatform = os.platform(); // "win32", "linux", "darwin", etc.
@@ -2291,6 +2294,7 @@ export class Matterbridge extends EventEmitter {
     // Log the system information
     this.log.debug('Host System Information:');
     this.log.debug(`- Hostname: ${this.systemInformation.hostname}`);
+    this.log.debug(`- User: ${this.systemInformation.user}`);
     this.log.debug(`- IPv4 Address: ${this.systemInformation.ipv4Address}`);
     this.log.debug(`- IPv6 Address: ${this.systemInformation.ipv6Address}`);
     this.log.debug(`- Node.js: ${versionMajor}.${versionMinor}.${versionPatch}`);

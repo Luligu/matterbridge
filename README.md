@@ -381,7 +381,7 @@ sudo systemctl enable matterbridge.service
 sudo systemctl disable matterbridge.service
 ```
 
-## Run matterbridge with docker (Linux only)
+## Run matterbridge with docker (Linux only) BETA
 
 The Matterbridge docker image is published on the docker hub.
 
