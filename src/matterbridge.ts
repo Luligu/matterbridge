@@ -143,6 +143,7 @@ interface MatterbridgeInformation {
   matterbridgeVersion: string;
   matterbridgeLatestVersion: string;
   bridgeMode: string;
+  restartMode: string;
   debugEnabled: boolean;
 }
 
@@ -177,6 +178,7 @@ export class Matterbridge extends EventEmitter {
     matterbridgeVersion: '',
     matterbridgeLatestVersion: '',
     bridgeMode: '',
+    restartMode: '',
     debugEnabled: false,
   };
 
@@ -2649,6 +2651,7 @@ export class Matterbridge extends EventEmitter {
         res.json({});
       }
       this.matterbridgeInformation.bridgeMode = this.bridgeMode;
+      this.matterbridgeInformation.restartMode = this.restartMode;
       this.matterbridgeInformation.debugEnabled = this.debugEnabled;
       const response = { wssHost, qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
       this.log.debug('The frontend sent /api/settings');

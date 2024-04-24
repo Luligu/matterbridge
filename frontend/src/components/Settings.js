@@ -33,6 +33,7 @@ function Settings() {
 
 function MatterbridgeInfo() {
   // Define a state variable for the selected value
+  const [selectedRestartValue, setSelectedRestatValue] = useState(''); 
   const [selectedModeValue, setSelectedModeValue] = useState('bridge'); 
   const [selectedDebugValue, setSelectedDebugValue] = useState('Info'); 
   const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
@@ -44,6 +45,7 @@ function MatterbridgeInfo() {
       .then(response => response.json())
       .then(data => { 
         setMatterbridgeInfo(data.matterbridgeInformation); 
+        setSelectedRestatValue(data.matterbridgeInformation.restartMode); 
         setSelectedModeValue(data.matterbridgeInformation.bridgeMode==='bridge'?'bridge':'childbridge'); 
         setSelectedDebugValue(data.matterbridgeInformation.debugEnabled?'Debug':'Info'); 
         info = data.matterbridgeInformation; 
@@ -75,10 +77,18 @@ function MatterbridgeInfo() {
   return (
     <FormControl style={{ gap: '10px', width: '600px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-        <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-mode">Matterbridge Mode:</FormLabel>
+        <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-mode">Matterbridge mode:</FormLabel>
         <RadioGroup focused row name="mode-buttons-group" value={selectedModeValue} onChange={handleChangeMode}>
           <FormControlLabel value="bridge" disabled control={<Radio />} label="Bridge" />
           <FormControlLabel value="childbridge" disabled control={<Radio />} label="Childbridge" />
+        </RadioGroup>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-restart">Matterbridge restart:</FormLabel>
+        <RadioGroup focused row name="mode-buttons-group" value={selectedRestartValue} onChange={handleChangeMode}>
+          <FormControlLabel value="" disabled control={<Radio />} label="None" />
+          <FormControlLabel value="service" disabled control={<Radio />} label="Service" />
+          <FormControlLabel value="docker" disabled control={<Radio />} label="Docker" />
         </RadioGroup>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -89,7 +99,7 @@ function MatterbridgeInfo() {
           <FormControlLabel value="Warn" control={<Radio />} label="Warn" />
         </RadioGroup>
       </div>
-      <TextField focused value={password} onChange={handleChangePassword} size="small" id="matterbridgePassword" label="Matterbridge Password" type="password" autoComplete="current-password" variant="standard"/>
+      <TextField focused value={password} onChange={handleChangePassword} size="small" id="matterbridgePassword" label="Matterbridge Password" type="password" autoComplete="current-password" variant="outlined"/>
       <TextField focused value={matterbridgeInfo.matterbridgeVersion} size="small" id="matterbridgeVersion" label="Current Version" InputProps={{readOnly: true}} variant="standard"/>
       <TextField focused value={matterbridgeInfo.matterbridgeLatestVersion} size="small" id="matterbridgeLatestVersion" label="Latest Version" InputProps={{readOnly: true}} variant="standard"/>
       <TextField focused value={matterbridgeInfo.homeDirectory} size="small" id="homeDirectory" label="Home Directory" InputProps={{readOnly: true}} variant="standard"/>

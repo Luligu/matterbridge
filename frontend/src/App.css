@@ -60,6 +60,19 @@ width: 120px;
   box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2);
 }
 
+.status-information {
+  background-color: #9e9e9e;
+  color: white;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-bottom: 2px;
+  padding-top: 2px;
+  border-radius: 0.25rem;
+  text-align: center;
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2);
+}
 
 /* Home page style */
 

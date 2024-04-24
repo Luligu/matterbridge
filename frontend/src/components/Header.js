@@ -1,5 +1,5 @@
 // Header.js
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Tooltip, Button, createTheme } from '@mui/material';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
@@ -46,6 +46,12 @@ export function sendCommandToMatterbridge(command, param) {
 
 function Header() {
   const [open, setOpen] = React.useState(false);
+  const [wssHost, setWssHost] = useState(null);
+  const [qrCode, setQrCode] = useState('');
+  const [pairingCode, setPairingCode] = useState('');
+  const [systemInfo, setSystemInfo] = useState({});
+  const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
+
   const handleClose = () => {
     setOpen(false);
   };
@@ -77,10 +83,31 @@ function Header() {
     }, 20000);
   };
 
+  useEffect(() => {
+    // Fetch settinggs from the backend
+    fetch('/api/settings')
+      .then(response => response.json())
+      .then(data => { 
+        console.log('/api/settings (header):', data); 
+        setWssHost(data.wssHost); 
+        setQrCode(data.qrPairingCode); 
+        setPairingCode(data.manualPairingCode);
+        setSystemInfo(data.systemInformation);
+        setMatterbridgeInfo(data.matterbridgeInformation);
+        localStorage.setItem('wssHost', data.wssHost);
+        localStorage.setItem('qrPairingCode', data.qrPairingCode); 
+        localStorage.setItem('manualPairingCode', data.manualPairingCode); 
+        localStorage.setItem('systemInformation', data.systemInformation); 
+        localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
+      })
+      .catch(error => console.error('Error fetching settings:', error));
+
+  }, []); // The empty array causes this effect to run only once
+
   return (
     <div className="header">
       <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '30px' }} />
-      <h2>Matterbridge {info.matterbridgeVersion}</h2>
+      <h2>Matterbridge</h2>
       <nav>
         <Link to="/" className="nav-link">Home</Link>
         <Link to="/devices" className="nav-link">Devices</Link>
@@ -88,6 +115,19 @@ function Header() {
         <Link to="/settings" className="nav-link">Settings</Link>
       </nav>
       <div className="header" style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
+        <Tooltip title="Version">
+          <span className="status-information">v.{matterbridgeInfo.matterbridgeVersion}</span>
+        </Tooltip>        
+        {matterbridgeInfo.bridgeMode !== '' ? (        
+          <Tooltip title="Bridge mode">
+            <span className="status-information">{matterbridgeInfo.bridgeMode}</span>
+          </Tooltip>
+        ) : null}
+        {matterbridgeInfo.restartMode !== '' ? (        
+          <Tooltip title="Restart mode">
+            <span className="status-information">{matterbridgeInfo.restartMode}</span>
+          </Tooltip>        
+        ) : null}
         <Tooltip title="Update matterbridge">
           <Button theme={theme} color="primary" variant="contained" size="small" endIcon={<SystemUpdateAltIcon />} style={{ color: '#ffffff' }} onClick={handleUpdateClick}>Update</Button>
         </Tooltip>        

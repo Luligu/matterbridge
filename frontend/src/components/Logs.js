@@ -10,16 +10,18 @@ import Select from '@mui/material/Select';
 
 function Logs() {
   const [wssHost, setWssHost] = useState(null);
-  const [debugLevel, setDebugLevel] = useState('debug');
-  const [searchCriteria, setSearchCriteria] = useState('*');
+  const [debugLevel, setDebugLevel] = useState(localStorage.getItem('logFilterLevel')??'debug');
+  const [searchCriteria, setSearchCriteria] = useState(localStorage.getItem('logFilterSearch')??'*');
 
   const handleChangeLevel = (event) => {
     setDebugLevel(event.target.value);
+    localStorage.setItem('logFilterLevel', event.target.value);
     console.log('handleChangeLevel called with value:', event.target.value);
   };
 
   const handleChangeSearch = (event) => {
     setSearchCriteria(event.target.value);
+    localStorage.setItem('logFilterSearch', event.target.value);
     console.log('handleChangeSearch called with value:', event.target.value);
   };
 
