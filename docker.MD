@@ -75,7 +75,11 @@ docker volume rm matterbridge_storage
 
 ### Run the Docker container and start it (this is currently not working due to mdns)
 ```
-docker run --name matterbridge -p 8283:8283 -p 8284:8284 -p 5353:5353/tcp -p 5353:5353/udp -p 5550:5550 --restart always -d luligu/matterbridge
+docker run --name matterbridge \
+  -v matterbridge_plugin:/root/Matterbridge \
+  -v matterbridge_storage:/root/.matterbridge \
+  -p 8283:8283 -p 8284:8284 -p 5353:5353/tcp -p 5353:5353/udp -p 5550:5550 \
+  --restart always -d luligu/matterbridge
 ```
 If this fails check who is using the ports:
 ```
@@ -84,10 +88,18 @@ sudo netstat -lunp | grep 8284
 sudo netstat -lunp | grep 5350
 sudo netstat -lunp | grep 5353
 ```
+If it is homebridge:
+```
+sudo hb-service stop
+sudo systemctl disable avahi-daemon
+sudo systemctl stop avahi-daemon
+```
 
 ### Run the Docker container and start it with full access to the host network
 ```
-docker run --name matterbridge --network host --restart always -d luligu/matterbridge:latest
+docker run --name matterbridge \
+  --network host \
+  --restart always -d luligu/matterbridge:latest
 ```
 
 ### Run the Docker container and start it with full access to the host network and with volume for the plugin and data directory
@@ -97,7 +109,8 @@ docker volume create matterbridge_storage
 docker run --name matterbridge \
   -v matterbridge_plugin:/root/Matterbridge \
   -v matterbridge_storage:/root/.matterbridge \
-  --network host --restart always -d luligu/matterbridge:latest
+  --network host \
+  --restart always -d luligu/matterbridge:latest
 ```
 
 ### Start the Docker container

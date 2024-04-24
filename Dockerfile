@@ -31,6 +31,7 @@ RUN npm -g install matterbridge-eve-room
 RUN npm -g install matterbridge-eve-weather
 
 # Make port available to the world outside this container, if your app needs it
+EXPOSE 1883 8883
 EXPOSE 8283 
 EXPOSE 8284
 EXPOSE 5353/tcp 

@@ -5,8 +5,8 @@ services:
     network_mode: host # Ensures the Matter mdns works
     restart: always # Ensures the container always restarts automatically
     volumes:
-      - plugin:/root/Matterbridge
-      - storage:/root/.matterbridge
+      - plugin:/root/Matterbridge # Volume: matterbridge_plugin
+      - storage:/root/.matterbridge # Vloume: matterbridge_storage
 
 volumes:
   plugin:
