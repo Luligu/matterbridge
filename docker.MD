@@ -115,6 +115,16 @@ docker stop matterbridge
 docker restart matterbridge
 ```
 
+### Run with docker-compose
+```
+docker compose up -d
+```
+
+### Stop with docker-compose
+```
+docker compose down
+```
+
 ### Shows the logs
 ```
 docker logs matterbridge

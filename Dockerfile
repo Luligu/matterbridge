@@ -1,5 +1,5 @@
 # Use an official Node.js runtime as a parent image
-FROM node:latest
+FROM node:20-alpine
 
 # Set the working directory in the container
 WORKDIR /usr/src/app
@@ -37,7 +37,7 @@ EXPOSE 5353/tcp
 EXPOSE 5353/udp 
 EXPOSE 5550/tcp 
 EXPOSE 5550/udp
-# We need --network host the mdns doesn't work without it
+# We need --network host the mdns doesn't work without it apparently
 
 # Define environment variable, if needed
 # ENV NAME Value
