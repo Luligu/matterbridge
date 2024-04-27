@@ -419,8 +419,8 @@ services:
     network_mode: host # Ensures the Matter mdns works
     restart: always # Ensures the container always restarts automatically
     volumes:
-      - ${HOME}/Matterbridge:/root/Matterbridge 
-      - ${HOME}/.matterbridge:/root/.matterbridge
+      - "${HOME}/Matterbridge:/root/Matterbridge" # Mounts the Matterbridge plugin directory
+      - "${HOME}/.matterbridge:/root/.matterbridge" # Mounts the Matterbridge storage directory
 ```
 copy it in the home directory or edit the existing one to add the matterbridge service.
 
