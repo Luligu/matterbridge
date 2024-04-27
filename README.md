@@ -385,19 +385,25 @@ sudo systemctl disable matterbridge.service
 
 The Matterbridge docker image is published on the docker hub.
 
-### Run the Docker container and start it
-The container has full access to the host network (needed for mdns).
+### Create the Matterbridge directories
 
-The volume matterbridge_plugin connects to the internal Matterbridge plugin directory (Matterbridge).
-
-The volume matterbridge_storage connects to the internal Matterbridge storage directory (.matterbridge).
+This will create the required directories if they don't exist
 
 ```
-docker volume create matterbridge_plugin
-docker volume create matterbridge_storage
+cd ~
+mkdir -p ./Matterbridge
+mkdir -p ./.matterbridge
+sudo chown -R $USER:$USER ./Matterbridge ./.matterbridge
+```
+
+### Run the Docker container and start it
+
+The container has full access to the host network (needed for mdns).
+
+```
 docker run --name matterbridge \
-  -v matterbridge_plugin:/root/Matterbridge \
-  -v matterbridge_storage:/root/.matterbridge \
+  -v ${HOME}/Matterbridge:/root/Matterbridge \
+  -v ${HOME}/.matterbridge:/root/.matterbridge \
   --network host --restart always -d luligu/matterbridge:latest
 ```
 
@@ -413,13 +419,11 @@ services:
     network_mode: host # Ensures the Matter mdns works
     restart: always # Ensures the container always restarts automatically
     volumes:
-      - plugin:/root/Matterbridge
-      - storage:/root/.matterbridge
-
-volumes:
-  plugin:
-  storage:
+      - ${HOME}/Matterbridge:/root/Matterbridge 
+      - ${HOME}/.matterbridge:/root/.matterbridge
 ```
+copy it in the home directory or edit the existing one to add the matterbridge service.
+
 Run with docker compose
 
 ```
@@ -429,6 +433,11 @@ docker compose up -d
 ### Stop with docker compose
 ```
 docker compose down
+```
+
+### Inspect the container
+```
+docker container inspect matterbridge
 ```
 
 ### Start the Docker container
@@ -456,15 +465,6 @@ docker logs matterbridge
 docker logs --tail 1000 -f matterbridge
 ```
 
-### Inspect the Matterbridge plugin volume
-```
-docker volume inspect matterbridge_plugin
-```
-
-### Inspect the Matterbridge storage volume
-```
-docker volume inspect matterbridge_storage
-```
 
 # Contribution Guidelines
 

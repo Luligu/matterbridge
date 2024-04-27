@@ -104,13 +104,10 @@ docker run --name matterbridge \
 
 ### Run the Docker container and start it with full access to the host network and with volume for the plugin and data directory
 ```
-docker volume create matterbridge_plugin
-docker volume create matterbridge_storage
 docker run --name matterbridge \
-  -v matterbridge_plugin:/root/Matterbridge \
-  -v matterbridge_storage:/root/.matterbridge \
-  --network host \
-  --restart always -d luligu/matterbridge:latest
+  -v ${HOME}/Matterbridge:/root/Matterbridge \
+  -v ${HOME}/.matterbridge:/root/.matterbridge \
+  --network host --restart always -d luligu/matterbridge:latest
 ```
 
 ### Start the Docker container
