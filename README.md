@@ -385,7 +385,7 @@ sudo systemctl disable matterbridge.service
 
 The Matterbridge docker image is published on the docker hub.
 
-### Create the Matterbridge directories
+### First create the Matterbridge directories
 
 This will create the required directories if they don't exist
 
