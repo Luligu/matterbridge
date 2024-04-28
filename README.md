@@ -424,7 +424,7 @@ services:
 ```
 copy it in the home directory or edit the existing one to add the matterbridge service.
 
-Run with docker compose
+then run it
 
 ```
 docker compose up -d

@@ -749,6 +749,18 @@ export class Matterbridge extends EventEmitter {
   /**
    * Shut down the process and reset.
    */
+  private async unregisterAndShutdownProcess() {
+    this.log.info('Unregistering all devices and shutting down...');
+    for (const plugin of this.registeredPlugins.filter((plugin) => plugin.enabled && !plugin.error)) {
+      await this.removeAllBridgedDevices(plugin.name);
+    }
+    await this.cleanup('unregistered all devices and shutting down...', false);
+    this.hasCleanupStarted = false;
+  }
+
+  /**
+   * Shut down the process and reset.
+   */
   private async shutdownProcessAndReset() {
     await this.cleanup('shutting down with reset...', false);
     this.hasCleanupStarted = false;
@@ -1078,7 +1090,7 @@ export class Matterbridge extends EventEmitter {
   async removeAllBridgedDevices(pluginName: string): Promise<void> {
     const plugin = this.findPlugin(pluginName);
     if (this.bridgeMode === 'childbridge' && plugin?.type === 'AccessoryPlatform') {
-      this.log.info(`Removing devices for plugin ${plg}${pluginName}${nf}: AccessoryPlatform not supported in childbridge mode`);
+      this.log.info(`Removing devices for plugin ${plg}${pluginName}${nf} type AccessoryPlatform is not supported in childbridge mode`);
       return;
     }
     const devicesToRemove: RegisteredDevice[] = [];
@@ -2805,20 +2817,24 @@ export class Matterbridge extends EventEmitter {
       }
 
       // Handle the command reset from Settings
+      if (command === 'unregister') {
+        await this.unregisterAndShutdownProcess();
+      }
+      // Handle the command reset from Settings
       if (command === 'reset') {
-        this.shutdownProcessAndReset();
+        this.shutdownProcessAndReset(); // No await do it asyncronously
       }
       // Handle the command factoryreset from Settings
       if (command === 'factoryreset') {
-        this.shutdownProcessAndFactoryReset();
+        this.shutdownProcessAndFactoryReset(); // No await do it asyncronously
       }
       // Handle the command restart from Header
       if (command === 'shutdown') {
-        this.shutdownProcess();
+        this.shutdownProcess(); // No await do it asyncronously
       }
       // Handle the command restart from Header
       if (command === 'restart') {
-        this.restartProcess();
+        this.restartProcess(); // No await do it asyncronously
       }
       // Handle the command update from Header
       if (command === 'update') {
