@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.2.12] - 2024-04-29
 
+- [docker]: Added manifest to the docker image on the docker hub: architecture linux/amd64, linux/arm64, linux/arm/v7 and linux/arm/v6
 - [frontend]: Frontend updated to 0.8.9.
 - [frontend]: Added error in the logger level on the Settings page.
 - [frontend]: Added reset in the Settings page. Matterbridge will shutdown to allow the reset.
