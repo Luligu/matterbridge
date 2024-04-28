@@ -2100,6 +2100,7 @@ export class Matterbridge extends EventEmitter {
             if (session.fabric?.rootVendorId === 4362) controllerName = 'SmartThings';
             if (session.fabric?.rootVendorId === 4939) controllerName = 'HomeAssistant';
             if (session.fabric?.rootVendorId === 24582) controllerName = 'GoogleHome';
+            if (session.fabric?.rootVendorId === 4701) controllerName = 'Tuya';
             this.log.info(`*Controller ${session.fabric?.rootVendorId}${controllerName !== '' ? '(' + controllerName + ')' : ''}/${session.fabric?.label} connected to ${plg}${pluginName}${nf} on session ${session.name}`);
             connected = true;
           }
@@ -2981,7 +2982,7 @@ export class Matterbridge extends EventEmitter {
     if (!useHttps) {
       // Listen on HTTP
       this.expressServer = this.expressApp.listen(port, () => {
-        this.log.info(`The frontend is running on ${UNDERLINE}http://localhost:${port}${UNDERLINEOFF}${rs}`);
+        this.log.info(`The frontend is running on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
       });
     } else {
       // SSL certificate and private key paths
@@ -2994,7 +2995,7 @@ export class Matterbridge extends EventEmitter {
       // Specify the port to listen on, for example 443 for default HTTPS
       const PORT = 443;
       httpsServer.listen(PORT, () => {
-        this.log.info(`The frontend is running on ${UNDERLINE}https://localhost:${PORT}${UNDERLINEOFF}${rs}`);
+        this.log.info(`The frontend is running on ${UNDERLINE}https://${this.systemInformation.ipv4Address}:${PORT}${UNDERLINEOFF}${rs}`);
       });
     }
 
