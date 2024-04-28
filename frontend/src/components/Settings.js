@@ -1,12 +1,14 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
+//import Radio from '@mui/material/Radio';
+// import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
 import TextField from '@mui/material/TextField';
+import { Radio, RadioGroup, Button, createTheme, Tooltip } from '@mui/material';
+import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
 import { sendCommandToMatterbridge } from './Header';
 
@@ -16,6 +18,14 @@ export const MatterbridgeInfoContext = React.createContext();
 // </MatterbridgeInfoContext.Provider>
 
 export var info = {};
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#4CAF50', // your custom primary color
+    },
+  },
+});
 
 function Settings() {
 
@@ -33,9 +43,9 @@ function Settings() {
 
 function MatterbridgeInfo() {
   // Define a state variable for the selected value
-  const [selectedRestartValue, setSelectedRestatValue] = useState(''); 
-  const [selectedModeValue, setSelectedModeValue] = useState('bridge'); 
-  const [selectedDebugValue, setSelectedDebugValue] = useState('Info'); 
+  const [selectedRestartMode, setSelectedRestartMode] = useState(''); 
+  const [selectedBridgeMode, setSelectedBridgeMode] = useState('bridge'); 
+  const [selectedDebugLevel, setSelectedDebugLevel] = useState('Info'); 
   const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
   const [password, setPassword] = useState('');
 
@@ -45,25 +55,32 @@ function MatterbridgeInfo() {
       .then(response => response.json())
       .then(data => { 
         setMatterbridgeInfo(data.matterbridgeInformation); 
-        setSelectedRestatValue(data.matterbridgeInformation.restartMode); 
-        setSelectedModeValue(data.matterbridgeInformation.bridgeMode==='bridge'?'bridge':'childbridge'); 
-        setSelectedDebugValue(data.matterbridgeInformation.debugEnabled?'Debug':'Info'); 
+        setSelectedRestartMode(data.matterbridgeInformation.restartMode); 
+        setSelectedBridgeMode(data.matterbridgeInformation.bridgeMode==='bridge'?'bridge':'childbridge'); 
+        setSelectedDebugLevel(data.matterbridgeInformation.debugEnabled?'Debug':'Info'); 
         info = data.matterbridgeInformation; 
         console.log('/api/settings:', info) })
       .catch(error => console.error('Error fetching settings:', error));
   }, []); // The empty array causes this effect to run only once
 
-  // Define a function to handle change mode 
-  const handleChangeMode = (event) => {
-    console.log('handleChangeMode called with value:', event.target.value);
-    setSelectedModeValue(event.target.value);
+  // Define a function to handle change bridge mode 
+  const handleChangeBridgeMode = (event) => {
+    console.log('handleChangeBridgeMode called with value:', event.target.value);
+    setSelectedBridgeMode(event.target.value);
     sendCommandToMatterbridge('setbridgemode', event.target.value);
   };
 
+  // Define a function to handle change restart mode 
+  const handleChangeRestartMode = (event) => {
+    console.log('handleChangeRestartMode called with value:', event.target.value);
+    setSelectedBridgeMode(event.target.value);
+    sendCommandToMatterbridge('setrestartmode', event.target.value);
+  };
+
   // Define a function to handle change debug level
-  const handleChangeDebug = (event) => {
-    console.log('handleChangeDebug called with value:', event.target.value);
-    setSelectedDebugValue(event.target.value);
+  const handleChangeDebugLevel = (event) => {
+    console.log('handleChangeDebugLevel called with value:', event.target.value);
+    setSelectedDebugLevel(event.target.value);
     sendCommandToMatterbridge('setloglevel', event.target.value);
   };
 
@@ -74,45 +91,79 @@ function MatterbridgeInfo() {
     sendCommandToMatterbridge('setpassword', '*'+event.target.value+'*');
   };
 
+  // Define a function to handle change password
+  const handleReset = () => {
+    console.log('handleReset called');
+    sendCommandToMatterbridge('reset', 'now');
+  };
+
+  // Define a function to handle change password
+  const handleFactoryReset = () => {
+    console.log('handleFactoryReset called');
+    sendCommandToMatterbridge('factoryreset', 'now');
+  };
+
   return (
-    <FormControl style={{ gap: '10px', width: '600px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-        <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-mode">Matterbridge mode:</FormLabel>
-        <RadioGroup focused row name="mode-buttons-group" value={selectedModeValue} onChange={handleChangeMode}>
-          <FormControlLabel value="bridge" disabled control={<Radio />} label="Bridge" />
-          <FormControlLabel value="childbridge" disabled control={<Radio />} label="Childbridge" />
-        </RadioGroup>
+    <div style={{ display: 'flex', flexDirection: 'row', gap: '20px', marginTop: '10px', width: '100%'}}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '50%' }}>
+        <FormControl style={{ gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-mode">Matterbridge mode:</FormLabel>
+            <RadioGroup focused row name="mode-buttons-group" value={selectedBridgeMode} onChange={handleChangeBridgeMode}>
+              <FormControlLabel value="bridge" disabled control={<Radio />} label="Bridge" />
+              <FormControlLabel value="childbridge" disabled control={<Radio />} label="Childbridge" />
+            </RadioGroup>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-restart">Matterbridge restart mode:</FormLabel>
+            <RadioGroup focused row name="mode-buttons-group" value={selectedRestartMode} onChange={handleChangeRestartMode}>
+              <FormControlLabel value="" disabled control={<Radio />} label="None" />
+              <FormControlLabel value="service" disabled control={<Radio />} label="Service" />
+              <FormControlLabel value="docker" disabled control={<Radio />} label="Docker" />
+            </RadioGroup>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-debug">Logger level:</FormLabel>
+            <RadioGroup focused row name="debug-buttons-group" value={selectedDebugLevel} onChange={handleChangeDebugLevel}>
+              <FormControlLabel value="Debug" control={<Radio />} label="Debug" />
+              <FormControlLabel value="Info" control={<Radio />} label="Info" />
+              <FormControlLabel value="Warn" control={<Radio />} label="Warn" />
+              <FormControlLabel value="Error" control={<Radio />} label="Error" />
+            </RadioGroup>
+          </div>
+          <TextField focused value={password} onChange={handleChangePassword} size="small" id="matterbridgePassword" label="Matterbridge Password" type="password" autoComplete="current-password" variant="outlined" style={{ marginTop: '20px'}} />
+          <Tooltip title="Reset Matterbridge commissioning and shutdown.">
+            <Button onClick={handleReset} theme={theme} color="primary" variant="contained" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff', marginTop: '20px'}}>Reset Matterbridge commissioning</Button>
+          </Tooltip>        
+          <Tooltip title="Factory Reset Matterbridge and shutdown. You will loose all commissioning and settings.">
+            <Button onClick={handleFactoryReset} theme={theme} color="primary" variant="contained" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff', marginTop: '20px'}}>Factory Reset Matterbridge</Button>
+          </Tooltip>        
+        </FormControl>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-        <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-restart">Matterbridge restart:</FormLabel>
-        <RadioGroup focused row name="mode-buttons-group" value={selectedRestartValue} onChange={handleChangeMode}>
-          <FormControlLabel value="" disabled control={<Radio />} label="None" />
-          <FormControlLabel value="service" disabled control={<Radio />} label="Service" />
-          <FormControlLabel value="docker" disabled control={<Radio />} label="Docker" />
-        </RadioGroup>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '50%' }}>
+        <TextField focused value={matterbridgeInfo.matterbridgeVersion} size="small" id="matterbridgeVersion" label="Current Version" InputProps={{readOnly: true}} variant="standard" fullWidth/>
+        <TextField focused value={matterbridgeInfo.matterbridgeLatestVersion} size="small" id="matterbridgeLatestVersion" label="Latest Version" InputProps={{readOnly: true}} variant="standard" fullWidth/>
+        <TextField focused value={matterbridgeInfo.homeDirectory} size="small" id="homeDirectory" label="Home Directory" InputProps={{readOnly: true}} variant="standard"/>
+        <TextField focused value={matterbridgeInfo.rootDirectory} size="small" id="rootDirectory" label="Root Directory" InputProps={{readOnly: true}} variant="standard"/>
+        <TextField focused value={matterbridgeInfo.matterbridgeDirectory} size="small" id="matterbridgeDirectory" label="Matterbridge Storage Directory" InputProps={{readOnly: true}} variant="standard"/>
+        <TextField focused value={matterbridgeInfo.matterbridgePluginDirectory} size="small" id="matterbridgePluginDirectory" label="Matterbridge Plugin Directory" InputProps={{readOnly: true}} variant="standard"/>
+        <TextField focused value={matterbridgeInfo.globalModulesDirectory} size="small" id="globalModulesDirectory" label="Global Module Directory" InputProps={{readOnly: true}} variant="standard"/>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-        <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-debug">Logger level:</FormLabel>
-        <RadioGroup focused row name="debug-buttons-group" value={selectedDebugValue} onChange={handleChangeDebug}>
-          <FormControlLabel value="Debug" control={<Radio />} label="Debug" />
-          <FormControlLabel value="Info" control={<Radio />} label="Info" />
-          <FormControlLabel value="Warn" control={<Radio />} label="Warn" />
-        </RadioGroup>
-      </div>
-      <TextField focused value={password} onChange={handleChangePassword} size="small" id="matterbridgePassword" label="Matterbridge Password" type="password" autoComplete="current-password" variant="outlined"/>
-      <TextField focused value={matterbridgeInfo.matterbridgeVersion} size="small" id="matterbridgeVersion" label="Current Version" InputProps={{readOnly: true}} variant="standard"/>
-      <TextField focused value={matterbridgeInfo.matterbridgeLatestVersion} size="small" id="matterbridgeLatestVersion" label="Latest Version" InputProps={{readOnly: true}} variant="standard"/>
-      <TextField focused value={matterbridgeInfo.homeDirectory} size="small" id="homeDirectory" label="Home Directory" InputProps={{readOnly: true}} variant="standard"/>
-      <TextField focused value={matterbridgeInfo.rootDirectory} size="small" id="rootDirectory" label="Root Directory" InputProps={{readOnly: true}} variant="standard"/>
-      <TextField focused value={matterbridgeInfo.matterbridgeDirectory} size="small" id="matterbridgeDirectory" label="Matterbridge Directory" InputProps={{readOnly: true}} variant="standard"/>
-      <TextField focused value={matterbridgeInfo.matterbridgePluginDirectory} size="small" id="matterbridgePluginDirectory" label="Matterbridge Plugin Directory" InputProps={{readOnly: true}} variant="standard"/>
-      <TextField focused value={matterbridgeInfo.globalModulesDirectory} size="small" id="globalModulesDirectory" label="Global Module Directory" InputProps={{readOnly: true}} variant="standard"/>
-    </FormControl>
+    </div>
   );
 }
 
 export default Settings;
 
 /*
+    <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', marginTop: '10px' }}>
+        <TextField focused value={matterbridgeInfo.matterbridgeVersion} size="small" id="matterbridgeVersion" label="Current Version" InputProps={{readOnly: true}} variant="standard"/>
+        <TextField focused value={matterbridgeInfo.matterbridgeLatestVersion} size="small" id="matterbridgeLatestVersion" label="Latest Version" InputProps={{readOnly: true}} variant="standard"/>
+        <TextField focused value={matterbridgeInfo.homeDirectory} size="small" id="homeDirectory" label="Home Directory" InputProps={{readOnly: true}} variant="standard"/>
+        <TextField focused value={matterbridgeInfo.rootDirectory} size="small" id="rootDirectory" label="Root Directory" InputProps={{readOnly: true}} variant="standard"/>
+        <TextField focused value={matterbridgeInfo.matterbridgeDirectory} size="small" id="matterbridgeDirectory" label="Matterbridge Directory" InputProps={{readOnly: true}} variant="standard"/>
+        <TextField focused value={matterbridgeInfo.matterbridgePluginDirectory} size="small" id="matterbridgePluginDirectory" label="Matterbridge Plugin Directory" InputProps={{readOnly: true}} variant="standard"/>
+        <TextField focused value={matterbridgeInfo.globalModulesDirectory} size="small" id="globalModulesDirectory" label="Global Module Directory" InputProps={{readOnly: true}} variant="standard"/>
+    </div>
 
 */

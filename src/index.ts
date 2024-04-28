@@ -44,10 +44,10 @@ export * from './utils.js';
 
 async function main() {
   // eslint-disable-next-line no-console
-  console.log('MAIN: Matterbridge.loadInstance() called');
+  if (process.argv.includes('-debug')) console.log('MAIN: Matterbridge.loadInstance() called');
   await Matterbridge.loadInstance();
   // eslint-disable-next-line no-console
-  console.log('MAIN: Matterbridge.loadInstance() exited');
+  if (process.argv.includes('-debug')) console.log('MAIN: Matterbridge.loadInstance() exited');
 }
 
 main().catch((error) => {

@@ -12,6 +12,7 @@ docker login
 ```
 
 ### Build the Docker image
+Only latest
 ```
 git pull
 npm run deepClean
@@ -20,7 +21,7 @@ npm run build
 docker build -t luligu/matterbridge:latest .
 docker push luligu/matterbridge:latest
 ```
-or
+or latest and named version
 ```
 git pull
 npm run deepClean
@@ -28,8 +29,24 @@ npm install
 npm run build
 docker build -t luligu/matterbridge:latest .
 docker push luligu/matterbridge:latest
-docker build -t luligu/matterbridge:v1.2.11 .
-docker push luligu/matterbridge:v1.2.11
+docker build -t luligu/matterbridge:1.2.11 .
+docker push luligu/matterbridge:1.2.11
+```
+or manifest image with all common platforms latest
+```
+docker buildx create --use
+docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6 -t luligu/matterbridge:latest . --push
+```
+or manifest image with all common platforms latest and named version
+```
+docker buildx create --use
+docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6 -t luligu/matterbridge:latest . --push
+docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6 -t luligu/matterbridge:1.2.11 . --push
+```
+or manifest image with all common platforms dev
+```
+docker buildx create --use
+docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6 -t luligu/matterbridge:dev . --push
 ```
 
 ### Install or update all plugins inside the container

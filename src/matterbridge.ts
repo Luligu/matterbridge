@@ -138,7 +138,7 @@ interface SystemInformation {
 interface MatterbridgeInformation {
   homeDirectory: string;
   rootDirectory: string;
-  matterbridgeDirectory: string;
+  matterbridgeStorageDirectory: string;
   matterbridgePluginDirectory: string;
   globalModulesDirectory: string;
   matterbridgeVersion: string;
@@ -174,7 +174,7 @@ export class Matterbridge extends EventEmitter {
   public matterbridgeInformation: MatterbridgeInformation = {
     homeDirectory: '',
     rootDirectory: '',
-    matterbridgeDirectory: '',
+    matterbridgeStorageDirectory: '',
     matterbridgePluginDirectory: '',
     globalModulesDirectory: '',
     matterbridgeVersion: '',
@@ -309,7 +309,7 @@ export class Matterbridge extends EventEmitter {
     await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
     // Set reachability to true and trigger event after 60 seconds
     setTimeout(() => {
-      this.log.info(`*Setting reachability to true for ${plg}Matterbridge${db}`);
+      this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
       if (this.commissioningServer) this.setCommissioningServerReachability(this.commissioningServer, true);
       if (this.matterAggregator) this.setAggregatorReachability(this.matterAggregator, true);
     }, 60 * 1000);
@@ -497,7 +497,7 @@ export class Matterbridge extends EventEmitter {
       // Delete matter storage file
       await fs.unlink(path.join(this.matterbridgeDirectory, 'matterbridge.json'));
       // Delete node storage directory with its subdirectories
-      await fs.rmdir(path.join(this.matterbridgeDirectory, 'storage'), { recursive: true });
+      await fs.rm(path.join(this.matterbridgeDirectory, 'storage'), { recursive: true });
       this.log.info('Factory reset done! Remove all paired devices from the controllers.');
       this.emit('shutdown');
       process.exit(0);
@@ -747,6 +747,22 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
+   * Shut down the process and reset.
+   */
+  private async shutdownProcessAndReset() {
+    await this.cleanup('shutting down with reset...', false);
+    this.hasCleanupStarted = false;
+  }
+
+  /**
+   * Shut down the process and factory reset.
+   */
+  private async shutdownProcessAndFactoryReset() {
+    await this.cleanup('shutting down with factory reset...', false);
+    this.hasCleanupStarted = false;
+  }
+
+  /**
    * Cleans up the Matterbridge instance.
    * @param message - The cleanup message.
    * @param restart - Indicates whether to restart the instance after cleanup. Default is `false`.
@@ -764,7 +780,7 @@ export class Matterbridge extends EventEmitter {
       // Calling the shutdown functions with a reason
       for (const plugin of this.registeredPlugins) {
         if (!plugin.enabled || plugin.error) continue;
-        this.log.info(`*Shutting down plugin ${plg}${plugin.name}${nf}`);
+        this.log.info(`Shutting down plugin ${plg}${plugin.name}${nf}`);
         if (plugin.platform) {
           try {
             await plugin.platform.onShutdown('Matterbridge is closing: ' + message);
@@ -846,7 +862,7 @@ export class Matterbridge extends EventEmitter {
         this.webSocketServer = undefined;
       }
 
-      /*const cleanupTimeout1 =*/ setTimeout(async () => {
+      setTimeout(async () => {
         // Closing matter
         await this.stopMatter();
 
@@ -878,7 +894,7 @@ export class Matterbridge extends EventEmitter {
         this.registeredDevices = [];
 
         this.log.info('Waiting for matter to deliver last messages...');
-        /*const cleanupTimeout2 =*/ setTimeout(async () => {
+        setTimeout(async () => {
           if (restart) {
             if (message === 'updating...') {
               this.log.info('Cleanup completed. Updating...');
@@ -890,14 +906,27 @@ export class Matterbridge extends EventEmitter {
               this.emit('restart');
             }
           } else {
+            if (message === 'shutting down with reset...') {
+              // Delete matter storage file
+              this.log.info('Resetting Matterbridge commissioning information...');
+              await fs.unlink(path.join(this.matterbridgeDirectory, 'matterbridge.json'));
+              this.log.info('Reset done! Remove all paired devices from the controllers.');
+            }
+            if (message === 'shutting down with factory reset...') {
+              // Delete matter storage file
+              this.log.info('Resetting Matterbridge commissioning information...');
+              await fs.unlink(path.join(this.matterbridgeDirectory, 'matterbridge.json'));
+              // Delete node storage directory with its subdirectories
+              this.log.info('Resetting Matterbridge storage...');
+              await fs.rm(path.join(this.matterbridgeDirectory, 'storage'), { recursive: true });
+              this.log.info('Factory reset done! Remove all paired devices from the controllers.');
+            }
             this.log.info('Cleanup completed. Shutting down...');
             Matterbridge.instance = undefined;
             this.emit('shutdown');
           }
         }, 2 * 1000);
-        //cleanupTimeout2.unref();
       }, 3 * 1000);
-      //cleanupTimeout1.unref();
     }
   }
 
@@ -1687,7 +1716,7 @@ export class Matterbridge extends EventEmitter {
         await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
         //if (hasParameter('advertise')) await this.commissioningServer.advertise();
         setTimeout(() => {
-          this.log.info(`*Setting reachability to true for ${plg}Matterbridge${db}`);
+          this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
           if (this.commissioningServer) this.setCommissioningServerReachability(this.commissioningServer, true);
           if (this.matterAggregator) this.setAggregatorReachability(this.matterAggregator, true);
         }, 60 * 1000);
@@ -1784,7 +1813,7 @@ export class Matterbridge extends EventEmitter {
           }
           await this.showCommissioningQRCode(plugin.commissioningServer, plugin.storageContext, plugin.nodeContext, plugin.name);
           // Setting reachability to true
-          this.log.info(`*Setting reachability to true for ${plg}${plugin.name}${db}`);
+          this.log.info(`Setting reachability to true for ${plg}${plugin.name}${db}`);
           if (plugin.commissioningServer) this.setCommissioningServerReachability(plugin.commissioningServer, true);
           if (plugin.type === 'AccessoryPlatform' && plugin.device) this.setDeviceReachability(plugin.device, true);
           if (plugin.type === 'DynamicPlatform' && plugin.aggregator) this.setAggregatorReachability(plugin.aggregator, true);
@@ -1930,7 +1959,7 @@ export class Matterbridge extends EventEmitter {
       }
       await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
     } else {
-      this.log.info(`***The commissioning server on port ${commissioningServer.getPort()} for ${plg}${pluginName}${nf} is already commissioned . Waiting for controllers to connect ...`);
+      this.log.info(`*The commissioning server on port ${commissioningServer.getPort()} for ${plg}${pluginName}${nf} is already commissioned . Waiting for controllers to connect ...`);
       if (pluginName !== 'Matterbridge') {
         const plugin = this.findPlugin(pluginName);
         if (plugin) {
@@ -1978,7 +2007,7 @@ export class Matterbridge extends EventEmitter {
     if (basicInformationCluster && basicInformationCluster.attributes.reachable !== undefined) basicInformationCluster.setReachableAttribute(reachable);
     if (basicInformationCluster && basicInformationCluster.triggerReachableChangedEvent) basicInformationCluster.triggerReachableChangedEvent({ reachableNewValue: reachable });
     matterAggregator.getBridgedDevices().forEach((device) => {
-      this.log.debug(`*Setting reachability to true for bridged device: ${dev}${device.name}${nf}`);
+      this.log.debug(`Setting reachability to true for bridged device: ${dev}${device.name}${nf}`);
       device.getClusterServer(BridgedDeviceBasicInformationCluster)?.setReachableAttribute(reachable);
       device.getClusterServer(BridgedDeviceBasicInformationCluster)?.triggerReachableChangedEvent({ reachableNewValue: reachable });
     });
@@ -2052,13 +2081,14 @@ export class Matterbridge extends EventEmitter {
         const info = commissioningServer.getActiveSessionInformation(fabricIndex);
         let connected = false;
         info.forEach((session) => {
-          this.log.info(`***Active session changed on fabric ${fabricIndex} ${session.fabric?.rootVendorId}/${session.fabric?.label} for ${plg}${pluginName}${nf}`, debugStringify(session));
+          this.log.info(`*Active session changed on fabric ${fabricIndex} ${session.fabric?.rootVendorId}/${session.fabric?.label} for ${plg}${pluginName}${nf}`, debugStringify(session));
           if (session.isPeerActive === true && session.secure === true && session.numberOfActiveSubscriptions >= 1) {
             let controllerName = '';
             if (session.fabric?.rootVendorId === 4937) controllerName = 'AppleHome';
             if (session.fabric?.rootVendorId === 4362) controllerName = 'SmartThings';
             if (session.fabric?.rootVendorId === 4939) controllerName = 'HomeAssistant';
-            this.log.info(`***Controller ${session.fabric?.rootVendorId}${controllerName !== '' ? '(' + controllerName + ')' : ''}/${session.fabric?.label} connected to ${plg}${pluginName}${nf} on session ${session.name}`);
+            if (session.fabric?.rootVendorId === 24582) controllerName = 'GoogleHome';
+            this.log.info(`*Controller ${session.fabric?.rootVendorId}${controllerName !== '' ? '(' + controllerName + ')' : ''}/${session.fabric?.label} connected to ${plg}${pluginName}${nf} on session ${session.name}`);
             connected = true;
           }
         });
@@ -2119,9 +2149,9 @@ export class Matterbridge extends EventEmitter {
       },
       commissioningChangedCallback: async (fabricIndex) => {
         const info = commissioningServer.getCommissionedFabricInformation(fabricIndex);
-        this.log.debug(`***Commissioning changed on fabric ${fabricIndex} for ${plg}${pluginName}${nf}`, debugStringify(info));
+        this.log.debug(`*Commissioning changed on fabric ${fabricIndex} for ${plg}${pluginName}${nf}`, debugStringify(info));
         if (info.length === 0) {
-          this.log.warn(`***Commissioning removed from fabric ${fabricIndex} for ${plg}${pluginName}${wr}. Resetting the commissioning server ...`);
+          this.log.warn(`*Commissioning removed from fabric ${fabricIndex} for ${plg}${pluginName}${wr}. Resetting the commissioning server ...`);
           await commissioningServer.factoryReset();
           if (pluginName === 'Matterbridge') {
             await this.matterbridgeContext?.clearAll();
@@ -2135,7 +2165,7 @@ export class Matterbridge extends EventEmitter {
               }
             }
           }
-          this.log.warn(`***Restart to activate the pairing for ${plg}${pluginName}${wr}`);
+          this.log.warn(`*Restart to activate the pairing for ${plg}${pluginName}${wr}`);
         }
       },
     });
@@ -2333,7 +2363,7 @@ export class Matterbridge extends EventEmitter {
 
     // Create the data directory .matterbridge in the home directory
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
-    this.matterbridgeInformation.matterbridgeDirectory = this.matterbridgeDirectory;
+    this.matterbridgeInformation.matterbridgeStorageDirectory = this.matterbridgeDirectory;
     try {
       await fs.access(this.matterbridgeDirectory);
     } catch (err) {
@@ -2774,7 +2804,15 @@ export class Matterbridge extends EventEmitter {
         });
       }
 
-      // Handle the command shutdown from Header
+      // Handle the command reset from Settings
+      if (command === 'reset') {
+        this.shutdownProcessAndReset();
+      }
+      // Handle the command factoryreset from Settings
+      if (command === 'factoryreset') {
+        this.shutdownProcessAndFactoryReset();
+      }
+      // Handle the command restart from Header
       if (command === 'shutdown') {
         this.shutdownProcess();
       }

@@ -29,10 +29,10 @@ import { Matterbridge } from './matterbridge.js';
 let instance: Matterbridge | undefined;
 
 async function main() {
-  console.log('CLI: Matterbridge.loadInstance() called');
+  if (process.argv.includes('-debug')) console.log('CLI: Matterbridge.loadInstance() called');
   instance = await Matterbridge.loadInstance(true);
   registerHandlers();
-  console.log('CLI: Matterbridge.loadInstance() exited');
+  if (process.argv.includes('-debug')) console.log('CLI: Matterbridge.loadInstance() exited');
 }
 
 function registerHandlers() {
@@ -42,19 +42,19 @@ function registerHandlers() {
 }
 
 async function shutdown() {
-  console.log('CLI: received shutdown event, exiting...');
+  if (process.argv.includes('-debug')) console.log('CLI: received shutdown event, exiting...');
   //wtf.dump();
   process.exit(0);
 }
 
 async function restart() {
-  console.log('CLI: received restart event, loading...');
+  if (process.argv.includes('-debug')) console.log('CLI: received restart event, loading...');
   instance = await Matterbridge.loadInstance(true);
   registerHandlers();
 }
 
 async function update() {
-  console.log('CLI: received update event, updating...');
+  if (process.argv.includes('-debug')) console.log('CLI: received update event, updating...');
   instance = await Matterbridge.loadInstance(true);
   registerHandlers();
 }

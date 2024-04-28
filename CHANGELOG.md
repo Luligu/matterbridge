@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.12] - 2024-04-29
+
+- [frontend]: Frontend updated to 0.8.9.
+- [frontend]: Added error in the logger level on the Settings page.
+- [frontend]: Added reset in the Settings page. Matterbridge will shutdown to allow the reset.
+- [frontend]: Added factoryreset in the Settings page. Matterbridge will shutdown to allow the factoryreset.
+
+### Added
+
+
 ## [1.2.11] - 2024-04-25
 
 ### Added
