@@ -2773,6 +2773,7 @@ export class Matterbridge extends EventEmitter {
             });
           });
           registeredDevice.device.getChildEndpoints().forEach((childEndpoint) => {
+            const name = registeredDevice.device.getChildEndpointName(childEndpoint);
             const clusterServers = childEndpoint.getAllClusterServers();
             clusterServers.forEach((clusterServer) => {
               Object.entries(clusterServer.attributes).forEach(([key, value]) => {
@@ -2784,11 +2785,11 @@ export class Matterbridge extends EventEmitter {
                   else attributeValue = value.getLocal().toString();
                 } catch (error) {
                   attributeValue = 'Unavailable';
-                  this.log.debug(`GetLocal value ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
+                  this.log.debug(`GetLocal error ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
                   //console.log(error);
                 }
                 data.push({
-                  endpoint: childEndpoint.number ? childEndpoint.number.toString() : '...',
+                  endpoint: (childEndpoint.number ? childEndpoint.number.toString() : '...') + (name ? ' (' + name + ')' : ''),
                   clusterName: clusterServer.name,
                   clusterId: '0x' + clusterServer.id.toString(16).padStart(2, '0'),
                   attributeName: key,
@@ -3015,7 +3016,7 @@ export class Matterbridge extends EventEmitter {
     if (!useHttps) {
       // Listen on HTTP
       this.expressServer = this.expressApp.listen(port, () => {
-        this.log.info(`The frontend is running on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
+        this.log.info(`The frontend is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
       });
     } else {
       // SSL certificate and private key paths
@@ -3028,7 +3029,7 @@ export class Matterbridge extends EventEmitter {
       // Specify the port to listen on, for example 443 for default HTTPS
       const PORT = 443;
       httpsServer.listen(PORT, () => {
-        this.log.info(`The frontend is running on ${UNDERLINE}https://${this.systemInformation.ipv4Address}:${PORT}${UNDERLINEOFF}${rs}`);
+        this.log.info(`The frontend is listening on ${UNDERLINE}https://${this.systemInformation.ipv4Address}:${PORT}${UNDERLINEOFF}${rs}`);
       });
     }
 

@@ -34,6 +34,7 @@ import {
   DoorLockCluster,
   ElectricalMeasurement,
   ElectricalMeasurementCluster,
+  FixedLabelCluster,
   FlowMeasurement,
   FlowMeasurementCluster,
   Groups,
@@ -246,9 +247,10 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
    * @returns {Endpoint} - The child endpoint that was added.
    */
-  addChildDeviceTypeWithClusterServer(deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]): Endpoint {
+  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]): Endpoint {
     this.log.debug('addChildDeviceTypeWithClusterServer:');
     const child = new Endpoint(deviceTypes);
+    child.addFixedLabel('endpointName', endpointName);
     deviceTypes.forEach((deviceType) => {
       this.log.debug(`- with deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
       deviceType.requiredServerClusters.forEach((clusterId) => {
@@ -274,6 +276,38 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(ElectricalMeasurement.Cluster.id) && !this.hasClusterServer(ElectricalMeasurement.Complete)) child.addClusterServer(this.getDefaultElectricalMeasurementClusterServer());
     this.addChildEndpoint(child);
     return child;
+  }
+
+  /**
+   * Retrieves a child endpoint by its name.
+   *
+   * @param {string} endpointName - The name of the endpoint to retrieve.
+   * @returns {Endpoint | undefined} The child endpoint with the specified name, or undefined if not found.
+   */
+  getChildEndpointByName(endpointName: string): Endpoint | undefined {
+    for (const child of this.getChildEndpoints()) {
+      // Find the endpoint name (l1...)
+      const labelList = child.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
+      if (!labelList) continue;
+      const value = labelList.find((entry) => entry.label === 'endpointName');
+      if (value && value.value === endpointName) return child;
+    }
+    return undefined;
+  }
+
+  /**
+   * Retrieves a child endpoint name.
+   *
+   * @param {Endpoint} child - The child endpoint to retrieve the name.
+   * @returns {string | undefined} The child endpoint name, or undefined if not found.
+   */
+  getChildEndpointName(child: Endpoint): string | undefined {
+    // Find the endpoint name (l1...)
+    const labelList = child.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
+    if (!labelList) return undefined;
+    const endpointNameLabel = labelList.find((entry) => entry.label === 'endpointName');
+    if (endpointNameLabel) return endpointNameLabel.value;
+    return undefined;
   }
 
   /**
