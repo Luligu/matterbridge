@@ -2043,6 +2043,32 @@ export class Matterbridge extends EventEmitter {
    * @returns {CommissioningServer} The created commissioning server.
    */
   private async createCommisioningServer(context: StorageContext, pluginName: string): Promise<CommissioningServer> {
+    const getVendorIdName = (vendorId: number | undefined) => {
+      if (!vendorId) return '';
+      let vendorName = '';
+      switch (vendorId) {
+        case 4937:
+          vendorName = '(AppleHome)';
+          break;
+        case 4362:
+          vendorName = '(SmartThings)';
+          break;
+        case 4939:
+          vendorName = '(HomeAssistant)';
+          break;
+        case 24582:
+          vendorName = '(GoogleHome)';
+          break;
+        case 4701:
+          vendorName = '(Tuya)';
+          break;
+        case 4742:
+          vendorName = '(eWeLink)';
+          break;
+      }
+      return vendorName;
+    };
+
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db}`);
     const deviceName = await context.get<string>('deviceName');
     const deviceType = await context.get<DeviceTypeId>('deviceType');
@@ -2091,16 +2117,9 @@ export class Matterbridge extends EventEmitter {
         const info = commissioningServer.getActiveSessionInformation(fabricIndex);
         let connected = false;
         info.forEach((session) => {
-          this.log.info(`*Active session changed on fabric ${fabricIndex} ${session.fabric?.rootVendorId}/${session.fabric?.label} for ${plg}${pluginName}${nf}`, debugStringify(session));
+          this.log.info(`*Active session changed on fabric ${fabricIndex} ${session.fabric?.rootVendorId}${getVendorIdName(session.fabric?.rootVendorId)}/${session.fabric?.label} for ${plg}${pluginName}${nf}`, debugStringify(session));
           if (session.isPeerActive === true && session.secure === true && session.numberOfActiveSubscriptions >= 1) {
-            let controllerName = '';
-            if (session.fabric?.rootVendorId === 4937) controllerName = 'AppleHome';
-            if (session.fabric?.rootVendorId === 4362) controllerName = 'SmartThings';
-            if (session.fabric?.rootVendorId === 4939) controllerName = 'HomeAssistant';
-            if (session.fabric?.rootVendorId === 24582) controllerName = 'GoogleHome';
-            if (session.fabric?.rootVendorId === 4701) controllerName = 'Tuya';
-            if (session.fabric?.rootVendorId === 4742) controllerName = 'eWeLink';
-            this.log.info(`*Controller ${session.fabric?.rootVendorId}${controllerName !== '' ? '(' + controllerName + ')' : ''}/${session.fabric?.label} connected to ${plg}${pluginName}${nf} on session ${session.name}`);
+            this.log.info(`*Controller ${session.fabric?.rootVendorId}${getVendorIdName(session.fabric?.rootVendorId)}/${session.fabric?.label} connected to ${plg}${pluginName}${nf} on session ${session.name}`);
             connected = true;
           }
         });
@@ -3047,7 +3066,7 @@ export class Matterbridge extends EventEmitter {
       if (!labelList) return;
       const composed = labelList.find((entry) => entry.label === 'composed');
       if (composed) return 'Composed: ' + composed.value;
-      else return 'FixedLabel: ' + labelList.map((entry) => entry.label + ': ' + entry.value).join(' ');
+      else return ''; //'FixedLabel: ' + labelList.map((entry) => entry.label + ': ' + entry.value).join(' ');
     };
 
     let attributes = '';
