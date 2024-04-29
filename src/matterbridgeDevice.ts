@@ -311,6 +311,16 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Sets the endpoint name for a child endpoint.
+   *
+   * @param {Endpoint} child - The child endpoint.
+   * @param {string} endpointName - The name of the endpoint.
+   */
+  setChildEndpointName(child: Endpoint, endpointName: string) {
+    child.addFixedLabel('endpointName', endpointName);
+  }
+
+  /**
    * Serializes the Matterbridge device into a serialized object.
    *
    * @param pluginName - The name of the plugin.
