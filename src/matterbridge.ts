@@ -2065,6 +2065,9 @@ export class Matterbridge extends EventEmitter {
         case 4742:
           vendorName = '(eWeLink)';
           break;
+        default:
+          vendorName = '(unknown)';
+          break;
       }
       return vendorName;
     };
