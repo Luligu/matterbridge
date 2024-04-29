@@ -38,21 +38,19 @@ import WebSocket, { WebSocketServer } from 'ws';
 
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
 import {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  BasicInformation,
   BasicInformationCluster,
   BooleanStateCluster,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   BridgedDeviceBasicInformation,
   BridgedDeviceBasicInformationCluster,
   ClusterServer,
+  FixedLabelCluster,
   GeneralCommissioning,
   PowerSourceCluster,
   ThreadNetworkDiagnosticsCluster,
   getClusterNameById,
 } from '@project-chip/matter-node.js/cluster';
 import { DeviceTypeId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
-import { Aggregator, DeviceTypes, NodeStateInformation } from '@project-chip/matter-node.js/device';
+import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter-node.js/device';
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
 import { ManualPairingCodeCodec, QrCodeSchema } from '@project-chip/matter-node.js/schema';
 import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageManager } from '@project-chip/matter-node.js/storage';
@@ -138,7 +136,7 @@ interface SystemInformation {
 interface MatterbridgeInformation {
   homeDirectory: string;
   rootDirectory: string;
-  matterbridgeStorageDirectory: string;
+  matterbridgeDirectory: string;
   matterbridgePluginDirectory: string;
   globalModulesDirectory: string;
   matterbridgeVersion: string;
@@ -174,7 +172,7 @@ export class Matterbridge extends EventEmitter {
   public matterbridgeInformation: MatterbridgeInformation = {
     homeDirectory: '',
     rootDirectory: '',
-    matterbridgeStorageDirectory: '',
+    matterbridgeDirectory: '',
     matterbridgePluginDirectory: '',
     globalModulesDirectory: '',
     matterbridgeVersion: '',
@@ -2101,6 +2099,7 @@ export class Matterbridge extends EventEmitter {
             if (session.fabric?.rootVendorId === 4939) controllerName = 'HomeAssistant';
             if (session.fabric?.rootVendorId === 24582) controllerName = 'GoogleHome';
             if (session.fabric?.rootVendorId === 4701) controllerName = 'Tuya';
+            if (session.fabric?.rootVendorId === 4742) controllerName = 'eWeLink';
             this.log.info(`*Controller ${session.fabric?.rootVendorId}${controllerName !== '' ? '(' + controllerName + ')' : ''}/${session.fabric?.label} connected to ${plg}${pluginName}${nf} on session ${session.name}`);
             connected = true;
           }
@@ -2376,7 +2375,7 @@ export class Matterbridge extends EventEmitter {
 
     // Create the data directory .matterbridge in the home directory
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
-    this.matterbridgeInformation.matterbridgeStorageDirectory = this.matterbridgeDirectory;
+    this.matterbridgeInformation.matterbridgeDirectory = this.matterbridgeDirectory;
     try {
       await fs.access(this.matterbridgeDirectory);
     } catch (err) {
@@ -2746,7 +2745,7 @@ export class Matterbridge extends EventEmitter {
         res.json([]);
         return;
       }
-      const data: { clusterName: string; clusterId: string; attributeName: string; attributeId: string; attributeValue: string }[] = [];
+      const data: { endpoint: string; clusterName: string; clusterId: string; attributeName: string; attributeId: string; attributeValue: string }[] = [];
       this.registeredDevices.forEach((registeredDevice) => {
         if (registeredDevice.plugin === selectedPluginName && registeredDevice.device.number === selectedDeviceEndpoint) {
           const clusterServers = registeredDevice.device.getAllClusterServers();
@@ -2764,11 +2763,38 @@ export class Matterbridge extends EventEmitter {
                 //console.log(error);
               }
               data.push({
+                endpoint: registeredDevice.device.number ? registeredDevice.device.number.toString() : '...',
                 clusterName: clusterServer.name,
                 clusterId: '0x' + clusterServer.id.toString(16).padStart(2, '0'),
                 attributeName: key,
                 attributeId: '0x' + value.id.toString(16).padStart(2, '0'),
                 attributeValue,
+              });
+            });
+          });
+          registeredDevice.device.getChildEndpoints().forEach((childEndpoint) => {
+            const clusterServers = childEndpoint.getAllClusterServers();
+            clusterServers.forEach((clusterServer) => {
+              Object.entries(clusterServer.attributes).forEach(([key, value]) => {
+                if (clusterServer.name === 'EveHistory') return;
+                //this.log.debug(`***--clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute:${key}(${value.id}) ${value.isFixed} ${value.isWritable} ${value.isWritable}`);
+                let attributeValue;
+                try {
+                  if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
+                  else attributeValue = value.getLocal().toString();
+                } catch (error) {
+                  attributeValue = 'Unavailable';
+                  this.log.debug(`GetLocal value ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
+                  //console.log(error);
+                }
+                data.push({
+                  endpoint: childEndpoint.number ? childEndpoint.number.toString() : '...',
+                  clusterName: clusterServer.name,
+                  clusterId: '0x' + clusterServer.id.toString(16).padStart(2, '0'),
+                  attributeName: key,
+                  attributeId: '0x' + value.id.toString(16).padStart(2, '0'),
+                  attributeValue,
+                });
               });
             });
           });
@@ -2917,10 +2943,13 @@ export class Matterbridge extends EventEmitter {
         const plugin = plugins.find((plugin) => plugin.name === param);
         if (plugin) {
           plugin.enabled = true;
+          plugin.error = undefined;
           plugin.loaded = undefined;
           plugin.started = undefined;
           plugin.configured = undefined;
           plugin.connected = undefined;
+          plugin.platform = undefined;
+          plugin.registeredDevices = undefined;
           await this.nodeContext?.set<RegisteredPlugin[]>('plugins', plugins);
           this.log.info(`Enabled plugin ${plg}${param}${nf}`);
         }
@@ -2931,7 +2960,6 @@ export class Matterbridge extends EventEmitter {
             pluginToEnable.platform = await this.loadPlugin(pluginToEnable);
             if (pluginToEnable.platform) {
               await this.startPlugin(pluginToEnable, 'The plugin has been enabled', true);
-              pluginToEnable.enabled = false;
             } else {
               pluginToEnable.enabled = false;
               pluginToEnable.error = true;
@@ -2949,21 +2977,26 @@ export class Matterbridge extends EventEmitter {
             await this.savePluginConfig(pluginToDisable);
           }
           pluginToDisable.enabled = false;
+          pluginToDisable.error = undefined;
           pluginToDisable.loaded = undefined;
           pluginToDisable.started = undefined;
           pluginToDisable.configured = undefined;
           pluginToDisable.connected = undefined;
           pluginToDisable.platform = undefined;
+          pluginToDisable.registeredDevices = undefined;
 
           const plugins = await this.nodeContext?.get<RegisteredPlugin[]>('plugins');
           if (!plugins) return;
           const plugin = plugins.find((plugin) => plugin.name === param);
           if (plugin) {
             plugin.enabled = false;
+            plugin.error = undefined;
             plugin.loaded = undefined;
             plugin.started = undefined;
             plugin.configured = undefined;
             plugin.connected = undefined;
+            plugin.platform = undefined;
+            plugin.registeredDevices = undefined;
             await this.nodeContext?.set<RegisteredPlugin[]>('plugins', plugins);
             this.log.info(`Disabled plugin ${plg}${param}${nf}`);
           }
@@ -3008,6 +3041,14 @@ export class Matterbridge extends EventEmitter {
    * @returns The attributes of the cluster servers in the device.
    */
   private getClusterTextFromDevice(device: MatterbridgeDevice) {
+    const stringifyFixedLabel = (endpoint: Endpoint) => {
+      const labelList = endpoint.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
+      if (!labelList) return;
+      const composed = labelList.find((entry) => entry.label === 'composed');
+      if (composed) return 'Composed: ' + composed.value;
+      else return 'FixedLabel: ' + labelList.map((entry) => entry.label + ': ' + entry.value).join(' ');
+    };
+
     let attributes = '';
     //this.log.debug(`getClusterTextFromDevice: ${device.name}`);
     const clusterServers = device.getAllClusterServers();
@@ -3028,7 +3069,8 @@ export class Matterbridge extends EventEmitter {
       if (clusterServer.name === 'TemperatureMeasurement') attributes += `Temperature: ${clusterServer.getMeasuredValueAttribute() / 100}°C `;
       if (clusterServer.name === 'RelativeHumidityMeasurement') attributes += `Humidity: ${clusterServer.getMeasuredValueAttribute() / 100}% `;
       if (clusterServer.name === 'PressureMeasurement') attributes += `Pressure: ${clusterServer.getMeasuredValueAttribute()} `;
-      if (clusterServer.name === 'FlowMeasurement') attributes += `Pressure: ${clusterServer.getMeasuredValueAttribute()} `;
+      if (clusterServer.name === 'FlowMeasurement') attributes += `Flow: ${clusterServer.getMeasuredValueAttribute()} `;
+      if (clusterServer.name === 'FixedLabel') attributes += `${stringifyFixedLabel(device)} `;
     });
     return attributes;
   }

@@ -103,10 +103,11 @@ function Devices() {
         <table>
           <thead>
             <tr>
-              <th className="table-header" colSpan="2">{selectedRow>=0?'Cluster servers of '+sortedDevices[selectedRow].name:'(select a device)'}</th>
+              <th className="table-header" colSpan="3">{selectedRow>=0?'Cluster servers of '+sortedDevices[selectedRow].name:'(select a device)'}</th>
               <th className="table-header" colSpan="3">Attributes</th>
             </tr>
             <tr>
+              <th className="table-header">Endpoint</th>
               <th className="table-header">Name</th>
               <th className="table-header">Id</th>
               <th className="table-header">Name</th>
@@ -117,6 +118,7 @@ function Devices() {
           <tbody>
             {clusters.map((cluster, index) => (
               <tr key={index} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
+                <td className="table-content">{cluster.endpoint}</td>
                 <td className="table-content">{cluster.clusterName}</td>
                 <td className="table-content">{cluster.clusterId}</td>
                 <td className="table-content">{cluster.attributeName}</td>

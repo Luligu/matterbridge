@@ -116,6 +116,10 @@ function Home() {
     console.log('Updating page');
     setPlugins(prevPlugins => [...prevPlugins]);
     handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
+    setTimeout(() => {
+      window.location.reload();
+    }, 5000);
+
   };
 
   /*

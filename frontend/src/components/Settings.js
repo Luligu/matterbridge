@@ -1,14 +1,15 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 
-//import Radio from '@mui/material/Radio';
-// import RadioGroup from '@mui/material/RadioGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormControl from '@mui/material/FormControl';
-import FormLabel from '@mui/material/FormLabel';
-import TextField from '@mui/material/TextField';
-import { Radio, RadioGroup, Button, createTheme, Tooltip } from '@mui/material';
+import { Radio, RadioGroup, Button, createTheme, Tooltip, FormControlLabel, FormControl, FormLabel, TextField } from '@mui/material';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
+
+
+// npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8
+import { render } from 'react-dom';
+import Form from '@rjsf/core';
+import { RJSFSchema, UiSchema } from '@rjsf/utils';
+import validator from '@rjsf/validator-ajv8';
 
 import { sendCommandToMatterbridge } from './Header';
 
@@ -18,6 +19,43 @@ export const MatterbridgeInfoContext = React.createContext();
 // </MatterbridgeInfoContext.Provider>
 
 export var info = {};
+
+function Todo() {
+  const schema = {
+    title: 'zigbee2mqtt plugin settings',
+    type: 'object',
+    properties: {
+      name: {
+        description: 'Name',
+        type: 'string',
+      },
+      age: {
+        description: 'Age',
+        type: 'number',
+      },
+    },
+  };
+  const formData = {
+    name: 'First test',
+    age: 32,
+  };
+  const uiSchema = {
+    name: {
+      'ui:classNames': 'custom-class-name',
+      'ui:help': 'Please enter your name',
+      },
+    age: {
+      'ui:classNames': 'custom-class-age',
+      'ui:help': 'Please enter your name',
+      },
+  };
+  
+  return <Form schema={schema} formData={formData} uiSchema={uiSchema} validator={validator} />;
+}
+
+/*
+        <MatterbridgeInfo />
+*/
 
 const theme = createTheme({
   palette: {
