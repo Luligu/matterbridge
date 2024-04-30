@@ -68,6 +68,7 @@ interface MatterbridgePlatform {
   config: PlatformConfig;
   name: string;
   type: string;
+  version: string;
 }
 
 // PlatformConfig types
@@ -1458,6 +1459,7 @@ export class Matterbridge extends EventEmitter {
         const platform = pluginInstance.default(this, log, config) as MatterbridgePlatform;
         platform.name = packageJson.name;
         platform.config = config;
+        platform.version = packageJson.version;
         plugin.name = packageJson.name;
         plugin.description = packageJson.description;
         plugin.version = packageJson.version;

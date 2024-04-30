@@ -34,6 +34,7 @@ export class MatterbridgePlatform {
   protected config: PlatformConfig = {};
   protected name = ''; // Will be set by the loadPlugin() method using the package.json value.
   protected type = ''; // Will be set by the extending classes.
+  protected version = ''; // Will be set by the loadPlugin() method using the package.json value.
 
   /**
    * Creates an instance of the base MatterbridgePlatform.
