@@ -383,7 +383,7 @@ sudo systemctl disable matterbridge.service
 
 ## Run matterbridge with docker (Linux only)
 
-The Matterbridge docker image has manifest list (architecture linux/amd64, linux/arm64, linux/arm/v7, linux/arm/v6) is published on the docker hub.
+The Matterbridge Docker image, which includes a manifest list for the linux/amd64 and linux/arm64 architectures, is published on Docker Hub.
 
 ### First create the Matterbridge directories
 

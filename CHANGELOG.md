@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - [frontend]: Added the device child enpoints to the table in the Devices page
-- [docker]: Added all architectures to the docker image on the docker hub: linux/amd64, linux/arm64, linux/arm/v7 and linux/arm/v6
+- [docker]: Added architectures to the docker image on the docker hub: linux/amd64, linux/arm64
 - [frontend]: Frontend updated to 0.8.9.
 - [frontend]: Added error in the logger level on the Settings page.
 - [frontend]: Added unregister all devices in the Settings page. Matterbridge will shutdown to allow unregistering.

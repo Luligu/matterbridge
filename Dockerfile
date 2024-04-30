@@ -1,5 +1,8 @@
-# Use an official Node.js runtime as a parent image
+# Use an official Node.js runtime as a parent image for arm64 and amd64
 FROM node:20-alpine
+# Use an official Node.js runtime as a parent image for arm32v6 and arm32v7
+# FROM arm32v6/node:bullseye
+# FROM arm32v7/node:bullseye
 
 # Set the working directory in the container
 WORKDIR /usr/src/app
