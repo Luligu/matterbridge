@@ -435,6 +435,11 @@ docker compose up -d
 docker compose down
 ```
 
+### Update with docker compose
+```
+docker compose pull
+```
+
 ### Inspect the container
 ```
 docker container inspect matterbridge

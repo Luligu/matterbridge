@@ -1951,14 +1951,16 @@ export class Matterbridge extends EventEmitter {
   private async showCommissioningQRCode(commissioningServer: CommissioningServer, storageContext: StorageContext, nodeContext: NodeStorage, pluginName: string) {
     if (!commissioningServer || !storageContext || !pluginName) return;
     if (!commissioningServer.isCommissioned()) {
-      this.log.info(`***The commissioning server on port ${commissioningServer.getPort()} for ${plg}${pluginName}${nf} is not commissioned. Pair it scanning the QR code ...`);
       const { qrPairingCode, manualPairingCode } = commissioningServer.getPairingCode();
       await storageContext.set('qrPairingCode', qrPairingCode);
       await storageContext.set('manualPairingCode', manualPairingCode);
       await nodeContext.set<string>('qrPairingCode', qrPairingCode);
       await nodeContext.set<string>('manualPairingCode', manualPairingCode);
       const QrCode = new QrCodeSchema();
-      this.log.info(`Pairing code:\n\n${QrCode.encode(qrPairingCode)}\n${plg}${pluginName}${nf}\n\nqrPairingCode: ${qrPairingCode}\n\nManual pairing code: ${manualPairingCode}\n`);
+      this.log.info(
+        `***The commissioning server on port ${commissioningServer.getPort()} for ${plg}${pluginName}${nf} is not commissioned. Pair it scanning the QR code:\n\n` +
+          `${QrCode.encode(qrPairingCode)}\n${plg}${pluginName}${nf}\n\nqrPairingCode: ${qrPairingCode}\n\nManual pairing code: ${manualPairingCode}\n`,
+      );
       if (pluginName !== 'Matterbridge') {
         const plugin = this.findPlugin(pluginName);
         if (plugin) {
