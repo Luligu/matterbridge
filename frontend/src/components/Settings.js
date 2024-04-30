@@ -1,14 +1,15 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 
-//import Radio from '@mui/material/Radio';
-// import RadioGroup from '@mui/material/RadioGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormControl from '@mui/material/FormControl';
-import FormLabel from '@mui/material/FormLabel';
-import TextField from '@mui/material/TextField';
-import { Radio, RadioGroup, Button, createTheme, Tooltip } from '@mui/material';
+import { Radio, RadioGroup, Button, createTheme, Tooltip, FormControlLabel, FormControl, FormLabel, TextField } from '@mui/material';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
+
+
+// npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8
+import { render } from 'react-dom';
+import Form from '@rjsf/core';
+import { RJSFSchema, UiSchema } from '@rjsf/utils';
+import validator from '@rjsf/validator-ajv8';
 
 import { sendCommandToMatterbridge } from './Header';
 
@@ -18,6 +19,43 @@ export const MatterbridgeInfoContext = React.createContext();
 // </MatterbridgeInfoContext.Provider>
 
 export var info = {};
+
+function Todo() {
+  const schema = {
+    title: 'zigbee2mqtt plugin settings',
+    type: 'object',
+    properties: {
+      name: {
+        description: 'Name',
+        type: 'string',
+      },
+      age: {
+        description: 'Age',
+        type: 'number',
+      },
+    },
+  };
+  const formData = {
+    name: 'First test',
+    age: 32,
+  };
+  const uiSchema = {
+    name: {
+      'ui:classNames': 'custom-class-name',
+      'ui:help': 'Please enter your name',
+      },
+    age: {
+      'ui:classNames': 'custom-class-age',
+      'ui:help': 'Please enter your name',
+      },
+  };
+  
+  return <Form schema={schema} formData={formData} uiSchema={uiSchema} validator={validator} />;
+}
+
+/*
+        <MatterbridgeInfo />
+*/
 
 const theme = createTheme({
   palette: {
@@ -91,13 +129,19 @@ function MatterbridgeInfo() {
     sendCommandToMatterbridge('setpassword', '*'+event.target.value+'*');
   };
 
-  // Define a function to handle change password
+  // Define a function to handle unregister all devices
+  const handleUnregister = () => {
+    console.log('handleReset called');
+    sendCommandToMatterbridge('unregister', 'now');
+  };
+
+  // Define a function to handle reset
   const handleReset = () => {
     console.log('handleReset called');
     sendCommandToMatterbridge('reset', 'now');
   };
 
-  // Define a function to handle change password
+  // Define a function to handle factory reset
   const handleFactoryReset = () => {
     console.log('handleFactoryReset called');
     sendCommandToMatterbridge('factoryreset', 'now');
@@ -132,6 +176,9 @@ function MatterbridgeInfo() {
             </RadioGroup>
           </div>
           <TextField focused value={password} onChange={handleChangePassword} size="small" id="matterbridgePassword" label="Matterbridge Password" type="password" autoComplete="current-password" variant="outlined" style={{ marginTop: '20px'}} />
+          <Tooltip title="Unregister all bridged devices and shutdown.">
+            <Button onClick={handleUnregister} theme={theme} color="primary" variant="contained" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff', marginTop: '20px'}}>Unregisteer all bridged devices</Button>
+          </Tooltip>        
           <Tooltip title="Reset Matterbridge commissioning and shutdown.">
             <Button onClick={handleReset} theme={theme} color="primary" variant="contained" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff', marginTop: '20px'}}>Reset Matterbridge commissioning</Button>
           </Tooltip>        

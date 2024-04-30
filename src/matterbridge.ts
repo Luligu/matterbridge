@@ -38,21 +38,19 @@ import WebSocket, { WebSocketServer } from 'ws';
 
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
 import {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  BasicInformation,
   BasicInformationCluster,
   BooleanStateCluster,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   BridgedDeviceBasicInformation,
   BridgedDeviceBasicInformationCluster,
   ClusterServer,
+  FixedLabelCluster,
   GeneralCommissioning,
   PowerSourceCluster,
   ThreadNetworkDiagnosticsCluster,
   getClusterNameById,
 } from '@project-chip/matter-node.js/cluster';
 import { DeviceTypeId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
-import { Aggregator, DeviceTypes, NodeStateInformation } from '@project-chip/matter-node.js/device';
+import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter-node.js/device';
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
 import { ManualPairingCodeCodec, QrCodeSchema } from '@project-chip/matter-node.js/schema';
 import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageManager } from '@project-chip/matter-node.js/storage';
@@ -138,7 +136,7 @@ interface SystemInformation {
 interface MatterbridgeInformation {
   homeDirectory: string;
   rootDirectory: string;
-  matterbridgeStorageDirectory: string;
+  matterbridgeDirectory: string;
   matterbridgePluginDirectory: string;
   globalModulesDirectory: string;
   matterbridgeVersion: string;
@@ -174,7 +172,7 @@ export class Matterbridge extends EventEmitter {
   public matterbridgeInformation: MatterbridgeInformation = {
     homeDirectory: '',
     rootDirectory: '',
-    matterbridgeStorageDirectory: '',
+    matterbridgeDirectory: '',
     matterbridgePluginDirectory: '',
     globalModulesDirectory: '',
     matterbridgeVersion: '',
@@ -749,6 +747,18 @@ export class Matterbridge extends EventEmitter {
   /**
    * Shut down the process and reset.
    */
+  private async unregisterAndShutdownProcess() {
+    this.log.info('Unregistering all devices and shutting down...');
+    for (const plugin of this.registeredPlugins.filter((plugin) => plugin.enabled && !plugin.error)) {
+      await this.removeAllBridgedDevices(plugin.name);
+    }
+    await this.cleanup('unregistered all devices and shutting down...', false);
+    this.hasCleanupStarted = false;
+  }
+
+  /**
+   * Shut down the process and reset.
+   */
   private async shutdownProcessAndReset() {
     await this.cleanup('shutting down with reset...', false);
     this.hasCleanupStarted = false;
@@ -1078,7 +1088,7 @@ export class Matterbridge extends EventEmitter {
   async removeAllBridgedDevices(pluginName: string): Promise<void> {
     const plugin = this.findPlugin(pluginName);
     if (this.bridgeMode === 'childbridge' && plugin?.type === 'AccessoryPlatform') {
-      this.log.info(`Removing devices for plugin ${plg}${pluginName}${nf}: AccessoryPlatform not supported in childbridge mode`);
+      this.log.info(`Removing devices for plugin ${plg}${pluginName}${nf} type AccessoryPlatform is not supported in childbridge mode`);
       return;
     }
     const devicesToRemove: RegisteredDevice[] = [];
@@ -2033,6 +2043,35 @@ export class Matterbridge extends EventEmitter {
    * @returns {CommissioningServer} The created commissioning server.
    */
   private async createCommisioningServer(context: StorageContext, pluginName: string): Promise<CommissioningServer> {
+    const getVendorIdName = (vendorId: number | undefined) => {
+      if (!vendorId) return '';
+      let vendorName = '';
+      switch (vendorId) {
+        case 4937:
+          vendorName = '(AppleHome)';
+          break;
+        case 4362:
+          vendorName = '(SmartThings)';
+          break;
+        case 4939:
+          vendorName = '(HomeAssistant)';
+          break;
+        case 24582:
+          vendorName = '(GoogleHome)';
+          break;
+        case 4701:
+          vendorName = '(Tuya)';
+          break;
+        case 4742:
+          vendorName = '(eWeLink)';
+          break;
+        default:
+          vendorName = '(unknown)';
+          break;
+      }
+      return vendorName;
+    };
+
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db}`);
     const deviceName = await context.get<string>('deviceName');
     const deviceType = await context.get<DeviceTypeId>('deviceType');
@@ -2081,14 +2120,9 @@ export class Matterbridge extends EventEmitter {
         const info = commissioningServer.getActiveSessionInformation(fabricIndex);
         let connected = false;
         info.forEach((session) => {
-          this.log.info(`*Active session changed on fabric ${fabricIndex} ${session.fabric?.rootVendorId}/${session.fabric?.label} for ${plg}${pluginName}${nf}`, debugStringify(session));
+          this.log.info(`*Active session changed on fabric ${fabricIndex} ${session.fabric?.rootVendorId}${getVendorIdName(session.fabric?.rootVendorId)}/${session.fabric?.label} for ${plg}${pluginName}${nf}`, debugStringify(session));
           if (session.isPeerActive === true && session.secure === true && session.numberOfActiveSubscriptions >= 1) {
-            let controllerName = '';
-            if (session.fabric?.rootVendorId === 4937) controllerName = 'AppleHome';
-            if (session.fabric?.rootVendorId === 4362) controllerName = 'SmartThings';
-            if (session.fabric?.rootVendorId === 4939) controllerName = 'HomeAssistant';
-            if (session.fabric?.rootVendorId === 24582) controllerName = 'GoogleHome';
-            this.log.info(`*Controller ${session.fabric?.rootVendorId}${controllerName !== '' ? '(' + controllerName + ')' : ''}/${session.fabric?.label} connected to ${plg}${pluginName}${nf} on session ${session.name}`);
+            this.log.info(`*Controller ${session.fabric?.rootVendorId}${getVendorIdName(session.fabric?.rootVendorId)}/${session.fabric?.label} connected to ${plg}${pluginName}${nf} on session ${session.name}`);
             connected = true;
           }
         });
@@ -2363,7 +2397,7 @@ export class Matterbridge extends EventEmitter {
 
     // Create the data directory .matterbridge in the home directory
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
-    this.matterbridgeInformation.matterbridgeStorageDirectory = this.matterbridgeDirectory;
+    this.matterbridgeInformation.matterbridgeDirectory = this.matterbridgeDirectory;
     try {
       await fs.access(this.matterbridgeDirectory);
     } catch (err) {
@@ -2733,7 +2767,7 @@ export class Matterbridge extends EventEmitter {
         res.json([]);
         return;
       }
-      const data: { clusterName: string; clusterId: string; attributeName: string; attributeId: string; attributeValue: string }[] = [];
+      const data: { endpoint: string; clusterName: string; clusterId: string; attributeName: string; attributeId: string; attributeValue: string }[] = [];
       this.registeredDevices.forEach((registeredDevice) => {
         if (registeredDevice.plugin === selectedPluginName && registeredDevice.device.number === selectedDeviceEndpoint) {
           const clusterServers = registeredDevice.device.getAllClusterServers();
@@ -2751,11 +2785,39 @@ export class Matterbridge extends EventEmitter {
                 //console.log(error);
               }
               data.push({
+                endpoint: registeredDevice.device.number ? registeredDevice.device.number.toString() : '...',
                 clusterName: clusterServer.name,
                 clusterId: '0x' + clusterServer.id.toString(16).padStart(2, '0'),
                 attributeName: key,
                 attributeId: '0x' + value.id.toString(16).padStart(2, '0'),
                 attributeValue,
+              });
+            });
+          });
+          registeredDevice.device.getChildEndpoints().forEach((childEndpoint) => {
+            const name = registeredDevice.device.getChildEndpointName(childEndpoint);
+            const clusterServers = childEndpoint.getAllClusterServers();
+            clusterServers.forEach((clusterServer) => {
+              Object.entries(clusterServer.attributes).forEach(([key, value]) => {
+                if (clusterServer.name === 'EveHistory') return;
+                //this.log.debug(`***--clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute:${key}(${value.id}) ${value.isFixed} ${value.isWritable} ${value.isWritable}`);
+                let attributeValue;
+                try {
+                  if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
+                  else attributeValue = value.getLocal().toString();
+                } catch (error) {
+                  attributeValue = 'Unavailable';
+                  this.log.debug(`GetLocal error ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
+                  //console.log(error);
+                }
+                data.push({
+                  endpoint: (childEndpoint.number ? childEndpoint.number.toString() : '...') + (name ? ' (' + name + ')' : ''),
+                  clusterName: clusterServer.name,
+                  clusterId: '0x' + clusterServer.id.toString(16).padStart(2, '0'),
+                  attributeName: key,
+                  attributeId: '0x' + value.id.toString(16).padStart(2, '0'),
+                  attributeValue,
+                });
               });
             });
           });
@@ -2805,20 +2867,24 @@ export class Matterbridge extends EventEmitter {
       }
 
       // Handle the command reset from Settings
+      if (command === 'unregister') {
+        await this.unregisterAndShutdownProcess();
+      }
+      // Handle the command reset from Settings
       if (command === 'reset') {
-        this.shutdownProcessAndReset();
+        this.shutdownProcessAndReset(); // No await do it asyncronously
       }
       // Handle the command factoryreset from Settings
       if (command === 'factoryreset') {
-        this.shutdownProcessAndFactoryReset();
+        this.shutdownProcessAndFactoryReset(); // No await do it asyncronously
       }
       // Handle the command restart from Header
       if (command === 'shutdown') {
-        this.shutdownProcess();
+        this.shutdownProcess(); // No await do it asyncronously
       }
       // Handle the command restart from Header
       if (command === 'restart') {
-        this.restartProcess();
+        this.restartProcess(); // No await do it asyncronously
       }
       // Handle the command update from Header
       if (command === 'update') {
@@ -2900,10 +2966,13 @@ export class Matterbridge extends EventEmitter {
         const plugin = plugins.find((plugin) => plugin.name === param);
         if (plugin) {
           plugin.enabled = true;
+          plugin.error = undefined;
           plugin.loaded = undefined;
           plugin.started = undefined;
           plugin.configured = undefined;
           plugin.connected = undefined;
+          plugin.platform = undefined;
+          plugin.registeredDevices = undefined;
           await this.nodeContext?.set<RegisteredPlugin[]>('plugins', plugins);
           this.log.info(`Enabled plugin ${plg}${param}${nf}`);
         }
@@ -2914,7 +2983,6 @@ export class Matterbridge extends EventEmitter {
             pluginToEnable.platform = await this.loadPlugin(pluginToEnable);
             if (pluginToEnable.platform) {
               await this.startPlugin(pluginToEnable, 'The plugin has been enabled', true);
-              pluginToEnable.enabled = false;
             } else {
               pluginToEnable.enabled = false;
               pluginToEnable.error = true;
@@ -2932,21 +3000,26 @@ export class Matterbridge extends EventEmitter {
             await this.savePluginConfig(pluginToDisable);
           }
           pluginToDisable.enabled = false;
+          pluginToDisable.error = undefined;
           pluginToDisable.loaded = undefined;
           pluginToDisable.started = undefined;
           pluginToDisable.configured = undefined;
           pluginToDisable.connected = undefined;
           pluginToDisable.platform = undefined;
+          pluginToDisable.registeredDevices = undefined;
 
           const plugins = await this.nodeContext?.get<RegisteredPlugin[]>('plugins');
           if (!plugins) return;
           const plugin = plugins.find((plugin) => plugin.name === param);
           if (plugin) {
             plugin.enabled = false;
+            plugin.error = undefined;
             plugin.loaded = undefined;
             plugin.started = undefined;
             plugin.configured = undefined;
             plugin.connected = undefined;
+            plugin.platform = undefined;
+            plugin.registeredDevices = undefined;
             await this.nodeContext?.set<RegisteredPlugin[]>('plugins', plugins);
             this.log.info(`Disabled plugin ${plg}${param}${nf}`);
           }
@@ -2965,7 +3038,7 @@ export class Matterbridge extends EventEmitter {
     if (!useHttps) {
       // Listen on HTTP
       this.expressServer = this.expressApp.listen(port, () => {
-        this.log.info(`The frontend is running on ${UNDERLINE}http://localhost:${port}${UNDERLINEOFF}${rs}`);
+        this.log.info(`The frontend is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
       });
     } else {
       // SSL certificate and private key paths
@@ -2978,7 +3051,7 @@ export class Matterbridge extends EventEmitter {
       // Specify the port to listen on, for example 443 for default HTTPS
       const PORT = 443;
       httpsServer.listen(PORT, () => {
-        this.log.info(`The frontend is running on ${UNDERLINE}https://localhost:${PORT}${UNDERLINEOFF}${rs}`);
+        this.log.info(`The frontend is listening on ${UNDERLINE}https://${this.systemInformation.ipv4Address}:${PORT}${UNDERLINEOFF}${rs}`);
       });
     }
 
@@ -2991,6 +3064,14 @@ export class Matterbridge extends EventEmitter {
    * @returns The attributes of the cluster servers in the device.
    */
   private getClusterTextFromDevice(device: MatterbridgeDevice) {
+    const stringifyFixedLabel = (endpoint: Endpoint) => {
+      const labelList = endpoint.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
+      if (!labelList) return;
+      const composed = labelList.find((entry) => entry.label === 'composed');
+      if (composed) return 'Composed: ' + composed.value;
+      else return ''; //'FixedLabel: ' + labelList.map((entry) => entry.label + ': ' + entry.value).join(' ');
+    };
+
     let attributes = '';
     //this.log.debug(`getClusterTextFromDevice: ${device.name}`);
     const clusterServers = device.getAllClusterServers();
@@ -3011,7 +3092,8 @@ export class Matterbridge extends EventEmitter {
       if (clusterServer.name === 'TemperatureMeasurement') attributes += `Temperature: ${clusterServer.getMeasuredValueAttribute() / 100}°C `;
       if (clusterServer.name === 'RelativeHumidityMeasurement') attributes += `Humidity: ${clusterServer.getMeasuredValueAttribute() / 100}% `;
       if (clusterServer.name === 'PressureMeasurement') attributes += `Pressure: ${clusterServer.getMeasuredValueAttribute()} `;
-      if (clusterServer.name === 'FlowMeasurement') attributes += `Pressure: ${clusterServer.getMeasuredValueAttribute()} `;
+      if (clusterServer.name === 'FlowMeasurement') attributes += `Flow: ${clusterServer.getMeasuredValueAttribute()} `;
+      if (clusterServer.name === 'FixedLabel') attributes += `${stringifyFixedLabel(device)} `;
     });
     return attributes;
   }

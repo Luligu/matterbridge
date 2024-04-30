@@ -2,15 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.12] - 2024-04-29
-
-- [frontend]: Frontend updated to 0.8.9.
-- [frontend]: Added error in the logger level on the Settings page.
-- [frontend]: Added reset in the Settings page. Matterbridge will shutdown to allow the reset.
-- [frontend]: Added factoryreset in the Settings page. Matterbridge will shutdown to allow the factoryreset.
+## [1.2.12] - 2024-04-30
 
 ### Added
 
+- [frontend]: Added the device child enpoints to the table in the Devices page
+- [docker]: Added architectures to the docker image on the docker hub: linux/amd64, linux/arm64
+- [frontend]: Frontend updated to 0.8.9.
+- [frontend]: Added error in the logger level on the Settings page.
+- [frontend]: Added unregister all devices in the Settings page. Matterbridge will shutdown to allow unregistering.
+- [frontend]: Added reset in the Settings page. Matterbridge will shutdown to allow the reset.
+- [frontend]: Added factoryreset in the Settings page. Matterbridge will shutdown to allow the factoryreset.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
 
 ## [1.2.11] - 2024-04-25
 
@@ -18,7 +24,7 @@ All notable changes to this project will be documented in this file.
 
 - [matterbridge]: Added user to system information.
 - [frontend]: Persist the filter selection (debug level and search criteria) in the Logs route.
-- [frontend]: Added version and two badges for bridgeMode and restartMode.
+- [frontend]: Added on the header the version and two badges for bridgeMode and restartMode.
 - [frontend]: Frontend updated to 0.8.8.
 - [docker]: Added support for docker (BETA). The Matterbridge image is published on the docker hub.
 - [docker]: See the guidelines on https://github.com/Luligu/matterbridge?tab=readme-ov-file#Run-the-Docker-container-and-start-it.
