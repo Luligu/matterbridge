@@ -2864,6 +2864,10 @@ export class Matterbridge extends EventEmitter {
           this.log.setLogDebug(false);
           this.debugEnabled = false;
           Logger.defaultLogLevel = Level.WARN;
+        } else if (param === 'Error') {
+          this.log.setLogDebug(false);
+          this.debugEnabled = false;
+          Logger.defaultLogLevel = Level.ERROR;
         }
         this.registeredPlugins.forEach((plugin) => {
           plugin.platform?.log.setLogDebug(this.debugEnabled);
