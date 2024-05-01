@@ -116,7 +116,10 @@ function Header() {
       </nav>
       <div className="header" style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
         <Tooltip title="Version">
-          <span className="status-information">v.{matterbridgeInfo.matterbridgeVersion}</span>
+          {matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion ?
+            <span className="status-information">v{matterbridgeInfo.matterbridgeVersion}</span> :
+            <span className="status-information">v{matterbridgeInfo.matterbridgeVersion} latest v{matterbridgeInfo.matterbridgeLatestVersion}</span> 
+          }  
         </Tooltip>        
         {matterbridgeInfo.bridgeMode !== '' ? (        
           <Tooltip title="Bridge mode">
