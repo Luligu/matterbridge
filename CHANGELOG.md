@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.13] - 2024-05-02
+
+### Added
+
+- [frontend]: Added current and latest release to the badge in the Header section
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.2.12] - 2024-04-30
 
 ### Added
