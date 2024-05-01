@@ -131,7 +131,7 @@ function Home() {
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0', padding: '0' }}>
-      <div  style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', minWidth: '360px', flex: '0 1 auto', gap: '20px' }}>
+      <div  style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', flex: '0 1 auto', gap: '20px' }}>
         {qrCode && <QRDiv qrText={qrCode} pairingText={pairingCode} qrWidth={256} topText="QRCode" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName}/>}
         {systemInfo && <SystemInfoTable systemInfo={systemInfo}/>}
       </div>
@@ -340,7 +340,7 @@ function Home() {
   // It returns a div element with a rectangle, a QR code, and two texts
   function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText }) {
     return (
-      <div className="MbfWindowDiv" style={{alignItems: 'center'}}>
+      <div className="MbfWindowDiv" style={{alignItems: 'center'}} minWidth='360px'>
         <div className="MbfWindowHeader">
           <p className="MbfWindowHeaderText" style={{textAlign: 'center'}}>{topText}</p>
         </div>
