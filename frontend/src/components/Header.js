@@ -118,7 +118,7 @@ function Header() {
         <Tooltip title="Version">
           {matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion ?
             <span className="status-information">v{matterbridgeInfo.matterbridgeVersion}</span> :
-            <span className="status-information">current v{matterbridgeInfo.matterbridgeVersion} latest v{matterbridgeInfo.matterbridgeLatestVersion}</span> 
+            <span className="status-warning">current v{matterbridgeInfo.matterbridgeVersion} latest v{matterbridgeInfo.matterbridgeLatestVersion}</span> 
           }  
         </Tooltip>        
         {matterbridgeInfo.bridgeMode !== '' ? (        
