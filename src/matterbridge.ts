@@ -2921,7 +2921,7 @@ export class Matterbridge extends EventEmitter {
         }
       }
       // Handle the command addplugin from Home
-      if (command === 'addplugin') {
+      if (command === 'addplugin' || command === 'installplugin') {
         param = param.replace(/\*/g, '\\');
         if (this.registeredPlugins.find((plugin) => plugin.name === param)) {
           this.log.warn(`Plugin ${plg}${param}${wr} already added to matterbridge`);

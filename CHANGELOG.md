@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- [frontend]: When you install a plugin now it is also added
 - [frontend]: Added current and latest release to the badge in the Header section
 
 <a href="https://www.buymeacoffee.com/luligugithub">
