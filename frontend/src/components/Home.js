@@ -278,7 +278,7 @@ function Home() {
             <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart required</Alert>
           </Snackbar>
           <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth/>
-          <Tooltip title="Install a plugin from npm">
+          <Tooltip title="Install or update a plugin from npm">
             <Button onClick={handleInstallPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="install" endIcon={<DownloadIcon />} style={{ color: '#ffffff', height: '30px' }}> Install</Button>
           </Tooltip>        
           <Tooltip title="Add an installed plugin">
