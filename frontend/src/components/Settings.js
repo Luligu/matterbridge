@@ -193,7 +193,7 @@ function MatterbridgeInfo() {
           </div>
           <TextField focused value={password} onChange={handleChangePassword} size="small" id="matterbridgePassword" label="Matterbridge Password" type="password" autoComplete="current-password" variant="outlined" style={{ marginTop: '20px'}} />
           <Tooltip title="Unregister all bridged devices and shutdown.">
-            <Button onClick={handleUnregister} theme={theme} color="primary" variant="contained" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff', marginTop: '20px'}}>Unregisteer all bridged devices</Button>
+            <Button onClick={handleUnregister} theme={theme} color="primary" variant="contained" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff', marginTop: '20px'}}>Unregister all bridged devices</Button>
           </Tooltip>        
           <Tooltip title="Reset Matterbridge commissioning and shutdown.">
             <Button onClick={handleReset} theme={theme} color="primary" variant="contained" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff', marginTop: '20px'}}>Reset Matterbridge commissioning</Button>

@@ -50,7 +50,7 @@ function Home() {
       { Header: 'Type', accessor: 'type' },
       { Header: 'Devices', accessor: 'devices'},
       { Header: 'QR', accessor: 'qrcode' },
-      { Header: 'Status', accessor: 'status'/*, Cell: ({ value }) => <StatusIndicator status={value} /> */},
+      { Header: 'Status', accessor: 'status'},
     ],
     []
   );
@@ -159,8 +159,9 @@ function Home() {
                 <td className="table-content">{plugin.author}</td>
                 <td className="table-content">{plugin.type}</td>
                 <td className="table-content">{plugin.registeredDevices}</td>
-                <td className="table-content">{plugin.qrPairingCode ?  <>
-                  <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" size="small"><QrCode2Icon /></IconButton></Tooltip>
+                <td className="table-content">{plugin.qrPairingCode ?  
+                  <>
+                    <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" size="small"><QrCode2Icon /></IconButton></Tooltip>
                   </> : <></>}
                 </td>
                 <td className="table-content">
