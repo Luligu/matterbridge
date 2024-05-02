@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- [matterbridge]: Added plugin version check
 - [frontend]: When you install a plugin now it is also added
 - [frontend]: Added current and latest release to the badge in the Header section
 - [docker]: Added architectures to the docker image:dev on the docker hub: linux/amd64, linux/arm64, linux/arm/v7
