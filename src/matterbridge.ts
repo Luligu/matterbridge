@@ -795,7 +795,7 @@ export class Matterbridge extends EventEmitter {
         if (plugin.platform) {
           try {
             await plugin.platform.onShutdown('Matterbridge is closing: ' + message);
-            await this.savePluginConfig(plugin);
+            // await this.savePluginConfig(plugin);
           } catch (error) {
             this.log.error(`Plugin ${plg}${plugin.name}${er} shutting down error: ${error}`);
           }
@@ -1408,6 +1408,7 @@ export class Matterbridge extends EventEmitter {
         .then(() => {
           plugin.configured = true;
           this.log.info(`Configured plugin ${plg}${plugin.name}${db} type ${typ}${plugin.type}${db}`);
+          this.savePluginConfig(plugin);
           return Promise.resolve();
         })
         .catch((err) => {
@@ -2492,12 +2493,13 @@ export class Matterbridge extends EventEmitter {
    *
    * @returns {BaseRegisteredPlugin[]} An array of base registered plugins.
    */
-  private getBaseRegisteredPlugins() {
+  private getBaseRegisteredPlugins(): BaseRegisteredPlugin[] {
     const baseRegisteredPlugins: BaseRegisteredPlugin[] = this.registeredPlugins.map((plugin) => ({
       path: plugin.path,
       type: plugin.type,
       name: plugin.name,
       version: plugin.version,
+      latestVersion: plugin.latestVersion,
       description: plugin.description,
       author: plugin.author,
       enabled: plugin.enabled,
@@ -2970,7 +2972,7 @@ export class Matterbridge extends EventEmitter {
         if (index !== -1) {
           if (this.registeredPlugins[index].platform) {
             await this.registeredPlugins[index].platform?.onShutdown('The plugin has been removed.');
-            await this.savePluginConfig(this.registeredPlugins[index]);
+            // await this.savePluginConfig(this.registeredPlugins[index]);
           }
           this.registeredPlugins.splice(index, 1);
           await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
@@ -3017,7 +3019,7 @@ export class Matterbridge extends EventEmitter {
         if (pluginToDisable) {
           if (pluginToDisable.platform) {
             await pluginToDisable.platform.onShutdown('The plugin has been removed.');
-            await this.savePluginConfig(pluginToDisable);
+            // await this.savePluginConfig(pluginToDisable);
           }
           pluginToDisable.enabled = false;
           pluginToDisable.error = undefined;
