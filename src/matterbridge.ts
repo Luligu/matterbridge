@@ -1470,6 +1470,18 @@ export class Matterbridge extends EventEmitter {
         plugin.registeredDevices = 0;
         plugin.addedDevices = 0;
         await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+
+        this.getLatestVersion(plugin.name)
+          .then(async (latestVersion) => {
+            plugin.latestVersion = latestVersion;
+            await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+            if (plugin.version !== latestVersion) this.log.warn(`The plugin ${plugin.name} is out of date. Current version: ${plugin.version}, Latest version: ${latestVersion}`);
+            else this.log.info(`The plugin ${plugin.name} is up to date. Current version: ${plugin.version}, Latest version: ${latestVersion}`);
+          })
+          .catch((error) => {
+            this.log.error(`Error getting ${plugin.name} latest version: ${error}`);
+          });
+
         this.log.info(`Loaded plugin ${plg}${plugin.name}${db} type ${typ}${platform.type}${db} (entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
         if (start) this.startPlugin(plugin, message); // No await do it asyncronously
         return Promise.resolve(platform);
