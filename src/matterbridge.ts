@@ -36,12 +36,12 @@ import os from 'os';
 import path from 'path';
 import WebSocket, { WebSocketServer } from 'ws';
 
+import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './BridgedDeviceBasicInformationCluster.js';
+
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
 import {
   BasicInformationCluster,
   BooleanStateCluster,
-  BridgedDeviceBasicInformation,
-  BridgedDeviceBasicInformationCluster,
   ClusterServer,
   FixedLabelCluster,
   GeneralCommissioning,
