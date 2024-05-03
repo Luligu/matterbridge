@@ -153,7 +153,7 @@ function Home() {
 
               <tr key={index} onClick={() => handleSelect(index)} className={selectedRow === index ? 'table-content-selected' : index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
 
-                <td className="table-content">{plugin.name}</td>
+                <td className="table-content"><Tooltip title={plugin.path}>{plugin.name}</Tooltip></td>
                 <td className="table-content">{plugin.description}</td>
                 <td className="table-content">{plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning">{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</td>
                 <td className="table-content">{plugin.author}</td>
@@ -242,6 +242,7 @@ function Home() {
   
     // Function that sends the "addplugin" command
     const handleInstallPluginClick = () => {
+      handleSnackOpen();
       console.log('handleInstallPluginClick', pluginName);
       sendCommandToMatterbridge('installplugin', pluginName);
     };
