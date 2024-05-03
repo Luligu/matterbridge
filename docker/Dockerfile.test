@@ -8,10 +8,12 @@ FROM node:20-alpine
 
 
 WORKDIR /app
-COPY ./matterbridge/package.json ./
-COPY ./matterbridge/tsconfig.json ./
-COPY ./matterbridge/dist ./dist
-COPY ./matterbridge/frontend/build ./frontend/build
+COPY ./package.json ./
+COPY ./tsconfig.json ./
+COPY ./src ./src
+COPY ./frontend/build ./frontend/build
+RUN npm install
+RUN npm run build
 RUN npm link
 
 # FROM node:20-alpine as runner
