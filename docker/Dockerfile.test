@@ -16,6 +16,34 @@ RUN npm install
 RUN npm run build
 RUN npm link
 
+# Build the matterbridge-example-accessory-platform example plugin
+WORKDIR /accessory
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-example-accessory-platform.git .
+COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm install
+RUN npm run build
+
+# Build the matterbridge-example-dynamic-platform example plugin
+WORKDIR /dynamic
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-example-dynamic-platform.git .
+COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm install
+RUN npm run build
+
+# Build the matterbridge zigbee2mqtt branch dev plugin
+WORKDIR /zigbee2mqtt
+RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-zigbee2mqtt.git .
+COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm install
+RUN npm run build
+
+# Build the matterbridge-somfy-tahoma plugin
+WORKDIR /somfytahoma
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-somfy-tahoma.git .
+COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm install
+RUN npm run build
+
 
 FROM base as release
 WORKDIR /app
