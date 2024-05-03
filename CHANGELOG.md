@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - [frontend]: Added plugin version check
+- [frontend]: Added tooltip to plugin name showing plugin path
 - [matterbridge]: The plugin config file is no more saved on shutdown.
 - [matterbridge]: Added plugin version check
 - [frontend]: When you install a plugin now it is also added
