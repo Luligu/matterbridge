@@ -1,12 +1,9 @@
-# FROM node:20-alpine
-FROM node:20-bullseye-slim
-
-# RUN npm install -g npm
-# FROM alpine:3.18.4 as base
-# WORKDIR /app
-# RUN apk add --no-cache nodejs npm git
+FROM alpine:3.18.4 as base
+WORKDIR /app
+RUN apk add --no-cache nodejs npm git
 
 
+FROM base as builder
 WORKDIR /app
 COPY ./package.json ./
 COPY ./tsconfig.json ./
@@ -16,12 +13,12 @@ RUN npm install
 RUN npm run build
 RUN npm link
 
-# FROM node:20-alpine as runner
-# WORKDIR /app
-# COPY --from=builder /app/package.json ./
-# COPY --from=builder /app/dist ./dist
-# COPY --from=builder /app/node_modules ./node_modules
-# COPY --from=builder /app/frontend/build ./frontend/build
-# RUN npm run build
+
+FROM base as release
+WORKDIR /app
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/frontend/build ./frontend/build
 
 CMD ["node", "dist/cli.js", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
