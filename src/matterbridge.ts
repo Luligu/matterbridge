@@ -45,6 +45,8 @@ import {
   ClusterServer,
   FixedLabelCluster,
   GeneralCommissioning,
+  GeneralDiagnostics,
+  GeneralDiagnosticsCluster,
   PowerSourceCluster,
   ThreadNetworkDiagnosticsCluster,
   getClusterNameById,
@@ -2223,6 +2225,21 @@ export class Matterbridge extends EventEmitter {
         }
       },
     });
+    const gdcCluster = commissioningServer.getRootClusterServer(GeneralDiagnosticsCluster);
+    if (gdcCluster) {
+      gdcCluster.setNetworkInterfacesAttribute([
+        {
+          name: 'eth0',
+          isOperational: true,
+          offPremiseServicesReachableIPv4: null,
+          offPremiseServicesReachableIPv6: null,
+          hardwareAddress: Uint8Array.fromString('00000000'),
+          iPv4Addresses: [Uint8Array.fromString('0000')],
+          iPv6Addresses: [Uint8Array.fromString('0000000000000000')],
+          type: GeneralDiagnostics.InterfaceType.Ethernet,
+        },
+      ]);
+    } else this.log.warn(`*GeneralDiagnosticsCluster not found for ${plg}${pluginName}${wr}`);
     commissioningServer.addCommandHandler('testEventTrigger', async ({ request: { enableKey, eventTrigger } }) => this.log.info(`testEventTrigger called on GeneralDiagnostic cluster: ${enableKey} ${eventTrigger}`));
     return commissioningServer;
   }
