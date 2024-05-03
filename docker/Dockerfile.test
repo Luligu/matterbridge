@@ -1,7 +1,9 @@
 # FROM alpine as base
-FROM node:20-alpine as base
+FROM node:20-bullseye-slim as base
 WORKDIR /app
-# RUN apk add --no-cache nodejs npm git
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git && \
+    apt-get clean
 
 
 FROM base as builder
