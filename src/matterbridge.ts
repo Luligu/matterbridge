@@ -1741,6 +1741,7 @@ export class Matterbridge extends EventEmitter {
         await this.startMatterServer();
         this.log.info('Matter server started');
         await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
+        // logEndpoint(this.commissioningServer.getRootEndpoint());
         //if (hasParameter('advertise')) await this.commissioningServer.advertise();
         setTimeout(() => {
           this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
