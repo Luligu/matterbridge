@@ -51,5 +51,41 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/frontend/build ./frontend/build
+RUN npm link
+
+# Set the working directory
+WORKDIR /accessory
+COPY --from=builder /accessory/dist ./dist
+COPY --from=builder /accessory/node_modules ./node_modules
+COPY --from=builder /accessory/package.json ./package.json
+COPY --from=builder /accessory/link-matterbridge-script.js ./link-matterbridge-script.js
+RUN npm link
+
+# Set the working directory
+WORKDIR /dynamic
+COPY --from=builder /dynamic/dist ./dist
+COPY --from=builder /dynamic/node_modules ./node_modules
+COPY --from=builder /dynamic/package.json ./package.json
+COPY --from=builder /dynamic/link-matterbridge-script.js ./link-matterbridge-script.js
+RUN npm link
+
+# Set the working directory
+WORKDIR /zigbee2mqtt
+COPY --from=builder /zigbee2mqtt/dist ./dist
+COPY --from=builder /zigbee2mqtt/node_modules ./node_modules
+COPY --from=builder /zigbee2mqtt/package.json ./package.json
+COPY --from=builder /zigbee2mqtt/link-matterbridge-script.js ./link-matterbridge-script.js
+RUN npm link
+
+# Set the working directory
+WORKDIR /somfytahoma
+COPY --from=builder /somfytahoma/dist ./dist
+COPY --from=builder /somfytahoma/node_modules ./node_modules
+COPY --from=builder /somfytahoma/package.json ./package.json
+COPY --from=builder /somfytahoma/link-matterbridge-script.js ./link-matterbridge-script.js
+RUN npm link
+
+# Set the working directory
+WORKDIR /app
 
 CMD ["node", "dist/cli.js", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
