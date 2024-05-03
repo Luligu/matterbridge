@@ -2200,7 +2200,7 @@ export class Matterbridge extends EventEmitter {
               }
               Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
             }
-            //logEndpoint(commissioningServer.getRootEndpoint());
+            // logEndpoint(commissioningServer.getRootEndpoint());
           }, 2000);
         }
       },

@@ -155,7 +155,7 @@ function Home() {
 
                 <td className="table-content">{plugin.name}</td>
                 <td className="table-content">{plugin.description}</td>
-                <td className="table-content">{plugin.version}</td>
+                <td className="table-content">{plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning">{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</td>
                 <td className="table-content">{plugin.author}</td>
                 <td className="table-content">{plugin.type}</td>
                 <td className="table-content">{plugin.registeredDevices}</td>
