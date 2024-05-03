@@ -2272,7 +2272,7 @@ export class Matterbridge extends EventEmitter {
         BasicInformationCluster,
         {
           dataModelRevision: 1,
-          location: 'XX',
+          location: 'FR',
           vendorId: VendorId(0xfff1),
           vendorName: 'Matterbridge',
           productId: 0x8000,

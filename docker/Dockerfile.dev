@@ -1,0 +1,85 @@
+# FROM alpine as base
+FROM node:20-bullseye-slim as base
+WORKDIR /app
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git && \
+    apt-get clean
+
+
+FROM base as builder
+WORKDIR /app
+COPY ./package.json ./
+COPY ./tsconfig.json ./
+COPY ./src ./src
+COPY ./frontend/build ./frontend/build
+RUN npm install && npm run build && npm link
+
+# Build the matterbridge-example-accessory-platform example plugin
+WORKDIR /accessory
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-example-accessory-platform.git .
+COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm install && npm run build
+
+# Build the matterbridge-example-dynamic-platform example plugin
+WORKDIR /dynamic
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-example-dynamic-platform.git .
+COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm install && npm run build
+
+# Build the matterbridge zigbee2mqtt branch dev plugin
+WORKDIR /zigbee2mqtt
+RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-zigbee2mqtt.git .
+COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm install && npm run build
+
+# Build the matterbridge-somfy-tahoma plugin
+WORKDIR /somfytahoma
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-somfy-tahoma.git .
+COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm install && npm run build
+
+
+FROM base as release
+WORKDIR /app
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/frontend/build ./frontend/build
+RUN npm link
+
+# Set the working directory
+WORKDIR /accessory
+COPY --from=builder /accessory/dist ./dist
+COPY --from=builder /accessory/node_modules ./node_modules
+COPY --from=builder /accessory/package.json ./package.json
+COPY --from=builder /accessory/link-matterbridge-script.js ./link-matterbridge-script.js
+RUN npm link
+
+# Set the working directory
+WORKDIR /dynamic
+COPY --from=builder /dynamic/dist ./dist
+COPY --from=builder /dynamic/node_modules ./node_modules
+COPY --from=builder /dynamic/package.json ./package.json
+COPY --from=builder /dynamic/link-matterbridge-script.js ./link-matterbridge-script.js
+RUN npm link
+
+# Set the working directory
+WORKDIR /zigbee2mqtt
+COPY --from=builder /zigbee2mqtt/dist ./dist
+COPY --from=builder /zigbee2mqtt/node_modules ./node_modules
+COPY --from=builder /zigbee2mqtt/package.json ./package.json
+COPY --from=builder /zigbee2mqtt/link-matterbridge-script.js ./link-matterbridge-script.js
+RUN npm link
+
+# Set the working directory
+WORKDIR /somfytahoma
+COPY --from=builder /somfytahoma/dist ./dist
+COPY --from=builder /somfytahoma/node_modules ./node_modules
+COPY --from=builder /somfytahoma/package.json ./package.json
+COPY --from=builder /somfytahoma/link-matterbridge-script.js ./link-matterbridge-script.js
+RUN npm link
+
+# Set the working directory
+WORKDIR /app
+
+CMD ["node", "dist/cli.js", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
