@@ -1,0 +1,25 @@
+FROM node:20-alpine
+# FROM node:20-bullseye-slim
+
+# RUN npm install -g npm
+# FROM alpine:3.18.4 as base
+# WORKDIR /app
+# RUN apk add --no-cache nodejs npm git
+
+
+WORKDIR /app
+COPY ./matterbridge/package.json ./
+COPY ./matterbridge/tsconfig.json ./
+COPY ./matterbridge/dist ./dist
+COPY ./matterbridge/frontend/build ./frontend/build
+RUN npm link
+
+# FROM node:20-alpine as runner
+# WORKDIR /app
+# COPY --from=builder /app/package.json ./
+# COPY --from=builder /app/dist ./dist
+# COPY --from=builder /app/node_modules ./node_modules
+# COPY --from=builder /app/frontend/build ./frontend/build
+# RUN npm run build
+
+CMD ["node", "dist/cli.js", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
