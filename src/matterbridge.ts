@@ -2067,6 +2067,9 @@ export class Matterbridge extends EventEmitter {
         case 4937:
           vendorName = '(AppleHome)';
           break;
+        case 4996:
+          vendorName = '(AppleKeyChain)';
+          break;
         case 4362:
           vendorName = '(SmartThings)';
           break;
