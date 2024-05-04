@@ -119,6 +119,10 @@ function Home() {
   const handleUpdate = (row) => {
     console.log('handleUpdate row:', row, 'plugin:', plugins[row].name);
     sendCommandToMatterbridge('installplugin', plugins[row].name);
+    handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
+    setTimeout(() => {
+      window.location.reload();
+    }, 5000);
   };
 
   /*
