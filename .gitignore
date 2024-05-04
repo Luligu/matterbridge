@@ -12,7 +12,7 @@ tsconfig.tsbuildinfo
 *.tgz
 
 # Npm install
-package-lock.json
+# package-lock.json
 
 # Compiled class file
 *.class
