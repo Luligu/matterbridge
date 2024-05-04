@@ -115,10 +115,10 @@ function Header() {
         <Link to="/settings" className="nav-link">Settings</Link>
       </nav>
       <div className="header" style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
-        <Tooltip title="Version">
+        <Tooltip title="Matterbridge version">
           {matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion ?
             <span className="status-information">v{matterbridgeInfo.matterbridgeVersion}</span> :
-            <span className="status-warning">current v{matterbridgeInfo.matterbridgeVersion} latest v{matterbridgeInfo.matterbridgeLatestVersion}</span> 
+            <span className="status-warning" onClick={handleUpdateClick}>current v{matterbridgeInfo.matterbridgeVersion} latest v{matterbridgeInfo.matterbridgeLatestVersion}</span> 
           }  
         </Tooltip>        
         {matterbridgeInfo.bridgeMode !== '' ? (        

@@ -1442,7 +1442,7 @@ export class Matterbridge extends EventEmitter {
       this.log.error(`Plugin ${plg}${plugin.name}${er} already loaded`);
       return Promise.resolve(plugin.platform);
     }
-    this.log.info(`Loading plugin ${plg}${plugin.name}${db} type ${typ}${plugin.type}${db}`);
+    this.log.info(`Loading plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
     try {
       // Load the package.json of the plugin
       const packageJson = JSON.parse(await fs.readFile(plugin.path, 'utf8'));
@@ -1478,14 +1478,14 @@ export class Matterbridge extends EventEmitter {
           .then(async (latestVersion) => {
             plugin.latestVersion = latestVersion;
             await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
-            if (plugin.version !== latestVersion) this.log.warn(`The plugin ${plugin.name} is out of date. Current version: ${plugin.version}, Latest version: ${latestVersion}`);
-            else this.log.info(`The plugin ${plugin.name} is up to date. Current version: ${plugin.version}, Latest version: ${latestVersion}`);
+            if (plugin.version !== latestVersion) this.log.warn(`The plugin ${plg}${plugin.name}${wr} is out of date. Current version: ${plugin.version}, Latest version: ${latestVersion}`);
+            else this.log.info(`The plugin ${plg}${plugin.name}${nf} is up to date. Current version: ${plugin.version}, Latest version: ${latestVersion}`);
           })
           .catch((error) => {
             this.log.error(`Error getting ${plugin.name} latest version: ${error}`);
           });
 
-        this.log.info(`Loaded plugin ${plg}${plugin.name}${db} type ${typ}${platform.type}${db} (entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
+        this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${platform.type} ${db}(entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
         if (start) this.startPlugin(plugin, message); // No await do it asyncronously
         return Promise.resolve(platform);
       } else {
