@@ -37,7 +37,7 @@ jobs:
       run: |
         docker buildx build \
           --platform linux/amd64,linux/arm64,linux/arm/v7 \
-          -f docker/Dockerfile.test \
-          -t luligu/matterbridge:test \
+          -f docker/Dockerfile.dev \
+          -t luligu/matterbridge:dev \
           --push .
         docker manifest inspect luligu/matterbridge:dev
