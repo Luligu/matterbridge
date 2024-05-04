@@ -1,15 +1,15 @@
-FROM node:20-bullseye-slim as base
+FROM alpine:latest as base
 WORKDIR /app
-RUN npm install -g npm@10.7.0
 
+# Install Node.js and npm
+RUN apk add --update nodejs npm
 
 FROM base as builder
 WORKDIR /app
-COPY ./package.json ./
-COPY ./tsconfig.json ./
+COPY ./package.json ./package-lock.json ./tsconfig.json ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
-RUN npm install && npm run build && npm link
+RUN npm ci && npm run build
 
 
 FROM base as release
