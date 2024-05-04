@@ -1,0 +1,136 @@
+FROM node:20-bullseye-slim as base
+WORKDIR /app
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git && \
+    apt-get clean && \
+    npm install -g npm@10.7.0
+
+FROM base as builder
+WORKDIR /app
+COPY ./package.json ./
+COPY ./tsconfig.json ./
+COPY ./src ./src
+COPY ./frontend/build ./frontend/build
+RUN npm install && npm run build && npm link
+
+WORKDIR /matterbridge-example-accessory-platform
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-example-accessory-platform.git .
+COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm install && npm run build
+
+WORKDIR /matterbridge-example-dynamic-platform
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-example-dynamic-platform.git .
+COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm install && npm run build
+
+WORKDIR /matterbridge-zigbee2mqtt
+RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-zigbee2mqtt.git .
+COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm install && npm run build
+
+WORKDIR /matterbridge-somfy-tahoma
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-somfy-tahoma.git .
+COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm install && npm run build
+
+WORKDIR /matterbridge-eve-door
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-door.git .
+COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm install && npm run build
+
+WORKDIR /matterbridge-eve-motion
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-motion.git .
+COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm install && npm run build
+
+WORKDIR /matterbridge-eve-energy
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-energy.git .
+COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm install && npm run build
+
+WORKDIR /matterbridge-eve-room
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-room.git .
+COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm install && npm run build
+
+WORKDIR /matterbridge-eve-weather
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-weather.git .
+COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm install && npm run build
+
+
+FROM base as release
+WORKDIR /app
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/frontend/build ./frontend/build
+RUN npm link
+
+WORKDIR /matterbridge-example-accessory-platform
+COPY --from=builder /matterbridge-example-accessory-platform/dist ./dist
+COPY --from=builder /matterbridge-example-accessory-platform/node_modules ./node_modules
+COPY --from=builder /matterbridge-example-accessory-platform/package.json ./package.json
+COPY --from=builder /matterbridge-example-accessory-platform/link-matterbridge-script.js ./link-matterbridge-script.js
+RUN npm link
+
+WORKDIR /matterbridge-example-dynamic-platform
+COPY --from=builder /matterbridge-example-dynamic-platform/dist ./dist
+COPY --from=builder /matterbridge-example-dynamic-platform/node_modules ./node_modules
+COPY --from=builder /matterbridge-example-dynamic-platform/package.json ./package.json
+COPY --from=builder /matterbridge-example-dynamic-platform/link-matterbridge-script.js ./link-matterbridge-script.js
+RUN npm link
+
+WORKDIR /matterbridge-zigbee2mqtt
+COPY --from=builder /matterbridge-zigbee2mqtt/dist ./dist
+COPY --from=builder /matterbridge-zigbee2mqtt/node_modules ./node_modules
+COPY --from=builder /matterbridge-zigbee2mqtt/package.json ./package.json
+COPY --from=builder /matterbridge-zigbee2mqtt/link-matterbridge-script.js ./link-matterbridge-script.js
+RUN npm link
+
+WORKDIR /matterbridge-somfy-tahoma
+COPY --from=builder /matterbridge-somfy-tahoma/dist ./dist
+COPY --from=builder /matterbridge-somfy-tahoma/node_modules ./node_modules
+COPY --from=builder /matterbridge-somfy-tahoma/package.json ./package.json
+COPY --from=builder /matterbridge-somfy-tahoma/link-matterbridge-script.js ./link-matterbridge-script.js
+RUN npm link
+
+WORKDIR /matterbridge-eve-door
+COPY --from=builder /matterbridge-eve-door/dist ./dist
+COPY --from=builder /matterbridge-eve-door/node_modules ./node_modules
+COPY --from=builder /matterbridge-eve-door/package.json ./package.json
+COPY --from=builder /matterbridge-eve-door/link-matterbridge-script.js ./link-matterbridge-script.js
+RUN npm link
+
+WORKDIR /matterbridge-eve-motion
+COPY --from=builder /matterbridge-eve-motion/dist ./dist
+COPY --from=builder /matterbridge-eve-motion/node_modules ./node_modules
+COPY --from=builder /matterbridge-eve-motion/package.json ./package.json
+COPY --from=builder /matterbridge-eve-motion/link-matterbridge-script.js ./link-matterbridge-script.js
+RUN npm link
+
+WORKDIR /matterbridge-eve-energy
+COPY --from=builder /matterbridge-eve-energy/dist ./dist
+COPY --from=builder /matterbridge-eve-energy/node_modules ./node_modules
+COPY --from=builder /matterbridge-eve-energy/package.json ./package.json
+COPY --from=builder /matterbridge-eve-energy/link-matterbridge-script.js ./link-matterbridge-script.js
+RUN npm link
+
+WORKDIR /matterbridge-eve-room
+COPY --from=builder /matterbridge-eve-room/dist ./dist
+COPY --from=builder /matterbridge-eve-room/node_modules ./node_modules
+COPY --from=builder /matterbridge-eve-room/package.json ./package.json
+COPY --from=builder /matterbridge-eve-room/link-matterbridge-script.js ./link-matterbridge-script.js
+RUN npm link
+
+WORKDIR /matterbridge-eve-weather
+COPY --from=builder /matterbridge-eve-weather/dist ./dist
+COPY --from=builder /matterbridge-eve-weather/node_modules ./node_modules
+COPY --from=builder /matterbridge-eve-weather/package.json ./package.json
+COPY --from=builder /matterbridge-eve-weather/link-matterbridge-script.js ./link-matterbridge-script.js
+RUN npm link
+
+# Set the working directory
+WORKDIR /app
+
+CMD ["node", "dist/cli.js", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]

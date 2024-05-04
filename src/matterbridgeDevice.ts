@@ -25,7 +25,7 @@ import {
   BasicInformationCluster,
   BooleanState,
   BooleanStateCluster,
-  BridgedDeviceBasicInformationCluster,
+  // BridgedDeviceBasicInformationCluster,
   ClusterServer,
   ClusterServerHandlers,
   ColorControl,
@@ -83,6 +83,7 @@ import { AirQuality, AirQualityCluster } from './AirQualityCluster.js';
 import { AnsiLogger, TimestampFormat, db, hk, zb } from 'node-ansi-logger';
 import { createHash } from 'crypto';
 import { TvocMeasurement, TvocMeasurementCluster } from './TvocCluster.js';
+import { BridgedDeviceBasicInformationCluster } from './BridgedDeviceBasicInformationCluster.js';
 
 type MakeMandatory<T> = Exclude<T, undefined>;
 
@@ -974,6 +975,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         vendorId: vendorId !== undefined ? VendorId(vendorId) : undefined, // 4874
         vendorName: vendorName.slice(0, 32),
+        productId: 0x8000,
         productName: productName.slice(0, 32),
         productLabel: deviceName.slice(0, 64),
         nodeLabel: deviceName.slice(0, 32),

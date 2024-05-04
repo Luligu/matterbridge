@@ -50,7 +50,7 @@ function Home() {
       { Header: 'Type', accessor: 'type' },
       { Header: 'Devices', accessor: 'devices'},
       { Header: 'QR', accessor: 'qrcode' },
-      { Header: 'Status', accessor: 'status'/*, Cell: ({ value }) => <StatusIndicator status={value} /> */},
+      { Header: 'Status', accessor: 'status'},
     ],
     []
   );
@@ -131,7 +131,7 @@ function Home() {
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0', padding: '0' }}>
-      <div  style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', minWidth: '360px', flex: '0 1 auto', gap: '20px' }}>
+      <div  style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', flex: '0 1 auto', gap: '20px' }}>
         {qrCode && <QRDiv qrText={qrCode} pairingText={pairingCode} qrWidth={256} topText="QRCode" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName}/>}
         {systemInfo && <SystemInfoTable systemInfo={systemInfo}/>}
       </div>
@@ -153,14 +153,15 @@ function Home() {
 
               <tr key={index} onClick={() => handleSelect(index)} className={selectedRow === index ? 'table-content-selected' : index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
 
-                <td className="table-content">{plugin.name}</td>
+                <td className="table-content"><Tooltip title={plugin.path}>{plugin.name}</Tooltip></td>
                 <td className="table-content">{plugin.description}</td>
-                <td className="table-content">{plugin.version}</td>
+                <td className="table-content">{plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning">{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</td>
                 <td className="table-content">{plugin.author}</td>
                 <td className="table-content">{plugin.type}</td>
                 <td className="table-content">{plugin.registeredDevices}</td>
-                <td className="table-content">{plugin.qrPairingCode ?  <>
-                  <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" size="small"><QrCode2Icon /></IconButton></Tooltip>
+                <td className="table-content">{plugin.qrPairingCode ?  
+                  <>
+                    <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" size="small"><QrCode2Icon /></IconButton></Tooltip>
                   </> : <></>}
                 </td>
                 <td className="table-content">
@@ -241,6 +242,7 @@ function Home() {
   
     // Function that sends the "addplugin" command
     const handleInstallPluginClick = () => {
+      handleSnackOpen();
       console.log('handleInstallPluginClick', pluginName);
       sendCommandToMatterbridge('installplugin', pluginName);
     };
@@ -277,7 +279,7 @@ function Home() {
             <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart required</Alert>
           </Snackbar>
           <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth/>
-          <Tooltip title="Install a plugin from npm">
+          <Tooltip title="Install or update a plugin from npm">
             <Button onClick={handleInstallPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="install" endIcon={<DownloadIcon />} style={{ color: '#ffffff', height: '30px' }}> Install</Button>
           </Tooltip>        
           <Tooltip title="Add an installed plugin">
@@ -339,7 +341,7 @@ function Home() {
   // It returns a div element with a rectangle, a QR code, and two texts
   function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText }) {
     return (
-      <div className="MbfWindowDiv" style={{alignItems: 'center'}}>
+      <div className="MbfWindowDiv" style={{alignItems: 'center'}} minWidth='360px'>
         <div className="MbfWindowHeader">
           <p className="MbfWindowHeaderText" style={{textAlign: 'center'}}>{topText}</p>
         </div>

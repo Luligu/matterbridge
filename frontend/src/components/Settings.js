@@ -5,54 +5,70 @@ import { Radio, RadioGroup, Button, createTheme, Tooltip, FormControlLabel, Form
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
 
-// npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8
-import { render } from 'react-dom';
-import Form from '@rjsf/core';
-import { RJSFSchema, UiSchema } from '@rjsf/utils';
-import validator from '@rjsf/validator-ajv8';
+// npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8 @rjsf/mui
+// import Form from '@rjsf/core';
+// import Form from '@rjsf/mui';
+// import { RJSFSchema, UiSchema } from '@rjsf/utils';
+// import validator from '@rjsf/validator-ajv8';
 
 import { sendCommandToMatterbridge } from './Header';
 
-export const MatterbridgeInfoContext = React.createContext();
+// export const MatterbridgeInfoContext = React.createContext();
 // Use with const matterbridgeInfo = useContext(MatterbridgeInfoContext);
 // <MatterbridgeInfoContext.Provider value={matterbridgeInfo}>
 // </MatterbridgeInfoContext.Provider>
 
 export var info = {};
 
+/*
 function Todo() {
   const schema = {
-    title: 'zigbee2mqtt plugin settings',
+    title: 'Matterbridge zigbee2mqtt plugin',
+    description: 'matterbridge-zigbee2mqtt v2.0.12',
     type: 'object',
     properties: {
-      name: {
-        description: 'Name',
+      host: {
+        description: 'Host',
         type: 'string',
       },
-      age: {
-        description: 'Age',
+      username: {
+        description: 'Username',
+        type: 'string',
+      },
+      password: {
+        description: 'Password',
+        type: 'string',
+      },
+      port: {
+        description: 'Port',
         type: 'number',
+      },
+      topic: {
+        description: 'Topic',
+        type: 'string',
+      },
+      unregisterOnShutdown: {
+        description: 'Unregister on shutdown',
+        type: 'boolean',
       },
     },
   };
   const formData = {
-    name: 'First test',
-    age: 32,
+    name: "matterbridge-zigbee2mqtt",
+    type: "DynamicPlatform",
+    host: "localhost",
+    username: "Luligu",
+    password: "Tango2023",
+    port: 1883,
+    topic: "zigbee2mqtt",
+    unregisterOnShutdown: false,  
   };
   const uiSchema = {
-    name: {
-      'ui:classNames': 'custom-class-name',
-      'ui:help': 'Please enter your name',
-      },
-    age: {
-      'ui:classNames': 'custom-class-age',
-      'ui:help': 'Please enter your name',
-      },
   };
   
   return <Form schema={schema} formData={formData} uiSchema={uiSchema} validator={validator} />;
 }
-
+*/
 /*
         <MatterbridgeInfo />
 */
@@ -177,7 +193,7 @@ function MatterbridgeInfo() {
           </div>
           <TextField focused value={password} onChange={handleChangePassword} size="small" id="matterbridgePassword" label="Matterbridge Password" type="password" autoComplete="current-password" variant="outlined" style={{ marginTop: '20px'}} />
           <Tooltip title="Unregister all bridged devices and shutdown.">
-            <Button onClick={handleUnregister} theme={theme} color="primary" variant="contained" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff', marginTop: '20px'}}>Unregisteer all bridged devices</Button>
+            <Button onClick={handleUnregister} theme={theme} color="primary" variant="contained" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff', marginTop: '20px'}}>Unregister all bridged devices</Button>
           </Tooltip>        
           <Tooltip title="Reset Matterbridge commissioning and shutdown.">
             <Button onClick={handleReset} theme={theme} color="primary" variant="contained" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff', marginTop: '20px'}}>Reset Matterbridge commissioning</Button>
@@ -201,16 +217,3 @@ function MatterbridgeInfo() {
 }
 
 export default Settings;
-
-/*
-    <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', marginTop: '10px' }}>
-        <TextField focused value={matterbridgeInfo.matterbridgeVersion} size="small" id="matterbridgeVersion" label="Current Version" InputProps={{readOnly: true}} variant="standard"/>
-        <TextField focused value={matterbridgeInfo.matterbridgeLatestVersion} size="small" id="matterbridgeLatestVersion" label="Latest Version" InputProps={{readOnly: true}} variant="standard"/>
-        <TextField focused value={matterbridgeInfo.homeDirectory} size="small" id="homeDirectory" label="Home Directory" InputProps={{readOnly: true}} variant="standard"/>
-        <TextField focused value={matterbridgeInfo.rootDirectory} size="small" id="rootDirectory" label="Root Directory" InputProps={{readOnly: true}} variant="standard"/>
-        <TextField focused value={matterbridgeInfo.matterbridgeDirectory} size="small" id="matterbridgeDirectory" label="Matterbridge Directory" InputProps={{readOnly: true}} variant="standard"/>
-        <TextField focused value={matterbridgeInfo.matterbridgePluginDirectory} size="small" id="matterbridgePluginDirectory" label="Matterbridge Plugin Directory" InputProps={{readOnly: true}} variant="standard"/>
-        <TextField focused value={matterbridgeInfo.globalModulesDirectory} size="small" id="globalModulesDirectory" label="Global Module Directory" InputProps={{readOnly: true}} variant="standard"/>
-    </div>
-
-*/

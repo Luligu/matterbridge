@@ -8,6 +8,7 @@
     "@mui/icons-material": "^5.15.13",
     "@mui/material": "^5.15.13",
     "@rjsf/core": "^5.18.3",
+    "@rjsf/mui": "^5.18.3",
     "@rjsf/utils": "^5.18.3",
     "@rjsf/validator-ajv8": "^5.18.3",
     "@testing-library/jest-dom": "^5.17.0",

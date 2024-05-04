@@ -424,7 +424,7 @@ services:
 ```
 copy it in the home directory or edit the existing one to add the matterbridge service.
 
-then run it
+Then start docker compose with:
 
 ```
 docker compose up -d
@@ -433,6 +433,11 @@ docker compose up -d
 ### Stop with docker compose
 ```
 docker compose down
+```
+
+### Update with docker compose
+```
+docker compose pull
 ```
 
 ### Inspect the container

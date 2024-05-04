@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.13] - 2024-05-04
+
+### Added
+
+- [frontend]: Added plugin version check
+- [frontend]: Added tooltip to plugin name showing plugin path
+- [matterbridge]: The plugin config file is no more saved on shutdown.
+- [matterbridge]: Added plugin version check
+- [frontend]: When you install a plugin now it is also added
+- [frontend]: Added current and latest release to the badge in the Header section
+- [docker]: Added the docker image:dev on the docker hub with architectures: linux/amd64, linux/arm64, linux/arm/v7
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.2.12] - 2024-04-30
 
 ### Added
