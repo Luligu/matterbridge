@@ -55,10 +55,10 @@ function Home() {
     []
   );
 
- /*
- */
+  /*
+  */
   useEffect(() => {
-    // Fetch settinggs from the backend
+
     fetch('/api/settings')
       .then(response => response.json())
       .then(data => { 
@@ -76,15 +76,10 @@ function Home() {
       })
       .catch(error => console.error('Error fetching settings:', error));
 
-
-    // Fetch Plugins
     fetch('/api/plugins')
       .then(response => response.json())
       .then(data => { setPlugins(data); console.log('/api/plugins:', data)})
       .catch(error => console.error('Error fetching plugins:', error));
-
-      //if(refAddRemove && refRegisteredPlugins)
-        //console.log(`refAddRemove ${refAddRemove} refRegisteredPlugins ${refRegisteredPlugins}`, refAddRemove, refRegisteredPlugins);
 
   }, []); // The empty array causes this effect to run only once
 
@@ -119,7 +114,11 @@ function Home() {
     setTimeout(() => {
       window.location.reload();
     }, 5000);
+  };
 
+  const handleUpdate = (row) => {
+    console.log('handleUpdate row:', row, 'plugin:', plugins[row].name);
+    sendCommandToMatterbridge('installplugin', plugins[row].name);
   };
 
   /*
@@ -155,14 +154,17 @@ function Home() {
 
                 <td className="table-content"><Tooltip title={plugin.path}>{plugin.name}</Tooltip></td>
                 <td className="table-content">{plugin.description}</td>
-                <td className="table-content">{plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning">{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</td>
+                <td className="table-content">{plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning" onClick={() => handleUpdate(index)}>{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</td>
                 <td className="table-content">{plugin.author}</td>
                 <td className="table-content">{plugin.type}</td>
                 <td className="table-content">{plugin.registeredDevices}</td>
                 <td className="table-content">{plugin.qrPairingCode ?  
                   <>
                     <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" size="small"><QrCode2Icon /></IconButton></Tooltip>
-                  </> : <></>}
+                  </> : 
+                  <>
+                  </>
+                }
                 </td>
                 <td className="table-content">
                   <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', gap: '5px' }}>
