@@ -20,6 +20,16 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/frontend/build ./frontend/build
 RUN npm link
 
+# Install Matterbridge plugins
+RUN npm -g install matterbridge-example-accessory-platform
+RUN npm -g install matterbridge-example-dynamic-platform
+RUN npm -g install matterbridge-zigbee2mqtt
+RUN npm -g install matterbridge-somfy-tahoma
+RUN npm -g install matterbridge-eve-door
+RUN npm -g install matterbridge-eve-motion
+RUN npm -g install matterbridge-eve-energy
+RUN npm -g install matterbridge-eve-room
+RUN npm -g install matterbridge-eve-weather
 
 WORKDIR /app
 CMD ["node", "dist/cli.js", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
