@@ -21,7 +21,7 @@
     "homebridge",
     "bridge",
     "frontend",
-    "matter",
+    "matterbridge",
     "matter.js",
     "matter-node.js",
     "matterprotocol",
