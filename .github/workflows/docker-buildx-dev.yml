@@ -41,3 +41,4 @@ jobs:
           -t luligu/matterbridge:test \
           --push .
         docker manifest inspect luligu/matterbridge:test
+      timeout-minutes: 60  
