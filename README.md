@@ -383,7 +383,7 @@ sudo systemctl disable matterbridge.service
 
 ## Run matterbridge with docker (Linux only)
 
-The Matterbridge Docker image, which includes a manifest list for the linux/amd64 and linux/arm64 architectures, is published on Docker Hub.
+The Matterbridge Docker image, which includes a manifest list for the linux/amd64, linux/arm64 and linux/arm/v7 architectures, is published on Docker Hub.
 
 ### First create the Matterbridge directories
 
@@ -409,7 +409,7 @@ docker run --name matterbridge \
 
 ### Run with docker compose
 
-The docker-compose.yml file is available in the root of the package
+The docker-compose.yml file is available in the docker directory of the package
 
 ```
 services:
