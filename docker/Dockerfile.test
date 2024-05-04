@@ -1,5 +1,6 @@
-FROM node:20-alpine as base
+FROM node:20-bullseye-slim as base
 WORKDIR /app
+RUN npm install -g npm@10.7.0
 
 
 FROM base as builder
