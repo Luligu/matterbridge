@@ -250,7 +250,7 @@ matterbridge -reset [plugin path or plugin name]
 matterbridge -factoryreset
 ```
 
-This will reset the internal starages. All commissioning informations will be lost. All plugins will be unregistered.
+This will reset the internal storages. All commissioning informations will be lost. All plugins will be unregistered.
 
 ## How to create your plugin
 
