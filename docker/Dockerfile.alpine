@@ -2,14 +2,12 @@ FROM alpine:3.18.4 as base
 
 WORKDIR /app
 RUN apk add --no-cache nodejs npm icu-data-full
-# ENV NODE_ICU_DATA=/usr/lib/node_modules/full-icu
 
 FROM base as builder
 
 COPY ./package.json ./package-lock.json ./tsconfig.json ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
-# RUN apk add --no-cache --virtual .buildtools make gcc g++ python3 linux-headers git npm && \apk del .buildtools
 RUN npm ci --no-audit --no-update-notifier --verbose && \
     npm run build && \
     npm link
@@ -18,13 +16,13 @@ RUN npm ci --no-audit --no-update-notifier --verbose && \
 # Install Matterbridge plugins
 RUN npm -g install matterbridge-example-accessory-platform
 RUN npm -g install matterbridge-example-dynamic-platform
-RUN npm -g install matterbridge-zigbee2mqtt
-RUN npm -g install matterbridge-somfy-tahoma
-RUN npm -g install matterbridge-eve-door
-RUN npm -g install matterbridge-eve-motion
-RUN npm -g install matterbridge-eve-energy
-RUN npm -g install matterbridge-eve-room
-RUN npm -g install matterbridge-eve-weather
+# RUN npm -g install matterbridge-zigbee2mqtt
+# RUN npm -g install matterbridge-somfy-tahoma
+# RUN npm -g install matterbridge-eve-door
+# RUN npm -g install matterbridge-eve-motion
+# RUN npm -g install matterbridge-eve-energy
+# RUN npm -g install matterbridge-eve-room
+# RUN npm -g install matterbridge-eve-weather
 
 WORKDIR /app
 CMD ["node", "dist/cli.js", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
