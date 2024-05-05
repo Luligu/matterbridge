@@ -12,7 +12,7 @@ COPY ./src ./src
 COPY ./frontend/build ./frontend/build
 RUN npm ci --no-audit --no-update-notifier --verbose && \
     npm run build && \
-    npm link
+    npm -g install ./
     
 # Install Matterbridge plugins
 RUN npm -g install matterbridge-example-accessory-platform
