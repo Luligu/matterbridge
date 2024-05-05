@@ -12,7 +12,7 @@ import info from './Settings';
 /*
 */
 
-const theme = createTheme({
+export const theme = createTheme({
   palette: {
     primary: {
       main: '#4CAF50', // your custom primary color

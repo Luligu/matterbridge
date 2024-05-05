@@ -1,7 +1,6 @@
-import React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
-import { Radio, RadioGroup, Button, createTheme, Tooltip, FormControlLabel, FormControl, FormLabel, TextField } from '@mui/material';
+import { Radio, RadioGroup, Button, Tooltip, FormControlLabel, FormControl, FormLabel, TextField, Backdrop, CircularProgress } from '@mui/material';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
 
@@ -11,7 +10,7 @@ import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 // import { RJSFSchema, UiSchema } from '@rjsf/utils';
 // import validator from '@rjsf/validator-ajv8';
 
-import { sendCommandToMatterbridge } from './Header';
+import { theme, sendCommandToMatterbridge } from './Header';
 
 // export const MatterbridgeInfoContext = React.createContext();
 // Use with const matterbridgeInfo = useContext(MatterbridgeInfoContext);
@@ -72,7 +71,7 @@ function Todo() {
 /*
         <MatterbridgeInfo />
 */
-
+/*
 const theme = createTheme({
   palette: {
     primary: {
@@ -80,7 +79,7 @@ const theme = createTheme({
     },
   },
 });
-
+*/
 function Settings() {
 
   return (
@@ -96,12 +95,20 @@ function Settings() {
 }
 
 function MatterbridgeInfo() {
-  // Define a state variable for the selected value
+  const [open, setOpen] = useState(false);
   const [selectedRestartMode, setSelectedRestartMode] = useState(''); 
   const [selectedBridgeMode, setSelectedBridgeMode] = useState('bridge'); 
   const [selectedDebugLevel, setSelectedDebugLevel] = useState('Info'); 
   const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
   const [password, setPassword] = useState('');
+
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
 
   useEffect(() => {
     // Fetch System Info
@@ -147,24 +154,42 @@ function MatterbridgeInfo() {
 
   // Define a function to handle unregister all devices
   const handleUnregister = () => {
-    console.log('handleReset called');
+    console.log('handleUnregister called');
     sendCommandToMatterbridge('unregister', 'now');
+    setOpen(true);
+    setTimeout(() => {
+      setOpen(false);
+      window.location.reload();
+    }, 10 * 1000);
   };
 
   // Define a function to handle reset
   const handleReset = () => {
     console.log('handleReset called');
     sendCommandToMatterbridge('reset', 'now');
+    setOpen(true);
+    setTimeout(() => {
+      setOpen(false);
+      window.location.reload();
+    }, 10 * 1000);
   };
 
   // Define a function to handle factory reset
   const handleFactoryReset = () => {
     console.log('handleFactoryReset called');
     sendCommandToMatterbridge('factoryreset', 'now');
+    setOpen(true);
+    setTimeout(() => {
+      setOpen(false);
+      window.location.reload();
+    }, 10 * 1000);
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row', gap: '20px', marginTop: '10px', width: '100%'}}>
+      <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open} onClick={handleClose}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '50%' }}>
         <FormControl style={{ gap: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
