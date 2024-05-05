@@ -12,12 +12,13 @@ COPY ./src ./src
 COPY ./frontend/build ./frontend/build
 RUN npm ci --no-audit --no-update-notifier --verbose && \
     npm run build && \
-    npm -g install ./ && \
-    rm ./package.json ./package-lock.json ./tsconfig.json && \
-    rm -rf ./src && \
-    rm -rf ./frontend && \
-    rm -rf ./dist && \
-    rm -rf ./node_modules
+    npm link
+    #npm -g install ./ && \
+    #rm ./package.json ./package-lock.json ./tsconfig.json && \
+    #rm -rf ./src && \
+    #rm -rf ./frontend && \
+    #rm -rf ./dist && \
+    #rm -rf ./node_modules
 
 # Install Matterbridge plugins
 RUN npm -g install matterbridge-example-accessory-platform
