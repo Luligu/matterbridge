@@ -14,7 +14,6 @@ RUN npm ci --no-audit --no-update-notifier --verbose && \
     npm run build && \
     npm link
     
-
 # Install Matterbridge plugins
 RUN npm -g install matterbridge-example-accessory-platform
 RUN npm -g install matterbridge-example-dynamic-platform
