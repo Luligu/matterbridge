@@ -1,7 +1,7 @@
 FROM alpine:3.18.4 as base
 
 WORKDIR /app
-RUN apk add --no-cache nodejs
+RUN apk add --no-cache nodejs npm
 
 FROM base as builder
 
