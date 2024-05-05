@@ -1,4 +1,4 @@
-FROM alpine:latest as base
+FROM alpine as base
 
 WORKDIR /app
 RUN apk add --no-cache nodejs npm icu-data-full
