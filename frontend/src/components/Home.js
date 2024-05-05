@@ -3,16 +3,14 @@ import React, { useEffect, useState, useRef } from 'react';
 import QRCode from 'qrcode.react';
 import { StatusIndicator } from './StatusIndicator';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
-import { Tooltip, IconButton, Button, createTheme,  } from '@mui/material';
+import { Tooltip, IconButton, Button, createTheme } from '@mui/material';
 import { sendCommandToMatterbridge } from './Header';
 import WebSocketComponent from './WebSocketComponent';
 
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import TextField from '@mui/material/TextField';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
-import DownloadIcon from '@mui/icons-material/Download';
+import { DeleteForever, Download, Remove, Add, Unpublished, PublishedWithChanges, Settings } from '@mui/icons-material';
 
 // npm install @mui/material @emotion/react @emotion/styled
 // npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
@@ -49,7 +47,7 @@ function Home() {
       { Header: 'Author', accessor: 'author' },
       { Header: 'Type', accessor: 'type' },
       { Header: 'Devices', accessor: 'devices'},
-      { Header: 'QR', accessor: 'qrcode' },
+      { Header: 'Tools', accessor: 'qrcode' },
       { Header: 'Status', accessor: 'status'},
     ],
     []
@@ -125,6 +123,19 @@ function Home() {
     }, 5000);
   };
 
+  const handleRemovePlugin = (row) => {
+    console.log('handleRemovePluginClick row:', row, 'plugin:', plugins[row].name);
+    sendCommandToMatterbridge('removeplugin', plugins[row].name);
+    handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
+    setTimeout(() => {
+      window.location.reload();
+    }, 5000);
+  };
+
+  const handleConfigPlugin = (row) => {
+    console.log('handleConfigPlugin row:', row, 'plugin:', plugins[row].name);
+  };
+
   /*
         {matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
   */
@@ -162,13 +173,14 @@ function Home() {
                 <td className="table-content">{plugin.author}</td>
                 <td className="table-content">{plugin.type}</td>
                 <td className="table-content">{plugin.registeredDevices}</td>
-                <td className="table-content">{plugin.qrPairingCode ?  
+                <td className="table-content">  
                   <>
-                    <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" size="small"><QrCode2Icon /></IconButton></Tooltip>
-                  </> : 
-                  <>
+                    {!plugin.qrPairingCode ? <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" size="small"><QrCode2Icon /></IconButton></Tooltip> : <></>}
+                    <Tooltip title="Plugin config"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleConfigPlugin(index)} size="small"><Settings /></IconButton></Tooltip>
+                    <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleRemovePlugin(index)} size="small"><DeleteForever /></IconButton></Tooltip>
+                    {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><Unpublished /></IconButton></Tooltip> : <></>}
+                    {!plugin.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><PublishedWithChanges /></IconButton></Tooltip> : <></>}
                   </>
-                }
                 </td>
                 <td className="table-content">
                   <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', gap: '5px' }}>
@@ -177,7 +189,6 @@ function Home() {
                       <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart needed!</Alert>
                     </Snackbar>
 
-                    <StatusIndicator status={plugin.enabled} onClick={() => handleEnableDisable(index)} enabledText='Enabled' disabledText='Disabled' tooltipText='Enable or disable the plugin'/>
                     {plugin.loaded && plugin.started && plugin.configured && plugin.paired && plugin.connected ? 
                       <>
                         <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running'/>
@@ -188,6 +199,7 @@ function Home() {
                             <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running'/>
                           </> : 
                           <>
+                            <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled'/>
                             <StatusIndicator status={plugin.loaded} enabledText='Loaded' tooltipText='Whether the plugin has been loaded'/>
                             <StatusIndicator status={plugin.started} enabledText='Started' tooltipText='Whether the plugin started'/>
                             <StatusIndicator status={plugin.configured} enabledText='Configured' tooltipText='Whether the plugin has been configured'/>
@@ -286,13 +298,13 @@ function Home() {
           </Snackbar>
           <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth/>
           <Tooltip title="Install or update a plugin from npm">
-            <Button onClick={handleInstallPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="install" endIcon={<DownloadIcon />} style={{ color: '#ffffff', height: '30px' }}> Install</Button>
+            <Button onClick={handleInstallPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="install" endIcon={<Download />} style={{ color: '#ffffff', height: '30px' }}> Install</Button>
           </Tooltip>        
           <Tooltip title="Add an installed plugin">
-            <Button onClick={handleAddPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="add" endIcon={<AddIcon />} style={{ color: '#ffffff', height: '30px' }}> Add</Button>
+            <Button onClick={handleAddPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="add" endIcon={<Add />} style={{ color: '#ffffff', height: '30px' }}> Add</Button>
           </Tooltip>        
           <Tooltip title="Remove a registered plugin">
-            <Button onClick={handleRemovePluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="remove" endIcon={<RemoveIcon />} style={{ color: '#ffffff', height: '30px' }}> Remove</Button>
+            <Button onClick={handleRemovePluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="remove" endIcon={<Remove />} style={{ color: '#ffffff', height: '30px' }}> Remove</Button>
           </Tooltip>        
         </div>
       </div>
