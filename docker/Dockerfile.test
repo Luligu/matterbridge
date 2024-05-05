@@ -1,13 +1,17 @@
-FROM node:20-alpine
-RUN npm install -g npm@10.7.0
+FROM alpine:3.18.4 as base
 
 WORKDIR /app
+RUN apk add --no-cache nodejs
+
+FROM base as builder
+
 COPY ./package.json ./package-lock.json ./tsconfig.json ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
-RUN npm install --loglevel=verbose
-RUN npm run build
-RUN npm link
+RUN apk add --no-cache --virtual npm && \
+    npm ci --production --no-audit --no-optional --no-update-notifier && \
+    npm run build && \
+    npm link
 
 # Install Matterbridge plugins
 RUN npm -g install matterbridge-example-accessory-platform
