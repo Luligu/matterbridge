@@ -2246,9 +2246,9 @@ export class Matterbridge extends EventEmitter {
         ipv6Array.push(decimal & 0xff); // Low byte
       }
       const iPv6Address = new Uint8Array(ipv6Array);
-      this.log.info(`GeneralDiagnosticsCluster for ${plg}${pluginName}${db} hardwareAddress ${this.systemInformation.macAddress} => ${debugStringify(hardwareAddress)}`);
-      this.log.info(`GeneralDiagnosticsCluster for ${plg}${pluginName}${db} iPv4Address ${this.systemInformation.ipv4Address} => ${debugStringify(iPv4Address)}`);
-      this.log.info(`GeneralDiagnosticsCluster for ${plg}${pluginName}${db} iPv6Address ${this.systemInformation.ipv6Address} => ${debugStringify(iPv6Address)}`);
+      this.log.debug(`GeneralDiagnosticsCluster for ${plg}${pluginName}${db} hardwareAddress ${this.systemInformation.macAddress} => ${debugStringify(hardwareAddress)}`);
+      this.log.debug(`GeneralDiagnosticsCluster for ${plg}${pluginName}${db} iPv4Address ${this.systemInformation.ipv4Address} => ${debugStringify(iPv4Address)}`);
+      this.log.debug(`GeneralDiagnosticsCluster for ${plg}${pluginName}${db} iPv6Address ${this.systemInformation.ipv6Address} => ${debugStringify(iPv6Address)}`);
       try {
         gdcCluster.setNetworkInterfacesAttribute([
           {
