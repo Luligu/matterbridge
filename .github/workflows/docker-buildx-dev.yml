@@ -37,8 +37,8 @@ jobs:
       run: |
         docker buildx build \
           --platform linux/amd64,linux/arm64,linux/arm/v7 \
-          -f docker/Dockerfile.dev \
-          -t luligu/matterbridge:dev \
+          -f docker/Dockerfile.test \
+          -t luligu/matterbridge:test \
           --push .
-        docker manifest inspect luligu/matterbridge:dev
+        docker manifest inspect luligu/matterbridge:test
       timeout-minutes: 60  
