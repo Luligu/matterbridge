@@ -12,8 +12,13 @@ COPY ./src ./src
 COPY ./frontend/build ./frontend/build
 RUN npm ci --no-audit --no-update-notifier --verbose && \
     npm run build && \
-    npm -g install ./
-    
+    npm -g install ./ && \
+    rm ./package.json ./package-lock.json ./tsconfig.json && \
+    rm -rf ./src && \
+    rm -rf ./frontend && \
+    rm -rf ./dist && \
+    rm -rf ./node_modules
+
 # Install Matterbridge plugins
 RUN npm -g install matterbridge-example-accessory-platform
 RUN npm -g install matterbridge-example-dynamic-platform
@@ -26,4 +31,5 @@ RUN npm -g install matterbridge-eve-room
 RUN npm -g install matterbridge-eve-weather
 
 WORKDIR /app
-CMD ["node", "dist/cli.js", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
+# CMD ["node", "dist/cli.js", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
+CMD ["matterbridge", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
