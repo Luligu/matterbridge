@@ -8,10 +8,11 @@ FROM base as builder
 COPY ./package.json ./package-lock.json ./tsconfig.json ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
-RUN apk add --no-cache --virtual npm && \
+RUN apk add --no-cache --virtual .buildtools make gcc g++ python3 linux-headers git npm && \
     npm ci --production --no-audit --no-optional --no-update-notifier && \
-    npm run build && \
-    npm link
+    npm rebuild --build-from-source && \
+    npm link && \
+    apk del .buildtools
 
 # Install Matterbridge plugins
 RUN npm -g install matterbridge-example-accessory-platform
