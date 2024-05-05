@@ -2,7 +2,7 @@ FROM alpine:latest as base
 
 WORKDIR /app
 RUN apk add --no-cache nodejs npm icu-data-full
-ENV NODE_ICU_DATA=/usr/lib/node_modules/full-icu
+# ENV NODE_ICU_DATA=/usr/lib/node_modules/full-icu
 
 FROM base as builder
 
