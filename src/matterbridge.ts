@@ -121,6 +121,7 @@ interface RegisteredDevice {
 
 // Define an interface for storing the system information
 interface SystemInformation {
+  macAddress: string;
   ipv4Address: string;
   ipv6Address: string;
   nodeVersion: string;
@@ -158,6 +159,7 @@ const typ = '\u001B[38;5;207m';
  */
 export class Matterbridge extends EventEmitter {
   public systemInformation: SystemInformation = {
+    macAddress: '',
     ipv4Address: '',
     ipv6Address: '',
     nodeVersion: '',
@@ -2228,18 +2230,41 @@ export class Matterbridge extends EventEmitter {
     });
     const gdcCluster = commissioningServer.getRootClusterServer(GeneralDiagnosticsCluster);
     if (gdcCluster) {
-      gdcCluster.setNetworkInterfacesAttribute([
-        {
-          name: 'eth0',
-          isOperational: true,
-          offPremiseServicesReachableIPv4: null,
-          offPremiseServicesReachableIPv6: null,
-          hardwareAddress: Uint8Array.fromString('00000000'),
-          iPv4Addresses: [Uint8Array.fromString('0000')],
-          iPv6Addresses: [Uint8Array.fromString('0000000000000000')],
-          type: GeneralDiagnostics.InterfaceType.Ethernet,
-        },
-      ]);
+      // We have like "30:f6:ef:69:2b:c5" in this.systemInformation.macAddress
+      const macArray = this.systemInformation.macAddress.split(':').map((hex) => parseInt(hex, 16));
+      let hardwareAddress = new Uint8Array(macArray);
+      if (hardwareAddress.length === 6) hardwareAddress = Uint8Array.from([0, 0, ...hardwareAddress]);
+      // We have like "192.168.1.189" in this.systemInformation.ipv4Address
+      const ipv4Array = this.systemInformation.ipv4Address.split('.').map((num) => parseInt(num));
+      const iPv4Address = new Uint8Array(ipv4Array);
+      // We have like "fd78:cbf8:4939:746:d555:85a9:74f6:9c6" in this.systemInformation.ipv6Address
+      const ipv6Groups = this.systemInformation.ipv6Address.split(':');
+      const ipv6Array = [];
+      for (const group of ipv6Groups) {
+        const decimal = parseInt(group, 16);
+        ipv6Array.push(decimal >> 8); // High byte
+        ipv6Array.push(decimal & 0xff); // Low byte
+      }
+      const iPv6Address = new Uint8Array(ipv6Array);
+      this.log.info(`GeneralDiagnosticsCluster for ${plg}${pluginName}${db} hardwareAddress ${this.systemInformation.macAddress} => ${debugStringify(hardwareAddress)}`);
+      this.log.info(`GeneralDiagnosticsCluster for ${plg}${pluginName}${db} iPv4Address ${this.systemInformation.ipv4Address} => ${debugStringify(iPv4Address)}`);
+      this.log.info(`GeneralDiagnosticsCluster for ${plg}${pluginName}${db} iPv6Address ${this.systemInformation.ipv6Address} => ${debugStringify(iPv6Address)}`);
+      try {
+        gdcCluster.setNetworkInterfacesAttribute([
+          {
+            name: 'eth0',
+            isOperational: true,
+            offPremiseServicesReachableIPv4: null,
+            offPremiseServicesReachableIPv6: null,
+            hardwareAddress,
+            iPv4Addresses: [iPv4Address],
+            iPv6Addresses: [iPv6Address],
+            type: GeneralDiagnostics.InterfaceType.Ethernet,
+          },
+        ]);
+      } catch (error) {
+        this.log.error(`GeneralDiagnosticsCluster.setNetworkInterfacesAttribute for ${plg}${pluginName}${er} error:`, error);
+      }
     } else this.log.warn(`*GeneralDiagnosticsCluster not found for ${plg}${pluginName}${wr}`);
     commissioningServer.addCommandHandler('testEventTrigger', async ({ request: { enableKey, eventTrigger } }) => this.log.info(`testEventTrigger called on GeneralDiagnostic cluster: ${enableKey} ${eventTrigger}`));
     return commissioningServer;
@@ -2366,8 +2391,10 @@ export class Matterbridge extends EventEmitter {
       for (const detail of interfaceDetails) {
         if (detail.family === 'IPv4' && !detail.internal && this.systemInformation.ipv4Address === 'Not found') {
           this.systemInformation.ipv4Address = detail.address;
+          this.systemInformation.macAddress = detail.mac;
         } else if (detail.family === 'IPv6' && !detail.internal && this.systemInformation.ipv6Address === 'Not found') {
           this.systemInformation.ipv6Address = detail.address;
+          this.systemInformation.macAddress = detail.mac;
         }
       }
       // Break if both addresses are found to improve efficiency
@@ -2397,6 +2424,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug('Host System Information:');
     this.log.debug(`- Hostname: ${this.systemInformation.hostname}`);
     this.log.debug(`- User: ${this.systemInformation.user}`);
+    this.log.debug(`- MAC Address: ${this.systemInformation.macAddress}`);
     this.log.debug(`- IPv4 Address: ${this.systemInformation.ipv4Address}`);
     this.log.debug(`- IPv6 Address: ${this.systemInformation.ipv6Address}`);
     this.log.debug(`- Node.js: ${versionMajor}.${versionMinor}.${versionPatch}`);

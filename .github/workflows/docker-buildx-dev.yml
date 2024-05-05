@@ -44,7 +44,7 @@ jobs:
         docker buildx build \
           --platform linux/amd64,linux/arm64,linux/arm/v7 \
           -f docker/Dockerfile.alpine \
-          -t luligu/matterbridge:alpine \
+          -t luligu/matterbridge:dev_alpine \
           --push .
-        docker manifest inspect luligu/matterbridge:alpine
+        docker manifest inspect luligu/matterbridge:dev_alpine
       timeout-minutes: 60 
