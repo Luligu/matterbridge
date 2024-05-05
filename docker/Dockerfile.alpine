@@ -22,15 +22,15 @@ RUN npm ci --no-audit --no-update-notifier --verbose && \
     #rm -rf ./node_modules
 
 # Install Matterbridge plugins
-# RUN npm -g install matterbridge-example-accessory-platform
-# RUN npm -g install matterbridge-example-dynamic-platform
-# RUN npm -g install matterbridge-zigbee2mqtt
-# RUN npm -g install matterbridge-somfy-tahoma
-# RUN npm -g install matterbridge-eve-door
-# RUN npm -g install matterbridge-eve-motion
-# RUN npm -g install matterbridge-eve-energy
-# RUN npm -g install matterbridge-eve-room
-# RUN npm -g install matterbridge-eve-weather
+RUN npm -g install matterbridge-example-accessory-platform
+RUN npm -g install matterbridge-example-dynamic-platform
+RUN npm -g install matterbridge-zigbee2mqtt
+RUN npm -g install matterbridge-somfy-tahoma
+RUN npm -g install matterbridge-eve-door
+RUN npm -g install matterbridge-eve-motion
+RUN npm -g install matterbridge-eve-energy
+RUN npm -g install matterbridge-eve-room
+RUN npm -g install matterbridge-eve-weather
 
 # WORKDIR /app
 # Node modules: /usr/local/lib/node_modules/matterbridge/dist/cli.js
