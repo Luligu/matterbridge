@@ -10,7 +10,7 @@ COPY ./package.json ./package-lock.json ./tsconfig.json ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
 # RUN apk add --no-cache --virtual .buildtools make gcc g++ python3 linux-headers git npm && \apk del .buildtools
-RUN npm ci --no-audit --no-update-notifier && \
+RUN npm ci --no-audit --no-update-notifier --verbose && \
     npm run build && \
     npm link
     
