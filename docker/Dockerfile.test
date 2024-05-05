@@ -1,16 +1,11 @@
-# syntax=docker/dockerfile:1.2
-ARG BUILDPLATFORM
-ARG TARGETPLATFORM
-
 FROM node:20-alpine
-
-RUN echo "Building on $BUILDPLATFORM for $TARGETPLATFORM"
+RUN npm install -g npm@10.7.0
 
 WORKDIR /app
 COPY ./package.json ./package-lock.json ./tsconfig.json ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
-RUN npm install
+RUN npm install --loglevel=verbose
 RUN npm run build
 RUN npm link
 

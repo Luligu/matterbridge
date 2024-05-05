@@ -33,10 +33,10 @@ jobs:
       with:
         version: latest
 
-    - name: Run Docker Buildx
+    - name: Run Docker Buildx linux/amd64,linux/arm64,
       run: |
         docker buildx build \
-          --platform linux/amd64,linux/arm64,linux/arm/v7 \
+          --platform linux/arm/v7 \
           -f docker/Dockerfile.test \
           -t luligu/matterbridge:test \
           --push .
