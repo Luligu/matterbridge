@@ -1,5 +1,5 @@
 # FROM alpine:3.18.4 as base
-FROM node:20-alpine
+FROM node:20-alpine as base
 
 WORKDIR /app
 RUN apk add --no-cache nodejs npm icu-data-full
