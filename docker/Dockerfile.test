@@ -8,8 +8,9 @@ FROM base as builder
 COPY ./package.json ./package-lock.json ./tsconfig.json ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
-RUN apk add --no-cache --virtual .buildtools make gcc g++ python3 linux-headers git npm && \
-    npm ci --no-audit --no-optional --no-update-notifier && \
+# RUN apk add --no-cache --virtual .buildtools make gcc g++ python3 linux-headers git npm && \
+RUN apk add --no-cache --virtual .buildtools git npm && \
+    npm ci --no-audit --no-optional --omit=optional --no-update-notifier && \
     npm run build && \
     npm link && \
     apk del .buildtools
