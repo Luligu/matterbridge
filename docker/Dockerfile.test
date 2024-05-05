@@ -10,7 +10,7 @@ COPY ./src ./src
 COPY ./frontend/build ./frontend/build
 RUN apk add --no-cache --virtual .buildtools make gcc g++ python3 linux-headers git npm && \
     npm ci --production --no-audit --no-optional --no-update-notifier && \
-    npm rebuild --build-from-source && \
+    npm run build && \
     npm link && \
     apk del .buildtools
 
