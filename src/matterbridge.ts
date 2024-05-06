@@ -1730,8 +1730,10 @@ export class Matterbridge extends EventEmitter {
           this.log.error(`Node storage context undefined for ${plg}Matterbridge${er}`);
           return;
         }
-        await this.matterbridgeContext.set('softwareVersion', 1);
-        await this.matterbridgeContext.set('softwareVersionString', this.matterbridgeVersion);
+        await this.matterbridgeContext.set('softwareVersion', this.matterbridgeVersion && this.matterbridgeVersion.includes('.') ? parseInt(this.matterbridgeVersion.split('.')[0], 10) : 1);
+        await this.matterbridgeContext.set('softwareVersionString', this.matterbridgeVersion ?? '1.0.0');
+        await this.matterbridgeContext.set('hardwareVersion', this.systemInformation.osRelease && this.systemInformation.osRelease.includes('.') ? parseInt(this.systemInformation.osRelease.split('.')[0], 10) : 1);
+        await this.matterbridgeContext.set('hardwareVersionString', this.systemInformation.osRelease ?? '1.0.0');
         this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
         this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
         this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
@@ -2110,11 +2112,11 @@ export class Matterbridge extends EventEmitter {
     const serialNumber = await context.get<string>('serialNumber');
     const uniqueId = await context.get<string>('uniqueId');
 
-    const softwareVersion = await context.get('softwareVersion', 1);
-    const softwareVersionString = await context.get('softwareVersionString', '1.0.0'); // Home app = Firmware Revision
+    const softwareVersion = await context.get<number>('softwareVersion', 1);
+    const softwareVersionString = await context.get<string>('softwareVersionString', '1.0.0'); // Home app = Firmware Revision
 
-    const hardwareVersion = await context.get('hardwareVersion', 1);
-    const hardwareVersionString = await context.get('hardwareVersionString', '1.0.0');
+    const hardwareVersion = await context.get<number>('hardwareVersion', 1);
+    const hardwareVersionString = await context.get<string>('hardwareVersionString', '1.0.0');
 
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with deviceName ${deviceName} deviceType ${deviceType}(0x${deviceType.toString(16).padStart(4, '0')})`);
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with uniqueId ${uniqueId} serialNumber ${serialNumber}`);
@@ -2307,10 +2309,10 @@ export class Matterbridge extends EventEmitter {
           nodeLabel: 'Matterbridge aggregator',
           serialNumber: await context.get<string>('aggregatorSerialNumber'),
           uniqueId: await context.get<string>('aggregatorUniqueId'),
-          softwareVersion: 1,
-          softwareVersionString: 'v.1.0',
-          hardwareVersion: 1,
-          hardwareVersionString: 'v.1.0',
+          softwareVersion: await context.get<number>('softwareVersion', 1),
+          softwareVersionString: await context.get<string>('softwareVersionString', '1.0.0'),
+          hardwareVersion: await context.get<number>('hardwareVersion', 1),
+          hardwareVersionString: await context.get<string>('hardwareVersionString', '1.0.0'),
           reachable: true,
           capabilityMinima: { caseSessionsPerFabric: 3, subscriptionsPerFabric: 3 },
         },
