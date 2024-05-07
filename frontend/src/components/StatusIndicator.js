@@ -16,7 +16,7 @@ export function StatusIndicator({ status, enabledText = 'Enabled', disabledText 
     if(tooltipText !== undefined) {
       return (
       <div className="tooltip-container">
-        <div className={status ? 'status-enabled' : 'status-disabled'} onClick={onClick}>
+        <div className={status ? 'status-enabled' : 'status-disabled'} style={{ cursor: 'default' }} onClick={onClick}>
           {status ? enabledText : disabledText ?? enabledText}
         </div>
         <span 
@@ -26,7 +26,7 @@ export function StatusIndicator({ status, enabledText = 'Enabled', disabledText 
     }
     else {
       return(
-      <div className={status ? 'status-enabled' : 'status-disabled'}>
+      <div className={status ? 'status-enabled' : 'status-disabled'} style={{ cursor: 'default' }}>
         {status ? enabledText : disabledText ?? enabledText}
       </div>
       );

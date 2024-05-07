@@ -117,18 +117,18 @@ function Header() {
       <div className="header" style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
         <Tooltip title="Matterbridge version">
           {matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion ?
-            <span className="status-information">v{matterbridgeInfo.matterbridgeVersion}</span> :
+            <span className="status-information" style={{ cursor: 'default' }}>v{matterbridgeInfo.matterbridgeVersion}</span> :
             <span className="status-warning" onClick={handleUpdateClick}>current v{matterbridgeInfo.matterbridgeVersion} latest v{matterbridgeInfo.matterbridgeLatestVersion}</span> 
           }  
         </Tooltip>        
         {matterbridgeInfo.bridgeMode !== '' ? (        
           <Tooltip title="Bridge mode">
-            <span className="status-information">{matterbridgeInfo.bridgeMode}</span>
+            <span className="status-information" style={{ cursor: 'default' }}>{matterbridgeInfo.bridgeMode}</span>
           </Tooltip>
         ) : null}
         {matterbridgeInfo.restartMode !== '' ? (        
           <Tooltip title="Restart mode">
-            <span className="status-information">{matterbridgeInfo.restartMode}</span>
+            <span className="status-information" style={{ cursor: 'default' }}>{matterbridgeInfo.restartMode}</span>
           </Tooltip>        
         ) : null}
         <Tooltip title="Update matterbridge">

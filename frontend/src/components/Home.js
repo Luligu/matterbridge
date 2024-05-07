@@ -128,10 +128,10 @@ function Home() {
       sendCommandToMatterbridge('enableplugin', plugins[row].name);
     }
     console.log('Updating page');
-    setPlugins(prevPlugins => [...prevPlugins]);
+    //setPlugins(prevPlugins => [...prevPlugins]);
     handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
     setTimeout(() => {
-      window.location.reload();
+      //window.location.reload();
     }, 5000);
   };
 
@@ -140,7 +140,7 @@ function Home() {
     sendCommandToMatterbridge('installplugin', plugins[row].name);
     handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
     setTimeout(() => {
-      window.location.reload();
+      //window.location.reload();
     }, 5000);
   };
 
@@ -149,7 +149,7 @@ function Home() {
     sendCommandToMatterbridge('removeplugin', plugins[row].name);
     handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
     setTimeout(() => {
-      window.location.reload();
+      //window.location.reload();
     }, 5000);
   };
 
