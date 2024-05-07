@@ -59,6 +59,7 @@ import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageMana
 import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } from '@project-chip/matter-node.js/util';
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
+import { somfytahoma_config, somfytahoma_schema, zigbee2mqtt_config, zigbee2mqtt_schema } from './defaultConfigSchema.js';
 
 // Define an interface of common elements from MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform
 interface MatterbridgePlatform {
@@ -1296,34 +1297,38 @@ export class Matterbridge extends EventEmitter {
       const schema = JSON.parse(data) as PlatformSchema;
       schema.title = plugin.description;
       schema.description = plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author;
-      schema.type = 'object';
       this.log.debug(`Schema file found: ${schemaFile}.\nSchema:${rs}\n`, schema);
       return schema;
     } catch (err) {
       if (err instanceof Error) {
         const nodeErr = err as NodeJS.ErrnoException;
         if (nodeErr.code === 'ENOENT') {
-          const schema = {
-            title: plugin.description,
-            description: plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author,
-            type: 'object',
-            properties: {
-              name: {
-                description: 'Plugin name',
-                type: 'string',
-                readOnly: true,
+          let schema: PlatformSchema;
+          if (plugin.name === 'matterbridge-zigbee2mqtt') schema = zigbee2mqtt_schema;
+          else if (plugin.name === 'matterbridge-somfy-tahoma') schema = somfytahoma_schema;
+          else
+            schema = {
+              title: plugin.description,
+              description: plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author,
+              type: 'object',
+              properties: {
+                name: {
+                  description: 'Plugin name',
+                  type: 'string',
+                  readOnly: true,
+                },
+                type: {
+                  description: 'Plugin type',
+                  type: 'string',
+                  readOnly: true,
+                },
+                unregisterOnShutdown: {
+                  description: 'Unregister all devices on shutdown (development only)',
+                  type: 'boolean',
+                },
               },
-              type: {
-                description: 'Plugin type',
-                type: 'string',
-                readOnly: true,
-              },
-              unregisterOnShutdown: {
-                description: 'Unregister all devices on shutdown (development only)',
-                type: 'boolean',
-              },
-            },
-          };
+            };
+
           try {
             await this.writeFile(schemaFile, JSON.stringify(schema, null, 2));
             this.log.debug(`Created schema file: ${schemaFile}.\nSchema:${rs}\n`, schema);
@@ -1337,6 +1342,7 @@ export class Matterbridge extends EventEmitter {
           return {};
         }
       }
+      this.log.error(`Error loading schema file ${schemaFile}: ${err}`);
       return {};
     }
   }
@@ -1365,20 +1371,25 @@ export class Matterbridge extends EventEmitter {
       if (err instanceof Error) {
         const nodeErr = err as NodeJS.ErrnoException;
         if (nodeErr.code === 'ENOENT') {
+          let config: PlatformConfig;
+          if (plugin.name === 'matterbridge-zigbee2mqtt') config = zigbee2mqtt_config;
+          else if (plugin.name === 'matterbridge-somfy-tahoma') config = somfytahoma_config;
+          else config = { name: plugin.name, type: plugin.type, unregisterOnShutdown: false };
           try {
-            await this.writeFile(configFile, JSON.stringify({ name: plugin.name, type: plugin.type }, null, 2));
-            this.log.debug(`Created config file: ${configFile}.\nConfig:${rs}\n`, { name: plugin.name, type: plugin.type });
-            return { name: plugin.name, type: plugin.type };
+            await this.writeFile(configFile, JSON.stringify(config, null, 2));
+            this.log.debug(`Created config file: ${configFile}.\nConfig:${rs}\n`, config);
+            return config;
           } catch (err) {
             this.log.error(`Error creating config file ${configFile}: ${err}`);
-            return Promise.reject(err);
+            return config;
           }
         } else {
           this.log.error(`Error accessing config file ${configFile}: ${err}`);
-          return Promise.reject(err);
+          return {};
         }
       }
-      return Promise.reject(err);
+      this.log.error(`Error loading config file ${configFile}: ${err}`);
+      return {};
     }
   }
 
@@ -2610,7 +2621,7 @@ export class Matterbridge extends EventEmitter {
    *
    * @returns {BaseRegisteredPlugin[]} An array of base registered plugins.
    */
-  private async getBaseRegisteredPlugins(): Promise<BaseRegisteredPlugin[]> {
+  private async getBaseRegisteredPlugins(includeConfigSchema = false): Promise<BaseRegisteredPlugin[]> {
     const baseRegisteredPlugins: BaseRegisteredPlugin[] = [];
     for (const plugin of this.registeredPlugins) {
       baseRegisteredPlugins.push({
@@ -2630,8 +2641,8 @@ export class Matterbridge extends EventEmitter {
         registeredDevices: plugin.registeredDevices,
         qrPairingCode: plugin.qrPairingCode,
         manualPairingCode: plugin.manualPairingCode,
-        configJson: await this.loadPluginConfig(plugin),
-        schemaJson: await this.loadPluginSchema(plugin),
+        configJson: includeConfigSchema ? await this.loadPluginConfig(plugin) : {},
+        schemaJson: includeConfigSchema ? await this.loadPluginSchema(plugin) : {},
       });
     }
     return baseRegisteredPlugins;
@@ -2870,7 +2881,7 @@ export class Matterbridge extends EventEmitter {
     // Endpoint to provide plugins
     this.expressApp.get('/api/plugins', async (req, res) => {
       this.log.debug('The frontend sent /api/plugins');
-      res.json(await this.getBaseRegisteredPlugins());
+      res.json(await this.getBaseRegisteredPlugins(true));
     });
 
     // Endpoint to provide devices
