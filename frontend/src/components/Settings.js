@@ -3,13 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Radio, RadioGroup, Button, Tooltip, FormControlLabel, FormControl, FormLabel, TextField, Backdrop, CircularProgress } from '@mui/material';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
-
-// npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8 @rjsf/mui
-// import Form from '@rjsf/core';
-// import Form from '@rjsf/mui';
-// import { RJSFSchema, UiSchema } from '@rjsf/utils';
-// import validator from '@rjsf/validator-ajv8';
-
 import { theme, sendCommandToMatterbridge } from './Header';
 
 // export const MatterbridgeInfoContext = React.createContext();
@@ -20,65 +13,7 @@ import { theme, sendCommandToMatterbridge } from './Header';
 export var info = {};
 
 /*
-function Todo() {
-  const schema = {
-    title: 'Matterbridge zigbee2mqtt plugin',
-    description: 'matterbridge-zigbee2mqtt v2.0.12',
-    type: 'object',
-    properties: {
-      host: {
-        description: 'Host',
-        type: 'string',
-      },
-      username: {
-        description: 'Username',
-        type: 'string',
-      },
-      password: {
-        description: 'Password',
-        type: 'string',
-      },
-      port: {
-        description: 'Port',
-        type: 'number',
-      },
-      topic: {
-        description: 'Topic',
-        type: 'string',
-      },
-      unregisterOnShutdown: {
-        description: 'Unregister on shutdown',
-        type: 'boolean',
-      },
-    },
-  };
-  const formData = {
-    name: "matterbridge-zigbee2mqtt",
-    type: "DynamicPlatform",
-    host: "localhost",
-    username: "Luligu",
-    password: "Tango2023",
-    port: 1883,
-    topic: "zigbee2mqtt",
-    unregisterOnShutdown: false,  
-  };
-  const uiSchema = {
-  };
-  
-  return <Form schema={schema} formData={formData} uiSchema={uiSchema} validator={validator} />;
-}
-*/
-/*
         <MatterbridgeInfo />
-*/
-/*
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#4CAF50', // your custom primary color
-    },
-  },
-});
 */
 function Settings() {
 

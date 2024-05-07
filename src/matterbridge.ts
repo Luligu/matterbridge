@@ -80,6 +80,12 @@ export type PlatformConfig = {
   [key: string]: PlatformConfigValue; // This allows any string as a key, and the value can be ConfigValue.
 };
 
+export type PlatformSchemaValue = string | number | boolean | bigint | object | undefined | null;
+
+export type PlatformSchema = {
+  [key: string]: PlatformSchemaValue; // This allows any string as a key, and the value can be ConfigValue.
+};
+
 // Define an interface for storing the plugins
 interface RegisteredPlugin extends BaseRegisteredPlugin {
   nodeContext?: NodeStorage;
@@ -110,6 +116,8 @@ interface BaseRegisteredPlugin {
   addedDevices?: number;
   qrPairingCode?: string;
   manualPairingCode?: string;
+  configJson?: object;
+  schemaJson?: object;
 }
 
 // Define an interface for storing the devices
@@ -279,7 +287,7 @@ export class Matterbridge extends EventEmitter {
       addedDevices: 0,
     };
     this.registeredPlugins.push(plugin);
-    await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+    await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
 
     // Log system info and create .matterbridge directory
     await this.logNodeAndSystemInfo();
@@ -642,7 +650,7 @@ export class Matterbridge extends EventEmitter {
           const plugin = { path: packageJsonPath, type: '', name: packageJson.name, version: packageJson.version, description: packageJson.description, author: packageJson.author, enabled: true };
           if (await this.loadPlugin(plugin)) {
             this.registeredPlugins.push(plugin);
-            await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+            await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
             this.log.info(`Plugin ${plg}${packageJsonPath}${nf} type ${plugin.type} added to matterbridge`);
           } else {
             this.log.error(`Plugin ${plg}${packageJsonPath}${wr} not added to matterbridge error`);
@@ -656,7 +664,7 @@ export class Matterbridge extends EventEmitter {
             this.registeredPlugins.findIndex((registeredPlugin) => registeredPlugin.name === packageJson.name),
             1,
           );
-          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
           this.log.info(`Plugin ${plg}${packageJsonPath}${nf} removed from matterbridge`);
         } else {
           this.log.warn(`Plugin ${plg}${packageJsonPath}${wr} not registerd in matterbridge`);
@@ -669,7 +677,7 @@ export class Matterbridge extends EventEmitter {
           plugin.started = undefined;
           plugin.configured = undefined;
           plugin.connected = undefined;
-          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
           this.log.info(`Plugin ${plg}${packageJsonPath}${nf} enabled`);
         } else {
           this.log.warn(`Plugin ${plg}${packageJsonPath}${wr} not registerd in matterbridge`);
@@ -682,7 +690,7 @@ export class Matterbridge extends EventEmitter {
           plugin.started = undefined;
           plugin.configured = undefined;
           plugin.connected = undefined;
-          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
           this.log.info(`Plugin ${plg}${packageJsonPath}${nf} disabled`);
         } else {
           this.log.warn(`Plugin ${plg}${packageJsonPath}${wr} not registerd in matterbridge`);
@@ -700,7 +708,7 @@ export class Matterbridge extends EventEmitter {
           const context = this.storageManager?.createContext(plugin.name);
           if (!context) this.log.error(`Plugin ${plg}${plugin.name}${er} context not found`);
           await context?.clearAll();
-          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
           this.log.info(`Reset commissionig for plugin ${plg}${plugin.name}${nf} done! Remove the device from the controller.`);
         } else {
           this.log.warn(`Plugin ${plg}${packageJsonPath}${wr} not registerd in matterbridge`);
@@ -1134,7 +1142,8 @@ export class Matterbridge extends EventEmitter {
         await this.backupJsonStorage(storageName, storageName.replace('.json', '') + '.backup.json');
       }
     } catch (error) {
-      this.log.error('Storage initialize() error!');
+      this.log.error('Storage initialize() error! The file .matterbridge/matterbridge.json may be corrupted.');
+      this.log.error('Please delete it and rename matterbridge.backup.json to matterbridge.json and try to restart Matterbridge.');
       await this.cleanup('Storage initialize() error!');
     }
   }
@@ -1268,6 +1277,68 @@ export class Matterbridge extends EventEmitter {
         this.log.info('Set attribute and event for BooleanStateCluster to', !contact);
       }, 60 * 1000);
     }, 1000);
+  }
+
+  /**
+   * Loads the schema for a plugin.
+   * If the schema file exists, it reads the file and returns the parsed JSON data.
+   * If the schema file does not exist, it creates a new file with default configuration and returns it.
+   * If any error occurs during file access or creation, it logs an error and return an empty schema.
+   *
+   * @param plugin - The plugin for which to load the schema.
+   * @returns A promise that resolves to the loaded or created schema.
+   */
+  private async loadPluginSchema(plugin: RegisteredPlugin): Promise<PlatformSchema> {
+    const schemaFile = path.join(this.matterbridgeDirectory, `${plugin.name}.schema.json`);
+    try {
+      await fs.access(schemaFile);
+      const data = await fs.readFile(schemaFile, 'utf8');
+      const schema = JSON.parse(data) as PlatformSchema;
+      schema.title = plugin.description;
+      schema.description = plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author;
+      schema.type = 'object';
+      this.log.debug(`Schema file found: ${schemaFile}.\nSchema:${rs}\n`, schema);
+      return schema;
+    } catch (err) {
+      if (err instanceof Error) {
+        const nodeErr = err as NodeJS.ErrnoException;
+        if (nodeErr.code === 'ENOENT') {
+          const schema = {
+            title: plugin.description,
+            description: plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author,
+            type: 'object',
+            properties: {
+              name: {
+                description: 'Plugin name',
+                type: 'string',
+                readOnly: true,
+              },
+              type: {
+                description: 'Plugin type',
+                type: 'string',
+                readOnly: true,
+              },
+              unregisterOnShutdown: {
+                description: 'Unregister all devices on shutdown (development only)',
+                type: 'boolean',
+              },
+            },
+          };
+          try {
+            await this.writeFile(schemaFile, JSON.stringify(schema, null, 2));
+            this.log.debug(`Created schema file: ${schemaFile}.\nSchema:${rs}\n`, schema);
+            return schema;
+          } catch (err) {
+            this.log.error(`Error creating schema file ${schemaFile}: ${err}`);
+            return schema;
+          }
+        } else {
+          this.log.error(`Error accessing schema file ${schemaFile}: ${err}`);
+          return {};
+        }
+      }
+      return {};
+    }
   }
 
   /**
@@ -1474,12 +1545,12 @@ export class Matterbridge extends EventEmitter {
         plugin.loaded = true;
         plugin.registeredDevices = 0;
         plugin.addedDevices = 0;
-        await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+        await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
 
         this.getLatestVersion(plugin.name)
           .then(async (latestVersion) => {
             plugin.latestVersion = latestVersion;
-            await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+            await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
             if (plugin.version !== latestVersion) this.log.warn(`The plugin ${plg}${plugin.name}${wr} is out of date. Current version: ${plugin.version}, Latest version: ${latestVersion}`);
             else this.log.info(`The plugin ${plg}${plugin.name}${nf} is up to date. Current version: ${plugin.version}, Latest version: ${latestVersion}`);
           })
@@ -1730,10 +1801,6 @@ export class Matterbridge extends EventEmitter {
           this.log.error(`Node storage context undefined for ${plg}Matterbridge${er}`);
           return;
         }
-        await this.matterbridgeContext.set('softwareVersion', this.matterbridgeVersion && this.matterbridgeVersion.includes('.') ? parseInt(this.matterbridgeVersion.split('.')[0], 10) : 1);
-        await this.matterbridgeContext.set('softwareVersionString', this.matterbridgeVersion ?? '1.0.0');
-        await this.matterbridgeContext.set('hardwareVersion', this.systemInformation.osRelease && this.systemInformation.osRelease.includes('.') ? parseInt(this.systemInformation.osRelease.split('.')[0], 10) : 1);
-        await this.matterbridgeContext.set('hardwareVersionString', this.systemInformation.osRelease ?? '1.0.0');
         this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
         this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
         this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
@@ -1782,8 +1849,7 @@ export class Matterbridge extends EventEmitter {
             for (const registeredDevice of this.registeredDevices) {
               if (registeredDevice.plugin !== plugin.name) continue;
               if (!plugin.storageContext) plugin.storageContext = await this.importCommissioningServerContext(plugin.name, registeredDevice.device);
-              await plugin.storageContext.set('softwareVersion', 1);
-              await plugin.storageContext.set('softwareVersionString', this.matterbridgeVersion);
+              this.log.debug(`Creating commissioning server for ${plg}${plugin.name}${db}`);
               if (!plugin.commissioningServer) plugin.commissioningServer = await this.createCommisioningServer(plugin.storageContext, plugin.name);
               this.log.debug(`Adding device ${dev}${registeredDevice.device.name}${db} to commissioning server for plugin ${plg}${plugin.name}${db}`);
               plugin.commissioningServer.addDevice(registeredDevice.device);
@@ -1794,10 +1860,9 @@ export class Matterbridge extends EventEmitter {
           }
 
           if (plugin.type === 'DynamicPlatform') {
-            // eslint-disable-next-line max-len
+            this.log.debug(`Creating commissioning server context for ${plg}${plugin.name}${db}`);
             plugin.storageContext = await this.createCommissioningServerContext(plugin.name, 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Dynamic Platform');
-            await plugin.storageContext.set('softwareVersion', 1);
-            await plugin.storageContext.set('softwareVersionString', this.matterbridgeVersion);
+            this.log.debug(`Creating commissioning server for ${plg}${plugin.name}${db}`);
             plugin.commissioningServer = await this.createCommisioningServer(plugin.storageContext, plugin.name);
             this.log.debug(`Creating aggregator for plugin ${plg}${plugin.name}${db}`);
             plugin.aggregator = await this.createMatterAggregator(plugin.storageContext); // Generate serialNumber and uniqueId
@@ -1882,24 +1947,36 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Importing matter commissioning server storage context from device for ${plg}${pluginName}${db}`);
     const basic = device.getClusterServer(BasicInformationCluster);
     if (!basic) {
-      throw new Error('importCommissioningServerContext error: cannot find the BasicInformationCluster');
+      this.log.error('importCommissioningServerContext error: cannot find the BasicInformationCluster');
+      process.exit(1);
     }
-    //const random = 'CS' + CryptoNode.getRandomData(8).toHex();
-    return await this.createCommissioningServerContext(
-      pluginName,
-      basic.getNodeLabelAttribute(),
-      DeviceTypeId(device.deviceType),
-      basic.getVendorIdAttribute(),
-      basic.getVendorNameAttribute(),
-      basic.getProductIdAttribute(),
-      basic.getProductNameAttribute(),
-      basic.attributes.serialNumber?.getLocal(),
-      basic.attributes.uniqueId?.getLocal(),
-      basic.getSoftwareVersionAttribute(),
-      basic.getSoftwareVersionStringAttribute(),
-      basic.getHardwareVersionAttribute(),
-      basic.getHardwareVersionStringAttribute(),
-    );
+    if (!this.storageManager) {
+      this.log.error('importCommissioningServerContext error: no storage manager initialized');
+      process.exit(1);
+    }
+    this.log.debug(`Importing commissioning server storage context for ${plg}${pluginName}${db}`);
+    const storageContext = this.storageManager.createContext(pluginName);
+    await storageContext.set('deviceName', basic.getNodeLabelAttribute());
+    await storageContext.set('deviceType', DeviceTypeId(device.deviceType));
+    await storageContext.set('vendorId', basic.getVendorIdAttribute());
+    await storageContext.set('vendorName', basic.getVendorNameAttribute());
+    await storageContext.set('productId', basic.getProductIdAttribute());
+    await storageContext.set('productName', basic.getProductNameAttribute());
+    await storageContext.set('nodeLabel', basic.getNodeLabelAttribute());
+    await storageContext.set('productLabel', basic.getNodeLabelAttribute());
+    await storageContext.set('serialNumber', basic.attributes.serialNumber?.getLocal());
+    await storageContext.set('uniqueId', basic.attributes.uniqueId?.getLocal());
+    await storageContext.set('softwareVersion', basic.getSoftwareVersionAttribute());
+    await storageContext.set('softwareVersionString', basic.getSoftwareVersionStringAttribute());
+    await storageContext.set('hardwareVersion', basic.getHardwareVersionAttribute());
+    await storageContext.set('hardwareVersionString', basic.getHardwareVersionStringAttribute());
+
+    this.log.debug(`Imported commissioning server storage context for ${plg}${pluginName}${db}`);
+    this.log.debug(`- deviceName: ${await storageContext.get('deviceName')} deviceType: ${await storageContext.get('deviceType')}(0x${(await storageContext.get('deviceType'))?.toString(16).padStart(4, '0')})`);
+    this.log.debug(`- serialNumber: ${await storageContext.get('serialNumber')} uniqueId: ${await storageContext.get('uniqueId')}`);
+    this.log.debug(`- softwareVersion: ${await storageContext.get('softwareVersion')} softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
+    this.log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')} hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
+    return storageContext;
   }
 
   /**
@@ -1920,21 +1997,7 @@ export class Matterbridge extends EventEmitter {
    * @param hardwareVersionString - The hardware version string of the device (optional).
    * @returns The storage context for the commissioning server.
    */
-  private async createCommissioningServerContext(
-    pluginName: string,
-    deviceName: string,
-    deviceType: DeviceTypeId,
-    vendorId: number,
-    vendorName: string,
-    productId: number,
-    productName: string,
-    serialNumber?: string,
-    uniqueId?: string,
-    softwareVersion?: number,
-    softwareVersionString?: string,
-    hardwareVersion?: number,
-    hardwareVersionString?: string,
-  ) {
+  private async createCommissioningServerContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string) {
     if (!this.storageManager) {
       this.log.error('No storage manager initialized');
       process.exit(1);
@@ -1952,11 +2015,14 @@ export class Matterbridge extends EventEmitter {
     await storageContext.set('productLabel', productName.slice(0, 32));
     await storageContext.set('serialNumber', await storageContext.get('serialNumber', random));
     await storageContext.set('uniqueId', await storageContext.get('uniqueId', random));
-    await storageContext.set('softwareVersion', softwareVersion ?? 1);
-    await storageContext.set('softwareVersionString', softwareVersionString ?? '1.0.0');
-    await storageContext.set('hardwareVersion', hardwareVersion ?? 1);
-    await storageContext.set('hardwareVersionString', hardwareVersionString ?? '1.0.0');
+    await storageContext.set('softwareVersion', this.matterbridgeVersion && this.matterbridgeVersion.includes('.') ? parseInt(this.matterbridgeVersion.split('.')[0], 10) : 1);
+    await storageContext.set('softwareVersionString', this.matterbridgeVersion ?? '1.0.0');
+    await storageContext.set('hardwareVersion', this.systemInformation.osRelease && this.systemInformation.osRelease.includes('.') ? parseInt(this.systemInformation.osRelease.split('.')[0], 10) : 1);
+    await storageContext.set('hardwareVersionString', this.systemInformation.osRelease ?? '1.0.0');
+
     this.log.debug(`Created commissioning server storage context for ${plg}${pluginName}${db}`);
+    this.log.debug(`- deviceName: ${await storageContext.get('deviceName')} deviceType: ${await storageContext.get('deviceType')}(0x${(await storageContext.get('deviceType'))?.toString(16).padStart(4, '0')})`);
+    this.log.debug(`- serialNumber: ${await storageContext.get('serialNumber')} uniqueId: ${await storageContext.get('uniqueId')}`);
     this.log.debug(`- softwareVersion: ${await storageContext.get('softwareVersion')} softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
     this.log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')} hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
     return storageContext;
@@ -1991,7 +2057,7 @@ export class Matterbridge extends EventEmitter {
           plugin.paired = false;
         }
       }
-      await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+      await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
     } else {
       this.log.info(`*The commissioning server on port ${commissioningServer.getPort()} for ${plg}${pluginName}${nf} is already commissioned . Waiting for controllers to connect ...`);
       if (pluginName !== 'Matterbridge') {
@@ -2000,7 +2066,7 @@ export class Matterbridge extends EventEmitter {
           plugin.paired = true;
         }
       }
-      await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+      await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
     }
   }
 
@@ -2544,25 +2610,30 @@ export class Matterbridge extends EventEmitter {
    *
    * @returns {BaseRegisteredPlugin[]} An array of base registered plugins.
    */
-  private getBaseRegisteredPlugins(): BaseRegisteredPlugin[] {
-    const baseRegisteredPlugins: BaseRegisteredPlugin[] = this.registeredPlugins.map((plugin) => ({
-      path: plugin.path,
-      type: plugin.type,
-      name: plugin.name,
-      version: plugin.version,
-      latestVersion: plugin.latestVersion,
-      description: plugin.description,
-      author: plugin.author,
-      enabled: plugin.enabled,
-      loaded: plugin.loaded,
-      started: plugin.started,
-      configured: plugin.configured,
-      paired: plugin.paired,
-      connected: plugin.connected,
-      registeredDevices: plugin.registeredDevices,
-      qrPairingCode: plugin.qrPairingCode,
-      manualPairingCode: plugin.manualPairingCode,
-    }));
+  private async getBaseRegisteredPlugins(): Promise<BaseRegisteredPlugin[]> {
+    const baseRegisteredPlugins: BaseRegisteredPlugin[] = [];
+    for (const plugin of this.registeredPlugins) {
+      baseRegisteredPlugins.push({
+        path: plugin.path,
+        type: plugin.type,
+        name: plugin.name,
+        version: plugin.version,
+        latestVersion: plugin.latestVersion,
+        description: plugin.description,
+        author: plugin.author,
+        enabled: plugin.enabled,
+        loaded: plugin.loaded,
+        started: plugin.started,
+        configured: plugin.configured,
+        paired: plugin.paired,
+        connected: plugin.connected,
+        registeredDevices: plugin.registeredDevices,
+        qrPairingCode: plugin.qrPairingCode,
+        manualPairingCode: plugin.manualPairingCode,
+        configJson: await this.loadPluginConfig(plugin),
+        schemaJson: await this.loadPluginSchema(plugin),
+      });
+    }
     return baseRegisteredPlugins;
   }
 
@@ -2797,9 +2868,9 @@ export class Matterbridge extends EventEmitter {
     });
 
     // Endpoint to provide plugins
-    this.expressApp.get('/api/plugins', (req, res) => {
+    this.expressApp.get('/api/plugins', async (req, res) => {
       this.log.debug('The frontend sent /api/plugins');
-      res.json(this.getBaseRegisteredPlugins());
+      res.json(await this.getBaseRegisteredPlugins());
     });
 
     // Endpoint to provide devices
@@ -3006,7 +3077,7 @@ export class Matterbridge extends EventEmitter {
           const plugin = { path: packageJsonPath, type: '', name: packageJson.name, version: packageJson.version, description: packageJson.description, author: packageJson.author, enabled: true };
           if (await this.loadPlugin(plugin)) {
             this.registeredPlugins.push(plugin);
-            await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+            await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
             this.log.info(`Plugin ${plg}${packageJsonPath}${nf} type ${plugin.type} added to matterbridge. Restart required.`);
           } else {
             this.log.error(`Error adding plugin ${plg}${packageJsonPath}${er}`);
@@ -3026,7 +3097,7 @@ export class Matterbridge extends EventEmitter {
             // await this.savePluginConfig(this.registeredPlugins[index]);
           }
           this.registeredPlugins.splice(index, 1);
-          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', this.getBaseRegisteredPlugins());
+          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
           this.log.info(`Plugin ${plg}${param}${nf} removed from matterbridge`);
         } else {
           this.log.warn(`Plugin ${plg}${param}${wr} not registered in matterbridge`);

@@ -3,17 +3,26 @@ import React, { useEffect, useState, useRef } from 'react';
 import QRCode from 'qrcode.react';
 import { StatusIndicator } from './StatusIndicator';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
-import { Tooltip, IconButton, Button, createTheme } from '@mui/material';
+import { Tooltip, IconButton, Button, createTheme, ThemeProvider } from '@mui/material';
 import { sendCommandToMatterbridge } from './Header';
 import WebSocketComponent from './WebSocketComponent';
 
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import TextField from '@mui/material/TextField';
+import { Dialog, DialogTitle, DialogContent } from '@mui/material';
 import { DeleteForever, Download, Remove, Add, Unpublished, PublishedWithChanges, Settings } from '@mui/icons-material';
+
+// import path from 'path';
 
 // npm install @mui/material @emotion/react @emotion/styled
 // npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
+// npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8 @rjsf/mui
+
+// import Form from '@rjsf/core';
+import Form from '@rjsf/mui';
+import { RJSFSchema, UiSchema } from '@rjsf/utils';
+import validator from '@rjsf/validator-ajv8';
 
 function Home() {
   const [wssHost, setWssHost] = useState(null);
@@ -24,21 +33,33 @@ function Home() {
   const [plugins, setPlugins] = useState([]);
   const [selectedRow, setSelectedRow] = useState(-1); // -1 no selection, 0 or greater for selected row
   const [selectedPluginName, setSelectedPluginName] = useState('none'); // -1 no selection, 0 or greater for selected row
-  const [open, setSnack] = useState(false);
+  const [selectedPluginConfig, setSelectedPluginConfig] = useState({}); 
+  const [selectedPluginSchema, setSelectedPluginSchema] = useState({}); 
+  const [openSnack, setOpenSnack] = useState(false);
+  const [openConfig, setOpenConfig] = useState(false);
 
   const refAddRemove = useRef(null);
   const refRegisteredPlugins = useRef(null);
 
   const handleSnackOpen = () => {
     console.log('handleSnackOpen');
-    setSnack(true);
+    setOpenSnack(true);
   };
 
   const handleSnackClose = (event, reason) => {
     console.log('handleSnackClose:', reason);
     if (reason === 'clickaway') return;
-    setSnack(false);
+    setOpenSnack(false);
   };
+
+  const handleOpenConfig = () => {
+    setOpenConfig(true);
+  };
+
+  const handleCloseConfig = () => {
+    setOpenConfig(false);
+  };
+
 
   const columns = React.useMemo( () => [
       { Header: 'Name', accessor: 'name' },
@@ -81,7 +102,7 @@ function Home() {
 
   }, []); // The empty array causes this effect to run only once
 
-  const handleSelect = (row) => {
+  const handleSelectQRCode = (row) => {
     if (selectedRow === row) {
       setSelectedRow(-1);
       setSelectedPluginName('none');
@@ -134,6 +155,9 @@ function Home() {
 
   const handleConfigPlugin = (row) => {
     console.log('handleConfigPlugin row:', row, 'plugin:', plugins[row].name);
+    setSelectedPluginConfig(plugins[row].configJson);
+    setSelectedPluginSchema(plugins[row].schemaJson);
+    handleOpenConfig();
   };
 
   /*
@@ -145,6 +169,19 @@ function Home() {
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0', padding: '0' }}>
+
+      <Dialog  open={openConfig} onClose={handleCloseConfig} maxWidth='600px' PaperProps={{style: { border: "2px solid #ddd", backgroundColor: '#c4c2c2', boxShadow: '5px 5px 10px #888'}}}>
+        <DialogTitle gap={'20px'}>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
+            <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
+            <h3>Matterbridge plugin configuration</h3>
+          </div>
+        </DialogTitle>
+        <DialogContent>
+          <DialogConfigPlugin config={selectedPluginConfig} schema={selectedPluginSchema} handleCloseConfig={handleCloseConfig}/>
+        </DialogContent>
+      </Dialog>
+
       <div  style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', flex: '0 1 auto', gap: '20px' }}>
         {qrCode && <QRDiv qrText={qrCode} pairingText={pairingCode} qrWidth={256} topText="QRCode" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName}/>}
         {systemInfo && <SystemInfoTable systemInfo={systemInfo}/>}
@@ -165,7 +202,7 @@ function Home() {
           <tbody>
             {plugins.map((plugin, index) => (
 
-              <tr key={index} onClick={() => handleSelect(index)} className={selectedRow === index ? 'table-content-selected' : index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
+              <tr key={index} className={selectedRow === index ? 'table-content-selected' : index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
 
                 <td className="table-content"><Tooltip title={plugin.path}>{plugin.name}</Tooltip></td>
                 <td className="table-content">{plugin.description}</td>
@@ -175,7 +212,7 @@ function Home() {
                 <td className="table-content">{plugin.registeredDevices}</td>
                 <td className="table-content">  
                   <>
-                    {!plugin.qrPairingCode ? <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" size="small"><QrCode2Icon /></IconButton></Tooltip> : <></>}
+                    {plugin.qrPairingCode ? <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleSelectQRCode(index)} size="small"><QrCode2Icon /></IconButton></Tooltip> : <></>}
                     <Tooltip title="Plugin config"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleConfigPlugin(index)} size="small"><Settings /></IconButton></Tooltip>
                     <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleRemovePlugin(index)} size="small"><DeleteForever /></IconButton></Tooltip>
                     {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><Unpublished /></IconButton></Tooltip> : <></>}
@@ -185,7 +222,7 @@ function Home() {
                 <td className="table-content">
                   <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', gap: '5px' }}>
 
-                    <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={open} onClose={handleSnackClose} autoHideDuration={10000}>
+                    <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={openSnack} onClose={handleSnackClose} autoHideDuration={10000}>
                       <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart needed!</Alert>
                     </Snackbar>
 
@@ -374,4 +411,72 @@ function Home() {
     );
   }
 
+  function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
+    console.log('DialogConfigPlugin:', config, schema);
+    const uiSchema = {
+      "password": {
+        "ui:widget": "password",
+      },
+      "ui:submitButtonOptions": {
+        "props": {
+          "variant": "contained",
+          "disabled": false,
+        },
+        "norender": false,
+        "submitText": "Save the changes to the config file",
+      }
+    };
+    const theme = createTheme({
+      palette: {
+        primary: {
+          main: '#4CAF50', // your custom primary color
+        },
+      },
+      components: {
+        MuiPaper: {
+          styleOverrides: {
+            root: {
+              border: "1px solid #ddd", 
+              backgroundColor: '#c4c2c2', 
+              boxShadow: '5px 5px 10px #888'
+            },
+          },
+        },
+        MuiTextField: {
+          defaultProps: {
+            size: 'small',
+          },
+        },
+        MuiButton: {
+          styleOverrides: {
+            root: {
+              color: '#ffffff',
+              backgroundColor: '#4CAF50', 
+            },
+          },
+          defaultProps: {
+            color: 'primary',
+            variant: 'contained',
+            size: 'small',
+          },
+        },
+      },
+    });
+    const handleSaveChanges = ({ formData }, event) => {
+      console.log('handleSaveChanges:', formData);
+      // Close the dialog
+      handleCloseConfig();
+    };    
+    return (
+    <ThemeProvider theme={theme}>
+      <div style={{ maxWidth: '800px' }}>
+        <Form schema={schema} formData={config} uiSchema={uiSchema} validator={validator} onSubmit={handleSaveChanges} />
+      </div>
+    </ThemeProvider>  
+    );
+  }
+  
 export default Home;
+/*
+style={{ backgroundColor: '#c4c2c2' }} 
+*/
