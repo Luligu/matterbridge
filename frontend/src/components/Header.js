@@ -20,7 +20,7 @@ export const theme = createTheme({
   },
 });
 
-export function sendCommandToMatterbridge(command, param) {
+export function sendCommandToMatterbridge(command, param, body) {
   const sanitizedParam = param.replace(/\\/g, '*');
   console.log('sendCommandToMatterbridge:', command, param, sanitizedParam);
   // Send a POST request to the Matterbridge API
@@ -29,6 +29,7 @@ export function sendCommandToMatterbridge(command, param) {
     headers: {
       'Content-Type': 'application/json',
     },
+    body,
   })
   .then(response => {
     if (!response.ok) {
@@ -66,7 +67,10 @@ function Header() {
   };
 
   const handleRestartClick = () => {
-    sendCommandToMatterbridge('restart','now');
+    if(matterbridgeInfo.restartMode==='')
+      sendCommandToMatterbridge('restart','now');
+    else
+      sendCommandToMatterbridge('shutdown','now');
     setOpen(true);
     setTimeout(() => {
       setOpen(false);

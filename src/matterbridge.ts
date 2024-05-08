@@ -1348,6 +1348,27 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
+   * Saves the plugin configuration to a JSON file.
+   * @param plugin - The registered plugin.
+   * @param config - The platform configuration.
+   * @returns A promise that resolves when the configuration is saved successfully, or rejects with an error.
+   */
+  private async savePluginConfigFromJson(plugin: RegisteredPlugin, config: PlatformConfig): Promise<void> {
+    if (!config.name || !config.type || config.name !== plugin.name) {
+      this.log.error(`Error saving plugin ${plg}${plugin.name}${er} config`);
+      return;
+    }
+    const configFile = path.join(this.matterbridgeDirectory, `${plugin.name}.config.json`);
+    try {
+      await this.writeFile(configFile, JSON.stringify(config, null, 2));
+      this.log.debug(`Saved config file: ${configFile}.\nConfig:${rs}\n`, config);
+    } catch (err) {
+      this.log.error(`Error saving plugin ${plg}${plugin.name}${er} config: ${err}`);
+      return;
+    }
+  }
+
+  /**
    * Loads the configuration for a plugin.
    * If the configuration file exists, it reads the file and returns the parsed JSON data.
    * If the configuration file does not exist, it creates a new file with default configuration and returns it.
@@ -2978,7 +2999,7 @@ export class Matterbridge extends EventEmitter {
     });
 
     // Endpoint to receive commands
-    this.expressApp.post('/api/command/:command/:param', async (req, res) => {
+    this.expressApp.post('/api/command/:command/:param', express.json(), async (req, res) => {
       const command = req.params.command;
       let param = req.params.param;
       this.log.debug(`The frontend sent /api/command/${command}/${param}`);
@@ -2999,6 +3020,7 @@ export class Matterbridge extends EventEmitter {
 
       // Handle the command debugLevel from Settings
       if (command === 'setloglevel') {
+        this.log.debug('setloglevel:', param);
         if (param === 'Debug') {
           this.log.setLogDebug(true);
           this.debugEnabled = true;
@@ -3054,10 +3076,22 @@ export class Matterbridge extends EventEmitter {
         }
         this.updateProcess();
       }
+      // Handle the command saveschema from Home
+      if (command === 'saveconfig') {
+        param = param.replace(/\*/g, '\\');
+        this.log.info(`Saving config for plugin ${plg}${param}${nf}...`);
+        //console.log('Req.body:', JSON.stringify(req.body, null, 2));
+        const plugins = await this.nodeContext?.get<RegisteredPlugin[]>('plugins');
+        if (!plugins) return;
+        const plugin = plugins.find((plugin) => plugin.name === param);
+        if (!plugin) return;
+        this.savePluginConfigFromJson(plugin, req.body);
+      }
+
       // Handle the command installplugin from Home
       if (command === 'installplugin') {
         param = param.replace(/\*/g, '\\');
-        this.log.info(`Installing plugin ${plg}${param}${db}...`);
+        this.log.info(`Installing plugin ${plg}${param}${nf}...`);
         try {
           await this.spawnCommand('npm', ['install', '-g', param, '--loglevel=verbose']);
           this.log.info(`Plugin ${plg}${param}${nf} installed. Full restart required.`);

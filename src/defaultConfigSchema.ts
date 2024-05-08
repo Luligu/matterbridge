@@ -57,10 +57,6 @@ export const zigbee2mqtt_schema: PlatformSchema = {
       type: 'string',
       readOnly: true,
     },
-    unregisterOnShutdown: {
-      description: 'Unregister all devices on shutdown (development only)',
-      type: 'boolean',
-    },
     host: {
       description: 'Host',
       type: 'string',
@@ -133,6 +129,10 @@ export const zigbee2mqtt_schema: PlatformSchema = {
         },
       },
     },
+    unregisterOnShutdown: {
+      description: 'Unregister all devices on shutdown (development only)',
+      type: 'boolean',
+    },
   },
 };
 
@@ -162,10 +162,6 @@ export const somfytahoma_schema: PlatformSchema = {
       description: 'Plugin type',
       type: 'string',
       readOnly: true,
-    },
-    unregisterOnShutdown: {
-      description: 'Unregister all devices on shutdown (development only)',
-      type: 'boolean',
     },
     username: {
       description: 'Username',
@@ -217,6 +213,10 @@ export const somfytahoma_schema: PlatformSchema = {
       additionalProperties: {
         type: 'integer',
       },
+    },
+    unregisterOnShutdown: {
+      description: 'Unregister all devices on shutdown (development only)',
+      type: 'boolean',
     },
   },
 };

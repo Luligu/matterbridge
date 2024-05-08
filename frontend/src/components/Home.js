@@ -264,217 +264,222 @@ function Home() {
 
       </div>
     </div>
-  );}
-  /*
-        Working
-        <div className="MbfWindowDiv" style={{display: 'flex', flexDirection: 'column', flex: '0 1 auto'}}>
-          <div className="MbfWindowHeader">
-            <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>Log</p>
-          </div>
-          <div style={{ flex: '1', margin: '5px', padding: '5px', height: '200px', maxHeight: '200px', overflow: 'auto'}}>
-            <WebSocketComponent wssHost={wssHost}/>
-          </div>
-        </div>
-  */
+  );
+}
 
-  function AddRemovePluginsDiv({ plugins }) {
-    const [pluginName, setPluginName] = useState('matterbridge-');
-    const [open, setSnack] = useState(false);
-
-    const handleSnackOpen = () => {
-      console.log('handleSnackOpen');
-      setSnack(true);
-      setTimeout(() => {
-        window.location.reload();
-      }, 5000);
-    };
-  
-    const handleSnackClose = (event, reason) => {
-      console.log('handleSnackClose:', reason);
-      if (reason === 'clickaway') return;
-      setSnack(false);
-    };
-  
-    // Function that sends the "addplugin" command
-    const handleInstallPluginClick = () => {
-      handleSnackOpen();
-      console.log('handleInstallPluginClick', pluginName);
-      sendCommandToMatterbridge('installplugin', pluginName);
-    };
-
-    // Function that sends the "addplugin" command
-    const handleAddPluginClick = () => {
-      handleSnackOpen();
-      console.log('handleAddPluginClick', pluginName);
-      sendCommandToMatterbridge('addplugin', pluginName);
-    };
-
-    // Function that sends the "removeplugin" command
-    const handleRemovePluginClick = () => {
-      handleSnackOpen();
-      console.log('handleRemovePluginClick', pluginName);
-      sendCommandToMatterbridge('removeplugin', pluginName);
-    };
-
-    const theme = createTheme({
-      palette: {
-        primary: {
-          main: '#4CAF50', // your custom primary color
-        },
-      },
-    });
-
-    return (
-      <div className="MbfWindowDiv">
+/*
+      Working
+      <div className="MbfWindowDiv" style={{display: 'flex', flexDirection: 'column', flex: '0 1 auto'}}>
         <div className="MbfWindowHeader">
-          <p className="MbfWindowHeaderText">Add remove plugin</p>
+          <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>Log</p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '10px', gap: '20px' }}>
-          <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={open} onClose={handleSnackClose} autoHideDuration={5000}>
-            <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart required</Alert>
-          </Snackbar>
-          <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth/>
-          <Tooltip title="Install or update a plugin from npm">
-            <Button onClick={handleInstallPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="install" endIcon={<Download />} style={{ color: '#ffffff', height: '30px' }}> Install</Button>
-          </Tooltip>        
-          <Tooltip title="Add an installed plugin">
-            <Button onClick={handleAddPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="add" endIcon={<Add />} style={{ color: '#ffffff', height: '30px' }}> Add</Button>
-          </Tooltip>        
-          <Tooltip title="Remove a registered plugin">
-            <Button onClick={handleRemovePluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="remove" endIcon={<Remove />} style={{ color: '#ffffff', height: '30px' }}> Remove</Button>
-          </Tooltip>        
+        <div style={{ flex: '1', margin: '5px', padding: '5px', height: '200px', maxHeight: '200px', overflow: 'auto'}}>
+          <WebSocketComponent wssHost={wssHost}/>
         </div>
       </div>
-    );
-  }
+*/
 
-  // This function takes systemInfo as a parameter
-  // It returns a table element with the systemInfo
-  function SystemInfoTable({ systemInfo }) {
-    return (
-      <table>
-        <thead>
-          <tr>
-            <th colSpan="2" className="table-header">System Information</th>
+function AddRemovePluginsDiv({ plugins }) {
+  const [pluginName, setPluginName] = useState('matterbridge-');
+  const [open, setSnack] = useState(false);
+
+  const handleSnackOpen = () => {
+    console.log('handleSnackOpen');
+    setSnack(true);
+    setTimeout(() => {
+      window.location.reload();
+    }, 5000);
+  };
+
+  const handleSnackClose = (event, reason) => {
+    console.log('handleSnackClose:', reason);
+    if (reason === 'clickaway') return;
+    setSnack(false);
+  };
+
+  // Function that sends the "addplugin" command
+  const handleInstallPluginClick = () => {
+    handleSnackOpen();
+    console.log('handleInstallPluginClick', pluginName);
+    sendCommandToMatterbridge('installplugin', pluginName);
+  };
+
+  // Function that sends the "addplugin" command
+  const handleAddPluginClick = () => {
+    handleSnackOpen();
+    console.log('handleAddPluginClick', pluginName);
+    sendCommandToMatterbridge('addplugin', pluginName);
+  };
+
+  // Function that sends the "removeplugin" command
+  const handleRemovePluginClick = () => {
+    handleSnackOpen();
+    console.log('handleRemovePluginClick', pluginName);
+    sendCommandToMatterbridge('removeplugin', pluginName);
+  };
+
+  const theme = createTheme({
+    palette: {
+      primary: {
+        main: '#4CAF50', // your custom primary color
+      },
+    },
+  });
+
+  return (
+    <div className="MbfWindowDiv">
+      <div className="MbfWindowHeader">
+        <p className="MbfWindowHeaderText">Add remove plugin</p>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '10px', gap: '20px' }}>
+        <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={open} onClose={handleSnackClose} autoHideDuration={5000}>
+          <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart required</Alert>
+        </Snackbar>
+        <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth/>
+        <Tooltip title="Install or update a plugin from npm">
+          <Button onClick={handleInstallPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="install" endIcon={<Download />} style={{ color: '#ffffff', height: '30px' }}> Install</Button>
+        </Tooltip>        
+        <Tooltip title="Add an installed plugin">
+          <Button onClick={handleAddPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="add" endIcon={<Add />} style={{ color: '#ffffff', height: '30px' }}> Add</Button>
+        </Tooltip>        
+        <Tooltip title="Remove a registered plugin">
+          <Button onClick={handleRemovePluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="remove" endIcon={<Remove />} style={{ color: '#ffffff', height: '30px' }}> Remove</Button>
+        </Tooltip>        
+      </div>
+    </div>
+  );
+}
+
+// This function takes systemInfo as a parameter
+// It returns a table element with the systemInfo
+function SystemInfoTable({ systemInfo }) {
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th colSpan="2" className="table-header">System Information</th>
+        </tr>
+      </thead>
+      <tbody>
+        {Object.entries(systemInfo).map(([key, value], index) => (
+          <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
+            <td className="table-content">{key}</td>
+            <td className="table-content">{value}</td>
           </tr>
-        </thead>
-        <tbody>
-          {Object.entries(systemInfo).map(([key, value], index) => (
-            <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
-              <td className="table-content">{key}</td>
-              <td className="table-content">{value}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
-  }
+        ))}
+      </tbody>
+    </table>
+  );
+}
 
-  // This function takes systemInfo as a parameter
-  // It returns a table element with the systemInfo
-  function MatterbridgeInfoTable({ matterbridgeInfo }) {
-    return (
-      <table>
-        <thead>
-          <tr>
-            <th colSpan="2" className="table-header">Matterbridge Information</th>
+// This function takes systemInfo as a parameter
+// It returns a table element with the systemInfo
+function MatterbridgeInfoTable({ matterbridgeInfo }) {
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th colSpan="2" className="table-header">Matterbridge Information</th>
+        </tr>
+      </thead>
+      <tbody>
+        {Object.entries(matterbridgeInfo).map(([key, value], index) => (
+          <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
+            <td className="table-content">{key}</td>
+            <td className="table-content">{value}</td>
           </tr>
-        </thead>
-        <tbody>
-          {Object.entries(matterbridgeInfo).map(([key, value], index) => (
-            <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
-              <td className="table-content">{key}</td>
-              <td className="table-content">{value}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
-  }
+        ))}
+      </tbody>
+    </table>
+  );
+}
 
-  // This function takes four parameters: qrText, qrWidth, topText, and bottomText
-  // It returns a div element with a rectangle, a QR code, and two texts
-  function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText }) {
-    return (
-      <div className="MbfWindowDiv" style={{alignItems: 'center'}} minWidth='360px'>
-        <div className="MbfWindowHeader">
-          <p className="MbfWindowHeaderText" style={{textAlign: 'center'}}>{topText}</p>
-        </div>
-        <QRCode value={qrText} size={qrWidth} bgColor='#9e9e9e' style={{ margin: '20px' }}/>
-        <div  className="MbfWindowFooter">
-          <div>
-            <p style={{ margin: 0, textAlign: 'center' }}>Use {pairingText} or scan the QR to pair</p>
-            <p className="text-color-selected" style={{ margin: 0, textAlign: 'center' }}>{bottomText}</p>
-          </div>
+// This function takes four parameters: qrText, qrWidth, topText, and bottomText
+// It returns a div element with a rectangle, a QR code, and two texts
+function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText }) {
+  return (
+    <div className="MbfWindowDiv" style={{alignItems: 'center'}} minWidth='360px'>
+      <div className="MbfWindowHeader">
+        <p className="MbfWindowHeaderText" style={{textAlign: 'center'}}>{topText}</p>
+      </div>
+      <QRCode value={qrText} size={qrWidth} bgColor='#9e9e9e' style={{ margin: '20px' }}/>
+      <div  className="MbfWindowFooter">
+        <div>
+          <p style={{ margin: 0, textAlign: 'center' }}>Use {pairingText} or scan the QR to pair</p>
+          <p className="text-color-selected" style={{ margin: 0, textAlign: 'center' }}>{bottomText}</p>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
-  function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
-    console.log('DialogConfigPlugin:', config, schema);
-    const uiSchema = {
-      "password": {
-        "ui:widget": "password",
+function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
+  console.log('DialogConfigPlugin:', config, schema);
+  const uiSchema = {
+    "password": {
+      "ui:widget": "password",
+    },
+    "ui:submitButtonOptions": {
+      "props": {
+        "variant": "contained",
+        "disabled": false,
       },
-      "ui:submitButtonOptions": {
-        "props": {
-          "variant": "contained",
-          "disabled": false,
-        },
-        "norender": false,
-        "submitText": "Save the changes to the config file",
-      }
-    };
-    const theme = createTheme({
-      palette: {
-        primary: {
-          main: '#4CAF50', // your custom primary color
-        },
+      "norender": false,
+      "submitText": "Save the changes to the config file and restart Matterbridge",
+    }
+  };
+  const theme = createTheme({
+    palette: {
+      primary: {
+        main: '#4CAF50', // your custom primary color
       },
-      components: {
-        MuiPaper: {
-          styleOverrides: {
-            root: {
-              border: "1px solid #ddd", 
-              backgroundColor: '#c4c2c2', 
-              boxShadow: '5px 5px 10px #888'
-            },
-          },
-        },
-        MuiTextField: {
-          defaultProps: {
-            size: 'small',
-          },
-        },
-        MuiButton: {
-          styleOverrides: {
-            root: {
-              color: '#ffffff',
-              backgroundColor: '#4CAF50', 
-            },
-          },
-          defaultProps: {
-            color: 'primary',
-            variant: 'contained',
-            size: 'small',
+    },
+    components: {
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            border: "1px solid #ddd", 
+            backgroundColor: '#c4c2c2', 
+            boxShadow: '5px 5px 10px #888'
           },
         },
       },
-    });
-    const handleSaveChanges = ({ formData }, event) => {
-      console.log('handleSaveChanges:', formData);
-      // Close the dialog
-      handleCloseConfig();
-    };    
-    return (
-    <ThemeProvider theme={theme}>
-      <div style={{ maxWidth: '800px' }}>
-        <Form schema={schema} formData={config} uiSchema={uiSchema} validator={validator} onSubmit={handleSaveChanges} />
-      </div>
-    </ThemeProvider>  
-    );
-  }
+      MuiTextField: {
+        defaultProps: {
+          size: 'small',
+        },
+      },
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            color: '#ffffff',
+            backgroundColor: '#4CAF50', 
+          },
+        },
+        defaultProps: {
+          color: 'primary',
+          variant: 'contained',
+          size: 'small',
+        },
+      },
+    },
+  });
+  const handleSaveChanges = ({ formData }, event) => {
+    console.log('handleSaveChanges:', formData);
+    const schema = JSON.stringify(formData, null, 2)
+    sendCommandToMatterbridge('saveconfig', formData.name, schema);
+    // Close the dialog
+    handleCloseConfig();
+    window.location.reload();
+  };    
+  return (
+  <ThemeProvider theme={theme}>
+    <div style={{ maxWidth: '800px' }}>
+      <Form schema={schema} formData={config} uiSchema={uiSchema} validator={validator} onSubmit={handleSaveChanges} />
+    </div>
+  </ThemeProvider>  
+  );
+}
   
 export default Home;
 /*
