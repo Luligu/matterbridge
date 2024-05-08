@@ -16,12 +16,12 @@ RUN npm install && npm run build && npm link
 WORKDIR /matterbridge-example-accessory-platform
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-example-accessory-platform.git .
 COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
-RUN npm install && npm run build
+RUN npm install && npm run build && npm pack && npm -g install *.tgz
 
 WORKDIR /matterbridge-example-dynamic-platform
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-example-dynamic-platform.git .
 COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
-RUN npm install && npm run build
+RUN npm install && npm run build && npm pack && npm -g install *.tgz
 
 WORKDIR /matterbridge-zigbee2mqtt
 RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-zigbee2mqtt.git .
@@ -67,19 +67,19 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/frontend/build ./frontend/build
 RUN npm link
 
-WORKDIR /matterbridge-example-accessory-platform
-COPY --from=builder /matterbridge-example-accessory-platform/dist ./dist
+# WORKDIR /matterbridge-example-accessory-platform
+# COPY --from=builder /matterbridge-example-accessory-platform/dist ./dist
 # COPY --from=builder /matterbridge-example-accessory-platform/node_modules ./node_modules
-COPY --from=builder /matterbridge-example-accessory-platform/package.json ./package.json
-COPY --from=builder /matterbridge-example-accessory-platform/link-matterbridge-script.js ./link-matterbridge-script.js
-RUN npm -g install ./
+# COPY --from=builder /matterbridge-example-accessory-platform/package.json ./package.json
+# COPY --from=builder /matterbridge-example-accessory-platform/link-matterbridge-script.js ./link-matterbridge-script.js
+# RUN npm -g install ./
 
-WORKDIR /matterbridge-example-dynamic-platform
-COPY --from=builder /matterbridge-example-dynamic-platform/dist ./dist
+# WORKDIR /matterbridge-example-dynamic-platform
+# COPY --from=builder /matterbridge-example-dynamic-platform/dist ./dist
 # COPY --from=builder /matterbridge-example-dynamic-platform/node_modules ./node_modules
-COPY --from=builder /matterbridge-example-dynamic-platform/package.json ./package.json
-COPY --from=builder /matterbridge-example-dynamic-platform/link-matterbridge-script.js ./link-matterbridge-script.js
-RUN npm -g install ./
+# COPY --from=builder /matterbridge-example-dynamic-platform/package.json ./package.json
+# COPY --from=builder /matterbridge-example-dynamic-platform/link-matterbridge-script.js ./link-matterbridge-script.js
+# RUN npm -g install ./
 
 WORKDIR /matterbridge-zigbee2mqtt
 COPY --from=builder /matterbridge-zigbee2mqtt/dist ./dist
