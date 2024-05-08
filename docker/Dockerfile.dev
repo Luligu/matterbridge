@@ -58,8 +58,7 @@ COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
 RUN npm install && npm run build && npm pack
 
 
-# FROM node:20-bullseye-slim as release
-FROM node:20-alpine as release
+FROM node:20-bullseye-slim as release
 WORKDIR /app
 RUN apk add --no-cache icu-data-full
 
@@ -79,5 +78,4 @@ COPY --from=builder /matterbridge-eve-weather/*.tgz .
 RUN npm -g install *.tgz
 RUN rm *.tgz 
 
-# CMD ["node", "dist/cli.js", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
 CMD ["matterbridge", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
