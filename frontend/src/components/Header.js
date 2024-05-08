@@ -140,10 +140,12 @@ function Header() {
         </Tooltip>        
         <Tooltip title="Restart matterbridge">
           <Button theme={theme} color="primary" variant="contained" size="small" endIcon={<RestartAltIcon />} style={{ color: '#ffffff' }} onClick={handleRestartClick}>Restart</Button>
-        </Tooltip>        
-        <Tooltip title="Shut down matterbridge">
-          <Button theme={theme} color="primary" variant="contained" size="small" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff' }} onClick={handleShutdownClick}>Shutdown</Button>
-        </Tooltip>        
+        </Tooltip>
+        {matterbridgeInfo.restartMode === '' ? (        
+          <Tooltip title="Shut down matterbridge">
+            <Button theme={theme} color="primary" variant="contained" size="small" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff' }} onClick={handleShutdownClick}>Shutdown</Button>
+          </Tooltip>
+        ) : null}        
         <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open} onClick={handleClose}>
           <CircularProgress color="inherit" />
         </Backdrop>

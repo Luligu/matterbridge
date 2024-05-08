@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - [frontend]: Frontend updated to 0.9.0.
 - [frontend]: Added Plugin config editor
 - [frontend]: Added tool column to registered plugins with QRCode, Config, Remove and Enable/Disable
+- [frontend]: Removed Shutdown button when Matterbridge runs as a service or with docker
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">

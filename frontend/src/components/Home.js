@@ -425,13 +425,14 @@ function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
         "disabled": false,
       },
       "norender": false,
-      "submitText": "Save the changes to the config file and restart Matterbridge",
-    }
+      "submitText": "Save the changes to the config file",
+    },
+    'ui:globalOptions': { orderable: false },
   };
   const theme = createTheme({
     palette: {
       primary: {
-        main: '#4CAF50', // your custom primary color
+        main: '#4CAF50', 
       },
     },
     components: {
@@ -476,6 +477,7 @@ function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
   <ThemeProvider theme={theme}>
     <div style={{ maxWidth: '800px' }}>
       <Form schema={schema} formData={config} uiSchema={uiSchema} validator={validator} onSubmit={handleSaveChanges} />
+      <div style={{ paddingTop: '10px' }}>Restart Matterbridge to apply the changes</div>
     </div>
   </ThemeProvider>  
   );
