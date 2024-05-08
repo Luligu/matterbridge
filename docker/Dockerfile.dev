@@ -7,8 +7,7 @@ RUN apt-get update && \
 
 FROM base as builder
 WORKDIR /app
-COPY ./package.json ./
-COPY ./tsconfig.json ./
+COPY ./package.json ./package-lock.json ./tsconfig.json ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
 RUN npm install && npm run build && npm pack && npm link
@@ -66,6 +65,10 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/frontend/build ./frontend/build
 RUN npm link
+
+COPY --from=builder /app/*.tgz .
+RUN npm -g install *.tgz
+RUN rm *.tgz 
 
 COPY --from=builder /matterbridge-example-accessory-platform/*.tgz .
 COPY --from=builder /matterbridge-example-dynamic-platform/*.tgz .
@@ -144,4 +147,5 @@ RUN rm *.tgz
 # Set the working directory
 WORKDIR /app
 
-CMD ["node", "dist/cli.js", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
+# CMD ["node", "dist/cli.js", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
+CMD ["matterbridge", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
