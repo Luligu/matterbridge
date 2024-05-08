@@ -60,7 +60,6 @@ RUN npm install && npm run build && npm pack
 
 FROM node:20-bullseye-slim as release
 WORKDIR /app
-RUN apk add --no-cache icu-data-full
 
 COPY --from=builder /app/*.tgz .
 RUN npm -g install *.tgz
