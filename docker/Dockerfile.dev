@@ -11,7 +11,7 @@ COPY ./package.json ./
 COPY ./tsconfig.json ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
-RUN npm install && npm run build && npm pack
+RUN npm install && npm run build
 
 WORKDIR /matterbridge-example-accessory-platform
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-example-accessory-platform.git .
@@ -61,15 +61,11 @@ RUN npm install && npm run build && npm pack
 
 FROM base as release
 WORKDIR /app
-# COPY --from=builder /app/package.json ./
-# COPY --from=builder /app/dist ./dist
-# COPY --from=builder /app/node_modules ./node_modules
-# COPY --from=builder /app/frontend/build ./frontend/build
-# RUN npm link
-
-COPY --from=builder /app/*.tgz .
-RUN npm -g install *.tgz
-RUN rm *.tgz 
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/frontend/build ./frontend/build
+RUN npm link
 
 COPY --from=builder /matterbridge-example-accessory-platform/*.tgz .
 COPY --from=builder /matterbridge-example-dynamic-platform/*.tgz .
