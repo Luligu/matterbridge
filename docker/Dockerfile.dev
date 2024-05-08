@@ -11,7 +11,7 @@ COPY ./package.json ./
 COPY ./tsconfig.json ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
-RUN npm install && npm run build && npm link
+RUN npm install && npm run build && npm pack && npm link
 
 WORKDIR /matterbridge-example-accessory-platform
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-example-accessory-platform.git .
@@ -59,7 +59,7 @@ COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
 RUN npm install && npm run build && npm pack
 
 
-FROM base as release
+FROM node:20-bullseye-slim as release
 WORKDIR /app
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/dist ./dist
