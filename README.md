@@ -107,6 +107,9 @@ Devices page:
 Logs page:
 ![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/Screenshot%20logs.jpg)
 
+Config editor:
+![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/Screenshot%20config%20editor.jpg)
+
 ## Plugins
 
 ### Accessory platform example
