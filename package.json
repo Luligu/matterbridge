@@ -32,6 +32,7 @@
     "connectedthings",
     "hap",
     "homekit",
+    "siri",
     "google-home",
     "alexa",
     "homeassistant"
