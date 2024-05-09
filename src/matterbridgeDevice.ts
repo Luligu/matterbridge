@@ -273,8 +273,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(BooleanState.Cluster.id)) child.addClusterServer(this.getDefaultBooleanStateClusterServer());
     if (includeServerList.includes(OccupancySensing.Cluster.id)) child.addClusterServer(this.getDefaultOccupancySensingClusterServer());
     if (includeServerList.includes(IlluminanceMeasurement.Cluster.id)) child.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer());
-    if (includeServerList.includes(EveHistory.Cluster.id) && !this.hasClusterServer(EveHistory.Complete)) child.addClusterServer(this.getDefaultStaticEveHistoryClusterServer());
-    if (includeServerList.includes(ElectricalMeasurement.Cluster.id) && !this.hasClusterServer(ElectricalMeasurement.Complete)) child.addClusterServer(this.getDefaultElectricalMeasurementClusterServer());
+    if (includeServerList.includes(EveHistory.Cluster.id)) child.addClusterServer(this.getDefaultStaticEveHistoryClusterServer());
+    if (includeServerList.includes(ElectricalMeasurement.Cluster.id)) child.addClusterServer(this.getDefaultElectricalMeasurementClusterServer());
     this.addChildEndpoint(child);
     return child;
   }

@@ -33,11 +33,18 @@ jobs:
       with:
         version: latest
 
-    - name: Run Docker Buildx
+    - name: Run Docker Buildx 
       run: |
+        docker buildx build \
+          --platform linux/amd64,linux/arm64,linux/arm/v7 \
+          -f docker/Dockerfile.alpine \
+          -t luligu/matterbridge:dev_alpine \
+          --push .
+        docker manifest inspect luligu/matterbridge:dev_alpine
         docker buildx build \
           --platform linux/amd64,linux/arm64,linux/arm/v7 \
           -f docker/Dockerfile.dev \
           -t luligu/matterbridge:dev \
           --push .
         docker manifest inspect luligu/matterbridge:dev
+      timeout-minutes: 60 

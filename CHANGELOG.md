@@ -2,7 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.13] - 2024-05-04
+## [1.2.14] - 2024-05-09
+
+### Added
+
+- [frontend]: Frontend updated to 0.9.0.
+- [frontend]: Added Plugin config editor
+- [frontend]: Added tool column to registered plugins with QRCode, Config, Remove and Enable/Disable
+- [frontend]: Removed Shutdown button when Matterbridge runs as a service or with docker
+- [frontend]: Added Error state to registered plugins
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
+## [1.2.13] - 2024-05-05
 
 ### Added
 

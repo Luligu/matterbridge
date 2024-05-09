@@ -12,7 +12,7 @@ import info from './Settings';
 /*
 */
 
-const theme = createTheme({
+export const theme = createTheme({
   palette: {
     primary: {
       main: '#4CAF50', // your custom primary color
@@ -20,7 +20,7 @@ const theme = createTheme({
   },
 });
 
-export function sendCommandToMatterbridge(command, param) {
+export function sendCommandToMatterbridge(command, param, body) {
   const sanitizedParam = param.replace(/\\/g, '*');
   console.log('sendCommandToMatterbridge:', command, param, sanitizedParam);
   // Send a POST request to the Matterbridge API
@@ -29,6 +29,7 @@ export function sendCommandToMatterbridge(command, param) {
     headers: {
       'Content-Type': 'application/json',
     },
+    body,
   })
   .then(response => {
     if (!response.ok) {
@@ -66,7 +67,10 @@ function Header() {
   };
 
   const handleRestartClick = () => {
-    sendCommandToMatterbridge('restart','now');
+    if(matterbridgeInfo.restartMode==='')
+      sendCommandToMatterbridge('restart','now');
+    else
+      sendCommandToMatterbridge('shutdown','now');
     setOpen(true);
     setTimeout(() => {
       setOpen(false);
@@ -117,18 +121,18 @@ function Header() {
       <div className="header" style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
         <Tooltip title="Matterbridge version">
           {matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion ?
-            <span className="status-information">v{matterbridgeInfo.matterbridgeVersion}</span> :
+            <span className="status-information" style={{ cursor: 'default' }}>v{matterbridgeInfo.matterbridgeVersion}</span> :
             <span className="status-warning" onClick={handleUpdateClick}>current v{matterbridgeInfo.matterbridgeVersion} latest v{matterbridgeInfo.matterbridgeLatestVersion}</span> 
           }  
         </Tooltip>        
         {matterbridgeInfo.bridgeMode !== '' ? (        
           <Tooltip title="Bridge mode">
-            <span className="status-information">{matterbridgeInfo.bridgeMode}</span>
+            <span className="status-information" style={{ cursor: 'default' }}>{matterbridgeInfo.bridgeMode}</span>
           </Tooltip>
         ) : null}
         {matterbridgeInfo.restartMode !== '' ? (        
           <Tooltip title="Restart mode">
-            <span className="status-information">{matterbridgeInfo.restartMode}</span>
+            <span className="status-information" style={{ cursor: 'default' }}>{matterbridgeInfo.restartMode}</span>
           </Tooltip>        
         ) : null}
         <Tooltip title="Update matterbridge">
@@ -136,10 +140,12 @@ function Header() {
         </Tooltip>        
         <Tooltip title="Restart matterbridge">
           <Button theme={theme} color="primary" variant="contained" size="small" endIcon={<RestartAltIcon />} style={{ color: '#ffffff' }} onClick={handleRestartClick}>Restart</Button>
-        </Tooltip>        
-        <Tooltip title="Shut down matterbridge">
-          <Button theme={theme} color="primary" variant="contained" size="small" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff' }} onClick={handleShutdownClick}>Shutdown</Button>
-        </Tooltip>        
+        </Tooltip>
+        {matterbridgeInfo.restartMode === '' ? (        
+          <Tooltip title="Shut down matterbridge">
+            <Button theme={theme} color="primary" variant="contained" size="small" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff' }} onClick={handleShutdownClick}>Shutdown</Button>
+          </Tooltip>
+        ) : null}        
         <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open} onClick={handleClose}>
           <CircularProgress color="inherit" />
         </Backdrop>

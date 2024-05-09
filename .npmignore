@@ -15,6 +15,7 @@ src
 # typescript
 tsconfig.json
 tsconfig.eslint.json
+tsconfig.tsbuildinfo
 
 # vscode
 .vscode
