@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.15] - 2024-05-12
+
+### Added
+
+- [frontend]: Added sponsor link in Header.
+
+### Fixed
+
+- [frontend]: Fixed the case when the latest version of Matterbridge or a plugin is not available.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
+
 ## [1.2.14] - 2024-05-09
 
 ### Added

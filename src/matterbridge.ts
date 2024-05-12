@@ -41,7 +41,6 @@ import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } f
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
 import {
   BasicInformationCluster,
-  BooleanStateCluster,
   ClusterServer,
   FixedLabelCluster,
   GeneralCommissioning,
@@ -311,7 +310,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
     this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
     this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
-    this.matterAggregator = await this.createMatterAggregator(this.matterbridgeContext);
+    this.matterAggregator = await this.createMatterAggregator(this.matterbridgeContext, 'Matterbridge');
     this.log.debug('Adding matterbridge aggregator to commissioning server');
     this.commissioningServer.addDevice(this.matterAggregator);
     this.log.debug('Adding matterbridge commissioning server to matter server');
@@ -1187,8 +1186,7 @@ export class Matterbridge extends EventEmitter {
   }
 
   private async testStartMatterBridge(): Promise<void> {
-    // Plugins are loaded by loadPlugin on startup and plugin.loaded is set to true
-    // Plugins are started and configured by callback when Matterbridge is commissioned
+    /*
     if (!this.storageManager) {
       this.log.error('No storage manager initialized');
       await this.cleanup('No storage manager initialized');
@@ -1232,19 +1230,16 @@ export class Matterbridge extends EventEmitter {
       this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
 
       this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
-      this.matterAggregator = await this.createMatterAggregator(this.matterbridgeContext);
+      this.matterAggregator = await this.createMatterAggregator(this.matterbridgeContext, 'Matterbridge');
       this.log.debug('Adding matterbridge aggregator to commissioning server');
       this.commissioningServer.addDevice(this.matterAggregator);
 
       const device = new MatterbridgeDevice(DeviceTypes.CONTACT_SENSOR);
       device.createDefaultIdentifyClusterServer();
-      //device.createDefaultBasicInformationClusterServer('Boolean test', '0x89930475', 0x8000, 'Matterbridge', 77, 'Boolean');
       device.createDefaultBridgedDeviceBasicInformationClusterServer('Boolean test', '0x89930475', 0x8000, 'Matterbridge', 'Boolean');
       device.createDefaultBooleanStateClusterServer(true);
       device.createDefaultPowerSourceReplaceableBatteryClusterServer(75);
       device.createDefaultPowerSourceConfigurationClusterServer(1);
-      //this.commissioningServer.addDevice(device);
-      //this.matterAggregator.addBridgedDevice(device);
 
       this.log.debug('Adding matterbridge commissioning server to matter server');
       await this.matterServer?.addCommissioningServer(this.commissioningServer, { uniqueStorageKey: 'Matterbridge' });
@@ -1254,15 +1249,6 @@ export class Matterbridge extends EventEmitter {
       await this.startMatterServer();
       this.log.info('Matter server started');
       await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
-
-      //2024-03-31 21:54:12.065 DEBUG  InteractionServer    Received subscribe request from udp://fe80::14b6:bb16:5d3a:1293%9:51251 on session secure/48170 (keepSubscriptions=true, isFabricFiltered=false)
-      //2024-03-31 21:54:12.066 DEBUG  InteractionServer    Subscribe to attributes:*/*/*, events:!*/*/*
-      /*
-      2024-03-31 21:52:22.669 DEBUG  SubscriptionHandler  Sending subscription update message for ID 2529153003 with 1 attributes and 1 events
-      2024-03-31 21:52:22.669 DEBUG  MessageExchange      New exchange protocol: 1 id: 30278 session: secure/24489 peerSessionId: 2131 active threshold ms: 4000 active interval ms: 300 idle interval ms: 300 retries: 5
-      2024-03-31 21:52:22.669 DEBUG  SubscriptionHandler  Sending subscription changes for ID 2529153003: MA-contactsensor(0x3b)/BooleanState(0x45)/stateValue(0x0)=true (1805472651)
-      2024-03-31 21:52:22.670 DEBUG  InteractionMessenger Sending DataReport chunk with 1 attributes and 1 events: 85 bytes
-      */
 
       setTimeout(() => {
         this.matterAggregator?.addBridgedDevice(device);
@@ -1278,6 +1264,7 @@ export class Matterbridge extends EventEmitter {
         this.log.info('Set attribute and event for BooleanStateCluster to', !contact);
       }, 60 * 1000);
     }, 1000);
+    */
   }
 
   /**
@@ -1836,7 +1823,7 @@ export class Matterbridge extends EventEmitter {
         this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
         this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
         this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
-        this.matterAggregator = await this.createMatterAggregator(this.matterbridgeContext);
+        this.matterAggregator = await this.createMatterAggregator(this.matterbridgeContext, 'Matterbridge');
         this.log.debug('Adding matterbridge aggregator to commissioning server');
         this.commissioningServer.addDevice(this.matterAggregator);
         this.log.debug('Adding matterbridge commissioning server to matter server');
@@ -1897,7 +1884,7 @@ export class Matterbridge extends EventEmitter {
             this.log.debug(`Creating commissioning server for ${plg}${plugin.name}${db}`);
             plugin.commissioningServer = await this.createCommisioningServer(plugin.storageContext, plugin.name);
             this.log.debug(`Creating aggregator for plugin ${plg}${plugin.name}${db}`);
-            plugin.aggregator = await this.createMatterAggregator(plugin.storageContext); // Generate serialNumber and uniqueId
+            plugin.aggregator = await this.createMatterAggregator(plugin.storageContext, plugin.name); // Generate serialNumber and uniqueId
             this.log.debug(`Adding matter aggregator to commissioning server for plugin ${plg}${plugin.name}${db}`);
             plugin.commissioningServer.addDevice(plugin.aggregator);
             this.log.debug(`Adding commissioning server to matter server for plugin ${plg}${plugin.name}${db}`);
@@ -2387,10 +2374,14 @@ export class Matterbridge extends EventEmitter {
    * @param {StorageContext} context - The storage context.
    * @returns {Aggregator} - The created Matter Aggregator.
    */
-  private async createMatterAggregator(context: StorageContext): Promise<Aggregator> {
+  private async createMatterAggregator(context: StorageContext, pluginName: string): Promise<Aggregator> {
     const random = 'AG' + CryptoNode.getRandomData(8).toHex();
     await context.set('aggregatorSerialNumber', await context.get('aggregatorSerialNumber', random));
     await context.set('aggregatorUniqueId', await context.get('aggregatorUniqueId', random));
+
+    this.log.debug(`Creating matter aggregator for plugin ${plg}${pluginName}${db} with uniqueId ${await context.get<string>('aggregatorUniqueId')} serialNumber ${await context.get<string>('aggregatorSerialNumber')}`);
+    this.log.debug(`Creating matter aggregator for plugin ${plg}${pluginName}${db} with softwareVersion ${await context.get<number>('softwareVersion', 1)} softwareVersionString ${await context.get<string>('softwareVersionString', '1.0.0')}`);
+    this.log.debug(`Creating matter aggregator for plugin ${plg}${pluginName}${db} with hardwareVersion ${await context.get<number>('hardwareVersion', 1)} hardwareVersionString ${await context.get<string>('hardwareVersionString', '1.0.0')}`);
 
     const matterAggregator = new Aggregator();
     matterAggregator.addClusterServer(

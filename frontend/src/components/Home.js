@@ -206,7 +206,7 @@ function Home() {
 
                 <td className="table-content"><Tooltip title={plugin.path}>{plugin.name}</Tooltip></td>
                 <td className="table-content">{plugin.description}</td>
-                <td className="table-content">{plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning" onClick={() => handleUpdate(index)}>{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</td>
+                <td className="table-content">{plugin.latestVersion === undefined || plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning" onClick={() => handleUpdate(index)}>{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</td>
                 <td className="table-content">{plugin.author}</td>
                 <td className="table-content">{plugin.type}</td>
                 <td className="table-content">{plugin.registeredDevices}</td>
@@ -268,15 +268,6 @@ function Home() {
 }
 
 /*
-      Working
-      <div className="MbfWindowDiv" style={{display: 'flex', flexDirection: 'column', flex: '0 1 auto'}}>
-        <div className="MbfWindowHeader">
-          <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>Log</p>
-        </div>
-        <div style={{ flex: '1', margin: '5px', padding: '5px', height: '200px', maxHeight: '200px', overflow: 'auto'}}>
-          <WebSocketComponent wssHost={wssHost}/>
-        </div>
-      </div>
 */
 
 function AddRemovePluginsDiv({ plugins }) {
