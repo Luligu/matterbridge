@@ -7,11 +7,11 @@ import { Tooltip, IconButton, Button, createTheme, ThemeProvider } from '@mui/ma
 import { sendCommandToMatterbridge } from './Header';
 import WebSocketComponent from './WebSocketComponent';
 
-import Snackbar from '@mui/material/Snackbar';
-import Alert from '@mui/material/Alert';
-import TextField from '@mui/material/TextField';
-import { Dialog, DialogTitle, DialogContent } from '@mui/material';
-import { DeleteForever, Download, Remove, Add, Unpublished, PublishedWithChanges, Settings } from '@mui/icons-material';
+//import Snackbar from '@mui/material/Snackbar';
+//import Alert from '@mui/material/Alert';
+//import TextField from '@mui/material/TextField';
+import { Dialog, DialogTitle, DialogContent, MenuItem, TextField, Alert, Snackbar } from '@mui/material';
+import { DeleteForever, Download, Remove, Add, Unpublished, PublishedWithChanges, Settings, Favorite } from '@mui/icons-material';
 
 // import path from 'path';
 
@@ -21,7 +21,6 @@ import { DeleteForever, Download, Remove, Add, Unpublished, PublishedWithChanges
 
 // import Form from '@rjsf/core';
 import Form from '@rjsf/mui';
-import { RJSFSchema, UiSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 
 function Home() {
@@ -160,6 +159,10 @@ function Home() {
     handleOpenConfig();
   };
 
+  const handleSponsorPlugin = (row) => {
+    console.log('handleSponsorPlugin row:', row, 'plugin:', plugins[row].name);
+    window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
+  };
   /*
         {matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
   */
@@ -206,7 +209,7 @@ function Home() {
 
                 <td className="table-content"><Tooltip title={plugin.path}>{plugin.name}</Tooltip></td>
                 <td className="table-content">{plugin.description}</td>
-                <td className="table-content">{plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning" onClick={() => handleUpdate(index)}>{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</td>
+                <td className="table-content">{plugin.latestVersion === undefined || plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning" onClick={() => handleUpdate(index)}>{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</td>
                 <td className="table-content">{plugin.author}</td>
                 <td className="table-content">{plugin.type}</td>
                 <td className="table-content">{plugin.registeredDevices}</td>
@@ -217,6 +220,7 @@ function Home() {
                     <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleRemovePlugin(index)} size="small"><DeleteForever /></IconButton></Tooltip>
                     {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><Unpublished /></IconButton></Tooltip> : <></>}
                     {!plugin.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><PublishedWithChanges /></IconButton></Tooltip> : <></>}
+                    <Tooltip title="Sponsor the plugin"><IconButton style={{padding: 0, color: '#b6409c'}} className="PluginsIconButton" onClick={() => handleSponsorPlugin(index)} size="small"><Favorite /></IconButton></Tooltip>
                   </>
                 </td>
                 <td className="table-content">
@@ -268,15 +272,6 @@ function Home() {
 }
 
 /*
-      Working
-      <div className="MbfWindowDiv" style={{display: 'flex', flexDirection: 'column', flex: '0 1 auto'}}>
-        <div className="MbfWindowHeader">
-          <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>Log</p>
-        </div>
-        <div style={{ flex: '1', margin: '5px', padding: '5px', height: '200px', maxHeight: '200px', overflow: 'auto'}}>
-          <WebSocketComponent wssHost={wssHost}/>
-        </div>
-      </div>
 */
 
 function AddRemovePluginsDiv({ plugins }) {
@@ -326,6 +321,28 @@ function AddRemovePluginsDiv({ plugins }) {
     },
   });
 
+  /*
+  const pluginList = [
+    { value: 'matterbridge-zigbee2mqtt', label: 'matterbridge-zigbee2mqtt' },
+    { value: 'matterbridge-somfy-tahoma', label: 'matterbridge-somfy-tahoma' },
+    { value: 'matterbridge-shelly', label: 'matterbridge-shelly' },
+    { value: 'matterbridge-example-accessory-platform', label: 'matterbridge-example-accessory-platform' },
+    { value: 'matterbridge-example-dynamic-platform', label: 'matterbridge-example-dynamic-platform' },
+    { value: 'matterbridge-eve-door', label: 'matterbridge-eve-door' },
+    { value: 'matterbridge-eve-motion', label: 'matterbridge-eve-motion' },
+    { value: 'matterbridge-eve-energy', label: 'matterbridge-eve-energy' },
+    { value: 'matterbridge-eve-weather', label: 'matterbridge-eve-weather' },
+    { value: 'matterbridge-eve-room', label: 'matterbridge-eve-room' },
+  ];
+
+   sx={{ '.MuiSelect-select': { bgcolor: '#c4c2c2' } }} value={pluginName} 
+          {pluginList.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+          SelectProps={{ native: true, MenuProps: { PaperProps: { style: { backgroundColor: '#9e9e9e' } } }}}
+  */
   return (
     <div className="MbfWindowDiv">
       <div className="MbfWindowHeader">

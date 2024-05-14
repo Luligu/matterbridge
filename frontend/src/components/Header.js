@@ -57,6 +57,10 @@ function Header() {
     setOpen(false);
   };
 
+  const handleSponsorClick = () => {
+    window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
+  };
+
   const handleUpdateClick = () => {
     sendCommandToMatterbridge('update','now');
     setOpen(true);
@@ -119,8 +123,11 @@ function Header() {
         <Link to="/settings" className="nav-link">Settings</Link>
       </nav>
       <div className="header" style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
+        <Tooltip title="Sponsor Matterbridge and its plugins">
+          <span className="status-sponsor" onClick={handleSponsorClick}>Sponsor</span> 
+        </Tooltip>        
         <Tooltip title="Matterbridge version">
-          {matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion ?
+          {matterbridgeInfo.matterbridgeLatestVersion === undefined || matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion ?
             <span className="status-information" style={{ cursor: 'default' }}>v{matterbridgeInfo.matterbridgeVersion}</span> :
             <span className="status-warning" onClick={handleUpdateClick}>current v{matterbridgeInfo.matterbridgeVersion} latest v{matterbridgeInfo.matterbridgeLatestVersion}</span> 
           }  
