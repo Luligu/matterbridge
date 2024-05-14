@@ -7,11 +7,11 @@ import { Tooltip, IconButton, Button, createTheme, ThemeProvider } from '@mui/ma
 import { sendCommandToMatterbridge } from './Header';
 import WebSocketComponent from './WebSocketComponent';
 
-import Snackbar from '@mui/material/Snackbar';
-import Alert from '@mui/material/Alert';
-import TextField from '@mui/material/TextField';
-import { Dialog, DialogTitle, DialogContent } from '@mui/material';
-import { DeleteForever, Download, Remove, Add, Unpublished, PublishedWithChanges, Settings } from '@mui/icons-material';
+//import Snackbar from '@mui/material/Snackbar';
+//import Alert from '@mui/material/Alert';
+//import TextField from '@mui/material/TextField';
+import { Dialog, DialogTitle, DialogContent, MenuItem, TextField, Alert, Snackbar } from '@mui/material';
+import { DeleteForever, Download, Remove, Add, Unpublished, PublishedWithChanges, Settings, Favorite } from '@mui/icons-material';
 
 // import path from 'path';
 
@@ -160,6 +160,10 @@ function Home() {
     handleOpenConfig();
   };
 
+  const handleSponsorPlugin = (row) => {
+    console.log('handleSponsorPlugin row:', row, 'plugin:', plugins[row].name);
+    window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
+  };
   /*
         {matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
   */
@@ -217,6 +221,7 @@ function Home() {
                     <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleRemovePlugin(index)} size="small"><DeleteForever /></IconButton></Tooltip>
                     {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><Unpublished /></IconButton></Tooltip> : <></>}
                     {!plugin.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><PublishedWithChanges /></IconButton></Tooltip> : <></>}
+                    <Tooltip title="Sponsor the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleSponsorPlugin(index)} size="small"><Favorite /></IconButton></Tooltip>
                   </>
                 </td>
                 <td className="table-content">
@@ -317,6 +322,19 @@ function AddRemovePluginsDiv({ plugins }) {
     },
   });
 
+  const pluginList = [
+    { value: 'matterbridge-zigbee2mqtt', label: 'matterbridge-zigbee2mqtt' },
+    { value: 'matterbridge-somfy-tahoma', label: 'matterbridge-somfy-tahoma' },
+    { value: 'matterbridge-shelly', label: 'matterbridge-shelly' },
+    { value: 'matterbridge-example-accessory-platform', label: 'matterbridge-example-accessory-platform' },
+    { value: 'matterbridge-example-dynamic-platform', label: 'matterbridge-example-dynamic-platform' },
+    { value: 'matterbridge-eve-door', label: 'matterbridge-eve-door' },
+    { value: 'matterbridge-eve-motion', label: 'matterbridge-eve-motion' },
+    { value: 'matterbridge-eve-energy', label: 'matterbridge-eve-energy' },
+    { value: 'matterbridge-eve-weather', label: 'matterbridge-eve-weather' },
+    { value: 'matterbridge-eve-room', label: 'matterbridge-eve-room' },
+  ];
+
   return (
     <div className="MbfWindowDiv">
       <div className="MbfWindowHeader">
@@ -326,7 +344,16 @@ function AddRemovePluginsDiv({ plugins }) {
         <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={open} onClose={handleSnackClose} autoHideDuration={5000}>
           <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart required</Alert>
         </Snackbar>
-        <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth/>
+
+
+        <TextField select SelectProps={{native: true}} value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth>
+          {pluginList.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </TextField>
+        
         <Tooltip title="Install or update a plugin from npm">
           <Button onClick={handleInstallPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="install" endIcon={<Download />} style={{ color: '#ffffff', height: '30px' }}> Install</Button>
         </Tooltip>        
