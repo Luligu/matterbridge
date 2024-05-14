@@ -335,6 +335,7 @@ function AddRemovePluginsDiv({ plugins }) {
     { value: 'matterbridge-eve-room', label: 'matterbridge-eve-room' },
   ];
 
+  // sx={{ '.MuiSelect-select': { bgcolor: '#c4c2c2' } }} value={pluginName} 
   return (
     <div className="MbfWindowDiv">
       <div className="MbfWindowHeader">
@@ -346,7 +347,7 @@ function AddRemovePluginsDiv({ plugins }) {
         </Snackbar>
 
 
-        <TextField select SelectProps={{native: true}} value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth>
+        <TextField select SelectProps={{ native: true, MenuProps: { PaperProps: { style: { backgroundColor: '#9e9e9e' } } }}} defaultValue='matterbridge-zigbee2mqtt' onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth>
           {pluginList.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
