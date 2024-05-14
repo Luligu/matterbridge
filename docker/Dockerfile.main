@@ -32,4 +32,5 @@ RUN npm -g install matterbridge-eve-room
 RUN npm -g install matterbridge-eve-weather
 
 WORKDIR /app
-CMD ["node", "dist/cli.js", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
+CMD ["matterbridge", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
+# CMD ["node", "dist/cli.js", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
