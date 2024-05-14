@@ -2,11 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.2.15] - 2024-05-14
 
 ### Added
 
 - [frontend]: Added sponsor link in Header.
+- [frontend]: Added sponsor link in the plugin list.
+- [frontend]: Added drop down list in Add remove plugin.
 
 ### Fixed
 
