@@ -8,7 +8,6 @@ All notable changes to this project will be documented in this file.
 
 - [frontend]: Added sponsor link in Header.
 - [frontend]: Added sponsor link in the plugin list.
-- [frontend]: Added drop down list in Add remove plugin.
 
 ### Fixed
 

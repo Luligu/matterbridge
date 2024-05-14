@@ -21,7 +21,6 @@ import { DeleteForever, Download, Remove, Add, Unpublished, PublishedWithChanges
 
 // import Form from '@rjsf/core';
 import Form from '@rjsf/mui';
-import { RJSFSchema, UiSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 
 function Home() {
@@ -221,7 +220,7 @@ function Home() {
                     <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleRemovePlugin(index)} size="small"><DeleteForever /></IconButton></Tooltip>
                     {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><Unpublished /></IconButton></Tooltip> : <></>}
                     {!plugin.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><PublishedWithChanges /></IconButton></Tooltip> : <></>}
-                    <Tooltip title="Sponsor the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleSponsorPlugin(index)} size="small"><Favorite /></IconButton></Tooltip>
+                    <Tooltip title="Sponsor the plugin"><IconButton style={{padding: 0, color: '#b6409c'}} className="PluginsIconButton" onClick={() => handleSponsorPlugin(index)} size="small"><Favorite /></IconButton></Tooltip>
                   </>
                 </td>
                 <td className="table-content">
@@ -322,6 +321,7 @@ function AddRemovePluginsDiv({ plugins }) {
     },
   });
 
+  /*
   const pluginList = [
     { value: 'matterbridge-zigbee2mqtt', label: 'matterbridge-zigbee2mqtt' },
     { value: 'matterbridge-somfy-tahoma', label: 'matterbridge-somfy-tahoma' },
@@ -335,7 +335,14 @@ function AddRemovePluginsDiv({ plugins }) {
     { value: 'matterbridge-eve-room', label: 'matterbridge-eve-room' },
   ];
 
-  // sx={{ '.MuiSelect-select': { bgcolor: '#c4c2c2' } }} value={pluginName} 
+   sx={{ '.MuiSelect-select': { bgcolor: '#c4c2c2' } }} value={pluginName} 
+          {pluginList.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+          SelectProps={{ native: true, MenuProps: { PaperProps: { style: { backgroundColor: '#9e9e9e' } } }}}
+  */
   return (
     <div className="MbfWindowDiv">
       <div className="MbfWindowHeader">
@@ -345,16 +352,7 @@ function AddRemovePluginsDiv({ plugins }) {
         <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={open} onClose={handleSnackClose} autoHideDuration={5000}>
           <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart required</Alert>
         </Snackbar>
-
-
-        <TextField select SelectProps={{ native: true, MenuProps: { PaperProps: { style: { backgroundColor: '#9e9e9e' } } }}} defaultValue='matterbridge-zigbee2mqtt' onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth>
-          {pluginList.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </TextField>
-        
+        <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth/>
         <Tooltip title="Install or update a plugin from npm">
           <Button onClick={handleInstallPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="install" endIcon={<Download />} style={{ color: '#ffffff', height: '30px' }}> Install</Button>
         </Tooltip>        
