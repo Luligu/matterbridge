@@ -39,17 +39,7 @@ import WebSocket, { WebSocketServer } from 'ws';
 import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './BridgedDeviceBasicInformationCluster.js';
 
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
-import {
-  BasicInformationCluster,
-  ClusterServer,
-  FixedLabelCluster,
-  GeneralCommissioning,
-  GeneralDiagnostics,
-  GeneralDiagnosticsCluster,
-  PowerSourceCluster,
-  ThreadNetworkDiagnosticsCluster,
-  getClusterNameById,
-} from '@project-chip/matter-node.js/cluster';
+import { BasicInformationCluster, ClusterServer, FixedLabelCluster, GeneralCommissioning, PowerSourceCluster, ThreadNetworkDiagnosticsCluster, getClusterNameById } from '@project-chip/matter-node.js/cluster';
 import { DeviceTypeId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter-node.js/device';
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
@@ -1962,6 +1952,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug('Starting matter server...');
     await this.matterServer.start();
     this.log.debug('Started matter server');
+    //this.commissioningServer?.getRootEndpoint() && logEndpoint(this.commissioningServer?.getRootEndpoint());
   }
 
   /**
@@ -2324,8 +2315,11 @@ export class Matterbridge extends EventEmitter {
         }
       },
     });
+    /*
     const gdcCluster = commissioningServer.getRootClusterServer(GeneralDiagnosticsCluster);
     if (gdcCluster) {
+      // console.log('GeneralDiagnosticsCluster found for', plg, pluginName, db);
+      // console.log('GeneralDiagnosticsCluster', gdcCluster);
       // We have like "30:f6:ef:69:2b:c5" in this.systemInformation.macAddress
       const macArray = this.systemInformation.macAddress.split(':').map((hex) => parseInt(hex, 16));
       let hardwareAddress = new Uint8Array(macArray);
@@ -2362,6 +2356,7 @@ export class Matterbridge extends EventEmitter {
         this.log.error(`GeneralDiagnosticsCluster.setNetworkInterfacesAttribute for ${plg}${pluginName}${er} error:`, error);
       }
     } else this.log.warn(`*GeneralDiagnosticsCluster not found for ${plg}${pluginName}${wr}`);
+    */
     commissioningServer.addCommandHandler('testEventTrigger', async ({ request: { enableKey, eventTrigger } }) => this.log.info(`testEventTrigger called on GeneralDiagnostic cluster: ${enableKey} ${eventTrigger}`));
     return commissioningServer;
   }

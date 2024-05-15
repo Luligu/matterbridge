@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [1.2.16] - 2024-05-15
 
+### Changed
+- [matter.js]: Update to @project-chip/matter-node.js v. 0.9.0
+
 ### Added
 
 - [frontend]: Frontend updated to 1.0.0.
