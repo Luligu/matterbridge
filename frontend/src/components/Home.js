@@ -1,27 +1,24 @@
 // Home.js
 import React, { useEffect, useState, useRef } from 'react';
-import QRCode from 'qrcode.react';
 import { StatusIndicator } from './StatusIndicator';
-import QrCode2Icon from '@mui/icons-material/QrCode2';
-import { Tooltip, IconButton, Button, createTheme, ThemeProvider } from '@mui/material';
-import { sendCommandToMatterbridge } from './Header';
+import { sendCommandToMatterbridge, theme } from './Header';
 import WebSocketComponent from './WebSocketComponent';
 
-//import Snackbar from '@mui/material/Snackbar';
-//import Alert from '@mui/material/Alert';
-//import TextField from '@mui/material/TextField';
-import { Dialog, DialogTitle, DialogContent, MenuItem, TextField, Alert, Snackbar } from '@mui/material';
-import { DeleteForever, Download, Remove, Add, Unpublished, PublishedWithChanges, Settings, Favorite } from '@mui/icons-material';
+// @mui
+import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip, IconButton, Button, createTheme, ThemeProvider } from '@mui/material';
+import { DeleteForever, Download, Remove, Add, Unpublished, PublishedWithChanges, Settings, Favorite, Help, Announcement, QrCode2 } from '@mui/icons-material';
 
-// import path from 'path';
+// @rjsf
+// import Form from '@rjsf/core';
+import Form from '@rjsf/mui';
+import validator from '@rjsf/validator-ajv8';
+
+import QRCode from 'qrcode.react';
 
 // npm install @mui/material @emotion/react @emotion/styled
 // npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
 // npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8 @rjsf/mui
 
-// import Form from '@rjsf/core';
-import Form from '@rjsf/mui';
-import validator from '@rjsf/validator-ajv8';
 
 function Home() {
   const [wssHost, setWssHost] = useState(null);
@@ -163,6 +160,30 @@ function Home() {
     console.log('handleSponsorPlugin row:', row, 'plugin:', plugins[row].name);
     window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
   };
+
+  const handleHelpPlugin = (row) => {
+    console.log('handleHelpPlugin row:', row, 'plugin:', plugins[row].name);
+    window.open(`https://github.com/Luligu/${plugins[row].name}/blob/main/README.md`, '_blank');
+  };
+
+  const handleChangelogPlugin = (row) => {
+    console.log('handleChangelogPlugin row:', row, 'plugin:', plugins[row].name);
+    window.open(`https://github.com/Luligu/${plugins[row].name}/blob/main/CHANGELOG.md`, '_blank');
+  };
+
+  /*
+  const theme = createTheme({
+    components: {
+      MuiTooltip: {
+        defaultProps: {
+          placement: 'top-end', 
+          arrow: true,
+        },
+      },
+    },
+  });
+  */
+
   /*
         {matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
   */
@@ -172,6 +193,8 @@ function Home() {
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0', padding: '0' }}>
+
+    <ThemeProvider theme={theme}>
 
       <Dialog  open={openConfig} onClose={handleCloseConfig} maxWidth='600px' PaperProps={{style: { border: "2px solid #ddd", backgroundColor: '#c4c2c2', boxShadow: '5px 5px 10px #888'}}}>
         <DialogTitle gap={'20px'}>
@@ -215,11 +238,13 @@ function Home() {
                 <td className="table-content">{plugin.registeredDevices}</td>
                 <td className="table-content">  
                   <>
-                    {plugin.qrPairingCode ? <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleSelectQRCode(index)} size="small"><QrCode2Icon /></IconButton></Tooltip> : <></>}
+                    {plugin.qrPairingCode ? <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleSelectQRCode(index)} size="small"><QrCode2 /></IconButton></Tooltip> : <></>}
                     <Tooltip title="Plugin config"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleConfigPlugin(index)} size="small"><Settings /></IconButton></Tooltip>
                     <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleRemovePlugin(index)} size="small"><DeleteForever /></IconButton></Tooltip>
                     {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><Unpublished /></IconButton></Tooltip> : <></>}
                     {!plugin.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><PublishedWithChanges /></IconButton></Tooltip> : <></>}
+                    <Tooltip title="Plugin help"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleHelpPlugin(index)} size="small"><Help /></IconButton></Tooltip>
+                    <Tooltip title="Plugin version history"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleChangelogPlugin(index)} size="small"><Announcement /></IconButton></Tooltip>
                     <Tooltip title="Sponsor the plugin"><IconButton style={{padding: 0, color: '#b6409c'}} className="PluginsIconButton" onClick={() => handleSponsorPlugin(index)} size="small"><Favorite /></IconButton></Tooltip>
                   </>
                 </td>
@@ -267,6 +292,7 @@ function Home() {
         </div>
 
       </div>
+    </ThemeProvider>  
     </div>
   );
 }

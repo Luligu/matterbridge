@@ -39,17 +39,7 @@ import WebSocket, { WebSocketServer } from 'ws';
 import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './BridgedDeviceBasicInformationCluster.js';
 
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
-import {
-  BasicInformationCluster,
-  ClusterServer,
-  FixedLabelCluster,
-  GeneralCommissioning,
-  GeneralDiagnostics,
-  GeneralDiagnosticsCluster,
-  PowerSourceCluster,
-  ThreadNetworkDiagnosticsCluster,
-  getClusterNameById,
-} from '@project-chip/matter-node.js/cluster';
+import { BasicInformationCluster, ClusterServer, FixedLabelCluster, GeneralCommissioning, PowerSourceCluster, ThreadNetworkDiagnosticsCluster, getClusterNameById } from '@project-chip/matter-node.js/cluster';
 import { DeviceTypeId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter-node.js/device';
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
@@ -202,6 +192,7 @@ export class Matterbridge extends EventEmitter {
   public globalModulesDirectory: string = '';
   public matterbridgeVersion: string = '';
   public matterbridgeLatestVersion: string = '';
+  private checkUpdateInterval?: NodeJS.Timeout; // = 24 * 60 * 60 * 1000; // 24 hours
 
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public restartMode: 'service' | 'docker' | '' = '';
@@ -419,12 +410,6 @@ export class Matterbridge extends EventEmitter {
       await plugin.nodeContext.set<string>('description', plugin.description);
       await plugin.nodeContext.set<string>('author', plugin.author);
     }
-    if (hasParameter('logstorage')) {
-      await this.nodeContext.logStorage();
-      for (const plugin of this.registeredPlugins) {
-        await plugin.nodeContext?.logStorage();
-      }
-    }
 
     // Log system info and create .matterbridge directory
     await this.logNodeAndSystemInfo();
@@ -479,6 +464,17 @@ export class Matterbridge extends EventEmitter {
       this.emit('shutdown');
       process.exit(0);
     }
+    if (hasParameter('logstorage')) {
+      this.log.info(`${plg}matterbridge${nf} storage log`);
+      await this.nodeContext?.logStorage();
+      for (const plugin of this.registeredPlugins) {
+        this.log.info(`${plg}${plugin.name}${nf} storage log`);
+        await plugin.nodeContext?.logStorage();
+      }
+      this.emit('shutdown');
+      process.exit(0);
+    }
+
     if (getParameter('add')) {
       this.log.debug(`Registering plugin ${getParameter('add')}`);
       await this.executeCommandLine(getParameter('add')!, 'add');
@@ -537,6 +533,16 @@ export class Matterbridge extends EventEmitter {
 
     // Initialize frontend
     await this.initializeFrontend(getIntParameter('frontend'));
+
+    this.checkUpdateInterval = setInterval(
+      () => {
+        this.getMatterbridgeLatestVersion();
+        this.registeredPlugins.forEach((plugin) => {
+          this.getPluginLatestVersion(plugin);
+        });
+      },
+      60 * 60 * 1000,
+    );
 
     if (hasParameter('test')) {
       this.bridgeMode = 'childbridge';
@@ -799,6 +805,8 @@ export class Matterbridge extends EventEmitter {
       process.removeAllListeners('SIGINT');
       process.removeAllListeners('SIGTERM');
       this.log.debug('All listeners removed');
+      this.checkUpdateInterval && clearInterval(this.checkUpdateInterval);
+      this.checkUpdateInterval = undefined;
 
       // Calling the shutdown functions with a reason
       for (const plugin of this.registeredPlugins) {
@@ -1566,16 +1574,7 @@ export class Matterbridge extends EventEmitter {
         plugin.addedDevices = 0;
         await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
 
-        this.getLatestVersion(plugin.name)
-          .then(async (latestVersion) => {
-            plugin.latestVersion = latestVersion;
-            await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
-            if (plugin.version !== latestVersion) this.log.warn(`The plugin ${plg}${plugin.name}${wr} is out of date. Current version: ${plugin.version}, Latest version: ${latestVersion}`);
-            else this.log.info(`The plugin ${plg}${plugin.name}${nf} is up to date. Current version: ${plugin.version}, Latest version: ${latestVersion}`);
-          })
-          .catch((error) => {
-            this.log.error(`Error getting ${plugin.name} latest version: ${error}`);
-          });
+        await this.getPluginLatestVersion(plugin);
 
         this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${platform.type} ${db}(entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
         if (start) this.startPlugin(plugin, message); // No await do it asyncronously
@@ -1953,6 +1952,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug('Starting matter server...');
     await this.matterServer.start();
     this.log.debug('Started matter server');
+    //this.commissioningServer?.getRootEndpoint() && logEndpoint(this.commissioningServer?.getRootEndpoint());
   }
 
   /**
@@ -2315,8 +2315,11 @@ export class Matterbridge extends EventEmitter {
         }
       },
     });
+    /*
     const gdcCluster = commissioningServer.getRootClusterServer(GeneralDiagnosticsCluster);
     if (gdcCluster) {
+      // console.log('GeneralDiagnosticsCluster found for', plg, pluginName, db);
+      // console.log('GeneralDiagnosticsCluster', gdcCluster);
       // We have like "30:f6:ef:69:2b:c5" in this.systemInformation.macAddress
       const macArray = this.systemInformation.macAddress.split(':').map((hex) => parseInt(hex, 16));
       let hardwareAddress = new Uint8Array(macArray);
@@ -2353,6 +2356,7 @@ export class Matterbridge extends EventEmitter {
         this.log.error(`GeneralDiagnosticsCluster.setNetworkInterfacesAttribute for ${plg}${pluginName}${er} error:`, error);
       }
     } else this.log.warn(`*GeneralDiagnosticsCluster not found for ${plg}${pluginName}${wr}`);
+    */
     commissioningServer.addCommandHandler('testEventTrigger', async ({ request: { enableKey, eventTrigger } }) => this.log.info(`testEventTrigger called on GeneralDiagnostic cluster: ${enableKey} ${eventTrigger}`));
     return commissioningServer;
   }
@@ -2605,6 +2609,23 @@ export class Matterbridge extends EventEmitter {
     // Matterbridge latest version
     if (this.nodeContext) this.matterbridgeLatestVersion = await this.nodeContext.get<string>('matterbridgeLatestVersion', '');
     this.log.debug(`Matterbridge Latest Version: ${this.matterbridgeLatestVersion}`);
+    await this.getMatterbridgeLatestVersion();
+
+    // Current working directory
+    const currentDir = process.cwd();
+    this.log.debug(`Current Working Directory: ${currentDir}`);
+
+    // Command line arguments (excluding 'node' and the script name)
+    const cmdArgs = process.argv.slice(2).join(' ');
+    this.log.debug(`Command Line Arguments: ${cmdArgs}`);
+  }
+
+  /**
+   * Retrieves the latest version of Matterbridge and performs necessary actions based on the version comparison.
+   * @private
+   * @returns {Promise<void>} A promise that resolves when the latest version is retrieved and actions are performed.
+   */
+  private async getMatterbridgeLatestVersion() {
     this.getLatestVersion('matterbridge')
       .then(async (matterbridgeLatestVersion) => {
         this.matterbridgeLatestVersion = matterbridgeLatestVersion;
@@ -2615,17 +2636,34 @@ export class Matterbridge extends EventEmitter {
           this.log.warn(`Matterbridge is out of date. Current version: ${this.matterbridgeVersion}, Latest version: ${this.matterbridgeLatestVersion}`);
         }
       })
-      .catch((error) => {
-        this.log.error(`Error getting Matterbridge latest version: ${error}`);
+      .catch((error: Error) => {
+        this.log.error(`Error getting Matterbridge latest version: ${error.message}`);
+        error.stack && this.log.debug(error.stack);
       });
+  }
 
-    // Current working directory
-    const currentDir = process.cwd();
-    this.log.debug(`Current Working Directory: ${currentDir}`);
-
-    // Command line arguments (excluding 'node' and the script name)
-    const cmdArgs = process.argv.slice(2).join(' ');
-    this.log.debug(`Command Line Arguments: ${cmdArgs}`);
+  /**
+   * Retrieves the latest version of a plugin and updates the plugin's latestVersion property.
+   * If the plugin's version is different from the latest version, logs a warning message.
+   * If the plugin's version is the same as the latest version, logs an info message.
+   * If there is an error retrieving the latest version, logs an error message.
+   *
+   * @private
+   * @param {RegisteredPlugin} plugin - The plugin for which to retrieve the latest version.
+   * @returns {Promise<void>} A promise that resolves when the latest version is retrieved and actions are performed.
+   */
+  private async getPluginLatestVersion(plugin: RegisteredPlugin) {
+    this.getLatestVersion(plugin.name)
+      .then(async (latestVersion) => {
+        plugin.latestVersion = latestVersion;
+        await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
+        if (plugin.version !== latestVersion) this.log.warn(`The plugin ${plg}${plugin.name}${wr} is out of date. Current version: ${plugin.version}, Latest version: ${latestVersion}`);
+        else this.log.info(`The plugin ${plg}${plugin.name}${nf} is up to date. Current version: ${plugin.version}, Latest version: ${latestVersion}`);
+      })
+      .catch((error: Error) => {
+        this.log.error(`Error getting ${plugin.name} latest version: ${error.message}`);
+        error.stack && this.log.debug(error.stack);
+      });
   }
 
   /**

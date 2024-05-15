@@ -1,21 +1,24 @@
 // Header.js
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Tooltip, Button, createTheme } from '@mui/material';
+import { Tooltip, Button, createTheme, Backdrop, CircularProgress, ThemeProvider } from '@mui/material';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
-import info from './Settings';
 
-/*
-*/
 
 export const theme = createTheme({
+  components: {
+    MuiTooltip: {
+      defaultProps: {
+        placement: 'top-end', 
+        arrow: true,
+      },
+    },
+  },
   palette: {
     primary: {
-      main: '#4CAF50', // your custom primary color
+      main: '#4CAF50',
     },
   },
 });
@@ -60,6 +63,15 @@ function Header() {
   const handleSponsorClick = () => {
     window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
   };
+
+  const handleHelp = (row) => {
+    window.open(`https://github.com/Luligu/matterbridge/blob/main/README.md`, '_blank');
+  };
+
+  const handleChangelog = () => {
+    window.open(`https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md`, '_blank');
+  };
+
 
   const handleUpdateClick = () => {
     sendCommandToMatterbridge('update','now');
@@ -114,6 +126,7 @@ function Header() {
 
   return (
     <div className="header">
+    <ThemeProvider theme={theme}>
       <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '30px' }} />
       <h2>Matterbridge</h2>
       <nav>
@@ -126,12 +139,16 @@ function Header() {
         <Tooltip title="Sponsor Matterbridge and its plugins">
           <span className="status-sponsor" onClick={handleSponsorClick}>Sponsor</span> 
         </Tooltip>        
-        <Tooltip title="Matterbridge version">
-          {matterbridgeInfo.matterbridgeLatestVersion === undefined || matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion ?
-            <span className="status-information" style={{ cursor: 'default' }}>v{matterbridgeInfo.matterbridgeVersion}</span> :
-            <span className="status-warning" onClick={handleUpdateClick}>current v{matterbridgeInfo.matterbridgeVersion} latest v{matterbridgeInfo.matterbridgeLatestVersion}</span> 
-          }  
-        </Tooltip>        
+        {matterbridgeInfo.matterbridgeLatestVersion === undefined || matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion ?
+          <Tooltip title="Matterbridge version"><span className="status-information" onClick={handleChangelog}>v{matterbridgeInfo.matterbridgeVersion}</span></Tooltip> :
+          <Tooltip title="New Matterbridge version available"><span className="status-warning" onClick={handleChangelog}>current v{matterbridgeInfo.matterbridgeVersion} latest v{matterbridgeInfo.matterbridgeLatestVersion}</span></Tooltip> 
+        }  
+        <Tooltip title="Matterbridge help">
+          <span className="status-information" onClick={handleHelp}>help</span>
+        </Tooltip>
+        <Tooltip title="Matterbridge version history">
+          <span className="status-information" onClick={handleChangelog}>info</span>
+        </Tooltip>
         {matterbridgeInfo.bridgeMode !== '' ? (        
           <Tooltip title="Bridge mode">
             <span className="status-information" style={{ cursor: 'default' }}>{matterbridgeInfo.bridgeMode}</span>
@@ -157,6 +174,7 @@ function Header() {
           <CircularProgress color="inherit" />
         </Backdrop>
       </div>
+    </ThemeProvider>  
     </div>
   );
 }
