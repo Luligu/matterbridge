@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.16] - 2024-05-15
+
+### Added
+
+- [frontend]: Added check version interval.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.2.15] - 2024-05-14
 
 ### Added
