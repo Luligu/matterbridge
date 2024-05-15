@@ -1,13 +1,11 @@
 // Header.js
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Tooltip, Button, createTheme } from '@mui/material';
+import { Tooltip, Button, createTheme, IconButton, Backdrop, CircularProgress } from '@mui/material';
+import { Help, Announcement } from '@mui/icons-material';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
-import info from './Settings';
 
 /*
 */
@@ -61,9 +59,14 @@ function Header() {
     window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
   };
 
-  const handleChangelogPlugin = () => {
+  const handleHelp = (row) => {
+    window.open(`https://github.com/Luligu/matterbridge/blob/main/README.md`, '_blank');
+  };
+
+  const handleChangelog = () => {
     window.open(`https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md`, '_blank');
   };
+
 
   const handleUpdateClick = () => {
     sendCommandToMatterbridge('update','now');
@@ -132,10 +135,16 @@ function Header() {
         </Tooltip>        
         <Tooltip title="Matterbridge version">
           {matterbridgeInfo.matterbridgeLatestVersion === undefined || matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion ?
-            <span className="status-information" onClick={handleChangelogPlugin}>v{matterbridgeInfo.matterbridgeVersion}</span> :
+            <span className="status-information" onClick={handleChangelog}>v{matterbridgeInfo.matterbridgeVersion}</span> :
             <span className="status-warning" onClick={handleUpdateClick}>current v{matterbridgeInfo.matterbridgeVersion} latest v{matterbridgeInfo.matterbridgeLatestVersion}</span> 
           }  
-        </Tooltip>        
+        </Tooltip>  
+        <Tooltip title="Matterbridge help">
+          <span className="status-information" onClick={handleHelp}>help</span>
+        </Tooltip>
+        <Tooltip title="Matterbridge version history">
+          <span className="status-information" onClick={handleChangelog}>info</span>
+        </Tooltip>
         {matterbridgeInfo.bridgeMode !== '' ? (        
           <Tooltip title="Bridge mode">
             <span className="status-information" style={{ cursor: 'default' }}>{matterbridgeInfo.bridgeMode}</span>
