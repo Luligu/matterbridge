@@ -1,7 +1,7 @@
 // Home.js
 import React, { useEffect, useState, useRef } from 'react';
 import { StatusIndicator } from './StatusIndicator';
-import { sendCommandToMatterbridge } from './Header';
+import { sendCommandToMatterbridge, theme } from './Header';
 import WebSocketComponent from './WebSocketComponent';
 
 // @mui
@@ -171,6 +171,7 @@ function Home() {
     window.open(`https://github.com/Luligu/${plugins[row].name}/blob/main/CHANGELOG.md`, '_blank');
   };
 
+  /*
   const theme = createTheme({
     components: {
       MuiTooltip: {
@@ -181,6 +182,7 @@ function Home() {
       },
     },
   });
+  */
 
   /*
         {matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
