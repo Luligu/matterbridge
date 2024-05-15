@@ -1,19 +1,24 @@
 // Header.js
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Tooltip, Button, createTheme, IconButton, Backdrop, CircularProgress } from '@mui/material';
-import { Help, Announcement } from '@mui/icons-material';
+import { Tooltip, Button, createTheme, Backdrop, CircularProgress, ThemeProvider } from '@mui/material';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
-/*
-*/
 
 export const theme = createTheme({
+  components: {
+    MuiTooltip: {
+      defaultProps: {
+        placement: 'top-end', 
+        arrow: true,
+      },
+    },
+  },
   palette: {
     primary: {
-      main: '#4CAF50', // your custom primary color
+      main: '#4CAF50',
     },
   },
 });
@@ -121,6 +126,7 @@ function Header() {
 
   return (
     <div className="header">
+    <ThemeProvider theme={theme}>
       <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '30px' }} />
       <h2>Matterbridge</h2>
       <nav>
@@ -168,6 +174,7 @@ function Header() {
           <CircularProgress color="inherit" />
         </Backdrop>
       </div>
+    </ThemeProvider>  
     </div>
   );
 }

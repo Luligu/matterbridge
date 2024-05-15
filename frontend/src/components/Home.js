@@ -170,6 +170,18 @@ function Home() {
     console.log('handleChangelogPlugin row:', row, 'plugin:', plugins[row].name);
     window.open(`https://github.com/Luligu/${plugins[row].name}/blob/main/CHANGELOG.md`, '_blank');
   };
+
+  const theme = createTheme({
+    components: {
+      MuiTooltip: {
+        defaultProps: {
+          placement: 'top-end', 
+          arrow: true,
+        },
+      },
+    },
+  });
+
   /*
         {matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
   */
@@ -179,6 +191,8 @@ function Home() {
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0', padding: '0' }}>
+
+    <ThemeProvider theme={theme}>
 
       <Dialog  open={openConfig} onClose={handleCloseConfig} maxWidth='600px' PaperProps={{style: { border: "2px solid #ddd", backgroundColor: '#c4c2c2', boxShadow: '5px 5px 10px #888'}}}>
         <DialogTitle gap={'20px'}>
@@ -276,6 +290,7 @@ function Home() {
         </div>
 
       </div>
+    </ThemeProvider>  
     </div>
   );
 }
