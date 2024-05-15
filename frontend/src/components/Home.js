@@ -1,27 +1,24 @@
 // Home.js
 import React, { useEffect, useState, useRef } from 'react';
-import QRCode from 'qrcode.react';
 import { StatusIndicator } from './StatusIndicator';
-import QrCode2Icon from '@mui/icons-material/QrCode2';
-import { Tooltip, IconButton, Button, createTheme, ThemeProvider } from '@mui/material';
 import { sendCommandToMatterbridge } from './Header';
 import WebSocketComponent from './WebSocketComponent';
 
-//import Snackbar from '@mui/material/Snackbar';
-//import Alert from '@mui/material/Alert';
-//import TextField from '@mui/material/TextField';
-import { Dialog, DialogTitle, DialogContent, MenuItem, TextField, Alert, Snackbar } from '@mui/material';
-import { DeleteForever, Download, Remove, Add, Unpublished, PublishedWithChanges, Settings, Favorite, Help, Announcement } from '@mui/icons-material';
+// @mui
+import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip, IconButton, Button, createTheme, ThemeProvider } from '@mui/material';
+import { DeleteForever, Download, Remove, Add, Unpublished, PublishedWithChanges, Settings, Favorite, Help, Announcement, QrCode2 } from '@mui/icons-material';
 
-// import path from 'path';
+// @rjsf
+// import Form from '@rjsf/core';
+import Form from '@rjsf/mui';
+import validator from '@rjsf/validator-ajv8';
+
+import QRCode from 'qrcode.react';
 
 // npm install @mui/material @emotion/react @emotion/styled
 // npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
 // npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8 @rjsf/mui
 
-// import Form from '@rjsf/core';
-import Form from '@rjsf/mui';
-import validator from '@rjsf/validator-ajv8';
 
 function Home() {
   const [wssHost, setWssHost] = useState(null);
@@ -225,7 +222,7 @@ function Home() {
                 <td className="table-content">{plugin.registeredDevices}</td>
                 <td className="table-content">  
                   <>
-                    {plugin.qrPairingCode ? <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleSelectQRCode(index)} size="small"><QrCode2Icon /></IconButton></Tooltip> : <></>}
+                    {plugin.qrPairingCode ? <Tooltip title="Scan the QRCode"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleSelectQRCode(index)} size="small"><QrCode2 /></IconButton></Tooltip> : <></>}
                     <Tooltip title="Plugin config"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleConfigPlugin(index)} size="small"><Settings /></IconButton></Tooltip>
                     <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleRemovePlugin(index)} size="small"><DeleteForever /></IconButton></Tooltip>
                     {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><Unpublished /></IconButton></Tooltip> : <></>}
