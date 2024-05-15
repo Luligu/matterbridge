@@ -551,7 +551,7 @@ export class Matterbridge extends EventEmitter {
           this.getPluginLatestVersion(plugin);
         });
       },
-      10 * 60 * 1000,
+      60 * 60 * 1000,
     );
 
     if (hasParameter('test')) {

@@ -11,7 +11,7 @@ import WebSocketComponent from './WebSocketComponent';
 //import Alert from '@mui/material/Alert';
 //import TextField from '@mui/material/TextField';
 import { Dialog, DialogTitle, DialogContent, MenuItem, TextField, Alert, Snackbar } from '@mui/material';
-import { DeleteForever, Download, Remove, Add, Unpublished, PublishedWithChanges, Settings, Favorite } from '@mui/icons-material';
+import { DeleteForever, Download, Remove, Add, Unpublished, PublishedWithChanges, Settings, Favorite, Help, Announcement } from '@mui/icons-material';
 
 // import path from 'path';
 
@@ -163,6 +163,16 @@ function Home() {
     console.log('handleSponsorPlugin row:', row, 'plugin:', plugins[row].name);
     window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
   };
+
+  const handleHelpPlugin = (row) => {
+    console.log('handleHelpPlugin row:', row, 'plugin:', plugins[row].name);
+    window.open(`https://github.com/Luligu/${plugins[row].name}/blob/main/README.md`, '_blank');
+  };
+
+  const handleChangelogPlugin = (row) => {
+    console.log('handleChangelogPlugin row:', row, 'plugin:', plugins[row].name);
+    window.open(`https://github.com/Luligu/${plugins[row].name}/blob/main/CHANGELOG.md`, '_blank');
+  };
   /*
         {matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
   */
@@ -220,6 +230,8 @@ function Home() {
                     <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleRemovePlugin(index)} size="small"><DeleteForever /></IconButton></Tooltip>
                     {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><Unpublished /></IconButton></Tooltip> : <></>}
                     {!plugin.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><PublishedWithChanges /></IconButton></Tooltip> : <></>}
+                    <Tooltip title="Plugin help"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleHelpPlugin(index)} size="small"><Help /></IconButton></Tooltip>
+                    <Tooltip title="Plugin version history"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleChangelogPlugin(index)} size="small"><Announcement /></IconButton></Tooltip>
                     <Tooltip title="Sponsor the plugin"><IconButton style={{padding: 0, color: '#b6409c'}} className="PluginsIconButton" onClick={() => handleSponsorPlugin(index)} size="small"><Favorite /></IconButton></Tooltip>
                   </>
                 </td>

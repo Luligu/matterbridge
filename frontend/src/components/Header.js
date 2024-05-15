@@ -61,6 +61,10 @@ function Header() {
     window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
   };
 
+  const handleChangelogPlugin = () => {
+    window.open(`https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md`, '_blank');
+  };
+
   const handleUpdateClick = () => {
     sendCommandToMatterbridge('update','now');
     setOpen(true);
@@ -128,7 +132,7 @@ function Header() {
         </Tooltip>        
         <Tooltip title="Matterbridge version">
           {matterbridgeInfo.matterbridgeLatestVersion === undefined || matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion ?
-            <span className="status-information" style={{ cursor: 'default' }}>v{matterbridgeInfo.matterbridgeVersion}</span> :
+            <span className="status-information" onClick={handleChangelogPlugin}>v{matterbridgeInfo.matterbridgeVersion}</span> :
             <span className="status-warning" onClick={handleUpdateClick}>current v{matterbridgeInfo.matterbridgeVersion} latest v{matterbridgeInfo.matterbridgeLatestVersion}</span> 
           }  
         </Tooltip>        

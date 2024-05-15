@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - [frontend]: Added check version interval.
+- [frontend]: Added help and version information icons for plugins.
+- [frontend]: Added version information for Matterbridge (Click on the version badge).
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
