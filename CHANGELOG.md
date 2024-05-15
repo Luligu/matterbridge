@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- [frontend]: Frontend updated to 1.0.0.
 - [frontend]: Added check version interval.
 - [frontend]: Added help and version information icons for plugins.
 - [frontend]: Added version information for Matterbridge (Click on the version badge).

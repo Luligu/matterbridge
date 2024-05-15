@@ -135,7 +135,7 @@ function Header() {
         </Tooltip>        
         {matterbridgeInfo.matterbridgeLatestVersion === undefined || matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion ?
           <Tooltip title="Matterbridge version"><span className="status-information" onClick={handleChangelog}>v{matterbridgeInfo.matterbridgeVersion}</span></Tooltip> :
-          <Tooltip title="New Matterbridge version available"><span className="status-warning" onClick={handleUpdateClick}>current v{matterbridgeInfo.matterbridgeVersion} latest v{matterbridgeInfo.matterbridgeLatestVersion}</span></Tooltip> 
+          <Tooltip title="New Matterbridge version available"><span className="status-warning" onClick={handleChangelog}>current v{matterbridgeInfo.matterbridgeVersion} latest v{matterbridgeInfo.matterbridgeLatestVersion}</span></Tooltip> 
         }  
         <Tooltip title="Matterbridge help">
           <span className="status-information" onClick={handleHelp}>help</span>
