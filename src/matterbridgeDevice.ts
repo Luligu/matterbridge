@@ -22,18 +22,21 @@
  */
 
 import {
+  Attributes,
   BasicInformationCluster,
   BooleanState,
   BooleanStateCluster,
   // BridgedDeviceBasicInformationCluster,
   ClusterServer,
   ClusterServerHandlers,
+  ClusterServerObj,
   ColorControl,
   ColorControlCluster,
   DoorLock,
   DoorLockCluster,
   ElectricalMeasurement,
   ElectricalMeasurementCluster,
+  Events,
   FixedLabelCluster,
   FlowMeasurement,
   FlowMeasurementCluster,
@@ -226,19 +229,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     includeServerList.forEach((clusterId) => {
       this.log.debug(`- with cluster: ${hk}${clusterId}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
     });
-    if (includeServerList.includes(Identify.Cluster.id)) this.addClusterServer(this.getDefaultIdentifyClusterServer());
-    if (includeServerList.includes(Groups.Cluster.id)) this.addClusterServer(this.getDefaultGroupsClusterServer());
-    if (includeServerList.includes(Scenes.Cluster.id)) this.addClusterServer(this.getDefaultScenesClusterServer());
-    if (includeServerList.includes(OnOff.Cluster.id)) this.addClusterServer(this.getDefaultOnOffClusterServer());
-    if (includeServerList.includes(TemperatureMeasurement.Cluster.id)) this.addClusterServer(this.getDefaultTemperatureMeasurementClusterServer());
-    if (includeServerList.includes(RelativeHumidityMeasurement.Cluster.id)) this.addClusterServer(this.getDefaultRelativeHumidityMeasurementClusterServer());
-    if (includeServerList.includes(PressureMeasurement.Cluster.id)) this.addClusterServer(this.getDefaultPressureMeasurementClusterServer());
-    if (includeServerList.includes(FlowMeasurement.Cluster.id)) this.addClusterServer(this.getDefaultFlowMeasurementClusterServer());
-    if (includeServerList.includes(BooleanState.Cluster.id)) this.addClusterServer(this.getDefaultBooleanStateClusterServer());
-    if (includeServerList.includes(OccupancySensing.Cluster.id)) this.addClusterServer(this.getDefaultOccupancySensingClusterServer());
-    if (includeServerList.includes(IlluminanceMeasurement.Cluster.id)) this.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer());
-    if (includeServerList.includes(EveHistory.Cluster.id)) this.addClusterServer(this.getDefaultStaticEveHistoryClusterServer());
-    if (includeServerList.includes(ElectricalMeasurement.Cluster.id)) this.addClusterServer(this.getDefaultElectricalMeasurementClusterServer());
+    this.addClusterServerFromList(this, includeServerList);
   }
 
   /**
@@ -262,23 +253,43 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       this.log.debug(`- with cluster: ${hk}${clusterId}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
     });
 
-    if (includeServerList.includes(Identify.Cluster.id)) child.addClusterServer(this.getDefaultIdentifyClusterServer());
-    if (includeServerList.includes(Groups.Cluster.id)) child.addClusterServer(this.getDefaultGroupsClusterServer());
-    if (includeServerList.includes(Scenes.Cluster.id)) child.addClusterServer(this.getDefaultScenesClusterServer());
-    if (includeServerList.includes(OnOff.Cluster.id)) child.addClusterServer(this.getDefaultOnOffClusterServer());
-    if (includeServerList.includes(TemperatureMeasurement.Cluster.id)) child.addClusterServer(this.getDefaultTemperatureMeasurementClusterServer());
-    if (includeServerList.includes(RelativeHumidityMeasurement.Cluster.id)) child.addClusterServer(this.getDefaultRelativeHumidityMeasurementClusterServer());
-    if (includeServerList.includes(PressureMeasurement.Cluster.id)) child.addClusterServer(this.getDefaultPressureMeasurementClusterServer());
-    if (includeServerList.includes(FlowMeasurement.Cluster.id)) child.addClusterServer(this.getDefaultFlowMeasurementClusterServer());
-    if (includeServerList.includes(BooleanState.Cluster.id)) child.addClusterServer(this.getDefaultBooleanStateClusterServer());
-    if (includeServerList.includes(OccupancySensing.Cluster.id)) child.addClusterServer(this.getDefaultOccupancySensingClusterServer());
-    if (includeServerList.includes(IlluminanceMeasurement.Cluster.id)) child.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer());
-    if (includeServerList.includes(EveHistory.Cluster.id)) child.addClusterServer(this.getDefaultStaticEveHistoryClusterServer());
-    if (includeServerList.includes(ElectricalMeasurement.Cluster.id)) child.addClusterServer(this.getDefaultElectricalMeasurementClusterServer());
+    this.addClusterServerFromList(child, includeServerList);
     this.addChildEndpoint(child);
     return child;
   }
 
+  /**
+   * Adds cluster servers to the specified endpoint based on the provided server list.
+   * 
+   * @param {Endpoint} endpoint - The endpoint to add cluster servers to.
+   * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
+   * @returns void
+   */
+  addClusterServerFromList(endpoint: Endpoint, includeServerList: ClusterId[]): void {
+    if (includeServerList.includes(Identify.Cluster.id)) endpoint.addClusterServer(this.getDefaultIdentifyClusterServer());
+    if (includeServerList.includes(Groups.Cluster.id)) endpoint.addClusterServer(this.getDefaultGroupsClusterServer());
+    if (includeServerList.includes(Scenes.Cluster.id)) endpoint.addClusterServer(this.getDefaultScenesClusterServer());
+    if (includeServerList.includes(OnOff.Cluster.id)) endpoint.addClusterServer(this.getDefaultOnOffClusterServer());
+    if (includeServerList.includes(LevelControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultLevelControlClusterServer());
+    if (includeServerList.includes(ColorControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultColorControlClusterServer());
+    if (includeServerList.includes(Switch.Cluster.id)) endpoint.addClusterServer(this.getDefaultSwitchClusterServer());
+    if (includeServerList.includes(DoorLock.Cluster.id)) endpoint.addClusterServer(this.getDefaultDoorLockClusterServer());
+    if (includeServerList.includes(Thermostat.Cluster.id)) endpoint.addClusterServer(this.getDefaultThermostatClusterServer());
+    if (includeServerList.includes(TimeSync.Cluster.id)) endpoint.addClusterServer(this.getDefaultTimeSyncClusterServer());
+    if (includeServerList.includes(WindowCovering.Cluster.id)) endpoint.addClusterServer(this.getDefaultWindowCoveringClusterServer());
+    if (includeServerList.includes(TemperatureMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultTemperatureMeasurementClusterServer());
+    if (includeServerList.includes(RelativeHumidityMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultRelativeHumidityMeasurementClusterServer());
+    if (includeServerList.includes(PressureMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultPressureMeasurementClusterServer());
+    if (includeServerList.includes(FlowMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultFlowMeasurementClusterServer());
+    if (includeServerList.includes(BooleanState.Cluster.id)) endpoint.addClusterServer(this.getDefaultBooleanStateClusterServer());
+    if (includeServerList.includes(OccupancySensing.Cluster.id)) endpoint.addClusterServer(this.getDefaultOccupancySensingClusterServer());
+    if (includeServerList.includes(IlluminanceMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer());
+    if (includeServerList.includes(EveHistory.Cluster.id)) endpoint.addClusterServer(this.getDefaultStaticEveHistoryClusterServer());
+    if (includeServerList.includes(ElectricalMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalMeasurementClusterServer());
+    if (includeServerList.includes(AirQuality.Cluster.id)) endpoint.addClusterServer(this.getDefaultAirQualityClusterServer());
+    if (includeServerList.includes(TvocMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultTvocMeasurementClusterServer());
+  }
+    
   /**
    * Retrieves a child endpoint by its name.
    *
@@ -1352,7 +1363,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           // eslint-disable-next-line no-console
           console.log(
             `goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
-              `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
+            `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
           );
           await this.commandHandler.executeHandler('goToLiftPercentage', data);
         },
@@ -1372,8 +1383,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Sets the window covering target position as the current position and stops the movement.
    */
-  setWindowCoveringTargetAsCurrentAndStopped() {
-    const windowCoveringCluster = this.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
+  setWindowCoveringTargetAsCurrentAndStopped(endpoint?: Endpoint) {
+    if (!endpoint) endpoint = this;
+    const windowCoveringCluster = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (windowCoveringCluster) {
       const position = windowCoveringCluster.getCurrentPositionLiftPercent100thsAttribute();
       if (position !== null) {
@@ -1395,8 +1407,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param target - The target position of the window covering.
    * @param status - The movement status of the window covering.
    */
-  setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus) {
-    const windowCoveringCluster = this.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
+  setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus, endpoint?: Endpoint) {
+    if (!endpoint) endpoint = this;
+    const windowCoveringCluster = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (windowCoveringCluster) {
       windowCoveringCluster.setCurrentPositionLiftPercent100thsAttribute(current);
       windowCoveringCluster.setTargetPositionLiftPercent100thsAttribute(target);
@@ -1414,8 +1427,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * Sets the status of the window covering.
    * @param {WindowCovering.MovementStatus} status - The movement status to set.
    */
-  setWindowCoveringStatus(status: WindowCovering.MovementStatus) {
-    const windowCovering = this.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
+  setWindowCoveringStatus(status: WindowCovering.MovementStatus, endpoint?: Endpoint) {
+    if (!endpoint) endpoint = this;
+    const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (!windowCovering) return;
     windowCovering.setOperationalStatusAttribute({ global: status, lift: status, tilt: 0 });
     // eslint-disable-next-line no-console
@@ -1426,8 +1440,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * Retrieves the status of the window covering.
    * @returns The global operational status of the window covering.
    */
-  getWindowCoveringStatus() {
-    const windowCovering = this.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
+  getWindowCoveringStatus(endpoint?: Endpoint) {
+    if (!endpoint) endpoint = this;
+    const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (!windowCovering) return undefined;
     const status = windowCovering.getOperationalStatusAttribute();
     // eslint-disable-next-line no-console
@@ -1440,8 +1455,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param position - The position to set, specified as a number.
    */
-  setWindowCoveringTargetAndCurrentPosition(position: number) {
-    const windowCovering = this.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift));
+  setWindowCoveringTargetAndCurrentPosition(position: number, endpoint?: Endpoint) {
+    if (!endpoint) endpoint = this;
+    const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift));
     if (!windowCovering) return;
     windowCovering.setCurrentPositionLiftPercent100thsAttribute(position);
     windowCovering.setTargetPositionLiftPercent100thsAttribute(position);

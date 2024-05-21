@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.17] - 2024-05-22
+
+### Changed
+- [matterbridge]: Preliminary integration for the new matterbridge-shelly plugin
+
+### Added
+- [device]: Added new method addClusterServerFromList
+
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.2.16] - 2024-05-15
 
 ### Changed
