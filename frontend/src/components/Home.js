@@ -73,28 +73,41 @@ function Home() {
   /*
   */
   useEffect(() => {
+    // Fetch settings from the backend
+    const fetchSettings = () => {
 
-    fetch('/api/settings')
-      .then(response => response.json())
-      .then(data => { 
-        console.log('/api/settings:', data); 
-        setWssHost(data.wssHost); 
-        setQrCode(data.qrPairingCode); 
-        setPairingCode(data.manualPairingCode);
-        setSystemInfo(data.systemInformation);
-        setMatterbridgeInfo(data.matterbridgeInformation);
-        localStorage.setItem('wssHost', data.wssHost);
-        localStorage.setItem('manualPairingCode', data.manualPairingCode); 
-        localStorage.setItem('qrPairingCode', data.qrPairingCode); 
-        localStorage.setItem('systemInformation', data.systemInformation); 
-        localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
-      })
-      .catch(error => console.error('Error fetching settings:', error));
+      fetch('/api/settings')
+        .then(response => response.json())
+        .then(data => { 
+          console.log('From home /api/settings:', data); 
+          setWssHost(data.wssHost); 
+          setQrCode(data.qrPairingCode); 
+          setPairingCode(data.manualPairingCode);
+          setSystemInfo(data.systemInformation);
+          setMatterbridgeInfo(data.matterbridgeInformation);
+          localStorage.setItem('wssHost', data.wssHost);
+          localStorage.setItem('manualPairingCode', data.manualPairingCode); 
+          localStorage.setItem('qrPairingCode', data.qrPairingCode); 
+          localStorage.setItem('systemInformation', data.systemInformation); 
+          localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
+        })
+        .catch(error => console.error('Error fetching settings:', error));
 
-    fetch('/api/plugins')
-      .then(response => response.json())
-      .then(data => { setPlugins(data); console.log('/api/plugins:', data)})
-      .catch(error => console.error('Error fetching plugins:', error));
+      fetch('/api/plugins')
+        .then(response => response.json())
+        .then(data => { 
+          console.log('From home /api/plugins:', data)
+          setPlugins(data); 
+        })
+        .catch(error => console.error('Error fetching plugins:', error));
+    };  
+
+    // Call fetchSettings immediately and then every 10 minutes
+    fetchSettings();
+    const intervalId = setInterval(fetchSettings, 10 * 60 * 1000);
+  
+    // Clear the interval when the component is unmounted
+    return () => clearInterval(intervalId);
 
   }, []); // The empty array causes this effect to run only once
 
@@ -170,19 +183,6 @@ function Home() {
     console.log('handleChangelogPlugin row:', row, 'plugin:', plugins[row].name);
     window.open(`https://github.com/Luligu/${plugins[row].name}/blob/main/CHANGELOG.md`, '_blank');
   };
-
-  /*
-  const theme = createTheme({
-    components: {
-      MuiTooltip: {
-        defaultProps: {
-          placement: 'top-end', 
-          arrow: true,
-        },
-      },
-    },
-  });
-  */
 
   /*
         {matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}

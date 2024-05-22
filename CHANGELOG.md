@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - [device]: Added new method addClusterServerFromList
+- [frontend]: Fetch data every 10 minutes
 
 
 <a href="https://www.buymeacoffee.com/luligugithub">
