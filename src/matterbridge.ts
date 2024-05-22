@@ -2220,7 +2220,7 @@ export class Matterbridge extends EventEmitter {
       commissioningChangedCallback: async (fabricIndex) => {
         const fabricInfo = commissioningServer.getCommissionedFabricInformation(fabricIndex);
         this.log.debug(`*Commissioning changed on fabric ${fabricIndex} for ${plg}${pluginName}${nf}`, debugStringify(fabricInfo));
-        if (fabricInfo.length === 0) {
+        if (commissioningServer.getCommissionedFabricInformation().length === 0) {
           this.log.warn(`*Commissioning removed from fabric ${fabricIndex} for ${plg}${pluginName}${wr}. Resetting the commissioning server ...`);
           await commissioningServer.factoryReset();
           if (pluginName === 'Matterbridge') {
