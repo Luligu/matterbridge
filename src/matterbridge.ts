@@ -24,7 +24,7 @@
 import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
 
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
-import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr, RED, GREEN } from 'node-ansi-logger';
+import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr, RED, GREEN, zb } from 'node-ansi-logger';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { promises as fs } from 'fs';
 import { ExecException, exec, spawn } from 'child_process';
@@ -1999,6 +1999,10 @@ export class Matterbridge extends EventEmitter {
       await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
     } else {
       this.log.info(`*The commissioning server on port ${commissioningServer.getPort()} for ${plg}${pluginName}${nf} is already commissioned . Waiting for controllers to connect ...`);
+      const fabricInfo = commissioningServer.getCommissionedFabricInformation();
+      fabricInfo?.forEach((info) => {
+        this.log.info(`- fabric index ${zb}${info.fabricIndex}${nf} id ${zb}${info.fabricId}${nf} vendor ${zb}${info.rootVendorId}${nf} ${this.getVendorIdName(info.rootVendorId)} ${info.label}`);
+      });
       if (pluginName !== 'Matterbridge') {
         const plugin = this.findPlugin(pluginName);
         if (plugin) {
@@ -2064,6 +2068,38 @@ export class Matterbridge extends EventEmitter {
     if (basicInformationCluster && basicInformationCluster.triggerReachableChangedEvent) basicInformationCluster.triggerReachableChangedEvent({ reachableNewValue: reachable });
   }
 
+  private getVendorIdName = (vendorId: number | undefined) => {
+    if (!vendorId) return '';
+    let vendorName = '';
+    switch (vendorId) {
+      case 4937:
+        vendorName = '(AppleHome)';
+        break;
+      case 4996:
+        vendorName = '(AppleKeyChain)';
+        break;
+      case 4362:
+        vendorName = '(SmartThings)';
+        break;
+      case 4939:
+        vendorName = '(HomeAssistant)';
+        break;
+      case 24582:
+        vendorName = '(GoogleHome)';
+        break;
+      case 4701:
+        vendorName = '(Tuya)';
+        break;
+      case 4742:
+        vendorName = '(eWeLink)';
+        break;
+      default:
+        vendorName = '(unknown)';
+        break;
+    }
+    return vendorName;
+  };
+
   /**
    * Creates a matter commissioning server.
    *
@@ -2072,38 +2108,6 @@ export class Matterbridge extends EventEmitter {
    * @returns {CommissioningServer} The created commissioning server.
    */
   private async createCommisioningServer(context: StorageContext, pluginName: string): Promise<CommissioningServer> {
-    const getVendorIdName = (vendorId: number | undefined) => {
-      if (!vendorId) return '';
-      let vendorName = '';
-      switch (vendorId) {
-        case 4937:
-          vendorName = '(AppleHome)';
-          break;
-        case 4996:
-          vendorName = '(AppleKeyChain)';
-          break;
-        case 4362:
-          vendorName = '(SmartThings)';
-          break;
-        case 4939:
-          vendorName = '(HomeAssistant)';
-          break;
-        case 24582:
-          vendorName = '(GoogleHome)';
-          break;
-        case 4701:
-          vendorName = '(Tuya)';
-          break;
-        case 4742:
-          vendorName = '(eWeLink)';
-          break;
-        default:
-          vendorName = '(unknown)';
-          break;
-      }
-      return vendorName;
-    };
-
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db}`);
     const deviceName = await context.get<string>('deviceName');
     const deviceType = await context.get<DeviceTypeId>('deviceType');
@@ -2152,9 +2156,9 @@ export class Matterbridge extends EventEmitter {
         const info = commissioningServer.getActiveSessionInformation(fabricIndex);
         let connected = false;
         info.forEach((session) => {
-          this.log.info(`*Active session changed on fabric ${fabricIndex} ${session.fabric?.rootVendorId}${getVendorIdName(session.fabric?.rootVendorId)}/${session.fabric?.label} for ${plg}${pluginName}${nf}`, debugStringify(session));
+          this.log.info(`*Active session changed on fabric ${fabricIndex} ${session.fabric?.rootVendorId}${this.getVendorIdName(session.fabric?.rootVendorId)}/${session.fabric?.label} for ${plg}${pluginName}${nf}`, debugStringify(session));
           if (session.isPeerActive === true && session.secure === true && session.numberOfActiveSubscriptions >= 1) {
-            this.log.info(`*Controller ${session.fabric?.rootVendorId}${getVendorIdName(session.fabric?.rootVendorId)}/${session.fabric?.label} connected to ${plg}${pluginName}${nf} on session ${session.name}`);
+            this.log.info(`*Controller ${session.fabric?.rootVendorId} ${this.getVendorIdName(session.fabric?.rootVendorId)}/${session.fabric?.label} connected to ${plg}${pluginName}${nf} on session ${session.name}`);
             connected = true;
           }
         });
@@ -2214,9 +2218,9 @@ export class Matterbridge extends EventEmitter {
         }
       },
       commissioningChangedCallback: async (fabricIndex) => {
-        const info = commissioningServer.getCommissionedFabricInformation(fabricIndex);
-        this.log.debug(`*Commissioning changed on fabric ${fabricIndex} for ${plg}${pluginName}${nf}`, debugStringify(info));
-        if (info.length === 0) {
+        const fabricInfo = commissioningServer.getCommissionedFabricInformation(fabricIndex);
+        this.log.debug(`*Commissioning changed on fabric ${fabricIndex} for ${plg}${pluginName}${nf}`, debugStringify(fabricInfo));
+        if (fabricInfo.length === 0) {
           this.log.warn(`*Commissioning removed from fabric ${fabricIndex} for ${plg}${pluginName}${wr}. Resetting the commissioning server ...`);
           await commissioningServer.factoryReset();
           if (pluginName === 'Matterbridge') {

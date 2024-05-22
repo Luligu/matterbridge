@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - [frontend]: Fetch data in Home page every minute
 - [device]: Added new method addClusterServerFromList
 - [device]: Added ModeSelectClusterServer ()
+- [matterbridge]: Added fabric info in the log on startup
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
