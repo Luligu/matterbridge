@@ -48,7 +48,7 @@ import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageMana
 import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } from '@project-chip/matter-node.js/util';
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
-import { somfytahoma_config, somfytahoma_schema, zigbee2mqtt_config, zigbee2mqtt_schema } from './defaultConfigSchema.js';
+import { shelly_config, shelly_schema, somfytahoma_config, somfytahoma_schema, zigbee2mqtt_config, zigbee2mqtt_schema } from './defaultConfigSchema.js';
 
 // Define an interface of common elements from MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform
 interface MatterbridgePlatform {
@@ -1222,6 +1222,7 @@ export class Matterbridge extends EventEmitter {
           let schema: PlatformSchema;
           if (plugin.name === 'matterbridge-zigbee2mqtt') schema = zigbee2mqtt_schema;
           else if (plugin.name === 'matterbridge-somfy-tahoma') schema = somfytahoma_schema;
+          else if (plugin.name === 'matterbridge-shelly') schema = shelly_schema;
           else
             schema = {
               title: plugin.description,
@@ -1311,6 +1312,7 @@ export class Matterbridge extends EventEmitter {
           let config: PlatformConfig;
           if (plugin.name === 'matterbridge-zigbee2mqtt') config = zigbee2mqtt_config;
           else if (plugin.name === 'matterbridge-somfy-tahoma') config = somfytahoma_config;
+          else if (plugin.name === 'matterbridge-shelly') config = shelly_config;
           else config = { name: plugin.name, type: plugin.type, unregisterOnShutdown: false };
           try {
             await this.writeFile(configFile, JSON.stringify(config, null, 2));

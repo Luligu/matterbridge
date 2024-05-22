@@ -220,3 +220,75 @@ export const somfytahoma_schema: PlatformSchema = {
     },
   },
 };
+
+export const shelly_config: PlatformConfig = {
+  "blackList": [],
+  "whiteList": [],
+  "name": "matterbridge-shelly",
+  "type": "DynamicPlatform",
+  "unregisterOnShutdown": false,
+  "deviceIp": {},
+  "enableMdnsDiscover": true,
+  "enableStorageDiscover": true,
+  "enableConfigDiscover": true
+};
+
+export const shelly_schema: PlatformSchema = {
+  "title": "Matterbridge shelly plugin",
+  "description": "matterbridge-shelly v. 0.0.1 by https://github.com/Luligu",
+  "type": "object",
+  "properties": {
+    "name": {
+      "description": "Plugin name",
+      "type": "string",
+      "readOnly": true
+    },
+    "type": {
+      "description": "Plugin type",
+      "type": "string",
+      "readOnly": true
+    },
+    "blackList": {
+      "description": "The devices in the list will not be exposed.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "whiteList": {
+      "description": "Only the devices in the list will be exposed.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "deviceIp": {
+      "description": "Set the IP address for each device. Enter in the first field the shelly ID of the device and in the second field the IP address.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "enableMdnsDiscover": {
+      "description": "Enable mdns discovery for shelly devices (it will stop after 10 minutes)",
+      "type": "boolean"
+    },
+    "enableStorageDiscover": {
+      "description": "Enable storage discovery for shelly devices (it will load from the storage the devices already registered)",
+      "type": "boolean"
+    },
+    "enableConfigDiscover": {
+      "description": "Enable config discovery for shelly devices (it will load the devices from deviceIp)",
+      "type": "boolean"
+    },
+    "enableBleDiscover": {
+      "description": "Enable ble discovery for shelly devices (under development)",
+      "type": "boolean",
+      "readOnly": true
+    },
+    "unregisterOnShutdown": {
+      "description": "Unregister all devices on shutdown (development only)",
+      "type": "boolean"
+    }
+  }
+}
