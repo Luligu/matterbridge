@@ -23,7 +23,7 @@
  */
 
 /* eslint-disable no-console */
-//import wtf from 'wtfnode';
+// import wtf from 'wtfnode';
 import { Matterbridge } from './matterbridge.js';
 
 let instance: Matterbridge | undefined;
@@ -43,7 +43,7 @@ function registerHandlers() {
 
 async function shutdown() {
   if (process.argv.includes('-debug')) console.log('CLI: received shutdown event, exiting...');
-  //wtf.dump();
+  // wtf.dump();
   process.exit(0);
 }
 

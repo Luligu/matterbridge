@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*** THIS FILE IS GENERATED, DO NOT EDIT ***/
+/** * THIS FILE IS GENERATED, DO NOT EDIT ***/
 /* eslint-disable @typescript-eslint/no-namespace */
 
 import { MutableCluster } from '@project-chip/matter-node.js/cluster';

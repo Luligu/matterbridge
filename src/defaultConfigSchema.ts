@@ -286,6 +286,10 @@ export const shelly_schema: PlatformSchema = {
       type: 'boolean',
       readOnly: true,
     },
+    debugDiscover: {
+      description: 'Enable the debug for the discovery (development only)',
+      type: 'boolean',
+    },
     unregisterOnShutdown: {
       description: 'Unregister all devices on shutdown (development only)',
       type: 'boolean',

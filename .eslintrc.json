@@ -1,7 +1,7 @@
 {
   "plugins": [
     "@typescript-eslint",
-    "@stylistic",
+    //"@stylistic",
     "prettier"
   ],
   "parser": "@typescript-eslint/parser",
@@ -36,6 +36,10 @@
     "max-len": [
       "warn",
       250
+    ],
+    "spaced-comment": [
+      "error",
+      "always"
     ],
     "no-console": [
       "warn"

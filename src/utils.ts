@@ -119,7 +119,7 @@ export function deepEqual(a: any, b: any, excludeProperties: string[] = []): boo
         return false;
       }
       if (!deepEqual(a[prop], b[prop], excludeProperties)) {
-        debugLog(`deepEqual false for !deepEqual(a[${prop}], b[${prop}])` /*, a[prop], b[prop]*/);
+        debugLog(`deepEqual false for !deepEqual(a[${prop}], b[${prop}])` /* , a[prop], b[prop]*/);
         return false;
       }
     }

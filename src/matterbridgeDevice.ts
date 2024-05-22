@@ -1173,7 +1173,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         moveToLevel: async ({ request, attributes }) => {
           // eslint-disable-next-line no-console
           console.log('moveToLevel request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
-          //attributes.currentLevel.setLocal(request.level);
+          // attributes.currentLevel.setLocal(request.level);
           await this.commandHandler.executeHandler('moveToLevel', { request: request, attributes: attributes });
         },
         move: async () => {
@@ -1191,7 +1191,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         moveToLevelWithOnOff: async ({ request, attributes }) => {
           // eslint-disable-next-line no-console
           console.log('moveToLevelWithOnOff request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
-          //attributes.currentLevel.setLocal(request.level);
+          // attributes.currentLevel.setLocal(request.level);
           await this.commandHandler.executeHandler('moveToLevelWithOnOff', { request: request, attributes: attributes });
         },
         moveWithOnOff: async () => {
@@ -1248,7 +1248,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         moveToHue: async ({ request: request, attributes: attributes }) => {
           // eslint-disable-next-line no-console
           console.log('Command moveToHue request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal());
-          //attributes.currentHue.setLocal(request.hue);
+          // attributes.currentHue.setLocal(request.hue);
           this.commandHandler.executeHandler('moveToHue', { request: request, attributes: attributes });
         },
         moveHue: async () => {
@@ -1262,7 +1262,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         moveToSaturation: async ({ request: request, attributes: attributes }) => {
           // eslint-disable-next-line no-console
           console.log('Command moveToSaturation request:', request, 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
-          //attributes.currentSaturation.setLocal(request.saturation);
+          // attributes.currentSaturation.setLocal(request.saturation);
           this.commandHandler.executeHandler('moveToSaturation', { request: request, attributes: attributes });
         },
         moveSaturation: async () => {
@@ -1276,8 +1276,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         moveToHueAndSaturation: async ({ request: request, attributes: attributes }) => {
           // eslint-disable-next-line no-console
           console.log('Command moveToHueAndSaturation request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal(), 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
-          //attributes.currentHue.setLocal(request.hue);
-          //attributes.currentSaturation.setLocal(request.saturation);
+          // attributes.currentHue.setLocal(request.hue);
+          // attributes.currentSaturation.setLocal(request.saturation);
           this.commandHandler.executeHandler('moveToHueAndSaturation', { request: request, attributes: attributes });
         },
         stopMoveStep: async () => {
@@ -1287,7 +1287,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         moveToColorTemperature: async ({ request: request, attributes: attributes }) => {
           // eslint-disable-next-line no-console
           console.log('Command moveToColorTemperature request:', request, 'attributes.colorTemperatureMireds:', attributes.colorTemperatureMireds.getLocal());
-          //attributes.colorTemperatureMireds.setLocal(request.colorTemperatureMireds);
+          // attributes.colorTemperatureMireds.setLocal(request.colorTemperatureMireds);
           this.commandHandler.executeHandler('moveToColorTemperature', { request: request, attributes: attributes });
         },
         moveColorTemperature: async () => {
