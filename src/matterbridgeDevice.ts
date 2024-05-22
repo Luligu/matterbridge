@@ -47,6 +47,8 @@ import {
   IlluminanceMeasurementCluster,
   LevelControl,
   LevelControlCluster,
+  ModeSelect,
+  ModeSelectCluster,
   OccupancySensing,
   OccupancySensingCluster,
   OnOff,
@@ -1548,6 +1550,34 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     this.addFixedLabel('orientation', 'Switch');
     this.addFixedLabel('label', 'Switch');
   }
+
+  getDefaultModeSelectClusterServer(description: string, supportedModes: ModeSelect.ModeOptionStruct[], currentMode = 0, startUpMode = 0) {
+    return ClusterServer(
+      ModeSelectCluster,
+      {
+        description: description,
+        standardNamespace: null,
+        supportedModes: supportedModes,
+        currentMode: currentMode,
+        startUpMode: startUpMode,
+      },
+      {
+        changeToMode: async (data) => {
+          // eslint-disable-next-line no-console
+          console.log('changeToMode', data.request);
+          await this.commandHandler.executeHandler('changeToMode', data);
+        },
+      },
+    );
+  }
+  createDefaultModeSelectClusterServer(endpoint?: Endpoint) {
+    if(!endpoint) endpoint = this;
+    endpoint.addClusterServer(this.getDefaultModeSelectClusterServer('Mode select', [
+      { label: 'Mode 0', mode: 0, semanticTags: [ { mfgCode: VendorId(0xfff1), value: 0 } ] }, 
+      { label: 'Mode 1', mode: 1, semanticTags: [ { mfgCode: VendorId(0xfff1), value: 1 } ] }
+    ]));
+  }
+
 
   /**
    * Get a default occupancy sensing cluster server.
