@@ -1382,8 +1382,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * Sets the window covering target position as the current position and stops the movement.
    */
   setWindowCoveringTargetAsCurrentAndStopped(endpoint?: Endpoint) {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    if (!endpoint) endpoint = this;
+    if (!endpoint) endpoint = this as Endpoint;
     const windowCoveringCluster = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (windowCoveringCluster) {
       const position = windowCoveringCluster.getCurrentPositionLiftPercent100thsAttribute();
@@ -1396,7 +1395,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         });
       }
       // eslint-disable-next-line no-console
-      // console.log(`Set WindowCovering initial currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
+      console.log(`Set WindowCovering initial currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
     }
   }
 
@@ -1407,8 +1406,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param status - The movement status of the window covering.
    */
   setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus, endpoint?: Endpoint) {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    if (!endpoint) endpoint = this;
+    if (!endpoint) endpoint = this as Endpoint;
     const windowCoveringCluster = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (windowCoveringCluster) {
       windowCoveringCluster.setCurrentPositionLiftPercent100thsAttribute(current);
@@ -1420,7 +1418,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       });
     }
     // eslint-disable-next-line no-console
-    // console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
+    console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
   }
 
   /**
@@ -1428,13 +1426,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {WindowCovering.MovementStatus} status - The movement status to set.
    */
   setWindowCoveringStatus(status: WindowCovering.MovementStatus, endpoint?: Endpoint) {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    if (!endpoint) endpoint = this;
+    if (!endpoint) endpoint = this as Endpoint;
     const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (!windowCovering) return;
     windowCovering.setOperationalStatusAttribute({ global: status, lift: status, tilt: 0 });
     // eslint-disable-next-line no-console
-    // console.log(`Set WindowCovering operationalStatus: ${status}`);
+    console.log(`Set WindowCovering operationalStatus: ${status}`);
   }
 
   /**
@@ -1442,13 +1439,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @returns The global operational status of the window covering.
    */
   getWindowCoveringStatus(endpoint?: Endpoint) {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    if (!endpoint) endpoint = this;
+    if (!endpoint) endpoint = this as Endpoint;
     const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (!windowCovering) return undefined;
     const status = windowCovering.getOperationalStatusAttribute();
     // eslint-disable-next-line no-console
-    // console.log(`Get WindowCovering operationalStatus: ${status.global}`);
+    console.log(`Get WindowCovering operationalStatus: ${status.global}`);
     return status.global;
   }
 
@@ -1458,14 +1454,13 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param position - The position to set, specified as a number.
    */
   setWindowCoveringTargetAndCurrentPosition(position: number, endpoint?: Endpoint) {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    if (!endpoint) endpoint = this;
+    if (!endpoint) endpoint = this as Endpoint;
     const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift));
     if (!windowCovering) return;
     windowCovering.setCurrentPositionLiftPercent100thsAttribute(position);
     windowCovering.setTargetPositionLiftPercent100thsAttribute(position);
     // eslint-disable-next-line no-console
-    // console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
+    console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
   }
 
   /**
@@ -1572,8 +1567,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
   createDefaultModeSelectClusterServer(endpoint?: Endpoint) {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    if (!endpoint) endpoint = this;
+    if (!endpoint) endpoint = this as Endpoint;
     endpoint.addClusterServer(
       this.getDefaultModeSelectClusterServer('Mode select', [
         { label: 'Mode 0', mode: 0, semanticTags: [{ mfgCode: VendorId(0xfff1), value: 0 }] },

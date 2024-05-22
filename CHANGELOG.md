@@ -5,13 +5,14 @@ All notable changes to this project will be documented in this file.
 ## [1.2.17] - 2024-05-22
 
 ### Changed
-- [matterbridge]: Preliminary integration for the new matterbridge-shelly plugin
+- [matterbridge]: Preliminary integration for the new matterbridge-shelly plugin (still not published)
+- [matterbridge]: Updated dependencies
+
 
 ### Added
+- [frontend]: Fetch data in Home page every minute
 - [device]: Added new method addClusterServerFromList
-- [frontend]: Fetch data every minute
-- [device]: Added ModeSelectClusterServer
-
+- [device]: Added ModeSelectClusterServer ()
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
