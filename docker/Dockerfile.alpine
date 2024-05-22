@@ -35,4 +35,4 @@ RUN npm -g install matterbridge-eve-weather
 # WORKDIR /app
 # Node modules: /usr/local/lib/node_modules/matterbridge/dist/cli.js
 # Bin: /usr/local/bin/matterbridge
-CMD ["/usr/local/bin/matterbridge", "-bridge", "-docker", "-frontend", "8283", "-port", "5550"]
+CMD ["/usr/local/bin/matterbridge", "-bridge", "-docker", "-frontend", "8283"]
