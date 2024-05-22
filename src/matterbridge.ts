@@ -2156,9 +2156,9 @@ export class Matterbridge extends EventEmitter {
         const info = commissioningServer.getActiveSessionInformation(fabricIndex);
         let connected = false;
         info.forEach((session) => {
-          this.log.info(`*Active session changed on fabric ${fabricIndex} ${session.fabric?.rootVendorId}${this.getVendorIdName(session.fabric?.rootVendorId)}/${session.fabric?.label} for ${plg}${pluginName}${nf}`, debugStringify(session));
+          this.log.info(`*Active session changed on fabric ${fabricIndex} ${session.fabric?.rootVendorId} ${this.getVendorIdName(session.fabric?.rootVendorId)} ${session.fabric?.label} for ${plg}${pluginName}${nf}`, debugStringify(session));
           if (session.isPeerActive === true && session.secure === true && session.numberOfActiveSubscriptions >= 1) {
-            this.log.info(`*Controller ${session.fabric?.rootVendorId} ${this.getVendorIdName(session.fabric?.rootVendorId)}/${session.fabric?.label} connected to ${plg}${pluginName}${nf} on session ${session.name}`);
+            this.log.info(`*Controller ${session.fabric?.rootVendorId} ${this.getVendorIdName(session.fabric?.rootVendorId)} ${session.fabric?.label} connected to ${plg}${pluginName}${nf} on session ${session.name}`);
             connected = true;
           }
         });

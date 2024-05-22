@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [1.2.17] - 2024-05-22
 
 ### Fixed
-- [matterbridge]: Fixed the issue causing the commissioning reset for all fabrics when only one is removed
+- [matterbridge]: Fixed the issue causing the commissioning reset for all fabrics when only one is removed. (Apple uses 2 fabrics: Home app and Key chain).
 
 ### Changed
 - [matterbridge]: Preliminary integration for the new matterbridge-shelly plugin (still not published)
