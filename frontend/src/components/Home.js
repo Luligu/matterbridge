@@ -255,20 +255,29 @@ function Home() {
                       <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart needed!</Alert>
                     </Snackbar>
                     {plugin.error ? 
-                      <><StatusIndicator status={plugin.error} enabledText='Error' tooltipText='The plugin is in error state. Check the log!'/></> :
                       <>
-                        {plugin.loaded && plugin.started && plugin.configured && plugin.paired && plugin.connected ? 
-                          <><StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running'/></> : 
+                        <StatusIndicator status={plugin.error} enabledText='Error' tooltipText='The plugin is in error state. Check the log!'/></> :
+                      <>
+                        {plugin.enabled === false ?
                           <>
-                            {plugin.loaded && plugin.started && plugin.configured && plugin.connected===undefined ? 
-                              <><StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running'/></> : 
+                            <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled'/></> :
+                          <>
+                            {plugin.loaded && plugin.started && plugin.configured && plugin.paired && plugin.connected ? 
                               <>
-                                <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled'/>
-                                <StatusIndicator status={plugin.loaded} enabledText='Loaded' tooltipText='Whether the plugin has been loaded'/>
-                                <StatusIndicator status={plugin.started} enabledText='Started' tooltipText='Whether the plugin started'/>
-                                <StatusIndicator status={plugin.configured} enabledText='Configured' tooltipText='Whether the plugin has been configured'/>
-                                <StatusIndicator status={plugin.paired} enabledText='Paired' tooltipText='Whether the plugin has been paired'/>
-                                <StatusIndicator status={plugin.connected} enabledText='Connected' tooltipText='Whether the controller connected'/>
+                                <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running'/></> : 
+                              <>
+                                {plugin.loaded && plugin.started && plugin.configured && plugin.connected===undefined ? 
+                                  <>
+                                    <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running'/></> : 
+                                  <>
+                                    <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled'/>
+                                    <StatusIndicator status={plugin.loaded} enabledText='Loaded' tooltipText='Whether the plugin has been loaded'/>
+                                    <StatusIndicator status={plugin.started} enabledText='Started' tooltipText='Whether the plugin started'/>
+                                    <StatusIndicator status={plugin.configured} enabledText='Configured' tooltipText='Whether the plugin has been configured'/>
+                                    <StatusIndicator status={plugin.paired} enabledText='Paired' tooltipText='Whether the plugin has been paired'/>
+                                    <StatusIndicator status={plugin.connected} enabledText='Connected' tooltipText='Whether the controller connected'/>
+                                  </>
+                                }
                               </>
                             }
                           </>
