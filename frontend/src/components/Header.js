@@ -149,7 +149,7 @@ function Header() {
   
     // Call fetchSettings immediately and then every 10 minutes
     fetchSettings();
-    const intervalId = setInterval(fetchSettings, 10 * 60 * 1000);
+    const intervalId = setInterval(fetchSettings, 1 * 60 * 1000);
   
     // Clear the interval when the component is unmounted
     return () => clearInterval(intervalId);
