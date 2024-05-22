@@ -1,7 +1,6 @@
 {
   "plugins": [
     "@typescript-eslint",
-    //"@stylistic",
     "prettier"
   ],
   "parser": "@typescript-eslint/parser",
@@ -18,8 +17,6 @@
     "eslint:recommended",
     "plugin:@typescript-eslint/strict",
     "plugin:@typescript-eslint/stylistic",
-    //"plugin:@typescript-eslint/eslint-recommended",
-    //"plugin:@typescript-eslint/recommended",
     "prettier"
   ],
   "rules": {
