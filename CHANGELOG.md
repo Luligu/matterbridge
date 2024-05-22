@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - [matterbridge]: Preliminary integration for the new matterbridge-shelly plugin (still not published)
 - [matterbridge]: Updated dependencies
+- [matterbridge]: Moved eslint to @typescript-eslint/strict and @typescript-eslint/stylistic
 
 
 ### Added

@@ -58,6 +58,7 @@ export namespace BridgedDeviceBasicInformation {
     finish: TlvField(0, TlvEnum<ProductFinish>()),
     primaryColor: TlvField(1, TlvNullable(TlvEnum<Color>())),
   });
+  // eslint-disable-next-line @typescript-eslint/no-empty-interface
   export interface ProductAppearanceStruct extends TypeFromSchema<typeof TlvProductAppearanceStruct> {}
 
   /**
@@ -72,6 +73,7 @@ export namespace BridgedDeviceBasicInformation {
    *
    * @see {@link MatterSpecification.v11.Core} § 9.13.5
    */
+  // eslint-disable-next-line @typescript-eslint/no-empty-interface
   export interface StartUpEvent extends TypeFromSchema<typeof TlvStartUpEvent> {}
 
   /**
@@ -86,6 +88,7 @@ export namespace BridgedDeviceBasicInformation {
    *
    * @see {@link MatterSpecification.v11.Core} § 9.13.5.1
    */
+  // eslint-disable-next-line @typescript-eslint/no-empty-interface
   export interface ReachableChangedEvent extends TypeFromSchema<typeof TlvReachableChangedEvent> {}
 
   /**
@@ -240,6 +243,7 @@ export namespace BridgedDeviceBasicInformation {
    *
    * @see {@link MatterSpecification.v11.Core} § 9.13
    */
+  // eslint-disable-next-line @typescript-eslint/no-empty-interface
   export interface Cluster extends Identity<typeof ClusterInstance> {}
 
   export const Cluster: Cluster = ClusterInstance;

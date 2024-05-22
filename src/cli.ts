@@ -36,9 +36,9 @@ async function main() {
 }
 
 function registerHandlers() {
-  instance!.on('shutdown', async () => shutdown());
-  instance!.on('restart', async () => restart());
-  instance!.on('update', async () => update());
+  if (instance) instance.on('shutdown', async () => shutdown());
+  if (instance) instance.on('restart', async () => restart());
+  if (instance) instance.on('update', async () => update());
 }
 
 async function shutdown() {

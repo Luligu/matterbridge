@@ -88,7 +88,7 @@ import { BridgedDeviceBasicInformationCluster } from './BridgedDeviceBasicInform
 
 type MakeMandatory<T> = Exclude<T, undefined>;
 
-type MatterbridgeDeviceCommands = {
+interface MatterbridgeDeviceCommands {
   identify: MakeMandatory<ClusterServerHandlers<typeof Identify.Complete>['identify']>;
 
   on: MakeMandatory<ClusterServerHandlers<typeof OnOff.Complete>['on']>;
@@ -117,7 +117,7 @@ type MatterbridgeDeviceCommands = {
   unlockDoor: MakeMandatory<ClusterServerHandlers<typeof DoorLock.Complete>['unlockDoor']>;
 
   setpointRaiseLower: MakeMandatory<ClusterServerHandlers<typeof Thermostat.Complete>['setpointRaiseLower']>;
-};
+}
 
 // Custom device types
 export const onOffSwitch = DeviceTypeDefinition({
@@ -337,11 +337,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @returns The serialized Matterbridge device object.
    */
   serialize(pluginName: string) {
+    if (!this.serialNumber || !this.deviceName || !this.uniqueId) return;
     const serialized: SerializedMatterbridgeDevice = {
       pluginName,
-      serialNumber: this.serialNumber!,
-      deviceName: this.deviceName!,
-      uniqueId: this.uniqueId!,
+      serialNumber: this.serialNumber,
+      deviceName: this.deviceName,
+      uniqueId: this.uniqueId,
       deviceTypes: this.getDeviceTypes(),
       endpoint: this.number,
       endpointName: this.name,
@@ -1607,7 +1608,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param measuredValue - The measured value of illuminance.
    */
-  getDefaultIlluminanceMeasurementClusterServer(measuredValue: number = 0) {
+  getDefaultIlluminanceMeasurementClusterServer(measuredValue = 0) {
     return ClusterServer(
       IlluminanceMeasurementCluster,
       {
@@ -1625,7 +1626,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param measuredValue - The measured value of illuminance.
    */
-  createDefaultIlluminanceMeasurementClusterServer(measuredValue: number = 0) {
+  createDefaultIlluminanceMeasurementClusterServer(measuredValue = 0) {
     this.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer(measuredValue));
   }
 
@@ -1634,7 +1635,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param measuredValue - The measured value of the temperature.
    */
-  getDefaultFlowMeasurementClusterServer(measuredValue: number = 0) {
+  getDefaultFlowMeasurementClusterServer(measuredValue = 0) {
     return ClusterServer(
       FlowMeasurementCluster,
       {
@@ -1653,7 +1654,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param measuredValue - The measured value of the temperature.
    */
-  createDefaultFlowMeasurementClusterServer(measuredValue: number = 0) {
+  createDefaultFlowMeasurementClusterServer(measuredValue = 0) {
     this.addClusterServer(this.getDefaultFlowMeasurementClusterServer(measuredValue));
   }
 
@@ -1662,7 +1663,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param measuredValue - The measured value of the temperature.
    */
-  getDefaultTemperatureMeasurementClusterServer(measuredValue: number = 0) {
+  getDefaultTemperatureMeasurementClusterServer(measuredValue = 0) {
     return ClusterServer(
       TemperatureMeasurementCluster,
       {
@@ -1681,7 +1682,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param measuredValue - The measured value of the temperature.
    */
-  createDefaultTemperatureMeasurementClusterServer(measuredValue: number = 0) {
+  createDefaultTemperatureMeasurementClusterServer(measuredValue = 0) {
     this.addClusterServer(this.getDefaultTemperatureMeasurementClusterServer(measuredValue));
   }
 
@@ -1690,7 +1691,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param measuredValue - The measured value of the relative humidity.
    */
-  getDefaultRelativeHumidityMeasurementClusterServer(measuredValue: number = 0) {
+  getDefaultRelativeHumidityMeasurementClusterServer(measuredValue = 0) {
     return ClusterServer(
       RelativeHumidityMeasurementCluster,
       {
@@ -1708,7 +1709,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param measuredValue - The measured value of the relative humidity.
    */
-  createDefaultRelativeHumidityMeasurementClusterServer(measuredValue: number = 0) {
+  createDefaultRelativeHumidityMeasurementClusterServer(measuredValue = 0) {
     this.addClusterServer(this.getDefaultRelativeHumidityMeasurementClusterServer(measuredValue));
   }
 
@@ -1717,7 +1718,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param measuredValue - The measured value for the pressure.
    */
-  getDefaultPressureMeasurementClusterServer(measuredValue: number = 1000) {
+  getDefaultPressureMeasurementClusterServer(measuredValue = 1000) {
     return ClusterServer(
       PressureMeasurementCluster,
       {
@@ -1735,7 +1736,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param measuredValue - The measured value for the pressure.
    */
-  createDefaultPressureMeasurementClusterServer(measuredValue: number = 1000) {
+  createDefaultPressureMeasurementClusterServer(measuredValue = 1000) {
     this.addClusterServer(this.getDefaultPressureMeasurementClusterServer(measuredValue));
   }
 
@@ -1775,13 +1776,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param batReplacementDescription - The battery replacement description (default: 'Battery type').
    * @param batQuantity - The battery quantity (default: 1).
    */
-  createDefaultPowerSourceReplaceableBatteryClusterServer(
-    batPercentRemaining: number = 100,
-    batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
-    batVoltage: number = 1500,
-    batReplacementDescription: string = 'Battery type',
-    batQuantity: number = 1,
-  ) {
+  createDefaultPowerSourceReplaceableBatteryClusterServer(batPercentRemaining = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage = 1500, batReplacementDescription = 'Battery type', batQuantity = 1) {
     this.addClusterServer(
       ClusterServer(
         PowerSourceCluster.with(PowerSource.Feature.Battery, PowerSource.Feature.Replaceable),
@@ -1811,7 +1806,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
    * @param batVoltage - The battery voltage (default: 1500).
    */
-  createDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining: number = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage: number = 1500) {
+  createDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage = 1500) {
     this.addClusterServer(
       ClusterServer(
         PowerSourceCluster.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable),
@@ -1908,7 +1903,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param measuredValue - The measured value for TVOC.
    */
-  getDefaultTvocMeasurementClusterServer(measuredValue: number = 0) {
+  getDefaultTvocMeasurementClusterServer(measuredValue = 0) {
     return ClusterServer(
       TvocMeasurementCluster.with(TvocMeasurement.Feature.NumericMeasurement),
       {
@@ -1925,7 +1920,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param measuredValue - The measured value for TVOC.
    */
-  createDefaultTvocMeasurementClusterServer(measuredValue: number = 0) {
+  createDefaultTvocMeasurementClusterServer(measuredValue = 0) {
     this.addClusterServer(this.getDefaultTvocMeasurementClusterServer(measuredValue));
   }
 
@@ -1937,7 +1932,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param occupiedCoolingSetpoint - The occupied cooling setpoint value in degrees Celsius. Defaults to 25.
    * @param minSetpointDeadBand - The minimum setpoint dead band value.
    */
-  getDefaultThermostatClusterServer(localTemperature: number = 23, occupiedHeatingSetpoint: number = 21, occupiedCoolingSetpoint: number = 25, minSetpointDeadBand: number = 1) {
+  getDefaultThermostatClusterServer(localTemperature = 23, occupiedHeatingSetpoint = 21, occupiedCoolingSetpoint = 25, minSetpointDeadBand = 1) {
     return ClusterServer(
       ThermostatCluster.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode),
       {
@@ -1976,7 +1971,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param occupiedCoolingSetpoint - The occupied cooling setpoint value.
    * @param minSetpointDeadBand - The minimum setpoint dead band value.
    */
-  createDefaultThermostatClusterServer(localTemperature: number = 23, occupiedHeatingSetpoint: number = 21, occupiedCoolingSetpoint: number = 25, minSetpointDeadBand: number = 1) {
+  createDefaultThermostatClusterServer(localTemperature = 23, occupiedHeatingSetpoint = 21, occupiedCoolingSetpoint = 25, minSetpointDeadBand = 1) {
     this.addClusterServer(this.getDefaultThermostatClusterServer(localTemperature, occupiedHeatingSetpoint, occupiedCoolingSetpoint, minSetpointDeadBand));
   }
 

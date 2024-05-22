@@ -66,15 +66,11 @@ interface MatterbridgePlatform {
 // PlatformConfig types
 export type PlatformConfigValue = string | number | boolean | bigint | object | undefined | null;
 
-export type PlatformConfig = {
-  [key: string]: PlatformConfigValue; // This allows any string as a key, and the value can be ConfigValue.
-};
+export type PlatformConfig = Record<string, PlatformConfigValue>;
 
 export type PlatformSchemaValue = string | number | boolean | bigint | object | undefined | null;
 
-export type PlatformSchema = {
-  [key: string]: PlatformSchemaValue; // This allows any string as a key, and the value can be ConfigValue.
-};
+export type PlatformSchema = Record<string, PlatformSchemaValue>;
 
 // Define an interface for storing the plugins
 interface RegisteredPlugin extends BaseRegisteredPlugin {
@@ -185,13 +181,13 @@ export class Matterbridge extends EventEmitter {
     debugEnabled: false,
   };
 
-  public homeDirectory: string = '';
-  public rootDirectory: string = '';
-  public matterbridgeDirectory: string = '';
-  public matterbridgePluginDirectory: string = '';
-  public globalModulesDirectory: string = '';
-  public matterbridgeVersion: string = '';
-  public matterbridgeLatestVersion: string = '';
+  public homeDirectory = '';
+  public rootDirectory = '';
+  public matterbridgeDirectory = '';
+  public matterbridgePluginDirectory = '';
+  public globalModulesDirectory = '';
+  public matterbridgeVersion = '';
+  public matterbridgeLatestVersion = '';
   private checkUpdateInterval?: NodeJS.Timeout; // = 24 * 60 * 60 * 1000; // 24 hours
 
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
@@ -477,25 +473,25 @@ export class Matterbridge extends EventEmitter {
 
     if (getParameter('add')) {
       this.log.debug(`Registering plugin ${getParameter('add')}`);
-      await this.executeCommandLine(getParameter('add')!, 'add');
+      await this.executeCommandLine(getParameter('add') as string, 'add');
       this.emit('shutdown');
       process.exit(0);
     }
     if (getParameter('remove')) {
       this.log.debug(`Unregistering plugin ${getParameter('remove')}`);
-      await this.executeCommandLine(getParameter('remove')!, 'remove');
+      await this.executeCommandLine(getParameter('remove') as string, 'remove');
       this.emit('shutdown');
       process.exit(0);
     }
     if (getParameter('enable')) {
       this.log.debug(`Enable plugin ${getParameter('enable')}`);
-      await this.executeCommandLine(getParameter('enable')!, 'enable');
+      await this.executeCommandLine(getParameter('enable') as string, 'enable');
       this.emit('shutdown');
       process.exit(0);
     }
     if (getParameter('disable')) {
       this.log.debug(`Disable plugin ${getParameter('disable')}`);
-      await this.executeCommandLine(getParameter('disable')!, 'disable');
+      await this.executeCommandLine(getParameter('disable') as string, 'disable');
       this.emit('shutdown');
       process.exit(0);
     }
@@ -525,7 +521,7 @@ export class Matterbridge extends EventEmitter {
 
     if (getParameter('reset') && getParameter('reset') !== undefined) {
       this.log.debug(`Reset plugin ${getParameter('reset')}`);
-      await this.executeCommandLine(getParameter('reset')!, 'reset');
+      await this.executeCommandLine(getParameter('reset') as string, 'reset');
       await this.stopStorage();
       this.emit('shutdown');
       process.exit(0);
@@ -907,7 +903,7 @@ export class Matterbridge extends EventEmitter {
           this.registeredDevices.forEach((registeredDevice) => {
             const serializedMatterbridgeDevice = registeredDevice.device.serialize(registeredDevice.plugin);
             //this.log.info(`- ${serializedMatterbridgeDevice.deviceName}${rs}\n`, serializedMatterbridgeDevice);
-            serializedRegisteredDevices.push(serializedMatterbridgeDevice);
+            if (serializedMatterbridgeDevice) serializedRegisteredDevices.push(serializedMatterbridgeDevice);
           });
           await this.nodeContext.set<SerializedMatterbridgeDevice[]>('devices', serializedRegisteredDevices);
           this.log.info('Saved registered devices');
@@ -1067,7 +1063,7 @@ export class Matterbridge extends EventEmitter {
     if (this.bridgeMode === 'bridge') {
       device.setBridgedDeviceReachability(false);
       device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
-      this.matterAggregator!.removeBridgedDevice(device);
+      this.matterAggregator?.removeBridgedDevice(device);
       this.registeredDevices.forEach((registeredDevice, index) => {
         if (registeredDevice.device === device) {
           this.registeredDevices.splice(index, 1);
@@ -1092,7 +1088,7 @@ export class Matterbridge extends EventEmitter {
         });
         device.setBridgedDeviceReachability(false);
         device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
-        plugin.aggregator!.removeBridgedDevice(device);
+        plugin.aggregator?.removeBridgedDevice(device);
       }
       this.log.info(`Removed bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
@@ -1193,7 +1189,9 @@ export class Matterbridge extends EventEmitter {
     this.mattercontrollerContext = undefined;
   }
 
-  private async testStartMatterBridge(): Promise<void> {}
+  private async testStartMatterBridge(): Promise<void> {
+    // Start the Matterbridge
+  }
 
   /**
    * Loads the schema for a plugin.
@@ -1796,7 +1794,7 @@ export class Matterbridge extends EventEmitter {
               if (!plugin.device) plugin.device = registeredDevice.device;
             }
             this.log.debug(`Adding commissioning server to matter server for plugin ${plg}${plugin.name}${db}`);
-            await this.matterServer?.addCommissioningServer(plugin.commissioningServer!, { uniqueStorageKey: plugin.name });
+            if (plugin.commissioningServer) await this.matterServer?.addCommissioningServer(plugin.commissioningServer, { uniqueStorageKey: plugin.name });
           }
 
           if (plugin.type === 'DynamicPlatform') {
@@ -2748,7 +2746,7 @@ export class Matterbridge extends EventEmitter {
    *
    * @param port The port number to run the frontend server on. Default is 3000.
    */
-  async initializeFrontend(port: number = 8283): Promise<void> {
+  async initializeFrontend(port = 8283): Promise<void> {
     this.log.debug(`Initializing the frontend on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
 
     const wssPort = 8284;
