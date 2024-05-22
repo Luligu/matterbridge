@@ -228,7 +228,7 @@ export const shelly_config: PlatformConfig = {
   "type": "DynamicPlatform",
   "unregisterOnShutdown": false,
   "deviceIp": {},
-  "enableMdnsDiscover": true,
+  "enableMdnsDiscover": true, 
   "enableStorageDiscover": true,
   "enableConfigDiscover": true
 };
