@@ -1193,8 +1193,7 @@ export class Matterbridge extends EventEmitter {
     this.mattercontrollerContext = undefined;
   }
 
-  private async testStartMatterBridge(): Promise<void> {
-  }
+  private async testStartMatterBridge(): Promise<void> {}
 
   /**
    * Loads the schema for a plugin.

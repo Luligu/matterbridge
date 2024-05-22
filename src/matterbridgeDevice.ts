@@ -22,21 +22,17 @@
  */
 
 import {
-  Attributes,
   BasicInformationCluster,
   BooleanState,
   BooleanStateCluster,
-  // BridgedDeviceBasicInformationCluster,
   ClusterServer,
   ClusterServerHandlers,
-  ClusterServerObj,
   ColorControl,
   ColorControlCluster,
   DoorLock,
   DoorLockCluster,
   ElectricalMeasurement,
   ElectricalMeasurementCluster,
-  Events,
   FixedLabelCluster,
   FlowMeasurement,
   FlowMeasurementCluster,
@@ -262,7 +258,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Adds cluster servers to the specified endpoint based on the provided server list.
-   * 
+   *
    * @param {Endpoint} endpoint - The endpoint to add cluster servers to.
    * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
    * @returns void
@@ -291,7 +287,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(AirQuality.Cluster.id)) endpoint.addClusterServer(this.getDefaultAirQualityClusterServer());
     if (includeServerList.includes(TvocMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultTvocMeasurementClusterServer());
   }
-    
+
   /**
    * Retrieves a child endpoint by its name.
    *
@@ -1365,7 +1361,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           // eslint-disable-next-line no-console
           console.log(
             `goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
-            `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
+              `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
           );
           await this.commandHandler.executeHandler('goToLiftPercentage', data);
         },
@@ -1386,6 +1382,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * Sets the window covering target position as the current position and stops the movement.
    */
   setWindowCoveringTargetAsCurrentAndStopped(endpoint?: Endpoint) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     if (!endpoint) endpoint = this;
     const windowCoveringCluster = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (windowCoveringCluster) {
@@ -1410,6 +1407,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param status - The movement status of the window covering.
    */
   setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus, endpoint?: Endpoint) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     if (!endpoint) endpoint = this;
     const windowCoveringCluster = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (windowCoveringCluster) {
@@ -1430,6 +1428,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {WindowCovering.MovementStatus} status - The movement status to set.
    */
   setWindowCoveringStatus(status: WindowCovering.MovementStatus, endpoint?: Endpoint) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     if (!endpoint) endpoint = this;
     const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (!windowCovering) return;
@@ -1443,6 +1442,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @returns The global operational status of the window covering.
    */
   getWindowCoveringStatus(endpoint?: Endpoint) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     if (!endpoint) endpoint = this;
     const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (!windowCovering) return undefined;
@@ -1458,6 +1458,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param position - The position to set, specified as a number.
    */
   setWindowCoveringTargetAndCurrentPosition(position: number, endpoint?: Endpoint) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     if (!endpoint) endpoint = this;
     const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift));
     if (!windowCovering) return;
@@ -1571,13 +1572,15 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
   createDefaultModeSelectClusterServer(endpoint?: Endpoint) {
-    if(!endpoint) endpoint = this;
-    endpoint.addClusterServer(this.getDefaultModeSelectClusterServer('Mode select', [
-      { label: 'Mode 0', mode: 0, semanticTags: [ { mfgCode: VendorId(0xfff1), value: 0 } ] }, 
-      { label: 'Mode 1', mode: 1, semanticTags: [ { mfgCode: VendorId(0xfff1), value: 1 } ] }
-    ]));
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    if (!endpoint) endpoint = this;
+    endpoint.addClusterServer(
+      this.getDefaultModeSelectClusterServer('Mode select', [
+        { label: 'Mode 0', mode: 0, semanticTags: [{ mfgCode: VendorId(0xfff1), value: 0 }] },
+        { label: 'Mode 1', mode: 1, semanticTags: [{ mfgCode: VendorId(0xfff1), value: 1 }] },
+      ]),
+    );
   }
-
 
   /**
    * Get a default occupancy sensing cluster server.
