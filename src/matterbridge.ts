@@ -2088,6 +2088,9 @@ export class Matterbridge extends EventEmitter {
       case 24582:
         vendorName = '(GoogleHome)';
         break;
+      case 4631:
+        vendorName = '(Alexa)';
+        break;
       case 4701:
         vendorName = '(Tuya)';
         break;
