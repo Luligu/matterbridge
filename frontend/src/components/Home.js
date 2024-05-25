@@ -5,8 +5,8 @@ import { sendCommandToMatterbridge, theme } from './Header';
 import WebSocketComponent from './WebSocketComponent';
 
 // @mui
-import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip, IconButton, Button, createTheme, ThemeProvider } from '@mui/material';
-import { DeleteForever, Download, Remove, Add, Unpublished, PublishedWithChanges, Settings, Favorite, Help, Announcement, QrCode2 } from '@mui/icons-material';
+import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip, IconButton, Button, createTheme, ThemeProvider, Select, MenuItem, Menu } from '@mui/material';
+import { DeleteForever, Download, Remove, Add, Unpublished, PublishedWithChanges, Settings, Favorite, Help, Announcement, QrCode2, MoreVert } from '@mui/icons-material';
 
 // @rjsf
 // import Form from '@rjsf/core';
@@ -312,6 +312,7 @@ function Home() {
 function AddRemovePluginsDiv({ plugins }) {
   const [pluginName, setPluginName] = useState('matterbridge-');
   const [open, setSnack] = useState(false);
+  const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleSnackOpen = () => {
     console.log('handleSnackOpen');
@@ -348,6 +349,16 @@ function AddRemovePluginsDiv({ plugins }) {
     sendCommandToMatterbridge('removeplugin', pluginName);
   };
 
+  const handleClickVertical = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseMenu = (value) => {
+    console.log('handleCloseMenu:', value);
+    if(value) setPluginName(value);
+    setAnchorEl(null);
+  };
+
   const theme = createTheme({
     palette: {
       primary: {
@@ -356,28 +367,6 @@ function AddRemovePluginsDiv({ plugins }) {
     },
   });
 
-  /*
-  const pluginList = [
-    { value: 'matterbridge-zigbee2mqtt', label: 'matterbridge-zigbee2mqtt' },
-    { value: 'matterbridge-somfy-tahoma', label: 'matterbridge-somfy-tahoma' },
-    { value: 'matterbridge-shelly', label: 'matterbridge-shelly' },
-    { value: 'matterbridge-example-accessory-platform', label: 'matterbridge-example-accessory-platform' },
-    { value: 'matterbridge-example-dynamic-platform', label: 'matterbridge-example-dynamic-platform' },
-    { value: 'matterbridge-eve-door', label: 'matterbridge-eve-door' },
-    { value: 'matterbridge-eve-motion', label: 'matterbridge-eve-motion' },
-    { value: 'matterbridge-eve-energy', label: 'matterbridge-eve-energy' },
-    { value: 'matterbridge-eve-weather', label: 'matterbridge-eve-weather' },
-    { value: 'matterbridge-eve-room', label: 'matterbridge-eve-room' },
-  ];
-
-   sx={{ '.MuiSelect-select': { bgcolor: '#c4c2c2' } }} value={pluginName} 
-          {pluginList.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-          SelectProps={{ native: true, MenuProps: { PaperProps: { style: { backgroundColor: '#9e9e9e' } } }}}
-  */
   return (
     <div className="MbfWindowDiv">
       <div className="MbfWindowHeader">
@@ -388,14 +377,31 @@ function AddRemovePluginsDiv({ plugins }) {
           <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart required</Alert>
         </Snackbar>
         <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth/>
+
+        <IconButton onClick={handleClickVertical}>
+          <MoreVert />
+        </IconButton>
+        <Menu id="simple-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={handleCloseMenu}>
+          <MenuItem onClick={() => handleCloseMenu('matterbridge-zigbee2mqtt')}>matterbridge-zigbee2mqtt</MenuItem>
+          <MenuItem onClick={() => handleCloseMenu('matterbridge-somfy-tahoma')}>matterbridge-somfy-tahoma</MenuItem>
+          <MenuItem onClick={() => handleCloseMenu('matterbridge-shelly')}>matterbridge-shelly</MenuItem>
+          <MenuItem onClick={() => handleCloseMenu('matterbridge-example-accessory-platform')}>matterbridge-example-accessory-platform</MenuItem>
+          <MenuItem onClick={() => handleCloseMenu('matterbridge-example-dynamic-platform')}>matterbridge-example-dynamic-platform</MenuItem>
+          <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-door')}>matterbridge-eve-door</MenuItem>
+          <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-motion')}>matterbridge-eve-motion</MenuItem>
+          <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-energy')}>matterbridge-eve-energy</MenuItem>
+          <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-weather')}>matterbridge-eve-weather</MenuItem>
+          <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-room')}>matterbridge-eve-room</MenuItem>
+        </Menu>
+
         <Tooltip title="Install or update a plugin from npm">
-          <Button onClick={handleInstallPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="install" endIcon={<Download />} style={{ color: '#ffffff', height: '30px' }}> Install</Button>
+          <Button onClick={handleInstallPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="install" endIcon={<Download />} style={{ color: '#ffffff', height: '30px', minWidth: '90px' }}> Install</Button>
         </Tooltip>        
         <Tooltip title="Add an installed plugin">
-          <Button onClick={handleAddPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="add" endIcon={<Add />} style={{ color: '#ffffff', height: '30px' }}> Add</Button>
+          <Button onClick={handleAddPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="add" endIcon={<Add />} style={{ color: '#ffffff', height: '30px', minWidth: '90px' }}> Add</Button>
         </Tooltip>        
         <Tooltip title="Remove a registered plugin">
-          <Button onClick={handleRemovePluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="remove" endIcon={<Remove />} style={{ color: '#ffffff', height: '30px' }}> Remove</Button>
+          <Button onClick={handleRemovePluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="remove" endIcon={<Remove />} style={{ color: '#ffffff', height: '30px', minWidth: '90px' }}> Remove</Button>
         </Tooltip>        
       </div>
     </div>
