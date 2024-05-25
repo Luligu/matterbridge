@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - [matterbridge]: Fixed /api/settings error after resetting commissioning server
 
+### Added
+- [frontend]: Added a dropdown menu to Add Remove plugin to select the plugins
+
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
 </a>
