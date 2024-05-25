@@ -73,28 +73,41 @@ function Home() {
   /*
   */
   useEffect(() => {
+    // Fetch settings from the backend
+    const fetchSettings = () => {
 
-    fetch('/api/settings')
-      .then(response => response.json())
-      .then(data => { 
-        console.log('/api/settings:', data); 
-        setWssHost(data.wssHost); 
-        setQrCode(data.qrPairingCode); 
-        setPairingCode(data.manualPairingCode);
-        setSystemInfo(data.systemInformation);
-        setMatterbridgeInfo(data.matterbridgeInformation);
-        localStorage.setItem('wssHost', data.wssHost);
-        localStorage.setItem('manualPairingCode', data.manualPairingCode); 
-        localStorage.setItem('qrPairingCode', data.qrPairingCode); 
-        localStorage.setItem('systemInformation', data.systemInformation); 
-        localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
-      })
-      .catch(error => console.error('Error fetching settings:', error));
+      fetch('/api/settings')
+        .then(response => response.json())
+        .then(data => { 
+          console.log('From home /api/settings:', data); 
+          setWssHost(data.wssHost); 
+          setQrCode(data.qrPairingCode); 
+          setPairingCode(data.manualPairingCode);
+          setSystemInfo(data.systemInformation);
+          setMatterbridgeInfo(data.matterbridgeInformation);
+          localStorage.setItem('wssHost', data.wssHost);
+          localStorage.setItem('manualPairingCode', data.manualPairingCode); 
+          localStorage.setItem('qrPairingCode', data.qrPairingCode); 
+          localStorage.setItem('systemInformation', data.systemInformation); 
+          localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
+        })
+        .catch(error => console.error('Error fetching settings:', error));
 
-    fetch('/api/plugins')
-      .then(response => response.json())
-      .then(data => { setPlugins(data); console.log('/api/plugins:', data)})
-      .catch(error => console.error('Error fetching plugins:', error));
+      fetch('/api/plugins')
+        .then(response => response.json())
+        .then(data => { 
+          console.log('From home /api/plugins:', data)
+          setPlugins(data); 
+        })
+        .catch(error => console.error('Error fetching plugins:', error));
+    };  
+
+    // Call fetchSettings immediately and then every 10 minutes
+    fetchSettings();
+    const intervalId = setInterval(fetchSettings, 1 * 60 * 1000);
+  
+    // Clear the interval when the component is unmounted
+    return () => clearInterval(intervalId);
 
   }, []); // The empty array causes this effect to run only once
 
@@ -172,19 +185,6 @@ function Home() {
   };
 
   /*
-  const theme = createTheme({
-    components: {
-      MuiTooltip: {
-        defaultProps: {
-          placement: 'top-end', 
-          arrow: true,
-        },
-      },
-    },
-  });
-  */
-
-  /*
         {matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
   */
 
@@ -255,20 +255,29 @@ function Home() {
                       <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart needed!</Alert>
                     </Snackbar>
                     {plugin.error ? 
-                      <><StatusIndicator status={plugin.error} enabledText='Error' tooltipText='The plugin is in error state. Check the log!'/></> :
                       <>
-                        {plugin.loaded && plugin.started && plugin.configured && plugin.paired && plugin.connected ? 
-                          <><StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running'/></> : 
+                        <StatusIndicator status={plugin.error} enabledText='Error' tooltipText='The plugin is in error state. Check the log!'/></> :
+                      <>
+                        {plugin.enabled === false ?
                           <>
-                            {plugin.loaded && plugin.started && plugin.configured && plugin.connected===undefined ? 
-                              <><StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running'/></> : 
+                            <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled'/></> :
+                          <>
+                            {plugin.loaded && plugin.started && plugin.configured && plugin.paired && plugin.connected ? 
                               <>
-                                <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled'/>
-                                <StatusIndicator status={plugin.loaded} enabledText='Loaded' tooltipText='Whether the plugin has been loaded'/>
-                                <StatusIndicator status={plugin.started} enabledText='Started' tooltipText='Whether the plugin started'/>
-                                <StatusIndicator status={plugin.configured} enabledText='Configured' tooltipText='Whether the plugin has been configured'/>
-                                <StatusIndicator status={plugin.paired} enabledText='Paired' tooltipText='Whether the plugin has been paired'/>
-                                <StatusIndicator status={plugin.connected} enabledText='Connected' tooltipText='Whether the controller connected'/>
+                                <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running'/></> : 
+                              <>
+                                {plugin.loaded && plugin.started && plugin.configured && plugin.connected===undefined ? 
+                                  <>
+                                    <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running'/></> : 
+                                  <>
+                                    <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled'/>
+                                    <StatusIndicator status={plugin.loaded} enabledText='Loaded' tooltipText='Whether the plugin has been loaded'/>
+                                    <StatusIndicator status={plugin.started} enabledText='Started' tooltipText='Whether the plugin started'/>
+                                    <StatusIndicator status={plugin.configured} enabledText='Configured' tooltipText='Whether the plugin has been configured'/>
+                                    <StatusIndicator status={plugin.paired} enabledText='Paired' tooltipText='Whether the plugin has been paired'/>
+                                    <StatusIndicator status={plugin.connected} enabledText='Connected' tooltipText='Whether the controller connected'/>
+                                  </>
+                                }
                               </>
                             }
                           </>

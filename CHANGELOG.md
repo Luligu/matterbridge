@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.17] - 2024-05-22
+
+### Fixed
+- [matterbridge]: Fixed the issue causing the commissioning reset for all fabrics when only one is removed. (Apple uses 2 fabrics: Home app and Key chain).
+
+### Changed
+- [matterbridge]: Preliminary integration for the new matterbridge-shelly plugin (still not published)
+- [matterbridge]: Updated dependencies
+- [matterbridge]: Moved eslint to @typescript-eslint/strict and @typescript-eslint/stylistic
+
+### Added
+- [frontend]: Fetch data in Home page every minute
+- [device]: Added new method addClusterServerFromList
+- [device]: Added ModeSelectClusterServer (only for testing)
+- [matterbridge]: Added fabric info in the log on startup
+- [matterbridge]: Added vendorId for Alexa
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.2.16] - 2024-05-15
 
 ### Changed

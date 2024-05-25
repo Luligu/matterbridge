@@ -58,7 +58,7 @@ export function startController() {
 -- undefined-0-53 id: 4 name: extendedPanId: 8704323698196694754
 -- undefined-0-53 id: 5 name: meshLocalPrefix: "40fd78cbf849390000"
 */
-  //const log: AnsiLogger;
+  // const log: AnsiLogger;
   /*
   async startController() {
     this.log.info('Creating mattercontrollerContext: mattercontrollerContext');

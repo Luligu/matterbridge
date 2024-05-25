@@ -103,6 +103,7 @@ function Header() {
     }, 20000);
   };
 
+  /*
   useEffect(() => {
     // Fetch settinggs from the backend
     fetch('/api/settings')
@@ -122,6 +123,37 @@ function Header() {
       })
       .catch(error => console.error('Error fetching settings:', error));
 
+  }, []); // The empty array causes this effect to run only once
+  */
+  useEffect(() => {
+    // Fetch settings from the backend
+    const fetchSettings = () => {
+
+      fetch('/api/settings')
+        .then(response => response.json())
+        .then(data => { 
+          console.log('From header /api/settings (header):', data); 
+          setWssHost(data.wssHost); 
+          setQrCode(data.qrPairingCode); 
+          setPairingCode(data.manualPairingCode);
+          setSystemInfo(data.systemInformation);
+          setMatterbridgeInfo(data.matterbridgeInformation);
+          localStorage.setItem('wssHost', data.wssHost);
+          localStorage.setItem('qrPairingCode', data.qrPairingCode); 
+          localStorage.setItem('manualPairingCode', data.manualPairingCode); 
+          localStorage.setItem('systemInformation', data.systemInformation); 
+          localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
+        })
+        .catch(error => console.error('Error fetching settings:', error));
+    };
+  
+    // Call fetchSettings immediately and then every 10 minutes
+    fetchSettings();
+    const intervalId = setInterval(fetchSettings, 1 * 60 * 1000);
+  
+    // Clear the interval when the component is unmounted
+    return () => clearInterval(intervalId);
+    
   }, []); // The empty array causes this effect to run only once
 
   return (

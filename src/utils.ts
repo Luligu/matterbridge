@@ -4,7 +4,7 @@
  * @file utils.ts
  * @author Luca Liguori
  * @date 2024-02-17
- * @version 1.0.1
+ * @version 1.2.3
  *
  * Copyright 2024 Luca Liguori.
  *
@@ -20,6 +20,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License. *
  */
+
+import os from 'os';
 
 /**
  * Performs a deep comparison between two values to determine if they are equivalent.
@@ -76,9 +78,8 @@ export function deepEqual(a: any, b: any, excludeProperties: string[] = []): boo
   }
 
   // If one of them is null (and we know they are not equal from the first check), return false
-  // eslint-disable-next-line eqeqeq
   if (a == null || b == null) {
-    debugLog('deepEqual false for ==null');
+    debugLog('deepEqual false for == null');
     return false;
   }
 
@@ -119,7 +120,7 @@ export function deepEqual(a: any, b: any, excludeProperties: string[] = []): boo
         return false;
       }
       if (!deepEqual(a[prop], b[prop], excludeProperties)) {
-        debugLog(`deepEqual false for !deepEqual(a[${prop}], b[${prop}])` /*, a[prop], b[prop]*/);
+        debugLog(`deepEqual false for !deepEqual(a[${prop}], b[${prop}])` /* , a[prop], b[prop]*/);
         return false;
       }
     }
@@ -131,34 +132,100 @@ export function deepEqual(a: any, b: any, excludeProperties: string[] = []): boo
   return false;
 }
 
-// Http server use with:
-/*
-Invoke-WebRequest -Uri "http://localhost:3030/LogAggregator"
-Invoke-WebRequest -Uri "http://localhost:3030/RegisterAll"
-Invoke-WebRequest -Uri "http://localhost:3030/UnregisterAll"
-Invoke-WebRequest -Uri "http://localhost:3030/LogRootEndpoint"
-
-const server = http.createServer((req, res) => {
-  if (req.url === '/UnregisterAll') {
-    logger.warn('UnregisterAll signal received.');
-    matterAggregator.removeBridgedDevice(matterDevice1!);
-    matterAggregator.removeBridgedDevice(matterDevice2!);
-    matterAggregator.removeBridgedDevice(matterDevice3!);
-  } else if (req.url === '/RegisterAll') {
-    logger.warn('RegisterAll signal received.');
-    matterAggregator.addChildEndpoint(matterDevice1!);
-    matterAggregator.addChildEndpoint(matterDevice2!);
-    matterAggregator.addChildEndpoint(matterDevice3!);
-  } else if (req.url === '/LogRootEndpoint') {
-    logger.warn('LogRootEndpoint signal received.');
-    logEndpoint(commissioningServer.getRootEndpoint());
-  } else if (req.url === '/LogAggregator') {
-    logger.warn('LogAggregator signal received.');
-    logEndpoint(matterAggregator);
+/**
+ * Creates a deep copy of the given value.
+ *
+ * @template T - The type of the value being copied.
+ * @param {T} value - The value to be copied.
+ * @returns {T} - The deep copy of the value.
+ */
+export function deepCopy<T>(value: T): T {
+  if (typeof value !== 'object' || value === null) {
+    // Primitive value (string, number, boolean, bigint, undefined, symbol) or null
+    return value;
+  } else if (Array.isArray(value)) {
+    // Array: Recursively copy each element
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return value.map((item) => deepCopy(item)) as any;
+  } else if (value instanceof Date) {
+    // Date objects
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return new Date(value.getTime()) as any;
+  } else if (value instanceof Map) {
+    // Maps
+    const mapCopy = new Map();
+    value.forEach((val, key) => {
+      mapCopy.set(key, deepCopy(val));
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return mapCopy as any;
+  } else if (value instanceof Set) {
+    // Sets
+    const setCopy = new Set();
+    value.forEach((item) => {
+      setCopy.add(deepCopy(item));
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return setCopy as any;
+  } else {
+    // Objects: Create a copy with the same prototype as the original
+    const proto = Object.getPrototypeOf(value);
+    const copy = Object.create(proto);
+    for (const key in value) {
+      if (Object.prototype.hasOwnProperty.call(value, key)) {
+        copy[key] = deepCopy(value[key]);
+      }
+    }
+    return copy as T;
   }
-  res.end('Signal processed');
-});
+}
 
-server.listen(3030);
+/**
+ * Retrieves the IPv4 address of the first non-internal network interface.
+ * @returns {string | undefined} The IPv4 address of the selected network interface, or undefined if not found.
+ */
+export function getIpv4InterfaceAddress(): string | undefined {
+  let ipv4Address: string | undefined;
+  const networkInterfaces = os.networkInterfaces();
+  // console.log('Available Network Interfaces:', networkInterfaces);
+  for (const interfaceDetails of Object.values(networkInterfaces)) {
+    if (!interfaceDetails) {
+      break;
+    }
+    for (const detail of interfaceDetails) {
+      if (detail.family === 'IPv4' && !detail.internal && ipv4Address === undefined) {
+        ipv4Address = detail.address;
+      }
+    }
+    if (ipv4Address !== undefined) {
+      break;
+    }
+  }
+  // console.log('Selected Network Interfaces:', ipv4Address);
+  return ipv4Address;
+}
 
-*/
+/**
+ * Retrieves the IPv6 address of the first non-internal network interface.
+ * @returns {string | undefined} The IPv4 address of the selected network interface, or undefined if not found.
+ */
+export function getIpv6InterfaceAddress(): string | undefined {
+  let ipv6Address: string | undefined;
+  const networkInterfaces = os.networkInterfaces();
+  // console.log('Available Network Interfaces:', networkInterfaces);
+  for (const interfaceDetails of Object.values(networkInterfaces)) {
+    if (!interfaceDetails) {
+      break;
+    }
+    for (const detail of interfaceDetails) {
+      if (detail.family === 'IPv6' && !detail.internal && ipv6Address === undefined) {
+        ipv6Address = detail.address;
+      }
+    }
+    if (ipv6Address !== undefined) {
+      break;
+    }
+  }
+  // console.log('Selected Network Interfaces:', ipv6Address);
+  return ipv6Address;
+}
