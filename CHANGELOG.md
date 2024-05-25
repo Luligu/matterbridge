@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - [matterbridge]: Fixed /api/settings error after resetting commissioning server
+- [matterbridge]: Added error message and clean shutdown when WebSocketServer or ExpressServer ports are already in use
 
 ### Added
 - [frontend]: Added a dropdown menu to Add Remove plugin to select the plugins
