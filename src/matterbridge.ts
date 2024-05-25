@@ -2849,6 +2849,7 @@ export class Matterbridge extends EventEmitter {
       } catch (error) {
         if (this.bridgeMode === 'bridge') this.log.error('pairingCode for /api/settings not found');
         res.json({});
+        return;
       }
       this.matterbridgeInformation.bridgeMode = this.bridgeMode;
       this.matterbridgeInformation.restartMode = this.restartMode;

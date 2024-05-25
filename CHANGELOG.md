@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 ## [1.2.17] - 2024-05-25
 
 ### Fixed
+- [matterbridge]: Fixed /api/settings error after resetting commissioning server
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
+## [1.2.17] - 2024-05-25
+
+### Fixed
 - [matterbridge]: Fixed the issue causing the commissioning reset for all fabrics when only one is removed. (Apple uses 2 fabrics: Home app and Key chain).
 
 ### Changed
