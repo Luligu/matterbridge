@@ -355,7 +355,7 @@ function AddRemovePluginsDiv({ plugins }) {
 
   const handleCloseMenu = (value) => {
     console.log('handleCloseMenu:', value);
-    if(value) setPluginName(value);
+    if(value !== '') setPluginName(value);
     setAnchorEl(null);
   };
 
@@ -381,7 +381,7 @@ function AddRemovePluginsDiv({ plugins }) {
         <IconButton onClick={handleClickVertical}>
           <MoreVert />
         </IconButton>
-        <Menu id="simple-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={handleCloseMenu}>
+        <Menu id="simple-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => handleCloseMenu('')}>
           <MenuItem onClick={() => handleCloseMenu('matterbridge-zigbee2mqtt')}>matterbridge-zigbee2mqtt</MenuItem>
           <MenuItem onClick={() => handleCloseMenu('matterbridge-somfy-tahoma')}>matterbridge-somfy-tahoma</MenuItem>
           <MenuItem onClick={() => handleCloseMenu('matterbridge-shelly')}>matterbridge-shelly</MenuItem>
