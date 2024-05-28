@@ -84,7 +84,7 @@ import { AirQuality, AirQualityCluster } from './AirQualityCluster.js';
 import { AnsiLogger, TimestampFormat, db, hk, zb } from 'node-ansi-logger';
 import { createHash } from 'crypto';
 import { TvocMeasurement, TvocMeasurementCluster } from './TvocCluster.js';
-import { BridgedDeviceBasicInformationCluster } from './BridgedDeviceBasicInformationCluster.js';
+import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './BridgedDeviceBasicInformationCluster.js';
 
 type MakeMandatory<T> = Exclude<T, undefined>;
 
@@ -120,6 +120,24 @@ interface MatterbridgeDeviceCommands {
 }
 
 // Custom device types
+export const powerSource = DeviceTypeDefinition({
+  name: 'MA-powersource',
+  code: 0x0011,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [PowerSource.Cluster.id],
+  optionalServerClusters: [],
+});
+
+export const bridgedNode = DeviceTypeDefinition({
+  name: 'MA-bridgedNode',
+  code: 0x0013,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [BridgedDeviceBasicInformation.Cluster.id],
+  optionalServerClusters: [],
+});
+
 export const onOffSwitch = DeviceTypeDefinition({
   name: 'MA-onoffswitch',
   code: 0x0103,

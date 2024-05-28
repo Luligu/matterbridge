@@ -2,7 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.18] - 2024-05-25
+## [1.2.18] - 2024-05-28
+
+### Changed
+- [matterbridgeDevice]: bridgedNode and powerSource device types as conformance to Matter 1.3
 
 ### Fixed
 - [matterbridge]: Fixed /api/settings error after resetting commissioning server
