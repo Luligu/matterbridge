@@ -1188,11 +1188,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         },
       },
       {
-        moveToLevel: async ({ request, attributes }) => {
+        moveToLevel: async ({ request, attributes, endpoint }) => {
           // eslint-disable-next-line no-console
           console.log('moveToLevel request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
           // attributes.currentLevel.setLocal(request.level);
-          await this.commandHandler.executeHandler('moveToLevel', { request: request, attributes: attributes });
+          await this.commandHandler.executeHandler('moveToLevel', { request: request, attributes: attributes, endpoint: endpoint });
         },
         move: async () => {
           // eslint-disable-next-line no-console
@@ -1206,11 +1206,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           // eslint-disable-next-line no-console
           console.error('Not implemented');
         },
-        moveToLevelWithOnOff: async ({ request, attributes }) => {
+        moveToLevelWithOnOff: async ({ request, attributes, endpoint }) => {
           // eslint-disable-next-line no-console
           console.log('moveToLevelWithOnOff request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
           // attributes.currentLevel.setLocal(request.level);
-          await this.commandHandler.executeHandler('moveToLevelWithOnOff', { request: request, attributes: attributes });
+          await this.commandHandler.executeHandler('moveToLevelWithOnOff', { request: request, attributes: attributes, endpoint: endpoint });
         },
         moveWithOnOff: async () => {
           // eslint-disable-next-line no-console
@@ -1380,7 +1380,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           // eslint-disable-next-line no-console
           console.log(
             `goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
-              `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
+            `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
           );
           await this.commandHandler.executeHandler('goToLiftPercentage', data);
         },
