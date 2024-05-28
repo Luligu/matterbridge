@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.18] - 2024-05-28
+
+### Changed
+- [matterbridgeDevice]: bridgedNode and powerSource device types as conformance to Matter 1.3
+
+### Fixed
+- [matterbridge]: Fixed /api/settings error after resetting commissioning server
+- [matterbridge]: Added error message and clean shutdown when WebSocketServer or ExpressServer ports are already in use
+
+### Added
+- [frontend]: Added a dropdown menu in Add Remove plugin to select the plugins
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.2.17] - 2024-05-25
 
 ### Fixed

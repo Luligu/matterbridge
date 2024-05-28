@@ -2767,7 +2767,7 @@ export class Matterbridge extends EventEmitter {
     if (!useHttps) {
       // Create a WebSocket server no certificate required
       this.webSocketServer = new WebSocketServer({ port: wssPort });
-      this.log.info(`WebSocket server listening on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
+      // this.log.info(`WebSocket server listening on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
     } else {
       // Define the options for HTTPS server
       // openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout mykey.key -out mycert.pem -config openssl.cnf
@@ -2796,20 +2796,30 @@ export class Matterbridge extends EventEmitter {
       this.wssSendMessage('Matterbridge', 'info', 'WebSocketServer client connected to Matterbridge');
 
       ws.on('message', (message) => {
-        this.log.info(`WebSocketServer received message => ${message}`);
+        this.log.info(`WebSocket received message => ${message}`);
       });
 
       ws.on('close', () => {
-        this.log.info('WebSocketServer client disconnected');
+        this.log.info('WebSocket client disconnected');
         if (this.webSocketServer?.clients.size === 0) {
           this.log.setGlobalCallback(undefined);
-          this.log.debug('WebSocketServer deactivated logger callback');
+          this.log.debug('WebSocket deactivated logger callback');
         }
       });
 
       ws.on('error', (error: Error) => {
-        this.log.error(`WebSocketServer error: ${error}`);
+        this.log.error(`WebSocket error: ${error}`);
       });
+    });
+
+    this.webSocketServer.on('error', (ws: WebSocket, error: Error) => {
+      this.log.error(`WebSocketServer error: ${error}`);
+      return;
+    });
+
+    this.webSocketServer.on('listening', () => {
+      this.log.info(`WebSocketServer is listening on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
+      return;
     });
 
     // Serve React build directory
@@ -2849,6 +2859,7 @@ export class Matterbridge extends EventEmitter {
       } catch (error) {
         if (this.bridgeMode === 'bridge') this.log.error('pairingCode for /api/settings not found');
         res.json({});
+        return;
       }
       this.matterbridgeInformation.bridgeMode = this.bridgeMode;
       this.matterbridgeInformation.restartMode = this.restartMode;
@@ -3188,6 +3199,22 @@ export class Matterbridge extends EventEmitter {
       // Listen on HTTP
       this.expressServer = this.expressApp.listen(port, () => {
         this.log.info(`The frontend is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      this.expressServer.on('error', (error: any) => {
+        this.log.error(`Frontend error listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
+        switch (error.code) {
+          case 'EACCES':
+            this.log.error(`Port ${port} requires elevated privileges`);
+            break;
+          case 'EADDRINUSE':
+            this.log.error(`Port ${port} is already in use`);
+            break;
+          default:
+            this.log.error(`Port ${port} requires elevated privileges`);
+        }
+        process.exit(1);
       });
     } else {
       // SSL certificate and private key paths
