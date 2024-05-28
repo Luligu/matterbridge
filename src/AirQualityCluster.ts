@@ -68,7 +68,7 @@ export namespace AirQuality {
   }
 
   export const Base = MutableCluster.Component({
-    id: 0x5b,
+    id: 0x005b,
     name: 'AirQuality',
     revision: 1,
 
