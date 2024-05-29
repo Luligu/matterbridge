@@ -1766,7 +1766,7 @@ export class Matterbridge extends EventEmitter {
       // or to the plugin aggregator for Dynamic Platform after the commissioning is done
       // Plugins are configured by callback when the plugin is commissioned
       this.registeredPlugins.forEach((plugin) => {
-        if (!plugin.enabled) return;
+        if (!plugin.enabled || plugin.error) return;
 
         // Start the interval to check if the plugins is started
         this.log.debug(`*Starting startMatterbridge interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
