@@ -1380,7 +1380,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           // eslint-disable-next-line no-console
           console.log(
             `goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
-            `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
+              `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
           );
           await this.commandHandler.executeHandler('goToLiftPercentage', data);
         },
@@ -1414,7 +1414,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         });
       }
       // eslint-disable-next-line no-console
-      console.log(`Set WindowCovering initial currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
+      // console.log(`Set WindowCovering initial currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
     }
   }
 
@@ -1437,7 +1437,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       });
     }
     // eslint-disable-next-line no-console
-    console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
+    // console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
   }
 
   /**
@@ -1450,7 +1450,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (!windowCovering) return;
     windowCovering.setOperationalStatusAttribute({ global: status, lift: status, tilt: 0 });
     // eslint-disable-next-line no-console
-    console.log(`Set WindowCovering operationalStatus: ${status}`);
+    // console.log(`Set WindowCovering operationalStatus: ${status}`);
   }
 
   /**
@@ -1463,7 +1463,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (!windowCovering) return undefined;
     const status = windowCovering.getOperationalStatusAttribute();
     // eslint-disable-next-line no-console
-    console.log(`Get WindowCovering operationalStatus: ${status.global}`);
+    // console.log(`Get WindowCovering operationalStatus: ${status.global}`);
     return status.global;
   }
 
@@ -1479,7 +1479,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     windowCovering.setCurrentPositionLiftPercent100thsAttribute(position);
     windowCovering.setTargetPositionLiftPercent100thsAttribute(position);
     // eslint-disable-next-line no-console
-    console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
+    // console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
   }
 
   /**

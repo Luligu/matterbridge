@@ -256,7 +256,7 @@ function Home() {
                     </Snackbar>
                     {plugin.error ? 
                       <>
-                        <StatusIndicator status={plugin.error} enabledText='Error' tooltipText='The plugin is in error state. Check the log!'/></> :
+                        <StatusIndicator status={false} enabledText='Error' disabledText='Error' tooltipText='The plugin is in error state. Check the log!'/></> :
                       <>
                         {plugin.enabled === false ?
                           <>

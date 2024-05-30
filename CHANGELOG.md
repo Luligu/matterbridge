@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.19] - 2024-06-02
+
+### Breaking change on Matterbridge start!
+Now the plugins load and start before the controller connects.
+
+### Changed
+- [matterbridge]: In bridge mode the plugins are loaded and started immediately
+- [matterbridge]: In child bridge mode the plugins are loaded and started immediately
+
+### Fixed
+- [frontend]: Fixed the error badge in the registered plugins window
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.2.18] - 2024-05-28
 
 ### Changed
