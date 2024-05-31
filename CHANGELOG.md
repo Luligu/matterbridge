@@ -15,6 +15,7 @@ A special thank to Tamer Salah (https://github.com/tammeryousef1006) for his hel
 
 ### Fixed
 - [frontend]: Fixed the error badge in the registered plugins window
+- [frontend]: Added tooltip to the plugin update badge in the registered plugins window
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
