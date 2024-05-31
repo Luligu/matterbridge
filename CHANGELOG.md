@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.19] - 2024-06-02
+## [1.2.19] - 2024-06-01
 
 ### Breaking change on Matterbridge start!
 Now the plugins load and start before the controller connects.
