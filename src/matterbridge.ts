@@ -111,7 +111,6 @@ interface BaseRegisteredPlugin {
 interface RegisteredDevice {
   plugin: string;
   device: MatterbridgeDevice;
-  added?: boolean;
 }
 
 // Define an interface for storing the system information
@@ -1007,75 +1006,6 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Adds a device to the Matterbridge.
-   * @param pluginName - The name of the plugin.
-   * @param device - The device to be added.
-   * @returns A Promise that resolves when the device is added successfully.
-   */
-  async addDevice(pluginName: string, device: MatterbridgeDevice): Promise<void> {
-    if (this.bridgeMode === 'bridge' && !this.matterAggregator) {
-      this.log.error(`Adding device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er} error: matterAggregator not found`);
-      return;
-    }
-    this.log.debug(`Adding device ${dev}${device.deviceName}${db} (${dev}${device.name}${db}) for plugin ${plg}${pluginName}${db}`);
-
-    // Check if the plugin is registered
-    const plugin = this.registeredPlugins.find((plugin) => plugin.name === pluginName);
-    if (!plugin) {
-      this.log.error(`Error adding device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) plugin ${plg}${pluginName}${er} not found`);
-      return;
-    }
-
-    // Register and add the device to matterbridge aggregator in bridge mode
-    if (this.bridgeMode === 'bridge') {
-      this.matterAggregator?.addBridgedDevice(device);
-      this.registeredDevices.push({ plugin: pluginName, device, added: true });
-      if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
-      if (plugin.addedDevices !== undefined) plugin.addedDevices++;
-      this.log.info(`Added and registered device (${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
-    }
-
-    // Only register the device in childbridge mode
-    if (this.bridgeMode === 'childbridge') {
-      if (plugin.type === 'AccessoryPlatform') {
-        if (!plugin.locked) {
-          plugin.locked = true;
-          plugin.storageContext = await this.importCommissioningServerContext(plugin.name, device);
-          this.log.debug(`Creating commissioning server for ${plg}${plugin.name}${db}`);
-          plugin.commissioningServer = await this.createCommisioningServer(plugin.storageContext, plugin.name);
-          this.log.debug(`Adding device ${dev}${device.name}${db} to commissioning server for plugin ${plg}${plugin.name}${db}`);
-          plugin.commissioningServer.addDevice(device);
-          plugin.device = device;
-          this.log.debug(`Adding commissioning server to matter server for plugin ${plg}${plugin.name}${db}`);
-          await this.matterServer?.addCommissioningServer(plugin.commissioningServer, { uniqueStorageKey: plugin.name });
-        }
-      }
-
-      if (plugin.type === 'DynamicPlatform') {
-        if (!plugin.locked) {
-          plugin.locked = true;
-          this.log.debug(`Creating commissioning server context for ${plg}${plugin.name}${db}`);
-          plugin.storageContext = await this.createCommissioningServerContext(plugin.name, 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Dynamic Platform');
-          this.log.debug(`Creating commissioning server for ${plg}${plugin.name}${db}`);
-          plugin.commissioningServer = await this.createCommisioningServer(plugin.storageContext, plugin.name);
-          this.log.debug(`Creating aggregator for plugin ${plg}${plugin.name}${db}`);
-          plugin.aggregator = await this.createMatterAggregator(plugin.storageContext, plugin.name); // Generate serialNumber and uniqueId
-          this.log.debug(`Adding matter aggregator to commissioning server for plugin ${plg}${plugin.name}${db}`);
-          plugin.commissioningServer.addDevice(plugin.aggregator);
-          this.log.debug(`Adding commissioning server to matter server for plugin ${plg}${plugin.name}${db}`);
-          await this.matterServer?.addCommissioningServer(plugin.commissioningServer, { uniqueStorageKey: plugin.name });
-        }
-        plugin.aggregator?.addBridgedDevice(device);
-      }
-      this.registeredDevices.push({ plugin: pluginName, device, added: true });
-      if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
-      if (plugin.addedDevices !== undefined) plugin.addedDevices++;
-
-      this.log.info(`Added and registered bridged device (${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
-    }
-  }
-
-  /**
    * Adds a bridged device to the Matterbridge.
    * @param pluginName - The name of the plugin.
    * @param device - The bridged device to add.
@@ -1098,13 +1028,10 @@ export class Matterbridge extends EventEmitter {
     // Register and add the device to matterbridge aggregator in bridge mode
     if (this.bridgeMode === 'bridge') {
       this.matterAggregator?.addBridgedDevice(device);
-      this.registeredDevices.push({ plugin: pluginName, device, added: true });
-      if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
-      if (plugin.addedDevices !== undefined) plugin.addedDevices++;
-      this.log.info(`Added and registered bridged device (${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
     }
 
-    // Only register the device in childbridge mode
+    // The first time create the commissioning server and the aggregator for DynamicPlatform
+    // Register and add the device in childbridge mode
     if (this.bridgeMode === 'childbridge') {
       if (plugin.type === 'AccessoryPlatform') {
         if (!plugin.locked) {
@@ -1136,12 +1063,11 @@ export class Matterbridge extends EventEmitter {
         }
         plugin.aggregator?.addBridgedDevice(device);
       }
-      this.registeredDevices.push({ plugin: pluginName, device, added: true });
-      if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
-      if (plugin.addedDevices !== undefined) plugin.addedDevices++;
-
-      this.log.info(`Added and registered bridged device (${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
     }
+    this.registeredDevices.push({ plugin: pluginName, device });
+    if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
+    if (plugin.addedDevices !== undefined) plugin.addedDevices++;
+    this.log.info(`Added and registered bridged device (${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
   }
 
   /**
@@ -2268,7 +2194,8 @@ export class Matterbridge extends EventEmitter {
         let connected = false;
         info.forEach((session) => {
           this.log.info(
-            `*Active session changed on fabric ${zb}${fabricIndex}${nf} vendor ${zb}${session.fabric?.rootVendorId}${nf} ${this.getVendorIdName(session.fabric?.rootVendorId)} ${session.fabric?.label} for ${plg}${pluginName}${nf}`,
+            // eslint-disable-next-line max-len
+            `*Active session changed on fabric ${zb}${fabricIndex}${nf} id ${zb}${session.fabric?.fabricId}${nf} vendor ${zb}${session.fabric?.rootVendorId}${nf} ${this.getVendorIdName(session.fabric?.rootVendorId)} ${session.fabric?.label} for ${plg}${pluginName}${nf}`,
             debugStringify(session),
           );
           if (session.isPeerActive === true && session.secure === true && session.numberOfActiveSubscriptions >= 1) {
