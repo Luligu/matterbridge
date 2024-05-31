@@ -11,6 +11,7 @@ A special thank to Tamer Salah (https://github.com/tammeryousef1006) for his hel
 ### Changed
 - [matterbridge]: In bridge mode the plugins are loaded and started immediately
 - [matterbridge]: In child bridge mode the plugins are loaded and started immediately
+- [matterbridge]: Updated dependencies
 
 ### Fixed
 - [frontend]: Fixed the error badge in the registered plugins window
