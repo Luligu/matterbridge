@@ -4,7 +4,7 @@
  * @file utils.ts
  * @author Luca Liguori
  * @date 2024-02-17
- * @version 1.2.3
+ * @version 1.2.4
  *
  * Copyright 2024 Luca Liguori.
  *
@@ -228,4 +228,29 @@ export function getIpv6InterfaceAddress(): string | undefined {
   }
   // console.log('Selected Network Interfaces:', ipv6Address);
   return ipv6Address;
+}
+
+export async function waiter(name: string, check: () => boolean, exitWithReject = false, resolveTimeout = 5000, resolveInterval = 500, debug = false) {
+  // eslint-disable-next-line no-console
+  if (debug) console.log(`**Waiter ${name} started...`);
+  return new Promise<boolean>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      // eslint-disable-next-line no-console
+      if (debug) console.log(`****Waiter ${name} exited for timeout...`);
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+      if (exitWithReject) reject(new Error(`Waiter ${name} exited due to timeout`));
+      else resolve(false);
+    }, resolveTimeout);
+
+    const intervalId = setInterval(() => {
+      if (check()) {
+        // eslint-disable-next-line no-console
+        if (debug) console.log(`**Waiter ${name} exited for true condition...`);
+        clearTimeout(timeoutId);
+        clearInterval(intervalId);
+        resolve(true);
+      }
+    }, resolveInterval);
+  });
 }

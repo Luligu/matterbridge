@@ -85,7 +85,7 @@ export class MatterbridgeDynamicPlatform extends MatterbridgePlatform {
   }
 
   /**
-   * Unegisters a device registered with the Matterbridge platform.
+   * Unregisters a device registered with the Matterbridge platform.
    * @param {MatterbridgeDevice} device - The device to unregister.
    */
   async unregisterDevice(device: MatterbridgeDevice) {
@@ -93,7 +93,7 @@ export class MatterbridgeDynamicPlatform extends MatterbridgePlatform {
   }
 
   /**
-   * Unegisters all devices registered with the Matterbridge platform.
+   * Unregisters all devices registered with the Matterbridge platform.
    */
   async unregisterAllDevices() {
     await this.matterbridge.removeAllBridgedDevices(this.name);

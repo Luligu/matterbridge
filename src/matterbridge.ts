@@ -599,6 +599,7 @@ export class Matterbridge extends EventEmitter {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
           continue;
         }
+        plugin.error = false;
         plugin.loaded = false;
         plugin.started = false;
         plugin.configured = false;
@@ -628,6 +629,7 @@ export class Matterbridge extends EventEmitter {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
           continue;
         }
+        plugin.error = false;
         plugin.loaded = false;
         plugin.started = false;
         plugin.configured = false;
@@ -1840,13 +1842,60 @@ export class Matterbridge extends EventEmitter {
         await this.startMatterServer();
         this.log.info('Matter server started');
         await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
+
         /*
+        const gdcCluster = this.commissioningServer?.getRootClusterServer(GeneralDiagnosticsCluster);
+        if (gdcCluster) {
+          console.log('GeneralDiagnosticsCluster', gdcCluster);
+          const net = gdcCluster.getNetworkInterfacesAttribute();
+          console.log('NetworkInterfaces', net);
+
+          // We have like "30:f6:ef:69:2b:c5" in this.systemInformation.macAddress
+          const macArray = this.systemInformation.macAddress.split(':').map((hex) => parseInt(hex, 16));
+          let hardwareAddress = new Uint8Array(macArray);
+          if (hardwareAddress.length === 6) hardwareAddress = Uint8Array.from([0, 0, ...hardwareAddress]);
+          // We have like "192.168.1.189" in this.systemInformation.ipv4Address
+          const ipv4Array = this.systemInformation.ipv4Address.split('.').map((num) => parseInt(num));
+          const iPv4Address = new Uint8Array(ipv4Array);
+          // We have like "fd78:cbf8:4939:746:d555:85a9:74f6:9c6" in this.systemInformation.ipv6Address
+          const ipv6Groups = this.systemInformation.ipv6Address.split(':');
+          const ipv6Array = [];
+          for (const group of ipv6Groups) {
+            const decimal = parseInt(group, 16);
+            ipv6Array.push(decimal >> 8); // High byte
+            ipv6Array.push(decimal & 0xff); // Low byte
+          }
+          const iPv6Address = new Uint8Array(ipv6Array);
+          this.log.warn(`GeneralDiagnosticsCluster for hardwareAddress ${this.systemInformation.macAddress} => ${debugStringify(hardwareAddress)}`);
+          this.log.warn(`GeneralDiagnosticsCluster for iPv4Address ${this.systemInformation.ipv4Address} => ${debugStringify(iPv4Address)}`);
+          this.log.warn(`GeneralDiagnosticsCluster for iPv6Address ${this.systemInformation.ipv6Address} => ${debugStringify(iPv6Address)}`);
+          try {
+            gdcCluster.setNetworkInterfacesAttribute([
+              {
+                name: 'eth0',
+                isOperational: true,
+                offPremiseServicesReachableIPv4: null,
+                offPremiseServicesReachableIPv6: null,
+                hardwareAddress,
+                iPv4Addresses: [iPv4Address],
+                iPv6Addresses: [iPv6Address],
+                type: GeneralDiagnostics.InterfaceType.Ethernet,
+              },
+            ]);
+            const net = gdcCluster.getNetworkInterfacesAttribute();
+            console.log('NetworkInterfaces', net);
+          } catch (error) {
+            this.log.error('GeneralDiagnosticsCluster.setNetworkInterfacesAttribute error:', error);
+          }
+        }
+        */
+
+        // Setting reachability to true
         setTimeout(() => {
           this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
           if (this.commissioningServer) this.setCommissioningServerReachability(this.commissioningServer, true);
           if (this.matterAggregator) this.setAggregatorReachability(this.matterAggregator, true);
         }, 60 * 1000);
-        */
       }, 1000);
     }
 
@@ -1866,7 +1915,7 @@ export class Matterbridge extends EventEmitter {
           this.log.debug(`***Checking plugin ${plg}${plugin.name}${db} to start matter in childbridge mode...`);
           if (!plugin.loaded || !plugin.started) {
             allStarted = false;
-            this.log.debug(`***Waiting for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
+            this.log.debug(`***Waiting (failSafeCount=${failCount}/30) for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
             failCount++;
             if (failCount > 30) {
               this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error mode.`);
@@ -1901,12 +1950,12 @@ export class Matterbridge extends EventEmitter {
           }
           await this.showCommissioningQRCode(plugin.commissioningServer, plugin.storageContext, plugin.nodeContext, plugin.name);
           // Setting reachability to true
-          /*
-          this.log.info(`Setting reachability to true for ${plg}${plugin.name}${db}`);
-          if (plugin.commissioningServer) this.setCommissioningServerReachability(plugin.commissioningServer, true);
-          if (plugin.type === 'AccessoryPlatform' && plugin.device) this.setDeviceReachability(plugin.device, true);
-          if (plugin.type === 'DynamicPlatform' && plugin.aggregator) this.setAggregatorReachability(plugin.aggregator, true);
-          */
+          setTimeout(() => {
+            this.log.info(`Setting reachability to true for ${plg}${plugin.name}${db}`);
+            if (plugin.commissioningServer) this.setCommissioningServerReachability(plugin.commissioningServer, true);
+            if (plugin.type === 'AccessoryPlatform' && plugin.device) this.setDeviceReachability(plugin.device, true);
+            if (plugin.type === 'DynamicPlatform' && plugin.aggregator) this.setAggregatorReachability(plugin.aggregator, true);
+          }, 60 * 1000);
         }
       }, 1000);
     }
@@ -2137,6 +2186,7 @@ export class Matterbridge extends EventEmitter {
         vendorName = '(AppleKeyChain)';
         break;
       case 4362:
+      case 65521:
         vendorName = '(SmartThings)';
         break;
       case 4939:

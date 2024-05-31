@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Breaking change on Matterbridge start!
 Now the plugins load and start before the controller connects.
+A special thank to Tamer Salah (https://github.com/tammeryousef1006) for his help testing all controllers.
 
 ### Changed
 - [matterbridge]: In bridge mode the plugins are loaded and started immediately
