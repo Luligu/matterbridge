@@ -232,7 +232,7 @@ function Home() {
 
                 <td className="table-content"><Tooltip title={plugin.path}>{plugin.name}</Tooltip></td>
                 <td className="table-content">{plugin.description}</td>
-                <td className="table-content">{plugin.latestVersion === undefined || plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning" onClick={() => handleUpdate(index)}>{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</td>
+                <td className="table-content"><Tooltip title="Update the plugin to the latest version">{plugin.latestVersion === undefined || plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning" onClick={() => handleUpdate(index)}>{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</Tooltip></td>
                 <td className="table-content">{plugin.author}</td>
                 <td className="table-content">{plugin.type}</td>
                 <td className="table-content">{plugin.registeredDevices}</td>
@@ -256,7 +256,7 @@ function Home() {
                     </Snackbar>
                     {plugin.error ? 
                       <>
-                        <StatusIndicator status={plugin.error} enabledText='Error' tooltipText='The plugin is in error state. Check the log!'/></> :
+                        <StatusIndicator status={false} enabledText='Error' disabledText='Error' tooltipText='The plugin is in error state. Check the log!'/></> :
                       <>
                         {plugin.enabled === false ?
                           <>
