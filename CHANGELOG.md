@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.20] - 2024-06-02
+
+### Changed
+- [matter.js]: Update to @project-chip/matter-node.js v. 0.9.1
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.2.19] - 2024-06-01
 
 ### Breaking change on Matterbridge start!
