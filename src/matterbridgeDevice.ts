@@ -1786,6 +1786,36 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Get a default power source replaceable battery cluster server.
+   *
+   * @param batPercentRemaining - The remaining battery percentage (default: 100).
+   * @param batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
+   * @param batVoltage - The battery voltage (default: 1500).
+   * @param batReplacementDescription - The battery replacement description (default: 'Battery type').
+   * @param batQuantity - The battery quantity (default: 1).
+   */
+  getDefaultPowerSourceReplaceableBatteryClusterServer(batPercentRemaining = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage = 1500, batReplacementDescription = 'Battery type', batQuantity = 1) {
+    return ClusterServer(
+      PowerSourceCluster.with(PowerSource.Feature.Battery, PowerSource.Feature.Replaceable),
+      {
+        status: PowerSource.PowerSourceStatus.Active,
+        order: 0,
+        description: 'Primary battery',
+        batVoltage,
+        batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
+        batChargeLevel,
+        batReplacementNeeded: false,
+        batReplaceability: PowerSource.BatReplaceability.UserReplaceable,
+        activeBatFaults: undefined,
+        batReplacementDescription,
+        batQuantity,
+      },
+      {},
+      {},
+    );
+  }
+
+  /**
    * Creates a default power source replaceable battery cluster server.
    *
    * @param batPercentRemaining - The remaining battery percentage (default: 100).
@@ -1795,25 +1825,35 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param batQuantity - The battery quantity (default: 1).
    */
   createDefaultPowerSourceReplaceableBatteryClusterServer(batPercentRemaining = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage = 1500, batReplacementDescription = 'Battery type', batQuantity = 1) {
-    this.addClusterServer(
-      ClusterServer(
-        PowerSourceCluster.with(PowerSource.Feature.Battery, PowerSource.Feature.Replaceable),
-        {
-          status: PowerSource.PowerSourceStatus.Active,
-          order: 0,
-          description: 'Primary battery',
-          batVoltage,
-          batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
-          batChargeLevel,
-          batReplacementNeeded: false,
-          batReplaceability: PowerSource.BatReplaceability.UserReplaceable,
-          activeBatFaults: undefined,
-          batReplacementDescription,
-          batQuantity,
-        },
-        {},
-        {},
-      ),
+    this.addClusterServer(this.getDefaultPowerSourceReplaceableBatteryClusterServer(batPercentRemaining, batChargeLevel, batVoltage, batReplacementDescription, batQuantity));
+  }
+
+  /**
+   * Get a default power source rechargeable battery cluster server.
+   *
+   * @param batPercentRemaining - The remaining battery percentage (default: 100).
+   * @param batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
+   * @param batVoltage - The battery voltage (default: 1500).
+   */
+  getDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage = 1500) {
+    return ClusterServer(
+      PowerSourceCluster.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable),
+      {
+        status: PowerSource.PowerSourceStatus.Active,
+        order: 0,
+        description: 'Primary battery',
+        batVoltage,
+        batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
+        batTimeRemaining: 1,
+        batChargeLevel,
+        batReplacementNeeded: false,
+        batReplaceability: PowerSource.BatReplaceability.Unspecified,
+        activeBatFaults: undefined,
+        batChargeState: PowerSource.BatChargeState.IsNotCharging,
+        batFunctionalWhileCharging: true,
+      },
+      {},
+      {},
     );
   }
 
@@ -1825,26 +1865,25 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param batVoltage - The battery voltage (default: 1500).
    */
   createDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage = 1500) {
-    this.addClusterServer(
-      ClusterServer(
-        PowerSourceCluster.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable),
-        {
-          status: PowerSource.PowerSourceStatus.Active,
-          order: 0,
-          description: 'Primary battery',
-          batVoltage,
-          batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
-          batTimeRemaining: 1,
-          batChargeLevel,
-          batReplacementNeeded: false,
-          batReplaceability: PowerSource.BatReplaceability.Unspecified,
-          activeBatFaults: undefined,
-          batChargeState: PowerSource.BatChargeState.IsNotCharging,
-          batFunctionalWhileCharging: true,
-        },
-        {},
-        {},
-      ),
+    this.addClusterServer(this.getDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining, batChargeLevel, batVoltage));
+  }
+
+  /**
+   * Get a default power source wired cluster server.
+   *
+   * @param wiredCurrentType - The type of wired current (default: PowerSource.WiredCurrentType.Ac)
+   */
+  getDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerSource.WiredCurrentType = PowerSource.WiredCurrentType.Ac) {
+    return ClusterServer(
+      PowerSourceCluster.with(PowerSource.Feature.Wired),
+      {
+        wiredCurrentType,
+        description: wiredCurrentType === PowerSource.WiredCurrentType.Ac ? 'AC Power' : 'DC Power',
+        status: PowerSource.PowerSourceStatus.Active,
+        order: 0,
+      },
+      {},
+      {},
     );
   }
 
@@ -1854,19 +1893,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param wiredCurrentType - The type of wired current (default: PowerSource.WiredCurrentType.Ac)
    */
   createDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerSource.WiredCurrentType = PowerSource.WiredCurrentType.Ac) {
-    this.addClusterServer(
-      ClusterServer(
-        PowerSourceCluster.with(PowerSource.Feature.Wired),
-        {
-          wiredCurrentType,
-          description: wiredCurrentType === PowerSource.WiredCurrentType.Ac ? 'AC Power' : 'DC Power',
-          status: PowerSource.PowerSourceStatus.Active,
-          order: 0,
-        },
-        {},
-        {},
-      ),
-    );
+    this.addClusterServer(this.getDefaultPowerSourceWiredClusterServer(wiredCurrentType));
   }
 
   /**
