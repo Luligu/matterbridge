@@ -36,15 +36,18 @@ import { Environment, StorageService } from '@project-chip/matter.js/environment
 import { ServerNode } from '@project-chip/matter.js/node';
 import { OnOffLightDevice } from '@project-chip/matter.js/devices/OnOffLightDevice';
 import { Endpoint, EndpointServer } from '@project-chip/matter.js/endpoint';
-import { logEndpoint } from '@project-chip/matter-node.js/device';
+import { DeviceTypes, logEndpoint } from '@project-chip/matter-node.js/device';
 import { QrCode } from '@project-chip/matter-node.js/schema';
 import { FabricAction } from '@project-chip/matter-node.js/fabric';
+import { AggregatorEndpoint } from '@project-chip/matter.js/endpoints/AggregatorEndpoint';
+import { BridgedNodeEndpoint } from '@project-chip/matter.js/endpoints/BridgedNodeEndpoint';
 
 import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr, RED, GREEN, zb, CYAN } from 'node-ansi-logger';
 
 import EventEmitter from 'events';
 import path from 'path';
 import { promises as fs } from 'fs';
+import { MatterbridgeDeviceV8 } from './matterbridgeDeviceV8.js';
 
 /**
  * Represents the Matterbridge application.
@@ -61,6 +64,9 @@ export class MatterbridgeV8 extends EventEmitter {
   public matterStorageService?: StorageService;
   public matterStorageManager?: StorageManager;
   public matterStorageContext?: StorageContext;
+
+  public matterServerNode?: ServerNode<ServerNode.RootEndpoint>;
+
   public matterLogger?: Logger;
 
   private constructor() {
@@ -81,7 +87,7 @@ export class MatterbridgeV8 extends EventEmitter {
 
     await this.deleteMatterLogfile('matterbridge.log');
 
-    this.setupMatterVars(Level.INFO, Format.ANSI);
+    this.setupMatterVars(Level.DEBUG, Format.ANSI);
 
     await this.setupMatterStorage();
 
@@ -101,7 +107,7 @@ export class MatterbridgeV8 extends EventEmitter {
     this.matterStorageManager = await this.matterStorageService.open('Matterbridge');
     this.matterLogger?.notice('Storage manager created');
 
-    this.matterStorageContext = this.matterStorageManager.createContext('Matterbridge');
+    this.matterStorageContext = this.matterStorageManager.createContext('persist');
     this.matterLogger?.notice('Storage context created');
   }
 
@@ -137,7 +143,7 @@ export class MatterbridgeV8 extends EventEmitter {
    * @param hardwareVersionString - The hardware version string of the device (optional).
    * @returns The storage context for the commissioning server.
    */
-  private async createCommissioningServerContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string) {
+  private async createServerNodeContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string) {
     if (!this.matterLogger) return;
     const log = this.matterLogger;
     if (!this.matterStorageService || !this.matterStorageManager) {
@@ -145,7 +151,7 @@ export class MatterbridgeV8 extends EventEmitter {
       return;
     }
     log.debug(`Creating commissioning server storage context for ${pluginName}...`);
-    const storageContext = this.matterStorageManager.createContext(pluginName);
+    const storageContext = this.matterStorageManager.createContext('persist');
     const random = 'CS' + CryptoNode.getRandomData(8).toHex();
     await storageContext.set('storeId', pluginName);
     await storageContext.set('deviceName', deviceName);
@@ -176,7 +182,7 @@ export class MatterbridgeV8 extends EventEmitter {
     if (!this.matterLogger) return;
     const log = this.matterLogger;
     log.notice('Starting Matterbridge');
-    this.matterStorageContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', OnOffLightDevice.deviceType, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Aggregator');
+    this.matterStorageContext = await this.createServerNodeContext('Matterbridge', 'Matterbridge', AggregatorEndpoint.deviceType, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Aggregator');
     if (!this.matterStorageContext) {
       log.error('Error creating storage context for Matterbridge');
       return;
@@ -185,7 +191,7 @@ export class MatterbridgeV8 extends EventEmitter {
     /**
      * Create a Matter ServerNode, which contains the Root Endpoint and all relevant data and configuration
      */
-    const server = await ServerNode.create({
+    this.matterServerNode = await ServerNode.create({
       // Required: Give the Node a unique ID which is used to store the state of this node
       id: await this.matterStorageContext.get<string>('storeId'),
 
@@ -222,6 +228,11 @@ export class MatterbridgeV8 extends EventEmitter {
 
         serialNumber: await this.matterStorageContext.get<string>('serialNumber'),
         uniqueId: await this.matterStorageContext.get<string>('uniqueId'),
+
+        softwareVersion: await this.matterStorageContext.get<number>('softwareVersion'),
+        softwareVersionString: await this.matterStorageContext.get<string>('softwareVersionString'),
+        hardwareVersion: await this.matterStorageContext.get<number>('hardwareVersion'),
+        hardwareVersionString: await this.matterStorageContext.get<string>('hardwareVersionString'),
       },
     });
 
@@ -233,44 +244,54 @@ export class MatterbridgeV8 extends EventEmitter {
      * to see how to customize the command handlers.
      */
     const endpoint = new Endpoint(OnOffLightDevice, { id: 'onoff' });
-    await server.add(endpoint);
+    // await this.matterServerNode.add(endpoint);
+    // const mbV8 = new MatterbridgeDeviceV8(DeviceTypes.OnOffLight);
+    // const endpoint = mbV8.getBridgedNodeEndpointV8();
+
+    const aggregator = new Endpoint(AggregatorEndpoint, { id: 'aggregator' });
+
+    await this.matterServerNode.add(aggregator);
+
+    await aggregator.add(endpoint);
 
     /**
      * Register state change handlers and events of the node for identify and onoff states to react to the commands.
      * If the code in these change handlers fail then the change is also rolled back and not executed and an error is
      * reported back to the controller.
      */
+    /*
     endpoint.events.identify.startIdentifying.on(() => log.notice('Run identify logic, ideally blink a light every 0.5s ...'));
 
     endpoint.events.identify.stopIdentifying.on(() => log.notice('Stop identify logic ...'));
 
     endpoint.events.onOff.onOff$Changed.on((value) => log.notice(`OnOff is now ${value ? 'ON' : 'OFF'}`));
+    */
 
     /**
      * Log the endpoint structure for debugging reasons and to allow to verify anything is correct
      */
-    // logEndpoint(EndpointServer.forEndpoint(server));
+    logEndpoint(EndpointServer.forEndpoint(this.matterServerNode));
 
     /**
      * This event is triggered when the device is initially commissioned successfully.
      * This means: It is added to the first fabric.
      */
-    server.lifecycle.commissioned.on(() => log.notice('Server was initially commissioned successfully!'));
+    this.matterServerNode.lifecycle.commissioned.on(() => log.notice('Server was initially commissioned successfully!'));
 
     /** This event is triggered when all fabrics are removed from the device, usually it also does a factory reset then. */
-    server.lifecycle.decommissioned.on(() => log.notice('Server was fully decommissioned successfully!'));
+    this.matterServerNode.lifecycle.decommissioned.on(() => log.notice('Server was fully decommissioned successfully!'));
 
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */
-    server.lifecycle.online.on(() => log.notice('Server is online'));
+    this.matterServerNode.lifecycle.online.on(() => log.notice('Server is online'));
 
     /** This event is triggered when the device went offline. it is not longer discoverable or connectable in the network. */
-    server.lifecycle.offline.on(() => log.notice('Server is offline'));
+    this.matterServerNode.lifecycle.offline.on(() => log.notice('Server is offline'));
 
     /**
      * This event is triggered when a fabric is added, removed or updated on the device. Use this if more granular
      * information is needed.
      */
-    server.events.commissioning.fabricsChanged.on((fabricIndex, fabricAction) => {
+    this.matterServerNode.events.commissioning.fabricsChanged.on((fabricIndex, fabricAction) => {
       let action = '';
       switch (fabricAction) {
         case FabricAction.Added:
@@ -284,50 +305,62 @@ export class MatterbridgeV8 extends EventEmitter {
           break;
       }
       log.notice(`Commissioned Fabrics changed event (${action}) for ${fabricIndex} triggered`);
-      log.notice(server.state.commissioning.fabrics[fabricIndex]);
+      log.notice(this.matterServerNode?.state.commissioning.fabrics[fabricIndex]);
     });
 
     /**
      * This event is triggered when an operative new session was opened by a Controller.
      * It is not triggered for the initial commissioning process, just afterwards for real connections.
      */
-    server.events.sessions.opened.on((session) => log.notice('Session opened', session));
+    this.matterServerNode.events.sessions.opened.on((session) => log.notice('Session opened', session));
 
     /**
      * This event is triggered when an operative session is closed by a Controller or because the Device goes offline.
      */
-    server.events.sessions.closed.on((session) => log.notice('Session closed', session));
+    this.matterServerNode.events.sessions.closed.on((session) => log.notice('Session closed', session));
 
     /** This event is triggered when a subscription gets added or removed on an operative session. */
-    server.events.sessions.subscriptionsChanged.on((session) => {
+    this.matterServerNode.events.sessions.subscriptionsChanged.on((session) => {
       log.notice('Session subscriptions changed', session);
-      log.notice('Status of all sessions', server.state.sessions.sessions);
+      log.notice('Status of all sessions', this.matterServerNode?.state.sessions.sessions);
     });
 
-    await server.bringOnline();
+    await this.matterServerNode.bringOnline();
+  }
 
-    if (!server.lifecycle.isCommissioned) {
-      const { qrPairingCode, manualPairingCode } = server.state.commissioning.pairingCodes;
+  showServerNodeQR() {
+    if (!this.matterServerNode || !this.matterLogger) return;
+    const log = this.matterLogger;
+    if (!this.matterServerNode.lifecycle.isCommissioned) {
+      const { qrPairingCode, manualPairingCode } = this.matterServerNode.state.commissioning.pairingCodes;
       console.log(QrCode.get(qrPairingCode));
       log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
       log.notice(`Manual pairing code: ${manualPairingCode}`);
     } else {
       log.notice('Device is already commissioned. Waiting for controllers to connect ...');
-      log.notice('Fabrics:');
-      for (const key in server.state.commissioning.fabrics) {
-        const fabric = server.state.commissioning.fabrics[FabricIndex(Number(key))];
+      log.notice('Fabrics:', this.matterServerNode.state.commissioning.fabrics);
+      for (const key in this.matterServerNode.state.commissioning.fabrics) {
+        const fabric = this.matterServerNode.state.commissioning.fabrics[FabricIndex(Number(key))];
         log.notice(`- index ${fabric.fabricIndex} id ${fabric.fabricId} nodeId ${fabric.nodeId} rootVendor ${fabric.rootVendorId} rootNodeId ${fabric.rootNodeId}`);
       }
     }
   }
+
+  async stopServerNode() {
+    if (!this.matterServerNode) return;
+    await this.matterServerNode.close();
+  }
 }
 
-// node dist/matterbridgeNewApi.js newMatterbridge
-if (process.argv.includes('newMatterbridge')) {
+// node dist/matterbridgeV8.js MatterbridgeV8
+if (process.argv.includes('MatterbridgeV8')) {
   const matterbridge = await MatterbridgeV8.create();
-  await matterbridge.startServerNode();
+  await matterbridge.startServerNode(5070, 20242025, 3950);
+  matterbridge.showServerNodeQR();
 
   process.on('SIGINT', async function () {
+    console.log('Caught interrupt signal');
+    await matterbridge.stopServerNode();
     // process.exit();
   });
 }

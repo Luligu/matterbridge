@@ -2,13 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.20] - 2024-06-02
+## [1.2.20] - 2024-06-03
 
 ### Changed
 - [matter.js]: Update to @project-chip/matter-node.js v. 0.9.1
 
 ### Fixed
-- [matterbridge]: Log level of Plugin already configured
+- [matterbridge]: Log level of Plugin already configured is now info
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
