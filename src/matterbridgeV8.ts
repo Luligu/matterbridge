@@ -49,10 +49,11 @@ import { promises as fs } from 'fs';
 /**
  * Represents the Matterbridge application.
  */
-export class NewMatterbridgeV8 extends EventEmitter {
+export class MatterbridgeV8 extends EventEmitter {
   private environment = Environment.default;
 
   public matterbridgeVersion = '2.0.0';
+  public osVersion = '10.0.22631';
   public matterbridgeDirectory = '';
   public matterbridgePluginDirectory = '';
   public globalModulesDirectory = '';
@@ -67,7 +68,7 @@ export class NewMatterbridgeV8 extends EventEmitter {
   }
 
   static async create() {
-    const matterbridge = new NewMatterbridgeV8();
+    const matterbridge = new MatterbridgeV8();
     await matterbridge.initialize();
     return matterbridge;
   }
@@ -159,19 +160,19 @@ export class NewMatterbridgeV8 extends EventEmitter {
     await storageContext.set('uniqueId', await storageContext.get('uniqueId', random));
     await storageContext.set('softwareVersion', this.matterbridgeVersion && this.matterbridgeVersion.includes('.') ? parseInt(this.matterbridgeVersion.split('.')[0], 10) : 1);
     await storageContext.set('softwareVersionString', this.matterbridgeVersion ?? '1.0.0');
-    // await storageContext.set('hardwareVersion', this.systemInformation.osRelease && this.systemInformation.osRelease.includes('.') ? parseInt(this.systemInformation.osRelease.split('.')[0], 10) : 1);
-    // await storageContext.set('hardwareVersionString', this.systemInformation.osRelease ?? '1.0.0');
+    await storageContext.set('hardwareVersion', this.osVersion && this.osVersion.includes('.') ? parseInt(this.osVersion.split('.')[0], 10) : 1);
+    await storageContext.set('hardwareVersionString', this.osVersion ?? '1.0.0');
 
     log.debug(`Created commissioning server storage context for ${pluginName}:`);
     log.debug(`- deviceName: ${await storageContext.get('deviceName')} deviceType: ${await storageContext.get('deviceType')}(0x${(await storageContext.get('deviceType'))?.toString(16).padStart(4, '0')})`);
     log.debug(`- serialNumber: ${await storageContext.get('serialNumber')} uniqueId: ${await storageContext.get('uniqueId')}`);
     log.debug(`- softwareVersion: ${await storageContext.get('softwareVersion')} softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
-    // log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')} hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
+    log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')} hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
     log.notice(`Created commissioning server storage context for ${pluginName}`);
     return storageContext;
   }
 
-  async start(port = 5080, passcode = 20202021, discriminator = 3840) {
+  async startServerNode(port = 5080, passcode = 20202021, discriminator = 3840) {
     if (!this.matterLogger) return;
     const log = this.matterLogger;
     log.notice('Starting Matterbridge');
@@ -323,8 +324,8 @@ export class NewMatterbridgeV8 extends EventEmitter {
 
 // node dist/matterbridgeNewApi.js newMatterbridge
 if (process.argv.includes('newMatterbridge')) {
-  const matterbridge = await NewMatterbridgeV8.create();
-  await matterbridge.start();
+  const matterbridge = await MatterbridgeV8.create();
+  await matterbridge.startServerNode();
 
   process.on('SIGINT', async function () {
     // process.exit();

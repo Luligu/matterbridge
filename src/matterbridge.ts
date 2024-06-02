@@ -1464,7 +1464,7 @@ export class Matterbridge extends EventEmitter {
       return Promise.reject(new Error(`Plugin ${plg}${plugin.name}${er} not loaded or not started or not platform`));
     }
     if (plugin.configured) {
-      this.log.error(`Plugin ${plg}${plugin.name}${er} already configured`);
+      this.log.info(`Plugin ${plg}${plugin.name}${nf} already configured`);
       return Promise.resolve();
     }
     this.log.info(`Configuring plugin ${plg}${plugin.name}${db} type ${typ}${plugin.type}${db}`);
