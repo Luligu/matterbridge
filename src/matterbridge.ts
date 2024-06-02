@@ -1000,7 +1000,7 @@ export class Matterbridge extends EventEmitter {
             Matterbridge.instance = undefined;
             this.emit('shutdown');
           }
-        }, 2 * 1000);
+        }, 2 * 1000); // From 2 to 5 seconds
       }, 3 * 1000);
     }
   }
