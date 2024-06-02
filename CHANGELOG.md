@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - [matter.js]: Update to @project-chip/matter-node.js v. 0.9.1
+- [matterbridge]: Updated dependencies
 
 ### Fixed
 - [matterbridge]: Log level of Plugin already configured is now info
