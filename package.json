@@ -93,7 +93,7 @@
     "@project-chip/matter-node.js": "^0.9.1",
     "body-parser": "^1.20.2",
     "express": "^4.19.2",
-    "matter-history": "file:../matter-history",
+    "matter-history": "^1.1.1",
     "node-ansi-logger": "^1.9.5",
     "node-persist-manager": "^1.0.7",
     "ws": "^8.17.0"
