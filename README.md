@@ -475,6 +475,11 @@ docker logs --tail 1000 -f matterbridge
 
 # Known issues
 
+## Session XYZ does not exist 
+This message may appear after Matterbridge restarts, indicating that the controller is still using a session from the previous connection that has since been closed.
+After some time, it will reconnect. 
+In this context, the message is not indicative of a problem.
+
 ## Apple Home issues
 
 The HomePods, being a WiFi devices, sometimes pruduce message trasmission errors. The Apple TV with network cable is more reliable (but also more expensive).
