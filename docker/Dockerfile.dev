@@ -3,8 +3,9 @@ FROM node:20-bullseye-slim as base
 WORKDIR /app
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git && \
-    apt-get clean && \
-    npm install -g npm@10.7.0
+    apt-get clean
+
+# && npm install -g npm@10.7.0
 
 FROM base as builder
 WORKDIR /app
@@ -78,4 +79,4 @@ COPY --from=builder /matterbridge-eve-weather/*.tgz .
 RUN npm -g install *.tgz
 RUN rm *.tgz 
 
-CMD ["matterbridge", "-bridge", "-docker", "-frontend", "8283"]
+CMD ["matterbridge", "-bridge", "-docker"]

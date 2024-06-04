@@ -42,6 +42,8 @@ import { FabricAction } from '@project-chip/matter-node.js/fabric';
 import { AggregatorEndpoint } from '@project-chip/matter.js/endpoints/AggregatorEndpoint';
 import { BridgedNodeEndpoint } from '@project-chip/matter.js/endpoints/BridgedNodeEndpoint';
 import { BridgedDeviceBasicInformationServer } from '@project-chip/matter.js/behavior/definitions/bridged-device-basic-information';
+import { OnOffServer } from '@project-chip/matter.js/behavior/definitions/on-off';
+import { ColorDimmerSwitchDevice } from '@project-chip/matter.js/devices/ColorDimmerSwitchDevice';
 
 import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr, RED, GREEN, zb, CYAN } from 'node-ansi-logger';
 
@@ -100,6 +102,8 @@ export class MatterbridgeV8 extends EventEmitter {
     this.environment.vars.set('log.level', level);
     this.environment.vars.set('log.format', format);
     this.environment.vars.set('path.root', path.join(this.matterbridgeDirectory, 'matterstorage'));
+    this.environment.vars.set('runtime.signals', false);
+    this.environment.vars.set('runtime.exitcode', false);
   }
 
   private async setupMatterStorage() {
@@ -245,7 +249,7 @@ export class MatterbridgeV8 extends EventEmitter {
      * In this case we directly use the default command implementation from matter.js. Check out the DeviceNodeFull example
      * to see how to customize the command handlers.
      */
-    const endpoint = new Endpoint(OnOffLightDevice.with(BridgedDeviceBasicInformationServer), {
+    const lightEndpoint = new Endpoint(OnOffLightDevice.with(BridgedDeviceBasicInformationServer), {
       id: 'OnOffLight',
       bridgedDeviceBasicInformation: {
         vendorId: VendorId(await this.matterStorageContext.get<number>('vendorId')),
@@ -260,17 +264,36 @@ export class MatterbridgeV8 extends EventEmitter {
         reachable: true,
       },
     });
+    console.log('lightEndpoint', lightEndpoint);
 
     /**
      * Register state change handlers and events of the node for identify and onoff states to react to the commands.
      * If the code in these change handlers fail then the change is also rolled back and not executed and an error is
      * reported back to the controller.
      */
-    endpoint.events.identify.startIdentifying.on(() => log.notice('Run identify logic, ideally blink a light every 0.5s ...'));
+    lightEndpoint.events.identify.startIdentifying.on(() => log.notice('Run identify logic, ideally blink a light every 0.5s ...'));
 
-    endpoint.events.identify.stopIdentifying.on(() => log.notice('Stop identify logic ...'));
+    lightEndpoint.events.identify.stopIdentifying.on(() => log.notice('Stop identify logic ...'));
 
-    endpoint.events.onOff.onOff$Changed.on((value) => log.notice(`OnOff is now ${value ? 'ON' : 'OFF'}`));
+    lightEndpoint.events.onOff.onOff$Changed.on((value) => log.notice(`OnOff is now ${value ? 'ON' : 'OFF'}`));
+
+    const switchEndpoint = new Endpoint(ColorDimmerSwitchDevice.with(BridgedDeviceBasicInformationServer, OnOffServer), {
+      id: 'OnOffSwitch',
+      bridgedDeviceBasicInformation: {
+        vendorId: VendorId(await this.matterStorageContext.get<number>('vendorId')),
+        vendorName: await this.matterStorageContext.get<string>('vendorName'),
+
+        productName: 'Switch',
+        productLabel: 'Switch',
+        nodeLabel: 'Switch',
+
+        serialNumber: '0x123456789S',
+        uniqueId: '0x123456789S',
+        reachable: true,
+      },
+    });
+
+    console.log('switchEndpoint', switchEndpoint);
 
     // await this.matterServerNode.add(endpoint);
     // const mbV8 = new MatterbridgeDeviceV8(DeviceTypes.OnOffLight);
@@ -280,7 +303,8 @@ export class MatterbridgeV8 extends EventEmitter {
 
     await this.matterServerNode.add(aggregator);
 
-    await aggregator.add(endpoint);
+    await aggregator.add(lightEndpoint);
+    await aggregator.add(switchEndpoint);
 
     /**
      * Log the endpoint structure for debugging reasons and to allow to verify anything is correct
@@ -341,6 +365,8 @@ export class MatterbridgeV8 extends EventEmitter {
     });
 
     await this.matterServerNode.bringOnline();
+    console.log('lightEndpoint', lightEndpoint);
+    console.log('switchEndpoint', switchEndpoint);
   }
 
   showServerNodeQR() {
@@ -376,6 +402,6 @@ if (process.argv.includes('MatterbridgeV8')) {
   process.on('SIGINT', async function () {
     console.log('Caught interrupt signal');
     await matterbridge.stopServerNode();
-    // process.exit();
+    process.exit();
   });
 }
