@@ -41,6 +41,7 @@ import { QrCode } from '@project-chip/matter-node.js/schema';
 import { FabricAction } from '@project-chip/matter-node.js/fabric';
 import { AggregatorEndpoint } from '@project-chip/matter.js/endpoints/AggregatorEndpoint';
 import { BridgedNodeEndpoint } from '@project-chip/matter.js/endpoints/BridgedNodeEndpoint';
+import { BridgedDeviceBasicInformationServer } from '@project-chip/matter.js/behavior/definitions/bridged-device-basic-information';
 
 import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr, RED, GREEN, zb, CYAN } from 'node-ansi-logger';
 
@@ -48,6 +49,7 @@ import EventEmitter from 'events';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { MatterbridgeDeviceV8 } from './matterbridgeDeviceV8.js';
+import { BasicInformationCluster } from '@project-chip/matter-node.js/cluster';
 
 /**
  * Represents the Matterbridge application.
@@ -152,7 +154,7 @@ export class MatterbridgeV8 extends EventEmitter {
     }
     log.debug(`Creating commissioning server storage context for ${pluginName}...`);
     const storageContext = this.matterStorageManager.createContext('persist');
-    const random = 'CS' + CryptoNode.getRandomData(8).toHex();
+    const random = 'AG' + CryptoNode.getRandomData(8).toHex();
     await storageContext.set('storeId', pluginName);
     await storageContext.set('deviceName', deviceName);
     await storageContext.set('deviceType', deviceType);
@@ -243,7 +245,33 @@ export class MatterbridgeV8 extends EventEmitter {
      * In this case we directly use the default command implementation from matter.js. Check out the DeviceNodeFull example
      * to see how to customize the command handlers.
      */
-    const endpoint = new Endpoint(OnOffLightDevice, { id: 'onoff' });
+    const endpoint = new Endpoint(OnOffLightDevice.with(BridgedDeviceBasicInformationServer), {
+      id: 'OnOffLight',
+      bridgedDeviceBasicInformation: {
+        vendorId: VendorId(await this.matterStorageContext.get<number>('vendorId')),
+        vendorName: await this.matterStorageContext.get<string>('vendorName'),
+
+        productName: 'Light',
+        productLabel: 'Light',
+        nodeLabel: 'Light',
+
+        serialNumber: '0x123456789',
+        uniqueId: '0x123456789',
+        reachable: true,
+      },
+    });
+
+    /**
+     * Register state change handlers and events of the node for identify and onoff states to react to the commands.
+     * If the code in these change handlers fail then the change is also rolled back and not executed and an error is
+     * reported back to the controller.
+     */
+    endpoint.events.identify.startIdentifying.on(() => log.notice('Run identify logic, ideally blink a light every 0.5s ...'));
+
+    endpoint.events.identify.stopIdentifying.on(() => log.notice('Stop identify logic ...'));
+
+    endpoint.events.onOff.onOff$Changed.on((value) => log.notice(`OnOff is now ${value ? 'ON' : 'OFF'}`));
+
     // await this.matterServerNode.add(endpoint);
     // const mbV8 = new MatterbridgeDeviceV8(DeviceTypes.OnOffLight);
     // const endpoint = mbV8.getBridgedNodeEndpointV8();
@@ -253,19 +281,6 @@ export class MatterbridgeV8 extends EventEmitter {
     await this.matterServerNode.add(aggregator);
 
     await aggregator.add(endpoint);
-
-    /**
-     * Register state change handlers and events of the node for identify and onoff states to react to the commands.
-     * If the code in these change handlers fail then the change is also rolled back and not executed and an error is
-     * reported back to the controller.
-     */
-    /*
-    endpoint.events.identify.startIdentifying.on(() => log.notice('Run identify logic, ideally blink a light every 0.5s ...'));
-
-    endpoint.events.identify.stopIdentifying.on(() => log.notice('Stop identify logic ...'));
-
-    endpoint.events.onOff.onOff$Changed.on((value) => log.notice(`OnOff is now ${value ? 'ON' : 'OFF'}`));
-    */
 
     /**
      * Log the endpoint structure for debugging reasons and to allow to verify anything is correct

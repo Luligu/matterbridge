@@ -49,6 +49,7 @@ import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } fr
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
 import { shelly_config, shelly_schema, somfytahoma_config, somfytahoma_schema, zigbee2mqtt_config, zigbee2mqtt_schema } from './defaultConfigSchema.js';
+import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
 
 // Define an interface of common elements from MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform
 interface MatterbridgePlatform {
@@ -99,6 +100,7 @@ interface BaseRegisteredPlugin {
   configured?: boolean;
   paired?: boolean;
   connected?: boolean;
+  fabricInfo?: ExposedFabricInformation[];
   registeredDevices?: number;
   addedDevices?: number;
   qrPairingCode?: string;
@@ -188,6 +190,9 @@ export class Matterbridge extends EventEmitter {
   public globalModulesDirectory = '';
   public matterbridgeVersion = '';
   public matterbridgeLatestVersion = '';
+  public matterbridgeFabricInfo: ExposedFabricInformation[] = [];
+  public matterbridgePaired = false;
+  public matterbridgeConnected = false;
   private checkUpdateInterval?: NodeJS.Timeout; // = 24 * 60 * 60 * 1000; // 24 hours
 
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
@@ -2037,9 +2042,14 @@ export class Matterbridge extends EventEmitter {
       fabricInfo?.forEach((info) => {
         this.log.info(`- fabric index ${zb}${info.fabricIndex}${nf} id ${zb}${info.fabricId}${nf} vendor ${zb}${info.rootVendorId}${nf} ${this.getVendorIdName(info.rootVendorId)} ${info.label}`);
       });
+      if (pluginName === 'Matterbridge') {
+        this.matterbridgeFabricInfo = fabricInfo;
+        this.matterbridgePaired = true;
+      }
       if (pluginName !== 'Matterbridge') {
         const plugin = this.findPlugin(pluginName);
         if (plugin) {
+          plugin.fabricInfo = fabricInfo;
           plugin.paired = true;
         }
       }
@@ -2205,6 +2215,10 @@ export class Matterbridge extends EventEmitter {
           }
         });
         if (connected) {
+          if (this.bridgeMode === 'bridge') {
+            this.matterbridgePaired = true;
+            this.matterbridgeConnected = true;
+          }
           if (this.bridgeMode === 'childbridge') {
             const plugin = this.findPlugin(pluginName);
             if (plugin) {
@@ -2250,10 +2264,14 @@ export class Matterbridge extends EventEmitter {
           await commissioningServer.factoryReset();
           if (pluginName === 'Matterbridge') {
             await this.matterbridgeContext?.clearAll();
+            this.matterbridgeFabricInfo = [];
+            this.matterbridgePaired = false;
+            this.matterbridgeConnected = false;
           } else {
             for (const plugin of this.registeredPlugins) {
               if (plugin.name === pluginName) {
                 await plugin.platform?.onShutdown('Commissioning removed by the controller');
+                plugin.fabricInfo = [];
                 plugin.paired = false;
                 plugin.connected = false;
                 await plugin.storageContext?.clearAll();
@@ -2663,7 +2681,7 @@ export class Matterbridge extends EventEmitter {
    * Retrieves an array of base registered devices from the registered plugins.
    * @returns {BaseRegisteredPlugin[]} An array of base registered devices.
    */
-  private getBaseRegisteredDevices() {
+  private getBaseRegisteredDevices(): BaseRegisteredPlugin[] {
     const baseRegisteredPlugins: BaseRegisteredPlugin[] = this.registeredPlugins.map((plugin) => ({
       path: plugin.path,
       type: plugin.type,
@@ -2676,6 +2694,7 @@ export class Matterbridge extends EventEmitter {
       started: plugin.started,
       paired: plugin.paired,
       connected: plugin.connected,
+      fabricInfo: plugin.fabricInfo,
       registeredDevices: plugin.registeredDevices,
     }));
     return baseRegisteredPlugins;
