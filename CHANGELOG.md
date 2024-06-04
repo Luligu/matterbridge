@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.21] - 2024-06-04
+
+### Changed
+- [matterbridge]: Updated dependencies
+
+### Fixed
+- [matterbridge]: Removed error stack from log error for npm get versions
+- [matterbridge]: Fixed the error that caused -add plugin to fail at the first run of matterbridge
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.2.20] - 2024-06-03
 
 ### Changed

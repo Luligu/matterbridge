@@ -460,6 +460,7 @@ export class Matterbridge extends EventEmitter {
       this.emit('shutdown');
       process.exit(0);
     }
+
     if (hasParameter('logstorage')) {
       this.log.info(`${plg}matterbridge${nf} storage log`);
       await this.nodeContext?.logStorage();
@@ -2492,17 +2493,28 @@ export class Matterbridge extends EventEmitter {
 
     // Global node_modules directory
     if (this.nodeContext) this.globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
-    this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
-    this.getGlobalNodeModules()
-      .then(async (globalModulesDirectory) => {
-        this.globalModulesDirectory = globalModulesDirectory;
+    // First run of Matterbridge so the node storage is empty
+    if (this.globalModulesDirectory === '') {
+      try {
+        this.globalModulesDirectory = await this.getGlobalNodeModules();
         this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory;
         this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
         await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
-      })
-      .catch((error) => {
+      } catch (error) {
         this.log.error(`Error getting global node_modules directory: ${error}`);
-      });
+      }
+    } else {
+      this.getGlobalNodeModules()
+        .then(async (globalModulesDirectory) => {
+          this.globalModulesDirectory = globalModulesDirectory;
+          this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory;
+          this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
+          await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
+        })
+        .catch((error) => {
+          this.log.error(`Error getting global node_modules directory: ${error}`);
+        });
+    }
 
     // Create the data directory .matterbridge in the home directory
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
@@ -2526,7 +2538,7 @@ export class Matterbridge extends EventEmitter {
     }
     this.log.debug(`Matterbridge Directory: ${this.matterbridgeDirectory}`);
 
-    // Create the data directory .matterbridge in the home directory
+    // Create the plugin directory Matterbridge in the home directory
     this.matterbridgePluginDirectory = path.join(this.homeDirectory, 'Matterbridge');
     this.matterbridgeInformation.matterbridgePluginDirectory = this.matterbridgePluginDirectory;
     try {
@@ -2557,7 +2569,7 @@ export class Matterbridge extends EventEmitter {
     // Matterbridge latest version
     if (this.nodeContext) this.matterbridgeLatestVersion = await this.nodeContext.get<string>('matterbridgeLatestVersion', '');
     this.log.debug(`Matterbridge Latest Version: ${this.matterbridgeLatestVersion}`);
-    await this.getMatterbridgeLatestVersion();
+    this.getMatterbridgeLatestVersion();
 
     // Current working directory
     const currentDir = process.cwd();
@@ -2573,7 +2585,7 @@ export class Matterbridge extends EventEmitter {
    * @private
    * @returns {Promise<void>} A promise that resolves when the latest version is retrieved and actions are performed.
    */
-  private async getMatterbridgeLatestVersion() {
+  private async getMatterbridgeLatestVersion(): Promise<void> {
     this.getLatestVersion('matterbridge')
       .then(async (matterbridgeLatestVersion) => {
         this.matterbridgeLatestVersion = matterbridgeLatestVersion;
@@ -2586,7 +2598,7 @@ export class Matterbridge extends EventEmitter {
       })
       .catch((error: Error) => {
         this.log.error(`Error getting Matterbridge latest version: ${error.message}`);
-        error.stack && this.log.debug(error.stack);
+        // error.stack && this.log.debug(error.stack);
       });
   }
 
@@ -2600,7 +2612,7 @@ export class Matterbridge extends EventEmitter {
    * @param {RegisteredPlugin} plugin - The plugin for which to retrieve the latest version.
    * @returns {Promise<void>} A promise that resolves when the latest version is retrieved and actions are performed.
    */
-  private async getPluginLatestVersion(plugin: RegisteredPlugin) {
+  private async getPluginLatestVersion(plugin: RegisteredPlugin): Promise<void> {
     this.getLatestVersion(plugin.name)
       .then(async (latestVersion) => {
         plugin.latestVersion = latestVersion;
@@ -2610,7 +2622,7 @@ export class Matterbridge extends EventEmitter {
       })
       .catch((error: Error) => {
         this.log.error(`Error getting ${plugin.name} latest version: ${error.message}`);
-        error.stack && this.log.debug(error.stack);
+        // error.stack && this.log.debug(error.stack);
       });
   }
 

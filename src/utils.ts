@@ -4,7 +4,7 @@
  * @file utils.ts
  * @author Luca Liguori
  * @date 2024-02-17
- * @version 1.2.4
+ * @version 1.2.5
  *
  * Copyright 2024 Luca Liguori.
  *
@@ -227,6 +227,23 @@ export function getIpv6InterfaceAddress(): string | undefined {
     }
   }
   // console.log('Selected Network Interfaces:', ipv6Address);
+  return ipv6Address;
+}
+
+export function logInterfaces(): string | undefined {
+  let ipv6Address: string | undefined;
+  const networkInterfaces = os.networkInterfaces();
+  // eslint-disable-next-line no-console
+  console.log('Available Network Interfaces:', networkInterfaces);
+  for (const interfaceDetails of Object.values(networkInterfaces)) {
+    if (!interfaceDetails) {
+      break;
+    }
+    for (const detail of interfaceDetails) {
+      // eslint-disable-next-line no-console
+      console.log('Details:', detail);
+    }
+  }
   return ipv6Address;
 }
 
