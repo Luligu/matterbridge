@@ -477,7 +477,7 @@ docker logs --tail 1000 -f matterbridge
 
 ## Session XYZ does not exist 
 This message may appear after Matterbridge restarts, indicating that the controller is still using a session from the previous connection that has since been closed.
-After some time, it will reconnect. 
+After some time, the controller will reconnect. 
 In this context, the message is not indicative of a problem.
 
 ## Apple Home issues
@@ -494,9 +494,10 @@ Solved with the version 17.5 of the HomePod/AppleTV.
 
 ## Home Assistant issues (Matter Server for HA is still in Beta)
 
-- if HA doesn't show all devices just reload the HA Matter Server or reboot HA
-- it doesn't seem that HA reacts to removing a device from the aggregator: they remain like unavailable...
-- in the Home Assistant Core log you can see sometimes error messages relating to unique id not found but it seems to be an issue related to missing some matter packet during the commissioning and subscription phase...
+- If HA doesn't show all devices just reload the HA Matter Server or reboot HA
+- Home Assistant doesn't seem to react when a device is removed from the bridge: they remain like unavailable forever...
+- In the Home Assistant Core log you can see sometimes error messages relating to unique id not found but it seems to be an issue related to missing some matter packet during the commissioning and subscription phase...
+- Version 6.1.0 is more stable and has solved the problem of the commissioning window: now pairing is again easy. Use Apple Home when you have to choose the controller type even if you pair Matterbridge directly with HA.
 
 ## Google Home
 
@@ -535,6 +536,7 @@ We believe in a welcoming and respectful community for all. Please make sure to 
 ## Support
 
 If you find this project helpful and you wish to support the ongoing development, you can do so by buying me a coffee. 
+On my side I sponsor the packages that I use in this project. It would be nice to have sponsors too.
 Click on the badge below to get started:
 
 <a href="https://www.buymeacoffee.com/luligugithub">
