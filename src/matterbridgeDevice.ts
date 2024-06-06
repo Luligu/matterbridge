@@ -198,9 +198,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {DeviceTypeDefinition} definition - The definition of the device.
    * @param {EndpointOptions} [options={}] - The options for the device.
    */
-  constructor(definition: DeviceTypeDefinition, options: EndpointOptions = {}) {
+  constructor(definition: DeviceTypeDefinition, options: EndpointOptions = {}, debug = false) {
     super(definition, options);
-    this.log = new AnsiLogger({ logName: 'MatterbridgeDevice', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: true });
+    this.log = new AnsiLogger({ logName: 'MatterbridgeDevice', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: debug });
   }
 
   /**
@@ -1380,7 +1380,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           // eslint-disable-next-line no-console
           console.log(
             `goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
-              `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
+            `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
           );
           await this.commandHandler.executeHandler('goToLiftPercentage', data);
         },
