@@ -222,15 +222,17 @@ export const somfytahoma_schema: PlatformSchema = {
 };
 
 export const shelly_config: PlatformConfig = {
-  blackList: [],
-  whiteList: [],
   name: 'matterbridge-shelly',
   type: 'DynamicPlatform',
-  unregisterOnShutdown: false,
+  blackList: [],
+  whiteList: [],
   deviceIp: {},
   enableMdnsDiscover: true,
   enableStorageDiscover: true,
-  enableConfigDiscover: true,
+  resetStorageDiscover: false,
+  enableConfigDiscover: false,
+  debug: false,
+  unregisterOnShutdown: false,
 };
 
 export const shelly_schema: PlatformSchema = {
@@ -248,37 +250,49 @@ export const shelly_schema: PlatformSchema = {
       type: 'string',
       readOnly: true,
     },
+    username: {
+      description: 'Username (always admin for gen 2 and 3 devices so use admin also for gen 1)',
+      type: 'string',
+    },
+    password: {
+      description: 'Password (must be unique for all the devices)',
+      type: 'string',
+    },
     blackList: {
-      description: 'The devices in the list will not be exposed.',
+      description: 'The devices in the list will not be exposed. Use the device id (e.g. shellyplus2pm-5443b23d81f8)',
       type: 'array',
       items: {
         type: 'string',
       },
     },
     whiteList: {
-      description: 'Only the devices in the list will be exposed.',
+      description: 'Only the devices in the list will be exposed. Use the device id (e.g. shellyplus2pm-5443b23d81f8)',
       type: 'array',
       items: {
         type: 'string',
       },
     },
     deviceIp: {
-      description: 'Set the IP address for each device. Enter in the first field the shelly ID of the device and in the second field the IP address.',
+      description: 'Set the IP address for each device. Enter in the first field the shelly ID of the device and in the second field the IP address. (e.g. shelly1minig3-543204547478: 192.168.1.221)',
       type: 'object',
       additionalProperties: {
         type: 'string',
       },
     },
     enableMdnsDiscover: {
-      description: 'Enable mdns discovery for shelly devices (it will stop after 10 minutes)',
+      description: 'Enable the mdns discovery for shelly devices (it will stop after 10 minutes)',
       type: 'boolean',
     },
     enableStorageDiscover: {
-      description: 'Enable storage discovery for shelly devices (it will load from the storage the devices already registered)',
+      description: 'Enable storage discovery for shelly devices (it will load from the storage the devices already discovered)',
+      type: 'boolean',
+    },
+    resetStorageDiscover: {
+      description: 'Reset the storage discovery on the next restart (it will clear the storage of already discovers devices)',
       type: 'boolean',
     },
     enableConfigDiscover: {
-      description: 'Enable config discovery for shelly devices (it will load the devices from deviceIp)',
+      description: 'Enable config discovery for shelly devices (it will load the devices from deviceIp config setting)',
       type: 'boolean',
     },
     enableBleDiscover: {
@@ -286,8 +300,8 @@ export const shelly_schema: PlatformSchema = {
       type: 'boolean',
       readOnly: true,
     },
-    debugDiscover: {
-      description: 'Enable the debug for the discovery (development only)',
+    debug: {
+      description: 'Enable the debug for the plugin (development only)',
       type: 'boolean',
     },
     unregisterOnShutdown: {

@@ -34,16 +34,25 @@ import { Format, Level, Logger, createFileLogger } from '@project-chip/matter-no
 import { StorageContext, StorageManager } from '@project-chip/matter-node.js/storage';
 import { Environment, StorageService } from '@project-chip/matter.js/environment';
 import { ServerNode } from '@project-chip/matter.js/node';
-import { OnOffLightDevice } from '@project-chip/matter.js/devices/OnOffLightDevice';
-import { Endpoint, EndpointServer } from '@project-chip/matter.js/endpoint';
 import { DeviceTypes, logEndpoint } from '@project-chip/matter-node.js/device';
 import { QrCode } from '@project-chip/matter-node.js/schema';
 import { FabricAction } from '@project-chip/matter-node.js/fabric';
+import { Endpoint, EndpointServer } from '@project-chip/matter.js/endpoint';
+
 import { AggregatorEndpoint } from '@project-chip/matter.js/endpoints/AggregatorEndpoint';
 import { BridgedNodeEndpoint } from '@project-chip/matter.js/endpoints/BridgedNodeEndpoint';
-import { BridgedDeviceBasicInformationServer } from '@project-chip/matter.js/behavior/definitions/bridged-device-basic-information';
+
+import { IdentifyServer } from '@project-chip/matter.js/behavior/definitions/identify';
 import { OnOffServer } from '@project-chip/matter.js/behavior/definitions/on-off';
+import { GroupsServer } from '@project-chip/matter.js/behavior/definitions/groups';
+import { ScenesServer } from '@project-chip/matter.js/behavior/definitions/scenes';
+import { BridgedDeviceBasicInformationServer } from '@project-chip/matter.js/behavior/definitions/bridged-device-basic-information';
+
 import { ColorDimmerSwitchDevice } from '@project-chip/matter.js/devices/ColorDimmerSwitchDevice';
+import { OnOffLightDevice, OnOffLightRequirements } from '@project-chip/matter.js/devices/OnOffLightDevice';
+
+import { MutableEndpoint } from '@project-chip/matter.js/endpoint/type';
+import { SupportedBehaviors } from '@project-chip/matter.js/endpoint/properties';
 
 import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr, RED, GREEN, zb, CYAN } from 'node-ansi-logger';
 
@@ -264,7 +273,6 @@ export class MatterbridgeV8 extends EventEmitter {
         reachable: true,
       },
     });
-    console.log('lightEndpoint', lightEndpoint);
 
     /**
      * Register state change handlers and events of the node for identify and onoff states to react to the commands.
@@ -277,8 +285,29 @@ export class MatterbridgeV8 extends EventEmitter {
 
     lightEndpoint.events.onOff.onOff$Changed.on((value) => log.notice(`OnOff is now ${value ? 'ON' : 'OFF'}`));
 
-    const switchEndpoint = new Endpoint(ColorDimmerSwitchDevice.with(BridgedDeviceBasicInformationServer, OnOffServer), {
+    const OnOffSwitchDeviceDefinition = MutableEndpoint({
+      name: 'OnOffSwitch',
+      deviceType: 0x103,
+      deviceRevision: 2,
+      requirements: {
+        server: {
+          mandatory: {},
+          optional: {},
+        },
+        client: {
+          optional: {},
+          mandatory: {},
+        },
+      },
+      behaviors: SupportedBehaviors(IdentifyServer, GroupsServer, ScenesServer, OnOffServer, BridgedDeviceBasicInformationServer),
+    });
+    console.log('OnOffSwitchDeviceDefinition\n', OnOffSwitchDeviceDefinition);
+
+    const switchEndpoint = new Endpoint(OnOffSwitchDeviceDefinition, {
       id: 'OnOffSwitch',
+      onOff: {
+        onOff: false,
+      },
       bridgedDeviceBasicInformation: {
         vendorId: VendorId(await this.matterStorageContext.get<number>('vendorId')),
         vendorName: await this.matterStorageContext.get<string>('vendorName'),
@@ -292,8 +321,6 @@ export class MatterbridgeV8 extends EventEmitter {
         reachable: true,
       },
     });
-
-    console.log('switchEndpoint', switchEndpoint);
 
     // await this.matterServerNode.add(endpoint);
     // const mbV8 = new MatterbridgeDeviceV8(DeviceTypes.OnOffLight);
@@ -365,8 +392,9 @@ export class MatterbridgeV8 extends EventEmitter {
     });
 
     await this.matterServerNode.bringOnline();
-    console.log('lightEndpoint', lightEndpoint);
-    console.log('switchEndpoint', switchEndpoint);
+
+    console.log('lightEndpoint\n', lightEndpoint);
+    console.log('switchEndpoint\n', switchEndpoint);
   }
 
   showServerNodeQR() {
