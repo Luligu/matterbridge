@@ -201,6 +201,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   constructor(definition: DeviceTypeDefinition, options: EndpointOptions = {}, debug = false) {
     super(definition, options);
     this.log = new AnsiLogger({ logName: 'MatterbridgeDevice', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: debug });
+    this.log.debug(`MatterbridgeDevice with deviceType: ${zb}${definition.code}${db}-${zb}${definition.name}${db}`);
   }
 
   /**
@@ -346,6 +347,40 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   setChildEndpointName(child: Endpoint, endpointName: string) {
     child.addFixedLabel('endpointName', endpointName);
+  }
+
+  /**
+   * Retrieves the label associated with the specified endpoint number.
+   * @param {EndpointNumber} endpointNumber - The number of the endpoint.
+   * @returns {string | undefined} The label associated with the endpoint number, or undefined if not found.
+   */
+  getEndpointLabel(endpointNumber: EndpointNumber): string | undefined {
+    const labelList = this.getChildEndpoint(endpointNumber)?.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
+    if (!labelList) return undefined;
+    for (const entry of labelList) {
+      if (entry.label === 'endpointName') return entry.value;
+    }
+    return undefined;
+  }
+
+  /**
+   * Retrieves the child endpoint with the specified label.
+   * 
+   * @param {string} label - The label of the child endpoint to retrieve.
+   * @returns {Endpoint | undefined} The child endpoint with the specified label, or undefined if not found.
+   */
+  getChildEndpointWithLabel(label: string): Endpoint | undefined {
+    const endpoints = this.getChildEndpoints();
+    for (const endpoint of endpoints) {
+      const labelList = endpoint.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
+      if (!labelList) return undefined;
+      let endpointName = '';
+      for (const entry of labelList) {
+        if (entry.label === 'endpointName') endpointName = entry.value;
+      }
+      if (endpointName === label) return endpoint;
+    }
+    return undefined;
   }
 
   /**
@@ -826,8 +861,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {
         identify: async (data) => {
-          // eslint-disable-next-line no-console
-          console.log('Identify');
+          this.log.debug('Matter command: Identify');
           await this.commandHandler.executeHandler('identify', data);
         },
       },
@@ -1121,7 +1155,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         {
           resetCounts: async (data) => {
             // eslint-disable-next-line no-console
-            console.log('resetCounts');
+            this.log.debug('Matter command: resetCounts');
             await this.commandHandler.executeHandler('resetCounts', data);
           },
         },
@@ -1144,17 +1178,17 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         on: async (data) => {
           // eslint-disable-next-line no-console
-          console.log('on onOff:', data.attributes.onOff.getLocal());
+          this.log.debug('Matter command: on onOff:', data.attributes.onOff.getLocal());
           await this.commandHandler.executeHandler('on', data);
         },
         off: async (data) => {
           // eslint-disable-next-line no-console
-          console.log('off onOff:', data.attributes.onOff.getLocal());
+          this.log.debug('Matter command: off onOff:', data.attributes.onOff.getLocal());
           await this.commandHandler.executeHandler('off', data);
         },
         toggle: async (data) => {
           // eslint-disable-next-line no-console
-          console.log('toggle onOff:', data.attributes.onOff.getLocal());
+          this.log.debug('Matter command: toggle onOff:', data.attributes.onOff.getLocal());
           await this.commandHandler.executeHandler('toggle', data);
         },
       },
@@ -1190,21 +1224,21 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         moveToLevel: async ({ request, attributes, endpoint }) => {
           // eslint-disable-next-line no-console
-          console.log('moveToLevel request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
+          this.log.debug('Matter command: moveToLevel request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
           // attributes.currentLevel.setLocal(request.level);
           await this.commandHandler.executeHandler('moveToLevel', { request: request, attributes: attributes, endpoint: endpoint });
         },
         move: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: move not implemented');
         },
         step: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: step not implemented');
         },
         stop: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: stop not implemented');
         },
         moveToLevelWithOnOff: async ({ request, attributes, endpoint }) => {
           // eslint-disable-next-line no-console
@@ -1214,15 +1248,15 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         },
         moveWithOnOff: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: moveWithOnOff not implemented');
         },
         stepWithOnOff: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: stepWithOnOff not implemented');
         },
         stopWithOnOff: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: stopWithOnOff not implemented');
         },
       },
     );
@@ -1265,56 +1299,56 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         moveToHue: async ({ request: request, attributes: attributes }) => {
           // eslint-disable-next-line no-console
-          console.log('Command moveToHue request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal());
+          this.log.debug('Matter command: moveToHue request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal());
           // attributes.currentHue.setLocal(request.hue);
           this.commandHandler.executeHandler('moveToHue', { request: request, attributes: attributes });
         },
         moveHue: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: moveHue not implemented');
         },
         stepHue: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: stepHue not implemented');
         },
         moveToSaturation: async ({ request: request, attributes: attributes }) => {
           // eslint-disable-next-line no-console
-          console.log('Command moveToSaturation request:', request, 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
+          this.log.debug('Matter command: moveToSaturation request:', request, 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
           // attributes.currentSaturation.setLocal(request.saturation);
           this.commandHandler.executeHandler('moveToSaturation', { request: request, attributes: attributes });
         },
         moveSaturation: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: moveSaturation not implemented');
         },
         stepSaturation: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: stepSaturation not implemented');
         },
         moveToHueAndSaturation: async ({ request: request, attributes: attributes }) => {
           // eslint-disable-next-line no-console
-          console.log('Command moveToHueAndSaturation request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal(), 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
+          this.log.debug('Matter command: moveToHueAndSaturation request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal(), 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
           // attributes.currentHue.setLocal(request.hue);
           // attributes.currentSaturation.setLocal(request.saturation);
           this.commandHandler.executeHandler('moveToHueAndSaturation', { request: request, attributes: attributes });
         },
         stopMoveStep: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: stopMoveStep not implemented');
         },
         moveToColorTemperature: async ({ request: request, attributes: attributes }) => {
           // eslint-disable-next-line no-console
-          console.log('Command moveToColorTemperature request:', request, 'attributes.colorTemperatureMireds:', attributes.colorTemperatureMireds.getLocal());
+          this.log.debug('Matter command: moveToColorTemperature request:', request, 'attributes.colorTemperatureMireds:', attributes.colorTemperatureMireds.getLocal());
           // attributes.colorTemperatureMireds.setLocal(request.colorTemperatureMireds);
           this.commandHandler.executeHandler('moveToColorTemperature', { request: request, attributes: attributes });
         },
         moveColorTemperature: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: moveColorTemperature not implemented');
         },
         stepColorTemperature: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: stepColorTemperature not implemented');
         },
       },
       {},
@@ -1363,23 +1397,22 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         upOrOpen: async (data) => {
           // eslint-disable-next-line no-console
-          console.log('upOrOpen');
+          this.log.debug('Matter command: upOrOpen');
           await this.commandHandler.executeHandler('upOrOpen', data);
         },
         downOrClose: async (data) => {
           // eslint-disable-next-line no-console
-          console.log('downOrClose');
+          this.log.debug('Matter command: downOrClose');
           await this.commandHandler.executeHandler('downOrClose', data);
         },
         stopMotion: async (data) => {
           // eslint-disable-next-line no-console
-          console.log('stopMotion');
+          this.log.debug('Matter command: stopMotion');
           await this.commandHandler.executeHandler('stopMotion', data);
         },
         goToLiftPercentage: async (data) => {
           // eslint-disable-next-line no-console
-          console.log(
-            `goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
+          this.log.debug(`Matter command: goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
             `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
           );
           await this.commandHandler.executeHandler('goToLiftPercentage', data);
@@ -1502,12 +1535,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         lockDoor: async (data) => {
           // eslint-disable-next-line no-console
-          console.log('lockDoor', data.request);
+          this.log.debug('Matter command: lockDoor', data.request);
           await this.commandHandler.executeHandler('lockDoor', data);
         },
         unlockDoor: async (data) => {
           // eslint-disable-next-line no-console
-          console.log('unlockDoor', data.request);
+          this.log.debug('Matter command: unlockDoor', data.request);
           await this.commandHandler.executeHandler('unlockDoor', data);
         },
       },
@@ -1579,7 +1612,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         changeToMode: async (data) => {
           // eslint-disable-next-line no-console
-          console.log('changeToMode', data.request);
+          this.log.debug('Matter command: changeToMode', data.request);
           await this.commandHandler.executeHandler('changeToMode', data);
         },
       },
@@ -2000,7 +2033,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         setpointRaiseLower: async ({ request, attributes }) => {
           // eslint-disable-next-line no-console
-          console.log('setpointRaiseLower', request);
+          this.log.debug('Matter command: setpointRaiseLower', request);
           await this.commandHandler.executeHandler('setpointRaiseLower', { request, attributes });
         },
       },
@@ -2038,7 +2071,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         setUtcTime: async ({ request, attributes }) => {
           // eslint-disable-next-line no-console
-          console.log('setUtcTime', request);
+          this.log.debug('Matter command: setUtcTime', request);
           await this.commandHandler.executeHandler('setUtcTime', { request, attributes });
         },
       },
