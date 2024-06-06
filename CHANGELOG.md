@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.22] - 2024-06-04
+
+### Changed
+- [matterbridge]: Updated dependencies
+- [matterbridge]: Default config and schema for the new plugin matterbridge-shelly
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.2.21] - 2024-06-04
 
 ### Changed
