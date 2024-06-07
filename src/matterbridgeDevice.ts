@@ -1077,7 +1077,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Creates a default BridgedDeviceBasicInformationClusterServer.
+   * Creates a default BridgedDeviceBasicInformationClusterServer. 
    *
    * @param deviceName - The name of the device.
    * @param serialNumber - The serial number of the device.
