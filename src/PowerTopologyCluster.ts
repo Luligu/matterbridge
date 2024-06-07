@@ -1,10 +1,10 @@
+/* eslint-disable @typescript-eslint/no-empty-interface */
+/* eslint-disable @typescript-eslint/no-namespace */
 /**
  * @license
  * Copyright 2022-2024 Matter.js Authors
  * SPDX-License-Identifier: Apache-2.0
  */
-
-/*** THIS FILE IS GENERATED, DO NOT EDIT ***/
 
 import { ClusterRegistry, MutableCluster } from '@project-chip/matter-node.js/cluster';
 import { FixedAttribute, Attribute } from '@project-chip/matter-node.js/cluster';

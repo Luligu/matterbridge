@@ -88,7 +88,6 @@ import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } f
 import { PowerTopology, PowerTopologyCluster } from './PowerTopologyCluster.js';
 import { ElectricalPowerMeasurement, ElectricalPowerMeasurementCluster } from './ElectricalPowerMeasurementCluster.js';
 import { ElectricalEnergyMeasurement, ElectricalEnergyMeasurementCluster } from './ElectricalEnergyMeasurementCluster.js';
-import { TlvMeasurementAccuracy } from './MeasurementAccuracy.js';
 import { MeasurementType } from './MeasurementType.js';
 
 type MakeMandatory<T> = Exclude<T, undefined>;
@@ -1111,7 +1110,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param energy - The total consumption value.
    */
-  getDefaultPowerTopologyClusterServer(energy = 0) {
+  getDefaultPowerTopologyClusterServer() {
     return ClusterServer(PowerTopologyCluster.with(PowerTopology.Feature.TreeTopology), {}, {}, {});
   }
 
@@ -1120,6 +1119,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param energy - The total consumption value.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getDefaultElectricalEnergyMeasurementClusterServer(energy = 0) {
     return ClusterServer(
       ElectricalEnergyMeasurementCluster.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),

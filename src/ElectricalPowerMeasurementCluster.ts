@@ -1,10 +1,9 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 /**
  * @license
  * Copyright 2022-2024 Matter.js Authors
  * SPDX-License-Identifier: Apache-2.0
  */
-
-/*** THIS FILE IS GENERATED, DO NOT EDIT ***/
 
 import { ClusterRegistry, EventPriority, MutableCluster, OptionalAttribute, OptionalEvent } from '@project-chip/matter-node.js/cluster';
 import { FixedAttribute, Attribute } from '@project-chip/matter-node.js/cluster';
@@ -49,7 +48,7 @@ export namespace ElectricalPowerMeasurement {
   /**
    * @see {@link MatterSpecification.v13.Cluster} § 2.13.5.3
    */
-  export interface HarmonicMeasurement extends TypeFromSchema<typeof TlvHarmonicMeasurement> {}
+  export type HarmonicMeasurement = TypeFromSchema<typeof TlvHarmonicMeasurement>;
 
   /**
    * @see {@link MatterSpecification.v13.Cluster} § 2.13.5.1
@@ -200,7 +199,7 @@ export namespace ElectricalPowerMeasurement {
    *
    * @see {@link MatterSpecification.v13.Cluster} § 2.13.5.2
    */
-  export interface MeasurementRange extends TypeFromSchema<typeof TlvMeasurementRange> {}
+  export type MeasurementRange = TypeFromSchema<typeof TlvMeasurementRange>;
 
   /**
    * Body of the ElectricalPowerMeasurement measurementPeriodRanges event
@@ -221,7 +220,7 @@ export namespace ElectricalPowerMeasurement {
    *
    * @see {@link MatterSpecification.v13.Cluster} § 2.13.7.1
    */
-  export interface MeasurementPeriodRangesEvent extends TypeFromSchema<typeof TlvMeasurementPeriodRangesEvent> {}
+  export type MeasurementPeriodRangesEvent = TypeFromSchema<typeof TlvMeasurementPeriodRangesEvent>;
 
   /**
    * A ElectricalPowerMeasurementCluster supports these elements if it supports feature AlternatingCurrent.
@@ -735,7 +734,7 @@ export namespace ElectricalPowerMeasurement {
    *
    * @see {@link MatterSpecification.v13.Cluster} § 2.13
    */
-  export interface Cluster extends Identity<typeof ClusterInstance> {}
+  export type Cluster = Identity<typeof ClusterInstance>;
 
   export const Cluster: Cluster = ClusterInstance;
   const ALTC = { alternatingCurrent: true };
@@ -777,7 +776,7 @@ export namespace ElectricalPowerMeasurement {
    * If you use this cluster you must manually specify which features are active and ensure the set of active
    * features is legal per the Matter specification.
    */
-  export interface Complete extends Identity<typeof CompleteInstance> {}
+  export type Complete = Identity<typeof CompleteInstance>;
 
   export const Complete: Complete = CompleteInstance;
 }

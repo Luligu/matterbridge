@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*** THIS FILE IS GENERATED, DO NOT EDIT ***/
-
 import { TlvObject, TlvField, TlvInt64, TlvOptionalField, TypeFromSchema, TlvPercent100ths, TlvUInt64 } from '@project-chip/matter-node.js/tlv';
 
 /**
@@ -142,4 +140,4 @@ export const TlvMeasurementAccuracyRange = TlvObject({
  *
  * @see {@link MatterSpecification.v13.Cluster} § 2.1.4.3
  */
-export interface MeasurementAccuracyRange extends TypeFromSchema<typeof TlvMeasurementAccuracyRange> {}
+export type MeasurementAccuracyRange = TypeFromSchema<typeof TlvMeasurementAccuracyRange>;

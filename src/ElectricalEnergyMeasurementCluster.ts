@@ -1,10 +1,9 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 /**
  * @license
  * Copyright 2022-2024 Matter.js Authors
  * SPDX-License-Identifier: Apache-2.0
  */
-
-/*** THIS FILE IS GENERATED, DO NOT EDIT ***/
 
 import { ClusterRegistry, EventPriority, MutableCluster, OptionalAttribute } from '@project-chip/matter-node.js/cluster';
 import { FixedAttribute, Attribute, Event } from '@project-chip/matter-node.js/cluster';
@@ -117,7 +116,7 @@ export namespace ElectricalEnergyMeasurement {
    *
    * @see {@link MatterSpecification.v13.Cluster} § 2.12.5.1
    */
-  export interface EnergyMeasurement extends TypeFromSchema<typeof TlvEnergyMeasurement> {}
+  export type EnergyMeasurement = TypeFromSchema<typeof TlvEnergyMeasurement>;
 
   /**
    * This struct shall represent the times at which cumulative measurements were last zero, either due to
@@ -202,7 +201,7 @@ export namespace ElectricalEnergyMeasurement {
    *
    * @see {@link MatterSpecification.v13.Cluster} § 2.12.5.2
    */
-  export interface CumulativeEnergyReset extends TypeFromSchema<typeof TlvCumulativeEnergyReset> {}
+  export type CumulativeEnergyReset = TypeFromSchema<typeof TlvCumulativeEnergyReset>;
 
   /**
    * Body of the ElectricalEnergyMeasurement cumulativeEnergyMeasured event
@@ -232,7 +231,7 @@ export namespace ElectricalEnergyMeasurement {
    *
    * @see {@link MatterSpecification.v13.Cluster} § 2.12.7.1
    */
-  export interface CumulativeEnergyMeasuredEvent extends TypeFromSchema<typeof TlvCumulativeEnergyMeasuredEvent> {}
+  export type CumulativeEnergyMeasuredEvent = TypeFromSchema<typeof TlvCumulativeEnergyMeasuredEvent>;
 
   /**
    * Body of the ElectricalEnergyMeasurement periodicEnergyMeasured event
@@ -262,7 +261,7 @@ export namespace ElectricalEnergyMeasurement {
    *
    * @see {@link MatterSpecification.v13.Cluster} § 2.12.7.2
    */
-  export interface PeriodicEnergyMeasuredEvent extends TypeFromSchema<typeof TlvPeriodicEnergyMeasuredEvent> {}
+  export type PeriodicEnergyMeasuredEvent = TypeFromSchema<typeof TlvPeriodicEnergyMeasuredEvent>;
 
   /**
    * A ElectricalEnergyMeasurementCluster supports these elements if it supports features ImportedEnergy and
@@ -563,7 +562,7 @@ export namespace ElectricalEnergyMeasurement {
    *
    * @see {@link MatterSpecification.v13.Cluster} § 2.12
    */
-  export interface Cluster extends Identity<typeof ClusterInstance> {}
+  export type Cluster = Identity<typeof ClusterInstance>;
 
   export const Cluster: Cluster = ClusterInstance;
   const IMPE_CUME = { importedEnergy: true, cumulativeEnergy: true };
@@ -603,7 +602,7 @@ export namespace ElectricalEnergyMeasurement {
    * If you use this cluster you must manually specify which features are active and ensure the set of active
    * features is legal per the Matter specification.
    */
-  export interface Complete extends Identity<typeof CompleteInstance> {}
+  export type Complete = Identity<typeof CompleteInstance>;
 
   export const Complete: Complete = CompleteInstance;
 }

@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/*** THIS FILE IS GENERATED, DO NOT EDIT ***/
-
 /**
  * @see {@link MatterSpecification.v13.Cluster} § 2.1.4.2
  */
