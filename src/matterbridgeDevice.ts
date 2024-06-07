@@ -85,6 +85,11 @@ import { AnsiLogger, TimestampFormat, db, hk, zb } from 'node-ansi-logger';
 import { createHash } from 'crypto';
 import { TvocMeasurement, TvocMeasurementCluster } from './TvocCluster.js';
 import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './BridgedDeviceBasicInformationCluster.js';
+import { PowerTopology, PowerTopologyCluster } from './PowerTopologyCluster.js';
+import { ElectricalPowerMeasurement, ElectricalPowerMeasurementCluster } from './ElectricalPowerMeasurementCluster.js';
+import { ElectricalEnergyMeasurement, ElectricalEnergyMeasurementCluster } from './ElectricalEnergyMeasurementCluster.js';
+import { TlvMeasurementAccuracy } from './MeasurementAccuracy.js';
+import { MeasurementType } from './MeasurementType.js';
 
 type MakeMandatory<T> = Exclude<T, undefined>;
 
@@ -120,6 +125,16 @@ interface MatterbridgeDeviceCommands {
 }
 
 // Custom device types
+
+export const electricalSensor = DeviceTypeDefinition({
+  name: 'MA-electricalsensor',
+  code: 0x0510,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [PowerTopology.Cluster.id],
+  optionalServerClusters: [ElectricalPowerMeasurement.Cluster.id, ElectricalEnergyMeasurement.Cluster.id],
+});
+
 export const powerSource = DeviceTypeDefinition({
   name: 'MA-powersource',
   code: 0x0011,
@@ -193,7 +208,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   uniqueId: string | undefined = undefined;
 
   /**
-   * Represents a Matterbridge device.
+   * Create a Matterbridge device.
    * @constructor
    * @param {DeviceTypeDefinition} definition - The definition of the device.
    * @param {EndpointOptions} [options={}] - The options for the device.
@@ -250,8 +265,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Adds a child device type with cluster server.
+   * Adds a child endpoint with one or more device types with the required cluster servers and the specified cluster servers.
    *
+   * @param {string} endpointName - The name of the new enpoint to add.
    * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
    * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
    * @returns {Endpoint} - The child endpoint that was added.
@@ -301,10 +317,14 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(BooleanState.Cluster.id)) endpoint.addClusterServer(this.getDefaultBooleanStateClusterServer());
     if (includeServerList.includes(OccupancySensing.Cluster.id)) endpoint.addClusterServer(this.getDefaultOccupancySensingClusterServer());
     if (includeServerList.includes(IlluminanceMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer());
+    if (includeServerList.includes(PowerSource.Cluster.id)) endpoint.addClusterServer(this.getDefaultPowerSourceWiredClusterServer());
     if (includeServerList.includes(EveHistory.Cluster.id)) endpoint.addClusterServer(this.getDefaultStaticEveHistoryClusterServer());
     if (includeServerList.includes(ElectricalMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalMeasurementClusterServer());
     if (includeServerList.includes(AirQuality.Cluster.id)) endpoint.addClusterServer(this.getDefaultAirQualityClusterServer());
     if (includeServerList.includes(TvocMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultTvocMeasurementClusterServer());
+    if (includeServerList.includes(PowerTopology.Cluster.id)) endpoint.addClusterServer(this.getDefaultPowerTopologyClusterServer());
+    if (includeServerList.includes(ElectricalPowerMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalPowerMeasurementClusterServer());
+    if (includeServerList.includes(ElectricalEnergyMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalEnergyMeasurementClusterServer());
   }
 
   /**
@@ -1087,13 +1107,88 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Get a default Electrical Measurement Cluster Server.
+   * Get a default Electrical Energy Measurement Cluster Server.
    *
-   * @param voltage - The RMS voltage value.
-   * @param current - The RMS current value.
-   * @param power - The active power value.
-   * @param consumption - The total active power consumption value.
+   * @param energy - The total consumption value.
    */
+  getDefaultPowerTopologyClusterServer(energy = 0) {
+    return ClusterServer(
+      PowerTopologyCluster.with(PowerTopology.Feature.TreeTopology),
+      {},
+      {},
+      {},
+    );
+  }
+
+  /**
+   * Get a default Electrical Energy Measurement Cluster Server.
+   *
+   * @param energy - The total consumption value.
+   */
+  getDefaultElectricalEnergyMeasurementClusterServer(energy = 0) {
+    return ClusterServer(
+      ElectricalEnergyMeasurementCluster.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
+      {
+        accuracy: {
+          measurementType: MeasurementType.ElectricalEnergy, measured: true, minMeasuredValue: 0, maxMeasuredValue: 0, accuracyRanges: [
+            { rangeMin: 0, rangeMax: 100, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }
+          ]
+        },
+        cumulativeEnergyImported: null,
+        cumulativeEnergyExported: null,
+      },
+      {},
+      {
+        cumulativeEnergyMeasured: true,
+      },
+    );
+  }
+
+  /**
+   * Get a default Electrical Power Measurement Cluster Server.
+   *
+   * @param energy - The total consumption value.
+   */
+  getDefaultElectricalPowerMeasurementClusterServer(voltage = 0, current = 0, power = 0) {
+    return ClusterServer(
+      ElectricalPowerMeasurementCluster.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent),
+      {
+        powerMode: ElectricalPowerMeasurement.PowerMode.Ac,
+        numberOfMeasurementTypes: 3,
+        accuracy: [
+          {
+            measurementType: MeasurementType.Voltage, measured: true, minMeasuredValue: 0, maxMeasuredValue: 100, accuracyRanges: [
+              { rangeMin: 0, rangeMax: 100, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }
+            ]
+          },
+          {
+            measurementType: MeasurementType.ActiveCurrent, measured: true, minMeasuredValue: 0, maxMeasuredValue: 100, accuracyRanges: [
+              { rangeMin: 0, rangeMax: 100, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }
+            ]
+          },
+          {
+            measurementType: MeasurementType.ActivePower, measured: true, minMeasuredValue: 0, maxMeasuredValue: 100, accuracyRanges: [
+              { rangeMin: 0, rangeMax: 100, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }
+            ]
+          },
+        ],
+        voltage: voltage,
+        activeCurrent: current,
+        activePower: power,
+      },
+      {},
+      {},
+    );
+  }
+
+  /**
+     * Get a default Electrical Measurement Cluster Server.
+     *
+     * @param voltage - The RMS voltage value.
+     * @param current - The RMS current value.
+     * @param power - The active power value.
+     * @param consumption - The total active power consumption value.
+     */
   getDefaultElectricalMeasurementClusterServer(voltage = 0, current = 0, power = 0, consumption = 0) {
     return ClusterServer(
       ElectricalMeasurementCluster,

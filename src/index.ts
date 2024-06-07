@@ -40,6 +40,9 @@ export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
 export * from './AirQualityCluster.js';
 export * from './TvocCluster.js';
+export * from './PowerTopologyCluster.js';
+export * from './ElectricalEnergyMeasurementCluster.js';
+export * from './ElectricalPowerMeasurementCluster.js';
 export * from './utils.js';
 
 async function main() {
