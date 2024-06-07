@@ -1337,7 +1337,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         },
         moveToLevelWithOnOff: async ({ request, attributes, endpoint }) => {
           // eslint-disable-next-line no-console
-          console.log('moveToLevelWithOnOff request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
+          this.log.debug('Matter command: moveToLevelWithOnOff request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
           // attributes.currentLevel.setLocal(request.level);
           await this.commandHandler.executeHandler('moveToLevelWithOnOff', { request: request, attributes: attributes, endpoint: endpoint });
         },
