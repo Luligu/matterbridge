@@ -159,7 +159,7 @@ export const onOffSwitch = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, Scenes.Cluster.id, OnOff.Cluster.id],
-  optionalServerClusters: [LevelControl.Cluster.id],
+  optionalServerClusters: [LevelControl.Cluster.id, ColorControl.Cluster.id],
 });
 
 export const dimmableSwitch = DeviceTypeDefinition({
@@ -168,7 +168,7 @@ export const dimmableSwitch = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, Scenes.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id],
-  optionalServerClusters: [],
+  optionalServerClusters: [ColorControl.Cluster.id],
 });
 
 export const colorTemperatureSwitch = DeviceTypeDefinition({
@@ -230,7 +230,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Adds a device type to the list of device types.
+   * Adds a device type to the list of device types of the MatterbridgeDevice endpoint.
    * If the device type is not already present in the list, it will be added.
    *
    * @param {DeviceTypeDefinition} deviceType - The device type to add.
@@ -273,7 +273,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @returns {Endpoint} - The child endpoint that was added.
    */
   addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]): Endpoint {
-    this.log.debug('addChildDeviceTypeWithClusterServer:');
+    this.log.debug(`addChildDeviceTypeWithClusterServer: ${endpointName}`);
     const child = new Endpoint(deviceTypes);
     child.addFixedLabel('endpointName', endpointName);
     deviceTypes.forEach((deviceType) => {
