@@ -385,7 +385,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Retrieves the child endpoint with the specified label.
-   * 
+   *
    * @param {string} label - The label of the child endpoint to retrieve.
    * @returns {Endpoint | undefined} The child endpoint with the specified label, or undefined if not found.
    */
@@ -1077,7 +1077,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Creates a default BridgedDeviceBasicInformationClusterServer. 
+   * Creates a default BridgedDeviceBasicInformationClusterServer.
    *
    * @param deviceName - The name of the device.
    * @param serialNumber - The serial number of the device.
@@ -1112,12 +1112,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param energy - The total consumption value.
    */
   getDefaultPowerTopologyClusterServer(energy = 0) {
-    return ClusterServer(
-      PowerTopologyCluster.with(PowerTopology.Feature.TreeTopology),
-      {},
-      {},
-      {},
-    );
+    return ClusterServer(PowerTopologyCluster.with(PowerTopology.Feature.TreeTopology), {}, {}, {});
   }
 
   /**
@@ -1130,9 +1125,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       ElectricalEnergyMeasurementCluster.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
       {
         accuracy: {
-          measurementType: MeasurementType.ElectricalEnergy, measured: true, minMeasuredValue: 0, maxMeasuredValue: 0, accuracyRanges: [
-            { rangeMin: 0, rangeMax: 100, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }
-          ]
+          measurementType: MeasurementType.ElectricalEnergy,
+          measured: true,
+          minMeasuredValue: 0,
+          maxMeasuredValue: 0,
+          accuracyRanges: [{ rangeMin: 0, rangeMax: 100, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }],
         },
         cumulativeEnergyImported: null,
         cumulativeEnergyExported: null,
@@ -1157,19 +1154,25 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         numberOfMeasurementTypes: 3,
         accuracy: [
           {
-            measurementType: MeasurementType.Voltage, measured: true, minMeasuredValue: 0, maxMeasuredValue: 100, accuracyRanges: [
-              { rangeMin: 0, rangeMax: 100, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }
-            ]
+            measurementType: MeasurementType.Voltage,
+            measured: true,
+            minMeasuredValue: 0,
+            maxMeasuredValue: 100,
+            accuracyRanges: [{ rangeMin: 0, rangeMax: 100, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }],
           },
           {
-            measurementType: MeasurementType.ActiveCurrent, measured: true, minMeasuredValue: 0, maxMeasuredValue: 100, accuracyRanges: [
-              { rangeMin: 0, rangeMax: 100, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }
-            ]
+            measurementType: MeasurementType.ActiveCurrent,
+            measured: true,
+            minMeasuredValue: 0,
+            maxMeasuredValue: 100,
+            accuracyRanges: [{ rangeMin: 0, rangeMax: 100, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }],
           },
           {
-            measurementType: MeasurementType.ActivePower, measured: true, minMeasuredValue: 0, maxMeasuredValue: 100, accuracyRanges: [
-              { rangeMin: 0, rangeMax: 100, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }
-            ]
+            measurementType: MeasurementType.ActivePower,
+            measured: true,
+            minMeasuredValue: 0,
+            maxMeasuredValue: 100,
+            accuracyRanges: [{ rangeMin: 0, rangeMax: 100, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }],
           },
         ],
         voltage: voltage,
@@ -1182,13 +1185,13 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-     * Get a default Electrical Measurement Cluster Server.
-     *
-     * @param voltage - The RMS voltage value.
-     * @param current - The RMS current value.
-     * @param power - The active power value.
-     * @param consumption - The total active power consumption value.
-     */
+   * Get a default Electrical Measurement Cluster Server.
+   *
+   * @param voltage - The RMS voltage value.
+   * @param current - The RMS current value.
+   * @param power - The active power value.
+   * @param consumption - The total active power consumption value.
+   */
   getDefaultElectricalMeasurementClusterServer(voltage = 0, current = 0, power = 0, consumption = 0) {
     return ClusterServer(
       ElectricalMeasurementCluster,
@@ -1507,8 +1510,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         },
         goToLiftPercentage: async (data) => {
           // eslint-disable-next-line no-console
-          this.log.debug(`Matter command: goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
-            `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
+          this.log.debug(
+            `Matter command: goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
+              `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
           );
           await this.commandHandler.executeHandler('goToLiftPercentage', data);
         },
