@@ -81,7 +81,7 @@ import { MatterHistory, Sensitivity, WeatherTrend, TemperatureDisplayUnits } fro
 import { EveHistory, EveHistoryCluster } from 'matter-history';
 
 import { AirQuality, AirQualityCluster } from './AirQualityCluster.js';
-import { AnsiLogger, TimestampFormat, db, hk, zb } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, TimestampFormat, db, hk, zb } from 'node-ansi-logger';
 import { createHash } from 'crypto';
 import { TvocMeasurement, TvocMeasurementCluster } from './TvocCluster.js';
 import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './BridgedDeviceBasicInformationCluster.js';
@@ -237,6 +237,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   addDeviceType(deviceType: DeviceTypeDefinition) {
     const deviceTypes = this.getDeviceTypes();
     if (!deviceTypes.includes(deviceType)) {
+      this.log.debug(`addDeviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
       deviceTypes.push(deviceType);
       this.setDeviceTypes(deviceTypes);
     }
@@ -272,7 +273,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @returns {Endpoint} - The child endpoint that was added.
    */
   addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]): Endpoint {
-    this.log.debug(`addChildDeviceTypeWithClusterServer: ${endpointName}`);
+    this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
     const child = new Endpoint(deviceTypes);
     child.addFixedLabel('endpointName', endpointName);
     deviceTypes.forEach((deviceType) => {
