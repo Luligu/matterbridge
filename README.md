@@ -330,7 +330,7 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/matterbridge -bridge -service -port 5550
+ExecStart=/usr/bin/matterbridge -bridge -service
 WorkingDirectory=/home/<USER>/Matterbridge
 StandardOutput=inherit
 StandardError=inherit
@@ -474,7 +474,7 @@ docker logs matterbridge
 docker logs --tail 1000 -f matterbridge
 ```
 
-# Known issues
+# Known general issues
 
 ## Session XYZ does not exist 
 This message may appear after Matterbridge restarts, indicating that the controller is still using a session from the previous connection that has since been closed.
@@ -493,10 +493,17 @@ The DoorLock cluster in the Home app takes a while to get online. The Home app s
 
 Solved with the version 17.5 of the HomePod/AppleTV.
 
+## Home Assistant 
+
+So far is the only controller supporting some Matter 1.3 device type:
+- air quality sensor
+
+HA also support electrical measurements from EveHistoryCluster (used in Matterbridge plugins)
+
 ## Home Assistant issues (Matter Server for HA is still in Beta)
 
-- If HA doesn't show all devices just reload the HA Matter Server or reboot HA
-- Home Assistant doesn't seem to react when a device is removed from the bridge: they remain like unavailable forever...
+- If HA doesn't show all devices just reload the Matter Server or reboot HA
+- Home Assistant doesn't seem to react when a device is removed from the bridge: they remain in HA unavailable forever...
 - In the Home Assistant Core log you can see sometimes error messages relating to unique id not found but it seems to be an issue related to missing some matter packet during the commissioning and subscription phase...
 - Version 6.1.0 is more stable and has solved the problem of the commissioning window: now pairing is again easy. Use Apple Home when you have to choose the controller type even if you pair Matterbridge directly with HA.
 
@@ -506,7 +513,7 @@ No issues reported so far.
 
 ## Alexa issues
 
-Alexa needs the standard port 5040 to pair (from matter.js readme).
+Alexa needs the standard port 5540 to pair (from matter.js readme).
 
 There is no support for these Matter device types:
 - pressure sensor
@@ -525,7 +532,7 @@ No issues reported so far.
 
 ## eWeLink
 
-eWeLink needs the standard port 5040 for commissioning.
+eWeLink needs the standard port 5540 for commissioning.
 
 ## Tuya/Smart Life
 
@@ -544,7 +551,7 @@ I warmly welcome contributions to this project! Whether it's reporting bugs, pro
 
 ## Submitting Changes
 
-- Create a new pull request from my repository and I'll be glad to check it out
+- Create a new pull request against the dev from my repository and I'll be glad to check it out
 - Be sure to follow the existing code style
 - Add unit tests for any new or changed functionality if possible
 - In your pull request, do describe what your changes do and how they work
