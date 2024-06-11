@@ -511,7 +511,7 @@ HA also support electrical measurements from EveHistoryCluster (used in Matterbr
 
 No issues reported so far.
 
-## Alexa issues
+## Alexa
 
 Tested by Tamer Salah
 
@@ -522,11 +522,14 @@ There is no support for these Matter device types:
 - flow sensor
 - light sensor
 
-Devices with child endpoints are not shown correctly.
-
 In the zigbee2mqtt and shelly plugins select the option to expose 
 the switch devices like light or outlet cause they don't show up like switch
 (Matterbridge uses a modified switch device type without client cluster).
+
+### Alexa issues
+
+Devices with child endpoints are not shown correctly.
+
 
 ## SmartThings
 
