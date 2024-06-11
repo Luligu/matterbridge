@@ -513,6 +513,8 @@ No issues reported so far.
 
 ## Alexa issues
 
+Tested by Tamer Salah
+
 Alexa needs the standard port 5540 to pair (from matter.js readme).
 
 There is no support for these Matter device types:
@@ -528,9 +530,13 @@ the switch devices like light or outlet cause they don't show up like switch
 
 ## SmartThings
 
+Tested by Tamer Salah
+
 No issues reported so far.
 
 ## eWeLink
+
+Tested by Tamer Salah
 
 eWeLink needs the standard port 5540 for commissioning.
 

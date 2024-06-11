@@ -367,6 +367,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(PressureMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultPressureMeasurementClusterServer());
     if (includeServerList.includes(FlowMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultFlowMeasurementClusterServer());
     if (includeServerList.includes(BooleanState.Cluster.id)) endpoint.addClusterServer(this.getDefaultBooleanStateClusterServer());
+    if (includeServerList.includes(BooleanStateConfiguration.Cluster.id)) endpoint.addClusterServer(this.getDefaultBooleanStateConfigurationClusterServer());
     if (includeServerList.includes(OccupancySensing.Cluster.id)) endpoint.addClusterServer(this.getDefaultOccupancySensingClusterServer());
     if (includeServerList.includes(IlluminanceMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer());
     if (includeServerList.includes(PowerSource.Cluster.id)) endpoint.addClusterServer(this.getDefaultPowerSourceWiredClusterServer());
@@ -1182,7 +1183,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           measured: true,
           minMeasuredValue: 0,
           maxMeasuredValue: 0,
-          accuracyRanges: [{ rangeMin: 0, rangeMax: 100, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }],
+          accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }],
         },
         cumulativeEnergyImported: { energy },
         cumulativeEnergyExported: null,
@@ -1211,21 +1212,21 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
             measured: true,
             minMeasuredValue: 0,
             maxMeasuredValue: 100,
-            accuracyRanges: [{ rangeMin: 0, rangeMax: 100, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }],
+            accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }],
           },
           {
             measurementType: MeasurementType.ActiveCurrent,
             measured: true,
             minMeasuredValue: 0,
             maxMeasuredValue: 100,
-            accuracyRanges: [{ rangeMin: 0, rangeMax: 100, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }],
+            accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }],
           },
           {
             measurementType: MeasurementType.ActivePower,
             measured: true,
             minMeasuredValue: 0,
             maxMeasuredValue: 100,
-            accuracyRanges: [{ rangeMin: 0, rangeMax: 100, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }],
+            accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }],
           },
         ],
         voltage: voltage,
