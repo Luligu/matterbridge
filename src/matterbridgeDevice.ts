@@ -91,7 +91,7 @@ import { ElectricalEnergyMeasurement, ElectricalEnergyMeasurementCluster } from 
 import { MeasurementType } from './MeasurementType.js';
 import { CarbonMonoxideConcentrationMeasurement } from './CarbonMonoxideConcentrationMeasurementCluster.js';
 import { SmokeCoAlarm } from './SmokeCoAlarmCluster.js';
-import { BooleanStateConfiguration } from './BooleanStateConfigurationCluster.js';
+import { BooleanStateConfiguration, BooleanStateConfigurationCluster } from './BooleanStateConfigurationCluster.js';
 import { DeviceEnergyManagement } from './DeviceEnergyManagementCluster.js';
 import { DeviceEnergyManagementMode } from './DeviceEnergyManagementModeCluster.js';
 
@@ -1184,7 +1184,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           maxMeasuredValue: 0,
           accuracyRanges: [{ rangeMin: 0, rangeMax: 100, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }],
         },
-        cumulativeEnergyImported: null,
+        cumulativeEnergyImported: { energy },
         cumulativeEnergyExported: null,
       },
       {},
@@ -1968,6 +1968,31 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createDefaultBooleanStateClusterServer(contact?: boolean) {
     this.addClusterServer(this.getDefaultBooleanStateClusterServer(contact));
+  }
+
+  /**
+   * Get a default boolean state configuration cluster server.
+   *
+   * @param contact - Optional boolean value indicating the sensor fault state. Defaults to `false` if not provided.
+   */
+  getDefaultBooleanStateConfigurationClusterServer(sensorFault = false) {
+    return ClusterServer(
+      BooleanStateConfigurationCluster,
+      {
+        sensorFault: { generalFault: sensorFault },
+      },
+      {},
+      {},
+    );
+  }
+
+  /**
+   * Creates a default boolean state configuration cluster server.
+   *
+   * @param contact - Optional boolean value indicating the sensor fault state. Defaults to `false` if not provided.
+   */
+  createDefaultBooleanStateConfigurationClusterServer(sensorFault = false) {
+    this.addClusterServer(this.getDefaultBooleanStateConfigurationClusterServer(sensorFault));
   }
 
   /**
