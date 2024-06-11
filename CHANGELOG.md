@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.23] - 2024-06-16
+
+### Changed
+- [matterbridge]: Updated dependencies
+- [matterbridge]: Default config and schema for the new plugin matterbridge-shelly
+
+### Added
+- [matterbridgeDevice]: waterFreezeDetector, waterLeakDetector rainSensor, smokeCoAlarm, electricalSensor and deviceEnergyManagement device types as conformance to Matter 1.3
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.2.22] - 2024-06-04
 
 ### Changed
