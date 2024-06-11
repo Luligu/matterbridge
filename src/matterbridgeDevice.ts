@@ -90,7 +90,7 @@ import { ElectricalPowerMeasurement, ElectricalPowerMeasurementCluster } from '.
 import { ElectricalEnergyMeasurement, ElectricalEnergyMeasurementCluster } from './ElectricalEnergyMeasurementCluster.js';
 import { MeasurementType } from './MeasurementType.js';
 import { CarbonMonoxideConcentrationMeasurement } from './CarbonMonoxideConcentrationMeasurementCluster.js';
-import { SmokeCoAlarm } from './SmokeCoAlarmCluster.js';
+import { SmokeCoAlarm, SmokeCoAlarmCluster } from './SmokeCoAlarmCluster.js';
 import { BooleanStateConfiguration, BooleanStateConfigurationCluster } from './BooleanStateConfigurationCluster.js';
 import { DeviceEnergyManagement } from './DeviceEnergyManagementCluster.js';
 import { DeviceEnergyManagementMode } from './DeviceEnergyManagementModeCluster.js';
@@ -2171,6 +2171,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {},
     );
   }
+
   /**
    * Creates a default TVOC measurement cluster server.
    *
@@ -2265,5 +2266,37 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createDefaultTimeSyncClusterServer() {
     this.addClusterServer(this.getDefaultTimeSyncClusterServer());
+  }
+
+  getDefaultSmokeCOAlarmClusterServer(smokeState = SmokeCoAlarm.AlarmState.Normal, coState = SmokeCoAlarm.AlarmState.Normal) {
+    return ClusterServer(
+      SmokeCoAlarmCluster.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm),
+      {
+        smokeState,
+        coState,
+        expressedState: SmokeCoAlarm.ExpressedState.Normal,
+        batteryAlert: SmokeCoAlarm.AlarmState.Normal,
+        deviceMuted: SmokeCoAlarm.MuteState.NotMuted,
+        testInProgress: false,
+        hardwareFaultAlert: false,
+        endOfServiceAlert: SmokeCoAlarm.EndOfService.Normal,
+        interconnectSmokeAlarm: SmokeCoAlarm.AlarmState.Normal,
+        interconnectCoAlarm: SmokeCoAlarm.AlarmState.Normal,
+      },
+      {},
+      {
+        smokeAlarm: true,
+        interconnectSmokeAlarm: true,
+        coAlarm: true,
+        interconnectCoAlarm: true,
+        lowBattery: true,
+        hardwareFault: true,
+        endOfService: true,
+        selfTestComplete: true,
+        alarmMuted: true,
+        muteEnded: true,
+        allClear: true,
+      },
+    );
   }
 }
