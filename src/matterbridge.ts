@@ -141,6 +141,9 @@ interface MatterbridgeInformation {
   globalModulesDirectory: string;
   matterbridgeVersion: string;
   matterbridgeLatestVersion: string;
+  matterbridgeFabricInfo: ExposedFabricInformation[];
+  matterbridgePaired: boolean;
+  matterbridgeConnected: boolean;
   bridgeMode: string;
   restartMode: string;
   debugEnabled: boolean;
@@ -178,6 +181,9 @@ export class Matterbridge extends EventEmitter {
     globalModulesDirectory: '',
     matterbridgeVersion: '',
     matterbridgeLatestVersion: '',
+    matterbridgeFabricInfo: [],
+    matterbridgePaired: false,
+    matterbridgeConnected: false,
     bridgeMode: '',
     restartMode: '',
     debugEnabled: false,
@@ -2918,6 +2924,9 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.bridgeMode = this.bridgeMode;
       this.matterbridgeInformation.restartMode = this.restartMode;
       this.matterbridgeInformation.debugEnabled = this.debugEnabled;
+      this.matterbridgeInformation.matterbridgePaired = this.matterbridgePaired;
+      this.matterbridgeInformation.matterbridgeConnected = this.matterbridgeConnected;
+      // this.matterbridgeInformation.matterbridgeFabricInfo = this.matterbridgeFabricInfo;
       const response = { wssHost, qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
       this.log.debug('Response:', debugStringify(response));
       res.json(response);

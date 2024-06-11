@@ -33,6 +33,8 @@ import {
   DoorLockCluster,
   ElectricalMeasurement,
   ElectricalMeasurementCluster,
+  FanControl,
+  FanControlCluster,
   FixedLabelCluster,
   FlowMeasurement,
   FlowMeasurementCluster,
@@ -379,6 +381,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(ElectricalPowerMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalPowerMeasurementClusterServer());
     if (includeServerList.includes(ElectricalEnergyMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalEnergyMeasurementClusterServer());
     if (includeServerList.includes(SmokeCoAlarm.Cluster.id)) endpoint.addClusterServer(this.getDefaultSmokeCOAlarmClusterServer());
+    if (includeServerList.includes(FanControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultFanControlClusterServer());
   }
 
   /**
@@ -2298,6 +2301,23 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         muteEnded: true,
         allClear: true,
       },
+    );
+  }
+
+  getDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
+    return ClusterServer(
+      FanControlCluster.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto),
+      {
+        fanMode,
+        fanModeSequence: FanControl.FanModeSequence.OffOnAuto,
+        percentSetting: 0,
+        percentCurrent: 0,
+        speedMax: 100,
+        speedSetting: 0,
+        speedCurrent: 0,
+      },
+      {},
+      {},
     );
   }
 }
