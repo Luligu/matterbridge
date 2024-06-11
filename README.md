@@ -530,7 +530,6 @@ the switch devices like light or outlet cause they don't show up like switch
 
 Devices with child endpoints are not shown correctly.
 
-
 ## SmartThings
 
 Tested by Tamer Salah
@@ -545,6 +544,7 @@ eWeLink needs the standard port 5540 for commissioning.
 
 ## Tuya/Smart Life
 
+Check the matter.js readme.
 
 # Contribution Guidelines
 
