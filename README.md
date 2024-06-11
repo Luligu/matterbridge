@@ -481,13 +481,13 @@ This message may appear after Matterbridge restarts, indicating that the control
 After some time, the controller will reconnect. 
 In this context, the message is not indicative of a problem.
 
-## Apple Home issues
+## Apple Home
 
 The HomePods, being a WiFi devices, sometimes pruduce message trasmission errors. The Apple TV with network cable is more reliable (but also more expensive).
 
 Solved with the version 17.5 of the HomePod/AppleTV. Now they are stable.
 
-### DoorLock
+### DoorLock issue
 
 The DoorLock cluster in the Home app takes a while to get online. The Home app shows no response for 1 or 2 seconds but then the accessory goes online. With the Eve app or the Controller app this issue is not present.
 
@@ -502,11 +502,30 @@ Solved with the version 17.5 of the HomePod/AppleTV.
 
 ## Google Home
 
-## Alexa
+No issues reported so far.
+
+## Alexa issues
+
+Alexa needs the standard port 5040 to pair (from matter.js readme).
+
+There is no support for these Matter device types:
+- pressure sensor
+- flow sensor
+- light sensor
+
+Devices with child endpoints are not shown correctly.
+
+In the zigbee2mqtt and shelly plugins select the option to expose 
+the switch devices like light or outlet cause they don't show up like switch
+(Matterbridge uses a modified switch device type without client cluster).
 
 ## SmartThings
 
+No issues reported so far.
+
 ## eWeLink
+
+eWeLink needs the standard port 5040 for commissioning.
 
 ## Tuya/Smart Life
 
