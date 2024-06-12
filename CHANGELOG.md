@@ -4,12 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [1.3.0] - 2024-06-16
 
+This release is all about Matter 1.3
+
+If you are wondering if the controllers already support Matter 1.3 the answer is no unfortunately:
+Only HA supports:
+- airQualitySensor
+- waterFreezeDetector
+- waterLeakDetector
+- rainSensor
+
 ### Changed
 - [matterbridge]: Updated dependencies
-- [matterbridge]: Default config and schema for the new plugin matterbridge-shelly
+- [matterbridge]: Default config and schema for the new plugin matterbridge-shelly (will be published after this release)
 
 ### Added
 - [matterbridgeDevice]: waterFreezeDetector, waterLeakDetector, rainSensor, smokeCoAlarm, electricalSensor and deviceEnergyManagement device types as conformance to Matter 1.3
+- [matterbridgeDevice]: all clusters needed for the above Matter 1.3 device types 
+- [matterbridgeDevice]: FanControl helper method for the Fan device type
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
