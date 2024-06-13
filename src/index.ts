@@ -39,6 +39,7 @@ export * from './matterbridgeDevice.js';
 export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
 export * from './cluster/AirQualityCluster.js';
+export * from './cluster/BooleanStateConfigurationCluster.js';
 export * from './cluster/TvocCluster.js';
 export * from './cluster/PowerTopologyCluster.js';
 export * from './cluster/ElectricalEnergyMeasurementCluster.js';

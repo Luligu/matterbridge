@@ -34,10 +34,11 @@ import { Format, Level, Logger, createFileLogger } from '@project-chip/matter-no
 import { Storage, StorageContext, StorageManager } from '@project-chip/matter-node.js/storage';
 import { Environment, StorageService } from '@project-chip/matter.js/environment';
 import { ServerNode } from '@project-chip/matter.js/node';
-import { DeviceTypes, logEndpoint } from '@project-chip/matter-node.js/device';
+import { DeviceTypeDefinition, DeviceTypes, logEndpoint } from '@project-chip/matter-node.js/device';
 import { QrCode } from '@project-chip/matter-node.js/schema';
 import { FabricAction } from '@project-chip/matter-node.js/fabric';
 import { Endpoint, EndpointServer } from '@project-chip/matter.js/endpoint';
+import { EndpointType } from '@project-chip/matter.js/endpoint/type';
 
 import { AggregatorEndpoint } from '@project-chip/matter.js/endpoints/AggregatorEndpoint';
 import { BridgedNodeEndpoint } from '@project-chip/matter.js/endpoints/BridgedNodeEndpoint';
@@ -61,6 +62,7 @@ import path from 'path';
 import { promises as fs } from 'fs';
 import { MatterbridgeDeviceV8 } from './matterbridgeDeviceV8.js';
 import { BasicInformationCluster } from '@project-chip/matter-node.js/cluster';
+import { dimmableSwitch } from './matterbridgeDevice.js';
 
 /**
  * Represents the Matterbridge application.
@@ -450,6 +452,7 @@ export class MatterbridgeV8 extends EventEmitter {
     log.notice(`Adding ${await storageContext.get<string>('storeId')} aggregator to ${await storageContext.get<string>('storeId')} server node`);
     await this.matterServerNode.add(this.matterAggregator);
 
+    log.notice(`Adding lightEndpoint1 to ${await storageContext.get<string>('storeId')} aggregator`);
     const lightEndpoint1 = new Endpoint(OnOffLightDevice.with(BridgedDeviceBasicInformationServer), {
       id: 'OnOffLight',
       bridgedDeviceBasicInformation: {
@@ -465,11 +468,71 @@ export class MatterbridgeV8 extends EventEmitter {
         reachable: true,
       },
     });
-
     this.matterAggregator.add(lightEndpoint1);
+
+    log.notice(`Adding switchEnpoint2 to ${await storageContext.get<string>('storeId')} aggregator`);
+    const switchEnpoint2definition = MutableEndpoint({
+      name: 'OnOffSwitch',
+      deviceType: 0x103,
+      deviceRevision: 2,
+      requirements: {
+        server: {
+          mandatory: {},
+          optional: {},
+        },
+        client: {
+          mandatory: {},
+          optional: {},
+        },
+      },
+      behaviors: SupportedBehaviors(IdentifyServer, GroupsServer, ScenesServer, OnOffServer, BridgedDeviceBasicInformationServer),
+    });
+    const switchEnpoint2 = new Endpoint(switchEnpoint2definition, {
+      id: 'OnOffSwitch',
+      bridgedDeviceBasicInformation: {
+        vendorId: VendorId(await storageContext.get<number>('vendorId')),
+        vendorName: await storageContext.get<string>('vendorName'),
+
+        productName: 'Switch',
+        productLabel: 'Switch',
+        nodeLabel: 'Switch',
+
+        serialNumber: '0x123456739',
+        uniqueId: '0x123456739',
+        reachable: true,
+      },
+    });
+    this.matterAggregator.add(switchEnpoint2);
+
+    /*
+    log.notice(`Adding dimmableSwitchEnpoint3 to ${await storageContext.get<string>('storeId')} aggregator`);
+    const dimmableSwitchEnpoint3 = getEntpointV8(dimmableSwitch, {
+      id: 'OnOffDimmerSwitch',
+      bridgedDeviceBasicInformation: {
+        vendorId: VendorId(await storageContext.get<number>('vendorId')),
+        vendorName: await storageContext.get<string>('vendorName'),
+
+        productName: 'dimmerSwitch',
+        productLabel: 'dimmerSwitch',
+        nodeLabel: 'dimmerSwitch',
+
+        serialNumber: '0x123436739',
+        uniqueId: '0x123436739',
+        reachable: true,
+      },
+    });
+    this.matterAggregator.add(dimmableSwitchEnpoint3);
+    */
+
+    log.notice(`Adding matterbridge device to ${await storageContext.get<string>('storeId')} aggregator`);
+    const matterbridgeDevice = new MatterbridgeDeviceV8(DeviceTypes.TEMPERATURE_SENSOR, { uniqueStorageKey: 'TemperatureSensor' });
+    this.matterAggregator.add(matterbridgeDevice);
+    // console.log('matterbridgeDevice\n', matterbridgeDevice);
 
     log.notice(`Starting ${await storageContext.get<string>('storeId')} server node`);
     await this.matterServerNode.bringOnline();
+
+    logEndpoint(EndpointServer.forEndpoint(this.matterServerNode));
 
     this.showServerNodeQR();
   }
@@ -481,6 +544,26 @@ export class MatterbridgeV8 extends EventEmitter {
   async startController() {
     //
   }
+}
+
+export function getEntpointV8(definition: DeviceTypeDefinition, options?: Endpoint.Options) {
+  const definitionV8 = MutableEndpoint({
+    name: definition.name.replace('-', '_'),
+    deviceType: definition.code,
+    deviceRevision: definition.revision,
+    requirements: {
+      server: {
+        mandatory: {},
+        optional: {},
+      },
+      client: {
+        mandatory: {},
+        optional: {},
+      },
+    },
+    behaviors: SupportedBehaviors(IdentifyServer, GroupsServer, ScenesServer, OnOffServer, BridgedDeviceBasicInformationServer),
+  });
+  return new Endpoint(definitionV8, options);
 }
 
 // node dist/matterbridgeV8.js MatterbridgeV8

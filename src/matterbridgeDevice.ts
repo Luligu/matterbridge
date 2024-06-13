@@ -278,8 +278,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {DeviceTypeDefinition} definition - The DeviceTypeDefinition of the device.
    * @returns MatterbridgeDevice instance.
    */
-  static async loadInstance(definition: DeviceTypeDefinition, options: EndpointOptions) {
-    return new MatterbridgeDevice(definition, options);
+  static async loadInstance(definition: DeviceTypeDefinition, options: EndpointOptions = {}, debug = false) {
+    return new MatterbridgeDevice(definition, options, debug);
   }
 
   /**
@@ -1967,7 +1967,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Creates a default boolean state cluster server.
+   * Creates a default boolean state configuration cluster server.
    *
    * @param contact - Optional boolean value indicating the contact state. Defaults to `true` if not provided.
    */
@@ -1982,12 +1982,22 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   getDefaultBooleanStateConfigurationClusterServer(sensorFault = false) {
     return ClusterServer(
-      BooleanStateConfigurationCluster,
+      BooleanStateConfigurationCluster.with(BooleanStateConfiguration.Feature.Visual, BooleanStateConfiguration.Feature.Audible, BooleanStateConfiguration.Feature.AlarmSuppress, BooleanStateConfiguration.Feature.SensitivityLevel),
       {
+        currentSensitivityLevel: 0,
+        supportedSensitivityLevels: 2,
+        defaultSensitivityLevel: 0,
+        alarmsActive: { visual: false, audible: false },
+        alarmsEnabled: { visual: false, audible: false },
+        alarmsSupported: { visual: true, audible: true },
+        alarmsSuppressed: { visual: false, audible: false },
         sensorFault: { generalFault: sensorFault },
       },
       {},
-      {},
+      {
+        alarmsStateChanged: true,
+        sensorFault: true,
+      },
     );
   }
 
