@@ -399,10 +399,6 @@ export class MatterbridgeV8 extends EventEmitter {
       log.notice('Status of all sessions', this.matterServerNode?.state.sessions.sessions);
     });
 
-    /*
-    console.log('lightEndpoint\n', lightEndpoint);
-    console.log('switchEndpoint\n', switchEndpoint);
-    */
     return serverNode;
   }
 
@@ -504,26 +500,6 @@ export class MatterbridgeV8 extends EventEmitter {
     });
     this.matterAggregator.add(switchEnpoint2);
 
-    /*
-    log.notice(`Adding dimmableSwitchEnpoint3 to ${await storageContext.get<string>('storeId')} aggregator`);
-    const dimmableSwitchEnpoint3 = getEntpointV8(dimmableSwitch, {
-      id: 'OnOffDimmerSwitch',
-      bridgedDeviceBasicInformation: {
-        vendorId: VendorId(await storageContext.get<number>('vendorId')),
-        vendorName: await storageContext.get<string>('vendorName'),
-
-        productName: 'dimmerSwitch',
-        productLabel: 'dimmerSwitch',
-        nodeLabel: 'dimmerSwitch',
-
-        serialNumber: '0x123436739',
-        uniqueId: '0x123436739',
-        reachable: true,
-      },
-    });
-    this.matterAggregator.add(dimmableSwitchEnpoint3);
-    */
-
     log.notice(`Adding matterbridge device to ${await storageContext.get<string>('storeId')} aggregator`);
     const matterbridgeDevice = new MatterbridgeDeviceV8(DeviceTypes.TEMPERATURE_SENSOR, { uniqueStorageKey: 'TemperatureSensor' });
     this.matterAggregator.add(matterbridgeDevice);
@@ -544,26 +520,6 @@ export class MatterbridgeV8 extends EventEmitter {
   async startController() {
     //
   }
-}
-
-export function getEntpointV8(definition: DeviceTypeDefinition, options?: Endpoint.Options) {
-  const definitionV8 = MutableEndpoint({
-    name: definition.name.replace('-', '_'),
-    deviceType: definition.code,
-    deviceRevision: definition.revision,
-    requirements: {
-      server: {
-        mandatory: {},
-        optional: {},
-      },
-      client: {
-        mandatory: {},
-        optional: {},
-      },
-    },
-    behaviors: SupportedBehaviors(IdentifyServer, GroupsServer, ScenesServer, OnOffServer, BridgedDeviceBasicInformationServer),
-  });
-  return new Endpoint(definitionV8, options);
 }
 
 // node dist/matterbridgeV8.js MatterbridgeV8
