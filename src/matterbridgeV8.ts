@@ -31,7 +31,7 @@ import '@project-chip/matter-node.js';
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { DeviceTypeId, FabricIndex, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Format, Level, Logger, createFileLogger } from '@project-chip/matter-node.js/log';
-import { StorageContext, StorageManager } from '@project-chip/matter-node.js/storage';
+import { Storage, StorageContext, StorageManager } from '@project-chip/matter-node.js/storage';
 import { Environment, StorageService } from '@project-chip/matter.js/environment';
 import { ServerNode } from '@project-chip/matter.js/node';
 import { DeviceTypes, logEndpoint } from '@project-chip/matter-node.js/device';
@@ -68,17 +68,19 @@ import { BasicInformationCluster } from '@project-chip/matter-node.js/cluster';
 export class MatterbridgeV8 extends EventEmitter {
   private environment = Environment.default;
 
-  public matterbridgeVersion = '2.0.0';
-  public osVersion = '10.0.22631';
+  public matterbridgeVersion = '';
+  public osVersion = '';
   public matterbridgeDirectory = '';
   public matterbridgePluginDirectory = '';
   public globalModulesDirectory = '';
+  public matterbridgeLogFile = '';
 
   public matterStorageService?: StorageService;
   public matterStorageManager?: StorageManager;
   public matterStorageContext?: StorageContext;
 
   public matterServerNode?: ServerNode<ServerNode.RootEndpoint>;
+  public matterAggregator?: Endpoint<AggregatorEndpoint>;
 
   public matterLogger?: Logger;
 
@@ -93,18 +95,22 @@ export class MatterbridgeV8 extends EventEmitter {
   }
 
   async initialize() {
-    this.matterLogger = Logger.get('Matterbridge');
-
+    // Set up the temporary Matterbridge environment
+    this.matterbridgeVersion = '2.0.0';
+    this.osVersion = '10.0.22631';
     this.matterbridgeDirectory = 'C:\\Users\\lligu\\.matterbridge';
     this.matterbridgePluginDirectory = 'C:\\Users\\lligu\\Matterbridge';
+    this.globalModulesDirectory = 'C:\\Users\\lligu\\AppData\\Roaming\\npm\\node_modules';
+    this.matterbridgeLogFile = 'matterbridge.log';
 
-    await this.deleteMatterLogfile('matterbridge.log');
+    this.matterLogger = Logger.get('Matterbridge');
+    await this.deleteMatterLogfile(this.matterbridgeLogFile);
+    await this.setupMatterFileLogger(this.matterbridgeLogFile);
+    this.matterLogger?.notice(`Starting Matterbridge v${this.matterbridgeVersion} on Node.js ${process.version} (${process.platform} ${process.arch})`);
 
     this.setupMatterVars(Level.DEBUG, Format.ANSI);
 
     await this.setupMatterStorage();
-
-    await this.setupMatterFileLogger('matterbridge.log');
   }
 
   private setupMatterVars(level: Level, format: Format.Type) {
@@ -120,19 +126,20 @@ export class MatterbridgeV8 extends EventEmitter {
     this.matterLogger?.notice(`Storage service created: ${this.matterStorageService.location}`);
 
     this.matterStorageManager = await this.matterStorageService.open('Matterbridge');
-    this.matterLogger?.notice('Storage manager created');
+    this.matterLogger?.notice('Storage manager "Matterbridge" created');
 
     this.matterStorageContext = this.matterStorageManager.createContext('persist');
-    this.matterLogger?.notice('Storage context created');
+    this.matterLogger?.notice('Storage context "Matterbridge.persist" created');
   }
 
   private async deleteMatterLogfile(filename: string) {
     try {
       await fs.unlink(path.join(this.matterbridgeDirectory, filename));
     } catch (err) {
-      console.error(`Error deleting old log file: ${err}`);
+      this.matterLogger?.error(`Error deleting old log file: ${err}`);
     }
   }
+
   private async setupMatterFileLogger(filename: string) {
     Logger.addLogger('filelogger', await createFileLogger(path.join(this.matterbridgeDirectory, filename)), {
       defaultLogLevel: Level.DEBUG,
@@ -141,11 +148,11 @@ export class MatterbridgeV8 extends EventEmitter {
   }
 
   /**
-   * Creates a commissioning server storage context.
+   * Creates a server node storage context.
    *
    * @param pluginName - The name of the plugin.
    * @param deviceName - The name of the device.
-   * @param deviceType - The type of the device.
+   * @param deviceType - The deviceType of the device.
    * @param vendorId - The vendor ID.
    * @param vendorName - The vendor name.
    * @param productId - The product ID.
@@ -158,16 +165,15 @@ export class MatterbridgeV8 extends EventEmitter {
    * @param hardwareVersionString - The hardware version string of the device (optional).
    * @returns The storage context for the commissioning server.
    */
-  private async createServerNodeContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string) {
-    if (!this.matterLogger) return;
+  async createServerNodeContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string, serialNumber?: string): Promise<StorageContext<Storage>> {
+    if (!this.matterLogger) throw new Error('No logger initialized');
     const log = this.matterLogger;
-    if (!this.matterStorageService || !this.matterStorageManager) {
-      log.error('No storage manager initialized');
-      return;
-    }
-    log.debug(`Creating commissioning server storage context for ${pluginName}...`);
-    const storageContext = this.matterStorageManager.createContext('persist');
-    const random = 'AG' + CryptoNode.getRandomData(8).toHex();
+    if (!this.matterStorageService) throw new Error('No storage service initialized');
+
+    log.notice(`Creating server node storage context "${pluginName}.persist" for ${pluginName}...`);
+    const storageManager = await this.matterStorageService.open(pluginName);
+    const storageContext = storageManager.createContext('persist');
+    const random = 'SN' + CryptoNode.getRandomData(8).toHex();
     await storageContext.set('storeId', pluginName);
     await storageContext.set('deviceName', deviceName);
     await storageContext.set('deviceType', deviceType);
@@ -177,38 +183,33 @@ export class MatterbridgeV8 extends EventEmitter {
     await storageContext.set('productName', productName.slice(0, 32));
     await storageContext.set('nodeLabel', productName.slice(0, 32));
     await storageContext.set('productLabel', productName.slice(0, 32));
-    await storageContext.set('serialNumber', await storageContext.get('serialNumber', random));
+    await storageContext.set('serialNumber', await storageContext.get('serialNumber', serialNumber ? serialNumber.slice(0, 32) : random));
     await storageContext.set('uniqueId', await storageContext.get('uniqueId', random));
     await storageContext.set('softwareVersion', this.matterbridgeVersion && this.matterbridgeVersion.includes('.') ? parseInt(this.matterbridgeVersion.split('.')[0], 10) : 1);
     await storageContext.set('softwareVersionString', this.matterbridgeVersion ?? '1.0.0');
     await storageContext.set('hardwareVersion', this.osVersion && this.osVersion.includes('.') ? parseInt(this.osVersion.split('.')[0], 10) : 1);
     await storageContext.set('hardwareVersionString', this.osVersion ?? '1.0.0');
 
-    log.debug(`Created commissioning server storage context for ${pluginName}:`);
+    log.debug(`Created server node storage context "${pluginName}.persist"  for ${pluginName}:`);
     log.debug(`- deviceName: ${await storageContext.get('deviceName')} deviceType: ${await storageContext.get('deviceType')}(0x${(await storageContext.get('deviceType'))?.toString(16).padStart(4, '0')})`);
     log.debug(`- serialNumber: ${await storageContext.get('serialNumber')} uniqueId: ${await storageContext.get('uniqueId')}`);
     log.debug(`- softwareVersion: ${await storageContext.get('softwareVersion')} softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
     log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')} hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
-    log.notice(`Created commissioning server storage context for ${pluginName}`);
     return storageContext;
   }
 
-  async startServerNode(port = 5080, passcode = 20202021, discriminator = 3840) {
-    if (!this.matterLogger) return;
+  async createServerNode(storageContext: StorageContext<Storage>, port = 5540, passcode = 20242025, discriminator = 3850) {
+    if (!this.matterLogger) throw new Error('No logger initialized');
     const log = this.matterLogger;
-    log.notice('Starting Matterbridge');
-    this.matterStorageContext = await this.createServerNodeContext('Matterbridge', 'Matterbridge', AggregatorEndpoint.deviceType, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Aggregator');
-    if (!this.matterStorageContext) {
-      log.error('Error creating storage context for Matterbridge');
-      return;
-    }
+
+    log.notice(`Creating server node for ${await storageContext.get<string>('storeId')}`);
 
     /**
      * Create a Matter ServerNode, which contains the Root Endpoint and all relevant data and configuration
      */
-    this.matterServerNode = await ServerNode.create({
+    const serverNode = await ServerNode.create({
       // Required: Give the Node a unique ID which is used to store the state of this node
-      id: await this.matterStorageContext.get<string>('storeId'),
+      id: await storageContext.get<string>('storeId'),
 
       // Provide Network relevant configuration like the port
       // Optional when operating only one device on a host, Default port is 5540
@@ -226,28 +227,28 @@ export class MatterbridgeV8 extends EventEmitter {
       // Provide Node announcement settings
       // Optional: If Ommitted some development defaults are used
       productDescription: {
-        name: await this.matterStorageContext.get<string>('deviceName'),
-        deviceType: DeviceTypeId(await this.matterStorageContext.get<number>('deviceType')),
+        name: await storageContext.get<string>('deviceName'),
+        deviceType: DeviceTypeId(await storageContext.get<number>('deviceType')),
       },
 
       // Provide defaults for the BasicInformation cluster on the Root endpoint
       // Optional: If Omitted some development defaults are used
       basicInformation: {
-        vendorId: VendorId(await this.matterStorageContext.get<number>('vendorId')),
-        vendorName: await this.matterStorageContext.get<string>('vendorName'),
+        vendorId: VendorId(await storageContext.get<number>('vendorId')),
+        vendorName: await storageContext.get<string>('vendorName'),
 
-        productId: await this.matterStorageContext.get<number>('productId'),
-        productName: await this.matterStorageContext.get<string>('productName'),
-        productLabel: await this.matterStorageContext.get<string>('productName'),
-        nodeLabel: await this.matterStorageContext.get<string>('productName'),
+        productId: await storageContext.get<number>('productId'),
+        productName: await storageContext.get<string>('productName'),
+        productLabel: await storageContext.get<string>('productName'),
+        nodeLabel: await storageContext.get<string>('productName'),
 
-        serialNumber: await this.matterStorageContext.get<string>('serialNumber'),
-        uniqueId: await this.matterStorageContext.get<string>('uniqueId'),
+        serialNumber: await storageContext.get<string>('serialNumber'),
+        uniqueId: await storageContext.get<string>('uniqueId'),
 
-        softwareVersion: await this.matterStorageContext.get<number>('softwareVersion'),
-        softwareVersionString: await this.matterStorageContext.get<string>('softwareVersionString'),
-        hardwareVersion: await this.matterStorageContext.get<number>('hardwareVersion'),
-        hardwareVersionString: await this.matterStorageContext.get<string>('hardwareVersionString'),
+        softwareVersion: await storageContext.get<number>('softwareVersion'),
+        softwareVersionString: await storageContext.get<string>('softwareVersionString'),
+        hardwareVersion: await storageContext.get<number>('hardwareVersion'),
+        hardwareVersionString: await storageContext.get<string>('hardwareVersionString'),
       },
     });
 
@@ -258,11 +259,13 @@ export class MatterbridgeV8 extends EventEmitter {
      * In this case we directly use the default command implementation from matter.js. Check out the DeviceNodeFull example
      * to see how to customize the command handlers.
      */
+
+    /*
     const lightEndpoint = new Endpoint(OnOffLightDevice.with(BridgedDeviceBasicInformationServer), {
       id: 'OnOffLight',
       bridgedDeviceBasicInformation: {
-        vendorId: VendorId(await this.matterStorageContext.get<number>('vendorId')),
-        vendorName: await this.matterStorageContext.get<string>('vendorName'),
+        vendorId: VendorId(await storageContext.get<number>('vendorId')),
+        vendorName: await storageContext.get<string>('vendorName'),
 
         productName: 'Light',
         productLabel: 'Light',
@@ -273,12 +276,14 @@ export class MatterbridgeV8 extends EventEmitter {
         reachable: true,
       },
     });
+    */
 
     /**
      * Register state change handlers and events of the node for identify and onoff states to react to the commands.
      * If the code in these change handlers fail then the change is also rolled back and not executed and an error is
      * reported back to the controller.
      */
+    /*
     lightEndpoint.events.identify.startIdentifying.on(() => log.notice('Run identify logic, ideally blink a light every 0.5s ...'));
 
     lightEndpoint.events.identify.stopIdentifying.on(() => log.notice('Stop identify logic ...'));
@@ -295,8 +300,8 @@ export class MatterbridgeV8 extends EventEmitter {
           optional: {},
         },
         client: {
-          optional: {},
           mandatory: {},
+          optional: {},
         },
       },
       behaviors: SupportedBehaviors(IdentifyServer, GroupsServer, ScenesServer, OnOffServer, BridgedDeviceBasicInformationServer),
@@ -309,8 +314,8 @@ export class MatterbridgeV8 extends EventEmitter {
         onOff: false,
       },
       bridgedDeviceBasicInformation: {
-        vendorId: VendorId(await this.matterStorageContext.get<number>('vendorId')),
-        vendorName: await this.matterStorageContext.get<string>('vendorName'),
+        vendorId: VendorId(await storageContext.get<number>('vendorId')),
+        vendorName: await storageContext.get<string>('vendorName'),
 
         productName: 'Switch',
         productLabel: 'Switch',
@@ -332,32 +337,33 @@ export class MatterbridgeV8 extends EventEmitter {
 
     await aggregator.add(lightEndpoint);
     await aggregator.add(switchEndpoint);
+*/
 
     /**
      * Log the endpoint structure for debugging reasons and to allow to verify anything is correct
      */
-    logEndpoint(EndpointServer.forEndpoint(this.matterServerNode));
+    // logEndpoint(EndpointServer.forEndpoint(this.matterServerNode));
 
     /**
      * This event is triggered when the device is initially commissioned successfully.
      * This means: It is added to the first fabric.
      */
-    this.matterServerNode.lifecycle.commissioned.on(() => log.notice('Server was initially commissioned successfully!'));
+    serverNode.lifecycle.commissioned.on(() => log.notice('Server was initially commissioned successfully!'));
 
     /** This event is triggered when all fabrics are removed from the device, usually it also does a factory reset then. */
-    this.matterServerNode.lifecycle.decommissioned.on(() => log.notice('Server was fully decommissioned successfully!'));
+    serverNode.lifecycle.decommissioned.on(() => log.notice('Server was fully decommissioned successfully!'));
 
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */
-    this.matterServerNode.lifecycle.online.on(() => log.notice('Server is online'));
+    serverNode.lifecycle.online.on(() => log.notice('Server is online'));
 
     /** This event is triggered when the device went offline. it is not longer discoverable or connectable in the network. */
-    this.matterServerNode.lifecycle.offline.on(() => log.notice('Server is offline'));
+    serverNode.lifecycle.offline.on(() => log.notice('Server is offline'));
 
     /**
      * This event is triggered when a fabric is added, removed or updated on the device. Use this if more granular
      * information is needed.
      */
-    this.matterServerNode.events.commissioning.fabricsChanged.on((fabricIndex, fabricAction) => {
+    serverNode.events.commissioning.fabricsChanged.on((fabricIndex, fabricAction) => {
       let action = '';
       switch (fabricAction) {
         case FabricAction.Added:
@@ -378,23 +384,24 @@ export class MatterbridgeV8 extends EventEmitter {
      * This event is triggered when an operative new session was opened by a Controller.
      * It is not triggered for the initial commissioning process, just afterwards for real connections.
      */
-    this.matterServerNode.events.sessions.opened.on((session) => log.notice('Session opened', session));
+    serverNode.events.sessions.opened.on((session) => log.notice('Session opened', session));
 
     /**
      * This event is triggered when an operative session is closed by a Controller or because the Device goes offline.
      */
-    this.matterServerNode.events.sessions.closed.on((session) => log.notice('Session closed', session));
+    serverNode.events.sessions.closed.on((session) => log.notice('Session closed', session));
 
     /** This event is triggered when a subscription gets added or removed on an operative session. */
-    this.matterServerNode.events.sessions.subscriptionsChanged.on((session) => {
+    serverNode.events.sessions.subscriptionsChanged.on((session) => {
       log.notice('Session subscriptions changed', session);
       log.notice('Status of all sessions', this.matterServerNode?.state.sessions.sessions);
     });
 
-    await this.matterServerNode.bringOnline();
-
+    /*
     console.log('lightEndpoint\n', lightEndpoint);
     console.log('switchEndpoint\n', switchEndpoint);
+    */
+    return serverNode;
   }
 
   showServerNodeQR() {
@@ -419,13 +426,70 @@ export class MatterbridgeV8 extends EventEmitter {
     if (!this.matterServerNode) return;
     await this.matterServerNode.close();
   }
+
+  async createAggregator(storageContext: StorageContext<Storage>) {
+    if (!this.matterLogger) throw new Error('No logger initialized');
+    const log = this.matterLogger;
+
+    log.notice(`Creating ${await storageContext.get<string>('storeId')} aggregator `);
+
+    const aggregator = new Endpoint(AggregatorEndpoint, { id: `${await storageContext.get<string>('storeId')} aggregator` });
+    return aggregator;
+  }
+
+  async startBridge() {
+    if (!this.matterLogger) throw new Error('No logger initialized');
+    const log = this.matterLogger;
+
+    const storageContext = await this.createServerNodeContext('Matterbridge', 'Matterbridge', AggregatorEndpoint.deviceType, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Aggregator');
+
+    this.matterServerNode = await this.createServerNode(storageContext);
+
+    this.matterAggregator = await this.createAggregator(storageContext);
+
+    log.notice(`Adding ${await storageContext.get<string>('storeId')} aggregator to ${await storageContext.get<string>('storeId')} server node`);
+    await this.matterServerNode.add(this.matterAggregator);
+
+    const lightEndpoint1 = new Endpoint(OnOffLightDevice.with(BridgedDeviceBasicInformationServer), {
+      id: 'OnOffLight',
+      bridgedDeviceBasicInformation: {
+        vendorId: VendorId(await storageContext.get<number>('vendorId')),
+        vendorName: await storageContext.get<string>('vendorName'),
+
+        productName: 'Light',
+        productLabel: 'Light',
+        nodeLabel: 'Light',
+
+        serialNumber: '0x123456789',
+        uniqueId: '0x123456789',
+        reachable: true,
+      },
+    });
+
+    this.matterAggregator.add(lightEndpoint1);
+
+    log.notice(`Starting ${await storageContext.get<string>('storeId')} server node`);
+    await this.matterServerNode.bringOnline();
+
+    this.showServerNodeQR();
+  }
+
+  async startChildbridge() {
+    //
+  }
+
+  async startController() {
+    //
+  }
 }
 
 // node dist/matterbridgeV8.js MatterbridgeV8
 if (process.argv.includes('MatterbridgeV8')) {
   const matterbridge = await MatterbridgeV8.create();
-  await matterbridge.startServerNode(5070, 20242025, 3950);
-  matterbridge.showServerNodeQR();
+
+  if (process.argv.includes('-bridge')) await matterbridge.startBridge();
+  if (process.argv.includes('-childbridge')) await matterbridge.startChildbridge();
+  if (process.argv.includes('-controller')) await matterbridge.startController();
 
   process.on('SIGINT', async function () {
     console.log('Caught interrupt signal');

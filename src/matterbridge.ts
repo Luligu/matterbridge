@@ -36,7 +36,7 @@ import os from 'os';
 import path from 'path';
 import WebSocket, { WebSocketServer } from 'ws';
 
-import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './BridgedDeviceBasicInformationCluster.js';
+import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
 
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
 import { BasicInformationCluster, ClusterServer, FixedLabelCluster, GeneralCommissioning, PowerSourceCluster, ThreadNetworkDiagnosticsCluster, getClusterNameById } from '@project-chip/matter-node.js/cluster';
@@ -84,7 +84,7 @@ interface RegisteredPlugin extends BaseRegisteredPlugin {
 }
 
 // Simplified interface for saving the plugins in node storage
-interface BaseRegisteredPlugin {
+export interface BaseRegisteredPlugin {
   path: string;
   type: string;
   name: string;
@@ -2129,7 +2129,6 @@ export class Matterbridge extends EventEmitter {
         vendorName = '(AppleKeyChain)';
         break;
       case 4362:
-      case 65521:
         vendorName = '(SmartThings)';
         break;
       case 4939:

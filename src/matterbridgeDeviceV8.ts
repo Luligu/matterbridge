@@ -4,6 +4,13 @@ import { Endpoint, EndpointServer } from '@project-chip/matter.js/endpoint';
 import { OnOffLightDevice } from '@project-chip/matter.js/devices/OnOffLightDevice';
 import { AggregatorEndpoint } from '@project-chip/matter.js/endpoints/AggregatorEndpoint';
 import { BridgedNodeEndpoint } from '@project-chip/matter.js/endpoints/BridgedNodeEndpoint';
+import { MutableEndpoint } from '@project-chip/matter.js/endpoint/type';
+import { SupportedBehaviors } from '@project-chip/matter.js/endpoint/properties';
+import { IdentifyServer, IdentifyBehavior } from '@project-chip/matter.js/behavior/definitions/identify';
+import { GroupsServer, GroupsBehavior } from '@project-chip/matter.js/behavior/definitions/groups';
+import { ScenesServer, ScenesBehavior } from '@project-chip/matter.js/behavior/definitions/scenes';
+import { OnOffServer, OnOffBehavior } from '@project-chip/matter.js/behavior/definitions/on-off';
+import { BridgedDeviceBasicInformationServer, BridgedDeviceBasicInformationBehavior } from '@project-chip/matter.js/behavior/definitions/bridged-device-basic-information';
 
 // Old API imports
 import { DeviceTypeDefinition, DeviceTypes, EndpointOptions } from '@project-chip/matter-node.js/device';
@@ -14,7 +21,7 @@ import { AtLeastOne } from '@project-chip/matter-node.js/util';
 import { ClusterId } from '@project-chip/matter-node.js/datatype';
 import { getClusterNameById } from '@project-chip/matter-node.js/cluster';
 
-export class MatterbridgeDeviceV8 {
+export class MatterbridgeDeviceV8 extends Endpoint {
   public static bridgeMode = '';
   log: AnsiLogger;
   serialNumber: string | undefined = undefined;
@@ -30,6 +37,23 @@ export class MatterbridgeDeviceV8 {
    * @param {EndpointOptions} [options={}] - The options for the device.
    */
   constructor(definition: DeviceTypeDefinition, options: EndpointOptions = {}) {
+    const definitionV8 = MutableEndpoint({
+      name: definition.name,
+      deviceType: definition.code,
+      deviceRevision: definition.revision,
+      requirements: {
+        server: {
+          mandatory: {},
+          optional: {},
+        },
+        client: {
+          mandatory: {},
+          optional: {},
+        },
+      },
+      behaviors: SupportedBehaviors(IdentifyServer, GroupsServer, ScenesServer, OnOffBehavior, BridgedDeviceBasicInformationServer),
+    });
+    super(definitionV8);
     this.log = new AnsiLogger({ logName: 'MatterbridgeDevice', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: true });
     this.deviceTypes = [definition];
   }

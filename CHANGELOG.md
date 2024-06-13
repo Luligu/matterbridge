@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 This release is all about Matter 1.3
 
 If you are wondering if the controllers already support Matter 1.3 the answer is no unfortunately:
+
 Only Home Automation supports:
 - airQualitySensor
 - waterFreezeDetector

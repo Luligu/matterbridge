@@ -526,10 +526,6 @@ In the zigbee2mqtt and shelly plugins select the option to expose
 the switch devices like light or outlet cause they don't show up like switch
 (Matterbridge uses a modified switch device type without client cluster).
 
-### Alexa issues
-
-Devices with child endpoints are not shown correctly.
-
 ## SmartThings
 
 Tested by Tamer Salah

@@ -82,20 +82,20 @@ import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-nod
 import { MatterHistory, Sensitivity, WeatherTrend, TemperatureDisplayUnits } from 'matter-history';
 import { EveHistory, EveHistoryCluster } from 'matter-history';
 
-import { AirQuality, AirQualityCluster } from './AirQualityCluster.js';
+import { AirQuality, AirQualityCluster } from './cluster/AirQualityCluster.js';
 import { AnsiLogger, CYAN, TimestampFormat, db, hk, zb } from 'node-ansi-logger';
 import { createHash } from 'crypto';
-import { TvocMeasurement, TvocMeasurementCluster } from './TvocCluster.js';
-import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './BridgedDeviceBasicInformationCluster.js';
-import { PowerTopology, PowerTopologyCluster } from './PowerTopologyCluster.js';
-import { ElectricalPowerMeasurement, ElectricalPowerMeasurementCluster } from './ElectricalPowerMeasurementCluster.js';
-import { ElectricalEnergyMeasurement, ElectricalEnergyMeasurementCluster } from './ElectricalEnergyMeasurementCluster.js';
-import { MeasurementType } from './MeasurementType.js';
-import { CarbonMonoxideConcentrationMeasurement } from './CarbonMonoxideConcentrationMeasurementCluster.js';
-import { SmokeCoAlarm, SmokeCoAlarmCluster } from './SmokeCoAlarmCluster.js';
-import { BooleanStateConfiguration, BooleanStateConfigurationCluster } from './BooleanStateConfigurationCluster.js';
-import { DeviceEnergyManagement } from './DeviceEnergyManagementCluster.js';
-import { DeviceEnergyManagementMode } from './DeviceEnergyManagementModeCluster.js';
+import { TvocMeasurement, TvocMeasurementCluster } from './cluster/TvocCluster.js';
+import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
+import { PowerTopology, PowerTopologyCluster } from './cluster/PowerTopologyCluster.js';
+import { ElectricalPowerMeasurement, ElectricalPowerMeasurementCluster } from './cluster/ElectricalPowerMeasurementCluster.js';
+import { ElectricalEnergyMeasurement, ElectricalEnergyMeasurementCluster } from './cluster/ElectricalEnergyMeasurementCluster.js';
+import { MeasurementType } from './cluster/MeasurementType.js';
+import { CarbonMonoxideConcentrationMeasurement } from './cluster/CarbonMonoxideConcentrationMeasurementCluster.js';
+import { SmokeCoAlarm, SmokeCoAlarmCluster } from './cluster/SmokeCoAlarmCluster.js';
+import { BooleanStateConfiguration, BooleanStateConfigurationCluster } from './cluster/BooleanStateConfigurationCluster.js';
+import { DeviceEnergyManagement } from './cluster/DeviceEnergyManagementCluster.js';
+import { DeviceEnergyManagementMode } from './cluster/DeviceEnergyManagementModeCluster.js';
 
 type MakeMandatory<T> = Exclude<T, undefined>;
 
