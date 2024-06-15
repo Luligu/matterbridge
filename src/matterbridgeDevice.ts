@@ -1241,6 +1241,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * @deprecated This method is deprecated and will be removed in a future version.
    * Get a default Electrical Measurement Cluster Server.
    *
    * @param voltage - The RMS voltage value.
@@ -1263,6 +1264,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * @deprecated This method is deprecated and will be removed in a future version.
    * Creates a default Electrical Measurement Cluster Server.
    *
    * @param voltage - The RMS voltage value.
@@ -2127,14 +2129,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Creates a default power source configuration cluster server.
-   *
-   * @remarks
-   * The endpoint at this time is only known for Accessory Platforms.
-   * Don't use it in Dynamic Platforms.
-   *
-   *
-   * @param endpointNumber - The endpoint number where to find the PowerSourceCluster.
+   * @deprecated This function is deprecated by Matter 1.3 spec and will be removed in a future version.
    */
   createDefaultPowerSourceConfigurationClusterServer(endpointNumber?: number) {
     this.addClusterServer(
@@ -2252,7 +2247,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Get a default time sync cluster server. Only needed to create a thermostat.
+   * Get a default dummy time sync cluster server. Only needed to create a thermostat.
    */
   getDefaultTimeSyncClusterServer() {
     return ClusterServer(
@@ -2280,7 +2275,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
   /**
-   * Creates a default time sync cluster server. Only needed to create a thermostat.
+   * Creates a default dummy time sync cluster server. Only needed to create a thermostat.
    */
   createDefaultTimeSyncClusterServer() {
     this.addClusterServer(this.getDefaultTimeSyncClusterServer());
@@ -2308,7 +2303,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         interconnectSmokeAlarm: SmokeCoAlarm.AlarmState.Normal,
         interconnectCoAlarm: SmokeCoAlarm.AlarmState.Normal,
       },
-      {},
+      {
+        selfTestRequest: async ({ request, attributes }) => {
+          this.log.debug('Matter command: selfTestRequest');
+          await this.commandHandler.executeHandler('selfTestRequest', { request, attributes });
+        },
+      },
       {
         smokeAlarm: true,
         interconnectSmokeAlarm: true,
@@ -2326,7 +2326,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Returns the default fan control cluster server.
+   * Returns the default fan control cluster server rev 4.
    *
    * @param fanMode The fan mode to set. Defaults to `FanControl.FanMode.Off`.
    * @returns The default fan control cluster server.
