@@ -52,10 +52,13 @@ import { shelly_config, shelly_schema, somfytahoma_config, somfytahoma_schema, z
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
 
 // Define an interface of common elements from MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform
-interface MatterbridgePlatform {
+export interface MatterbridgePlatform {
   onStart(reason?: string): Promise<void>;
   onConfigure(): Promise<void>;
   onShutdown(reason?: string): Promise<void>;
+  registerDevice(device: MatterbridgeDevice): Promise<void>;
+  unregisterDevice(device: MatterbridgeDevice): Promise<void>;
+  unregisterAllDevices(): Promise<void>;
   matterbridge: Matterbridge;
   log: AnsiLogger;
   config: PlatformConfig;
@@ -74,7 +77,7 @@ export type PlatformSchemaValue = string | number | boolean | bigint | object | 
 export type PlatformSchema = Record<string, PlatformSchemaValue>;
 
 // Define an interface for storing the plugins
-interface RegisteredPlugin extends BaseRegisteredPlugin {
+export interface RegisteredPlugin extends BaseRegisteredPlugin {
   nodeContext?: NodeStorage;
   storageContext?: StorageContext;
   commissioningServer?: CommissioningServer;
@@ -1413,16 +1416,13 @@ export class Matterbridge extends EventEmitter {
    * @param {string} data - The data to write to the file.
    * @returns {Promise<void>} - A promise that resolves when the data is successfully written to the file.
    */
-  private async writeFile(filePath: string, data: string) {
-    // Write the data to a file
-    await fs
-      .writeFile(`${filePath}`, data, 'utf8')
-      .then(() => {
-        this.log.debug(`Successfully wrote to ${filePath}`);
-      })
-      .catch((error) => {
-        this.log.error(`Error writing to ${filePath}:`, error);
-      });
+  private async writeFile(filePath: string, data: string): Promise<void> {
+    try {
+      await fs.writeFile(`${filePath}`, data, 'utf8');
+      this.log.debug(`Successfully wrote to ${filePath}`);
+    } catch (error) {
+      this.log.error(`Error writing to ${filePath}:`, error);
+    }
   }
 
   /**
@@ -1430,13 +1430,13 @@ export class Matterbridge extends EventEmitter {
    *
    * @param {RegisteredPlugin} plugin - The plugin to start.
    * @param {string} [message] - Optional message to pass to the plugin's onStart method.
-   * @param {boolean} [configure=false] - Indicates whether to configure the plugin after starting.
+   * @param {boolean} [configure] - Indicates whether to configure the plugin after starting (default false).
    * @returns {Promise<void>} A promise that resolves when the plugin is started successfully, or rejects with an error if starting the plugin fails.
    */
   private async startPlugin(plugin: RegisteredPlugin, message?: string, configure = false): Promise<void> {
     if (!plugin.loaded || !plugin.platform) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} not loaded or no platform`);
-      return Promise.reject(new Error(`Plugin ${plg}${plugin.name}${er} not loaded or no platform`));
+      return Promise.resolve();
     }
     if (plugin.started) {
       this.log.debug(`Plugin ${plg}${plugin.name}${db} already started`);
@@ -1455,12 +1455,12 @@ export class Matterbridge extends EventEmitter {
         .catch((err) => {
           plugin.error = true;
           this.log.error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err}`);
-          // return Promise.reject(new Error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err}`));
+          return Promise.resolve();
         });
     } catch (err) {
       plugin.error = true;
       this.log.error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err}`);
-      // return Promise.reject(new Error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err}`));
+      return Promise.resolve();
     }
   }
 
@@ -1473,7 +1473,7 @@ export class Matterbridge extends EventEmitter {
   private async configurePlugin(plugin: RegisteredPlugin): Promise<void> {
     if (!plugin.loaded || !plugin.started || !plugin.platform) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} not loaded (${plugin.loaded}) or not started (${plugin.started}) or not platform (${plugin.platform?.name})`);
-      return Promise.reject(new Error(`Plugin ${plg}${plugin.name}${er} not loaded or not started or not platform`));
+      return Promise.resolve();
     }
     if (plugin.configured) {
       this.log.info(`Plugin ${plg}${plugin.name}${nf} already configured`);
@@ -1492,12 +1492,12 @@ export class Matterbridge extends EventEmitter {
         .catch((err) => {
           plugin.error = true;
           this.log.error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`);
-          // return Promise.reject(new Error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`));
+          return Promise.resolve();
         });
     } catch (err) {
       plugin.error = true;
       this.log.error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`);
-      // return Promise.reject(new Error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`));
+      return Promise.resolve();
     }
   }
 
@@ -1512,7 +1512,7 @@ export class Matterbridge extends EventEmitter {
   private async loadPlugin(plugin: RegisteredPlugin, start = false, message = ''): Promise<MatterbridgePlatform | undefined> {
     if (!plugin.enabled) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} not enabled`);
-      return Promise.reject(new Error(`Plugin ${plg}${plugin.name}${er} not enabled`));
+      return Promise.resolve(undefined);
     }
     if (plugin.platform) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} already loaded`);
@@ -1530,11 +1530,10 @@ export class Matterbridge extends EventEmitter {
       const pluginInstance = await import(pluginUrl.href);
       this.log.debug(`Imported plugin ${plg}${plugin.name}${db} from ${pluginUrl.href}`);
 
-      // Call the default export function of the plugin, passing this MatterBridge instance
+      // Call the default export function of the plugin, passing this MatterBridge instance, the log and the config
       if (pluginInstance.default) {
         const config: PlatformConfig = await this.loadPluginConfig(plugin);
         const log = new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled });
-        // log.setCallback(this.wssSendMessage.bind(this));
         const platform = pluginInstance.default(this, log, config) as MatterbridgePlatform;
         platform.name = packageJson.name;
         platform.config = config;
@@ -1548,9 +1547,10 @@ export class Matterbridge extends EventEmitter {
         plugin.loaded = true;
         plugin.registeredDevices = 0;
         plugin.addedDevices = 0;
+        // Save the updated plugin data in the node storage
         await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
 
-        await this.getPluginLatestVersion(plugin);
+        this.getPluginLatestVersion(plugin);
 
         this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${platform.type} ${db}(entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
         if (start) this.startPlugin(plugin, message); // No await do it asyncronously
@@ -1558,14 +1558,12 @@ export class Matterbridge extends EventEmitter {
       } else {
         this.log.error(`Plugin ${plg}${plugin.name}${er} does not provide a default export`);
         plugin.error = true;
-        return;
-        // return Promise.reject(new Error(`Plugin ${plg}${plugin.name}${er} does not provide a default export`));
+        return Promise.resolve(undefined);
       }
     } catch (err) {
       this.log.error(`Failed to load plugin ${plg}${plugin.name}${er}: ${err}`);
       plugin.error = true;
-      return;
-      // return Promise.reject(new Error(`Failed to load plugin ${plg}${plugin.name}${er}: ${err}`));
+      return Promise.resolve(undefined);
     }
   }
 

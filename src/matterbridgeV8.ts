@@ -43,26 +43,45 @@ import { EndpointType } from '@project-chip/matter.js/endpoint/type';
 import { AggregatorEndpoint } from '@project-chip/matter.js/endpoints/AggregatorEndpoint';
 import { BridgedNodeEndpoint } from '@project-chip/matter.js/endpoints/BridgedNodeEndpoint';
 
+// Behaviour servers
 import { IdentifyServer } from '@project-chip/matter.js/behavior/definitions/identify';
 import { OnOffServer } from '@project-chip/matter.js/behavior/definitions/on-off';
 import { GroupsServer } from '@project-chip/matter.js/behavior/definitions/groups';
 import { ScenesServer } from '@project-chip/matter.js/behavior/definitions/scenes';
 import { BridgedDeviceBasicInformationServer } from '@project-chip/matter.js/behavior/definitions/bridged-device-basic-information';
+import { TemperatureMeasurementServer } from '@project-chip/matter.js/behavior/definitions/temperature-measurement';
+import { RelativeHumidityMeasurementServer } from '@project-chip/matter.js/behavior/definitions/relative-humidity-measurement';
+import { SwitchServer } from '@project-chip/matter.js/behavior/definitions/switch';
 
+import { ActionContext } from '@project-chip/matter.js/behavior/context';
+
+// Device definitions
 import { ColorDimmerSwitchDevice } from '@project-chip/matter.js/devices/ColorDimmerSwitchDevice';
-import { OnOffLightDevice, OnOffLightRequirements } from '@project-chip/matter.js/devices/OnOffLightDevice';
+import { OnOffLightDevice } from '@project-chip/matter.js/devices/OnOffLightDevice';
+import { GenericSwitchDevice } from '@project-chip/matter.js/devices/GenericSwitchDevice';
 
 import { MutableEndpoint } from '@project-chip/matter.js/endpoint/type';
 import { SupportedBehaviors } from '@project-chip/matter.js/endpoint/properties';
 
 import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr, RED, GREEN, zb, CYAN } from 'node-ansi-logger';
+import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 
 import EventEmitter from 'events';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { MatterbridgeDeviceV8 } from './matterbridgeDeviceV8.js';
-import { BasicInformationCluster } from '@project-chip/matter-node.js/cluster';
+import { Actions, BasicInformationCluster, Identify, SwitchCluster } from '@project-chip/matter-node.js/cluster';
 import { dimmableSwitch } from './matterbridgeDevice.js';
+import { PlatformConfig, RegisteredPlugin } from './matterbridge.js';
+import { MatterbridgePlatform } from './matterbridge.js';
+import { pathToFileURL } from 'url';
+import { shelly_config, somfytahoma_config, zigbee2mqtt_config } from './defaultConfigSchema.js';
+
+const plg = '\u001B[38;5;33m';
+const dev = '\u001B[38;5;79m';
+const typ = '\u001B[38;5;207m';
+
+const log = Logger.get('Matterbridge');
 
 /**
  * Represents the Matterbridge application.
@@ -76,7 +95,13 @@ export class MatterbridgeV8 extends EventEmitter {
   public matterbridgePluginDirectory = '';
   public globalModulesDirectory = '';
   public matterbridgeLogFile = '';
+  private registeredPlugins: RegisteredPlugin[] = [];
 
+  // Node storage
+  private nodeStorage: NodeStorageManager | undefined;
+  private nodeContext: NodeStorage | undefined;
+
+  // Matter storage
   public matterStorageService?: StorageService;
   public matterStorageManager?: StorageManager;
   public matterStorageContext?: StorageContext;
@@ -113,6 +138,23 @@ export class MatterbridgeV8 extends EventEmitter {
     this.setupMatterVars(Level.DEBUG, Format.ANSI);
 
     await this.setupMatterStorage();
+
+    await this.setupNodeStorage();
+
+    // Get the plugins from node storage
+    if (!this.nodeStorage) throw new Error('No node storage initialized');
+    if (!this.nodeContext) throw new Error('No node storage context initialized');
+    this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
+    for (const plugin of this.registeredPlugins) {
+      plugin.nodeContext = await this.nodeStorage.createStorage(plugin.name);
+      await plugin.nodeContext.set<string>('name', plugin.name);
+      await plugin.nodeContext.set<string>('type', plugin.type);
+      await plugin.nodeContext.set<string>('path', plugin.path);
+      await plugin.nodeContext.set<string>('version', plugin.version);
+      await plugin.nodeContext.set<string>('description', plugin.description);
+      await plugin.nodeContext.set<string>('author', plugin.author);
+      this.matterLogger?.notice(`Created node storage context for plugin ${plugin.name}`);
+    }
   }
 
   private setupMatterVars(level: Level, format: Format.Type) {
@@ -132,6 +174,13 @@ export class MatterbridgeV8 extends EventEmitter {
 
     this.matterStorageContext = this.matterStorageManager.createContext('persist');
     this.matterLogger?.notice('Storage context "Matterbridge.persist" created');
+  }
+
+  private async setupNodeStorage() {
+    this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, 'storage'), logging: false });
+    this.matterLogger?.notice(`Created node storage manager: ${path.join(this.matterbridgeDirectory, 'storage')}`);
+    this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
+    this.matterLogger?.notice('Created node storage context "matterbridge"');
   }
 
   private async deleteMatterLogfile(filename: string) {
@@ -255,98 +304,6 @@ export class MatterbridgeV8 extends EventEmitter {
     });
 
     /**
-     * Matter Nodes are a composition of endpoints. Create and add a single endpoint to the node. This example uses the
-     * OnOffLightDevice or OnOffPlugInUnitDevice depending on the value of the type parameter. It also assigns this Part a
-     * unique ID to store the endpoint number for it in the storage to restore the device on restart.
-     * In this case we directly use the default command implementation from matter.js. Check out the DeviceNodeFull example
-     * to see how to customize the command handlers.
-     */
-
-    /*
-    const lightEndpoint = new Endpoint(OnOffLightDevice.with(BridgedDeviceBasicInformationServer), {
-      id: 'OnOffLight',
-      bridgedDeviceBasicInformation: {
-        vendorId: VendorId(await storageContext.get<number>('vendorId')),
-        vendorName: await storageContext.get<string>('vendorName'),
-
-        productName: 'Light',
-        productLabel: 'Light',
-        nodeLabel: 'Light',
-
-        serialNumber: '0x123456789',
-        uniqueId: '0x123456789',
-        reachable: true,
-      },
-    });
-    */
-
-    /**
-     * Register state change handlers and events of the node for identify and onoff states to react to the commands.
-     * If the code in these change handlers fail then the change is also rolled back and not executed and an error is
-     * reported back to the controller.
-     */
-    /*
-    lightEndpoint.events.identify.startIdentifying.on(() => log.notice('Run identify logic, ideally blink a light every 0.5s ...'));
-
-    lightEndpoint.events.identify.stopIdentifying.on(() => log.notice('Stop identify logic ...'));
-
-    lightEndpoint.events.onOff.onOff$Changed.on((value) => log.notice(`OnOff is now ${value ? 'ON' : 'OFF'}`));
-
-    const OnOffSwitchDeviceDefinition = MutableEndpoint({
-      name: 'OnOffSwitch',
-      deviceType: 0x103,
-      deviceRevision: 2,
-      requirements: {
-        server: {
-          mandatory: {},
-          optional: {},
-        },
-        client: {
-          mandatory: {},
-          optional: {},
-        },
-      },
-      behaviors: SupportedBehaviors(IdentifyServer, GroupsServer, ScenesServer, OnOffServer, BridgedDeviceBasicInformationServer),
-    });
-    console.log('OnOffSwitchDeviceDefinition\n', OnOffSwitchDeviceDefinition);
-
-    const switchEndpoint = new Endpoint(OnOffSwitchDeviceDefinition, {
-      id: 'OnOffSwitch',
-      onOff: {
-        onOff: false,
-      },
-      bridgedDeviceBasicInformation: {
-        vendorId: VendorId(await storageContext.get<number>('vendorId')),
-        vendorName: await storageContext.get<string>('vendorName'),
-
-        productName: 'Switch',
-        productLabel: 'Switch',
-        nodeLabel: 'Switch',
-
-        serialNumber: '0x123456789S',
-        uniqueId: '0x123456789S',
-        reachable: true,
-      },
-    });
-
-    // await this.matterServerNode.add(endpoint);
-    // const mbV8 = new MatterbridgeDeviceV8(DeviceTypes.OnOffLight);
-    // const endpoint = mbV8.getBridgedNodeEndpointV8();
-
-    const aggregator = new Endpoint(AggregatorEndpoint, { id: 'aggregator' });
-
-    await this.matterServerNode.add(aggregator);
-
-    await aggregator.add(lightEndpoint);
-    await aggregator.add(switchEndpoint);
-*/
-
-    /**
-     * Log the endpoint structure for debugging reasons and to allow to verify anything is correct
-     */
-    // logEndpoint(EndpointServer.forEndpoint(this.matterServerNode));
-
-    /**
      * This event is triggered when the device is initially commissioned successfully.
      * This means: It is added to the first fabric.
      */
@@ -448,6 +405,21 @@ export class MatterbridgeV8 extends EventEmitter {
     log.notice(`Adding ${await storageContext.get<string>('storeId')} aggregator to ${await storageContext.get<string>('storeId')} server node`);
     await this.matterServerNode.add(this.matterAggregator);
 
+    for (const plugin of this.registeredPlugins) {
+      if (!plugin.enabled) {
+        log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
+        continue;
+      }
+      plugin.error = false;
+      plugin.loaded = false;
+      plugin.started = false;
+      plugin.configured = false;
+      plugin.connected = undefined;
+      plugin.qrPairingCode = undefined;
+      plugin.manualPairingCode = undefined;
+      this.loadPlugin(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
+    }
+
     log.notice(`Adding lightEndpoint1 to ${await storageContext.get<string>('storeId')} aggregator`);
     const lightEndpoint1 = new Endpoint(OnOffLightDevice.with(BridgedDeviceBasicInformationServer), {
       id: 'OnOffLight',
@@ -467,48 +439,48 @@ export class MatterbridgeV8 extends EventEmitter {
     this.matterAggregator.add(lightEndpoint1);
 
     log.notice(`Adding switchEnpoint2 to ${await storageContext.get<string>('storeId')} aggregator`);
-    const switchEnpoint2definition = MutableEndpoint({
-      name: 'OnOffSwitch',
-      deviceType: 0x103,
-      deviceRevision: 2,
-      requirements: {
-        server: {
-          mandatory: {},
-          optional: {},
-        },
-        client: {
-          mandatory: {},
-          optional: {},
-        },
-      },
-      behaviors: SupportedBehaviors(IdentifyServer, GroupsServer, ScenesServer, OnOffServer, BridgedDeviceBasicInformationServer),
-    });
-    const switchEnpoint2 = new Endpoint(switchEnpoint2definition, {
-      id: 'OnOffSwitch',
+    const switchEnpoint2 = new Endpoint(GenericSwitchDevice.with(BridgedDeviceBasicInformationServer, SwitchServer.with('MomentarySwitch', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress', 'MomentarySwitchRelease')), {
+      id: 'GenericSwitch',
       bridgedDeviceBasicInformation: {
         vendorId: VendorId(await storageContext.get<number>('vendorId')),
         vendorName: await storageContext.get<string>('vendorName'),
 
-        productName: 'Switch',
-        productLabel: 'Switch',
-        nodeLabel: 'Switch',
+        productName: 'GenericSwitch',
+        productLabel: 'GenericSwitch',
+        nodeLabel: 'GenericSwitch',
 
         serialNumber: '0x123456739',
         uniqueId: '0x123456739',
         reachable: true,
       },
+      switch: {
+        numberOfPositions: 2,
+        currentPosition: 0,
+        multiPressMax: 2,
+      },
     });
     this.matterAggregator.add(switchEnpoint2);
+    switchEnpoint2.events.identify.startIdentifying.on(() => log.notice('Run identify logic, ideally blink a light every 0.5s ...'));
+    switchEnpoint2.events.switch.currentPosition$Changed.on(() => log.notice('Run identify logic, ideally blink a light every 0.5s ...'));
+    // switchEnpoint2.events.switch.emit('initialPress', { newPosition: 1 }, ActionContext.agentFor(switchEnpoint2) );
 
     log.notice(`Adding matterbridge device to ${await storageContext.get<string>('storeId')} aggregator`);
-    const matterbridgeDevice = new MatterbridgeDeviceV8(DeviceTypes.TEMPERATURE_SENSOR, { uniqueStorageKey: 'TemperatureSensor' });
-    this.matterAggregator.add(matterbridgeDevice);
-    // console.log('matterbridgeDevice\n', matterbridgeDevice);
+    const matterbridgeDevice3 = new MatterbridgeDeviceV8(DeviceTypes.TEMPERATURE_SENSOR, { uniqueStorageKey: 'TemperatureSensor' });
+    this.matterAggregator.add(matterbridgeDevice3);
 
     log.notice(`Starting ${await storageContext.get<string>('storeId')} server node`);
     await this.matterServerNode.bringOnline();
 
+    /*
     logEndpoint(EndpointServer.forEndpoint(this.matterServerNode));
+    console.log('matterbridgeDevice3\n', matterbridgeDevice3);
+    console.log('matterbridgeDevice3.events\n', matterbridgeDevice3.events);
+    console.log('matterbridgeDevice3.events.identify\n', matterbridgeDevice3.eventsOf(IdentifyServer));
+    console.log('matterbridgeDevice3.state\n', matterbridgeDevice3.state);
+    console.log('matterbridgeDevice3.state.temperatureMeasurement\n', matterbridgeDevice3.stateOf(TemperatureMeasurementServer));
+    // matterbridgeDevice3.eventsOf(IdentifyServer);
+    // matterbridgeDevice3.events.identify.startIdentifying.on(() => log.notice('Run identify logic, ideally blink a light every 0.5s ...'));
+    */
 
     this.showServerNodeQR();
   }
@@ -519,6 +491,216 @@ export class MatterbridgeV8 extends EventEmitter {
 
   async startController() {
     //
+  }
+
+  /**
+   * Adds a bridged device to the Matterbridge.
+   * @param pluginName - The name of the plugin.
+   * @param device - The bridged device to add.
+   * @returns {Promise<void>} - A promise that resolves when the storage process is started.
+   */
+  async addBridgedDevice(pluginName: string, device: MatterbridgeDeviceV8): Promise<void> {
+    log.info(`Adding bridged device ${dev}${device.deviceName}${nf} for plugin ${plg}${pluginName}${nf}`);
+  }
+
+  /**
+   * Loads a plugin and returns the corresponding MatterbridgePlatform instance.
+   * @param plugin - The plugin to load.
+   * @param start - Optional flag indicating whether to start the plugin after loading. Default is false.
+   * @param message - Optional message to pass to the plugin when starting.
+   * @returns A Promise that resolves to the loaded MatterbridgePlatform instance.
+   * @throws An error if the plugin is not enabled, already loaded, or fails to load.
+   */
+  private async loadPlugin(plugin: RegisteredPlugin, start = false, message = ''): Promise<MatterbridgePlatform | undefined> {
+    if (!plugin.enabled) {
+      return Promise.reject(new Error(`Plugin ${plg}${plugin.name}${er} not enabled`));
+    }
+    if (plugin.platform) {
+      return Promise.resolve(plugin.platform);
+    }
+    log.info(`Loading plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
+    try {
+      // Load the package.json of the plugin
+      const packageJson = JSON.parse(await fs.readFile(plugin.path, 'utf8'));
+      // Resolve the main module path relative to package.json
+      const pluginEntry = path.resolve(path.dirname(plugin.path), packageJson.main);
+      // Dynamically import the plugin
+      const pluginUrl = pathToFileURL(pluginEntry);
+      log.debug(`Importing plugin ${plg}${plugin.name}${db} from ${pluginUrl.href}`);
+      const pluginInstance = await import(pluginUrl.href);
+      log.debug(`Imported plugin ${plg}${plugin.name}${db} from ${pluginUrl.href}`);
+
+      // Call the default export function of the plugin, passing this MatterBridge instance, the log and the config
+      if (pluginInstance.default) {
+        const config: PlatformConfig = await this.loadPluginConfig(plugin);
+        const log = new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: true });
+        const platform = pluginInstance.default(this, log, config) as MatterbridgePlatform;
+        platform.name = packageJson.name;
+        platform.config = config;
+        platform.version = packageJson.version;
+        plugin.name = packageJson.name;
+        plugin.description = packageJson.description;
+        plugin.version = packageJson.version;
+        plugin.author = packageJson.author;
+        plugin.type = platform.type;
+        plugin.platform = platform;
+        plugin.loaded = true;
+        plugin.registeredDevices = 0;
+        plugin.addedDevices = 0;
+        // Save the updated plugin data in the node storage
+        // await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
+
+        // await this.getPluginLatestVersion(plugin);
+
+        log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${platform.type} ${db}(entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
+        if (start) this.startPlugin(plugin, message); // No await do it asyncronously
+        return Promise.resolve(platform);
+      } else {
+        plugin.error = true;
+        return Promise.reject(new Error(`Plugin ${plg}${plugin.name}${er} does not provide a default export`));
+      }
+    } catch (err) {
+      plugin.error = true;
+      return Promise.reject(new Error(`Failed to load plugin ${plg}${plugin.name}${er}: ${err}`));
+    }
+  }
+
+  /**
+   * Starts a plugin.
+   *
+   * @param {RegisteredPlugin} plugin - The plugin to start.
+   * @param {string} [message] - Optional message to pass to the plugin's onStart method.
+   * @param {boolean} [configure=false] - Indicates whether to configure the plugin after starting.
+   * @returns {Promise<void>} A promise that resolves when the plugin is started successfully, or rejects with an error if starting the plugin fails.
+   */
+  private async startPlugin(plugin: RegisteredPlugin, message?: string, configure = false): Promise<void> {
+    if (!plugin.loaded || !plugin.platform) {
+      return Promise.reject(new Error(`Plugin ${plg}${plugin.name}${er} not loaded or no platform`));
+    }
+    if (plugin.started) {
+      log.debug(`Plugin ${plg}${plugin.name}${db} already started`);
+      return Promise.resolve();
+    }
+    log.info(`Starting plugin ${plg}${plugin.name}${db} type ${typ}${plugin.type}${db}`);
+    try {
+      plugin.platform
+        .onStart(message)
+        .then(() => {
+          plugin.started = true;
+          log.info(`Started plugin ${plg}${plugin.name}${db} type ${typ}${plugin.type}${db}`);
+          if (configure) this.configurePlugin(plugin); // No await do it asyncronously
+          return Promise.resolve();
+        })
+        .catch((err) => {
+          plugin.error = true;
+          return Promise.reject(new Error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err}`));
+        });
+    } catch (err) {
+      plugin.error = true;
+      return Promise.reject(new Error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err}`));
+    }
+  }
+
+  /**
+   * Configures a plugin.
+   *
+   * @param {RegisteredPlugin} plugin - The plugin to configure.
+   * @returns {Promise<void>} A promise that resolves when the plugin is configured successfully, or rejects with an error if configuration fails.
+   */
+  private async configurePlugin(plugin: RegisteredPlugin): Promise<void> {
+    if (!plugin.loaded || !plugin.started || !plugin.platform) {
+      return Promise.reject(new Error(`Plugin ${plg}${plugin.name}${er} not loaded (${plugin.loaded}) or not started (${plugin.started}) or not platform (${plugin.platform?.name})`));
+    }
+    if (plugin.configured) {
+      log.info(`Plugin ${plg}${plugin.name}${nf} already configured`);
+      return Promise.resolve();
+    }
+    log.info(`Configuring plugin ${plg}${plugin.name}${db} type ${typ}${plugin.type}${db}`);
+    try {
+      plugin.platform
+        .onConfigure()
+        .then(() => {
+          plugin.configured = true;
+          log.info(`Configured plugin ${plg}${plugin.name}${db} type ${typ}${plugin.type}${db}`);
+          // this.savePluginConfig(plugin);
+          return Promise.resolve();
+        })
+        .catch((err) => {
+          plugin.error = true;
+          return Promise.reject(new Error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`));
+        });
+    } catch (err) {
+      plugin.error = true;
+      return Promise.reject(new Error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`));
+    }
+  }
+
+  /**
+   * Loads the configuration for a plugin.
+   * If the configuration file exists, it reads the file and returns the parsed JSON data.
+   * If the configuration file does not exist, it creates a new file with default configuration and returns it.
+   * If any error occurs during file access or creation, it logs an error and rejects the promise with the error.
+   *
+   * @param plugin - The plugin for which to load the configuration.
+   * @returns A promise that resolves to the loaded or created configuration.
+   */
+  private async loadPluginConfig(plugin: RegisteredPlugin): Promise<PlatformConfig> {
+    const configFile = path.join(this.matterbridgeDirectory, `${plugin.name}.config.json`);
+    try {
+      await fs.access(configFile);
+      const data = await fs.readFile(configFile, 'utf8');
+      const config = JSON.parse(data) as PlatformConfig;
+      // this.log.debug(`Config file found: ${configFile}.\nConfig:${rs}\n`, config);
+      log.debug(`Config file found: ${configFile}.`);
+      /* The first time a plugin is added to the system, the config file is created with the plugin name and type "".*/
+      config.name = plugin.name;
+      config.type = plugin.type;
+      return config;
+    } catch (err) {
+      if (err instanceof Error) {
+        const nodeErr = err as NodeJS.ErrnoException;
+        if (nodeErr.code === 'ENOENT') {
+          let config: PlatformConfig;
+          if (plugin.name === 'matterbridge-zigbee2mqtt') config = zigbee2mqtt_config;
+          else if (plugin.name === 'matterbridge-somfy-tahoma') config = somfytahoma_config;
+          else if (plugin.name === 'matterbridge-shelly') config = shelly_config;
+          else config = { name: plugin.name, type: plugin.type, unregisterOnShutdown: false };
+          try {
+            await this.writeFile(configFile, JSON.stringify(config, null, 2));
+            log.debug(`Created config file: ${configFile}.`);
+            // this.log.debug(`Created config file: ${configFile}.\nConfig:${rs}\n`, config);
+            return config;
+          } catch (err) {
+            log.error(`Error creating config file ${configFile}: ${err}`);
+            return config;
+          }
+        } else {
+          log.error(`Error accessing config file ${configFile}: ${err}`);
+          return {};
+        }
+      }
+      log.error(`Error loading config file ${configFile}: ${err}`);
+      return {};
+    }
+  }
+
+  /**
+   * Writes data to a file.
+   *
+   * @param {string} filePath - The path of the file to write to.
+   * @param {string} data - The data to write to the file.
+   * @returns {Promise<void>} - A promise that resolves when the data is successfully written to the file.
+   */
+  private async writeFile(filePath: string, data: string): Promise<void> {
+    // Write the data to a file
+    await fs
+      .writeFile(`${filePath}`, data, 'utf8')
+      .then(() => {
+        log.debug(`Successfully wrote to ${filePath}`);
+      })
+      .catch((error) => {
+        log.error(`Error writing to ${filePath}:`, error);
+      });
   }
 }
 

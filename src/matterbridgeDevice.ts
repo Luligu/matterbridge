@@ -33,8 +33,6 @@ import {
   DoorLockCluster,
   ElectricalMeasurement,
   ElectricalMeasurementCluster,
-  FanControl,
-  FanControlCluster,
   FixedLabelCluster,
   FlowMeasurement,
   FlowMeasurementCluster,
@@ -96,6 +94,7 @@ import { SmokeCoAlarm, SmokeCoAlarmCluster } from './cluster/SmokeCoAlarmCluster
 import { BooleanStateConfiguration, BooleanStateConfigurationCluster } from './cluster/BooleanStateConfigurationCluster.js';
 import { DeviceEnergyManagement } from './cluster/DeviceEnergyManagementCluster.js';
 import { DeviceEnergyManagementMode } from './cluster/DeviceEnergyManagementModeCluster.js';
+import { FanControl, FanControlCluster } from './cluster/FanControlCluster.js';
 
 type MakeMandatory<T> = Exclude<T, undefined>;
 
@@ -1177,7 +1176,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param energy - The total consumption value.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getDefaultElectricalEnergyMeasurementClusterServer(energy = 0) {
     return ClusterServer(
       ElectricalEnergyMeasurementCluster.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
@@ -1744,6 +1742,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
     );
   }
+
   /**
    * Creates a default switch cluster server.
    *
@@ -1982,7 +1981,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   getDefaultBooleanStateConfigurationClusterServer(sensorFault = false) {
     return ClusterServer(
-      BooleanStateConfigurationCluster.with(BooleanStateConfiguration.Feature.Visual, BooleanStateConfiguration.Feature.Audible, BooleanStateConfiguration.Feature.AlarmSuppress, BooleanStateConfiguration.Feature.SensitivityLevel),
+      BooleanStateConfigurationCluster.with(BooleanStateConfiguration.Feature.Visual, BooleanStateConfiguration.Feature.Audible, BooleanStateConfiguration.Feature.SensitivityLevel),
       {
         currentSensitivityLevel: 0,
         supportedSensitivityLevels: 2,
@@ -1990,10 +1989,16 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         alarmsActive: { visual: false, audible: false },
         alarmsEnabled: { visual: false, audible: false },
         alarmsSupported: { visual: true, audible: true },
-        alarmsSuppressed: { visual: false, audible: false },
+        // alarmsSuppressed: { visual: false, audible: false },
         sensorFault: { generalFault: sensorFault },
       },
-      {},
+      {
+        enableDisableAlarm: async ({ request, attributes }) => {
+          // eslint-disable-next-line no-console
+          this.log.debug('Matter command: enableDisableAlarm', request);
+          await this.commandHandler.executeHandler('enableDisableAlarm', { request, attributes });
+        },
+      },
       {
         alarmsStateChanged: true,
         sensorFault: true,
@@ -2263,7 +2268,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {
         setUtcTime: async ({ request, attributes }) => {
-          // eslint-disable-next-line no-console
           this.log.debug('Matter command: setUtcTime', request);
           await this.commandHandler.executeHandler('setUtcTime', { request, attributes });
         },
@@ -2282,6 +2286,13 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     this.addClusterServer(this.getDefaultTimeSyncClusterServer());
   }
 
+  /**
+   * Returns the default SmokeCOAlarmClusterServer.
+   *
+   * @param smokeState - The state of the smoke alarm. Defaults to SmokeCoAlarm.AlarmState.Normal.
+   * @param coState - The state of the CO alarm. Defaults to SmokeCoAlarm.AlarmState.Normal.
+   * @returns The default SmokeCOAlarmClusterServer.
+   */
   getDefaultSmokeCOAlarmClusterServer(smokeState = SmokeCoAlarm.AlarmState.Normal, coState = SmokeCoAlarm.AlarmState.Normal) {
     return ClusterServer(
       SmokeCoAlarmCluster.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm),
@@ -2314,19 +2325,30 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
 
+  /**
+   * Returns the default fan control cluster server.
+   *
+   * @param fanMode The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @returns The default fan control cluster server.
+   */
   getDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
     return ClusterServer(
-      FanControlCluster.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto),
+      FanControlCluster.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step),
       {
         fanMode,
-        fanModeSequence: FanControl.FanModeSequence.OffOnAuto,
+        fanModeSequence: FanControl.FanModeSequence.OffLowMedHighAuto,
         percentSetting: 0,
         percentCurrent: 0,
         speedMax: 100,
         speedSetting: 0,
         speedCurrent: 0,
       },
-      {},
+      {
+        step: async ({ request, attributes }) => {
+          this.log.debug('Matter command: step', request);
+          await this.commandHandler.executeHandler('step', { request, attributes });
+        },
+      },
       {},
     );
   }
