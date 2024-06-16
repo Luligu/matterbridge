@@ -108,8 +108,8 @@ export interface BaseRegisteredPlugin {
   addedDevices?: number;
   qrPairingCode?: string;
   manualPairingCode?: string;
-  configJson?: object;
-  schemaJson?: object;
+  configJson?: PlatformConfig;
+  schemaJson?: PlatformSchema;
 }
 
 // Define an interface for storing the devices
@@ -1052,7 +1052,7 @@ export class Matterbridge extends EventEmitter {
    * Adds a bridged device to the Matterbridge.
    * @param pluginName - The name of the plugin.
    * @param device - The bridged device to add.
-   * @returns {Promise<void>} - A promise that resolves when the storage process is started.
+   * @returns {Promise<void>} - A promise that resolves when the device is added.
    */
   async addBridgedDevice(pluginName: string, device: MatterbridgeDevice): Promise<void> {
     if (this.bridgeMode === 'bridge' && !this.matterAggregator) {
@@ -1349,17 +1349,18 @@ export class Matterbridge extends EventEmitter {
    * Saves the plugin configuration to a JSON file.
    * @param plugin - The registered plugin.
    * @param config - The platform configuration.
-   * @returns A promise that resolves when the configuration is saved successfully, or rejects with an error.
+   * @returns A promise that resolves when the configuration is saved successfully, or with an error logged.
    */
   private async savePluginConfigFromJson(plugin: RegisteredPlugin, config: PlatformConfig): Promise<void> {
     if (!config.name || !config.type || config.name !== plugin.name) {
-      this.log.error(`Error saving plugin ${plg}${plugin.name}${er} config`);
+      this.log.error(`Error saving plugin ${plg}${plugin.name}${er} config. Wrong config data content.`);
       return;
     }
     const configFile = path.join(this.matterbridgeDirectory, `${plugin.name}.config.json`);
     try {
       await this.writeFile(configFile, JSON.stringify(config, null, 2));
-      this.log.debug(`Saved config file: ${configFile}.\nConfig:${rs}\n`, config);
+      plugin.configJson = config;
+      this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
     } catch (err) {
       this.log.error(`Error saving plugin ${plg}${plugin.name}${er} config: ${err}`);
       return;
@@ -1370,7 +1371,7 @@ export class Matterbridge extends EventEmitter {
    * Loads the configuration for a plugin.
    * If the configuration file exists, it reads the file and returns the parsed JSON data.
    * If the configuration file does not exist, it creates a new file with default configuration and returns it.
-   * If any error occurs during file access or creation, it logs an error and rejects the promise with the error.
+   * If any error occurs during file access or creation, it logs an error and return un empty config.
    *
    * @param plugin - The plugin for which to load the configuration.
    * @returns A promise that resolves to the loaded or created configuration.
@@ -1575,6 +1576,8 @@ export class Matterbridge extends EventEmitter {
         plugin.loaded = true;
         plugin.registeredDevices = 0;
         plugin.addedDevices = 0;
+        plugin.configJson = config;
+        plugin.schemaJson = await this.loadPluginSchema(plugin);
         // Save the updated plugin data in the node storage
         await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
 
@@ -2701,8 +2704,10 @@ export class Matterbridge extends EventEmitter {
         registeredDevices: plugin.registeredDevices,
         qrPairingCode: plugin.qrPairingCode,
         manualPairingCode: plugin.manualPairingCode,
-        configJson: includeConfigSchema ? await this.loadPluginConfig(plugin) : {},
-        schemaJson: includeConfigSchema ? await this.loadPluginSchema(plugin) : {},
+        // configJson: includeConfigSchema ? await this.loadPluginConfig(plugin) : {},
+        // schemaJson: includeConfigSchema ? await this.loadPluginSchema(plugin) : {},
+        configJson: includeConfigSchema ? plugin.configJson : {},
+        schemaJson: includeConfigSchema ? plugin.schemaJson : {},
       });
     }
     return baseRegisteredPlugins;
