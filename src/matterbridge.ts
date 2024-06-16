@@ -254,6 +254,7 @@ export class Matterbridge extends EventEmitter {
 
   /**
    * Initializes the Matterbridge instance as extension for zigbee2mqtt.
+   * @deprecated This method is deprecated and will be removed in a future version.
    *
    * @returns A Promise that resolves when the initialization is complete.
    */
@@ -330,6 +331,7 @@ export class Matterbridge extends EventEmitter {
 
   /**
    * Close the Matterbridge instance as extension for zigbee2mqtt.
+   * @deprecated This method is deprecated and will be removed in a future version.
    *
    * @returns A Promise that resolves when the initialization is complete.
    */
@@ -346,6 +348,12 @@ export class Matterbridge extends EventEmitter {
     this.log.info('Matter server stopped');
   }
 
+  /**
+   * Checks if the extension is commissioned.
+   * @deprecated This method is deprecated and will be removed in a future version.
+   *
+   * @returns {boolean} Returns true if the extension is commissioned, false otherwise.
+   */
   public isExtensionCommissioned(): boolean {
     if (!this.commissioningServer) return false;
     return this.commissioningServer.isCommissioned();
@@ -436,7 +444,24 @@ export class Matterbridge extends EventEmitter {
     this.registerSignalHandlers();
 
     // Set matter.js logger level and format
-    Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
+    if (hasParameter('matterlogger')) {
+      const level = getParameter('matterlogger');
+      if (level === 'debug') {
+        Logger.defaultLogLevel = Level.DEBUG;
+      } else if (level === 'info') {
+        Logger.defaultLogLevel = Level.INFO;
+      } else if (level === 'notice') {
+        Logger.defaultLogLevel = Level.NOTICE;
+      } else if (level === 'warn') {
+        Logger.defaultLogLevel = Level.WARN;
+      } else if (level === 'error') {
+        Logger.defaultLogLevel = Level.ERROR;
+      } else if (level === 'fatal') {
+        Logger.defaultLogLevel = Level.FATAL;
+      }
+    } else {
+      Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
+    }
     Logger.format = Format.ANSI;
 
     // Parse command line
