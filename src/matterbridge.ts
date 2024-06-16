@@ -1277,7 +1277,8 @@ export class Matterbridge extends EventEmitter {
 
   /**
    * Loads the schema for a plugin.
-   * If the schema file exists, it reads the file and returns the parsed JSON data.
+   * If the schema file exists in the plugin directory, it reads the file and returns the parsed JSON data.
+   * If the schema file exists in matterbridgeDirectory, it reads the file and returns the parsed JSON data.
    * If the schema file does not exist, it creates a new file with default configuration and returns it.
    * If any error occurs during file access or creation, it logs an error and return an empty schema.
    *
@@ -1285,7 +1286,21 @@ export class Matterbridge extends EventEmitter {
    * @returns A promise that resolves to the loaded or created schema.
    */
   private async loadPluginSchema(plugin: RegisteredPlugin): Promise<PlatformSchema> {
-    const schemaFile = path.join(this.matterbridgeDirectory, `${plugin.name}.schema.json`);
+    let schemaFile = plugin.path.replace('package.json', `${plugin.name}.schema.json`);
+    try {
+      await fs.access(schemaFile);
+      const data = await fs.readFile(schemaFile, 'utf8');
+      const schema = JSON.parse(data) as PlatformSchema;
+      schema.title = plugin.description;
+      schema.description = plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author;
+      this.log.debug(`Schema file found: ${schemaFile}.`);
+      // this.log.debug(`Schema file found: ${schemaFile}.\nSchema:${rs}\n`, schema);
+      return schema;
+    } catch (err) {
+      this.log.debug(`Schema file ${schemaFile} not found.`);
+    }
+
+    schemaFile = path.join(this.matterbridgeDirectory, `${plugin.name}.schema.json`);
     try {
       await fs.access(schemaFile);
       const data = await fs.readFile(schemaFile, 'utf8');
