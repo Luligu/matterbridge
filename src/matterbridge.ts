@@ -2916,7 +2916,7 @@ export class Matterbridge extends EventEmitter {
         qrPairingCode = await this.matterbridgeContext.get('qrPairingCode');
         manualPairingCode = await this.matterbridgeContext.get('manualPairingCode');
       } catch (error) {
-        if (this.bridgeMode === 'bridge') this.log.error('pairingCodes for /api/settings not found');
+        if (this.bridgeMode === 'bridge') this.log.warn('pairingCodes for /api/settings not found');
       }
       this.matterbridgeInformation.bridgeMode = this.bridgeMode;
       this.matterbridgeInformation.restartMode = this.restartMode;

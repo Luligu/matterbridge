@@ -33,6 +33,8 @@ import {
   DoorLockCluster,
   ElectricalMeasurement,
   ElectricalMeasurementCluster,
+  FanControl,
+  FanControlCluster,
   FixedLabelCluster,
   FlowMeasurement,
   FlowMeasurementCluster,
@@ -89,12 +91,13 @@ import { PowerTopology, PowerTopologyCluster } from './cluster/PowerTopologyClus
 import { ElectricalPowerMeasurement, ElectricalPowerMeasurementCluster } from './cluster/ElectricalPowerMeasurementCluster.js';
 import { ElectricalEnergyMeasurement, ElectricalEnergyMeasurementCluster } from './cluster/ElectricalEnergyMeasurementCluster.js';
 import { MeasurementType } from './cluster/MeasurementType.js';
-import { CarbonMonoxideConcentrationMeasurement } from './cluster/CarbonMonoxideConcentrationMeasurementCluster.js';
+import { CarbonMonoxideConcentrationMeasurement, CarbonMonoxideConcentrationMeasurementCluster } from './cluster/CarbonMonoxideConcentrationMeasurementCluster.js';
 import { SmokeCoAlarm, SmokeCoAlarmCluster } from './cluster/SmokeCoAlarmCluster.js';
 import { BooleanStateConfiguration, BooleanStateConfigurationCluster } from './cluster/BooleanStateConfigurationCluster.js';
-import { DeviceEnergyManagement } from './cluster/DeviceEnergyManagementCluster.js';
-import { DeviceEnergyManagementMode } from './cluster/DeviceEnergyManagementModeCluster.js';
-import { FanControl, FanControlCluster } from './cluster/FanControlCluster.js';
+import { DeviceEnergyManagement, DeviceEnergyManagementCluster } from './cluster/DeviceEnergyManagementCluster.js';
+import { DeviceEnergyManagementMode, DeviceEnergyManagementModeCluster } from './cluster/DeviceEnergyManagementModeCluster.js';
+// import { FanControl, FanControlCluster } from './cluster/FanControlCluster.js';
+import { ConcentrationMeasurement } from './cluster/ConcentrationMeasurementCluster.js';
 
 type MakeMandatory<T> = Exclude<T, undefined>;
 
@@ -127,6 +130,13 @@ interface MatterbridgeDeviceCommands {
   unlockDoor: MakeMandatory<ClusterServerHandlers<typeof DoorLock.Complete>['unlockDoor']>;
 
   setpointRaiseLower: MakeMandatory<ClusterServerHandlers<typeof Thermostat.Complete>['setpointRaiseLower']>;
+
+  // step: MakeMandatory<ClusterServerHandlers<typeof FanControl.Complete>['step']>;
+
+  suppressAlarm: MakeMandatory<ClusterServerHandlers<typeof BooleanStateConfiguration.Complete>['suppressAlarm']>;
+  enableDisableAlarm: MakeMandatory<ClusterServerHandlers<typeof BooleanStateConfiguration.Complete>['enableDisableAlarm']>;
+
+  selfTestRequest: MakeMandatory<ClusterServerHandlers<typeof SmokeCoAlarm.Complete>['selfTestRequest']>;
 }
 
 // Matter 1.2 and 1.3 device types
@@ -380,7 +390,10 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(ElectricalPowerMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalPowerMeasurementClusterServer());
     if (includeServerList.includes(ElectricalEnergyMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalEnergyMeasurementClusterServer());
     if (includeServerList.includes(SmokeCoAlarm.Cluster.id)) endpoint.addClusterServer(this.getDefaultSmokeCOAlarmClusterServer());
+    if (includeServerList.includes(CarbonMonoxideConcentrationMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultCarbonMonoxideConcentrationMeasurementClusterServer());
     if (includeServerList.includes(FanControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultFanControlClusterServer());
+    if (includeServerList.includes(DeviceEnergyManagement.Cluster.id)) endpoint.addClusterServer(this.getDefaultDeviceEnergyManagementClusterServer());
+    if (includeServerList.includes(DeviceEnergyManagementMode.Cluster.id)) endpoint.addClusterServer(this.getDefaultDeviceEnergyManagementModeClusterServer());
   }
 
   /**
@@ -2007,7 +2020,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
     );
   }
-
   /**
    * Creates a default boolean state configuration cluster server.
    *
@@ -2324,16 +2336,60 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
     );
   }
+  /**
+   * Create the default SmokeCOAlarmClusterServer.
+   *
+   * @param smokeState - The state of the smoke alarm. Defaults to SmokeCoAlarm.AlarmState.Normal.
+   * @param coState - The state of the CO alarm. Defaults to SmokeCoAlarm.AlarmState.Normal.
+   * @returns The default SmokeCOAlarmClusterServer.
+   */
+  createDefaultSmokeCOAlarmClusterServer(smokeState = SmokeCoAlarm.AlarmState.Normal, coState = SmokeCoAlarm.AlarmState.Normal) {
+    this.addClusterServer(this.getDefaultSmokeCOAlarmClusterServer(smokeState, coState));
+  }
 
   /**
-   * Returns the default fan control cluster server rev 4.
+   * Returns the default Carbon Monoxide Concentration Measurement Cluster Server.
+   *
+   * @param {number} measuredValue - The measured value of the concentration.
+   * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement.
+   * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The medium of measurement.
+   * @returns {ClusterServer} - The default Carbon Monoxide Concentration Measurement Cluster Server.
+   */
+  getDefaultCarbonMonoxideConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+    return ClusterServer(
+      CarbonMonoxideConcentrationMeasurementCluster.with('NumericMeasurement'),
+      {
+        measuredValue,
+        minMeasuredValue: null,
+        maxMeasuredValue: null,
+        uncertainty: 0,
+        measurementUnit,
+        measurementMedium,
+      },
+      {},
+      {},
+    );
+  }
+  /**
+   * Create the default Carbon Monoxide Concentration Measurement Cluster Server.
+   *
+   * @param {number} measuredValue - The measured value of the concentration.
+   * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement.
+   * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The medium of measurement.
+   */
+  createDefaultCarbonMonoxideConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+    this.addClusterServer(this.getDefaultCarbonMonoxideConcentrationMeasurementClusterServer(measuredValue, measurementUnit, measurementMedium));
+  }
+
+  /**
+   * Returns the default fan control cluster server rev 2.
    *
    * @param fanMode The fan mode to set. Defaults to `FanControl.FanMode.Off`.
    * @returns The default fan control cluster server.
    */
   getDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
     return ClusterServer(
-      FanControlCluster.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step),
+      FanControlCluster.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto /* , FanControl.Feature.Step*/),
       {
         fanMode,
         fanModeSequence: FanControl.FanModeSequence.OffLowMedHighAuto,
@@ -2344,11 +2400,69 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         speedCurrent: 0,
       },
       {
+        /*
         step: async ({ request, attributes }) => {
           this.log.debug('Matter command: step', request);
           await this.commandHandler.executeHandler('step', { request, attributes });
         },
+        */
       },
+      {},
+    );
+  }
+  /**
+   * Create the default fan control cluster server rev 2.
+   *
+   * @param fanMode The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @returns The default fan control cluster server.
+   */
+  createDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
+    this.addClusterServer(this.getDefaultFanControlClusterServer(fanMode));
+  }
+
+  // NOTE Support of Device Energy Management Cluster is provisional.
+  getDefaultDeviceEnergyManagementClusterServer() {
+    return ClusterServer(
+      DeviceEnergyManagementCluster.with(DeviceEnergyManagement.Feature.Pausable, DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.StateForecastReporting),
+      {
+        esaType: DeviceEnergyManagement.EsaType.Other,
+        esaCanGenerate: false,
+        esaState: DeviceEnergyManagement.EsaState.Online,
+        absMinPower: 0,
+        absMaxPower: 0,
+        optOutState: DeviceEnergyManagement.OptOutState.NoOptOut,
+        forecast: null,
+      },
+      {
+        pauseRequest: async ({ request, attributes }) => {
+          this.log.debug('Matter command: pauseRequest', request);
+          await this.commandHandler.executeHandler('pauseRequest', { request, attributes });
+        },
+        resumeRequest: async () => {
+          this.log.debug('Matter command: resumeRequest');
+          await this.commandHandler.executeHandler('resumeRequest');
+        },
+      },
+      {
+        paused: true,
+        resumed: true,
+      },
+    );
+  }
+
+  // NOTE Support of Device Energy Management Mode Cluster is provisional.
+  getDefaultDeviceEnergyManagementModeClusterServer() {
+    return ClusterServer(
+      DeviceEnergyManagementModeCluster,
+      {
+        esaType: DeviceEnergyManagement.EsaType.Other,
+        esaCanGenerate: false,
+        esaState: DeviceEnergyManagement.EsaState.Online,
+        absMinPower: 0,
+        absMaxPower: 0,
+        optOutState: DeviceEnergyManagement.OptOutState.NoOptOut,
+      },
+      {},
       {},
     );
   }
