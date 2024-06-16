@@ -1277,7 +1277,7 @@ export class Matterbridge extends EventEmitter {
 
   /**
    * Loads the schema for a plugin.
-   * If the schema file exists in the plugin directory, it reads the file and returns the parsed JSON data.
+   * If the schema file exists in the plugin directory, it reads the file and returns the parsed JSON data and delete the schema form .matterbridge.
    * If the schema file exists in matterbridgeDirectory, it reads the file and returns the parsed JSON data.
    * If the schema file does not exist, it creates a new file with default configuration and returns it.
    * If any error occurs during file access or creation, it logs an error and return an empty schema.
@@ -1295,6 +1295,13 @@ export class Matterbridge extends EventEmitter {
       schema.description = plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author;
       this.log.debug(`Schema file found: ${schemaFile}.`);
       // this.log.debug(`Schema file found: ${schemaFile}.\nSchema:${rs}\n`, schema);
+      schemaFile = path.join(this.matterbridgeDirectory, `${plugin.name}.schema.json`);
+      try {
+        await fs.unlink(schemaFile);
+        this.log.debug(`****Schema file ${schemaFile} deleted.`);
+      } catch (err) {
+        this.log.debug(`****Schema file ${schemaFile} to delete not found.`);
+      }
       return schema;
     } catch (err) {
       this.log.debug(`Schema file ${schemaFile} not found.`);
