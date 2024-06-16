@@ -147,8 +147,10 @@ function MatterbridgeInfo() {
             <RadioGroup focused row name="debug-buttons-group" value={selectedDebugLevel} onChange={handleChangeDebugLevel}>
               <FormControlLabel value="Debug" control={<Radio />} label="Debug" />
               <FormControlLabel value="Info" control={<Radio />} label="Info" />
+              <FormControlLabel value="Notice" control={<Radio />} label="Notice" />
               <FormControlLabel value="Warn" control={<Radio />} label="Warn" />
               <FormControlLabel value="Error" control={<Radio />} label="Error" />
+              <FormControlLabel value="Fatal" control={<Radio />} label="Fatal" />
             </RadioGroup>
           </div>
           <TextField focused value={password} onChange={handleChangePassword} size="small" id="matterbridgePassword" label="Matterbridge Password" type="password" autoComplete="current-password" variant="outlined" style={{ marginTop: '20px'}} />

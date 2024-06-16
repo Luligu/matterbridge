@@ -43,7 +43,7 @@ export * from './cluster/TvocCluster.js';
 export * from './cluster/CarbonMonoxideConcentrationMeasurementCluster.js';
 export * from './cluster/BooleanStateConfigurationCluster.js';
 export * from './cluster/PowerTopologyCluster.js';
-// export * from './cluster/FanControlCluster.js';
+// export * from './cluster/FanControlCluster.js'; // Already defined in matter.js like rev. 2
 export * from './cluster/ElectricalEnergyMeasurementCluster.js';
 export * from './cluster/ElectricalPowerMeasurementCluster.js';
 export * from './utils.js';

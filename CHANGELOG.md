@@ -25,6 +25,7 @@ and (probably only like BooleanState cluster)
 - [matterbridgeDevice]: Added all clusters needed for the above Matter 1.3 device types 
 - [matterbridgeDevice]: Added FanControl cluster (rev. 2) helper methods for the Fan device type
 - [matterbridge]: Added parameter -matterlogger [debug | info | notice | warn | error | fatal] to set the matter.js Logger separately from the Matterbridge log
+- [frontend]: Added logger level settings to reflect -matterlogger [debug | info | notice | warn | error | fatal]
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">

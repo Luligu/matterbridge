@@ -14,12 +14,7 @@ COPY ./frontend/build ./frontend/build
 RUN npm ci --no-audit --no-update-notifier --no-fund && \
     npm run build && \
     npm link
-    #npm -g install ./ && \
-    #rm ./package.json ./package-lock.json ./tsconfig.json && \
-    #rm -rf ./src && \
-    #rm -rf ./frontend && \
-    #rm -rf ./dist && \
-    #rm -rf ./node_modules
+
 
 # Install Matterbridge plugins
 RUN npm -g install matterbridge-example-accessory-platform
@@ -35,4 +30,4 @@ RUN npm -g install matterbridge-eve-weather
 # WORKDIR /app
 # Node modules: /usr/local/lib/node_modules/matterbridge/dist/cli.js
 # Bin: /usr/local/bin/matterbridge
-CMD ["/usr/local/bin/matterbridge", "-bridge", "-docker", "-frontend", "8283"]
+CMD ["/usr/local/bin/matterbridge", "-bridge", "-docker"]

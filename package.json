@@ -97,6 +97,6 @@
     "matter-history": "^1.1.1",
     "node-ansi-logger": "^1.9.5",
     "node-persist-manager": "^1.0.7",
-    "ws": "^8.17.0"
+    "ws": "^8.17.1"
   }
 }
