@@ -2,8 +2,9 @@
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
 [![npm downloads](https://img.shields.io/npm/dt/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
+[![Docker Version](https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver)](https://hub.docker.com/r/luligu/matterbridge)
+[![Docker Pulls](https://img.shields.io/docker/pulls/luligu/matterbridge.svg)](https://hub.docker.com/r/luligu/matterbridge)
 ![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
-
 
 [![power by](https://img.shields.io/badge/powered%20by-matter--history-blue)](https://www.npmjs.com/package/matter-history)
 [![power by](https://img.shields.io/badge/powered%20by-node--ansi--logger-blue)](https://www.npmjs.com/package/node-ansi-logger)
@@ -329,7 +330,7 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/matterbridge -bridge -service -port 5550
+ExecStart=/usr/bin/matterbridge -bridge -service
 WorkingDirectory=/home/<USER>/Matterbridge
 StandardOutput=inherit
 StandardError=inherit
@@ -473,42 +474,73 @@ docker logs matterbridge
 docker logs --tail 1000 -f matterbridge
 ```
 
-# Known issues
+# Known general issues
 
 ## Session XYZ does not exist 
 This message may appear after Matterbridge restarts, indicating that the controller is still using a session from the previous connection that has since been closed.
 After some time, the controller will reconnect. 
 In this context, the message is not indicative of a problem.
 
-## Apple Home issues
+## Apple Home
 
 The HomePods, being a WiFi devices, sometimes pruduce message trasmission errors. The Apple TV with network cable is more reliable (but also more expensive).
 
 Solved with the version 17.5 of the HomePod/AppleTV. Now they are stable.
 
-### DoorLock
+### DoorLock issue
 
 The DoorLock cluster in the Home app takes a while to get online. The Home app shows no response for 1 or 2 seconds but then the accessory goes online. With the Eve app or the Controller app this issue is not present.
 
 Solved with the version 17.5 of the HomePod/AppleTV.
 
+## Home Assistant 
+
+So far is the only controller supporting some Matter 1.3 device type:
+- air quality sensor
+
+HA also support electrical measurements from EveHistoryCluster (used in Matterbridge plugins)
+
 ## Home Assistant issues (Matter Server for HA is still in Beta)
 
-- If HA doesn't show all devices just reload the HA Matter Server or reboot HA
-- Home Assistant doesn't seem to react when a device is removed from the bridge: they remain like unavailable forever...
+- If HA doesn't show all devices just reload the Matter Server or reboot HA
+- Home Assistant doesn't seem to react when a device is removed from the bridge: they remain in HA unavailable forever...
 - In the Home Assistant Core log you can see sometimes error messages relating to unique id not found but it seems to be an issue related to missing some matter packet during the commissioning and subscription phase...
 - Version 6.1.0 is more stable and has solved the problem of the commissioning window: now pairing is again easy. Use Apple Home when you have to choose the controller type even if you pair Matterbridge directly with HA.
 
 ## Google Home
 
+No issues reported so far.
+
 ## Alexa
+
+Tested by Tamer Salah
+
+Alexa needs the standard port 5540 to pair (from matter.js readme).
+
+There is no support for these Matter device types:
+- pressure sensor
+- flow sensor
+- light sensor
+
+In the zigbee2mqtt and shelly plugins select the option to expose 
+the switch devices like light or outlet cause they don't show up like switch
+(Matterbridge uses a modified switch device type without client cluster).
 
 ## SmartThings
 
+Tested by Tamer Salah
+
+No issues reported so far.
+
 ## eWeLink
+
+Tested by Tamer Salah
+
+eWeLink needs the standard port 5540 for commissioning.
 
 ## Tuya/Smart Life
 
+Check the matter.js readme.
 
 # Contribution Guidelines
 
@@ -524,7 +556,7 @@ I warmly welcome contributions to this project! Whether it's reporting bugs, pro
 
 ## Submitting Changes
 
-- Create a new pull request from my repository and I'll be glad to check it out
+- Create a new pull request against the dev from my repository and I'll be glad to check it out
 - Be sure to follow the existing code style
 - Add unit tests for any new or changed functionality if possible
 - In your pull request, do describe what your changes do and how they work

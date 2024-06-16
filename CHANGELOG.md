@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2024-06-16
+
+This release is all about Matter 1.3
+
+If you are wondering whether the controllers already support Matter 1.3, the answer is unfortunately no.
+
+Only Home Automation supports:
+- airQualitySensor (Matter 1.2)
+
+and (probably only like BooleanState cluster)
+- waterFreezeDetector (Matter 1.3)
+- waterLeakDetector (Matter 1.3)
+- rainSensor (Matter 1.3)
+
+### Changed
+- [matterbridge]: Updated dependencies
+- [matterbridge]: Default config and schema for the new plugin matterbridge-shelly (will be published after this release)
+
+### Added
+- [matterbridgeDevice]: Added waterFreezeDetector, waterLeakDetector, rainSensor, smokeCoAlarm, electricalSensor and deviceEnergyManagement device types as conformance to Matter 1.3
+- [matterbridgeDevice]: Added all clusters needed for the above Matter 1.3 device types 
+- [matterbridgeDevice]: Added FanControl cluster (rev. 2) helper methods for the Fan device type
+- [matterbridge]: Added parameter -matterlogger [debug | info | notice | warn | error | fatal] to set the matter.js Logger separately from the Matterbridge log
+- [frontend]: Added logger level settings to reflect -matterlogger [debug | info | notice | warn | error | fatal]
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.2.22] - 2024-06-04
 
 ### Changed

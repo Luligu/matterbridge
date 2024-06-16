@@ -33,6 +33,8 @@ import {
   DoorLockCluster,
   ElectricalMeasurement,
   ElectricalMeasurementCluster,
+  FanControl,
+  FanControlCluster,
   FixedLabelCluster,
   FlowMeasurement,
   FlowMeasurementCluster,
@@ -80,11 +82,22 @@ import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-nod
 import { MatterHistory, Sensitivity, WeatherTrend, TemperatureDisplayUnits } from 'matter-history';
 import { EveHistory, EveHistoryCluster } from 'matter-history';
 
-import { AirQuality, AirQualityCluster } from './AirQualityCluster.js';
-import { AnsiLogger, TimestampFormat, db, hk, zb } from 'node-ansi-logger';
+import { AirQuality, AirQualityCluster } from './cluster/AirQualityCluster.js';
+import { AnsiLogger, CYAN, TimestampFormat, db, hk, zb } from 'node-ansi-logger';
 import { createHash } from 'crypto';
-import { TvocMeasurement, TvocMeasurementCluster } from './TvocCluster.js';
-import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './BridgedDeviceBasicInformationCluster.js';
+import { TvocMeasurement, TvocMeasurementCluster } from './cluster/TvocCluster.js';
+import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
+import { PowerTopology, PowerTopologyCluster } from './cluster/PowerTopologyCluster.js';
+import { ElectricalPowerMeasurement, ElectricalPowerMeasurementCluster } from './cluster/ElectricalPowerMeasurementCluster.js';
+import { ElectricalEnergyMeasurement, ElectricalEnergyMeasurementCluster } from './cluster/ElectricalEnergyMeasurementCluster.js';
+import { MeasurementType } from './cluster/MeasurementType.js';
+import { CarbonMonoxideConcentrationMeasurement, CarbonMonoxideConcentrationMeasurementCluster } from './cluster/CarbonMonoxideConcentrationMeasurementCluster.js';
+import { SmokeCoAlarm, SmokeCoAlarmCluster } from './cluster/SmokeCoAlarmCluster.js';
+import { BooleanStateConfiguration, BooleanStateConfigurationCluster } from './cluster/BooleanStateConfigurationCluster.js';
+import { DeviceEnergyManagement, DeviceEnergyManagementCluster } from './cluster/DeviceEnergyManagementCluster.js';
+import { DeviceEnergyManagementMode, DeviceEnergyManagementModeCluster } from './cluster/DeviceEnergyManagementModeCluster.js';
+// import { FanControl, FanControlCluster } from './cluster/FanControlCluster.js';
+import { ConcentrationMeasurement } from './cluster/ConcentrationMeasurementCluster.js';
 
 type MakeMandatory<T> = Exclude<T, undefined>;
 
@@ -117,13 +130,84 @@ interface MatterbridgeDeviceCommands {
   unlockDoor: MakeMandatory<ClusterServerHandlers<typeof DoorLock.Complete>['unlockDoor']>;
 
   setpointRaiseLower: MakeMandatory<ClusterServerHandlers<typeof Thermostat.Complete>['setpointRaiseLower']>;
+
+  // step: MakeMandatory<ClusterServerHandlers<typeof FanControl.Complete>['step']>;
+
+  suppressAlarm: MakeMandatory<ClusterServerHandlers<typeof BooleanStateConfiguration.Complete>['suppressAlarm']>;
+  enableDisableAlarm: MakeMandatory<ClusterServerHandlers<typeof BooleanStateConfiguration.Complete>['enableDisableAlarm']>;
+
+  selfTestRequest: MakeMandatory<ClusterServerHandlers<typeof SmokeCoAlarm.Complete>['selfTestRequest']>;
 }
 
-// Custom device types
-export const powerSource = DeviceTypeDefinition({
-  name: 'MA-powersource',
-  code: 0x0011,
+// Matter 1.2 and 1.3 device types
+
+export const airQualitySensor = DeviceTypeDefinition({
+  name: 'MA-airQualitySensor',
+  code: 0x002c,
   deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [Identify.Cluster.id, AirQuality.Cluster.id],
+  optionalServerClusters: [TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id, TvocMeasurement.Cluster.id],
+});
+
+export const waterFreezeDetector = DeviceTypeDefinition({
+  name: 'MA-waterFreezeDetector',
+  code: 0x0041,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [Identify.Cluster.id, BooleanState.Cluster.id],
+  optionalServerClusters: [BooleanStateConfiguration.Cluster.id],
+});
+
+export const waterLeakDetector = DeviceTypeDefinition({
+  name: 'MA-waterLeakDetector',
+  code: 0x0043,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [Identify.Cluster.id, BooleanState.Cluster.id],
+  optionalServerClusters: [BooleanStateConfiguration.Cluster.id],
+});
+
+export const rainSensor = DeviceTypeDefinition({
+  name: 'MA-rainSensor',
+  code: 0x0044,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [Identify.Cluster.id, BooleanState.Cluster.id],
+  optionalServerClusters: [BooleanStateConfiguration.Cluster.id],
+});
+
+export const smokeCoAlarm = DeviceTypeDefinition({
+  name: 'MA-smokeCoAlarm',
+  code: 0x0076,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [Identify.Cluster.id, SmokeCoAlarm.Cluster.id],
+  optionalServerClusters: [Groups.Cluster.id, TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id, CarbonMonoxideConcentrationMeasurement.Cluster.id],
+});
+
+export const electricalSensor = DeviceTypeDefinition({
+  name: 'MA-electricalSensor',
+  code: 0x0510,
+  deviceClass: DeviceClasses.Utility,
+  revision: 1,
+  requiredServerClusters: [PowerTopology.Cluster.id],
+  optionalServerClusters: [ElectricalPowerMeasurement.Cluster.id, ElectricalEnergyMeasurement.Cluster.id],
+});
+
+export const deviceEnergyManagement = DeviceTypeDefinition({
+  name: 'MA-deviceEnergyManagement',
+  code: 0x050d,
+  deviceClass: DeviceClasses.Utility,
+  revision: 1,
+  requiredServerClusters: [DeviceEnergyManagement.Cluster.id, DeviceEnergyManagementMode.Cluster.id],
+  optionalServerClusters: [],
+});
+
+export const powerSource = DeviceTypeDefinition({
+  name: 'MA-powerSource',
+  code: 0x0011,
+  deviceClass: DeviceClasses.Utility,
   revision: 1,
   requiredServerClusters: [PowerSource.Cluster.id],
   optionalServerClusters: [],
@@ -132,11 +216,13 @@ export const powerSource = DeviceTypeDefinition({
 export const bridgedNode = DeviceTypeDefinition({
   name: 'MA-bridgedNode',
   code: 0x0013,
-  deviceClass: DeviceClasses.Simple,
+  deviceClass: DeviceClasses.Utility,
   revision: 2,
   requiredServerClusters: [BridgedDeviceBasicInformation.Cluster.id],
   optionalServerClusters: [],
 });
+
+// Custom device types: switch without ClientClusters
 
 export const onOffSwitch = DeviceTypeDefinition({
   name: 'MA-onoffswitch',
@@ -144,7 +230,7 @@ export const onOffSwitch = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, Scenes.Cluster.id, OnOff.Cluster.id],
-  optionalServerClusters: [LevelControl.Cluster.id],
+  optionalServerClusters: [LevelControl.Cluster.id, ColorControl.Cluster.id],
 });
 
 export const dimmableSwitch = DeviceTypeDefinition({
@@ -153,7 +239,7 @@ export const dimmableSwitch = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, Scenes.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id],
-  optionalServerClusters: [],
+  optionalServerClusters: [ColorControl.Cluster.id],
 });
 
 export const colorTemperatureSwitch = DeviceTypeDefinition({
@@ -163,15 +249,6 @@ export const colorTemperatureSwitch = DeviceTypeDefinition({
   revision: 2,
   requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, Scenes.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
   optionalServerClusters: [],
-});
-
-export const airQualitySensor = DeviceTypeDefinition({
-  name: 'MA-airqualitysensor',
-  code: 0x002c,
-  deviceClass: DeviceClasses.Simple,
-  revision: 1,
-  requiredServerClusters: [Identify.Cluster.id, AirQuality.Cluster.id],
-  optionalServerClusters: [TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id, TvocMeasurement.Cluster.id],
 });
 
 export interface SerializedMatterbridgeDevice {
@@ -193,14 +270,15 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   uniqueId: string | undefined = undefined;
 
   /**
-   * Represents a Matterbridge device.
+   * Create a Matterbridge device.
    * @constructor
    * @param {DeviceTypeDefinition} definition - The definition of the device.
    * @param {EndpointOptions} [options={}] - The options for the device.
    */
-  constructor(definition: DeviceTypeDefinition, options: EndpointOptions = {}) {
+  constructor(definition: DeviceTypeDefinition, options: EndpointOptions = {}, debug = false) {
     super(definition, options);
-    this.log = new AnsiLogger({ logName: 'MatterbridgeDevice', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: true });
+    this.log = new AnsiLogger({ logName: 'MatterbridgeDevice', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: debug });
+    this.log.debug(`MatterbridgeDevice with deviceType: ${zb}${definition.code}${db}-${zb}${definition.name}${db}`);
   }
 
   /**
@@ -209,12 +287,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {DeviceTypeDefinition} definition - The DeviceTypeDefinition of the device.
    * @returns MatterbridgeDevice instance.
    */
-  static async loadInstance(definition: DeviceTypeDefinition, options: EndpointOptions) {
-    return new MatterbridgeDevice(definition, options);
+  static async loadInstance(definition: DeviceTypeDefinition, options: EndpointOptions = {}, debug = false) {
+    return new MatterbridgeDevice(definition, options, debug);
   }
 
   /**
-   * Adds a device type to the list of device types.
+   * Adds a device type to the list of device types of the MatterbridgeDevice endpoint.
    * If the device type is not already present in the list, it will be added.
    *
    * @param {DeviceTypeDefinition} deviceType - The device type to add.
@@ -222,6 +300,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   addDeviceType(deviceType: DeviceTypeDefinition) {
     const deviceTypes = this.getDeviceTypes();
     if (!deviceTypes.includes(deviceType)) {
+      this.log.debug(`addDeviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
       deviceTypes.push(deviceType);
       this.setDeviceTypes(deviceTypes);
     }
@@ -249,14 +328,15 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Adds a child device type with cluster server.
+   * Adds a child endpoint with one or more device types with the required cluster servers and the specified cluster servers.
    *
+   * @param {string} endpointName - The name of the new enpoint to add.
    * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
    * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
    * @returns {Endpoint} - The child endpoint that was added.
    */
   addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]): Endpoint {
-    this.log.debug('addChildDeviceTypeWithClusterServer:');
+    this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
     const child = new Endpoint(deviceTypes);
     child.addFixedLabel('endpointName', endpointName);
     deviceTypes.forEach((deviceType) => {
@@ -298,12 +378,22 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(PressureMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultPressureMeasurementClusterServer());
     if (includeServerList.includes(FlowMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultFlowMeasurementClusterServer());
     if (includeServerList.includes(BooleanState.Cluster.id)) endpoint.addClusterServer(this.getDefaultBooleanStateClusterServer());
+    if (includeServerList.includes(BooleanStateConfiguration.Cluster.id)) endpoint.addClusterServer(this.getDefaultBooleanStateConfigurationClusterServer());
     if (includeServerList.includes(OccupancySensing.Cluster.id)) endpoint.addClusterServer(this.getDefaultOccupancySensingClusterServer());
     if (includeServerList.includes(IlluminanceMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer());
+    if (includeServerList.includes(PowerSource.Cluster.id)) endpoint.addClusterServer(this.getDefaultPowerSourceWiredClusterServer());
     if (includeServerList.includes(EveHistory.Cluster.id)) endpoint.addClusterServer(this.getDefaultStaticEveHistoryClusterServer());
     if (includeServerList.includes(ElectricalMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalMeasurementClusterServer());
     if (includeServerList.includes(AirQuality.Cluster.id)) endpoint.addClusterServer(this.getDefaultAirQualityClusterServer());
     if (includeServerList.includes(TvocMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultTvocMeasurementClusterServer());
+    if (includeServerList.includes(PowerTopology.Cluster.id)) endpoint.addClusterServer(this.getDefaultPowerTopologyClusterServer());
+    if (includeServerList.includes(ElectricalPowerMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalPowerMeasurementClusterServer());
+    if (includeServerList.includes(ElectricalEnergyMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalEnergyMeasurementClusterServer());
+    if (includeServerList.includes(SmokeCoAlarm.Cluster.id)) endpoint.addClusterServer(this.getDefaultSmokeCOAlarmClusterServer());
+    if (includeServerList.includes(CarbonMonoxideConcentrationMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultCarbonMonoxideConcentrationMeasurementClusterServer());
+    if (includeServerList.includes(FanControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultFanControlClusterServer());
+    if (includeServerList.includes(DeviceEnergyManagement.Cluster.id)) endpoint.addClusterServer(this.getDefaultDeviceEnergyManagementClusterServer());
+    if (includeServerList.includes(DeviceEnergyManagementMode.Cluster.id)) endpoint.addClusterServer(this.getDefaultDeviceEnergyManagementModeClusterServer());
   }
 
   /**
@@ -346,6 +436,40 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   setChildEndpointName(child: Endpoint, endpointName: string) {
     child.addFixedLabel('endpointName', endpointName);
+  }
+
+  /**
+   * Retrieves the label associated with the specified endpoint number.
+   * @param {EndpointNumber} endpointNumber - The number of the endpoint.
+   * @returns {string | undefined} The label associated with the endpoint number, or undefined if not found.
+   */
+  getEndpointLabel(endpointNumber: EndpointNumber): string | undefined {
+    const labelList = this.getChildEndpoint(endpointNumber)?.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
+    if (!labelList) return undefined;
+    for (const entry of labelList) {
+      if (entry.label === 'endpointName') return entry.value;
+    }
+    return undefined;
+  }
+
+  /**
+   * Retrieves the child endpoint with the specified label.
+   *
+   * @param {string} label - The label of the child endpoint to retrieve.
+   * @returns {Endpoint | undefined} The child endpoint with the specified label, or undefined if not found.
+   */
+  getChildEndpointWithLabel(label: string): Endpoint | undefined {
+    const endpoints = this.getChildEndpoints();
+    for (const endpoint of endpoints) {
+      const labelList = endpoint.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
+      if (!labelList) return undefined;
+      let endpointName = '';
+      for (const entry of labelList) {
+        if (entry.label === 'endpointName') endpointName = entry.value;
+      }
+      if (endpointName === label) return endpoint;
+    }
+    return undefined;
   }
 
   /**
@@ -826,8 +950,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {
         identify: async (data) => {
-          // eslint-disable-next-line no-console
-          console.log('Identify');
+          this.log.debug('Matter command: Identify');
           await this.commandHandler.executeHandler('identify', data);
         },
       },
@@ -1053,6 +1176,85 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Get a default Electrical Energy Measurement Cluster Server.
+   *
+   * @param energy - The total consumption value.
+   */
+  getDefaultPowerTopologyClusterServer() {
+    return ClusterServer(PowerTopologyCluster.with(PowerTopology.Feature.TreeTopology), {}, {}, {});
+  }
+
+  /**
+   * Get a default Electrical Energy Measurement Cluster Server.
+   *
+   * @param energy - The total consumption value.
+   */
+  getDefaultElectricalEnergyMeasurementClusterServer(energy = 0) {
+    return ClusterServer(
+      ElectricalEnergyMeasurementCluster.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
+      {
+        accuracy: {
+          measurementType: MeasurementType.ElectricalEnergy,
+          measured: true,
+          minMeasuredValue: 0,
+          maxMeasuredValue: 0,
+          accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }],
+        },
+        cumulativeEnergyImported: { energy },
+        cumulativeEnergyExported: null,
+      },
+      {},
+      {
+        cumulativeEnergyMeasured: true,
+      },
+    );
+  }
+
+  /**
+   * Get a default Electrical Power Measurement Cluster Server.
+   *
+   * @param energy - The total consumption value.
+   */
+  getDefaultElectricalPowerMeasurementClusterServer(voltage = 0, current = 0, power = 0) {
+    return ClusterServer(
+      ElectricalPowerMeasurementCluster.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent),
+      {
+        powerMode: ElectricalPowerMeasurement.PowerMode.Ac,
+        numberOfMeasurementTypes: 3,
+        accuracy: [
+          {
+            measurementType: MeasurementType.Voltage,
+            measured: true,
+            minMeasuredValue: 0,
+            maxMeasuredValue: 100,
+            accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }],
+          },
+          {
+            measurementType: MeasurementType.ActiveCurrent,
+            measured: true,
+            minMeasuredValue: 0,
+            maxMeasuredValue: 100,
+            accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }],
+          },
+          {
+            measurementType: MeasurementType.ActivePower,
+            measured: true,
+            minMeasuredValue: 0,
+            maxMeasuredValue: 100,
+            accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62, fixedMax: 10, fixedMin: 10, fixedTypical: 0 }],
+          },
+        ],
+        voltage: voltage,
+        activeCurrent: current,
+        activePower: power,
+      },
+      {},
+      {},
+    );
+  }
+
+  /**
+   * @deprecated This method is deprecated and will be removed in a future version.
    * Get a default Electrical Measurement Cluster Server.
    *
    * @param voltage - The RMS voltage value.
@@ -1075,6 +1277,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * @deprecated This method is deprecated and will be removed in a future version.
    * Creates a default Electrical Measurement Cluster Server.
    *
    * @param voltage - The RMS voltage value.
@@ -1121,7 +1324,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         {
           resetCounts: async (data) => {
             // eslint-disable-next-line no-console
-            console.log('resetCounts');
+            this.log.debug('Matter command: resetCounts');
             await this.commandHandler.executeHandler('resetCounts', data);
           },
         },
@@ -1144,17 +1347,17 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         on: async (data) => {
           // eslint-disable-next-line no-console
-          console.log('on onOff:', data.attributes.onOff.getLocal());
+          this.log.debug('Matter command: on onOff:', data.attributes.onOff.getLocal());
           await this.commandHandler.executeHandler('on', data);
         },
         off: async (data) => {
           // eslint-disable-next-line no-console
-          console.log('off onOff:', data.attributes.onOff.getLocal());
+          this.log.debug('Matter command: off onOff:', data.attributes.onOff.getLocal());
           await this.commandHandler.executeHandler('off', data);
         },
         toggle: async (data) => {
           // eslint-disable-next-line no-console
-          console.log('toggle onOff:', data.attributes.onOff.getLocal());
+          this.log.debug('Matter command: toggle onOff:', data.attributes.onOff.getLocal());
           await this.commandHandler.executeHandler('toggle', data);
         },
       },
@@ -1190,39 +1393,39 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         moveToLevel: async ({ request, attributes, endpoint }) => {
           // eslint-disable-next-line no-console
-          console.log('moveToLevel request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
+          this.log.debug('Matter command: moveToLevel request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
           // attributes.currentLevel.setLocal(request.level);
           await this.commandHandler.executeHandler('moveToLevel', { request: request, attributes: attributes, endpoint: endpoint });
         },
         move: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: move not implemented');
         },
         step: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: step not implemented');
         },
         stop: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: stop not implemented');
         },
         moveToLevelWithOnOff: async ({ request, attributes, endpoint }) => {
           // eslint-disable-next-line no-console
-          console.log('moveToLevelWithOnOff request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
+          this.log.debug('Matter command: moveToLevelWithOnOff request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
           // attributes.currentLevel.setLocal(request.level);
           await this.commandHandler.executeHandler('moveToLevelWithOnOff', { request: request, attributes: attributes, endpoint: endpoint });
         },
         moveWithOnOff: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: moveWithOnOff not implemented');
         },
         stepWithOnOff: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: stepWithOnOff not implemented');
         },
         stopWithOnOff: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: stopWithOnOff not implemented');
         },
       },
     );
@@ -1265,56 +1468,56 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         moveToHue: async ({ request: request, attributes: attributes }) => {
           // eslint-disable-next-line no-console
-          console.log('Command moveToHue request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal());
+          this.log.debug('Matter command: moveToHue request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal());
           // attributes.currentHue.setLocal(request.hue);
           this.commandHandler.executeHandler('moveToHue', { request: request, attributes: attributes });
         },
         moveHue: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: moveHue not implemented');
         },
         stepHue: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: stepHue not implemented');
         },
         moveToSaturation: async ({ request: request, attributes: attributes }) => {
           // eslint-disable-next-line no-console
-          console.log('Command moveToSaturation request:', request, 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
+          this.log.debug('Matter command: moveToSaturation request:', request, 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
           // attributes.currentSaturation.setLocal(request.saturation);
           this.commandHandler.executeHandler('moveToSaturation', { request: request, attributes: attributes });
         },
         moveSaturation: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: moveSaturation not implemented');
         },
         stepSaturation: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: stepSaturation not implemented');
         },
         moveToHueAndSaturation: async ({ request: request, attributes: attributes }) => {
           // eslint-disable-next-line no-console
-          console.log('Command moveToHueAndSaturation request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal(), 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
+          this.log.debug('Matter command: moveToHueAndSaturation request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal(), 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
           // attributes.currentHue.setLocal(request.hue);
           // attributes.currentSaturation.setLocal(request.saturation);
           this.commandHandler.executeHandler('moveToHueAndSaturation', { request: request, attributes: attributes });
         },
         stopMoveStep: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: stopMoveStep not implemented');
         },
         moveToColorTemperature: async ({ request: request, attributes: attributes }) => {
           // eslint-disable-next-line no-console
-          console.log('Command moveToColorTemperature request:', request, 'attributes.colorTemperatureMireds:', attributes.colorTemperatureMireds.getLocal());
+          this.log.debug('Matter command: moveToColorTemperature request:', request, 'attributes.colorTemperatureMireds:', attributes.colorTemperatureMireds.getLocal());
           // attributes.colorTemperatureMireds.setLocal(request.colorTemperatureMireds);
           this.commandHandler.executeHandler('moveToColorTemperature', { request: request, attributes: attributes });
         },
         moveColorTemperature: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: moveColorTemperature not implemented');
         },
         stepColorTemperature: async () => {
           // eslint-disable-next-line no-console
-          console.error('Not implemented');
+          this.log.error('Matter command: stepColorTemperature not implemented');
         },
       },
       {},
@@ -1363,23 +1566,23 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         upOrOpen: async (data) => {
           // eslint-disable-next-line no-console
-          console.log('upOrOpen');
+          this.log.debug('Matter command: upOrOpen');
           await this.commandHandler.executeHandler('upOrOpen', data);
         },
         downOrClose: async (data) => {
           // eslint-disable-next-line no-console
-          console.log('downOrClose');
+          this.log.debug('Matter command: downOrClose');
           await this.commandHandler.executeHandler('downOrClose', data);
         },
         stopMotion: async (data) => {
           // eslint-disable-next-line no-console
-          console.log('stopMotion');
+          this.log.debug('Matter command: stopMotion');
           await this.commandHandler.executeHandler('stopMotion', data);
         },
         goToLiftPercentage: async (data) => {
           // eslint-disable-next-line no-console
-          console.log(
-            `goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
+          this.log.debug(
+            `Matter command: goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
               `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
           );
           await this.commandHandler.executeHandler('goToLiftPercentage', data);
@@ -1502,12 +1705,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         lockDoor: async (data) => {
           // eslint-disable-next-line no-console
-          console.log('lockDoor', data.request);
+          this.log.debug('Matter command: lockDoor', data.request);
           await this.commandHandler.executeHandler('lockDoor', data);
         },
         unlockDoor: async (data) => {
           // eslint-disable-next-line no-console
-          console.log('unlockDoor', data.request);
+          this.log.debug('Matter command: unlockDoor', data.request);
           await this.commandHandler.executeHandler('unlockDoor', data);
         },
       },
@@ -1554,6 +1757,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
     );
   }
+
   /**
    * Creates a default switch cluster server.
    *
@@ -1579,7 +1783,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         changeToMode: async (data) => {
           // eslint-disable-next-line no-console
-          console.log('changeToMode', data.request);
+          this.log.debug('Matter command: changeToMode', data.request);
           await this.commandHandler.executeHandler('changeToMode', data);
         },
       },
@@ -1777,12 +1981,52 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Creates a default boolean state cluster server.
+   * Creates a default boolean state configuration cluster server.
    *
    * @param contact - Optional boolean value indicating the contact state. Defaults to `true` if not provided.
    */
   createDefaultBooleanStateClusterServer(contact?: boolean) {
     this.addClusterServer(this.getDefaultBooleanStateClusterServer(contact));
+  }
+
+  /**
+   * Get a default boolean state configuration cluster server.
+   *
+   * @param contact - Optional boolean value indicating the sensor fault state. Defaults to `false` if not provided.
+   */
+  getDefaultBooleanStateConfigurationClusterServer(sensorFault = false) {
+    return ClusterServer(
+      BooleanStateConfigurationCluster.with(BooleanStateConfiguration.Feature.Visual, BooleanStateConfiguration.Feature.Audible, BooleanStateConfiguration.Feature.SensitivityLevel),
+      {
+        currentSensitivityLevel: 0,
+        supportedSensitivityLevels: 2,
+        defaultSensitivityLevel: 0,
+        alarmsActive: { visual: false, audible: false },
+        alarmsEnabled: { visual: false, audible: false },
+        alarmsSupported: { visual: true, audible: true },
+        // alarmsSuppressed: { visual: false, audible: false },
+        sensorFault: { generalFault: sensorFault },
+      },
+      {
+        enableDisableAlarm: async ({ request, attributes }) => {
+          // eslint-disable-next-line no-console
+          this.log.debug('Matter command: enableDisableAlarm', request);
+          await this.commandHandler.executeHandler('enableDisableAlarm', { request, attributes });
+        },
+      },
+      {
+        alarmsStateChanged: true,
+        sensorFault: true,
+      },
+    );
+  }
+  /**
+   * Creates a default boolean state configuration cluster server.
+   *
+   * @param contact - Optional boolean value indicating the sensor fault state. Defaults to `false` if not provided.
+   */
+  createDefaultBooleanStateConfigurationClusterServer(sensorFault = false) {
+    this.addClusterServer(this.getDefaultBooleanStateConfigurationClusterServer(sensorFault));
   }
 
   /**
@@ -1897,14 +2141,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Creates a default power source configuration cluster server.
-   *
-   * @remarks
-   * The endpoint at this time is only known for Accessory Platforms.
-   * Don't use it in Dynamic Platforms.
-   *
-   *
-   * @param endpointNumber - The endpoint number where to find the PowerSourceCluster.
+   * @deprecated This function is deprecated by Matter 1.3 spec and will be removed in a future version.
    */
   createDefaultPowerSourceConfigurationClusterServer(endpointNumber?: number) {
     this.addClusterServer(
@@ -1960,6 +2197,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {},
     );
   }
+
   /**
    * Creates a default TVOC measurement cluster server.
    *
@@ -2000,7 +2238,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         setpointRaiseLower: async ({ request, attributes }) => {
           // eslint-disable-next-line no-console
-          console.log('setpointRaiseLower', request);
+          this.log.debug('Matter command: setpointRaiseLower', request);
           await this.commandHandler.executeHandler('setpointRaiseLower', { request, attributes });
         },
       },
@@ -2021,7 +2259,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Get a default time sync cluster server. Only needed to create a thermostat.
+   * Get a default dummy time sync cluster server. Only needed to create a thermostat.
    */
   getDefaultTimeSyncClusterServer() {
     return ClusterServer(
@@ -2037,8 +2275,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {
         setUtcTime: async ({ request, attributes }) => {
-          // eslint-disable-next-line no-console
-          console.log('setUtcTime', request);
+          this.log.debug('Matter command: setUtcTime', request);
           await this.commandHandler.executeHandler('setUtcTime', { request, attributes });
         },
       },
@@ -2050,9 +2287,183 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     );
   }
   /**
-   * Creates a default time sync cluster server. Only needed to create a thermostat.
+   * Creates a default dummy time sync cluster server. Only needed to create a thermostat.
    */
   createDefaultTimeSyncClusterServer() {
     this.addClusterServer(this.getDefaultTimeSyncClusterServer());
+  }
+
+  /**
+   * Returns the default SmokeCOAlarmClusterServer.
+   *
+   * @param smokeState - The state of the smoke alarm. Defaults to SmokeCoAlarm.AlarmState.Normal.
+   * @param coState - The state of the CO alarm. Defaults to SmokeCoAlarm.AlarmState.Normal.
+   * @returns The default SmokeCOAlarmClusterServer.
+   */
+  getDefaultSmokeCOAlarmClusterServer(smokeState = SmokeCoAlarm.AlarmState.Normal, coState = SmokeCoAlarm.AlarmState.Normal) {
+    return ClusterServer(
+      SmokeCoAlarmCluster.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm),
+      {
+        smokeState,
+        coState,
+        expressedState: SmokeCoAlarm.ExpressedState.Normal,
+        batteryAlert: SmokeCoAlarm.AlarmState.Normal,
+        deviceMuted: SmokeCoAlarm.MuteState.NotMuted,
+        testInProgress: false,
+        hardwareFaultAlert: false,
+        endOfServiceAlert: SmokeCoAlarm.EndOfService.Normal,
+        interconnectSmokeAlarm: SmokeCoAlarm.AlarmState.Normal,
+        interconnectCoAlarm: SmokeCoAlarm.AlarmState.Normal,
+      },
+      {
+        selfTestRequest: async ({ request, attributes }) => {
+          this.log.debug('Matter command: selfTestRequest');
+          await this.commandHandler.executeHandler('selfTestRequest', { request, attributes });
+        },
+      },
+      {
+        smokeAlarm: true,
+        interconnectSmokeAlarm: true,
+        coAlarm: true,
+        interconnectCoAlarm: true,
+        lowBattery: true,
+        hardwareFault: true,
+        endOfService: true,
+        selfTestComplete: true,
+        alarmMuted: true,
+        muteEnded: true,
+        allClear: true,
+      },
+    );
+  }
+  /**
+   * Create the default SmokeCOAlarmClusterServer.
+   *
+   * @param smokeState - The state of the smoke alarm. Defaults to SmokeCoAlarm.AlarmState.Normal.
+   * @param coState - The state of the CO alarm. Defaults to SmokeCoAlarm.AlarmState.Normal.
+   * @returns The default SmokeCOAlarmClusterServer.
+   */
+  createDefaultSmokeCOAlarmClusterServer(smokeState = SmokeCoAlarm.AlarmState.Normal, coState = SmokeCoAlarm.AlarmState.Normal) {
+    this.addClusterServer(this.getDefaultSmokeCOAlarmClusterServer(smokeState, coState));
+  }
+
+  /**
+   * Returns the default Carbon Monoxide Concentration Measurement Cluster Server.
+   *
+   * @param {number} measuredValue - The measured value of the concentration.
+   * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement.
+   * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The medium of measurement.
+   * @returns {ClusterServer} - The default Carbon Monoxide Concentration Measurement Cluster Server.
+   */
+  getDefaultCarbonMonoxideConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+    return ClusterServer(
+      CarbonMonoxideConcentrationMeasurementCluster.with('NumericMeasurement'),
+      {
+        measuredValue,
+        minMeasuredValue: null,
+        maxMeasuredValue: null,
+        uncertainty: 0,
+        measurementUnit,
+        measurementMedium,
+      },
+      {},
+      {},
+    );
+  }
+  /**
+   * Create the default Carbon Monoxide Concentration Measurement Cluster Server.
+   *
+   * @param {number} measuredValue - The measured value of the concentration.
+   * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement.
+   * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The medium of measurement.
+   */
+  createDefaultCarbonMonoxideConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+    this.addClusterServer(this.getDefaultCarbonMonoxideConcentrationMeasurementClusterServer(measuredValue, measurementUnit, measurementMedium));
+  }
+
+  /**
+   * Returns the default fan control cluster server rev 2.
+   *
+   * @param fanMode The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @returns The default fan control cluster server.
+   */
+  getDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
+    return ClusterServer(
+      FanControlCluster.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto /* , FanControl.Feature.Step*/),
+      {
+        fanMode,
+        fanModeSequence: FanControl.FanModeSequence.OffLowMedHighAuto,
+        percentSetting: 0,
+        percentCurrent: 0,
+        speedMax: 100,
+        speedSetting: 0,
+        speedCurrent: 0,
+      },
+      {
+        /*
+        step: async ({ request, attributes }) => {
+          this.log.debug('Matter command: step', request);
+          await this.commandHandler.executeHandler('step', { request, attributes });
+        },
+        */
+      },
+      {},
+    );
+  }
+  /**
+   * Create the default fan control cluster server rev 2.
+   *
+   * @param fanMode The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @returns The default fan control cluster server.
+   */
+  createDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
+    this.addClusterServer(this.getDefaultFanControlClusterServer(fanMode));
+  }
+
+  // NOTE Support of Device Energy Management Cluster is provisional.
+  getDefaultDeviceEnergyManagementClusterServer() {
+    return ClusterServer(
+      DeviceEnergyManagementCluster.with(DeviceEnergyManagement.Feature.Pausable, DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.StateForecastReporting),
+      {
+        esaType: DeviceEnergyManagement.EsaType.Other,
+        esaCanGenerate: false,
+        esaState: DeviceEnergyManagement.EsaState.Online,
+        absMinPower: 0,
+        absMaxPower: 0,
+        optOutState: DeviceEnergyManagement.OptOutState.NoOptOut,
+        forecast: null,
+      },
+      {
+        pauseRequest: async ({ request, attributes }) => {
+          this.log.debug('Matter command: pauseRequest', request);
+          await this.commandHandler.executeHandler('pauseRequest', { request, attributes });
+        },
+        resumeRequest: async () => {
+          this.log.debug('Matter command: resumeRequest');
+          await this.commandHandler.executeHandler('resumeRequest');
+        },
+      },
+      {
+        paused: true,
+        resumed: true,
+      },
+    );
+  }
+
+  // NOTE Support of Device Energy Management Mode Cluster is provisional.
+  getDefaultDeviceEnergyManagementModeClusterServer() {
+    return ClusterServer(
+      DeviceEnergyManagementModeCluster,
+      {
+        esaType: DeviceEnergyManagement.EsaType.Other,
+        esaCanGenerate: false,
+        esaState: DeviceEnergyManagement.EsaState.Online,
+        absMinPower: 0,
+        absMaxPower: 0,
+        optOutState: DeviceEnergyManagement.OptOutState.NoOptOut,
+      },
+      {},
+      {},
+    );
   }
 }

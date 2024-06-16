@@ -38,8 +38,14 @@ export * from './matterbridge.js';
 export * from './matterbridgeDevice.js';
 export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
-export * from './AirQualityCluster.js';
-export * from './TvocCluster.js';
+export * from './cluster/AirQualityCluster.js';
+export * from './cluster/TvocCluster.js';
+export * from './cluster/CarbonMonoxideConcentrationMeasurementCluster.js';
+export * from './cluster/BooleanStateConfigurationCluster.js';
+export * from './cluster/PowerTopologyCluster.js';
+// export * from './cluster/FanControlCluster.js'; // Already defined in matter.js like rev. 2
+export * from './cluster/ElectricalEnergyMeasurementCluster.js';
+export * from './cluster/ElectricalPowerMeasurementCluster.js';
 export * from './utils.js';
 
 async function main() {
