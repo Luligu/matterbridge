@@ -458,6 +458,9 @@ export class Matterbridge extends EventEmitter {
         Logger.defaultLogLevel = Level.ERROR;
       } else if (level === 'fatal') {
         Logger.defaultLogLevel = Level.FATAL;
+      } else {
+        this.log.warn(`Invalid matterlogger level: ${level}. Using default level ${this.debugEnabled ? 'debug' : 'info'}.`);
+        Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
       }
     } else {
       Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
@@ -3084,6 +3087,10 @@ export class Matterbridge extends EventEmitter {
           this.log.setLogDebug(false);
           this.debugEnabled = false;
           Logger.defaultLogLevel = Level.INFO;
+        } else if (param === 'Notice') {
+          this.log.setLogDebug(false);
+          this.debugEnabled = false;
+          Logger.defaultLogLevel = Level.NOTICE;
         } else if (param === 'Warn') {
           this.log.setLogDebug(false);
           this.debugEnabled = false;
@@ -3092,6 +3099,10 @@ export class Matterbridge extends EventEmitter {
           this.log.setLogDebug(false);
           this.debugEnabled = false;
           Logger.defaultLogLevel = Level.ERROR;
+        } else if (param === 'Fatal') {
+          this.log.setLogDebug(false);
+          this.debugEnabled = false;
+          Logger.defaultLogLevel = Level.FATAL;
         }
         this.registeredPlugins.forEach((plugin) => {
           plugin.platform?.log.setLogDebug(this.debugEnabled);
