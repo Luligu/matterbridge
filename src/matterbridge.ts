@@ -416,7 +416,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug('Creating node storage context for matterbridge');
     this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
 
-    // Get the plugins from node storage
+    // Get the plugins from node storage and create the plugin node storage contexts
     this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
     for (const plugin of this.registeredPlugins) {
       this.log.debug(`Creating node storage context for plugin ${plugin.name}`);
@@ -669,6 +669,8 @@ export class Matterbridge extends EventEmitter {
       this.matterServer = this.createMatterServer(this.storageManager);
 
       for (const plugin of this.registeredPlugins) {
+        plugin.configJson = await this.loadPluginConfig(plugin);
+        plugin.schemaJson = await this.loadPluginSchema(plugin);
         if (!plugin.enabled) {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
           continue;
