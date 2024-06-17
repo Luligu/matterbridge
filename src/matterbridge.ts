@@ -637,6 +637,8 @@ export class Matterbridge extends EventEmitter {
       await this.matterServer.addCommissioningServer(this.commissioningServer, { uniqueStorageKey: 'Matterbridge' });
 
       for (const plugin of this.registeredPlugins) {
+        plugin.configJson = await this.loadPluginConfig(plugin);
+        plugin.schemaJson = await this.loadPluginSchema(plugin);
         if (!plugin.enabled) {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
           continue;
@@ -1279,7 +1281,7 @@ export class Matterbridge extends EventEmitter {
    * Loads the schema for a plugin.
    * If the schema file exists in the plugin directory, it reads the file and returns the parsed JSON data and delete the schema form .matterbridge.
    * If the schema file exists in matterbridgeDirectory, it reads the file and returns the parsed JSON data.
-   * If the schema file does not exist, it creates a new file with default configuration and returns it.
+   * If the schema file does not exist, it creates a new schema with the default configuration and returns it.
    * If any error occurs during file access or creation, it logs an error and return an empty schema.
    *
    * @param plugin - The plugin for which to load the schema.
@@ -1298,9 +1300,9 @@ export class Matterbridge extends EventEmitter {
       schemaFile = path.join(this.matterbridgeDirectory, `${plugin.name}.schema.json`);
       try {
         await fs.unlink(schemaFile);
-        this.log.debug(`****Schema file ${schemaFile} deleted.`);
+        this.log.debug(`Schema file ${schemaFile} deleted.`);
       } catch (err) {
-        this.log.debug(`****Schema file ${schemaFile} to delete not found.`);
+        this.log.debug(`Schema file ${schemaFile} to delete not found.`);
       }
       return schema;
     } catch (err) {
@@ -1341,13 +1343,18 @@ export class Matterbridge extends EventEmitter {
                   type: 'string',
                   readOnly: true,
                 },
+                debug: {
+                  description: 'Enable the debug for the plugin (development only)',
+                  type: 'boolean',
+                },
                 unregisterOnShutdown: {
                   description: 'Unregister all devices on shutdown (development only)',
                   type: 'boolean',
                 },
               },
             };
-
+          return schema;
+          /*
           try {
             await this.writeFile(schemaFile, JSON.stringify(schema, null, 2));
             this.log.debug(`Created schema file: ${schemaFile}.`);
@@ -1357,6 +1364,7 @@ export class Matterbridge extends EventEmitter {
             this.log.error(`Error creating schema file ${schemaFile}: ${err}`);
             return schema;
           }
+          */
         } else {
           this.log.error(`Error accessing schema file ${schemaFile}: ${err}`);
           return {};

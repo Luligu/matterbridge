@@ -45,7 +45,7 @@ export const zigbee2mqtt_schema: PlatformSchema = {
   title: 'Matterbridge zigbee2mqtt plugin',
   description: 'matterbridge-zigbee2mqtt v. 2.0.13 by https://github.com/Luligu',
   type: 'object',
-  required: ['username', 'password', 'host', 'port', 'topic'],
+  required: ['host', 'port', 'topic'],
   properties: {
     name: {
       description: 'Plugin name',
@@ -128,6 +128,10 @@ export const zigbee2mqtt_schema: PlatformSchema = {
           type: 'string',
         },
       },
+    },
+    debug: {
+      description: 'Enable the debug for the plugin (development only)',
+      type: 'boolean',
     },
     unregisterOnShutdown: {
       description: 'Unregister all devices on shutdown (development only)',
@@ -213,6 +217,10 @@ export const somfytahoma_schema: PlatformSchema = {
       additionalProperties: {
         type: 'integer',
       },
+    },
+    debug: {
+      description: 'Enable the debug for the plugin (development only)',
+      type: 'boolean',
     },
     unregisterOnShutdown: {
       description: 'Unregister all devices on shutdown (development only)',
