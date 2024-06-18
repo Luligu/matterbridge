@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2024-06-19
+
+### Changed
+- [matterbridge]: Updated dependencies
+- [matterbridge]: Refactor the loading of schemas, now they load from the plugin directory.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.3.0] - 2024-06-16
 
 This release is all about Matter 1.3

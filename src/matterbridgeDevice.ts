@@ -329,16 +329,21 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Adds a child endpoint with one or more device types with the required cluster servers and the specified cluster servers.
+   * If the child endpoint is not already present in the childEndpoints, it will be added.
+   * If the child endpoint is already present in the childEndpoints, the device types and cluster servers will be added to the existing child endpoint.
    *
    * @param {string} endpointName - The name of the new enpoint to add.
    * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
    * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
-   * @returns {Endpoint} - The child endpoint that was added.
+   * @returns {Endpoint} - The child endpoint that was found or added.
    */
   addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]): Endpoint {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
-    const child = new Endpoint(deviceTypes);
-    child.addFixedLabel('endpointName', endpointName);
+    let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName);
+    if (!child) {
+      child = new Endpoint(deviceTypes, { uniqueStorageKey: endpointName });
+      child.addFixedLabel('endpointName', endpointName);
+    }
     deviceTypes.forEach((deviceType) => {
       this.log.debug(`- with deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
       deviceType.requiredServerClusters.forEach((clusterId) => {
@@ -348,7 +353,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     includeServerList.forEach((clusterId) => {
       this.log.debug(`- with cluster: ${hk}${clusterId}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
     });
-
     this.addClusterServerFromList(child, includeServerList);
     this.addChildEndpoint(child);
     return child;
@@ -440,10 +444,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Retrieves the label associated with the specified endpoint number.
-   * @param {EndpointNumber} endpointNumber - The number of the endpoint.
+   * @param {EndpointNumber | undefined} endpointNumber - The number of the endpoint.
    * @returns {string | undefined} The label associated with the endpoint number, or undefined if not found.
    */
-  getEndpointLabel(endpointNumber: EndpointNumber): string | undefined {
+  getEndpointLabel(endpointNumber: EndpointNumber | undefined): string | undefined {
+    if (!endpointNumber) return undefined;
     const labelList = this.getChildEndpoint(endpointNumber)?.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
     if (!labelList) return undefined;
     for (const entry of labelList) {
@@ -1290,7 +1295,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Creates a default Thread Network Diagnostics Cluster server.
+   * Creates a default Dummy Thread Network Diagnostics Cluster server.
    *
    * @remarks
    * This method adds a cluster server used only to give the networkName to Eve app.
@@ -1346,17 +1351,14 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {
         on: async (data) => {
-          // eslint-disable-next-line no-console
           this.log.debug('Matter command: on onOff:', data.attributes.onOff.getLocal());
           await this.commandHandler.executeHandler('on', data);
         },
         off: async (data) => {
-          // eslint-disable-next-line no-console
           this.log.debug('Matter command: off onOff:', data.attributes.onOff.getLocal());
           await this.commandHandler.executeHandler('off', data);
         },
         toggle: async (data) => {
-          // eslint-disable-next-line no-console
           this.log.debug('Matter command: toggle onOff:', data.attributes.onOff.getLocal());
           await this.commandHandler.executeHandler('toggle', data);
         },
@@ -1392,44 +1394,35 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {
         moveToLevel: async ({ request, attributes, endpoint }) => {
-          // eslint-disable-next-line no-console
           this.log.debug('Matter command: moveToLevel request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
-          // attributes.currentLevel.setLocal(request.level);
           await this.commandHandler.executeHandler('moveToLevel', { request: request, attributes: attributes, endpoint: endpoint });
         },
         move: async () => {
-          // eslint-disable-next-line no-console
           this.log.error('Matter command: move not implemented');
         },
         step: async () => {
-          // eslint-disable-next-line no-console
           this.log.error('Matter command: step not implemented');
         },
         stop: async () => {
-          // eslint-disable-next-line no-console
           this.log.error('Matter command: stop not implemented');
         },
         moveToLevelWithOnOff: async ({ request, attributes, endpoint }) => {
-          // eslint-disable-next-line no-console
           this.log.debug('Matter command: moveToLevelWithOnOff request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
-          // attributes.currentLevel.setLocal(request.level);
           await this.commandHandler.executeHandler('moveToLevelWithOnOff', { request: request, attributes: attributes, endpoint: endpoint });
         },
         moveWithOnOff: async () => {
-          // eslint-disable-next-line no-console
           this.log.error('Matter command: moveWithOnOff not implemented');
         },
         stepWithOnOff: async () => {
-          // eslint-disable-next-line no-console
           this.log.error('Matter command: stepWithOnOff not implemented');
         },
         stopWithOnOff: async () => {
-          // eslint-disable-next-line no-console
           this.log.error('Matter command: stopWithOnOff not implemented');
         },
       },
     );
   }
+
   /**
    * Creates a default level control cluster server.
    *
