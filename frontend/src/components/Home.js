@@ -525,8 +525,8 @@ function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
   });
   const handleSaveChanges = ({ formData }, event) => {
     console.log('handleSaveChanges:', formData);
-    const schema = JSON.stringify(formData, null, 2)
-    sendCommandToMatterbridge('saveconfig', formData.name, schema);
+    const config = JSON.stringify(formData, null, 2)
+    sendCommandToMatterbridge('saveconfig', formData.name, config);
     // Close the dialog
     handleCloseConfig();
     window.location.reload();
