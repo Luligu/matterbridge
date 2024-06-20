@@ -2,11 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.3.1] - 2024-06-19
+## [1.3.1] - 2024-06-20
 
 ### Changed
 - [matterbridge]: Updated dependencies
 - [matterbridge]: Refactor the loading of schemas, now they load from the plugin directory.
+- [matterbridge]: Moved getPluginVersion to the start also for disabled plugins.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
