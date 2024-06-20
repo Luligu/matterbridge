@@ -39,6 +39,11 @@ RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-
 COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
 RUN npm install && npm run build && npm pack
 
+WORKDIR /matterbridge-shelly
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-shelly.git .
+COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm install && npm run build && npm pack
+
 WORKDIR /matterbridge-eve-motion
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-motion.git .
 COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
@@ -71,6 +76,7 @@ COPY --from=builder /matterbridge-example-accessory-platform/*.tgz .
 COPY --from=builder /matterbridge-example-dynamic-platform/*.tgz .
 COPY --from=builder /matterbridge-zigbee2mqtt/*.tgz .
 COPY --from=builder /matterbridge-somfy-tahoma/*.tgz .
+COPY --from=builder /matterbridge-shelly/*.tgz .
 COPY --from=builder /matterbridge-eve-door/*.tgz .
 COPY --from=builder /matterbridge-eve-motion/*.tgz .
 COPY --from=builder /matterbridge-eve-energy/*.tgz .
