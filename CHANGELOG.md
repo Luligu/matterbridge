@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.2] - 2024-06-21
+
+### Changed
+- [matterbridge]: Updated dependencies
+- [matter.js]: Updated to 0.9.2
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.3.1] - 2024-06-20
 
 ### Changed
