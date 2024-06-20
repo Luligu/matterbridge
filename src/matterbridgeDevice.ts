@@ -219,7 +219,7 @@ export const bridgedNode = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Utility,
   revision: 2,
   requiredServerClusters: [BridgedDeviceBasicInformation.Cluster.id],
-  optionalServerClusters: [],
+  optionalServerClusters: [PowerSource.Cluster.id],
 });
 
 // Custom device types: switch without ClientClusters
@@ -1729,7 +1729,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * Get a default switch cluster server.
    *
    * @remarks
-   * This method adds a cluster server with default switch features and configurations.
+   * This method adds a cluster server with default momentary switch features and configurations suitable for (AppleHome) Single Double Long automations.
    */
   getDefaultSwitchClusterServer() {
     return ClusterServer(
@@ -1775,7 +1775,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {
         changeToMode: async (data) => {
-          // eslint-disable-next-line no-console
           this.log.debug('Matter command: changeToMode', data.request);
           await this.commandHandler.executeHandler('changeToMode', data);
         },

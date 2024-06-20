@@ -639,6 +639,7 @@ export class Matterbridge extends EventEmitter {
       for (const plugin of this.registeredPlugins) {
         plugin.configJson = await this.loadPluginConfig(plugin);
         plugin.schemaJson = await this.loadPluginSchema(plugin);
+        this.getPluginLatestVersion(plugin);
         if (!plugin.enabled) {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
           continue;
@@ -671,6 +672,7 @@ export class Matterbridge extends EventEmitter {
       for (const plugin of this.registeredPlugins) {
         plugin.configJson = await this.loadPluginConfig(plugin);
         plugin.schemaJson = await this.loadPluginSchema(plugin);
+        this.getPluginLatestVersion(plugin);
         if (!plugin.enabled) {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
           continue;
@@ -1613,7 +1615,7 @@ export class Matterbridge extends EventEmitter {
         // Save the updated plugin data in the node storage
         await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
 
-        this.getPluginLatestVersion(plugin);
+        // this.getPluginLatestVersion(plugin); moved to parseCommandLine
 
         this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${platform.type} ${db}(entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
         if (start) this.startPlugin(plugin, message); // No await do it asyncronously
