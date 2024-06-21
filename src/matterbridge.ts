@@ -1443,7 +1443,7 @@ export class Matterbridge extends EventEmitter {
           if (plugin.name === 'matterbridge-zigbee2mqtt') config = zigbee2mqtt_config;
           else if (plugin.name === 'matterbridge-somfy-tahoma') config = somfytahoma_config;
           else if (plugin.name === 'matterbridge-shelly') config = shelly_config;
-          else config = { name: plugin.name, type: plugin.type, unregisterOnShutdown: false };
+          else config = { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
           try {
             await this.writeFile(configFile, JSON.stringify(config, null, 2));
             this.log.debug(`Created config file: ${configFile}.`);
