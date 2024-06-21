@@ -21,9 +21,18 @@
  * limitations under the License. *
  */
 
-import { Matterbridge, PlatformConfig } from './matterbridge.js';
+import { Matterbridge } from './matterbridge.js';
 import { AnsiLogger } from 'node-ansi-logger';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
+
+// PlatformConfig types
+export type PlatformConfigValue = string | number | boolean | bigint | object | undefined | null;
+
+export type PlatformConfig = Record<string, PlatformConfigValue>;
+
+export type PlatformSchemaValue = string | number | boolean | bigint | object | undefined | null;
+
+export type PlatformSchema = Record<string, PlatformSchemaValue>;
 
 /**
  * Represents the base Matterbridge platform.

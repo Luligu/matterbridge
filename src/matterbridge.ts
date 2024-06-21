@@ -35,7 +35,7 @@ import path from 'path';
 import WebSocket, { WebSocketServer } from 'ws';
 
 import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
-import { MatterbridgePlatform } from './matterbridgePlatform.js';
+import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import { shelly_config, somfytahoma_config, zigbee2mqtt_config } from './defaultConfigSchema.js';
 import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
 
@@ -50,33 +50,6 @@ import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } fr
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
-
-// Define an interface of common elements from MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform
-/*
-export interface MatterbridgePlatform {
-  onStart(reason?: string): Promise<void>;
-  onConfigure(): Promise<void>;
-  onShutdown(reason?: string): Promise<void>;
-  registerDevice(device: MatterbridgeDevice): Promise<void>;
-  unregisterDevice(device: MatterbridgeDevice): Promise<void>;
-  unregisterAllDevices(): Promise<void>;
-  matterbridge: Matterbridge;
-  log: AnsiLogger;
-  config: PlatformConfig;
-  name: string;
-  type: string;
-  version: string;
-}
-  */
-
-// PlatformConfig types
-export type PlatformConfigValue = string | number | boolean | bigint | object | undefined | null;
-
-export type PlatformConfig = Record<string, PlatformConfigValue>;
-
-export type PlatformSchemaValue = string | number | boolean | bigint | object | undefined | null;
-
-export type PlatformSchema = Record<string, PlatformSchemaValue>;
 
 // Define an interface for storing the plugins
 export interface RegisteredPlugin extends BaseRegisteredPlugin {
@@ -1340,58 +1313,6 @@ export class Matterbridge extends EventEmitter {
       };
       return schema;
     }
-    /*
-    schemaFile = path.join(this.matterbridgeDirectory, `${plugin.name}.schema.json`);
-    try {
-      await fs.access(schemaFile);
-      const data = await fs.readFile(schemaFile, 'utf8');
-      const schema = JSON.parse(data) as PlatformSchema;
-      schema.title = plugin.description;
-      schema.description = plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author;
-      this.log.debug(`Schema file found: ${schemaFile}.`);
-      // this.log.debug(`Schema file found: ${schemaFile}.\nSchema:${rs}\n`, schema);
-      return schema;
-    } catch (err) {
-      if (err instanceof Error) {
-        const nodeErr = err as NodeJS.ErrnoException;
-        if (nodeErr.code === 'ENOENT') {
-          const schema: PlatformSchema = {
-            title: plugin.description,
-            description: plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author,
-            type: 'object',
-            properties: {
-              name: {
-                description: 'Plugin name',
-                type: 'string',
-                readOnly: true,
-              },
-              type: {
-                description: 'Plugin type',
-                type: 'string',
-                readOnly: true,
-              },
-              debug: {
-                description: 'Enable the debug for the plugin (development only)',
-                type: 'boolean',
-                default: false,
-              },
-              unregisterOnShutdown: {
-                description: 'Unregister all devices on shutdown (development only)',
-                type: 'boolean',
-                default: false,
-              },
-            },
-          };
-          return schema;
-        } else {
-          this.log.error(`Error accessing schema file ${schemaFile}: ${err}`);
-          return {};
-        }
-      }
-      this.log.error(`Error loading schema file ${schemaFile}: ${err}`);
-      return {};
-    }
-    */
   }
 
   /**
