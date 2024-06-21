@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [1.3.2] - 2024-06-22
 
+New plugin
+
+[shelly](https://github.com/Luligu/matterbridge-shelly)
+
+Matterbridge shelly allows you to expose Shelly Gen 1, Gen 2, and Gen 3 devices to Matter.
+
+Features:
+
+- Shellies are automatically discovered using mDNS.
+- Discovered shellies are stored in local storage for quick loading on startup.
+- In this first release, the components exposed are lights (with brightness), switches, rollers and meters.
+- Shellies are controlled locally, eliminating the need for cloud or MQTT (which can be disabled).
+- Shelly Gen 1 devices are controlled using the CoIoT protocol (see the note below).
+- Shelly Gen 2 and Gen 3 devices are controlled using WebSocket.
+- The Matter device takes the name configured in the Shelly device's web page.
+- A 10-minute timer checks if the device has reported in that time.
+
 ### Added
 - [matterbridgeDevice]: Added all clusters for airQualitySensor:
     CarbonMonoxideConcentrationMeasurement,
