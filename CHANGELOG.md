@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.3.2] - 2024-06-21
+## [1.3.2] - 2024-06-22
 
 ### Added
 - [matterbridgeDevice]: Added all clusters for airQualitySensor:
