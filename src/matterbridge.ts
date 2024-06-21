@@ -4,7 +4,7 @@
  * @file matterbridge.ts
  * @author Luca Liguori
  * @date 2023-12-29
- * @version 1.2.0
+ * @version 1.3.2
  *
  * Copyright 2023, 2024 Luca Liguori.
  *
