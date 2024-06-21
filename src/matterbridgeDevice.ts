@@ -4,7 +4,7 @@
  * @file matterbridgeDevice.ts
  * @author Luca Liguori
  * @date 2023-12-29
- * @version 1.0.15
+ * @version 1.1.1
  *
  * Copyright 2023, 2024 Luca Liguori.
  *
