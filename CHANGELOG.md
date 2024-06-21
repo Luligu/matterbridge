@@ -14,7 +14,7 @@ Features:
 
 - Shellies are automatically discovered using mDNS.
 - Discovered shellies are stored in local storage for quick loading on startup.
-- In this first release, the components exposed are lights (with brightness), switches, rollers and power meters.
+- In this first release, the components exposed are lights (with brightness), switches, rollers and power meters (with EveHistory electrical measurements).
 - Shellies are controlled locally, eliminating the need for cloud or MQTT (which can be disabled).
 - Shelly Gen 1 devices are controlled using the CoIoT protocol (see the note below).
 - Shelly Gen 2 and Gen 3 devices are controlled using WebSocket.
