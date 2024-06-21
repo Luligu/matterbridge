@@ -208,9 +208,9 @@ export class Matterbridge extends EventEmitter {
 
   private static instance: Matterbridge | undefined;
 
+  // We load asyncronously so is private
   private constructor() {
     super();
-    // We load asyncronously
   }
 
   /**
@@ -356,7 +356,7 @@ export class Matterbridge extends EventEmitter {
       - help:                  show the help
       - bridge:                start Matterbridge in bridge mode
       - childbridge:           start Matterbridge in childbridge mode
-      - frontend [port]:       start the frontend on the given port (default 3000)
+      - frontend [port]:       start the frontend on the given port (default 8283)
       - debug:                 enable debug mode (default false)
       - reset:                 remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
       - factoryreset:          remove all commissioning information and reset all internal storages. Shutdown Matterbridge before using it!
@@ -679,7 +679,7 @@ export class Matterbridge extends EventEmitter {
 
     // Resolve the package.json of the plugin
     let packageJsonPath = path.resolve(pluginPath);
-    this.log.debug(`Loading plugin from ${plg}${packageJsonPath}${db}`);
+    this.log.debug(`Resolving plugin from ${plg}${packageJsonPath}${db}`);
 
     // Check if the package.json file exists
     let packageJsonExists = false;
