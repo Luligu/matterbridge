@@ -30,12 +30,12 @@ import { MatterbridgeDevice } from './matterbridgeDevice.js';
  *
  */
 export class MatterbridgePlatform {
-  protected matterbridge: Matterbridge;
-  protected log: AnsiLogger;
-  protected config: PlatformConfig = {};
-  protected name = ''; // Will be set by the loadPlugin() method using the package.json value.
-  protected type = ''; // Will be set by the extending classes.
-  protected version = ''; // Will be set by the loadPlugin() method using the package.json value.
+  public matterbridge: Matterbridge;
+  public log: AnsiLogger;
+  public config: PlatformConfig = {};
+  public name = ''; // Will be set by the loadPlugin() method using the package.json value.
+  public type = ''; // Will be set by the extending classes.
+  public version = ''; // Will be set by the loadPlugin() method using the package.json value.
 
   /**
    * Creates an instance of the base MatterbridgePlatform.

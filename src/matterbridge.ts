@@ -21,8 +21,6 @@
  * limitations under the License. *
  */
 
-import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
-
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr, RED, GREEN, zb } from 'node-ansi-logger';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -36,6 +34,9 @@ import os from 'os';
 import path from 'path';
 import WebSocket, { WebSocketServer } from 'ws';
 
+import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
+import { MatterbridgePlatform } from './matterbridgePlatform.js';
+import { shelly_config, somfytahoma_config, zigbee2mqtt_config } from './defaultConfigSchema.js';
 import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
 
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
@@ -48,10 +49,10 @@ import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageMana
 import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } from '@project-chip/matter-node.js/util';
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
-import { shelly_config, somfytahoma_config, zigbee2mqtt_config } from './defaultConfigSchema.js';
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
 
 // Define an interface of common elements from MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform
+/*
 export interface MatterbridgePlatform {
   onStart(reason?: string): Promise<void>;
   onConfigure(): Promise<void>;
@@ -66,6 +67,7 @@ export interface MatterbridgePlatform {
   type: string;
   version: string;
 }
+  */
 
 // PlatformConfig types
 export type PlatformConfigValue = string | number | boolean | bigint | object | undefined | null;
