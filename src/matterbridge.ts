@@ -48,7 +48,7 @@ import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageMana
 import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } from '@project-chip/matter-node.js/util';
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
-import { shelly_config, shelly_schema, somfytahoma_config, somfytahoma_schema, zigbee2mqtt_config, zigbee2mqtt_schema } from './defaultConfigSchema.js';
+import { shelly_config, somfytahoma_config, zigbee2mqtt_config } from './defaultConfigSchema.js';
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
 
 // Define an interface of common elements from MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform
@@ -1284,9 +1284,7 @@ export class Matterbridge extends EventEmitter {
   /**
    * Loads the schema for a plugin.
    * If the schema file exists in the plugin directory, it reads the file and returns the parsed JSON data and delete the schema form .matterbridge.
-   * If the schema file exists in matterbridgeDirectory, it reads the file and returns the parsed JSON data.
    * If the schema file does not exist, it creates a new schema with the default configuration and returns it.
-   * If any error occurs during file access or creation, it logs an error and return an empty schema.
    *
    * @param plugin - The plugin for which to load the schema.
    * @returns A promise that resolves to the loaded or created schema.
@@ -1310,9 +1308,37 @@ export class Matterbridge extends EventEmitter {
       }
       return schema;
     } catch (err) {
-      this.log.debug(`Schema file ${schemaFile} not found.`);
+      this.log.debug(`Schema file ${schemaFile} not found. Loading default schema.`);
+      const schema: PlatformSchema = {
+        title: plugin.description,
+        description: plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author,
+        type: 'object',
+        properties: {
+          name: {
+            description: 'Plugin name',
+            type: 'string',
+            readOnly: true,
+          },
+          type: {
+            description: 'Plugin type',
+            type: 'string',
+            readOnly: true,
+          },
+          debug: {
+            description: 'Enable the debug for the plugin (development only)',
+            type: 'boolean',
+            default: false,
+          },
+          unregisterOnShutdown: {
+            description: 'Unregister all devices on shutdown (development only)',
+            type: 'boolean',
+            default: false,
+          },
+        },
+      };
+      return schema;
     }
-
+    /*
     schemaFile = path.join(this.matterbridgeDirectory, `${plugin.name}.schema.json`);
     try {
       await fs.access(schemaFile);
@@ -1327,48 +1353,34 @@ export class Matterbridge extends EventEmitter {
       if (err instanceof Error) {
         const nodeErr = err as NodeJS.ErrnoException;
         if (nodeErr.code === 'ENOENT') {
-          let schema: PlatformSchema;
-          if (plugin.name === 'matterbridge-zigbee2mqtt') schema = zigbee2mqtt_schema;
-          else if (plugin.name === 'matterbridge-somfy-tahoma') schema = somfytahoma_schema;
-          else if (plugin.name === 'matterbridge-shelly') schema = shelly_schema;
-          else
-            schema = {
-              title: plugin.description,
-              description: plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author,
-              type: 'object',
-              properties: {
-                name: {
-                  description: 'Plugin name',
-                  type: 'string',
-                  readOnly: true,
-                },
-                type: {
-                  description: 'Plugin type',
-                  type: 'string',
-                  readOnly: true,
-                },
-                debug: {
-                  description: 'Enable the debug for the plugin (development only)',
-                  type: 'boolean',
-                },
-                unregisterOnShutdown: {
-                  description: 'Unregister all devices on shutdown (development only)',
-                  type: 'boolean',
-                },
+          const schema: PlatformSchema = {
+            title: plugin.description,
+            description: plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author,
+            type: 'object',
+            properties: {
+              name: {
+                description: 'Plugin name',
+                type: 'string',
+                readOnly: true,
               },
-            };
+              type: {
+                description: 'Plugin type',
+                type: 'string',
+                readOnly: true,
+              },
+              debug: {
+                description: 'Enable the debug for the plugin (development only)',
+                type: 'boolean',
+                default: false,
+              },
+              unregisterOnShutdown: {
+                description: 'Unregister all devices on shutdown (development only)',
+                type: 'boolean',
+                default: false,
+              },
+            },
+          };
           return schema;
-          /*
-          try {
-            await this.writeFile(schemaFile, JSON.stringify(schema, null, 2));
-            this.log.debug(`Created schema file: ${schemaFile}.`);
-            // this.log.debug(`Created schema file: ${schemaFile}.\nSchema:${rs}\n`, schema);
-            return schema;
-          } catch (err) {
-            this.log.error(`Error creating schema file ${schemaFile}: ${err}`);
-            return schema;
-          }
-          */
         } else {
           this.log.error(`Error accessing schema file ${schemaFile}: ${err}`);
           return {};
@@ -1377,6 +1389,7 @@ export class Matterbridge extends EventEmitter {
       this.log.error(`Error loading schema file ${schemaFile}: ${err}`);
       return {};
     }
+    */
   }
 
   /**
