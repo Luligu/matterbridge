@@ -1,10 +1,10 @@
 /**
- * This file contains the default config end schema for the plugins.
+ * This file contains the default config for the plugins.
  *
- * @file utils.ts
+ * @file defaultConfigSchema.ts
  * @author Luca Liguori
  * @date 2024-05-07
- * @version 1.0.0
+ * @version 1.0.1
  *
  * Copyright 2024 Luca Liguori.
  *
