@@ -4,9 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [1.3.2] - 2024-06-21
 
+### Added
+- [matterbridgeDevice]: Added all clusters for airQualitySensor:
+    CarbonMonoxideConcentrationMeasurement,
+    CarbonDioxideConcentrationMeasurement,
+    NitrogenDioxideConcentrationMeasurement,
+    OzoneConcentrationMeasurement,
+    FormaldehydeConcentrationMeasurement,
+    Pm1ConcentrationMeasurement,
+    Pm25ConcentrationMeasurement,
+    Pm10ConcentrationMeasurement,
+    RadonConcentrationMeasurement,
+
+
 ### Changed
 - [matterbridge]: Updated dependencies
-- [matter.js]: Updated to 0.9.2
+- [matter.js]: Updated matter.js to 0.9.2
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
