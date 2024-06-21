@@ -98,6 +98,14 @@ import { DeviceEnergyManagement, DeviceEnergyManagementCluster } from './cluster
 import { DeviceEnergyManagementMode, DeviceEnergyManagementModeCluster } from './cluster/DeviceEnergyManagementModeCluster.js';
 // import { FanControl, FanControlCluster } from './cluster/FanControlCluster.js';
 import { ConcentrationMeasurement } from './cluster/ConcentrationMeasurementCluster.js';
+import { CarbonDioxideConcentrationMeasurement, CarbonDioxideConcentrationMeasurementCluster } from './cluster/CarbonDioxideConcentrationMeasurementCluster.js';
+import { OzoneConcentrationMeasurement } from './cluster/OzoneConcentrationMeasurementCluster.js';
+import { Pm1ConcentrationMeasurement } from './cluster/Pm1ConcentrationMeasurementCluster.js';
+import { Pm25ConcentrationMeasurement } from './cluster/Pm25ConcentrationMeasurementCluster.js';
+import { Pm10ConcentrationMeasurement } from './cluster/Pm10ConcentrationMeasurementCluster.js';
+import { RadonConcentrationMeasurement } from './cluster/RadonConcentrationMeasurementCluster.js';
+import { NitrogenDioxideConcentrationMeasurement } from './cluster/NitrogenDioxideConcentrationMeasurementCluster.js';
+import { FormaldehydeConcentrationMeasurement } from './cluster/FormaldehydeConcentrationMeasurementCluster.js';
 
 type MakeMandatory<T> = Exclude<T, undefined>;
 
@@ -147,7 +155,20 @@ export const airQualitySensor = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 1,
   requiredServerClusters: [Identify.Cluster.id, AirQuality.Cluster.id],
-  optionalServerClusters: [TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id, TvocMeasurement.Cluster.id],
+  optionalServerClusters: [
+    TemperatureMeasurement.Cluster.id,
+    RelativeHumidityMeasurement.Cluster.id,
+    CarbonMonoxideConcentrationMeasurement.Cluster.id,
+    CarbonDioxideConcentrationMeasurement.Cluster.id,
+    NitrogenDioxideConcentrationMeasurement.Cluster.id,
+    OzoneConcentrationMeasurement.Cluster.id,
+    FormaldehydeConcentrationMeasurement.Cluster.id,
+    Pm1ConcentrationMeasurement.Cluster.id,
+    Pm25ConcentrationMeasurement.Cluster.id,
+    Pm10ConcentrationMeasurement.Cluster.id,
+    RadonConcentrationMeasurement.Cluster.id,
+    TvocMeasurement.Cluster.id,
+  ],
 });
 
 export const waterFreezeDetector = DeviceTypeDefinition({
@@ -2371,6 +2392,40 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createDefaultCarbonMonoxideConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.addClusterServer(this.getDefaultCarbonMonoxideConcentrationMeasurementClusterServer(measuredValue, measurementUnit, measurementMedium));
+  }
+
+  /**
+   * Returns the default Carbon Dioxide Concentration Measurement Cluster Server.
+   *
+   * @param {number} measuredValue - The measured value of the concentration.
+   * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement.
+   * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The medium of measurement.
+   * @returns {ClusterServer} - The default Carbon Monoxide Concentration Measurement Cluster Server.
+   */
+  getDefaultCarbonDioxideConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+    return ClusterServer(
+      CarbonDioxideConcentrationMeasurementCluster.with('NumericMeasurement'),
+      {
+        measuredValue,
+        minMeasuredValue: null,
+        maxMeasuredValue: null,
+        uncertainty: 0,
+        measurementUnit,
+        measurementMedium,
+      },
+      {},
+      {},
+    );
+  }
+  /**
+   * Create the default Carbon Dioxide Concentration Measurement Cluster Server.
+   *
+   * @param {number} measuredValue - The measured value of the concentration.
+   * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement.
+   * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The medium of measurement.
+   */
+  createDefaultCarbonDioxideConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+    this.addClusterServer(this.getDefaultCarbonDioxideConcentrationMeasurementClusterServer(measuredValue, measurementUnit, measurementMedium));
   }
 
   /**
