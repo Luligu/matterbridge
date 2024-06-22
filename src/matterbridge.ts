@@ -1758,26 +1758,37 @@ export class Matterbridge extends EventEmitter {
    */
   private async startMatterbridge(): Promise<void> {
     if (this.bridgeMode === 'bridge') {
-      // Plugins are loaded and started by loadPlugin on startup and plugin.loaded is set to true
-      // Plugins configured by callback when Matterbridge is commissioned
+      // Plugins are loaded and started by loadPlugin on startup and plugin.loaded and plugin.loaded are set to true
+      // Plugins are configured by callback when Matterbridge is commissioned and plugin.configured is set to true
       this.log.debug('***Starting startMatterbridge interval for Matterbridge');
       let failCount = 0;
-      const startInterval = setInterval(async () => {
+      const startMatterInterval = setInterval(async () => {
         for (const plugin of this.registeredPlugins) {
-          if (!plugin.enabled || plugin.error) continue;
+          // if (!plugin.enabled || plugin.error) continue;
+
+          // new code to not start the bridge if one plugin is in error cause the controllers will delete the devices loosing all the configuration
+          if (!plugin.enabled) continue;
+          if (plugin.error) {
+            clearInterval(startMatterInterval);
+            this.log.debug('***Cleared startMatterInterval interval for Matterbridge for plugin in error state');
+            this.log.error(`The plugin ${plg}${plugin.name}${er} is in error state.`);
+            this.log.error('The bridge will not start until the problem is solved to prevent the controllers from deleting all registered devices.');
+            this.log.error('If you want to start the bridge disable the plugin in error state and restart.');
+            return;
+          }
+
           if (!plugin.loaded || !plugin.started) {
-            this.log.debug(`***Waiting (failSafeCount=${failCount}/30) in startMatterbridge interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
+            this.log.debug(`***Waiting (failSafeCount=${failCount}/30) in startMatterInterval interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
             failCount++;
             if (failCount > 30) {
-              this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error mode.`);
+              this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error state.`);
               plugin.error = true;
-            } else {
-              return;
             }
+            return;
           }
         }
-        clearInterval(startInterval);
-        this.log.debug('***Cleared startMatterbridge interval for Matterbridge');
+        clearInterval(startMatterInterval);
+        this.log.debug('***Cleared startMatterInterval interval for Matterbridge');
 
         await this.startMatterServer();
         this.log.info('Matter server started');
@@ -1850,8 +1861,21 @@ export class Matterbridge extends EventEmitter {
       let failCount = 0;
       const startMatterInterval = setInterval(async () => {
         let allStarted = true;
-        this.registeredPlugins.forEach((plugin) => {
-          if (!plugin.enabled || plugin.error) return;
+        // this.registeredPlugins.forEach((plugin) => {
+        for (const plugin of this.registeredPlugins) {
+          // if (!plugin.enabled || plugin.error) return;
+
+          // new code to not start the bridge if one plugin is in error cause the controllers will delete the devices loosing all the configuration
+          if (!plugin.enabled) continue;
+          if (plugin.error) {
+            clearInterval(startMatterInterval);
+            this.log.debug('***Cleared startMatterInterval interval for Matterbridge for plugin in error state');
+            this.log.error(`The plugin ${plg}${plugin.name}${er} is in error state.`);
+            this.log.error('The bridge will not start until the problem is solved to prevent the controllers from deleting all registered devices.');
+            this.log.error('If you want to start the bridge disable the plugin in error state and restart.');
+            return;
+          }
+
           this.log.debug(`***Checking plugin ${plg}${plugin.name}${db} to start matter in childbridge mode...`);
           if (!plugin.loaded || !plugin.started) {
             allStarted = false;
@@ -1860,13 +1884,12 @@ export class Matterbridge extends EventEmitter {
             if (failCount > 30) {
               this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error mode.`);
               plugin.error = true;
-              return;
             }
           }
-        });
+        }
         if (!allStarted) return;
         clearInterval(startMatterInterval);
-        this.log.debug('***Cleared startMatterbridge interval in childbridge mode');
+        this.log.debug('***Cleared startMatterInterval interval in childbridge mode');
 
         await this.startMatterServer();
         this.log.info('Matter server started');
