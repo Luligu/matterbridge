@@ -33,7 +33,6 @@ Features:
     Pm10ConcentrationMeasurement,
     RadonConcentrationMeasurement,
 
-
 ### Changed
 - [matterbridge]: Updated dependencies
 - [matter.js]: Updated matter.js to 0.9.2
