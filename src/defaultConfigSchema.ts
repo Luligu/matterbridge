@@ -21,7 +21,7 @@
  * limitations under the License. *
  */
 
-import { PlatformConfig } from './matterbridge.js';
+import { PlatformConfig } from './matterbridgePlatform.js';
 
 export const zigbee2mqtt_config: PlatformConfig = {
   name: 'matterbridge-zigbee2mqtt',
