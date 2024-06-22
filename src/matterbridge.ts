@@ -456,7 +456,7 @@ export class Matterbridge extends EventEmitter {
    */
   private async parseCommandLine(): Promise<void> {
     if (hasParameter('list')) {
-      this.log.info('│ Registered plugins');
+      this.log.info(`│ Registered plugins (${this.registeredPlugins?.length})`);
       this.registeredPlugins.forEach((plugin, index) => {
         if (index !== this.registeredPlugins.length - 1) {
           this.log.info(`├─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${plugin.enabled ? GREEN : RED}enabled ${plugin.paired ? GREEN : RED}paired${nf}`);
@@ -467,7 +467,7 @@ export class Matterbridge extends EventEmitter {
         }
       });
       const serializedRegisteredDevices = await this.nodeContext?.get<SerializedMatterbridgeDevice[]>('devices', []);
-      this.log.info('│ Registered devices');
+      this.log.info(`│ Registered devices (${serializedRegisteredDevices?.length})`);
       serializedRegisteredDevices?.forEach((device, index) => {
         if (index !== serializedRegisteredDevices.length - 1) {
           this.log.info(`├─┬─ plugin ${plg}${device.pluginName}${nf} device: ${dev}${device.deviceName}${nf} uniqueId: ${YELLOW}${device.uniqueId}${nf}`);
@@ -981,7 +981,7 @@ export class Matterbridge extends EventEmitter {
             if (serializedMatterbridgeDevice) serializedRegisteredDevices.push(serializedMatterbridgeDevice);
           });
           await this.nodeContext.set<SerializedMatterbridgeDevice[]>('devices', serializedRegisteredDevices);
-          this.log.info('Saved registered devices');
+          this.log.info(`Saved registered devices (${serializedRegisteredDevices?.length})`);
           // Clear nodeContext and nodeStorage (they just need 1000ms to write the data to disk)
           this.log.debug('Closing node storage context...');
           this.nodeContext.close();
@@ -1027,7 +1027,7 @@ export class Matterbridge extends EventEmitter {
             Matterbridge.instance = undefined;
             this.emit('shutdown');
           }
-        }, 2 * 1000); // From 2 to 5 seconds
+        }, 2 * 1000);
       }, 3 * 1000);
     }
   }
