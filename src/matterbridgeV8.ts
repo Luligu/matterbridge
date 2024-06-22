@@ -72,8 +72,8 @@ import { promises as fs } from 'fs';
 import { MatterbridgeDeviceV8 } from './matterbridgeDeviceV8.js';
 import { Actions, BasicInformationCluster, Identify, SwitchCluster } from '@project-chip/matter-node.js/cluster';
 import { dimmableSwitch } from './matterbridgeDevice.js';
-import { PlatformConfig, RegisteredPlugin } from './matterbridge.js';
-import { MatterbridgePlatform } from './matterbridge.js';
+import { RegisteredPlugin } from './matterbridge.js';
+import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
 import { pathToFileURL } from 'url';
 import { shelly_config, somfytahoma_config, zigbee2mqtt_config } from './defaultConfigSchema.js';
 

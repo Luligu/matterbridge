@@ -21,21 +21,30 @@
  * limitations under the License. *
  */
 
-import { Matterbridge, PlatformConfig } from './matterbridge.js';
+import { Matterbridge } from './matterbridge.js';
 import { AnsiLogger } from 'node-ansi-logger';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
+
+// Platform types
+export type PlatformConfigValue = string | number | boolean | bigint | object | undefined | null;
+
+export type PlatformConfig = Record<string, PlatformConfigValue>;
+
+export type PlatformSchemaValue = string | number | boolean | bigint | object | undefined | null;
+
+export type PlatformSchema = Record<string, PlatformSchemaValue>;
 
 /**
  * Represents the base Matterbridge platform.
  *
  */
 export class MatterbridgePlatform {
-  protected matterbridge: Matterbridge;
-  protected log: AnsiLogger;
-  protected config: PlatformConfig = {};
-  protected name = ''; // Will be set by the loadPlugin() method using the package.json value.
-  protected type = ''; // Will be set by the extending classes.
-  protected version = ''; // Will be set by the loadPlugin() method using the package.json value.
+  public matterbridge: Matterbridge;
+  public log: AnsiLogger;
+  public config: PlatformConfig = {};
+  public name = ''; // Will be set by the loadPlugin() method using the package.json value.
+  public type = ''; // Will be set by the extending classes.
+  public version = ''; // Will be set by the loadPlugin() method using the package.json value.
 
   /**
    * Creates an instance of the base MatterbridgePlatform.

@@ -4,7 +4,7 @@
  * @file matterbridge.ts
  * @author Luca Liguori
  * @date 2023-12-29
- * @version 1.2.0
+ * @version 1.3.2
  *
  * Copyright 2023, 2024 Luca Liguori.
  *
@@ -21,8 +21,6 @@
  * limitations under the License. *
  */
 
-import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
-
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr, RED, GREEN, zb } from 'node-ansi-logger';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -36,8 +34,13 @@ import os from 'os';
 import path from 'path';
 import WebSocket, { WebSocketServer } from 'ws';
 
+// Matterbridge
+import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
+import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
+import { shelly_config, somfytahoma_config, zigbee2mqtt_config } from './defaultConfigSchema.js';
 import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
 
+// @project-chip/matter-node.js
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
 import { BasicInformationCluster, ClusterServer, FixedLabelCluster, GeneralCommissioning, PowerSourceCluster, ThreadNetworkDiagnosticsCluster, getClusterNameById } from '@project-chip/matter-node.js/cluster';
 import { DeviceTypeId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
@@ -48,33 +51,7 @@ import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageMana
 import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } from '@project-chip/matter-node.js/util';
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
-import { shelly_config, shelly_schema, somfytahoma_config, somfytahoma_schema, zigbee2mqtt_config, zigbee2mqtt_schema } from './defaultConfigSchema.js';
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
-
-// Define an interface of common elements from MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform
-export interface MatterbridgePlatform {
-  onStart(reason?: string): Promise<void>;
-  onConfigure(): Promise<void>;
-  onShutdown(reason?: string): Promise<void>;
-  registerDevice(device: MatterbridgeDevice): Promise<void>;
-  unregisterDevice(device: MatterbridgeDevice): Promise<void>;
-  unregisterAllDevices(): Promise<void>;
-  matterbridge: Matterbridge;
-  log: AnsiLogger;
-  config: PlatformConfig;
-  name: string;
-  type: string;
-  version: string;
-}
-
-// PlatformConfig types
-export type PlatformConfigValue = string | number | boolean | bigint | object | undefined | null;
-
-export type PlatformConfig = Record<string, PlatformConfigValue>;
-
-export type PlatformSchemaValue = string | number | boolean | bigint | object | undefined | null;
-
-export type PlatformSchema = Record<string, PlatformSchemaValue>;
 
 // Define an interface for storing the plugins
 export interface RegisteredPlugin extends BaseRegisteredPlugin {
@@ -152,6 +129,7 @@ interface MatterbridgeInformation {
   debugEnabled: boolean;
 }
 
+// Default colors
 const plg = '\u001B[38;5;33m';
 const dev = '\u001B[38;5;79m';
 const typ = '\u001B[38;5;207m';
@@ -230,9 +208,9 @@ export class Matterbridge extends EventEmitter {
 
   private static instance: Matterbridge | undefined;
 
+  // We load asyncronously so is private
   private constructor() {
     super();
-    // We load asyncronously
   }
 
   /**
@@ -378,7 +356,7 @@ export class Matterbridge extends EventEmitter {
       - help:                  show the help
       - bridge:                start Matterbridge in bridge mode
       - childbridge:           start Matterbridge in childbridge mode
-      - frontend [port]:       start the frontend on the given port (default 3000)
+      - frontend [port]:       start the frontend on the given port (default 8283)
       - debug:                 enable debug mode (default false)
       - reset:                 remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
       - factoryreset:          remove all commissioning information and reset all internal storages. Shutdown Matterbridge before using it!
@@ -478,7 +456,7 @@ export class Matterbridge extends EventEmitter {
    */
   private async parseCommandLine(): Promise<void> {
     if (hasParameter('list')) {
-      this.log.info('│ Registered plugins');
+      this.log.info(`│ Registered plugins (${this.registeredPlugins?.length})`);
       this.registeredPlugins.forEach((plugin, index) => {
         if (index !== this.registeredPlugins.length - 1) {
           this.log.info(`├─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${plugin.enabled ? GREEN : RED}enabled ${plugin.paired ? GREEN : RED}paired${nf}`);
@@ -489,7 +467,7 @@ export class Matterbridge extends EventEmitter {
         }
       });
       const serializedRegisteredDevices = await this.nodeContext?.get<SerializedMatterbridgeDevice[]>('devices', []);
-      this.log.info('│ Registered devices');
+      this.log.info(`│ Registered devices (${serializedRegisteredDevices?.length})`);
       serializedRegisteredDevices?.forEach((device, index) => {
         if (index !== serializedRegisteredDevices.length - 1) {
           this.log.info(`├─┬─ plugin ${plg}${device.pluginName}${nf} device: ${dev}${device.deviceName}${nf} uniqueId: ${YELLOW}${device.uniqueId}${nf}`);
@@ -701,7 +679,7 @@ export class Matterbridge extends EventEmitter {
 
     // Resolve the package.json of the plugin
     let packageJsonPath = path.resolve(pluginPath);
-    this.log.debug(`Loading plugin from ${plg}${packageJsonPath}${db}`);
+    this.log.debug(`Resolving plugin from ${plg}${packageJsonPath}${db}`);
 
     // Check if the package.json file exists
     let packageJsonExists = false;
@@ -1003,7 +981,7 @@ export class Matterbridge extends EventEmitter {
             if (serializedMatterbridgeDevice) serializedRegisteredDevices.push(serializedMatterbridgeDevice);
           });
           await this.nodeContext.set<SerializedMatterbridgeDevice[]>('devices', serializedRegisteredDevices);
-          this.log.info('Saved registered devices');
+          this.log.info(`Saved registered devices (${serializedRegisteredDevices?.length})`);
           // Clear nodeContext and nodeStorage (they just need 1000ms to write the data to disk)
           this.log.debug('Closing node storage context...');
           this.nodeContext.close();
@@ -1049,7 +1027,7 @@ export class Matterbridge extends EventEmitter {
             Matterbridge.instance = undefined;
             this.emit('shutdown');
           }
-        }, 2 * 1000); // From 2 to 5 seconds
+        }, 2 * 1000);
       }, 3 * 1000);
     }
   }
@@ -1284,9 +1262,7 @@ export class Matterbridge extends EventEmitter {
   /**
    * Loads the schema for a plugin.
    * If the schema file exists in the plugin directory, it reads the file and returns the parsed JSON data and delete the schema form .matterbridge.
-   * If the schema file exists in matterbridgeDirectory, it reads the file and returns the parsed JSON data.
    * If the schema file does not exist, it creates a new schema with the default configuration and returns it.
-   * If any error occurs during file access or creation, it logs an error and return an empty schema.
    *
    * @param plugin - The plugin for which to load the schema.
    * @returns A promise that resolves to the loaded or created schema.
@@ -1310,72 +1286,35 @@ export class Matterbridge extends EventEmitter {
       }
       return schema;
     } catch (err) {
-      this.log.debug(`Schema file ${schemaFile} not found.`);
-    }
-
-    schemaFile = path.join(this.matterbridgeDirectory, `${plugin.name}.schema.json`);
-    try {
-      await fs.access(schemaFile);
-      const data = await fs.readFile(schemaFile, 'utf8');
-      const schema = JSON.parse(data) as PlatformSchema;
-      schema.title = plugin.description;
-      schema.description = plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author;
-      this.log.debug(`Schema file found: ${schemaFile}.`);
-      // this.log.debug(`Schema file found: ${schemaFile}.\nSchema:${rs}\n`, schema);
+      this.log.debug(`Schema file ${schemaFile} not found. Loading default schema.`);
+      const schema: PlatformSchema = {
+        title: plugin.description,
+        description: plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author,
+        type: 'object',
+        properties: {
+          name: {
+            description: 'Plugin name',
+            type: 'string',
+            readOnly: true,
+          },
+          type: {
+            description: 'Plugin type',
+            type: 'string',
+            readOnly: true,
+          },
+          debug: {
+            description: 'Enable the debug for the plugin (development only)',
+            type: 'boolean',
+            default: false,
+          },
+          unregisterOnShutdown: {
+            description: 'Unregister all devices on shutdown (development only)',
+            type: 'boolean',
+            default: false,
+          },
+        },
+      };
       return schema;
-    } catch (err) {
-      if (err instanceof Error) {
-        const nodeErr = err as NodeJS.ErrnoException;
-        if (nodeErr.code === 'ENOENT') {
-          let schema: PlatformSchema;
-          if (plugin.name === 'matterbridge-zigbee2mqtt') schema = zigbee2mqtt_schema;
-          else if (plugin.name === 'matterbridge-somfy-tahoma') schema = somfytahoma_schema;
-          else if (plugin.name === 'matterbridge-shelly') schema = shelly_schema;
-          else
-            schema = {
-              title: plugin.description,
-              description: plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author,
-              type: 'object',
-              properties: {
-                name: {
-                  description: 'Plugin name',
-                  type: 'string',
-                  readOnly: true,
-                },
-                type: {
-                  description: 'Plugin type',
-                  type: 'string',
-                  readOnly: true,
-                },
-                debug: {
-                  description: 'Enable the debug for the plugin (development only)',
-                  type: 'boolean',
-                },
-                unregisterOnShutdown: {
-                  description: 'Unregister all devices on shutdown (development only)',
-                  type: 'boolean',
-                },
-              },
-            };
-          return schema;
-          /*
-          try {
-            await this.writeFile(schemaFile, JSON.stringify(schema, null, 2));
-            this.log.debug(`Created schema file: ${schemaFile}.`);
-            // this.log.debug(`Created schema file: ${schemaFile}.\nSchema:${rs}\n`, schema);
-            return schema;
-          } catch (err) {
-            this.log.error(`Error creating schema file ${schemaFile}: ${err}`);
-            return schema;
-          }
-          */
-        } else {
-          this.log.error(`Error accessing schema file ${schemaFile}: ${err}`);
-          return {};
-        }
-      }
-      this.log.error(`Error loading schema file ${schemaFile}: ${err}`);
-      return {};
     }
   }
 
@@ -1430,7 +1369,7 @@ export class Matterbridge extends EventEmitter {
           if (plugin.name === 'matterbridge-zigbee2mqtt') config = zigbee2mqtt_config;
           else if (plugin.name === 'matterbridge-somfy-tahoma') config = somfytahoma_config;
           else if (plugin.name === 'matterbridge-shelly') config = shelly_config;
-          else config = { name: plugin.name, type: plugin.type, unregisterOnShutdown: false };
+          else config = { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
           try {
             await this.writeFile(configFile, JSON.stringify(config, null, 2));
             this.log.debug(`Created config file: ${configFile}.`);
