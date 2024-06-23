@@ -35,7 +35,7 @@ export namespace Pm1ConcentrationMeasurement {
    * If you use this cluster you must manually specify which features are active and ensure the set of active
    * features is legal per the Matter specification.
    */
-  export const CompleteInstance = MutableCluster({ ...ConcentrationMeasurement.Complete, id: 0x42c });
+  export const CompleteInstance = MutableCluster({ ...ConcentrationMeasurement.Complete, id: 0x42c, name: 'Pm1ConcentrationMeasurement' });
 
   export type Complete = Identity<typeof CompleteInstance>;
   export const Complete: Complete = CompleteInstance;
