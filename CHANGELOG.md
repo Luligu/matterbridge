@@ -77,10 +77,10 @@ This release is all about Matter 1.3
 
 If you are wondering whether the controllers already support Matter 1.3, the answer is unfortunately no.
 
-Only Home Automation supports:
+SmartThings and Home Automation support:
 - airQualitySensor (Matter 1.2)
 
-and (probably only like BooleanState cluster)
+Home Automation supports (probably only like BooleanState cluster):
 - waterFreezeDetector (Matter 1.3)
 - waterLeakDetector (Matter 1.3)
 - rainSensor (Matter 1.3)

@@ -548,6 +548,9 @@ Tested by Tamer Salah
 
 No issues reported so far.
 
+Supports also:
+- air quality sensor
+
 ## eWeLink
 
 Tested by Tamer Salah
