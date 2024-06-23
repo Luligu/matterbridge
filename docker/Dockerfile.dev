@@ -1,4 +1,4 @@
-FROM node:20-bullseye-slim as base
+FROM node:20-bullseye-slim AS base
 
 WORKDIR /app
 RUN apt-get update && \
@@ -7,7 +7,7 @@ RUN apt-get update && \
 
 # && npm install -g npm@10.7.0
 
-FROM base as builder
+FROM base AS builder
 WORKDIR /app
 COPY ./package.json ./package-lock.json ./tsconfig.json ./
 COPY ./src ./src
@@ -65,7 +65,7 @@ COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
 RUN npm install && npm run build && npm pack
 
 
-FROM node:20-bullseye-slim as release
+FROM node:20-bullseye-slim AS release
 WORKDIR /app
 
 COPY --from=builder /app/*.tgz .
