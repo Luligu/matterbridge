@@ -511,15 +511,20 @@ Solved with the version 17.5 of the HomePod/AppleTV.
 
 ## Home Assistant 
 
-So far is the only controller supporting some Matter 1.3 device type:
-- air quality sensor
+So far is the only controller supporting some Matter 1.2 and 1.3 device type:
+- air quality sensor (Matter 1.2)
+
+Also supports (probably only like BooleanState cluster):
+- waterFreezeDetector (Matter 1.3)
+- waterLeakDetector (Matter 1.3)
+- rainSensor (Matter 1.3)
 
 HA also support electrical measurements from EveHistoryCluster (used in Matterbridge plugins)
 
 ## Home Assistant issues (Matter Server for HA is still in Beta)
 
-- If HA doesn't show all devices just reload the Matter Server or reboot HA
-- Home Assistant doesn't seem to react when a device is removed from the bridge: they remain in HA unavailable forever...
+- If HA doesn't show all devices, reload the Matter Server Integration or reboot HA
+- Home Assistant doesn't seem to always react when a device is removed from the bridge: they remain in HA unavailable forever...
 - In the Home Assistant Core log you can see sometimes error messages relating to unique id not found but it seems to be an issue related to missing some matter packet during the commissioning and subscription phase...
 - Version 6.1.2 is more stable and has solved the problem of the commissioning window: now pairing is again easy. Use Apple Home when you have to choose the controller type even if you pair Matterbridge directly with HA.
 
