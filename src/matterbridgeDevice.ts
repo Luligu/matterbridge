@@ -1424,7 +1424,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         moveToLevel: async ({ request, attributes, endpoint }) => {
           this.log.debug('Matter command: moveToLevel request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
-          await this.commandHandler.executeHandler('moveToLevel', { request: request, attributes: attributes, endpoint: endpoint });
+          await this.commandHandler.executeHandler('moveToLevel', { request, attributes, endpoint });
         },
         move: async () => {
           this.log.error('Matter command: move not implemented');
@@ -1437,7 +1437,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         },
         moveToLevelWithOnOff: async ({ request, attributes, endpoint }) => {
           this.log.debug('Matter command: moveToLevelWithOnOff request:', request, 'attributes.currentLevel:', attributes.currentLevel.getLocal());
-          await this.commandHandler.executeHandler('moveToLevelWithOnOff', { request: request, attributes: attributes, endpoint: endpoint });
+          await this.commandHandler.executeHandler('moveToLevelWithOnOff', { request, attributes, endpoint });
         },
         moveWithOnOff: async () => {
           this.log.error('Matter command: moveWithOnOff not implemented');
@@ -1488,11 +1488,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         colorTempPhysicalMaxMireds,
       },
       {
-        moveToHue: async ({ request: request, attributes: attributes }) => {
+        moveToHue: async ({ request, attributes, endpoint }) => {
           // eslint-disable-next-line no-console
           this.log.debug('Matter command: moveToHue request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal());
           // attributes.currentHue.setLocal(request.hue);
-          this.commandHandler.executeHandler('moveToHue', { request: request, attributes: attributes });
+          this.commandHandler.executeHandler('moveToHue', { request, attributes, endpoint });
         },
         moveHue: async () => {
           // eslint-disable-next-line no-console
@@ -1502,11 +1502,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           // eslint-disable-next-line no-console
           this.log.error('Matter command: stepHue not implemented');
         },
-        moveToSaturation: async ({ request: request, attributes: attributes }) => {
+        moveToSaturation: async ({ request, attributes, endpoint }) => {
           // eslint-disable-next-line no-console
           this.log.debug('Matter command: moveToSaturation request:', request, 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
           // attributes.currentSaturation.setLocal(request.saturation);
-          this.commandHandler.executeHandler('moveToSaturation', { request: request, attributes: attributes });
+          this.commandHandler.executeHandler('moveToSaturation', { request, attributes, endpoint });
         },
         moveSaturation: async () => {
           // eslint-disable-next-line no-console
@@ -1516,22 +1516,22 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           // eslint-disable-next-line no-console
           this.log.error('Matter command: stepSaturation not implemented');
         },
-        moveToHueAndSaturation: async ({ request: request, attributes: attributes }) => {
+        moveToHueAndSaturation: async ({ request, attributes, endpoint }) => {
           // eslint-disable-next-line no-console
           this.log.debug('Matter command: moveToHueAndSaturation request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal(), 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
           // attributes.currentHue.setLocal(request.hue);
           // attributes.currentSaturation.setLocal(request.saturation);
-          this.commandHandler.executeHandler('moveToHueAndSaturation', { request: request, attributes: attributes });
+          this.commandHandler.executeHandler('moveToHueAndSaturation', { request, attributes, endpoint });
         },
         stopMoveStep: async () => {
           // eslint-disable-next-line no-console
           this.log.error('Matter command: stopMoveStep not implemented');
         },
-        moveToColorTemperature: async ({ request: request, attributes: attributes }) => {
+        moveToColorTemperature: async ({ request, attributes, endpoint }) => {
           // eslint-disable-next-line no-console
           this.log.debug('Matter command: moveToColorTemperature request:', request, 'attributes.colorTemperatureMireds:', attributes.colorTemperatureMireds.getLocal());
           // attributes.colorTemperatureMireds.setLocal(request.colorTemperatureMireds);
-          this.commandHandler.executeHandler('moveToColorTemperature', { request: request, attributes: attributes });
+          this.commandHandler.executeHandler('moveToColorTemperature', { request, attributes, endpoint });
         },
         moveColorTemperature: async () => {
           // eslint-disable-next-line no-console

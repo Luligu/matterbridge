@@ -521,7 +521,7 @@ HA also support electrical measurements from EveHistoryCluster (used in Matterbr
 - If HA doesn't show all devices just reload the Matter Server or reboot HA
 - Home Assistant doesn't seem to react when a device is removed from the bridge: they remain in HA unavailable forever...
 - In the Home Assistant Core log you can see sometimes error messages relating to unique id not found but it seems to be an issue related to missing some matter packet during the commissioning and subscription phase...
-- Version 6.1.0 is more stable and has solved the problem of the commissioning window: now pairing is again easy. Use Apple Home when you have to choose the controller type even if you pair Matterbridge directly with HA.
+- Version 6.1.2 is more stable and has solved the problem of the commissioning window: now pairing is again easy. Use Apple Home when you have to choose the controller type even if you pair Matterbridge directly with HA.
 
 ## Google Home
 
@@ -549,7 +549,8 @@ Tested by Tamer Salah
 No issues reported so far.
 
 Supports also:
-- air quality sensor
+- air Quality Sensor
+- smoke Co Alarm
 
 ## eWeLink
 

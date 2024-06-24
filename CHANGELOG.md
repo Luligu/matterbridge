@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.5] - 2024-06-24
+
+### Changed
+- [matterbridgeDevice]: Updated ColorControl commandHandlers for (https://github.com/Luligu/matterbridge-shelly)
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.3.4] - 2024-06-23
 
 ### Fixed
