@@ -120,6 +120,9 @@ interface MatterbridgeDeviceCommands {
   moveToLevel: MakeMandatory<ClusterServerHandlers<typeof LevelControl.Complete>['moveToLevel']>;
   moveToLevelWithOnOff: MakeMandatory<ClusterServerHandlers<typeof LevelControl.Complete>['moveToLevelWithOnOff']>;
 
+  moveToColor: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['moveToHue']>;
+  moveColor: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['moveToHue']>;
+  stepColor: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['moveToHue']>;
   moveToHue: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['moveToHue']>;
   moveHue: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['moveHue']>;
   stepHue: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['stepHue']>;
@@ -139,7 +142,7 @@ interface MatterbridgeDeviceCommands {
 
   setpointRaiseLower: MakeMandatory<ClusterServerHandlers<typeof Thermostat.Complete>['setpointRaiseLower']>;
 
-  // step: MakeMandatory<ClusterServerHandlers<typeof FanControl.Complete>['step']>;
+  // step: MakeMandatory<ClusterServerHandlers<typeof FanControl.Complete>['step']>; // Rev > 2
 
   suppressAlarm: MakeMandatory<ClusterServerHandlers<typeof BooleanStateConfiguration.Complete>['suppressAlarm']>;
   enableDisableAlarm: MakeMandatory<ClusterServerHandlers<typeof BooleanStateConfiguration.Complete>['enableDisableAlarm']>;
@@ -1559,6 +1562,99 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Get a default color control cluster server.
+   *
+   * @param currentHue - The current hue value.
+   * @param currentSaturation - The current saturation value.
+   * @param colorTemperatureMireds - The color temperature in mireds.
+   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
+   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   */
+  getDefaultXYColorControlClusterServer(currentX = 0, currentY = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+    return ClusterServer(
+      ColorControlCluster.with(ColorControl.Feature.Xy, ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature),
+      {
+        colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
+        options: {
+          executeIfOff: false,
+        },
+        numberOfPrimaries: null,
+        enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
+        colorCapabilities: { xy: true, hueSaturation: true, colorLoop: false, enhancedHue: false, colorTemperature: true },
+        currentHue: 0,
+        currentSaturation: 0,
+        currentX,
+        currentY,
+        colorTemperatureMireds,
+        colorTempPhysicalMinMireds,
+        colorTempPhysicalMaxMireds,
+      },
+      {
+        moveToColor: async (data) => {
+          this.log.debug('Matter command: moveToColor request:', data.request, 'attributes.currentHue:', data.attributes.currentX.getLocal(), data.attributes.currentY.getLocal());
+          this.commandHandler.executeHandler('moveToColor', data);
+        },
+        moveColor: async () => {
+          this.log.error('Matter command: moveColor not implemented');
+        },
+        stepColor: async () => {
+          this.log.error('Matter command: stepColor not implemented');
+        },
+        moveToHue: async ({ request, attributes, endpoint }) => {
+          this.log.debug('Matter command: moveToHue request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal());
+          this.commandHandler.executeHandler('moveToHue', { request, attributes, endpoint });
+        },
+        moveHue: async () => {
+          this.log.error('Matter command: moveHue not implemented');
+        },
+        stepHue: async () => {
+          this.log.error('Matter command: stepHue not implemented');
+        },
+        moveToSaturation: async ({ request, attributes, endpoint }) => {
+          this.log.debug('Matter command: moveToSaturation request:', request, 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
+          this.commandHandler.executeHandler('moveToSaturation', { request, attributes, endpoint });
+        },
+        moveSaturation: async () => {
+          this.log.error('Matter command: moveSaturation not implemented');
+        },
+        stepSaturation: async () => {
+          this.log.error('Matter command: stepSaturation not implemented');
+        },
+        moveToHueAndSaturation: async ({ request, attributes, endpoint }) => {
+          this.log.debug('Matter command: moveToHueAndSaturation request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal(), 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
+          this.commandHandler.executeHandler('moveToHueAndSaturation', { request, attributes, endpoint });
+        },
+        stopMoveStep: async () => {
+          this.log.error('Matter command: stopMoveStep not implemented');
+        },
+        moveToColorTemperature: async ({ request, attributes, endpoint }) => {
+          this.log.debug('Matter command: moveToColorTemperature request:', request, 'attributes.colorTemperatureMireds:', attributes.colorTemperatureMireds.getLocal());
+          this.commandHandler.executeHandler('moveToColorTemperature', { request, attributes, endpoint });
+        },
+        moveColorTemperature: async () => {
+          this.log.error('Matter command: moveColorTemperature not implemented');
+        },
+        stepColorTemperature: async () => {
+          this.log.error('Matter command: stepColorTemperature not implemented');
+        },
+      },
+      {},
+    );
+  }
+  /**
+   * Creates a default color control cluster server.
+   *
+   * @param currentHue - The current hue value.
+   * @param currentSaturation - The current saturation value.
+   * @param colorTemperatureMireds - The color temperature in mireds.
+   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
+   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   */
+  createDefaultXYColorControlClusterServer(currentX = 0, currentY = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+    this.addClusterServer(this.getDefaultXYColorControlClusterServer(currentX, currentY, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
+  }
+
+  /**
    * Get a default window covering cluster server.
    *
    * @param positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0.
@@ -1755,7 +1851,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Get a default switch cluster server.
+   * Get a default momentary switch cluster server.
    *
    * @remarks
    * This method adds a cluster server with default momentary switch features and configurations suitable for (AppleHome) Single Double Long automations.
@@ -1781,13 +1877,45 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Creates a default switch cluster server.
+   * Creates a default momentary switch cluster server.
    *
    * @remarks
-   * This method adds a cluster server with default switch features and configurations.
+   * This method adds a cluster server with default momentary switch features and configurations.
    */
   createDefaultSwitchClusterServer() {
     this.addClusterServer(this.getDefaultSwitchClusterServer());
+    this.addFixedLabel('orientation', 'Switch');
+    this.addFixedLabel('label', 'Switch');
+  }
+
+  /**
+   * Get a default latching switch cluster server.
+   *
+   * @remarks
+   * This method adds a cluster server with default latching switch features and configuration.
+   */
+  getDefaultLatchingSwitchClusterServer() {
+    return ClusterServer(
+      SwitchCluster.with(Switch.Feature.LatchingSwitch),
+      {
+        numberOfPositions: 2,
+        currentPosition: 0,
+      },
+      {},
+      {
+        switchLatched: true,
+      },
+    );
+  }
+
+  /**
+   * Creates a default latching switch cluster server.
+   *
+   * @remarks
+   * This method adds a cluster server with default latching switch features and configuration.
+   */
+  createDefaultLatchingSwitchClusterServer() {
+    this.addClusterServer(this.getDefaultLatchingSwitchClusterServer());
     this.addFixedLabel('orientation', 'Switch');
     this.addFixedLabel('label', 'Switch');
   }
@@ -2580,7 +2708,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The medium of measurement.
    * @returns {ClusterServer} - The default Carbon Monoxide Concentration Measurement Cluster Server.
    */
-  getDefaultOzoneConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  getDefaultOzoneConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     return ClusterServer(
       OzoneConcentrationMeasurementCluster.with('NumericMeasurement'),
       {
@@ -2602,7 +2730,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement.
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The medium of measurement.
    */
-  createDefaulOzoneConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaulOzoneConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.addClusterServer(this.getDefaultOzoneConcentrationMeasurementClusterServer(measuredValue, measurementUnit, measurementMedium));
   }
 
@@ -2648,7 +2776,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The medium of measurement.
    * @returns {ClusterServer} - The default Carbon Monoxide Concentration Measurement Cluster Server.
    */
-  getDefaultNitrogenDioxideConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  getDefaultNitrogenDioxideConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     return ClusterServer(
       NitrogenDioxideConcentrationMeasurementCluster.with('NumericMeasurement'),
       {
@@ -2670,7 +2798,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement.
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The medium of measurement.
    */
-  createDefaulNitrogenDioxideConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaulNitrogenDioxideConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.addClusterServer(this.getDefaultNitrogenDioxideConcentrationMeasurementClusterServer(measuredValue, measurementUnit, measurementMedium));
   }
 

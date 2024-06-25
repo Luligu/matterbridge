@@ -2,10 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.3.5] - 2024-06-24
+## [1.3.5] - 2024-06-26
+
+### Added
+- [matterbridgeDevice]: Added createDefaultLatchingSwitchClusterServer and getDefaultLatchingSwitchClusterServer for (https://github.com/Luligu/matterbridge-shelly)
 
 ### Changed
 - [matterbridgeDevice]: Updated ColorControl commandHandlers for (https://github.com/Luligu/matterbridge-shelly)
+- [matterbridge]: Plugin disable and plugin remove methods now remove also the registered devices from the bridge
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">

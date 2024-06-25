@@ -3110,7 +3110,7 @@ export class Matterbridge extends EventEmitter {
         });
       }
 
-      // Handle the command reset from Settings
+      // Handle the command unregister from Settings
       if (command === 'unregister') {
         await this.unregisterAndShutdownProcess();
       }
@@ -3122,7 +3122,7 @@ export class Matterbridge extends EventEmitter {
       if (command === 'factoryreset') {
         this.shutdownProcessAndFactoryReset(); // No await do it asyncronously
       }
-      // Handle the command restart from Header
+      // Handle the command shutdown from Header
       if (command === 'shutdown') {
         this.shutdownProcess(); // No await do it asyncronously
       }
@@ -3143,7 +3143,7 @@ export class Matterbridge extends EventEmitter {
         }
         this.updateProcess();
       }
-      // Handle the command saveschema from Home
+      // Handle the command saveconfig from Home
       if (command === 'saveconfig') {
         param = param.replace(/\*/g, '\\');
         this.log.info(`Saving config for plugin ${plg}${param}${nf}...`);
@@ -3206,8 +3206,10 @@ export class Matterbridge extends EventEmitter {
         if (index !== -1) {
           if (this.registeredPlugins[index].platform) {
             await this.registeredPlugins[index].platform?.onShutdown('The plugin has been removed.');
-            // await this.savePluginConfig(this.registeredPlugins[index]);
           }
+          // Remove all devices from the plugin
+          await this.removeAllBridgedDevices(this.registeredPlugins[index].name);
+          // Remove the plugin from the registered plugins
           this.registeredPlugins.splice(index, 1);
           await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
           this.log.info(`Plugin ${plg}${param}${nf} removed from matterbridge`);
@@ -3253,8 +3255,12 @@ export class Matterbridge extends EventEmitter {
         if (pluginToDisable) {
           if (pluginToDisable.platform) {
             await pluginToDisable.platform.onShutdown('The plugin has been removed.');
-            // await this.savePluginConfig(pluginToDisable);
           }
+
+          // Remove all devices from the plugin
+          this.log.info(`Unregistering devices for plugin ${plg}${pluginToDisable.name}${nf}...`);
+          await this.removeAllBridgedDevices(pluginToDisable.name);
+
           pluginToDisable.enabled = false;
           pluginToDisable.error = undefined;
           pluginToDisable.loaded = undefined;
