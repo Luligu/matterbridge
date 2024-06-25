@@ -357,6 +357,8 @@ export class Matterbridge extends EventEmitter {
       - bridge:                start Matterbridge in bridge mode
       - childbridge:           start Matterbridge in childbridge mode
       - frontend [port]:       start the frontend on the given port (default 8283)
+      - useSecureSocket:       start the frontend with secure web socket
+      - useHttps:              start the frontend with https
       - debug:                 enable debug mode (default false)
       - reset:                 remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
       - factoryreset:          remove all commissioning information and reset all internal storages. Shutdown Matterbridge before using it!
@@ -557,7 +559,7 @@ export class Matterbridge extends EventEmitter {
     }
 
     // Initialize frontend
-    await this.initializeFrontend(getIntParameter('frontend'));
+    await this.initializeFrontend(getIntParameter('frontend'), hasParameter('useSecureSocket'), hasParameter('useHttps'));
 
     // Check each 60 minutes the latest versions
     this.checkUpdateInterval = setInterval(
@@ -2838,13 +2840,11 @@ export class Matterbridge extends EventEmitter {
    *
    * @param port The port number to run the frontend server on. Default is 3000.
    */
-  async initializeFrontend(port = 8283): Promise<void> {
+  async initializeFrontend(port = 8283, useSecureSocket = false, useHttps = false): Promise<void> {
     this.log.debug(`Initializing the frontend on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
 
     const wssPort = 8284;
-    const useHttps = false;
-    // const wssHost = (useHttps ? 'wss://' : 'ws://') + `${os.hostname().toLowerCase()}:${wssPort}`;
-    const wssHost = (useHttps ? 'wss://' : 'ws://') + `${this.systemInformation.ipv4Address}:${wssPort}`;
+    const wssHost = (useSecureSocket ? 'wss://' : 'ws://') + `${this.systemInformation.ipv4Address}:${wssPort}`;
     if (!useHttps) {
       // Create a WebSocket server no certificate required
       this.webSocketServer = new WebSocketServer({ port: wssPort });
