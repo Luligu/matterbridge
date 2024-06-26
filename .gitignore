@@ -39,19 +39,6 @@ tsconfig.tsbuildinfo
 hs_err_pid*
 replay_pid*
 
-# zigbee2mqtt
-bridge-info.json
-bridge-devices.json
-bridge-groups.json
-
-# storage
-.matterbridge.json
-.matterbridge.backup.json
-node_storage
-
-Eve door_history.json
-
-# Dockerfile
-
+# local
 migrationV8.txt
 migrationV8-answered.txt

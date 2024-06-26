@@ -1,2 +1,14 @@
-node_modules
+# Ignore build files
 dist
+node_modules
+build
+coverage
+
+# Ignore frontend
+frontend
+
+# Ignore docker
+docker
+
+# Ignore all HTML files:
+**/*.html

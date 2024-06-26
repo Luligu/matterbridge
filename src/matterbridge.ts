@@ -410,7 +410,6 @@ export class Matterbridge extends EventEmitter {
     // Log system info and create .matterbridge directory
     await this.logNodeAndSystemInfo();
     this.log.info(
-      // eslint-disable-next-line max-len
       `Matterbridge version ${this.matterbridgeVersion} mode ${hasParameter('bridge') ? 'bridge' : ''}${hasParameter('childbridge') ? 'childbridge' : ''}${hasParameter('controller') ? 'controller' : ''} ` +
         `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}running on ${this.systemInformation.osType} ${this.systemInformation.osRelease} ${this.systemInformation.osPlatform} ${this.systemInformation.osArch}`,
     );
@@ -1667,7 +1666,7 @@ export class Matterbridge extends EventEmitter {
     this.log.info(`***Commissioning controller is commissioned ${this.commissioningController.isCommissioned()} and has ${nodeIds.length} nodes commisioned: `);
     for (const nodeId of nodeIds) {
       this.log.info(`***Connecting to commissioned node: ${nodeId}`);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
       const node = await this.commissioningController.connectNode(nodeId, {
         attributeChangedCallback: (peerNodeId, { path: { nodeId, clusterId, endpointId, attributeName }, value }) =>
           this.log.info(`***Commissioning controller attributeChangedCallback ${peerNodeId}: attribute ${nodeId}/${endpointId}/${clusterId}/${attributeName} changed to ${Logger.toJSON(value)}`),
@@ -1716,7 +1715,6 @@ export class Matterbridge extends EventEmitter {
       this.log.warn(`Cluster: ${cluster.name} attributes:`);
       attributes.forEach((attribute) => {
         this.log.info(
-          // eslint-disable-next-line max-len
           `- endpoint ${attribute.path.endpointId} cluster ${getClusterNameById(attribute.path.clusterId)} (${attribute.path.clusterId}) attribute ${attribute.path.attributeName} (${attribute.path.attributeId}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
         );
       });
@@ -1728,7 +1726,6 @@ export class Matterbridge extends EventEmitter {
       this.log.warn(`Cluster: ${cluster.name} attributes:`);
       attributes.forEach((attribute) => {
         this.log.info(
-          // eslint-disable-next-line max-len
           `- endpoint ${attribute.path.endpointId} cluster ${getClusterNameById(attribute.path.clusterId)} (${attribute.path.clusterId}) attribute ${attribute.path.attributeName} (${attribute.path.attributeId}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
         );
       });
@@ -1740,7 +1737,6 @@ export class Matterbridge extends EventEmitter {
       this.log.warn(`Cluster: ${cluster.name} attributes:`);
       attributes.forEach((attribute) => {
         this.log.info(
-          // eslint-disable-next-line max-len
           `- endpoint ${attribute.path.endpointId} cluster ${getClusterNameById(attribute.path.clusterId)} (${attribute.path.clusterId}) attribute ${attribute.path.attributeName} (${attribute.path.attributeId}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
         );
       });
@@ -2235,7 +2231,6 @@ export class Matterbridge extends EventEmitter {
         let connected = false;
         info.forEach((session) => {
           this.log.info(
-            // eslint-disable-next-line max-len
             `*Active session changed on fabric ${zb}${fabricIndex}${nf} id ${zb}${session.fabric?.fabricId}${nf} vendor ${zb}${session.fabric?.rootVendorId}${nf} ${this.getVendorIdName(session.fabric?.rootVendorId)} ${session.fabric?.label} for ${plg}${pluginName}${nf}`,
             debugStringify(session),
           );
@@ -2839,57 +2834,38 @@ export class Matterbridge extends EventEmitter {
    * @param port The port number to run the frontend server on. Default is 3000.
    */
   async initializeFrontend(port = 8283): Promise<void> {
+    if (hasParameter('test_https')) {
+      await this.initializeHttpsFrontend(8443);
+      return;
+    }
     this.log.debug(`Initializing the frontend on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
 
     const wssPort = 8284;
-    const useHttps = false;
-    // const wssHost = (useHttps ? 'wss://' : 'ws://') + `${os.hostname().toLowerCase()}:${wssPort}`;
-    const wssHost = (useHttps ? 'wss://' : 'ws://') + `${this.systemInformation.ipv4Address}:${wssPort}`;
-    if (!useHttps) {
-      // Create a WebSocket server no certificate required
-      this.webSocketServer = new WebSocketServer({ port: wssPort });
-      // this.log.info(`WebSocket server listening on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
-    } else {
-      // Define the options for HTTPS server
-      // openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout mykey.key -out mycert.pem -config openssl.cnf
-      // For wss connect the browser to https://laptop5_luca:8284/ https://192.168.1.189/log and accept the certificate
-      const serverOptions: https.ServerOptions = {
-        cert: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/mycert.pem')), // Ensure the path is correct
-        key: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/mykey.key')), // Ensure the path is correct
-        // cert: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/laptop5_luca.pem')), // Ensure the path is correct
-        // key: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/laptop5_luca.key')), // Ensure the path is correct
-      };
-      // Create an HTTPS server
-      const httpsServer = https.createServer(serverOptions);
-      // Attach WebSocket server to HTTPS server
-      this.webSocketServer = new WebSocketServer({ server: httpsServer });
-
-      // Listen on a specific port
-      httpsServer.listen(wssPort, () => {
-        this.log.info(`WebSocket server listening on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
-      });
-    }
+    const wssHost = `ws://${this.systemInformation.ipv4Address}:${wssPort}`;
+    // Create a WebSocket server no certificate required
+    this.webSocketServer = new WebSocketServer({ port: wssPort });
+    this.log.debug(`WebSocket server creatd on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
 
     this.webSocketServer.on('connection', (ws: WebSocket) => {
       this.log.info('WebSocketServer client connected');
       this.log.setGlobalCallback(this.wssSendMessage.bind(this));
-      this.log.debug('WebSocketServer activated logger callback');
+      this.log.debug('WebSocketServer logger callback added');
       this.wssSendMessage('Matterbridge', 'info', 'WebSocketServer client connected to Matterbridge');
 
       ws.on('message', (message) => {
-        this.log.info(`WebSocket received message => ${message}`);
+        this.log.info(`WebSocket client sent a message => ${message}`);
       });
 
       ws.on('close', () => {
         this.log.info('WebSocket client disconnected');
         if (this.webSocketServer?.clients.size === 0) {
           this.log.setGlobalCallback(undefined);
-          this.log.debug('WebSocket deactivated logger callback');
+          this.log.debug('All WebSocket client disconnected. WebSocketServer logger callback removed');
         }
       });
 
       ws.on('error', (error: Error) => {
-        this.log.error(`WebSocket error: ${error}`);
+        this.log.error(`WebSocket client error: ${error}`);
       });
     });
 
@@ -2906,6 +2882,31 @@ export class Matterbridge extends EventEmitter {
     // Serve React build directory
     this.expressApp = express();
     this.expressApp.use(express.static(path.join(this.rootDirectory, 'frontend/build')));
+
+    // Fallback for routing
+    this.expressApp.get('*', (req, res) => {
+      this.log.debug('The frontend sent:', req.url);
+      res.sendFile(path.join(this.rootDirectory, 'frontend/build/index.html'));
+    });
+
+    // Listen on HTTP
+    this.expressServer = this.expressApp.listen(port, () => {
+      this.log.info(`The frontend is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.expressServer.on('error', (error: any) => {
+      this.log.error(`Frontend error listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
+      switch (error.code) {
+        case 'EACCES':
+          this.log.error(`Port ${port} requires elevated privileges`);
+          break;
+        case 'EADDRINUSE':
+          this.log.error(`Port ${port} is already in use`);
+          break;
+      }
+      process.exit(1);
+    });
 
     // Endpoint to validate login code
     this.expressApp.post('/api/login', express.json(), async (req, res) => {
@@ -3291,49 +3292,68 @@ export class Matterbridge extends EventEmitter {
       res.json({ message: 'Command received' });
     });
 
+    this.log.debug(`Frontend initialized on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
+  }
+
+  async initializeHttpsFrontend(port = 8443): Promise<void> {
+    this.log.debug(`Initializing the https frontend on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
+
+    // Create the express app that serves the frontend
+    this.expressApp = express();
+
+    // Load the SSL certificate and private key
+    // If we need also the CA certificate, we can add it to the serverOptions object
+    const serverOptions: https.ServerOptions = {
+      cert: await fs.readFile(path.join(this.matterbridgeDirectory, 'certs/cert.pem'), 'utf8'),
+      key: await fs.readFile(path.join(this.matterbridgeDirectory, 'certs/key.pem'), 'utf8'),
+      // ca: await fs.readFile(path.join(this.matterbridgeDirectory, 'certs/ca.pem'), 'utf8'),
+    };
+
+    // Create an HTTPS server with the SSL certificate and private key and attach the express app
+    const httpsServer = https.createServer(serverOptions, this.expressApp);
+
     // Fallback for routing
-    this.expressApp.get('*', (req, res) => {
-      this.log.debug('The frontend sent *', req.url);
-      res.sendFile(path.join(this.rootDirectory, 'frontend/build/index.html'));
+    this.expressApp.get('/', (req, res) => {
+      this.log.debug('The frontend sent:', req.url);
+      res.send('Hello, HTTPS!');
     });
 
-    if (!useHttps) {
-      // Listen on HTTP
-      this.expressServer = this.expressApp.listen(port, () => {
-        this.log.info(`The frontend is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
+    // Listen on a specific port
+    // Connect to the frontend with 'https://localhost:8443'
+    httpsServer.listen(port, () => {
+      this.log.info(`HTTPS server listening on ${UNDERLINE}'https://localhost:${port}${UNDERLINEOFF}${rs}`);
+    });
+
+    // Attach WebSocket server to HTTPS server
+    this.webSocketServer = new WebSocketServer({ server: httpsServer });
+    this.log.info(`WebSocketServer runnig on ${UNDERLINE}wss://localhost:${port}${UNDERLINEOFF}${rs}`);
+
+    // Handle connections to the WebSocketServer
+    // Connect to the WebSocket server using wss from the react frontend this way: const ws = new WebSocket('wss://localhost:8443');
+    this.webSocketServer.on('connection', (ws: WebSocket) => {
+      this.log.info('WebSocketServer: WebSocket client connected');
+
+      ws.on('message', (message) => {
+        this.log.info(`WebSocket client sent message => ${message}`);
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.expressServer.on('error', (error: any) => {
-        this.log.error(`Frontend error listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
-        switch (error.code) {
-          case 'EACCES':
-            this.log.error(`Port ${port} requires elevated privileges`);
-            break;
-          case 'EADDRINUSE':
-            this.log.error(`Port ${port} is already in use`);
-            break;
-          default:
-            this.log.error(`Port ${port} requires elevated privileges`);
+      ws.on('close', () => {
+        this.log.info('WebSocket client disconnected');
+        if (this.webSocketServer?.clients.size === 0) {
+          this.log.info('All WebSocket clients disconnected');
         }
-        process.exit(1);
       });
-    } else {
-      // SSL certificate and private key paths
-      const options = {
-        cert: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/laptop5_luca.pem')), // Ensure the path is correct
-        key: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/laptop5_luca.key')), // Ensure the path is correct
-      };
-      // Create HTTPS server
-      const httpsServer = https.createServer(options, this.expressApp);
-      // Specify the port to listen on, for example 443 for default HTTPS
-      const PORT = 443;
-      httpsServer.listen(PORT, () => {
-        this.log.info(`The frontend is listening on ${UNDERLINE}https://${this.systemInformation.ipv4Address}:${PORT}${UNDERLINEOFF}${rs}`);
-      });
-    }
 
-    this.log.debug(`Frontend initialized on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
+      ws.on('error', (error: Error) => {
+        this.log.error(`WebSocket client error: ${error}`);
+      });
+    });
+
+    // Handle error from the WebSocketServer
+    this.webSocketServer.on('error', (ws: WebSocket, error: Error) => {
+      this.log.error(`WebSocketServer error: ${error}`);
+      return;
+    });
   }
 
   /**
@@ -3376,56 +3396,6 @@ export class Matterbridge extends EventEmitter {
     return attributes;
   }
 }
-/*
-TO IMPLEMENT
-
-import { spawn } from 'child_process';
-
-function restartProcess() {
-  // Spawn a new process
-  const newProcess = spawn(process.argv[0], process.argv.slice(1), {
-    detached: true,
-    stdio: 'inherit',
-  });
-
-  // Handle errors
-  newProcess.on('error', (err) => {
-    console.error('Failed to start new process:', err);
-  });
-
-  // Unreference the new process so that the current process can exit
-  newProcess.unref();
-
-  // Exit the current process
-  cleanup();
-  process.exit();
-}
-
-import React from 'react';
-import Form from "@rjsf/core";
-
-const schema = {
-  title: "Todo",
-  type: "object",
-  required: ["title"],
-  properties: {
-    title: {type: "string", title: "Title", default: "A new task"},
-    done: {type: "boolean", title: "Done?", default: false}
-  }
-};
-
-const log = (type) => console.log.bind(console, type);
-
-function Todo() {
-  return (
-    <Form schema={schema}
-          onChange={log("changed")}
-          onSubmit={log("submitted")}
-          onError={log("errors")} />
-  );
-}
-
-export default Todo;
 
 /*
 How frontend was created

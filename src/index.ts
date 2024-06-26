@@ -63,9 +63,6 @@ export * from './cluster/RadonConcentrationMeasurementCluster.js';
 export * from './cluster/SmokeCoAlarmCluster.js';
 export * from './cluster/TvocCluster.js';
 
-// export * from './cluster/BridgedDeviceBasicInformationCluster.js'; // Already defined in matter.js like rev. 2
-// export * from './cluster/FanControlCluster.js'; // Already defined in matter.js like rev. 2
-
 export * from './utils.js';
 
 async function main() {

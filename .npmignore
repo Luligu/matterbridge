@@ -173,11 +173,26 @@ bridge-groups.json
 .matterbridge.backup.json
 node_storage
 
+# eslint
+.eslintrc
+.eslintrc.json
+.eslintignore
+eslint.config.js
+
+# prettier
+.prettierignore
+.prettierrc.json
+prettier.config.js
+
+# jest
+jest.config.js
+
+# screenshot
+screenshot
+
+# local
 TODO.md
 matterbridge.service
-docker.MD
-Dockerfile
-docker-compose.yml
 docker
 
 migrationV8.txt

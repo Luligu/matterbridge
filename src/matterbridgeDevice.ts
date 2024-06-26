@@ -1360,7 +1360,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         },
         {
           resetCounts: async (data) => {
-            // eslint-disable-next-line no-console
             this.log.debug('Matter command: resetCounts');
             await this.commandHandler.executeHandler('resetCounts', data);
           },
@@ -1492,56 +1491,45 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {
         moveToHue: async ({ request, attributes, endpoint }) => {
-          // eslint-disable-next-line no-console
           this.log.debug('Matter command: moveToHue request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal());
           // attributes.currentHue.setLocal(request.hue);
           this.commandHandler.executeHandler('moveToHue', { request, attributes, endpoint });
         },
         moveHue: async () => {
-          // eslint-disable-next-line no-console
           this.log.error('Matter command: moveHue not implemented');
         },
         stepHue: async () => {
-          // eslint-disable-next-line no-console
           this.log.error('Matter command: stepHue not implemented');
         },
         moveToSaturation: async ({ request, attributes, endpoint }) => {
-          // eslint-disable-next-line no-console
           this.log.debug('Matter command: moveToSaturation request:', request, 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
           // attributes.currentSaturation.setLocal(request.saturation);
           this.commandHandler.executeHandler('moveToSaturation', { request, attributes, endpoint });
         },
         moveSaturation: async () => {
-          // eslint-disable-next-line no-console
           this.log.error('Matter command: moveSaturation not implemented');
         },
         stepSaturation: async () => {
-          // eslint-disable-next-line no-console
           this.log.error('Matter command: stepSaturation not implemented');
         },
         moveToHueAndSaturation: async ({ request, attributes, endpoint }) => {
-          // eslint-disable-next-line no-console
           this.log.debug('Matter command: moveToHueAndSaturation request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal(), 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
           // attributes.currentHue.setLocal(request.hue);
           // attributes.currentSaturation.setLocal(request.saturation);
           this.commandHandler.executeHandler('moveToHueAndSaturation', { request, attributes, endpoint });
         },
         stopMoveStep: async () => {
-          // eslint-disable-next-line no-console
           this.log.error('Matter command: stopMoveStep not implemented');
         },
         moveToColorTemperature: async ({ request, attributes, endpoint }) => {
-          // eslint-disable-next-line no-console
           this.log.debug('Matter command: moveToColorTemperature request:', request, 'attributes.colorTemperatureMireds:', attributes.colorTemperatureMireds.getLocal());
           // attributes.colorTemperatureMireds.setLocal(request.colorTemperatureMireds);
           this.commandHandler.executeHandler('moveToColorTemperature', { request, attributes, endpoint });
         },
         moveColorTemperature: async () => {
-          // eslint-disable-next-line no-console
           this.log.error('Matter command: moveColorTemperature not implemented');
         },
         stepColorTemperature: async () => {
-          // eslint-disable-next-line no-console
           this.log.error('Matter command: stepColorTemperature not implemented');
         },
       },
@@ -1683,22 +1671,18 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {
         upOrOpen: async (data) => {
-          // eslint-disable-next-line no-console
           this.log.debug('Matter command: upOrOpen');
           await this.commandHandler.executeHandler('upOrOpen', data);
         },
         downOrClose: async (data) => {
-          // eslint-disable-next-line no-console
           this.log.debug('Matter command: downOrClose');
           await this.commandHandler.executeHandler('downOrClose', data);
         },
         stopMotion: async (data) => {
-          // eslint-disable-next-line no-console
           this.log.debug('Matter command: stopMotion');
           await this.commandHandler.executeHandler('stopMotion', data);
         },
         goToLiftPercentage: async (data) => {
-          // eslint-disable-next-line no-console
           this.log.debug(
             `Matter command: goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
               `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
@@ -1734,7 +1718,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           tilt: 0,
         });
       }
-      // eslint-disable-next-line no-console
+
       // console.log(`Set WindowCovering initial currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
     }
   }
@@ -1757,7 +1741,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         tilt: 0,
       });
     }
-    // eslint-disable-next-line no-console
+
     // console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
   }
 
@@ -1770,7 +1754,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (!windowCovering) return;
     windowCovering.setOperationalStatusAttribute({ global: status, lift: status, tilt: 0 });
-    // eslint-disable-next-line no-console
+
     // console.log(`Set WindowCovering operationalStatus: ${status}`);
   }
 
@@ -1783,7 +1767,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (!windowCovering) return undefined;
     const status = windowCovering.getOperationalStatusAttribute();
-    // eslint-disable-next-line no-console
+
     // console.log(`Get WindowCovering operationalStatus: ${status.global}`);
     return status.global;
   }
@@ -1799,7 +1783,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (!windowCovering) return;
     windowCovering.setCurrentPositionLiftPercent100thsAttribute(position);
     windowCovering.setTargetPositionLiftPercent100thsAttribute(position);
-    // eslint-disable-next-line no-console
+
     // console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
   }
 
@@ -1822,12 +1806,10 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {
         lockDoor: async (data) => {
-          // eslint-disable-next-line no-console
           this.log.debug('Matter command: lockDoor', data.request);
           await this.commandHandler.executeHandler('lockDoor', data);
         },
         unlockDoor: async (data) => {
-          // eslint-disable-next-line no-console
           this.log.debug('Matter command: unlockDoor', data.request);
           await this.commandHandler.executeHandler('unlockDoor', data);
         },
@@ -2158,7 +2140,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {
         enableDisableAlarm: async ({ request, attributes }) => {
-          // eslint-disable-next-line no-console
           this.log.debug('Matter command: enableDisableAlarm', request);
           await this.commandHandler.executeHandler('enableDisableAlarm', { request, attributes });
         },
@@ -2386,7 +2367,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {
         setpointRaiseLower: async ({ request, attributes }) => {
-          // eslint-disable-next-line no-console
           this.log.debug('Matter command: setpointRaiseLower', request);
           await this.commandHandler.executeHandler('setpointRaiseLower', { request, attributes });
         },
