@@ -3295,6 +3295,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Frontend initialized on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
   }
 
+  // Just for testing purposes. Use with matterbridge -test_https so no bridge is loaded
   async initializeHttpsFrontend(port = 8443): Promise<void> {
     this.log.debug(`Initializing the https frontend on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
 
@@ -3303,6 +3304,10 @@ export class Matterbridge extends EventEmitter {
 
     // Load the SSL certificate and private key
     // If we need also the CA certificate, we can add it to the serverOptions object
+    // I created dev certificates with openssl using the following commands:
+    // openssl genrsa -out key.pem 2048
+    // openssl req -new -key key.pem -out csr.pem
+    // openssl x509 -req -days 365 -in csr.pem -signkey key.pem -out cert.pem
     const serverOptions: https.ServerOptions = {
       cert: await fs.readFile(path.join(this.matterbridgeDirectory, 'certs/cert.pem'), 'utf8'),
       key: await fs.readFile(path.join(this.matterbridgeDirectory, 'certs/key.pem'), 'utf8'),
