@@ -1,10 +1,33 @@
-# Changelog
+# <img src="https://github.com/Luligu/matterbridge/blob/main/frontend/public/matterbridge%2064x64.png" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge changelog
 
 All notable changes to this project will be documented in this file.
+
+If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
+
+## [1.3.5] - 2024-06-26
+
+### Added
+
+- [matterbridgeDevice]: Added createDefaultLatchingSwitchClusterServer and getDefaultLatchingSwitchClusterServer for (https://github.com/Luligu/matterbridge-shelly)
+- [frontend]: Added interfaceName
+
+### Changed
+
+- [package]: Updated to eslint 9.5.0 and adopted the flat config
+- [package]: Updated to use prettier and jest with the flat config
+- [matterbridge]: Updated dependencies
+- [matterbridgeDevice]: Updated ColorControl commandHandlers for improved compatibility with (https://github.com/Luligu/matterbridge-shelly)
+- [matterbridge]:  The "plugin disable" and "plugin remove" methods now also remove the registered devices from the bridge
+- [matterbridge]: The "plugin add" method now loads, starts, and configures the plugin
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
 
 ## [1.3.4] - 2024-06-23
 
 ### Fixed
+
 - [matterbridge]: Fixed exports
 
 <a href="https://www.buymeacoffee.com/luligugithub">
@@ -14,6 +37,7 @@ All notable changes to this project will be documented in this file.
 ## [1.3.3] - 2024-06-22
 
 ### Changed
+
 - [matterbridge]: Updated dependencies
 - [matterbridge]: When a plugin is in an error state, the bridge does not start to avoid causing the controllers to delete the registered devices and lose the configuration (e.g. room and automations).
 
@@ -41,18 +65,20 @@ Features:
 - A 10-minute timer checks if the device has reported in that time.
 
 ### Added
+
 - [matterbridgeDevice]: Added all clusters for airQualitySensor:
-    CarbonMonoxideConcentrationMeasurement,
-    CarbonDioxideConcentrationMeasurement,
-    NitrogenDioxideConcentrationMeasurement,
-    OzoneConcentrationMeasurement,
-    FormaldehydeConcentrationMeasurement,
-    Pm1ConcentrationMeasurement,
-    Pm25ConcentrationMeasurement,
-    Pm10ConcentrationMeasurement,
-    RadonConcentrationMeasurement,
+  CarbonMonoxideConcentrationMeasurement,
+  CarbonDioxideConcentrationMeasurement,
+  NitrogenDioxideConcentrationMeasurement,
+  OzoneConcentrationMeasurement,
+  FormaldehydeConcentrationMeasurement,
+  Pm1ConcentrationMeasurement,
+  Pm25ConcentrationMeasurement,
+  Pm10ConcentrationMeasurement,
+  RadonConcentrationMeasurement,
 
 ### Changed
+
 - [matterbridge]: Updated dependencies
 - [matter.js]: Updated matter.js to 0.9.2
 
@@ -63,6 +89,7 @@ Features:
 ## [1.3.1] - 2024-06-20
 
 ### Changed
+
 - [matterbridge]: Updated dependencies
 - [matterbridge]: Refactor the loading of schemas, now they load from the plugin directory.
 - [matterbridge]: Moved getPluginVersion to the start also for disabled plugins.
@@ -77,21 +104,25 @@ This release is all about Matter 1.3
 
 If you are wondering whether the controllers already support Matter 1.3, the answer is unfortunately no.
 
-Only Home Automation supports:
+SmartThings and Home Automation support:
+
 - airQualitySensor (Matter 1.2)
 
-and (probably only like BooleanState cluster)
+Home Automation supports (probably only like BooleanState cluster):
+
 - waterFreezeDetector (Matter 1.3)
 - waterLeakDetector (Matter 1.3)
 - rainSensor (Matter 1.3)
 
 ### Changed
+
 - [matterbridge]: Updated dependencies
 - [matterbridge]: Default config and schema for the new plugin matterbridge-shelly (will be published after this release)
 
 ### Added
+
 - [matterbridgeDevice]: Added waterFreezeDetector, waterLeakDetector, rainSensor, smokeCoAlarm, electricalSensor and deviceEnergyManagement device types as conformance to Matter 1.3
-- [matterbridgeDevice]: Added all clusters needed for the above Matter 1.3 device types 
+- [matterbridgeDevice]: Added all clusters needed for the above Matter 1.3 device types
 - [matterbridgeDevice]: Added FanControl cluster (rev. 2) helper methods for the Fan device type
 - [matterbridge]: Added parameter -matterlogger [debug | info | notice | warn | error | fatal] to set the matter.js Logger separately from the Matterbridge log
 - [frontend]: Added logger level settings to reflect -matterlogger [debug | info | notice | warn | error | fatal]
@@ -103,6 +134,7 @@ and (probably only like BooleanState cluster)
 ## [1.2.22] - 2024-06-04
 
 ### Changed
+
 - [matterbridge]: Updated dependencies
 - [matterbridge]: Default config and schema for the new plugin matterbridge-shelly
 
@@ -113,9 +145,11 @@ and (probably only like BooleanState cluster)
 ## [1.2.21] - 2024-06-04
 
 ### Changed
+
 - [matterbridge]: Updated dependencies
 
 ### Fixed
+
 - [matterbridge]: Removed error stack from log error for npm get versions
 - [matterbridge]: Fixed the error that caused -add plugin to fail at the first run of matterbridge
 
@@ -126,10 +160,12 @@ and (probably only like BooleanState cluster)
 ## [1.2.20] - 2024-06-03
 
 ### Changed
+
 - [matter.js]: Update to @project-chip/matter-node.js v. 0.9.1
 - [matterbridge]: Updated dependencies
 
 ### Fixed
+
 - [matterbridge]: Log level of Plugin already configured is now info
 
 <a href="https://www.buymeacoffee.com/luligugithub">
@@ -139,15 +175,18 @@ and (probably only like BooleanState cluster)
 ## [1.2.19] - 2024-06-01
 
 ### Breaking change on Matterbridge start!
+
 Now the plugins load and start before the controller connects.
 A special thank to Tamer Salah (https://github.com/tammeryousef1006) for his help testing all controllers.
 
 ### Changed
+
 - [matterbridge]: In bridge mode the plugins are loaded and started immediately
 - [matterbridge]: In child bridge mode the plugins are loaded and started immediately
 - [matterbridge]: Updated dependencies
 
 ### Fixed
+
 - [frontend]: Fixed the error badge in the registered plugins window
 - [frontend]: Added tooltip to the plugin update badge in the registered plugins window
 
@@ -158,13 +197,16 @@ A special thank to Tamer Salah (https://github.com/tammeryousef1006) for his hel
 ## [1.2.18] - 2024-05-28
 
 ### Changed
+
 - [matterbridgeDevice]: bridgedNode and powerSource device types as conformance to Matter 1.3
 
 ### Fixed
+
 - [matterbridge]: Fixed /api/settings error after resetting commissioning server
 - [matterbridge]: Added error message and clean shutdown when WebSocketServer or ExpressServer ports are already in use
 
 ### Added
+
 - [frontend]: Added a dropdown menu in Add Remove plugin to select the plugins
 
 <a href="https://www.buymeacoffee.com/luligugithub">
@@ -174,14 +216,17 @@ A special thank to Tamer Salah (https://github.com/tammeryousef1006) for his hel
 ## [1.2.17] - 2024-05-25
 
 ### Fixed
+
 - [matterbridge]: Fixed the issue causing the commissioning reset for all fabrics when only one is removed. (Apple uses 2 fabrics: Home app and Key chain).
 
 ### Changed
+
 - [matterbridge]: Preliminary integration for the new matterbridge-shelly plugin (still not published)
 - [matterbridge]: Updated dependencies
 - [matterbridge]: Moved eslint to @typescript-eslint/strict and @typescript-eslint/stylistic
 
 ### Added
+
 - [frontend]: Fetch data in Home page every minute
 - [device]: Added new method addClusterServerFromList
 - [device]: Added ModeSelectClusterServer (only for testing)
@@ -195,6 +240,7 @@ A special thank to Tamer Salah (https://github.com/tammeryousef1006) for his hel
 ## [1.2.16] - 2024-05-15
 
 ### Changed
+
 - [matter.js]: Update to @project-chip/matter-node.js v. 0.9.0
 
 ### Added
@@ -224,7 +270,6 @@ A special thank to Tamer Salah (https://github.com/tammeryousef1006) for his hel
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
 </a>
-
 
 ## [1.2.14] - 2024-05-09
 
@@ -298,7 +343,6 @@ A special thank to Tamer Salah (https://github.com/tammeryousef1006) for his hel
 
 - [extension]: Finalized implementation of zigbee2MQTT internal extension v. 1.0.0.
 
-
 ## [1.2.9] - 2024-04-19
 
 ### Added
@@ -319,6 +363,7 @@ A special thank to Tamer Salah (https://github.com/tammeryousef1006) for his hel
 ## [1.2.8] - 2024-04-16
 
 ### Changed
+
 - [matter.js]: Update to @project-chip/matter-node.js v. 0.8.1
 
 ### Added
@@ -363,10 +408,10 @@ A special thank to Tamer Salah (https://github.com/tammeryousef1006) for his hel
 - [frontend]: Added sudo to the spawned command to execute update and install from frontend (for Linux this may be necessary).
 - [childbridge mode]: Fixed a syncronize issue on the start.
 
-
 ## [1.2.5] - 2024-04-08
 
 ### Added
+
 - [frontend]: Added update Matterbridge (spawn the command: 'npm -install -g matterbridge'). The console inherit the the spawned process running so you can check.
 - [frontend]: Added install plugin (spawn the command: 'npm -install -g plugin-name'). The console inherit the the spawned process running so you can check.
 - [frontend]: Added shutdown button.
@@ -377,9 +422,11 @@ A special thank to Tamer Salah (https://github.com/tammeryousef1006) for his hel
 ## [1.2.4] - 2024-04-01
 
 ### Changed
+
 - [matter.js]: Updated the code to matter.js release 0.80.0.
 
 ### Added
+
 - [MatterbridgeDevice]: Added DoorLock and Thermostat clusters.
 
 ## [1.2.3] - 2024-03-28
@@ -413,6 +460,7 @@ A special thank to Tamer Salah (https://github.com/tammeryousef1006) for his hel
 ## [1.2.0] - 2024-03-23
 
 ### Breaking change on plugin default entry point and platform constructor!
+
 - [plugin default entry point]: export default function initializePlugin(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig)
 - [platform constructor]: constructor(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig)
 
@@ -435,7 +483,7 @@ A special thank to Tamer Salah (https://github.com/tammeryousef1006) for his hel
 
 ### Added
 
-- [matterbridge]: added unregisterAllDevices() to the platforms 
+- [matterbridge]: added unregisterAllDevices() to the platforms
 - [matterbridge]: added unregisterDevice(device: MatterbridgeDevice) to the platforms
 - [frontend]: Enable and disable plugin are now available. Restart Matteerbridge after.
 - [frontend]: Frontend got updated to 0.8.2.
@@ -477,8 +525,8 @@ A special thank to Tamer Salah (https://github.com/tammeryousef1006) for his hel
 
 ### Added
 
-- [debug]: Added public property enableDebug to Matterbridge. 
-- [debug]: Added parameter -debug to the command line. 
+- [debug]: Added public property enableDebug to Matterbridge.
+- [debug]: Added parameter -debug to the command line.
 
 ### Fixed
 
@@ -492,13 +540,12 @@ A special thank to Tamer Salah (https://github.com/tammeryousef1006) for his hel
 
 - [cli]: Updated the loading from cli.
 
-
 ## [1.1.3] - 2024-03-10
 
 ### Added
 
-- [onMatterStarted]: onMatterStarted() is called after matter server started. 
-- [onConfigure]: onConfigure() is called after the platform controller is commissioned. 
+- [onMatterStarted]: onMatterStarted() is called after matter server started.
+- [onConfigure]: onConfigure() is called after the platform controller is commissioned.
 
 ### Changed
 

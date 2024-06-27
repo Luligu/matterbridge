@@ -12,11 +12,10 @@
 
 ---
 
-
-Matterbridge is a matter.js plugin manager. 
+Matterbridge is a matter.js plugin manager.
 
 It allows you to have all your Matter devices up and running in a couple of minutes without
-having to deal with the pairing process of each single device. 
+having to deal with the pairing process of each single device.
 
 The developer just focuses on the device development extending the provided classes.
 
@@ -24,18 +23,22 @@ Just pair Matterbridge once, and it will load all your registered plugins.
 
 This project aims to allow the porting of homebridge plugins to matterbridge plugins without recoding everything.
 
-It creates a device to pair in any ecosystem like Apple Home, Google Home, Amazon Alexa, or 
+It creates a device to pair in any ecosystem like Apple Home, Google Home, Amazon Alexa, or
 any other ecosystem supporting Matter like Home Assistant.
 
 You don't need a hub or a dedicated new machine.
 
 No complex setup just copy paste the installation scripts.
 
-Matterbridge is light weight and run also on slow Linux machine with 512MB of memory. 
+Matterbridge is light weight and run also on slow Linux machine with 512MB of memory.
 
 It runs perfectly on Windows too.
 
-The project is build on top of https://github.com/project-chip/matter.js. 
+If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
+
+## Acknowledgements
+
+The project is build on top of https://github.com/project-chip/matter.js.
 
 A special thank to Apollon77 for his incredible work.
 
@@ -44,16 +47,19 @@ A special thank to Apollon77 for his incredible work.
 Follow these steps to install Matterbridge:
 
 on Windows:
+
 ```
 npm install -g matterbridge
 ```
 
 on Linux (you need the necessary permissions):
+
 ```
 sudo npm install -g matterbridge
 ```
 
 Test the installation with:
+
 ```
 matterbridge -bridge
 ```
@@ -78,7 +84,7 @@ matterbridge -childbridge
 
 Matterbridge exposes each registered plugins, and you have to pair each one by scanning the QR code shown in the frontend or in the console.
 
-### Use matterbridge -help to see the command line syntax 
+### Use matterbridge -help to see the command line syntax
 
 ```
 matterbridge -help
@@ -91,6 +97,7 @@ Matterbridge has a frontend available on http://localhost:8283
 You can change the default port by adding the frontend parameter when you launch it.
 
 Here's how to specify a different port number:
+
 ```
 matterbridge -bridge -frontend [port number]
 ```
@@ -142,7 +149,7 @@ Features:
 
 ### Accessory platform example
 
-This an example of an accessory platform plugin. 
+This an example of an accessory platform plugin.
 
 It exposes a virtual cover device that continuously moves position and shows how to use the command handlers (you can control the device).
 
@@ -176,16 +183,16 @@ Matterbridge can run as many plugins as you want.
 
 [Room plugin with history](https://github.com/Luligu/matterbridge-eve-room)
 
-The history works in both bridge and childbridge mode. 
+The history works in both bridge and childbridge mode.
 
 The Eve app only shows the history when the plugins run like an AccessoryPlatform in childbridge mode (this means the plugin is paired directly).
-
 
 ## How to install and register a production-level plugin (from npm)
 
 To install i.e. https://github.com/Luligu/matterbridge-zigbee2mqtt
 
 On windows:
+
 ```
 cd $HOME\Matterbridge
 npm install -g matterbridge-zigbee2mqtt
@@ -193,6 +200,7 @@ matterbridge -add matterbridge-zigbee2mqtt
 ```
 
 On linux:
+
 ```
 cd ~/Matterbridge
 sudo npm install -g matterbridge-zigbee2mqtt
@@ -204,11 +212,13 @@ matterbridge -add matterbridge-zigbee2mqtt
 To install i.e. https://github.com/Luligu/matterbridge-example-accessory-platform
 
 On windows:
+
 ```
 cd $HOME\Matterbridge
 ```
 
 On linux:
+
 ```
 cd ~/Matterbridge
 ```
@@ -240,13 +250,13 @@ matterbridge -add [plugin path or plugin name]
 matterbridge -remove [plugin path or plugin name]
 ```
 
-## How to disable a registered plugin 
+## How to disable a registered plugin
 
 ```
 matterbridge -disable [plugin path or plugin name]
 ```
 
-## How to enable a registered plugin 
+## How to enable a registered plugin
 
 ```
 matterbridge -enable [plugin path or plugin name]
@@ -278,7 +288,6 @@ The easiest way is to clone:
 
 - https://github.com/Luligu/matterbridge-example-accessory-platform if you want to create an Accessory Platform Plugin.
 
-
 - https://github.com/Luligu/matterbridge-example-dynamic-platform if you want to create a Dynamic Platform Plugin.
 
 Then change the name (keep matterbridge- at the beginning of the name), version, description and author in the package.json.
@@ -288,39 +297,48 @@ Add your plugin logic in platform.ts.
 ## MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform api
 
 ### public name: string
+
 The plugin name.
 
 ### public type: string
+
 The plugin platform type.
 
 ### public config: object
+
 The plugin config (loaded before the platform constructor is called and saved after onShutdown() is called).
 Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for example)
 
 ### async onStart(reason?: string)
-The method onStart() is where you have to create your MatterbridgeDevice and add all needed clusters and command handlers. 
+
+The method onStart() is where you have to create your MatterbridgeDevice and add all needed clusters and command handlers.
 
 The MatterbridgeDevice class has the create cluster methods already done and all command handlers needed (see plugin examples).
 
 The method is called when Matterbridge load the plugin.
 
 ### async onConfigure()
-The method onConfigure() is where you can configure or initialize your device. 
+
+The method onConfigure() is where you can configure or initialize your device.
 
 The method is called when the platform is commissioned.
 
 ### async onShutdown(reason?: string)
-The method onShutdown() is where you have to eventually cleanup some resources. 
+
+The method onShutdown() is where you have to eventually cleanup some resources.
 
 The method is called when Matterbridge is shutting down.
 
 ### async registerDevice(device: MatterbridgeDevice)
+
 After you created your device, add it to the platform.
 
 ### async unregisterDevice(device: MatterbridgeDevice)
+
 You can unregister one or more device.
 
 ### async unregisterAllDevices()
+
 You can unregister all devices you added.
 
 It can be useful to call this method from onShutdown() if you don't want to keep all the devices during development.
@@ -360,31 +378,37 @@ WantedBy=multi-user.target
 ```
 
 If you modify it after, then run:
+
 ```
 sudo systemctl daemon-reload
 ```
 
 ### Start Matterbridge
+
 ```
 sudo systemctl start matterbridge
 ```
 
 ### Stop Matterbridge
+
 ```
 sudo systemctl stop matterbridge
 ```
 
 ### Show Matterbridge status
+
 ```
 sudo systemctl status matterbridge.service
 ```
 
 ### View the log of Matterbridge in real time (this will show the log with colors)
+
 ```
 sudo journalctl -u matterbridge.service -f --output cat
 ```
 
 ### Delete the logs older then 3 days (all of them not only the ones of Matterbridge!)
+
 ```
 sudo journalctl --vacuum-time=3d
 ```
@@ -442,6 +466,7 @@ services:
       - "${HOME}/Matterbridge:/root/Matterbridge" # Mounts the Matterbridge plugin directory
       - "${HOME}/.matterbridge:/root/.matterbridge" # Mounts the Matterbridge storage directory
 ```
+
 copy it in the home directory or edit the existing one to add the matterbridge service.
 
 Then start docker compose with:
@@ -451,50 +476,59 @@ docker compose up -d
 ```
 
 ### Stop with docker compose
+
 ```
 docker compose down
 ```
 
 ### Update with docker compose
+
 ```
 docker compose pull
 ```
 
 ### Inspect the container
+
 ```
 docker container inspect matterbridge
 ```
 
 ### Start the Docker container
+
 ```
 docker start matterbridge
 ```
 
 ### Stop the Docker container
+
 ```
 docker stop matterbridge
 ```
 
 ### Restart the Docker container
+
 ```
 docker restart matterbridge
 ```
 
 ### Shows the logs
+
 ```
 docker logs matterbridge
 ```
 
 ### Shows the logs real time (tail)
+
 ```
 docker logs --tail 1000 -f matterbridge
 ```
 
 # Known general issues
 
-## Session XYZ does not exist 
+## Session XYZ does not exist
+
 This message may appear after Matterbridge restarts, indicating that the controller is still using a session from the previous connection that has since been closed.
-After some time, the controller will reconnect. 
+After some time, the controller will reconnect.
 In this context, the message is not indicative of a problem.
 
 ## Apple Home
@@ -509,19 +543,26 @@ The DoorLock cluster in the Home app takes a while to get online. The Home app s
 
 Solved with the version 17.5 of the HomePod/AppleTV.
 
-## Home Assistant 
+## Home Assistant
 
-So far is the only controller supporting some Matter 1.3 device type:
-- air quality sensor
+So far is the only controller supporting some Matter 1.2 and 1.3 device type:
+
+- air quality sensor (Matter 1.2)
+
+Also supports (probably only like BooleanState cluster):
+
+- waterFreezeDetector (Matter 1.3)
+- waterLeakDetector (Matter 1.3)
+- rainSensor (Matter 1.3)
 
 HA also support electrical measurements from EveHistoryCluster (used in Matterbridge plugins)
 
 ## Home Assistant issues (Matter Server for HA is still in Beta)
 
-- If HA doesn't show all devices just reload the Matter Server or reboot HA
-- Home Assistant doesn't seem to react when a device is removed from the bridge: they remain in HA unavailable forever...
-- In the Home Assistant Core log you can see sometimes error messages relating to unique id not found but it seems to be an issue related to missing some matter packet during the commissioning and subscription phase...
-- Version 6.1.0 is more stable and has solved the problem of the commissioning window: now pairing is again easy. Use Apple Home when you have to choose the controller type even if you pair Matterbridge directly with HA.
+- If HA doesn't show all devices, reload the Matter Server Integration or reboot HA
+- Home Assistant doesn't seem to always react when a device is removed from the bridge: they remain in HA unavailable forever...
+- Version 6.1.2 is stable.
+- Use Apple Home when you have to choose the controller type even if you pair Matterbridge directly with HA.
 
 ## Google Home
 
@@ -534,11 +575,12 @@ Tested by Tamer Salah
 Alexa needs the standard port 5540 to pair (from matter.js readme).
 
 There is no support for these Matter device types:
+
 - pressure sensor
 - flow sensor
 - light sensor
 
-In the zigbee2mqtt and shelly plugins select the option to expose 
+In the zigbee2mqtt and shelly plugins select the option to expose
 the switch devices like light or outlet cause they don't show up like switch
 (Matterbridge uses a modified switch device type without client cluster).
 
@@ -547,6 +589,11 @@ the switch devices like light or outlet cause they don't show up like switch
 Tested by Tamer Salah
 
 No issues reported so far.
+
+Supports also:
+
+- air Quality Sensor
+- smoke Co Alarm
 
 ## eWeLink
 
@@ -560,7 +607,7 @@ Check the matter.js readme.
 
 # Contribution Guidelines
 
-Thank you for your interest in contributing to my project! 
+Thank you for your interest in contributing to my project!
 
 I warmly welcome contributions to this project! Whether it's reporting bugs, proposing new features, updating documentation, or writing code, your help is greatly appreciated.
 
@@ -583,7 +630,7 @@ We believe in a welcoming and respectful community for all. Please make sure to 
 
 ## Support
 
-If you find this project helpful and you wish to support the ongoing development, you can do so by buying me a coffee. 
+If you find this project helpful and you wish to support the ongoing development, you can do so by buying me a coffee.
 On my side I sponsor the packages that I use in this project. It would be nice to have sponsors too.
 Click on the badge below to get started:
 

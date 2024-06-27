@@ -39,6 +39,7 @@ import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridge
 import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import { shelly_config, somfytahoma_config, zigbee2mqtt_config } from './defaultConfigSchema.js';
 import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
+import { logInterfaces } from './utils/utils.js';
 
 // @project-chip/matter-node.js
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
@@ -97,6 +98,7 @@ interface RegisteredDevice {
 
 // Define an interface for storing the system information
 interface SystemInformation {
+  interfaceName: string;
   macAddress: string;
   ipv4Address: string;
   ipv6Address: string;
@@ -139,6 +141,7 @@ const typ = '\u001B[38;5;207m';
  */
 export class Matterbridge extends EventEmitter {
   public systemInformation: SystemInformation = {
+    interfaceName: '',
     macAddress: '',
     ipv4Address: '',
     ipv6Address: '',
@@ -189,6 +192,8 @@ export class Matterbridge extends EventEmitter {
   private port = 5540;
   private log!: AnsiLogger;
   private hasCleanupStarted = false;
+  private plugins = new Map<string, RegisteredPlugin>();
+  private devices = new Map<string, RegisteredDevice>();
   private registeredPlugins: RegisteredPlugin[] = [];
   private registeredDevices: RegisteredDevice[] = [];
   private nodeStorage: NodeStorageManager | undefined;
@@ -357,7 +362,8 @@ export class Matterbridge extends EventEmitter {
       - bridge:                start Matterbridge in bridge mode
       - childbridge:           start Matterbridge in childbridge mode
       - frontend [port]:       start the frontend on the given port (default 8283)
-      - debug:                 enable debug mode (default false)
+      - debug:                 enable the Matterbridge debug mode (default false)
+      - matterlogger:          set the matter.js logger level: debug | info | notice | warn | error | fatal (default info)
       - reset:                 remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
       - factoryreset:          remove all commissioning information and reset all internal storages. Shutdown Matterbridge before using it!
       - list:                  list the registered plugins
@@ -410,7 +416,6 @@ export class Matterbridge extends EventEmitter {
     // Log system info and create .matterbridge directory
     await this.logNodeAndSystemInfo();
     this.log.info(
-      // eslint-disable-next-line max-len
       `Matterbridge version ${this.matterbridgeVersion} mode ${hasParameter('bridge') ? 'bridge' : ''}${hasParameter('childbridge') ? 'childbridge' : ''}${hasParameter('controller') ? 'controller' : ''} ` +
         `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}running on ${this.systemInformation.osType} ${this.systemInformation.osRelease} ${this.systemInformation.osPlatform} ${this.systemInformation.osArch}`,
     );
@@ -482,12 +487,19 @@ export class Matterbridge extends EventEmitter {
     }
 
     if (hasParameter('logstorage')) {
-      this.log.info(`${plg}matterbridge${nf} storage log`);
+      this.log.info(`${plg}Matterbridge${nf} storage log`);
       await this.nodeContext?.logStorage();
       for (const plugin of this.registeredPlugins) {
         this.log.info(`${plg}${plugin.name}${nf} storage log`);
         await plugin.nodeContext?.logStorage();
       }
+      this.emit('shutdown');
+      process.exit(0);
+    }
+
+    if (hasParameter('loginterfaces')) {
+      this.log.info(`${plg}Matterbridge${nf} network interfaces log`);
+      logInterfaces();
       this.emit('shutdown');
       process.exit(0);
     }
@@ -623,10 +635,13 @@ export class Matterbridge extends EventEmitter {
           continue;
         }
         plugin.error = false;
+        plugin.locked = false;
         plugin.loaded = false;
         plugin.started = false;
         plugin.configured = false;
         plugin.connected = undefined;
+        plugin.registeredDevices = undefined;
+        plugin.addedDevices = undefined;
         plugin.qrPairingCode = undefined;
         plugin.manualPairingCode = undefined;
         this.loadPlugin(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
@@ -656,10 +671,13 @@ export class Matterbridge extends EventEmitter {
           continue;
         }
         plugin.error = false;
+        plugin.locked = false;
         plugin.loaded = false;
         plugin.started = false;
         plugin.configured = false;
         plugin.connected = false;
+        plugin.registeredDevices = undefined;
+        plugin.addedDevices = undefined;
         plugin.qrPairingCode = (await plugin.nodeContext?.get<string>('qrPairingCode', undefined)) ?? undefined;
         plugin.manualPairingCode = (await plugin.nodeContext?.get<string>('manualPairingCode', undefined)) ?? undefined;
         this.loadPlugin(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
@@ -667,6 +685,30 @@ export class Matterbridge extends EventEmitter {
       await this.startMatterbridge();
       return;
     }
+  }
+
+  async savePluginsToStorage() {
+    if (!this.nodeContext) {
+      this.log.error('loadPluginsFromStorage() error: the node context is not initialized');
+      return;
+    }
+    // Convert the map to an array
+    // const pluginArray = Array.from(this.plugins.values());
+    // await this.nodeContext.set('plugins', pluginArray);
+    // TODO remove after migration done
+    await this.nodeContext.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
+  }
+
+  async loadPluginsFromStorage() {
+    if (!this.nodeContext) {
+      this.log.error('loadPluginsFromStorage() error: the node context is not initialized');
+      return;
+    }
+    // Load the array from storage and convert it back to a map
+    // const pluginArray = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
+    // for (const plugin of pluginArray) this.plugins.set(plugin.name, plugin);
+    // TODO remove after migration done
+    this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
   }
 
   /**
@@ -693,7 +735,6 @@ export class Matterbridge extends EventEmitter {
       this.log.debug(`Package.json not found at ${packageJsonPath}`);
       this.log.debug(`Trying at ${this.globalModulesDirectory}`);
       packageJsonPath = path.join(this.globalModulesDirectory, pluginPath);
-      // this.log.debug(`Got ${packageJsonPath}`);
     }
     try {
       // Load the package.json of the plugin
@@ -1355,8 +1396,8 @@ export class Matterbridge extends EventEmitter {
       await fs.access(configFile);
       const data = await fs.readFile(configFile, 'utf8');
       const config = JSON.parse(data) as PlatformConfig;
-      // this.log.debug(`Config file found: ${configFile}.\nConfig:${rs}\n`, config);
       this.log.debug(`Config file found: ${configFile}.`);
+      // this.log.debug(`Config file found: ${configFile}.\nConfig:${rs}\n`, config);
       /* The first time a plugin is added to the system, the config file is created with the plugin name and type "".*/
       config.name = plugin.name;
       config.type = plugin.type;
@@ -1667,7 +1708,7 @@ export class Matterbridge extends EventEmitter {
     this.log.info(`***Commissioning controller is commissioned ${this.commissioningController.isCommissioned()} and has ${nodeIds.length} nodes commisioned: `);
     for (const nodeId of nodeIds) {
       this.log.info(`***Connecting to commissioned node: ${nodeId}`);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
       const node = await this.commissioningController.connectNode(nodeId, {
         attributeChangedCallback: (peerNodeId, { path: { nodeId, clusterId, endpointId, attributeName }, value }) =>
           this.log.info(`***Commissioning controller attributeChangedCallback ${peerNodeId}: attribute ${nodeId}/${endpointId}/${clusterId}/${attributeName} changed to ${Logger.toJSON(value)}`),
@@ -1716,7 +1757,6 @@ export class Matterbridge extends EventEmitter {
       this.log.warn(`Cluster: ${cluster.name} attributes:`);
       attributes.forEach((attribute) => {
         this.log.info(
-          // eslint-disable-next-line max-len
           `- endpoint ${attribute.path.endpointId} cluster ${getClusterNameById(attribute.path.clusterId)} (${attribute.path.clusterId}) attribute ${attribute.path.attributeName} (${attribute.path.attributeId}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
         );
       });
@@ -1728,7 +1768,6 @@ export class Matterbridge extends EventEmitter {
       this.log.warn(`Cluster: ${cluster.name} attributes:`);
       attributes.forEach((attribute) => {
         this.log.info(
-          // eslint-disable-next-line max-len
           `- endpoint ${attribute.path.endpointId} cluster ${getClusterNameById(attribute.path.clusterId)} (${attribute.path.clusterId}) attribute ${attribute.path.attributeName} (${attribute.path.attributeId}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
         );
       });
@@ -1740,7 +1779,6 @@ export class Matterbridge extends EventEmitter {
       this.log.warn(`Cluster: ${cluster.name} attributes:`);
       attributes.forEach((attribute) => {
         this.log.info(
-          // eslint-disable-next-line max-len
           `- endpoint ${attribute.path.endpointId} cluster ${getClusterNameById(attribute.path.clusterId)} (${attribute.path.clusterId}) attribute ${attribute.path.attributeName} (${attribute.path.attributeId}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
         );
       });
@@ -1764,8 +1802,6 @@ export class Matterbridge extends EventEmitter {
       let failCount = 0;
       const startMatterInterval = setInterval(async () => {
         for (const plugin of this.registeredPlugins) {
-          // if (!plugin.enabled || plugin.error) continue;
-
           // new code to not start the bridge if one plugin is in error cause the controllers will delete the devices loosing all the configuration
           if (!plugin.enabled) continue;
           if (plugin.error) {
@@ -1792,54 +1828,22 @@ export class Matterbridge extends EventEmitter {
 
         await this.startMatterServer();
         this.log.info('Matter server started');
-        await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
 
+        // Configure the plugins
         /*
-        const gdcCluster = this.commissioningServer?.getRootClusterServer(GeneralDiagnosticsCluster);
-        if (gdcCluster) {
-          console.log('GeneralDiagnosticsCluster', gdcCluster);
-          const net = gdcCluster.getNetworkInterfacesAttribute();
-          console.log('NetworkInterfaces', net);
-
-          // We have like "30:f6:ef:69:2b:c5" in this.systemInformation.macAddress
-          const macArray = this.systemInformation.macAddress.split(':').map((hex) => parseInt(hex, 16));
-          let hardwareAddress = new Uint8Array(macArray);
-          if (hardwareAddress.length === 6) hardwareAddress = Uint8Array.from([0, 0, ...hardwareAddress]);
-          // We have like "192.168.1.189" in this.systemInformation.ipv4Address
-          const ipv4Array = this.systemInformation.ipv4Address.split('.').map((num) => parseInt(num));
-          const iPv4Address = new Uint8Array(ipv4Array);
-          // We have like "fd78:cbf8:4939:746:d555:85a9:74f6:9c6" in this.systemInformation.ipv6Address
-          const ipv6Groups = this.systemInformation.ipv6Address.split(':');
-          const ipv6Array = [];
-          for (const group of ipv6Groups) {
-            const decimal = parseInt(group, 16);
-            ipv6Array.push(decimal >> 8); // High byte
-            ipv6Array.push(decimal & 0xff); // Low byte
-          }
-          const iPv6Address = new Uint8Array(ipv6Array);
-          this.log.warn(`GeneralDiagnosticsCluster for hardwareAddress ${this.systemInformation.macAddress} => ${debugStringify(hardwareAddress)}`);
-          this.log.warn(`GeneralDiagnosticsCluster for iPv4Address ${this.systemInformation.ipv4Address} => ${debugStringify(iPv4Address)}`);
-          this.log.warn(`GeneralDiagnosticsCluster for iPv6Address ${this.systemInformation.ipv6Address} => ${debugStringify(iPv6Address)}`);
+        for (const plugin of this.registeredPlugins) {
+          if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
           try {
-            gdcCluster.setNetworkInterfacesAttribute([
-              {
-                name: 'eth0',
-                isOperational: true,
-                offPremiseServicesReachableIPv4: null,
-                offPremiseServicesReachableIPv6: null,
-                hardwareAddress,
-                iPv4Addresses: [iPv4Address],
-                iPv6Addresses: [iPv6Address],
-                type: GeneralDiagnostics.InterfaceType.Ethernet,
-              },
-            ]);
-            const net = gdcCluster.getNetworkInterfacesAttribute();
-            console.log('NetworkInterfaces', net);
+            this.configurePlugin(plugin); // No await do it asyncronously
           } catch (error) {
-            this.log.error('GeneralDiagnosticsCluster.setNetworkInterfacesAttribute error:', error);
+            plugin.error = true;
+            this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
           }
         }
         */
+
+        // Show the QR code for commissioning or log the already commissioned message
+        await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
 
         // Setting reachability to true
         setTimeout(() => {
@@ -1856,15 +1860,11 @@ export class Matterbridge extends EventEmitter {
       // Plugins are configured by callback when the plugin is commissioned
 
       // Start the interval to check if all plugins are loaded and started and so start the matter server
-      // TODO set a counter or a timeout
       this.log.debug('***Starting start matter interval in childbridge mode...');
       let failCount = 0;
       const startMatterInterval = setInterval(async () => {
         let allStarted = true;
-        // this.registeredPlugins.forEach((plugin) => {
         for (const plugin of this.registeredPlugins) {
-          // if (!plugin.enabled || plugin.error) return;
-
           // new code to not start the bridge if one plugin is in error cause the controllers will delete the devices loosing all the configuration
           if (!plugin.enabled) continue;
           if (plugin.error) {
@@ -2235,7 +2235,6 @@ export class Matterbridge extends EventEmitter {
         let connected = false;
         info.forEach((session) => {
           this.log.info(
-            // eslint-disable-next-line max-len
             `*Active session changed on fabric ${zb}${fabricIndex}${nf} id ${zb}${session.fabric?.fabricId}${nf} vendor ${zb}${session.fabric?.rootVendorId}${nf} ${this.getVendorIdName(session.fabric?.rootVendorId)} ${session.fabric?.label} for ${plg}${pluginName}${nf}`,
             debugStringify(session),
           );
@@ -2312,48 +2311,6 @@ export class Matterbridge extends EventEmitter {
         }
       },
     });
-    /*
-    const gdcCluster = commissioningServer.getRootClusterServer(GeneralDiagnosticsCluster);
-    if (gdcCluster) {
-      // console.log('GeneralDiagnosticsCluster found for', plg, pluginName, db);
-      // console.log('GeneralDiagnosticsCluster', gdcCluster);
-      // We have like "30:f6:ef:69:2b:c5" in this.systemInformation.macAddress
-      const macArray = this.systemInformation.macAddress.split(':').map((hex) => parseInt(hex, 16));
-      let hardwareAddress = new Uint8Array(macArray);
-      if (hardwareAddress.length === 6) hardwareAddress = Uint8Array.from([0, 0, ...hardwareAddress]);
-      // We have like "192.168.1.189" in this.systemInformation.ipv4Address
-      const ipv4Array = this.systemInformation.ipv4Address.split('.').map((num) => parseInt(num));
-      const iPv4Address = new Uint8Array(ipv4Array);
-      // We have like "fd78:cbf8:4939:746:d555:85a9:74f6:9c6" in this.systemInformation.ipv6Address
-      const ipv6Groups = this.systemInformation.ipv6Address.split(':');
-      const ipv6Array = [];
-      for (const group of ipv6Groups) {
-        const decimal = parseInt(group, 16);
-        ipv6Array.push(decimal >> 8); // High byte
-        ipv6Array.push(decimal & 0xff); // Low byte
-      }
-      const iPv6Address = new Uint8Array(ipv6Array);
-      this.log.debug(`GeneralDiagnosticsCluster for ${plg}${pluginName}${db} hardwareAddress ${this.systemInformation.macAddress} => ${debugStringify(hardwareAddress)}`);
-      this.log.debug(`GeneralDiagnosticsCluster for ${plg}${pluginName}${db} iPv4Address ${this.systemInformation.ipv4Address} => ${debugStringify(iPv4Address)}`);
-      this.log.debug(`GeneralDiagnosticsCluster for ${plg}${pluginName}${db} iPv6Address ${this.systemInformation.ipv6Address} => ${debugStringify(iPv6Address)}`);
-      try {
-        gdcCluster.setNetworkInterfacesAttribute([
-          {
-            name: 'eth0',
-            isOperational: true,
-            offPremiseServicesReachableIPv4: null,
-            offPremiseServicesReachableIPv6: null,
-            hardwareAddress,
-            iPv4Addresses: [iPv4Address],
-            iPv6Addresses: [iPv6Address],
-            type: GeneralDiagnostics.InterfaceType.Ethernet,
-          },
-        ]);
-      } catch (error) {
-        this.log.error(`GeneralDiagnosticsCluster.setNetworkInterfacesAttribute for ${plg}${pluginName}${er} error:`, error);
-      }
-    } else this.log.warn(`*GeneralDiagnosticsCluster not found for ${plg}${pluginName}${wr}`);
-    */
     commissioningServer.addCommandHandler('testEventTrigger', async ({ request: { enableKey, eventTrigger } }) => this.log.info(`testEventTrigger called on GeneralDiagnostic cluster: ${enableKey} ${eventTrigger}`));
     return commissioningServer;
   }
@@ -2476,15 +2433,17 @@ export class Matterbridge extends EventEmitter {
     const networkInterfaces = os.networkInterfaces();
     this.systemInformation.ipv4Address = 'Not found';
     this.systemInformation.ipv6Address = 'Not found';
-    for (const interfaceDetails of Object.values(networkInterfaces)) {
+    for (const [interfaceName, interfaceDetails] of Object.entries(networkInterfaces)) {
       if (!interfaceDetails) {
         break;
       }
       for (const detail of interfaceDetails) {
         if (detail.family === 'IPv4' && !detail.internal && this.systemInformation.ipv4Address === 'Not found') {
+          this.systemInformation.interfaceName = interfaceName;
           this.systemInformation.ipv4Address = detail.address;
           this.systemInformation.macAddress = detail.mac;
         } else if (detail.family === 'IPv6' && !detail.internal && this.systemInformation.ipv6Address === 'Not found') {
+          this.systemInformation.interfaceName = interfaceName;
           this.systemInformation.ipv6Address = detail.address;
           this.systemInformation.macAddress = detail.mac;
         }
@@ -2516,6 +2475,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug('Host System Information:');
     this.log.debug(`- Hostname: ${this.systemInformation.hostname}`);
     this.log.debug(`- User: ${this.systemInformation.user}`);
+    this.log.debug(`- Interface: ${this.systemInformation.interfaceName}`);
     this.log.debug(`- MAC Address: ${this.systemInformation.macAddress}`);
     this.log.debug(`- IPv4 Address: ${this.systemInformation.ipv4Address}`);
     this.log.debug(`- IPv6 Address: ${this.systemInformation.ipv6Address}`);
@@ -2687,9 +2647,10 @@ export class Matterbridge extends EventEmitter {
         type: plugin.type,
         name: plugin.name,
         version: plugin.version,
-        latestVersion: plugin.latestVersion,
         description: plugin.description,
         author: plugin.author,
+        latestVersion: plugin.latestVersion,
+        locked: plugin.locked,
         error: plugin.error,
         enabled: plugin.enabled,
         loaded: plugin.loaded,
@@ -2697,11 +2658,11 @@ export class Matterbridge extends EventEmitter {
         configured: plugin.configured,
         paired: plugin.paired,
         connected: plugin.connected,
+        fabricInfo: plugin.fabricInfo,
         registeredDevices: plugin.registeredDevices,
+        addedDevices: plugin.addedDevices,
         qrPairingCode: plugin.qrPairingCode,
         manualPairingCode: plugin.manualPairingCode,
-        // configJson: includeConfigSchema ? await this.loadPluginConfig(plugin) : {},
-        // schemaJson: includeConfigSchema ? await this.loadPluginSchema(plugin) : {},
         configJson: includeConfigSchema ? plugin.configJson : {},
         schemaJson: includeConfigSchema ? plugin.schemaJson : {},
       });
@@ -2825,7 +2786,7 @@ export class Matterbridge extends EventEmitter {
     const cleanMessage = message.replace(/\x1B\[[0-9;]*[m|s|u|K]/g, '');
     // Remove leading asterisks from the message
     const finalMessage = cleanMessage.replace(/^\*+/, '');
-
+    // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({ type, subType, message: finalMessage }));
@@ -2839,57 +2800,38 @@ export class Matterbridge extends EventEmitter {
    * @param port The port number to run the frontend server on. Default is 3000.
    */
   async initializeFrontend(port = 8283): Promise<void> {
+    if (hasParameter('test_https')) {
+      await this.initializeHttpsFrontend(8443);
+      return;
+    }
     this.log.debug(`Initializing the frontend on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
 
+    // Create a WebSocket server
     const wssPort = 8284;
-    const useHttps = false;
-    // const wssHost = (useHttps ? 'wss://' : 'ws://') + `${os.hostname().toLowerCase()}:${wssPort}`;
-    const wssHost = (useHttps ? 'wss://' : 'ws://') + `${this.systemInformation.ipv4Address}:${wssPort}`;
-    if (!useHttps) {
-      // Create a WebSocket server no certificate required
-      this.webSocketServer = new WebSocketServer({ port: wssPort });
-      // this.log.info(`WebSocket server listening on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
-    } else {
-      // Define the options for HTTPS server
-      // openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout mykey.key -out mycert.pem -config openssl.cnf
-      // For wss connect the browser to https://laptop5_luca:8284/ https://192.168.1.189/log and accept the certificate
-      const serverOptions: https.ServerOptions = {
-        cert: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/mycert.pem')), // Ensure the path is correct
-        key: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/mykey.key')), // Ensure the path is correct
-        // cert: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/laptop5_luca.pem')), // Ensure the path is correct
-        // key: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/laptop5_luca.key')), // Ensure the path is correct
-      };
-      // Create an HTTPS server
-      const httpsServer = https.createServer(serverOptions);
-      // Attach WebSocket server to HTTPS server
-      this.webSocketServer = new WebSocketServer({ server: httpsServer });
-
-      // Listen on a specific port
-      httpsServer.listen(wssPort, () => {
-        this.log.info(`WebSocket server listening on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
-      });
-    }
+    const wssHost = `ws://${this.systemInformation.ipv4Address}:${wssPort}`;
+    this.webSocketServer = new WebSocketServer({ port: wssPort, host: this.systemInformation.ipv4Address });
+    this.log.debug(`WebSocket server created on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
 
     this.webSocketServer.on('connection', (ws: WebSocket) => {
       this.log.info('WebSocketServer client connected');
       this.log.setGlobalCallback(this.wssSendMessage.bind(this));
-      this.log.debug('WebSocketServer activated logger callback');
+      this.log.debug('WebSocketServer logger callback added');
       this.wssSendMessage('Matterbridge', 'info', 'WebSocketServer client connected to Matterbridge');
 
       ws.on('message', (message) => {
-        this.log.info(`WebSocket received message => ${message}`);
+        this.log.info(`WebSocket client sent a message => ${message}`);
       });
 
       ws.on('close', () => {
         this.log.info('WebSocket client disconnected');
         if (this.webSocketServer?.clients.size === 0) {
           this.log.setGlobalCallback(undefined);
-          this.log.debug('WebSocket deactivated logger callback');
+          this.log.debug('All WebSocket client disconnected. WebSocketServer logger callback removed');
         }
       });
 
       ws.on('error', (error: Error) => {
-        this.log.error(`WebSocket error: ${error}`);
+        this.log.error(`WebSocket client error: ${error}`);
       });
     });
 
@@ -2906,6 +2848,26 @@ export class Matterbridge extends EventEmitter {
     // Serve React build directory
     this.expressApp = express();
     this.expressApp.use(express.static(path.join(this.rootDirectory, 'frontend/build')));
+
+    // Listen on HTTP
+    this.expressServer = this.expressApp.listen(port, () => {
+      this.log.info(`The frontend is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
+      this.log.debug(`The frontend is listening on ${UNDERLINE}http://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.expressServer.on('error', (error: any) => {
+      this.log.error(`Frontend error listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
+      switch (error.code) {
+        case 'EACCES':
+          this.log.error(`Port ${port} requires elevated privileges`);
+          break;
+        case 'EADDRINUSE':
+          this.log.error(`Port ${port} is already in use`);
+          break;
+      }
+      process.exit(1);
+    });
 
     // Endpoint to validate login code
     this.expressApp.post('/api/login', express.json(), async (req, res) => {
@@ -2954,14 +2916,16 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.matterbridgeConnected = this.matterbridgeConnected;
       // this.matterbridgeInformation.matterbridgeFabricInfo = this.matterbridgeFabricInfo;
       const response = { wssHost, qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
-      this.log.debug('Response:', debugStringify(response));
+      // this.log.debug('Response:', debugStringify(response));
       res.json(response);
     });
 
     // Endpoint to provide plugins
     this.expressApp.get('/api/plugins', async (req, res) => {
       this.log.debug('The frontend sent /api/plugins');
-      res.json(await this.getBaseRegisteredPlugins(true));
+      const response = await this.getBaseRegisteredPlugins(true);
+      // this.log.debug('Response:', debugStringify(response));
+      res.json(response);
     });
 
     // Endpoint to provide devices
@@ -2986,6 +2950,7 @@ export class Matterbridge extends EventEmitter {
           cluster: cluster,
         });
       });
+      // this.log.debug('Response:', debugStringify(data));
       res.json(data);
     });
 
@@ -3110,7 +3075,7 @@ export class Matterbridge extends EventEmitter {
         });
       }
 
-      // Handle the command reset from Settings
+      // Handle the command unregister from Settings
       if (command === 'unregister') {
         await this.unregisterAndShutdownProcess();
       }
@@ -3122,7 +3087,7 @@ export class Matterbridge extends EventEmitter {
       if (command === 'factoryreset') {
         this.shutdownProcessAndFactoryReset(); // No await do it asyncronously
       }
-      // Handle the command restart from Header
+      // Handle the command shutdown from Header
       if (command === 'shutdown') {
         this.shutdownProcess(); // No await do it asyncronously
       }
@@ -3143,7 +3108,7 @@ export class Matterbridge extends EventEmitter {
         }
         this.updateProcess();
       }
-      // Handle the command saveschema from Home
+      // Handle the command saveconfig from Home
       if (command === 'saveconfig') {
         param = param.replace(/\*/g, '\\');
         this.log.info(`Saving config for plugin ${plg}${param}${nf}...`);
@@ -3191,6 +3156,7 @@ export class Matterbridge extends EventEmitter {
             this.registeredPlugins.push(plugin);
             await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
             this.log.info(`Plugin ${plg}${packageJsonPath}${nf} type ${plugin.type} added to matterbridge. Restart required.`);
+            this.startPlugin(plugin, 'The plugin has been added to Matterbridge', true);
           } else {
             this.log.error(`Error adding plugin ${plg}${packageJsonPath}${er}`);
           }
@@ -3206,8 +3172,10 @@ export class Matterbridge extends EventEmitter {
         if (index !== -1) {
           if (this.registeredPlugins[index].platform) {
             await this.registeredPlugins[index].platform?.onShutdown('The plugin has been removed.');
-            // await this.savePluginConfig(this.registeredPlugins[index]);
           }
+          // Remove all devices from the plugin
+          await this.removeAllBridgedDevices(this.registeredPlugins[index].name);
+          // Remove the plugin from the registered plugins
           this.registeredPlugins.splice(index, 1);
           await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
           this.log.info(`Plugin ${plg}${param}${nf} removed from matterbridge`);
@@ -3222,6 +3190,7 @@ export class Matterbridge extends EventEmitter {
         const plugin = plugins.find((plugin) => plugin.name === param);
         if (plugin) {
           plugin.enabled = true;
+          plugin.locked = undefined;
           plugin.error = undefined;
           plugin.loaded = undefined;
           plugin.started = undefined;
@@ -3229,6 +3198,7 @@ export class Matterbridge extends EventEmitter {
           plugin.connected = undefined;
           plugin.platform = undefined;
           plugin.registeredDevices = undefined;
+          plugin.addedDevices = undefined;
           await this.nodeContext?.set<RegisteredPlugin[]>('plugins', plugins);
           this.log.info(`Enabled plugin ${plg}${param}${nf}`);
         }
@@ -3252,10 +3222,13 @@ export class Matterbridge extends EventEmitter {
         const pluginToDisable = this.findPlugin(param);
         if (pluginToDisable) {
           if (pluginToDisable.platform) {
-            await pluginToDisable.platform.onShutdown('The plugin has been removed.');
-            // await this.savePluginConfig(pluginToDisable);
+            await pluginToDisable.platform.onShutdown('The plugin has been disabled.');
           }
+          // Remove all devices from the plugin
+          this.log.info(`Unregistering devices for plugin ${plg}${pluginToDisable.name}${nf}...`);
+          await this.removeAllBridgedDevices(pluginToDisable.name);
           pluginToDisable.enabled = false;
+          pluginToDisable.locked = undefined;
           pluginToDisable.error = undefined;
           pluginToDisable.loaded = undefined;
           pluginToDisable.started = undefined;
@@ -3263,12 +3236,14 @@ export class Matterbridge extends EventEmitter {
           pluginToDisable.connected = undefined;
           pluginToDisable.platform = undefined;
           pluginToDisable.registeredDevices = undefined;
-
+          pluginToDisable.addedDevices = undefined;
+          // Save the plugins state in node storage
           const plugins = await this.nodeContext?.get<RegisteredPlugin[]>('plugins');
           if (!plugins) return;
           const plugin = plugins.find((plugin) => plugin.name === param);
           if (plugin) {
             plugin.enabled = false;
+            plugin.locked = undefined;
             plugin.error = undefined;
             plugin.loaded = undefined;
             plugin.started = undefined;
@@ -3276,58 +3251,89 @@ export class Matterbridge extends EventEmitter {
             plugin.connected = undefined;
             plugin.platform = undefined;
             plugin.registeredDevices = undefined;
+            plugin.addedDevices = undefined;
             await this.nodeContext?.set<RegisteredPlugin[]>('plugins', plugins);
             this.log.info(`Disabled plugin ${plg}${param}${nf}`);
           }
         }
       }
-
       res.json({ message: 'Command received' });
     });
 
-    // Fallback for routing
+    // Fallback for routing (must be the last route)
     this.expressApp.get('*', (req, res) => {
-      this.log.debug('The frontend sent *', req.url);
+      this.log.debug('The frontend sent:', req.url);
+      this.log.debug('Response send file:', path.join(this.rootDirectory, 'frontend/build/index.html'));
       res.sendFile(path.join(this.rootDirectory, 'frontend/build/index.html'));
     });
 
-    if (!useHttps) {
-      // Listen on HTTP
-      this.expressServer = this.expressApp.listen(port, () => {
-        this.log.info(`The frontend is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
-      });
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.expressServer.on('error', (error: any) => {
-        this.log.error(`Frontend error listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
-        switch (error.code) {
-          case 'EACCES':
-            this.log.error(`Port ${port} requires elevated privileges`);
-            break;
-          case 'EADDRINUSE':
-            this.log.error(`Port ${port} is already in use`);
-            break;
-          default:
-            this.log.error(`Port ${port} requires elevated privileges`);
-        }
-        process.exit(1);
-      });
-    } else {
-      // SSL certificate and private key paths
-      const options = {
-        cert: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/laptop5_luca.pem')), // Ensure the path is correct
-        key: await fs.readFile(path.join(this.rootDirectory, 'frontend/certificates/laptop5_luca.key')), // Ensure the path is correct
-      };
-      // Create HTTPS server
-      const httpsServer = https.createServer(options, this.expressApp);
-      // Specify the port to listen on, for example 443 for default HTTPS
-      const PORT = 443;
-      httpsServer.listen(PORT, () => {
-        this.log.info(`The frontend is listening on ${UNDERLINE}https://${this.systemInformation.ipv4Address}:${PORT}${UNDERLINEOFF}${rs}`);
-      });
-    }
-
     this.log.debug(`Frontend initialized on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
+  }
+
+  // Just for testing purposes. Use with matterbridge -test_https so no bridge is loaded
+  async initializeHttpsFrontend(port = 8443): Promise<void> {
+    this.log.debug(`Initializing the https frontend on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
+
+    // Create the express app that serves the frontend
+    this.expressApp = express();
+
+    // Load the SSL certificate and private key
+    // If we need also the CA certificate, we can add it to the serverOptions object
+    // I created dev certificates with openssl using the following commands:
+    // openssl genrsa -out key.pem 2048
+    // openssl req -new -key key.pem -out csr.pem
+    // openssl x509 -req -days 365 -in csr.pem -signkey key.pem -out cert.pem
+    const serverOptions: https.ServerOptions = {
+      cert: await fs.readFile(path.join(this.matterbridgeDirectory, 'certs/cert.pem'), 'utf8'),
+      key: await fs.readFile(path.join(this.matterbridgeDirectory, 'certs/key.pem'), 'utf8'),
+      // ca: await fs.readFile(path.join(this.matterbridgeDirectory, 'certs/ca.pem'), 'utf8'),
+    };
+
+    // Create an HTTPS server with the SSL certificate and private key and attach the express app
+    const httpsServer = https.createServer(serverOptions, this.expressApp);
+
+    // Fallback for routing
+    this.expressApp.get('/', (req, res) => {
+      this.log.debug('The frontend sent:', req.url);
+      res.send('Hello, HTTPS!');
+    });
+
+    // Listen on a specific port
+    // Connect to the frontend with 'https://localhost:8443'
+    httpsServer.listen(port, () => {
+      this.log.info(`HTTPS server listening on ${UNDERLINE}'https://localhost:${port}${UNDERLINEOFF}${rs}`);
+    });
+
+    // Attach WebSocket server to HTTPS server
+    this.webSocketServer = new WebSocketServer({ server: httpsServer });
+    this.log.info(`WebSocketServer runnig on ${UNDERLINE}wss://localhost:${port}${UNDERLINEOFF}${rs}`);
+
+    // Handle connections to the WebSocketServer
+    // Connect to the WebSocket server using wss from the react frontend this way: const ws = new WebSocket('wss://localhost:8443');
+    this.webSocketServer.on('connection', (ws: WebSocket) => {
+      this.log.info('WebSocketServer: WebSocket client connected');
+
+      ws.on('message', (message) => {
+        this.log.info(`WebSocket client sent message => ${message}`);
+      });
+
+      ws.on('close', () => {
+        this.log.info('WebSocket client disconnected');
+        if (this.webSocketServer?.clients.size === 0) {
+          this.log.info('All WebSocket clients disconnected');
+        }
+      });
+
+      ws.on('error', (error: Error) => {
+        this.log.error(`WebSocket client error: ${error}`);
+      });
+    });
+
+    // Handle error from the WebSocketServer
+    this.webSocketServer.on('error', (ws: WebSocket, error: Error) => {
+      this.log.error(`WebSocketServer error: ${error}`);
+      return;
+    });
   }
 
   /**
@@ -3370,124 +3376,3 @@ export class Matterbridge extends EventEmitter {
     return attributes;
   }
 }
-/*
-TO IMPLEMENT
-
-import { spawn } from 'child_process';
-
-function restartProcess() {
-  // Spawn a new process
-  const newProcess = spawn(process.argv[0], process.argv.slice(1), {
-    detached: true,
-    stdio: 'inherit',
-  });
-
-  // Handle errors
-  newProcess.on('error', (err) => {
-    console.error('Failed to start new process:', err);
-  });
-
-  // Unreference the new process so that the current process can exit
-  newProcess.unref();
-
-  // Exit the current process
-  cleanup();
-  process.exit();
-}
-
-import React from 'react';
-import Form from "@rjsf/core";
-
-const schema = {
-  title: "Todo",
-  type: "object",
-  required: ["title"],
-  properties: {
-    title: {type: "string", title: "Title", default: "A new task"},
-    done: {type: "boolean", title: "Done?", default: false}
-  }
-};
-
-const log = (type) => console.log.bind(console, type);
-
-function Todo() {
-  return (
-    <Form schema={schema}
-          onChange={log("changed")}
-          onSubmit={log("submitted")}
-          onError={log("errors")} />
-  );
-}
-
-export default Todo;
-
-/*
-How frontend was created
-npx create-react-app matterbridge-frontend
-cd matterbridge-frontend
-npm install react-router-dom 
-
-Success! Created frontend at C:\Users\lligu\OneDrive\GitHub\matterbridge\frontend
-Inside that directory, you can run several commands:
-
-  npm start
-    Starts the development server.
-
-  npm run build
-    Bundles the app into static files for production.
-
-  npm test
-    Starts the test runner.
-
-  npm run eject
-    Removes this tool and copies build dependencies, configuration files
-    and scripts into the app directory. If you do this, you can’t go back!
-
-We suggest that you begin by typing:
-
-  cd frontend
-  npm start
-
-Happy hacking!
-PS C:\Users\lligu\OneDrive\GitHub\matterbridge> cd frontend
-PS C:\Users\lligu\OneDrive\GitHub\matterbridge\frontend> npm run build
-
-> frontend@0.1.0 build
-> react-scripts build
-
-Creating an optimized production build...
-One of your dependencies, babel-preset-react-app, is importing the
-"@babel/plugin-proposal-private-property-in-object" package without
-declaring it in its dependencies. This is currently working because
-"@babel/plugin-proposal-private-property-in-object" is already in your
-node_modules folder for unrelated reasons, but it may break at any time.
-
-babel-preset-react-app is part of the create-react-app project, which
-is not maintianed anymore. It is thus unlikely that this bug will
-ever be fixed. Add "@babel/plugin-proposal-private-property-in-object" to
-your devDependencies to work around this error. This will make this message
-go away.
-
-Compiled successfully.
-
-File sizes after gzip:
-
-  46.65 kB  build\static\js\main.9b7ec296.js
-  1.77 kB   build\static\js\453.8ab44547.chunk.js
-  513 B     build\static\css\main.f855e6bc.css
-
-The project was built assuming it is hosted at /.
-You can control this with the homepage field in your package.json.
-
-The build folder is ready to be deployed.
-You may serve it with a static server:
-
-  npm install -g serve
-  serve -s build
-
-Find out more about deployment here:
-
-  https://cra.link/deployment
-
-PS C:\Users\lligu\OneDrive\GitHub\matterbridge\frontend> 
-*/

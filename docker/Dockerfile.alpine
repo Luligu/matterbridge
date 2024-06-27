@@ -1,4 +1,4 @@
-FROM alpine:3.18.4 as base
+FROM alpine:3.18.4 AS base
 # FROM alpine:latest as base not working
 # FROM node:20-alpine as base not working
 
