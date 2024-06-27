@@ -34,6 +34,10 @@ Matterbridge is light weight and run also on slow Linux machine with 512MB of me
 
 It runs perfectly on Windows too.
 
+If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
+
+## Acknowledgements
+
 The project is build on top of https://github.com/project-chip/matter.js.
 
 A special thank to Apollon77 for his incredible work.

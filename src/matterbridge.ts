@@ -39,6 +39,7 @@ import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridge
 import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import { shelly_config, somfytahoma_config, zigbee2mqtt_config } from './defaultConfigSchema.js';
 import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
+import { logInterfaces } from './utils/utils.js';
 
 // @project-chip/matter-node.js
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
@@ -189,6 +190,8 @@ export class Matterbridge extends EventEmitter {
   private port = 5540;
   private log!: AnsiLogger;
   private hasCleanupStarted = false;
+  private plugins = new Map<string, RegisteredPlugin>();
+  private devices = new Map<string, RegisteredDevice>();
   private registeredPlugins: RegisteredPlugin[] = [];
   private registeredDevices: RegisteredDevice[] = [];
   private nodeStorage: NodeStorageManager | undefined;
@@ -357,7 +360,8 @@ export class Matterbridge extends EventEmitter {
       - bridge:                start Matterbridge in bridge mode
       - childbridge:           start Matterbridge in childbridge mode
       - frontend [port]:       start the frontend on the given port (default 8283)
-      - debug:                 enable debug mode (default false)
+      - debug:                 enable the Matterbridge debug mode (default false)
+      - matterlogger:          set the matter.js logger level: debug | info | notice | warn | error | fatal (default info)
       - reset:                 remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
       - factoryreset:          remove all commissioning information and reset all internal storages. Shutdown Matterbridge before using it!
       - list:                  list the registered plugins
@@ -481,12 +485,19 @@ export class Matterbridge extends EventEmitter {
     }
 
     if (hasParameter('logstorage')) {
-      this.log.info(`${plg}matterbridge${nf} storage log`);
+      this.log.info(`${plg}Matterbridge${nf} storage log`);
       await this.nodeContext?.logStorage();
       for (const plugin of this.registeredPlugins) {
         this.log.info(`${plg}${plugin.name}${nf} storage log`);
         await plugin.nodeContext?.logStorage();
       }
+      this.emit('shutdown');
+      process.exit(0);
+    }
+
+    if (hasParameter('loginterfaces')) {
+      this.log.info(`${plg}Matterbridge${nf} network interfaces log`);
+      logInterfaces();
       this.emit('shutdown');
       process.exit(0);
     }
@@ -622,10 +633,13 @@ export class Matterbridge extends EventEmitter {
           continue;
         }
         plugin.error = false;
+        plugin.locked = false;
         plugin.loaded = false;
         plugin.started = false;
         plugin.configured = false;
         plugin.connected = undefined;
+        plugin.registeredDevices = undefined;
+        plugin.addedDevices = undefined;
         plugin.qrPairingCode = undefined;
         plugin.manualPairingCode = undefined;
         this.loadPlugin(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
@@ -655,10 +669,13 @@ export class Matterbridge extends EventEmitter {
           continue;
         }
         plugin.error = false;
+        plugin.locked = false;
         plugin.loaded = false;
         plugin.started = false;
         plugin.configured = false;
         plugin.connected = false;
+        plugin.registeredDevices = undefined;
+        plugin.addedDevices = undefined;
         plugin.qrPairingCode = (await plugin.nodeContext?.get<string>('qrPairingCode', undefined)) ?? undefined;
         plugin.manualPairingCode = (await plugin.nodeContext?.get<string>('manualPairingCode', undefined)) ?? undefined;
         this.loadPlugin(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
@@ -666,6 +683,30 @@ export class Matterbridge extends EventEmitter {
       await this.startMatterbridge();
       return;
     }
+  }
+
+  async savePluginsToStorage() {
+    if (!this.nodeContext) {
+      this.log.error('loadPluginsFromStorage() error: the node context is not initialized');
+      return;
+    }
+    // Convert the map to an array
+    // const pluginArray = Array.from(this.plugins.values());
+    // await this.nodeContext.set('plugins', pluginArray);
+    // TODO remove after migration done
+    await this.nodeContext.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
+  }
+
+  async loadPluginsFromStorage() {
+    if (!this.nodeContext) {
+      this.log.error('loadPluginsFromStorage() error: the node context is not initialized');
+      return;
+    }
+    // Load the array from storage and convert it back to a map
+    // const pluginArray = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
+    // for (const plugin of pluginArray) this.plugins.set(plugin.name, plugin);
+    // TODO remove after migration done
+    this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
   }
 
   /**
@@ -692,7 +733,6 @@ export class Matterbridge extends EventEmitter {
       this.log.debug(`Package.json not found at ${packageJsonPath}`);
       this.log.debug(`Trying at ${this.globalModulesDirectory}`);
       packageJsonPath = path.join(this.globalModulesDirectory, pluginPath);
-      // this.log.debug(`Got ${packageJsonPath}`);
     }
     try {
       // Load the package.json of the plugin
@@ -1354,8 +1394,8 @@ export class Matterbridge extends EventEmitter {
       await fs.access(configFile);
       const data = await fs.readFile(configFile, 'utf8');
       const config = JSON.parse(data) as PlatformConfig;
-      // this.log.debug(`Config file found: ${configFile}.\nConfig:${rs}\n`, config);
       this.log.debug(`Config file found: ${configFile}.`);
+      // this.log.debug(`Config file found: ${configFile}.\nConfig:${rs}\n`, config);
       /* The first time a plugin is added to the system, the config file is created with the plugin name and type "".*/
       config.name = plugin.name;
       config.type = plugin.type;
@@ -1760,8 +1800,6 @@ export class Matterbridge extends EventEmitter {
       let failCount = 0;
       const startMatterInterval = setInterval(async () => {
         for (const plugin of this.registeredPlugins) {
-          // if (!plugin.enabled || plugin.error) continue;
-
           // new code to not start the bridge if one plugin is in error cause the controllers will delete the devices loosing all the configuration
           if (!plugin.enabled) continue;
           if (plugin.error) {
@@ -1788,54 +1826,22 @@ export class Matterbridge extends EventEmitter {
 
         await this.startMatterServer();
         this.log.info('Matter server started');
-        await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
 
+        // Configure the plugins
         /*
-        const gdcCluster = this.commissioningServer?.getRootClusterServer(GeneralDiagnosticsCluster);
-        if (gdcCluster) {
-          console.log('GeneralDiagnosticsCluster', gdcCluster);
-          const net = gdcCluster.getNetworkInterfacesAttribute();
-          console.log('NetworkInterfaces', net);
-
-          // We have like "30:f6:ef:69:2b:c5" in this.systemInformation.macAddress
-          const macArray = this.systemInformation.macAddress.split(':').map((hex) => parseInt(hex, 16));
-          let hardwareAddress = new Uint8Array(macArray);
-          if (hardwareAddress.length === 6) hardwareAddress = Uint8Array.from([0, 0, ...hardwareAddress]);
-          // We have like "192.168.1.189" in this.systemInformation.ipv4Address
-          const ipv4Array = this.systemInformation.ipv4Address.split('.').map((num) => parseInt(num));
-          const iPv4Address = new Uint8Array(ipv4Array);
-          // We have like "fd78:cbf8:4939:746:d555:85a9:74f6:9c6" in this.systemInformation.ipv6Address
-          const ipv6Groups = this.systemInformation.ipv6Address.split(':');
-          const ipv6Array = [];
-          for (const group of ipv6Groups) {
-            const decimal = parseInt(group, 16);
-            ipv6Array.push(decimal >> 8); // High byte
-            ipv6Array.push(decimal & 0xff); // Low byte
-          }
-          const iPv6Address = new Uint8Array(ipv6Array);
-          this.log.warn(`GeneralDiagnosticsCluster for hardwareAddress ${this.systemInformation.macAddress} => ${debugStringify(hardwareAddress)}`);
-          this.log.warn(`GeneralDiagnosticsCluster for iPv4Address ${this.systemInformation.ipv4Address} => ${debugStringify(iPv4Address)}`);
-          this.log.warn(`GeneralDiagnosticsCluster for iPv6Address ${this.systemInformation.ipv6Address} => ${debugStringify(iPv6Address)}`);
+        for (const plugin of this.registeredPlugins) {
+          if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
           try {
-            gdcCluster.setNetworkInterfacesAttribute([
-              {
-                name: 'eth0',
-                isOperational: true,
-                offPremiseServicesReachableIPv4: null,
-                offPremiseServicesReachableIPv6: null,
-                hardwareAddress,
-                iPv4Addresses: [iPv4Address],
-                iPv6Addresses: [iPv6Address],
-                type: GeneralDiagnostics.InterfaceType.Ethernet,
-              },
-            ]);
-            const net = gdcCluster.getNetworkInterfacesAttribute();
-            console.log('NetworkInterfaces', net);
+            this.configurePlugin(plugin); // No await do it asyncronously
           } catch (error) {
-            this.log.error('GeneralDiagnosticsCluster.setNetworkInterfacesAttribute error:', error);
+            plugin.error = true;
+            this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
           }
         }
         */
+
+        // Show the QR code for commissioning or log the already commissioned message
+        await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
 
         // Setting reachability to true
         setTimeout(() => {
@@ -1852,15 +1858,11 @@ export class Matterbridge extends EventEmitter {
       // Plugins are configured by callback when the plugin is commissioned
 
       // Start the interval to check if all plugins are loaded and started and so start the matter server
-      // TODO set a counter or a timeout
       this.log.debug('***Starting start matter interval in childbridge mode...');
       let failCount = 0;
       const startMatterInterval = setInterval(async () => {
         let allStarted = true;
-        // this.registeredPlugins.forEach((plugin) => {
         for (const plugin of this.registeredPlugins) {
-          // if (!plugin.enabled || plugin.error) return;
-
           // new code to not start the bridge if one plugin is in error cause the controllers will delete the devices loosing all the configuration
           if (!plugin.enabled) continue;
           if (plugin.error) {
@@ -2307,48 +2309,6 @@ export class Matterbridge extends EventEmitter {
         }
       },
     });
-    /*
-    const gdcCluster = commissioningServer.getRootClusterServer(GeneralDiagnosticsCluster);
-    if (gdcCluster) {
-      // console.log('GeneralDiagnosticsCluster found for', plg, pluginName, db);
-      // console.log('GeneralDiagnosticsCluster', gdcCluster);
-      // We have like "30:f6:ef:69:2b:c5" in this.systemInformation.macAddress
-      const macArray = this.systemInformation.macAddress.split(':').map((hex) => parseInt(hex, 16));
-      let hardwareAddress = new Uint8Array(macArray);
-      if (hardwareAddress.length === 6) hardwareAddress = Uint8Array.from([0, 0, ...hardwareAddress]);
-      // We have like "192.168.1.189" in this.systemInformation.ipv4Address
-      const ipv4Array = this.systemInformation.ipv4Address.split('.').map((num) => parseInt(num));
-      const iPv4Address = new Uint8Array(ipv4Array);
-      // We have like "fd78:cbf8:4939:746:d555:85a9:74f6:9c6" in this.systemInformation.ipv6Address
-      const ipv6Groups = this.systemInformation.ipv6Address.split(':');
-      const ipv6Array = [];
-      for (const group of ipv6Groups) {
-        const decimal = parseInt(group, 16);
-        ipv6Array.push(decimal >> 8); // High byte
-        ipv6Array.push(decimal & 0xff); // Low byte
-      }
-      const iPv6Address = new Uint8Array(ipv6Array);
-      this.log.debug(`GeneralDiagnosticsCluster for ${plg}${pluginName}${db} hardwareAddress ${this.systemInformation.macAddress} => ${debugStringify(hardwareAddress)}`);
-      this.log.debug(`GeneralDiagnosticsCluster for ${plg}${pluginName}${db} iPv4Address ${this.systemInformation.ipv4Address} => ${debugStringify(iPv4Address)}`);
-      this.log.debug(`GeneralDiagnosticsCluster for ${plg}${pluginName}${db} iPv6Address ${this.systemInformation.ipv6Address} => ${debugStringify(iPv6Address)}`);
-      try {
-        gdcCluster.setNetworkInterfacesAttribute([
-          {
-            name: 'eth0',
-            isOperational: true,
-            offPremiseServicesReachableIPv4: null,
-            offPremiseServicesReachableIPv6: null,
-            hardwareAddress,
-            iPv4Addresses: [iPv4Address],
-            iPv6Addresses: [iPv6Address],
-            type: GeneralDiagnostics.InterfaceType.Ethernet,
-          },
-        ]);
-      } catch (error) {
-        this.log.error(`GeneralDiagnosticsCluster.setNetworkInterfacesAttribute for ${plg}${pluginName}${er} error:`, error);
-      }
-    } else this.log.warn(`*GeneralDiagnosticsCluster not found for ${plg}${pluginName}${wr}`);
-    */
     commissioningServer.addCommandHandler('testEventTrigger', async ({ request: { enableKey, eventTrigger } }) => this.log.info(`testEventTrigger called on GeneralDiagnostic cluster: ${enableKey} ${eventTrigger}`));
     return commissioningServer;
   }
@@ -2682,9 +2642,10 @@ export class Matterbridge extends EventEmitter {
         type: plugin.type,
         name: plugin.name,
         version: plugin.version,
-        latestVersion: plugin.latestVersion,
         description: plugin.description,
         author: plugin.author,
+        latestVersion: plugin.latestVersion,
+        locked: plugin.locked,
         error: plugin.error,
         enabled: plugin.enabled,
         loaded: plugin.loaded,
@@ -2692,11 +2653,11 @@ export class Matterbridge extends EventEmitter {
         configured: plugin.configured,
         paired: plugin.paired,
         connected: plugin.connected,
+        fabricInfo: plugin.fabricInfo,
         registeredDevices: plugin.registeredDevices,
+        addedDevices: plugin.addedDevices,
         qrPairingCode: plugin.qrPairingCode,
         manualPairingCode: plugin.manualPairingCode,
-        // configJson: includeConfigSchema ? await this.loadPluginConfig(plugin) : {},
-        // schemaJson: includeConfigSchema ? await this.loadPluginSchema(plugin) : {},
         configJson: includeConfigSchema ? plugin.configJson : {},
         schemaJson: includeConfigSchema ? plugin.schemaJson : {},
       });
@@ -2883,12 +2844,6 @@ export class Matterbridge extends EventEmitter {
     this.expressApp = express();
     this.expressApp.use(express.static(path.join(this.rootDirectory, 'frontend/build')));
 
-    // Fallback for routing
-    this.expressApp.get('*', (req, res) => {
-      this.log.debug('The frontend sent:', req.url);
-      res.sendFile(path.join(this.rootDirectory, 'frontend/build/index.html'));
-    });
-
     // Listen on HTTP
     this.expressServer = this.expressApp.listen(port, () => {
       this.log.info(`The frontend is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
@@ -2955,14 +2910,16 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.matterbridgeConnected = this.matterbridgeConnected;
       // this.matterbridgeInformation.matterbridgeFabricInfo = this.matterbridgeFabricInfo;
       const response = { wssHost, qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
-      this.log.debug('Response:', debugStringify(response));
+      // this.log.debug('Response:', debugStringify(response));
       res.json(response);
     });
 
     // Endpoint to provide plugins
     this.expressApp.get('/api/plugins', async (req, res) => {
       this.log.debug('The frontend sent /api/plugins');
-      res.json(await this.getBaseRegisteredPlugins(true));
+      const response = await this.getBaseRegisteredPlugins(true);
+      // this.log.debug('Response:', debugStringify(response));
+      res.json(response);
     });
 
     // Endpoint to provide devices
@@ -2987,6 +2944,7 @@ export class Matterbridge extends EventEmitter {
           cluster: cluster,
         });
       });
+      // this.log.debug('Response:', debugStringify(data));
       res.json(data);
     });
 
@@ -3192,6 +3150,7 @@ export class Matterbridge extends EventEmitter {
             this.registeredPlugins.push(plugin);
             await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
             this.log.info(`Plugin ${plg}${packageJsonPath}${nf} type ${plugin.type} added to matterbridge. Restart required.`);
+            this.startPlugin(plugin, 'The plugin has been added to Matterbridge', true);
           } else {
             this.log.error(`Error adding plugin ${plg}${packageJsonPath}${er}`);
           }
@@ -3225,6 +3184,7 @@ export class Matterbridge extends EventEmitter {
         const plugin = plugins.find((plugin) => plugin.name === param);
         if (plugin) {
           plugin.enabled = true;
+          plugin.locked = undefined;
           plugin.error = undefined;
           plugin.loaded = undefined;
           plugin.started = undefined;
@@ -3232,6 +3192,7 @@ export class Matterbridge extends EventEmitter {
           plugin.connected = undefined;
           plugin.platform = undefined;
           plugin.registeredDevices = undefined;
+          plugin.addedDevices = undefined;
           await this.nodeContext?.set<RegisteredPlugin[]>('plugins', plugins);
           this.log.info(`Enabled plugin ${plg}${param}${nf}`);
         }
@@ -3255,14 +3216,13 @@ export class Matterbridge extends EventEmitter {
         const pluginToDisable = this.findPlugin(param);
         if (pluginToDisable) {
           if (pluginToDisable.platform) {
-            await pluginToDisable.platform.onShutdown('The plugin has been removed.');
+            await pluginToDisable.platform.onShutdown('The plugin has been disabled.');
           }
-
           // Remove all devices from the plugin
           this.log.info(`Unregistering devices for plugin ${plg}${pluginToDisable.name}${nf}...`);
           await this.removeAllBridgedDevices(pluginToDisable.name);
-
           pluginToDisable.enabled = false;
+          pluginToDisable.locked = undefined;
           pluginToDisable.error = undefined;
           pluginToDisable.loaded = undefined;
           pluginToDisable.started = undefined;
@@ -3270,12 +3230,14 @@ export class Matterbridge extends EventEmitter {
           pluginToDisable.connected = undefined;
           pluginToDisable.platform = undefined;
           pluginToDisable.registeredDevices = undefined;
-
+          pluginToDisable.addedDevices = undefined;
+          // Save the plugins state in node storage
           const plugins = await this.nodeContext?.get<RegisteredPlugin[]>('plugins');
           if (!plugins) return;
           const plugin = plugins.find((plugin) => plugin.name === param);
           if (plugin) {
             plugin.enabled = false;
+            plugin.locked = undefined;
             plugin.error = undefined;
             plugin.loaded = undefined;
             plugin.started = undefined;
@@ -3283,13 +3245,20 @@ export class Matterbridge extends EventEmitter {
             plugin.connected = undefined;
             plugin.platform = undefined;
             plugin.registeredDevices = undefined;
+            plugin.addedDevices = undefined;
             await this.nodeContext?.set<RegisteredPlugin[]>('plugins', plugins);
             this.log.info(`Disabled plugin ${plg}${param}${nf}`);
           }
         }
       }
-
       res.json({ message: 'Command received' });
+    });
+
+    // Fallback for routing (must be the last route)
+    this.expressApp.get('*', (req, res) => {
+      this.log.debug('The frontend sent:', req.url);
+      this.log.debug('Response send file:', path.join(this.rootDirectory, 'frontend/build/index.html'));
+      res.sendFile(path.join(this.rootDirectory, 'frontend/build/index.html'));
     });
 
     this.log.debug(`Frontend initialized on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
@@ -3401,74 +3370,3 @@ export class Matterbridge extends EventEmitter {
     return attributes;
   }
 }
-
-/*
-How frontend was created
-npx create-react-app matterbridge-frontend
-cd matterbridge-frontend
-npm install react-router-dom 
-
-Success! Created frontend at C:\Users\lligu\OneDrive\GitHub\matterbridge\frontend
-Inside that directory, you can run several commands:
-
-  npm start
-    Starts the development server.
-
-  npm run build
-    Bundles the app into static files for production.
-
-  npm test
-    Starts the test runner.
-
-  npm run eject
-    Removes this tool and copies build dependencies, configuration files
-    and scripts into the app directory. If you do this, you can’t go back!
-
-We suggest that you begin by typing:
-
-  cd frontend
-  npm start
-
-Happy hacking!
-PS C:\Users\lligu\OneDrive\GitHub\matterbridge> cd frontend
-PS C:\Users\lligu\OneDrive\GitHub\matterbridge\frontend> npm run build
-
-> frontend@0.1.0 build
-> react-scripts build
-
-Creating an optimized production build...
-One of your dependencies, babel-preset-react-app, is importing the
-"@babel/plugin-proposal-private-property-in-object" package without
-declaring it in its dependencies. This is currently working because
-"@babel/plugin-proposal-private-property-in-object" is already in your
-node_modules folder for unrelated reasons, but it may break at any time.
-
-babel-preset-react-app is part of the create-react-app project, which
-is not maintianed anymore. It is thus unlikely that this bug will
-ever be fixed. Add "@babel/plugin-proposal-private-property-in-object" to
-your devDependencies to work around this error. This will make this message
-go away.
-
-Compiled successfully.
-
-File sizes after gzip:
-
-  46.65 kB  build\static\js\main.9b7ec296.js
-  1.77 kB   build\static\js\453.8ab44547.chunk.js
-  513 B     build\static\css\main.f855e6bc.css
-
-The project was built assuming it is hosted at /.
-You can control this with the homepage field in your package.json.
-
-The build folder is ready to be deployed.
-You may serve it with a static server:
-
-  npm install -g serve
-  serve -s build
-
-Find out more about deployment here:
-
-  https://cra.link/deployment
-
-PS C:\Users\lligu\OneDrive\GitHub\matterbridge\frontend> 
-*/

@@ -12,11 +12,12 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
-- [package]: Updated to eslint 9.5.0 and flat config
-- [package]: Updated to prettier and jest flat config
+- [package]: Updated to eslint 9.5.0 and adopted the flat config
+- [package]: Updated to use prettier and jest with the flat config
 - [matterbridge]: Updated dependencies
-- [matterbridgeDevice]: Updated ColorControl commandHandlers for (https://github.com/Luligu/matterbridge-shelly)
-- [matterbridge]: Plugin disable and plugin remove methods now remove also the registered devices from the bridge
+- [matterbridgeDevice]: Updated ColorControl commandHandlers for improved compatibility with (https://github.com/Luligu/matterbridge-shelly)
+- [matterbridge]:  The "plugin disable" and "plugin remove" methods now also remove the registered devices from the bridge
+- [matterbridge]: The "plugin add" method now loads, starts, and configures the plugin
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">

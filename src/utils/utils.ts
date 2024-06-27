@@ -4,7 +4,7 @@
  * @file utils.ts
  * @author Luca Liguori
  * @date 2024-02-17
- * @version 1.2.5
+ * @version 1.2.6
  *
  * Copyright 2024 Luca Liguori.
  *
@@ -233,13 +233,13 @@ export function getIpv6InterfaceAddress(): string | undefined {
 export function logInterfaces(): string | undefined {
   let ipv6Address: string | undefined;
   const networkInterfaces = os.networkInterfaces();
-  // eslint-disable-next-line no-console
-  console.log('Available Network Interfaces:', networkInterfaces);
-  for (const interfaceDetails of Object.values(networkInterfaces)) {
-    if (!interfaceDetails) {
-      break;
-    }
-    for (const detail of interfaceDetails) {
+
+  // console.log('Available Network Interfaces:', networkInterfaces);
+  for (const [interfaceName, networkInterface] of Object.entries(networkInterfaces)) {
+    if (!networkInterface) break;
+    // eslint-disable-next-line no-console
+    console.log('Interface:', '\u001B[48;5;21m\u001B[38;5;255m', interfaceName, '\u001B[40;0m');
+    for (const detail of networkInterface) {
       // eslint-disable-next-line no-console
       console.log('Details:', detail);
     }

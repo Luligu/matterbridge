@@ -9,10 +9,6 @@ import Settings from './components/Settings';
 import Test from './components/Test';
 import Logs from './components/Logs';
 
-/*
-      <div style={{backgroundColor: 'lightgray'}} >
-      <div className="main-background" style={{ flex: 1, flexBasis: 'auto', flexDirection: 'column', height: 'calc(100vh - 40px)', width: 'calc(100vw - 40px)', gap: '20px' , margin: '0', padding: '20px' }}>
-*/
 // Create a context for the authentication state
 const AuthContext = createContext();
 
@@ -175,21 +171,77 @@ function App() {
       <LoginForm />
     </AuthProvider>
   );
-  /*
-  return (
-    <Router>
-      <div className="main-background" style={{ display: 'flex', flex: 1, flexBasis: 'auto', flexDirection: 'column', height: 'calc(100vh - 40px)', width: 'calc(100vw - 40px)', gap: '20px' , margin: '0', padding: '20px' }}>
-        <Header />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/devices" element={<Devices />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/test" element={<Test />} />
-        </Routes>
-      </div>
-    </Router>
-  );
-  */
 }
 
 export default App;
+
+/*
+How frontend was created
+npx create-react-app matterbridge-frontend
+cd matterbridge-frontend
+npm install react-router-dom 
+
+Success! Created frontend at C:\Users\lligu\OneDrive\GitHub\matterbridge\frontend
+Inside that directory, you can run several commands:
+
+  npm start
+    Starts the development server.
+
+  npm run build
+    Bundles the app into static files for production.
+
+  npm test
+    Starts the test runner.
+
+  npm run eject
+    Removes this tool and copies build dependencies, configuration files
+    and scripts into the app directory. If you do this, you can’t go back!
+
+We suggest that you begin by typing:
+
+  cd frontend
+  npm start
+
+Happy hacking!
+PS C:\Users\lligu\OneDrive\GitHub\matterbridge> cd frontend
+PS C:\Users\lligu\OneDrive\GitHub\matterbridge\frontend> npm run build
+
+> frontend@0.1.0 build
+> react-scripts build
+
+Creating an optimized production build...
+One of your dependencies, babel-preset-react-app, is importing the
+"@babel/plugin-proposal-private-property-in-object" package without
+declaring it in its dependencies. This is currently working because
+"@babel/plugin-proposal-private-property-in-object" is already in your
+node_modules folder for unrelated reasons, but it may break at any time.
+
+babel-preset-react-app is part of the create-react-app project, which
+is not maintianed anymore. It is thus unlikely that this bug will
+ever be fixed. Add "@babel/plugin-proposal-private-property-in-object" to
+your devDependencies to work around this error. This will make this message
+go away.
+
+Compiled successfully.
+
+File sizes after gzip:
+
+  46.65 kB  build\static\js\main.9b7ec296.js
+  1.77 kB   build\static\js\453.8ab44547.chunk.js
+  513 B     build\static\css\main.f855e6bc.css
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  npm install -g serve
+  serve -s build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+
+PS C:\Users\lligu\OneDrive\GitHub\matterbridge\frontend> 
+*/

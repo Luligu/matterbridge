@@ -247,6 +247,11 @@ export function logInterfaces(): string | undefined {
   return ipv6Address;
 }
 
+export function isValidIpv4Address(ipv4Address: string): boolean {
+  const ipv4Regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+  return ipv4Regex.test(ipv4Address);
+}
+
 export async function waiter(name: string, check: () => boolean, exitWithReject = false, resolveTimeout = 5000, resolveInterval = 500, debug = false) {
   // eslint-disable-next-line no-console
   if (debug) console.log(`**Waiter ${name} started...`);
