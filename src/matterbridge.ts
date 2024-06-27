@@ -2852,6 +2852,7 @@ export class Matterbridge extends EventEmitter {
     // Listen on HTTP
     this.expressServer = this.expressApp.listen(port, () => {
       this.log.info(`The frontend is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
+      this.log.debug(`The frontend is listening on ${UNDERLINE}http://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
