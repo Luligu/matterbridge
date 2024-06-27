@@ -208,7 +208,7 @@ function Home() {
 
       <div  style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', flex: '0 1 auto', gap: '20px' }}>
         {qrCode && <QRDiv qrText={qrCode} pairingText={pairingCode} qrWidth={256} topText="QRCode" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName}/>}
-        {systemInfo && <SystemInfoTable systemInfo={systemInfo}/>}
+        {systemInfo && <SystemInfoTable systemInfo={systemInfo} compact={true}/>}
       </div>
       <div  style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', flex: '0 1 auto', width: '100%', gap: '20px' }}>
         <AddRemovePluginsDiv ref={refAddRemove} plugins={plugins}/>
@@ -406,19 +406,27 @@ function AddRemovePluginsDiv({ plugins }) {
   );
 }
 
-// This function takes systemInfo as a parameter
-// It returns a table element with the systemInfo
-function SystemInfoTable({ systemInfo }) {
+// This function takes systemInfo as a parameter and returns a table element with the systemInfo
+function SystemInfoTable({ systemInfo, compact }) {
   const excludeKeys = ['totalMemory', 'osRelease', 'osArch'];
-  const totalMemory = systemInfo.totalMemory;
-  const freeMemory = systemInfo.freeMemory;
-  systemInfo.freeMemory = `${freeMemory} / ${totalMemory}`;
-  const osType = systemInfo.osType;
-  const osRelease	= systemInfo.osRelease;
-  systemInfo.osType = `${osType} (${osRelease})`;
-  const osPlatform = systemInfo.osPlatform;
-  const osArch = systemInfo.osArch;
-  systemInfo.osPlatform = `${osPlatform} (${osArch})`;
+  if (compact && systemInfo.totalMemory) {
+    const totalMemory = systemInfo.totalMemory;
+    const freeMemory = systemInfo.freeMemory;
+    systemInfo.freeMemory = `${freeMemory} / ${totalMemory}`;
+    delete systemInfo.totalMemory;
+  }
+  if (compact && systemInfo.osRelease) {
+    const osType = systemInfo.osType;
+    const osRelease	= systemInfo.osRelease;
+    systemInfo.osType = `${osType} (${osRelease})`;
+    delete systemInfo.osRelease;
+  }
+  if(compact && systemInfo.osArch) {
+    const osPlatform = systemInfo.osPlatform;
+    const osArch = systemInfo.osArch;
+    systemInfo.osPlatform = `${osPlatform} (${osArch})`;
+    delete systemInfo.osArch;
+  }
 
   return (
     <table>
@@ -439,8 +447,7 @@ function SystemInfoTable({ systemInfo }) {
   );
 }
 
-// This function takes systemInfo as a parameter
-// It returns a table element with the systemInfo
+// This function takes systemInfo as a parameter and returns a table element with the systemInfo
 function MatterbridgeInfoTable({ matterbridgeInfo }) {
   return (
     <table>
@@ -472,8 +479,8 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText }) {
       <QRCode value={qrText} size={qrWidth} bgColor='#9e9e9e' style={{ margin: '20px' }}/>
       <div  className="MbfWindowFooter">
         <div>
-          <p style={{ margin: 0, textAlign: 'center' }}>Use {pairingText} or scan the QR to pair</p>
-          <p className="text-color-selected" style={{ margin: 0, textAlign: 'center' }}>{bottomText}</p>
+          <p style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>Use {pairingText} or scan the QR to pair</p>
+          <p className="text-color-selected" style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>{bottomText}</p>
         </div>
       </div>
     </div>

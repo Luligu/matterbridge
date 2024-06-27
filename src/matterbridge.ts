@@ -2786,7 +2786,7 @@ export class Matterbridge extends EventEmitter {
     const cleanMessage = message.replace(/\x1B\[[0-9;]*[m|s|u|K]/g, '');
     // Remove leading asterisks from the message
     const finalMessage = cleanMessage.replace(/^\*+/, '');
-
+    // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({ type, subType, message: finalMessage }));
