@@ -9,6 +9,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [matterbridgeDevice]: Added createDefaultLatchingSwitchClusterServer and getDefaultLatchingSwitchClusterServer for (https://github.com/Luligu/matterbridge-shelly)
+- [frontend]: Added interfaceName
 
 ### Changed
 

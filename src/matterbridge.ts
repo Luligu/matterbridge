@@ -98,6 +98,7 @@ interface RegisteredDevice {
 
 // Define an interface for storing the system information
 interface SystemInformation {
+  interfaceName: string;
   macAddress: string;
   ipv4Address: string;
   ipv6Address: string;
@@ -140,6 +141,7 @@ const typ = '\u001B[38;5;207m';
  */
 export class Matterbridge extends EventEmitter {
   public systemInformation: SystemInformation = {
+    interfaceName: '',
     macAddress: '',
     ipv4Address: '',
     ipv6Address: '',
@@ -2431,15 +2433,17 @@ export class Matterbridge extends EventEmitter {
     const networkInterfaces = os.networkInterfaces();
     this.systemInformation.ipv4Address = 'Not found';
     this.systemInformation.ipv6Address = 'Not found';
-    for (const interfaceDetails of Object.values(networkInterfaces)) {
+    for (const [interfaceName, interfaceDetails] of Object.entries(networkInterfaces)) {
       if (!interfaceDetails) {
         break;
       }
       for (const detail of interfaceDetails) {
         if (detail.family === 'IPv4' && !detail.internal && this.systemInformation.ipv4Address === 'Not found') {
+          this.systemInformation.interfaceName = interfaceName;
           this.systemInformation.ipv4Address = detail.address;
           this.systemInformation.macAddress = detail.mac;
         } else if (detail.family === 'IPv6' && !detail.internal && this.systemInformation.ipv6Address === 'Not found') {
+          this.systemInformation.interfaceName = interfaceName;
           this.systemInformation.ipv6Address = detail.address;
           this.systemInformation.macAddress = detail.mac;
         }
@@ -2471,6 +2475,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug('Host System Information:');
     this.log.debug(`- Hostname: ${this.systemInformation.hostname}`);
     this.log.debug(`- User: ${this.systemInformation.user}`);
+    this.log.debug(`- Interface: ${this.systemInformation.interfaceName}`);
     this.log.debug(`- MAC Address: ${this.systemInformation.macAddress}`);
     this.log.debug(`- IPv4 Address: ${this.systemInformation.ipv4Address}`);
     this.log.debug(`- IPv6 Address: ${this.systemInformation.ipv6Address}`);
@@ -2801,11 +2806,11 @@ export class Matterbridge extends EventEmitter {
     }
     this.log.debug(`Initializing the frontend on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
 
+    // Create a WebSocket server
     const wssPort = 8284;
     const wssHost = `ws://${this.systemInformation.ipv4Address}:${wssPort}`;
-    // Create a WebSocket server no certificate required
-    this.webSocketServer = new WebSocketServer({ port: wssPort });
-    this.log.debug(`WebSocket server creatd on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
+    this.webSocketServer = new WebSocketServer({ port: wssPort, host: this.systemInformation.ipv4Address });
+    this.log.debug(`WebSocket server created on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
 
     this.webSocketServer.on('connection', (ws: WebSocket) => {
       this.log.info('WebSocketServer client connected');

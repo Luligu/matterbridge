@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-console */
 // Home.js
 import React, { useEffect, useState, useRef } from 'react';
 import { StatusIndicator } from './StatusIndicator';
@@ -9,7 +11,6 @@ import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip
 import { DeleteForever, Download, Remove, Add, Unpublished, PublishedWithChanges, Settings, Favorite, Help, Announcement, QrCode2, MoreVert } from '@mui/icons-material';
 
 // @rjsf
-// import Form from '@rjsf/core';
 import Form from '@rjsf/mui';
 import validator from '@rjsf/validator-ajv8';
 
@@ -18,7 +19,6 @@ import QRCode from 'qrcode.react';
 // npm install @mui/material @emotion/react @emotion/styled
 // npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
 // npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8 @rjsf/mui
-
 
 function Home() {
   const [wssHost, setWssHost] = useState(null);
@@ -70,8 +70,6 @@ function Home() {
     []
   );
 
-  /*
-  */
   useEffect(() => {
     // Fetch settings from the backend
     const fetchSettings = () => {
@@ -137,10 +135,10 @@ function Home() {
       sendCommandToMatterbridge('enableplugin', plugins[row].name);
     }
     console.log('Updating page');
-    //setPlugins(prevPlugins => [...prevPlugins]);
+    // setPlugins(prevPlugins => [...prevPlugins]);
     handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
     setTimeout(() => {
-      //window.location.reload();
+      // window.location.reload();
     }, 5000);
   };
 
@@ -149,7 +147,7 @@ function Home() {
     sendCommandToMatterbridge('installplugin', plugins[row].name);
     handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
     setTimeout(() => {
-      //window.location.reload();
+      // window.location.reload();
     }, 5000);
   };
 
@@ -158,7 +156,7 @@ function Home() {
     sendCommandToMatterbridge('removeplugin', plugins[row].name);
     handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
     setTimeout(() => {
-      //window.location.reload();
+      // window.location.reload();
     }, 5000);
   };
 
@@ -411,6 +409,17 @@ function AddRemovePluginsDiv({ plugins }) {
 // This function takes systemInfo as a parameter
 // It returns a table element with the systemInfo
 function SystemInfoTable({ systemInfo }) {
+  const excludeKeys = ['totalMemory', 'osRelease', 'osArch'];
+  const totalMemory = systemInfo.totalMemory;
+  const freeMemory = systemInfo.freeMemory;
+  systemInfo.freeMemory = `${freeMemory} / ${totalMemory}`;
+  const osType = systemInfo.osType;
+  const osRelease	= systemInfo.osRelease;
+  systemInfo.osType = `${osType} (${osRelease})`;
+  const osPlatform = systemInfo.osPlatform;
+  const osArch = systemInfo.osArch;
+  systemInfo.osPlatform = `${osPlatform} (${osArch})`;
+
   return (
     <table>
       <thead>
@@ -419,7 +428,7 @@ function SystemInfoTable({ systemInfo }) {
         </tr>
       </thead>
       <tbody>
-        {Object.entries(systemInfo).map(([key, value], index) => (
+        {Object.entries(systemInfo).filter(([key, _]) => !excludeKeys.includes(key)).map(([key, value], index) => (
           <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
             <td className="table-content">{key}</td>
             <td className="table-content">{value}</td>
@@ -542,6 +551,3 @@ function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
 }
   
 export default Home;
-/*
-style={{ backgroundColor: '#c4c2c2' }} 
-*/
