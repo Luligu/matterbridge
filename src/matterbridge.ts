@@ -2819,7 +2819,7 @@ export class Matterbridge extends EventEmitter {
    * @param port The port number to run the frontend server on. Default is 3000.
    */
   async initializeFrontend(port = 8283): Promise<void> {
-    this.log.debug(`Initializing the frontend http server on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
+    this.log.debug(`Initializing the frontend ${hasParameter('ssl') ? 'https' : 'http'} server on port ${YELLOW}${port}${db}`);
 
     // Create the express app that serves the frontend
     this.expressApp = express();
@@ -2910,7 +2910,7 @@ export class Matterbridge extends EventEmitter {
 
     this.webSocketServer.on('connection', (ws: WebSocket, request: http.IncomingMessage) => {
       const clientIp = request.socket.remoteAddress;
-      this.log.info(`WebSocketServer client connected from ${clientIp}`);
+      this.log.info(`WebSocketServer client ${clientIp} connected`);
       this.log.setGlobalCallback(this.wssSendMessage.bind(this));
       this.log.debug('WebSocketServer logger callback added');
       this.wssSendMessage('Matterbridge', 'info', 'WebSocketServer client connected to Matterbridge');
