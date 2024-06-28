@@ -27,6 +27,7 @@ import { fileURLToPath, pathToFileURL } from 'url';
 import { promises as fs } from 'fs';
 import { ExecException, exec, spawn } from 'child_process';
 import { Server, createServer } from 'http';
+import * as http from 'http';
 import https from 'https';
 import EventEmitter from 'events';
 import express from 'express';
@@ -999,11 +1000,11 @@ export class Matterbridge extends EventEmitter {
         this.httpsServer = undefined;
         this.log.debug('Frontend https server closed successfully');
       }
-      // Remove listeners
+      // Remove listeners from the express app
       if (this.expressApp) {
         this.expressApp.removeAllListeners();
         this.expressApp = undefined;
-        this.log.debug('Frontend closed successfully');
+        this.log.debug('Frontend app closed successfully');
       }
       // Close the WebSocket server
       if (this.webSocketServer) {
@@ -2818,53 +2819,104 @@ export class Matterbridge extends EventEmitter {
    * @param port The port number to run the frontend server on. Default is 3000.
    */
   async initializeFrontend(port = 8283): Promise<void> {
-    if (hasParameter('test_https')) {
-      await this.initializeHttpsFrontend(8443);
-      return;
-    }
     this.log.debug(`Initializing the frontend http server on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
 
     // Create the express app that serves the frontend
     this.expressApp = express();
     this.expressApp.use(express.static(path.join(this.rootDirectory, 'frontend/build')));
 
-    // Create an HTTP server and attach the express app
-    this.httpServer = createServer(this.expressApp);
+    if (!hasParameter('ssl')) {
+      // Create an HTTP server and attach the express app
+      this.httpServer = createServer(this.expressApp);
 
-    // Listen on the specified port
-    this.httpServer.listen(port, () => {
-      this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
-      this.log.debug(`The frontend http server is listening on ${UNDERLINE}http://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
-    });
+      // Listen on the specified port
+      this.httpServer.listen(port, () => {
+        if (this.systemInformation.ipv4Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
+        if (this.systemInformation.ipv6Address !== '') this.log.debug(`The frontend http server is listening on ${UNDERLINE}http://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
+      });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.httpServer.on('error', (error: any) => {
-      this.log.error(`Frontend http server error listening on ${port}`);
-      switch (error.code) {
-        case 'EACCES':
-          this.log.error(`Port ${port} requires elevated privileges`);
-          break;
-        case 'EADDRINUSE':
-          this.log.error(`Port ${port} is already in use`);
-          break;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      this.httpServer.on('error', (error: any) => {
+        this.log.error(`Frontend http server error listening on ${port}`);
+        switch (error.code) {
+          case 'EACCES':
+            this.log.error(`Port ${port} requires elevated privileges`);
+            break;
+          case 'EADDRINUSE':
+            this.log.error(`Port ${port} is already in use`);
+            break;
+        }
+        process.exit(1);
+      });
+    } else {
+      // Load the SSL certificate and private key and optionally the CA certificate
+      // Development certificates can be created with openssl using the following commands:
+      // openssl genrsa -out key.pem 2048
+      // openssl req -new -key key.pem -out csr.pem
+      // openssl x509 -req -days 365 -in csr.pem -signkey key.pem -out cert.pem
+      let cert: string | undefined;
+      try {
+        cert = await fs.readFile(path.join(this.matterbridgeDirectory, 'certs/cert.pem'), 'utf8');
+        this.log.info(`Loaded certificate file ${path.join(this.matterbridgeDirectory, 'certs/cert.pem')}`);
+      } catch (error) {
+        this.log.error(`Error reading certificate file: ${error}`);
+        process.exit(1);
       }
-      process.exit(1);
-    });
+      let key: string | undefined;
+      try {
+        key = await fs.readFile(path.join(this.matterbridgeDirectory, 'certs/key.pem'), 'utf8');
+        this.log.info(`Loaded key file ${path.join(this.matterbridgeDirectory, 'certs/key.pem')}`);
+      } catch (error) {
+        this.log.error(`Error reading key file: ${error}`);
+        process.exit(1);
+      }
+      let ca: string | undefined;
+      try {
+        ca = await fs.readFile(path.join(this.matterbridgeDirectory, 'certs/ca.pem'), 'utf8');
+        this.log.info(`Loaded CA certificate file ${path.join(this.matterbridgeDirectory, 'certs/ca.pem')}`);
+      } catch (error) {
+        this.log.info(`CA certificate file ${path.join(this.matterbridgeDirectory, 'certs/ca.pem')} not loaded: ${error}`);
+      }
+      const serverOptions: https.ServerOptions = { cert, key, ca };
+
+      // Create an HTTPS server with the SSL certificate and private key and attach the express app
+      this.httpsServer = https.createServer(serverOptions, this.expressApp);
+
+      // Listen on the specified port
+      this.httpsServer.listen(port, () => {
+        if (this.systemInformation.ipv4Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
+        if (this.systemInformation.ipv6Address !== '') this.log.debug(`The frontend https server is listening on ${UNDERLINE}https://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      this.httpsServer.on('error', (error: any) => {
+        this.log.error(`Frontend https server error listening on ${port}`);
+        switch (error.code) {
+          case 'EACCES':
+            this.log.error(`Port ${port} requires elevated privileges`);
+            break;
+          case 'EADDRINUSE':
+            this.log.error(`Port ${port} is already in use`);
+            break;
+        }
+        process.exit(1);
+      });
+    }
 
     // Createe a WebSocket server and attach it to the http server
     const wssPort = port;
-    const wssHost = `ws://${this.systemInformation.ipv4Address}:${wssPort}`;
-    this.webSocketServer = new WebSocketServer({ server: this.httpServer });
-    this.log.info(`WebSocket server running on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
+    const wssHost = hasParameter('ssl') ? `wss://${this.systemInformation.ipv4Address}:${wssPort}` : `ws://${this.systemInformation.ipv4Address}:${wssPort}`;
+    this.webSocketServer = new WebSocketServer(hasParameter('ssl') ? { server: this.httpsServer } : { server: this.httpServer });
 
-    this.webSocketServer.on('connection', (ws: WebSocket) => {
-      this.log.info('WebSocketServer client connected');
+    this.webSocketServer.on('connection', (ws: WebSocket, request: http.IncomingMessage) => {
+      const clientIp = request.socket.remoteAddress;
+      this.log.info(`WebSocketServer client connected from ${clientIp}`);
       this.log.setGlobalCallback(this.wssSendMessage.bind(this));
       this.log.debug('WebSocketServer logger callback added');
       this.wssSendMessage('Matterbridge', 'info', 'WebSocketServer client connected to Matterbridge');
 
       ws.on('message', (message) => {
-        this.log.info(`WebSocket client message: ${message}`);
+        this.log.debug(`WebSocket client message: ${message}`);
       });
 
       ws.on('close', () => {
@@ -2878,6 +2930,14 @@ export class Matterbridge extends EventEmitter {
       ws.on('error', (error: Error) => {
         this.log.error(`WebSocket client error: ${error}`);
       });
+    });
+
+    this.webSocketServer.on('close', () => {
+      this.log.debug(`WebSocketServer closed`);
+    });
+
+    this.webSocketServer.on('listening', () => {
+      this.log.info(`The WebSocketServer is listening on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
     });
 
     this.webSocketServer.on('error', (ws: WebSocket, error: Error) => {
@@ -3322,72 +3382,6 @@ export class Matterbridge extends EventEmitter {
     });
 
     this.log.debug(`Frontend initialized on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
-  }
-
-  // Just for testing purposes. Use with matterbridge -test_https so no bridge is loaded
-  async initializeHttpsFrontend(port = 8443): Promise<void> {
-    this.log.debug(`Initializing the https frontend on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
-
-    // Create the express app that serves the frontend
-    this.expressApp = express();
-
-    // Load the SSL certificate and private key
-    // If we need also the CA certificate, we can add it to the serverOptions object
-    // I created dev certificates with openssl using the following commands:
-    // openssl genrsa -out key.pem 2048
-    // openssl req -new -key key.pem -out csr.pem
-    // openssl x509 -req -days 365 -in csr.pem -signkey key.pem -out cert.pem
-    const serverOptions: https.ServerOptions = {
-      cert: await fs.readFile(path.join(this.matterbridgeDirectory, 'certs/cert.pem'), 'utf8'),
-      key: await fs.readFile(path.join(this.matterbridgeDirectory, 'certs/key.pem'), 'utf8'),
-      // ca: await fs.readFile(path.join(this.matterbridgeDirectory, 'certs/ca.pem'), 'utf8'),
-    };
-
-    // Create an HTTPS server with the SSL certificate and private key and attach the express app
-    this.httpsServer = https.createServer(serverOptions, this.expressApp);
-
-    // Fallback for routing
-    this.expressApp.get('/', (req, res) => {
-      this.log.debug('The frontend sent:', req.url);
-      res.send('Hello, HTTPS!');
-    });
-
-    // Listen on a specific port
-    // Connect to the frontend with 'https://localhost:8443'
-    this.httpsServer.listen(port, () => {
-      this.log.info(`HTTPS server listening on ${UNDERLINE}'https://localhost:${port}${UNDERLINEOFF}${rs}`);
-    });
-
-    // Attach WebSocket server to HTTPS server
-    this.webSocketServer = new WebSocketServer({ server: this.httpsServer });
-    this.log.info(`WebSocketServer runnig on ${UNDERLINE}wss://localhost:${port}${UNDERLINEOFF}${rs}`);
-
-    // Handle connections to the WebSocketServer
-    // Connect to the WebSocket server using wss from the react frontend this way: const ws = new WebSocket('wss://localhost:8443');
-    this.webSocketServer.on('connection', (ws: WebSocket) => {
-      this.log.info('WebSocketServer: WebSocket client connected');
-
-      ws.on('message', (message) => {
-        this.log.info(`WebSocket client sent message => ${message}`);
-      });
-
-      ws.on('close', () => {
-        this.log.info('WebSocket client disconnected');
-        if (this.webSocketServer?.clients.size === 0) {
-          this.log.info('All WebSocket clients disconnected');
-        }
-      });
-
-      ws.on('error', (error: Error) => {
-        this.log.error(`WebSocket client error: ${error}`);
-      });
-    });
-
-    // Handle error from the WebSocketServer
-    this.webSocketServer.on('error', (ws: WebSocket, error: Error) => {
-      this.log.error(`WebSocketServer error: ${error}`);
-      return;
-    });
   }
 
   /**

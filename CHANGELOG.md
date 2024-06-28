@@ -8,7 +8,9 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
-- [matterbridge]: Unified the frontend and the WebSockerServer on the same port of the http server
+- [matterbridge]: Unified the http server port for the frontend and the WebSockerServer.
+- [matterbridge]: Unified the https server port for the frontend and the WebSockerServer.
+- [certificates]: The certificates for https connections are imported from the directory ~/.matterbridge/certs with these names: cert.pem, key.pem and ca.pem (optional). Use the -ssl command line parameter to activate https for both frontend and WebSocketServer.
 
 ### Fixed
 
