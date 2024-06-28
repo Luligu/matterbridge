@@ -60,8 +60,8 @@
       "types": "./dist/cluster/*.d.ts"
     },
     "./logger": {
-      "import": "./dist/log/export.js",
-      "types": "./dist/log/export.d.ts"
+      "import": "./dist/logger/export.js",
+      "types": "./dist/logger/export.d.ts"
     },
     "./storage": {
       "import": "./dist/storage/export.js",
