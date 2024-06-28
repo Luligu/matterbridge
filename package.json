@@ -59,7 +59,7 @@
       "import": "./dist/cluster/*.js",
       "types": "./dist/cluster/*.d.ts"
     },
-    "./log": {
+    "./logger": {
       "import": "./dist/log/export.js",
       "types": "./dist/log/export.d.ts"
     },
