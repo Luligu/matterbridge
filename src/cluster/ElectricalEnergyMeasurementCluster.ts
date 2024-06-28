@@ -38,7 +38,7 @@ export namespace ElectricalEnergyMeasurement {
      *
      * @see {@link MatterSpecification.v13.Cluster} § 2.12.5.1.1
      */
-    energy: TlvField(0, TlvInt64.bound({ min: 0, max: 262 })),
+    energy: TlvField(0, TlvInt64.bound({ min: 0, max: 2 ** 62 })),
 
     /**
      * This field shall indicate the timestamp in UTC of the beginning of the period during which the value of the

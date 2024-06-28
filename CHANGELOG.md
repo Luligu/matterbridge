@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
+## [1.3.6] - 2024-06-28
+
+### Changed
+
+- [matterbridge]: Unified the http server port for the frontend and the WebSockerServer.
+- [matterbridge]: Unified the https server port for the frontend and the WebSockerServer.
+- [certificates]: The certificates for https connections are imported from the directory ~/.matterbridge/certs with these names: cert.pem, key.pem and ca.pem (optional). Use the -ssl command line parameter to activate https for both frontend and WebSocketServer.
+
+### Fixed
+
+- [matterbridge]: Fixed exports
+- [matterbridgeDevice]: Fixed ElectricalEnergyMeasurement and ElectricalPowerMeasurement
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.3.5] - 2024-06-26
 
 ### Added
