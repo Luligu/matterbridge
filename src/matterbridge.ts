@@ -371,6 +371,9 @@ export class Matterbridge extends EventEmitter {
       - reset:                 remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
       - factoryreset:          remove all commissioning information and reset all internal storages. Shutdown Matterbridge before using it!
       - list:                  list the registered plugins
+      - loginterfaces:         log the network interfaces
+      - logstorage:            log the node storage
+      - ssl:                   enable SSL for the frontend and WebSockerServer (certificates in .matterbridge/certs directory cert.pem, key.pem and ca.pem (optional))
       - add [plugin path]:     register the plugin from the given absolute or relative path
       - add [plugin name]:     register the globally installed plugin with the given name
       - remove [plugin path]:  remove the plugin from the given absolute or relative path
