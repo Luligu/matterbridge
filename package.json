@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.3.5",
+  "version": "1.3.6",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -39,12 +39,34 @@
   ],
   "type": "module",
   "main": "dist/index.js",
-  "types": "dist/index.d.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "matterbridge": "dist/cli.js"
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./utils/*": {
+      "import": "./dist/utils/*.js",
+      "types": "./dist/utils/*.d.ts"
+    },
+    "./cluster/*": {
+      "import": "./dist/cluster/*.js",
+      "types": "./dist/cluster/*.d.ts"
+    },
+    "./log": {
+      "import": "./dist/log/export.js",
+      "types": "./dist/log/export.d.ts"
+    },
+    "./storage": {
+      "import": "./dist/storage/export.js",
+      "types": "./dist/storage/export.d.ts"
+    }
   },
   "scripts": {
     "build": "tsc",

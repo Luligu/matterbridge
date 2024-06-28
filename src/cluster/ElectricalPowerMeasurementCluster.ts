@@ -42,7 +42,7 @@ export namespace ElectricalPowerMeasurement {
      *
      * @see {@link MatterSpecification.v13.Cluster} § 2.13.5.3.2
      */
-    measurement: TlvField(1, TlvNullable(TlvInt64.bound({ min: -262, max: 262 }))),
+    measurement: TlvField(1, TlvNullable(TlvInt64.bound({ min: -(2 ** 62), max: 2 ** 62 }))),
   });
 
   /**
@@ -95,7 +95,7 @@ export namespace ElectricalPowerMeasurement {
      *
      * @see {@link MatterSpecification.v13.Cluster} § 2.13.5.2.2
      */
-    min: TlvField(1, TlvInt64.bound({ min: -262, max: 262 })),
+    min: TlvField(1, TlvInt64.bound({ min: -(2 ** 62), max: 2 ** 62 })),
 
     /**
      * This field shall be the largest measured value for the associated measurement over the period between either
@@ -103,7 +103,7 @@ export namespace ElectricalPowerMeasurement {
      *
      * @see {@link MatterSpecification.v13.Cluster} § 2.13.5.2.3
      */
-    max: TlvField(2, TlvInt64.bound({ min: -262, max: 262 })),
+    max: TlvField(2, TlvInt64.bound({ min: -(2 ** 62), max: 2 ** 62 })),
 
     /**
      * This field shall be the timestamp in UTC of the beginning of the measurement period.
@@ -246,7 +246,7 @@ export namespace ElectricalPowerMeasurement {
        *
        * @see {@link MatterSpecification.v13.Cluster} § 2.13.6.7
        */
-      reactiveCurrent: OptionalAttribute(0x6, TlvNullable(TlvInt64.bound({ min: -262, max: 262 })), { default: null }),
+      reactiveCurrent: OptionalAttribute(0x6, TlvNullable(TlvInt64.bound({ min: -(2 ** 62), max: 2 ** 62 })), { default: null }),
 
       /**
        * This shall indicate the most recent ApparentCurrent (square root sum of the squares of active and
@@ -265,7 +265,7 @@ export namespace ElectricalPowerMeasurement {
        *
        * @see {@link MatterSpecification.v13.Cluster} § 2.13.6.8
        */
-      apparentCurrent: OptionalAttribute(0x7, TlvNullable(TlvInt64.bound({ min: 0, max: 262 })), { default: null }),
+      apparentCurrent: OptionalAttribute(0x7, TlvNullable(TlvInt64.bound({ min: 0, max: 2 ** 62 })), { default: null }),
 
       /**
        * This shall indicate the most recent ReactivePower reading in millivolt-amps reactive (mVAR). A positive
@@ -287,7 +287,7 @@ export namespace ElectricalPowerMeasurement {
        *
        * @see {@link MatterSpecification.v13.Cluster} § 2.13.6.10
        */
-      reactivePower: OptionalAttribute(0x9, TlvNullable(TlvInt64.bound({ min: -262, max: 262 })), { default: null }),
+      reactivePower: OptionalAttribute(0x9, TlvNullable(TlvInt64.bound({ min: -(2 ** 62), max: 2 ** 62 })), { default: null }),
 
       /**
        * This shall indicate the most recent ApparentPower reading in millivolt-amps (mVA).
@@ -307,7 +307,7 @@ export namespace ElectricalPowerMeasurement {
        *
        * @see {@link MatterSpecification.v13.Cluster} § 2.13.6.11
        */
-      apparentPower: OptionalAttribute(0xa, TlvNullable(TlvInt64.bound({ min: -262, max: 262 })), { default: null }),
+      apparentPower: OptionalAttribute(0xa, TlvNullable(TlvInt64.bound({ min: -(2 ** 62), max: 2 ** 62 })), { default: null }),
 
       /**
        * This shall indicate the most recent RMSVoltage reading in millivolts (mV).
@@ -325,7 +325,7 @@ export namespace ElectricalPowerMeasurement {
        *
        * @see {@link MatterSpecification.v13.Cluster} § 2.13.6.12
        */
-      rmsVoltage: OptionalAttribute(0xb, TlvNullable(TlvInt64.bound({ min: -262, max: 262 })), { default: null }),
+      rmsVoltage: OptionalAttribute(0xb, TlvNullable(TlvInt64.bound({ min: -(2 ** 62), max: 2 ** 62 })), { default: null }),
 
       /**
        * This shall indicate the most recent RMSCurrent reading in milliamps (mA).
@@ -346,7 +346,7 @@ export namespace ElectricalPowerMeasurement {
        *
        * @see {@link MatterSpecification.v13.Cluster} § 2.13.6.13
        */
-      rmsCurrent: OptionalAttribute(0xc, TlvNullable(TlvInt64.bound({ min: -262, max: 262 })), { default: null }),
+      rmsCurrent: OptionalAttribute(0xc, TlvNullable(TlvInt64.bound({ min: -(2 ** 62), max: 2 ** 62 })), { default: null }),
 
       /**
        * This shall indicate the most recent RMSPower reading in milliwatts (mW).
@@ -366,7 +366,7 @@ export namespace ElectricalPowerMeasurement {
        *
        * @see {@link MatterSpecification.v13.Cluster} § 2.13.6.14
        */
-      rmsPower: OptionalAttribute(0xd, TlvNullable(TlvInt64.bound({ min: -262, max: 262 })), { default: null }),
+      rmsPower: OptionalAttribute(0xd, TlvNullable(TlvInt64.bound({ min: -(2 ** 62), max: 2 ** 62 })), { default: null }),
 
       /**
        * This shall indicate the most recent Frequency reading in millihertz (mHz).
