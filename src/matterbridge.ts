@@ -2450,25 +2450,28 @@ export class Matterbridge extends EventEmitter {
   private async logNodeAndSystemInfo() {
     // IP address information
     const networkInterfaces = os.networkInterfaces();
-    this.systemInformation.ipv4Address = 'Not found';
-    this.systemInformation.ipv6Address = 'Not found';
+    this.systemInformation.ipv4Address = '';
+    this.systemInformation.ipv6Address = '';
     for (const [interfaceName, interfaceDetails] of Object.entries(networkInterfaces)) {
       if (!interfaceDetails) {
         break;
       }
       for (const detail of interfaceDetails) {
-        if (detail.family === 'IPv4' && !detail.internal && this.systemInformation.ipv4Address === 'Not found') {
+        if (detail.family === 'IPv4' && !detail.internal && this.systemInformation.ipv4Address === '') {
           this.systemInformation.interfaceName = interfaceName;
           this.systemInformation.ipv4Address = detail.address;
           this.systemInformation.macAddress = detail.mac;
-        } else if (detail.family === 'IPv6' && !detail.internal && this.systemInformation.ipv6Address === 'Not found') {
+        } else if (detail.family === 'IPv6' && !detail.internal && this.systemInformation.ipv6Address === '') {
           this.systemInformation.interfaceName = interfaceName;
           this.systemInformation.ipv6Address = detail.address;
           this.systemInformation.macAddress = detail.mac;
         }
       }
-      // Break if both addresses are found to improve efficiency
-      if (this.systemInformation.ipv4Address !== 'Not found' && this.systemInformation.ipv6Address !== 'Not found') {
+      if (this.systemInformation.ipv4Address !== '' /* && this.systemInformation.ipv6Address !== ''*/) {
+        this.log.debug(`Using interface: '${this.systemInformation.interfaceName}'`);
+        this.log.debug(`- with MAC address: '${this.systemInformation.macAddress}'`);
+        this.log.debug(`- with IPv4 address: '${this.systemInformation.ipv4Address}'`);
+        this.log.debug(`- with IPv6 address: '${this.systemInformation.ipv6Address}'`);
         break;
       }
     }
@@ -2849,11 +2852,7 @@ export class Matterbridge extends EventEmitter {
         process.exit(1);
       });
     } else {
-      // Load the SSL certificate and private key and optionally the CA certificate
-      // Development certificates can be created with openssl using the following commands:
-      // openssl genrsa -out key.pem 2048
-      // openssl req -new -key key.pem -out csr.pem
-      // openssl x509 -req -days 365 -in csr.pem -signkey key.pem -out cert.pem
+      // Load the SSL certificate, the private key and optionally the CA certificate
       let cert: string | undefined;
       try {
         cert = await fs.readFile(path.join(this.matterbridgeDirectory, 'certs/cert.pem'), 'utf8');
@@ -2879,7 +2878,7 @@ export class Matterbridge extends EventEmitter {
       }
       const serverOptions: https.ServerOptions = { cert, key, ca };
 
-      // Create an HTTPS server with the SSL certificate and private key and attach the express app
+      // Create an HTTPS server with the SSL certificate and private key (ca is optional) and attach the express app
       this.httpsServer = https.createServer(serverOptions, this.expressApp);
 
       // Listen on the specified port
