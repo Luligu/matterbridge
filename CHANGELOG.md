@@ -6,6 +6,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [1.3.6] - 2024-06-28
 
+### Changed
+
+- [matterbridge]: Unified the frontend and the WebSockerServer on the same port of the http server
+
 ### Fixed
 
 - [matterbridge]: Fixed exports

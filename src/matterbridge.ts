@@ -26,7 +26,7 @@ import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YE
 import { fileURLToPath, pathToFileURL } from 'url';
 import { promises as fs } from 'fs';
 import { ExecException, exec, spawn } from 'child_process';
-import { Server } from 'http';
+import { Server, createServer } from 'http';
 import https from 'https';
 import EventEmitter from 'events';
 import express from 'express';
@@ -198,8 +198,11 @@ export class Matterbridge extends EventEmitter {
   private registeredDevices: RegisteredDevice[] = [];
   private nodeStorage: NodeStorageManager | undefined;
   private nodeContext: NodeStorage | undefined;
+
   private expressApp: express.Express | undefined;
   private expressServer: Server | undefined;
+  private httpServer: Server | undefined;
+  private httpsServer: Server | undefined;
   private webSocketServer: WebSocketServer | undefined;
 
   private storageManager: StorageManager | undefined;
@@ -920,7 +923,7 @@ export class Matterbridge extends EventEmitter {
       this.checkUpdateInterval && clearInterval(this.checkUpdateInterval);
       this.checkUpdateInterval = undefined;
 
-      // Calling the shutdown functions with a reason
+      // Calling the shutdown method of each plugin
       for (const plugin of this.registeredPlugins) {
         if (!plugin.enabled || plugin.error) continue;
         this.log.info(`Shutting down plugin ${plg}${plugin.name}${nf}`);
@@ -978,8 +981,23 @@ export class Matterbridge extends EventEmitter {
       // Close the express server
       if (this.expressServer) {
         this.expressServer.close();
+        this.expressServer.removeAllListeners();
         this.expressServer = undefined;
         this.log.debug('Express server closed successfully');
+      }
+      // Close the http server
+      if (this.httpServer) {
+        this.httpServer.close();
+        this.httpServer.removeAllListeners();
+        this.httpServer = undefined;
+        this.log.debug('Frontend http server closed successfully');
+      }
+      // Close the https server
+      if (this.httpsServer) {
+        this.httpsServer.close();
+        this.httpsServer.removeAllListeners();
+        this.httpsServer = undefined;
+        this.log.debug('Frontend https server closed successfully');
       }
       // Remove listeners
       if (this.expressApp) {
@@ -2804,13 +2822,40 @@ export class Matterbridge extends EventEmitter {
       await this.initializeHttpsFrontend(8443);
       return;
     }
-    this.log.debug(`Initializing the frontend on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
+    this.log.debug(`Initializing the frontend http server on port ${YELLOW}${port}${db} static ${UNDERLINE}${path.join(this.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
 
-    // Create a WebSocket server
-    const wssPort = 8284;
+    // Create the express app that serves the frontend
+    this.expressApp = express();
+    this.expressApp.use(express.static(path.join(this.rootDirectory, 'frontend/build')));
+
+    // Create an HTTP server and attach the express app
+    this.httpServer = createServer(this.expressApp);
+
+    // Listen on the specified port
+    this.httpServer.listen(port, () => {
+      this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
+      this.log.debug(`The frontend http server is listening on ${UNDERLINE}http://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.httpServer.on('error', (error: any) => {
+      this.log.error(`Frontend http server error listening on ${port}`);
+      switch (error.code) {
+        case 'EACCES':
+          this.log.error(`Port ${port} requires elevated privileges`);
+          break;
+        case 'EADDRINUSE':
+          this.log.error(`Port ${port} is already in use`);
+          break;
+      }
+      process.exit(1);
+    });
+
+    // Createe a WebSocket server and attach it to the http server
+    const wssPort = port;
     const wssHost = `ws://${this.systemInformation.ipv4Address}:${wssPort}`;
-    this.webSocketServer = new WebSocketServer({ port: wssPort, host: this.systemInformation.ipv4Address });
-    this.log.debug(`WebSocket server created on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
+    this.webSocketServer = new WebSocketServer({ server: this.httpServer });
+    this.log.info(`WebSocket server running on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
 
     this.webSocketServer.on('connection', (ws: WebSocket) => {
       this.log.info('WebSocketServer client connected');
@@ -2819,14 +2864,14 @@ export class Matterbridge extends EventEmitter {
       this.wssSendMessage('Matterbridge', 'info', 'WebSocketServer client connected to Matterbridge');
 
       ws.on('message', (message) => {
-        this.log.info(`WebSocket client sent a message => ${message}`);
+        this.log.info(`WebSocket client message: ${message}`);
       });
 
       ws.on('close', () => {
         this.log.info('WebSocket client disconnected');
         if (this.webSocketServer?.clients.size === 0) {
           this.log.setGlobalCallback(undefined);
-          this.log.debug('All WebSocket client disconnected. WebSocketServer logger callback removed');
+          this.log.debug('All WebSocket clients disconnected. WebSocketServer logger callback removed');
         }
       });
 
@@ -2837,14 +2882,22 @@ export class Matterbridge extends EventEmitter {
 
     this.webSocketServer.on('error', (ws: WebSocket, error: Error) => {
       this.log.error(`WebSocketServer error: ${error}`);
-      return;
     });
+
+    /*
+    // Create a WebSocket server
+    const wssPort = 8284;
+    const wssHost = `ws://${this.systemInformation.ipv4Address}:${wssPort}`;
+    this.webSocketServer = new WebSocketServer({ port: wssPort, host: this.systemInformation.ipv4Address });
+    this.log.debug(`WebSocket server created on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
 
     this.webSocketServer.on('listening', () => {
       this.log.info(`WebSocketServer is listening on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
       return;
     });
+    */
 
+    /*
     // Serve React build directory
     this.expressApp = express();
     this.expressApp.use(express.static(path.join(this.rootDirectory, 'frontend/build')));
@@ -2868,6 +2921,7 @@ export class Matterbridge extends EventEmitter {
       }
       process.exit(1);
     });
+    */
 
     // Endpoint to validate login code
     this.expressApp.post('/api/login', express.json(), async (req, res) => {
@@ -3260,10 +3314,10 @@ export class Matterbridge extends EventEmitter {
       res.json({ message: 'Command received' });
     });
 
-    // Fallback for routing (must be the last route)
+    // Fallback for routing (must be the last route but it should not be used because the frontend is static)
     this.expressApp.get('*', (req, res) => {
-      this.log.debug('The frontend sent:', req.url);
-      this.log.debug('Response send file:', path.join(this.rootDirectory, 'frontend/build/index.html'));
+      this.log.warn('The frontend sent:', req.url);
+      this.log.warn('Response send file:', path.join(this.rootDirectory, 'frontend/build/index.html'));
       res.sendFile(path.join(this.rootDirectory, 'frontend/build/index.html'));
     });
 
@@ -3290,7 +3344,7 @@ export class Matterbridge extends EventEmitter {
     };
 
     // Create an HTTPS server with the SSL certificate and private key and attach the express app
-    const httpsServer = https.createServer(serverOptions, this.expressApp);
+    this.httpsServer = https.createServer(serverOptions, this.expressApp);
 
     // Fallback for routing
     this.expressApp.get('/', (req, res) => {
@@ -3300,12 +3354,12 @@ export class Matterbridge extends EventEmitter {
 
     // Listen on a specific port
     // Connect to the frontend with 'https://localhost:8443'
-    httpsServer.listen(port, () => {
+    this.httpsServer.listen(port, () => {
       this.log.info(`HTTPS server listening on ${UNDERLINE}'https://localhost:${port}${UNDERLINEOFF}${rs}`);
     });
 
     // Attach WebSocket server to HTTPS server
-    this.webSocketServer = new WebSocketServer({ server: httpsServer });
+    this.webSocketServer = new WebSocketServer({ server: this.httpsServer });
     this.log.info(`WebSocketServer runnig on ${UNDERLINE}wss://localhost:${port}${UNDERLINEOFF}${rs}`);
 
     // Handle connections to the WebSocketServer
