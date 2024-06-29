@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // App.js
 import './App.css';
 import React, { useState, useEffect, createContext, useContext } from 'react';

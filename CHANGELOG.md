@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
+## [1.3.7] - 2024-06-30
+
+### Changed
+
+- [dependencies]: Update dependencies.
+- [dependencies]: Update eslint to 9.6.0.
+- [dependencies]: Update matter.js to 0.9.3.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.3.6] - 2024-06-28
 
 ### Changed

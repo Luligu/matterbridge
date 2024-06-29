@@ -123,11 +123,14 @@ width: 120px;
 .header {
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* Distribute items evenly */
+  justify-content: flex-start;
+  /* Distribute items evenly */
   gap: 20px;
   margin: 0;
-  padding: 0;  /* 20px */
-  height: 40px; /* Increase height for a more modern look */
+  padding: 0;
+  /* 20px */
+  height: 40px;
+  /* Increase height for a more modern look */
 }
 
 /* Navigation style */
@@ -140,13 +143,17 @@ nav {
 .nav-link {
   margin: 0 10px;
   font-size: 20px;
-  text-decoration: none; /* Remove underline from links */
-  color: #333; /* Dark gray color for the links */
-  transition: color 0.3s ease; /* Smooth color transition */
+  text-decoration: none;
+  /* Remove underline from links */
+  color: #333;
+  /* Dark gray color for the links */
+  transition: color 0.3s ease;
+  /* Smooth color transition */
 }
 
 .nav-link:hover {
-  color: #007BFF; /* Change color to blue when hovering */
+  color: #007BFF;
+  /* Change color to blue when hovering */
 }
 
 /* Table header style */
@@ -172,7 +179,8 @@ nav {
 }
 
 .table-body {
-  max-height: 100px; /* Replace with your desired maximum height */
+  max-height: 100px;
+  /* Replace with your desired maximum height */
   overflow-y: auto;
 }
 
@@ -221,7 +229,7 @@ nav {
   font-weight: 400;
 }
 
-/* Table style */
+/* H3 style */
 h3 {
   margin: 0;
 }
@@ -230,7 +238,7 @@ h3 {
 table {
   border-collapse: collapse;
   width: 100%;
-  box-shadow: 5px 5px 10px #888; 
+  box-shadow: 5px 5px 10px #888;
 }
 
 /* Mbf content style */
@@ -277,7 +285,9 @@ table {
   padding: 5px;
   padding-right: 10px;
   padding-left: 10px;
-};
+}
+
+;
 
 /* Define the style for the body element */
 .MbfWindowBody {
@@ -289,7 +299,9 @@ table {
   margin: 0px;
   padding: 10px;
   gap: 20px;
-};
+}
+
+;
 
 /* Define the style for the body element */
 .MbfWindowBody2 {
@@ -297,7 +309,9 @@ table {
   margin: 0px;
   padding: 10px;
   gap: 20px;
-};
+}
+
+;
 
 /*
 @media (max-width: 600px) {
