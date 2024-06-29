@@ -2346,7 +2346,7 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Creates a Matter server using the provided storage manager.
+   * Creates a Matter server using the provided storage manager and the provided mdnsInterface.
    * @param storageManager The storage manager to be used by the Matter server.
    *
    */
@@ -2361,7 +2361,7 @@ export class Matterbridge extends EventEmitter {
         this.log.error(`Invalid mdnsInterface: ${this.mdnsInterface}. Available interfaces are: ${availableInterfaces.join(', ')}. Using all available interfaces.`);
         this.mdnsInterface = undefined;
       } else {
-        this.log.info(`***Using mdnsInterface: ${this.mdnsInterface}`);
+        this.log.info(`Using mdnsInterface '${this.mdnsInterface}' for the Matter server MdnsBroadcaster.`);
       }
     }
     const matterServer = new MatterServer(storageManager, { mdnsInterface: this.mdnsInterface });
