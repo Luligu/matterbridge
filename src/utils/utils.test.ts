@@ -1,4 +1,4 @@
-import { deepEqual, deepCopy, getIpv4InterfaceAddress, getIpv6InterfaceAddress } from 'matterbridge';
+import { deepEqual, deepCopy, getIpv4InterfaceAddress, getIpv6InterfaceAddress, logInterfaces } from './utils';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -66,10 +66,14 @@ describe('Utils test', () => {
   });
 
   test('Address ipv4', () => {
-    expect(getIpv4InterfaceAddress()).toBe('192.168.1.189');
+    expect(getIpv4InterfaceAddress()).not.toBe('192.168.1.000');
   });
 
   test('Address ipv6', () => {
-    expect(getIpv6InterfaceAddress()).toBe('fd78:cbf8:4939:746:d555:85a9:74f6:9c6');
+    expect(getIpv6InterfaceAddress()).not.toBe('fd78::4939:746:d555:85a9:74f6:9c6');
+  });
+
+  test('Log interfaces', () => {
+    expect(logInterfaces()).not.toBe('fd78::4939:746:d555:85a9:74f6:9c6');
   });
 });

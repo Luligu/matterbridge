@@ -6,6 +6,9 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [1.3.7] - 2024-06-30
 
+### Added
+- [matter.js]: Added -mdnsinterface command line parameter to limit the MdnsBroadcaster to a single interface (e.g. matterbridge -bridge -mdnsinterface eth0). Matterbridge will validate the given interface and log a message if the interface is not available and will use all available interfaces.
+
 ### Changed
 
 - [dependencies]: Update dependencies.
