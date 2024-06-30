@@ -1718,8 +1718,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           tilt: 0,
         });
       }
-
-      // console.log(`Set WindowCovering initial currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
+      this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
     }
   }
 
@@ -1741,8 +1740,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         tilt: 0,
       });
     }
-
-    // console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
+    this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
   }
 
   /**
@@ -1754,8 +1752,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (!windowCovering) return;
     windowCovering.setOperationalStatusAttribute({ global: status, lift: status, tilt: 0 });
-
-    // console.log(`Set WindowCovering operationalStatus: ${status}`);
+    this.log.debug(`Set WindowCovering operationalStatus: ${status}`);
   }
 
   /**
@@ -1767,8 +1764,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (!windowCovering) return undefined;
     const status = windowCovering.getOperationalStatusAttribute();
-
-    // console.log(`Get WindowCovering operationalStatus: ${status.global}`);
+    this.log.debug(`Get WindowCovering operationalStatus: ${status.global}`);
     return status.global;
   }
 
@@ -1783,8 +1779,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (!windowCovering) return;
     windowCovering.setCurrentPositionLiftPercent100thsAttribute(position);
     windowCovering.setTargetPositionLiftPercent100thsAttribute(position);
-
-    // console.log(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
+    this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
   }
 
   /**

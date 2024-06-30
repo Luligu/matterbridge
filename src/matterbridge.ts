@@ -3396,10 +3396,10 @@ export class Matterbridge extends EventEmitter {
       res.json({ message: 'Command received' });
     });
 
-    // Fallback for routing (must be the last route but it should not be used because the frontend is static)
+    // Fallback for routing (must be the last route)
     this.expressApp.get('*', (req, res) => {
-      this.log.warn('The frontend sent:', req.url);
-      this.log.warn('Response send file:', path.join(this.rootDirectory, 'frontend/build/index.html'));
+      this.log.debug('The frontend sent:', req.url);
+      this.log.debug('Response send file:', path.join(this.rootDirectory, 'frontend/build/index.html'));
       res.sendFile(path.join(this.rootDirectory, 'frontend/build/index.html'));
     });
 
