@@ -190,11 +190,12 @@ export class Matterbridge extends EventEmitter {
   public restartMode: 'service' | 'docker' | '' = '';
   public debugEnabled = false;
 
-  private port = 5540;
+  private mdnsInterface: string | undefined; // matter server mdnsInterface: 'eth0' or 'wlan0' or 'WiFi'
+  private port = 5540; // first commissioning server port
   private log!: AnsiLogger;
   private hasCleanupStarted = false;
-  private plugins = new Map<string, RegisteredPlugin>();
-  private devices = new Map<string, RegisteredDevice>();
+  // private plugins = new Map<string, RegisteredPlugin>();
+  // private devices = new Map<string, RegisteredDevice>();
   private registeredPlugins: RegisteredPlugin[] = [];
   private registeredDevices: RegisteredDevice[] = [];
   private nodeStorage: NodeStorageManager | undefined;
@@ -365,6 +366,8 @@ export class Matterbridge extends EventEmitter {
       - help:                  show the help
       - bridge:                start Matterbridge in bridge mode
       - childbridge:           start Matterbridge in childbridge mode
+      - port [port]:           start the commissioning server on the given port (default 5540)
+      - mdnsinterface [name]:  set the interface to use for the matter server mdnsInterface (default all interfaces)
       - frontend [port]:       start the frontend on the given port (default 8283)
       - debug:                 enable the Matterbridge debug mode (default false)
       - matterlogger:          set the matter.js logger level: debug | info | notice | warn | error | fatal (default info)
@@ -387,7 +390,10 @@ export class Matterbridge extends EventEmitter {
       process.exit(0);
     }
 
-    // Set the first port to use
+    // Set the interface to use for the matter server mdnsInterface
+    this.mdnsInterface = getParameter('mdnsinterface');
+
+    // Set the first port to use for the commissioning server
     this.port = getIntParameter('port') ?? 5540;
 
     // Set the restart mode
@@ -450,10 +456,10 @@ export class Matterbridge extends EventEmitter {
         Logger.defaultLogLevel = Level.FATAL;
       } else {
         this.log.warn(`Invalid matterlogger level: ${level}. Using default level ${this.debugEnabled ? 'debug' : 'info'}.`);
-        Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
+        Logger.defaultLogLevel = Level.INFO;
       }
     } else {
-      Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
+      Logger.defaultLogLevel = Level.INFO;
     }
     Logger.format = Format.ANSI;
 
@@ -2233,6 +2239,8 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with hardwareVersion ${hardwareVersion} hardwareVersionString ${hardwareVersionString}`);
     const commissioningServer = new CommissioningServer({
       port: this.port++,
+      // listeningAddressIpv4
+      // listeningAddressIpv6
       passcode: undefined,
       discriminator: undefined,
       deviceName,
@@ -2338,13 +2346,25 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Creates a Matter server using the provided storage manager.
+   * Creates a Matter server using the provided storage manager and the provided mdnsInterface.
    * @param storageManager The storage manager to be used by the Matter server.
    *
    */
   private createMatterServer(storageManager: StorageManager): MatterServer {
     this.log.debug('Creating matter server');
-    const matterServer = new MatterServer(storageManager, { mdnsAnnounceInterface: undefined });
+
+    // Validate mdnsInterface
+    if (this.mdnsInterface) {
+      const networkInterfaces = os.networkInterfaces();
+      const availableInterfaces = Object.keys(networkInterfaces);
+      if (!availableInterfaces.includes(this.mdnsInterface)) {
+        this.log.error(`Invalid mdnsInterface: ${this.mdnsInterface}. Available interfaces are: ${availableInterfaces.join(', ')}. Using all available interfaces.`);
+        this.mdnsInterface = undefined;
+      } else {
+        this.log.info(`Using mdnsInterface '${this.mdnsInterface}' for the Matter server MdnsBroadcaster.`);
+      }
+    }
+    const matterServer = new MatterServer(storageManager, { mdnsInterface: this.mdnsInterface });
     this.log.debug('Created matter server');
     return matterServer;
   }
@@ -2915,7 +2935,7 @@ export class Matterbridge extends EventEmitter {
       this.log.info(`WebSocketServer client ${clientIp} connected`);
       this.log.setGlobalCallback(this.wssSendMessage.bind(this));
       this.log.debug('WebSocketServer logger callback added');
-      this.wssSendMessage('Matterbridge', 'info', 'WebSocketServer client connected to Matterbridge');
+      this.wssSendMessage('Matterbridge', 'info', `WebSocketServer client ${clientIp} connected to Matterbridge`);
 
       ws.on('message', (message) => {
         this.log.debug(`WebSocket client message: ${message}`);
@@ -3376,10 +3396,10 @@ export class Matterbridge extends EventEmitter {
       res.json({ message: 'Command received' });
     });
 
-    // Fallback for routing (must be the last route but it should not be used because the frontend is static)
+    // Fallback for routing (must be the last route)
     this.expressApp.get('*', (req, res) => {
-      this.log.warn('The frontend sent:', req.url);
-      this.log.warn('Response send file:', path.join(this.rootDirectory, 'frontend/build/index.html'));
+      this.log.debug('The frontend sent:', req.url);
+      this.log.debug('Response send file:', path.join(this.rootDirectory, 'frontend/build/index.html'));
       res.sendFile(path.join(this.rootDirectory, 'frontend/build/index.html'));
     });
 

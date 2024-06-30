@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // Devices.js
 import React, { useEffect, useState } from 'react';
 
@@ -34,7 +35,7 @@ function Devices() {
       if(sortDirection===true) setSortDirection(false);
       if(sortDirection===false) setSortColumn(undefined);
       if(sortDirection===false) setSortDirection(undefined);
-      //setSortDirection(!sortDirection);
+      // setSortDirection(!sortDirection);
     } else {
       setSortColumn(column);
       setSortDirection(true);

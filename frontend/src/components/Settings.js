@@ -1,5 +1,5 @@
+/* eslint-disable no-console */
 import React, { useState, useEffect } from 'react';
-
 import { Radio, RadioGroup, Button, Tooltip, FormControlLabel, FormControl, FormLabel, TextField, Backdrop, CircularProgress } from '@mui/material';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
@@ -12,9 +12,6 @@ import { theme, sendCommandToMatterbridge } from './Header';
 
 export var info = {};
 
-/*
-        <MatterbridgeInfo />
-*/
 function Settings() {
 
   return (
@@ -37,6 +34,7 @@ function MatterbridgeInfo() {
   const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
   const [password, setPassword] = useState('');
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleOpen = () => {
     setOpen(true);
   };
