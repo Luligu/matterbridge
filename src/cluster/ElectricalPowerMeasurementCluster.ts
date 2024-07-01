@@ -479,7 +479,7 @@ export namespace ElectricalPowerMeasurement {
        *
        * @see {@link MatterSpecification.v13.Cluster} § 2.13.6.19
        */
-      neutralCurrent: OptionalAttribute(0x12, TlvNullable(TlvInt64.bound({ min: -262, max: 262 })), { default: null }),
+      neutralCurrent: OptionalAttribute(0x12, TlvNullable(TlvInt64.bound({ min: -(2 ** 62), max: 2 ** 62 })), { default: null }),
     },
   });
 
@@ -649,7 +649,7 @@ export namespace ElectricalPowerMeasurement {
        *
        * @see {@link MatterSpecification.v13.Cluster} § 2.13.6.5
        */
-      voltage: OptionalAttribute(0x4, TlvNullable(TlvInt64.bound({ min: -262, max: 262 })), { default: null }),
+      voltage: OptionalAttribute(0x4, TlvNullable(TlvInt64.bound({ min: -(2 ** 62), max: 2 ** 62 })), { default: null }),
 
       /**
        * This shall indicate the most recent ActiveCurrent reading in milliamps (mA).
@@ -670,7 +670,7 @@ export namespace ElectricalPowerMeasurement {
        *
        * @see {@link MatterSpecification.v13.Cluster} § 2.13.6.6
        */
-      activeCurrent: OptionalAttribute(0x5, TlvNullable(TlvInt64.bound({ min: -262, max: 262 })), { default: null }),
+      activeCurrent: OptionalAttribute(0x5, TlvNullable(TlvInt64.bound({ min: -(2 ** 62), max: 2 ** 62 })), { default: null }),
 
       /**
        * This shall indicate the most recent ActivePower reading in milliwatts (mW). If the power cannot be
@@ -692,7 +692,7 @@ export namespace ElectricalPowerMeasurement {
        *
        * @see {@link MatterSpecification.v13.Cluster} § 2.13.6.9
        */
-      activePower: Attribute(0x8, TlvNullable(TlvInt64.bound({ min: -262, max: 262 })), { default: null }),
+      activePower: Attribute(0x8, TlvNullable(TlvInt64.bound({ min: -(2 ** 62), max: 2 ** 62 })), { default: null }),
     },
 
     events: {
