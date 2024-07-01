@@ -192,6 +192,8 @@ export class Matterbridge extends EventEmitter {
 
   private mdnsInterface: string | undefined; // matter server mdnsInterface: 'eth0' or 'wlan0' or 'WiFi'
   private port = 5540; // first commissioning server port
+  private passcode?: number; // first commissioning server passcode
+  private discriminator?: number; // first commissioning server discriminator
   private log!: AnsiLogger;
   private hasCleanupStarted = false;
   // private plugins = new Map<string, RegisteredPlugin>();
@@ -395,6 +397,10 @@ export class Matterbridge extends EventEmitter {
 
     // Set the first port to use for the commissioning server
     this.port = getIntParameter('port') ?? 5540;
+    // Set the first passcode to use for the commissioning server
+    this.passcode = getIntParameter('passcode');
+    // Set the first discriminator to use for the commissioning server
+    this.discriminator = getIntParameter('discriminator');
 
     // Set the restart mode
     if (hasParameter('service')) this.restartMode = 'service';
@@ -1147,7 +1153,8 @@ export class Matterbridge extends EventEmitter {
         if (!plugin.locked) {
           plugin.locked = true;
           this.log.debug(`Creating commissioning server context for ${plg}${plugin.name}${db}`);
-          plugin.storageContext = await this.createCommissioningServerContext(plugin.name, 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Dynamic Platform');
+          // plugin.storageContext = await this.createCommissioningServerContext(plugin.name, 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Dynamic Platform');
+          plugin.storageContext = await this.createCommissioningServerContext(plugin.name, 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, plugin.description);
           this.log.debug(`Creating commissioning server for ${plg}${plugin.name}${db}`);
           plugin.commissioningServer = await this.createCommisioningServer(plugin.storageContext, plugin.name);
           this.log.debug(`Creating aggregator for plugin ${plg}${plugin.name}${db}`);
@@ -1986,6 +1993,7 @@ export class Matterbridge extends EventEmitter {
       this.log.error('importCommissioningServerContext error: no storage manager initialized');
       process.exit(1);
     }
+
     this.log.debug(`Importing commissioning server storage context for ${plg}${pluginName}${db}`);
     const storageContext = this.storageManager.createContext(pluginName);
     await storageContext.set('deviceName', basic.getNodeLabelAttribute());
@@ -2233,16 +2241,17 @@ export class Matterbridge extends EventEmitter {
     const hardwareVersion = await context.get<number>('hardwareVersion', 1);
     const hardwareVersionString = await context.get<string>('hardwareVersionString', '1.0.0');
 
-    this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with deviceName ${deviceName} deviceType ${deviceType}(0x${deviceType.toString(16).padStart(4, '0')})`);
+    this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with deviceName '${deviceName}' deviceType ${deviceType}(0x${deviceType.toString(16).padStart(4, '0')})`);
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with uniqueId ${uniqueId} serialNumber ${serialNumber}`);
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with softwareVersion ${softwareVersion} softwareVersionString ${softwareVersionString}`);
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with hardwareVersion ${hardwareVersion} hardwareVersionString ${hardwareVersionString}`);
+    this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with nodeLabel '${productName}' port ${this.port} passcode ${this.passcode} discriminator ${this.discriminator}`);
     const commissioningServer = new CommissioningServer({
       port: this.port++,
       // listeningAddressIpv4
       // listeningAddressIpv6
-      passcode: undefined,
-      discriminator: undefined,
+      passcode: this.passcode,
+      discriminator: this.discriminator,
       deviceName,
       deviceType,
       basicInformation: {
@@ -2341,6 +2350,9 @@ export class Matterbridge extends EventEmitter {
         }
       },
     });
+    if (this.passcode !== undefined) this.passcode++;
+    if (this.discriminator !== undefined) this.discriminator++;
+
     commissioningServer.addCommandHandler('testEventTrigger', async ({ request: { enableKey, eventTrigger } }) => this.log.info(`testEventTrigger called on GeneralDiagnostic cluster: ${enableKey} ${eventTrigger}`));
     return commissioningServer;
   }

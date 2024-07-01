@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
+## [1.3.9] - 2024-07-02
+
+### Fixed
+- [matterbridge]: Fixed nodeLabel in childbridge mode
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.3.8] - 2024-07-01
 
 ### Fixed
