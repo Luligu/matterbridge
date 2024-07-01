@@ -70,8 +70,8 @@ import EventEmitter from 'events';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { MatterbridgeDeviceV8 } from './matterbridgeDeviceV8.js';
-import { Actions, BasicInformationCluster, Identify, SwitchCluster } from '@project-chip/matter-node.js/cluster';
-import { dimmableSwitch } from './matterbridgeDevice.js';
+import { Actions, BasicInformationCluster, Identify, RelativeHumidityMeasurement, SwitchCluster, TemperatureMeasurement } from '@project-chip/matter-node.js/cluster';
+import { bridgedNode, dimmableSwitch } from './matterbridgeDevice.js';
 import { RegisteredPlugin } from './matterbridge.js';
 import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
 import { pathToFileURL } from 'url';
@@ -377,9 +377,23 @@ export class MatterbridgeV8 extends EventEmitter {
     }
   }
 
-  async stopServerNode() {
+  async startServerNode(storageContext: StorageContext<Storage>) {
+    if (!this.matterLogger) throw new Error('No logger initialized');
+    const log = this.matterLogger;
+
     if (!this.matterServerNode) return;
+    log.notice(`Starting ${await storageContext.get<string>('storeId')} server node`);
+    await this.matterServerNode.bringOnline();
+  }
+
+  async stopServerNode(storageContext: StorageContext<Storage>) {
+    if (!this.matterLogger) throw new Error('No logger initialized');
+    const log = this.matterLogger;
+
+    if (!this.matterServerNode) return;
+    log.notice(`Stopping ${await storageContext.get<string>('storeId')} server node`);
     await this.matterServerNode.close();
+    this.matterServerNode = undefined;
   }
 
   async createAggregator(storageContext: StorageContext<Storage>) {
@@ -405,6 +419,7 @@ export class MatterbridgeV8 extends EventEmitter {
     log.notice(`Adding ${await storageContext.get<string>('storeId')} aggregator to ${await storageContext.get<string>('storeId')} server node`);
     await this.matterServerNode.add(this.matterAggregator);
 
+    /*
     for (const plugin of this.registeredPlugins) {
       if (!plugin.enabled) {
         log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
@@ -419,6 +434,7 @@ export class MatterbridgeV8 extends EventEmitter {
       plugin.manualPairingCode = undefined;
       this.loadPlugin(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
     }
+    */
 
     log.notice(`Adding lightEndpoint1 to ${await storageContext.get<string>('storeId')} aggregator`);
     const lightEndpoint1 = new Endpoint(OnOffLightDevice.with(BridgedDeviceBasicInformationServer), {
@@ -436,7 +452,7 @@ export class MatterbridgeV8 extends EventEmitter {
         reachable: true,
       },
     });
-    this.matterAggregator.add(lightEndpoint1);
+    await this.matterAggregator.add(lightEndpoint1);
 
     log.notice(`Adding switchEnpoint2 to ${await storageContext.get<string>('storeId')} aggregator`);
     const switchEnpoint2 = new Endpoint(GenericSwitchDevice.with(BridgedDeviceBasicInformationServer, SwitchServer.with('MomentarySwitch', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress', 'MomentarySwitchRelease')), {
@@ -459,20 +475,68 @@ export class MatterbridgeV8 extends EventEmitter {
         multiPressMax: 2,
       },
     });
-    this.matterAggregator.add(switchEnpoint2);
-    switchEnpoint2.events.identify.startIdentifying.on(() => log.notice('Run identify logic, ideally blink a light every 0.5s ...'));
-    switchEnpoint2.events.switch.currentPosition$Changed.on(() => log.notice('Run identify logic, ideally blink a light every 0.5s ...'));
-    // switchEnpoint2.events.switch.emit('initialPress', { newPosition: 1 }, ActionContext.agentFor(switchEnpoint2) );
+    await this.matterAggregator.add(switchEnpoint2);
+    switchEnpoint2.events.identify.startIdentifying.on(() => log.notice('GenericSwitch.identify logic, ideally blink a light every 0.5s ...'));
+    switchEnpoint2.events.switch.currentPosition$Changed.on(() => log.notice('GenericSwitch.currentPosition changed ...'));
+    // switchEnpoint2.act((agent) => agent.switch.events.initialPress.emit({ newPosition: 1 }, agent.context));
+    // switchEnpoint2.events.switch.emit('initialPress', { newPosition: 1 }, switchEnpoint2.events.switch.context);
 
     log.notice(`Adding matterbridge device to ${await storageContext.get<string>('storeId')} aggregator`);
     const matterbridgeDevice3 = new MatterbridgeDeviceV8(DeviceTypes.TEMPERATURE_SENSOR, { uniqueStorageKey: 'TemperatureSensor' });
-    this.matterAggregator.add(matterbridgeDevice3);
+    matterbridgeDevice3.addDeviceTypeWithClusterServer([DeviceTypes.HUMIDITY_SENSOR], [TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id]);
+    /*
+    matterbridgeDevice3.behaviors.require(IdentifyServer, {
+      identifyTime: 5,
+    });
+    matterbridgeDevice3.behaviors.require(TemperatureMeasurementServer, {
+      measuredValue: 25.0,
+      minMeasuredValue: null,
+      maxMeasuredValue: null,
+    });
+    */
+    matterbridgeDevice3.behaviors.require(BridgedDeviceBasicInformationServer, {
+      vendorId: VendorId(await storageContext.get<number>('vendorId')),
+      vendorName: await storageContext.get<string>('vendorName'),
 
-    log.notice(`Starting ${await storageContext.get<string>('storeId')} server node`);
-    await this.matterServerNode.bringOnline();
+      productName: 'TemperatureSensor',
+      productLabel: 'TemperatureSensor',
+      nodeLabel: 'TemperatureSensor',
+
+      serialNumber: '0x145456739',
+      uniqueId: '0x124556739',
+      reachable: true,
+    });
+    await this.matterAggregator.add(matterbridgeDevice3);
+
+    await this.startServerNode(storageContext);
+
+    // logEndpoint(EndpointServer.forEndpoint(matterbridgeDevice3));
+
+    await lightEndpoint1.set({
+      onOff: {
+        onOff: true,
+      },
+    });
+    await matterbridgeDevice3.set({
+      temperatureMeasurement: {
+        measuredValue: 20 * 100,
+      },
+      relativeHumidityMeasurement: {
+        measuredValue: 50 * 100,
+      },
+    });
+    await switchEnpoint2.set({
+      switch: {
+        currentPosition: 1,
+      },
+    });
+    switchEnpoint2.act((agent) => agent.switch.events.initialPress.emit({ newPosition: 1 }, agent.context));
+
+    // logEndpoint(EndpointServer.forEndpoint(matterbridgeDevice3));
 
     /*
     logEndpoint(EndpointServer.forEndpoint(this.matterServerNode));
+    logEndpoint(EndpointServer.forEndpoint(matterbridgeDevice3));
     console.log('matterbridgeDevice3\n', matterbridgeDevice3);
     console.log('matterbridgeDevice3.events\n', matterbridgeDevice3.events);
     console.log('matterbridgeDevice3.events.identify\n', matterbridgeDevice3.eventsOf(IdentifyServer));
@@ -714,7 +778,8 @@ if (process.argv.includes('MatterbridgeV8')) {
 
   process.on('SIGINT', async function () {
     console.log('Caught interrupt signal');
-    await matterbridge.stopServerNode();
+    if (!matterbridge || !matterbridge.matterServerNode || !matterbridge.matterStorageContext) return;
+    await matterbridge.stopServerNode(matterbridge.matterStorageContext);
     process.exit();
   });
 }

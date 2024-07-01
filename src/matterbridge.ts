@@ -2703,7 +2703,7 @@ export class Matterbridge extends EventEmitter {
         configured: plugin.configured,
         paired: plugin.paired,
         connected: plugin.connected,
-        fabricInfo: plugin.fabricInfo,
+        // fabricInfo: plugin.fabricInfo,
         registeredDevices: plugin.registeredDevices,
         addedDevices: plugin.addedDevices,
         qrPairingCode: plugin.qrPairingCode,
@@ -2712,29 +2712,6 @@ export class Matterbridge extends EventEmitter {
         schemaJson: includeConfigSchema ? plugin.schemaJson : {},
       });
     }
-    return baseRegisteredPlugins;
-  }
-
-  /**
-   * Retrieves an array of base registered devices from the registered plugins.
-   * @returns {BaseRegisteredPlugin[]} An array of base registered devices.
-   */
-  private getBaseRegisteredDevices(): BaseRegisteredPlugin[] {
-    const baseRegisteredPlugins: BaseRegisteredPlugin[] = this.registeredPlugins.map((plugin) => ({
-      path: plugin.path,
-      type: plugin.type,
-      name: plugin.name,
-      version: plugin.version,
-      description: plugin.description,
-      author: plugin.author,
-      enabled: plugin.enabled,
-      loaded: plugin.loaded,
-      started: plugin.started,
-      paired: plugin.paired,
-      connected: plugin.connected,
-      fabricInfo: plugin.fabricInfo,
-      registeredDevices: plugin.registeredDevices,
-    }));
     return baseRegisteredPlugins;
   }
 
