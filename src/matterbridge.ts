@@ -431,6 +431,13 @@ export class Matterbridge extends EventEmitter {
     // Get the plugins from node storage and create the plugin node storage contexts
     this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
     for (const plugin of this.registeredPlugins) {
+      const packageJson = await this.parsePlugin(plugin);
+      if (packageJson) {
+        plugin.name = packageJson.name as string;
+        plugin.version = packageJson.version as string;
+        plugin.description = packageJson.description as string;
+        plugin.author = packageJson.author as string;
+      }
       this.log.debug(`Creating node storage context for plugin ${plugin.name}`);
       plugin.nodeContext = await this.nodeStorage.createStorage(plugin.name);
       await plugin.nodeContext.set<string>('name', plugin.name);
@@ -657,6 +664,14 @@ export class Matterbridge extends EventEmitter {
       for (const plugin of this.registeredPlugins) {
         plugin.configJson = await this.loadPluginConfig(plugin);
         plugin.schemaJson = await this.loadPluginSchema(plugin);
+        // Check if the plugin is available
+        if (!(await this.resolvePluginName(plugin.path))) {
+          this.log.error(`Plugin ${plg}${plugin.name}${er} not found. Disabling it.`);
+          plugin.enabled = false;
+          plugin.error = true;
+          continue;
+        }
+        // Check if the plugin has a new version
         this.getPluginLatestVersion(plugin);
         if (!plugin.enabled) {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
@@ -693,6 +708,14 @@ export class Matterbridge extends EventEmitter {
       for (const plugin of this.registeredPlugins) {
         plugin.configJson = await this.loadPluginConfig(plugin);
         plugin.schemaJson = await this.loadPluginSchema(plugin);
+        // Check if the plugin is available
+        if (!(await this.resolvePluginName(plugin.path))) {
+          this.log.error(`Plugin ${plg}${plugin.name}${er} not found. Disabling it.`);
+          plugin.enabled = false;
+          plugin.error = true;
+          continue;
+        }
+        // Check if the plugin has a new version
         this.getPluginLatestVersion(plugin);
         if (!plugin.enabled) {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
@@ -1585,6 +1608,23 @@ export class Matterbridge extends EventEmitter {
       plugin.error = true;
       this.log.error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`);
       return Promise.resolve();
+    }
+  }
+
+  /**
+   * Loads and parse the plugin package.json and returns it.
+   * @param plugin - The plugin to load the package from.
+   * @returns A Promise that resolves to the package.json object or undefined if the package.json could not be loaded.
+   */
+  private async parsePlugin(plugin: RegisteredPlugin): Promise<Record<string, string | number | object> | undefined> {
+    this.log.debug(`Parsing package.json of plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
+    try {
+      const packageJson = JSON.parse(await fs.readFile(plugin.path, 'utf8'));
+      return packageJson;
+    } catch (err) {
+      this.log.error(`Failed to parse plugin ${plg}${plugin.name}${er} package.json: ${err}`);
+      plugin.error = true;
+      return undefined;
     }
   }
 

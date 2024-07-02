@@ -9,6 +9,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [fabric]: Added sanitized fabricInfo to matterbridge in bridge mode and to the plugins in childbridge mode.
+- [matterbridge]: Added parsePlugin to load the updated data from the plugin even when is disabled.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
