@@ -45,7 +45,7 @@ import { logInterfaces } from './utils/utils.js';
 // @project-chip/matter-node.js
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
 import { BasicInformationCluster, ClusterServer, FixedLabelCluster, GeneralCommissioning, PowerSourceCluster, ThreadNetworkDiagnosticsCluster, getClusterNameById } from '@project-chip/matter-node.js/cluster';
-import { DeviceTypeId, EndpointNumber, FabricIndex, VendorId } from '@project-chip/matter-node.js/datatype';
+import { DeviceTypeId, EndpointNumber, FabricIndex, NodeId, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter-node.js/device';
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
 import { ManualPairingCodeCodec, QrCodeSchema } from '@project-chip/matter-node.js/schema';
@@ -82,7 +82,8 @@ export interface BaseRegisteredPlugin {
   configured?: boolean;
   paired?: boolean;
   connected?: boolean;
-  fabricInfo?: SanitizedExposedFabricInformation[];
+  fabricInformations?: SanitizedExposedFabricInformation[];
+  sessionInformations?: SanitizedSessionInformation[];
   registeredDevices?: number;
   addedDevices?: number;
   qrPairingCode?: string;
@@ -124,7 +125,8 @@ interface MatterbridgeInformation {
   globalModulesDirectory: string;
   matterbridgeVersion: string;
   matterbridgeLatestVersion: string;
-  matterbridgeFabricInfo: SanitizedExposedFabricInformation[];
+  matterbridgeFabricInformations: SanitizedExposedFabricInformation[];
+  matterbridgeSessionInformations: SanitizedSessionInformation[];
   matterbridgePaired: boolean;
   matterbridgeConnected: boolean;
   bridgeMode: string;
@@ -138,7 +140,45 @@ interface SanitizedExposedFabricInformation {
   nodeId: string; // bigint > string
   rootNodeId: string; // bigint > string
   rootVendorId: VendorId;
+  rootVendorName: string;
   label: string;
+}
+
+/*
+{
+  name: session.name,
+  nodeId: session.nodeId,
+  peerNodeId: session.peerNodeId,
+  fabric: session instanceof SecureSession ? session.fabric?.externalInformation : undefined,
+  isPeerActive: session.isPeerActive(),
+  secure: session.isSecure,
+  lastInteractionTimestamp: session instanceof SecureSession ? session.timestamp : undefined,
+  lastActiveTimestamp: session instanceof SecureSession ? session.activeTimestamp : undefined,
+  numberOfActiveSubscriptions: session instanceof SecureSession ? session.numberOfActiveSubscriptions : 0,
+}
+*/
+
+interface SessionInformation {
+  name: string;
+  nodeId: NodeId;
+  peerNodeId: NodeId;
+  fabric?: ExposedFabricInformation;
+  isPeerActive: boolean;
+  secure: boolean;
+  lastInteractionTimestamp?: number;
+  lastActiveTimestamp?: number;
+  numberOfActiveSubscriptions: number;
+}
+interface SanitizedSessionInformation {
+  name: string;
+  nodeId: string;
+  peerNodeId: string;
+  fabric?: SanitizedExposedFabricInformation;
+  isPeerActive: boolean;
+  secure: boolean;
+  lastInteractionTimestamp?: number;
+  lastActiveTimestamp?: number;
+  numberOfActiveSubscriptions: number;
 }
 
 // Default colors
@@ -175,7 +215,8 @@ export class Matterbridge extends EventEmitter {
     globalModulesDirectory: '',
     matterbridgeVersion: '',
     matterbridgeLatestVersion: '',
-    matterbridgeFabricInfo: [],
+    matterbridgeFabricInformations: [],
+    matterbridgeSessionInformations: [],
     matterbridgePaired: false,
     matterbridgeConnected: false,
     bridgeMode: '',
@@ -190,9 +231,11 @@ export class Matterbridge extends EventEmitter {
   public globalModulesDirectory = '';
   public matterbridgeVersion = '';
   public matterbridgeLatestVersion = '';
-  public matterbridgeFabricInfo: SanitizedExposedFabricInformation[] = [];
+  public matterbridgeFabricInformation: SanitizedExposedFabricInformation[] = [];
   public matterbridgePaired = false;
   public matterbridgeConnected = false;
+  public matterbridgeSessionInformation: SanitizedSessionInformation[] = [];
+
   private checkUpdateInterval?: NodeJS.Timeout; // = 24 * 60 * 60 * 1000; // 24 hours
 
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
@@ -2159,13 +2202,13 @@ export class Matterbridge extends EventEmitter {
         this.log.info(`- fabric index ${zb}${info.fabricIndex}${nf} id ${zb}${info.fabricId}${nf} vendor ${zb}${info.rootVendorId}${nf} ${this.getVendorIdName(info.rootVendorId)} ${info.label}`);
       });
       if (pluginName === 'Matterbridge') {
-        this.matterbridgeFabricInfo = this.sanitizeFabricInformation(fabricInfo);
+        this.matterbridgeFabricInformation = this.sanitizeFabricInformation(fabricInfo);
         this.matterbridgePaired = true;
       }
       if (pluginName !== 'Matterbridge') {
         const plugin = this.findPlugin(pluginName);
         if (plugin) {
-          plugin.fabricInfo = this.sanitizeFabricInformation(fabricInfo);
+          plugin.fabricInformations = this.sanitizeFabricInformation(fabricInfo);
           plugin.paired = true;
         }
       }
@@ -2180,16 +2223,6 @@ export class Matterbridge extends EventEmitter {
    * @returns An array of sanitized exposed fabric information objects.
    */
   sanitizeFabricInformation(fabricInfo: ExposedFabricInformation[]) {
-    /*
-    export type ExposedFabricInformation = {
-      fabricIndex: FabricIndex;
-      fabricId: FabricId; // bigint
-      nodeId: NodeId; // bigint
-      rootNodeId: NodeId; // bigint
-      rootVendorId: VendorId;
-      label: string;
-    };
-    */
     return fabricInfo.map((info) => {
       return {
         fabricIndex: info.fabricIndex,
@@ -2197,8 +2230,41 @@ export class Matterbridge extends EventEmitter {
         nodeId: info.nodeId.toString(),
         rootNodeId: info.rootNodeId.toString(),
         rootVendorId: info.rootVendorId,
+        rootVendorName: this.getVendorIdName(info.rootVendorId),
         label: info.label,
       } as SanitizedExposedFabricInformation;
+    });
+  }
+
+  /**
+   * Sanitizes the session information by converting bigint properties to string.
+   *
+   * @param sessionInfo - The array of session information objects.
+   * @returns An array of sanitized session information objects.
+   */
+  sanitizeSessionInformation(sessionInfo: SessionInformation[]) {
+    return sessionInfo.map((info) => {
+      return {
+        name: info.name,
+        nodeId: info.nodeId.toString(),
+        peerNodeId: info.peerNodeId.toString(),
+        fabric: info.fabric
+          ? {
+              fabricIndex: info.fabric.fabricIndex,
+              fabricId: info.fabric.fabricId.toString(),
+              nodeId: info.fabric.nodeId.toString(),
+              rootNodeId: info.fabric.rootNodeId.toString(),
+              rootVendorId: info.fabric.rootVendorId,
+              rootVendorName: this.getVendorIdName(info.fabric.rootVendorId),
+              label: info.fabric.label,
+            }
+          : undefined,
+        isPeerActive: info.isPeerActive,
+        secure: info.secure,
+        lastInteractionTimestamp: info.lastInteractionTimestamp,
+        lastActiveTimestamp: info.lastActiveTimestamp,
+        numberOfActiveSubscriptions: info.numberOfActiveSubscriptions,
+      } as SanitizedSessionInformation;
     });
   }
 
@@ -2348,9 +2414,9 @@ export class Matterbridge extends EventEmitter {
         reachable: true,
       },
       activeSessionsChangedCallback: (fabricIndex) => {
-        const info = commissioningServer.getActiveSessionInformation(fabricIndex);
+        const sessionInformations: SessionInformation[] = commissioningServer.getActiveSessionInformation(fabricIndex);
         let connected = false;
-        info.forEach((session) => {
+        sessionInformations.forEach((session) => {
           this.log.info(
             `*Active session changed on fabric ${zb}${fabricIndex}${nf} id ${zb}${session.fabric?.fabricId}${nf} vendor ${zb}${session.fabric?.rootVendorId}${nf} ${this.getVendorIdName(session.fabric?.rootVendorId)} ${session.fabric?.label} for ${plg}${pluginName}${nf}`,
             debugStringify(session),
@@ -2364,12 +2430,14 @@ export class Matterbridge extends EventEmitter {
           if (this.bridgeMode === 'bridge') {
             this.matterbridgePaired = true;
             this.matterbridgeConnected = true;
+            this.matterbridgeSessionInformation = this.sanitizeSessionInformation(sessionInformations);
           }
           if (this.bridgeMode === 'childbridge') {
             const plugin = this.findPlugin(pluginName);
             if (plugin) {
               plugin.paired = true;
               plugin.connected = true;
+              plugin.sessionInformations = this.sanitizeSessionInformation(sessionInformations);
             }
           }
 
@@ -2410,14 +2478,14 @@ export class Matterbridge extends EventEmitter {
           await commissioningServer.factoryReset();
           if (pluginName === 'Matterbridge') {
             await this.matterbridgeContext?.clearAll();
-            this.matterbridgeFabricInfo = [];
+            this.matterbridgeFabricInformation = [];
             this.matterbridgePaired = false;
             this.matterbridgeConnected = false;
           } else {
             for (const plugin of this.registeredPlugins) {
               if (plugin.name === pluginName) {
                 await plugin.platform?.onShutdown('Commissioning removed by the controller');
-                plugin.fabricInfo = [];
+                plugin.fabricInformations = [];
                 plugin.paired = false;
                 plugin.connected = false;
                 await plugin.storageContext?.clearAll();
@@ -2793,7 +2861,8 @@ export class Matterbridge extends EventEmitter {
         configured: plugin.configured,
         paired: plugin.paired,
         connected: plugin.connected,
-        fabricInfo: plugin.fabricInfo,
+        fabricInformations: plugin.fabricInformations,
+        sessionInformations: plugin.sessionInformations,
         registeredDevices: plugin.registeredDevices,
         addedDevices: plugin.addedDevices,
         qrPairingCode: plugin.qrPairingCode,
@@ -3117,7 +3186,8 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.debugEnabled = this.debugEnabled;
       this.matterbridgeInformation.matterbridgePaired = this.matterbridgePaired;
       this.matterbridgeInformation.matterbridgeConnected = this.matterbridgeConnected;
-      this.matterbridgeInformation.matterbridgeFabricInfo = this.matterbridgeFabricInfo;
+      this.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridgeFabricInformation;
+      this.matterbridgeInformation.matterbridgeSessionInformations = this.matterbridgeSessionInformation;
       const response = { wssHost, qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
       // this.log.debug('Response:', debugStringify(response));
       res.json(response);
