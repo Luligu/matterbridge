@@ -45,7 +45,7 @@ import { logInterfaces } from './utils/utils.js';
 // @project-chip/matter-node.js
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
 import { BasicInformationCluster, ClusterServer, FixedLabelCluster, GeneralCommissioning, PowerSourceCluster, ThreadNetworkDiagnosticsCluster, getClusterNameById } from '@project-chip/matter-node.js/cluster';
-import { DeviceTypeId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
+import { DeviceTypeId, EndpointNumber, FabricIndex, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter-node.js/device';
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
 import { ManualPairingCodeCodec, QrCodeSchema } from '@project-chip/matter-node.js/schema';
@@ -82,7 +82,7 @@ export interface BaseRegisteredPlugin {
   configured?: boolean;
   paired?: boolean;
   connected?: boolean;
-  fabricInfo?: ExposedFabricInformation[];
+  fabricInfo?: SanitizedExposedFabricInformation[];
   registeredDevices?: number;
   addedDevices?: number;
   qrPairingCode?: string;
@@ -124,12 +124,21 @@ interface MatterbridgeInformation {
   globalModulesDirectory: string;
   matterbridgeVersion: string;
   matterbridgeLatestVersion: string;
-  matterbridgeFabricInfo: ExposedFabricInformation[];
+  matterbridgeFabricInfo: SanitizedExposedFabricInformation[];
   matterbridgePaired: boolean;
   matterbridgeConnected: boolean;
   bridgeMode: string;
   restartMode: string;
   debugEnabled: boolean;
+}
+
+interface SanitizedExposedFabricInformation {
+  fabricIndex: FabricIndex;
+  fabricId: string; // bigint > string
+  nodeId: string; // bigint > string
+  rootNodeId: string; // bigint > string
+  rootVendorId: VendorId;
+  label: string;
 }
 
 // Default colors
@@ -181,7 +190,7 @@ export class Matterbridge extends EventEmitter {
   public globalModulesDirectory = '';
   public matterbridgeVersion = '';
   public matterbridgeLatestVersion = '';
-  public matterbridgeFabricInfo: ExposedFabricInformation[] = [];
+  public matterbridgeFabricInfo: SanitizedExposedFabricInformation[] = [];
   public matterbridgePaired = false;
   public matterbridgeConnected = false;
   private checkUpdateInterval?: NodeJS.Timeout; // = 24 * 60 * 60 * 1000; // 24 hours
@@ -2110,18 +2119,47 @@ export class Matterbridge extends EventEmitter {
         this.log.info(`- fabric index ${zb}${info.fabricIndex}${nf} id ${zb}${info.fabricId}${nf} vendor ${zb}${info.rootVendorId}${nf} ${this.getVendorIdName(info.rootVendorId)} ${info.label}`);
       });
       if (pluginName === 'Matterbridge') {
-        this.matterbridgeFabricInfo = fabricInfo;
+        this.matterbridgeFabricInfo = this.sanitizeFabricInformation(fabricInfo);
         this.matterbridgePaired = true;
       }
       if (pluginName !== 'Matterbridge') {
         const plugin = this.findPlugin(pluginName);
         if (plugin) {
-          plugin.fabricInfo = fabricInfo;
+          plugin.fabricInfo = this.sanitizeFabricInformation(fabricInfo);
           plugin.paired = true;
         }
       }
       await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
     }
+  }
+
+  /**
+   * Sanitizes the fabric information by converting bigint properties to string cause res..
+   *
+   * @param fabricInfo - The array of exposed fabric information objects.
+   * @returns An array of sanitized exposed fabric information objects.
+   */
+  sanitizeFabricInformation(fabricInfo: ExposedFabricInformation[]) {
+    /*
+    export type ExposedFabricInformation = {
+      fabricIndex: FabricIndex;
+      fabricId: FabricId; // bigint
+      nodeId: NodeId; // bigint
+      rootNodeId: NodeId; // bigint
+      rootVendorId: VendorId;
+      label: string;
+    };
+    */
+    return fabricInfo.map((info) => {
+      return {
+        fabricIndex: info.fabricIndex,
+        fabricId: info.fabricId.toString(),
+        nodeId: info.nodeId.toString(),
+        rootNodeId: info.rootNodeId.toString(),
+        rootVendorId: info.rootVendorId,
+        label: info.label,
+      } as SanitizedExposedFabricInformation;
+    });
   }
 
   /**
@@ -2715,7 +2753,7 @@ export class Matterbridge extends EventEmitter {
         configured: plugin.configured,
         paired: plugin.paired,
         connected: plugin.connected,
-        // fabricInfo: plugin.fabricInfo,
+        fabricInfo: plugin.fabricInfo,
         registeredDevices: plugin.registeredDevices,
         addedDevices: plugin.addedDevices,
         qrPairingCode: plugin.qrPairingCode,
@@ -3039,7 +3077,7 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.debugEnabled = this.debugEnabled;
       this.matterbridgeInformation.matterbridgePaired = this.matterbridgePaired;
       this.matterbridgeInformation.matterbridgeConnected = this.matterbridgeConnected;
-      // this.matterbridgeInformation.matterbridgeFabricInfo = this.matterbridgeFabricInfo;
+      this.matterbridgeInformation.matterbridgeFabricInfo = this.matterbridgeFabricInfo;
       const response = { wssHost, qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
       // this.log.debug('Response:', debugStringify(response));
       res.json(response);
