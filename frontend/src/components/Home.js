@@ -207,7 +207,7 @@ function Home() {
       </Dialog>
 
       <div  style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', maxHeight: 'calc(100vh - 60px - 40px)', flex: '0 1 auto', gap: '20px' }}>
-        {qrCode && <QRDiv qrText={qrCode} pairingText={pairingCode} qrWidth={256} topText="QRCode" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName}/>}
+        {qrCode && <QRDiv qrText={qrCode} pairingText={pairingCode} qrWidth={256} topText="QRCode" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName} matterbridgeInfo={matterbridgeInfo} plugin={selectedRow===-1?undefined:plugins[selectedRow]}/>}
         {systemInfo && <SystemInfoTable systemInfo={systemInfo} compact={true}/>}
       </div>
       <div  style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', maxHeight: 'calc(100vh - 60px - 40px)', flex: '1 1 auto', gap: '20px' }}>
@@ -476,7 +476,53 @@ function MatterbridgeInfoTable({ matterbridgeInfo }) {
 
 // This function takes four parameters: qrText, qrWidth, topText, and bottomText
 // It returns a div element with a rectangle, a QR code, and two texts
-function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText }) {
+function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridgeInfo, plugin }) {
+  console.log('QRDiv:', matterbridgeInfo, plugin);
+  if(matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === true) 
+    return ( 
+      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '360px'}} >
+        <div className="MbfWindowHeader">
+          <p className="MbfWindowHeaderText" style={{textAlign: 'center'}}>Paired fabrics</p>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', margin: '20px', padding: '0px', gap: '20px' }}>
+          {matterbridgeInfo.matterbridgeFabricInformations.map((fabric, index) => (
+            <div key={index} style={{ margin: '0px', padding: '0px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
+                <p style={{ margin: '0px', marginTop: '0px', padding: '0px', gap: '0px', textAlign: 'left'}}>Fabric: {fabric.fabricIndex} / ID {fabric.fabricId}</p>
+                <p style={{ margin: '0px', marginTop: '0px', padding: '0px', gap: '0px', textAlign: 'left'}}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
+                <p style={{ margin: '0px', marginTop: '0px', padding: '0px', gap: '0px', textAlign: 'left'}}>Label: {fabric.label}</p>
+            </div>  
+          ))}
+        </div>  
+        <div  className="MbfWindowFooter">
+          <div>
+            <p className="text-color-selected" style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>{bottomText}</p>
+          </div>
+        </div>
+      </div>
+  )  
+  else if(matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired === true) 
+    return ( 
+      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '360px'}} >
+        <div className="MbfWindowHeader">
+          <p className="MbfWindowHeaderText" style={{textAlign: 'center'}}>Paired fabrics</p>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', margin: '20px', padding: '0px', gap: '20px' }}>
+          {plugin.fabricInformations.map((fabric, index) => (
+            <div key={index} style={{ margin: '0px', padding: '0px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
+                <p style={{ margin: '0px', marginTop: '0px', padding: '0px', gap: '0px', textAlign: 'left'}}>Fabric: {fabric.fabricIndex} / ID {fabric.fabricId}</p>
+                <p style={{ margin: '0px', marginTop: '0px', padding: '0px', gap: '0px', textAlign: 'left'}}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
+                <p style={{ margin: '0px', marginTop: '0px', padding: '0px', gap: '0px', textAlign: 'left'}}>Label: {fabric.label}</p>
+            </div>  
+          ))}
+        </div>  
+        <div  className="MbfWindowFooter">
+          <div>
+            <p className="text-color-selected" style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>{bottomText}</p>
+          </div>
+        </div>
+      </div>
+  )
+  else
   return (
     <div className="MbfWindowDiv" style={{alignItems: 'center'}} minWidth='360px'>
       <div className="MbfWindowHeader">

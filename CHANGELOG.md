@@ -8,7 +8,9 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
-- [fabric]: Added sanitized fabricInfo to matterbridge in bridge mode and to the plugins in childbridge mode.
+- [fabrics]: Added fabricInfo to matterbridge in bridge mode and to the plugins in childbridge mode.
+- [sessions]: Added sessionInfo to matterbridge in bridge mode and to the plugins in childbridge mode.
+- [frontend]: Added fabricInfo and sessionInfo in bridge mode and in childbridge mode.
 - [matterbridge]: Added parsePlugin to load the updated data from the plugin even when is disabled.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
