@@ -65,6 +65,35 @@ describe('Utils test', () => {
     expect(deepEqual(switch2PM, copy)).toBeFalsy();
   });
 
+  test('Deep copy equal bridge-info', async () => {
+    const data = await fs.readFile(path.join('src', 'mock', 'bridge-info.json'), 'utf8');
+    const bridgeInfo = JSON.parse(data);
+    const copy = deepCopy(bridgeInfo);
+    expect(deepEqual(bridgeInfo, copy)).toBeTruthy();
+  });
+
+  test('Deep equal bridge-info', async () => {
+    const data = await fs.readFile(path.join('src', 'mock', 'bridge-info.json'), 'utf8');
+    const bridgeInfo = JSON.parse(data);
+    const copy = deepCopy(bridgeInfo);
+    copy.version = '1.0.0';
+    expect(deepEqual(bridgeInfo, copy)).toBeFalsy();
+  });
+
+  test('Deep copy equal bridge-devices', async () => {
+    const data = await fs.readFile(path.join('src', 'mock', 'bridge-devices.json'), 'utf8');
+    const bridgeDevices = JSON.parse(data);
+    const copy = deepCopy(bridgeDevices);
+    expect(deepEqual(bridgeDevices, copy)).toBeTruthy();
+  });
+
+  test('Deep copy equal bridge-groups', async () => {
+    const data = await fs.readFile(path.join('src', 'mock', 'bridge-groups.json'), 'utf8');
+    const bridgeGroups = JSON.parse(data);
+    const copy = deepCopy(bridgeGroups);
+    expect(deepEqual(bridgeGroups, copy)).toBeTruthy();
+  });
+
   test('Address ipv4', () => {
     expect(getIpv4InterfaceAddress()).not.toBe('192.168.1.000');
   });
