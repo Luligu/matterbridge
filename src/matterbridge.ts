@@ -643,7 +643,7 @@ export class Matterbridge extends EventEmitter {
     }
 
     // Initialize frontend
-    await this.initializeFrontend(getIntParameter('frontend'));
+    if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.initializeFrontend(getIntParameter('frontend'));
 
     // Check each 60 minutes the latest versions
     this.checkUpdateInterval = setInterval(
@@ -1110,7 +1110,7 @@ export class Matterbridge extends EventEmitter {
         this.webSocketServer = undefined;
       }
 
-      setTimeout(async () => {
+      const clenupTimeout1 = setTimeout(async () => {
         // Closing matter
         await this.stopMatter();
 
@@ -1142,7 +1142,7 @@ export class Matterbridge extends EventEmitter {
         this.registeredDevices = [];
 
         this.log.info('Waiting for matter to deliver last messages...');
-        setTimeout(async () => {
+        const clenupTimeout2 = setTimeout(async () => {
           if (restart) {
             if (message === 'updating...') {
               this.log.info('Cleanup completed. Updating...');
@@ -1174,7 +1174,9 @@ export class Matterbridge extends EventEmitter {
             this.emit('shutdown');
           }
         }, 2 * 1000);
+        clenupTimeout2.unref();
       }, 3 * 1000);
+      clenupTimeout1.unref();
     }
   }
 

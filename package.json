@@ -76,7 +76,7 @@
     "start:childbridge": "node ./dist/cli.js -childbridge",
     "start:controller": "node ./dist/cli.js -controller",
     "start:help": "node ./dist/cli.js -help",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test": "node --detectOpenHandles --experimental-vm-modules node_modules/jest/bin/jest.js ",
     "test:verbose": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "lint": "eslint --max-warnings=0 .",
