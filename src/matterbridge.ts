@@ -2183,7 +2183,9 @@ export class Matterbridge extends EventEmitter {
       );
       if (pluginName === 'Matterbridge') {
         this.matterbridgeFabricInformations = [];
+        this.matterbridgeSessionInformations = [];
         this.matterbridgePaired = false;
+        this.matterbridgeConnected = false;
       }
       if (pluginName !== 'Matterbridge') {
         const plugin = this.findPlugin(pluginName);
@@ -2191,7 +2193,9 @@ export class Matterbridge extends EventEmitter {
           plugin.qrPairingCode = qrPairingCode;
           plugin.manualPairingCode = manualPairingCode;
           plugin.fabricInformations = [];
+          plugin.sessionInformations = [];
           plugin.paired = false;
+          plugin.connected = false;
         }
       }
       await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
@@ -2483,6 +2487,7 @@ export class Matterbridge extends EventEmitter {
           if (pluginName === 'Matterbridge') {
             await this.matterbridgeContext?.clearAll();
             this.matterbridgeFabricInformations = [];
+            this.matterbridgeSessionInformations = [];
             this.matterbridgePaired = false;
             this.matterbridgeConnected = false;
           } else {
@@ -2490,13 +2495,26 @@ export class Matterbridge extends EventEmitter {
               if (plugin.name === pluginName) {
                 await plugin.platform?.onShutdown('Commissioning removed by the controller');
                 plugin.fabricInformations = [];
+                plugin.sessionInformations = [];
                 plugin.paired = false;
                 plugin.connected = false;
                 await plugin.storageContext?.clearAll();
               }
             }
           }
-          this.log.warn(`*Restart to activate the pairing for ${plg}${pluginName}${wr}`);
+          this.log.warn(`*Restart to activate the pairing for ${plg}${pluginName}${wr}.`);
+        } else {
+          const fabricInfo = commissioningServer.getCommissionedFabricInformation();
+          if (pluginName === 'Matterbridge') {
+            this.matterbridgeFabricInformations = this.sanitizeFabricInformations(fabricInfo);
+            this.matterbridgePaired = true;
+          } else {
+            const plugin = this.findPlugin(pluginName);
+            if (plugin) {
+              plugin.fabricInformations = this.sanitizeFabricInformations(fabricInfo);
+              plugin.paired = true;
+            }
+          }
         }
       },
     });
