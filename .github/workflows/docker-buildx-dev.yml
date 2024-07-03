@@ -41,7 +41,7 @@ jobs:
           -t luligu/matterbridge:dev \
           --push .
         docker manifest inspect luligu/matterbridge:dev
-      timeout-minutes: 10 
+      timeout-minutes: 60 
 
     - name: Run Docker Buildx on dev_alpine
       run: |
