@@ -113,8 +113,10 @@ function Home() {
     if (selectedRow === row) {
       setSelectedRow(-1);
       setSelectedPluginName('none');
-      setQrCode(localStorage.getItem('qrPairingCode'));
-      setPairingCode(localStorage.getItem('manualPairingCode'));
+      // setQrCode(localStorage.getItem('qrPairingCode'));
+      // setPairingCode(localStorage.getItem('manualPairingCode'));
+      setQrCode('');
+      setPairingCode('');
     } else {
       setSelectedRow(row);
       setSelectedPluginName(plugins[row].name);
@@ -206,9 +208,10 @@ function Home() {
         </DialogContent>
       </Dialog>
 
-      <div  style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', maxHeight: 'calc(100vh - 60px - 40px)', flex: '0 1 auto', gap: '20px' }}>
+      <div  style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', maxHeight: 'calc(100vh - 60px - 40px)', flex: '1 1 auto', gap: '20px' }}>
         {qrCode && <QRDiv qrText={qrCode} pairingText={pairingCode} qrWidth={256} topText="QRCode" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName} matterbridgeInfo={matterbridgeInfo} plugin={selectedRow===-1?undefined:plugins[selectedRow]}/>}
         {systemInfo && <SystemInfoTable systemInfo={systemInfo} compact={true}/>}
+        {/* qrCode==='' && matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/> */}
       </div>
       <div  style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', maxHeight: 'calc(100vh - 60px - 40px)', flex: '1 1 auto', gap: '20px' }}>
 
@@ -435,42 +438,50 @@ function SystemInfoTable({ systemInfo, compact }) {
   }
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th colSpan="2" className="table-header">System Information</th>
-        </tr>
-      </thead>
-      <tbody>
-        {Object.entries(systemInfo).filter(([key, _]) => !excludeKeys.includes(key)).map(([key, value], index) => (
-          <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
-            <td className="table-content">{key}</td>
-            <td className="table-content">{value}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="MbfWindowDiv">
+      <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', margin: 0, padding: 0, gap: '0px', overflow: 'auto' }}>
+        <table>
+          <thead>
+            <tr>
+              <th colSpan="2" className="table-header">System Information</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(systemInfo).filter(([key, _]) => !excludeKeys.includes(key)).map(([key, value], index) => (
+              <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ borderTop: '1px solid #ddd' }}>
+                <td className="table-content">{key}</td>
+                <td className="table-content">{value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 
 // This function takes systemInfo as a parameter and returns a table element with the systemInfo
 function MatterbridgeInfoTable({ matterbridgeInfo }) {
   return (
-    <table>
-      <thead>
-        <tr>
-          <th colSpan="2" className="table-header">Matterbridge Information</th>
-        </tr>
-      </thead>
-      <tbody>
-        {Object.entries(matterbridgeInfo).map(([key, value], index) => (
-          <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
-            <td className="table-content">{key}</td>
-            <td className="table-content">{value}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="MbfWindowDiv">
+      <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', margin: 0, padding: 0, gap: '0px', overflow: 'auto' }}>
+        <table>
+          <thead>
+            <tr>
+              <th colSpan="2" className="table-header">Matterbridge Information</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(matterbridgeInfo).map(([key, value], index) => (
+              <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ borderTop: '1px solid #ddd' }}>
+                <td className="table-content">{key}</td>
+                <td className="table-content">{value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 
@@ -482,7 +493,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
         <div className="MbfWindowHeader">
           <p className="MbfWindowHeaderText" style={{textAlign: 'center'}}>Paired fabrics</p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', margin: '15px', marginBottom: '0px', padding: '0px', gap: '15px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', margin: '15px', padding: '0px', gap: '15px' }}>
           {matterbridgeInfo.matterbridgeFabricInformations.map((fabric, index) => (
             <div key={index} style={{ margin: '0px', padding: '0px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
                 <p className="status-blue" style={{ margin: '0px', marginBottom: '5px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
@@ -499,7 +510,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
         <div className="MbfWindowHeader">
           <p className="MbfWindowHeaderText" style={{textAlign: 'center'}}>Paired fabrics</p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', margin: '15px', marginBottom: '0px', padding: '0px', gap: '15px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', margin: '15px', padding: '0px', gap: '15px' }}>
           {plugin.fabricInformations.map((fabric, index) => (
             <div key={index} style={{ margin: '0px', padding: '0px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
                 <p className="status-blue" style={{ margin: '0px', marginBottom: '5px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
@@ -508,11 +519,6 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
             </div>  
           ))}
         </div>  
-        <div className="MbfWindowFooter" style={{ margin: '5px', marginBottom: '5px', padding: 0 }} >
-          <div>
-            <p className="text-color-selected" style={{ textAlign: 'center', fontSize: '14px' }}>{bottomText}</p>
-          </div>
-        </div>
       </div>
   )
   else if(matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired !== true) 
@@ -522,10 +528,10 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
           <p className="MbfWindowHeaderText" style={{textAlign: 'center'}}>{topText}</p>
         </div>
         <QRCode value={qrText} size={qrWidth} bgColor='#9e9e9e' style={{ margin: '20px' }}/>
-        <div  className="MbfWindowFooter">
+        <div className="MbfWindowFooter" style={{padding: 0}}>
           <div>
-            <p style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>Use {pairingText} or scan the QR to pair</p>
-            {<p className="text-color-selected" style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>{bottomText}</p>}
+            <p style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>Manual pairing code: {pairingText}</p>
+            {/* <p className="text-color-selected" style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>{bottomText}</p>*/}
           </div>
         </div>
       </div>
@@ -537,10 +543,10 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
           <p className="MbfWindowHeaderText" style={{textAlign: 'center'}}>{topText}</p>
         </div>
         <QRCode value={qrText} size={qrWidth} bgColor='#9e9e9e' style={{ margin: '20px' }}/>
-        <div  className="MbfWindowFooter">
+        <div className="MbfWindowFooter" style={{padding: 0}}>
           <div>
-            <p style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>Use {pairingText} or scan the QR to pair</p>
-            <p className="text-color-selected" style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>{bottomText}</p>
+            <p style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>Manual pairing code: {pairingText}</p>
+            {/* <p className="text-color-selected" style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>{bottomText}</p>*/}
           </div>
         </div>
       </div>

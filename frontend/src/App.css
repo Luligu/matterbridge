@@ -167,6 +167,13 @@ nav {
   /* Change color to blue when hovering */
 }
 
+/* Table style */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  box-shadow: 5px 5px 10px #888;
+}
+
 /* Table header style */
 .table-header {
   border: 1px solid #ddd;
@@ -178,6 +185,12 @@ nav {
   text-align: left;
 }
 
+.table-body {
+  max-height: 100px;
+  /* Replace with your desired maximum height */
+  overflow-y: auto;
+}
+
 /* Table footer style */
 .table-footer {
   border: 1px solid #ddd;
@@ -187,12 +200,6 @@ nav {
   background-color: #7dac7f;
   color: white;
   text-align: left;
-}
-
-.table-body {
-  max-height: 100px;
-  /* Replace with your desired maximum height */
-  overflow-y: auto;
 }
 
 /* Table content style */
@@ -245,14 +252,16 @@ h3 {
   margin: 0;
 }
 
-/* Table style */
-table {
-  border-collapse: collapse;
-  width: 100%;
-  box-shadow: 5px 5px 10px #888;
+/* Mbf table content style */
+.MbfWindowDiv table,
+.MbfWindowDiv table thead,
+.MbfWindowDiv table tbody,
+.MbfWindowDiv table tr,
+.MbfWindowDiv table th,
+.MbfWindowDiv table td {
+  border: none;
+  box-shadow: none;
 }
-
-/* Mbf content style */
 
 /* Define the style for the main div element */
 .MbfWindowDiv {
@@ -268,7 +277,7 @@ table {
   display: 'flex';
   align-items: center;
   width: 100%;
-  height: 34px;
+  /* height: 34px */
   border-bottom: 1px solid #ddd;
   background-color: #4CAF50;
   margin: 0px;
@@ -328,25 +337,4 @@ table {
     margin-top: 20px;
   }
 }
-*/
-/*
-th, td {
-  border: 1px solid #ddd;
-  padding: 5px;
-  text-align: left;
-}
-
-th {
-  background-color: #4CAF50;
-  color: white;
-}
-
-tr:nth-child(odd) {
-  background-color: #9e9e9e;
-}
-
-tr:nth-child(even) {
-  background-color: #bdbdbd;
-}
-
 */

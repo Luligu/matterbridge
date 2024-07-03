@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.11.4",
@@ -28,7 +28,6 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "checkDependencies": "npx npm-check-updates"
-
   },
   "eslintConfig": {
     "extends": [

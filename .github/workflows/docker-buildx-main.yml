@@ -33,7 +33,7 @@ jobs:
       with:
         version: latest
 
-    - name: Run Docker Buildx
+    - name: Run Docker Buildx on latest 
       run: |
         docker buildx build \
           --platform linux/amd64,linux/arm64,linux/arm/v7 \
