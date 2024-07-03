@@ -144,20 +144,6 @@ interface SanitizedExposedFabricInformation {
   label: string;
 }
 
-/*
-{
-  name: session.name,
-  nodeId: session.nodeId,
-  peerNodeId: session.peerNodeId,
-  fabric: session instanceof SecureSession ? session.fabric?.externalInformation : undefined,
-  isPeerActive: session.isPeerActive(),
-  secure: session.isSecure,
-  lastInteractionTimestamp: session instanceof SecureSession ? session.timestamp : undefined,
-  lastActiveTimestamp: session instanceof SecureSession ? session.activeTimestamp : undefined,
-  numberOfActiveSubscriptions: session instanceof SecureSession ? session.numberOfActiveSubscriptions : 0,
-}
-*/
-
 interface SessionInformation {
   name: string;
   nodeId: NodeId;
@@ -169,6 +155,7 @@ interface SessionInformation {
   lastActiveTimestamp?: number;
   numberOfActiveSubscriptions: number;
 }
+
 interface SanitizedSessionInformation {
   name: string;
   nodeId: string;

@@ -236,8 +236,8 @@ function Home() {
                   <td className="table-content"><Tooltip title={plugin.path}>{plugin.name}</Tooltip></td>
                   <td className="table-content">{plugin.description}</td>
                   <td className="table-content"><Tooltip title="Update the plugin to the latest version">{plugin.latestVersion === undefined || plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning" onClick={() => handleUpdate(index)}>{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</Tooltip></td>
-                  <td className="table-content">{plugin.author}</td>
-                  <td className="table-content">{plugin.type}</td>
+                  <td className="table-content">{plugin.author.replace('https://github.com/', '')}</td>
+                  <td className="table-content">{plugin.type === 'DynamicPlatform'?'Dynamic':'Accessory'}</td>
                   <td className="table-content">{plugin.registeredDevices}</td>
                   <td className="table-content">  
                     <>
@@ -474,69 +474,77 @@ function MatterbridgeInfoTable({ matterbridgeInfo }) {
   );
 }
 
-// This function takes four parameters: qrText, qrWidth, topText, and bottomText
-// It returns a div element with a rectangle, a QR code, and two texts
 function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridgeInfo, plugin }) {
   console.log('QRDiv:', matterbridgeInfo, plugin);
   if(matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === true) 
     return ( 
-      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '360px'}} >
+      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '300px'}} >
         <div className="MbfWindowHeader">
           <p className="MbfWindowHeaderText" style={{textAlign: 'center'}}>Paired fabrics</p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', margin: '20px', padding: '0px', gap: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', margin: '15px', marginBottom: '0px', padding: '0px', gap: '15px' }}>
           {matterbridgeInfo.matterbridgeFabricInformations.map((fabric, index) => (
             <div key={index} style={{ margin: '0px', padding: '0px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
-                <p style={{ margin: '0px', marginTop: '0px', padding: '0px', gap: '0px', textAlign: 'left'}}>Fabric: {fabric.fabricIndex} / ID {fabric.fabricId}</p>
-                <p style={{ margin: '0px', marginTop: '0px', padding: '0px', gap: '0px', textAlign: 'left'}}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
-                <p style={{ margin: '0px', marginTop: '0px', padding: '0px', gap: '0px', textAlign: 'left'}}>Label: {fabric.label}</p>
+                <p className="status-blue" style={{ margin: '0px', marginBottom: '5px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
+                <p style={{ margin: '0px'}}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
+                {fabric.label !== '' && <p style={{ margin: '0px'}}>Label: {fabric.label}</p>}
             </div>  
           ))}
         </div>  
-        <div  className="MbfWindowFooter">
-          <div>
-            <p className="text-color-selected" style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>{bottomText}</p>
-          </div>
-        </div>
       </div>
   )  
   else if(matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired === true) 
     return ( 
-      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '360px'}} >
+      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '300px'}} >
         <div className="MbfWindowHeader">
           <p className="MbfWindowHeaderText" style={{textAlign: 'center'}}>Paired fabrics</p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', margin: '20px', padding: '0px', gap: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', margin: '15px', marginBottom: '0px', padding: '0px', gap: '15px' }}>
           {plugin.fabricInformations.map((fabric, index) => (
             <div key={index} style={{ margin: '0px', padding: '0px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
-                <p style={{ margin: '0px', marginTop: '0px', padding: '0px', gap: '0px', textAlign: 'left'}}>Fabric: {fabric.fabricIndex} / ID {fabric.fabricId}</p>
-                <p style={{ margin: '0px', marginTop: '0px', padding: '0px', gap: '0px', textAlign: 'left'}}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
-                <p style={{ margin: '0px', marginTop: '0px', padding: '0px', gap: '0px', textAlign: 'left'}}>Label: {fabric.label}</p>
+                <p className="status-blue" style={{ margin: '0px', marginBottom: '5px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
+                <p style={{ margin: '0px'}}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
+                {fabric.label !== '' && <p style={{ margin: '0px'}}>Label: {fabric.label}</p>}
             </div>  
           ))}
         </div>  
-        <div  className="MbfWindowFooter">
+        <div className="MbfWindowFooter" style={{ margin: '5px', marginBottom: '5px', padding: 0 }} >
           <div>
-            <p className="text-color-selected" style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>{bottomText}</p>
+            <p className="text-color-selected" style={{ textAlign: 'center', fontSize: '14px' }}>{bottomText}</p>
           </div>
         </div>
       </div>
   )
-  else
-  return (
-    <div className="MbfWindowDiv" style={{alignItems: 'center'}} minWidth='360px'>
-      <div className="MbfWindowHeader">
-        <p className="MbfWindowHeaderText" style={{textAlign: 'center'}}>{topText}</p>
-      </div>
-      <QRCode value={qrText} size={qrWidth} bgColor='#9e9e9e' style={{ margin: '20px' }}/>
-      <div  className="MbfWindowFooter">
-        <div>
-          <p style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>Use {pairingText} or scan the QR to pair</p>
-          <p className="text-color-selected" style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>{bottomText}</p>
+  else if(matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired !== true) 
+    return (
+      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '300px'}}>
+        <div className="MbfWindowHeader">
+          <p className="MbfWindowHeaderText" style={{textAlign: 'center'}}>{topText}</p>
+        </div>
+        <QRCode value={qrText} size={qrWidth} bgColor='#9e9e9e' style={{ margin: '20px' }}/>
+        <div  className="MbfWindowFooter">
+          <div>
+            <p style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>Use {pairingText} or scan the QR to pair</p>
+            {<p className="text-color-selected" style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>{bottomText}</p>}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  else if(matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired !== true)  
+    return (
+      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '300px'}}>
+        <div className="MbfWindowHeader">
+          <p className="MbfWindowHeaderText" style={{textAlign: 'center'}}>{topText}</p>
+        </div>
+        <QRCode value={qrText} size={qrWidth} bgColor='#9e9e9e' style={{ margin: '20px' }}/>
+        <div  className="MbfWindowFooter">
+          <div>
+            <p style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>Use {pairingText} or scan the QR to pair</p>
+            <p className="text-color-selected" style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>{bottomText}</p>
+          </div>
+        </div>
+      </div>
+    );
 }
 
 function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
