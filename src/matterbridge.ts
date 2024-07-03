@@ -2210,12 +2210,14 @@ export class Matterbridge extends EventEmitter {
       });
       if (pluginName === 'Matterbridge') {
         this.matterbridgeFabricInformations = this.sanitizeFabricInformations(fabricInfo);
+        this.matterbridgeSessionInformations = [];
         this.matterbridgePaired = true;
       }
       if (pluginName !== 'Matterbridge') {
         const plugin = this.findPlugin(pluginName);
         if (plugin) {
           plugin.fabricInformations = this.sanitizeFabricInformations(fabricInfo);
+          plugin.sessionInformations = [];
           plugin.paired = true;
         }
       }
