@@ -45,7 +45,7 @@ describe('Matterbridge test', () => {
         label: 'Fabric 2 label',
       },
     ];
-    expect(matterbridge.sanitizeFabricInformation(fabricInfos).length).toBe(2);
-    expect(JSON.stringify(matterbridge.sanitizeFabricInformation(fabricInfos)).length).toBe(367);
+    expect(matterbridge.sanitizeFabricInformations(fabricInfos).length).toBe(2);
+    expect(JSON.stringify(matterbridge.sanitizeFabricInformations(fabricInfos)).length).toBe(367);
   });
 });

@@ -218,10 +218,10 @@ export class Matterbridge extends EventEmitter {
   public globalModulesDirectory = '';
   public matterbridgeVersion = '';
   public matterbridgeLatestVersion = '';
-  public matterbridgeFabricInformation: SanitizedExposedFabricInformation[] = [];
+  public matterbridgeFabricInformations: SanitizedExposedFabricInformation[] = [];
   public matterbridgePaired = false;
   public matterbridgeConnected = false;
-  public matterbridgeSessionInformation: SanitizedSessionInformation[] = [];
+  public matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
 
   private checkUpdateInterval?: NodeJS.Timeout; // = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -2181,11 +2181,16 @@ export class Matterbridge extends EventEmitter {
         `***The commissioning server on port ${commissioningServer.getPort()} for ${plg}${pluginName}${nf} is not commissioned. Pair it scanning the QR code:\n\n` +
           `${QrCode.encode(qrPairingCode)}\n${plg}${pluginName}${nf}\n\nqrPairingCode: ${qrPairingCode}\n\nManual pairing code: ${manualPairingCode}\n`,
       );
+      if (pluginName === 'Matterbridge') {
+        this.matterbridgeFabricInformations = [];
+        this.matterbridgePaired = false;
+      }
       if (pluginName !== 'Matterbridge') {
         const plugin = this.findPlugin(pluginName);
         if (plugin) {
           plugin.qrPairingCode = qrPairingCode;
           plugin.manualPairingCode = manualPairingCode;
+          plugin.fabricInformations = [];
           plugin.paired = false;
         }
       }
@@ -2198,13 +2203,13 @@ export class Matterbridge extends EventEmitter {
         this.log.info(`- fabric index ${zb}${info.fabricIndex}${nf} id ${zb}${info.fabricId}${nf} vendor ${zb}${info.rootVendorId}${nf} ${this.getVendorIdName(info.rootVendorId)} ${info.label}`);
       });
       if (pluginName === 'Matterbridge') {
-        this.matterbridgeFabricInformation = this.sanitizeFabricInformation(fabricInfo);
+        this.matterbridgeFabricInformations = this.sanitizeFabricInformations(fabricInfo);
         this.matterbridgePaired = true;
       }
       if (pluginName !== 'Matterbridge') {
         const plugin = this.findPlugin(pluginName);
         if (plugin) {
-          plugin.fabricInformations = this.sanitizeFabricInformation(fabricInfo);
+          plugin.fabricInformations = this.sanitizeFabricInformations(fabricInfo);
           plugin.paired = true;
         }
       }
@@ -2218,7 +2223,7 @@ export class Matterbridge extends EventEmitter {
    * @param fabricInfo - The array of exposed fabric information objects.
    * @returns An array of sanitized exposed fabric information objects.
    */
-  sanitizeFabricInformation(fabricInfo: ExposedFabricInformation[]) {
+  sanitizeFabricInformations(fabricInfo: ExposedFabricInformation[]) {
     return fabricInfo.map((info) => {
       return {
         fabricIndex: info.fabricIndex,
@@ -2429,7 +2434,7 @@ export class Matterbridge extends EventEmitter {
           if (this.bridgeMode === 'bridge') {
             this.matterbridgePaired = true;
             this.matterbridgeConnected = true;
-            this.matterbridgeSessionInformation = this.sanitizeSessionInformation(sessionInformations);
+            this.matterbridgeSessionInformations = this.sanitizeSessionInformation(sessionInformations);
           }
           if (this.bridgeMode === 'childbridge') {
             const plugin = this.findPlugin(pluginName);
@@ -2477,7 +2482,7 @@ export class Matterbridge extends EventEmitter {
           await commissioningServer.factoryReset();
           if (pluginName === 'Matterbridge') {
             await this.matterbridgeContext?.clearAll();
-            this.matterbridgeFabricInformation = [];
+            this.matterbridgeFabricInformations = [];
             this.matterbridgePaired = false;
             this.matterbridgeConnected = false;
           } else {
@@ -3185,8 +3190,8 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.debugEnabled = this.debugEnabled;
       this.matterbridgeInformation.matterbridgePaired = this.matterbridgePaired;
       this.matterbridgeInformation.matterbridgeConnected = this.matterbridgeConnected;
-      this.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridgeFabricInformation;
-      this.matterbridgeInformation.matterbridgeSessionInformations = this.matterbridgeSessionInformation;
+      this.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridgeFabricInformations;
+      this.matterbridgeInformation.matterbridgeSessionInformations = this.matterbridgeSessionInformations;
       const response = { wssHost, qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
       // this.log.debug('Response:', debugStringify(response));
       res.json(response);
