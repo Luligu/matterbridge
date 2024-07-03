@@ -534,6 +534,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
                 <p className="status-blue" style={{ margin: '0px', marginBottom: '5px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
                 <p style={{ margin: '0px'}}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
                 {fabric.label !== '' && <p style={{ margin: '0px'}}>Label: {fabric.label}</p>}
+                <p style={{ margin: '0px'}}>Active sessions: {matterbridgeInfo.matterbridgeSessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length}</p>
             </div>  
           ))}
         </div>  
