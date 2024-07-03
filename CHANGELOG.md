@@ -10,7 +10,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [fabrics]: Added fabricInfo to matterbridge in bridge mode and to the plugins in childbridge mode.
 - [sessions]: Added sessionInfo to matterbridge in bridge mode and to the plugins in childbridge mode.
-- [frontend]: Added fabricInfo in bridge mode and in childbridge mode.
+- [frontend]: Added fabricInfo in bridge mode and in childbridge mode instead of QRCode if already paired.
 - [matterbridge]: Added parsePlugin to load the updated data from the plugin even when is disabled.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
