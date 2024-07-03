@@ -282,6 +282,15 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
+   * Call shutdownProcess.
+   * @deprecated This method is deprecated and is only used for jest.
+   *
+   */
+  async destroyInstance() {
+    await this.shutdownProcess();
+  }
+
+  /**
    * Initializes the Matterbridge instance as extension for zigbee2mqtt.
    * @deprecated This method is deprecated and will be removed in a future version.
    *
@@ -415,7 +424,7 @@ export class Matterbridge extends EventEmitter {
       - reset:                 remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
       - factoryreset:          remove all commissioning information and reset all internal storages. Shutdown Matterbridge before using it!
       - list:                  list the registered plugins
-      - loginterfaces:         log the network interfaces
+      - loginterfaces:         log the network interfaces (usefull for finding the name of the interface to use with -mdnsinterface option)
       - logstorage:            log the node storage
       - ssl:                   enable SSL for the frontend and WebSockerServer (certificates in .matterbridge/certs directory cert.pem, key.pem and ca.pem (optional))
       - add [plugin path]:     register the plugin from the given absolute or relative path
@@ -768,7 +777,7 @@ export class Matterbridge extends EventEmitter {
     }
   }
 
-  async savePluginsToStorage() {
+  private async savePluginsToStorage() {
     if (!this.nodeContext) {
       this.log.error('loadPluginsFromStorage() error: the node context is not initialized');
       return;
@@ -780,7 +789,7 @@ export class Matterbridge extends EventEmitter {
     await this.nodeContext.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
   }
 
-  async loadPluginsFromStorage() {
+  private async loadPluginsFromStorage() {
     if (!this.nodeContext) {
       this.log.error('loadPluginsFromStorage() error: the node context is not initialized');
       return;
@@ -2337,6 +2346,9 @@ export class Matterbridge extends EventEmitter {
         break;
       case 4742:
         vendorName = '(eWeLink)';
+        break;
+      case 65521:
+        vendorName = '(PythonMatterServer)';
         break;
       default:
         vendorName = '(unknown)';
