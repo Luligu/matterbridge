@@ -23,13 +23,16 @@ interface SessionInformation {
 
 describe('Matterbridge test', () => {
   let matterbridge: Matterbridge;
+  console.log('Matterbridge test', process.argv);
 
   beforeAll(async () => {
-    process.argv = ['matterbridge', '-frontend', '0'];
+    console.log('Loading Matterbridge');
+    process.argv = ['matterbridge', '-debug', '-frontend', '0'];
     matterbridge = await Matterbridge.loadInstance(true);
   });
 
   afterAll(async () => {
+    console.log('Destroying Matterbridge');
     await matterbridge.destroyInstance();
     await waiter(
       'Matterbridge destroyed',
