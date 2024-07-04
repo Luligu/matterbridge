@@ -16,6 +16,7 @@ export default {
   extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^@project-chip/matter-node.js/util$': '<rootDir>/__mocks__/@project-chip/matter-node.js/util.js',
   },
   transform: {
     '^.+\\.ts$': [

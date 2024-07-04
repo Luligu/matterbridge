@@ -13,6 +13,10 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Added fabricInfo in bridge mode and in childbridge mode instead of QRCode if already paired.
 - [matterbridge]: Added parsePlugin to load the updated data from the plugin even when is disabled.
 
+### Changed
+
+- [dependencies]: Update dependencies.
+
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
 </a>
