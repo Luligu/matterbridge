@@ -478,10 +478,10 @@ export class Matterbridge extends EventEmitter {
         plugin.description = packageJson.description as string;
         plugin.author = packageJson.author as string;
       } else {
-        this.log.info(`Error parsing plugin ${plg}${plugin.name}${er}. Trying to reinstall it from npm.`);
+        this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm.`);
         try {
           await this.spawnCommand('npm', ['install', '-g', plugin.name]);
-          this.log.info(`Plugin ${plg}${plugin.name}${nf} installed correctly.`);
+          this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
         } catch (error) {
           plugin.error = true;
