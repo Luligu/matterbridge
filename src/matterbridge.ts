@@ -491,7 +491,7 @@ export class Matterbridge extends EventEmitter {
     await this.logNodeAndSystemInfo();
     this.log.info(
       `Matterbridge version ${this.matterbridgeVersion} mode ${hasParameter('bridge') ? 'bridge' : ''}${hasParameter('childbridge') ? 'childbridge' : ''}${hasParameter('controller') ? 'controller' : ''} ` +
-        `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}running on ${this.systemInformation.osType} ${this.systemInformation.osRelease} ${this.systemInformation.osPlatform} ${this.systemInformation.osArch}`,
+        `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}running on ${this.systemInformation.osType} ${this.systemInformation.osRelease} ${this.systemInformation.osPlatform} ${this.systemInformation.osArch} `,
     );
 
     // Check node version and throw error
@@ -2231,7 +2231,7 @@ export class Matterbridge extends EventEmitter {
    * @param fabricInfo - The array of exposed fabric information objects.
    * @returns An array of sanitized exposed fabric information objects.
    */
-  sanitizeFabricInformations(fabricInfo: ExposedFabricInformation[]) {
+  private sanitizeFabricInformations(fabricInfo: ExposedFabricInformation[]) {
     return fabricInfo.map((info) => {
       return {
         fabricIndex: info.fabricIndex,
@@ -2251,7 +2251,7 @@ export class Matterbridge extends EventEmitter {
    * @param sessionInfo - The array of session information objects.
    * @returns An array of sanitized session information objects.
    */
-  sanitizeSessionInformation(sessionInfo: SessionInformation[]) {
+  private sanitizeSessionInformation(sessionInfo: SessionInformation[]) {
     return sessionInfo.map((info) => {
       return {
         name: info.name,

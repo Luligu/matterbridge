@@ -1,13 +1,36 @@
+/* eslint-disable jest/no-commented-out-tests */
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-loss-of-precision */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
-import { Matterbridge } from './matterbridge.js';
-import { deepEqual, deepCopy, waiter } from './utils';
 
-import { promises as fs } from 'fs';
-import path from 'path';
+// process.argv = ['node', 'matterbridge', '-debug', '-frontend', '0'];
+
+import { jest } from '@jest/globals';
+
+// Mock the node-ansi-logger module
+jest.unstable_mockModule('node-ansi-logger', async () => {
+  const originalModule = await import('node-ansi-logger');
+
+  class AnsiLogger {
+    log = jest.fn((level: string, message: string, ...parameters: any[]) => {
+      // Optional: Implement mock behavior if needed, e.g., console.log for debugging
+      console.log(`Mock log: ${level} - ${message}`, ...parameters);
+    });
+  }
+
+  return {
+    __esModule: true,
+    ...originalModule,
+    AnsiLogger,
+  };
+});
+
+import { AnsiLogger } from 'node-ansi-logger';
+
+import { Matterbridge } from './matterbridge.js';
+import { waiter } from './utils';
+
+import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
 import { FabricId, FabricIndex, NodeId, VendorId } from '@project-chip/matter-node.js/datatype';
 
 interface SessionInformation {
@@ -22,18 +45,42 @@ interface SessionInformation {
   numberOfActiveSubscriptions: number;
 }
 
+/*
+describe('Matterbridge logging', () => {
+  beforeAll(async () => {
+    jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation(() => {
+      //
+    });
+  });
+
+  afterAll(async () => {
+    (AnsiLogger.prototype.log as jest.Mock).mockRestore();
+  });
+
+  it('should log the correct message when calling a specific function', async () => {
+    const matterbridge = await Matterbridge.loadInstance(true);
+    expect(AnsiLogger.prototype.log).toHaveBeenCalledTimes(1);
+    matterbridge.destroyInstance();
+  });
+});
+*/
+
 describe('Matterbridge test', () => {
   let matterbridge: Matterbridge;
-  console.log('Matterbridge test', process.argv);
+  // console.log('Matterbridge test', process.argv);
 
   beforeAll(async () => {
-    console.log('Loading Matterbridge');
-    process.argv = ['matterbridge', '-debug', '-frontend', '0'];
+    // Mock the log function
+    jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
+      console.log(`Mock log: ${level} - ${message}`, ...parameters);
+    });
+
+    // console.log('Loading Matterbridge');
     matterbridge = await Matterbridge.loadInstance(true);
   });
 
   afterAll(async () => {
-    console.log('Destroying Matterbridge');
+    // console.log('Destroying Matterbridge');
     await matterbridge.destroyInstance();
     await waiter(
       'Matterbridge destroyed',
@@ -43,9 +90,16 @@ describe('Matterbridge test', () => {
       false,
       20000,
     );
-    await waiter('Matterbridge destroyed', () => {
-      return false;
-    });
+    await waiter(
+      'Matterbridge destroyed',
+      () => {
+        return false;
+      },
+      false,
+      20000,
+    );
+    // Restore the mock
+    (AnsiLogger.prototype.log as jest.Mock).mockRestore();
   }, 60000);
 
   test('Sanitize fabrics', () => {
@@ -67,8 +121,8 @@ describe('Matterbridge test', () => {
         label: 'Fabric 2 label',
       },
     ];
-    expect(matterbridge.sanitizeFabricInformations(fabricInfos).length).toBe(2);
-    expect(JSON.stringify(matterbridge.sanitizeFabricInformations(fabricInfos)).length).toBe(367);
+    expect((matterbridge as any).sanitizeFabricInformations(fabricInfos).length).toBe(2);
+    expect(JSON.stringify((matterbridge as any).sanitizeFabricInformations(fabricInfos)).length).toBe(367);
   });
 
   test('Sanitize sessions', () => {
@@ -85,7 +139,7 @@ describe('Matterbridge test', () => {
         numberOfActiveSubscriptions: 0,
       },
     ];
-    expect(matterbridge.sanitizeSessionInformation(sessionInfos).length).toBe(1);
-    expect(JSON.stringify(matterbridge.sanitizeSessionInformation(sessionInfos)).length).toBe(443);
+    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos).length).toBe(1);
+    expect(JSON.stringify((matterbridge as any).sanitizeSessionInformation(sessionInfos)).length).toBe(443);
   });
 });
