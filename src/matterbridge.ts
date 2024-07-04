@@ -472,10 +472,22 @@ export class Matterbridge extends EventEmitter {
     for (const plugin of this.registeredPlugins) {
       const packageJson = await this.parsePlugin(plugin);
       if (packageJson) {
+        // Update the plugin information
         plugin.name = packageJson.name as string;
         plugin.version = packageJson.version as string;
         plugin.description = packageJson.description as string;
         plugin.author = packageJson.author as string;
+      } else {
+        this.log.info(`Error parsing plugin ${plg}${plugin.name}${er}. Trying to reinstall it from npm.`);
+        try {
+          await this.spawnCommand('npm', ['install', '-g', plugin.name]);
+          this.log.info(`Plugin ${plg}${plugin.name}${nf} installed correctly.`);
+          plugin.error = false;
+        } catch (error) {
+          plugin.error = true;
+          plugin.enabled = false;
+          this.log.error(`Error installing plugin ${plg}${plugin.name}${er}. The plugin is disabled.`);
+        }
       }
       this.log.debug(`Creating node storage context for plugin ${plugin.name}`);
       plugin.nodeContext = await this.nodeStorage.createStorage(plugin.name);
@@ -3127,45 +3139,6 @@ export class Matterbridge extends EventEmitter {
     this.webSocketServer.on('error', (ws: WebSocket, error: Error) => {
       this.log.error(`WebSocketServer error: ${error}`);
     });
-
-    /*
-    // Create a WebSocket server
-    const wssPort = 8284;
-    const wssHost = `ws://${this.systemInformation.ipv4Address}:${wssPort}`;
-    this.webSocketServer = new WebSocketServer({ port: wssPort, host: this.systemInformation.ipv4Address });
-    this.log.debug(`WebSocket server created on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
-
-    this.webSocketServer.on('listening', () => {
-      this.log.info(`WebSocketServer is listening on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
-      return;
-    });
-    */
-
-    /*
-    // Serve React build directory
-    this.expressApp = express();
-    this.expressApp.use(express.static(path.join(this.rootDirectory, 'frontend/build')));
-
-    // Listen on HTTP
-    this.expressServer = this.expressApp.listen(port, () => {
-      this.log.info(`The frontend is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
-      this.log.debug(`The frontend is listening on ${UNDERLINE}http://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.expressServer.on('error', (error: any) => {
-      this.log.error(`Frontend error listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
-      switch (error.code) {
-        case 'EACCES':
-          this.log.error(`Port ${port} requires elevated privileges`);
-          break;
-        case 'EADDRINUSE':
-          this.log.error(`Port ${port} is already in use`);
-          break;
-      }
-      process.exit(1);
-    });
-    */
 
     // Endpoint to validate login code
     this.expressApp.post('/api/login', express.json(), async (req, res) => {
