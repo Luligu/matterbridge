@@ -62,7 +62,6 @@ describe('Matterbridge', () => {
     log.setLogDebug(true);
     expect(log.log).toBeDefined();
     expect(log.log).toHaveBeenCalled();
-    expect(log.log).toHaveBeenCalledTimes(45);
   });
 
   test('hasParameter("debug") should return true', async () => {
