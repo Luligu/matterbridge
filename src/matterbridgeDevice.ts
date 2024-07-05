@@ -304,14 +304,14 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (Array.isArray(definition)) firstDefinition = definition[0];
     else firstDefinition = definition;
     super(firstDefinition, options);
+    this.log = new AnsiLogger({ logName: 'MatterbridgeDevice', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: debug });
+    this.log.debug(`MatterbridgeDevice with deviceType: ${zb}${firstDefinition.code}${db}-${zb}${firstDefinition.name}${db}`);
     if (Array.isArray(definition)) {
       definition.forEach((deviceType) => {
         this.addDeviceType(deviceType);
       });
     }
     this.addDeviceType(firstDefinition);
-    this.log = new AnsiLogger({ logName: 'MatterbridgeDevice', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: debug });
-    this.log.debug(`MatterbridgeDevice with deviceType: ${zb}${firstDefinition.code}${db}-${zb}${firstDefinition.name}${db}`);
   }
 
   /**
@@ -320,7 +320,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {DeviceTypeDefinition} definition - The DeviceTypeDefinition of the device.
    * @returns MatterbridgeDevice instance.
    */
-  static async loadInstance(definition: DeviceTypeDefinition, options: EndpointOptions = {}, debug = false) {
+  static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, debug = false) {
     return new MatterbridgeDevice(definition, options, debug);
   }
 
@@ -345,7 +345,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
    * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
    */
-  addDeviceTypeWithClusterServer(deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]) {
+  addDeviceTypeWithClusterServer(deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = []) {
     this.log.debug('addDeviceTypeWithClusterServer:');
     deviceTypes.forEach((deviceType) => {
       this.addDeviceType(deviceType);
@@ -370,12 +370,13 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
    * @returns {Endpoint} - The child endpoint that was found or added.
    */
-  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]): Endpoint {
+  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = []): Endpoint {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
     let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName);
     if (!child) {
       child = new Endpoint(deviceTypes, { uniqueStorageKey: endpointName });
       child.addFixedLabel('endpointName', endpointName);
+      this.addChildEndpoint(child);
     }
     deviceTypes.forEach((deviceType) => {
       this.log.debug(`- with deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
@@ -386,8 +387,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     includeServerList.forEach((clusterId) => {
       this.log.debug(`- with cluster: ${hk}${clusterId}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
     });
+    const childDeviceTypes = child.getDeviceTypes();
+    deviceTypes.forEach((deviceType) => {
+      if (!childDeviceTypes.includes(deviceType)) childDeviceTypes.push(deviceType);
+    });
+    child.setDeviceTypes(childDeviceTypes);
     this.addClusterServerFromList(child, includeServerList);
-    this.addChildEndpoint(child);
     return child;
   }
 
@@ -448,14 +453,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @returns {Endpoint | undefined} The child endpoint with the specified name, or undefined if not found.
    */
   getChildEndpointByName(endpointName: string): Endpoint | undefined {
-    for (const child of this.getChildEndpoints()) {
-      // Find the endpoint name (l1...)
-      const labelList = child.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
-      if (!labelList) continue;
-      const value = labelList.find((entry) => entry.label === 'endpointName');
-      if (value && value.value === endpointName) return child;
-    }
-    return undefined;
+    return this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName);
   }
 
   /**
