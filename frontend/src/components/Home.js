@@ -524,17 +524,17 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
   // console.log('QRDiv:', matterbridgeInfo, plugin);
   if(matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === true) 
     return ( 
-      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '300px'}} >
+      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '300px', overflow: 'hidden'}} >
         <div className="MbfWindowHeader">
-          <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>Paired fabrics</p>
+          <p className="MbfWindowHeaderText" style={{textAlign: 'left', overflow: 'hidden'}}>Paired fabrics</p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', margin: '15px', padding: '0px', gap: '15px' }}>
+        <div className="MbfWindowBodyColumn">
           {matterbridgeInfo.matterbridgeFabricInformations.map((fabric, index) => (
-            <div key={index} style={{ margin: '0px', padding: '0px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
-                <p className="status-blue" style={{ margin: '0px', marginBottom: '5px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
-                <p style={{ margin: '0px'}}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
-                {fabric.label !== '' && <p style={{ margin: '0px'}}>Label: {fabric.label}</p>}
-                <p style={{ margin: '0px'}}>Active sessions: {matterbridgeInfo.matterbridgeSessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length}</p>
+            <div key={index} style={{ margin: '0px 15px 0px 15px', padding: '10px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
+                <p className="status-blue" style={{ margin: '0px 10px 5px 10px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
+                <p style={{ margin: '0px 20px 0px 20px'}}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
+                {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px'}}>Label: {fabric.label}</p>}
+                <p style={{ margin: '0px 20px 0px 20px'}}>Active sessions: {matterbridgeInfo.matterbridgeSessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length}</p>
             </div>  
           ))}
         </div>  
@@ -542,17 +542,17 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
   )  
   else if(matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired === true) 
     return ( 
-      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '300px'}} >
+      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '300px', overflow: 'hidden'}} >
         <div className="MbfWindowHeader">
           <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>Paired fabrics</p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', margin: '15px', padding: '0px', gap: '15px' }}>
+        <div className="MbfWindowBodyColumn">
           {plugin.fabricInformations.map((fabric, index) => (
-            <div key={index} style={{ margin: '0px', padding: '0px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
-                <p className="status-blue" style={{ margin: '0px', marginBottom: '5px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
-                <p style={{ margin: '0px'}}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
-                {fabric.label !== '' && <p style={{ margin: '0px'}}>Label: {fabric.label}</p>}
-                <p style={{ margin: '0px'}}>Active sessions: {plugin.sessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length}</p>
+            <div key={index} style={{ margin: '0px 15px 0px 15px', padding: '10px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
+                <p className="status-blue" style={{ margin: '0px 10px 5px 10px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
+                <p style={{ margin: '0px 20px 0px 20px' }}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
+                {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px'}}>Label: {fabric.label}</p>}
+                <p style={{ margin: '0px 20px 0px 20px' }}>Active sessions: {plugin.sessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length}</p>
             </div>  
           ))}
         </div>  

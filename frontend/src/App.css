@@ -320,23 +320,28 @@ h3 {
 }
 
 /* Define the style for the body element */
-.MbfWindowBody {
+/* display: 'flex', flexDirection: 'column', flex: '1 1 auto', width: '100%', margin: '0px', padding: '0px', gap: '0px', overflow: 'auto'*/
+.MbfWindowBodyColumn {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   flex: 1 1 auto;
-  align-items: center;
-  justify-content: space-between;
+  width: 100%;
   margin: 0px;
-  padding: 10px;
-  gap: 20px;
+  padding: 0px;
+  gap: 0px;
+  overflow: auto;
 }
 
 /* Define the style for the body element */
-.MbfWindowBody2 {
-  align-items: left;
+.MbfWindowBodyRow {
+  display: flex;
+  flex-direction: row;
+  flex: 1 1 auto;
+  height: 100%;
   margin: 0px;
-  padding: 10px;
-  gap: 20px;
+  padding: 0px;
+  gap: 0px;
+  overflow: auto;
 }
 
 /*
