@@ -1,0 +1,82 @@
+[
+  {
+    "friendly_name": "Hallway",
+    "id": 1,
+    "members": [
+      {
+        "endpoint": 1,
+        "ieee_address": "0x943469fffeee28c5"
+      },
+      {
+        "endpoint": 1,
+        "ieee_address": "0x943469fffeee28c1"
+      }
+    ],
+    "scenes": [
+      {
+        "id": 0,
+        "name": "Off"
+      },
+      {
+        "id": 1,
+        "name": "On 50%"
+      },
+      {
+        "id": 2,
+        "name": "On 100%"
+      },
+      {
+        "id": 3,
+        "name": "On 10%"
+      }
+    ]
+  },
+  {
+    "friendly_name": "At home",
+    "id": 101,
+    "members": [],
+    "scenes": []
+  },
+  {
+    "friendly_name": "Is night",
+    "id": 102,
+    "members": [],
+    "scenes": []
+  },
+  {
+    "friendly_name": "Is dark",
+    "id": 103,
+    "members": [],
+    "scenes": []
+  },
+  {
+    "friendly_name": "Sleeping",
+    "id": 104,
+    "members": [],
+    "scenes": []
+  },
+  {
+    "friendly_name": "Guests",
+    "id": 105,
+    "members": [],
+    "scenes": []
+  },
+  {
+    "friendly_name": "Master contact",
+    "id": 110,
+    "members": [],
+    "scenes": []
+  },
+  {
+    "friendly_name": "Master motion",
+    "id": 111,
+    "members": [],
+    "scenes": []
+  },
+  {
+    "friendly_name": "Master sensor",
+    "id": 112,
+    "members": [],
+    "scenes": []
+  }
+]

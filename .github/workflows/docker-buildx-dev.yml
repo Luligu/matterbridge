@@ -1,4 +1,4 @@
-name: Build and Push Docker image to Docker Hub with buildx
+name: Build dev and Push Docker image dev and dev_alpine to Docker Hub with buildx
 
 on:
   push:
@@ -33,7 +33,17 @@ jobs:
       with:
         version: latest
 
-    - name: Run Docker Buildx 
+    - name: Run Docker Buildx on dev
+      run: |
+        docker buildx build \
+          --platform linux/amd64,linux/arm64,linux/arm/v7 \
+          -f docker/Dockerfile.dev \
+          -t luligu/matterbridge:dev \
+          --push .
+        docker manifest inspect luligu/matterbridge:dev
+      timeout-minutes: 60 
+
+    - name: Run Docker Buildx on dev_alpine
       run: |
         docker buildx build \
           --platform linux/amd64,linux/arm64,linux/arm/v7 \
@@ -41,10 +51,4 @@ jobs:
           -t luligu/matterbridge:dev_alpine \
           --push .
         docker manifest inspect luligu/matterbridge:dev_alpine
-        docker buildx build \
-          --platform linux/amd64,linux/arm64,linux/arm/v7 \
-          -f docker/Dockerfile.dev \
-          -t luligu/matterbridge:dev \
-          --push .
-        docker manifest inspect luligu/matterbridge:dev
       timeout-minutes: 60 

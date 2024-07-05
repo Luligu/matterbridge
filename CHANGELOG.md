@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
+## [1.3.10] - 2024-07-05
+
+### Added
+
+- [fabrics]: Added fabricInfo to matterbridge in bridge mode and to the plugins in childbridge mode.
+- [sessions]: Added sessionInfo to matterbridge in bridge mode and to the plugins in childbridge mode.
+- [frontend]: Added fabricInfo in bridge mode and in childbridge mode instead of QRCode if already paired.
+- [frontend]: Added sessionInfo in bridge mode and in childbridge mode instead of QRCode if already paired.
+- [matterbridge]: Added parsePlugin to load the updated data from the plugin even when is disabled.
+- [matterbridge]: Added an automatic plugin reinstall from npm when the plugin is not found. (e.g. when the docker image is updated and the plugin is not an official plugin)
+
+### Changed
+
+- [dependencies]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.3.9] - 2024-07-02
 
 ### Fixed

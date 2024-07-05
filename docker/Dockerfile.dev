@@ -34,13 +34,13 @@ RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-somf
 COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
 RUN npm install && npm run build && npm pack
 
-WORKDIR /matterbridge-eve-door
-RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-door.git .
+WORKDIR /matterbridge-shelly
+RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-shelly.git .
 COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
 RUN npm install && npm run build && npm pack
 
-WORKDIR /matterbridge-shelly
-RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-shelly.git .
+WORKDIR /matterbridge-eve-door
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-door.git .
 COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
 RUN npm install && npm run build && npm pack
 

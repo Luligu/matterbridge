@@ -45,7 +45,7 @@ import { logInterfaces } from './utils/utils.js';
 // @project-chip/matter-node.js
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
 import { BasicInformationCluster, ClusterServer, FixedLabelCluster, GeneralCommissioning, PowerSourceCluster, ThreadNetworkDiagnosticsCluster, getClusterNameById } from '@project-chip/matter-node.js/cluster';
-import { DeviceTypeId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
+import { DeviceTypeId, EndpointNumber, FabricIndex, NodeId, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter-node.js/device';
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
 import { ManualPairingCodeCodec, QrCodeSchema } from '@project-chip/matter-node.js/schema';
@@ -82,7 +82,8 @@ export interface BaseRegisteredPlugin {
   configured?: boolean;
   paired?: boolean;
   connected?: boolean;
-  fabricInfo?: ExposedFabricInformation[];
+  fabricInformations?: SanitizedExposedFabricInformation[];
+  sessionInformations?: SanitizedSessionInformation[];
   registeredDevices?: number;
   addedDevices?: number;
   qrPairingCode?: string;
@@ -124,12 +125,47 @@ interface MatterbridgeInformation {
   globalModulesDirectory: string;
   matterbridgeVersion: string;
   matterbridgeLatestVersion: string;
-  matterbridgeFabricInfo: ExposedFabricInformation[];
+  matterbridgeFabricInformations: SanitizedExposedFabricInformation[];
+  matterbridgeSessionInformations: SanitizedSessionInformation[];
   matterbridgePaired: boolean;
   matterbridgeConnected: boolean;
   bridgeMode: string;
   restartMode: string;
   debugEnabled: boolean;
+}
+
+interface SanitizedExposedFabricInformation {
+  fabricIndex: FabricIndex;
+  fabricId: string; // bigint > string
+  nodeId: string; // bigint > string
+  rootNodeId: string; // bigint > string
+  rootVendorId: VendorId;
+  rootVendorName: string;
+  label: string;
+}
+
+interface SessionInformation {
+  name: string;
+  nodeId: NodeId;
+  peerNodeId: NodeId;
+  fabric?: ExposedFabricInformation;
+  isPeerActive: boolean;
+  secure: boolean;
+  lastInteractionTimestamp?: number;
+  lastActiveTimestamp?: number;
+  numberOfActiveSubscriptions: number;
+}
+
+interface SanitizedSessionInformation {
+  name: string;
+  nodeId: string;
+  peerNodeId: string;
+  fabric?: SanitizedExposedFabricInformation;
+  isPeerActive: boolean;
+  secure: boolean;
+  lastInteractionTimestamp?: number;
+  lastActiveTimestamp?: number;
+  numberOfActiveSubscriptions: number;
 }
 
 // Default colors
@@ -166,7 +202,8 @@ export class Matterbridge extends EventEmitter {
     globalModulesDirectory: '',
     matterbridgeVersion: '',
     matterbridgeLatestVersion: '',
-    matterbridgeFabricInfo: [],
+    matterbridgeFabricInformations: [],
+    matterbridgeSessionInformations: [],
     matterbridgePaired: false,
     matterbridgeConnected: false,
     bridgeMode: '',
@@ -181,9 +218,11 @@ export class Matterbridge extends EventEmitter {
   public globalModulesDirectory = '';
   public matterbridgeVersion = '';
   public matterbridgeLatestVersion = '';
-  public matterbridgeFabricInfo: ExposedFabricInformation[] = [];
+  public matterbridgeFabricInformations: SanitizedExposedFabricInformation[] = [];
   public matterbridgePaired = false;
   public matterbridgeConnected = false;
+  public matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
+
   private checkUpdateInterval?: NodeJS.Timeout; // = 24 * 60 * 60 * 1000; // 24 hours
 
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
@@ -240,6 +279,15 @@ export class Matterbridge extends EventEmitter {
       if (initialize) await Matterbridge.instance.initialize();
     }
     return Matterbridge.instance;
+  }
+
+  /**
+   * Call shutdownProcess.
+   * @deprecated This method is deprecated and is only used for jest.
+   *
+   */
+  async destroyInstance() {
+    await this.shutdownProcess();
   }
 
   /**
@@ -376,7 +424,7 @@ export class Matterbridge extends EventEmitter {
       - reset:                 remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
       - factoryreset:          remove all commissioning information and reset all internal storages. Shutdown Matterbridge before using it!
       - list:                  list the registered plugins
-      - loginterfaces:         log the network interfaces
+      - loginterfaces:         log the network interfaces (usefull for finding the name of the interface to use with -mdnsinterface option)
       - logstorage:            log the node storage
       - ssl:                   enable SSL for the frontend and WebSockerServer (certificates in .matterbridge/certs directory cert.pem, key.pem and ca.pem (optional))
       - add [plugin path]:     register the plugin from the given absolute or relative path
@@ -422,6 +470,25 @@ export class Matterbridge extends EventEmitter {
     // Get the plugins from node storage and create the plugin node storage contexts
     this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
     for (const plugin of this.registeredPlugins) {
+      const packageJson = await this.parsePlugin(plugin);
+      if (packageJson) {
+        // Update the plugin information
+        plugin.name = packageJson.name as string;
+        plugin.version = packageJson.version as string;
+        plugin.description = packageJson.description as string;
+        plugin.author = packageJson.author as string;
+      } else {
+        this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm.`);
+        try {
+          await this.spawnCommand('npm', ['install', '-g', plugin.name]);
+          this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
+          plugin.error = false;
+        } catch (error) {
+          plugin.error = true;
+          plugin.enabled = false;
+          this.log.error(`Error installing plugin ${plg}${plugin.name}${er}. The plugin is disabled.`);
+        }
+      }
       this.log.debug(`Creating node storage context for plugin ${plugin.name}`);
       plugin.nodeContext = await this.nodeStorage.createStorage(plugin.name);
       await plugin.nodeContext.set<string>('name', plugin.name);
@@ -436,7 +503,7 @@ export class Matterbridge extends EventEmitter {
     await this.logNodeAndSystemInfo();
     this.log.info(
       `Matterbridge version ${this.matterbridgeVersion} mode ${hasParameter('bridge') ? 'bridge' : ''}${hasParameter('childbridge') ? 'childbridge' : ''}${hasParameter('controller') ? 'controller' : ''} ` +
-        `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}running on ${this.systemInformation.osType} ${this.systemInformation.osRelease} ${this.systemInformation.osPlatform} ${this.systemInformation.osArch}`,
+        `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}running on ${this.systemInformation.osType} ${this.systemInformation.osRelease} ${this.systemInformation.osPlatform} ${this.systemInformation.osArch} `,
     );
 
     // Check node version and throw error
@@ -588,7 +655,7 @@ export class Matterbridge extends EventEmitter {
     }
 
     // Initialize frontend
-    await this.initializeFrontend(getIntParameter('frontend'));
+    if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.initializeFrontend(getIntParameter('frontend'));
 
     // Check each 60 minutes the latest versions
     this.checkUpdateInterval = setInterval(
@@ -648,6 +715,14 @@ export class Matterbridge extends EventEmitter {
       for (const plugin of this.registeredPlugins) {
         plugin.configJson = await this.loadPluginConfig(plugin);
         plugin.schemaJson = await this.loadPluginSchema(plugin);
+        // Check if the plugin is available
+        if (!(await this.resolvePluginName(plugin.path))) {
+          this.log.error(`Plugin ${plg}${plugin.name}${er} not found. Disabling it.`);
+          plugin.enabled = false;
+          plugin.error = true;
+          continue;
+        }
+        // Check if the plugin has a new version
         this.getPluginLatestVersion(plugin);
         if (!plugin.enabled) {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
@@ -684,6 +759,14 @@ export class Matterbridge extends EventEmitter {
       for (const plugin of this.registeredPlugins) {
         plugin.configJson = await this.loadPluginConfig(plugin);
         plugin.schemaJson = await this.loadPluginSchema(plugin);
+        // Check if the plugin is available
+        if (!(await this.resolvePluginName(plugin.path))) {
+          this.log.error(`Plugin ${plg}${plugin.name}${er} not found. Disabling it.`);
+          plugin.enabled = false;
+          plugin.error = true;
+          continue;
+        }
+        // Check if the plugin has a new version
         this.getPluginLatestVersion(plugin);
         if (!plugin.enabled) {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
@@ -706,7 +789,7 @@ export class Matterbridge extends EventEmitter {
     }
   }
 
-  async savePluginsToStorage() {
+  private async savePluginsToStorage() {
     if (!this.nodeContext) {
       this.log.error('loadPluginsFromStorage() error: the node context is not initialized');
       return;
@@ -718,7 +801,7 @@ export class Matterbridge extends EventEmitter {
     await this.nodeContext.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
   }
 
-  async loadPluginsFromStorage() {
+  private async loadPluginsFromStorage() {
     if (!this.nodeContext) {
       this.log.error('loadPluginsFromStorage() error: the node context is not initialized');
       return;
@@ -1039,7 +1122,7 @@ export class Matterbridge extends EventEmitter {
         this.webSocketServer = undefined;
       }
 
-      setTimeout(async () => {
+      const clenupTimeout1 = setTimeout(async () => {
         // Closing matter
         await this.stopMatter();
 
@@ -1071,7 +1154,7 @@ export class Matterbridge extends EventEmitter {
         this.registeredDevices = [];
 
         this.log.info('Waiting for matter to deliver last messages...');
-        setTimeout(async () => {
+        const clenupTimeout2 = setTimeout(async () => {
           if (restart) {
             if (message === 'updating...') {
               this.log.info('Cleanup completed. Updating...');
@@ -1103,7 +1186,9 @@ export class Matterbridge extends EventEmitter {
             this.emit('shutdown');
           }
         }, 2 * 1000);
+        clenupTimeout2.unref();
       }, 3 * 1000);
+      clenupTimeout1.unref();
     }
   }
 
@@ -1576,6 +1661,23 @@ export class Matterbridge extends EventEmitter {
       plugin.error = true;
       this.log.error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`);
       return Promise.resolve();
+    }
+  }
+
+  /**
+   * Loads and parse the plugin package.json and returns it.
+   * @param plugin - The plugin to load the package from.
+   * @returns A Promise that resolves to the package.json object or undefined if the package.json could not be loaded.
+   */
+  private async parsePlugin(plugin: RegisteredPlugin): Promise<Record<string, string | number | object> | undefined> {
+    this.log.debug(`Parsing package.json of plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
+    try {
+      const packageJson = JSON.parse(await fs.readFile(plugin.path, 'utf8'));
+      return packageJson;
+    } catch (err) {
+      this.log.error(`Failed to parse plugin ${plg}${plugin.name}${er} package.json: ${err}`);
+      plugin.error = true;
+      return undefined;
     }
   }
 
@@ -2093,12 +2195,21 @@ export class Matterbridge extends EventEmitter {
         `***The commissioning server on port ${commissioningServer.getPort()} for ${plg}${pluginName}${nf} is not commissioned. Pair it scanning the QR code:\n\n` +
           `${QrCode.encode(qrPairingCode)}\n${plg}${pluginName}${nf}\n\nqrPairingCode: ${qrPairingCode}\n\nManual pairing code: ${manualPairingCode}\n`,
       );
+      if (pluginName === 'Matterbridge') {
+        this.matterbridgeFabricInformations = [];
+        this.matterbridgeSessionInformations = [];
+        this.matterbridgePaired = false;
+        this.matterbridgeConnected = false;
+      }
       if (pluginName !== 'Matterbridge') {
         const plugin = this.findPlugin(pluginName);
         if (plugin) {
           plugin.qrPairingCode = qrPairingCode;
           plugin.manualPairingCode = manualPairingCode;
+          plugin.fabricInformations = [];
+          plugin.sessionInformations = [];
           plugin.paired = false;
+          plugin.connected = false;
         }
       }
       await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
@@ -2110,18 +2221,72 @@ export class Matterbridge extends EventEmitter {
         this.log.info(`- fabric index ${zb}${info.fabricIndex}${nf} id ${zb}${info.fabricId}${nf} vendor ${zb}${info.rootVendorId}${nf} ${this.getVendorIdName(info.rootVendorId)} ${info.label}`);
       });
       if (pluginName === 'Matterbridge') {
-        this.matterbridgeFabricInfo = fabricInfo;
+        this.matterbridgeFabricInformations = this.sanitizeFabricInformations(fabricInfo);
+        this.matterbridgeSessionInformations = [];
         this.matterbridgePaired = true;
       }
       if (pluginName !== 'Matterbridge') {
         const plugin = this.findPlugin(pluginName);
         if (plugin) {
-          plugin.fabricInfo = fabricInfo;
+          plugin.fabricInformations = this.sanitizeFabricInformations(fabricInfo);
+          plugin.sessionInformations = [];
           plugin.paired = true;
         }
       }
       await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
     }
+  }
+
+  /**
+   * Sanitizes the fabric information by converting bigint properties to string cause res..
+   *
+   * @param fabricInfo - The array of exposed fabric information objects.
+   * @returns An array of sanitized exposed fabric information objects.
+   */
+  private sanitizeFabricInformations(fabricInfo: ExposedFabricInformation[]) {
+    return fabricInfo.map((info) => {
+      return {
+        fabricIndex: info.fabricIndex,
+        fabricId: info.fabricId.toString(),
+        nodeId: info.nodeId.toString(),
+        rootNodeId: info.rootNodeId.toString(),
+        rootVendorId: info.rootVendorId,
+        rootVendorName: this.getVendorIdName(info.rootVendorId),
+        label: info.label,
+      } as SanitizedExposedFabricInformation;
+    });
+  }
+
+  /**
+   * Sanitizes the session information by converting bigint properties to string.
+   *
+   * @param sessionInfo - The array of session information objects.
+   * @returns An array of sanitized session information objects.
+   */
+  private sanitizeSessionInformation(sessionInfo: SessionInformation[]) {
+    return sessionInfo.map((info) => {
+      return {
+        name: info.name,
+        nodeId: info.nodeId.toString(),
+        peerNodeId: info.peerNodeId.toString(),
+        fabric: info.fabric
+          ? {
+              fabricIndex: info.fabric.fabricIndex,
+              fabricId: info.fabric.fabricId.toString(),
+              nodeId: info.fabric.nodeId.toString(),
+              rootNodeId: info.fabric.rootNodeId.toString(),
+              rootVendorId: info.fabric.rootVendorId,
+              rootVendorName: this.getVendorIdName(info.fabric.rootVendorId),
+              label: info.fabric.label,
+            }
+          : undefined,
+        isPeerActive: info.isPeerActive,
+        secure: info.secure,
+        lastInteractionTimestamp: info.lastInteractionTimestamp,
+        lastActiveTimestamp: info.lastActiveTimestamp,
+        numberOfActiveSubscriptions: info.numberOfActiveSubscriptions,
+      } as SanitizedSessionInformation;
+    });
   }
 
   /**
@@ -2207,6 +2372,9 @@ export class Matterbridge extends EventEmitter {
       case 4742:
         vendorName = '(eWeLink)';
         break;
+      case 65521:
+        vendorName = '(PythonMatterServer)';
+        break;
       default:
         vendorName = '(unknown)';
         break;
@@ -2270,9 +2438,9 @@ export class Matterbridge extends EventEmitter {
         reachable: true,
       },
       activeSessionsChangedCallback: (fabricIndex) => {
-        const info = commissioningServer.getActiveSessionInformation(fabricIndex);
+        const sessionInformations: SessionInformation[] = commissioningServer.getActiveSessionInformation(fabricIndex);
         let connected = false;
-        info.forEach((session) => {
+        sessionInformations.forEach((session) => {
           this.log.info(
             `*Active session changed on fabric ${zb}${fabricIndex}${nf} id ${zb}${session.fabric?.fabricId}${nf} vendor ${zb}${session.fabric?.rootVendorId}${nf} ${this.getVendorIdName(session.fabric?.rootVendorId)} ${session.fabric?.label} for ${plg}${pluginName}${nf}`,
             debugStringify(session),
@@ -2286,12 +2454,14 @@ export class Matterbridge extends EventEmitter {
           if (this.bridgeMode === 'bridge') {
             this.matterbridgePaired = true;
             this.matterbridgeConnected = true;
+            this.matterbridgeSessionInformations = this.sanitizeSessionInformation(sessionInformations);
           }
           if (this.bridgeMode === 'childbridge') {
             const plugin = this.findPlugin(pluginName);
             if (plugin) {
               plugin.paired = true;
               plugin.connected = true;
+              plugin.sessionInformations = this.sanitizeSessionInformation(sessionInformations);
             }
           }
 
@@ -2332,21 +2502,35 @@ export class Matterbridge extends EventEmitter {
           await commissioningServer.factoryReset();
           if (pluginName === 'Matterbridge') {
             await this.matterbridgeContext?.clearAll();
-            this.matterbridgeFabricInfo = [];
+            this.matterbridgeFabricInformations = [];
+            this.matterbridgeSessionInformations = [];
             this.matterbridgePaired = false;
             this.matterbridgeConnected = false;
           } else {
             for (const plugin of this.registeredPlugins) {
               if (plugin.name === pluginName) {
                 await plugin.platform?.onShutdown('Commissioning removed by the controller');
-                plugin.fabricInfo = [];
+                plugin.fabricInformations = [];
+                plugin.sessionInformations = [];
                 plugin.paired = false;
                 plugin.connected = false;
                 await plugin.storageContext?.clearAll();
               }
             }
           }
-          this.log.warn(`*Restart to activate the pairing for ${plg}${pluginName}${wr}`);
+          this.log.warn(`*Restart to activate the pairing for ${plg}${pluginName}${wr}.`);
+        } else {
+          const fabricInfo = commissioningServer.getCommissionedFabricInformation();
+          if (pluginName === 'Matterbridge') {
+            this.matterbridgeFabricInformations = this.sanitizeFabricInformations(fabricInfo);
+            this.matterbridgePaired = true;
+          } else {
+            const plugin = this.findPlugin(pluginName);
+            if (plugin) {
+              plugin.fabricInformations = this.sanitizeFabricInformations(fabricInfo);
+              plugin.paired = true;
+            }
+          }
         }
       },
     });
@@ -2715,7 +2899,8 @@ export class Matterbridge extends EventEmitter {
         configured: plugin.configured,
         paired: plugin.paired,
         connected: plugin.connected,
-        // fabricInfo: plugin.fabricInfo,
+        fabricInformations: plugin.fabricInformations,
+        sessionInformations: plugin.sessionInformations,
         registeredDevices: plugin.registeredDevices,
         addedDevices: plugin.addedDevices,
         qrPairingCode: plugin.qrPairingCode,
@@ -2955,45 +3140,6 @@ export class Matterbridge extends EventEmitter {
       this.log.error(`WebSocketServer error: ${error}`);
     });
 
-    /*
-    // Create a WebSocket server
-    const wssPort = 8284;
-    const wssHost = `ws://${this.systemInformation.ipv4Address}:${wssPort}`;
-    this.webSocketServer = new WebSocketServer({ port: wssPort, host: this.systemInformation.ipv4Address });
-    this.log.debug(`WebSocket server created on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
-
-    this.webSocketServer.on('listening', () => {
-      this.log.info(`WebSocketServer is listening on ${UNDERLINE}${wssHost}${UNDERLINEOFF}${rs}`);
-      return;
-    });
-    */
-
-    /*
-    // Serve React build directory
-    this.expressApp = express();
-    this.expressApp.use(express.static(path.join(this.rootDirectory, 'frontend/build')));
-
-    // Listen on HTTP
-    this.expressServer = this.expressApp.listen(port, () => {
-      this.log.info(`The frontend is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
-      this.log.debug(`The frontend is listening on ${UNDERLINE}http://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.expressServer.on('error', (error: any) => {
-      this.log.error(`Frontend error listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
-      switch (error.code) {
-        case 'EACCES':
-          this.log.error(`Port ${port} requires elevated privileges`);
-          break;
-        case 'EADDRINUSE':
-          this.log.error(`Port ${port} is already in use`);
-          break;
-      }
-      process.exit(1);
-    });
-    */
-
     // Endpoint to validate login code
     this.expressApp.post('/api/login', express.json(), async (req, res) => {
       const { password } = req.body;
@@ -3039,7 +3185,8 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.debugEnabled = this.debugEnabled;
       this.matterbridgeInformation.matterbridgePaired = this.matterbridgePaired;
       this.matterbridgeInformation.matterbridgeConnected = this.matterbridgeConnected;
-      // this.matterbridgeInformation.matterbridgeFabricInfo = this.matterbridgeFabricInfo;
+      this.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridgeFabricInformations;
+      this.matterbridgeInformation.matterbridgeSessionInformations = this.matterbridgeSessionInformations;
       const response = { wssHost, qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
       // this.log.debug('Response:', debugStringify(response));
       res.json(response);

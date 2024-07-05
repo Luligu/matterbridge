@@ -230,12 +230,17 @@ export function getIpv6InterfaceAddress(): string | undefined {
   return ipv6Address;
 }
 
-export function logInterfaces(): string | undefined {
-  let ipv6Address: string | undefined;
+/**
+ * Logs the available network interfaces and their details.
+ * @returns The number of network interfaces logged.
+ */
+export function logInterfaces(): number {
+  let count = 0;
   const networkInterfaces = os.networkInterfaces();
   // eslint-disable-next-line no-console
   console.log('Available Network Interfaces:', networkInterfaces);
   for (const interfaceDetails of Object.values(networkInterfaces)) {
+    count++;
     if (!interfaceDetails) {
       break;
     }
@@ -244,14 +249,30 @@ export function logInterfaces(): string | undefined {
       console.log('Details:', detail);
     }
   }
-  return ipv6Address;
+  return count;
 }
 
+/**
+ * Checks if a given string is a valid IPv4 address.
+ *
+ * @param {string} ipv4Address - The string to be checked.
+ * @returns {boolean} - Returns true if the string is a valid IPv4 address, otherwise returns false.
+ */
 export function isValidIpv4Address(ipv4Address: string): boolean {
   const ipv4Regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
   return ipv4Regex.test(ipv4Address);
 }
 
+/**
+ * Asynchronous waiter function that resolves when a condition is met or rejects on timeout.
+ * @param name - The name of the waiter.
+ * @param check - A function that checks the condition. Should return a boolean.
+ * @param exitWithReject - Optional. If true, the promise will be rejected on timeout. Default is false.
+ * @param resolveTimeout - Optional. The timeout duration in milliseconds. Default is 5000ms.
+ * @param resolveInterval - Optional. The interval duration in milliseconds between condition checks. Default is 500ms.
+ * @param debug - Optional. If true, debug messages will be logged to the console. Default is false.
+ * @returns A promise that resolves to true when the condition is met, or false on timeout.
+ */
 export async function waiter(name: string, check: () => boolean, exitWithReject = false, resolveTimeout = 5000, resolveInterval = 500, debug = false) {
   // eslint-disable-next-line no-console
   if (debug) console.log(`**Waiter ${name} started...`);
