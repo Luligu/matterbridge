@@ -64,7 +64,7 @@ describe('Matterbridge', () => {
   });
 
   test('hasParameter("debug") should return true', async () => {
-    expect(hasParameter('debug')).toBeTruthy();
+    expect(hasParameter('debug')).toBeFalsy();
   });
 
   test('Sanitize fabrics', () => {

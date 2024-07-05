@@ -296,13 +296,22 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Create a Matterbridge device.
    * @constructor
-   * @param {DeviceTypeDefinition} definition - The definition of the device.
+   * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The definition of the device.
    * @param {EndpointOptions} [options={}] - The options for the device.
    */
-  constructor(definition: DeviceTypeDefinition, options: EndpointOptions = {}, debug = false) {
-    super(definition, options);
+  constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, debug = false) {
+    let firstDefinition: DeviceTypeDefinition;
+    if (Array.isArray(definition)) firstDefinition = definition[0];
+    else firstDefinition = definition;
+    super(firstDefinition, options);
+    if (Array.isArray(definition)) {
+      definition.forEach((deviceType) => {
+        this.addDeviceType(deviceType);
+      });
+    }
+    this.addDeviceType(firstDefinition);
     this.log = new AnsiLogger({ logName: 'MatterbridgeDevice', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: debug });
-    this.log.debug(`MatterbridgeDevice with deviceType: ${zb}${definition.code}${db}-${zb}${definition.name}${db}`);
+    this.log.debug(`MatterbridgeDevice with deviceType: ${zb}${firstDefinition.code}${db}-${zb}${firstDefinition.name}${db}`);
   }
 
   /**
