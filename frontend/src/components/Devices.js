@@ -67,9 +67,10 @@ function Devices() {
     return 0;
   })
 
+  //     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0px', padding: '0px' }}>
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0px', padding: '0px' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', flex: '0 0 auto', maxHeight: 'calc(50vh - 40px)', width: '100%', gap: '5px', overflow: 'auto', paddingBottom: '10px', paddingRight: '10px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100% - 60px)', width: '100%', gap: '20px', margin: '0px', padding: '0px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', maxHeight: '50%', width: '100%', overflow: 'auto' }}>
         <table>
           <thead>
             <tr>
@@ -100,7 +101,7 @@ function Devices() {
           </tbody>
         </table>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', width: '100%', gap: '5px', overflow: 'auto', paddingBottom: '10px', paddingRight: '10px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', maxHeight: '50%', width: '100%', overflow: 'auto' }}>
         <table>
           <thead>
             <tr>

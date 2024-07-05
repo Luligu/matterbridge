@@ -153,9 +153,10 @@ function App() {
     .catch(error => console.error('Failed with no password', error));
   }, []);
 
+  // flex: '0 0 auto'
   if (noPassword) return (
     <Router>
-      <div className="main-background" style={{ display: 'flex', flex: 1, flexBasis: 'auto', flexDirection: 'column', height: 'calc(100vh - 40px)', width: 'calc(100vw - 40px)', gap: '20px' , margin: '0', padding: '20px' }}>
+      <div className="main-background" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 40px)', width: 'calc(100vw - 40px)', gap: '20px' , margin: '0', padding: '20px' }}>
         <Header />
         <Routes>
           <Route path="/" element={<Home />} />
