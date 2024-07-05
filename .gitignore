@@ -42,3 +42,5 @@ replay_pid*
 # local
 migrationV8.txt
 migrationV8-answered.txt
+
+coverage
