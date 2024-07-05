@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-loss-of-precision */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-debug'];
+process.argv = ['node', 'matterbridge.test.js', '-frontend', '0'];
 
 interface SessionInformation {
   name: string;

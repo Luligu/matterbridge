@@ -79,6 +79,7 @@
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:matterbridge": "node --experimental-vm-modules node_modules/jest/bin/jest.js matterbridge.test.ts",
     "test:platform": "node --experimental-vm-modules node_modules/jest/bin/jest.js matterbridgePlatform.test.ts",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "test:verbose": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "lint": "eslint --max-warnings=0 .",

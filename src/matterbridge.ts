@@ -1019,7 +1019,7 @@ export class Matterbridge extends EventEmitter {
       process.removeAllListeners('SIGINT');
       process.removeAllListeners('SIGTERM');
       this.log.debug('All listeners removed');
-      this.checkUpdateInterval && clearInterval(this.checkUpdateInterval);
+      if (this.checkUpdateInterval) clearInterval(this.checkUpdateInterval);
       this.checkUpdateInterval = undefined;
 
       // Calling the shutdown method of each plugin
@@ -1122,7 +1122,7 @@ export class Matterbridge extends EventEmitter {
         this.webSocketServer = undefined;
       }
 
-      const clenupTimeout1 = setTimeout(async () => {
+      const cleanupTimeout1 = setTimeout(async () => {
         // Closing matter
         await this.stopMatter();
 
@@ -1154,7 +1154,7 @@ export class Matterbridge extends EventEmitter {
         this.registeredDevices = [];
 
         this.log.info('Waiting for matter to deliver last messages...');
-        const clenupTimeout2 = setTimeout(async () => {
+        const cleanupTimeout2 = setTimeout(async () => {
           if (restart) {
             if (message === 'updating...') {
               this.log.info('Cleanup completed. Updating...');
@@ -1186,9 +1186,9 @@ export class Matterbridge extends EventEmitter {
             this.emit('shutdown');
           }
         }, 2 * 1000);
-        clenupTimeout2.unref();
+        cleanupTimeout2.unref();
       }, 3 * 1000);
-      clenupTimeout1.unref();
+      cleanupTimeout1.unref();
     }
   }
 
