@@ -39,6 +39,8 @@ import {
   FlowMeasurement,
   FlowMeasurementCluster,
   Groups,
+  GroupsCluster,
+  GroupsClusterHandler,
   Identify,
   IdentifyCluster,
   IlluminanceMeasurement,
@@ -59,6 +61,8 @@ import {
   RelativeHumidityMeasurement,
   RelativeHumidityMeasurementCluster,
   Scenes,
+  ScenesCluster,
+  ScenesClusterHandler,
   Switch,
   SwitchCluster,
   TemperatureMeasurement,
@@ -71,11 +75,9 @@ import {
   TimeSyncCluster,
   WindowCovering,
   WindowCoveringCluster,
-  createDefaultGroupsClusterServer,
-  createDefaultScenesClusterServer,
   getClusterNameById,
 } from '@project-chip/matter-node.js/cluster';
-import { ClusterId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
+import { ClusterId, EndpointNumber, GroupId, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Device, DeviceClasses, DeviceTypeDefinition, Endpoint, EndpointOptions } from '@project-chip/matter-node.js/device';
 import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
 
@@ -1011,7 +1013,16 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * Get a default IdentifyCluster server.
    */
   getDefaultGroupsClusterServer() {
-    return createDefaultGroupsClusterServer();
+    return ClusterServer(
+      GroupsCluster,
+      {
+        nameSupport: {
+          nameSupport: true,
+        },
+      },
+      GroupsClusterHandler(),
+    );
+    // return createDefaultGroupsClusterServer();
   }
 
   /**
@@ -1025,7 +1036,21 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * Get a default scenes cluster server and adds it to the current instance.
    */
   getDefaultScenesClusterServer() {
-    return createDefaultScenesClusterServer();
+    return ClusterServer(
+      ScenesCluster,
+      {
+        sceneCount: 0,
+        currentScene: 0,
+        currentGroup: GroupId(0),
+        sceneValid: false,
+        nameSupport: {
+          nameSupport: true,
+        },
+        lastConfiguredBy: null,
+      },
+      ScenesClusterHandler(),
+    );
+    // return createDefaultScenesClusterServer();
   }
 
   /**
