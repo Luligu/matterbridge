@@ -192,5 +192,17 @@ describe('Matterbridge platform', () => {
     child?.verifyRequiredClusters();
     // eslint-disable-next-line jest/no-conditional-expect
     if (child) expect(device.getChildEndpointName(child)).toBe('ComposedDevice3');
+
+    child = device.getChildEndpointWithLabel('ComposedDevice1');
+    // eslint-disable-next-line jest/no-conditional-expect
+    if (child) expect(device.getChildEndpointName(child)).toBe('ComposedDevice1');
+
+    child = device.getChildEndpointWithLabel('ComposedDevice2');
+    // eslint-disable-next-line jest/no-conditional-expect
+    if (child) expect(device.getChildEndpointName(child)).toBe('ComposedDevice2');
+
+    child = device.getChildEndpointWithLabel('ComposedDevice3');
+    // eslint-disable-next-line jest/no-conditional-expect
+    if (child) expect(device.getChildEndpointName(child)).toBe('ComposedDevice3');
   });
 });

@@ -503,8 +503,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @returns {Endpoint | undefined} The child endpoint with the specified label, or undefined if not found.
    */
   getChildEndpointWithLabel(label: string): Endpoint | undefined {
-    const endpoints = this.getChildEndpoints();
-    for (const endpoint of endpoints) {
+    for (const endpoint of this.getChildEndpoints()) {
       const labelList = endpoint.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
       if (!labelList) return undefined;
       let endpointName = '';
