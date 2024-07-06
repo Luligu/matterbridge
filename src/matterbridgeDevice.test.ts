@@ -21,10 +21,11 @@ import {
   waterFreezeDetector,
   waterLeakDetector,
 } from './matterbridgeDevice.js';
-import { EveHistory, EveHistoryCluster } from 'matter-history';
+import { EveHistory, EveHistoryCluster, MatterHistory } from 'matter-history';
 
 import { getClusterNameById } from '@project-chip/matter-node.js/cluster';
 import { DeviceTypes } from '@project-chip/matter-node.js/device';
+import e from 'express';
 
 describe('Matterbridge platform', () => {
   beforeAll(async () => {
@@ -213,5 +214,115 @@ describe('Matterbridge platform', () => {
     const device = new MatterbridgeDevice(powerSource);
     device.createDefaultStaticEveHistoryClusterServer();
     expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
+    expect(device.getDeviceTypes()).toHaveLength(1);
+    expect(() => device.verifyRequiredClusters()).toThrow();
+    device.addRequiredClusterServer(device);
+    expect(() => device.verifyRequiredClusters()).not.toThrow();
+  });
+
+  test('create a door device with EveHistory', async () => {
+    const device = new MatterbridgeDevice(DeviceTypes.CONTACT_SENSOR);
+    const history = new MatterHistory(device.log, 'Eve door');
+    device.createDoorEveHistoryClusterServer(history, device.log);
+    expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
+    expect(device.getDeviceTypes()).toHaveLength(1);
+    expect(() => device.verifyRequiredClusters()).toThrow();
+    device.addRequiredClusterServer(device);
+    expect(() => device.verifyRequiredClusters()).not.toThrow();
+  });
+
+  test('create a motion device with EveHistory', async () => {
+    const device = new MatterbridgeDevice(DeviceTypes.OCCUPANCY_SENSOR);
+    const history = new MatterHistory(device.log, 'Eve motion');
+    device.createMotionEveHistoryClusterServer(history, device.log);
+    expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
+    expect(device.getDeviceTypes()).toHaveLength(1);
+    expect(() => device.verifyRequiredClusters()).toThrow();
+    device.addRequiredClusterServer(device);
+    expect(() => device.verifyRequiredClusters()).not.toThrow();
+  });
+
+  test('create a energy device with EveHistory', async () => {
+    const device = new MatterbridgeDevice(DeviceTypes.ON_OFF_PLUGIN_UNIT);
+    const history = new MatterHistory(device.log, 'Eve energy');
+    device.createEnergyEveHistoryClusterServer(history, device.log);
+    expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
+    expect(device.getDeviceTypes()).toHaveLength(1);
+    expect(() => device.verifyRequiredClusters()).toThrow();
+    device.addRequiredClusterServer(device);
+    expect(() => device.verifyRequiredClusters()).not.toThrow();
+  });
+
+  test('create a room device with EveHistory', async () => {
+    const device = new MatterbridgeDevice([airQualitySensor]);
+    const history = new MatterHistory(device.log, 'Eve room');
+    device.createRoomEveHistoryClusterServer(history, device.log);
+    expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
+    expect(device.getDeviceTypes()).toHaveLength(1);
+    expect(() => device.verifyRequiredClusters()).toThrow();
+    device.addRequiredClusterServer(device);
+    expect(() => device.verifyRequiredClusters()).not.toThrow();
+  });
+
+  test('create a weather device with EveHistory', async () => {
+    const device = new MatterbridgeDevice([DeviceTypes.TEMPERATURE_SENSOR, DeviceTypes.HUMIDITY_SENSOR, DeviceTypes.PRESSURE_SENSOR]);
+    const history = new MatterHistory(device.log, 'Eve weather');
+    device.createWeatherEveHistoryClusterServer(history, device.log);
+    expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
+    expect(device.getDeviceTypes()).toHaveLength(3);
+    expect(() => device.verifyRequiredClusters()).toThrow();
+    device.addRequiredClusterServer(device);
+    expect(() => device.verifyRequiredClusters()).not.toThrow();
+  });
+
+  test('create a device with all default clusters', async () => {
+    const device = new MatterbridgeDevice(bridgedNode);
+    device.createDefaultBridgedDeviceBasicInformationClusterServer('Name', 'Serial', 1, 'VendorName', 'ProductName');
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultGroupsClusterServer();
+    device.createDefaultScenesClusterServer();
+    device.createDefaultElectricalMeasurementClusterServer();
+    device.createDefaultDummyThreadNetworkDiagnosticsClusterServer();
+    device.createDefaultOnOffClusterServer();
+    device.createDefaultLevelControlClusterServer();
+    device.createDefaultColorControlClusterServer();
+    device.createDefaultXYColorControlClusterServer();
+    device.createDefaultWindowCoveringClusterServer();
+    device.createDefaultDoorLockClusterServer();
+    device.createDefaultSwitchClusterServer();
+    device.createDefaultLatchingSwitchClusterServer();
+    device.createDefaultModeSelectClusterServer();
+    device.createDefaultOccupancySensingClusterServer();
+    device.createDefaultIlluminanceMeasurementClusterServer();
+    device.createDefaultFlowMeasurementClusterServer();
+    device.createDefaultTemperatureMeasurementClusterServer();
+    device.createDefaultRelativeHumidityMeasurementClusterServer();
+    device.createDefaultPressureMeasurementClusterServer();
+    device.createDefaultBooleanStateClusterServer();
+    device.createDefaultBooleanStateConfigurationClusterServer();
+    device.createDefaultPowerSourceReplaceableBatteryClusterServer();
+    device.createDefaultPowerSourceRechargeableBatteryClusterServer();
+    device.createDefaultPowerSourceWiredClusterServer();
+    device.createDefaultAirQualityClusterServer();
+    device.createDefaultTvocMeasurementClusterServer();
+    device.createDefaultThermostatClusterServer();
+    device.createDefaultTimeSyncClusterServer();
+    device.createDefaultSmokeCOAlarmClusterServer();
+    device.createDefaultCarbonMonoxideConcentrationMeasurementClusterServer();
+    device.createDefaultCarbonDioxideConcentrationMeasurementClusterServer();
+    device.createDefaultFormaldehydeConcentrationMeasurementClusterServer();
+    device.createDefaulPm1ConcentrationMeasurementClusterServer();
+    device.createDefaulPm25ConcentrationMeasurementClusterServer();
+    device.createDefaulPm10ConcentrationMeasurementClusterServer();
+    device.createDefaulOzoneConcentrationMeasurementClusterServer();
+    device.createDefaulRadonConcentrationMeasurementClusterServer();
+    device.createDefaulNitrogenDioxideConcentrationMeasurementClusterServer();
+    device.createDefaultFanControlClusterServer();
+    device.addClusterServer(device.getDefaultDeviceEnergyManagementModeClusterServer());
+    device.addClusterServer(device.getDefaultDeviceEnergyManagementClusterServer());
+    expect(() => device.verifyRequiredClusters()).not.toThrow();
+    device.addDeviceTypeWithClusterServer([airQualitySensor, waterFreezeDetector, waterLeakDetector, rainSensor, smokeCoAlarm, electricalSensor, deviceEnergyManagement]);
+    device.addRequiredClusterServer(device);
+    expect(() => device.verifyRequiredClusters()).not.toThrow();
   });
 });

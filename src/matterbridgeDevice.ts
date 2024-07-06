@@ -80,7 +80,6 @@ import {
 import { ClusterId, EndpointNumber, GroupId, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Device, DeviceClasses, DeviceTypeDefinition, Endpoint, EndpointOptions } from '@project-chip/matter-node.js/device';
 import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
-
 import { MatterHistory, Sensitivity, WeatherTrend, TemperatureDisplayUnits } from 'matter-history';
 import { EveHistory, EveHistoryCluster } from 'matter-history';
 
@@ -399,13 +398,35 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Adds the required cluster servers for the specified endpoint.
+   *
+   * @param {Endpoint} endpoint - The endpoint to add the required cluster servers to.
+   * @returns {Endpoint} The updated endpoint with the required cluster servers added.
+   */
+  addRequiredClusterServer(endpoint: Endpoint): Endpoint {
+    const requiredServerList: ClusterId[] = [];
+    this.log.debug(`addRequiredClusterServer: ${CYAN}${endpoint.name}${db}`);
+    endpoint.getDeviceTypes().forEach((deviceType) => {
+      this.log.debug(`- for deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
+      deviceType.requiredServerClusters.forEach((clusterId) => {
+        if (!requiredServerList.includes(clusterId) && !endpoint.getClusterClientById(clusterId)) requiredServerList.push(clusterId);
+      });
+    });
+    requiredServerList.forEach((clusterId) => {
+      this.log.debug(`- with cluster: ${hk}${clusterId}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
+    });
+    this.addClusterServerFromList(endpoint, requiredServerList);
+    return endpoint;
+  }
+
+  /**
    * Adds cluster servers to the specified endpoint based on the provided server list.
    *
    * @param {Endpoint} endpoint - The endpoint to add cluster servers to.
    * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
-   * @returns void
+   * @returns {Endpoint} The updated endpoint with the cluster servers added.
    */
-  addClusterServerFromList(endpoint: Endpoint, includeServerList: ClusterId[]): void {
+  addClusterServerFromList(endpoint: Endpoint, includeServerList: ClusterId[]): Endpoint {
     if (includeServerList.includes(Identify.Cluster.id)) endpoint.addClusterServer(this.getDefaultIdentifyClusterServer());
     if (includeServerList.includes(Groups.Cluster.id)) endpoint.addClusterServer(this.getDefaultGroupsClusterServer());
     if (includeServerList.includes(Scenes.Cluster.id)) endpoint.addClusterServer(this.getDefaultScenesClusterServer());
@@ -446,6 +467,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(FanControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultFanControlClusterServer());
     if (includeServerList.includes(DeviceEnergyManagement.Cluster.id)) endpoint.addClusterServer(this.getDefaultDeviceEnergyManagementClusterServer());
     if (includeServerList.includes(DeviceEnergyManagementMode.Cluster.id)) endpoint.addClusterServer(this.getDefaultDeviceEnergyManagementModeClusterServer());
+    return endpoint;
   }
 
   /**
@@ -1941,6 +1963,17 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     this.addFixedLabel('label', 'Switch');
   }
 
+  /**
+   * Retrieves the default mode select cluster server.
+   *
+   * @deprecated This method is currently under development and should not be used.
+   *
+   * @param description - The description of the cluster server.
+   * @param supportedModes - The supported modes for the cluster server.
+   * @param currentMode - The current mode of the cluster server. Defaults to 0.
+   * @param startUpMode - The startup mode of the cluster server. Defaults to 0.
+   * @returns The default mode select cluster server.
+   */
   getDefaultModeSelectClusterServer(description: string, supportedModes: ModeSelect.ModeOptionStruct[], currentMode = 0, startUpMode = 0) {
     return ClusterServer(
       ModeSelectCluster,
@@ -1959,6 +1992,17 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
     );
   }
+
+  /**
+   * Creates a default mode select cluster server.
+   *
+   * @remarks
+   * This method adds a cluster server for a mode select cluster with default settings.
+   *
+   * @deprecated This method is currently under development and should not be used.
+   *
+   * @param endpoint - The endpoint to add the cluster server to. Defaults to `this` if not provided.
+   */
   createDefaultModeSelectClusterServer(endpoint?: Endpoint) {
     if (!endpoint) endpoint = this as Endpoint;
     endpoint.addClusterServer(
