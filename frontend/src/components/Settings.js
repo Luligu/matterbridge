@@ -31,7 +31,8 @@ function MatterbridgeInfo() {
   const [open, setOpen] = useState(false);
   const [selectedRestartMode, setSelectedRestartMode] = useState(''); 
   const [selectedBridgeMode, setSelectedBridgeMode] = useState('bridge'); 
-  const [selectedDebugLevel, setSelectedDebugLevel] = useState('Info'); 
+  const [selectedMbLoggerLevel, setSelectedMbLoggerLevel] = useState('Info'); 
+  const [selectedMjLoggerLevel, setSelectedMjLoggerLevel] = useState('Info'); 
   const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
   const [password, setPassword] = useState('');
 
@@ -52,7 +53,13 @@ function MatterbridgeInfo() {
         setMatterbridgeInfo(data.matterbridgeInformation); 
         setSelectedRestartMode(data.matterbridgeInformation.restartMode); 
         setSelectedBridgeMode(data.matterbridgeInformation.bridgeMode==='bridge'?'bridge':'childbridge'); 
-        setSelectedDebugLevel(data.matterbridgeInformation.debugEnabled?'Debug':'Info'); 
+        setSelectedMbLoggerLevel(data.matterbridgeInformation.debugEnabled?'Debug':'Info'); 
+        if(data.matterbridgeInformation.matterLoggerLevel === 0) setSelectedMjLoggerLevel('Debug');
+        if(data.matterbridgeInformation.matterLoggerLevel === 1) setSelectedMjLoggerLevel('Info');
+        if(data.matterbridgeInformation.matterLoggerLevel === 2) setSelectedMjLoggerLevel('Notice');
+        if(data.matterbridgeInformation.matterLoggerLevel === 3) setSelectedMjLoggerLevel('Warn');
+        if(data.matterbridgeInformation.matterLoggerLevel === 4) setSelectedMjLoggerLevel('Error');
+        if(data.matterbridgeInformation.matterLoggerLevel === 5) setSelectedMjLoggerLevel('Fatal');
         info = data.matterbridgeInformation; 
         console.log('/api/settings:', info) })
       .catch(error => console.error('Error fetching settings:', error));
@@ -73,10 +80,17 @@ function MatterbridgeInfo() {
   };
 
   // Define a function to handle change debug level
-  const handleChangeDebugLevel = (event) => {
-    console.log('handleChangeDebugLevel called with value:', event.target.value);
-    setSelectedDebugLevel(event.target.value);
-    sendCommandToMatterbridge('setloglevel', event.target.value);
+  const handleChangeMbLoggerLevel = (event) => {
+    console.log('handleChangeMbLoggerLevel called with value:', event.target.value);
+    setSelectedMbLoggerLevel(event.target.value);
+    sendCommandToMatterbridge('setmbloglevel', event.target.value);
+  };
+
+  // Define a function to handle change debug level
+  const handleChangeMjLoggerLevel = (event) => {
+    console.log('handleChangeMjLoggerLevel called with value:', event.target.value);
+    setSelectedMjLoggerLevel(event.target.value);
+    sendCommandToMatterbridge('setmjloglevel', event.target.value);
   };
 
   // Define a function to handle change password
@@ -142,8 +156,15 @@ function MatterbridgeInfo() {
             </RadioGroup>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-debug">Logger level:</FormLabel>
-            <RadioGroup focused row name="debug-buttons-group" value={selectedDebugLevel} onChange={handleChangeDebugLevel}>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-debug">Matterbridge logger level:</FormLabel>
+            <RadioGroup focused row name="debug-buttons-group" value={selectedMbLoggerLevel} onChange={handleChangeMbLoggerLevel}>
+              <FormControlLabel value="Debug" control={<Radio />} label="Debug" />
+              <FormControlLabel value="Info" control={<Radio />} label="Info" />
+            </RadioGroup>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-debug">Matter logger level:</FormLabel>
+            <RadioGroup focused row name="debug-buttons-group" value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
               <FormControlLabel value="Debug" control={<Radio />} label="Debug" />
               <FormControlLabel value="Info" control={<Radio />} label="Info" />
               <FormControlLabel value="Notice" control={<Radio />} label="Notice" />

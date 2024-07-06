@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { jest } from '@jest/globals';
@@ -23,9 +22,8 @@ import {
 } from './matterbridgeDevice.js';
 import { EveHistory, EveHistoryCluster, MatterHistory } from 'matter-history';
 
-import { getClusterNameById } from '@project-chip/matter-node.js/cluster';
+import { Attributes, BasicInformation, BasicInformationCluster, Binding, ClusterServerObj, Descriptor, Events, getClusterNameById, Switch, SwitchCluster, WindowCovering, WindowCoveringCluster } from '@project-chip/matter-node.js/cluster';
 import { DeviceTypes } from '@project-chip/matter-node.js/device';
-import e from 'express';
 
 describe('Matterbridge platform', () => {
   beforeAll(async () => {
@@ -326,5 +324,61 @@ describe('Matterbridge platform', () => {
     device.addRequiredClusterServers(device);
     device.addOptionalClusterServers(device);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
+  });
+
+  test('create a device switch with basic information', async () => {
+    const device = new MatterbridgeDevice(DeviceTypes.GENERIC_SWITCH);
+    expect(MatterbridgeDevice.bridgeMode).toBe('');
+    device.createDefaultBasicInformationClusterServer('Name', 'Serial', 0xfff1, 'VendorName', 0x8000, 'ProductName');
+    expect(device.getDeviceTypes()).toHaveLength(1);
+    expect(device.getDeviceTypes().includes(DeviceTypes.GENERIC_SWITCH)).toBeTruthy();
+    expect(() => device.verifyRequiredClusters()).toThrow();
+    // expect(() => device.getAllClusterServers()).toHaveLength(1); // This is not working
+    device.addRequiredClusterServers(device);
+    expect(() => device.verifyRequiredClusters()).not.toThrow();
+    // expect(() => device.getAllClusterServers()).toHaveLength(1); // This is not working
+  });
+
+  test('create a device switch with bridged basic information', async () => {
+    const device = new MatterbridgeDevice(DeviceTypes.GENERIC_SWITCH);
+    expect(MatterbridgeDevice.bridgeMode).toBe('');
+    device.addDeviceType(bridgedNode);
+    device.createDefaultBridgedDeviceBasicInformationClusterServer('Name', 'Serial', 0xfff1, 'VendorName', 'ProductName');
+    expect(device.getDeviceTypes()).toHaveLength(2);
+    expect(device.getDeviceTypes().includes(DeviceTypes.GENERIC_SWITCH)).toBeTruthy();
+    expect(() => device.verifyRequiredClusters()).toThrow();
+    // expect(() => device.getAllClusterServers()).toHaveLength(1); // This is not working
+    device.addRequiredClusterServers(device);
+    expect(() => device.verifyRequiredClusters()).not.toThrow();
+    // expect(() => device.getAllClusterServers()).toHaveLength(1); // This is not working
+  });
+
+  test('create a device window covering', async () => {
+    const device = new MatterbridgeDevice(DeviceTypes.WINDOW_COVERING);
+    expect(MatterbridgeDevice.bridgeMode).toBe('');
+    expect(device.getDeviceTypes()).toHaveLength(1);
+    expect(device.getDeviceTypes().includes(DeviceTypes.WINDOW_COVERING)).toBeTruthy();
+    expect(() => device.verifyRequiredClusters()).toThrow();
+    device.addRequiredClusterServers(device);
+    expect(() => device.verifyRequiredClusters()).not.toThrow();
+    const windowCoveringCluster = device.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
+
+    windowCoveringCluster?.getCurrentPositionLiftPercent100thsAttribute();
+
+    device.setWindowCoveringTargetAsCurrentAndStopped();
+    expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Stopped);
+    expect(windowCoveringCluster?.getCurrentPositionLiftPercent100thsAttribute()).toBe(windowCoveringCluster?.getTargetPositionLiftPercent100thsAttribute());
+
+    device.setWindowCoveringStatus(WindowCovering.MovementStatus.Opening);
+    expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Opening);
+
+    device.setWindowCoveringCurrentTargetStatus(5000, 6000, WindowCovering.MovementStatus.Closing);
+    expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Closing);
+    expect(windowCoveringCluster?.getCurrentPositionLiftPercent100thsAttribute()).toBe(5000);
+    expect(windowCoveringCluster?.getTargetPositionLiftPercent100thsAttribute()).toBe(6000);
+
+    device.setWindowCoveringTargetAndCurrentPosition(7000);
+    expect(windowCoveringCluster?.getCurrentPositionLiftPercent100thsAttribute()).toBe(7000);
+    expect(windowCoveringCluster?.getTargetPositionLiftPercent100thsAttribute()).toBe(7000);
   });
 });

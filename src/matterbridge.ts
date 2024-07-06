@@ -132,6 +132,7 @@ interface MatterbridgeInformation {
   bridgeMode: string;
   restartMode: string;
   debugEnabled: boolean;
+  matterLoggerLevel: number;
 }
 
 interface SanitizedExposedFabricInformation {
@@ -209,6 +210,7 @@ export class Matterbridge extends EventEmitter {
     bridgeMode: '',
     restartMode: '',
     debugEnabled: false,
+    matterLoggerLevel: Level.INFO,
   };
 
   public homeDirectory = '';
@@ -243,7 +245,7 @@ export class Matterbridge extends EventEmitter {
   private nodeContext: NodeStorage | undefined;
 
   private expressApp: express.Express | undefined;
-  private expressServer: Server | undefined;
+  // private expressServer: Server | undefined;
   private httpServer: Server | undefined;
   private httpsServer: Server | undefined;
   private webSocketServer: WebSocketServer | undefined;
@@ -1078,12 +1080,14 @@ export class Matterbridge extends EventEmitter {
       */
 
       // Close the express server
+      /*
       if (this.expressServer) {
         this.expressServer.close();
         this.expressServer.removeAllListeners();
         this.expressServer = undefined;
         this.log.debug('Express server closed successfully');
       }
+      */
       // Close the http server
       if (this.httpServer) {
         this.httpServer.close();
@@ -3183,6 +3187,7 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.bridgeMode = this.bridgeMode;
       this.matterbridgeInformation.restartMode = this.restartMode;
       this.matterbridgeInformation.debugEnabled = this.debugEnabled;
+      this.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
       this.matterbridgeInformation.matterbridgePaired = this.matterbridgePaired;
       this.matterbridgeInformation.matterbridgeConnected = this.matterbridgeConnected;
       this.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridgeFabricInformations;
@@ -3314,37 +3319,39 @@ export class Matterbridge extends EventEmitter {
         await this.nodeContext?.set('password', password);
       }
 
-      // Handle the command debugLevel from Settings
-      if (command === 'setloglevel') {
+      // Handle the command setmbloglevel from Settings
+      if (command === 'setmbloglevel') {
         this.log.debug('setloglevel:', param);
         if (param === 'Debug') {
           this.log.setLogDebug(true);
           this.debugEnabled = true;
-          Logger.defaultLogLevel = Level.DEBUG;
         } else if (param === 'Info') {
           this.log.setLogDebug(false);
           this.debugEnabled = false;
-          Logger.defaultLogLevel = Level.INFO;
-        } else if (param === 'Notice') {
-          this.log.setLogDebug(false);
-          this.debugEnabled = false;
-          Logger.defaultLogLevel = Level.NOTICE;
-        } else if (param === 'Warn') {
-          this.log.setLogDebug(false);
-          this.debugEnabled = false;
-          Logger.defaultLogLevel = Level.WARN;
-        } else if (param === 'Error') {
-          this.log.setLogDebug(false);
-          this.debugEnabled = false;
-          Logger.defaultLogLevel = Level.ERROR;
-        } else if (param === 'Fatal') {
-          this.log.setLogDebug(false);
-          this.debugEnabled = false;
-          Logger.defaultLogLevel = Level.FATAL;
         }
+        /*
         this.registeredPlugins.forEach((plugin) => {
           plugin.platform?.log.setLogDebug(this.debugEnabled);
         });
+        */
+      }
+
+      // Handle the command setmbloglevel from Settings
+      if (command === 'setmjloglevel') {
+        this.log.debug('setmjloglevel:', param);
+        if (param === 'Debug') {
+          Logger.defaultLogLevel = Level.DEBUG;
+        } else if (param === 'Info') {
+          Logger.defaultLogLevel = Level.INFO;
+        } else if (param === 'Notice') {
+          Logger.defaultLogLevel = Level.NOTICE;
+        } else if (param === 'Warn') {
+          Logger.defaultLogLevel = Level.WARN;
+        } else if (param === 'Error') {
+          Logger.defaultLogLevel = Level.ERROR;
+        } else if (param === 'Fatal') {
+          Logger.defaultLogLevel = Level.FATAL;
+        }
       }
 
       // Handle the command unregister from Settings
