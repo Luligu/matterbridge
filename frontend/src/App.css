@@ -135,13 +135,10 @@ width: 120px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  /* Distribute items evenly */
   gap: 20px;
   margin: 0;
   padding: 0;
-  /* 20px */
   height: 40px;
-  /* Increase height for a more modern look */
 }
 
 /* Navigation style */
@@ -355,14 +352,22 @@ h3 {
   overflow: auto;
 }
 
-/*
-@media (max-width: 600px) {
-  .header {
-    flex-direction: column;
-  }
+/* Table header style */
+.MbfScreen {
+  display: flex;
+  flex-direction: column;
+  width: calc(100vw - 40px);
+  height: calc(100vh - 40px);
+  gap: 20px;
+  margin: 0;
+  padding: 20px;
+  background-color: #c4c2c2;
+}
 
-  nav {
-    margin-top: 20px;
+/* Styles for mobile screens */
+@media (max-width: 1500px) {
+  .MbfScreen {
+    width: 1500px;
+    height: 1000px;
   }
 }
-*/

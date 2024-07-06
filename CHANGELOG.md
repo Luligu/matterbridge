@@ -9,6 +9,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [device]: Refactor contructor to accept DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>.
+- [frontend]: Update to 1.2.0
 
 ## [1.3.10] - 2024-07-05
 

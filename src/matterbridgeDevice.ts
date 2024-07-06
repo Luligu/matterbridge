@@ -297,8 +297,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Create a Matterbridge device.
    * @constructor
-   * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The definition of the device.
+   * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition of the device.
    * @param {EndpointOptions} [options={}] - The options for the device.
+   * @param {boolean} [debug=false] - The debug level for the device.
    */
   constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, debug = false) {
     let firstDefinition: DeviceTypeDefinition;
@@ -316,9 +317,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Loads an instance of the MatterbridgeDevice class.
+   * Loads asyncronously an instance of the MatterbridgeDevice class.
    *
-   * @param {DeviceTypeDefinition} definition - The DeviceTypeDefinition of the device.
+   * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition of the device.
+   * @param {EndpointOptions} [options={}] - The options for the device.
+   * @param {boolean} [debug=false] - The debug level for the device.
    * @returns MatterbridgeDevice instance.
    */
   static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, debug = false) {
@@ -398,14 +401,14 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Adds the required cluster servers for the specified endpoint.
+   * Adds the required cluster servers (only if they are not present) for the device types of the specified endpoint.
    *
    * @param {Endpoint} endpoint - The endpoint to add the required cluster servers to.
    * @returns {Endpoint} The updated endpoint with the required cluster servers added.
    */
-  addRequiredClusterServer(endpoint: Endpoint): Endpoint {
+  addRequiredClusterServers(endpoint: Endpoint): Endpoint {
     const requiredServerList: ClusterId[] = [];
-    this.log.debug(`addRequiredClusterServer: ${CYAN}${endpoint.name}${db}`);
+    this.log.debug(`addRequiredClusterServer for ${CYAN}${endpoint.name}${db}`);
     endpoint.getDeviceTypes().forEach((deviceType) => {
       this.log.debug(`- for deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
       deviceType.requiredServerClusters.forEach((clusterId) => {
@@ -416,6 +419,28 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       this.log.debug(`- with cluster: ${hk}${clusterId}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
     });
     this.addClusterServerFromList(endpoint, requiredServerList);
+    return endpoint;
+  }
+
+  /**
+   * Adds the optional cluster servers (only if they are not present) for the device types of the specified endpoint.
+   *
+   * @param {Endpoint} endpoint - The endpoint to add the required cluster servers to.
+   * @returns {Endpoint} The updated endpoint with the required cluster servers added.
+   */
+  addOptionalClusterServers(endpoint: Endpoint): Endpoint {
+    const optionalServerList: ClusterId[] = [];
+    this.log.debug(`addRequiredClusterServer for ${CYAN}${endpoint.name}${db}`);
+    endpoint.getDeviceTypes().forEach((deviceType) => {
+      this.log.debug(`- for deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
+      deviceType.optionalServerClusters.forEach((clusterId) => {
+        if (!optionalServerList.includes(clusterId) && !endpoint.getClusterClientById(clusterId)) optionalServerList.push(clusterId);
+      });
+    });
+    optionalServerList.forEach((clusterId) => {
+      this.log.debug(`- with cluster: ${hk}${clusterId}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
+    });
+    this.addClusterServerFromList(endpoint, optionalServerList);
     return endpoint;
   }
 

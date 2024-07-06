@@ -216,7 +216,7 @@ describe('Matterbridge platform', () => {
     expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
     expect(device.getDeviceTypes()).toHaveLength(1);
     expect(() => device.verifyRequiredClusters()).toThrow();
-    device.addRequiredClusterServer(device);
+    device.addRequiredClusterServers(device);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
   });
 
@@ -227,7 +227,7 @@ describe('Matterbridge platform', () => {
     expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
     expect(device.getDeviceTypes()).toHaveLength(1);
     expect(() => device.verifyRequiredClusters()).toThrow();
-    device.addRequiredClusterServer(device);
+    device.addRequiredClusterServers(device);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
   });
 
@@ -238,7 +238,7 @@ describe('Matterbridge platform', () => {
     expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
     expect(device.getDeviceTypes()).toHaveLength(1);
     expect(() => device.verifyRequiredClusters()).toThrow();
-    device.addRequiredClusterServer(device);
+    device.addRequiredClusterServers(device);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
   });
 
@@ -249,7 +249,7 @@ describe('Matterbridge platform', () => {
     expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
     expect(device.getDeviceTypes()).toHaveLength(1);
     expect(() => device.verifyRequiredClusters()).toThrow();
-    device.addRequiredClusterServer(device);
+    device.addRequiredClusterServers(device);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
   });
 
@@ -260,7 +260,8 @@ describe('Matterbridge platform', () => {
     expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
     expect(device.getDeviceTypes()).toHaveLength(1);
     expect(() => device.verifyRequiredClusters()).toThrow();
-    device.addRequiredClusterServer(device);
+    device.addRequiredClusterServers(device);
+    device.addOptionalClusterServers(device);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
   });
 
@@ -271,7 +272,7 @@ describe('Matterbridge platform', () => {
     expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
     expect(device.getDeviceTypes()).toHaveLength(3);
     expect(() => device.verifyRequiredClusters()).toThrow();
-    device.addRequiredClusterServer(device);
+    device.addRequiredClusterServers(device);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
   });
 
@@ -322,7 +323,8 @@ describe('Matterbridge platform', () => {
     device.addClusterServer(device.getDefaultDeviceEnergyManagementClusterServer());
     expect(() => device.verifyRequiredClusters()).not.toThrow();
     device.addDeviceTypeWithClusterServer([airQualitySensor, waterFreezeDetector, waterLeakDetector, rainSensor, smokeCoAlarm, electricalSensor, deviceEnergyManagement]);
-    device.addRequiredClusterServer(device);
+    device.addRequiredClusterServers(device);
+    device.addOptionalClusterServers(device);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
   });
 });
