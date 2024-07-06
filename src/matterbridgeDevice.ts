@@ -578,6 +578,19 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Create a default static EveHistoryClusterServer object with the specified voltage, current, power, and consumption values.
+   * This shows up in HA as a static sensor!
+   * @param voltage - The voltage value (default: 0).
+   * @param current - The current value (default: 0).
+   * @param power - The power value (default: 0).
+   * @param consumption - The consumption value (default: 0).
+   * @returns The default static EveHistoryClusterServer object.
+   */
+  createDefaultStaticEveHistoryClusterServer(voltage = 0, current = 0, power = 0, consumption = 0) {
+    this.addClusterServer(this.getDefaultStaticEveHistoryClusterServer(voltage, current, power, consumption));
+  }
+
+  /**
    * Creates a room Eve History Cluster Server.
    *
    * @param history - The MatterHistory object.

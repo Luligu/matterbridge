@@ -21,6 +21,8 @@ import {
   waterFreezeDetector,
   waterLeakDetector,
 } from './matterbridgeDevice.js';
+import { EveHistory, EveHistoryCluster } from 'matter-history';
+
 import { getClusterNameById } from '@project-chip/matter-node.js/cluster';
 import { DeviceTypes } from '@project-chip/matter-node.js/device';
 
@@ -205,5 +207,11 @@ describe('Matterbridge platform', () => {
     child = device.getChildEndpointWithLabel('ComposedDevice3');
     // eslint-disable-next-line jest/no-conditional-expect
     if (child) expect(device.getChildEndpointName(child)).toBe('ComposedDevice3');
+  });
+
+  test('create a power source device with EveHistory', async () => {
+    const device = new MatterbridgeDevice(powerSource);
+    device.createDefaultStaticEveHistoryClusterServer();
+    expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
   });
 });
