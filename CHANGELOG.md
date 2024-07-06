@@ -6,10 +6,13 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [1.3.11] - 2024-07-08
 
+### Added
+- [device]: Added addRequiredClusterServers and addOptionalClusterServers methods.
+
 ### Changed
 
-- [device]: Refactor contructor to accept DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>.
-- [frontend]: Update to 1.2.0
+- [device]: Refactor contructor and loadInstance to accept DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>.
+- [frontend]: Update to 1.2.0 (optimization for mobile)
 
 ## [1.3.10] - 2024-07-05
 

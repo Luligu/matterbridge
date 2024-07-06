@@ -14,8 +14,9 @@ export var info = {};
 
 function Settings() {
 
+//  <div style={{ display: 'flex', flex: 1, flexBasis: 'auto', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '10px' , margin: '0', padding: '0' }}>
   return (
-    <div style={{ display: 'flex', flex: 1, flexBasis: 'auto', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '10px' , margin: '0', padding: '0' }}>
+    <div className="MbfPageDiv">
       <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
         <h3>Matterbridge settings:</h3>
       </div>  
