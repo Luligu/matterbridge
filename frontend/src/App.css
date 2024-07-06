@@ -264,6 +264,17 @@ h3 {
 }
 */
 
+/* Define the style for the main page element */
+.MbfPageDiv {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 60px);
+  width: 100%;
+  margin: 0px;
+  padding: 0px;
+  gap: 20px;
+}
+
 /* Define the style for the main div element */
 .MbfWindowDiv {
   display: flex;
