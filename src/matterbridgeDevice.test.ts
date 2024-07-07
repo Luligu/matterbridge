@@ -531,10 +531,10 @@ describe('Matterbridge platform', () => {
   test('create a device lock with bridged basic information', async () => {
     const device = new MatterbridgeDevice(DeviceTypes.DOOR_LOCK);
     device.addCommandHandler('lockDoor', (data) => {
-      console.log('Lock command called with:', data.request);
+      device.log.debug('Lock command called with:', data.request);
     });
     device.addCommandHandler('unlockDoor', (data) => {
-      console.log('Unlock command called with:', data.request);
+      device.log.debug('Unlock command called with:', data.request);
     });
     expect(MatterbridgeDevice.bridgeMode).toBe('');
     expect(device.getDeviceTypes()).toHaveLength(1);
@@ -553,16 +553,16 @@ describe('Matterbridge platform', () => {
   test('create a device window covering', async () => {
     const device = new MatterbridgeDevice(DeviceTypes.WINDOW_COVERING);
     device.addCommandHandler('upOrOpen', (data) => {
-      console.log('upOrOpen command called with:', data.request);
+      device.log.debug('upOrOpen command called with:', data.request);
     });
     device.addCommandHandler('downOrClose', (data) => {
-      console.log('downOrClose command called with:', data.request);
+      device.log.debug('downOrClose command called with:', data.request);
     });
     device.addCommandHandler('stopMotion', (data) => {
-      console.log('stopMotion command called with:', data.request);
+      device.log.debug('stopMotion command called with:', data.request);
     });
     device.addCommandHandler('goToLiftPercentage', (data) => {
-      console.log('goToLiftPercentage command called with:', data.request);
+      device.log.debug('goToLiftPercentage command called with:', data.request);
     });
 
     expect(MatterbridgeDevice.bridgeMode).toBe('');
@@ -606,10 +606,10 @@ describe('Matterbridge platform', () => {
     expect(identifyCluster?.isCommandSupportedByName('lock')).toBeFalsy();
 
     device.addCommandHandler('identify', (data) => {
-      console.log('Identify command called with:', data.request);
+      device.log.debug('Identify command called with:', data.request);
     });
     device.addCommandHandler('triggerEffect', (data) => {
-      console.log('triggerEffect command called with:', data.request);
+      device.log.debug('triggerEffect command called with:', data.request);
     });
     invokeCommands(identifyCluster);
   });

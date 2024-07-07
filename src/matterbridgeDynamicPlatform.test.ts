@@ -46,7 +46,7 @@ describe('Matterbridge dynamic platform', () => {
       false,
       20000,
       500,
-      true,
+      false,
     );
     matterbridge.removeAllListeners();
     await waiter(
@@ -57,7 +57,7 @@ describe('Matterbridge dynamic platform', () => {
       false,
       10000,
       500,
-      true,
+      false,
     );
   }, 60000);
 });
