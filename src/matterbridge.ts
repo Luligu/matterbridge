@@ -3321,7 +3321,7 @@ export class Matterbridge extends EventEmitter {
 
       // Handle the command setmbloglevel from Settings
       if (command === 'setmbloglevel') {
-        this.log.debug('setloglevel:', param);
+        this.log.debug('Matterbridge log level:', param);
         if (param === 'Debug') {
           this.log.setLogDebug(true);
           this.debugEnabled = true;
@@ -3329,16 +3329,11 @@ export class Matterbridge extends EventEmitter {
           this.log.setLogDebug(false);
           this.debugEnabled = false;
         }
-        /*
-        this.registeredPlugins.forEach((plugin) => {
-          plugin.platform?.log.setLogDebug(this.debugEnabled);
-        });
-        */
       }
 
       // Handle the command setmbloglevel from Settings
       if (command === 'setmjloglevel') {
-        this.log.debug('setmjloglevel:', param);
+        this.log.debug('Matter.js log level::', param);
         if (param === 'Debug') {
           Logger.defaultLogLevel = Level.DEBUG;
         } else if (param === 'Info') {

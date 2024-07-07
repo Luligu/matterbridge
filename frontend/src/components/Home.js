@@ -227,11 +227,11 @@ function Home() {
           <table ref={refRegisteredPlugins}>
             <thead>
               <tr>
-                <th className="table-header" colSpan="8">Registered plugins</th>
+                <th colSpan="8">Registered plugins</th>
               </tr>
               <tr>
                 {columns.map((column, index) => (
-                  <th className="table-header" key={index}>{column.Header}</th>
+                  <th key={index}>{column.Header}</th>
                 ))}
               </tr>
             </thead>
@@ -447,7 +447,7 @@ function SystemInfoTable({ systemInfo, compact }) {
         <table>
           <thead>
             <tr>
-              <th colSpan="2" className="table-header">System Information</th>
+              <th colSpan="2">System Information</th>
             </tr>
           </thead>
           <tbody>
@@ -468,7 +468,7 @@ function SystemInfoTable({ systemInfo, compact }) {
 
 // This function takes systemInfo as a parameter and returns a table element with the systemInfo
 function MatterbridgeInfoTable({ matterbridgeInfo }) {
-  const excludeKeys = ['matterbridgeVersion', 'matterbridgeLatestVersion', 'debugEnabled', 'bridgeMode', 'matterbridgeFabricInformations', 'matterbridgeSessionInformations'];
+  const excludeKeys = ['matterbridgeVersion', 'matterbridgeLatestVersion', 'matterLoggerLevel', 'debugEnabled', 'bridgeMode', 'matterbridgeFabricInformations', 'matterbridgeSessionInformations'];
   if(matterbridgeInfo.bridgeMode === 'childbridge') excludeKeys.push('matterbridgePaired', 'matterbridgeConnected');
   return (
     <div className="MbfWindowDiv" style={{ minWidth: '302px' }}>
@@ -476,7 +476,7 @@ function MatterbridgeInfoTable({ matterbridgeInfo }) {
         <table>
           <thead>
             <tr>
-              <th colSpan="2" className="table-header">Matterbridge Information</th>
+              <th colSpan="2">Matterbridge Information</th>
             </tr>
           </thead>
           <tbody>
@@ -532,8 +532,8 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
         </div>
         <div className="MbfWindowBodyColumn">
           {matterbridgeInfo.matterbridgeFabricInformations.map((fabric, index) => (
-            <div key={index} style={{ margin: '0px 15px 0px 15px', padding: '10px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
-                <p className="status-blue" style={{ margin: '0px 10px 5px 10px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
+            <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
+                <p className="status-blue" style={{ margin: '0px 10px 10px 10px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
                 <p style={{ margin: '0px 20px 0px 20px'}}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
                 {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px'}}>Label: {fabric.label}</p>}
                 <p style={{ margin: '0px 20px 0px 20px'}}>Active sessions: {matterbridgeInfo.matterbridgeSessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length}</p>
@@ -550,8 +550,8 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
         </div>
         <div className="MbfWindowBodyColumn">
           {plugin.fabricInformations.map((fabric, index) => (
-            <div key={index} style={{ margin: '0px 15px 0px 15px', padding: '10px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
-                <p className="status-blue" style={{ margin: '0px 10px 5px 10px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
+            <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
+                <p className="status-blue" style={{ margin: '0px 10px 10px 10px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
                 <p style={{ margin: '0px 20px 0px 20px' }}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
                 {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px'}}>Label: {fabric.label}</p>}
                 <p style={{ margin: '0px 20px 0px 20px' }}>Active sessions: {plugin.sessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length}</p>
