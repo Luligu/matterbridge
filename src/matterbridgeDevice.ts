@@ -658,7 +658,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         HistorySetTime: Uint8Array.fromHex(''),
         LastEvent: 0,
         ResetTotal: 0,
-        // Normal attributes
+        // Normal static attributes
         Voltage: voltage,
         Current: current,
         Consumption: power,
