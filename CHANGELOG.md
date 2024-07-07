@@ -14,6 +14,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [device]: Refactor contructor and loadInstance to accept DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>.
 - [frontend]: Update to 1.2.0 (initial optimization for mobile)
+- [dependencies]: Update dependencies.
 
 ## [1.3.10] - 2024-07-05
 
