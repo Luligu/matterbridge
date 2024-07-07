@@ -332,7 +332,7 @@ describe('Matterbridge platform', () => {
     historyCluster?.getHistorySetTimeAttribute();
     historyCluster?.setHistorySetTimeAttribute(Uint8Array.fromHex('000000000000'));
     historyCluster?.getHistoryRequestAttribute();
-    // historyCluster?.setHistoryRequestAttribute(Uint8Array.fromHex(''));
+    historyCluster?.setHistoryRequestAttribute(Uint8Array.fromHex('000000000000'));
     historyCluster?.getLastEventAttribute();
     historyCluster?.getTimesOpenedAttribute();
     historyCluster?.getResetTotalAttribute();
@@ -360,7 +360,7 @@ describe('Matterbridge platform', () => {
     historyCluster?.getHistorySetTimeAttribute();
     historyCluster?.setHistorySetTimeAttribute(Uint8Array.fromHex('000000000000'));
     historyCluster?.getHistoryRequestAttribute();
-    // historyCluster?.setHistoryRequestAttribute(Uint8Array.fromHex(''));
+    historyCluster?.setHistoryRequestAttribute(Uint8Array.fromHex('000000000000'));
     historyCluster?.getLastEventAttribute();
   });
 
@@ -385,7 +385,7 @@ describe('Matterbridge platform', () => {
     historyCluster?.getHistorySetTimeAttribute();
     historyCluster?.setHistorySetTimeAttribute(Uint8Array.fromHex('000000000000'));
     historyCluster?.getHistoryRequestAttribute();
-    // historyCluster?.setHistoryRequestAttribute(Uint8Array.fromHex(''));
+    historyCluster?.setHistoryRequestAttribute(Uint8Array.fromHex('000000000000'));
     historyCluster?.getLastEventAttribute();
     historyCluster?.getResetTotalAttribute();
     historyCluster?.setResetTotalAttribute(0);
@@ -413,7 +413,7 @@ describe('Matterbridge platform', () => {
     historyCluster?.getHistorySetTimeAttribute();
     historyCluster?.setHistorySetTimeAttribute(Uint8Array.fromHex('000000000000'));
     historyCluster?.getHistoryRequestAttribute();
-    // historyCluster?.setHistoryRequestAttribute(Uint8Array.fromHex(''));
+    historyCluster?.setHistoryRequestAttribute(Uint8Array.fromHex('000000000000'));
   });
 
   test('create a weather device with EveHistory', async () => {
@@ -437,7 +437,7 @@ describe('Matterbridge platform', () => {
     historyCluster?.getHistorySetTimeAttribute();
     historyCluster?.setHistorySetTimeAttribute(Uint8Array.fromHex('000000000000'));
     historyCluster?.getHistoryRequestAttribute();
-    // historyCluster?.setHistoryRequestAttribute(Uint8Array.fromHex(''));
+    historyCluster?.setHistoryRequestAttribute(Uint8Array.fromHex('000000000000'));
   });
 
   test('create a device with all default clusters', async () => {
