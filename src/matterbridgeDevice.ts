@@ -112,6 +112,7 @@ type MakeMandatory<T> = Exclude<T, undefined>;
 
 interface MatterbridgeDeviceCommands {
   identify: MakeMandatory<ClusterServerHandlers<typeof Identify.Complete>['identify']>;
+  triggerEffect: MakeMandatory<ClusterServerHandlers<typeof Identify.Complete>['triggerEffect']>;
 
   on: MakeMandatory<ClusterServerHandlers<typeof OnOff.Complete>['on']>;
   off: MakeMandatory<ClusterServerHandlers<typeof OnOff.Complete>['off']>;
@@ -142,6 +143,8 @@ interface MatterbridgeDeviceCommands {
   unlockDoor: MakeMandatory<ClusterServerHandlers<typeof DoorLock.Complete>['unlockDoor']>;
 
   setpointRaiseLower: MakeMandatory<ClusterServerHandlers<typeof Thermostat.Complete>['setpointRaiseLower']>;
+
+  changeToMode: MakeMandatory<ClusterServerHandlers<typeof ModeSelect.Complete>['changeToMode']>;
 
   // step: MakeMandatory<ClusterServerHandlers<typeof FanControl.Complete>['step']>; // Rev > 2
 
@@ -281,6 +284,10 @@ export interface SerializedMatterbridgeDevice {
   deviceName: string;
   serialNumber: string;
   uniqueId: string;
+  productId?: number;
+  productName?: string;
+  vendorId?: number;
+  vendorName?: string;
   deviceTypes: AtLeastOne<DeviceTypeDefinition>;
   endpoint: EndpointNumber | undefined;
   endpointName: string;
@@ -322,9 +329,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition of the device.
    * @param {EndpointOptions} [options={}] - The options for the device.
    * @param {boolean} [debug=false] - The debug level for the device.
-   * @returns MatterbridgeDevice instance.
+   * @returns {Promise<MatterbridgeDevice>} A Promise of MatterbridgeDevice instance.
    */
-  static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, debug = false) {
+  static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, debug = false): Promise<MatterbridgeDevice> {
     return new MatterbridgeDevice(definition, options, debug);
   }
 
@@ -333,14 +340,16 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * If the device type is not already present in the list, it will be added.
    *
    * @param {DeviceTypeDefinition} deviceType - The device type to add.
+   * @returns {MatterbridgeDevice} The MatterbridgeDevice instance.
    */
-  addDeviceType(deviceType: DeviceTypeDefinition) {
+  addDeviceType(deviceType: DeviceTypeDefinition): MatterbridgeDevice {
     const deviceTypes = this.getDeviceTypes();
     if (!deviceTypes.includes(deviceType)) {
       this.log.debug(`addDeviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
       deviceTypes.push(deviceType);
       this.setDeviceTypes(deviceTypes);
     }
+    return this;
   }
 
   /**
@@ -348,8 +357,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
    * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
+   * @returns {MatterbridgeDevice} The MatterbridgeDevice instance.
    */
-  addDeviceTypeWithClusterServer(deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = []) {
+  addDeviceTypeWithClusterServer(deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = []): MatterbridgeDevice {
     this.log.debug('addDeviceTypeWithClusterServer:');
     deviceTypes.forEach((deviceType) => {
       this.addDeviceType(deviceType);
@@ -362,6 +372,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       this.log.debug(`- with cluster: ${hk}${clusterId}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
     });
     this.addClusterServerFromList(this, includeServerList);
+    return this;
   }
 
   /**
@@ -517,7 +528,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (!labelList) return undefined;
     const endpointNameLabel = labelList.find((entry) => entry.label === 'endpointName');
     if (endpointNameLabel) return endpointNameLabel.value;
-    return undefined;
   }
 
   /**
@@ -542,7 +552,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     for (const entry of labelList) {
       if (entry.label === 'endpointName') return entry.value;
     }
-    return undefined;
   }
 
   /**
@@ -561,7 +570,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       }
       if (endpointName === label) return endpoint;
     }
-    return undefined;
   }
 
   /**
@@ -570,13 +578,19 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param pluginName - The name of the plugin.
    * @returns The serialized Matterbridge device object.
    */
-  serialize(pluginName: string) {
+  serialize(pluginName: string): SerializedMatterbridgeDevice | undefined {
     if (!this.serialNumber || !this.deviceName || !this.uniqueId) return;
+    const cluster = this.getClusterServer(BasicInformationCluster) ?? this.getClusterServer(BridgedDeviceBasicInformationCluster);
+    if (!cluster) return;
     const serialized: SerializedMatterbridgeDevice = {
       pluginName,
       serialNumber: this.serialNumber,
       deviceName: this.deviceName,
       uniqueId: this.uniqueId,
+      productId: cluster.attributes.productId?.getLocal(),
+      productName: cluster.attributes.productName?.getLocal(),
+      vendorId: cluster.attributes.vendorId?.getLocal(),
+      vendorName: cluster.attributes.vendorName?.getLocal(),
       deviceTypes: this.getDeviceTypes(),
       endpoint: this.number,
       endpointName: this.name,
@@ -586,6 +600,40 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       serialized.clusterServersId.push(clusterServer.id);
     });
     return serialized;
+  }
+
+  /**
+   * Serializes the Matterbridge device into a serialized object.
+   *
+   * @param pluginName - The name of the plugin.
+   * @returns The serialized Matterbridge device object.
+   */
+  static deserialize(serializedDevice: SerializedMatterbridgeDevice): MatterbridgeDevice {
+    const device = new MatterbridgeDevice(serializedDevice.deviceTypes);
+    device.serialNumber = serializedDevice.serialNumber;
+    device.deviceName = serializedDevice.deviceName;
+    device.uniqueId = serializedDevice.uniqueId;
+    for (const clusterId of serializedDevice.clusterServersId) {
+      if (clusterId === BasicInformationCluster.id)
+        device.createDefaultBasicInformationClusterServer(
+          serializedDevice.deviceName,
+          serializedDevice.serialNumber,
+          serializedDevice.vendorId ?? 0xfff1,
+          serializedDevice.vendorName ?? 'Matterbridge',
+          serializedDevice.productId ?? 0x8000,
+          serializedDevice.productName ?? 'Matterbridge device',
+        );
+      else if (clusterId === BridgedDeviceBasicInformationCluster.id)
+        device.createDefaultBridgedDeviceBasicInformationClusterServer(
+          serializedDevice.deviceName,
+          serializedDevice.serialNumber,
+          serializedDevice.vendorId ?? 0xfff1,
+          serializedDevice.vendorName ?? 'Matterbridge',
+          serializedDevice.productName ?? 'Matterbridge device',
+        );
+      else device.addClusterServerFromList(device, [clusterId]);
+    }
+    return device;
   }
 
   /**
@@ -1046,17 +1094,21 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Get a default IdentifyCluster server.
    */
-  getDefaultIdentifyClusterServer() {
+  getDefaultIdentifyClusterServer(identifyTime = 0, identifyType = Identify.IdentifyType.None) {
     return ClusterServer(
       IdentifyCluster,
       {
-        identifyTime: 0,
-        identifyType: Identify.IdentifyType.None,
+        identifyTime,
+        identifyType,
       },
       {
         identify: async (data) => {
           this.log.debug('Matter command: Identify');
           await this.commandHandler.executeHandler('identify', data);
+        },
+        triggerEffect: async (data) => {
+          this.log.debug('Matter command: TriggerEffect');
+          await this.commandHandler.executeHandler('triggerEffect', data);
         },
       },
     );
@@ -1065,8 +1117,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Creates a default IdentifyCluster server.
    */
-  createDefaultIdentifyClusterServer() {
-    this.addClusterServer(this.getDefaultIdentifyClusterServer());
+  createDefaultIdentifyClusterServer(identifyTime = 0, identifyType = Identify.IdentifyType.None) {
+    this.addClusterServer(this.getDefaultIdentifyClusterServer(identifyTime, identifyType));
   }
 
   /**
@@ -1419,6 +1471,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Creates a default Dummy Thread Network Diagnostics Cluster server.
+   * @deprecated This method is deprecated and is only for testing.
    *
    * @remarks
    * This method adds a cluster server used only to give the networkName to Eve app.
