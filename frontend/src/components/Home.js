@@ -284,8 +284,8 @@ function Home() {
                                       <StatusIndicator status={plugin.loaded} enabledText='Loaded' tooltipText='Whether the plugin has been loaded'/>
                                       <StatusIndicator status={plugin.started} enabledText='Started' tooltipText='Whether the plugin started'/>
                                       <StatusIndicator status={plugin.configured} enabledText='Configured' tooltipText='Whether the plugin has been configured'/>
-                                      <StatusIndicator status={plugin.paired} enabledText='Paired' tooltipText='Whether the plugin has been paired'/>
-                                      <StatusIndicator status={plugin.connected} enabledText='Connected' tooltipText='Whether the controller connected'/>
+                                      {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' ? <StatusIndicator status={plugin.paired} enabledText='Paired' tooltipText='Whether the plugin has been paired'/> : <></>}
+                                      {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' ? <StatusIndicator status={plugin.connected} enabledText='Connected' tooltipText='Whether the controller connected'/> : <></>}
                                     </>
                                   }
                                 </>
