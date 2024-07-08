@@ -223,90 +223,92 @@ function Home() {
           <AddRemovePluginsDiv ref={refAddRemove} plugins={plugins}/>
         </div>
 
-        <div>
-          <table ref={refRegisteredPlugins}>
-            <thead>
-              <tr>
-                <th colSpan="8">Registered plugins</th>
-              </tr>
-              <tr>
-                {columns.map((column, index) => (
-                  <th key={index}>{column.Header}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {plugins.map((plugin, index) => (
-
-                <tr key={index} className={selectedRow === index ? 'table-content-selected' : index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
-
-                  <td className="table-content"><Tooltip title={plugin.path}>{plugin.name}</Tooltip></td>
-                  <td className="table-content">{plugin.description}</td>
-                  <td className="table-content"><Tooltip title="Update the plugin to the latest version">{plugin.latestVersion === undefined || plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning" onClick={() => handleUpdate(index)}>{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</Tooltip></td>
-                  <td className="table-content">{plugin.author.replace('https://github.com/', '')}</td>
-                  <td className="table-content">{plugin.type === 'DynamicPlatform'?'Dynamic':'Accessory'}</td>
-                  <td className="table-content">{plugin.registeredDevices}</td>
-                  <td className="table-content">  
-                    <>
-                      {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' ? <Tooltip title="Shows the QRCode or the fabrics"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleSelectQRCode(index)} size="small"><QrCode2 /></IconButton></Tooltip> : <></>}
-                      <Tooltip title="Plugin config"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleConfigPlugin(index)} size="small"><Settings /></IconButton></Tooltip>
-                      <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleRemovePlugin(index)} size="small"><DeleteForever /></IconButton></Tooltip>
-                      {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><Unpublished /></IconButton></Tooltip> : <></>}
-                      {!plugin.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><PublishedWithChanges /></IconButton></Tooltip> : <></>}
-                      <Tooltip title="Plugin help"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleHelpPlugin(index)} size="small"><Help /></IconButton></Tooltip>
-                      <Tooltip title="Plugin version history"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleChangelogPlugin(index)} size="small"><Announcement /></IconButton></Tooltip>
-                      <Tooltip title="Sponsor the plugin"><IconButton style={{padding: 0, color: '#b6409c'}} className="PluginsIconButton" onClick={() => handleSponsorPlugin(index)} size="small"><Favorite /></IconButton></Tooltip>
-                    </>
-                  </td>
-                  <td className="table-content">
-                    <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', gap: '5px' }}>
-
-                      <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={openSnack} onClose={handleSnackClose} autoHideDuration={10000}>
-                        <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart needed!</Alert>
-                      </Snackbar>
-                      {plugin.error ? 
-                        <>
-                          <StatusIndicator status={false} enabledText='Error' disabledText='Error' tooltipText='The plugin is in error state. Check the log!'/></> :
-                        <>
-                          {plugin.enabled === false ?
-                            <>
-                              <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled'/></> :
-                            <>
-                              {plugin.loaded && plugin.started && plugin.configured && plugin.paired && plugin.connected ? 
-                                <>
-                                  <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running'/></> : 
-                                <>
-                                  {plugin.loaded && plugin.started && plugin.configured && plugin.connected===undefined ? 
-                                    <>
-                                      <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running'/></> : 
-                                    <>
-                                      <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled'/>
-                                      <StatusIndicator status={plugin.loaded} enabledText='Loaded' tooltipText='Whether the plugin has been loaded'/>
-                                      <StatusIndicator status={plugin.started} enabledText='Started' tooltipText='Whether the plugin started'/>
-                                      <StatusIndicator status={plugin.configured} enabledText='Configured' tooltipText='Whether the plugin has been configured'/>
-                                      {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' ? <StatusIndicator status={plugin.paired} enabledText='Paired' tooltipText='Whether the plugin has been paired'/> : <></>}
-                                      {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' ? <StatusIndicator status={plugin.connected} enabledText='Connected' tooltipText='Whether the controller connected'/> : <></>}
-                                    </>
-                                  }
-                                </>
-                              }
-                            </>
-                          }
-                        </>
-                      }
-                    </div> 
-                  </td>
+        <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
+          <div className="MbfWindowDivTable" style={{ flex: '0 0 auto', overflow: 'hidden' }}>
+            <table ref={refRegisteredPlugins}>
+              <thead>
+                <tr>
+                  <th colSpan="8">Registered plugins</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+                <tr>
+                  {columns.map((column, index) => (
+                    <th key={index}>{column.Header}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {plugins.map((plugin, index) => (
+
+                  <tr key={index} className={selectedRow === index ? 'table-content-selected' : index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
+
+                    <td className="table-content"><Tooltip title={plugin.path}>{plugin.name}</Tooltip></td>
+                    <td className="table-content">{plugin.description}</td>
+                    <td className="table-content"><Tooltip title="Update the plugin to the latest version">{plugin.latestVersion === undefined || plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning" onClick={() => handleUpdate(index)}>{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</Tooltip></td>
+                    <td className="table-content">{plugin.author.replace('https://github.com/', '')}</td>
+                    <td className="table-content">{plugin.type === 'DynamicPlatform'?'Dynamic':'Accessory'}</td>
+                    <td className="table-content">{plugin.registeredDevices}</td>
+                    <td className="table-content">  
+                      <>
+                        {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' ? <Tooltip title="Shows the QRCode or the fabrics"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleSelectQRCode(index)} size="small"><QrCode2 /></IconButton></Tooltip> : <></>}
+                        <Tooltip title="Plugin config"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleConfigPlugin(index)} size="small"><Settings /></IconButton></Tooltip>
+                        <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleRemovePlugin(index)} size="small"><DeleteForever /></IconButton></Tooltip>
+                        {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><Unpublished /></IconButton></Tooltip> : <></>}
+                        {!plugin.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><PublishedWithChanges /></IconButton></Tooltip> : <></>}
+                        <Tooltip title="Plugin help"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleHelpPlugin(index)} size="small"><Help /></IconButton></Tooltip>
+                        <Tooltip title="Plugin version history"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleChangelogPlugin(index)} size="small"><Announcement /></IconButton></Tooltip>
+                        <Tooltip title="Sponsor the plugin"><IconButton style={{padding: 0, color: '#b6409c'}} className="PluginsIconButton" onClick={() => handleSponsorPlugin(index)} size="small"><Favorite /></IconButton></Tooltip>
+                      </>
+                    </td>
+                    <td className="table-content">
+                      <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', gap: '5px' }}>
+
+                        <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={openSnack} onClose={handleSnackClose} autoHideDuration={10000}>
+                          <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart needed!</Alert>
+                        </Snackbar>
+                        {plugin.error ? 
+                          <>
+                            <StatusIndicator status={false} enabledText='Error' disabledText='Error' tooltipText='The plugin is in error state. Check the log!'/></> :
+                          <>
+                            {plugin.enabled === false ?
+                              <>
+                                <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled'/></> :
+                              <>
+                                {plugin.loaded && plugin.started && plugin.configured && plugin.paired && plugin.connected ? 
+                                  <>
+                                    <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running'/></> : 
+                                  <>
+                                    {plugin.loaded && plugin.started && plugin.configured && plugin.connected===undefined ? 
+                                      <>
+                                        <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running'/></> : 
+                                      <>
+                                        <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled'/>
+                                        <StatusIndicator status={plugin.loaded} enabledText='Loaded' tooltipText='Whether the plugin has been loaded'/>
+                                        <StatusIndicator status={plugin.started} enabledText='Started' tooltipText='Whether the plugin started'/>
+                                        <StatusIndicator status={plugin.configured} enabledText='Configured' tooltipText='Whether the plugin has been configured'/>
+                                        {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' ? <StatusIndicator status={plugin.paired} enabledText='Paired' tooltipText='Whether the plugin has been paired'/> : <></>}
+                                        {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' ? <StatusIndicator status={plugin.connected} enabledText='Connected' tooltipText='Whether the controller connected'/> : <></>}
+                                      </>
+                                    }
+                                  </>
+                                }
+                              </>
+                            }
+                          </>
+                        }
+                      </div> 
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <div className="MbfWindowDiv" style={{flex: '1 1 auto', display: 'flex', flexDirection: 'column', overflow: 'hidden'}}>
+        <div className="MbfWindowDiv" style={{flex: '1 1 auto', width: '100%', overflow: 'hidden'}}>
           <div className="MbfWindowHeader" style={{ flexShrink: 0 }}>
             <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>Logs</p>
           </div>
-          <div style={{ flex: '1 1 auto', margin: '5px', padding: '5px', overflow: 'auto'}}>
+          <div style={{ flex: '1 1 auto', margin: '0px', padding: '0px', overflow: 'auto'}}>
             <WebSocketComponent wssHost={wssHost} debugLevel='debug' searchCriteria='*'/>
           </div>
         </div>

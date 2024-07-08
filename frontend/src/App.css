@@ -382,9 +382,9 @@ h3 {
 }
 
 /* Styles for mobile screens */
-@media (max-width: 1500px) {
+@media (max-width: 1600px) {
   .MbfScreen {
-    width: 1500px;
-    height: 1000px;
+    width: 1600px;
+    height: 800px;
   }
 }
