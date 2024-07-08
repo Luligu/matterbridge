@@ -62,6 +62,7 @@ describe('Matterbridge device serialize/deserialize', () => {
     device.createDefaultBasicInformationClusterServer('Name', 'Serial', 1, 'VendorName', 1, 'ProductName');
     MatterbridgeDevice.bridgeMode = '';
     device.createDefaultBasicInformationClusterServer('Name', 'Serial', 1, 'VendorName', 1, 'ProductName');
+    device.createDefaultBasicInformationClusterServer('Name', 'Serial', 1, 'VendorName', 1, 'ProductName', 1, '1.0.0', 1, '1.0.0');
     device.createDefaultIdentifyClusterServer();
     device.createDefaultGroupsClusterServer();
     device.createDefaultScenesClusterServer();
@@ -82,6 +83,7 @@ describe('Matterbridge device serialize/deserialize', () => {
   test('create a bridged device with all default clusters', async () => {
     const device = new MatterbridgeDevice(bridgedNode);
     device.createDefaultBridgedDeviceBasicInformationClusterServer('Name', 'Serial', 1, 'VendorName', 'ProductName');
+    device.createDefaultBridgedDeviceBasicInformationClusterServer('Name', 'Serial', 1, 'VendorName', 'ProductName', 1, '1.0.0', 1, '1.0.0');
     device.createDefaultIdentifyClusterServer();
     device.createDefaultGroupsClusterServer();
     device.createDefaultScenesClusterServer();
