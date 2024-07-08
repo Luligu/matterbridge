@@ -314,7 +314,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     else firstDefinition = definition;
     super(firstDefinition, options);
     this.log = new AnsiLogger({ logName: 'MatterbridgeDevice', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: debug });
-    this.log.debug(`MatterbridgeDevice with deviceType: ${zb}${firstDefinition.code}${db}-${zb}${firstDefinition.name}${db}`);
+    this.log.debug(`new MatterbridgeDevice with deviceType: ${zb}${firstDefinition.code}${db}-${zb}${firstDefinition.name}${db}`);
     if (Array.isArray(definition)) {
       definition.forEach((deviceType) => {
         this.addDeviceType(deviceType);
@@ -334,6 +334,74 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, debug = false): Promise<MatterbridgeDevice> {
     return new MatterbridgeDevice(definition, options, debug);
   }
+
+  /**
+   * Create asyncronously a device with one or more device types and with the required cluster servers and the specified cluster servers.
+   *
+   * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The device types to add.
+   * @param {EndpointOptions} [options={}] - The options for the device.
+   * @param {ClusterId[]} clusterServerList - The list of cluster IDs to include.
+   * @param {boolean} [debug=false] - The debug level for the device.
+   * @returns {Promise<MatterbridgeDevice>} The MatterbridgeDevice instance.
+   *
+  static async createWithClusterServer(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, clusterServerList: ClusterId[] = [], debug = false): Promise<MatterbridgeDevice> {
+    const device = new MatterbridgeDevice(definition, options, debug);
+    if (Array.isArray(definition)) {
+      definition.forEach((deviceType) => {
+        deviceType.requiredServerClusters.forEach((clusterId) => {
+          if (!clusterServerList.includes(clusterId)) clusterServerList.push(clusterId);
+        });
+      });
+    } else {
+      definition.requiredServerClusters.forEach((clusterId) => {
+        if (!clusterServerList.includes(clusterId)) clusterServerList.push(clusterId);
+      });
+    }
+    device.log.debug(`createWithClusterServer:`);
+    const deviceTypes = device.getDeviceTypes();
+    deviceTypes.forEach((deviceType) => {
+      device.log.debug(`- with deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
+    });
+    clusterServerList.forEach((clusterId) => {
+      device.log.debug(`- with cluster: ${hk}${clusterId}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
+    });
+    device.addClusterServerFromList(device, clusterServerList);
+    // TODO must by typed and tested
+    Object.entries(options).forEach(([key, value]) => {
+      if (key === 'basicInformation') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const basicInformation = value as any;
+        device.createDefaultBasicInformationClusterServer(
+          basicInformation.deviceName,
+          basicInformation.serialNumber,
+          basicInformation.vendorId,
+          basicInformation.vendorName,
+          basicInformation.productId,
+          basicInformation.productName,
+          basicInformation.softwareVersion,
+          basicInformation.softwareVersionString,
+          basicInformation.hardwareVersion,
+          basicInformation.hardwareVersionString,
+        );
+      } else if (key === 'bridgedDeviceBasicInformation') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const bridgedDeviceBasicInformation = value as any;
+        device.createDefaultBridgedDeviceBasicInformationClusterServer(
+          bridgedDeviceBasicInformation.deviceName,
+          bridgedDeviceBasicInformation.serialNumber,
+          bridgedDeviceBasicInformation.vendorId,
+          bridgedDeviceBasicInformation.vendorName,
+          bridgedDeviceBasicInformation.productName,
+          bridgedDeviceBasicInformation.softwareVersion,
+          bridgedDeviceBasicInformation.softwareVersionString,
+          bridgedDeviceBasicInformation.hardwareVersion,
+          bridgedDeviceBasicInformation.hardwareVersionString,
+        );
+      }
+    });
+    return device;
+  }
+  */
 
   /**
    * Adds a device type to the list of device types of the MatterbridgeDevice endpoint.

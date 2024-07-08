@@ -48,8 +48,11 @@ describe('Matterbridge platform', () => {
   });
 
   afterAll(async () => {
+    // Destroy the Matterbridge instance
     // console.log('Destroying Matterbridge');
     await matterbridge.destroyInstance();
+
+    // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion)
     await waiter(
       'Matterbridge destroyed',
       () => {
@@ -58,14 +61,7 @@ describe('Matterbridge platform', () => {
       false,
       20000,
     );
-    await waiter(
-      'Matterbridge destroyed',
-      () => {
-        return false;
-      },
-      false,
-      5000,
-    );
+
     // Restore the mocked AnsiLogger.log method
     (AnsiLogger.prototype.log as jest.Mock).mockRestore();
   }, 60000);

@@ -539,7 +539,7 @@ export class Matterbridge extends EventEmitter {
     Logger.format = Format.ANSI;
 
     // Parse command line
-    this.parseCommandLine();
+    await this.parseCommandLine();
   }
 
   /**
@@ -946,6 +946,7 @@ export class Matterbridge extends EventEmitter {
    * When either of these signals are received, the cleanup method is called with an appropriate message.
    */
   private async registerSignalHandlers() {
+    this.log.debug(`Registering SIGINT and SIGTERM signal handlers...`);
     process.once('SIGINT', async () => {
       await this.cleanup('SIGINT received, cleaning up...');
     });
@@ -1018,11 +1019,14 @@ export class Matterbridge extends EventEmitter {
       this.hasCleanupStarted = true;
       this.log.info(message);
 
-      process.removeAllListeners('SIGINT');
-      process.removeAllListeners('SIGTERM');
+      // Remove all listeners from the process
+      process.removeAllListeners();
       this.log.debug('All listeners removed');
+
+      // Clear the update interval
       if (this.checkUpdateInterval) clearInterval(this.checkUpdateInterval);
       this.checkUpdateInterval = undefined;
+      this.log.debug('Update interval cleared');
 
       // Calling the shutdown method of each plugin
       for (const plugin of this.registeredPlugins) {

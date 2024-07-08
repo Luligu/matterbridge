@@ -37,7 +37,12 @@ describe('Matterbridge dynamic platform', () => {
     const matterbridge = await Matterbridge.loadInstance(true);
     const platform = new MatterbridgeDynamicPlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'test', type: 'type', debug: false, unregisterOnShutdown: false });
     expect(platform.type).toBe('DynamicPlatform');
+
+    // Destroy the Matterbridge instance
+    // console.log('Destroying Matterbridge');
     await matterbridge.destroyInstance();
+
+    // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion)
     await waiter(
       'Matterbridge destroyInstance()',
       () => {
@@ -45,17 +50,6 @@ describe('Matterbridge dynamic platform', () => {
       },
       false,
       20000,
-      500,
-      false,
-    );
-    matterbridge.removeAllListeners();
-    await waiter(
-      'Matterbridge destroyInstance() extended',
-      () => {
-        return false;
-      },
-      false,
-      10000,
       500,
       false,
     );

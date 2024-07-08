@@ -18,12 +18,14 @@ interface SessionInformation {
 
 import { jest } from '@jest/globals';
 
+// jest.useFakeTimers();
+
 jest.mock('@project-chip/matter-node.js/util');
 
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import { hasParameter } from '@project-chip/matter-node.js/util';
 import { Matterbridge } from './matterbridge.js';
-import { waiter } from './utils';
+import { waiter } from './utils/utils';
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
 import { FabricId, FabricIndex, NodeId, VendorId } from '@project-chip/matter-node.js/datatype';
 
@@ -37,11 +39,15 @@ describe('Matterbridge', () => {
     });
     // console.log('Loading Matterbridge');
     matterbridge = await Matterbridge.loadInstance(true);
+    // console.log('Loaded Matterbridge');
   });
 
   afterAll(async () => {
+    // Destroy the Matterbridge instance
     // console.log('Destroying Matterbridge');
     await matterbridge.destroyInstance();
+
+    // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion)
     await waiter(
       'Matterbridge destroyed',
       () => {
@@ -49,9 +55,15 @@ describe('Matterbridge', () => {
       },
       false,
       20000,
+      500,
+      false,
     );
+
     // Restore the mocked AnsiLogger.log method
     (AnsiLogger.prototype.log as jest.Mock).mockRestore();
+
+    // Clear the timers
+    // jest.runAllTimers();
   }, 60000);
 
   test('should do a partial mock of AnsiLogger', () => {
