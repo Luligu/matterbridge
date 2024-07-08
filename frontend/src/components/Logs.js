@@ -37,8 +37,10 @@ function Logs() {
   if (wssHost === null) {
     return <div>Loading settings...</div>;
   }
+  // <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '10px' , margin: '0', padding: '0' }}>
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '10px' , margin: '0', padding: '0' }}>
+    <div className="MbfPageDiv">
       <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '0px', gap: '10px' }}>
         <h3>Logs:</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

@@ -132,6 +132,7 @@ interface MatterbridgeInformation {
   bridgeMode: string;
   restartMode: string;
   debugEnabled: boolean;
+  matterLoggerLevel: number;
 }
 
 interface SanitizedExposedFabricInformation {
@@ -209,6 +210,7 @@ export class Matterbridge extends EventEmitter {
     bridgeMode: '',
     restartMode: '',
     debugEnabled: false,
+    matterLoggerLevel: Level.INFO,
   };
 
   public homeDirectory = '';
@@ -243,7 +245,7 @@ export class Matterbridge extends EventEmitter {
   private nodeContext: NodeStorage | undefined;
 
   private expressApp: express.Express | undefined;
-  private expressServer: Server | undefined;
+  // private expressServer: Server | undefined;
   private httpServer: Server | undefined;
   private httpsServer: Server | undefined;
   private webSocketServer: WebSocketServer | undefined;
@@ -443,11 +445,11 @@ export class Matterbridge extends EventEmitter {
     // Set the interface to use for the matter server mdnsInterface
     this.mdnsInterface = getParameter('mdnsinterface');
 
-    // Set the first port to use for the commissioning server
+    // Set the first port to use for the commissioning server (will be incremented in childbridge mode)
     this.port = getIntParameter('port') ?? 5540;
-    // Set the first passcode to use for the commissioning server
+    // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode)
     this.passcode = getIntParameter('passcode');
-    // Set the first discriminator to use for the commissioning server
+    // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode)
     this.discriminator = getIntParameter('discriminator');
 
     // Set the restart mode
@@ -537,13 +539,13 @@ export class Matterbridge extends EventEmitter {
     Logger.format = Format.ANSI;
 
     // Parse command line
-    this.parseCommandLine();
+    await this.parseCommandLine();
   }
 
   /**
    * Parses the command line arguments and performs the corresponding actions.
    * @private
-   * @returns {Promise<void>} A promise that resolves when the command line arguments have been processed.
+   * @returns {Promise<void>} A promise that resolves when the command line arguments have been processed, or the process exits.
    */
   private async parseCommandLine(): Promise<void> {
     if (hasParameter('list')) {
@@ -671,7 +673,7 @@ export class Matterbridge extends EventEmitter {
     if (hasParameter('test')) {
       this.bridgeMode = 'childbridge';
       MatterbridgeDevice.bridgeMode = 'childbridge';
-      await this.testStartMatterBridge(); // No await do it asyncronously
+      await this.testStartMatterBridge();
       return;
     }
 
@@ -944,6 +946,7 @@ export class Matterbridge extends EventEmitter {
    * When either of these signals are received, the cleanup method is called with an appropriate message.
    */
   private async registerSignalHandlers() {
+    this.log.debug(`Registering SIGINT and SIGTERM signal handlers...`);
     process.once('SIGINT', async () => {
       await this.cleanup('SIGINT received, cleaning up...');
     });
@@ -1016,11 +1019,14 @@ export class Matterbridge extends EventEmitter {
       this.hasCleanupStarted = true;
       this.log.info(message);
 
-      process.removeAllListeners('SIGINT');
-      process.removeAllListeners('SIGTERM');
+      // Remove all listeners from the process
+      process.removeAllListeners();
       this.log.debug('All listeners removed');
-      this.checkUpdateInterval && clearInterval(this.checkUpdateInterval);
+
+      // Clear the update interval
+      if (this.checkUpdateInterval) clearInterval(this.checkUpdateInterval);
       this.checkUpdateInterval = undefined;
+      this.log.debug('Update interval cleared');
 
       // Calling the shutdown method of each plugin
       for (const plugin of this.registeredPlugins) {
@@ -1078,12 +1084,14 @@ export class Matterbridge extends EventEmitter {
       */
 
       // Close the express server
+      /*
       if (this.expressServer) {
         this.expressServer.close();
         this.expressServer.removeAllListeners();
         this.expressServer = undefined;
         this.log.debug('Express server closed successfully');
       }
+      */
       // Close the http server
       if (this.httpServer) {
         this.httpServer.close();
@@ -1122,7 +1130,7 @@ export class Matterbridge extends EventEmitter {
         this.webSocketServer = undefined;
       }
 
-      const clenupTimeout1 = setTimeout(async () => {
+      const cleanupTimeout1 = setTimeout(async () => {
         // Closing matter
         await this.stopMatter();
 
@@ -1154,7 +1162,7 @@ export class Matterbridge extends EventEmitter {
         this.registeredDevices = [];
 
         this.log.info('Waiting for matter to deliver last messages...');
-        const clenupTimeout2 = setTimeout(async () => {
+        const cleanupTimeout2 = setTimeout(async () => {
           if (restart) {
             if (message === 'updating...') {
               this.log.info('Cleanup completed. Updating...');
@@ -1186,9 +1194,9 @@ export class Matterbridge extends EventEmitter {
             this.emit('shutdown');
           }
         }, 2 * 1000);
-        clenupTimeout2.unref();
+        cleanupTimeout2.unref();
       }, 3 * 1000);
-      clenupTimeout1.unref();
+      cleanupTimeout1.unref();
     }
   }
 
@@ -3183,6 +3191,7 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.bridgeMode = this.bridgeMode;
       this.matterbridgeInformation.restartMode = this.restartMode;
       this.matterbridgeInformation.debugEnabled = this.debugEnabled;
+      this.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
       this.matterbridgeInformation.matterbridgePaired = this.matterbridgePaired;
       this.matterbridgeInformation.matterbridgeConnected = this.matterbridgeConnected;
       this.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridgeFabricInformations;
@@ -3314,37 +3323,34 @@ export class Matterbridge extends EventEmitter {
         await this.nodeContext?.set('password', password);
       }
 
-      // Handle the command debugLevel from Settings
-      if (command === 'setloglevel') {
-        this.log.debug('setloglevel:', param);
+      // Handle the command setmbloglevel from Settings
+      if (command === 'setmbloglevel') {
+        this.log.debug('Matterbridge log level:', param);
         if (param === 'Debug') {
           this.log.setLogDebug(true);
           this.debugEnabled = true;
-          Logger.defaultLogLevel = Level.DEBUG;
         } else if (param === 'Info') {
           this.log.setLogDebug(false);
           this.debugEnabled = false;
+        }
+      }
+
+      // Handle the command setmbloglevel from Settings
+      if (command === 'setmjloglevel') {
+        this.log.debug('Matter.js log level::', param);
+        if (param === 'Debug') {
+          Logger.defaultLogLevel = Level.DEBUG;
+        } else if (param === 'Info') {
           Logger.defaultLogLevel = Level.INFO;
         } else if (param === 'Notice') {
-          this.log.setLogDebug(false);
-          this.debugEnabled = false;
           Logger.defaultLogLevel = Level.NOTICE;
         } else if (param === 'Warn') {
-          this.log.setLogDebug(false);
-          this.debugEnabled = false;
           Logger.defaultLogLevel = Level.WARN;
         } else if (param === 'Error') {
-          this.log.setLogDebug(false);
-          this.debugEnabled = false;
           Logger.defaultLogLevel = Level.ERROR;
         } else if (param === 'Fatal') {
-          this.log.setLogDebug(false);
-          this.debugEnabled = false;
           Logger.defaultLogLevel = Level.FATAL;
         }
-        this.registeredPlugins.forEach((plugin) => {
-          plugin.platform?.log.setLogDebug(this.debugEnabled);
-        });
       }
 
       // Handle the command unregister from Settings

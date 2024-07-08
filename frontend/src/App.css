@@ -135,13 +135,10 @@ width: 120px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  /* Distribute items evenly */
   gap: 20px;
   margin: 0;
   padding: 0;
-  /* 20px */
   height: 40px;
-  /* Increase height for a more modern look */
 }
 
 /* Navigation style */
@@ -172,6 +169,23 @@ table {
   border-collapse: collapse;
   width: 100%;
   box-shadow: 5px 5px 10px #888;
+}
+
+thead {
+  position: sticky;
+  top: 0;
+  border: 1px solid #ddd;
+  z-index: 10;
+}
+
+thead th {
+  border: 1px solid #ddd;
+  padding: 5px;
+  padding-right: 10px;
+  padding-left: 10px;
+  color: white;
+  background: #4CAF50;
+  text-align: left;
 }
 
 /* Table header style */
@@ -264,6 +278,17 @@ h3 {
 }
 */
 
+/* Define the style for the main page element */
+.MbfPageDiv {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 60px);
+  width: 100%;
+  margin: 0px;
+  padding: 0px;
+  gap: 20px;
+}
+
 /* Define the style for the main div element */
 .MbfWindowDiv {
   display: flex;
@@ -282,6 +307,7 @@ h3 {
   padding: 0;
   gap: 0;
   overflow: auto;
+  display: block;
 }
 
 /* Define the style for the header element */
@@ -289,7 +315,6 @@ h3 {
   display: 'flex';
   align-items: center;
   width: 100%;
-  /* height: 34px */
   border-bottom: 1px solid #ddd;
   background-color: #4CAF50;
   margin: 0px;
@@ -319,15 +344,14 @@ h3 {
   padding-left: 10px;
 }
 
-/* Define the style for the body element */
-/* display: 'flex', flexDirection: 'column', flex: '1 1 auto', width: '100%', margin: '0px', padding: '0px', gap: '0px', overflow: 'auto'*/
+/* Define the style for the body element width: 100%;*/
 .MbfWindowBodyColumn {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   width: 100%;
   margin: 0px;
-  padding: 0px;
+  padding: 10px 0px 10px 0px;
   gap: 0px;
   overflow: auto;
 }
@@ -338,20 +362,29 @@ h3 {
   flex-direction: row;
   flex: 1 1 auto;
   height: 100%;
+  padding: 0px 10px 0px 10px;
   margin: 0px;
   padding: 0px;
   gap: 0px;
   overflow: auto;
 }
 
-/*
-@media (max-width: 600px) {
-  .header {
-    flex-direction: column;
-  }
+/* Table header style */
+.MbfScreen {
+  display: flex;
+  flex-direction: column;
+  width: calc(100vw - 40px);
+  height: calc(100vh - 40px);
+  gap: 20px;
+  margin: 0;
+  padding: 20px;
+  background-color: #c4c2c2;
+}
 
-  nav {
-    margin-top: 20px;
+/* Styles for mobile screens */
+@media (max-width: 1500px) {
+  .MbfScreen {
+    width: 1500px;
+    height: 1000px;
   }
 }
-*/

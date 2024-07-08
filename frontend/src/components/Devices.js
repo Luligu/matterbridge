@@ -67,69 +67,72 @@ function Devices() {
     return 0;
   })
 
-  //     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0px', padding: '0px' }}>
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100% - 60px)', width: '100%', gap: '20px', margin: '0px', padding: '0px' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', maxHeight: '50%', width: '100%', overflow: 'auto' }}>
-        <table>
-          <thead>
-            <tr>
-              <th className="table-header" colSpan="7">Registered devices</th>
-            </tr>
-            <tr>
-            <th className="table-header" onClick={() => handleSort('pluginName')}>Plugin name {sortColumn === 'pluginName' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
-            <th className="table-header" onClick={() => handleSort('type')}>Device type {sortColumn === 'type' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
-            <th className="table-header" onClick={() => handleSort('endpoint')}>Endpoint {sortColumn === 'endpoint' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
-            <th className="table-header" onClick={() => handleSort('name')}>Name {sortColumn === 'name' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
-            <th className="table-header" onClick={() => handleSort('serial')}>Serial number {sortColumn === 'serial' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
-            <th className="table-header" onClick={() => handleSort('uniqueId')}>Unique ID {sortColumn === 'uniqueId' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
-            <th className="table-header" onClick={() => handleSort('cluster')}>Cluster {sortColumn === 'cluster' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedDevices.map((device, index) => (
-              <tr key={index} onClick={() => handleSelect(index)} className={selectedRow === index ? 'table-content-selected' : index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
-                <td className="table-content">{device.pluginName}</td>
-                <td className="table-content">{device.type}</td>
-                <td className="table-content">{device.endpoint}</td>
-                <td className="table-content">{device.name}</td>
-                <td className="table-content">{device.serial}</td>
-                <td className="table-content">{device.uniqueId}</td>
-                <td className="table-content">{device.cluster}</td>
+    <div className="MbfPageDiv">
+      <div className="MbfWindowDiv" style={{ flex: '1 1 auto', maxHeight: '50%', width: '100%', overflow: 'hidden' }}>
+        <div className="MbfWindowDivTable">
+          <table>
+            <thead>
+              <tr>
+                <th colSpan="7">Registered devices</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+              <tr>
+                <th onClick={() => handleSort('pluginName')}>Plugin name {sortColumn === 'pluginName' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
+                <th onClick={() => handleSort('type')}>Device type {sortColumn === 'type' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
+                <th onClick={() => handleSort('endpoint')}>Endpoint {sortColumn === 'endpoint' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
+                <th onClick={() => handleSort('name')}>Name {sortColumn === 'name' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
+                <th onClick={() => handleSort('serial')}>Serial number {sortColumn === 'serial' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
+                <th onClick={() => handleSort('uniqueId')}>Unique ID {sortColumn === 'uniqueId' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
+                <th onClick={() => handleSort('cluster')}>Cluster {sortColumn === 'cluster' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedDevices.map((device, index) => (
+                <tr key={index} onClick={() => handleSelect(index)} className={selectedRow === index ? 'table-content-selected' : index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
+                  <td className="table-content">{device.pluginName}</td>
+                  <td className="table-content">{device.type}</td>
+                  <td className="table-content">{device.endpoint}</td>
+                  <td className="table-content">{device.name}</td>
+                  <td className="table-content">{device.serial}</td>
+                  <td className="table-content">{device.uniqueId}</td>
+                  <td className="table-content">{device.cluster}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', maxHeight: '50%', width: '100%', overflow: 'auto' }}>
-        <table>
-          <thead>
-            <tr>
-              <th className="table-header" colSpan="3">{selectedRow>=0?'Cluster servers of '+sortedDevices[selectedRow].name:'(select a device)'}</th>
-              <th className="table-header" colSpan="3">Attributes</th>
-            </tr>
-            <tr>
-              <th className="table-header">Endpoint</th>
-              <th className="table-header">Name</th>
-              <th className="table-header">Id</th>
-              <th className="table-header">Name</th>
-              <th className="table-header">Id</th>
-              <th className="table-header">Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            {clusters.map((cluster, index) => (
-              <tr key={index} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
-                <td className="table-content">{cluster.endpoint}</td>
-                <td className="table-content">{cluster.clusterName}</td>
-                <td className="table-content">{cluster.clusterId}</td>
-                <td className="table-content">{cluster.attributeName}</td>
-                <td className="table-content">{cluster.attributeId}</td>
-                <td className="table-content">{cluster.attributeValue}</td>
+      <div className="MbfWindowDiv" style={{ flex: '1 1 auto', maxHeight: '50%', width: '100%', overflow: 'hidden' }}>
+        <div className="MbfWindowDivTable">
+          <table>
+            <thead>
+              <tr>
+                <th colSpan="3">{selectedRow>=0?'Cluster servers of '+sortedDevices[selectedRow].name:'(select a device)'}</th>
+                <th colSpan="3">Attributes</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+              <tr>
+                <th>Endpoint</th>
+                <th>Name</th>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Id</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {clusters.map((cluster, index) => (
+                <tr key={index} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
+                  <td className="table-content">{cluster.endpoint}</td>
+                  <td className="table-content">{cluster.clusterName}</td>
+                  <td className="table-content">{cluster.clusterId}</td>
+                  <td className="table-content">{cluster.attributeName}</td>
+                  <td className="table-content">{cluster.attributeId}</td>
+                  <td className="table-content">{cluster.attributeValue}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

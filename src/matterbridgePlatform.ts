@@ -76,7 +76,7 @@ export class MatterbridgePlatform {
    * Use this method to perform any configuration of your devices.
    */
   async onConfigure() {
-    this.log.debug("**The plugin doesn't override onConfigure.");
+    this.log.debug("The plugin doesn't override onConfigure.");
   }
 
   /**

@@ -188,13 +188,15 @@ function Home() {
 
   /*
         {matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
+      <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', maxHeight: 'calc(100vh - 60px - 40px)', width: '302px', minWidth: '302px', maxWidth: '302px', flex: '1 1 auto', gap: '20px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', maxHeight: 'calc(100vh - 60px - 40px)', flex: '1 1 auto', gap: '20px' }}>
   */
 
   if (wssHost === null) {
     return <div>Loading settings...</div>;
   }
   return (
-    <div style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '20px', margin: '0', padding: '0' }}>
+    <div className="MbfPageDiv" style={{ flexDirection: 'row' }}>
 
     <ThemeProvider theme={theme}>
 
@@ -210,12 +212,12 @@ function Home() {
         </DialogContent>
       </Dialog>
 
-      <div  style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', maxHeight: 'calc(100vh - 60px - 40px)', width: '302px', minWidth: '302px', maxWidth: '302px', flex: '1 1 auto', gap: '20px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>
         {qrCode && <QRDiv qrText={qrCode} pairingText={pairingCode} qrWidth={256} topText="QR pairing code" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName} matterbridgeInfo={matterbridgeInfo} plugin={selectedRow===-1?undefined:plugins[selectedRow]}/>}
         {systemInfo && <SystemInfoTable systemInfo={systemInfo} compact={true}/>}
         {qrCode==='' && matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
       </div>
-      <div  style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', maxHeight: 'calc(100vh - 60px - 40px)', flex: '1 1 auto', gap: '20px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: '20px' }}>
 
         <div>
           <AddRemovePluginsDiv ref={refAddRemove} plugins={plugins}/>
@@ -225,11 +227,11 @@ function Home() {
           <table ref={refRegisteredPlugins}>
             <thead>
               <tr>
-                <th className="table-header" colSpan="8">Registered plugins</th>
+                <th colSpan="8">Registered plugins</th>
               </tr>
               <tr>
                 {columns.map((column, index) => (
-                  <th className="table-header" key={index}>{column.Header}</th>
+                  <th key={index}>{column.Header}</th>
                 ))}
               </tr>
             </thead>
@@ -440,12 +442,12 @@ function SystemInfoTable({ systemInfo, compact }) {
   }
 
   return (
-    <div className="MbfWindowDiv">
+    <div className="MbfWindowDiv" style={{ minWidth: '302px' }}>
       <div className="MbfWindowDivTable">
         <table>
           <thead>
             <tr>
-              <th colSpan="2" className="table-header">System Information</th>
+              <th colSpan="2">System Information</th>
             </tr>
           </thead>
           <tbody>
@@ -466,15 +468,15 @@ function SystemInfoTable({ systemInfo, compact }) {
 
 // This function takes systemInfo as a parameter and returns a table element with the systemInfo
 function MatterbridgeInfoTable({ matterbridgeInfo }) {
-  const excludeKeys = ['matterbridgeVersion', 'matterbridgeLatestVersion', 'debugEnabled', 'bridgeMode', 'matterbridgeFabricInformations', 'matterbridgeSessionInformations'];
+  const excludeKeys = ['matterbridgeVersion', 'matterbridgeLatestVersion', 'matterLoggerLevel', 'debugEnabled', 'bridgeMode', 'matterbridgeFabricInformations', 'matterbridgeSessionInformations'];
   if(matterbridgeInfo.bridgeMode === 'childbridge') excludeKeys.push('matterbridgePaired', 'matterbridgeConnected');
   return (
-    <div className="MbfWindowDiv">
+    <div className="MbfWindowDiv" style={{ minWidth: '302px' }}>
       <div className="MbfWindowDivTable">
         <table>
           <thead>
             <tr>
-              <th colSpan="2" className="table-header">Matterbridge Information</th>
+              <th colSpan="2">Matterbridge Information</th>
             </tr>
           </thead>
           <tbody>
@@ -524,14 +526,14 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
   // console.log('QRDiv:', matterbridgeInfo, plugin);
   if(matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === true) 
     return ( 
-      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '300px', overflow: 'hidden'}} >
+      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '302px', overflow: 'hidden'}} >
         <div className="MbfWindowHeader">
           <p className="MbfWindowHeaderText" style={{textAlign: 'left', overflow: 'hidden'}}>Paired fabrics</p>
         </div>
         <div className="MbfWindowBodyColumn">
           {matterbridgeInfo.matterbridgeFabricInformations.map((fabric, index) => (
-            <div key={index} style={{ margin: '0px 15px 0px 15px', padding: '10px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
-                <p className="status-blue" style={{ margin: '0px 10px 5px 10px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
+            <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
+                <p className="status-blue" style={{ margin: '0px 10px 10px 10px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
                 <p style={{ margin: '0px 20px 0px 20px'}}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
                 {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px'}}>Label: {fabric.label}</p>}
                 <p style={{ margin: '0px 20px 0px 20px'}}>Active sessions: {matterbridgeInfo.matterbridgeSessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length}</p>
@@ -542,14 +544,14 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
   )  
   else if(matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired === true) 
     return ( 
-      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '300px', overflow: 'hidden'}} >
+      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '302px', overflow: 'hidden'}} >
         <div className="MbfWindowHeader">
           <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>Paired fabrics</p>
         </div>
         <div className="MbfWindowBodyColumn">
           {plugin.fabricInformations.map((fabric, index) => (
-            <div key={index} style={{ margin: '0px 15px 0px 15px', padding: '10px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
-                <p className="status-blue" style={{ margin: '0px 10px 5px 10px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
+            <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
+                <p className="status-blue" style={{ margin: '0px 10px 10px 10px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
                 <p style={{ margin: '0px 20px 0px 20px' }}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
                 {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px'}}>Label: {fabric.label}</p>}
                 <p style={{ margin: '0px 20px 0px 20px' }}>Active sessions: {plugin.sessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length}</p>
@@ -560,7 +562,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
   )
   else if(matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired !== true) 
     return (
-      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '300px'}}>
+      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '302px'}}>
         <div className="MbfWindowHeader">
           <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>{topText}</p>
         </div>
@@ -574,7 +576,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
     );
   else if(matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired !== true)  
     return (
-      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '300px'}}>
+      <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '302px'}}>
         <div className="MbfWindowHeader">
           <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>{topText}</p>
         </div>

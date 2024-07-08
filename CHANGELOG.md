@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
+## [1.3.11] - 2024-07-08
+
+### Added
+- [device]: Added addRequiredClusterServers and addOptionalClusterServers methods.
+- [frontend]: Added separated settings for the two logging systems (Matterbridge and Matter.js).
+
+### Changed
+
+- [device]: Refactor contructor and loadInstance to accept DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>.
+- [frontend]: Update to 1.2.0 (initial optimization for mobile)
+- [dependencies]: Update dependencies.
+
 ## [1.3.10] - 2024-07-05
 
 ### Added
