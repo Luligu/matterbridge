@@ -53,6 +53,7 @@ import { EndpointNumber, GroupId } from '@project-chip/matter-node.js/datatype';
 import { BooleanStateConfiguration } from './cluster/BooleanStateConfigurationCluster.js';
 import { SmokeCoAlarm } from './cluster/SmokeCoAlarmCluster.js';
 import { DeviceEnergyManagement } from './cluster/DeviceEnergyManagementCluster.js';
+import { waiter } from './utils/utils.js';
 
 describe('Matterbridge device serialize/deserialize', () => {
   test('create a basic device with all default clusters', async () => {
@@ -99,7 +100,7 @@ describe('Matterbridge device serialize/deserialize', () => {
   });
 });
 
-describe('Matterbridge platform', () => {
+describe('Matterbridge device', () => {
   function invokeCommands(cluster: ClusterServerObj<Attributes, Events> | undefined): void {
     // console.log('Identify cluster commands:', (identifyCluster as any)._commands);
     const commands = (cluster as any)._commands as object;
@@ -110,6 +111,8 @@ describe('Matterbridge platform', () => {
   }
 
   beforeAll(async () => {
+    jest.useFakeTimers();
+
     // Mock the AnsiLogger.log method
     jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
       // console.log(`Mocked log: ${level} - ${message}`, ...parameters);
@@ -129,6 +132,23 @@ describe('Matterbridge platform', () => {
   });
 
   afterAll(async () => {
+    // Clear the timers
+    jest.runAllTimers();
+
+    jest.useRealTimers();
+
+    // Wait for the Matterbridge device to be destroyed (give time to history to close)
+    await waiter(
+      'Matterbridge device destroyed',
+      () => {
+        return false;
+      },
+      false,
+      5000,
+      500,
+      false,
+    );
+
     // Restore the mocked AnsiLogger.log method
     (AnsiLogger.prototype.log as jest.Mock).mockRestore();
   }, 60000);
@@ -320,13 +340,14 @@ describe('Matterbridge platform', () => {
     expect(() => device.verifyRequiredClusters()).toThrow();
     device.addRequiredClusterServers(device);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
-
     const historyCluster = device.getClusterServerById(EveHistory.Complete.id);
     expect(historyCluster).toBeDefined();
+
+    history.autoPilot(device);
     historyCluster?.getConfigDataGetAttribute();
     historyCluster?.getConfigDataSetAttribute();
     historyCluster?.setConfigDataSetAttribute(Uint8Array.fromHex(''));
-    // historyCluster?.getHistoryStatusAttribute();
+    historyCluster?.getHistoryStatusAttribute();
     historyCluster?.getHistoryEntriesAttribute();
     historyCluster?.setHistoryEntriesAttribute(Uint8Array.fromHex(''));
     historyCluster?.getHistorySetTimeAttribute();
@@ -337,6 +358,7 @@ describe('Matterbridge platform', () => {
     historyCluster?.getTimesOpenedAttribute();
     historyCluster?.getResetTotalAttribute();
     historyCluster?.setResetTotalAttribute(0);
+    await history.close();
   });
 
   test('create a motion device with EveHistory', async () => {
@@ -348,13 +370,14 @@ describe('Matterbridge platform', () => {
     expect(() => device.verifyRequiredClusters()).toThrow();
     device.addRequiredClusterServers(device);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
-
     const historyCluster = device.getClusterServerById(EveHistory.Complete.id);
     expect(historyCluster).toBeDefined();
+
+    history.autoPilot(device);
     historyCluster?.getConfigDataGetAttribute();
     historyCluster?.getConfigDataSetAttribute();
     historyCluster?.setConfigDataSetAttribute(Uint8Array.fromHex(''));
-    // historyCluster?.getHistoryStatusAttribute();
+    historyCluster?.getHistoryStatusAttribute();
     historyCluster?.getHistoryEntriesAttribute();
     historyCluster?.setHistoryEntriesAttribute(Uint8Array.fromHex(''));
     historyCluster?.getHistorySetTimeAttribute();
@@ -362,6 +385,7 @@ describe('Matterbridge platform', () => {
     historyCluster?.getHistoryRequestAttribute();
     historyCluster?.setHistoryRequestAttribute(Uint8Array.fromHex('000000000000'));
     historyCluster?.getLastEventAttribute();
+    await history.close();
   });
 
   test('create a energy device with EveHistory', async () => {
@@ -373,13 +397,14 @@ describe('Matterbridge platform', () => {
     expect(() => device.verifyRequiredClusters()).toThrow();
     device.addRequiredClusterServers(device);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
-
     const historyCluster = device.getClusterServerById(EveHistory.Complete.id);
     expect(historyCluster).toBeDefined();
+
+    history.autoPilot(device);
     historyCluster?.getConfigDataGetAttribute();
     historyCluster?.getConfigDataSetAttribute();
     historyCluster?.setConfigDataSetAttribute(Uint8Array.fromHex(''));
-    // historyCluster?.getHistoryStatusAttribute();
+    historyCluster?.getHistoryStatusAttribute();
     historyCluster?.getHistoryEntriesAttribute();
     historyCluster?.setHistoryEntriesAttribute(Uint8Array.fromHex(''));
     historyCluster?.getHistorySetTimeAttribute();
@@ -389,6 +414,7 @@ describe('Matterbridge platform', () => {
     historyCluster?.getLastEventAttribute();
     historyCluster?.getResetTotalAttribute();
     historyCluster?.setResetTotalAttribute(0);
+    await history.close();
   });
 
   test('create a room device with EveHistory', async () => {
@@ -402,18 +428,20 @@ describe('Matterbridge platform', () => {
     device.addOptionalClusterServers(device);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
     const historyCluster = device.getClusterServerById(EveHistory.Complete.id);
-
     expect(historyCluster).toBeDefined();
+
+    history.autoPilot(device);
     historyCluster?.getConfigDataGetAttribute();
     historyCluster?.getConfigDataSetAttribute();
     historyCluster?.setConfigDataSetAttribute(Uint8Array.fromHex(''));
-    // historyCluster?.getHistoryStatusAttribute();
+    historyCluster?.getHistoryStatusAttribute();
     historyCluster?.getHistoryEntriesAttribute();
     historyCluster?.setHistoryEntriesAttribute(Uint8Array.fromHex(''));
     historyCluster?.getHistorySetTimeAttribute();
     historyCluster?.setHistorySetTimeAttribute(Uint8Array.fromHex('000000000000'));
     historyCluster?.getHistoryRequestAttribute();
     historyCluster?.setHistoryRequestAttribute(Uint8Array.fromHex('000000000000'));
+    await history.close();
   });
 
   test('create a weather device with EveHistory', async () => {
@@ -425,19 +453,21 @@ describe('Matterbridge platform', () => {
     expect(() => device.verifyRequiredClusters()).toThrow();
     device.addRequiredClusterServers(device);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
-
     const historyCluster = device.getClusterServerById(EveHistory.Complete.id);
     expect(historyCluster).toBeDefined();
+
+    history.autoPilot(device);
     historyCluster?.getConfigDataGetAttribute();
     historyCluster?.getConfigDataSetAttribute();
     historyCluster?.setConfigDataSetAttribute(Uint8Array.fromHex(''));
-    // historyCluster?.getHistoryStatusAttribute();
+    historyCluster?.getHistoryStatusAttribute();
     historyCluster?.getHistoryEntriesAttribute();
     historyCluster?.setHistoryEntriesAttribute(Uint8Array.fromHex(''));
     historyCluster?.getHistorySetTimeAttribute();
     historyCluster?.setHistorySetTimeAttribute(Uint8Array.fromHex('000000000000'));
     historyCluster?.getHistoryRequestAttribute();
     historyCluster?.setHistoryRequestAttribute(Uint8Array.fromHex('000000000000'));
+    await history.close();
   });
 
   test('create a device with all default clusters', async () => {
