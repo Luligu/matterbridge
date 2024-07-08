@@ -445,11 +445,11 @@ export class Matterbridge extends EventEmitter {
     // Set the interface to use for the matter server mdnsInterface
     this.mdnsInterface = getParameter('mdnsinterface');
 
-    // Set the first port to use for the commissioning server
+    // Set the first port to use for the commissioning server (will be incremented in childbridge mode)
     this.port = getIntParameter('port') ?? 5540;
-    // Set the first passcode to use for the commissioning server
+    // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode)
     this.passcode = getIntParameter('passcode');
-    // Set the first discriminator to use for the commissioning server
+    // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode)
     this.discriminator = getIntParameter('discriminator');
 
     // Set the restart mode
@@ -545,7 +545,7 @@ export class Matterbridge extends EventEmitter {
   /**
    * Parses the command line arguments and performs the corresponding actions.
    * @private
-   * @returns {Promise<void>} A promise that resolves when the command line arguments have been processed.
+   * @returns {Promise<void>} A promise that resolves when the command line arguments have been processed, or the process exits.
    */
   private async parseCommandLine(): Promise<void> {
     if (hasParameter('list')) {
@@ -673,7 +673,7 @@ export class Matterbridge extends EventEmitter {
     if (hasParameter('test')) {
       this.bridgeMode = 'childbridge';
       MatterbridgeDevice.bridgeMode = 'childbridge';
-      await this.testStartMatterBridge(); // No await do it asyncronously
+      await this.testStartMatterBridge();
       return;
     }
 
