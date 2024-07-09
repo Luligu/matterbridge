@@ -89,13 +89,13 @@ function Devices() {
             <tbody>
               {sortedDevices.map((device, index) => (
                 <tr key={index} onClick={() => handleSelect(index)} className={selectedRow === index ? 'table-content-selected' : index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
-                  <td className="table-content">{device.pluginName}</td>
-                  <td className="table-content">{device.type}</td>
-                  <td className="table-content">{device.endpoint}</td>
-                  <td className="table-content">{device.name}</td>
-                  <td className="table-content">{device.serial}</td>
-                  <td className="table-content">{device.uniqueId}</td>
-                  <td className="table-content">{device.cluster}</td>
+                  <td>{device.pluginName}</td>
+                  <td>{device.type}</td>
+                  <td>{device.endpoint}</td>
+                  <td>{device.name}</td>
+                  <td>{device.serial}</td>
+                  <td>{device.uniqueId}</td>
+                  <td>{device.cluster}</td>
                 </tr>
               ))}
             </tbody>
@@ -122,12 +122,12 @@ function Devices() {
             <tbody>
               {clusters.map((cluster, index) => (
                 <tr key={index} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
-                  <td className="table-content">{cluster.endpoint}</td>
-                  <td className="table-content">{cluster.clusterName}</td>
-                  <td className="table-content">{cluster.clusterId}</td>
-                  <td className="table-content">{cluster.attributeName}</td>
-                  <td className="table-content">{cluster.attributeId}</td>
-                  <td className="table-content">{cluster.attributeValue}</td>
+                  <td>{cluster.endpoint}</td>
+                  <td>{cluster.clusterName}</td>
+                  <td>{cluster.clusterId}</td>
+                  <td>{cluster.attributeName}</td>
+                  <td>{cluster.attributeId}</td>
+                  <td>{cluster.attributeValue}</td>
                 </tr>
               ))}
             </tbody>

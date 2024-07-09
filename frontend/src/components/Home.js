@@ -219,10 +219,14 @@ function Home() {
         {systemInfo && <SystemInfoTable systemInfo={systemInfo} compact={true}/>}
         {qrCode==='' && matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
       </div>
+
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: '20px' }}>
 
-        <div>
-          <AddRemovePluginsDiv ref={refAddRemove} plugins={plugins}/>
+        <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
+          <div className="MbfWindowHeader">
+            <p className="MbfWindowHeaderText">Add remove plugin</p>
+          </div>
+          <AddRemovePlugins ref={refAddRemove} plugins={plugins}/>
         </div>
 
         <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
@@ -243,13 +247,13 @@ function Home() {
 
                   <tr key={index} className={selectedRow === index ? 'table-content-selected' : index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
 
-                    <td className="table-content"><Tooltip title={plugin.path}>{plugin.name}</Tooltip></td>
-                    <td className="table-content">{plugin.description}</td>
-                    <td className="table-content"><Tooltip title="Update the plugin to the latest version">{plugin.latestVersion === undefined || plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning" onClick={() => handleUpdate(index)}>{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</Tooltip></td>
-                    <td className="table-content">{plugin.author.replace('https://github.com/', '')}</td>
-                    <td className="table-content">{plugin.type === 'DynamicPlatform'?'Dynamic':'Accessory'}</td>
-                    <td className="table-content">{plugin.registeredDevices}</td>
-                    <td className="table-content">  
+                    <td><Tooltip title={plugin.path}>{plugin.name}</Tooltip></td>
+                    <td>{plugin.description}</td>
+                    <td><Tooltip title="Update the plugin to the latest version">{plugin.latestVersion === undefined || plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning" onClick={() => handleUpdate(index)}>{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</Tooltip></td>
+                    <td>{plugin.author.replace('https://github.com/', '')}</td>
+                    <td>{plugin.type === 'DynamicPlatform'?'Dynamic':'Accessory'}</td>
+                    <td>{plugin.registeredDevices}</td>
+                    <td>  
                       <>
                         {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' ? <Tooltip title="Shows the QRCode or the fabrics"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleSelectQRCode(index)} size="small"><QrCode2 /></IconButton></Tooltip> : <></>}
                         <Tooltip title="Plugin config"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleConfigPlugin(index)} size="small"><Settings /></IconButton></Tooltip>
@@ -261,7 +265,7 @@ function Home() {
                         <Tooltip title="Sponsor the plugin"><IconButton style={{padding: 0, color: '#b6409c'}} className="PluginsIconButton" onClick={() => handleSponsorPlugin(index)} size="small"><Favorite /></IconButton></Tooltip>
                       </>
                     </td>
-                    <td className="table-content">
+                    <td>
                       <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', gap: '5px' }}>
 
                         <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={openSnack} onClose={handleSnackClose} autoHideDuration={10000}>
@@ -324,7 +328,7 @@ function Home() {
 /*
 */
 
-function AddRemovePluginsDiv({ plugins }) {
+function AddRemovePlugins({ plugins }) {
   const [pluginName, setPluginName] = useState('matterbridge-');
   const [open, setSnack] = useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -383,42 +387,37 @@ function AddRemovePluginsDiv({ plugins }) {
   });
 
   return (
-    <div className="MbfWindowDiv">
-      <div className="MbfWindowHeader">
-        <p className="MbfWindowHeaderText">Add remove plugin</p>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '10px', gap: '20px' }}>
-        <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={open} onClose={handleSnackClose} autoHideDuration={5000}>
-          <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart required</Alert>
-        </Snackbar>
-        <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth/>
+    <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '10px', gap: '20px' }}>
+      <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={open} onClose={handleSnackClose} autoHideDuration={5000}>
+        <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart required</Alert>
+      </Snackbar>
+      <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth/>
 
-        <IconButton onClick={handleClickVertical}>
-          <MoreVert />
-        </IconButton>
-        <Menu id="simple-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => handleCloseMenu('')}>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-zigbee2mqtt')}>matterbridge-zigbee2mqtt</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-somfy-tahoma')}>matterbridge-somfy-tahoma</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-shelly')}>matterbridge-shelly</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-example-accessory-platform')}>matterbridge-example-accessory-platform</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-example-dynamic-platform')}>matterbridge-example-dynamic-platform</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-door')}>matterbridge-eve-door</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-motion')}>matterbridge-eve-motion</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-energy')}>matterbridge-eve-energy</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-weather')}>matterbridge-eve-weather</MenuItem>
-          <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-room')}>matterbridge-eve-room</MenuItem>
-        </Menu>
+      <IconButton onClick={handleClickVertical}>
+        <MoreVert />
+      </IconButton>
+      <Menu id="simple-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => handleCloseMenu('')}>
+        <MenuItem onClick={() => handleCloseMenu('matterbridge-zigbee2mqtt')}>matterbridge-zigbee2mqtt</MenuItem>
+        <MenuItem onClick={() => handleCloseMenu('matterbridge-somfy-tahoma')}>matterbridge-somfy-tahoma</MenuItem>
+        <MenuItem onClick={() => handleCloseMenu('matterbridge-shelly')}>matterbridge-shelly</MenuItem>
+        <MenuItem onClick={() => handleCloseMenu('matterbridge-example-accessory-platform')}>matterbridge-example-accessory-platform</MenuItem>
+        <MenuItem onClick={() => handleCloseMenu('matterbridge-example-dynamic-platform')}>matterbridge-example-dynamic-platform</MenuItem>
+        <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-door')}>matterbridge-eve-door</MenuItem>
+        <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-motion')}>matterbridge-eve-motion</MenuItem>
+        <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-energy')}>matterbridge-eve-energy</MenuItem>
+        <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-weather')}>matterbridge-eve-weather</MenuItem>
+        <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-room')}>matterbridge-eve-room</MenuItem>
+      </Menu>
 
-        <Tooltip title="Install or update a plugin from npm">
-          <Button onClick={handleInstallPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="install" endIcon={<Download />} style={{ color: '#ffffff', height: '30px', minWidth: '90px' }}> Install</Button>
-        </Tooltip>        
-        <Tooltip title="Add an installed plugin">
-          <Button onClick={handleAddPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="add" endIcon={<Add />} style={{ color: '#ffffff', height: '30px', minWidth: '90px' }}> Add</Button>
-        </Tooltip>        
-        <Tooltip title="Remove a registered plugin">
-          <Button onClick={handleRemovePluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="remove" endIcon={<Remove />} style={{ color: '#ffffff', height: '30px', minWidth: '90px' }}> Remove</Button>
-        </Tooltip>        
-      </div>
+      <Tooltip title="Install or update a plugin from npm">
+        <Button onClick={handleInstallPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="install" endIcon={<Download />} style={{ color: '#ffffff', height: '30px', minWidth: '90px' }}> Install</Button>
+      </Tooltip>        
+      <Tooltip title="Add an installed plugin">
+        <Button onClick={handleAddPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="add" endIcon={<Add />} style={{ color: '#ffffff', height: '30px', minWidth: '90px' }}> Add</Button>
+      </Tooltip>        
+      <Tooltip title="Remove a registered plugin">
+        <Button onClick={handleRemovePluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="remove" endIcon={<Remove />} style={{ color: '#ffffff', height: '30px', minWidth: '90px' }}> Remove</Button>
+      </Tooltip>        
     </div>
   );
 }
@@ -457,8 +456,8 @@ function SystemInfoTable({ systemInfo, compact }) {
           <tbody>
             {Object.entries(systemInfo).filter(([key, _]) => !excludeKeys.includes(key)).map(([key, value], index) => (
               <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ borderTop: '1px solid #ddd' }}>
-                <td className="table-content">{key}</td>
-                <td className="table-content">
+                <td>{key}</td>
+                <td>
                   <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={26} />
                 </td>
               </tr>
@@ -488,8 +487,8 @@ function MatterbridgeInfoTable({ matterbridgeInfo }) {
               .filter(([key, value]) => !excludeKeys.includes(key) && value !== undefined && value !== '')
               .map(([key, value], index) => (
               <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ borderTop: '1px solid #ddd' }}>
-                <td className="table-content">{key.replace('matterbridgeConnected', 'connected').replace('matterbridgePaired', 'paired').replace('homeDirectory', 'home').replace('rootDirectory', 'root').replace('matterbridgeDirectory', 'storage').replace('matterbridgePluginDirectory', 'plugins').replace('globalModulesDirectory', 'modules')}</td>
-                <td className="table-content">
+                <td>{key.replace('matterbridgeConnected', 'connected').replace('matterbridgePaired', 'paired').replace('homeDirectory', 'home').replace('rootDirectory', 'root').replace('matterbridgeDirectory', 'storage').replace('matterbridgePluginDirectory', 'plugins').replace('globalModulesDirectory', 'modules')}</td>
+                <td>
                   <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={30} />
                 </td>
               </tr>

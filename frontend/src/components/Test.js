@@ -39,7 +39,7 @@ function Table({ columns, data }) {
           return (
             <tr key={index} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} {...row.getRowProps()}>
               {row.cells.map(cell => (
-                <td className="table-content" {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
               ))}
             </tr>
           );
