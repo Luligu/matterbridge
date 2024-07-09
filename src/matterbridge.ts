@@ -22,7 +22,7 @@
  */
 
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
-import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr, RED, GREEN, zb } from 'node-ansi-logger';
+import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr, RED, GREEN, zb, hk, or, idn, BLUE } from 'node-ansi-logger';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { promises as fs } from 'fs';
 import { ExecException, exec, spawn } from 'child_process';
@@ -44,7 +44,7 @@ import { logInterfaces } from './utils/utils.js';
 
 // @project-chip/matter-node.js
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
-import { BasicInformationCluster, ClusterServer, FixedLabelCluster, GeneralCommissioning, PowerSourceCluster, ThreadNetworkDiagnosticsCluster, getClusterNameById } from '@project-chip/matter-node.js/cluster';
+import { BasicInformationCluster, ClusterServer, FixedLabelCluster, GeneralCommissioning, PowerSourceCluster, SwitchCluster, ThreadNetworkDiagnosticsCluster, getClusterNameById } from '@project-chip/matter-node.js/cluster';
 import { DeviceTypeId, EndpointNumber, FabricIndex, NodeId, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter-node.js/device';
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
@@ -1033,7 +1033,7 @@ export class Matterbridge extends EventEmitter {
             this.log.error(`Plugin ${plg}${plugin.name}${er} shutting down error: ${error}`);
           }
         } else {
-          this.log.warn(`Plugin ${plg}${plugin.name}${wr} platform not found`);
+          this.log.debug(`Plugin ${plg}${plugin.name}${db} platform not found`);
         }
       }
 
@@ -1851,6 +1851,7 @@ export class Matterbridge extends EventEmitter {
       this.log.info(`***Connecting to commissioned node: ${nodeId}`);
 
       const node = await this.commissioningController.connectNode(nodeId, {
+        autoSubscribe: false,
         attributeChangedCallback: (peerNodeId, { path: { nodeId, clusterId, endpointId, attributeName }, value }) =>
           this.log.info(`***Commissioning controller attributeChangedCallback ${peerNodeId}: attribute ${nodeId}/${endpointId}/${clusterId}/${attributeName} changed to ${Logger.toJSON(value)}`),
         eventTriggeredCallback: (peerNodeId, { path: { nodeId, clusterId, endpointId, eventName }, events }) =>
@@ -1882,7 +1883,7 @@ export class Matterbridge extends EventEmitter {
         },
       });
 
-      // node.logStructure();
+      node.logStructure();
 
       // Get the interaction client
       this.log.info('Getting the interaction client');
@@ -1895,34 +1896,63 @@ export class Matterbridge extends EventEmitter {
       attributes = await interactionClient.getMultipleAttributes({
         attributes: [{ clusterId: cluster.id }],
       });
-      this.log.warn(`Cluster: ${cluster.name} attributes:`);
+      if (attributes.length > 0) this.log.info(`Cluster: ${idn}${cluster.name}${rs}${nf} attributes:`);
       attributes.forEach((attribute) => {
         this.log.info(
-          `- endpoint ${attribute.path.endpointId} cluster ${getClusterNameById(attribute.path.clusterId)} (${attribute.path.clusterId}) attribute ${attribute.path.attributeName} (${attribute.path.attributeId}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
+          `- endpoint ${or}${attribute.path.endpointId}${nf} cluster ${hk}${getClusterNameById(attribute.path.clusterId)}${nf} (${hk}0x${attribute.path.clusterId.toString(16)}${nf}) attribute ${zb}${attribute.path.attributeName}${nf} (${zb}0x${attribute.path.attributeId.toString(16)}${nf}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
         );
       });
+
       // Log PowerSourceCluster
       cluster = PowerSourceCluster;
       attributes = await interactionClient.getMultipleAttributes({
         attributes: [{ clusterId: cluster.id }],
       });
-      this.log.warn(`Cluster: ${cluster.name} attributes:`);
+      if (attributes.length > 0) this.log.info(`Cluster: ${idn}${cluster.name}${rs}${nf} attributes:`);
       attributes.forEach((attribute) => {
         this.log.info(
-          `- endpoint ${attribute.path.endpointId} cluster ${getClusterNameById(attribute.path.clusterId)} (${attribute.path.clusterId}) attribute ${attribute.path.attributeName} (${attribute.path.attributeId}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
+          `- endpoint ${or}${attribute.path.endpointId}${nf} cluster ${hk}${getClusterNameById(attribute.path.clusterId)}${nf} (${hk}0x${attribute.path.clusterId.toString(16)}${nf}) attribute ${zb}${attribute.path.attributeName}${nf} (${zb}0x${attribute.path.attributeId.toString(16)}${nf}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
         );
       });
+
       // Log ThreadNetworkDiagnostics
       cluster = ThreadNetworkDiagnosticsCluster;
       attributes = await interactionClient.getMultipleAttributes({
         attributes: [{ clusterId: cluster.id }],
       });
-      this.log.warn(`Cluster: ${cluster.name} attributes:`);
+      if (attributes.length > 0) this.log.info(`Cluster: ${idn}${cluster.name}${rs}${nf} attributes:`);
       attributes.forEach((attribute) => {
         this.log.info(
-          `- endpoint ${attribute.path.endpointId} cluster ${getClusterNameById(attribute.path.clusterId)} (${attribute.path.clusterId}) attribute ${attribute.path.attributeName} (${attribute.path.attributeId}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
+          `- endpoint ${or}${attribute.path.endpointId}${nf} cluster ${hk}${getClusterNameById(attribute.path.clusterId)}${nf} (${hk}0x${attribute.path.clusterId.toString(16)}${nf}) attribute ${zb}${attribute.path.attributeName}${nf} (${zb}0x${attribute.path.attributeId.toString(16)}${nf}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
         );
       });
+
+      // Log SwitchCluster
+      cluster = SwitchCluster;
+      attributes = await interactionClient.getMultipleAttributes({
+        attributes: [{ clusterId: cluster.id }],
+      });
+      if (attributes.length > 0) this.log.info(`Cluster: ${idn}${cluster.name}${rs}${nf} attributes:`);
+      attributes.forEach((attribute) => {
+        this.log.info(
+          `- endpoint ${or}${attribute.path.endpointId}${nf} cluster ${hk}${getClusterNameById(attribute.path.clusterId)}${nf} (${hk}0x${attribute.path.clusterId.toString(16)}${nf}) attribute ${zb}${attribute.path.attributeName}${nf} (${zb}0x${attribute.path.attributeId.toString(16)}${nf}): ${typeof attribute.value === 'object' ? stringify(attribute.value) : attribute.value}`,
+        );
+      });
+
+      this.log.info('Subscribing to all attributes and events');
+      await node.subscribeAllAttributesAndEvents({
+        ignoreInitialTriggers: false,
+        attributeChangedCallback: ({ path: { nodeId, clusterId, endpointId, attributeName }, version, value }) =>
+          this.log.info(
+            `***${db}Commissioning controller attributeChangedCallback version ${version}: attribute ${BLUE}${nodeId}${db}/${or}${endpointId}${db}/${hk}${getClusterNameById(clusterId)}${db}/${zb}${attributeName}${db} changed to ${typeof value === 'object' ? debugStringify(value ?? { none: true }) : value}`,
+          ),
+        eventTriggeredCallback: ({ path: { nodeId, clusterId, endpointId, eventName }, events }) => {
+          this.log.info(
+            `***${db}Commissioning controller eventTriggeredCallback: event ${BLUE}${nodeId}${db}/${or}${endpointId}${db}/${hk}${getClusterNameById(clusterId)}${db}/${zb}${eventName}${db} triggered with ${debugStringify(events ?? { none: true })}`,
+          );
+        },
+      });
+      this.log.info('Subscribed to all attributes and events');
     }
   }
 
