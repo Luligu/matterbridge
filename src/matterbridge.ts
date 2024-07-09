@@ -231,7 +231,7 @@ export class Matterbridge extends EventEmitter {
   public restartMode: 'service' | 'docker' | '' = '';
   public debugEnabled = false;
 
-  private mdnsInterface: string | undefined; // matter server mdnsInterface: 'eth0' or 'wlan0' or 'WiFi'
+  private mdnsInterface: string | undefined; // matter server mdnsInterface: e.g. 'eth0' or 'wlan0' or 'WiFi'
   private port = 5540; // first commissioning server port
   private passcode?: number; // first commissioning server passcode
   private discriminator?: number; // first commissioning server discriminator
@@ -245,7 +245,6 @@ export class Matterbridge extends EventEmitter {
   private nodeContext: NodeStorage | undefined;
 
   private expressApp: express.Express | undefined;
-  // private expressServer: Server | undefined;
   private httpServer: Server | undefined;
   private httpsServer: Server | undefined;
   private webSocketServer: WebSocketServer | undefined;
@@ -961,7 +960,6 @@ export class Matterbridge extends EventEmitter {
    */
   private async updateProcess() {
     await this.cleanup('updating...', false);
-    this.hasCleanupStarted = false;
   }
 
   /**
@@ -969,7 +967,6 @@ export class Matterbridge extends EventEmitter {
    */
   private async restartProcess() {
     await this.cleanup('restarting...', true);
-    this.hasCleanupStarted = false;
   }
 
   /**
@@ -977,7 +974,6 @@ export class Matterbridge extends EventEmitter {
    */
   private async shutdownProcess() {
     await this.cleanup('shutting down...', false);
-    this.hasCleanupStarted = false;
   }
 
   /**
@@ -989,7 +985,6 @@ export class Matterbridge extends EventEmitter {
       await this.removeAllBridgedDevices(plugin.name);
     }
     await this.cleanup('unregistered all devices and shutting down...', false);
-    this.hasCleanupStarted = false;
   }
 
   /**
@@ -997,7 +992,6 @@ export class Matterbridge extends EventEmitter {
    */
   private async shutdownProcessAndReset() {
     await this.cleanup('shutting down with reset...', false);
-    this.hasCleanupStarted = false;
   }
 
   /**
@@ -1005,7 +999,6 @@ export class Matterbridge extends EventEmitter {
    */
   private async shutdownProcessAndFactoryReset() {
     await this.cleanup('shutting down with factory reset...', false);
-    this.hasCleanupStarted = false;
   }
 
   /**
@@ -1193,6 +1186,7 @@ export class Matterbridge extends EventEmitter {
             Matterbridge.instance = undefined;
             this.emit('shutdown');
           }
+          this.hasCleanupStarted = false;
         }, 2 * 1000);
         cleanupTimeout2.unref();
       }, 3 * 1000);
