@@ -1764,6 +1764,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Get a default color control cluster server.
    *
+   * @param currentX - The current X value.
+   * @param currentY - The current Y value.
    * @param currentHue - The current hue value.
    * @param currentSaturation - The current saturation value.
    * @param colorTemperatureMireds - The color temperature in mireds.
@@ -1844,6 +1846,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Creates a default color control cluster server.
    *
+   * @param currentX - The current X value.
+   * @param currentY - The current Y value.
    * @param currentHue - The current hue value.
    * @param currentSaturation - The current saturation value.
    * @param colorTemperatureMireds - The color temperature in mireds.
