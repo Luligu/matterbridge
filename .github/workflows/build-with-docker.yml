@@ -4,17 +4,17 @@ on: [push, pull_request]
 
 jobs:
   build:
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.os }}
+
     strategy:
       fail-fast: false
       matrix:
         node-version: [18.x, 20.x, 21.x]
         os: [debian-latest, fedora-latest, alpine-latest]
-
-    runs-on: ubuntu-latest
-    container:
-      image: ${{ matrix.os }}
-
-
+  
+  
     steps:
       - uses: actions/checkout@v4
 
