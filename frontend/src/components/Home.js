@@ -33,6 +33,8 @@ function Home() {
   const [selectedPluginSchema, setSelectedPluginSchema] = useState({}); 
   const [openSnack, setOpenSnack] = useState(false);
   const [openConfig, setOpenConfig] = useState(false);
+  const [logDebugLevel, setLogDebugLevel] = useState(localStorage.getItem('logFilterLevel')??'debug');
+  const [logSearchCriteria, setLogSearchCriteria] = useState(localStorage.getItem('logFilterSearch')??'*');
 
   const refAddRemove = useRef(null);
   const refRegisteredPlugins = useRef(null);
@@ -306,10 +308,10 @@ function Home() {
 
         <div className="MbfWindowDiv" style={{flex: '1 1 auto', width: '100%', overflow: 'hidden'}}>
           <div className="MbfWindowHeader" style={{ flexShrink: 0 }}>
-            <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>Logs</p>
+            <p className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>Logs <span style={{ fontWeight: 'normal' }}>filter: level "{logDebugLevel}" and search "{logSearchCriteria}"</span></p>
           </div>
           <div style={{ flex: '1 1 auto', margin: '0px', padding: '0px', overflow: 'auto'}}>
-            <WebSocketComponent wssHost={wssHost} debugLevel='debug' searchCriteria='*'/>
+            <WebSocketComponent wssHost={wssHost} debugLevel={logDebugLevel} searchCriteria={logSearchCriteria}/>
           </div>
         </div>
 

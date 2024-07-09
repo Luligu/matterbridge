@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { useEffect, useRef, useState, useCallback } from 'react';
 
 function useWebSocket(wssHost, debugLevel, searchCriteria) {
