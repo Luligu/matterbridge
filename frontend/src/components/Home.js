@@ -308,7 +308,7 @@ function Home() {
 
         <div className="MbfWindowDiv" style={{flex: '1 1 auto', width: '100%', overflow: 'hidden'}}>
           <div className="MbfWindowHeader" style={{ flexShrink: 0 }}>
-            <p className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>Logs <span style={{ fontWeight: 'normal' }}>filter: debug level "{logDebugLevel}" and search "{logSearchCriteria}"</span></p>
+            <p className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>Logs <span style={{ fontWeight: 'normal' }}>Filter: debug level "{logDebugLevel}" and search "{logSearchCriteria}"</span></p>
           </div>
           <div style={{ flex: '1 1 auto', margin: '0px', padding: '0px', overflow: 'auto'}}>
             <WebSocketComponent wssHost={wssHost} debugLevel={logDebugLevel} searchCriteria={logSearchCriteria}/>

@@ -107,16 +107,16 @@ matterbridge -childbridge -frontend [port number]
 ```
 
 Home page:
-![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/Screenshot%20home.jpg)
+![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/screenshot/Screenshot%20home.jpg)
 
 Devices page:
-![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/Screenshot%20devices.jpg)
+![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/screenshot/Screenshot%20devices.jpg)
 
 Logs page:
-![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/Screenshot%20logs.jpg)
+![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/screenshot/Screenshot%20logs.jpg)
 
 Config editor:
-![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/Screenshot%20config%20editor.jpg)
+![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/screenshot/Screenshot%20config%20editor.jpg)
 
 ## Plugins
 
