@@ -1523,6 +1523,8 @@ export class Matterbridge extends EventEmitter {
       /* The first time a plugin is added to the system, the config file is created with the plugin name and type "".*/
       config.name = plugin.name;
       config.type = plugin.type;
+      if (config.debug === undefined) config.debug = false;
+      if (config.unregisterOnShutdown === undefined) config.unregisterOnShutdown = false;
       return config;
     } catch (err) {
       if (err instanceof Error) {
@@ -1715,7 +1717,7 @@ export class Matterbridge extends EventEmitter {
       // Call the default export function of the plugin, passing this MatterBridge instance, the log and the config
       if (pluginInstance.default) {
         const config: PlatformConfig = await this.loadPluginConfig(plugin);
-        const log = new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: (config.debug as boolean) ?? this.debugEnabled });
+        const log = new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: config.debug as boolean });
         const platform = pluginInstance.default(this, log, config) as MatterbridgePlatform;
         platform.name = packageJson.name;
         platform.config = config;
