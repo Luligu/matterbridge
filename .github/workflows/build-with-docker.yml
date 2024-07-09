@@ -1,18 +1,19 @@
-name: Install, Lint, Test and Build
+name: Install, Lint, Test and Build with docker
 
 on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    container:
-      image: debian:latest
-
     strategy:
       fail-fast: false
       matrix:
         node-version: [18.x, 20.x, 21.x]
-        os: [debian-latest]
+        os: [debian-latest, fedora-latest, alpine-latest]
+
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.os }}
+
 
     steps:
       - uses: actions/checkout@v4
