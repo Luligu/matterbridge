@@ -1546,11 +1546,11 @@ export class Matterbridge extends EventEmitter {
           }
         } else {
           this.log.error(`Error accessing config file ${configFile}: ${err}`);
-          return {};
+          return { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
         }
       }
       this.log.error(`Error loading config file ${configFile}: ${err}`);
-      return {};
+      return { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
     }
   }
 
@@ -1717,7 +1717,7 @@ export class Matterbridge extends EventEmitter {
       // Call the default export function of the plugin, passing this MatterBridge instance, the log and the config
       if (pluginInstance.default) {
         const config: PlatformConfig = await this.loadPluginConfig(plugin);
-        const log = new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: config.debug as boolean });
+        const log = new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: (config.debug as boolean) ?? false });
         const platform = pluginInstance.default(this, log, config) as MatterbridgePlatform;
         platform.name = packageJson.name;
         platform.config = config;
