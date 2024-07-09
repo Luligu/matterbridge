@@ -6,14 +6,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: ${{ matrix.os }}
+      image: debian-latest
 
     strategy:
       fail-fast: false
       matrix:
         node-version: [18.x, 20.x, 21.x]
-        os: [debian-latest, fedora-latest, alpine-latest]
-  
   
     steps:
       - uses: actions/checkout@v4
