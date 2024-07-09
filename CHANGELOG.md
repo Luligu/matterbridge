@@ -4,13 +4,14 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
-## [1.3.12] - Not planned
+## [1.3.12] - 2024-07-10
 
 ### Added
 
 ### Changed
 
 - [frontend]: The Logs in Home page has the same filter as the Logs page.
+- [matterbridge]: The plugins debug is now indipendent from matterbridge debug and matter.js log level. It can be set from the plugin config.
 
 ### Fixed
 
