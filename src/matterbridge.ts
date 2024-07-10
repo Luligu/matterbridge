@@ -3403,7 +3403,7 @@ export class Matterbridge extends EventEmitter {
       if (command === 'update') {
         this.log.info('Updating matterbridge...');
         try {
-          await this.spawnCommand('npm', ['install', '-g', 'matterbridge', '--loglevel=verbose']);
+          await this.spawnCommand('npm', ['install', '-g', 'matterbridge' /* , '--loglevel=verbose'*/]);
           this.log.info('Matterbridge has been updated. Full restart required.');
         } catch (error) {
           this.log.error('Error updating matterbridge');
@@ -3429,7 +3429,7 @@ export class Matterbridge extends EventEmitter {
         param = param.replace(/\*/g, '\\');
         this.log.info(`Installing plugin ${plg}${param}${nf}...`);
         try {
-          await this.spawnCommand('npm', ['install', '-g', param, '--loglevel=verbose']);
+          await this.spawnCommand('npm', ['install', '-g', param /* , '--loglevel=verbose'*/]);
           this.log.info(`Plugin ${plg}${param}${nf} installed. Full restart required.`);
         } catch (error) {
           this.log.error(`Error installing plugin ${plg}${param}${er}`);
