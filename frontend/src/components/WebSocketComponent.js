@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useRef } from 'react';
 import useWebSocket from './useWebSocket';
 
@@ -19,10 +20,8 @@ function WebSocketComponent(props) {
     }, [messages, isHovering]);
 
     return (
-        <div>
-            <ul style={{ margin: '10px', padding: '10px' }}
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}>
+        <div style={{ margin: '0px', padding: '0px' }}>
+            <ul onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
                 {messages.map((msg, index) => (
                     <li key={index} dangerouslySetInnerHTML={{ __html: msg }} />
                 ))}

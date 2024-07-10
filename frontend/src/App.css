@@ -152,30 +152,25 @@ nav {
   margin: 0 10px;
   font-size: 20px;
   text-decoration: none;
-  /* Remove underline from links */
   color: #333;
-  /* Dark gray color for the links */
   transition: color 0.3s ease;
-  /* Smooth color transition */
 }
 
 .nav-link:hover {
   color: #007BFF;
-  /* Change color to blue when hovering */
 }
 
 /* Table style */
 table {
   border-collapse: collapse;
   width: 100%;
-  box-shadow: 5px 5px 10px #888;
 }
 
 thead {
   position: sticky;
   top: 0;
   border: 1px solid #ddd;
-  z-index: 10;
+  z-index: auto;
 }
 
 thead th {
@@ -188,37 +183,9 @@ thead th {
   text-align: left;
 }
 
-/* Table header style */
-.table-header {
+tbody td {
   border: 1px solid #ddd;
-  padding: 5px;
-  padding-right: 10px;
-  padding-left: 10px;
-  background-color: #4CAF50;
-  color: white;
-  text-align: left;
-}
-
-.table-body {
-  max-height: 100px;
-  /* Replace with your desired maximum height */
-  overflow-y: auto;
-}
-
-/* Table footer style */
-.table-footer {
-  border: 1px solid #ddd;
-  padding: 5px;
-  padding-right: 10px;
-  padding-left: 10px;
-  background-color: #7dac7f;
-  color: white;
-  text-align: left;
-}
-
-/* Table content style */
-.table-content {
-  border: 1px solid #ddd;
+  margin: 0;
   padding: 5px;
   padding-right: 10px;
   padding-left: 10px;
@@ -226,42 +193,18 @@ thead th {
   font-size: 14px;
 }
 
-/* Table content style */
 .table-content-even {
   background-color: #bdbdbd;
 }
 
-/* Table content style */
 .table-content-odd {
   background-color: #9e9e9e;
 }
 
-/* Table content style for selected rows*/
 .table-content-selected {
   background-color: #5f8c9e;
 }
 
-/* Color for selected text */
-.text-color-selected {
-  color: #09516d;
-}
-
-/* Color for field text */
-.label-color-selected {
-  color: #000000;
-}
-
-/* Color for field text */
-.field-color-selected {
-  color: #000000;
-  font-size: 16px;
-  margin: 0;
-  margin-top: 5px;
-  margin-bottom: 20px;
-  font-weight: 400;
-}
-
-/* H3 style */
 h3 {
   margin: 0;
 }
@@ -295,6 +238,7 @@ h3 {
   flex-direction: column;
   box-shadow: 5px 5px 10px #888;
   border: 1px solid #ddd;
+  box-sizing: border-box;
   background-color: #9e9e9e;
 }
 
@@ -382,9 +326,9 @@ h3 {
 }
 
 /* Styles for mobile screens */
-@media (max-width: 1500px) {
+@media (max-width: 1600px) {
   .MbfScreen {
-    width: 1500px;
-    height: 1000px;
+    width: 1600px;
+    height: 800px;
   }
 }

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import React, { useEffect, useState } from 'react';
 import WebSocketComponent from './WebSocketComponent';
 import TextField from '@mui/material/TextField';
