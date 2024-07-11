@@ -250,7 +250,7 @@ function Home() {
                     <td><Tooltip title={plugin.path}>{plugin.name}</Tooltip></td>
                     <td>{plugin.description}</td>
                     <td><Tooltip title="Update the plugin to the latest version">{plugin.latestVersion === undefined || plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning" onClick={() => handleUpdate(index)}>{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</Tooltip></td>
-                    <td>{plugin.author.replace('https://github.com/', '')}</td>
+                    <td>{plugin.author?.replace('https://github.com/', '')}</td>
                     <td>{plugin.type === 'DynamicPlatform'?'Dynamic':'Accessory'}</td>
                     <td>{plugin.registeredDevices}</td>
                     <td>  
