@@ -1,7 +1,6 @@
-import { deepEqual, deepCopy, getIpv4InterfaceAddress, getIpv6InterfaceAddress, logInterfaces } from './utils';
+import { deepEqual, deepCopy, getIpv4InterfaceAddress, getIpv6InterfaceAddress, logInterfaces, isValidIpv4Address } from './utils';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { isValidIpv4Address } from '../utils';
 
 describe('Utils test', () => {
   const obj1 = {
@@ -111,5 +110,9 @@ describe('Utils test', () => {
     expect(isValidIpv4Address('192.168.1.1')).toBeTruthy();
     expect(isValidIpv4Address('192.168.1.0001')).toBeFalsy();
     expect(isValidIpv4Address('192a.168.1.1')).toBeFalsy();
+    expect(isValidIpv4Address('256.256.256.256')).toBeFalsy();
+    expect(isValidIpv4Address('192.168.1.1.1')).toBeFalsy();
+    expect(isValidIpv4Address('192.168.1')).toBeFalsy();
+    expect(isValidIpv4Address('abc.def.ghi.jkl')).toBeFalsy();
   });
 });

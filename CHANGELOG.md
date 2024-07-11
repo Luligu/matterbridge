@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
+## [1.3.14] - 2024-07-12
+
+### Added
+
+### Changed
+
+### Fixed
+
+- [matterbridge]: Fixed utils export
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.3.13] - 2024-07-11
 
 ### Added
