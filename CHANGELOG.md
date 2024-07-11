@@ -10,12 +10,12 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
-- [frontend]: The Logs in Home page has the same filter as the Logs page.
+- [frontend]: The Logs window in the Home page has the same filter as the Logs page.
 - [matterbridge]: The plugins debug is now indipendent from matterbridge debug and matter.js log level. It can be set from the plugin config.
 
 ### Fixed
 
-- [frontend]: Fix Home for mobile.
+- [frontend]: Fix Home page for mobile (the page doesn't "jump" anymore with touchscreens).
 - [matterbridge]: Fixed npm ignore for exports.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
