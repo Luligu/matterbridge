@@ -671,10 +671,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Serializes the Matterbridge device into a serialized object.
+   * Deserializes the device into a serialized object.
    *
-   * @param pluginName - The name of the plugin.
-   * @returns The serialized Matterbridge device object.
+   * @returns The deserialized MatterbridgeDevice.
    */
   static deserialize(serializedDevice: SerializedMatterbridgeDevice): MatterbridgeDevice {
     const device = new MatterbridgeDevice(serializedDevice.deviceTypes);
@@ -707,6 +706,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Returns a default static EveHistoryClusterServer object with the specified voltage, current, power, and consumption values.
    * This shows up in HA as a static sensor!
+   * @deprecated This method is deprecated and will be removed in a future version.
    * @param voltage - The voltage value (default: 0).
    * @param current - The current value (default: 0).
    * @param power - The power value (default: 0).
@@ -743,6 +743,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Create a default static EveHistoryClusterServer object with the specified voltage, current, power, and consumption values.
    * This shows up in HA as a static sensor!
+   * @deprecated This method is deprecated and will be removed in a future version.
    * @param voltage - The voltage value (default: 0).
    * @param current - The current value (default: 0).
    * @param power - The power value (default: 0).
@@ -755,6 +756,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Creates a room Eve History Cluster Server.
+   * @deprecated This method is deprecated and will be removed in a future version.
    *
    * @param history - The MatterHistory object.
    * @param log - The AnsiLogger object.
@@ -826,6 +828,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Creates a Weather Eve History Cluster Server.
+   * @deprecated This method is deprecated and will be removed in a future version.
    *
    * @param history - The MatterHistory instance.
    * @param log - The AnsiLogger instance.
@@ -900,6 +903,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Creates an Energy Eve History Cluster Server.
+   * @deprecated This method is deprecated and will be removed in a future version.
    *
    * @param history - The MatterHistory object.
    * @param log - The AnsiLogger object.
@@ -992,6 +996,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Creates a Motion Eve History Cluster Server.
+   * @deprecated This method is deprecated and will be removed in a future version.
    *
    * @param history - The MatterHistory object.
    * @param log - The AnsiLogger object.
@@ -1069,6 +1074,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Creates a door EveHistoryCluster server.
+   * @deprecated This method is deprecated and will be removed in a future version.
    *
    * @param history - The MatterHistory instance.
    * @param log - The AnsiLogger instance.
