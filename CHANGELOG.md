@@ -10,6 +10,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
+- [package]: Update dependencies.
+
 ### Fixed
 
 - [matterbridge]: Fixed utils export
