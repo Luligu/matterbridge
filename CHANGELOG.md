@@ -16,6 +16,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Fixed
 
 - [frontend]: Fix Home for mobile.
+- [matterbridge]: Fixed npm ignore for exports.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
