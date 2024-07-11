@@ -18,11 +18,10 @@ function WebSocketComponent(props) {
     const endOfMessagesRef = useRef(null); // Create a ref for scrolling purposes
     const [isHovering, setIsHovering] = useState(false); // State to track mouse hover
 
-    // Adjust hover logic based on device type
     const handleMouseEnter = () => setIsHovering(true);
     const handleMouseLeave = () => setIsHovering(false);
     
-    // Scroll to the bottom of the message list on every update, only if already at bottom
+    // Scroll to the bottom of the message list on every update, only if the user is not hovering and not on a touchscreen
     useEffect(() => {
         if (!isHovering && !detectTouchscreen()) {
             // console.log(`isHovering: ${isHovering}`);
