@@ -1,6 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* global DocumentTouch */
 import React, { useState, useEffect, useRef } from 'react';
 import useWebSocket from './useWebSocket';
+
+const detectTouchscreen = () => {
+    let hasTouchscreen = false;
+    if ('ontouchstart' in window || (window.DocumentTouch && document instanceof DocumentTouch)) {
+        hasTouchscreen = true;
+    }
+    return hasTouchscreen;
+  };
 
 function WebSocketComponent(props) {
     const { wssHost, debugLevel, searchCriteria } = props;
@@ -9,11 +18,13 @@ function WebSocketComponent(props) {
     const endOfMessagesRef = useRef(null); // Create a ref for scrolling purposes
     const [isHovering, setIsHovering] = useState(false); // State to track mouse hover
 
-    // console.log(`WebSocketComponent: wssHost: ${wssHost} debugLevel: ${debugLevel} searchCriteria: ${searchCriteria}`);
-
+    // Adjust hover logic based on device type
+    const handleMouseEnter = () => setIsHovering(true);
+    const handleMouseLeave = () => setIsHovering(false);
+    
     // Scroll to the bottom of the message list on every update, only if already at bottom
     useEffect(() => {
-        if (!isHovering) {
+        if (!isHovering && !detectTouchscreen()) {
             // console.log(`isHovering: ${isHovering}`);
             endOfMessagesRef.current.scrollIntoView({ behavior: 'smooth' });
         }
@@ -21,7 +32,7 @@ function WebSocketComponent(props) {
 
     return (
         <div style={{ margin: '0px', padding: '0px' }}>
-            <ul onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
+            <ul onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
                 {messages.map((msg, index) => (
                     <li key={index} dangerouslySetInnerHTML={{ __html: msg }} />
                 ))}
@@ -32,26 +43,3 @@ function WebSocketComponent(props) {
 }
 
 export default WebSocketComponent;
-
-    /*
-        <div>
-            <ul style={{ margin: '10px', padding: '10px' }}
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}>
-                {messages.map((msg, index) => (
-                    <li key={index}>{msg}</li>
-                ))}
-                <div ref={endOfMessagesRef} /> {// Invisible element to mark the end }
-                </ul>
-                </div>
-                        
-            <input
-                type="text"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Enter message"
-            />
-            <button onClick={() => { sendMessage(message); setMessage(''); }}>
-                Send Message
-            </button>
-    */

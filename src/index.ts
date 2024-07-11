@@ -32,8 +32,6 @@ export * from '@project-chip/matter.js/util';
 export * from '@project-chip/matter.js/schema';
 export * from '@project-chip/matter.js/tlv';
 
-export * from 'matter-history';
-
 export * from './matterbridge.js';
 export * from './matterbridgeDevice.js';
 export * from './matterbridgePlatform.js';

@@ -7,8 +7,6 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 
-// export const MatterbridgeInfoContext = React.createContext();
-
 function Logs() {
   const [wssHost, setWssHost] = useState(null);
   const [debugLevel, setDebugLevel] = useState(localStorage.getItem('logFilterLevel')??'debug');
