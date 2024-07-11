@@ -17,7 +17,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [frontend]: Fix Home page for mobile (the page doesn't "jump" anymore with touchscreens).
 - [matterbridge]: Fixed npm ignore for exports.
-- [matterbridge]: Fixed load plugin when the don't have author.
+- [matterbridge]: Fixed load plugin when the don't have author and description.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
