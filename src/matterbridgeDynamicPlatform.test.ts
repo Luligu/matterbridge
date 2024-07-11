@@ -7,7 +7,7 @@ import { jest } from '@jest/globals';
 
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
-import { waiter } from './utils.js';
+import { waiter } from './utils/utils.js';
 import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
 
 describe('Matterbridge dynamic platform', () => {

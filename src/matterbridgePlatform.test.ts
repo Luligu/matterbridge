@@ -6,7 +6,7 @@ import { jest } from '@jest/globals';
 
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
-import { waiter } from './utils.js';
+import { waiter } from './utils/utils.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { MatterbridgeDevice, powerSource } from './matterbridgeDevice.js';
 
