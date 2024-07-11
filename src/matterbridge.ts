@@ -476,8 +476,8 @@ export class Matterbridge extends EventEmitter {
         // Update the plugin information
         plugin.name = packageJson.name as string;
         plugin.version = packageJson.version as string;
-        plugin.description = packageJson.description as string;
-        plugin.author = packageJson.author as string;
+        plugin.description = (packageJson.description as string) ?? 'No description';
+        plugin.author = (packageJson.author as string) ?? 'Unknown';
       } else {
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm.`);
         try {
@@ -1717,15 +1717,15 @@ export class Matterbridge extends EventEmitter {
       // Call the default export function of the plugin, passing this MatterBridge instance, the log and the config
       if (pluginInstance.default) {
         const config: PlatformConfig = await this.loadPluginConfig(plugin);
-        const log = new AnsiLogger({ logName: plugin.description, logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: (config.debug as boolean) ?? false });
+        const log = new AnsiLogger({ logName: plugin.description ?? 'No description', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: (config.debug as boolean) ?? false });
         const platform = pluginInstance.default(this, log, config) as MatterbridgePlatform;
         platform.name = packageJson.name;
         platform.config = config;
         platform.version = packageJson.version;
         plugin.name = packageJson.name;
-        plugin.description = packageJson.description;
+        plugin.description = packageJson.description ?? 'No description';
         plugin.version = packageJson.version;
-        plugin.author = packageJson.author;
+        plugin.author = packageJson.author ?? 'Unknown';
         plugin.type = platform.type;
         plugin.platform = platform;
         plugin.loaded = true;
@@ -3403,7 +3403,7 @@ export class Matterbridge extends EventEmitter {
       if (command === 'update') {
         this.log.info('Updating matterbridge...');
         try {
-          await this.spawnCommand('npm', ['install', '-g', 'matterbridge', '--loglevel=verbose']);
+          await this.spawnCommand('npm', ['install', '-g', 'matterbridge' /* , '--loglevel=verbose'*/]);
           this.log.info('Matterbridge has been updated. Full restart required.');
         } catch (error) {
           this.log.error('Error updating matterbridge');
@@ -3429,7 +3429,7 @@ export class Matterbridge extends EventEmitter {
         param = param.replace(/\*/g, '\\');
         this.log.info(`Installing plugin ${plg}${param}${nf}...`);
         try {
-          await this.spawnCommand('npm', ['install', '-g', param, '--loglevel=verbose']);
+          await this.spawnCommand('npm', ['install', '-g', param /* , '--loglevel=verbose'*/]);
           this.log.info(`Plugin ${plg}${param}${nf} installed. Full restart required.`);
         } catch (error) {
           this.log.error(`Error installing plugin ${plg}${param}${er}`);

@@ -171,7 +171,8 @@ bridge-groups.json
 # storage
 .matterbridge.json
 .matterbridge.backup.json
-node_storage
+/storage
+/node_storage
 
 # eslint
 .eslintrc

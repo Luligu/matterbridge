@@ -32,6 +32,7 @@ export * from '@project-chip/matter.js/util';
 export * from '@project-chip/matter.js/schema';
 export * from '@project-chip/matter.js/tlv';
 
+// TODO Remove in august 2024
 export * from 'matter-history';
 
 export * from './matterbridge.js';
