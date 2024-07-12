@@ -6,7 +6,7 @@ import { jest } from '@jest/globals';
 
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
-import { waiter } from './utils/utils.js';
+import { wait, waiter } from './utils/utils.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { MatterbridgeDevice, powerSource } from './matterbridgeDevice.js';
 
@@ -49,10 +49,8 @@ describe('Matterbridge platform', () => {
 
   afterAll(async () => {
     // Destroy the Matterbridge instance
-    // console.log('Destroying Matterbridge');
     await matterbridge.destroyInstance(true);
 
-    // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion)
     await waiter(
       'Matterbridge destroyed',
       () => {
@@ -61,6 +59,9 @@ describe('Matterbridge platform', () => {
       false,
       20000,
     );
+
+    // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion) and the storage to close
+    await wait(1000, 'Wait for the Matterbridge instance to be destroyed', false);
 
     // Restore the mocked AnsiLogger.log method
     (AnsiLogger.prototype.log as jest.Mock).mockRestore();

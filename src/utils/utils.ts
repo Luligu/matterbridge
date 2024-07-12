@@ -241,6 +241,10 @@ export function isValidIpv4Address(ipv4Address: string): boolean {
   return ipv4Regex.test(ipv4Address);
 }
 
+/**
+ * Logs the available network interfaces and their details.
+ * @returns The IPv6 address of the network interface, if available.
+ */
 export function logInterfaces(): string | undefined {
   let ipv6Address: string | undefined;
   const networkInterfaces = os.networkInterfaces();
@@ -274,17 +278,17 @@ export async function waiter(name: string, check: () => boolean, exitWithReject 
   return new Promise<boolean>((resolve, reject) => {
     const timeoutId = setTimeout(() => {
       // eslint-disable-next-line no-console
-      if (debug) console.log(`Waiter "${name}" exited for timeout...`);
+      if (debug) console.log(`Waiter "${name}" finished for timeout...`);
       clearTimeout(timeoutId);
       clearInterval(intervalId);
-      if (exitWithReject) reject(new Error(`Waiter "${name}" exited due to timeout`));
+      if (exitWithReject) reject(new Error(`Waiter "${name}" finished due to timeout`));
       else resolve(false);
     }, resolveTimeout);
 
     const intervalId = setInterval(() => {
       if (check()) {
         // eslint-disable-next-line no-console
-        if (debug) console.log(`Waiter "${name}" exited for true condition...`);
+        if (debug) console.log(`Waiter "${name}" finished for true condition...`);
         clearTimeout(timeoutId);
         clearInterval(intervalId);
         resolve(true);
@@ -307,7 +311,7 @@ export async function wait(timeout = 1000, name?: string, debug = false): Promis
   return new Promise<void>((resolve, reject) => {
     const timeoutId = setTimeout(() => {
       // eslint-disable-next-line no-console
-      if (debug) console.log(`Wait "${name}" exited for timeout...`);
+      if (debug) console.log(`Wait "${name}" finished...`);
       clearTimeout(timeoutId);
       resolve();
     }, timeout);

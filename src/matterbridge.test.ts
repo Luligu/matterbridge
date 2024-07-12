@@ -25,7 +25,7 @@ jest.mock('@project-chip/matter-node.js/util');
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import { hasParameter } from '@project-chip/matter-node.js/util';
 import { Matterbridge } from './matterbridge.js';
-import { waiter } from './utils/utils';
+import { wait, waiter } from './utils/utils';
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
 import { FabricId, FabricIndex, NodeId, VendorId } from '@project-chip/matter-node.js/datatype';
 
@@ -48,17 +48,12 @@ describe('Matterbridge', () => {
     // console.log('Destroying Matterbridge');
     await matterbridge.destroyInstance(true);
 
-    // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion)
-    await waiter(
-      'Matterbridge destroyed',
-      () => {
-        return (Matterbridge as any).instance === undefined;
-      },
-      false,
-      20000,
-      1000,
-      false,
-    );
+    await waiter('Matterbridge destroyed', () => {
+      return (Matterbridge as any).instance === undefined;
+    });
+
+    // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion) and the storage to close
+    await wait(1000, 'Wait for the Matterbridge instance to be destroyed', false);
 
     // Restore the mocked AnsiLogger.log method
     (AnsiLogger.prototype.log as jest.Mock).mockRestore();

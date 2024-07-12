@@ -1,4 +1,4 @@
-import { deepEqual, deepCopy, getIpv4InterfaceAddress, getIpv6InterfaceAddress, logInterfaces, isValidIpv4Address } from './utils';
+import { deepEqual, deepCopy, getIpv4InterfaceAddress, getIpv6InterfaceAddress, logInterfaces, isValidIpv4Address, waiter, wait } from './utils';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -115,4 +115,36 @@ describe('Utils test', () => {
     expect(isValidIpv4Address('192.168.1')).toBeFalsy();
     expect(isValidIpv4Address('abc.def.ghi.jkl')).toBeFalsy();
   });
+
+  test('Waiter for true condition', async () => {
+    expect(
+      await waiter(
+        'Test with jest',
+        () => {
+          return true;
+        },
+        false,
+        500,
+        100,
+      ),
+    ).toBe(true);
+  }, 5000);
+
+  test('Waiter for false condition', async () => {
+    expect(
+      await waiter(
+        'Test with jest',
+        () => {
+          return false;
+        },
+        false,
+        500,
+        100,
+      ),
+    ).toBe(false);
+  }, 5000);
+
+  test('Wait function', async () => {
+    expect(await wait(500, 'Test with jest')).toBeUndefined();
+  }, 5000);
 });

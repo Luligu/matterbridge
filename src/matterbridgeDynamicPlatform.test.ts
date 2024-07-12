@@ -7,7 +7,7 @@ import { jest } from '@jest/globals';
 
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
-import { waiter } from './utils/utils.js';
+import { wait, waiter } from './utils/utils.js';
 import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
 
 describe('Matterbridge dynamic platform', () => {
@@ -34,16 +34,13 @@ describe('Matterbridge dynamic platform', () => {
   }, 60000);
 
   test('create a MatterbridgeDynamicPlatform', async () => {
-    // console.log('Creating Matterbridge');
     const matterbridge = await Matterbridge.loadInstance(true);
     expect((Matterbridge as any).instance).toBeDefined();
 
-    // console.log('Created Matterbridge');
     const platform = new MatterbridgeDynamicPlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'test', type: 'type', debug: false, unregisterOnShutdown: false });
     expect(platform.type).toBe('DynamicPlatform');
 
     // Destroy the Matterbridge instance
-    // console.log('Destroying Matterbridge');
     await matterbridge.destroyInstance(true);
     expect((Matterbridge as any).instance).toBeUndefined();
 
@@ -55,8 +52,11 @@ describe('Matterbridge dynamic platform', () => {
       },
       false,
       20000,
-      1000,
+      500,
       false,
     );
+
+    // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion) and the storage to close
+    await wait(1000, 'Wait for the Matterbridge instance to be destroyed', false);
   }, 60000);
 });
