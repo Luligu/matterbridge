@@ -80,7 +80,7 @@ function Header() {
     setOpen(true);
     setTimeout(() => {
       setOpen(false);
-      window.location.reload();
+      window.location.href = window.location.origin;
     }, 5000);
   };
 
@@ -92,7 +92,7 @@ function Header() {
     setOpen(true);
     setTimeout(() => {
       setOpen(false);
-      window.location.reload();
+      window.location.href = window.location.origin;
     }, 5000);
   };
 
@@ -101,7 +101,7 @@ function Header() {
     setOpen(true);
     setTimeout(() => {
       setOpen(false);
-      window.location.reload();
+      window.location.href = window.location.origin;
     }, 5000);
   };
 
