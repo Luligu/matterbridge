@@ -4,7 +4,7 @@
  * @file index.ts
  * @author Luca Liguori
  * @date 2023-12-29
- * @version 1.0.5
+ * @version 1.0.6
  *
  * Copyright 2023, 2024 Luca Liguori.
  *
@@ -32,16 +32,16 @@ export * from '@project-chip/matter.js/util';
 export * from '@project-chip/matter.js/schema';
 export * from '@project-chip/matter.js/tlv';
 
-// TODO Remove in august 2024
-export * from 'matter-history';
-export * from './utils/utils.js';
-export * from './utils/colorUtils.js';
-
 export * from './matterbridge.js';
 export * from './matterbridgeDevice.js';
 export * from './matterbridgePlatform.js';
 export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
+
+// TODO Remove in august 2024
+export * from 'matter-history';
+export * from './utils/utils.js';
+export * from './utils/colorUtils.js';
 
 // TODO Refactor all plugins to import from matterbridge/cluster and remove in september 2024
 export * from './cluster/AirQualityCluster.js';
@@ -67,15 +67,19 @@ export * from './cluster/RadonConcentrationMeasurementCluster.js';
 export * from './cluster/SmokeCoAlarmCluster.js';
 export * from './cluster/TvocCluster.js';
 
+const cli = '\u001B[32m';
+const er = '\u001B[38;5;9m';
+const rs = '\u001B[40;0m';
+
 async function main() {
   // eslint-disable-next-line no-console
-  if (process.argv.includes('-debug')) console.log('MAIN: Matterbridge.loadInstance() called');
+  if (process.argv.includes('-debug')) console.log(cli + 'MAIN: Matterbridge.loadInstance() called' + rs);
   await Matterbridge.loadInstance();
   // eslint-disable-next-line no-console
-  if (process.argv.includes('-debug')) console.log('MAIN: Matterbridge.loadInstance() exited');
+  if (process.argv.includes('-debug')) console.log(cli + 'MAIN: Matterbridge.loadInstance() exited' + rs);
 }
 
 main().catch((error) => {
   // eslint-disable-next-line no-console
-  console.error(`MAIN: Matterbridge.loadInstance() failed with error: ${error}`);
+  console.error(er + `MAIN: Matterbridge.loadInstance() failed with error: ${error}` + rs);
 });
