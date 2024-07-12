@@ -80,40 +80,46 @@ describe('Matterbridge', () => {
     const fabricInfos: ExposedFabricInformation[] = [
       {
         fabricIndex: FabricIndex(1),
-        fabricId: FabricId(456532423464656),
-        nodeId: NodeId(556546442432656),
-        rootNodeId: NodeId(5565442324264656),
+        fabricId: FabricId(45653242346465555556n),
+        nodeId: NodeId(556546442432656555556n),
+        rootNodeId: NodeId(5565442324264656555556n),
         rootVendorId: VendorId(4996),
         label: 'Fabric 1 label',
       },
       {
         fabricIndex: FabricIndex(2),
-        fabricId: FabricId(45654621214656),
-        nodeId: NodeId(556546462112156),
-        rootNodeId: NodeId(556546412212656),
+        fabricId: FabricId(45654621214656555556n),
+        nodeId: NodeId(556546462112156555556n),
+        rootNodeId: NodeId(556546412212656555556n),
         rootVendorId: VendorId(4937),
         label: 'Fabric 2 label',
       },
     ];
     expect((matterbridge as any).sanitizeFabricInformations(fabricInfos).length).toBe(2);
-    expect(JSON.stringify((matterbridge as any).sanitizeFabricInformations(fabricInfos)).length).toBe(367);
+    expect(() => {
+      JSON.stringify(fabricInfos);
+    }).toThrow();
+    expect(JSON.stringify((matterbridge as any).sanitizeFabricInformations(fabricInfos)).length).toBe(402);
   });
 
   test('Sanitize sessions', () => {
     const sessionInfos: SessionInformation[] = [
       {
         name: 'secure/64351',
-        nodeId: NodeId(16784206195868397986),
-        peerNodeId: NodeId(1604858123872676291),
-        fabric: { fabricIndex: FabricIndex(2), fabricId: FabricId(45654621214656), nodeId: NodeId(16784206195868397986), rootNodeId: NodeId(18446744060824649729), rootVendorId: VendorId(4362), label: 'SmartThings Hub 0503' },
+        nodeId: NodeId(16784206195868397986n),
+        peerNodeId: NodeId(1604858123872676291n),
+        fabric: { fabricIndex: FabricIndex(2), fabricId: FabricId(456546212146567986n), nodeId: NodeId(1678420619586823323397986n), rootNodeId: NodeId(18446744060824623349729n), rootVendorId: VendorId(4362), label: 'SmartThings Hub 0503' },
         isPeerActive: false,
         secure: true,
-        lastInteractionTimestamp: 1720035769019,
-        lastActiveTimestamp: 1720035761934,
+        lastInteractionTimestamp: 1720035723121269019,
+        lastActiveTimestamp: 1720035761223121934,
         numberOfActiveSubscriptions: 0,
       },
     ];
     expect((matterbridge as any).sanitizeSessionInformation(sessionInfos).length).toBe(1);
-    expect(JSON.stringify((matterbridge as any).sanitizeSessionInformation(sessionInfos)).length).toBe(443);
+    expect(() => {
+      JSON.stringify(sessionInfos);
+    }).toThrow();
+    expect(JSON.stringify((matterbridge as any).sanitizeSessionInformation(sessionInfos)).length).toBe(471);
   });
 });

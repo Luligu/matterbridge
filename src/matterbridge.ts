@@ -40,7 +40,7 @@ import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridge
 import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import { shelly_config, somfytahoma_config, zigbee2mqtt_config } from './defaultConfigSchema.js';
 import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
-import { logInterfaces } from './utils/utils.js';
+import { logInterfaces, wait } from './utils/utils.js';
 
 // @project-chip/matter-node.js
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
@@ -165,8 +165,8 @@ interface SanitizedSessionInformation {
   fabric?: SanitizedExposedFabricInformation;
   isPeerActive: boolean;
   secure: boolean;
-  lastInteractionTimestamp?: number;
-  lastActiveTimestamp?: number;
+  lastInteractionTimestamp?: string;
+  lastActiveTimestamp?: string;
   numberOfActiveSubscriptions: number;
 }
 
@@ -307,6 +307,10 @@ export class Matterbridge extends EventEmitter {
         if (plugin.reachabilityTimeout) clearTimeout(plugin.reachabilityTimeout);
         plugin.reachabilityTimeout = undefined;
       }
+      for (const plugin of this.registeredPlugins) {
+        if (plugin.nodeContext) plugin.nodeContext.close();
+        plugin.nodeContext = undefined;
+      }
       if (this.nodeContext) {
         await this.nodeContext.close();
         this.nodeContext = undefined;
@@ -315,6 +319,7 @@ export class Matterbridge extends EventEmitter {
         await this.nodeStorage.close();
         this.nodeStorage = undefined;
       }
+      await wait(1000, 'Wait for the node storage to close', false);
       Matterbridge.instance = undefined;
     }
   }
@@ -2362,8 +2367,8 @@ export class Matterbridge extends EventEmitter {
           : undefined,
         isPeerActive: info.isPeerActive,
         secure: info.secure,
-        lastInteractionTimestamp: info.lastInteractionTimestamp,
-        lastActiveTimestamp: info.lastActiveTimestamp,
+        lastInteractionTimestamp: info.lastInteractionTimestamp?.toString(),
+        lastActiveTimestamp: info.lastActiveTimestamp?.toString(),
         numberOfActiveSubscriptions: info.numberOfActiveSubscriptions,
       } as SanitizedSessionInformation;
     });
@@ -2956,11 +2961,11 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Retrieves an array of base registered plugins.
-   *
-   * @returns {BaseRegisteredPlugin[]} An array of base registered plugins.
+   * Retrieves the base registered plugins sanitized for res.json().
+   * @param {boolean} includeAll - Whether to include all information for each plugin.
+   * @returns {BaseRegisteredPlugin[]} A promise that resolves to an array of BaseRegisteredPlugin objects.
    */
-  private async getBaseRegisteredPlugins(includeConfigSchema = false): Promise<BaseRegisteredPlugin[]> {
+  private async getBaseRegisteredPlugins(includeAll = false): Promise<BaseRegisteredPlugin[]> {
     const baseRegisteredPlugins: BaseRegisteredPlugin[] = [];
     for (const plugin of this.registeredPlugins) {
       baseRegisteredPlugins.push({
@@ -2979,14 +2984,14 @@ export class Matterbridge extends EventEmitter {
         configured: plugin.configured,
         paired: plugin.paired,
         connected: plugin.connected,
-        fabricInformations: plugin.fabricInformations,
-        sessionInformations: plugin.sessionInformations,
+        fabricInformations: includeAll ? plugin.fabricInformations : undefined,
+        sessionInformations: includeAll ? plugin.sessionInformations : undefined,
         registeredDevices: plugin.registeredDevices,
         addedDevices: plugin.addedDevices,
         qrPairingCode: plugin.qrPairingCode,
         manualPairingCode: plugin.manualPairingCode,
-        configJson: includeConfigSchema ? plugin.configJson : {},
-        schemaJson: includeConfigSchema ? plugin.schemaJson : {},
+        configJson: includeAll ? plugin.configJson : undefined,
+        schemaJson: includeAll ? plugin.schemaJson : undefined,
       });
     }
     return baseRegisteredPlugins;
