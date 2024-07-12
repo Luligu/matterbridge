@@ -28,6 +28,7 @@ import { Matterbridge } from './matterbridge.js';
 import { wait, waiter } from './utils/utils';
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
 import { FabricId, FabricIndex, NodeId, VendorId } from '@project-chip/matter-node.js/datatype';
+import e from 'express';
 
 describe('Matterbridge', () => {
   let matterbridge: Matterbridge;
@@ -45,7 +46,6 @@ describe('Matterbridge', () => {
 
   afterAll(async () => {
     // Destroy the Matterbridge instance
-    // console.log('Destroying Matterbridge');
     await matterbridge.destroyInstance(true);
 
     await waiter('Matterbridge destroyed', () => {
@@ -57,9 +57,6 @@ describe('Matterbridge', () => {
 
     // Restore the mocked AnsiLogger.log method
     (AnsiLogger.prototype.log as jest.Mock).mockRestore();
-
-    // Clear the timers
-    // jest.runAllTimers();
   }, 60000);
 
   test('should do a partial mock of AnsiLogger', () => {
@@ -122,4 +119,45 @@ describe('Matterbridge', () => {
     }).toThrow();
     expect(JSON.stringify((matterbridge as any).sanitizeSessionInformation(sessionInfos)).length).toBe(471);
   });
+
+  test('Load plugins from storage', () => {
+    expect((matterbridge as any).loadPluginsFromStorage()).not.toBeNull();
+  });
+
+  test('Save plugins to storage', () => {
+    expect((matterbridge as any).savePluginsToStorage()).not.toBeNull();
+  });
+
+  test('matterbridge -list', async () => {
+    const shutdownPromise = new Promise((resolve) => {
+      matterbridge.on('shutdown', resolve);
+    });
+    process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-list'];
+    await (matterbridge as any).parseCommandLine();
+    await shutdownPromise;
+    expect(true).toBeTruthy();
+    await wait(1000, 'Wait for the storage', false);
+  }, 60000);
+
+  test('matterbridge -logstorage', async () => {
+    const shutdownPromise = new Promise((resolve) => {
+      matterbridge.on('shutdown', resolve);
+    });
+    process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-logstorage'];
+    await (matterbridge as any).parseCommandLine();
+    await shutdownPromise;
+    expect(true).toBeTruthy();
+    await wait(1000, 'Wait for the storage', false);
+  }, 60000);
+
+  test('matterbridge -loginterfaces', async () => {
+    const shutdownPromise = new Promise((resolve) => {
+      matterbridge.on('shutdown', resolve);
+    });
+    process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-loginterfaces'];
+    await (matterbridge as any).parseCommandLine();
+    await shutdownPromise;
+    expect(true).toBeTruthy();
+    await wait(1000, 'Wait for the storage', false);
+  }, 60000);
 });

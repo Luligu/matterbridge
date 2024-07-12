@@ -241,6 +241,8 @@ export class Matterbridge extends EventEmitter {
   private cleanupTimeout2: NodeJS.Timeout | undefined;
   private checkUpdateInterval: NodeJS.Timeout | undefined;
   private reachabilityTimeout: NodeJS.Timeout | undefined;
+  private sigintHandler: NodeJS.SignalsListener | undefined;
+  private sigtermHandler: NodeJS.SignalsListener | undefined;
 
   // private plugins = new Map<string, RegisteredPlugin>();
   // private devices = new Map<string, RegisteredDevice>();
@@ -603,7 +605,7 @@ export class Matterbridge extends EventEmitter {
         }
       });
       this.emit('shutdown');
-      process.exit(0);
+      return;
     }
 
     if (hasParameter('logstorage')) {
@@ -614,39 +616,39 @@ export class Matterbridge extends EventEmitter {
         await plugin.nodeContext?.logStorage();
       }
       this.emit('shutdown');
-      process.exit(0);
+      return;
     }
 
     if (hasParameter('loginterfaces')) {
       this.log.info(`${plg}Matterbridge${nf} network interfaces log`);
       logInterfaces();
       this.emit('shutdown');
-      process.exit(0);
+      return;
     }
 
     if (getParameter('add')) {
       this.log.debug(`Registering plugin ${getParameter('add')}`);
       await this.executeCommandLine(getParameter('add') as string, 'add');
       this.emit('shutdown');
-      process.exit(0);
+      return;
     }
     if (getParameter('remove')) {
       this.log.debug(`Unregistering plugin ${getParameter('remove')}`);
       await this.executeCommandLine(getParameter('remove') as string, 'remove');
       this.emit('shutdown');
-      process.exit(0);
+      return;
     }
     if (getParameter('enable')) {
       this.log.debug(`Enable plugin ${getParameter('enable')}`);
       await this.executeCommandLine(getParameter('enable') as string, 'enable');
       this.emit('shutdown');
-      process.exit(0);
+      return;
     }
     if (getParameter('disable')) {
       this.log.debug(`Disable plugin ${getParameter('disable')}`);
       await this.executeCommandLine(getParameter('disable') as string, 'disable');
       this.emit('shutdown');
-      process.exit(0);
+      return;
     }
 
     if (hasParameter('factoryreset')) {
@@ -664,7 +666,7 @@ export class Matterbridge extends EventEmitter {
       }
       this.log.info('Factory reset done! Remove all paired devices from the controllers.');
       this.emit('shutdown');
-      process.exit(0);
+      return;
     }
 
     // Start the storage and create matterbridgeContext (we need it now for frontend and later for matterbridge)
@@ -677,7 +679,7 @@ export class Matterbridge extends EventEmitter {
       await this.stopStorage();
       this.log.info('Reset done! Remove the device from the controller.');
       this.emit('shutdown');
-      process.exit(0);
+      return;
     }
 
     if (getParameter('reset') && getParameter('reset') !== undefined) {
@@ -685,7 +687,7 @@ export class Matterbridge extends EventEmitter {
       await this.executeCommandLine(getParameter('reset') as string, 'reset');
       await this.stopStorage();
       this.emit('shutdown');
-      process.exit(0);
+      return;
     }
 
     // Initialize frontend
@@ -823,28 +825,40 @@ export class Matterbridge extends EventEmitter {
     }
   }
 
-  private async savePluginsToStorage() {
+  /**
+   * Saves the registered plugins to storage.
+   * @returns {Promise<RegisteredPlugin[] | null>} A promise that resolves to an array of RegisteredPlugin objects or null if the node context is not initialized.
+   */
+  private async savePluginsToStorage(): Promise<RegisteredPlugin[] | null> {
     if (!this.nodeContext) {
       this.log.error('loadPluginsFromStorage() error: the node context is not initialized');
-      return;
+      return null;
     }
     // Convert the map to an array
     // const pluginArray = Array.from(this.plugins.values());
     // await this.nodeContext.set('plugins', pluginArray);
     // TODO remove after migration done
     await this.nodeContext.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
+    return this.registeredPlugins;
   }
 
-  private async loadPluginsFromStorage() {
+  /**
+   * Loads the plugins from storage and returns an array of registered plugins.
+   * If the node context is not initialized, it logs an error and returns null.
+   *
+   * @returns {Promise<RegisteredPlugin[] | null>} A promise that resolves to an array of registered plugins, or null if the node context is not initialized.
+   */
+  private async loadPluginsFromStorage(): Promise<RegisteredPlugin[] | null> {
     if (!this.nodeContext) {
       this.log.error('loadPluginsFromStorage() error: the node context is not initialized');
-      return;
+      return null;
     }
     // Load the array from storage and convert it back to a map
     // const pluginArray = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
     // for (const plugin of pluginArray) this.plugins.set(plugin.name, plugin);
     // TODO remove after migration done
     this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
+    return this.registeredPlugins;
   }
 
   /**
@@ -977,15 +991,28 @@ export class Matterbridge extends EventEmitter {
    * Registers the signal handlers for SIGINT and SIGTERM.
    * When either of these signals are received, the cleanup method is called with an appropriate message.
    */
-  private async registerSignalHandlers() {
+  private registerSignalHandlers() {
     this.log.debug(`Registering SIGINT and SIGTERM signal handlers...`);
-    process.once('SIGINT', async () => {
+    this.sigintHandler = async () => {
       await this.cleanup('SIGINT received, cleaning up...');
-    });
+    };
+    process.on('SIGINT', this.sigintHandler);
 
-    process.once('SIGTERM', async () => {
+    this.sigtermHandler = async () => {
       await this.cleanup('SIGTERM received, cleaning up...');
-    });
+    };
+    process.on('SIGTERM', this.sigtermHandler);
+  }
+
+  /**
+   * Deregisters the SIGINT and SIGTERM signal handlers.
+   */
+  private deregisterSignalHandlers() {
+    this.log.debug(`Deregistering SIGINT and SIGTERM signal handlers...`);
+    this.sigintHandler && process.off('SIGINT', this.sigintHandler);
+    this.sigtermHandler && process.off('SIGTERM', this.sigtermHandler);
+    this.sigintHandler = undefined;
+    this.sigtermHandler = undefined;
   }
 
   /**
@@ -1045,14 +1072,13 @@ export class Matterbridge extends EventEmitter {
       this.hasCleanupStarted = true;
       this.log.info(message);
 
-      // Remove all listeners from the process
-      process.removeAllListeners();
-      this.log.debug('All listeners removed');
+      // Deregisters the SIGINT and SIGTERM signal handlers
+      this.deregisterSignalHandlers();
 
-      // Clear the update interval
+      // Clear the check update interval
       if (this.checkUpdateInterval) clearInterval(this.checkUpdateInterval);
       this.checkUpdateInterval = undefined;
-      this.log.debug('Update interval cleared');
+      this.log.debug('Check update interval cleared');
 
       // Clear the reachability timeout
       if (this.reachabilityTimeout) {
