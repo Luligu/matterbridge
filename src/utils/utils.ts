@@ -258,6 +258,16 @@ export function logInterfaces(): string | undefined {
   return ipv6Address;
 }
 
+/**
+ * Asynchronous waiter function that resolves when the provided condition is met or rejects on timeout.
+ * @param {string} name - The name of the waiter.
+ * @param {() => boolean} check - A function that checks the condition. Should return a boolean.
+ * @param {boolean} [exitWithReject=false] - Optional. If true, the promise will be rejected on timeout. Default is false.
+ * @param {number} [resolveTimeout=5000] - Optional. The timeout duration in milliseconds. Default is 5000ms.
+ * @param {number} [resolveInterval=500] - Optional. The interval duration in milliseconds between condition checks. Default is 500ms.
+ * @param {boolean} [debug=false] - Optional. If true, debug messages will be logged to the console. Default is false.
+ * @returns {Promise<boolean>} A promise that resolves to true when the condition is met, or false if the timeout occurs.
+ */
 export async function waiter(name: string, check: () => boolean, exitWithReject = false, resolveTimeout = 5000, resolveInterval = 500, debug = false) {
   // eslint-disable-next-line no-console
   if (debug) console.log(`Waiter "${name}" started...`);
@@ -280,5 +290,26 @@ export async function waiter(name: string, check: () => boolean, exitWithReject 
         resolve(true);
       }
     }, resolveInterval);
+  });
+}
+
+/**
+ * Asynchronously waits for a specified amount of time.
+ * @param {number} timeout - The duration to wait in milliseconds. Default is 1000ms.
+ * @param {string} name - The name of the wait operation. Default is undefined.
+ * @param {boolean} debug - Whether to enable debug logging. Default is false.
+ * @returns {Promise<void>} A Promise that resolves after the specified timeout.
+ */
+export async function wait(timeout = 1000, name?: string, debug = false): Promise<void> {
+  // eslint-disable-next-line no-console
+  if (debug) console.log(`Wait "${name}" started...`);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  return new Promise<void>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      // eslint-disable-next-line no-console
+      if (debug) console.log(`Wait "${name}" exited for timeout...`);
+      clearTimeout(timeoutId);
+      resolve();
+    }, timeout);
   });
 }
