@@ -37,6 +37,7 @@ describe('Matterbridge', () => {
     jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
       // console.log(`Mocked log: ${level} - ${message}`, ...parameters);
     });
+
     // console.log('Loading Matterbridge');
     matterbridge = await Matterbridge.loadInstance(true);
     // console.log('Loaded Matterbridge');
@@ -45,7 +46,7 @@ describe('Matterbridge', () => {
   afterAll(async () => {
     // Destroy the Matterbridge instance
     // console.log('Destroying Matterbridge');
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(true);
 
     // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion)
     await waiter(
@@ -55,7 +56,7 @@ describe('Matterbridge', () => {
       },
       false,
       20000,
-      500,
+      1000,
       false,
     );
 
@@ -73,6 +74,7 @@ describe('Matterbridge', () => {
     log.setLogDebug(true);
     expect(log.log).toBeDefined();
     expect(log.log).toHaveBeenCalled();
+    expect(log.log).toHaveBeenLastCalledWith(LogLevel.INFO, 'Hello, world!');
   });
 
   test('hasParameter("debug") should return true', async () => {

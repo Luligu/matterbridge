@@ -33,13 +33,16 @@ describe('Matterbridge accessory platform', () => {
     (AnsiLogger.prototype.log as jest.Mock).mockRestore();
   }, 60000);
 
-  test('unregisterAllDevices calls matterbridge.removeAllBridgedDevices with correct parameters', async () => {
+  test('create a MatterbridgeAccessoryPlatform', async () => {
     const matterbridge = await Matterbridge.loadInstance(true);
+    expect((Matterbridge as any).instance).toBeDefined();
+
     const platform = new MatterbridgeAccessoryPlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'test', type: 'type', debug: false, unregisterOnShutdown: false });
     expect(platform.type).toBe('AccessoryPlatform');
     // Destroy the Matterbridge instance
     // console.log('Destroying Matterbridge');
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(true);
+    expect((Matterbridge as any).instance).toBeUndefined();
 
     // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion)
     await waiter(
@@ -49,7 +52,7 @@ describe('Matterbridge accessory platform', () => {
       },
       false,
       20000,
-      500,
+      1000,
       false,
     );
   }, 60000);

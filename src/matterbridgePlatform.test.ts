@@ -50,7 +50,7 @@ describe('Matterbridge platform', () => {
   afterAll(async () => {
     // Destroy the Matterbridge instance
     // console.log('Destroying Matterbridge');
-    await matterbridge.destroyInstance();
+    await matterbridge.destroyInstance(true);
 
     // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion)
     await waiter(

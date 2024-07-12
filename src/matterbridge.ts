@@ -63,6 +63,7 @@ export interface RegisteredPlugin extends BaseRegisteredPlugin {
   aggregator?: Aggregator;
   device?: MatterbridgeDevice;
   platform?: MatterbridgePlatform;
+  reachabilityTimeout?: NodeJS.Timeout;
 }
 
 // Simplified interface for saving the plugins in node storage
@@ -225,8 +226,6 @@ export class Matterbridge extends EventEmitter {
   public matterbridgeConnected = false;
   public matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
 
-  private checkUpdateInterval?: NodeJS.Timeout; // = 24 * 60 * 60 * 1000; // 24 hours
-
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public restartMode: 'service' | 'docker' | '' = '';
   public debugEnabled = false;
@@ -236,7 +235,13 @@ export class Matterbridge extends EventEmitter {
   private passcode?: number; // first commissioning server passcode
   private discriminator?: number; // first commissioning server discriminator
   private log!: AnsiLogger;
+
   private hasCleanupStarted = false;
+  private cleanupTimeout1: NodeJS.Timeout | undefined;
+  private cleanupTimeout2: NodeJS.Timeout | undefined;
+  private checkUpdateInterval: NodeJS.Timeout | undefined;
+  private reachabilityTimeout: NodeJS.Timeout | undefined;
+
   // private plugins = new Map<string, RegisteredPlugin>();
   // private devices = new Map<string, RegisteredDevice>();
   private registeredPlugins: RegisteredPlugin[] = [];
@@ -275,7 +280,7 @@ export class Matterbridge extends EventEmitter {
   static async loadInstance(initialize = false) {
     if (!Matterbridge.instance) {
       // eslint-disable-next-line no-console
-      if (hasParameter('debug')) console.log(wr + 'Creating a new instance of Matterbridge.', initialize ? 'Initializing...' : 'Not initializing...', rs);
+      if (hasParameter('debug')) console.log(GREEN + 'Creating a new instance of Matterbridge.', initialize ? 'Initializing...' : 'Not initializing...', rs);
       Matterbridge.instance = new Matterbridge();
       if (initialize) await Matterbridge.instance.initialize();
     }
@@ -284,11 +289,34 @@ export class Matterbridge extends EventEmitter {
 
   /**
    * Call shutdownProcess.
-   * @deprecated This method is deprecated and is only used for jest.
+   * @deprecated This method is deprecated and is only used for jest tests.
    *
    */
-  async destroyInstance() {
+  async destroyInstance(force = false) {
     await this.shutdownProcess();
+    if (force) {
+      if (this.checkUpdateInterval) clearTimeout(this.checkUpdateInterval);
+      this.checkUpdateInterval = undefined;
+      if (this.cleanupTimeout1) clearTimeout(this.cleanupTimeout1);
+      this.cleanupTimeout1 = undefined;
+      if (this.cleanupTimeout2) clearTimeout(this.cleanupTimeout2);
+      this.cleanupTimeout2 = undefined;
+      if (this.reachabilityTimeout) clearTimeout(this.reachabilityTimeout);
+      this.reachabilityTimeout = undefined;
+      for (const plugin of this.registeredPlugins) {
+        if (plugin.reachabilityTimeout) clearTimeout(plugin.reachabilityTimeout);
+        plugin.reachabilityTimeout = undefined;
+      }
+      if (this.nodeContext) {
+        await this.nodeContext.close();
+        this.nodeContext = undefined;
+      }
+      if (this.nodeStorage) {
+        await this.nodeStorage.close();
+        this.nodeStorage = undefined;
+      }
+      Matterbridge.instance = undefined;
+    }
   }
 
   /**
@@ -724,7 +752,7 @@ export class Matterbridge extends EventEmitter {
           continue;
         }
         // Check if the plugin has a new version
-        this.getPluginLatestVersion(plugin);
+        this.getPluginLatestVersion(plugin); // No await do it asyncronously
         if (!plugin.enabled) {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
           continue;
@@ -1021,7 +1049,14 @@ export class Matterbridge extends EventEmitter {
       this.checkUpdateInterval = undefined;
       this.log.debug('Update interval cleared');
 
-      // Calling the shutdown method of each plugin
+      // Clear the reachability timeout
+      if (this.reachabilityTimeout) {
+        clearTimeout(this.reachabilityTimeout);
+        this.reachabilityTimeout = undefined;
+        this.log.debug('Matterbridge reachability timeout cleared');
+      }
+
+      // Calling the shutdown method of each plugin and clean up the reachability timeout
       for (const plugin of this.registeredPlugins) {
         if (!plugin.enabled || plugin.error) continue;
         this.log.info(`Shutting down plugin ${plg}${plugin.name}${nf}`);
@@ -1034,6 +1069,11 @@ export class Matterbridge extends EventEmitter {
           }
         } else {
           this.log.debug(`Plugin ${plg}${plugin.name}${db} platform not found`);
+        }
+        if (plugin.reachabilityTimeout) {
+          clearTimeout(plugin.reachabilityTimeout);
+          plugin.reachabilityTimeout = undefined;
+          this.log.debug(`Plugin ${plg}${plugin.name}${db} reachability timeout cleared`);
         }
       }
 
@@ -1123,74 +1163,80 @@ export class Matterbridge extends EventEmitter {
         this.webSocketServer = undefined;
       }
 
-      const cleanupTimeout1 = setTimeout(async () => {
-        // Closing matter
-        await this.stopMatter();
+      // this.cleanupTimeout1 = setTimeout(async () => {
+      // Closing matter
+      await this.stopMatter();
 
-        // Closing storage
-        await this.stopStorage();
+      // Closing storage
+      await this.stopStorage();
 
-        // Serialize registeredDevices
-        if (this.nodeStorage && this.nodeContext) {
-          this.log.info('Saving registered devices...');
-          const serializedRegisteredDevices: SerializedMatterbridgeDevice[] = [];
-          this.registeredDevices.forEach((registeredDevice) => {
-            const serializedMatterbridgeDevice = registeredDevice.device.serialize(registeredDevice.plugin);
-            // this.log.info(`- ${serializedMatterbridgeDevice.deviceName}${rs}\n`, serializedMatterbridgeDevice);
-            if (serializedMatterbridgeDevice) serializedRegisteredDevices.push(serializedMatterbridgeDevice);
-          });
-          await this.nodeContext.set<SerializedMatterbridgeDevice[]>('devices', serializedRegisteredDevices);
-          this.log.info(`Saved registered devices (${serializedRegisteredDevices?.length})`);
-          // Clear nodeContext and nodeStorage (they just need 1000ms to write the data to disk)
-          this.log.debug('Closing node storage context...');
-          this.nodeContext.close();
-          this.nodeContext = undefined;
-          this.log.debug('Closing node storage manager...');
-          this.nodeStorage.close();
-          this.nodeStorage = undefined;
-        } else {
-          this.log.error('Error saving registered devices: nodeContext not found!');
-        }
-        this.registeredPlugins = [];
-        this.registeredDevices = [];
-
-        this.log.info('Waiting for matter to deliver last messages...');
-        const cleanupTimeout2 = setTimeout(async () => {
-          if (restart) {
-            if (message === 'updating...') {
-              this.log.info('Cleanup completed. Updating...');
-              Matterbridge.instance = undefined;
-              this.emit('update');
-            } else if (message === 'restarting...') {
-              this.log.info('Cleanup completed. Restarting...');
-              Matterbridge.instance = undefined;
-              this.emit('restart');
-            }
-          } else {
-            if (message === 'shutting down with reset...') {
-              // Delete matter storage file
-              this.log.info('Resetting Matterbridge commissioning information...');
-              await fs.unlink(path.join(this.matterbridgeDirectory, 'matterbridge.json'));
-              this.log.info('Reset done! Remove all paired devices from the controllers.');
-            }
-            if (message === 'shutting down with factory reset...') {
-              // Delete matter storage file
-              this.log.info('Resetting Matterbridge commissioning information...');
-              await fs.unlink(path.join(this.matterbridgeDirectory, 'matterbridge.json'));
-              // Delete node storage directory with its subdirectories
-              this.log.info('Resetting Matterbridge storage...');
-              await fs.rm(path.join(this.matterbridgeDirectory, 'storage'), { recursive: true });
-              this.log.info('Factory reset done! Remove all paired devices from the controllers.');
-            }
-            this.log.info('Cleanup completed. Shutting down...');
-            Matterbridge.instance = undefined;
-            this.emit('shutdown');
+      // Serialize registeredDevices
+      if (this.nodeStorage && this.nodeContext) {
+        this.log.info('Saving registered devices...');
+        const serializedRegisteredDevices: SerializedMatterbridgeDevice[] = [];
+        this.registeredDevices.forEach((registeredDevice) => {
+          const serializedMatterbridgeDevice = registeredDevice.device.serialize(registeredDevice.plugin);
+          // this.log.info(`- ${serializedMatterbridgeDevice.deviceName}${rs}\n`, serializedMatterbridgeDevice);
+          if (serializedMatterbridgeDevice) serializedRegisteredDevices.push(serializedMatterbridgeDevice);
+        });
+        await this.nodeContext.set<SerializedMatterbridgeDevice[]>('devices', serializedRegisteredDevices);
+        this.log.info(`Saved registered devices (${serializedRegisteredDevices?.length})`);
+        // Clear nodeContext and nodeStorage (they just need 1000ms to write the data to disk)
+        this.log.debug(`Closing node storage context for ${plg}Matterbridge${db}...`);
+        await this.nodeContext.close();
+        this.nodeContext = undefined;
+        for (const plugin of this.registeredPlugins) {
+          if (plugin.nodeContext) {
+            this.log.debug(`Closing node storage context for plugin ${plg}${plugin.name}${db}...`);
+            await plugin.nodeContext.close();
+            plugin.nodeContext = undefined;
           }
-          this.hasCleanupStarted = false;
-        }, 2 * 1000);
-        cleanupTimeout2.unref();
-      }, 3 * 1000);
-      cleanupTimeout1.unref();
+        }
+        this.log.debug('Closing node storage manager...');
+        await this.nodeStorage.close();
+        this.nodeStorage = undefined;
+      } else {
+        this.log.error('Error saving registered devices: nodeContext not found!');
+      }
+      this.registeredPlugins = [];
+      this.registeredDevices = [];
+
+      // this.log.info('Waiting for matter to deliver last messages...');
+
+      // this.cleanupTimeout2 = setTimeout(async () => {
+      if (restart) {
+        if (message === 'updating...') {
+          this.log.info('Cleanup completed. Updating...');
+          Matterbridge.instance = undefined;
+          this.emit('update');
+        } else if (message === 'restarting...') {
+          this.log.info('Cleanup completed. Restarting...');
+          Matterbridge.instance = undefined;
+          this.emit('restart');
+        }
+      } else {
+        if (message === 'shutting down with reset...') {
+          // Delete matter storage file
+          this.log.info('Resetting Matterbridge commissioning information...');
+          await fs.unlink(path.join(this.matterbridgeDirectory, 'matterbridge.json'));
+          this.log.info('Reset done! Remove all paired devices from the controllers.');
+        }
+        if (message === 'shutting down with factory reset...') {
+          // Delete matter storage file
+          this.log.info('Resetting Matterbridge commissioning information...');
+          await fs.unlink(path.join(this.matterbridgeDirectory, 'matterbridge.json'));
+          // Delete node storage directory with its subdirectories
+          this.log.info('Resetting Matterbridge storage...');
+          await fs.rm(path.join(this.matterbridgeDirectory, 'storage'), { recursive: true });
+          this.log.info('Factory reset done! Remove all paired devices from the controllers.');
+        }
+        this.log.info('Cleanup completed. Shutting down...');
+        Matterbridge.instance = undefined;
+        this.emit('shutdown');
+      }
+      this.hasCleanupStarted = false;
+      // }, 2 * 1000);
+      // }, 3 * 1000);
     }
   }
 
@@ -2017,7 +2063,7 @@ export class Matterbridge extends EventEmitter {
         await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
 
         // Setting reachability to true
-        setTimeout(() => {
+        this.reachabilityTimeout = setTimeout(() => {
           this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
           if (this.commissioningServer) this.setCommissioningServerReachability(this.commissioningServer, true);
           if (this.matterAggregator) this.setAggregatorReachability(this.matterAggregator, true);
@@ -2084,7 +2130,7 @@ export class Matterbridge extends EventEmitter {
           }
           await this.showCommissioningQRCode(plugin.commissioningServer, plugin.storageContext, plugin.nodeContext, plugin.name);
           // Setting reachability to true
-          setTimeout(() => {
+          plugin.reachabilityTimeout = setTimeout(() => {
             this.log.info(`Setting reachability to true for ${plg}${plugin.name}${db}`);
             if (plugin.commissioningServer) this.setCommissioningServerReachability(plugin.commissioningServer, true);
             if (plugin.type === 'AccessoryPlatform' && plugin.device) this.setDeviceReachability(plugin.device, true);
