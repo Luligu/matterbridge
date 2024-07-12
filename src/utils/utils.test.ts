@@ -94,6 +94,69 @@ describe('Utils test', () => {
     expect(deepEqual(bridgeGroups, copy)).toBeTruthy();
   });
 
+  test('copies primitive values', () => {
+    expect(deepCopy(42)).toBe(42);
+    expect(deepCopy('string')).toBe('string');
+    expect(deepCopy(true)).toBe(true);
+    expect(deepCopy(undefined)).toBe(undefined);
+    expect(deepCopy(null)).toBe(null);
+    const symbol = Symbol('sym');
+    expect(deepCopy(symbol)).toBe(symbol);
+  });
+
+  test('copies arrays', () => {
+    const arr = [1, 'two', [3, 4], { five: 6 }];
+    const copiedArr = deepCopy(arr);
+    expect(copiedArr).toEqual(arr);
+    expect(copiedArr).not.toBe(arr);
+    expect(copiedArr[2]).not.toBe(arr[2]);
+    expect(copiedArr[3]).not.toBe(arr[3]);
+  });
+
+  test('copies Date objects', () => {
+    const date = new Date();
+    const copiedDate = deepCopy(date);
+    expect(copiedDate).toEqual(date);
+    expect(copiedDate).not.toBe(date);
+  });
+
+  test('copies Map objects', () => {
+    const map = new Map([
+      [1, 'one'],
+      [2, 'two'],
+    ]);
+    const copiedMap = deepCopy(map);
+    expect(copiedMap).toEqual(map);
+    expect(copiedMap).not.toBe(map);
+  });
+
+  test('copies Set objects', () => {
+    const set = new Set([1, 'two', { three: 4 }]);
+    const copiedSet = deepCopy(set);
+    expect(copiedSet).toEqual(set);
+    expect(copiedSet).not.toBe(set);
+  });
+
+  test('copies generic objects', () => {
+    const obj = {
+      num: 1,
+      str: 'string',
+      arr: [2, 3],
+      obj: { nested: true },
+      date: new Date(),
+      map: new Map([[1, 'one']]),
+      set: new Set([1, 2, 3]),
+    };
+    const copiedObj = deepCopy(obj);
+    expect(copiedObj).toEqual(obj);
+    expect(copiedObj).not.toBe(obj);
+    expect(copiedObj.arr).not.toBe(obj.arr);
+    expect(copiedObj.obj).not.toBe(obj.obj);
+    expect(copiedObj.date).not.toBe(obj.date);
+    expect(copiedObj.map).not.toBe(obj.map);
+    expect(copiedObj.set).not.toBe(obj.set);
+  });
+
   test('Address ipv4', () => {
     expect(getIpv4InterfaceAddress()).not.toBe('192.168.1.000');
   });
@@ -103,7 +166,7 @@ describe('Utils test', () => {
   });
 
   test('Log interfaces', () => {
-    expect(logInterfaces()).not.toBe('fd78::4939:746:d555:85a9:74f6:9c6');
+    expect(logInterfaces(false)).not.toBe('fd78::4939:746:d555:85a9:74f6:9c6');
   });
 
   test('Is valid ipv4 address', () => {

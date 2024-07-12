@@ -243,9 +243,10 @@ export function isValidIpv4Address(ipv4Address: string): boolean {
 
 /**
  * Logs the available network interfaces and their details.
- * @returns The IPv6 address of the network interface, if available.
+ * @param {boolean} log - Whether to enable logging of network interface details.
+ * @returns {string | undefined} The IPv6 address of the network interface, if available.
  */
-export function logInterfaces(): string | undefined {
+export function logInterfaces(log = true): string | undefined {
   let ipv6Address: string | undefined;
   const networkInterfaces = os.networkInterfaces();
 
@@ -253,10 +254,10 @@ export function logInterfaces(): string | undefined {
   for (const [interfaceName, networkInterface] of Object.entries(networkInterfaces)) {
     if (!networkInterface) break;
     // eslint-disable-next-line no-console
-    console.log('Interface:', '\u001B[48;5;21m\u001B[38;5;255m', interfaceName, '\u001B[40;0m');
+    if (log) console.log('Interface:', '\u001B[48;5;21m\u001B[38;5;255m', interfaceName, '\u001B[40;0m');
     for (const detail of networkInterface) {
       // eslint-disable-next-line no-console
-      console.log('Details:', detail);
+      if (log) console.log('Details:', detail);
     }
   }
   return ipv6Address;
