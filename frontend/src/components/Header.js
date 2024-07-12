@@ -81,7 +81,7 @@ function Header() {
     setTimeout(() => {
       setOpen(false);
       window.location.reload();
-    }, 20000);
+    }, 5000);
   };
 
   const handleRestartClick = () => {
@@ -93,7 +93,7 @@ function Header() {
     setTimeout(() => {
       setOpen(false);
       window.location.reload();
-    }, 20000);
+    }, 5000);
   };
 
   const handleShutdownClick = () => {
@@ -102,7 +102,7 @@ function Header() {
     setTimeout(() => {
       setOpen(false);
       window.location.reload();
-    }, 20000);
+    }, 5000);
   };
 
   useEffect(() => {

@@ -12,6 +12,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [package]: Update dependencies.
 - [matterbridge]: Removed timeout on cleanup (saved 5 seconds on restart and shutdown).
+- [frontend]: Frontned reduced timeout to reload page to 5 seconds.
 
 ### Fixed
 
