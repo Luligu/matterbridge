@@ -34,6 +34,8 @@ export * from '@project-chip/matter.js/tlv';
 
 // TODO Remove in august 2024
 export * from 'matter-history';
+export * from './utils/utils.js';
+export * from './utils/colorUtils.js';
 
 export * from './matterbridge.js';
 export * from './matterbridgeDevice.js';
@@ -63,8 +65,6 @@ export * from './cluster/PowerTopologyCluster.js';
 export * from './cluster/RadonConcentrationMeasurementCluster.js';
 export * from './cluster/SmokeCoAlarmCluster.js';
 export * from './cluster/TvocCluster.js';
-
-// export * from './utils.js';
 
 async function main() {
   // eslint-disable-next-line no-console
