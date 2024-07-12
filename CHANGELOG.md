@@ -11,6 +11,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [package]: Update dependencies.
+- [matterbridge]: Removed timeout on cleanup (saved 5 seconds on restart and shutdown).
 
 ### Fixed
 

@@ -43,6 +43,7 @@ export * from './matterbridgePlatform.js';
 export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
 
+// TODO Refactor all plugins to import from matterbridge/cluster and remove in september 2024
 export * from './cluster/AirQualityCluster.js';
 export * from './cluster/BooleanStateConfigurationCluster.js';
 export * from './cluster/CarbonDioxideConcentrationMeasurementCluster.js';
