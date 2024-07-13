@@ -120,12 +120,14 @@ describe('Matterbridge', () => {
     expect(JSON.stringify((matterbridge as any).sanitizeSessionInformation(sessionInfos)).length).toBe(471);
   });
 
-  test('Load plugins from storage', () => {
+  test('Load plugins from storage', async () => {
     expect((matterbridge as any).loadPluginsFromStorage()).not.toBeNull();
+    await wait(1000, 'Wait for the storage', false);
   });
 
-  test('Save plugins to storage', () => {
+  test('Save plugins to storage', async () => {
     expect((matterbridge as any).savePluginsToStorage()).not.toBeNull();
+    await wait(1000, 'Wait for the storage', false);
   });
 
   test('matterbridge -list', async () => {

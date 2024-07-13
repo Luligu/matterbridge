@@ -22,7 +22,7 @@
  */
 
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
-import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr, RED, GREEN, zb, hk, or, idn, BLUE } from 'node-ansi-logger';
+import { AnsiLogger, BRIGHT, RESET, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, er, nf, rs, wr, RED, GREEN, zb, hk, or, idn, BLUE, CYAN } from 'node-ansi-logger';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { promises as fs } from 'fs';
 import { ExecException, exec, spawn } from 'child_process';
@@ -235,6 +235,8 @@ export class Matterbridge extends EventEmitter {
   private passcode?: number; // first commissioning server passcode
   private discriminator?: number; // first commissioning server discriminator
   private log!: AnsiLogger;
+  private matterStorageName = 'matterbridge.json'; // + (getParameter('profile') ? '-' + getParameter('profile') : '')
+  private nodeStorageName = 'storage'; // + (getParameter('profile') ? '-' + getParameter('profile') : '')
 
   private hasCleanupStarted = false;
   private cleanupTimeout1: NodeJS.Timeout | undefined;
@@ -374,7 +376,7 @@ export class Matterbridge extends EventEmitter {
     Logger.format = Format.ANSI;
 
     // Start the storage and create matterbridgeContext
-    await this.startStorage('json', path.join(this.matterbridgeDirectory, 'matterbridge.json'));
+    await this.startStorage('json', path.join(this.matterbridgeDirectory, this.matterStorageName));
     if (!this.storageManager) return false;
     this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge zigbee2MQTT', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'zigbee2MQTT Matter extension');
     if (!this.matterbridgeContext) return false;
@@ -495,11 +497,11 @@ export class Matterbridge extends EventEmitter {
     this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled });
     this.log.debug('Matterbridge is starting...');
 
-    // Initialize NodeStorage
+    // Initialize nodeStorage and nodeContext
     this.homeDirectory = os.homedir();
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
-    this.log.debug('Creating node storage manager');
-    this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, 'storage'), logging: false });
+    this.log.debug(`Creating node storage manager: ${CYAN}${this.nodeStorageName}${db}`);
+    this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, this.nodeStorageName), writeQueue: false, expiredInterval: undefined, logging: false });
     this.log.debug('Creating node storage context for matterbridge');
     this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
 
@@ -525,7 +527,7 @@ export class Matterbridge extends EventEmitter {
           this.log.error(`Error installing plugin ${plg}${plugin.name}${er}. The plugin is disabled.`);
         }
       }
-      this.log.debug(`Creating node storage context for plugin ${plugin.name}`);
+      this.log.debug(`Creating node storage context for plugin  ${plg}${plugin.name}${db}`);
       plugin.nodeContext = await this.nodeStorage.createStorage(plugin.name);
       await plugin.nodeContext.set<string>('name', plugin.name);
       await plugin.nodeContext.set<string>('type', plugin.type);
@@ -654,13 +656,13 @@ export class Matterbridge extends EventEmitter {
     if (hasParameter('factoryreset')) {
       try {
         // Delete matter storage file
-        await fs.unlink(path.join(this.matterbridgeDirectory, 'matterbridge.json'));
+        await fs.unlink(path.join(this.matterbridgeDirectory, this.matterStorageName));
       } catch (err) {
         this.log.error(`Error deleting storage: ${err}`);
       }
       try {
         // Delete node storage directory with its subdirectories
-        await fs.rm(path.join(this.matterbridgeDirectory, 'storage'), { recursive: true });
+        await fs.rm(path.join(this.matterbridgeDirectory, this.nodeStorageName), { recursive: true });
       } catch (err) {
         this.log.error(`Error removing storage directory: ${err}`);
       }
@@ -669,7 +671,7 @@ export class Matterbridge extends EventEmitter {
       return;
     }
 
-    // Start the storage and create matterbridgeContext (we need it now for frontend and later for matterbridge)
+    // Start the storage and create matterbridgeContext
     await this.startStorage('json', path.join(this.matterbridgeDirectory, 'matterbridge.json'));
     this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
 
@@ -1087,7 +1089,7 @@ export class Matterbridge extends EventEmitter {
         this.log.debug('Matterbridge reachability timeout cleared');
       }
 
-      // Calling the shutdown method of each plugin and clean up the reachability timeout
+      // Calling the shutdown method of each plugin and clear the reachability timeout
       for (const plugin of this.registeredPlugins) {
         if (!plugin.enabled || plugin.error) continue;
         this.log.info(`Shutting down plugin ${plg}${plugin.name}${nf}`);
@@ -1147,15 +1149,6 @@ export class Matterbridge extends EventEmitter {
       }
       */
 
-      // Close the express server
-      /*
-      if (this.expressServer) {
-        this.expressServer.close();
-        this.expressServer.removeAllListeners();
-        this.expressServer = undefined;
-        this.log.debug('Express server closed successfully');
-      }
-      */
       // Close the http server
       if (this.httpServer) {
         this.httpServer.close();
@@ -1215,11 +1208,14 @@ export class Matterbridge extends EventEmitter {
         // Clear nodeContext and nodeStorage (they just need 1000ms to write the data to disk)
         this.log.debug(`Closing node storage context for ${plg}Matterbridge${db}...`);
         await this.nodeContext.close();
+        // console.log('nodeContext:', (this.nodeContext as any).storage);
         this.nodeContext = undefined;
+        // Clear nodeContext for each plugin (they just need 1000ms to write the data to disk)
         for (const plugin of this.registeredPlugins) {
           if (plugin.nodeContext) {
             this.log.debug(`Closing node storage context for plugin ${plg}${plugin.name}${db}...`);
             await plugin.nodeContext.close();
+            // console.log('nodeContext:', (plugin.nodeContext as any).storage);
             plugin.nodeContext = undefined;
           }
         }
@@ -1233,7 +1229,6 @@ export class Matterbridge extends EventEmitter {
       this.registeredDevices = [];
 
       // this.log.info('Waiting for matter to deliver last messages...');
-
       // this.cleanupTimeout2 = setTimeout(async () => {
       if (restart) {
         if (message === 'updating...') {
@@ -1258,7 +1253,7 @@ export class Matterbridge extends EventEmitter {
           await fs.unlink(path.join(this.matterbridgeDirectory, 'matterbridge.json'));
           // Delete node storage directory with its subdirectories
           this.log.info('Resetting Matterbridge storage...');
-          await fs.rm(path.join(this.matterbridgeDirectory, 'storage'), { recursive: true });
+          await fs.rm(path.join(this.matterbridgeDirectory, this.nodeStorageName), { recursive: true });
           this.log.info('Factory reset done! Remove all paired devices from the controllers.');
         }
         this.log.info('Cleanup completed. Shutting down...');
@@ -1452,8 +1447,8 @@ export class Matterbridge extends EventEmitter {
         await this.backupJsonStorage(storageName, storageName.replace('.json', '') + '.backup.json');
       }
     } catch (error) {
-      this.log.error('Storage initialize() error! The file .matterbridge/matterbridge.json may be corrupted.');
-      this.log.error('Please delete it and rename matterbridge.backup.json to matterbridge.json and try to restart Matterbridge.');
+      this.log.error(`Storage initialize() error! The file .matterbridge/${storageName} may be corrupted.`);
+      this.log.error(`Please delete it and rename matterbridge.backup.json to ${storageName} and try to restart Matterbridge.`);
       await this.cleanup('Storage initialize() error!');
     }
   }

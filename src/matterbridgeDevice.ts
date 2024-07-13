@@ -319,8 +319,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       definition.forEach((deviceType) => {
         this.addDeviceType(deviceType);
       });
-    }
-    this.addDeviceType(firstDefinition);
+    } else this.addDeviceType(firstDefinition);
   }
 
   /**
