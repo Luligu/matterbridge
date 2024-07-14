@@ -45,27 +45,15 @@ describe('Matterbridge platform', () => {
       // console.log(`Mocked removeAllBridgedDevices: ${pluginName}`);
       return Promise.resolve();
     });
+
+    // Load the Matterbridge instance
     matterbridge = await Matterbridge.loadInstance(true);
     platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'test', type: 'type', debug: false, unregisterOnShutdown: false });
   });
 
   afterAll(async () => {
     // Destroy the Matterbridge instance
-    await matterbridge.destroyInstance(false);
-
-    /*
-    await waiter(
-      'Matterbridge destroyed',
-      () => {
-        return (Matterbridge as any).instance === undefined;
-      },
-      false,
-      20000,
-    );
-
-    // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion) and the storage to close
-    await wait(1000, 'Wait for the Matterbridge instance to be destroyed', false);
-    */
+    await matterbridge.destroyInstance();
 
     // Restore the mocked AnsiLogger.log method
     (AnsiLogger.prototype.log as jest.Mock).mockRestore();

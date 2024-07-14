@@ -34,6 +34,47 @@ const plg = '\u001B[38;5;33m';
 const dev = '\u001B[38;5;79m';
 const typ = '\u001B[38;5;207m';
 
+describe('Matterbridge loadInstance() and cleanup()', () => {
+  let matterbridge: Matterbridge;
+
+  beforeAll(async () => {
+    // Mock the AnsiLogger.log method
+    jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
+      console.log(`Mocked log: ${level} - ${message}`, ...parameters);
+    });
+  });
+
+  afterAll(async () => {
+    // Restore the mocked AnsiLogger.log method
+    (AnsiLogger.prototype.log as jest.Mock).mockRestore();
+  }, 60000);
+
+  test('Matterbridge.loadInstance(false)', async () => {
+    console.log('Loading Matterbridge.loadInstance(false)');
+    matterbridge = await Matterbridge.loadInstance(false);
+    console.log('Loaded Matterbridge.loadInstance(false)');
+
+    expect(matterbridge).toBeDefined();
+    expect(matterbridge.initialized).toBeFalsy();
+    expect((matterbridge as any).log).toBeUndefined();
+    expect((matterbridge as any).homeDirectory).toBe('');
+    expect((matterbridge as any).matterbridgeDirectory).toBe('');
+    expect((matterbridge as any).nodeStorage).toBeUndefined();
+    expect((matterbridge as any).nodeContext).toBeUndefined();
+    expect((matterbridge as any).registeredPlugins).toHaveLength(0);
+    expect((matterbridge as any).registeredDevices).toHaveLength(0);
+    expect((matterbridge as any).globalModulesDirectory).toBe('');
+    expect((matterbridge as any).matterbridgeLatestVersion).toBe('');
+
+    // Destroy the Matterbridge instance
+    console.log('Destroying Matterbridge.loadInstance(false)');
+    matterbridge.globalModulesDirectory = 'xxx';
+    matterbridge.matterbridgeLatestVersion = 'xxx';
+    await matterbridge.destroyInstance();
+    console.log('Destroyed Matterbridge.loadInstance(false)');
+  });
+});
+
 describe('Matterbridge', () => {
   let matterbridge: Matterbridge;
 
@@ -43,19 +84,17 @@ describe('Matterbridge', () => {
       console.log(`Mocked log: ${level} - ${message}`, ...parameters);
     });
 
-    console.log('Loading Matterbridge');
+    console.log('Loading Matterbridge.loadInstance(true)');
     matterbridge = await Matterbridge.loadInstance(true);
-    console.log('Loaded Matterbridge');
+    if (!matterbridge.initialized) await matterbridge.initialize();
+    console.log('Loaded Matterbridge.loadInstance(true)');
   });
 
   afterAll(async () => {
     // Destroy the Matterbridge instance
-    console.log('Destroying Matterbridge');
-    await matterbridge.destroyInstance(false);
-    console.log('Destroyed Matterbridge');
-
-    // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion)
-    await wait(1000, 'Wait for the Matterbridge instance to be destroyed', false);
+    console.log('Destroying Matterbridge.loadInstance(true)');
+    await matterbridge.destroyInstance();
+    console.log('Destroyed Matterbridge.loadInstance(true)');
 
     // Restore the mocked AnsiLogger.log method
     (AnsiLogger.prototype.log as jest.Mock).mockRestore();

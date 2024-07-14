@@ -41,7 +41,7 @@ describe('Matterbridge dynamic platform', () => {
     expect(platform.type).toBe('DynamicPlatform');
 
     // Destroy the Matterbridge instance
-    await matterbridge.destroyInstance(false);
+    await matterbridge.destroyInstance();
     expect((Matterbridge as any).instance).toBeUndefined();
 
     /*

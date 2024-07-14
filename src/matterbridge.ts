@@ -40,7 +40,7 @@ import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridge
 import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import { shelly_config, somfytahoma_config, zigbee2mqtt_config } from './defaultConfigSchema.js';
 import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
-import { logInterfaces, wait } from './utils/utils.js';
+import { logInterfaces, wait, waiter } from './utils/utils.js';
 
 // @project-chip/matter-node.js
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
@@ -214,6 +214,7 @@ export class Matterbridge extends EventEmitter {
     matterLoggerLevel: Level.INFO,
   };
 
+  public initialized = false;
   public homeDirectory = '';
   public rootDirectory = '';
   public matterbridgeDirectory = '';
@@ -296,38 +297,19 @@ export class Matterbridge extends EventEmitter {
    * @deprecated This method is deprecated and is only used for jest tests.
    *
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async destroyInstance(force = false) {
-    await this.shutdownProcess();
-    /*
-    if (force) {
-      if (this.checkUpdateInterval) clearTimeout(this.checkUpdateInterval);
-      this.checkUpdateInterval = undefined;
-      if (this.cleanupTimeout1) clearTimeout(this.cleanupTimeout1);
-      this.cleanupTimeout1 = undefined;
-      if (this.cleanupTimeout2) clearTimeout(this.cleanupTimeout2);
-      this.cleanupTimeout2 = undefined;
-      if (this.reachabilityTimeout) clearTimeout(this.reachabilityTimeout);
-      this.reachabilityTimeout = undefined;
-      for (const plugin of this.registeredPlugins) {
-        if (plugin.reachabilityTimeout) clearTimeout(plugin.reachabilityTimeout);
-        plugin.reachabilityTimeout = undefined;
-      }
-      for (const plugin of this.registeredPlugins) {
-        if (plugin.nodeContext) plugin.nodeContext.close();
-        plugin.nodeContext = undefined;
-      }
-      if (this.nodeContext) {
-        await this.nodeContext.close();
-        this.nodeContext = undefined;
-      }
-      if (this.nodeStorage) {
-        await this.nodeStorage.close();
-        this.nodeStorage = undefined;
-      }
-    }
-    */
-    await wait(2000, 'Wait for the global node_modules and matterbridge version', false);
+  async destroyInstance() {
+    await this.cleanup('destroying instance...', false);
+    await waiter(
+      'destroying instance...',
+      () => {
+        return this.matterbridgeLatestVersion !== '' && this.globalModulesDirectory !== '' ? true : false;
+      },
+      false,
+      5000,
+      100,
+      true,
+    );
+    await wait(1000, 'Wait for the global node_modules and matterbridge version', false);
   }
 
   /**
@@ -578,6 +560,8 @@ export class Matterbridge extends EventEmitter {
 
     // Parse command line
     await this.parseCommandLine();
+
+    this.initialized = true;
   }
 
   /**
@@ -1079,7 +1063,7 @@ export class Matterbridge extends EventEmitter {
    * @returns A promise that resolves when the cleanup is completed.
    */
   private async cleanup(message: string, restart = false) {
-    if (!this.hasCleanupStarted) {
+    if (this.initialized && !this.hasCleanupStarted) {
       this.hasCleanupStarted = true;
       this.log.info(message);
 
@@ -1270,6 +1254,7 @@ export class Matterbridge extends EventEmitter {
         this.emit('shutdown');
       }
       this.hasCleanupStarted = false;
+      this.initialized = false;
       // }, 2 * 1000);
       // }, 3 * 1000);
     }

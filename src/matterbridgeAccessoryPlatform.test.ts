@@ -39,25 +39,9 @@ describe('Matterbridge accessory platform', () => {
 
     const platform = new MatterbridgeAccessoryPlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'test', type: 'type', debug: false, unregisterOnShutdown: false });
     expect(platform.type).toBe('AccessoryPlatform');
+
     // Destroy the Matterbridge instance
-    await matterbridge.destroyInstance(false);
+    await matterbridge.destroyInstance();
     expect((Matterbridge as any).instance).toBeUndefined();
-
-    /*
-    // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion)
-    await waiter(
-      'Matterbridge destroyInstance()',
-      () => {
-        return (Matterbridge as any).instance === undefined;
-      },
-      false,
-      20000,
-      500,
-      false,
-    );
-
-    // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion) and the storage to close
-    await wait(1000, 'Wait for the Matterbridge instance to be destroyed', false);
-    */
   }, 60000);
 });
