@@ -37,6 +37,7 @@ export * from './matterbridgeDevice.js';
 export * from './matterbridgePlatform.js';
 export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
+export * from './matterbridgeTypes.js';
 
 // TODO Remove in august 2024
 export * from 'matter-history';

@@ -2,7 +2,7 @@
 /* eslint-disable jest/no-conditional-expect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-frontend', '0'];
+process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest'];
 
 import { jest } from '@jest/globals';
 

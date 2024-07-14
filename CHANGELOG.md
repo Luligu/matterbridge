@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
-## [1.3.15] - 2024-07-13
+## [1.3.16] - 2024-07-13
 
 ### Added
 
@@ -14,6 +14,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Removed timeout on cleanup (saved 5 seconds on restart and shutdown).
 - [matterbridge]: Removed write cache and expired interval for node storage.
 - [frontend]: Frontend reduced timeout to reload page to 5 seconds.
+- [matterbridge]: Added matterbridgeTypes.ts
 
 ### Fixed
 

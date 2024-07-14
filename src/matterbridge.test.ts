@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-loss-of-precision */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -36,23 +35,30 @@ const typ = '\u001B[38;5;207m';
 
 describe('Matterbridge loadInstance() and cleanup()', () => {
   let matterbridge: Matterbridge;
+  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
 
   beforeAll(async () => {
-    // Mock the AnsiLogger.log method
+    // Spy on and mock the AnsiLogger.log method
     jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
-      console.log(`Mocked log: ${level} - ${message}`, ...parameters);
+      // console.log(`Mocked log: ${level} - ${message}`, ...parameters);
+    });
+    // Spy on and mock console.log
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
+      // Mock implementation or empty function
     });
   });
 
   afterAll(async () => {
     // Restore the mocked AnsiLogger.log method
     (AnsiLogger.prototype.log as jest.Mock).mockRestore();
+    // Restore the mocked console.log
+    consoleLogSpy.mockRestore();
   }, 60000);
 
   test('Matterbridge.loadInstance(false)', async () => {
-    console.log('Loading Matterbridge.loadInstance(false)');
+    // console.log('Loading Matterbridge.loadInstance(false)');
     matterbridge = await Matterbridge.loadInstance(false);
-    console.log('Loaded Matterbridge.loadInstance(false)');
+    // console.log('Loaded Matterbridge.loadInstance(false)');
 
     expect(matterbridge).toBeDefined();
     expect(matterbridge.initialized).toBeFalsy();
@@ -67,37 +73,44 @@ describe('Matterbridge loadInstance() and cleanup()', () => {
     expect((matterbridge as any).matterbridgeLatestVersion).toBe('');
 
     // Destroy the Matterbridge instance
-    console.log('Destroying Matterbridge.loadInstance(false)');
+    // console.log('Destroying Matterbridge.loadInstance(false)');
     matterbridge.globalModulesDirectory = 'xxx';
     matterbridge.matterbridgeLatestVersion = 'xxx';
     await matterbridge.destroyInstance();
-    console.log('Destroyed Matterbridge.loadInstance(false)');
+    // console.log('Destroyed Matterbridge.loadInstance(false)');
   });
 });
 
 describe('Matterbridge', () => {
   let matterbridge: Matterbridge;
+  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
 
   beforeAll(async () => {
     // Mock the AnsiLogger.log method
     jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
-      console.log(`Mocked log: ${level} - ${message}`, ...parameters);
+      // console.log(`Mocked log: ${level} - ${message}`, ...parameters);
+    });
+    // Spy on and mock console.log
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
+      // Mock implementation or empty function
     });
 
-    console.log('Loading Matterbridge.loadInstance(true)');
+    // console.log('Loading Matterbridge.loadInstance(true)');
     matterbridge = await Matterbridge.loadInstance(true);
     if (!matterbridge.initialized) await matterbridge.initialize();
-    console.log('Loaded Matterbridge.loadInstance(true)');
+    // console.log('Loaded Matterbridge.loadInstance(true)');
   });
 
   afterAll(async () => {
     // Destroy the Matterbridge instance
-    console.log('Destroying Matterbridge.loadInstance(true)');
+    // console.log('Destroying Matterbridge.loadInstance(true)');
     await matterbridge.destroyInstance();
-    console.log('Destroyed Matterbridge.loadInstance(true)');
+    // console.log('Destroyed Matterbridge.loadInstance(true)');
 
     // Restore the mocked AnsiLogger.log method
     (AnsiLogger.prototype.log as jest.Mock).mockRestore();
+    // Restore the mocked console.log
+    consoleLogSpy.mockRestore();
   }, 60000);
 
   test('should do a partial mock of AnsiLogger', () => {
@@ -170,6 +183,17 @@ describe('Matterbridge', () => {
     expect(await (matterbridge as any).savePluginsToStorage()).toHaveLength(0);
     // await wait(1000, 'Wait for the storage', false);
   });
+
+  test('matterbridge -help', async () => {
+    const shutdownPromise = new Promise((resolve) => {
+      matterbridge.on('shutdown', resolve);
+    });
+    process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-help'];
+    await (matterbridge as any).parseCommandLine();
+    expect((matterbridge as any).log.log).toHaveBeenCalled();
+    await shutdownPromise;
+    // await wait(1000, 'Wait for the storage', false);
+  }, 60000);
 
   test('matterbridge -list', async () => {
     const shutdownPromise = new Promise((resolve) => {

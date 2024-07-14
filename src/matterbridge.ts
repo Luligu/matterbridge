@@ -41,11 +41,12 @@ import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbr
 import { shelly_config, somfytahoma_config, zigbee2mqtt_config } from './defaultConfigSchema.js';
 import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
 import { logInterfaces, wait, waiter } from './utils/utils.js';
+import { BaseRegisteredPlugin, MatterbridgeInformation, RegisteredDevice, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 
 // @project-chip/matter-node.js
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
 import { BasicInformationCluster, ClusterServer, FixedLabelCluster, GeneralCommissioning, PowerSourceCluster, SwitchCluster, ThreadNetworkDiagnosticsCluster, getClusterNameById } from '@project-chip/matter-node.js/cluster';
-import { DeviceTypeId, EndpointNumber, FabricIndex, NodeId, VendorId } from '@project-chip/matter-node.js/datatype';
+import { DeviceTypeId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter-node.js/device';
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
 import { ManualPairingCodeCodec, QrCodeSchema } from '@project-chip/matter-node.js/schema';
@@ -54,121 +55,6 @@ import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } fr
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
-
-// Define an interface for storing the plugins
-export interface RegisteredPlugin extends BaseRegisteredPlugin {
-  nodeContext?: NodeStorage;
-  storageContext?: StorageContext;
-  commissioningServer?: CommissioningServer;
-  aggregator?: Aggregator;
-  device?: MatterbridgeDevice;
-  platform?: MatterbridgePlatform;
-  reachabilityTimeout?: NodeJS.Timeout;
-}
-
-// Simplified interface for saving the plugins in node storage
-export interface BaseRegisteredPlugin {
-  path: string;
-  type: string;
-  name: string;
-  version: string;
-  description: string;
-  author: string;
-  latestVersion?: string;
-  locked?: boolean;
-  error?: boolean;
-  enabled?: boolean;
-  loaded?: boolean;
-  started?: boolean;
-  configured?: boolean;
-  paired?: boolean;
-  connected?: boolean;
-  fabricInformations?: SanitizedExposedFabricInformation[];
-  sessionInformations?: SanitizedSessionInformation[];
-  registeredDevices?: number;
-  addedDevices?: number;
-  qrPairingCode?: string;
-  manualPairingCode?: string;
-  configJson?: PlatformConfig;
-  schemaJson?: PlatformSchema;
-}
-
-// Define an interface for storing the devices
-interface RegisteredDevice {
-  plugin: string;
-  device: MatterbridgeDevice;
-}
-
-// Define an interface for storing the system information
-interface SystemInformation {
-  interfaceName: string;
-  macAddress: string;
-  ipv4Address: string;
-  ipv6Address: string;
-  nodeVersion: string;
-  hostname: string;
-  user: string;
-  osType: string;
-  osRelease: string;
-  osPlatform: string;
-  osArch: string;
-  totalMemory: string;
-  freeMemory: string;
-  systemUptime: string;
-}
-
-// Define an interface for storing the matterbridge information
-interface MatterbridgeInformation {
-  homeDirectory: string;
-  rootDirectory: string;
-  matterbridgeDirectory: string;
-  matterbridgePluginDirectory: string;
-  globalModulesDirectory: string;
-  matterbridgeVersion: string;
-  matterbridgeLatestVersion: string;
-  matterbridgeFabricInformations: SanitizedExposedFabricInformation[];
-  matterbridgeSessionInformations: SanitizedSessionInformation[];
-  matterbridgePaired: boolean;
-  matterbridgeConnected: boolean;
-  bridgeMode: string;
-  restartMode: string;
-  debugEnabled: boolean;
-  matterLoggerLevel: number;
-}
-
-interface SanitizedExposedFabricInformation {
-  fabricIndex: FabricIndex;
-  fabricId: string; // bigint > string
-  nodeId: string; // bigint > string
-  rootNodeId: string; // bigint > string
-  rootVendorId: VendorId;
-  rootVendorName: string;
-  label: string;
-}
-
-interface SessionInformation {
-  name: string;
-  nodeId: NodeId;
-  peerNodeId: NodeId;
-  fabric?: ExposedFabricInformation;
-  isPeerActive: boolean;
-  secure: boolean;
-  lastInteractionTimestamp?: number;
-  lastActiveTimestamp?: number;
-  numberOfActiveSubscriptions: number;
-}
-
-interface SanitizedSessionInformation {
-  name: string;
-  nodeId: string;
-  peerNodeId: string;
-  fabric?: SanitizedExposedFabricInformation;
-  isPeerActive: boolean;
-  secure: boolean;
-  lastInteractionTimestamp?: string;
-  lastActiveTimestamp?: string;
-  numberOfActiveSubscriptions: number;
-}
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -214,6 +100,8 @@ export class Matterbridge extends EventEmitter {
     matterLoggerLevel: Level.INFO,
   };
 
+  private log!: AnsiLogger;
+
   public initialized = false;
   public homeDirectory = '';
   public rootDirectory = '';
@@ -231,14 +119,16 @@ export class Matterbridge extends EventEmitter {
   public restartMode: 'service' | 'docker' | '' = '';
   public debugEnabled = false;
 
-  private mdnsInterface: string | undefined; // matter server mdnsInterface: e.g. 'eth0' or 'wlan0' or 'WiFi'
-  private port = 5540; // first commissioning server port
-  private passcode?: number; // first commissioning server passcode
-  private discriminator?: number; // first commissioning server discriminator
-  private log!: AnsiLogger;
+  // private plugins = new Map<string, RegisteredPlugin>();
+  // private devices = new Map<string, RegisteredDevice>();
+  private registeredPlugins: RegisteredPlugin[] = [];
+  private registeredDevices: RegisteredDevice[] = [];
+  private nodeStorage: NodeStorageManager | undefined;
+  private nodeContext: NodeStorage | undefined;
   private matterStorageName = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.json';
   private nodeStorageName = 'storage' + (getParameter('profile') ? '.' + getParameter('profile') : '');
 
+  // Cleanup
   private hasCleanupStarted = false;
   private cleanupTimeout1: NodeJS.Timeout | undefined;
   private cleanupTimeout2: NodeJS.Timeout | undefined;
@@ -247,22 +137,20 @@ export class Matterbridge extends EventEmitter {
   private sigintHandler: NodeJS.SignalsListener | undefined;
   private sigtermHandler: NodeJS.SignalsListener | undefined;
 
-  // private plugins = new Map<string, RegisteredPlugin>();
-  // private devices = new Map<string, RegisteredDevice>();
-  private registeredPlugins: RegisteredPlugin[] = [];
-  private registeredDevices: RegisteredDevice[] = [];
-  private nodeStorage: NodeStorageManager | undefined;
-  private nodeContext: NodeStorage | undefined;
-
+  // Frontend
   private expressApp: express.Express | undefined;
   private httpServer: Server | undefined;
   private httpsServer: Server | undefined;
   private webSocketServer: WebSocketServer | undefined;
 
+  // Matter
+  private mdnsInterface: string | undefined; // matter server mdnsInterface: e.g. 'eth0' or 'wlan0' or 'WiFi'
+  private port = 5540; // first commissioning server port
+  private passcode?: number; // first commissioning server passcode
+  private discriminator?: number; // first commissioning server discriminator
   private storageManager: StorageManager | undefined;
   private matterbridgeContext: StorageContext | undefined;
   private mattercontrollerContext: StorageContext | undefined;
-
   private matterServer: MatterServer | undefined;
   private matterAggregator: Aggregator | undefined;
   private commissioningServer: CommissioningServer | undefined;
@@ -293,7 +181,7 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Call shutdownProcess.
+   * Call cleanup().
    * @deprecated This method is deprecated and is only used for jest tests.
    *
    */
@@ -307,116 +195,9 @@ export class Matterbridge extends EventEmitter {
       false,
       5000,
       100,
-      true,
+      false,
     );
     await wait(1000, 'Wait for the global node_modules and matterbridge version', false);
-  }
-
-  /**
-   * Initializes the Matterbridge instance as extension for zigbee2mqtt.
-   * @deprecated This method is deprecated and will be removed in a future version.
-   *
-   * @returns A Promise that resolves when the initialization is complete.
-   */
-  public async startExtension(dataPath: string, debugEnabled: boolean, extensionVersion: string, port = 5560): Promise<boolean> {
-    // Set the bridge mode
-    this.bridgeMode = 'bridge';
-
-    // Set the first port to use
-    this.port = port;
-
-    // Set Matterbridge logger
-    this.debugEnabled = debugEnabled;
-    this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled });
-    this.log.debug('Matterbridge extension is starting...');
-
-    // Initialize NodeStorage
-    this.matterbridgeDirectory = dataPath;
-    this.log.debug('Creating node storage manager dir: ' + path.join(this.matterbridgeDirectory, 'node_storage'));
-    this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, 'node_storage'), logging: false });
-    this.log.debug('Creating node storage context for matterbridge: matterbridge');
-    this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
-
-    const plugin: RegisteredPlugin = {
-      path: '',
-      type: 'DynamicPlatform',
-      name: 'MatterbridgeExtension',
-      version: '1.0.0',
-      description: 'Matterbridge extension',
-      author: 'https://github.com/Luligu',
-      enabled: false,
-      registeredDevices: 0,
-      addedDevices: 0,
-    };
-    this.registeredPlugins.push(plugin);
-    await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
-
-    // Log system info and create .matterbridge directory
-    await this.logNodeAndSystemInfo();
-    this.matterbridgeDirectory = dataPath;
-
-    // Set matter.js logger level and format
-    Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
-    Logger.format = Format.ANSI;
-
-    // Start the storage and create matterbridgeContext
-    await this.startStorage('json', path.join(this.matterbridgeDirectory, this.matterStorageName));
-    if (!this.storageManager) return false;
-    this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge zigbee2MQTT', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'zigbee2MQTT Matter extension');
-    if (!this.matterbridgeContext) return false;
-    await this.matterbridgeContext.set('softwareVersion', 1);
-    await this.matterbridgeContext.set('softwareVersionString', this.matterbridgeVersion);
-    await this.matterbridgeContext.set('hardwareVersion', 1);
-    await this.matterbridgeContext.set('hardwareVersionString', extensionVersion); // Update with the extension version
-    this.matterServer = this.createMatterServer(this.storageManager);
-    this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
-    this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
-    this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
-    this.matterAggregator = await this.createMatterAggregator(this.matterbridgeContext, 'Matterbridge');
-    this.log.debug('Adding matterbridge aggregator to commissioning server');
-    this.commissioningServer.addDevice(this.matterAggregator);
-    this.log.debug('Adding matterbridge commissioning server to matter server');
-    await this.matterServer.addCommissioningServer(this.commissioningServer, { uniqueStorageKey: 'Matterbridge' });
-    await this.startMatterServer();
-    this.log.info('Matter server started');
-    await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
-    // Set reachability to true and trigger event after 60 seconds
-    setTimeout(() => {
-      this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
-      if (this.commissioningServer) this.setCommissioningServerReachability(this.commissioningServer, true);
-      if (this.matterAggregator) this.setAggregatorReachability(this.matterAggregator, true);
-    }, 60 * 1000);
-    return this.commissioningServer.isCommissioned();
-  }
-
-  /**
-   * Close the Matterbridge instance as extension for zigbee2mqtt.
-   * @deprecated This method is deprecated and will be removed in a future version.
-   *
-   * @returns A Promise that resolves when the initialization is complete.
-   */
-  public async stopExtension() {
-    // Closing matter
-    await this.stopMatter();
-
-    // Clearing the session manager
-    // this.matterbridgeContext?.createContext('SessionManager').clear();
-
-    // Closing storage
-    await this.stopStorage();
-
-    this.log.info('Matter server stopped');
-  }
-
-  /**
-   * Checks if the extension is commissioned.
-   * @deprecated This method is deprecated and will be removed in a future version.
-   *
-   * @returns {boolean} Returns true if the extension is commissioned, false otherwise.
-   */
-  public isExtensionCommissioned(): boolean {
-    if (!this.commissioningServer) return false;
-    return this.commissioningServer.isCommissioned();
   }
 
   /**
@@ -430,41 +211,8 @@ export class Matterbridge extends EventEmitter {
    * @returns A Promise that resolves when the initialization is complete.
    */
   public async initialize() {
-    // Display the help
-    if (hasParameter('help')) {
-      // eslint-disable-next-line no-console
-      console.log(`\nUsage: matterbridge [options]\n
-      Options:
-      - help:                  show the help
-      - bridge:                start Matterbridge in bridge mode
-      - childbridge:           start Matterbridge in childbridge mode
-      - port [port]:           start the commissioning server on the given port (default 5540)
-      - mdnsinterface [name]:  set the interface to use for the matter server mdnsInterface (default all interfaces)
-      - frontend [port]:       start the frontend on the given port (default 8283)
-      - debug:                 enable the Matterbridge debug mode (default false)
-      - matterlogger:          set the matter.js logger level: debug | info | notice | warn | error | fatal (default info)
-      - reset:                 remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
-      - factoryreset:          remove all commissioning information and reset all internal storages. Shutdown Matterbridge before using it!
-      - list:                  list the registered plugins
-      - loginterfaces:         log the network interfaces (usefull for finding the name of the interface to use with -mdnsinterface option)
-      - logstorage:            log the node storage
-      - ssl:                   enable SSL for the frontend and WebSockerServer (certificates in .matterbridge/certs directory cert.pem, key.pem and ca.pem (optional))
-      - add [plugin path]:     register the plugin from the given absolute or relative path
-      - add [plugin name]:     register the globally installed plugin with the given name
-      - remove [plugin path]:  remove the plugin from the given absolute or relative path
-      - remove [plugin name]:  remove the globally installed plugin with the given name
-      - enable [plugin path]:  enable the plugin from the given absolute or relative path
-      - enable [plugin name]:  enable the globally installed plugin with the given name
-      - disable [plugin path]: disable the plugin from the given absolute or relative path
-      - disable [plugin name]: disable the globally installed plugin with the given name
-      - reset [plugin path]:   remove the commissioning for the plugin from the given absolute or relative path (childbridge mode). Shutdown Matterbridge before using it!
-      - reset [plugin name]:   remove the commissioning for the globally installed plugin (childbridge mode). Shutdown Matterbridge before using it!\n`);
-      process.exit(0);
-    }
-
     // Set the interface to use for the matter server mdnsInterface
     this.mdnsInterface = getParameter('mdnsinterface');
-
     // Set the first port to use for the commissioning server (will be incremented in childbridge mode)
     this.port = getIntParameter('port') ?? 5540;
     // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode)
@@ -481,6 +229,30 @@ export class Matterbridge extends EventEmitter {
     this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled });
     this.log.debug('Matterbridge is starting...');
 
+    // Set matter.js logger level and format
+    if (hasParameter('matterlogger')) {
+      const level = getParameter('matterlogger');
+      if (level === 'debug') {
+        Logger.defaultLogLevel = Level.DEBUG;
+      } else if (level === 'info') {
+        Logger.defaultLogLevel = Level.INFO;
+      } else if (level === 'notice') {
+        Logger.defaultLogLevel = Level.NOTICE;
+      } else if (level === 'warn') {
+        Logger.defaultLogLevel = Level.WARN;
+      } else if (level === 'error') {
+        Logger.defaultLogLevel = Level.ERROR;
+      } else if (level === 'fatal') {
+        Logger.defaultLogLevel = Level.FATAL;
+      } else {
+        this.log.warn(`Invalid matterlogger level: ${level}. Using default level ${this.debugEnabled ? 'debug' : 'info'}.`);
+        Logger.defaultLogLevel = Level.INFO;
+      }
+    } else {
+      Logger.defaultLogLevel = Level.INFO;
+    }
+    Logger.format = Format.ANSI;
+
     // Initialize nodeStorage and nodeContext
     this.homeDirectory = os.homedir();
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
@@ -489,7 +261,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug('Creating node storage context for matterbridge');
     this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
 
-    // Get the plugins from node storage and create the plugin node storage contexts
+    // Get the plugins from node storage and create the plugins node storage contexts
     this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
     for (const plugin of this.registeredPlugins) {
       const packageJson = await this.parsePlugin(plugin);
@@ -500,6 +272,7 @@ export class Matterbridge extends EventEmitter {
         plugin.description = (packageJson.description as string) ?? 'No description';
         plugin.author = (packageJson.author as string) ?? 'Unknown';
       } else {
+        // Try to reinstall the plugin from npm (for Docker pull and external plugins)
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm.`);
         try {
           await this.spawnCommand('npm', ['install', '-g', plugin.name]);
@@ -534,30 +307,6 @@ export class Matterbridge extends EventEmitter {
     // Register SIGINT SIGTERM signal handlers
     this.registerSignalHandlers();
 
-    // Set matter.js logger level and format
-    if (hasParameter('matterlogger')) {
-      const level = getParameter('matterlogger');
-      if (level === 'debug') {
-        Logger.defaultLogLevel = Level.DEBUG;
-      } else if (level === 'info') {
-        Logger.defaultLogLevel = Level.INFO;
-      } else if (level === 'notice') {
-        Logger.defaultLogLevel = Level.NOTICE;
-      } else if (level === 'warn') {
-        Logger.defaultLogLevel = Level.WARN;
-      } else if (level === 'error') {
-        Logger.defaultLogLevel = Level.ERROR;
-      } else if (level === 'fatal') {
-        Logger.defaultLogLevel = Level.FATAL;
-      } else {
-        this.log.warn(`Invalid matterlogger level: ${level}. Using default level ${this.debugEnabled ? 'debug' : 'info'}.`);
-        Logger.defaultLogLevel = Level.INFO;
-      }
-    } else {
-      Logger.defaultLogLevel = Level.INFO;
-    }
-    Logger.format = Format.ANSI;
-
     // Parse command line
     await this.parseCommandLine();
 
@@ -570,6 +319,37 @@ export class Matterbridge extends EventEmitter {
    * @returns {Promise<void>} A promise that resolves when the command line arguments have been processed, or the process exits.
    */
   private async parseCommandLine(): Promise<void> {
+    if (hasParameter('help')) {
+      this.log.info(`\nUsage: matterbridge [options]\n
+      Options:
+      - help:                  show the help
+      - bridge:                start Matterbridge in bridge mode
+      - childbridge:           start Matterbridge in childbridge mode
+      - port [port]:           start the commissioning server on the given port (default 5540)
+      - mdnsinterface [name]:  set the interface to use for the matter server mdnsInterface (default all interfaces)
+      - frontend [port]:       start the frontend on the given port (default 8283)
+      - debug:                 enable the Matterbridge debug mode (default false)
+      - matterlogger:          set the matter.js logger level: debug | info | notice | warn | error | fatal (default info)
+      - reset:                 remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
+      - factoryreset:          remove all commissioning information and reset all internal storages. Shutdown Matterbridge before using it!
+      - list:                  list the registered plugins
+      - loginterfaces:         log the network interfaces (usefull for finding the name of the interface to use with -mdnsinterface option)
+      - logstorage:            log the node storage
+      - ssl:                   enable SSL for the frontend and WebSockerServer (certificates in .matterbridge/certs directory cert.pem, key.pem and ca.pem (optional))
+      - add [plugin path]:     register the plugin from the given absolute or relative path
+      - add [plugin name]:     register the globally installed plugin with the given name
+      - remove [plugin path]:  remove the plugin from the given absolute or relative path
+      - remove [plugin name]:  remove the globally installed plugin with the given name
+      - enable [plugin path]:  enable the plugin from the given absolute or relative path
+      - enable [plugin name]:  enable the globally installed plugin with the given name
+      - disable [plugin path]: disable the plugin from the given absolute or relative path
+      - disable [plugin name]: disable the globally installed plugin with the given name
+      - reset [plugin path]:   remove the commissioning for the plugin from the given absolute or relative path (childbridge mode). Shutdown Matterbridge before using it!
+      - reset [plugin name]:   remove the commissioning for the globally installed plugin (childbridge mode). Shutdown Matterbridge before using it!${rs}`);
+      this.emit('shutdown');
+      return;
+    }
+
     if (hasParameter('list')) {
       this.log.info(`│ Registered plugins (${this.registeredPlugins?.length})`);
       this.registeredPlugins.forEach((plugin, index) => {
@@ -3678,5 +3458,112 @@ export class Matterbridge extends EventEmitter {
       if (clusterServer.name === 'FixedLabel') attributes += `${stringifyFixedLabel(device)} `;
     });
     return attributes;
+  }
+
+  /**
+   * Initializes the Matterbridge instance as extension for zigbee2mqtt.
+   * @deprecated This method is deprecated and will be removed in a future version.
+   *
+   * @returns A Promise that resolves when the initialization is complete.
+   */
+  public async startExtension(dataPath: string, debugEnabled: boolean, extensionVersion: string, port = 5560): Promise<boolean> {
+    // Set the bridge mode
+    this.bridgeMode = 'bridge';
+
+    // Set the first port to use
+    this.port = port;
+
+    // Set Matterbridge logger
+    this.debugEnabled = debugEnabled;
+    this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: this.debugEnabled });
+    this.log.debug('Matterbridge extension is starting...');
+
+    // Initialize NodeStorage
+    this.matterbridgeDirectory = dataPath;
+    this.log.debug('Creating node storage manager dir: ' + path.join(this.matterbridgeDirectory, 'node_storage'));
+    this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, 'node_storage'), logging: false });
+    this.log.debug('Creating node storage context for matterbridge: matterbridge');
+    this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
+
+    const plugin: RegisteredPlugin = {
+      path: '',
+      type: 'DynamicPlatform',
+      name: 'MatterbridgeExtension',
+      version: '1.0.0',
+      description: 'Matterbridge extension',
+      author: 'https://github.com/Luligu',
+      enabled: false,
+      registeredDevices: 0,
+      addedDevices: 0,
+    };
+    this.registeredPlugins.push(plugin);
+    await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
+
+    // Log system info and create .matterbridge directory
+    await this.logNodeAndSystemInfo();
+    this.matterbridgeDirectory = dataPath;
+
+    // Set matter.js logger level and format
+    Logger.defaultLogLevel = this.debugEnabled ? Level.DEBUG : Level.INFO;
+    Logger.format = Format.ANSI;
+
+    // Start the storage and create matterbridgeContext
+    await this.startStorage('json', path.join(this.matterbridgeDirectory, this.matterStorageName));
+    if (!this.storageManager) return false;
+    this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge zigbee2MQTT', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'zigbee2MQTT Matter extension');
+    if (!this.matterbridgeContext) return false;
+    await this.matterbridgeContext.set('softwareVersion', 1);
+    await this.matterbridgeContext.set('softwareVersionString', this.matterbridgeVersion);
+    await this.matterbridgeContext.set('hardwareVersion', 1);
+    await this.matterbridgeContext.set('hardwareVersionString', extensionVersion); // Update with the extension version
+    this.matterServer = this.createMatterServer(this.storageManager);
+    this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
+    this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
+    this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
+    this.matterAggregator = await this.createMatterAggregator(this.matterbridgeContext, 'Matterbridge');
+    this.log.debug('Adding matterbridge aggregator to commissioning server');
+    this.commissioningServer.addDevice(this.matterAggregator);
+    this.log.debug('Adding matterbridge commissioning server to matter server');
+    await this.matterServer.addCommissioningServer(this.commissioningServer, { uniqueStorageKey: 'Matterbridge' });
+    await this.startMatterServer();
+    this.log.info('Matter server started');
+    await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
+    // Set reachability to true and trigger event after 60 seconds
+    setTimeout(() => {
+      this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
+      if (this.commissioningServer) this.setCommissioningServerReachability(this.commissioningServer, true);
+      if (this.matterAggregator) this.setAggregatorReachability(this.matterAggregator, true);
+    }, 60 * 1000);
+    return this.commissioningServer.isCommissioned();
+  }
+
+  /**
+   * Close the Matterbridge instance as extension for zigbee2mqtt.
+   * @deprecated This method is deprecated and will be removed in a future version.
+   *
+   * @returns A Promise that resolves when the initialization is complete.
+   */
+  public async stopExtension() {
+    // Closing matter
+    await this.stopMatter();
+
+    // Clearing the session manager
+    // this.matterbridgeContext?.createContext('SessionManager').clear();
+
+    // Closing storage
+    await this.stopStorage();
+
+    this.log.info('Matter server stopped');
+  }
+
+  /**
+   * Checks if the extension is commissioned.
+   * @deprecated This method is deprecated and will be removed in a future version.
+   *
+   * @returns {boolean} Returns true if the extension is commissioned, false otherwise.
+   */
+  public isExtensionCommissioned(): boolean {
+    if (!this.commissioningServer) return false;
+    return this.commissioningServer.isCommissioned();
   }
 }
