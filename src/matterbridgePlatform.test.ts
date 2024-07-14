@@ -2,6 +2,8 @@
 /* eslint-disable jest/no-conditional-expect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+process.argv = ['node', 'matterbridge.test.js', '-frontend', '0'];
+
 import { jest } from '@jest/globals';
 
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
@@ -49,8 +51,9 @@ describe('Matterbridge platform', () => {
 
   afterAll(async () => {
     // Destroy the Matterbridge instance
-    await matterbridge.destroyInstance(true);
+    await matterbridge.destroyInstance(false);
 
+    /*
     await waiter(
       'Matterbridge destroyed',
       () => {
@@ -62,6 +65,7 @@ describe('Matterbridge platform', () => {
 
     // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion) and the storage to close
     await wait(1000, 'Wait for the Matterbridge instance to be destroyed', false);
+    */
 
     // Restore the mocked AnsiLogger.log method
     (AnsiLogger.prototype.log as jest.Mock).mockRestore();

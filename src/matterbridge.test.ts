@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-loss-of-precision */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-frontend', '0'];
+process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest'];
 
 interface SessionInformation {
   name: string;
@@ -18,11 +18,9 @@ interface SessionInformation {
 
 import { jest } from '@jest/globals';
 
-// jest.useFakeTimers();
-
 jest.mock('@project-chip/matter-node.js/util');
 
-import { AnsiLogger, LogLevel } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, nf } from 'node-ansi-logger';
 import { hasParameter } from '@project-chip/matter-node.js/util';
 import { Matterbridge } from './matterbridge.js';
 import { wait, waiter } from './utils/utils';
@@ -30,29 +28,32 @@ import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
 import { FabricId, FabricIndex, NodeId, VendorId } from '@project-chip/matter-node.js/datatype';
 import e from 'express';
 
+// Default colors
+const plg = '\u001B[38;5;33m';
+const dev = '\u001B[38;5;79m';
+const typ = '\u001B[38;5;207m';
+
 describe('Matterbridge', () => {
   let matterbridge: Matterbridge;
 
   beforeAll(async () => {
     // Mock the AnsiLogger.log method
     jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
-      // console.log(`Mocked log: ${level} - ${message}`, ...parameters);
+      console.log(`Mocked log: ${level} - ${message}`, ...parameters);
     });
 
-    // console.log('Loading Matterbridge');
+    console.log('Loading Matterbridge');
     matterbridge = await Matterbridge.loadInstance(true);
-    // console.log('Loaded Matterbridge');
+    console.log('Loaded Matterbridge');
   });
 
   afterAll(async () => {
     // Destroy the Matterbridge instance
-    await matterbridge.destroyInstance(true);
+    console.log('Destroying Matterbridge');
+    await matterbridge.destroyInstance(false);
+    console.log('Destroyed Matterbridge');
 
-    await waiter('Matterbridge destroyed', () => {
-      return (Matterbridge as any).instance === undefined;
-    });
-
-    // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion) and the storage to close
+    // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion)
     await wait(1000, 'Wait for the Matterbridge instance to be destroyed', false);
 
     // Restore the mocked AnsiLogger.log method
@@ -121,13 +122,13 @@ describe('Matterbridge', () => {
   });
 
   test('Load plugins from storage', async () => {
-    expect((matterbridge as any).loadPluginsFromStorage()).not.toBeNull();
-    await wait(1000, 'Wait for the storage', false);
+    expect(await (matterbridge as any).loadPluginsFromStorage()).toHaveLength(0);
+    // await wait(1000, 'Wait for the storage', false);
   });
 
   test('Save plugins to storage', async () => {
-    expect((matterbridge as any).savePluginsToStorage()).not.toBeNull();
-    await wait(1000, 'Wait for the storage', false);
+    expect(await (matterbridge as any).savePluginsToStorage()).toHaveLength(0);
+    // await wait(1000, 'Wait for the storage', false);
   });
 
   test('matterbridge -list', async () => {
@@ -136,9 +137,10 @@ describe('Matterbridge', () => {
     });
     process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-list'];
     await (matterbridge as any).parseCommandLine();
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `│ Registered plugins (0)`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `│ Registered devices (0)`);
     await shutdownPromise;
-    expect(true).toBeTruthy();
-    await wait(1000, 'Wait for the storage', false);
+    // await wait(1000, 'Wait for the storage', false);
   }, 60000);
 
   test('matterbridge -logstorage', async () => {
@@ -147,9 +149,9 @@ describe('Matterbridge', () => {
     });
     process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-logstorage'];
     await (matterbridge as any).parseCommandLine();
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `${plg}Matterbridge${nf} storage log`);
     await shutdownPromise;
-    expect(true).toBeTruthy();
-    await wait(1000, 'Wait for the storage', false);
+    // await wait(1000, 'Wait for the storage', false);
   }, 60000);
 
   test('matterbridge -loginterfaces', async () => {
@@ -158,8 +160,43 @@ describe('Matterbridge', () => {
     });
     process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-loginterfaces'];
     await (matterbridge as any).parseCommandLine();
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `${plg}Matterbridge${nf} network interfaces log`);
     await shutdownPromise;
-    expect(true).toBeTruthy();
-    await wait(1000, 'Wait for the storage', false);
+    // await wait(1000, 'Wait for the storage', false);
+  }, 60000);
+
+  test('matterbridge -reset', async () => {
+    const shutdownPromise = new Promise((resolve) => {
+      matterbridge.on('shutdown', resolve);
+    });
+    process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-reset'];
+    await (matterbridge as any).parseCommandLine();
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, 'Reset done! Remove the device from the controller.');
+    await shutdownPromise;
+    // await wait(1000, 'Wait for the storage', false);
+  }, 60000);
+
+  test('matterbridge -reset xxx', async () => {
+    const shutdownPromise = new Promise((resolve) => {
+      matterbridge.on('shutdown', resolve);
+    });
+    process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-reset', 'xxx'];
+    (matterbridge as any).log.setLogDebug(true);
+    await (matterbridge as any).parseCommandLine();
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, 'Reset plugin xxx');
+    (matterbridge as any).log.setLogDebug(false);
+    await shutdownPromise;
+    // await wait(1000, 'Wait for the storage', false);
+  }, 60000);
+
+  test('matterbridge -factoryreset', async () => {
+    const shutdownPromise = new Promise((resolve) => {
+      matterbridge.on('shutdown', resolve);
+    });
+    process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-factoryreset'];
+    await (matterbridge as any).parseCommandLine();
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired devices from the controllers.');
+    await shutdownPromise;
+    // await wait(1000, 'Wait for the storage', false);
   }, 60000);
 });

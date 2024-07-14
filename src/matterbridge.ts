@@ -235,8 +235,8 @@ export class Matterbridge extends EventEmitter {
   private passcode?: number; // first commissioning server passcode
   private discriminator?: number; // first commissioning server discriminator
   private log!: AnsiLogger;
-  private matterStorageName = 'matterbridge.json'; // + (getParameter('profile') ? '-' + getParameter('profile') : '')
-  private nodeStorageName = 'storage'; // + (getParameter('profile') ? '-' + getParameter('profile') : '')
+  private matterStorageName = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.json';
+  private nodeStorageName = 'storage' + (getParameter('profile') ? '.' + getParameter('profile') : '');
 
   private hasCleanupStarted = false;
   private cleanupTimeout1: NodeJS.Timeout | undefined;
@@ -296,8 +296,10 @@ export class Matterbridge extends EventEmitter {
    * @deprecated This method is deprecated and is only used for jest tests.
    *
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async destroyInstance(force = false) {
     await this.shutdownProcess();
+    /*
     if (force) {
       if (this.checkUpdateInterval) clearTimeout(this.checkUpdateInterval);
       this.checkUpdateInterval = undefined;
@@ -323,9 +325,9 @@ export class Matterbridge extends EventEmitter {
         await this.nodeStorage.close();
         this.nodeStorage = undefined;
       }
-      await wait(1000, 'Wait for the node storage to close', false);
-      Matterbridge.instance = undefined;
     }
+    */
+    await wait(2000, 'Wait for the global node_modules and matterbridge version', false);
   }
 
   /**
@@ -667,12 +669,16 @@ export class Matterbridge extends EventEmitter {
         this.log.error(`Error removing storage directory: ${err}`);
       }
       this.log.info('Factory reset done! Remove all paired devices from the controllers.');
+      this.nodeContext = undefined;
+      this.nodeStorage = undefined;
+      this.registeredPlugins = [];
+      this.registeredDevices = [];
       this.emit('shutdown');
       return;
     }
 
     // Start the storage and create matterbridgeContext
-    await this.startStorage('json', path.join(this.matterbridgeDirectory, 'matterbridge.json'));
+    await this.startStorage('json', path.join(this.matterbridgeDirectory, this.matterStorageName));
     this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
 
     if (hasParameter('reset') && getParameter('reset') === undefined) {
@@ -995,6 +1001,7 @@ export class Matterbridge extends EventEmitter {
    */
   private registerSignalHandlers() {
     this.log.debug(`Registering SIGINT and SIGTERM signal handlers...`);
+
     this.sigintHandler = async () => {
       await this.cleanup('SIGINT received, cleaning up...');
     };
@@ -1011,9 +1018,11 @@ export class Matterbridge extends EventEmitter {
    */
   private deregisterSignalHandlers() {
     this.log.debug(`Deregistering SIGINT and SIGTERM signal handlers...`);
+
     this.sigintHandler && process.off('SIGINT', this.sigintHandler);
-    this.sigtermHandler && process.off('SIGTERM', this.sigtermHandler);
     this.sigintHandler = undefined;
+
+    this.sigtermHandler && process.off('SIGTERM', this.sigtermHandler);
     this.sigtermHandler = undefined;
   }
 
@@ -1244,13 +1253,13 @@ export class Matterbridge extends EventEmitter {
         if (message === 'shutting down with reset...') {
           // Delete matter storage file
           this.log.info('Resetting Matterbridge commissioning information...');
-          await fs.unlink(path.join(this.matterbridgeDirectory, 'matterbridge.json'));
+          await fs.unlink(path.join(this.matterbridgeDirectory, this.matterStorageName));
           this.log.info('Reset done! Remove all paired devices from the controllers.');
         }
         if (message === 'shutting down with factory reset...') {
           // Delete matter storage file
           this.log.info('Resetting Matterbridge commissioning information...');
-          await fs.unlink(path.join(this.matterbridgeDirectory, 'matterbridge.json'));
+          await fs.unlink(path.join(this.matterbridgeDirectory, this.matterStorageName));
           // Delete node storage directory with its subdirectories
           this.log.info('Resetting Matterbridge storage...');
           await fs.rm(path.join(this.matterbridgeDirectory, this.nodeStorageName), { recursive: true });
@@ -1427,7 +1436,7 @@ export class Matterbridge extends EventEmitter {
    * @returns {Promise<void>} - A promise that resolves when the storage process is started.
    */
   private async startStorage(storageType: string, storageName: string): Promise<void> {
-    this.log.debug(`Starting storage ${storageType} ${storageName}`);
+    this.log.debug(`Starting ${storageType} storage ${CYAN}${storageName}${db}`);
     if (storageType === 'disk') {
       const storageDisk = new StorageBackendDisk(storageName);
       this.storageManager = new StorageManager(storageDisk);
@@ -1448,7 +1457,7 @@ export class Matterbridge extends EventEmitter {
       }
     } catch (error) {
       this.log.error(`Storage initialize() error! The file .matterbridge/${storageName} may be corrupted.`);
-      this.log.error(`Please delete it and rename matterbridge.backup.json to ${storageName} and try to restart Matterbridge.`);
+      this.log.error(`Please delete it and rename ${storageName.replace('.json', '.backup.json')} to ${storageName} and try to restart Matterbridge.`);
       await this.cleanup('Storage initialize() error!');
     }
   }
