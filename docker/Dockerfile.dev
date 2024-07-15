@@ -30,7 +30,7 @@ COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
 RUN npm install && npm run build && npm pack
 
 WORKDIR /matterbridge-somfy-tahoma
-RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-somfy-tahoma.git .
+RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-somfy-tahoma.git .
 COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
 RUN npm install && npm run build && npm pack
 
