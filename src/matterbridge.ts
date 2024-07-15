@@ -102,7 +102,6 @@ export class Matterbridge extends EventEmitter {
 
   private log!: AnsiLogger;
 
-  public initialized = false;
   public homeDirectory = '';
   public rootDirectory = '';
   public matterbridgeDirectory = '';
@@ -111,9 +110,9 @@ export class Matterbridge extends EventEmitter {
   public matterbridgeVersion = '';
   public matterbridgeLatestVersion = '';
   public matterbridgeFabricInformations: SanitizedExposedFabricInformation[] = [];
+  public matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
   public matterbridgePaired = false;
   public matterbridgeConnected = false;
-  public matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
 
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public restartMode: 'service' | 'docker' | '' = '';
@@ -157,6 +156,7 @@ export class Matterbridge extends EventEmitter {
   private commissioningController: CommissioningController | undefined;
 
   private static instance: Matterbridge | undefined;
+  public initialized = false;
 
   // We load asyncronously so is private
   private constructor() {
@@ -441,9 +441,9 @@ export class Matterbridge extends EventEmitter {
       return;
     }
 
-    // Start the storage and create matterbridgeContext
+    // Start the storage
     await this.startStorage('json', path.join(this.matterbridgeDirectory, this.matterStorageName));
-    this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
+    // this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
 
     if (hasParameter('reset') && getParameter('reset') === undefined) {
       this.log.info('Resetting Matterbridge commissioning information...');
@@ -493,24 +493,12 @@ export class Matterbridge extends EventEmitter {
       this.bridgeMode = 'bridge';
       MatterbridgeDevice.bridgeMode = 'bridge';
 
-      if (!this.storageManager) {
-        this.log.error('No storage manager initialized');
-        await this.cleanup('No storage manager initialized');
-        return;
-      }
+      if (!this.storageManager) throw new Error('No storage manager initialized');
+
       this.log.debug('Starting matterbridge in mode', this.bridgeMode);
       this.matterServer = this.createMatterServer(this.storageManager);
-
       this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
       this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Aggregator');
-      if (!this.matterbridgeContext) {
-        this.log.error(`Error creating storage context for ${plg}Matterbridge${er}`);
-        return;
-      }
-      if (!this.nodeContext) {
-        this.log.error(`Node storage context undefined for ${plg}Matterbridge${er}`);
-        return;
-      }
       this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
       this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
       this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
@@ -556,11 +544,8 @@ export class Matterbridge extends EventEmitter {
       this.bridgeMode = 'childbridge';
       MatterbridgeDevice.bridgeMode = 'childbridge';
 
-      if (!this.storageManager) {
-        this.log.error('No storage manager initialized');
-        await this.cleanup('No storage manager initialized');
-        return;
-      }
+      if (!this.storageManager) throw new Error('No storage manager initialized');
+
       this.log.debug('Starting matterbridge in mode', this.bridgeMode);
       this.matterServer = this.createMatterServer(this.storageManager);
 
@@ -594,82 +579,6 @@ export class Matterbridge extends EventEmitter {
       }
       await this.startMatterbridge();
       return;
-    }
-  }
-
-  /**
-   * Saves the registered plugins to storage.
-   * @returns {Promise<RegisteredPlugin[] | null>} A promise that resolves to an array of RegisteredPlugin objects or null if the node context is not initialized.
-   */
-  private async savePluginsToStorage(): Promise<RegisteredPlugin[] | null> {
-    if (!this.nodeContext) {
-      this.log.error('loadPluginsFromStorage() error: the node context is not initialized');
-      return null;
-    }
-    // Convert the map to an array
-    // const pluginArray = Array.from(this.plugins.values());
-    // await this.nodeContext.set('plugins', pluginArray);
-    // TODO remove after migration done
-    await this.nodeContext.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
-    return this.registeredPlugins;
-  }
-
-  /**
-   * Loads the plugins from storage and returns an array of registered plugins.
-   * If the node context is not initialized, it logs an error and returns null.
-   *
-   * @returns {Promise<RegisteredPlugin[] | null>} A promise that resolves to an array of registered plugins, or null if the node context is not initialized.
-   */
-  private async loadPluginsFromStorage(): Promise<RegisteredPlugin[] | null> {
-    if (!this.nodeContext) {
-      this.log.error('loadPluginsFromStorage() error: the node context is not initialized');
-      return null;
-    }
-    // Load the array from storage and convert it back to a map
-    // const pluginArray = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
-    // for (const plugin of pluginArray) this.plugins.set(plugin.name, plugin);
-    // TODO remove after migration done
-    this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
-    return this.registeredPlugins;
-  }
-
-  /**
-   * Resolves the name of a plugin by loading and parsing its package.json file.
-   * @param pluginPath - The path to the plugin or the path to the plugin's package.json file.
-   * @returns The path to the resolved package.json file, or null if the package.json file is not found or does not contain a name.
-   */
-  private async resolvePluginName(pluginPath: string): Promise<string | null> {
-    if (!pluginPath.endsWith('package.json')) pluginPath = path.join(pluginPath, 'package.json');
-
-    // Resolve the package.json of the plugin
-    let packageJsonPath = path.resolve(pluginPath);
-    this.log.debug(`Resolving plugin from ${plg}${packageJsonPath}${db}`);
-
-    // Check if the package.json file exists
-    let packageJsonExists = false;
-    try {
-      await fs.access(packageJsonPath);
-      packageJsonExists = true;
-    } catch {
-      packageJsonExists = false;
-    }
-    if (!packageJsonExists) {
-      this.log.debug(`Package.json not found at ${packageJsonPath}`);
-      this.log.debug(`Trying at ${this.globalModulesDirectory}`);
-      packageJsonPath = path.join(this.globalModulesDirectory, pluginPath);
-    }
-    try {
-      // Load the package.json of the plugin
-      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
-      if (!packageJson.name) {
-        this.log.debug(`Package.json name not found at ${packageJsonPath}`);
-        return null;
-      }
-      this.log.debug(`Package.json name: ${plg}${packageJson.name}${db} description: "${nf}${packageJson.description}${db}" found at "${nf}${packageJsonPath}${db}"`);
-      return packageJsonPath;
-    } catch (err) {
-      this.log.debug(`Failed to load plugin from ${plg}${packageJsonPath}${er}: ${err}`);
-      return null;
     }
   }
 
@@ -757,6 +666,42 @@ export class Matterbridge extends EventEmitter {
     } catch (err) {
       this.log.error(`Failed to load plugin from ${plg}${packageJsonPath}${er}: ${err}`);
     }
+  }
+
+  /**
+   * Saves the registered plugins to storage.
+   * @returns {Promise<RegisteredPlugin[] | null>} A promise that resolves to an array of RegisteredPlugin objects or null if the node context is not initialized.
+   */
+  private async savePluginsToStorage(): Promise<RegisteredPlugin[] | null> {
+    if (!this.nodeContext) {
+      this.log.error('loadPluginsFromStorage() error: the node context is not initialized');
+      return null;
+    }
+    // Convert the map to an array
+    // const pluginArray = Array.from(this.plugins.values());
+    // await this.nodeContext.set('plugins', pluginArray);
+    // TODO remove after migration done
+    await this.nodeContext.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
+    return this.registeredPlugins;
+  }
+
+  /**
+   * Loads the plugins from storage and returns an array of registered plugins.
+   * If the node context is not initialized, it logs an error and returns null.
+   *
+   * @returns {Promise<RegisteredPlugin[] | null>} A promise that resolves to an array of registered plugins, or null if the node context is not initialized.
+   */
+  private async loadPluginsFromStorage(): Promise<RegisteredPlugin[] | null> {
+    if (!this.nodeContext) {
+      this.log.error('loadPluginsFromStorage() error: the node context is not initialized');
+      return null;
+    }
+    // Load the array from storage and convert it back to a map
+    // const pluginArray = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
+    // for (const plugin of pluginArray) this.plugins.set(plugin.name, plugin);
+    // TODO remove after migration done
+    this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
+    return this.registeredPlugins;
   }
 
   /**
@@ -1264,8 +1209,44 @@ export class Matterbridge extends EventEmitter {
     this.mattercontrollerContext = undefined;
   }
 
-  private async testStartMatterBridge(): Promise<void> {
-    // Start the Matterbridge
+  /**
+   * Resolves the name of a plugin by loading and parsing its package.json file.
+   * @param pluginPath - The path to the plugin or the path to the plugin's package.json file.
+   * @returns The path to the resolved package.json file, or null if the package.json file is not found or does not contain a name.
+   */
+  private async resolvePluginName(pluginPath: string): Promise<string | null> {
+    if (!pluginPath.endsWith('package.json')) pluginPath = path.join(pluginPath, 'package.json');
+
+    // Resolve the package.json of the plugin
+    let packageJsonPath = path.resolve(pluginPath);
+    this.log.debug(`Resolving plugin from ${plg}${packageJsonPath}${db}`);
+
+    // Check if the package.json file exists
+    let packageJsonExists = false;
+    try {
+      await fs.access(packageJsonPath);
+      packageJsonExists = true;
+    } catch {
+      packageJsonExists = false;
+    }
+    if (!packageJsonExists) {
+      this.log.debug(`Package.json not found at ${packageJsonPath}`);
+      this.log.debug(`Trying at ${this.globalModulesDirectory}`);
+      packageJsonPath = path.join(this.globalModulesDirectory, pluginPath);
+    }
+    try {
+      // Load the package.json of the plugin
+      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+      if (!packageJson.name) {
+        this.log.debug(`Package.json name not found at ${packageJsonPath}`);
+        return null;
+      }
+      this.log.debug(`Package.json name: ${plg}${packageJson.name}${db} description: "${nf}${packageJson.description}${db}" found at "${nf}${packageJsonPath}${db}"`);
+      return packageJsonPath;
+    } catch (err) {
+      this.log.debug(`Failed to load plugin from ${plg}${packageJsonPath}${er}: ${err}`);
+      return null;
+    }
   }
 
   /**
@@ -1597,6 +1578,10 @@ export class Matterbridge extends EventEmitter {
       plugin.error = true;
       return Promise.resolve(undefined);
     }
+  }
+
+  private async testStartMatterBridge(): Promise<void> {
+    // Start the Matterbridge
   }
 
   /**
@@ -2020,10 +2005,7 @@ export class Matterbridge extends EventEmitter {
    * @returns The storage context for the commissioning server.
    */
   private async createCommissioningServerContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string) {
-    if (!this.storageManager) {
-      this.log.error('No storage manager initialized');
-      process.exit(1);
-    }
+    if (!this.storageManager) throw new Error('No storage manager initialized');
     this.log.debug(`Creating commissioning server storage context for ${plg}${pluginName}${db}`);
     const random = 'CS' + CryptoNode.getRandomData(8).toHex();
     const storageContext = this.storageManager.createContext(pluginName);
@@ -2896,7 +2878,7 @@ export class Matterbridge extends EventEmitter {
   /**
    * Initializes the frontend of Matterbridge.
    *
-   * @param port The port number to run the frontend server on. Default is 3000.
+   * @param port The port number to run the frontend server on. Default is 8283.
    */
   async initializeFrontend(port = 8283): Promise<void> {
     this.log.debug(`Initializing the frontend ${hasParameter('ssl') ? 'https' : 'http'} server on port ${YELLOW}${port}${db}`);
@@ -2935,16 +2917,16 @@ export class Matterbridge extends EventEmitter {
         cert = await fs.readFile(path.join(this.matterbridgeDirectory, 'certs/cert.pem'), 'utf8');
         this.log.info(`Loaded certificate file ${path.join(this.matterbridgeDirectory, 'certs/cert.pem')}`);
       } catch (error) {
-        this.log.error(`Error reading certificate file: ${error}`);
-        process.exit(1);
+        this.log.error(`Error reading certificate file ${path.join(this.matterbridgeDirectory, 'certs/cert.pem')}: ${error}`);
+        return;
       }
       let key: string | undefined;
       try {
         key = await fs.readFile(path.join(this.matterbridgeDirectory, 'certs/key.pem'), 'utf8');
         this.log.info(`Loaded key file ${path.join(this.matterbridgeDirectory, 'certs/key.pem')}`);
       } catch (error) {
-        this.log.error(`Error reading key file: ${error}`);
-        process.exit(1);
+        this.log.error(`Error reading key file ${path.join(this.matterbridgeDirectory, 'certs/key.pem')}: ${error}`);
+        return;
       }
       let ca: string | undefined;
       try {
