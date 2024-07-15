@@ -443,7 +443,8 @@ export class Matterbridge extends EventEmitter {
 
     // Start the storage
     await this.startStorage('json', path.join(this.matterbridgeDirectory, this.matterStorageName));
-    // this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
+    this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
+    this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
 
     if (hasParameter('reset') && getParameter('reset') === undefined) {
       this.log.info('Resetting Matterbridge commissioning information...');
@@ -497,8 +498,8 @@ export class Matterbridge extends EventEmitter {
 
       this.log.debug('Starting matterbridge in mode', this.bridgeMode);
       this.matterServer = this.createMatterServer(this.storageManager);
-      this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
-      this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Aggregator');
+      // this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
+      // this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Aggregator');
       this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
       this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
       this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
