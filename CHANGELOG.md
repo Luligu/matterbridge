@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
-## [1.3.16] - 2024-07-13
+## [1.3.17] - 2024-07-15
 
 ### Added
 
