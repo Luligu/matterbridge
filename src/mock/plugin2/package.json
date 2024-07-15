@@ -1,0 +1,10 @@
+{
+  "name": "matterbridge-mock2",
+  "version": "1.0.2",
+  "description": "Matterbridge mock plugin 2",
+  "author": "https://github.com/Luligu",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts"
+}

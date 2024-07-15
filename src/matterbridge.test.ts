@@ -20,13 +20,15 @@ import { jest } from '@jest/globals';
 
 jest.mock('@project-chip/matter-node.js/util');
 
-import { AnsiLogger, LogLevel, nf } from 'node-ansi-logger';
+import { AnsiLogger, db, LogLevel, nf } from 'node-ansi-logger';
 import { hasParameter } from '@project-chip/matter-node.js/util';
 import { Matterbridge } from './matterbridge.js';
 import { wait, waiter } from './utils/utils';
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
 import { FabricId, FabricIndex, NodeId, VendorId } from '@project-chip/matter-node.js/datatype';
 import e from 'express';
+import path from 'path';
+import { RegisteredPlugin } from './matterbridgeTypes.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -36,10 +38,11 @@ const typ = '\u001B[38;5;207m';
 describe('Matterbridge loadInstance() and cleanup()', () => {
   let matterbridge: Matterbridge;
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
+  let loggerLogSpy: jest.SpiedFunction<(level: LogLevel, message: string, ...parameters: any[]) => void>;
 
   beforeAll(async () => {
     // Spy on and mock the AnsiLogger.log method
-    jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
       // console.log(`Mocked log: ${level} - ${message}`, ...parameters);
     });
     // Spy on and mock console.log
@@ -50,7 +53,7 @@ describe('Matterbridge loadInstance() and cleanup()', () => {
 
   afterAll(async () => {
     // Restore the mocked AnsiLogger.log method
-    (AnsiLogger.prototype.log as jest.Mock).mockRestore();
+    loggerLogSpy.mockRestore();
     // Restore the mocked console.log
     consoleLogSpy.mockRestore();
   }, 60000);
@@ -84,11 +87,12 @@ describe('Matterbridge loadInstance() and cleanup()', () => {
 describe('Matterbridge', () => {
   let matterbridge: Matterbridge;
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
+  let loggerLogSpy: jest.SpiedFunction<(level: LogLevel, message: string, ...parameters: any[]) => void>;
 
   beforeAll(async () => {
     // Mock the AnsiLogger.log method
-    jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
-      // console.log(`Mocked log: ${level} - ${message}`, ...parameters);
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
+      // console.error(`Mocked log: ${level} - ${message}`, ...parameters);
     });
     // Spy on and mock console.log
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
@@ -108,7 +112,7 @@ describe('Matterbridge', () => {
     // console.log('Destroyed Matterbridge.loadInstance(true)');
 
     // Restore the mocked AnsiLogger.log method
-    (AnsiLogger.prototype.log as jest.Mock).mockRestore();
+    loggerLogSpy.mockRestore();
     // Restore the mocked console.log
     consoleLogSpy.mockRestore();
   }, 60000);
@@ -123,8 +127,12 @@ describe('Matterbridge', () => {
     expect(log.log).toHaveBeenLastCalledWith(LogLevel.INFO, 'Hello, world!');
   });
 
-  test('hasParameter("debug") should return true', async () => {
+  test('hasParameter("debug") should return false', async () => {
     expect(hasParameter('debug')).toBeFalsy();
+  });
+
+  test('hasParameter("frontend") should return true', async () => {
+    expect(hasParameter('frontend')).toBeTruthy();
   });
 
   test('Sanitize fabrics', () => {
@@ -176,12 +184,10 @@ describe('Matterbridge', () => {
 
   test('Load plugins from storage', async () => {
     expect(await (matterbridge as any).loadPluginsFromStorage()).toHaveLength(0);
-    // await wait(1000, 'Wait for the storage', false);
   });
 
   test('Save plugins to storage', async () => {
     expect(await (matterbridge as any).savePluginsToStorage()).toHaveLength(0);
-    // await wait(1000, 'Wait for the storage', false);
   });
 
   test('matterbridge -help', async () => {
@@ -192,7 +198,7 @@ describe('Matterbridge', () => {
     await (matterbridge as any).parseCommandLine();
     expect((matterbridge as any).log.log).toHaveBeenCalled();
     await shutdownPromise;
-    // await wait(1000, 'Wait for the storage', false);
+    matterbridge.removeAllListeners('shutdown');
   }, 60000);
 
   test('matterbridge -list', async () => {
@@ -204,7 +210,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `│ Registered plugins (0)`);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `│ Registered devices (0)`);
     await shutdownPromise;
-    // await wait(1000, 'Wait for the storage', false);
+    matterbridge.removeAllListeners('shutdown');
   }, 60000);
 
   test('matterbridge -logstorage', async () => {
@@ -215,7 +221,7 @@ describe('Matterbridge', () => {
     await (matterbridge as any).parseCommandLine();
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `${plg}Matterbridge${nf} storage log`);
     await shutdownPromise;
-    // await wait(1000, 'Wait for the storage', false);
+    matterbridge.removeAllListeners('shutdown');
   }, 60000);
 
   test('matterbridge -loginterfaces', async () => {
@@ -226,7 +232,7 @@ describe('Matterbridge', () => {
     await (matterbridge as any).parseCommandLine();
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `${plg}Matterbridge${nf} network interfaces log`);
     await shutdownPromise;
-    // await wait(1000, 'Wait for the storage', false);
+    matterbridge.removeAllListeners('shutdown');
   }, 60000);
 
   test('matterbridge -reset', async () => {
@@ -237,7 +243,7 @@ describe('Matterbridge', () => {
     await (matterbridge as any).parseCommandLine();
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, 'Reset done! Remove the device from the controller.');
     await shutdownPromise;
-    // await wait(1000, 'Wait for the storage', false);
+    matterbridge.removeAllListeners('shutdown');
   }, 60000);
 
   test('matterbridge -reset xxx', async () => {
@@ -248,10 +254,186 @@ describe('Matterbridge', () => {
     (matterbridge as any).log.setLogDebug(true);
     await (matterbridge as any).parseCommandLine();
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, 'Reset plugin xxx');
-    (matterbridge as any).log.setLogDebug(false);
+    (matterbridge as any).log.setLogDebug(true);
     await shutdownPromise;
-    // await wait(1000, 'Wait for the storage', false);
+    matterbridge.removeAllListeners('shutdown');
   }, 60000);
+
+  test('matterbridge -add mockPlugin1', async () => {
+    loggerLogSpy.mockClear();
+    const shutdownPromise = new Promise((resolve) => {
+      matterbridge.on('shutdown', resolve);
+    });
+    let plugins = (await (matterbridge as any).loadPluginsFromStorage()) as RegisteredPlugin[];
+    expect(plugins).toHaveLength(0);
+
+    process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-add', './src/mock/plugin1'];
+    (matterbridge as any).log.setLogDebug(true);
+    loggerLogSpy.mockClear();
+    await (matterbridge as any).parseCommandLine();
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Registering plugin ./src/mock/plugin1`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Loading plugin ${plg}matterbridge-mock1${nf} type ${typ}${nf}`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Plugin ${plg}${path.resolve('./src/mock/plugin1/package.json')}${nf} type DynamicPlatform added to matterbridge`);
+    (matterbridge as any).log.setLogDebug(false);
+    plugins = (await (matterbridge as any).loadPluginsFromStorage()) as RegisteredPlugin[];
+    expect(plugins).toHaveLength(1);
+    expect(plugins[0].version).toBe('1.0.1');
+    expect(plugins[0].name).toBe('matterbridge-mock1');
+    expect(plugins[0].description).toBe('Matterbridge mock plugin 1');
+    expect(plugins[0].author).toBe('https://github.com/Luligu');
+    expect(plugins[0].type).toBe('DynamicPlatform');
+    expect(plugins[0].enabled).toBeTruthy();
+    await shutdownPromise;
+    matterbridge.removeAllListeners('shutdown');
+  }, 60000);
+
+  test('matterbridge -disable mockPlugin1', async () => {
+    loggerLogSpy.mockClear();
+    const shutdownPromise = new Promise((resolve) => {
+      matterbridge.on('shutdown', resolve);
+    });
+    process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-disable', './src/mock/plugin1'];
+    (matterbridge as any).log.setLogDebug(true);
+    loggerLogSpy.mockClear();
+    await (matterbridge as any).parseCommandLine();
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Plugin ${plg}${path.resolve('./src/mock/plugin1/package.json')}${nf} disabled`);
+    (matterbridge as any).log.setLogDebug(false);
+    const plugins = (await (matterbridge as any).loadPluginsFromStorage()) as RegisteredPlugin[];
+    expect(plugins).toHaveLength(1);
+    expect(plugins[0].version).toBe('1.0.1');
+    expect(plugins[0].name).toBe('matterbridge-mock1');
+    expect(plugins[0].description).toBe('Matterbridge mock plugin 1');
+    expect(plugins[0].author).toBe('https://github.com/Luligu');
+    expect(plugins[0].type).toBe('DynamicPlatform');
+    expect(plugins[0].enabled).toBeFalsy();
+    await shutdownPromise;
+    matterbridge.removeAllListeners('shutdown');
+  }, 60000);
+
+  test('matterbridge -enable mockPlugin1', async () => {
+    loggerLogSpy.mockClear();
+    const shutdownPromise = new Promise((resolve) => {
+      matterbridge.on('shutdown', resolve);
+    });
+    process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-enable', './src/mock/plugin1'];
+    (matterbridge as any).log.setLogDebug(true);
+    loggerLogSpy.mockClear();
+    await (matterbridge as any).parseCommandLine();
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Plugin ${plg}${path.resolve('./src/mock/plugin1/package.json')}${nf} enabled`);
+    (matterbridge as any).log.setLogDebug(false);
+    const plugins = (await (matterbridge as any).loadPluginsFromStorage()) as RegisteredPlugin[];
+    expect(plugins).toHaveLength(1);
+    expect(plugins[0].version).toBe('1.0.1');
+    expect(plugins[0].name).toBe('matterbridge-mock1');
+    expect(plugins[0].description).toBe('Matterbridge mock plugin 1');
+    expect(plugins[0].author).toBe('https://github.com/Luligu');
+    expect(plugins[0].type).toBe('DynamicPlatform');
+    expect(plugins[0].enabled).toBeTruthy();
+    await shutdownPromise;
+    matterbridge.removeAllListeners('shutdown');
+  }, 60000);
+
+  test('matterbridge -remove mockPlugin1', async () => {
+    loggerLogSpy.mockClear();
+    const shutdownPromise = new Promise((resolve) => {
+      matterbridge.on('shutdown', resolve);
+    });
+    process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-remove', './src/mock/plugin1'];
+    (matterbridge as any).log.setLogDebug(true);
+    loggerLogSpy.mockClear();
+    await (matterbridge as any).parseCommandLine();
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Plugin ${plg}${path.resolve('./src/mock/plugin1/package.json')}${nf} removed from matterbridge`);
+    (matterbridge as any).log.setLogDebug(false);
+    const plugins = (await (matterbridge as any).loadPluginsFromStorage()) as RegisteredPlugin[];
+    expect(plugins).toHaveLength(0);
+    await shutdownPromise;
+    matterbridge.removeAllListeners('shutdown');
+  }, 60000);
+
+  test('matterbridge -add mockPlugin1/2/3', async () => {
+    loggerLogSpy.mockClear();
+    const shutdownPromise = new Promise((resolve) => {
+      matterbridge.on('shutdown', resolve);
+    });
+    process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-add', './src/mock/plugin1'];
+    (matterbridge as any).log.setLogDebug(true);
+    loggerLogSpy.mockClear();
+    await (matterbridge as any).parseCommandLine();
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Registering plugin ./src/mock/plugin1`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Loading plugin ${plg}matterbridge-mock1${nf} type ${typ}${nf}`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Plugin ${plg}${path.resolve('./src/mock/plugin1/package.json')}${nf} type DynamicPlatform added to matterbridge`);
+    (matterbridge as any).log.setLogDebug(false);
+    let plugins = (await (matterbridge as any).loadPluginsFromStorage()) as RegisteredPlugin[];
+    expect(plugins).toHaveLength(1);
+    expect(plugins[0].version).toBe('1.0.1');
+    expect(plugins[0].name).toBe('matterbridge-mock1');
+    expect(plugins[0].description).toBe('Matterbridge mock plugin 1');
+    expect(plugins[0].author).toBe('https://github.com/Luligu');
+    expect(plugins[0].type).toBe('DynamicPlatform');
+    expect(plugins[0].enabled).toBeTruthy();
+
+    process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-add', './src/mock/plugin2'];
+    (matterbridge as any).log.setLogDebug(true);
+    loggerLogSpy.mockClear();
+    await (matterbridge as any).parseCommandLine();
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Registering plugin ./src/mock/plugin2`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Loading plugin ${plg}matterbridge-mock2${nf} type ${typ}${nf}`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Plugin ${plg}${path.resolve('./src/mock/plugin2/package.json')}${nf} type DynamicPlatform added to matterbridge`);
+    (matterbridge as any).log.setLogDebug(false);
+    plugins = (await (matterbridge as any).loadPluginsFromStorage()) as RegisteredPlugin[];
+    expect(plugins).toHaveLength(2);
+    expect(plugins[1].version).toBe('1.0.2');
+    expect(plugins[1].name).toBe('matterbridge-mock2');
+    expect(plugins[1].description).toBe('Matterbridge mock plugin 2');
+    expect(plugins[1].author).toBe('https://github.com/Luligu');
+    expect(plugins[1].type).toBe('DynamicPlatform');
+    expect(plugins[1].enabled).toBeTruthy();
+
+    process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-add', './src/mock/plugin3'];
+    (matterbridge as any).log.setLogDebug(true);
+    loggerLogSpy.mockClear();
+    await (matterbridge as any).parseCommandLine();
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Registering plugin ./src/mock/plugin3`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Loading plugin ${plg}matterbridge-mock3${nf} type ${typ}${nf}`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Plugin ${plg}${path.resolve('./src/mock/plugin3/package.json')}${nf} type DynamicPlatform added to matterbridge`);
+    (matterbridge as any).log.setLogDebug(false);
+    plugins = (await (matterbridge as any).loadPluginsFromStorage()) as RegisteredPlugin[];
+    expect(plugins).toHaveLength(3);
+    expect(plugins[2].version).toBe('1.0.3');
+    expect(plugins[2].name).toBe('matterbridge-mock3');
+    expect(plugins[2].description).toBe('Matterbridge mock plugin 3');
+    expect(plugins[2].author).toBe('https://github.com/Luligu');
+    expect(plugins[2].type).toBe('DynamicPlatform');
+    expect(plugins[2].enabled).toBeTruthy();
+
+    await shutdownPromise;
+    matterbridge.removeAllListeners('shutdown');
+  }, 60000);
+
+  test('matterbridge start mockPlugin1/2/3', async () => {
+    loggerLogSpy.mockClear();
+    process.argv = ['node', 'matterbridge.test.js', '-frontend', '0'];
+    const plugins = (await (matterbridge as any).loadPluginsFromStorage()) as RegisteredPlugin[];
+    expect(plugins).toHaveLength(3);
+
+    await (matterbridge as any).loadPlugin(plugins[0]);
+    expect(plugins[0].loaded).toBeTruthy();
+    await (matterbridge as any).startPlugin(plugins[0], 'Jest test');
+    expect(plugins[0].started).toBeTruthy();
+    expect(plugins[0].configured).toBeFalsy();
+
+    await (matterbridge as any).loadPlugin(plugins[1]);
+    expect(plugins[1].loaded).toBeTruthy();
+    await (matterbridge as any).startPlugin(plugins[1], 'Jest test');
+    expect(plugins[1].started).toBeTruthy();
+    expect(plugins[1].configured).toBeFalsy();
+
+    await (matterbridge as any).loadPlugin(plugins[2]);
+    expect(plugins[2].loaded).toBeTruthy();
+    await (matterbridge as any).startPlugin(plugins[2], 'Jest test');
+    expect(plugins[2].started).toBeTruthy();
+    expect(plugins[2].configured).toBeFalsy();
+  }, 10000);
 
   test('matterbridge -factoryreset', async () => {
     const shutdownPromise = new Promise((resolve) => {
@@ -261,6 +443,6 @@ describe('Matterbridge', () => {
     await (matterbridge as any).parseCommandLine();
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired devices from the controllers.');
     await shutdownPromise;
-    // await wait(1000, 'Wait for the storage', false);
+    matterbridge.removeAllListeners('shutdown');
   }, 60000);
 });
