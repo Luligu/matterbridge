@@ -15,6 +15,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Removed write cache and expired interval for node storage.
 - [frontend]: Frontend reduced timeout to reload page to 5 seconds.
 - [matterbridge]: Added matterbridgeTypes.ts
+- [frontend]: Removed QR button for plugins in error and not enabled.
 
 ### Fixed
 

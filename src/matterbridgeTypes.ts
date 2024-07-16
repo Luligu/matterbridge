@@ -21,12 +21,12 @@ export interface RegisteredPlugin extends BaseRegisteredPlugin {
 
 // Simplified interface for saving the plugins in node storage
 export interface BaseRegisteredPlugin {
-  path: string;
-  type: string;
   name: string;
   version: string;
   description: string;
   author: string;
+  path: string;
+  type: string;
   latestVersion?: string;
   locked?: boolean;
   error?: boolean;

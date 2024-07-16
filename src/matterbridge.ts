@@ -55,6 +55,7 @@ import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } fr
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
+import { Plugins } from './plugins.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -101,6 +102,7 @@ export class Matterbridge extends EventEmitter {
   };
 
   private log!: AnsiLogger;
+  private plugins!: Plugins;
 
   public homeDirectory = '';
   public rootDirectory = '';
@@ -118,8 +120,6 @@ export class Matterbridge extends EventEmitter {
   public restartMode: 'service' | 'docker' | '' = '';
   public debugEnabled = false;
 
-  // private plugins = new Map<string, RegisteredPlugin>();
-  // private devices = new Map<string, RegisteredDevice>();
   private registeredPlugins: RegisteredPlugin[] = [];
   private registeredDevices: RegisteredDevice[] = [];
   private nodeStorage: NodeStorageManager | undefined;
@@ -261,16 +261,21 @@ export class Matterbridge extends EventEmitter {
     this.log.debug('Creating node storage context for matterbridge');
     this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
 
+    // Initialize Plugins
+    this.plugins = new Plugins(this);
+    await this.plugins.loadFromStorage();
+
     // Get the plugins from node storage and create the plugins node storage contexts
     this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
     for (const plugin of this.registeredPlugins) {
-      const packageJson = await this.parsePlugin(plugin);
+      // const packageJson = await this.parsePlugin(plugin);
+      const packageJson = await this.plugins.parse(plugin);
       if (packageJson) {
         // Update the plugin information
-        plugin.name = packageJson.name as string;
-        plugin.version = packageJson.version as string;
-        plugin.description = (packageJson.description as string) ?? 'No description';
-        plugin.author = (packageJson.author as string) ?? 'Unknown';
+        // plugin.name = packageJson.name as string;
+        // plugin.version = packageJson.version as string;
+        // plugin.description = (packageJson.description as string) ?? 'No description';
+        // plugin.author = (packageJson.author as string) ?? 'Unknown';
       } else {
         // Try to reinstall the plugin from npm (for Docker pull and external plugins)
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm.`);
@@ -395,26 +400,30 @@ export class Matterbridge extends EventEmitter {
     }
 
     if (getParameter('add')) {
-      this.log.debug(`Registering plugin ${getParameter('add')}`);
-      await this.executeCommandLine(getParameter('add') as string, 'add');
+      // this.log.debug(`Registering plugin ${getParameter('add')}`);
+      // await this.executeCommandLine(getParameter('add') as string, 'add');
+      await this.plugins.add(getParameter('add') as string);
       this.emit('shutdown');
       return;
     }
     if (getParameter('remove')) {
-      this.log.debug(`Unregistering plugin ${getParameter('remove')}`);
-      await this.executeCommandLine(getParameter('remove') as string, 'remove');
+      // this.log.debug(`Unregistering plugin ${getParameter('remove')}`);
+      // await this.executeCommandLine(getParameter('remove') as string, 'remove');
+      await this.plugins.remove(getParameter('remove') as string);
       this.emit('shutdown');
       return;
     }
     if (getParameter('enable')) {
-      this.log.debug(`Enable plugin ${getParameter('enable')}`);
-      await this.executeCommandLine(getParameter('enable') as string, 'enable');
+      // this.log.debug(`Enable plugin ${getParameter('enable')}`);
+      // await this.executeCommandLine(getParameter('enable') as string, 'enable');
+      await this.plugins.enable(getParameter('enable') as string);
       this.emit('shutdown');
       return;
     }
     if (getParameter('disable')) {
-      this.log.debug(`Disable plugin ${getParameter('disable')}`);
-      await this.executeCommandLine(getParameter('disable') as string, 'disable');
+      // this.log.debug(`Disable plugin ${getParameter('disable')}`);
+      // await this.executeCommandLine(getParameter('disable') as string, 'disable');
+      await this.plugins.disable(getParameter('disable') as string);
       this.emit('shutdown');
       return;
     }
@@ -441,7 +450,7 @@ export class Matterbridge extends EventEmitter {
       return;
     }
 
-    // Start the storage
+    // Start the storage and create the matterbridge context
     await this.startStorage('json', path.join(this.matterbridgeDirectory, this.matterStorageName));
     this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
     this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
@@ -498,8 +507,7 @@ export class Matterbridge extends EventEmitter {
 
       this.log.debug('Starting matterbridge in mode', this.bridgeMode);
       this.matterServer = this.createMatterServer(this.storageManager);
-      // this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
-      // this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Aggregator');
+
       this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
       this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
       this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
@@ -513,7 +521,7 @@ export class Matterbridge extends EventEmitter {
         plugin.configJson = await this.loadPluginConfig(plugin);
         plugin.schemaJson = await this.loadPluginSchema(plugin);
         // Check if the plugin is available
-        if (!(await this.resolvePluginName(plugin.path))) {
+        if (!(await this.plugins.resolve(plugin.path))) {
           this.log.error(`Plugin ${plg}${plugin.name}${er} not found. Disabling it.`);
           plugin.enabled = false;
           plugin.error = true;
@@ -554,7 +562,7 @@ export class Matterbridge extends EventEmitter {
         plugin.configJson = await this.loadPluginConfig(plugin);
         plugin.schemaJson = await this.loadPluginSchema(plugin);
         // Check if the plugin is available
-        if (!(await this.resolvePluginName(plugin.path))) {
+        if (!(await this.plugins.resolve(plugin.path))) {
           this.log.error(`Plugin ${plg}${plugin.name}${er} not found. Disabling it.`);
           plugin.enabled = false;
           plugin.error = true;
@@ -590,7 +598,7 @@ export class Matterbridge extends EventEmitter {
    * @returns A Promise that resolves when the plugin is loaded successfully, or rejects with an error if loading fails.
    */
   private async executeCommandLine(packageJsonPath: string, mode: string) {
-    packageJsonPath = (await this.resolvePluginName(packageJsonPath)) ?? packageJsonPath;
+    packageJsonPath = (await this.plugins.resolve(packageJsonPath)) ?? packageJsonPath;
     this.log.debug(`Loading plugin from ${plg}${packageJsonPath}${db}`);
     try {
       // Load the package.json of the plugin
@@ -1215,6 +1223,7 @@ export class Matterbridge extends EventEmitter {
    * @param pluginPath - The path to the plugin or the path to the plugin's package.json file.
    * @returns The path to the resolved package.json file, or null if the package.json file is not found or does not contain a name.
    */
+  /*
   private async resolvePluginName(pluginPath: string): Promise<string | null> {
     if (!pluginPath.endsWith('package.json')) pluginPath = path.join(pluginPath, 'package.json');
 
@@ -1249,6 +1258,7 @@ export class Matterbridge extends EventEmitter {
       return null;
     }
   }
+  */
 
   /**
    * Loads the schema for a plugin.
@@ -1501,6 +1511,7 @@ export class Matterbridge extends EventEmitter {
    * @param plugin - The plugin to load the package from.
    * @returns A Promise that resolves to the package.json object or undefined if the package.json could not be loaded.
    */
+  /*
   private async parsePlugin(plugin: RegisteredPlugin): Promise<Record<string, string | number | object> | undefined> {
     this.log.debug(`Parsing package.json of plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
     try {
@@ -1512,6 +1523,7 @@ export class Matterbridge extends EventEmitter {
       return undefined;
     }
   }
+  */
 
   /**
    * Loads a plugin and returns the corresponding MatterbridgePlatform instance.
@@ -3274,7 +3286,7 @@ export class Matterbridge extends EventEmitter {
           res.json({ message: 'Command received' });
           return;
         }
-        const packageJsonPath = await this.resolvePluginName(param);
+        const packageJsonPath = await this.plugins.resolve(param);
         if (!packageJsonPath) {
           this.log.error(`Error resolving plugin ${plg}${param}${er}`);
           res.json({ message: 'Command received' });
