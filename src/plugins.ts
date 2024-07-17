@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { AnsiLogger, db, er, nf, pl, TimestampFormat, wr } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, db, er, nf, pl, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 import { NodeStorage } from 'node-persist-manager';
 import path from 'path';
 import { promises as fs } from 'fs';
+import { fileURLToPath, pathToFileURL } from 'url';
+import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -25,7 +27,7 @@ export class Plugins {
     this.log.debug('Matterbridge plugin manager starting...');
   }
 
-  get lenght(): number {
+  get length(): number {
     return this._plugins.size;
   }
 
@@ -37,8 +39,21 @@ export class Plugins {
     return this._plugins.has(name);
   }
 
+  get(name: string): RegisteredPlugin | undefined {
+    return this._plugins.get(name);
+  }
+
+  set(plugin: RegisteredPlugin): RegisteredPlugin {
+    this._plugins.set(plugin.name, plugin);
+    return plugin;
+  }
+
   clear(): void {
     this._plugins.clear();
+  }
+
+  array(): RegisteredPlugin[] {
+    return Array.from(this._plugins.values());
   }
 
   [Symbol.iterator]() {
@@ -70,7 +85,7 @@ export class Plugins {
       });
     }
     await this.nodeContext.set<RegisteredPlugin[]>('plugins', plugins);
-    this.log.debug(`Saved ${pl}${plugins.length}${db} plugins to storage`);
+    this.log.debug(`Saved ${BLUE}${plugins.length}${db} plugins to storage`);
     return plugins.length;
   }
 
@@ -136,18 +151,11 @@ export class Plugins {
   }
 
   async enable(nameOrPath: string): Promise<RegisteredPlugin | null> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pluginsArray = (this.matterbridge as any).registeredPlugins;
-    this._plugins.clear();
-    for (const plugin of pluginsArray) this._plugins.set(plugin.name, plugin);
-
     if (!nameOrPath || nameOrPath === '') return null;
     if (this._plugins.has(nameOrPath)) {
       const plugin = this._plugins.get(nameOrPath) as RegisteredPlugin;
       plugin.enabled = true;
       this.log.info(`Enabled plugin ${plg}${plugin.name}${nf}`);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (this.matterbridge as any).registeredPlugins = Array.from(this._plugins.values());
       await this.saveToStorage();
       return plugin;
     }
@@ -165,8 +173,6 @@ export class Plugins {
       }
       plugin.enabled = true;
       this.log.info(`Enabled plugin ${plg}${plugin.name}${nf}`);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (this.matterbridge as any).registeredPlugins = Array.from(this._plugins.values());
       await this.saveToStorage();
       return plugin;
     } catch (err) {
@@ -176,18 +182,11 @@ export class Plugins {
   }
 
   async disable(nameOrPath: string): Promise<RegisteredPlugin | null> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pluginsArray = (this.matterbridge as any).registeredPlugins;
-    this._plugins.clear();
-    for (const plugin of pluginsArray) this._plugins.set(plugin.name, plugin);
-
     if (!nameOrPath || nameOrPath === '') return null;
     if (this._plugins.has(nameOrPath)) {
       const plugin = this._plugins.get(nameOrPath) as RegisteredPlugin;
       plugin.enabled = false;
       this.log.info(`Disabled plugin ${plg}${plugin.name}${nf}`);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (this.matterbridge as any).registeredPlugins = Array.from(this._plugins.values());
       await this.saveToStorage();
       return plugin;
     }
@@ -205,8 +204,6 @@ export class Plugins {
       }
       plugin.enabled = false;
       this.log.info(`Disabled plugin ${plg}${plugin.name}${nf}`);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (this.matterbridge as any).registeredPlugins = Array.from(this._plugins.values());
       await this.saveToStorage();
       return plugin;
     } catch (err) {
@@ -216,18 +213,11 @@ export class Plugins {
   }
 
   async remove(nameOrPath: string): Promise<RegisteredPlugin | null> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pluginsArray = (this.matterbridge as any).registeredPlugins;
-    this._plugins.clear();
-    for (const plugin of pluginsArray) this._plugins.set(plugin.name, plugin);
-
     if (!nameOrPath || nameOrPath === '') return null;
     if (this._plugins.has(nameOrPath)) {
       const plugin = this._plugins.get(nameOrPath) as RegisteredPlugin;
       this._plugins.delete(nameOrPath);
       this.log.info(`Removed plugin ${plg}${plugin.name}${nf}`);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (this.matterbridge as any).registeredPlugins = Array.from(this._plugins.values());
       await this.saveToStorage();
       return plugin;
     }
@@ -245,8 +235,6 @@ export class Plugins {
       }
       this._plugins.delete(packageJson.name);
       this.log.info(`Removed plugin ${plg}${plugin.name}${nf}`);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (this.matterbridge as any).registeredPlugins = Array.from(this._plugins.values());
       await this.saveToStorage();
       return plugin;
     } catch (err) {
@@ -256,11 +244,6 @@ export class Plugins {
   }
 
   async add(nameOrPath: string): Promise<RegisteredPlugin | null> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pluginsArray = (this.matterbridge as any).registeredPlugins;
-    this._plugins.clear();
-    for (const plugin of pluginsArray) this._plugins.set(plugin.name, plugin);
-
     if (!nameOrPath || nameOrPath === '') return null;
     const packageJsonPath = await this.resolve(nameOrPath);
     if (!packageJsonPath) {
@@ -275,8 +258,6 @@ export class Plugins {
       }
       this._plugins.set(packageJson.name, { name: packageJson.name, enabled: true, path: packageJsonPath, type: '', version: packageJson.version, description: packageJson.description, author: packageJson.author });
       this.log.info(`Added plugin ${plg}${packageJson.name}${nf}`);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (this.matterbridge as any).registeredPlugins = Array.from(this._plugins.values());
       await this.saveToStorage();
       const plugin = this._plugins.get(packageJson.name);
       return plugin || null;
@@ -284,5 +265,115 @@ export class Plugins {
       this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err}`);
       return null;
     }
+  }
+
+  /**
+   * Loads a plugin and returns the corresponding MatterbridgePlatform instance.
+   * @param plugin - The plugin to load.
+   * @param start - Optional flag indicating whether to start the plugin after loading. Default is false.
+   * @param message - Optional message to pass to the plugin when starting.
+   * @returns A Promise that resolves to the loaded MatterbridgePlatform instance.
+   * @throws An error if the plugin is not enabled, already loaded, or fails to load.
+   */
+  async load(plugin: RegisteredPlugin, start = false, message = ''): Promise<MatterbridgePlatform | undefined> {
+    if (!plugin.enabled) {
+      this.log.error(`Plugin ${plg}${plugin.name}${er} not enabled`);
+      return Promise.resolve(undefined);
+    }
+    if (plugin.platform) {
+      this.log.error(`Plugin ${plg}${plugin.name}${er} already loaded`);
+      return Promise.resolve(plugin.platform);
+    }
+    this.log.info(`Loading plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
+    try {
+      // Load the package.json of the plugin
+      const packageJson = JSON.parse(await fs.readFile(plugin.path, 'utf8'));
+      // Resolve the main module path relative to package.json
+      const pluginEntry = path.resolve(path.dirname(plugin.path), packageJson.main);
+      // Dynamically import the plugin
+      const pluginUrl = pathToFileURL(pluginEntry);
+      this.log.debug(`Importing plugin ${plg}${plugin.name}${db} from ${pluginUrl.href}`);
+      const pluginInstance = await import(pluginUrl.href);
+      this.log.debug(`Imported plugin ${plg}${plugin.name}${db} from ${pluginUrl.href}`);
+
+      // Call the default export function of the plugin, passing this MatterBridge instance, the log and the config
+      if (pluginInstance.default) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const config: PlatformConfig = await (this.matterbridge as any).loadPluginConfig(plugin);
+        const log = new AnsiLogger({ logName: plugin.description ?? 'No description', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: (config.debug as boolean) ?? false });
+        const platform = pluginInstance.default(this, log, config) as MatterbridgePlatform;
+        platform.name = packageJson.name;
+        platform.config = config;
+        platform.version = packageJson.version;
+        plugin.name = packageJson.name;
+        plugin.description = packageJson.description ?? 'No description';
+        plugin.version = packageJson.version;
+        plugin.author = packageJson.author ?? 'Unknown';
+        plugin.type = platform.type;
+        plugin.platform = platform;
+        plugin.loaded = true;
+        plugin.registeredDevices = 0;
+        plugin.addedDevices = 0;
+        plugin.configJson = config;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        plugin.schemaJson = await (this.matterbridge as any).loadPluginSchema(plugin);
+        // Save the updated plugin data in the node storage
+        // await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
+
+        this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${platform.type} ${db}(entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (start) (this.matterbridge as any).startPlugin(plugin, message); // No await do it asyncronously
+        return Promise.resolve(platform);
+      } else {
+        this.log.error(`Plugin ${plg}${plugin.name}${er} does not provide a default export`);
+        plugin.error = true;
+        return Promise.resolve(undefined);
+      }
+    } catch (err) {
+      this.log.error(`Failed to load plugin ${plg}${plugin.name}${er}: ${err}`);
+      plugin.error = true;
+      return Promise.resolve(undefined);
+    }
+  }
+
+  async shutdown(plugin: RegisteredPlugin, reason?: string, removeAllDevices = false): Promise<RegisteredPlugin | null> {
+    this.log.debug(`Shutting down plugin ${plg}${plugin.name}${db}`);
+    if (!plugin.loaded) {
+      this.log.debug(`Plugin ${plg}${plugin.name}${db} not loaded`);
+      return null;
+    }
+    if (!plugin.started) {
+      this.log.debug(`*Plugin ${plg}${plugin.name}${db} not started`);
+      return null;
+    }
+    if (!plugin.platform) {
+      this.log.debug(`*Plugin ${plg}${plugin.name}${db} has no platform`);
+      return null;
+    }
+    this.log.info(`Shutting down plugin ${plg}${plugin.name}${nf}: ${reason}...`);
+    try {
+      plugin.platform
+        .onShutdown(reason)
+        .then(async () => {
+          plugin.locked = undefined;
+          plugin.error = undefined;
+          plugin.loaded = undefined;
+          plugin.started = undefined;
+          plugin.configured = undefined;
+          plugin.connected = undefined;
+          plugin.platform = undefined;
+          plugin.registeredDevices = undefined;
+          plugin.addedDevices = undefined;
+          if (removeAllDevices) await this.matterbridge.removeAllBridgedDevices(plugin.name);
+          this.log.info(`Shutdown of plugin ${plg}${plugin.name}${nf} completed`);
+          return plugin;
+        })
+        .catch((err) => {
+          this.log.error(`Failed to shut down plugin ${plg}${plugin.name}${er}: ${err}`);
+        });
+    } catch (err) {
+      this.log.error(`Failed to shut down plugin ${plg}${plugin.name}${er}: ${err}`);
+    }
+    return null;
   }
 }

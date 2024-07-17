@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
-## [1.3.17] - 2024-07-15
+## [1.3.20] - 2024-07-15
 
 ### Added
 
@@ -16,6 +16,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Frontend reduced timeout to reload page to 5 seconds.
 - [matterbridge]: Added matterbridgeTypes.ts
 - [frontend]: Removed QR button for plugins in error and not enabled.
+- [matterbridge]: Added PluginsManager.
 
 ### Fixed
 

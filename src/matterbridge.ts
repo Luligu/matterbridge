@@ -120,7 +120,7 @@ export class Matterbridge extends EventEmitter {
   public restartMode: 'service' | 'docker' | '' = '';
   public debugEnabled = false;
 
-  private registeredPlugins: RegisteredPlugin[] = [];
+  // private registeredPlugins: RegisteredPlugin[] = [];
   private registeredDevices: RegisteredDevice[] = [];
   private nodeStorage: NodeStorageManager | undefined;
   private nodeContext: NodeStorage | undefined;
@@ -266,8 +266,8 @@ export class Matterbridge extends EventEmitter {
     await this.plugins.loadFromStorage();
 
     // Get the plugins from node storage and create the plugins node storage contexts
-    this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
-    for (const plugin of this.registeredPlugins) {
+    // this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
+    for (const plugin of this.plugins) {
       // const packageJson = await this.parsePlugin(plugin);
       const packageJson = await this.plugins.parse(plugin);
       if (packageJson) {
@@ -356,16 +356,18 @@ export class Matterbridge extends EventEmitter {
     }
 
     if (hasParameter('list')) {
-      this.log.info(`│ Registered plugins (${this.registeredPlugins?.length})`);
-      this.registeredPlugins.forEach((plugin, index) => {
-        if (index !== this.registeredPlugins.length - 1) {
+      this.log.info(`│ Registered plugins (${this.plugins.length})`);
+      let index = 0;
+      for (const plugin of this.plugins) {
+        if (index !== this.plugins.length - 1) {
           this.log.info(`├─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${plugin.enabled ? GREEN : RED}enabled ${plugin.paired ? GREEN : RED}paired${nf}`);
           this.log.info(`│ └─ entry ${UNDERLINE}${db}${plugin.path}${UNDERLINEOFF}${db}`);
         } else {
           this.log.info(`└─┬─ plugin ${plg}${plugin.name}${nf}: "${plg}${BRIGHT}${plugin.description}${RESET}${nf}" type: ${typ}${plugin.type}${nf} ${plugin.enabled ? GREEN : RED}enabled ${plugin.paired ? GREEN : RED}paired${nf}`);
           this.log.info(`  └─ entry ${UNDERLINE}${db}${plugin.path}${UNDERLINEOFF}${db}`);
         }
-      });
+        index++;
+      }
       const serializedRegisteredDevices = await this.nodeContext?.get<SerializedMatterbridgeDevice[]>('devices', []);
       this.log.info(`│ Registered devices (${serializedRegisteredDevices?.length})`);
       serializedRegisteredDevices?.forEach((device, index) => {
@@ -384,7 +386,7 @@ export class Matterbridge extends EventEmitter {
     if (hasParameter('logstorage')) {
       this.log.info(`${plg}Matterbridge${nf} storage log`);
       await this.nodeContext?.logStorage();
-      for (const plugin of this.registeredPlugins) {
+      for (const plugin of this.plugins) {
         this.log.info(`${plg}${plugin.name}${nf} storage log`);
         await plugin.nodeContext?.logStorage();
       }
@@ -400,28 +402,28 @@ export class Matterbridge extends EventEmitter {
     }
 
     if (getParameter('add')) {
-      // this.log.debug(`Registering plugin ${getParameter('add')}`);
+      this.log.debug(`Adding plugin ${getParameter('add')}`);
       // await this.executeCommandLine(getParameter('add') as string, 'add');
       await this.plugins.add(getParameter('add') as string);
       this.emit('shutdown');
       return;
     }
     if (getParameter('remove')) {
-      // this.log.debug(`Unregistering plugin ${getParameter('remove')}`);
+      this.log.debug(`Removing plugin ${getParameter('remove')}`);
       // await this.executeCommandLine(getParameter('remove') as string, 'remove');
       await this.plugins.remove(getParameter('remove') as string);
       this.emit('shutdown');
       return;
     }
     if (getParameter('enable')) {
-      // this.log.debug(`Enable plugin ${getParameter('enable')}`);
+      this.log.debug(`Enabling plugin ${getParameter('enable')}`);
       // await this.executeCommandLine(getParameter('enable') as string, 'enable');
       await this.plugins.enable(getParameter('enable') as string);
       this.emit('shutdown');
       return;
     }
     if (getParameter('disable')) {
-      // this.log.debug(`Disable plugin ${getParameter('disable')}`);
+      this.log.debug(`Disabling plugin ${getParameter('disable')}`);
       // await this.executeCommandLine(getParameter('disable') as string, 'disable');
       await this.plugins.disable(getParameter('disable') as string);
       this.emit('shutdown');
@@ -444,13 +446,13 @@ export class Matterbridge extends EventEmitter {
       this.log.info('Factory reset done! Remove all paired devices from the controllers.');
       this.nodeContext = undefined;
       this.nodeStorage = undefined;
-      this.registeredPlugins = [];
+      this.plugins.clear();
       this.registeredDevices = [];
       this.emit('shutdown');
       return;
     }
 
-    // Start the storage and create the matterbridge context
+    // Start the matter storage and create the matterbridge context
     await this.startStorage('json', path.join(this.matterbridgeDirectory, this.matterStorageName));
     this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
     this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
@@ -466,7 +468,25 @@ export class Matterbridge extends EventEmitter {
 
     if (getParameter('reset') && getParameter('reset') !== undefined) {
       this.log.debug(`Reset plugin ${getParameter('reset')}`);
-      await this.executeCommandLine(getParameter('reset') as string, 'reset');
+      // await this.executeCommandLine(getParameter('reset') as string, 'reset');
+      // const plugin = this.registeredPlugins.find((registeredPlugin) => registeredPlugin.name === getParameter('reset'));
+      const plugin = this.plugins.get(getParameter('reset') as string);
+      if (plugin) {
+        plugin.loaded = undefined;
+        plugin.started = undefined;
+        plugin.configured = undefined;
+        plugin.connected = undefined;
+        plugin.paired = undefined;
+        plugin.connected = undefined;
+        if (!this.storageManager) this.log.error(`Plugin ${plg}${plugin.name}${er} storageManager not found`);
+        const context = this.storageManager?.createContext(plugin.name);
+        if (!context) this.log.error(`Plugin ${plg}${plugin.name}${er} context not found`);
+        await context?.clearAll();
+        // await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
+        this.log.info(`Reset commissionig for plugin ${plg}${plugin.name}${nf} done! Remove the device from the controller.`);
+      } else {
+        this.log.warn(`Plugin ${plg}${getParameter('reset')}${wr} not registerd in matterbridge`);
+      }
       await this.stopStorage();
       this.emit('shutdown');
       return;
@@ -479,9 +499,9 @@ export class Matterbridge extends EventEmitter {
     this.checkUpdateInterval = setInterval(
       () => {
         this.getMatterbridgeLatestVersion();
-        this.registeredPlugins.forEach((plugin) => {
+        for (const plugin of this.plugins) {
           this.getPluginLatestVersion(plugin);
-        });
+        }
       },
       60 * 60 * 1000,
     );
@@ -517,7 +537,7 @@ export class Matterbridge extends EventEmitter {
       this.log.debug('Adding matterbridge commissioning server to matter server');
       await this.matterServer.addCommissioningServer(this.commissioningServer, { uniqueStorageKey: 'Matterbridge' });
 
-      for (const plugin of this.registeredPlugins) {
+      for (const plugin of this.plugins) {
         plugin.configJson = await this.loadPluginConfig(plugin);
         plugin.schemaJson = await this.loadPluginSchema(plugin);
         // Check if the plugin is available
@@ -558,7 +578,7 @@ export class Matterbridge extends EventEmitter {
       this.log.debug('Starting matterbridge in mode', this.bridgeMode);
       this.matterServer = this.createMatterServer(this.storageManager);
 
-      for (const plugin of this.registeredPlugins) {
+      for (const plugin of this.plugins) {
         plugin.configJson = await this.loadPluginConfig(plugin);
         plugin.schemaJson = await this.loadPluginSchema(plugin);
         // Check if the plugin is available
@@ -569,7 +589,7 @@ export class Matterbridge extends EventEmitter {
           continue;
         }
         // Check if the plugin has a new version
-        this.getPluginLatestVersion(plugin);
+        this.getPluginLatestVersion(plugin); // No await do it asyncronously
         if (!plugin.enabled) {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
           continue;
@@ -589,128 +609,6 @@ export class Matterbridge extends EventEmitter {
       await this.startMatterbridge();
       return;
     }
-  }
-
-  /**
-   * Loads a plugin from the specified package.json file path.
-   * @param packageJsonPath - The path to the package.json file of the plugin.
-   * @param mode - The mode of operation. Possible values are 'add', 'remove', 'enable', 'disable'.
-   * @returns A Promise that resolves when the plugin is loaded successfully, or rejects with an error if loading fails.
-   */
-  private async executeCommandLine(packageJsonPath: string, mode: string) {
-    packageJsonPath = (await this.plugins.resolve(packageJsonPath)) ?? packageJsonPath;
-    this.log.debug(`Loading plugin from ${plg}${packageJsonPath}${db}`);
-    try {
-      // Load the package.json of the plugin
-      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
-      if (mode === 'add') {
-        if (!this.registeredPlugins.find((plugin) => plugin.name === packageJson.name)) {
-          const plugin = { path: packageJsonPath, type: '', name: packageJson.name, version: packageJson.version, description: packageJson.description, author: packageJson.author, enabled: true };
-          if (await this.loadPlugin(plugin)) {
-            this.registeredPlugins.push(plugin);
-            await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
-            this.log.info(`Plugin ${plg}${packageJsonPath}${nf} type ${plugin.type} added to matterbridge`);
-          } else {
-            this.log.error(`Plugin ${plg}${packageJsonPath}${wr} not added to matterbridge error`);
-          }
-        } else {
-          this.log.warn(`Plugin ${plg}${packageJsonPath}${wr} already added to matterbridge`);
-        }
-      } else if (mode === 'remove') {
-        if (this.registeredPlugins.find((registeredPlugin) => registeredPlugin.name === packageJson.name)) {
-          this.registeredPlugins.splice(
-            this.registeredPlugins.findIndex((registeredPlugin) => registeredPlugin.name === packageJson.name),
-            1,
-          );
-          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
-          this.log.info(`Plugin ${plg}${packageJsonPath}${nf} removed from matterbridge`);
-        } else {
-          this.log.warn(`Plugin ${plg}${packageJsonPath}${wr} not registerd in matterbridge`);
-        }
-      } else if (mode === 'enable') {
-        const plugin = this.registeredPlugins.find((registeredPlugin) => registeredPlugin.name === packageJson.name);
-        if (plugin) {
-          plugin.enabled = true;
-          plugin.loaded = undefined;
-          plugin.started = undefined;
-          plugin.configured = undefined;
-          plugin.connected = undefined;
-          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
-          this.log.info(`Plugin ${plg}${packageJsonPath}${nf} enabled`);
-        } else {
-          this.log.warn(`Plugin ${plg}${packageJsonPath}${wr} not registerd in matterbridge`);
-        }
-      } else if (mode === 'disable') {
-        const plugin = this.registeredPlugins.find((registeredPlugin) => registeredPlugin.name === packageJson.name);
-        if (plugin) {
-          plugin.enabled = false;
-          plugin.loaded = undefined;
-          plugin.started = undefined;
-          plugin.configured = undefined;
-          plugin.connected = undefined;
-          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
-          this.log.info(`Plugin ${plg}${packageJsonPath}${nf} disabled`);
-        } else {
-          this.log.warn(`Plugin ${plg}${packageJsonPath}${wr} not registerd in matterbridge`);
-        }
-      } else if (mode === 'reset') {
-        const plugin = this.registeredPlugins.find((registeredPlugin) => registeredPlugin.name === packageJson.name);
-        if (plugin) {
-          plugin.loaded = undefined;
-          plugin.started = undefined;
-          plugin.configured = undefined;
-          plugin.connected = undefined;
-          plugin.paired = undefined;
-          plugin.connected = undefined;
-          if (!this.storageManager) this.log.error(`Plugin ${plg}${plugin.name}${er} storageManager not found`);
-          const context = this.storageManager?.createContext(plugin.name);
-          if (!context) this.log.error(`Plugin ${plg}${plugin.name}${er} context not found`);
-          await context?.clearAll();
-          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
-          this.log.info(`Reset commissionig for plugin ${plg}${plugin.name}${nf} done! Remove the device from the controller.`);
-        } else {
-          this.log.warn(`Plugin ${plg}${packageJsonPath}${wr} not registerd in matterbridge`);
-        }
-      }
-    } catch (err) {
-      this.log.error(`Failed to load plugin from ${plg}${packageJsonPath}${er}: ${err}`);
-    }
-  }
-
-  /**
-   * Saves the registered plugins to storage.
-   * @returns {Promise<RegisteredPlugin[] | null>} A promise that resolves to an array of RegisteredPlugin objects or null if the node context is not initialized.
-   */
-  private async savePluginsToStorage(): Promise<RegisteredPlugin[] | null> {
-    if (!this.nodeContext) {
-      this.log.error('loadPluginsFromStorage() error: the node context is not initialized');
-      return null;
-    }
-    // Convert the map to an array
-    // const pluginArray = Array.from(this.plugins.values());
-    // await this.nodeContext.set('plugins', pluginArray);
-    // TODO remove after migration done
-    await this.nodeContext.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
-    return this.registeredPlugins;
-  }
-
-  /**
-   * Loads the plugins from storage and returns an array of registered plugins.
-   * If the node context is not initialized, it logs an error and returns null.
-   *
-   * @returns {Promise<RegisteredPlugin[] | null>} A promise that resolves to an array of registered plugins, or null if the node context is not initialized.
-   */
-  private async loadPluginsFromStorage(): Promise<RegisteredPlugin[] | null> {
-    if (!this.nodeContext) {
-      this.log.error('loadPluginsFromStorage() error: the node context is not initialized');
-      return null;
-    }
-    // Load the array from storage and convert it back to a map
-    // const pluginArray = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
-    // for (const plugin of pluginArray) this.plugins.set(plugin.name, plugin);
-    // TODO remove after migration done
-    this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
-    return this.registeredPlugins;
   }
 
   /**
@@ -770,7 +668,7 @@ export class Matterbridge extends EventEmitter {
    */
   private async unregisterAndShutdownProcess() {
     this.log.info('Unregistering all devices and shutting down...');
-    for (const plugin of this.registeredPlugins.filter((plugin) => plugin.enabled && !plugin.error)) {
+    for (const plugin of this.plugins /* .filter((plugin) => plugin.enabled && !plugin.error))*/) {
       await this.removeAllBridgedDevices(plugin.name);
     }
     await this.cleanup('unregistered all devices and shutting down...', false);
@@ -817,19 +715,9 @@ export class Matterbridge extends EventEmitter {
       }
 
       // Calling the shutdown method of each plugin and clear the reachability timeout
-      for (const plugin of this.registeredPlugins) {
+      for (const plugin of this.plugins) {
         if (!plugin.enabled || plugin.error) continue;
-        this.log.info(`Shutting down plugin ${plg}${plugin.name}${nf}`);
-        if (plugin.platform) {
-          try {
-            await plugin.platform.onShutdown('Matterbridge is closing: ' + message);
-            // await this.savePluginConfig(plugin);
-          } catch (error) {
-            this.log.error(`Plugin ${plg}${plugin.name}${er} shutting down error: ${error}`);
-          }
-        } else {
-          this.log.debug(`Plugin ${plg}${plugin.name}${db} platform not found`);
-        }
+        await this.plugins.shutdown(plugin, 'Matterbridge is closing: ' + message);
         if (plugin.reachabilityTimeout) {
           clearTimeout(plugin.reachabilityTimeout);
           plugin.reachabilityTimeout = undefined;
@@ -938,7 +826,7 @@ export class Matterbridge extends EventEmitter {
         // console.log('nodeContext:', (this.nodeContext as any).storage);
         this.nodeContext = undefined;
         // Clear nodeContext for each plugin (they just need 1000ms to write the data to disk)
-        for (const plugin of this.registeredPlugins) {
+        for (const plugin of this.plugins) {
           if (plugin.nodeContext) {
             this.log.debug(`Closing node storage context for plugin ${plg}${plugin.name}${db}...`);
             await plugin.nodeContext.close();
@@ -952,7 +840,7 @@ export class Matterbridge extends EventEmitter {
       } else {
         this.log.error('Error saving registered devices: nodeContext not found!');
       }
-      this.registeredPlugins = [];
+      this.plugins.clear();
       this.registeredDevices = [];
 
       // this.log.info('Waiting for matter to deliver last messages...');
@@ -1008,7 +896,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Adding bridged device ${dev}${device.deviceName}${db} (${dev}${device.name}${db}) for plugin ${plg}${pluginName}${db}`);
 
     // Check if the plugin is registered
-    const plugin = this.registeredPlugins.find((plugin) => plugin.name === pluginName);
+    const plugin = this.plugins.get(pluginName);
     if (!plugin) {
       this.log.error(`Error adding bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) plugin ${plg}${pluginName}${er} not found`);
       return;
@@ -1074,7 +962,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Removing bridged device ${dev}${device.deviceName}${db} (${dev}${device.name}${db}) for plugin ${plg}${pluginName}${db}`);
 
     // Check if the plugin is registered
-    const plugin = this.findPlugin(pluginName);
+    const plugin = this.plugins.get(pluginName);
     if (!plugin) {
       this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) plugin ${plg}${pluginName}${er} not found`);
       return;
@@ -1132,7 +1020,7 @@ export class Matterbridge extends EventEmitter {
    * @returns A promise that resolves when all devices have been removed.
    */
   async removeAllBridgedDevices(pluginName: string): Promise<void> {
-    const plugin = this.findPlugin(pluginName);
+    const plugin = this.plugins.get(pluginName);
     if (this.bridgeMode === 'childbridge' && plugin?.type === 'AccessoryPlatform') {
       this.log.info(`Removing devices for plugin ${plg}${pluginName}${nf} type AccessoryPlatform is not supported in childbridge mode`);
       return;
@@ -1431,6 +1319,72 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
+   * Loads a plugin and returns the corresponding MatterbridgePlatform instance.
+   * @param plugin - The plugin to load.
+   * @param start - Optional flag indicating whether to start the plugin after loading. Default is false.
+   * @param message - Optional message to pass to the plugin when starting.
+   * @returns A Promise that resolves to the loaded MatterbridgePlatform instance.
+   * @throws An error if the plugin is not enabled, already loaded, or fails to load.
+   */
+  private async loadPlugin(plugin: RegisteredPlugin, start = false, message = ''): Promise<MatterbridgePlatform | undefined> {
+    if (!plugin.enabled) {
+      this.log.error(`Plugin ${plg}${plugin.name}${er} not enabled`);
+      return Promise.resolve(undefined);
+    }
+    if (plugin.platform) {
+      this.log.error(`Plugin ${plg}${plugin.name}${er} already loaded`);
+      return Promise.resolve(plugin.platform);
+    }
+    this.log.info(`Loading plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
+    try {
+      // Load the package.json of the plugin
+      const packageJson = JSON.parse(await fs.readFile(plugin.path, 'utf8'));
+      // Resolve the main module path relative to package.json
+      const pluginEntry = path.resolve(path.dirname(plugin.path), packageJson.main);
+      // Dynamically import the plugin
+      const pluginUrl = pathToFileURL(pluginEntry);
+      this.log.debug(`Importing plugin ${plg}${plugin.name}${db} from ${pluginUrl.href}`);
+      const pluginInstance = await import(pluginUrl.href);
+      this.log.debug(`Imported plugin ${plg}${plugin.name}${db} from ${pluginUrl.href}`);
+
+      // Call the default export function of the plugin, passing this MatterBridge instance, the log and the config
+      if (pluginInstance.default) {
+        const config: PlatformConfig = await this.loadPluginConfig(plugin);
+        const log = new AnsiLogger({ logName: plugin.description ?? 'No description', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: (config.debug as boolean) ?? false });
+        const platform = pluginInstance.default(this, log, config) as MatterbridgePlatform;
+        platform.name = packageJson.name;
+        platform.config = config;
+        platform.version = packageJson.version;
+        plugin.name = packageJson.name;
+        plugin.description = packageJson.description ?? 'No description';
+        plugin.version = packageJson.version;
+        plugin.author = packageJson.author ?? 'Unknown';
+        plugin.type = platform.type;
+        plugin.platform = platform;
+        plugin.loaded = true;
+        plugin.registeredDevices = 0;
+        plugin.addedDevices = 0;
+        plugin.configJson = config;
+        plugin.schemaJson = await this.loadPluginSchema(plugin);
+        // Save the updated plugin data in the node storage
+        // await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
+
+        this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${platform.type} ${db}(entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
+        if (start) this.startPlugin(plugin, message); // No await do it asyncronously
+        return Promise.resolve(platform);
+      } else {
+        this.log.error(`Plugin ${plg}${plugin.name}${er} does not provide a default export`);
+        plugin.error = true;
+        return Promise.resolve(undefined);
+      }
+    } catch (err) {
+      this.log.error(`Failed to load plugin ${plg}${plugin.name}${er}: ${err}`);
+      plugin.error = true;
+      return Promise.resolve(undefined);
+    }
+  }
+
+  /**
    * Starts a plugin.
    *
    * @param {RegisteredPlugin} plugin - The plugin to start.
@@ -1484,13 +1438,13 @@ export class Matterbridge extends EventEmitter {
       this.log.info(`Plugin ${plg}${plugin.name}${nf} already configured`);
       return Promise.resolve();
     }
-    this.log.info(`Configuring plugin ${plg}${plugin.name}${db} type ${typ}${plugin.type}${db}`);
+    this.log.info(`Configuring plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
     try {
       plugin.platform
         .onConfigure()
         .then(() => {
           plugin.configured = true;
-          this.log.info(`Configured plugin ${plg}${plugin.name}${db} type ${typ}${plugin.type}${db}`);
+          this.log.info(`Configured plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
           this.savePluginConfig(plugin);
           return Promise.resolve();
         })
@@ -1503,93 +1457,6 @@ export class Matterbridge extends EventEmitter {
       plugin.error = true;
       this.log.error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`);
       return Promise.resolve();
-    }
-  }
-
-  /**
-   * Loads and parse the plugin package.json and returns it.
-   * @param plugin - The plugin to load the package from.
-   * @returns A Promise that resolves to the package.json object or undefined if the package.json could not be loaded.
-   */
-  /*
-  private async parsePlugin(plugin: RegisteredPlugin): Promise<Record<string, string | number | object> | undefined> {
-    this.log.debug(`Parsing package.json of plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
-    try {
-      const packageJson = JSON.parse(await fs.readFile(plugin.path, 'utf8'));
-      return packageJson;
-    } catch (err) {
-      this.log.error(`Failed to parse plugin ${plg}${plugin.name}${er} package.json: ${err}`);
-      plugin.error = true;
-      return undefined;
-    }
-  }
-  */
-
-  /**
-   * Loads a plugin and returns the corresponding MatterbridgePlatform instance.
-   * @param plugin - The plugin to load.
-   * @param start - Optional flag indicating whether to start the plugin after loading. Default is false.
-   * @param message - Optional message to pass to the plugin when starting.
-   * @returns A Promise that resolves to the loaded MatterbridgePlatform instance.
-   * @throws An error if the plugin is not enabled, already loaded, or fails to load.
-   */
-  private async loadPlugin(plugin: RegisteredPlugin, start = false, message = ''): Promise<MatterbridgePlatform | undefined> {
-    if (!plugin.enabled) {
-      this.log.error(`Plugin ${plg}${plugin.name}${er} not enabled`);
-      return Promise.resolve(undefined);
-    }
-    if (plugin.platform) {
-      this.log.error(`Plugin ${plg}${plugin.name}${er} already loaded`);
-      return Promise.resolve(plugin.platform);
-    }
-    this.log.info(`Loading plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
-    try {
-      // Load the package.json of the plugin
-      const packageJson = JSON.parse(await fs.readFile(plugin.path, 'utf8'));
-      // Resolve the main module path relative to package.json
-      const pluginEntry = path.resolve(path.dirname(plugin.path), packageJson.main);
-      // Dynamically import the plugin
-      const pluginUrl = pathToFileURL(pluginEntry);
-      this.log.debug(`Importing plugin ${plg}${plugin.name}${db} from ${pluginUrl.href}`);
-      const pluginInstance = await import(pluginUrl.href);
-      this.log.debug(`Imported plugin ${plg}${plugin.name}${db} from ${pluginUrl.href}`);
-
-      // Call the default export function of the plugin, passing this MatterBridge instance, the log and the config
-      if (pluginInstance.default) {
-        const config: PlatformConfig = await this.loadPluginConfig(plugin);
-        const log = new AnsiLogger({ logName: plugin.description ?? 'No description', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: (config.debug as boolean) ?? false });
-        const platform = pluginInstance.default(this, log, config) as MatterbridgePlatform;
-        platform.name = packageJson.name;
-        platform.config = config;
-        platform.version = packageJson.version;
-        plugin.name = packageJson.name;
-        plugin.description = packageJson.description ?? 'No description';
-        plugin.version = packageJson.version;
-        plugin.author = packageJson.author ?? 'Unknown';
-        plugin.type = platform.type;
-        plugin.platform = platform;
-        plugin.loaded = true;
-        plugin.registeredDevices = 0;
-        plugin.addedDevices = 0;
-        plugin.configJson = config;
-        plugin.schemaJson = await this.loadPluginSchema(plugin);
-        // Save the updated plugin data in the node storage
-        await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
-
-        // this.getPluginLatestVersion(plugin); moved to parseCommandLine
-
-        this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${platform.type} ${db}(entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
-        if (start) this.startPlugin(plugin, message); // No await do it asyncronously
-        return Promise.resolve(platform);
-      } else {
-        this.log.error(`Plugin ${plg}${plugin.name}${er} does not provide a default export`);
-        plugin.error = true;
-        return Promise.resolve(undefined);
-      }
-    } catch (err) {
-      this.log.error(`Failed to load plugin ${plg}${plugin.name}${er}: ${err}`);
-      plugin.error = true;
-      return Promise.resolve(undefined);
     }
   }
 
@@ -1816,7 +1683,7 @@ export class Matterbridge extends EventEmitter {
       this.log.debug('***Starting startMatterbridge interval for Matterbridge');
       let failCount = 0;
       const startMatterInterval = setInterval(async () => {
-        for (const plugin of this.registeredPlugins) {
+        for (const plugin of this.plugins) {
           // new code to not start the bridge if one plugin is in error cause the controllers will delete the devices loosing all the configuration
           if (!plugin.enabled) continue;
           if (plugin.error) {
@@ -1879,7 +1746,7 @@ export class Matterbridge extends EventEmitter {
       let failCount = 0;
       const startMatterInterval = setInterval(async () => {
         let allStarted = true;
-        for (const plugin of this.registeredPlugins) {
+        for (const plugin of this.plugins) {
           // new code to not start the bridge if one plugin is in error cause the controllers will delete the devices loosing all the configuration
           if (!plugin.enabled) continue;
           if (plugin.error) {
@@ -1908,7 +1775,7 @@ export class Matterbridge extends EventEmitter {
 
         await this.startMatterServer();
         this.log.info('Matter server started');
-        for (const plugin of this.registeredPlugins) {
+        for (const plugin of this.plugins) {
           if (!plugin.enabled || plugin.error) continue;
           if (!plugin.addedDevices || plugin.addedDevices === 0) {
             this.log.error(`Plugin ${plg}${plugin.name}${er} didn't add any devices to Matterbridge. Verify the plugin configuration.`);
@@ -2077,7 +1944,7 @@ export class Matterbridge extends EventEmitter {
         this.matterbridgeConnected = false;
       }
       if (pluginName !== 'Matterbridge') {
-        const plugin = this.findPlugin(pluginName);
+        const plugin = this.plugins.get(pluginName);
         if (plugin) {
           plugin.qrPairingCode = qrPairingCode;
           plugin.manualPairingCode = manualPairingCode;
@@ -2087,7 +1954,7 @@ export class Matterbridge extends EventEmitter {
           plugin.connected = false;
         }
       }
-      await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
+      // await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
     } else {
       this.log.info(`*The commissioning server on port ${commissioningServer.getPort()} for ${plg}${pluginName}${nf} is already commissioned. Waiting for controllers to connect ...`);
       const fabricInfo = commissioningServer.getCommissionedFabricInformation();
@@ -2101,14 +1968,14 @@ export class Matterbridge extends EventEmitter {
         this.matterbridgePaired = true;
       }
       if (pluginName !== 'Matterbridge') {
-        const plugin = this.findPlugin(pluginName);
+        const plugin = this.plugins.get(pluginName);
         if (plugin) {
           plugin.fabricInformations = this.sanitizeFabricInformations(fabricInfo);
           plugin.sessionInformations = [];
           plugin.paired = true;
         }
       }
-      await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
+      // await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
     }
   }
 
@@ -2170,14 +2037,17 @@ export class Matterbridge extends EventEmitter {
    * @param pluginName - The name of the plugin to find.
    * @returns The found plugin, or undefined if not found.
    */
+  /*
   private findPlugin(pluginName: string) {
-    const plugin = this.registeredPlugins.find((registeredPlugin) => registeredPlugin.name === pluginName);
+    // const plugin = this.registeredPlugins.find((registeredPlugin) => registeredPlugin.name === pluginName);
+    const plugin = this.plugins.get(pluginName);
     if (!plugin) {
       this.log.error(`Plugin ${plg}${pluginName}${er} not found`);
       return;
     }
     return plugin;
   }
+  */
 
   /**
    * Sets the reachability of a commissioning server and trigger.
@@ -2332,7 +2202,7 @@ export class Matterbridge extends EventEmitter {
             this.matterbridgeSessionInformations = this.sanitizeSessionInformation(sessionInformations);
           }
           if (this.bridgeMode === 'childbridge') {
-            const plugin = this.findPlugin(pluginName);
+            const plugin = this.plugins.get(pluginName);
             if (plugin) {
               plugin.paired = true;
               plugin.connected = true;
@@ -2343,7 +2213,7 @@ export class Matterbridge extends EventEmitter {
           setTimeout(() => {
             // We just need to configure the plugins after the controllers are connected
             if (this.bridgeMode === 'bridge') {
-              for (const plugin of this.registeredPlugins) {
+              for (const plugin of this.plugins) {
                 if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
                 try {
                   this.configurePlugin(plugin); // No await do it asyncronously
@@ -2354,7 +2224,7 @@ export class Matterbridge extends EventEmitter {
               }
             }
             if (this.bridgeMode === 'childbridge') {
-              for (const plugin of this.registeredPlugins) {
+              for (const plugin of this.plugins) {
                 if (plugin.name === pluginName && plugin.loaded === true && plugin.started === true && plugin.configured !== true) {
                   try {
                     this.configurePlugin(plugin); // No await do it asyncronously
@@ -2382,7 +2252,7 @@ export class Matterbridge extends EventEmitter {
             this.matterbridgePaired = false;
             this.matterbridgeConnected = false;
           } else {
-            for (const plugin of this.registeredPlugins) {
+            for (const plugin of this.plugins) {
               if (plugin.name === pluginName) {
                 await plugin.platform?.onShutdown('Commissioning removed by the controller');
                 plugin.fabricInformations = [];
@@ -2400,7 +2270,7 @@ export class Matterbridge extends EventEmitter {
             this.matterbridgeFabricInformations = this.sanitizeFabricInformations(fabricInfo);
             this.matterbridgePaired = true;
           } else {
-            const plugin = this.findPlugin(pluginName);
+            const plugin = this.plugins.get(pluginName);
             if (plugin) {
               plugin.fabricInformations = this.sanitizeFabricInformations(fabricInfo);
               plugin.paired = true;
@@ -2757,7 +2627,7 @@ export class Matterbridge extends EventEmitter {
    */
   private async getBaseRegisteredPlugins(includeAll = false): Promise<BaseRegisteredPlugin[]> {
     const baseRegisteredPlugins: BaseRegisteredPlugin[] = [];
-    for (const plugin of this.registeredPlugins) {
+    for (const plugin of this.plugins) {
       baseRegisteredPlugins.push({
         path: plugin.path,
         type: plugin.type,
@@ -3226,19 +3096,19 @@ export class Matterbridge extends EventEmitter {
       }
       // Handle the command reset from Settings
       if (command === 'reset') {
-        this.shutdownProcessAndReset(); // No await do it asyncronously
+        await this.shutdownProcessAndReset();
       }
       // Handle the command factoryreset from Settings
       if (command === 'factoryreset') {
-        this.shutdownProcessAndFactoryReset(); // No await do it asyncronously
+        await this.shutdownProcessAndFactoryReset();
       }
       // Handle the command shutdown from Header
       if (command === 'shutdown') {
-        this.shutdownProcess(); // No await do it asyncronously
+        await this.shutdownProcess();
       }
       // Handle the command restart from Header
       if (command === 'restart') {
-        this.restartProcess(); // No await do it asyncronously
+        await this.restartProcess();
       }
       // Handle the command update from Header
       if (command === 'update') {
@@ -3248,10 +3118,10 @@ export class Matterbridge extends EventEmitter {
           this.log.info('Matterbridge has been updated. Full restart required.');
         } catch (error) {
           this.log.error('Error updating matterbridge');
-          res.json({ message: 'Command received' });
-          return;
         }
-        this.updateProcess();
+        await this.updateProcess();
+        res.json({ message: 'Command received' });
+        return;
       }
       // Handle the command saveconfig from Home
       if (command === 'saveconfig') {
@@ -3262,7 +3132,9 @@ export class Matterbridge extends EventEmitter {
         if (!plugins) return;
         const plugin = plugins.find((plugin) => plugin.name === param);
         if (!plugin) return;
-        this.savePluginConfigFromJson(plugin, req.body);
+        this.savePluginConfigFromJson(plugin, req.body); // No await do it asyncronously
+        res.json({ message: 'Command received' });
+        return;
       }
 
       // Handle the command installplugin from Home
@@ -3274,120 +3146,40 @@ export class Matterbridge extends EventEmitter {
           this.log.info(`Plugin ${plg}${param}${nf} installed. Full restart required.`);
         } catch (error) {
           this.log.error(`Error installing plugin ${plg}${param}${er}`);
-          res.json({ message: 'Command received' });
-          return;
         }
+        res.json({ message: 'Command received' });
+        return;
       }
       // Handle the command addplugin from Home
       if (command === 'addplugin' || command === 'installplugin') {
         param = param.replace(/\*/g, '\\');
-        if (this.registeredPlugins.find((plugin) => plugin.name === param)) {
+        if (this.plugins.has(param)) {
           this.log.warn(`Plugin ${plg}${param}${wr} already added to matterbridge`);
-          res.json({ message: 'Command received' });
-          return;
+        } else {
+          await this.plugins.add(param);
         }
-        const packageJsonPath = await this.plugins.resolve(param);
-        if (!packageJsonPath) {
-          this.log.error(`Error resolving plugin ${plg}${param}${er}`);
-          res.json({ message: 'Command received' });
-          return;
-        }
-        this.log.debug(`Loading plugin from ${plg}${packageJsonPath}${db}`);
-        try {
-          // Load the package.json of the plugin
-          const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
-          const plugin = { path: packageJsonPath, type: '', name: packageJson.name, version: packageJson.version, description: packageJson.description, author: packageJson.author, enabled: true };
-          if (await this.loadPlugin(plugin)) {
-            this.registeredPlugins.push(plugin);
-            await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
-            this.log.info(`Plugin ${plg}${packageJsonPath}${nf} type ${plugin.type} added to matterbridge. Restart required.`);
-            this.startPlugin(plugin, 'The plugin has been added to Matterbridge', true);
-          } else {
-            this.log.error(`Error adding plugin ${plg}${packageJsonPath}${er}`);
-          }
-        } catch (error) {
-          this.log.error(`Error adding plugin ${plg}${packageJsonPath}${er}`);
-          res.json({ message: 'Command received' });
-          return;
-        }
+        res.json({ message: 'Command received' });
+        return;
       }
       // Handle the command removeplugin from Home
       if (command === 'removeplugin') {
-        const index = this.registeredPlugins.findIndex((registeredPlugin) => registeredPlugin.name === param);
-        if (index !== -1) {
-          if (this.registeredPlugins[index].platform) {
-            await this.registeredPlugins[index].platform?.onShutdown('The plugin has been removed.');
-          }
-          // Remove all devices from the plugin
-          await this.removeAllBridgedDevices(this.registeredPlugins[index].name);
-          // Remove the plugin from the registered plugins
-          this.registeredPlugins.splice(index, 1);
-          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
-          this.log.info(`Plugin ${plg}${param}${nf} removed from matterbridge`);
+        if (!this.plugins.has(param)) {
+          this.log.warn(`Plugin ${plg}${param}${wr} not found in matterbridge`);
         } else {
-          this.log.warn(`Plugin ${plg}${param}${wr} not registered in matterbridge`);
+          const plugin = this.plugins.get(param) as RegisteredPlugin;
+          await this.plugins.shutdown(plugin, 'The plugin has been removed.', true);
+          await this.plugins.remove(param);
         }
+        res.json({ message: 'Command received' });
+        return;
       }
       // Handle the command enableplugin from Home
       if (command === 'enableplugin') {
-        const plugins = await this.nodeContext?.get<RegisteredPlugin[]>('plugins');
-        if (!plugins) return;
-        const plugin = plugins.find((plugin) => plugin.name === param);
-        if (plugin) {
-          plugin.enabled = true;
-          plugin.locked = undefined;
-          plugin.error = undefined;
-          plugin.loaded = undefined;
-          plugin.started = undefined;
-          plugin.configured = undefined;
-          plugin.connected = undefined;
-          plugin.platform = undefined;
-          plugin.registeredDevices = undefined;
-          plugin.addedDevices = undefined;
-          await this.nodeContext?.set<RegisteredPlugin[]>('plugins', plugins);
-          this.log.info(`Enabled plugin ${plg}${param}${nf}`);
-        }
-        if (this.bridgeMode === 'bridge') {
-          const pluginToEnable = this.findPlugin(param);
-          if (pluginToEnable) {
-            pluginToEnable.enabled = true;
-            pluginToEnable.platform = await this.loadPlugin(pluginToEnable);
-            if (pluginToEnable.platform) {
-              await this.startPlugin(pluginToEnable, 'The plugin has been enabled', true);
-            } else {
-              pluginToEnable.enabled = false;
-              pluginToEnable.error = true;
-              this.log.error(`Error enabling plugin ${plg}${param}${er}`);
-            }
-          }
-        }
-      }
-      // Handle the command disableplugin from Home
-      if (command === 'disableplugin') {
-        const pluginToDisable = this.findPlugin(param);
-        if (pluginToDisable) {
-          if (pluginToDisable.platform) {
-            await pluginToDisable.platform.onShutdown('The plugin has been disabled.');
-          }
-          // Remove all devices from the plugin
-          this.log.info(`Unregistering devices for plugin ${plg}${pluginToDisable.name}${nf}...`);
-          await this.removeAllBridgedDevices(pluginToDisable.name);
-          pluginToDisable.enabled = false;
-          pluginToDisable.locked = undefined;
-          pluginToDisable.error = undefined;
-          pluginToDisable.loaded = undefined;
-          pluginToDisable.started = undefined;
-          pluginToDisable.configured = undefined;
-          pluginToDisable.connected = undefined;
-          pluginToDisable.platform = undefined;
-          pluginToDisable.registeredDevices = undefined;
-          pluginToDisable.addedDevices = undefined;
-          // Save the plugins state in node storage
-          const plugins = await this.nodeContext?.get<RegisteredPlugin[]>('plugins');
-          if (!plugins) return;
-          const plugin = plugins.find((plugin) => plugin.name === param);
-          if (plugin) {
-            plugin.enabled = false;
+        if (!this.plugins.has(param)) {
+          this.log.warn(`Plugin ${plg}${param}${wr} not found in matterbridge`);
+        } else {
+          const plugin = this.plugins.get(param);
+          if (plugin && !plugin.enabled) {
             plugin.locked = undefined;
             plugin.error = undefined;
             plugin.loaded = undefined;
@@ -3397,12 +3189,33 @@ export class Matterbridge extends EventEmitter {
             plugin.platform = undefined;
             plugin.registeredDevices = undefined;
             plugin.addedDevices = undefined;
-            await this.nodeContext?.set<RegisteredPlugin[]>('plugins', plugins);
-            this.log.info(`Disabled plugin ${plg}${param}${nf}`);
+            await this.plugins.enable(param);
+
+            // if (this.bridgeMode === 'bridge') {
+            plugin.platform = await this.loadPlugin(plugin);
+            if (plugin.platform) {
+              await this.startPlugin(plugin, 'The plugin has been enabled', true);
+            }
+            // }
           }
         }
+        res.json({ message: 'Command received' });
+        return;
       }
-      res.json({ message: 'Command received' });
+      // Handle the command disableplugin from Home
+      if (command === 'disableplugin') {
+        if (!this.plugins.has(param)) {
+          this.log.warn(`Plugin ${plg}${param}${wr} not found in matterbridge`);
+        } else {
+          const plugin = this.plugins.get(param);
+          if (plugin && plugin.enabled) {
+            await this.plugins.shutdown(plugin, 'The plugin has been disabled.', true);
+            await this.plugins.disable(param);
+          }
+        }
+        res.json({ message: 'Command received' });
+        return;
+      }
     });
 
     // Fallback for routing (must be the last route)
@@ -3491,8 +3304,8 @@ export class Matterbridge extends EventEmitter {
       registeredDevices: 0,
       addedDevices: 0,
     };
-    this.registeredPlugins.push(plugin);
-    await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
+    this.plugins.set(plugin);
+    this.plugins.saveToStorage();
 
     // Log system info and create .matterbridge directory
     await this.logNodeAndSystemInfo();

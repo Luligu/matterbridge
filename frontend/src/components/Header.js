@@ -77,9 +77,9 @@ function Header() {
 
   const handleUpdateClick = () => {
     sendCommandToMatterbridge('update','now');
-    setOpen(true);
+    // setOpen(true);
     setTimeout(() => {
-      setOpen(false);
+      // setOpen(false);
       window.location.href = window.location.origin;
     }, 5000);
   };
@@ -89,20 +89,20 @@ function Header() {
       sendCommandToMatterbridge('restart','now');
     else
       sendCommandToMatterbridge('shutdown','now');
-    setOpen(true);
+    // setOpen(true);
     setTimeout(() => {
-      setOpen(false);
+      // setOpen(false);
       window.location.href = window.location.origin;
-    }, 5000);
+    }, 3000);
   };
 
   const handleShutdownClick = () => {
     sendCommandToMatterbridge('shutdown','now');
-    setOpen(true);
+    // setOpen(true);
     setTimeout(() => {
-      setOpen(false);
+      // setOpen(false);
       window.location.href = window.location.origin;
-    }, 5000);
+    }, 3000);
   };
 
   useEffect(() => {

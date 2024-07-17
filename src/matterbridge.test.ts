@@ -68,7 +68,7 @@ describe('Matterbridge loadInstance() and cleanup()', () => {
     expect((matterbridge as any).matterbridgeDirectory).toBe('');
     expect((matterbridge as any).nodeStorage).toBeUndefined();
     expect((matterbridge as any).nodeContext).toBeUndefined();
-    expect((matterbridge as any).registeredPlugins).toHaveLength(0);
+    expect((matterbridge as any).plugins).toBeUndefined();
     expect((matterbridge as any).registeredDevices).toHaveLength(0);
     expect((matterbridge as any).globalModulesDirectory).toBe('');
     expect((matterbridge as any).matterbridgeLatestVersion).toBe('');
@@ -180,14 +180,6 @@ describe('Matterbridge', () => {
     expect(JSON.stringify((matterbridge as any).sanitizeSessionInformation(sessionInfos)).length).toBe(471);
   });
 
-  test('Load plugins from storage', async () => {
-    expect(await (matterbridge as any).loadPluginsFromStorage()).toHaveLength(0);
-  });
-
-  test('Save plugins to storage', async () => {
-    expect(await (matterbridge as any).savePluginsToStorage()).toHaveLength(0);
-  });
-
   test('matterbridge -help', async () => {
     const shutdownPromise = new Promise((resolve) => {
       matterbridge.on('shutdown', resolve);
@@ -261,7 +253,7 @@ describe('Matterbridge', () => {
     const shutdownPromise = new Promise((resolve) => {
       matterbridge.on('shutdown', resolve);
     });
-    let plugins = (await (matterbridge as any).loadPluginsFromStorage()) as RegisteredPlugin[];
+    let plugins = (await (matterbridge as any).plugins) as RegisteredPlugin[];
     expect(plugins).toHaveLength(0);
 
     process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-add', './src/mock/plugin1'];
@@ -278,7 +270,7 @@ describe('Matterbridge', () => {
     // expect(consoleLogSpy).toHaveBeenCalledWith(`Added plugin ${plg}matterbridge-mock1${nf}`);
     // expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Plugin ${plg}${path.resolve('./src/mock/plugin1/package.json')}${nf} type DynamicPlatform added to matterbridge`);
     (matterbridge as any).log.setLogDebug(false);
-    plugins = (await (matterbridge as any).loadPluginsFromStorage()) as RegisteredPlugin[];
+    plugins = (await (matterbridge as any).plugins.array()) as RegisteredPlugin[];
     expect(plugins).toHaveLength(1);
     expect(plugins[0].version).toBe('1.0.1');
     expect(plugins[0].name).toBe('matterbridge-mock1');
@@ -301,7 +293,7 @@ describe('Matterbridge', () => {
     await (matterbridge as any).parseCommandLine();
     expect((matterbridge as any).plugins.log.log).toHaveBeenCalledWith(LogLevel.INFO, `Disabled plugin ${plg}matterbridge-mock1${nf}`);
     (matterbridge as any).log.setLogDebug(false);
-    const plugins = (await (matterbridge as any).loadPluginsFromStorage()) as RegisteredPlugin[];
+    const plugins = (await (matterbridge as any).plugins.array()) as RegisteredPlugin[];
     expect(plugins).toHaveLength(1);
     expect(plugins[0].version).toBe('1.0.1');
     expect(plugins[0].name).toBe('matterbridge-mock1');
@@ -324,7 +316,7 @@ describe('Matterbridge', () => {
     await (matterbridge as any).parseCommandLine();
     expect((matterbridge as any).plugins.log.log).toHaveBeenCalledWith(LogLevel.INFO, `Enabled plugin ${plg}matterbridge-mock1${nf}`);
     (matterbridge as any).log.setLogDebug(false);
-    const plugins = (await (matterbridge as any).loadPluginsFromStorage()) as RegisteredPlugin[];
+    const plugins = (await (matterbridge as any).plugins.array()) as RegisteredPlugin[];
     expect(plugins).toHaveLength(1);
     expect(plugins[0].version).toBe('1.0.1');
     expect(plugins[0].name).toBe('matterbridge-mock1');
@@ -347,7 +339,7 @@ describe('Matterbridge', () => {
     await (matterbridge as any).parseCommandLine();
     expect((matterbridge as any).plugins.log.log).toHaveBeenCalledWith(LogLevel.INFO, `Removed plugin ${plg}matterbridge-mock1${nf}`);
     (matterbridge as any).log.setLogDebug(false);
-    const plugins = (await (matterbridge as any).loadPluginsFromStorage()) as RegisteredPlugin[];
+    const plugins = (await (matterbridge as any).plugins) as RegisteredPlugin[];
     expect(plugins).toHaveLength(0);
     await shutdownPromise;
     matterbridge.removeAllListeners('shutdown');
@@ -364,7 +356,7 @@ describe('Matterbridge', () => {
     await (matterbridge as any).parseCommandLine();
     expect((matterbridge as any).plugins.log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-mock1${nf}`);
     (matterbridge as any).log.setLogDebug(false);
-    let plugins = (await (matterbridge as any).loadPluginsFromStorage()) as RegisteredPlugin[];
+    let plugins = (await (matterbridge as any).plugins.array()) as RegisteredPlugin[];
     expect(plugins).toHaveLength(1);
     expect(plugins[0].version).toBe('1.0.1');
     expect(plugins[0].name).toBe('matterbridge-mock1');
@@ -379,7 +371,7 @@ describe('Matterbridge', () => {
     await (matterbridge as any).parseCommandLine();
     expect((matterbridge as any).plugins.log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-mock2${nf}`);
     (matterbridge as any).log.setLogDebug(false);
-    plugins = (await (matterbridge as any).loadPluginsFromStorage()) as RegisteredPlugin[];
+    plugins = (await (matterbridge as any).plugins.array()) as RegisteredPlugin[];
     expect(plugins).toHaveLength(2);
     expect(plugins[1].version).toBe('1.0.2');
     expect(plugins[1].name).toBe('matterbridge-mock2');
@@ -394,7 +386,7 @@ describe('Matterbridge', () => {
     await (matterbridge as any).parseCommandLine();
     expect((matterbridge as any).plugins.log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-mock3${nf}`);
     (matterbridge as any).log.setLogDebug(false);
-    plugins = (await (matterbridge as any).loadPluginsFromStorage()) as RegisteredPlugin[];
+    plugins = (await (matterbridge as any).plugins.array()) as RegisteredPlugin[];
     expect(plugins).toHaveLength(3);
     expect(plugins[2].version).toBe('1.0.3');
     expect(plugins[2].name).toBe('matterbridge-mock3');
@@ -410,7 +402,7 @@ describe('Matterbridge', () => {
   test('matterbridge start mockPlugin1/2/3', async () => {
     loggerLogSpy.mockClear();
     process.argv = ['node', 'matterbridge.test.js', '-frontend', '0'];
-    const plugins = (await (matterbridge as any).loadPluginsFromStorage()) as RegisteredPlugin[];
+    const plugins = (await (matterbridge as any).plugins.array()) as RegisteredPlugin[];
     expect(plugins).toHaveLength(3);
 
     await (matterbridge as any).loadPlugin(plugins[0]);
