@@ -7,6 +7,7 @@ import path from 'path';
 import { promises as fs } from 'fs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
+import { exec, ExecException } from 'child_process';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -265,6 +266,21 @@ export class Plugins {
       this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err}`);
       return null;
     }
+  }
+
+  async install(name: string): Promise<string> {
+    this.log.info(`Installing plugin ${plg}${name}${nf}`);
+    return new Promise((resolve, reject) => {
+      exec(`npm install -g ${name}`, (error: ExecException | null, stdout: string) => {
+        if (error) {
+          this.log.error(`Failed to install plugin ${plg}${name}${er}: ${error}`);
+          reject(error);
+        } else {
+          this.log.info(`Installed plugin ${plg}${name}${nf}`);
+          resolve(stdout.trim());
+        }
+      });
+    });
   }
 
   /**
