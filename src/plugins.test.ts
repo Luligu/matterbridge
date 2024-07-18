@@ -283,7 +283,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     loggerLogSpy.mockRestore();
     // Restore the mocked console.log
     consoleLogSpy.mockRestore();
-    execSync('npm uninstall -g matterbridge-eve-door');
+    // execSync('npm uninstall -g matterbridge-eve-door');
   }, 60000);
 
   test('constructor initializes correctly', () => {
