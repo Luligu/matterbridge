@@ -308,12 +308,12 @@ describe('PluginsManager load/start/configure/shutdown', () => {
   }, 300000);
 
   test('add plugin matterbridge-eve-door', async () => {
-    loggerLogSpy.mockRestore();
-    consoleLogSpy.mockRestore();
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
 
     expect(plugins.length).toBe(0);
     const plugin = await plugins.add('matterbridge-eve-door');
-    // expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-eve-door${nf}`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-eve-door${nf}`);
     expect(plugin).not.toBeNull();
   }, 60000);
 
