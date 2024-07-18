@@ -282,10 +282,6 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     loggerLogSpy.mockRestore();
     // Restore the mocked console.log
     consoleLogSpy.mockRestore();
-    if (getMacAddress() === '30:f6:ef:69:2b:c5') {
-      execSync('npm uninstall -g matterbridge-eve-door');
-    }
-    // execSync('npm uninstall -g matterbridge-eve-door');
   }, 60000);
 
   test('constructor initializes correctly', () => {
@@ -424,5 +420,8 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     plugins.clear();
     expect(await plugins.saveToStorage()).toBe(0);
     (matterbridge as any).registeredDevices = [];
+    if (getMacAddress() === '30:f6:ef:69:2b:c5') {
+      execSync('npm uninstall -g matterbridge-eve-door');
+    }
   }, 60000);
 });
