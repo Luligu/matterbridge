@@ -231,6 +231,30 @@ export function getIpv6InterfaceAddress(): string | undefined {
 }
 
 /**
+ * Retrieves the mac address of the first non-internal network interface.
+ * @returns {string | undefined} The IPv4 address of the selected network interface, or undefined if not found.
+ */
+export function getMacAddress(): string | undefined {
+  let macAddress: string | undefined;
+  const networkInterfaces = os.networkInterfaces();
+  // console.log('Available Network Interfaces:', networkInterfaces);
+  for (const interfaceDetails of Object.values(networkInterfaces)) {
+    if (!interfaceDetails) {
+      break;
+    }
+    for (const detail of interfaceDetails) {
+      if (detail.family === 'IPv6' && !detail.internal && macAddress === undefined) {
+        macAddress = detail.mac;
+      }
+    }
+    if (macAddress !== undefined) {
+      break;
+    }
+  }
+  return macAddress;
+}
+
+/**
  * Checks if a given string is a valid IPv4 address.
  *
  * @param {string} ipv4Address - The string to be checked.

@@ -1,4 +1,4 @@
-import { deepEqual, deepCopy, getIpv4InterfaceAddress, getIpv6InterfaceAddress, logInterfaces, isValidIpv4Address, waiter, wait } from './utils';
+import { deepEqual, deepCopy, getIpv4InterfaceAddress, getIpv6InterfaceAddress, logInterfaces, isValidIpv4Address, waiter, wait, getMacAddress } from './utils';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -159,10 +159,17 @@ describe('Utils test', () => {
 
   test('Address ipv4', () => {
     expect(getIpv4InterfaceAddress()).not.toBe('192.168.1.000');
+    expect(getIpv4InterfaceAddress()).toBeDefined();
   });
 
   test('Address ipv6', () => {
     expect(getIpv6InterfaceAddress()).not.toBe('fd78::4939:746:d555:85a9:74f6:9c6');
+    expect(getIpv6InterfaceAddress()).toBeDefined();
+  });
+
+  test('Address mac', () => {
+    expect(getMacAddress()).not.toBe('');
+    expect(getMacAddress()).toBeDefined();
   });
 
   test('Log interfaces', () => {

@@ -14,7 +14,7 @@ import { Plugins } from './plugins.js';
 import { exec, execSync } from 'child_process';
 import e from 'express';
 import exp from 'constants';
-import { waiter } from './utils/utils.js';
+import { getMacAddress, waiter } from './utils/utils.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -283,6 +283,9 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     loggerLogSpy.mockRestore();
     // Restore the mocked console.log
     consoleLogSpy.mockRestore();
+    if (getMacAddress() === '30:f6:ef:69:2b:c5') {
+      execSync('npm uninstall -g matterbridge-eve-door');
+    }
     // execSync('npm uninstall -g matterbridge-eve-door');
   }, 60000);
 
