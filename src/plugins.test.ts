@@ -415,7 +415,11 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect(plugin.platform).toBe(undefined);
 
     expect(await plugins.saveToStorage()).toBe(1);
+  }, 60000);
+
+  test('cleanup Jest profile', async () => {
     plugins.clear();
     expect(await plugins.saveToStorage()).toBe(0);
+    (matterbridge as any).registeredDevices = [];
   }, 60000);
 });

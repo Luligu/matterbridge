@@ -145,14 +145,12 @@ function Home() {
     if(matterbridgeInfo.bridgeMode === 'childbridge') {
       handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
       setTimeout(() => {
-        // window.location.reload();
         handleSnackClose();
       }, 3000);
     }
     if(matterbridgeInfo.bridgeMode === 'bridge') {
       handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
       setTimeout(() => {
-        // window.location.reload();
         handleSnackClose();
       }, 100);
     }

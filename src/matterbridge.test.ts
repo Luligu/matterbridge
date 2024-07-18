@@ -49,6 +49,11 @@ describe('Matterbridge loadInstance() and cleanup()', () => {
     });
   });
 
+  beforeEach(() => {
+    loggerLogSpy.mockClear();
+    consoleLogSpy.mockClear();
+  });
+
   afterAll(async () => {
     // Restore the mocked AnsiLogger.log method
     loggerLogSpy.mockRestore();
@@ -101,6 +106,11 @@ describe('Matterbridge', () => {
     matterbridge = await Matterbridge.loadInstance(true);
     if (!matterbridge.initialized) await matterbridge.initialize();
     // console.log('Loaded Matterbridge.loadInstance(true)');
+  });
+
+  beforeEach(() => {
+    loggerLogSpy.mockClear();
+    consoleLogSpy.mockClear();
   });
 
   afterAll(async () => {

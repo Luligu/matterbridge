@@ -157,6 +157,7 @@ export class Matterbridge extends EventEmitter {
 
   private static instance: Matterbridge | undefined;
   public initialized = false;
+  private execRunningCount = 0;
 
   // We load asyncronously so is private
   private constructor() {
@@ -190,10 +191,10 @@ export class Matterbridge extends EventEmitter {
     await waiter(
       'destroying instance...',
       () => {
-        return this.matterbridgeLatestVersion !== '' && this.globalModulesDirectory !== '' ? true : false;
+        return this.initialized === false && this.execRunningCount <= 0 ? true : false;
       },
       false,
-      5000,
+      60000,
       100,
       false,
     );
@@ -725,45 +726,6 @@ export class Matterbridge extends EventEmitter {
         }
       }
 
-      // Set reachability to false
-      /*
-      this.log.debug(`*Changing reachability to false for ${this.registeredDevices.length} devices (${this.bridgeMode} mode):`);
-      this.registeredDevices.forEach((registeredDevice) => {
-        const plugin = this.registeredPlugins.find((plugin) => plugin.name === registeredDevice.plugin);
-        if (!plugin) {
-          this.log.error(`Plugin ${plg}${registeredDevice.plugin}${er} not found`);
-          return;
-        }
-        if (this.bridgeMode === 'bridge' && registeredDevice.device.number) {
-          this.log.debug(`*-- device: ${dev}${registeredDevice.device.name}${db} plugin ${plg}${registeredDevice.plugin}${db} type ${plugin.type}${db}`);
-          registeredDevice.device.setBridgedDeviceReachability(false);
-          registeredDevice.device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
-        }
-        if (this.bridgeMode === 'childbridge') {
-          if (plugin.type === 'DynamicPlatform' && registeredDevice.device.number) {
-            this.log.debug(`*-- device: ${dev}${registeredDevice.device.name}${db} plugin ${plg}${registeredDevice.plugin}${db} type ${plugin.type}${db}`);
-            registeredDevice.device.setBridgedDeviceReachability(false);
-            registeredDevice.device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
-          }
-        }
-      });
-      if (this.bridgeMode === 'bridge') {
-        this.log.debug('*Changing reachability to false for Matterbridge');
-        this.matterAggregator?.getClusterServerById(BasicInformation.Cluster.id)?.setReachableAttribute(false);
-        this.matterAggregator?.getClusterServerById(BasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
-        this.commissioningServer?.setReachability(false);
-      }
-      if (this.bridgeMode === 'childbridge') {
-        for (const plugin of this.registeredPlugins) {
-          if (!plugin.enabled || plugin.error) continue;
-          this.log.debug(`*Changing reachability to false for plugin ${plg}${plugin.name}${db} type ${plugin.type}`);
-          plugin.aggregator?.getClusterServerById(BasicInformation.Cluster.id)?.setReachableAttribute(false);
-          plugin.aggregator?.getClusterServerById(BasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
-          plugin.commissioningServer?.setReachability(false);
-        }
-      }
-      */
-
       // Close the http server
       if (this.httpServer) {
         this.httpServer.close();
@@ -823,14 +785,12 @@ export class Matterbridge extends EventEmitter {
         // Clear nodeContext and nodeStorage (they just need 1000ms to write the data to disk)
         this.log.debug(`Closing node storage context for ${plg}Matterbridge${db}...`);
         await this.nodeContext.close();
-        // console.log('nodeContext:', (this.nodeContext as any).storage);
         this.nodeContext = undefined;
         // Clear nodeContext for each plugin (they just need 1000ms to write the data to disk)
         for (const plugin of this.plugins) {
           if (plugin.nodeContext) {
             this.log.debug(`Closing node storage context for plugin ${plg}${plugin.name}${db}...`);
             await plugin.nodeContext.close();
-            // console.log('nodeContext:', (plugin.nodeContext as any).storage);
             plugin.nodeContext = undefined;
           }
         }
@@ -2382,7 +2342,9 @@ export class Matterbridge extends EventEmitter {
    */
   private async getLatestVersion(packageName: string): Promise<string> {
     return new Promise((resolve, reject) => {
+      this.execRunningCount++;
       exec(`npm view ${packageName} version`, (error: ExecException | null, stdout: string) => {
+        this.execRunningCount--;
         if (error) {
           reject(error);
         } else {
@@ -2398,7 +2360,9 @@ export class Matterbridge extends EventEmitter {
    */
   private async getGlobalNodeModules(): Promise<string> {
     return new Promise((resolve, reject) => {
+      this.execRunningCount++;
       exec('npm root -g', (error: ExecException | null, stdout: string) => {
+        this.execRunningCount--;
         if (error) {
           reject(error);
         } else {
