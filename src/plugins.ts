@@ -268,16 +268,34 @@ export class Plugins {
     }
   }
 
-  async install(name: string): Promise<string> {
+  async install(name: string): Promise<string | undefined> {
     this.log.info(`Installing plugin ${plg}${name}${nf}`);
     return new Promise((resolve, reject) => {
       exec(`npm install -g ${name}`, (error: ExecException | null, stdout: string) => {
         if (error) {
           this.log.error(`Failed to install plugin ${plg}${name}${er}: ${error}`);
-          reject(error);
+          resolve(undefined);
         } else {
           this.log.info(`Installed plugin ${plg}${name}${nf}`);
-          resolve(stdout.trim());
+          // Get the installed version
+          exec(`npm list -g ${name} --depth=0`, (listError, listStdout, listStderr) => {
+            if (listError) {
+              this.log.error(`List error: ${listError}`);
+              resolve(undefined);
+            }
+            // Clean the output to get only the package name and version
+            const lines = listStdout.split('\n');
+            const versionLine = lines.find((line) => line.includes(`${name}@`));
+            if (versionLine) {
+              const version = versionLine.split('@')[1].trim();
+              this.log.info(`Installed plugin ${plg}${name}@${version}${nf}`);
+              resolve(version);
+            } else {
+              resolve(undefined);
+            }
+          });
+
+          // resolve(stdout.trim());
         }
       });
     });
