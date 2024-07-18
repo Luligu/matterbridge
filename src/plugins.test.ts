@@ -299,6 +299,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     // consoleLogSpy.mockRestore();
 
     const plugin = await plugins.install('matterbridge-eve-door');
+    // eslint-disable-next-line no-console
     console.error('plugin', plugin);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Installed plugin ${plg}matterbridge-eve-door${nf}`);
   }, 300000);
