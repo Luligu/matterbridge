@@ -7,13 +7,14 @@ import { jest } from '@jest/globals';
 
 jest.mock('@project-chip/matter-node.js/util');
 
-import { AnsiLogger, db, LogLevel, nf, pl } from 'node-ansi-logger';
+import { AnsiLogger, db, LogLevel, nf, pl, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 import { Plugins } from './plugins.js';
 import { exec, execSync } from 'child_process';
 import e from 'express';
 import exp from 'constants';
+import { waiter } from './utils/utils.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -36,7 +37,7 @@ describe('PluginsManager', () => {
       // Mock implementation or empty function
     });
     matterbridge = await Matterbridge.loadInstance(true);
-    plugins = new Plugins(matterbridge);
+    plugins = (matterbridge as any).plugins;
   });
 
   afterAll(async () => {
@@ -239,7 +240,7 @@ describe('PluginsManager', () => {
     expect(plugins.length).toBe(0);
 
     execSync('npm uninstall -g matterbridge-eve-door');
-  });
+  }, 60000);
 
   test('save to storage', async () => {
     (plugins as any)._plugins.set('matterbridge-mock1', { name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
@@ -258,6 +259,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
   let loggerLogSpy: jest.SpiedFunction<(level: LogLevel, message: string, ...parameters: any[]) => void>;
 
   beforeAll(async () => {
+    execSync('npm install -g matterbridge-eve-door');
     // Spy on and mock the AnsiLogger.log method
     loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
       // console.log(`Mocked log: ${level} - ${message}`, ...parameters);
@@ -267,7 +269,12 @@ describe('PluginsManager load/start/configure/shutdown', () => {
       // Mock implementation or empty function
     });
     matterbridge = await Matterbridge.loadInstance(true);
-    plugins = new Plugins(matterbridge);
+    plugins = (matterbridge as any).plugins;
+  });
+
+  beforeEach(() => {
+    loggerLogSpy.mockClear();
+    consoleLogSpy.mockClear();
   });
 
   afterAll(async () => {
@@ -276,6 +283,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     loggerLogSpy.mockRestore();
     // Restore the mocked console.log
     consoleLogSpy.mockRestore();
+    execSync('npm uninstall -g matterbridge-eve-door');
   });
 
   test('constructor initializes correctly', () => {
@@ -288,19 +296,126 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect(await plugins.loadFromStorage()).toHaveLength(0);
   });
 
-  test('add plugin with name', async () => {
-    loggerLogSpy.mockClear();
-    consoleLogSpy.mockClear();
+  test('add plugin matterbridge-eve-door', async () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
 
-    execSync('npm install -g matterbridge-eve-door');
     expect(plugins.length).toBe(0);
     const plugin = await plugins.add('matterbridge-eve-door');
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-eve-door${nf}`);
     expect(plugin).not.toBeNull();
-    if (!plugin) return;
-    expect(await plugins.load(plugin, false, 'Test with Jest')).toBeDefined();
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-eve-door${nf}`);
   });
+
+  test('load plugin matterbridge-eve-door', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    const plugin = plugins.get('matterbridge-eve-door');
+    expect(plugin).not.toBeUndefined();
+    if (!plugin) return;
+
+    expect(await plugins.load(plugin, false, 'Test with Jest')).toBeDefined();
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Loading plugin ${plg}${plugin.name}${nf} type ${typ}${nf}`);
+    // expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${plugin?.type}${db} (entrypoint ${UNDERLINE}${plugin.path}${UNDERLINEOFF})`);
+    expect(plugin.type).toBe('AccessoryPlatform');
+    expect(plugin.platform).toBeDefined();
+    expect(plugin.loaded).toBe(true);
+    expect(plugin.registeredDevices).toBe(0);
+    expect(plugin.addedDevices).toBe(0);
+    expect(plugin.configJson).toBeDefined();
+    expect(plugin.schemaJson).toBeDefined();
+  });
+
+  test('start plugin matterbridge-eve-door', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    let plugin = plugins.get('matterbridge-eve-door');
+    expect(plugin).not.toBeUndefined();
+    expect(plugin?.loaded).toBeTruthy();
+    expect(plugin?.started).toBeFalsy();
+    expect(plugin?.configured).toBeFalsy();
+    if (!plugin) return;
+
+    plugin = await plugins.start(plugin, 'Test with Jest', false);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Starting plugin ${plg}${plugin?.name}${db} type ${typ}${plugin?.type}${db}`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Started plugin ${plg}${plugin?.name}${db} type ${typ}${plugin?.type}${db}`);
+    if (!plugin) return;
+    await waiter(
+      'Plugin to start',
+      () => {
+        return plugin.started === true;
+      },
+      false,
+      5000,
+      1000,
+      true,
+    );
+    expect(plugin.started).toBe(true);
+  }, 60000);
+
+  test('configure plugin matterbridge-eve-door', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    let plugin = plugins.get('matterbridge-eve-door');
+    expect(plugin).not.toBeUndefined();
+    expect(plugin?.loaded).toBeTruthy();
+    expect(plugin?.started).toBeTruthy();
+    expect(plugin?.configured).toBeFalsy();
+    if (!plugin) return;
+
+    plugin = await plugins.configure(plugin);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Configuring plugin ${plg}${plugin?.name}${nf} type ${typ}${plugin?.type}${nf}`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Configured plugin ${plg}${plugin?.name}${nf} type ${typ}${plugin?.type}${nf}`);
+    if (!plugin) return;
+    await waiter(
+      'Plugin to configure',
+      () => {
+        return plugin.configured === true;
+      },
+      false,
+      5000,
+      1000,
+      true,
+    );
+    expect(plugin.configured).toBe(true);
+  }, 60000);
+
+  test('shutdown plugin matterbridge-eve-door', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    let plugin = plugins.get('matterbridge-eve-door');
+    expect(plugin).not.toBeUndefined();
+    expect(plugin?.loaded).toBeTruthy();
+    expect(plugin?.started).toBeTruthy();
+    expect(plugin?.configured).toBeTruthy();
+    if (!plugin) return;
+
+    plugin = await plugins.shutdown(plugin, 'Test with Jest', true);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Shutting down plugin ${plg}${plugin?.name}${nf}: Test with Jest...`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Shutdown of plugin ${plg}${plugin?.name}${nf} completed`);
+    if (!plugin) return;
+    await waiter(
+      'Plugin to shutdown',
+      () => {
+        return plugin.loaded === undefined;
+      },
+      false,
+      5000,
+      1000,
+      true,
+    );
+    expect(plugin.locked).toBe(undefined);
+    expect(plugin.error).toBe(undefined);
+    expect(plugin.loaded).toBe(undefined);
+    expect(plugin.started).toBe(undefined);
+    expect(plugin.configured).toBe(undefined);
+    expect(plugin.platform).toBe(undefined);
+
+    expect(await plugins.saveToStorage()).toBe(1);
+    plugins.clear();
+    expect(await plugins.saveToStorage()).toBe(0);
+  }, 60000);
 });

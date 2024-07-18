@@ -717,7 +717,7 @@ export class Matterbridge extends EventEmitter {
       // Calling the shutdown method of each plugin and clear the reachability timeout
       for (const plugin of this.plugins) {
         if (!plugin.enabled || plugin.error) continue;
-        await this.plugins.shutdown(plugin, 'Matterbridge is closing: ' + message);
+        await this.plugins.shutdown(plugin, 'Matterbridge is closing: ' + message, false);
         if (plugin.reachabilityTimeout) {
           clearTimeout(plugin.reachabilityTimeout);
           plugin.reachabilityTimeout = undefined;

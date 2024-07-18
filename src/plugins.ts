@@ -301,7 +301,7 @@ export class Plugins {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const config: PlatformConfig = await (this.matterbridge as any).loadPluginConfig(plugin);
         const log = new AnsiLogger({ logName: plugin.description ?? 'No description', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: (config.debug as boolean) ?? false });
-        const platform = pluginInstance.default(this, log, config) as MatterbridgePlatform;
+        const platform = pluginInstance.default(this.matterbridge, log, config) as MatterbridgePlatform;
         platform.name = packageJson.name;
         platform.config = config;
         platform.version = packageJson.version;
@@ -317,63 +317,135 @@ export class Plugins {
         plugin.configJson = config;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         plugin.schemaJson = await (this.matterbridge as any).loadPluginSchema(plugin);
-        // Save the updated plugin data in the node storage
-        // await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
 
-        this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${platform.type} ${db}(entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (start) (this.matterbridge as any).startPlugin(plugin, message); // No await do it asyncronously
+        this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${platform.type}${db} (entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
+
+        if (start) await this.start(plugin, message, false);
+
         return Promise.resolve(platform);
       } else {
         this.log.error(`Plugin ${plg}${plugin.name}${er} does not provide a default export`);
         plugin.error = true;
-        return Promise.resolve(undefined);
       }
     } catch (err) {
       this.log.error(`Failed to load plugin ${plg}${plugin.name}${er}: ${err}`);
       plugin.error = true;
-      return Promise.resolve(undefined);
     }
+    return Promise.resolve(undefined);
   }
 
-  async shutdown(plugin: RegisteredPlugin, reason?: string, removeAllDevices = false): Promise<RegisteredPlugin | null> {
+  /**
+   * Starts a plugin.
+   *
+   * @param {RegisteredPlugin} plugin - The plugin to start.
+   * @param {string} [message] - Optional message to pass to the plugin's onStart method.
+   * @param {boolean} [configure] - Indicates whether to configure the plugin after starting (default false).
+   * @returns {Promise<RegisteredPlugin | undefined>} A promise that resolves when the plugin is started successfully, or rejects with an error if starting the plugin fails.
+   */
+  async start(plugin: RegisteredPlugin, message?: string, configure = false): Promise<RegisteredPlugin | undefined> {
+    if (!plugin.loaded) {
+      this.log.error(`Plugin ${plg}${plugin.name}${er} not loaded`);
+      return Promise.resolve(undefined);
+    }
+    if (!plugin.platform) {
+      this.log.error(`Plugin ${plg}${plugin.name}${er} no platform found`);
+      return Promise.resolve(undefined);
+    }
+    if (plugin.started) {
+      this.log.error(`Plugin ${plg}${plugin.name}${er} already started`);
+      return Promise.resolve(undefined);
+    }
+    this.log.info(`Starting plugin ${plg}${plugin.name}${db} type ${typ}${plugin.type}${db}`);
+    try {
+      await plugin.platform.onStart(message);
+      this.log.info(`Started plugin ${plg}${plugin.name}${db} type ${typ}${plugin.type}${db}`);
+      plugin.started = true;
+      if (configure) await this.configure(plugin);
+      return Promise.resolve(plugin);
+    } catch (err) {
+      plugin.error = true;
+      this.log.error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err}`);
+    }
+    return Promise.resolve(undefined);
+  }
+
+  /**
+   * Configures a plugin.
+   *
+   * @param {RegisteredPlugin} plugin - The plugin to configure.
+   * @returns {Promise<void>} A promise that resolves when the plugin is configured successfully, or rejects with an error if configuration fails.
+   */
+  async configure(plugin: RegisteredPlugin): Promise<RegisteredPlugin | undefined> {
+    if (!plugin.loaded) {
+      this.log.error(`Plugin ${plg}${plugin.name}${er} not loaded`);
+      return Promise.resolve(undefined);
+    }
+    if (!plugin.started) {
+      this.log.error(`Plugin ${plg}${plugin.name}${er} not started`);
+      return Promise.resolve(undefined);
+    }
+    if (!plugin.platform) {
+      this.log.error(`Plugin ${plg}${plugin.name}${er} no platform found`);
+      return Promise.resolve(undefined);
+    }
+    if (plugin.configured) {
+      this.log.debug(`Plugin ${plg}${plugin.name}${db} already configured`);
+      return Promise.resolve(undefined);
+    }
+    this.log.info(`Configuring plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
+    try {
+      await plugin.platform.onConfigure();
+      this.log.info(`Configured plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
+      plugin.configured = true;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (this.matterbridge as any).savePluginConfig(plugin);
+      return Promise.resolve(plugin);
+    } catch (err) {
+      plugin.error = true;
+      this.log.error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`);
+    }
+    return Promise.resolve(undefined);
+  }
+
+  async shutdown(plugin: RegisteredPlugin, reason?: string, removeAllDevices = false): Promise<RegisteredPlugin | undefined> {
     this.log.debug(`Shutting down plugin ${plg}${plugin.name}${db}`);
     if (!plugin.loaded) {
-      this.log.debug(`Plugin ${plg}${plugin.name}${db} not loaded`);
-      return null;
+      this.log.debug(`*Plugin ${plg}${plugin.name}${db} not loaded`);
+      return undefined;
     }
     if (!plugin.started) {
       this.log.debug(`*Plugin ${plg}${plugin.name}${db} not started`);
-      return null;
+      return undefined;
+    }
+    if (!plugin.configured) {
+      this.log.debug(`*Plugin ${plg}${plugin.name}${db} not configured`);
+      return undefined;
     }
     if (!plugin.platform) {
-      this.log.debug(`*Plugin ${plg}${plugin.name}${db} has no platform`);
-      return null;
+      this.log.debug(`*Plugin ${plg}${plugin.name}${db} no platform found`);
+      return undefined;
     }
     this.log.info(`Shutting down plugin ${plg}${plugin.name}${nf}: ${reason}...`);
     try {
-      plugin.platform
-        .onShutdown(reason)
-        .then(async () => {
-          plugin.locked = undefined;
-          plugin.error = undefined;
-          plugin.loaded = undefined;
-          plugin.started = undefined;
-          plugin.configured = undefined;
-          plugin.connected = undefined;
-          plugin.platform = undefined;
-          plugin.registeredDevices = undefined;
-          plugin.addedDevices = undefined;
-          if (removeAllDevices) await this.matterbridge.removeAllBridgedDevices(plugin.name);
-          this.log.info(`Shutdown of plugin ${plg}${plugin.name}${nf} completed`);
-          return plugin;
-        })
-        .catch((err) => {
-          this.log.error(`Failed to shut down plugin ${plg}${plugin.name}${er}: ${err}`);
-        });
+      await plugin.platform.onShutdown(reason);
+      plugin.locked = undefined;
+      plugin.error = undefined;
+      plugin.loaded = undefined;
+      plugin.started = undefined;
+      plugin.configured = undefined;
+      plugin.connected = undefined;
+      plugin.platform = undefined;
+      plugin.registeredDevices = undefined;
+      plugin.addedDevices = undefined;
+      if (removeAllDevices) {
+        this.log.info(`Removing all devices for plugin ${plg}${plugin.name}${nf}: ${reason}...`);
+        await this.matterbridge.removeAllBridgedDevices(plugin.name);
+      }
+      this.log.info(`Shutdown of plugin ${plg}${plugin.name}${nf} completed`);
+      return plugin;
     } catch (err) {
       this.log.error(`Failed to shut down plugin ${plg}${plugin.name}${er}: ${err}`);
     }
-    return null;
+    return undefined;
   }
 }
