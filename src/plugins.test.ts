@@ -270,7 +270,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     });
     matterbridge = await Matterbridge.loadInstance(true);
     plugins = (matterbridge as any).plugins;
-  });
+  }, 60000);
 
   beforeEach(() => {
     loggerLogSpy.mockClear();
@@ -284,7 +284,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     // Restore the mocked console.log
     consoleLogSpy.mockRestore();
     execSync('npm uninstall -g matterbridge-eve-door');
-  });
+  }, 60000);
 
   test('constructor initializes correctly', () => {
     expect(plugins).toBeInstanceOf(Plugins);
