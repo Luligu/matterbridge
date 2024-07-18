@@ -301,6 +301,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     const plugin = await plugins.install('matterbridge-eve-door');
     // eslint-disable-next-line no-console
     console.error('plugin', plugin);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Installing plugin ${plg}matterbridge-eve-door${nf}`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Installed plugin ${plg}matterbridge-eve-door${nf}`);
   }, 300000);
 
