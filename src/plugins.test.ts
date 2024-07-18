@@ -298,7 +298,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
     if (getMacAddress() !== '30:f6:ef:69:2b:c5') {
-      await plugins.install('matterbridge');
+      // await plugins.install('matterbridge');
     }
     const plugin = await plugins.install('matterbridge-eve-door');
     // eslint-disable-next-line no-console

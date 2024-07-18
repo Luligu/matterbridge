@@ -23,6 +23,9 @@ jobs:
       - name: Clean cahce
         run: npm cache clean --force
 
+      - name: Install matterbridgee
+        run: npm install -g matterbridge --no-cache --force
+
       - name: Install dependencies
         run: npm install
 
