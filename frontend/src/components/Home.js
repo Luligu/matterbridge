@@ -72,38 +72,37 @@ function Home() {
     []
   );
 
+  const fetchSettings = () => {
+
+    fetch('/api/settings')
+      .then(response => response.json())
+      .then(data => { 
+        console.log('From home /api/settings:', data); 
+        setWssHost(data.wssHost); 
+        if(data.matterbridgeInformation.bridgeMode==='bridge') {
+          setQrCode(data.qrPairingCode); 
+          setPairingCode(data.manualPairingCode);
+        }
+        setSystemInfo(data.systemInformation);
+        setMatterbridgeInfo(data.matterbridgeInformation);
+        localStorage.setItem('wssHost', data.wssHost);
+        localStorage.setItem('manualPairingCode', data.manualPairingCode); 
+        localStorage.setItem('qrPairingCode', data.qrPairingCode); 
+        localStorage.setItem('systemInformation', data.systemInformation); 
+        localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
+      })
+      .catch(error => console.error('Error fetching settings:', error));
+
+    fetch('/api/plugins')
+      .then(response => response.json())
+      .then(data => { 
+        console.log('From home /api/plugins:', data)
+        setPlugins(data); 
+      })
+      .catch(error => console.error('Error fetching plugins:', error));
+  };  
+
   useEffect(() => {
-    // Fetch settings from the backend
-    const fetchSettings = () => {
-
-      fetch('/api/settings')
-        .then(response => response.json())
-        .then(data => { 
-          console.log('From home /api/settings:', data); 
-          setWssHost(data.wssHost); 
-          if(data.matterbridgeInformation.bridgeMode==='bridge') {
-            setQrCode(data.qrPairingCode); 
-            setPairingCode(data.manualPairingCode);
-          }
-          setSystemInfo(data.systemInformation);
-          setMatterbridgeInfo(data.matterbridgeInformation);
-          localStorage.setItem('wssHost', data.wssHost);
-          localStorage.setItem('manualPairingCode', data.manualPairingCode); 
-          localStorage.setItem('qrPairingCode', data.qrPairingCode); 
-          localStorage.setItem('systemInformation', data.systemInformation); 
-          localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
-        })
-        .catch(error => console.error('Error fetching settings:', error));
-
-      fetch('/api/plugins')
-        .then(response => response.json())
-        .then(data => { 
-          console.log('From home /api/plugins:', data)
-          setPlugins(data); 
-        })
-        .catch(error => console.error('Error fetching plugins:', error));
-    };  
-
     // Call fetchSettings immediately and then every 10 minutes
     fetchSettings();
     const intervalId = setInterval(fetchSettings, 1 * 60 * 1000);
@@ -112,6 +111,11 @@ function Home() {
     return () => clearInterval(intervalId);
 
   }, []); // The empty array causes this effect to run only once
+
+  // Function to reload settings on demand
+  const reloadSettings = () => {
+    fetchSettings();
+  };
 
   const handleSelectQRCode = (row) => {
     if (selectedRow === row) {
@@ -141,17 +145,18 @@ function Home() {
       sendCommandToMatterbridge('enableplugin', plugins[row].name);
     }
     console.log('Updating page');
-    // setPlugins(prevPlugins => [...prevPlugins]);
     if(matterbridgeInfo.bridgeMode === 'childbridge') {
       handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
       setTimeout(() => {
         handleSnackClose();
-      }, 3000);
+        reloadSettings();
+      }, 1000);
     }
     if(matterbridgeInfo.bridgeMode === 'bridge') {
       handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
       setTimeout(() => {
         handleSnackClose();
+        reloadSettings();
       }, 100);
     }
   };
@@ -161,7 +166,8 @@ function Home() {
     sendCommandToMatterbridge('installplugin', plugins[row].name);
     handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
     setTimeout(() => {
-      // window.location.reload();
+      handleSnackClose();
+      reloadSettings();
     }, 5000);
   };
 
@@ -170,8 +176,9 @@ function Home() {
     sendCommandToMatterbridge('removeplugin', plugins[row].name);
     handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
     setTimeout(() => {
-      // window.location.reload();
-    }, 5000);
+      handleSnackClose();
+      reloadSettings();
+    }, 1000);
   };
 
   const handleConfigPlugin = (row) => {
@@ -346,7 +353,7 @@ function AddRemovePlugins({ plugins }) {
     setSnack(true);
     setTimeout(() => {
       window.location.reload();
-    }, 5000);
+    }, 2000);
   };
 
   const handleSnackClose = (event, reason) => {

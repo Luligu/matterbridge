@@ -132,6 +132,7 @@ export class Matterbridge extends EventEmitter {
   private cleanupTimeout1: NodeJS.Timeout | undefined;
   private cleanupTimeout2: NodeJS.Timeout | undefined;
   private checkUpdateInterval: NodeJS.Timeout | undefined;
+  private configureTimeout: NodeJS.Timeout | undefined;
   private reachabilityTimeout: NodeJS.Timeout | undefined;
   private sigintHandler: NodeJS.SignalsListener | undefined;
   private sigtermHandler: NodeJS.SignalsListener | undefined;
@@ -708,6 +709,13 @@ export class Matterbridge extends EventEmitter {
       this.checkUpdateInterval = undefined;
       this.log.debug('Check update interval cleared');
 
+      // Clear the configure timeout
+      if (this.configureTimeout) {
+        clearTimeout(this.configureTimeout);
+        this.configureTimeout = undefined;
+        this.log.debug('Matterbridge configure timeout cleared');
+      }
+
       // Clear the reachability timeout
       if (this.reachabilityTimeout) {
         clearTimeout(this.reachabilityTimeout);
@@ -916,7 +924,7 @@ export class Matterbridge extends EventEmitter {
    */
   async removeBridgedDevice(pluginName: string, device: MatterbridgeDevice): Promise<void> {
     if (this.bridgeMode === 'bridge' && !this.matterAggregator) {
-      this.log.error(`Removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er} error: matterAggregator not found`);
+      this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: matterAggregator not found`);
       return;
     }
     this.log.debug(`Removing bridged device ${dev}${device.deviceName}${db} (${dev}${device.name}${db}) for plugin ${plg}${pluginName}${db}`);
@@ -924,17 +932,23 @@ export class Matterbridge extends EventEmitter {
     // Check if the plugin is registered
     const plugin = this.plugins.get(pluginName);
     if (!plugin) {
-      this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) plugin ${plg}${pluginName}${er} not found`);
+      this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: plugin not found`);
       return;
     }
-    if (this.bridgeMode === 'childbridge' && !plugin.aggregator) {
-      this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) plugin ${plg}${pluginName}${er} aggregator not found`);
+    if (this.bridgeMode === 'childbridge' && plugin.type === 'AccessoryPlatfoem' && !plugin.aggregator) {
+      this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: aggregator not found`);
       return;
     }
+    if (this.bridgeMode === 'childbridge' && plugin.type === 'DynamicPlatfoem' && !plugin.commissioningServer) {
+      this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: commissioning server not found`);
+      return;
+    }
+    /*
     if (this.bridgeMode === 'childbridge' && !plugin.connected) {
-      this.log.info(`Removing bridged device ${dev}${device.deviceName}${wr} (${dev}${device.name}${wr}) plugin ${plg}${pluginName}${wr} not connected`);
+      this.log.info(`Error removing bridged device ${dev}${device.deviceName}${wr} (${dev}${device.name}${wr}) for plugin ${plg}${pluginName}${wr}: plugin not connected`);
       return;
     }
+    */
 
     // Remove the device from matterbridge aggregator in bridge mode
     if (this.bridgeMode === 'bridge') {
@@ -955,7 +969,12 @@ export class Matterbridge extends EventEmitter {
     // Remove the device in childbridge mode
     if (this.bridgeMode === 'childbridge') {
       if (plugin.type === 'AccessoryPlatform') {
-        this.log.info(`Removing bridged device ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}: AccessoryPlatform not supported in childbridge mode`);
+        this.registeredDevices.forEach((registeredDevice, index) => {
+          if (registeredDevice.device === device) {
+            this.registeredDevices.splice(index, 1);
+            return;
+          }
+        });
       } else if (plugin.type === 'DynamicPlatform') {
         this.registeredDevices.forEach((registeredDevice, index) => {
           if (registeredDevice.device === device) {
@@ -970,6 +989,11 @@ export class Matterbridge extends EventEmitter {
       this.log.info(`Removed bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
       if (plugin.addedDevices !== undefined) plugin.addedDevices--;
+      if (plugin.registeredDevices === 0 && plugin.addedDevices === 0 && plugin.commissioningServer) {
+        this.matterServer?.removeCommissioningServer(plugin.commissioningServer);
+        plugin.commissioningServer = undefined;
+        this.log.info(`Removed commissioning server for plugin ${plg}${pluginName}${nf}`);
+      }
     }
   }
 
@@ -980,11 +1004,13 @@ export class Matterbridge extends EventEmitter {
    * @returns A promise that resolves when all devices have been removed.
    */
   async removeAllBridgedDevices(pluginName: string): Promise<void> {
+    /*
     const plugin = this.plugins.get(pluginName);
     if (this.bridgeMode === 'childbridge' && plugin?.type === 'AccessoryPlatform') {
       this.log.info(`Removing devices for plugin ${plg}${pluginName}${nf} type AccessoryPlatform is not supported in childbridge mode`);
       return;
     }
+    */
     const devicesToRemove: RegisteredDevice[] = [];
     for (const registeredDevice of this.registeredDevices) {
       if (registeredDevice.plugin === pluginName) {
@@ -1672,17 +1698,17 @@ export class Matterbridge extends EventEmitter {
         this.log.info('Matter server started');
 
         // Configure the plugins
-        /*
-        for (const plugin of this.registeredPlugins) {
-          if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
-          try {
-            this.configurePlugin(plugin); // No await do it asyncronously
-          } catch (error) {
-            plugin.error = true;
-            this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
+        this.configureTimeout = setTimeout(async () => {
+          for (const plugin of this.plugins) {
+            if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
+            try {
+              await this.plugins.configure(plugin); // No await do it asyncronously
+            } catch (error) {
+              plugin.error = true;
+              this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
+            }
           }
-        }
-        */
+        }, 30 * 1000);
 
         // Show the QR code for commissioning or log the already commissioned message
         await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
@@ -1735,6 +1761,20 @@ export class Matterbridge extends EventEmitter {
 
         await this.startMatterServer();
         this.log.info('Matter server started');
+
+        // Configure the plugins
+        this.configureTimeout = setTimeout(async () => {
+          for (const plugin of this.plugins) {
+            if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
+            try {
+              await this.plugins.configure(plugin); // No await do it asyncronously
+            } catch (error) {
+              plugin.error = true;
+              this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
+            }
+          }
+        }, 30 * 1000);
+
         for (const plugin of this.plugins) {
           if (!plugin.enabled || plugin.error) continue;
           if (!plugin.addedDevices || plugin.addedDevices === 0) {
@@ -1754,6 +1794,7 @@ export class Matterbridge extends EventEmitter {
             continue;
           }
           await this.showCommissioningQRCode(plugin.commissioningServer, plugin.storageContext, plugin.nodeContext, plugin.name);
+
           // Setting reachability to true
           plugin.reachabilityTimeout = setTimeout(() => {
             this.log.info(`Setting reachability to true for ${plg}${plugin.name}${db}`);
@@ -1935,7 +1976,6 @@ export class Matterbridge extends EventEmitter {
           plugin.paired = true;
         }
       }
-      // await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
     }
   }
 
@@ -2170,6 +2210,7 @@ export class Matterbridge extends EventEmitter {
             }
           }
 
+          /*
           setTimeout(() => {
             // We just need to configure the plugins after the controllers are connected
             if (this.bridgeMode === 'bridge') {
@@ -2197,6 +2238,7 @@ export class Matterbridge extends EventEmitter {
             }
             // logEndpoint(commissioningServer.getRootEndpoint());
           }, 2000);
+          */
         }
       },
       commissioningChangedCallback: async (fabricIndex) => {
@@ -3117,10 +3159,12 @@ export class Matterbridge extends EventEmitter {
       // Handle the command addplugin from Home
       if (command === 'addplugin' || command === 'installplugin') {
         param = param.replace(/\*/g, '\\');
-        if (this.plugins.has(param)) {
-          this.log.warn(`Plugin ${plg}${param}${wr} already added to matterbridge`);
-        } else {
-          await this.plugins.add(param);
+        const plugin = await this.plugins.add(param);
+        if (plugin) {
+          plugin.platform = await this.plugins.load(plugin, false, 'The plugin has been added');
+          if (plugin.platform) {
+            await this.plugins.start(plugin, 'The plugin has been added', true);
+          }
         }
         res.json({ message: 'Command received' });
         return;
@@ -3156,9 +3200,9 @@ export class Matterbridge extends EventEmitter {
             await this.plugins.enable(param);
 
             // if (this.bridgeMode === 'bridge') {
-            plugin.platform = await this.loadPlugin(plugin);
+            plugin.platform = await this.plugins.load(plugin, false, 'The plugin has been enabled');
             if (plugin.platform) {
-              await this.startPlugin(plugin, 'The plugin has been enabled', true);
+              await this.plugins.start(plugin, 'The plugin has been enabled', true);
             }
             // }
           }

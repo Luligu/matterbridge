@@ -254,7 +254,7 @@ export class Plugins {
     try {
       const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
       if (this._plugins.get(packageJson.name)) {
-        this.log.error(`Failed to add plugin ${plg}${nameOrPath}${er}: plugin already registered`);
+        this.log.warn(`Failed to add plugin ${plg}${nameOrPath}${wr}: plugin already registered`);
         return null;
       }
       this._plugins.set(packageJson.name, { name: packageJson.name, enabled: true, path: packageJsonPath, type: '', version: packageJson.version, description: packageJson.description, author: packageJson.author });
@@ -453,7 +453,7 @@ export class Plugins {
     }
     if (!plugin.configured) {
       this.log.debug(`*Plugin ${plg}${plugin.name}${db} not configured`);
-      return undefined;
+      // return undefined;
     }
     if (!plugin.platform) {
       this.log.debug(`*Plugin ${plg}${plugin.name}${db} no platform found`);
@@ -469,12 +469,12 @@ export class Plugins {
       plugin.configured = undefined;
       plugin.connected = undefined;
       plugin.platform = undefined;
-      plugin.registeredDevices = undefined;
-      plugin.addedDevices = undefined;
       if (removeAllDevices) {
         this.log.info(`Removing all devices for plugin ${plg}${plugin.name}${nf}: ${reason}...`);
         await this.matterbridge.removeAllBridgedDevices(plugin.name);
       }
+      plugin.registeredDevices = undefined;
+      plugin.addedDevices = undefined;
       this.log.info(`Shutdown of plugin ${plg}${plugin.name}${nf} completed`);
       return plugin;
     } catch (err) {

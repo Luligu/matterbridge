@@ -7,7 +7,7 @@ import { jest } from '@jest/globals';
 
 jest.mock('@project-chip/matter-node.js/util');
 
-import { AnsiLogger, db, LogLevel, nf, pl, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+import { AnsiLogger, db, er, LogLevel, nf, pl, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 import { Plugins } from './plugins.js';
@@ -294,17 +294,35 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect(await plugins.loadFromStorage()).toHaveLength(0);
   });
 
+  test('install plugin matterbridge-xyz', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    expect(await plugins.install('matterbridge-xyz')).toBeUndefined();
+  }, 300000);
+
   test('install plugin matterbridge-eve-door', async () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
 
     const version = await plugins.install('matterbridge-eve-door');
     expect(version).not.toBeUndefined();
-    // eslint-disable-next-line no-console
-    console.error(`Plugin installed: ${version}`);
+
+    // console.error(`Plugin installed: ${version}`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Installing plugin ${plg}matterbridge-eve-door${nf}`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Installed plugin ${plg}matterbridge-eve-door${nf}`);
   }, 300000);
+
+  test('add plugin matterbridge-xyz', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    expect(plugins.length).toBe(0);
+    const plugin = await plugins.add('matterbridge-xyz');
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to add plugin ${plg}matterbridge-xyz${er}: package.json not found`);
+    expect(plugin).toBeNull();
+    expect(plugins.length).toBe(0);
+  }, 60000);
 
   test('add plugin matterbridge-eve-door', async () => {
     // loggerLogSpy.mockRestore();
