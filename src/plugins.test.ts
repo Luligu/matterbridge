@@ -259,7 +259,6 @@ describe('PluginsManager load/start/configure/shutdown', () => {
   let loggerLogSpy: jest.SpiedFunction<(level: LogLevel, message: string, ...parameters: any[]) => void>;
 
   beforeAll(async () => {
-    execSync('npm install -g matterbridge-eve-door');
     // Spy on and mock the AnsiLogger.log method
     loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
       // console.log(`Mocked log: ${level} - ${message}`, ...parameters);
@@ -302,12 +301,13 @@ describe('PluginsManager load/start/configure/shutdown', () => {
   test('add plugin matterbridge-eve-door', async () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
+    execSync('npm install -g matterbridge-eve-door');
 
     expect(plugins.length).toBe(0);
     const plugin = await plugins.add('matterbridge-eve-door');
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-eve-door${nf}`);
     expect(plugin).not.toBeNull();
-  });
+  }, 60000);
 
   test('load plugin matterbridge-eve-door', async () => {
     // loggerLogSpy.mockRestore();
