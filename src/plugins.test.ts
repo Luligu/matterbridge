@@ -301,7 +301,6 @@ describe('PluginsManager load/start/configure/shutdown', () => {
       await plugins.install('matterbridge');
     }
     const plugin = await plugins.install('matterbridge-eve-door');
-    sudo chown -R 501:20 "/Users/runner/.npm
     // eslint-disable-next-line no-console
     console.error('plugin', plugin);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Installing plugin ${plg}matterbridge-eve-door${nf}`);
