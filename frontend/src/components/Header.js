@@ -8,6 +8,7 @@ import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
+import { sendCommandToMatterbridge } from '../App';
 
 export const theme = createTheme({
   components: {
@@ -24,31 +25,6 @@ export const theme = createTheme({
     },
   },
 });
-
-export function sendCommandToMatterbridge(command, param, body) {
-  const sanitizedParam = param.replace(/\\/g, '*');
-  console.log('sendCommandToMatterbridge:', command, param, sanitizedParam);
-  // Send a POST request to the Matterbridge API
-  fetch(`/api/command/${command}/${sanitizedParam}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body,
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  })
-  .then(json => {
-    console.log('Command sent successfully:', json);
-  })
-  .catch(error => {
-    console.error('Error sending command:', error);
-  });
-}
 
 function Header() {
   const [open, setOpen] = React.useState(false);

@@ -17,6 +17,8 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Added matterbridgeTypes.ts
 - [frontend]: Removed QR button for plugins in error and not enabled.
 - [matterbridge]: Added PluginsManager.
+- [frontend]: The Logs page and the log in the Home persist till you close the frontend (the last 1000 lines are available).
+
 
 ### Fixed
 

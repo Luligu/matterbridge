@@ -61,6 +61,13 @@ export class Plugins {
     return this._plugins.values();
   }
 
+  async forEach(callback: (plugin: RegisteredPlugin) => Promise<void>): Promise<void> {
+    const tasks = Array.from(this._plugins.values()).map(async (plugin) => {
+      await callback(plugin);
+    });
+    await Promise.all(tasks);
+  }
+
   async loadFromStorage(): Promise<RegisteredPlugin[]> {
     // Load the array from storage and convert it to a map
     const pluginsArray = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-console */
 // App.js
 import './App.css';
@@ -9,6 +10,33 @@ import Devices from './components/Devices';
 import Settings from './components/Settings';
 import Test from './components/Test';
 import Logs from './components/Logs';
+import useWebSocket from './components/WebSocketUse';
+import { WebSocketProvider } from './components/WebSocketContext';
+
+export function sendCommandToMatterbridge(command, param, body) {
+  const sanitizedParam = param.replace(/\\/g, '*');
+  console.log('sendCommandToMatterbridge:', command, param, sanitizedParam);
+  // Send a POST request to the Matterbridge API
+  fetch(`/api/command/${command}/${sanitizedParam}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body,
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(json => {
+    console.log('Command sent successfully:', json);
+  })
+  .catch(error => {
+    console.error('Error sending command:', error);
+  });
+}
 
 // Create a context for the authentication state
 const AuthContext = createContext();
@@ -53,6 +81,31 @@ function AuthProvider({ children }) {
 function LoginForm() {
   const [password, setPassword] = useState('');
   const { loggedIn, logIn, errorMessage  } = useContext(AuthContext);
+  // Settings
+  const [wssHost, setWssHost] = useState(null);
+  const [qrCode, setQrCode] = useState('');
+  const [pairingCode, setPairingCode] = useState('');
+  const [systemInfo, setSystemInfo] = useState({});
+  const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
+  
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(response => response.json())
+      .then(data => { 
+        // console.log('From app.js /api/settings:', data); 
+        setWssHost(data.wssHost); 
+        setQrCode(data.qrPairingCode); 
+        setPairingCode(data.manualPairingCode);
+        setSystemInfo(data.systemInformation);
+        setMatterbridgeInfo(data.matterbridgeInformation);
+        localStorage.setItem('wssHost', data.wssHost);
+        localStorage.setItem('qrPairingCode', data.qrPairingCode); 
+        localStorage.setItem('manualPairingCode', data.manualPairingCode); 
+        localStorage.setItem('systemInformation', data.systemInformation); 
+        localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
+      })
+      .catch(error => console.error('From app.js error fetching settings:', error));
+  }, []);
 
   const handleSubmit = event => {
     event.preventDefault();
@@ -89,18 +142,20 @@ function LoginForm() {
 
   if (loggedIn) {
     return (
-      <Router>
-        <div className="main-background" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 40px)', width: 'calc(100vw - 40px)', gap: '20px' , margin: '0', padding: '20px' }}>
-          <Header />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/devices" element={<Devices />} />
-            <Route path="/log" element={<Logs />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/test" element={<Test />} />
-          </Routes>
-        </div>
-      </Router>
+      <WebSocketProvider wssHost={wssHost}>
+        <Router>
+          <div className="MbfScreen">
+            <Header />
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/devices" element={<Devices />} />
+              <Route path="/log" element={<Logs />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/test" element={<Test />} />
+            </Routes>
+          </div>
+        </Router>
+      </WebSocketProvider>
     );
   } else {
     return (
@@ -130,7 +185,14 @@ function LoginForm() {
 }
 
 function App() {
+  // Login
   const [noPassword, setNoPassword] = useState(false);
+  // Settings
+  const [wssHost, setWssHost] = useState(null);
+  const [qrCode, setQrCode] = useState('');
+  const [pairingCode, setPairingCode] = useState('');
+  const [systemInfo, setSystemInfo] = useState({});
+  const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
 
   useEffect(() => {
     fetch('/api/login', {
@@ -153,25 +215,51 @@ function App() {
     .catch(error => console.error('Failed with no password', error));
   }, []);
 
-  if (noPassword) return (
-    <Router>
-      <div className="MbfScreen">
-        <Header />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/devices" element={<Devices />} />
-          <Route path="/log" element={<Logs />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/test" element={<Test />} />
-        </Routes>
-      </div>
-    </Router>
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(response => response.json())
+      .then(data => { 
+        // console.log('From app.js /api/settings:', data); 
+        setWssHost(data.wssHost); 
+        setQrCode(data.qrPairingCode); 
+        setPairingCode(data.manualPairingCode);
+        setSystemInfo(data.systemInformation);
+        setMatterbridgeInfo(data.matterbridgeInformation);
+        localStorage.setItem('wssHost', data.wssHost);
+        localStorage.setItem('qrPairingCode', data.qrPairingCode); 
+        localStorage.setItem('manualPairingCode', data.manualPairingCode); 
+        localStorage.setItem('systemInformation', data.systemInformation); 
+        localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
+      })
+      .catch(error => console.error('From app.js error fetching settings:', error));
+  }, []);
+
+  if (noPassword) {
+    // console.log('From app.js noPassword:');
+    return (
+      <WebSocketProvider wssHost={wssHost}>
+        <Router>
+          <div className="MbfScreen">
+            <Header />
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/devices" element={<Devices />} />
+                <Route path="/log" element={<Logs />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/test" element={<Test />} />
+              </Routes>
+          </div>
+        </Router>
+      </WebSocketProvider>
     );
-  else return (
-    <AuthProvider>
-      <LoginForm />
-    </AuthProvider>
-  );
+  }
+  else {
+    return (
+      <AuthProvider>
+        <LoginForm />
+      </AuthProvider>
+    );
+  }
 }
 
 export default App;

@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Radio, RadioGroup, Button, Tooltip, FormControlLabel, FormControl, FormLabel, TextField, Backdrop, CircularProgress } from '@mui/material';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
-import { theme, sendCommandToMatterbridge } from './Header';
+import { sendCommandToMatterbridge } from '../App';
+import { theme } from './Header';
 
 // export const MatterbridgeInfoContext = React.createContext();
 // Use with const matterbridgeInfo = useContext(MatterbridgeInfoContext);

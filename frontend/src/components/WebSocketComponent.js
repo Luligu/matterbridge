@@ -1,7 +1,9 @@
+ 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* global DocumentTouch */
-import React, { useState, useEffect, useRef } from 'react';
-import useWebSocket from './useWebSocket';
+import React, { useState, useEffect, useRef, useContext } from 'react';
+import WebSocketUse from './WebSocketUse';
+import { WebSocketContext } from './WebSocketContext';
 
 const detectTouchscreen = () => {
     let hasTouchscreen = false;
@@ -13,8 +15,10 @@ const detectTouchscreen = () => {
 
 function WebSocketComponent(props) {
     const { wssHost, debugLevel, searchCriteria } = props;
-    const [ message, setMessage ] = useState('');
-    const { messages, sendMessage } = useWebSocket(wssHost, debugLevel, searchCriteria);
+    // const { messages, sendMessage } = useWebSocket(wssHost, debugLevel, searchCriteria);
+    const { messages, sendMessage } = useContext(WebSocketContext);
+    // console.log('WebSocketComponent: consuming messages', messages.length);
+
     const endOfMessagesRef = useRef(null); // Create a ref for scrolling purposes
     const [isHovering, setIsHovering] = useState(false); // State to track mouse hover
 

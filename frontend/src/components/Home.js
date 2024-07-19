@@ -3,7 +3,8 @@
 // Home.js
 import React, { useEffect, useState, useRef } from 'react';
 import { StatusIndicator } from './StatusIndicator';
-import { sendCommandToMatterbridge, theme } from './Header';
+import { theme } from './Header';
+import { sendCommandToMatterbridge } from '../App';
 import WebSocketComponent from './WebSocketComponent';
 
 // @mui
@@ -40,12 +41,10 @@ function Home() {
   const refRegisteredPlugins = useRef(null);
 
   const handleSnackOpen = () => {
-    console.log('handleSnackOpen');
     setOpenSnack(true);
   };
 
   const handleSnackClose = (event, reason) => {
-    console.log('handleSnackClose:', reason);
     if (reason === 'clickaway') return;
     setOpenSnack(false);
   };
@@ -56,6 +55,8 @@ function Home() {
 
   const handleCloseConfig = () => {
     setOpenConfig(false);
+    handleSnackOpen();
+    reloadSettings();
   };
 
 
@@ -115,6 +116,7 @@ function Home() {
   // Function to reload settings on demand
   const reloadSettings = () => {
     fetchSettings();
+    console.log('reloadSettings');
   };
 
   const handleSelectQRCode = (row) => {
@@ -144,20 +146,15 @@ function Home() {
       plugins[row].enabled=true;
       sendCommandToMatterbridge('enableplugin', plugins[row].name);
     }
-    console.log('Updating page');
     if(matterbridgeInfo.bridgeMode === 'childbridge') {
-      handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
       setTimeout(() => {
-        handleSnackClose();
         reloadSettings();
-      }, 1000);
+      }, 500);
     }
     if(matterbridgeInfo.bridgeMode === 'bridge') {
-      handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
       setTimeout(() => {
-        handleSnackClose();
         reloadSettings();
-      }, 100);
+      }, 500);
     }
   };
 
@@ -174,11 +171,9 @@ function Home() {
   const handleRemovePlugin = (row) => {
     console.log('handleRemovePluginClick row:', row, 'plugin:', plugins[row].name);
     sendCommandToMatterbridge('removeplugin', plugins[row].name);
-    handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
     setTimeout(() => {
-      handleSnackClose();
       reloadSettings();
-    }, 1000);
+    }, 500);
   };
 
   const handleConfigPlugin = (row) => {
@@ -241,7 +236,7 @@ function Home() {
           <div className="MbfWindowHeader">
             <p className="MbfWindowHeaderText">Add remove plugin</p>
           </div>
-          <AddRemovePlugins ref={refAddRemove} plugins={plugins}/>
+          <AddRemovePlugins ref={refAddRemove} plugins={plugins} reloadSettings={reloadSettings}/>
         </div>
 
         <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
@@ -343,45 +338,41 @@ function Home() {
 /*
 */
 
-function AddRemovePlugins({ plugins }) {
+function AddRemovePlugins({ plugins, reloadSettings }) {
   const [pluginName, setPluginName] = useState('matterbridge-');
   const [open, setSnack] = useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleSnackOpen = () => {
-    console.log('handleSnackOpen');
     setSnack(true);
-    setTimeout(() => {
-      window.location.reload();
-    }, 2000);
   };
 
   const handleSnackClose = (event, reason) => {
-    console.log('handleSnackClose:', reason);
     if (reason === 'clickaway') return;
     setSnack(false);
   };
 
-  // Function that sends the "addplugin" command
   const handleInstallPluginClick = () => {
-    handleSnackOpen();
-    console.log('handleInstallPluginClick', pluginName);
     sendCommandToMatterbridge('installplugin', pluginName);
-  };
+    handleSnackOpen();
+    setTimeout(() => {
+      reloadSettings();
+    }, 5000);
+};
 
-  // Function that sends the "addplugin" command
   const handleAddPluginClick = () => {
-    handleSnackOpen();
-    console.log('handleAddPluginClick', pluginName);
     sendCommandToMatterbridge('addplugin', pluginName);
-  };
+    setTimeout(() => {
+      reloadSettings();
+    }, 500);
+};
 
-  // Function that sends the "removeplugin" command
   const handleRemovePluginClick = () => {
-    handleSnackOpen();
-    console.log('handleRemovePluginClick', pluginName);
     sendCommandToMatterbridge('removeplugin', pluginName);
-  };
+    setTimeout(() => {
+      reloadSettings();
+    }, 500);
+};
 
   const handleClickVertical = (event) => {
     setAnchorEl(event.currentTarget);
@@ -666,7 +657,7 @@ function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
     sendCommandToMatterbridge('saveconfig', formData.name, config);
     // Close the dialog
     handleCloseConfig();
-    window.location.reload();
+    // window.location.reload();
   };    
   return (
   <ThemeProvider theme={theme}>
