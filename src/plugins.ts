@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { AnsiLogger, BLUE, db, er, nf, pl, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, db, er, nf, pl, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 import { NodeStorage } from 'node-persist-manager';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { fileURLToPath, pathToFileURL } from 'url';
-import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
+import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import { exec, ExecException } from 'child_process';
+import { shelly_config, somfytahoma_config, zigbee2mqtt_config } from './defaultConfigSchema.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -488,5 +489,141 @@ export class Plugins {
       this.log.error(`Failed to shut down plugin ${plg}${plugin.name}${er}: ${err}`);
     }
     return undefined;
+  }
+
+  /**
+   * Loads the configuration for a plugin.
+   * If the configuration file exists, it reads the file and returns the parsed JSON data.
+   * If the configuration file does not exist, it creates a new file with default configuration and returns it.
+   * If any error occurs during file access or creation, it logs an error and return un empty config.
+   *
+   * @param plugin - The plugin for which to load the configuration.
+   * @returns A promise that resolves to the loaded or created configuration.
+   */
+  async loadConfig(plugin: RegisteredPlugin): Promise<PlatformConfig> {
+    const configFile = path.join(this.matterbridge.matterbridgeDirectory, `${plugin.name}.config.json`);
+    try {
+      await fs.access(configFile);
+      const data = await fs.readFile(configFile, 'utf8');
+      const config = JSON.parse(data) as PlatformConfig;
+      this.log.debug(`Loaded config file ${configFile} for plugin ${plg}${plugin.name}${db}.`);
+      this.log.debug(`Loaded config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
+      /* The first time a plugin is added to the system, the config file is created with the plugin name and type "".*/
+      config.name = plugin.name;
+      config.type = plugin.type;
+      if (config.debug === undefined) config.debug = false;
+      if (config.unregisterOnShutdown === undefined) config.unregisterOnShutdown = false;
+      return config;
+    } catch (err) {
+      if (err instanceof Error) {
+        const nodeErr = err as NodeJS.ErrnoException;
+        if (nodeErr.code === 'ENOENT') {
+          let config: PlatformConfig;
+          if (plugin.name === 'matterbridge-zigbee2mqtt') config = zigbee2mqtt_config;
+          else if (plugin.name === 'matterbridge-somfy-tahoma') config = somfytahoma_config;
+          else if (plugin.name === 'matterbridge-shelly') config = shelly_config;
+          else config = { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
+          try {
+            await fs.writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
+            this.log.debug(`Created config file ${configFile} for plugin ${plg}${plugin.name}${db}.`);
+            this.log.debug(`Created config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
+            return config;
+          } catch (err) {
+            this.log.error(`Error creating config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err}`);
+            return config;
+          }
+        } else {
+          this.log.error(`Error accessing config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err}`);
+          return { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
+        }
+      }
+      this.log.error(`Error loading config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err}`);
+      return { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
+    }
+  }
+
+  async saveConfigFromPlugin(plugin: RegisteredPlugin): Promise<void> {
+    if (!plugin.platform?.config) {
+      this.log.error(`Error saving config file for plugin ${plg}${plugin.name}${er}: config not found`);
+      return Promise.reject(new Error(`Error saving config file for plugin ${plg}${plugin.name}${er}: config not found`));
+    }
+    const configFile = path.join(this.matterbridge.matterbridgeDirectory, `${plugin.name}.config.json`);
+    try {
+      await fs.writeFile(configFile, JSON.stringify(plugin.platform.config, null, 2), 'utf8');
+      this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
+      this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, plugin.platform.config);
+    } catch (err) {
+      this.log.error(`Error saving config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err}`);
+      return Promise.reject(err);
+    }
+  }
+
+  async saveConfigFromJson(plugin: RegisteredPlugin, config: PlatformConfig): Promise<void> {
+    if (!config.name || !config.type || config.name !== plugin.name) {
+      this.log.error(`Error saving config file for plugin ${plg}${plugin.name}${er}. Wrong config data content.`);
+      return;
+    }
+    const configFile = path.join(this.matterbridge.matterbridgeDirectory, `${plugin.name}.config.json`);
+    try {
+      await fs.writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
+      plugin.configJson = config;
+      this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
+      this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
+    } catch (err) {
+      this.log.error(`Error saving config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err}`);
+      return;
+    }
+  }
+
+  async loadSchema(plugin: RegisteredPlugin): Promise<PlatformSchema> {
+    let schemaFile = plugin.path.replace('package.json', `${plugin.name}.schema.json`);
+    try {
+      await fs.access(schemaFile);
+      const data = await fs.readFile(schemaFile, 'utf8');
+      const schema = JSON.parse(data) as PlatformSchema;
+      schema.title = plugin.description;
+      schema.description = plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author;
+      this.log.debug(`Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.`);
+      this.log.debug(`Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.\nSchema:${rs}\n`, schema);
+      // Delete the schema file from old position
+      schemaFile = path.join(this.matterbridge.matterbridgeDirectory, `${plugin.name}.schema.json`);
+      try {
+        await fs.unlink(schemaFile);
+        this.log.debug(`Schema file ${schemaFile} deleted.`);
+      } catch (err) {
+        this.log.debug(`Schema file ${schemaFile} to delete not found.`);
+      }
+      return schema;
+    } catch (err) {
+      this.log.debug(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema.`);
+      const schema: PlatformSchema = {
+        title: plugin.description,
+        description: plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author,
+        type: 'object',
+        properties: {
+          name: {
+            description: 'Plugin name',
+            type: 'string',
+            readOnly: true,
+          },
+          type: {
+            description: 'Plugin type',
+            type: 'string',
+            readOnly: true,
+          },
+          debug: {
+            description: 'Enable the debug for the plugin (development only)',
+            type: 'boolean',
+            default: false,
+          },
+          unregisterOnShutdown: {
+            description: 'Unregister all devices on shutdown (development only)',
+            type: 'boolean',
+            default: false,
+          },
+        },
+      };
+      return schema;
+    }
   }
 }

@@ -56,8 +56,10 @@ function Home() {
   const handleCloseConfig = () => {
     setOpenConfig(false);
     handleSnackOpen();
-    reloadSettings();
-  };
+    setTimeout(() => {
+      reloadSettings();
+    }, 1000);
+};
 
 
   const columns = React.useMemo( () => [

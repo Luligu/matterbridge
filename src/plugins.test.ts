@@ -15,6 +15,7 @@ import { exec, execSync } from 'child_process';
 import e from 'express';
 import exp from 'constants';
 import { getMacAddress, waiter } from './utils/utils.js';
+import path from 'path';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -332,6 +333,47 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     const plugin = await plugins.add('matterbridge-eve-door');
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-eve-door${nf}`);
     expect(plugin).not.toBeNull();
+  }, 60000);
+
+  test('load config plugin matterbridge-eve-door', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    expect(plugins.length).toBe(1);
+    const plugin = plugins.get('matterbridge-eve-door');
+    expect(plugin).not.toBeUndefined();
+    if (!plugin) return;
+    const config = await plugins.loadConfig(plugin);
+    const configFile = path.join(matterbridge.matterbridgeDirectory, `${plugin.name}.config.json`);
+    if (getMacAddress() === '30:f6:ef:69:2b:c5') {
+      // eslint-disable-next-line jest/no-conditional-expect
+      expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded config file ${configFile} for plugin ${plg}${plugin.name}${db}.`);
+    }
+    expect(config).not.toBeUndefined();
+    expect(config).not.toBeNull();
+    expect(config.name).toBe(plugin.name);
+    expect(config.type).toBe(plugin.type);
+    expect(config.debug).toBeDefined();
+    expect(config.unregisterOnShutdown).toBeDefined();
+  }, 60000);
+
+  test('load schema plugin matterbridge-eve-door', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    expect(plugins.length).toBe(1);
+    const plugin = plugins.get('matterbridge-eve-door');
+    expect(plugin).not.toBeUndefined();
+    if (!plugin) return;
+    const schema = await plugins.loadSchema(plugin);
+    const schemaFile = plugin.path.replace('package.json', `${plugin.name}.schema.json`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema.`);
+    expect(schema).not.toBeUndefined();
+    expect(schema).not.toBeNull();
+    expect(schema.title).toBe(plugin.description);
+    expect(schema.type).toBe('object');
+    expect(schema.properties).toBeDefined();
+    expect(schema.description).toBeDefined();
   }, 60000);
 
   test('load plugin matterbridge-eve-door', async () => {

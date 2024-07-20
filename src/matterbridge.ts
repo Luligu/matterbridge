@@ -268,17 +268,9 @@ export class Matterbridge extends EventEmitter {
     await this.plugins.loadFromStorage();
 
     // Get the plugins from node storage and create the plugins node storage contexts
-    // this.registeredPlugins = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
     for (const plugin of this.plugins) {
-      // const packageJson = await this.parsePlugin(plugin);
       const packageJson = await this.plugins.parse(plugin);
-      if (packageJson) {
-        // Update the plugin information
-        // plugin.name = packageJson.name as string;
-        // plugin.version = packageJson.version as string;
-        // plugin.description = (packageJson.description as string) ?? 'No description';
-        // plugin.author = (packageJson.author as string) ?? 'Unknown';
-      } else {
+      if (packageJson === null) {
         // Try to reinstall the plugin from npm (for Docker pull and external plugins)
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm.`);
         try {
@@ -470,21 +462,12 @@ export class Matterbridge extends EventEmitter {
 
     if (getParameter('reset') && getParameter('reset') !== undefined) {
       this.log.debug(`Reset plugin ${getParameter('reset')}`);
-      // await this.executeCommandLine(getParameter('reset') as string, 'reset');
-      // const plugin = this.registeredPlugins.find((registeredPlugin) => registeredPlugin.name === getParameter('reset'));
       const plugin = this.plugins.get(getParameter('reset') as string);
       if (plugin) {
-        plugin.loaded = undefined;
-        plugin.started = undefined;
-        plugin.configured = undefined;
-        plugin.connected = undefined;
-        plugin.paired = undefined;
-        plugin.connected = undefined;
         if (!this.storageManager) this.log.error(`Plugin ${plg}${plugin.name}${er} storageManager not found`);
         const context = this.storageManager?.createContext(plugin.name);
         if (!context) this.log.error(`Plugin ${plg}${plugin.name}${er} context not found`);
         await context?.clearAll();
-        // await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
         this.log.info(`Reset commissionig for plugin ${plg}${plugin.name}${nf} done! Remove the device from the controller.`);
       } else {
         this.log.warn(`Plugin ${plg}${getParameter('reset')}${wr} not registerd in matterbridge`);
@@ -943,12 +926,6 @@ export class Matterbridge extends EventEmitter {
       this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: commissioning server not found`);
       return;
     }
-    /*
-    if (this.bridgeMode === 'childbridge' && !plugin.connected) {
-      this.log.info(`Error removing bridged device ${dev}${device.deviceName}${wr} (${dev}${device.name}${wr}) for plugin ${plg}${pluginName}${wr}: plugin not connected`);
-      return;
-    }
-    */
 
     // Remove the device from matterbridge aggregator in bridge mode
     if (this.bridgeMode === 'bridge') {
@@ -1004,13 +981,6 @@ export class Matterbridge extends EventEmitter {
    * @returns A promise that resolves when all devices have been removed.
    */
   async removeAllBridgedDevices(pluginName: string): Promise<void> {
-    /*
-    const plugin = this.plugins.get(pluginName);
-    if (this.bridgeMode === 'childbridge' && plugin?.type === 'AccessoryPlatform') {
-      this.log.info(`Removing devices for plugin ${plg}${pluginName}${nf} type AccessoryPlatform is not supported in childbridge mode`);
-      return;
-    }
-    */
     const devicesToRemove: RegisteredDevice[] = [];
     for (const registeredDevice of this.registeredDevices) {
       if (registeredDevice.plugin === pluginName) {
@@ -1091,48 +1061,6 @@ export class Matterbridge extends EventEmitter {
     this.matterbridgeContext = undefined;
     this.mattercontrollerContext = undefined;
   }
-
-  /**
-   * Resolves the name of a plugin by loading and parsing its package.json file.
-   * @param pluginPath - The path to the plugin or the path to the plugin's package.json file.
-   * @returns The path to the resolved package.json file, or null if the package.json file is not found or does not contain a name.
-   */
-  /*
-  private async resolvePluginName(pluginPath: string): Promise<string | null> {
-    if (!pluginPath.endsWith('package.json')) pluginPath = path.join(pluginPath, 'package.json');
-
-    // Resolve the package.json of the plugin
-    let packageJsonPath = path.resolve(pluginPath);
-    this.log.debug(`Resolving plugin from ${plg}${packageJsonPath}${db}`);
-
-    // Check if the package.json file exists
-    let packageJsonExists = false;
-    try {
-      await fs.access(packageJsonPath);
-      packageJsonExists = true;
-    } catch {
-      packageJsonExists = false;
-    }
-    if (!packageJsonExists) {
-      this.log.debug(`Package.json not found at ${packageJsonPath}`);
-      this.log.debug(`Trying at ${this.globalModulesDirectory}`);
-      packageJsonPath = path.join(this.globalModulesDirectory, pluginPath);
-    }
-    try {
-      // Load the package.json of the plugin
-      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
-      if (!packageJson.name) {
-        this.log.debug(`Package.json name not found at ${packageJsonPath}`);
-        return null;
-      }
-      this.log.debug(`Package.json name: ${plg}${packageJson.name}${db} description: "${nf}${packageJson.description}${db}" found at "${nf}${packageJsonPath}${db}"`);
-      return packageJsonPath;
-    } catch (err) {
-      this.log.debug(`Failed to load plugin from ${plg}${packageJsonPath}${er}: ${err}`);
-      return null;
-    }
-  }
-  */
 
   /**
    * Loads the schema for a plugin.
@@ -1934,10 +1862,10 @@ export class Matterbridge extends EventEmitter {
       await nodeContext.set<string>('qrPairingCode', qrPairingCode);
       await nodeContext.set<string>('manualPairingCode', manualPairingCode);
       const QrCode = new QrCodeSchema();
-      this.log.info(
-        `***The commissioning server on port ${commissioningServer.getPort()} for ${plg}${pluginName}${nf} is not commissioned. Pair it scanning the QR code:\n\n` +
-          `${QrCode.encode(qrPairingCode)}\n${plg}${pluginName}${nf}\n\nqrPairingCode: ${qrPairingCode}\n\nManual pairing code: ${manualPairingCode}\n`,
-      );
+      this.log.info(`***The commissioning server on port ${commissioningServer.getPort()} for ${plg}${pluginName}${nf} is not commissioned. Pair it scanning the QR code:\n\n`);
+      // eslint-disable-next-line no-console
+      console.log(`${QrCode.encode(qrPairingCode)}\n`);
+      this.log.info(`${plg}${pluginName}${nf}\n\nqrPairingCode: ${qrPairingCode}\n\nManual pairing code: ${manualPairingCode}\n`);
       if (pluginName === 'Matterbridge') {
         this.matterbridgeFabricInformations = [];
         this.matterbridgeSessionInformations = [];
@@ -2030,24 +1958,6 @@ export class Matterbridge extends EventEmitter {
       } as SanitizedSessionInformation;
     });
   }
-
-  /**
-   * Finds a plugin by its name.
-   *
-   * @param pluginName - The name of the plugin to find.
-   * @returns The found plugin, or undefined if not found.
-   */
-  /*
-  private findPlugin(pluginName: string) {
-    // const plugin = this.registeredPlugins.find((registeredPlugin) => registeredPlugin.name === pluginName);
-    const plugin = this.plugins.get(pluginName);
-    if (!plugin) {
-      this.log.error(`Plugin ${plg}${pluginName}${er} not found`);
-      return;
-    }
-    return plugin;
-  }
-  */
 
   /**
    * Sets the reachability of a commissioning server and trigger.
@@ -2616,7 +2526,7 @@ export class Matterbridge extends EventEmitter {
     this.getLatestVersion(plugin.name)
       .then(async (latestVersion) => {
         plugin.latestVersion = latestVersion;
-        await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
+        // await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
         if (plugin.version !== latestVersion) this.log.warn(`The plugin ${plg}${plugin.name}${wr} is out of date. Current version: ${plugin.version}, Latest version: ${latestVersion}`);
         else this.log.info(`The plugin ${plg}${plugin.name}${nf} is up to date. Current version: ${plugin.version}, Latest version: ${latestVersion}`);
       })
@@ -3134,11 +3044,14 @@ export class Matterbridge extends EventEmitter {
         param = param.replace(/\*/g, '\\');
         this.log.info(`Saving config for plugin ${plg}${param}${nf}...`);
         // console.log('Req.body:', JSON.stringify(req.body, null, 2));
-        const plugins = await this.nodeContext?.get<RegisteredPlugin[]>('plugins');
-        if (!plugins) return;
-        const plugin = plugins.find((plugin) => plugin.name === param);
-        if (!plugin) return;
-        this.savePluginConfigFromJson(plugin, req.body); // No await do it asyncronously
+
+        if (!this.plugins.has(param)) {
+          this.log.warn(`Plugin ${plg}${param}${wr} not found in matterbridge`);
+        } else {
+          const plugin = this.plugins.get(param);
+          if (!plugin) return;
+          this.savePluginConfigFromJson(plugin, req.body); // No await do it asyncronously
+        }
         res.json({ message: 'Command received' });
         return;
       }
