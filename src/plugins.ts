@@ -302,8 +302,6 @@ export class Plugins {
               resolve(undefined);
             }
           });
-
-          // resolve(stdout.trim());
         }
       });
     });
@@ -340,10 +338,10 @@ export class Plugins {
 
       // Call the default export function of the plugin, passing this MatterBridge instance, the log and the config
       if (pluginInstance.default) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const config: PlatformConfig = await (this.matterbridge as any).loadPluginConfig(plugin);
+        const config: PlatformConfig = await this.loadConfig(plugin);
         const log = new AnsiLogger({ logName: plugin.description ?? 'No description', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: (config.debug as boolean) ?? false });
         const platform = pluginInstance.default(this.matterbridge, log, config) as MatterbridgePlatform;
+        config.type = platform.type;
         platform.name = packageJson.name;
         platform.config = config;
         platform.version = packageJson.version;
@@ -357,8 +355,7 @@ export class Plugins {
         plugin.registeredDevices = 0;
         plugin.addedDevices = 0;
         plugin.configJson = config;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        plugin.schemaJson = await (this.matterbridge as any).loadPluginSchema(plugin);
+        plugin.schemaJson = await this.loadSchema(plugin);
 
         this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${platform.type}${db} (entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
 
@@ -439,8 +436,7 @@ export class Plugins {
       await plugin.platform.onConfigure();
       this.log.info(`Configured plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
       plugin.configured = true;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (this.matterbridge as any).savePluginConfig(plugin);
+      await this.saveConfigFromPlugin(plugin);
       return Promise.resolve(plugin);
     } catch (err) {
       plugin.error = true;
@@ -449,19 +445,19 @@ export class Plugins {
     return Promise.resolve(undefined);
   }
 
-  async shutdown(plugin: RegisteredPlugin, reason?: string, removeAllDevices = false): Promise<RegisteredPlugin | undefined> {
+  async shutdown(plugin: RegisteredPlugin, reason?: string, removeAllDevices = false, force = false): Promise<RegisteredPlugin | undefined> {
     this.log.debug(`Shutting down plugin ${plg}${plugin.name}${db}`);
     if (!plugin.loaded) {
       this.log.debug(`*Plugin ${plg}${plugin.name}${db} not loaded`);
-      return undefined;
+      if (!force) return undefined;
     }
     if (!plugin.started) {
       this.log.debug(`*Plugin ${plg}${plugin.name}${db} not started`);
-      return undefined;
+      if (!force) return undefined;
     }
     if (!plugin.configured) {
       this.log.debug(`*Plugin ${plg}${plugin.name}${db} not configured`);
-      // return undefined;
+      // if (!force) return undefined;
     }
     if (!plugin.platform) {
       this.log.debug(`*Plugin ${plg}${plugin.name}${db} no platform found`);
@@ -507,7 +503,7 @@ export class Plugins {
       const data = await fs.readFile(configFile, 'utf8');
       const config = JSON.parse(data) as PlatformConfig;
       this.log.debug(`Loaded config file ${configFile} for plugin ${plg}${plugin.name}${db}.`);
-      this.log.debug(`Loaded config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
+      // this.log.debug(`Loaded config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
       /* The first time a plugin is added to the system, the config file is created with the plugin name and type "".*/
       config.name = plugin.name;
       config.type = plugin.type;
@@ -515,7 +511,7 @@ export class Plugins {
       if (config.unregisterOnShutdown === undefined) config.unregisterOnShutdown = false;
       return config;
     } catch (err) {
-      if (err instanceof Error) {
+      if (err) {
         const nodeErr = err as NodeJS.ErrnoException;
         if (nodeErr.code === 'ENOENT') {
           let config: PlatformConfig;
@@ -526,7 +522,7 @@ export class Plugins {
           try {
             await fs.writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
             this.log.debug(`Created config file ${configFile} for plugin ${plg}${plugin.name}${db}.`);
-            this.log.debug(`Created config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
+            // this.log.debug(`Created config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
             return config;
           } catch (err) {
             this.log.error(`Error creating config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err}`);
@@ -551,7 +547,7 @@ export class Plugins {
     try {
       await fs.writeFile(configFile, JSON.stringify(plugin.platform.config, null, 2), 'utf8');
       this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
-      this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, plugin.platform.config);
+      // this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, plugin.platform.config);
     } catch (err) {
       this.log.error(`Error saving config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err}`);
       return Promise.reject(err);
@@ -560,7 +556,7 @@ export class Plugins {
 
   async saveConfigFromJson(plugin: RegisteredPlugin, config: PlatformConfig): Promise<void> {
     if (!config.name || !config.type || config.name !== plugin.name) {
-      this.log.error(`Error saving config file for plugin ${plg}${plugin.name}${er}. Wrong config data content.`);
+      this.log.error(`Error saving config file for plugin ${plg}${plugin.name}${er}. Wrong config data content:${rs}\n`, config);
       return;
     }
     const configFile = path.join(this.matterbridge.matterbridgeDirectory, `${plugin.name}.config.json`);
@@ -568,7 +564,7 @@ export class Plugins {
       await fs.writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
       plugin.configJson = config;
       this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
-      this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
+      // this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
     } catch (err) {
       this.log.error(`Error saving config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err}`);
       return;

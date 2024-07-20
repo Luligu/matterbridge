@@ -12,10 +12,9 @@ import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 import { Plugins } from './plugins.js';
 import { exec, execSync } from 'child_process';
-import e from 'express';
-import exp from 'constants';
 import { getMacAddress, waiter } from './utils/utils.js';
 import path from 'path';
+import { promises as fs } from 'fs';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -343,18 +342,57 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     const plugin = plugins.get('matterbridge-eve-door');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
-    const config = await plugins.loadConfig(plugin);
     const configFile = path.join(matterbridge.matterbridgeDirectory, `${plugin.name}.config.json`);
-    if (getMacAddress() === '30:f6:ef:69:2b:c5') {
-      // eslint-disable-next-line jest/no-conditional-expect
-      expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded config file ${configFile} for plugin ${plg}${plugin.name}${db}.`);
+    try {
+      await fs.unlink(configFile);
+    } catch (error) {
+      // Ignore error
     }
+    let config = await plugins.loadConfig(plugin);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Created config file ${configFile} for plugin ${plg}${plugin.name}${db}.`);
+
+    config = await plugins.loadConfig(plugin);
+    // if (getMacAddress() === '30:f6:ef:69:2b:c5') {
+
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded config file ${configFile} for plugin ${plg}${plugin.name}${db}.`);
+    // }
     expect(config).not.toBeUndefined();
     expect(config).not.toBeNull();
     expect(config.name).toBe(plugin.name);
     expect(config.type).toBe(plugin.type);
     expect(config.debug).toBeDefined();
     expect(config.unregisterOnShutdown).toBeDefined();
+  }, 60000);
+
+  test('save config from plugin matterbridge-eve-door', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    expect(plugins.length).toBe(1);
+    const plugin = plugins.get('matterbridge-eve-door');
+    expect(plugin).not.toBeUndefined();
+    if (!plugin) return;
+    await plugins.load(plugin);
+    await plugins.saveConfigFromPlugin(plugin);
+    const configFile = path.join(matterbridge.matterbridgeDirectory, `${plugin.name}.config.json`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
+    await plugins.shutdown(plugin, 'Test with Jest', true, true);
+  }, 60000);
+
+  test('save config from json matterbridge-eve-door', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    expect(plugins.length).toBe(1);
+    const plugin = plugins.get('matterbridge-eve-door');
+    expect(plugin).not.toBeUndefined();
+    if (!plugin) return;
+    await plugins.load(plugin);
+    const config = await plugins.loadConfig(plugin);
+    await plugins.saveConfigFromJson(plugin, config);
+    const configFile = path.join(matterbridge.matterbridgeDirectory, `${plugin.name}.config.json`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
+    await plugins.shutdown(plugin, 'Test with Jest', true, true);
   }, 60000);
 
   test('load schema plugin matterbridge-eve-door', async () => {
@@ -365,8 +403,8 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     const plugin = plugins.get('matterbridge-eve-door');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
-    const schema = await plugins.loadSchema(plugin);
     const schemaFile = plugin.path.replace('package.json', `${plugin.name}.schema.json`);
+    const schema = await plugins.loadSchema(plugin);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema.`);
     expect(schema).not.toBeUndefined();
     expect(schema).not.toBeNull();
@@ -384,8 +422,18 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
 
-    expect(await plugins.load(plugin, false, 'Test with Jest')).toBeDefined();
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Loading plugin ${plg}${plugin.name}${nf} type ${typ}${nf}`);
+    const platform = await plugins.load(plugin, false, 'Test with Jest');
+    expect(platform).toBeDefined();
+    if (!platform) return;
+    expect(platform.matterbridge).toBeDefined();
+    expect(platform.log).toBeDefined();
+    expect(platform.config).toBeDefined();
+    expect(platform.name).toBe('matterbridge-eve-door');
+    expect(platform.type).toBe('AccessoryPlatform');
+    expect(platform.version).toBeDefined();
+    expect(platform.version).not.toBe('');
+
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Loading plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
     // expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${plugin?.type}${db} (entrypoint ${UNDERLINE}${plugin.path}${UNDERLINEOFF})`);
     expect(plugin.type).toBe('AccessoryPlatform');
     expect(plugin.platform).toBeDefined();
@@ -434,10 +482,10 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect(plugin?.started).toBeTruthy();
     expect(plugin?.configured).toBeFalsy();
     if (!plugin) return;
-
     plugin = await plugins.configure(plugin);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Configuring plugin ${plg}${plugin?.name}${nf} type ${typ}${plugin?.type}${nf}`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Configured plugin ${plg}${plugin?.name}${nf} type ${typ}${plugin?.type}${nf}`);
+    expect(plugin).not.toBeUndefined();
     if (!plugin) return;
     await waiter(
       'Plugin to configure',
@@ -464,8 +512,11 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     if (!plugin) return;
 
     plugin = await plugins.shutdown(plugin, 'Test with Jest', true);
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Shutting down plugin ${plg}${plugin?.name}${nf}: Test with Jest...`);
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Shutdown of plugin ${plg}${plugin?.name}${nf} completed`);
+    expect(plugin).not.toBeUndefined();
+    if (!plugin) return;
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Shutting down plugin ${plg}${plugin.name}${nf}: Test with Jest...`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Shutdown of plugin ${plg}${plugin.name}${nf} completed`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Removing all bridged devices for plugin ${plg}${plugin.name}${db}`);
     if (!plugin) return;
     await waiter(
       'Plugin to shutdown',

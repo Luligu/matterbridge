@@ -67,7 +67,8 @@ describe('Matterbridge loadInstance() and cleanup()', () => {
     // console.log('Loaded Matterbridge.loadInstance(false)');
 
     expect(matterbridge).toBeDefined();
-    expect(matterbridge.initialized).toBeFalsy();
+    expect(matterbridge.profile).toBe('Jest');
+    expect((matterbridge as any).initialized).toBeFalsy();
     expect((matterbridge as any).log).toBeUndefined();
     expect((matterbridge as any).homeDirectory).toBe('');
     expect((matterbridge as any).matterbridgeDirectory).toBe('');
@@ -78,12 +79,77 @@ describe('Matterbridge loadInstance() and cleanup()', () => {
     expect((matterbridge as any).globalModulesDirectory).toBe('');
     expect((matterbridge as any).matterbridgeLatestVersion).toBe('');
 
+    expect((matterbridge as any).httpServer).toBeUndefined();
+    expect((matterbridge as any).httpsServer).toBeUndefined();
+    expect((matterbridge as any).expressApp).toBeUndefined();
+    expect((matterbridge as any).webSocketServer).toBeUndefined();
+
     // Destroy the Matterbridge instance
     // console.log('Destroying Matterbridge.loadInstance(false)');
-    matterbridge.globalModulesDirectory = 'xxx';
-    matterbridge.matterbridgeLatestVersion = 'xxx';
     await matterbridge.destroyInstance();
     // console.log('Destroyed Matterbridge.loadInstance(false)');
+  });
+
+  test('Matterbridge.loadInstance(true)', async () => {
+    // console.log('Loading Matterbridge.loadInstance(false)');
+    matterbridge = await Matterbridge.loadInstance(true);
+    expect((matterbridge as any).initialized).toBeFalsy();
+    if (!(matterbridge as any).initialized) await matterbridge.initialize();
+    // console.log('Loaded Matterbridge.loadInstance(false)');
+
+    expect(matterbridge).toBeDefined();
+    expect(matterbridge.profile).toBe('Jest');
+    expect((matterbridge as any).initialized).toBeTruthy();
+    expect((matterbridge as any).log).toBeDefined();
+    expect((matterbridge as any).homeDirectory).not.toBe('');
+    expect((matterbridge as any).matterbridgeDirectory).not.toBe('');
+    expect((matterbridge as any).nodeStorage).toBeDefined();
+    expect((matterbridge as any).nodeContext).toBeDefined();
+    expect((matterbridge as any).plugins).toBeDefined();
+    expect((matterbridge as any).registeredDevices).toHaveLength(0);
+
+    expect((matterbridge as any).httpServer).toBeUndefined();
+    expect((matterbridge as any).httpsServer).toBeUndefined();
+    expect((matterbridge as any).expressApp).toBeUndefined();
+    expect((matterbridge as any).webSocketServer).toBeUndefined();
+
+    // Destroy the Matterbridge instance
+    // console.log('Destroying Matterbridge.loadInstance(false)');
+    await matterbridge.destroyInstance();
+    // console.log('Destroyed Matterbridge.loadInstance(false)');
+  });
+
+  test('Matterbridge.loadInstance(true) with frontend', async () => {
+    process.argv = ['node', 'matterbridge.test.js', '-profile', 'Jest'];
+
+    // console.log('Loading Matterbridge.loadInstance(false)');
+    matterbridge = await Matterbridge.loadInstance(true);
+    expect((matterbridge as any).initialized).toBeTruthy();
+    if (!(matterbridge as any).initialized) await matterbridge.initialize();
+    // console.log('Loaded Matterbridge.loadInstance(false)');
+
+    expect(matterbridge).toBeDefined();
+    expect(matterbridge.profile).toBe('Jest');
+    expect((matterbridge as any).initialized).toBeTruthy();
+    expect((matterbridge as any).log).toBeDefined();
+    expect((matterbridge as any).homeDirectory).not.toBe('');
+    expect((matterbridge as any).matterbridgeDirectory).not.toBe('');
+    expect((matterbridge as any).nodeStorage).toBeDefined();
+    expect((matterbridge as any).nodeContext).toBeDefined();
+    expect((matterbridge as any).plugins).toBeDefined();
+    expect((matterbridge as any).registeredDevices).toHaveLength(0);
+
+    expect((matterbridge as any).httpServer).toBeDefined();
+    expect((matterbridge as any).httpsServer).toBeUndefined();
+    expect((matterbridge as any).expressApp).toBeDefined();
+    expect((matterbridge as any).webSocketServer).toBeDefined();
+
+    // Destroy the Matterbridge instance
+    // console.log('Destroying Matterbridge.loadInstance(false)');
+    await matterbridge.destroyInstance();
+    // console.log('Destroyed Matterbridge.loadInstance(false)');
+
+    process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest'];
   });
 });
 
@@ -104,7 +170,7 @@ describe('Matterbridge', () => {
 
     // console.log('Loading Matterbridge.loadInstance(true)');
     matterbridge = await Matterbridge.loadInstance(true);
-    if (!matterbridge.initialized) await matterbridge.initialize();
+    if (!(matterbridge as any).initialized) await matterbridge.initialize();
     // console.log('Loaded Matterbridge.loadInstance(true)');
   });
 
@@ -124,6 +190,11 @@ describe('Matterbridge', () => {
     // Restore the mocked console.log
     consoleLogSpy.mockRestore();
   }, 60000);
+
+  test('Matterbridge profile', async () => {
+    expect(matterbridge).toBeDefined();
+    expect(matterbridge.profile).toBe('Jest');
+  });
 
   test('should do a partial mock of AnsiLogger', () => {
     const log = new AnsiLogger({ logName: 'Mocked log' });
@@ -441,6 +512,7 @@ describe('Matterbridge', () => {
     process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-factoryreset'];
     await (matterbridge as any).parseCommandLine();
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired devices from the controllers.');
+    expect((matterbridge as any).plugins).toHaveLength(0);
     await shutdownPromise;
     matterbridge.removeAllListeners('shutdown');
   }, 60000);

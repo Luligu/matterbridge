@@ -356,7 +356,6 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
 
   const handleInstallPluginClick = () => {
     sendCommandToMatterbridge('installplugin', pluginName);
-    handleSnackOpen();
     setTimeout(() => {
       reloadSettings();
     }, 5000);
@@ -366,14 +365,14 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
     sendCommandToMatterbridge('addplugin', pluginName);
     setTimeout(() => {
       reloadSettings();
-    }, 500);
+    }, 1000);
 };
 
   const handleRemovePluginClick = () => {
     sendCommandToMatterbridge('removeplugin', pluginName);
     setTimeout(() => {
       reloadSettings();
-    }, 500);
+    }, 1000);
 };
 
   const handleClickVertical = (event) => {

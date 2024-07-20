@@ -40,6 +40,7 @@ export class MatterbridgeDynamicPlatform extends MatterbridgePlatform {
     super(matterbridge, log, config);
 
     this.type = 'DynamicPlatform';
+    config.type = this.type;
 
     this.log.debug(`Matterbridge${this.type} loaded`);
   }
