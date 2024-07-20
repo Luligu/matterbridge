@@ -85,6 +85,7 @@
     "test:verbose": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --watch",
     "test:matterbridge": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose matterbridge.test.ts",
+    "test:bridgemode": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose matterbridge.bridge.test.ts",
     "test:device": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose matterbridgeDevice.test.ts",
     "test:platform": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose matterbridgePlatform.test.ts matterbridgeAccessoryPlatform.test.ts matterbridgeDynamicPlatform.test.ts",
     "test:plugins": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose --coverage plugins.test.ts",
