@@ -3,13 +3,16 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 
 function WebSocketUse(wssHost, debugLevel, searchCriteria) {
     const [messages, setMessages] = useState([]);
+    const [retryCount, setRetryCount] = useState(0);
     const ws = useRef(null);
     const maxMessages = 1000;
 
     console.log(`useWebSocket: wssHost: ${wssHost} debugLevel: ${debugLevel} searchCriteria: ${searchCriteria} messages ${messages.length}`);
 
-    useEffect(() => {
+    // useEffect(() => {
+    const connectWebSocket = useCallback(() => {
         if(wssHost === '' || wssHost === null || wssHost === undefined)  return;
+        sendMessage(`Connecting to WebSocket: ${wssHost}`);
         ws.current = new WebSocket(wssHost);
         ws.current.onmessage = (event) => {
             const msg = JSON.parse(event.data);
@@ -63,20 +66,57 @@ function WebSocketUse(wssHost, debugLevel, searchCriteria) {
                 return newMessages;
             });
         };
-        ws.current.onopen = () => { console.log("connected to WebSocket:", wssHost); ws.current.send(`Connected to WebSocket: ${wssHost}`) };
-        ws.current.onclose = () => { console.log("disconnected from WebSocket", wssHost); window.location.href = window.location.origin; };
-        ws.current.onerror = (error) => console.error("WebSocket error: ", error);
+        ws.current.onopen = () => { 
+            console.log(`Connected to WebSocket: ${wssHost}`); 
+            sendMessage(`Connected to WebSocket: ${wssHost}`);
+            setRetryCount(0);
+        };
+        ws.current.onclose = () => { 
+            console.log(`Disconnected from WebSocket: ${wssHost}`); 
+            sendMessage(`Disconnected from WebSocket: ${wssHost}`);
+            attemptReconnect();
+        };
+        ws.current.onerror = (error) => {
+            console.error(`WebSocket error: ${error}`);
+            sendMessage(`WebSocket error: ${error}`) 
+            attemptReconnect();
+        };
 
         return () => {
             ws.current.close();
         };
     }, [wssHost, debugLevel, searchCriteria]);
 
-    const sendMessage = useCallback((message) => {
-        if (ws.current.readyState === WebSocket.OPEN) {
-            ws.current.send(message);
-            setMessages(prevMessages => [...prevMessages, `To Server: ${message}`]);
+    const attemptReconnect = useCallback(() => {
+        const maxRetries = 10;
+        const retryDelay = Math.min(100 * Math.pow(2, retryCount), 30000); 
+
+        if (retryCount < maxRetries) {
+            setRetryCount(retryCount + 1);
+            setTimeout(() => {
+                sendMessage(`Reconnecting to WebSocket: ${wssHost}`);
+                connectWebSocket();
+            }, retryDelay);
+        } else {
+            console.error('Max retries reached, could not reconnect to WebSocket.');
         }
+    }, [retryCount, connectWebSocket]);
+
+    useEffect(() => {
+        connectWebSocket();
+        return () => {
+            if (ws.current) {
+                ws.current.close();
+            }
+        };
+    }, [connectWebSocket]);
+    
+    const sendMessage = useCallback((message) => {
+        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+            ws.current.send(message);
+        }
+        const badge = `<span style="background-color: #239cb7; color: white; padding: 1px 5px; font-size: 12px; border-radius: 3px;">WebSocket</span>`;
+        setMessages(prevMessages => [...prevMessages, badge + ' - ' + message]);
     }, []);
 
     return { messages, sendMessage };
