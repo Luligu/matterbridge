@@ -16,7 +16,7 @@ const detectTouchscreen = () => {
 function WebSocketComponent(props) {
     const { wssHost, debugLevel, searchCriteria } = props;
     // const { messages, sendMessage } = useWebSocket(wssHost, debugLevel, searchCriteria);
-    const { messages, sendMessage } = useContext(WebSocketContext);
+    const { messages, sendMessage, logMessage } = useContext(WebSocketContext);
     // console.log('WebSocketComponent: consuming messages', messages.length);
 
     const endOfMessagesRef = useRef(null); // Create a ref for scrolling purposes

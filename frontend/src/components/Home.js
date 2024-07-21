@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-console */
 // Home.js
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import { StatusIndicator } from './StatusIndicator';
 import { theme } from './Header';
 import { sendCommandToMatterbridge } from '../App';
 import WebSocketComponent from './WebSocketComponent';
+import { WebSocketContext } from './WebSocketContext';
 
 // @mui
 import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip, IconButton, Button, createTheme, ThemeProvider, Select, MenuItem, Menu } from '@mui/material';
@@ -36,6 +37,7 @@ function Home() {
   const [openConfig, setOpenConfig] = useState(false);
   const [logDebugLevel, setLogDebugLevel] = useState(localStorage.getItem('logFilterLevel')??'debug');
   const [logSearchCriteria, setLogSearchCriteria] = useState(localStorage.getItem('logFilterSearch')??'*');
+  const { messages, sendMessage, logMessage } = useContext(WebSocketContext);
 
   const refAddRemove = useRef(null);
   const refRegisteredPlugins = useRef(null);
@@ -142,10 +144,12 @@ function Home() {
     console.log('Selected row:', row, 'plugin:', plugins[row].name, 'enabled:', plugins[row].enabled);
     if(plugins[row].enabled===true) {
       plugins[row].enabled=false;
+      logMessage('Plugins', `Disabling plugin: ${plugins[row].name}`);
       sendCommandToMatterbridge('disableplugin', plugins[row].name);
     }
     else {
       plugins[row].enabled=true;
+      logMessage('Plugins', `Enabling plugin: ${plugins[row].name}`);
       sendCommandToMatterbridge('enableplugin', plugins[row].name);
     }
     if(matterbridgeInfo.bridgeMode === 'childbridge') {
@@ -162,6 +166,7 @@ function Home() {
 
   const handleUpdate = (row) => {
     console.log('handleUpdate row:', row, 'plugin:', plugins[row].name);
+    logMessage('Plugins', `Updating plugin: ${plugins[row].name}`);
     sendCommandToMatterbridge('installplugin', plugins[row].name);
     handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
     setTimeout(() => {
@@ -172,6 +177,7 @@ function Home() {
 
   const handleRemovePlugin = (row) => {
     console.log('handleRemovePluginClick row:', row, 'plugin:', plugins[row].name);
+    logMessage('Plugins', `Removing plugin: ${plugins[row].name}`);
     sendCommandToMatterbridge('removeplugin', plugins[row].name);
     setTimeout(() => {
       reloadSettings();

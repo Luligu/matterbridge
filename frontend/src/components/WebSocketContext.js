@@ -7,11 +7,11 @@ export const WebSocketContext = createContext();
 export function WebSocketProvider({ children, wssHost }) {
   const [debugLevel, setDebugLevel] = useState(localStorage.getItem('logFilterLevel')??'debug');
   const [searchCriteria, setSearchCriteria] = useState(localStorage.getItem('logFilterSearch')??'*');
-  const { messages, sendMessage } = WebSocketUse(wssHost, debugLevel, searchCriteria);
+  const { messages, sendMessage, logMessage } = WebSocketUse(wssHost, debugLevel, searchCriteria);
   // console.log(`WebSocketProvider: wssHost: ${wssHost} debugLevel: ${debugLevel} searchCriteria: ${searchCriteria} messages ${messages.length}`);
 
   return (
-    <WebSocketContext.Provider value={{ messages, sendMessage }}>
+    <WebSocketContext.Provider value={{ messages, sendMessage, logMessage }}>
       {children}
     </WebSocketContext.Provider>
   );

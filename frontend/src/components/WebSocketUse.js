@@ -1,18 +1,32 @@
+ 
 /* eslint-disable no-console */
 import { useEffect, useRef, useState, useCallback } from 'react';
 
 function WebSocketUse(wssHost, debugLevel, searchCriteria) {
     const [messages, setMessages] = useState([]);
-    const [retryCount, setRetryCount] = useState(0);
+    // const [retryCount, setRetryCount] = useState(0);
     const ws = useRef(null);
+    const retryCountRef = useRef(1);
     const maxMessages = 1000;
+    const maxRetries = 10;
 
-    console.log(`useWebSocket: wssHost: ${wssHost} debugLevel: ${debugLevel} searchCriteria: ${searchCriteria} messages ${messages.length}`);
+    // console.log(`useWebSocket: wssHost: ${wssHost} debugLevel: ${debugLevel} searchCriteria: ${searchCriteria} messages ${messages.length}`);
+    
+    const sendMessage = useCallback((message) => {
+        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+            ws.current.send(message);
+        }
+    }, []);
+
+    const logMessage = useCallback((badge, message) => {
+        const badgeSpan = `<span style="background-color: #5c0e91; color: white; padding: 1px 5px; font-size: 12px; border-radius: 3px;">${badge}</span>`;
+        setMessages(prevMessages => [...prevMessages, badgeSpan + ' - ' + message]);
+    }, []);
 
     // useEffect(() => {
     const connectWebSocket = useCallback(() => {
         if(wssHost === '' || wssHost === null || wssHost === undefined)  return;
-        sendMessage(`Connecting to WebSocket: ${wssHost}`);
+        logMessage('WebSocket', `Connecting to WebSocket: ${wssHost}`);
         ws.current = new WebSocket(wssHost);
         ws.current.onmessage = (event) => {
             const msg = JSON.parse(event.data);
@@ -68,39 +82,27 @@ function WebSocketUse(wssHost, debugLevel, searchCriteria) {
         };
         ws.current.onopen = () => { 
             console.log(`Connected to WebSocket: ${wssHost}`); 
-            sendMessage(`Connected to WebSocket: ${wssHost}`);
-            setRetryCount(0);
+            logMessage('WebSocket', `Connected to WebSocket: ${wssHost}`);
+            retryCountRef.current = 1;
         };
         ws.current.onclose = () => { 
             console.log(`Disconnected from WebSocket: ${wssHost}`); 
-            sendMessage(`Disconnected from WebSocket: ${wssHost}`);
-            attemptReconnect();
+            logMessage('WebSocket', `Disconnected from WebSocket: ${wssHost}`);
+            logMessage('WebSocket', `Reconnecting (attempt ${retryCountRef.current} of ${maxRetries}) to WebSocket: ${wssHost}`);
+            if( retryCountRef.current === 0 ) attemptReconnect();
+            else if( retryCountRef.current < maxRetries ) setTimeout(attemptReconnect, 1000 * retryCountRef.current);
+            else logMessage('WebSocket', `Reconnect attempts exceeded limit of ${maxRetries} retries, giving up on WebSocket: ${wssHost}`);
+            retryCountRef.current = retryCountRef.current + 1;
         };
         ws.current.onerror = (error) => {
-            console.error(`WebSocket error: ${error}`);
-            sendMessage(`WebSocket error: ${error}`) 
-            attemptReconnect();
-        };
-
-        return () => {
-            ws.current.close();
+            console.error(`WebSocket error connecting to ${wssHost}`, error);
+            logMessage('WebSocket', `WebSocket error connecting to ${wssHost}`);
         };
     }, [wssHost, debugLevel, searchCriteria]);
 
     const attemptReconnect = useCallback(() => {
-        const maxRetries = 10;
-        const retryDelay = Math.min(100 * Math.pow(2, retryCount), 30000); 
-
-        if (retryCount < maxRetries) {
-            setRetryCount(retryCount + 1);
-            setTimeout(() => {
-                sendMessage(`Reconnecting to WebSocket: ${wssHost}`);
-                connectWebSocket();
-            }, retryDelay);
-        } else {
-            console.error('Max retries reached, could not reconnect to WebSocket.');
-        }
-    }, [retryCount, connectWebSocket]);
+        connectWebSocket();
+    }, [connectWebSocket]);
 
     useEffect(() => {
         connectWebSocket();
@@ -111,15 +113,7 @@ function WebSocketUse(wssHost, debugLevel, searchCriteria) {
         };
     }, [connectWebSocket]);
     
-    const sendMessage = useCallback((message) => {
-        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-            ws.current.send(message);
-        }
-        const badge = `<span style="background-color: #239cb7; color: white; padding: 1px 5px; font-size: 12px; border-radius: 3px;">WebSocket</span>`;
-        setMessages(prevMessages => [...prevMessages, badge + ' - ' + message]);
-    }, []);
-
-    return { messages, sendMessage };
+    return { messages, sendMessage, logMessage };
 }
 
 export default WebSocketUse;
