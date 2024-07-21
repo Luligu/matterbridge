@@ -93,6 +93,24 @@ describe('PluginsManager', () => {
     expect(count).toBe(3);
   });
 
+  test('async forEach allows for iteration over plugins', () => {
+    let count = 0;
+    plugins.forEach(async (plugin: RegisteredPlugin) => {
+      expect(plugin.name).toBeDefined();
+      expect(plugin.path).toBeDefined();
+      expect(plugin.type).toBeDefined();
+      expect(plugin.type).toBe('Unknown');
+      expect(plugin.version).toBeDefined();
+      expect(plugin.version).toBe('1.0.0');
+      expect(plugin.description).toBeDefined();
+      expect(plugin.description).toBe('To update');
+      expect(plugin.author).toBeDefined();
+      expect(plugin.author).toBe('To update');
+      count++;
+    });
+    expect(count).toBe(3);
+  });
+
   test('resolve plugin', async () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
@@ -404,14 +422,53 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
     const schemaFile = plugin.path.replace('package.json', `${plugin.name}.schema.json`);
+    try {
+      await fs.writeFile(schemaFile, JSON.stringify(plugins.getDefaultSchema(plugin), null, 2), 'utf8');
+    } catch (error) {
+      // Ignore error
+    }
+
+    const schema = await plugins.loadSchema(plugin);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.`);
+    expect(schema).not.toBeUndefined();
+    expect(schema).not.toBeNull();
+    expect(schema.title).toBe(plugin.description);
+    expect(schema.description).toBeDefined();
+    expect(schema.type).toBe('object');
+    expect(schema.properties).toBeDefined();
+    expect((schema.properties as any).name).toBeDefined();
+    expect((schema.properties as any).type).toBeDefined();
+    expect((schema.properties as any).debug).toBeDefined();
+    expect((schema.properties as any).unregisterOnShutdown).toBeDefined();
+  }, 60000);
+
+  test('load default schema plugin matterbridge-eve-door', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    expect(plugins.length).toBe(1);
+    const plugin = plugins.get('matterbridge-eve-door');
+    expect(plugin).not.toBeUndefined();
+    if (!plugin) return;
+    const schemaFile = plugin.path.replace('package.json', `${plugin.name}.schema.json`);
+    try {
+      await fs.unlink(schemaFile);
+    } catch (error) {
+      // Ignore error
+    }
+
     const schema = await plugins.loadSchema(plugin);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema.`);
     expect(schema).not.toBeUndefined();
     expect(schema).not.toBeNull();
     expect(schema.title).toBe(plugin.description);
+    expect(schema.description).toBeDefined();
     expect(schema.type).toBe('object');
     expect(schema.properties).toBeDefined();
-    expect(schema.description).toBeDefined();
+    expect((schema.properties as any).name).toBeDefined();
+    expect((schema.properties as any).type).toBeDefined();
+    expect((schema.properties as any).debug).toBeDefined();
+    expect((schema.properties as any).unregisterOnShutdown).toBeDefined();
   }, 60000);
 
   test('load plugin matterbridge-eve-door', async () => {

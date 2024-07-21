@@ -580,7 +580,7 @@ export class Plugins {
       schema.title = plugin.description;
       schema.description = plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author;
       this.log.debug(`Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.`);
-      this.log.debug(`Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.\nSchema:${rs}\n`, schema);
+      // this.log.debug(`Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.\nSchema:${rs}\n`, schema);
       // Delete the schema file from old position
       schemaFile = path.join(this.matterbridge.matterbridgeDirectory, `${plugin.name}.schema.json`);
       try {
@@ -592,34 +592,37 @@ export class Plugins {
       return schema;
     } catch (err) {
       this.log.debug(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema.`);
-      const schema: PlatformSchema = {
-        title: plugin.description,
-        description: plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author,
-        type: 'object',
-        properties: {
-          name: {
-            description: 'Plugin name',
-            type: 'string',
-            readOnly: true,
-          },
-          type: {
-            description: 'Plugin type',
-            type: 'string',
-            readOnly: true,
-          },
-          debug: {
-            description: 'Enable the debug for the plugin (development only)',
-            type: 'boolean',
-            default: false,
-          },
-          unregisterOnShutdown: {
-            description: 'Unregister all devices on shutdown (development only)',
-            type: 'boolean',
-            default: false,
-          },
-        },
-      };
-      return schema;
+      return this.getDefaultSchema(plugin);
     }
+  }
+
+  getDefaultSchema(plugin: RegisteredPlugin): PlatformSchema {
+    return {
+      title: plugin.description,
+      description: plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author,
+      type: 'object',
+      properties: {
+        name: {
+          description: 'Plugin name',
+          type: 'string',
+          readOnly: true,
+        },
+        type: {
+          description: 'Plugin type',
+          type: 'string',
+          readOnly: true,
+        },
+        debug: {
+          description: 'Enable the debug for the plugin (development only)',
+          type: 'boolean',
+          default: false,
+        },
+        unregisterOnShutdown: {
+          description: 'Unregister all devices on shutdown (development only)',
+          type: 'boolean',
+          default: false,
+        },
+      },
+    };
   }
 }

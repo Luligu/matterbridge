@@ -496,13 +496,13 @@ export class Matterbridge extends EventEmitter {
     if (hasParameter('test')) {
       this.bridgeMode = 'childbridge';
       MatterbridgeDevice.bridgeMode = 'childbridge';
-      await this.testStartMatterBridge();
+      await this.startTest();
       return;
     }
 
     if (hasParameter('controller')) {
       this.bridgeMode = 'controller';
-      await this.startMattercontroller();
+      await this.startController();
       return;
     }
 
@@ -552,7 +552,7 @@ export class Matterbridge extends EventEmitter {
         plugin.manualPairingCode = undefined;
         this.loadPlugin(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
       }
-      await this.startMatterbridge();
+      await this.startBridge();
       return;
     }
 
@@ -593,7 +593,7 @@ export class Matterbridge extends EventEmitter {
         plugin.manualPairingCode = (await plugin.nodeContext?.get<string>('manualPairingCode', undefined)) ?? undefined;
         this.loadPlugin(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
       }
-      await this.startMatterbridge();
+      await this.startChildbridge();
       return;
     }
   }
@@ -1534,162 +1534,161 @@ export class Matterbridge extends EventEmitter {
     }
   }
 
-  private async testStartMatterBridge(): Promise<void> {
+  private async startTest(): Promise<void> {
     // Start the Matterbridge
   }
 
   /**
-   * Starts the Matterbridge based on the bridge mode.
-   * If the bridge mode is 'bridge', it creates a commissioning server, matter aggregator,
-   * and starts the matter server.
-   * If the bridge mode is 'childbridge', it starts the plugins, creates commissioning servers,
-   * and starts the matter server when all plugins are loaded and started.
+   * Starts the Matterbridge in bridge mode.
    * @private
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
-  private async startMatterbridge(): Promise<void> {
-    if (this.bridgeMode === 'bridge') {
-      // Plugins are loaded and started by loadPlugin on startup and plugin.loaded and plugin.loaded are set to true
-      // Plugins are configured by callback when Matterbridge is commissioned and plugin.configured is set to true
-      this.log.debug('***Starting startMatterbridge interval for Matterbridge');
-      let failCount = 0;
-      const startMatterInterval = setInterval(async () => {
-        for (const plugin of this.plugins) {
-          // new code to not start the bridge if one plugin is in error cause the controllers will delete the devices loosing all the configuration
-          if (!plugin.enabled) continue;
-          if (plugin.error) {
-            clearInterval(startMatterInterval);
-            this.log.debug('***Cleared startMatterInterval interval for Matterbridge for plugin in error state');
-            this.log.error(`The plugin ${plg}${plugin.name}${er} is in error state.`);
-            this.log.error('The bridge will not start until the problem is solved to prevent the controllers from deleting all registered devices.');
-            this.log.error('If you want to start the bridge disable the plugin in error state and restart.');
-            return;
-          }
+  private async startBridge(): Promise<void> {
+    // Plugins are loaded and started by loadPlugin on startup and plugin.loaded and plugin.started are set to true
+    // Plugins are configured by a timer when matter server is started and plugin.configured is set to true
 
-          if (!plugin.loaded || !plugin.started) {
-            this.log.debug(`***Waiting (failSafeCount=${failCount}/30) in startMatterInterval interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
-            failCount++;
-            if (failCount > 30) {
-              this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error state.`);
-              plugin.error = true;
-            }
-            return;
+    this.log.debug('***Starting startMatterInterval in bridge mode');
+    let failCount = 0;
+    const startMatterInterval = setInterval(async () => {
+      for (const plugin of this.plugins) {
+        // new code to not start the bridge if one plugin is in error cause the controllers will delete the devices loosing all the configuration
+        if (!plugin.enabled) continue;
+        if (plugin.error) {
+          clearInterval(startMatterInterval);
+          this.log.debug('***Cleared startMatterInterval interval for Matterbridge for plugin in error state');
+          this.log.error(`The plugin ${plg}${plugin.name}${er} is in error state.`);
+          this.log.error('The bridge will not start until the problem is solved to prevent the controllers from deleting all registered devices.');
+          this.log.error('If you want to start the bridge disable the plugin in error state and restart.');
+          return;
+        }
+
+        if (!plugin.loaded || !plugin.started) {
+          this.log.debug(`***Waiting (failSafeCount=${failCount}/30) in startMatterInterval interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
+          failCount++;
+          if (failCount > 30) {
+            this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error state.`);
+            plugin.error = true;
+          }
+          return;
+        }
+      }
+      clearInterval(startMatterInterval);
+      this.log.debug('***Cleared startMatterInterval interval for Matterbridge');
+
+      await this.startMatterServer();
+      this.log.info('Matter server started');
+
+      // Configure the plugins
+      this.configureTimeout = setTimeout(async () => {
+        for (const plugin of this.plugins) {
+          if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
+          try {
+            await this.plugins.configure(plugin); // No await do it asyncronously
+          } catch (error) {
+            plugin.error = true;
+            this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
           }
         }
-        clearInterval(startMatterInterval);
-        this.log.debug('***Cleared startMatterInterval interval for Matterbridge');
+      }, 30 * 1000);
 
-        await this.startMatterServer();
-        this.log.info('Matter server started');
+      // Show the QR code for commissioning or log the already commissioned message
+      await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
 
-        // Configure the plugins
-        this.configureTimeout = setTimeout(async () => {
-          for (const plugin of this.plugins) {
-            if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
-            try {
-              await this.plugins.configure(plugin); // No await do it asyncronously
-            } catch (error) {
-              plugin.error = true;
-              this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
-            }
+      // Setting reachability to true
+      this.reachabilityTimeout = setTimeout(() => {
+        this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
+        if (this.commissioningServer) this.setCommissioningServerReachability(this.commissioningServer, true);
+        if (this.matterAggregator) this.setAggregatorReachability(this.matterAggregator, true);
+      }, 60 * 1000);
+    }, 1000);
+  }
+
+  /**
+   * Starts the Matterbridge in childbridge mode.
+   * @private
+   * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
+   */
+  private async startChildbridge(): Promise<void> {
+    // Plugins are loaded and started by loadPlugin on startup and plugin.loaded and plugin.started are set to true
+    // addDevice and addBridgedDeevice create the commissionig servers and add the devices to the the commissioning server or to the aggregator
+    // Plugins are configured by a timer when matter server is started and plugin.configured is set to true
+
+    this.log.debug('***Starting start matter interval in childbridge mode...');
+    let failCount = 0;
+    const startMatterInterval = setInterval(async () => {
+      let allStarted = true;
+      for (const plugin of this.plugins) {
+        // new code to not start the bridge if one plugin is in error cause the controllers will delete the devices loosing all the configuration
+        if (!plugin.enabled) continue;
+        if (plugin.error) {
+          clearInterval(startMatterInterval);
+          this.log.debug('***Cleared startMatterInterval interval for Matterbridge for plugin in error state');
+          this.log.error(`The plugin ${plg}${plugin.name}${er} is in error state.`);
+          this.log.error('The bridge will not start until the problem is solved to prevent the controllers from deleting all registered devices.');
+          this.log.error('If you want to start the bridge disable the plugin in error state and restart.');
+          return;
+        }
+
+        this.log.debug(`***Checking plugin ${plg}${plugin.name}${db} to start matter in childbridge mode...`);
+        if (!plugin.loaded || !plugin.started) {
+          allStarted = false;
+          this.log.debug(`***Waiting (failSafeCount=${failCount}/30) for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
+          failCount++;
+          if (failCount > 30) {
+            this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error mode.`);
+            plugin.error = true;
           }
-        }, 30 * 1000);
+        }
+      }
+      if (!allStarted) return;
+      clearInterval(startMatterInterval);
+      this.log.debug('***Cleared startMatterInterval interval in childbridge mode');
 
-        // Show the QR code for commissioning or log the already commissioned message
-        await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
+      await this.startMatterServer();
+      this.log.info('Matter server started');
+
+      // Configure the plugins
+      this.configureTimeout = setTimeout(async () => {
+        for (const plugin of this.plugins) {
+          if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
+          try {
+            await this.plugins.configure(plugin); // No await do it asyncronously
+          } catch (error) {
+            plugin.error = true;
+            this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
+          }
+        }
+      }, 30 * 1000);
+
+      for (const plugin of this.plugins) {
+        if (!plugin.enabled || plugin.error) continue;
+        if (!plugin.addedDevices || plugin.addedDevices === 0) {
+          this.log.error(`Plugin ${plg}${plugin.name}${er} didn't add any devices to Matterbridge. Verify the plugin configuration.`);
+          continue;
+        }
+        if (!plugin.commissioningServer) {
+          this.log.error(`Commissioning server not found for plugin ${plg}${plugin.name}${er}`);
+          continue;
+        }
+        if (!plugin.storageContext) {
+          this.log.error(`Storage context not found for plugin ${plg}${plugin.name}${er}`);
+          continue;
+        }
+        if (!plugin.nodeContext) {
+          this.log.error(`Node storage context not found for plugin ${plg}${plugin.name}${er}`);
+          continue;
+        }
+        await this.showCommissioningQRCode(plugin.commissioningServer, plugin.storageContext, plugin.nodeContext, plugin.name);
 
         // Setting reachability to true
-        this.reachabilityTimeout = setTimeout(() => {
-          this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
-          if (this.commissioningServer) this.setCommissioningServerReachability(this.commissioningServer, true);
-          if (this.matterAggregator) this.setAggregatorReachability(this.matterAggregator, true);
+        plugin.reachabilityTimeout = setTimeout(() => {
+          this.log.info(`Setting reachability to true for ${plg}${plugin.name}${db}`);
+          if (plugin.commissioningServer) this.setCommissioningServerReachability(plugin.commissioningServer, true);
+          if (plugin.type === 'AccessoryPlatform' && plugin.device) this.setDeviceReachability(plugin.device, true);
+          if (plugin.type === 'DynamicPlatform' && plugin.aggregator) this.setAggregatorReachability(plugin.aggregator, true);
         }, 60 * 1000);
-      }, 1000);
-    }
-
-    if (this.bridgeMode === 'childbridge') {
-      // Plugins are loaded and started by loadPlugin on startup
-      // addDevice and addBridgedDeevice create the commissionig servers and add the devices to the the commissioning server or to the aggregator
-      // Plugins are configured by callback when the plugin is commissioned
-
-      // Start the interval to check if all plugins are loaded and started and so start the matter server
-      this.log.debug('***Starting start matter interval in childbridge mode...');
-      let failCount = 0;
-      const startMatterInterval = setInterval(async () => {
-        let allStarted = true;
-        for (const plugin of this.plugins) {
-          // new code to not start the bridge if one plugin is in error cause the controllers will delete the devices loosing all the configuration
-          if (!plugin.enabled) continue;
-          if (plugin.error) {
-            clearInterval(startMatterInterval);
-            this.log.debug('***Cleared startMatterInterval interval for Matterbridge for plugin in error state');
-            this.log.error(`The plugin ${plg}${plugin.name}${er} is in error state.`);
-            this.log.error('The bridge will not start until the problem is solved to prevent the controllers from deleting all registered devices.');
-            this.log.error('If you want to start the bridge disable the plugin in error state and restart.');
-            return;
-          }
-
-          this.log.debug(`***Checking plugin ${plg}${plugin.name}${db} to start matter in childbridge mode...`);
-          if (!plugin.loaded || !plugin.started) {
-            allStarted = false;
-            this.log.debug(`***Waiting (failSafeCount=${failCount}/30) for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
-            failCount++;
-            if (failCount > 30) {
-              this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error mode.`);
-              plugin.error = true;
-            }
-          }
-        }
-        if (!allStarted) return;
-        clearInterval(startMatterInterval);
-        this.log.debug('***Cleared startMatterInterval interval in childbridge mode');
-
-        await this.startMatterServer();
-        this.log.info('Matter server started');
-
-        // Configure the plugins
-        this.configureTimeout = setTimeout(async () => {
-          for (const plugin of this.plugins) {
-            if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
-            try {
-              await this.plugins.configure(plugin); // No await do it asyncronously
-            } catch (error) {
-              plugin.error = true;
-              this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
-            }
-          }
-        }, 30 * 1000);
-
-        for (const plugin of this.plugins) {
-          if (!plugin.enabled || plugin.error) continue;
-          if (!plugin.addedDevices || plugin.addedDevices === 0) {
-            this.log.error(`Plugin ${plg}${plugin.name}${er} didn't add any devices to Matterbridge. Verify the plugin configuration.`);
-            continue;
-          }
-          if (!plugin.commissioningServer) {
-            this.log.error(`Commissioning server not found for plugin ${plg}${plugin.name}${er}`);
-            continue;
-          }
-          if (!plugin.storageContext) {
-            this.log.error(`Storage context not found for plugin ${plg}${plugin.name}${er}`);
-            continue;
-          }
-          if (!plugin.nodeContext) {
-            this.log.error(`Node storage context not found for plugin ${plg}${plugin.name}${er}`);
-            continue;
-          }
-          await this.showCommissioningQRCode(plugin.commissioningServer, plugin.storageContext, plugin.nodeContext, plugin.name);
-
-          // Setting reachability to true
-          plugin.reachabilityTimeout = setTimeout(() => {
-            this.log.info(`Setting reachability to true for ${plg}${plugin.name}${db}`);
-            if (plugin.commissioningServer) this.setCommissioningServerReachability(plugin.commissioningServer, true);
-            if (plugin.type === 'AccessoryPlatform' && plugin.device) this.setDeviceReachability(plugin.device, true);
-            if (plugin.type === 'DynamicPlatform' && plugin.aggregator) this.setAggregatorReachability(plugin.aggregator, true);
-          }, 60 * 1000);
-        }
-      }, 1000);
-    }
+      }
+    }, 1000);
   }
 
   /**
@@ -1697,7 +1696,7 @@ export class Matterbridge extends EventEmitter {
    * @private
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
-  private async startMattercontroller(): Promise<void> {
+  private async startController(): Promise<void> {
     if (!this.storageManager) {
       this.log.error('No storage manager initialized');
       await this.cleanup('No storage manager initialized');
