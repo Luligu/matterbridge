@@ -63,7 +63,7 @@ function WebSocketUse(wssHost, debugLevel, searchCriteria) {
             });
         };
         ws.current.onopen = () => { console.log("connected to WebSocket:", wssHost); ws.current.send(`Connected to WebSocket: ${wssHost}`) };
-        ws.current.onclose = () => { console.log("disconnected from WebSocket", wssHost); };
+        ws.current.onclose = () => { console.log("disconnected from WebSocket", wssHost); window.location.href = window.location.origin; };
         ws.current.onerror = (error) => console.error("WebSocket error: ", error);
 
         return () => {

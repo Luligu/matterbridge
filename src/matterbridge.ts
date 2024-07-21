@@ -868,7 +868,6 @@ export class Matterbridge extends EventEmitter {
     this.getLatestVersion(plugin.name)
       .then(async (latestVersion) => {
         plugin.latestVersion = latestVersion;
-        // await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
         if (plugin.version !== latestVersion) this.log.warn(`The plugin ${plg}${plugin.name}${wr} is out of date. Current version: ${plugin.version}, Latest version: ${latestVersion}`);
         else this.log.info(`The plugin ${plg}${plugin.name}${nf} is up to date. Current version: ${plugin.version}, Latest version: ${latestVersion}`);
       })
@@ -1440,8 +1439,6 @@ export class Matterbridge extends EventEmitter {
         plugin.addedDevices = 0;
         plugin.configJson = config;
         plugin.schemaJson = await this.loadPluginSchema(plugin);
-        // Save the updated plugin data in the node storage
-        // await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
 
         this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${platform.type} ${db}(entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
         if (start) this.startPlugin(plugin, message); // No await do it asyncronously
@@ -2366,7 +2363,6 @@ export class Matterbridge extends EventEmitter {
           plugin.connected = false;
         }
       }
-      // await this.nodeContext?.set<RegisteredPlugin[]>('plugins', await this.getBaseRegisteredPlugins());
     } else {
       this.log.info(`*The commissioning server on port ${commissioningServer.getPort()} for ${plg}${pluginName}${nf} is already commissioned. Waiting for controllers to connect ...`);
       const fabricInfo = commissioningServer.getCommissionedFabricInformation();
