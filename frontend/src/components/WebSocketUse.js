@@ -9,6 +9,7 @@ function WebSocketUse(wssHost, debugLevel, searchCriteria) {
     console.log(`useWebSocket: wssHost: ${wssHost} debugLevel: ${debugLevel} searchCriteria: ${searchCriteria} messages ${messages.length}`);
 
     useEffect(() => {
+        if(wssHost === '' || wssHost === null || wssHost === undefined)  return;
         ws.current = new WebSocket(wssHost);
         ws.current.onmessage = (event) => {
             const msg = JSON.parse(event.data);
