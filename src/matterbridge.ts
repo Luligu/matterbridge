@@ -2660,6 +2660,7 @@ export class Matterbridge extends EventEmitter {
    * @param port The port number to run the frontend server on. Default is 8283.
    */
   async initializeFrontend(port = 8283): Promise<void> {
+    let initializeError = false;
     this.log.debug(`Initializing the frontend ${hasParameter('ssl') ? 'https' : 'http'} server on port ${YELLOW}${port}${db}`);
 
     // Create the express app that serves the frontend
@@ -2687,7 +2688,8 @@ export class Matterbridge extends EventEmitter {
             this.log.error(`Port ${port} is already in use`);
             break;
         }
-        process.exit(1);
+        initializeError = true;
+        return;
       });
     } else {
       // Load the SSL certificate, the private key and optionally the CA certificate
@@ -2736,9 +2738,12 @@ export class Matterbridge extends EventEmitter {
             this.log.error(`Port ${port} is already in use`);
             break;
         }
-        process.exit(1);
+        initializeError = true;
+        return;
       });
     }
+
+    if (initializeError) return;
 
     // Createe a WebSocket server and attach it to the http server
     const wssPort = port;

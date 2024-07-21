@@ -331,6 +331,18 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Installed plugin ${plg}matterbridge-eve-door${nf}`);
   }, 300000);
 
+  test('install plugin matterbridge-eve-motion', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    const version = await plugins.install('matterbridge-eve-motion');
+    expect(version).not.toBeUndefined();
+
+    // console.error(`Plugin installed: ${version}`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Installing plugin ${plg}matterbridge-eve-motion${nf}`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Installed plugin ${plg}matterbridge-eve-motion${nf}`);
+  }, 300000);
+
   test('add plugin matterbridge-xyz', async () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
@@ -350,13 +362,25 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     const plugin = await plugins.add('matterbridge-eve-door');
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-eve-door${nf}`);
     expect(plugin).not.toBeNull();
+    expect(plugins.length).toBe(1);
+  }, 60000);
+
+  test('add plugin matterbridge-eve-motion', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    expect(plugins.length).toBe(1);
+    const plugin = await plugins.add('matterbridge-eve-motion');
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-eve-motion${nf}`);
+    expect(plugin).not.toBeNull();
+    expect(plugins.length).toBe(2);
   }, 60000);
 
   test('load config plugin matterbridge-eve-door', async () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
 
-    expect(plugins.length).toBe(1);
+    expect(plugins.length).toBe(2);
     const plugin = plugins.get('matterbridge-eve-door');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -386,7 +410,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
 
-    expect(plugins.length).toBe(1);
+    expect(plugins.length).toBe(2);
     const plugin = plugins.get('matterbridge-eve-door');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -401,7 +425,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
 
-    expect(plugins.length).toBe(1);
+    expect(plugins.length).toBe(2);
     const plugin = plugins.get('matterbridge-eve-door');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -417,7 +441,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
 
-    expect(plugins.length).toBe(1);
+    expect(plugins.length).toBe(2);
     const plugin = plugins.get('matterbridge-eve-door');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -446,7 +470,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
 
-    expect(plugins.length).toBe(1);
+    expect(plugins.length).toBe(2);
     const plugin = plugins.get('matterbridge-eve-door');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -501,6 +525,41 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect(plugin.schemaJson).toBeDefined();
   });
 
+  test('load, start and configure in parallel plugin matterbridge-eve-motion', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    const plugin = plugins.get('matterbridge-eve-motion');
+    expect(plugin).not.toBeUndefined();
+    if (!plugin) return;
+
+    plugins.load(plugin, true, 'Test with Jest', true); // No await do it in parallel
+    expect(plugin.loaded).toBe(undefined);
+    expect(plugin.started).toBe(undefined);
+    expect(plugin.configured).toBe(undefined);
+  });
+
+  test('wait for plugin matterbridge-eve-motion to load and start', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    const plugin = plugins.get('matterbridge-eve-motion');
+    expect(plugin).not.toBeUndefined();
+    if (!plugin) return;
+    await waiter(
+      'Plugin to start',
+      () => {
+        return plugin.configured === true;
+      },
+      false,
+      60000,
+      1000,
+    );
+    expect(plugin.loaded).toBe(true);
+    expect(plugin.started).toBe(true);
+    expect(plugin.configured).toBe(true);
+  }, 60000);
+
   test('start plugin matterbridge-eve-door', async () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
@@ -544,6 +603,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Configured plugin ${plg}${plugin?.name}${nf} type ${typ}${plugin?.type}${nf}`);
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
+    /*
     await waiter(
       'Plugin to configure',
       () => {
@@ -554,6 +614,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
       1000,
       true,
     );
+    */
     expect(plugin.configured).toBe(true);
   }, 60000);
 
@@ -592,8 +653,50 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect(plugin.configured).toBe(undefined);
     expect(plugin.platform).toBe(undefined);
 
-    expect(await plugins.saveToStorage()).toBe(1);
+    expect(await plugins.saveToStorage()).toBe(2);
   }, 60000);
+
+  test('shutdown plugin matterbridge-eve-motion', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    let plugin = plugins.get('matterbridge-eve-motion');
+    expect(plugin).not.toBeUndefined();
+    expect(plugin?.loaded).toBeTruthy();
+    expect(plugin?.started).toBeTruthy();
+    expect(plugin?.configured).toBeTruthy();
+    if (!plugin) return;
+
+    plugin = await plugins.shutdown(plugin, 'Test with Jest', true);
+    expect(plugin).not.toBeUndefined();
+  }, 60000);
+
+  test('uninstall plugin matterbridge-xyz', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    expect(await plugins.uninstall('matterbridge-xyz')).toBeDefined();
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalling plugin ${plg}matterbridge-xyz${nf}`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalled plugin ${plg}matterbridge-xyz${nf}`);
+  }, 300000);
+
+  test('uninstall plugin matterbridge-eve-door', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    expect(await plugins.uninstall('matterbridge-eve-door')).toBeDefined();
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalling plugin ${plg}matterbridge-eve-door${nf}`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalled plugin ${plg}matterbridge-eve-door${nf}`);
+  }, 300000);
+
+  test('uninstall plugin matterbridge-eve-motion', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
+    expect(await plugins.uninstall('matterbridge-eve-motion')).toBeDefined();
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalling plugin ${plg}matterbridge-eve-motion${nf}`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalled plugin ${plg}matterbridge-eve-motion${nf}`);
+  }, 300000);
 
   test('cleanup Jest profile', async () => {
     plugins.clear();

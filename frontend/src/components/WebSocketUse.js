@@ -89,7 +89,7 @@ function WebSocketUse(wssHost, debugLevel, searchCriteria) {
             console.log(`Disconnected from WebSocket: ${wssHost}`); 
             logMessage('WebSocket', `Disconnected from WebSocket: ${wssHost}`);
             logMessage('WebSocket', `Reconnecting (attempt ${retryCountRef.current} of ${maxRetries}) to WebSocket: ${wssHost}`);
-            if( retryCountRef.current === 0 ) attemptReconnect();
+            if( retryCountRef.current === 1 ) attemptReconnect();
             else if( retryCountRef.current < maxRetries ) setTimeout(attemptReconnect, 1000 * retryCountRef.current);
             else logMessage('WebSocket', `Reconnect attempts exceeded limit of ${maxRetries} retries, giving up on WebSocket: ${wssHost}`);
             retryCountRef.current = retryCountRef.current + 1;

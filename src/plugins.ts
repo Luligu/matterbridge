@@ -1,3 +1,26 @@
+/**
+ * This file contains the Plugins class.
+ *
+ * @file plugins.ts
+ * @author Luca Liguori
+ * @date 2024-07-14
+ * @version 1.2.8
+ *
+ * Copyright 2024 Luca Liguori.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License. *
+ */
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { AnsiLogger, BLUE, db, er, nf, pl, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
@@ -307,6 +330,21 @@ export class Plugins {
     });
   }
 
+  async uninstall(name: string): Promise<string | undefined> {
+    this.log.info(`Uninstalling plugin ${plg}${name}${nf}`);
+    return new Promise((resolve, reject) => {
+      exec(`npm uninstall -g ${name}`, (error: ExecException | null, stdout: string) => {
+        if (error) {
+          this.log.error(`Failed to uninstall plugin ${plg}${name}${er}: ${error}`);
+          resolve(undefined);
+        } else {
+          this.log.info(`Uninstalled plugin ${plg}${name}${nf}`);
+          resolve(name);
+        }
+      });
+    });
+  }
+
   /**
    * Loads a plugin and returns the corresponding MatterbridgePlatform instance.
    * @param plugin - The plugin to load.
@@ -315,14 +353,14 @@ export class Plugins {
    * @returns A Promise that resolves to the loaded MatterbridgePlatform instance.
    * @throws An error if the plugin is not enabled, already loaded, or fails to load.
    */
-  async load(plugin: RegisteredPlugin, start = false, message = ''): Promise<MatterbridgePlatform | undefined> {
+  async load(plugin: RegisteredPlugin, start = false, message = '', configure = false): Promise<MatterbridgePlatform | undefined> {
     if (!plugin.enabled) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} not enabled`);
-      return Promise.resolve(undefined);
+      return undefined;
     }
     if (plugin.platform) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} already loaded`);
-      return Promise.resolve(plugin.platform);
+      return plugin.platform;
     }
     this.log.info(`Loading plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
     try {
@@ -361,7 +399,9 @@ export class Plugins {
 
         if (start) await this.start(plugin, message, false);
 
-        return Promise.resolve(platform);
+        if (configure) await this.configure(plugin);
+
+        return platform;
       } else {
         this.log.error(`Plugin ${plg}${plugin.name}${er} does not provide a default export`);
         plugin.error = true;
@@ -370,7 +410,7 @@ export class Plugins {
       this.log.error(`Failed to load plugin ${plg}${plugin.name}${er}: ${err}`);
       plugin.error = true;
     }
-    return Promise.resolve(undefined);
+    return undefined;
   }
 
   /**
@@ -384,15 +424,15 @@ export class Plugins {
   async start(plugin: RegisteredPlugin, message?: string, configure = false): Promise<RegisteredPlugin | undefined> {
     if (!plugin.loaded) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} not loaded`);
-      return Promise.resolve(undefined);
+      return undefined;
     }
     if (!plugin.platform) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} no platform found`);
-      return Promise.resolve(undefined);
+      return undefined;
     }
     if (plugin.started) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} already started`);
-      return Promise.resolve(undefined);
+      return undefined;
     }
     this.log.info(`Starting plugin ${plg}${plugin.name}${db} type ${typ}${plugin.type}${db}`);
     try {
@@ -400,12 +440,12 @@ export class Plugins {
       this.log.info(`Started plugin ${plg}${plugin.name}${db} type ${typ}${plugin.type}${db}`);
       plugin.started = true;
       if (configure) await this.configure(plugin);
-      return Promise.resolve(plugin);
+      return plugin;
     } catch (err) {
       plugin.error = true;
       this.log.error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err}`);
     }
-    return Promise.resolve(undefined);
+    return undefined;
   }
 
   /**
@@ -417,19 +457,19 @@ export class Plugins {
   async configure(plugin: RegisteredPlugin): Promise<RegisteredPlugin | undefined> {
     if (!plugin.loaded) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} not loaded`);
-      return Promise.resolve(undefined);
+      return undefined;
     }
     if (!plugin.started) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} not started`);
-      return Promise.resolve(undefined);
+      return undefined;
     }
     if (!plugin.platform) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} no platform found`);
-      return Promise.resolve(undefined);
+      return undefined;
     }
     if (plugin.configured) {
       this.log.debug(`Plugin ${plg}${plugin.name}${db} already configured`);
-      return Promise.resolve(undefined);
+      return undefined;
     }
     this.log.info(`Configuring plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
     try {
@@ -437,27 +477,26 @@ export class Plugins {
       this.log.info(`Configured plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
       plugin.configured = true;
       await this.saveConfigFromPlugin(plugin);
-      return Promise.resolve(plugin);
+      return plugin;
     } catch (err) {
       plugin.error = true;
       this.log.error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`);
     }
-    return Promise.resolve(undefined);
+    return undefined;
   }
 
   async shutdown(plugin: RegisteredPlugin, reason?: string, removeAllDevices = false, force = false): Promise<RegisteredPlugin | undefined> {
     this.log.debug(`Shutting down plugin ${plg}${plugin.name}${db}`);
     if (!plugin.loaded) {
-      this.log.debug(`*Plugin ${plg}${plugin.name}${db} not loaded`);
+      this.log.debug(`Plugin ${plg}${plugin.name}${db} not loaded`);
       if (!force) return undefined;
     }
     if (!plugin.started) {
-      this.log.debug(`*Plugin ${plg}${plugin.name}${db} not started`);
+      this.log.debug(`Plugin ${plg}${plugin.name}${db} not started`);
       if (!force) return undefined;
     }
     if (!plugin.configured) {
-      this.log.debug(`*Plugin ${plg}${plugin.name}${db} not configured`);
-      // if (!force) return undefined;
+      this.log.debug(`Plugin ${plg}${plugin.name}${db} not configured`);
     }
     if (!plugin.platform) {
       this.log.debug(`*Plugin ${plg}${plugin.name}${db} no platform found`);

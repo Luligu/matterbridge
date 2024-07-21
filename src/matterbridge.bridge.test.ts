@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-debug', '-matterlogger', 'debug', '-bridge', '-profile', 'Jest'];
+process.argv = ['node', 'matterbridge.test.js', '-debug', '-matterlogger', 'fatal', '-bridge', '-profile', 'Jest'];
 
 import { jest } from '@jest/globals';
 
