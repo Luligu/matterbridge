@@ -4,20 +4,20 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
-## [1.3.20] - 2024-07-15
+## [1.4.0] - 2024-07-23
 
 ### Added
 
 ### Changed
 
 - [package]: Update dependencies.
+- [matterbridge]: Added PluginsManager.
 - [matterbridge]: Removed timeout on cleanup (saved 5 seconds on restart and shutdown).
 - [matterbridge]: Removed write cache and expired interval for node storage.
-- [frontend]: Frontend reduced timeout to reload page to 5 seconds.
 - [matterbridge]: Added matterbridgeTypes.ts
+- [frontend]: The frontend reconnects to WebSocket when the connection is closed.
 - [frontend]: Removed QR button for plugins in error and not enabled.
-- [matterbridge]: Added PluginsManager.
-- [frontend]: The Logs page and the log in the Home persist till you close the frontend (the last 1000 lines are available).
+- [frontend]: The Logs page and the log in the Home page persist till you close or reload the frontend (the last 1000 lines are available).
 
 
 ### Fixed

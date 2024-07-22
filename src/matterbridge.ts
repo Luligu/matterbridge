@@ -2754,7 +2754,7 @@ export class Matterbridge extends EventEmitter {
       const clientIp = request.socket.remoteAddress;
       this.log.info(`WebSocketServer client ${clientIp} connected`);
       this.log.setGlobalCallback(this.wssSendMessage.bind(this));
-      this.log.debug('WebSocketServer logger callback added');
+      this.log.debug('WebSocketServer logger global callback added');
       this.wssSendMessage('Matterbridge', 'info', `WebSocketServer client ${clientIp} connected to Matterbridge`);
 
       ws.on('message', (message) => {
@@ -2765,7 +2765,7 @@ export class Matterbridge extends EventEmitter {
         this.log.info('WebSocket client disconnected');
         if (this.webSocketServer?.clients.size === 0) {
           this.log.setGlobalCallback(undefined);
-          this.log.debug('All WebSocket clients disconnected. WebSocketServer logger callback removed');
+          this.log.debug('All WebSocket clients disconnected. WebSocketServer logger global callback removed');
         }
       });
 
@@ -2836,6 +2836,12 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.matterbridgeSessionInformations = this.matterbridgeSessionInformations;
       const response = { wssHost, qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
       // this.log.debug('Response:', debugStringify(response));
+      this.log.debug(`WebSocketServer logger local callback: ${this.log.getCallback() ? 'active' : 'inactive'}`);
+      this.log.debug(`WebSocketServer logger global callback: ${this.log.getGlobalCallback() ? 'active' : 'inactive'}`);
+      if (this.webSocketServer && this.webSocketServer.clients.size > 0 && !this.log.getGlobalCallback()) {
+        this.log.setGlobalCallback(this.wssSendMessage.bind(this));
+        this.log.debug('WebSocketServer logger global callback added');
+      }
       res.json(response);
     });
 
