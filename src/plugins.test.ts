@@ -450,6 +450,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
       await fs.writeFile(schemaFile, JSON.stringify(plugins.getDefaultSchema(plugin), null, 2), 'utf8');
     } catch (error) {
       // Ignore error
+      console.error('writeFile:', schemaFile, error);
     }
 
     const schema = await plugins.loadSchema(plugin);
@@ -479,6 +480,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
       await fs.unlink(schemaFile);
     } catch (error) {
       // Ignore error
+      console.error('unlink:', schemaFile, error);
     }
 
     const schema = await plugins.loadSchema(plugin);
