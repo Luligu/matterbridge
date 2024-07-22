@@ -671,7 +671,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect(plugin).not.toBeUndefined();
   }, 60000);
 
-  test('uninstall plugin matterbridge-xyz', async () => {
+  test('uninstall not existing plugin matterbridge-xyz', async () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
 

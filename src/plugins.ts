@@ -333,12 +333,18 @@ export class Plugins {
   async uninstall(name: string): Promise<string | undefined> {
     this.log.info(`Uninstalling plugin ${plg}${name}${nf}`);
     return new Promise((resolve, reject) => {
-      exec(`npm uninstall -g ${name}`, (error: ExecException | null, stdout: string) => {
+      exec(`npm uninstall -g ${name}`, (error: ExecException | null, stdout: string, stderr: string) => {
         if (error) {
           this.log.error(`Failed to uninstall plugin ${plg}${name}${er}: ${error}`);
+          this.log.error(`Failed to uninstall plugin ${plg}${name}${er}: ${stderr}`);
+          // eslint-disable-next-line no-console
+          console.error('Stderr:', stderr);
           resolve(undefined);
         } else {
           this.log.info(`Uninstalled plugin ${plg}${name}${nf}`);
+          this.log.debug(`Uninstalled plugin ${plg}${name}${nf}: ${stdout}`);
+          // eslint-disable-next-line no-console
+          console.error('Stdout:', stdout);
           resolve(name);
         }
       });

@@ -2959,6 +2959,8 @@ export class Matterbridge extends EventEmitter {
         const password = param.slice(1, -1); // Remove the first and last characters
         this.log.debug('setpassword', param, password);
         await this.nodeContext?.set('password', password);
+        res.json({ message: 'Command received' });
+        return;
       }
 
       // Handle the command setmbloglevel from Settings
@@ -2971,6 +2973,8 @@ export class Matterbridge extends EventEmitter {
           this.log.setLogDebug(false);
           this.debugEnabled = false;
         }
+        res.json({ message: 'Command received' });
+        return;
       }
 
       // Handle the command setmbloglevel from Settings
@@ -2989,27 +2993,39 @@ export class Matterbridge extends EventEmitter {
         } else if (param === 'Fatal') {
           Logger.defaultLogLevel = Level.FATAL;
         }
+        res.json({ message: 'Command received' });
+        return;
       }
 
       // Handle the command unregister from Settings
       if (command === 'unregister') {
         await this.unregisterAndShutdownProcess();
+        res.json({ message: 'Command received' });
+        return;
       }
       // Handle the command reset from Settings
       if (command === 'reset') {
         await this.shutdownProcessAndReset();
+        res.json({ message: 'Command received' });
+        return;
       }
       // Handle the command factoryreset from Settings
       if (command === 'factoryreset') {
         await this.shutdownProcessAndFactoryReset();
+        res.json({ message: 'Command received' });
+        return;
       }
       // Handle the command shutdown from Header
       if (command === 'shutdown') {
         await this.shutdownProcess();
+        res.json({ message: 'Command received' });
+        return;
       }
       // Handle the command restart from Header
       if (command === 'restart') {
         await this.restartProcess();
+        res.json({ message: 'Command received' });
+        return;
       }
       // Handle the command update from Header
       if (command === 'update') {
@@ -3060,10 +3076,13 @@ export class Matterbridge extends EventEmitter {
         param = param.replace(/\*/g, '\\');
         const plugin = await this.plugins.add(param);
         if (plugin) {
+          this.plugins.load(plugin, true, 'The plugin has been added', true); // No await do it in the background
+          /*
           plugin.platform = await this.plugins.load(plugin, false, 'The plugin has been added');
           if (plugin.platform) {
             await this.plugins.start(plugin, 'The plugin has been added', true);
           }
+          */
         }
         res.json({ message: 'Command received' });
         return;
@@ -3098,12 +3117,13 @@ export class Matterbridge extends EventEmitter {
             plugin.addedDevices = undefined;
             await this.plugins.enable(param);
 
-            // if (this.bridgeMode === 'bridge') {
+            this.plugins.load(plugin, true, 'The plugin has been enabled', true); // No await do it in the background
+            /*
             plugin.platform = await this.plugins.load(plugin, false, 'The plugin has been enabled');
             if (plugin.platform) {
               await this.plugins.start(plugin, 'The plugin has been enabled', true);
             }
-            // }
+            */
           }
         }
         res.json({ message: 'Command received' });
