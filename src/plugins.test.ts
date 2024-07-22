@@ -687,7 +687,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
   test('uninstall plugin matterbridge-eve-door', async () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return;
+    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     expect(await plugins.uninstall('matterbridge-eve-door')).toBeDefined();
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalling plugin ${plg}matterbridge-eve-door${nf}`);
