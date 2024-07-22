@@ -20,10 +20,10 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Clean cahce
+      - name: Clean cache
         run: npm cache clean --force
 
-      - name: Install matterbridgee
+      - name: Install matterbridge
         run: npm install -g matterbridge --force
 
       - name: Install dependencies
