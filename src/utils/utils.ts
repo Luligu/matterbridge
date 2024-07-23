@@ -4,7 +4,7 @@
  * @file utils.ts
  * @author Luca Liguori
  * @date 2024-02-17
- * @version 1.2.7
+ * @version 1.2.8
  *
  * Copyright 2024 Luca Liguori.
  *
@@ -230,7 +230,47 @@ export function getIpv6InterfaceAddress(): string | undefined {
   return ipv6Address;
 }
 
-export function logInterfaces(): string | undefined {
+/**
+ * Retrieves the mac address of the first non-internal network interface.
+ * @returns {string | undefined} The IPv4 address of the selected network interface, or undefined if not found.
+ */
+export function getMacAddress(): string | undefined {
+  let macAddress: string | undefined;
+  const networkInterfaces = os.networkInterfaces();
+  // console.log('Available Network Interfaces:', networkInterfaces);
+  for (const interfaceDetails of Object.values(networkInterfaces)) {
+    if (!interfaceDetails) {
+      break;
+    }
+    for (const detail of interfaceDetails) {
+      if (detail.family === 'IPv6' && !detail.internal && macAddress === undefined) {
+        macAddress = detail.mac;
+      }
+    }
+    if (macAddress !== undefined) {
+      break;
+    }
+  }
+  return macAddress;
+}
+
+/**
+ * Checks if a given string is a valid IPv4 address.
+ *
+ * @param {string} ipv4Address - The string to be checked.
+ * @returns {boolean} - Returns true if the string is a valid IPv4 address, otherwise returns false.
+ */
+export function isValidIpv4Address(ipv4Address: string): boolean {
+  const ipv4Regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+  return ipv4Regex.test(ipv4Address);
+}
+
+/**
+ * Logs the available network interfaces and their details.
+ * @param {boolean} log - Whether to enable logging of network interface details.
+ * @returns {string | undefined} The IPv6 address of the network interface, if available.
+ */
+export function logInterfaces(log = true): string | undefined {
   let ipv6Address: string | undefined;
   const networkInterfaces = os.networkInterfaces();
 
@@ -238,36 +278,67 @@ export function logInterfaces(): string | undefined {
   for (const [interfaceName, networkInterface] of Object.entries(networkInterfaces)) {
     if (!networkInterface) break;
     // eslint-disable-next-line no-console
-    console.log('Interface:', '\u001B[48;5;21m\u001B[38;5;255m', interfaceName, '\u001B[40;0m');
+    if (log) console.log('Interface:', '\u001B[48;5;21m\u001B[38;5;255m', interfaceName, '\u001B[40;0m');
     for (const detail of networkInterface) {
       // eslint-disable-next-line no-console
-      console.log('Details:', detail);
+      if (log) console.log('Details:', detail);
     }
   }
   return ipv6Address;
 }
 
+/**
+ * Asynchronous waiter function that resolves when the provided condition is met or rejects on timeout.
+ * @param {string} name - The name of the waiter.
+ * @param {() => boolean} check - A function that checks the condition. Should return a boolean.
+ * @param {boolean} [exitWithReject=false] - Optional. If true, the promise will be rejected on timeout. Default is false.
+ * @param {number} [resolveTimeout=5000] - Optional. The timeout duration in milliseconds. Default is 5000ms.
+ * @param {number} [resolveInterval=500] - Optional. The interval duration in milliseconds between condition checks. Default is 500ms.
+ * @param {boolean} [debug=false] - Optional. If true, debug messages will be logged to the console. Default is false.
+ * @returns {Promise<boolean>} A promise that resolves to true when the condition is met, or false if the timeout occurs.
+ */
 export async function waiter(name: string, check: () => boolean, exitWithReject = false, resolveTimeout = 5000, resolveInterval = 500, debug = false) {
   // eslint-disable-next-line no-console
   if (debug) console.log(`Waiter "${name}" started...`);
   return new Promise<boolean>((resolve, reject) => {
     const timeoutId = setTimeout(() => {
       // eslint-disable-next-line no-console
-      if (debug) console.log(`Waiter "${name}" exited for timeout...`);
+      if (debug) console.log(`Waiter "${name}" finished for timeout...`);
       clearTimeout(timeoutId);
       clearInterval(intervalId);
-      if (exitWithReject) reject(new Error(`Waiter "${name}" exited due to timeout`));
+      if (exitWithReject) reject(new Error(`Waiter "${name}" finished due to timeout`));
       else resolve(false);
     }, resolveTimeout);
 
     const intervalId = setInterval(() => {
       if (check()) {
         // eslint-disable-next-line no-console
-        if (debug) console.log(`Waiter "${name}" exited for true condition...`);
+        if (debug) console.log(`Waiter "${name}" finished for true condition...`);
         clearTimeout(timeoutId);
         clearInterval(intervalId);
         resolve(true);
       }
     }, resolveInterval);
+  });
+}
+
+/**
+ * Asynchronously waits for a specified amount of time.
+ * @param {number} timeout - The duration to wait in milliseconds. Default is 1000ms.
+ * @param {string} name - The name of the wait operation. Default is undefined.
+ * @param {boolean} debug - Whether to enable debug logging. Default is false.
+ * @returns {Promise<void>} A Promise that resolves after the specified timeout.
+ */
+export async function wait(timeout = 1000, name?: string, debug = false): Promise<void> {
+  // eslint-disable-next-line no-console
+  if (debug) console.log(`Wait "${name}" started...`);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  return new Promise<void>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      // eslint-disable-next-line no-console
+      if (debug) console.log(`Wait "${name}" finished...`);
+      clearTimeout(timeoutId);
+      resolve();
+    }, timeout);
   });
 }

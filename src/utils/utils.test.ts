@@ -1,7 +1,6 @@
-import { deepEqual, deepCopy, getIpv4InterfaceAddress, getIpv6InterfaceAddress, logInterfaces } from './utils';
+import { deepEqual, deepCopy, getIpv4InterfaceAddress, getIpv6InterfaceAddress, logInterfaces, isValidIpv4Address, waiter, wait, getMacAddress } from './utils';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { isValidIpv4Address } from '../utils';
 
 describe('Utils test', () => {
   const obj1 = {
@@ -95,21 +94,127 @@ describe('Utils test', () => {
     expect(deepEqual(bridgeGroups, copy)).toBeTruthy();
   });
 
+  test('copies primitive values', () => {
+    expect(deepCopy(42)).toBe(42);
+    expect(deepCopy('string')).toBe('string');
+    expect(deepCopy(true)).toBe(true);
+    expect(deepCopy(undefined)).toBe(undefined);
+    expect(deepCopy(null)).toBe(null);
+    const symbol = Symbol('sym');
+    expect(deepCopy(symbol)).toBe(symbol);
+  });
+
+  test('copies arrays', () => {
+    const arr = [1, 'two', [3, 4], { five: 6 }];
+    const copiedArr = deepCopy(arr);
+    expect(copiedArr).toEqual(arr);
+    expect(copiedArr).not.toBe(arr);
+    expect(copiedArr[2]).not.toBe(arr[2]);
+    expect(copiedArr[3]).not.toBe(arr[3]);
+  });
+
+  test('copies Date objects', () => {
+    const date = new Date();
+    const copiedDate = deepCopy(date);
+    expect(copiedDate).toEqual(date);
+    expect(copiedDate).not.toBe(date);
+  });
+
+  test('copies Map objects', () => {
+    const map = new Map([
+      [1, 'one'],
+      [2, 'two'],
+    ]);
+    const copiedMap = deepCopy(map);
+    expect(copiedMap).toEqual(map);
+    expect(copiedMap).not.toBe(map);
+  });
+
+  test('copies Set objects', () => {
+    const set = new Set([1, 'two', { three: 4 }]);
+    const copiedSet = deepCopy(set);
+    expect(copiedSet).toEqual(set);
+    expect(copiedSet).not.toBe(set);
+  });
+
+  test('copies generic objects', () => {
+    const obj = {
+      num: 1,
+      str: 'string',
+      arr: [2, 3],
+      obj: { nested: true },
+      date: new Date(),
+      map: new Map([[1, 'one']]),
+      set: new Set([1, 2, 3]),
+    };
+    const copiedObj = deepCopy(obj);
+    expect(copiedObj).toEqual(obj);
+    expect(copiedObj).not.toBe(obj);
+    expect(copiedObj.arr).not.toBe(obj.arr);
+    expect(copiedObj.obj).not.toBe(obj.obj);
+    expect(copiedObj.date).not.toBe(obj.date);
+    expect(copiedObj.map).not.toBe(obj.map);
+    expect(copiedObj.set).not.toBe(obj.set);
+  });
+
   test('Address ipv4', () => {
     expect(getIpv4InterfaceAddress()).not.toBe('192.168.1.000');
+    expect(getIpv4InterfaceAddress()).toBeDefined();
   });
 
   test('Address ipv6', () => {
     expect(getIpv6InterfaceAddress()).not.toBe('fd78::4939:746:d555:85a9:74f6:9c6');
+    expect(getIpv6InterfaceAddress()).toBeDefined();
+  });
+
+  test('Address mac', () => {
+    expect(getMacAddress()).not.toBe('');
+    expect(getMacAddress()).toBeDefined();
   });
 
   test('Log interfaces', () => {
-    expect(logInterfaces()).not.toBe('fd78::4939:746:d555:85a9:74f6:9c6');
+    expect(logInterfaces(false)).not.toBe('fd78::4939:746:d555:85a9:74f6:9c6');
   });
 
   test('Is valid ipv4 address', () => {
     expect(isValidIpv4Address('192.168.1.1')).toBeTruthy();
     expect(isValidIpv4Address('192.168.1.0001')).toBeFalsy();
     expect(isValidIpv4Address('192a.168.1.1')).toBeFalsy();
+    expect(isValidIpv4Address('256.256.256.256')).toBeFalsy();
+    expect(isValidIpv4Address('192.168.1.1.1')).toBeFalsy();
+    expect(isValidIpv4Address('192.168.1')).toBeFalsy();
+    expect(isValidIpv4Address('abc.def.ghi.jkl')).toBeFalsy();
   });
+
+  test('Waiter for true condition', async () => {
+    expect(
+      await waiter(
+        'Test with jest',
+        () => {
+          return true;
+        },
+        false,
+        500,
+        100,
+      ),
+    ).toBe(true);
+  }, 5000);
+
+  test('Waiter for false condition', async () => {
+    expect(
+      await waiter(
+        'Test with jest',
+        () => {
+          return false;
+        },
+        false,
+        500,
+        100,
+      ),
+    ).toBe(false);
+  }, 5000);
+
+  test('Wait function', async () => {
+    expect(await wait(500, 'Test with jest')).toBeUndefined();
+  }, 5000);
 });

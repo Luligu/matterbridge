@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-console */
 // Home.js
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import { StatusIndicator } from './StatusIndicator';
-import { sendCommandToMatterbridge, theme } from './Header';
+import { theme } from './Header';
+import { sendCommandToMatterbridge } from '../App';
 import WebSocketComponent from './WebSocketComponent';
+import { WebSocketContext } from './WebSocketContext';
 
 // @mui
 import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip, IconButton, Button, createTheme, ThemeProvider, Select, MenuItem, Menu } from '@mui/material';
@@ -35,17 +37,16 @@ function Home() {
   const [openConfig, setOpenConfig] = useState(false);
   const [logDebugLevel, setLogDebugLevel] = useState(localStorage.getItem('logFilterLevel')??'debug');
   const [logSearchCriteria, setLogSearchCriteria] = useState(localStorage.getItem('logFilterSearch')??'*');
+  const { messages, sendMessage, logMessage } = useContext(WebSocketContext);
 
   const refAddRemove = useRef(null);
   const refRegisteredPlugins = useRef(null);
 
   const handleSnackOpen = () => {
-    console.log('handleSnackOpen');
     setOpenSnack(true);
   };
 
   const handleSnackClose = (event, reason) => {
-    console.log('handleSnackClose:', reason);
     if (reason === 'clickaway') return;
     setOpenSnack(false);
   };
@@ -56,7 +57,11 @@ function Home() {
 
   const handleCloseConfig = () => {
     setOpenConfig(false);
-  };
+    handleSnackOpen();
+    setTimeout(() => {
+      reloadSettings();
+    }, 1000);
+};
 
 
   const columns = React.useMemo( () => [
@@ -72,38 +77,37 @@ function Home() {
     []
   );
 
+  const fetchSettings = () => {
+
+    fetch('/api/settings')
+      .then(response => response.json())
+      .then(data => { 
+        console.log('From home /api/settings:', data); 
+        setWssHost(data.wssHost); 
+        if(data.matterbridgeInformation.bridgeMode==='bridge') {
+          setQrCode(data.qrPairingCode); 
+          setPairingCode(data.manualPairingCode);
+        }
+        setSystemInfo(data.systemInformation);
+        setMatterbridgeInfo(data.matterbridgeInformation);
+        localStorage.setItem('wssHost', data.wssHost);
+        localStorage.setItem('manualPairingCode', data.manualPairingCode); 
+        localStorage.setItem('qrPairingCode', data.qrPairingCode); 
+        localStorage.setItem('systemInformation', data.systemInformation); 
+        localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
+      })
+      .catch(error => console.error('Error fetching settings:', error));
+
+    fetch('/api/plugins')
+      .then(response => response.json())
+      .then(data => { 
+        console.log('From home /api/plugins:', data)
+        setPlugins(data); 
+      })
+      .catch(error => console.error('Error fetching plugins:', error));
+  };  
+
   useEffect(() => {
-    // Fetch settings from the backend
-    const fetchSettings = () => {
-
-      fetch('/api/settings')
-        .then(response => response.json())
-        .then(data => { 
-          console.log('From home /api/settings:', data); 
-          setWssHost(data.wssHost); 
-          if(data.matterbridgeInformation.bridgeMode==='bridge') {
-            setQrCode(data.qrPairingCode); 
-            setPairingCode(data.manualPairingCode);
-          }
-          setSystemInfo(data.systemInformation);
-          setMatterbridgeInfo(data.matterbridgeInformation);
-          localStorage.setItem('wssHost', data.wssHost);
-          localStorage.setItem('manualPairingCode', data.manualPairingCode); 
-          localStorage.setItem('qrPairingCode', data.qrPairingCode); 
-          localStorage.setItem('systemInformation', data.systemInformation); 
-          localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
-        })
-        .catch(error => console.error('Error fetching settings:', error));
-
-      fetch('/api/plugins')
-        .then(response => response.json())
-        .then(data => { 
-          console.log('From home /api/plugins:', data)
-          setPlugins(data); 
-        })
-        .catch(error => console.error('Error fetching plugins:', error));
-    };  
-
     // Call fetchSettings immediately and then every 10 minutes
     fetchSettings();
     const intervalId = setInterval(fetchSettings, 1 * 60 * 1000);
@@ -112,6 +116,12 @@ function Home() {
     return () => clearInterval(intervalId);
 
   }, []); // The empty array causes this effect to run only once
+
+  // Function to reload settings on demand
+  const reloadSettings = () => {
+    fetchSettings();
+    console.log('reloadSettings');
+  };
 
   const handleSelectQRCode = (row) => {
     if (selectedRow === row) {
@@ -134,36 +144,44 @@ function Home() {
     console.log('Selected row:', row, 'plugin:', plugins[row].name, 'enabled:', plugins[row].enabled);
     if(plugins[row].enabled===true) {
       plugins[row].enabled=false;
+      logMessage('Plugins', `Disabling plugin: ${plugins[row].name}`);
       sendCommandToMatterbridge('disableplugin', plugins[row].name);
     }
     else {
       plugins[row].enabled=true;
+      logMessage('Plugins', `Enabling plugin: ${plugins[row].name}`);
       sendCommandToMatterbridge('enableplugin', plugins[row].name);
     }
-    console.log('Updating page');
-    // setPlugins(prevPlugins => [...prevPlugins]);
-    handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
-    setTimeout(() => {
-      // window.location.reload();
-    }, 5000);
+    if(matterbridgeInfo.bridgeMode === 'childbridge') {
+      setTimeout(() => {
+        reloadSettings();
+      }, 500);
+    }
+    if(matterbridgeInfo.bridgeMode === 'bridge') {
+      setTimeout(() => {
+        reloadSettings();
+      }, 500);
+    }
   };
 
   const handleUpdate = (row) => {
     console.log('handleUpdate row:', row, 'plugin:', plugins[row].name);
+    logMessage('Plugins', `Updating plugin: ${plugins[row].name}`);
     sendCommandToMatterbridge('installplugin', plugins[row].name);
     handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
     setTimeout(() => {
-      // window.location.reload();
+      handleSnackClose();
+      reloadSettings();
     }, 5000);
   };
 
   const handleRemovePlugin = (row) => {
     console.log('handleRemovePluginClick row:', row, 'plugin:', plugins[row].name);
+    logMessage('Plugins', `Removing plugin: ${plugins[row].name}`);
     sendCommandToMatterbridge('removeplugin', plugins[row].name);
-    handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
     setTimeout(() => {
-      // window.location.reload();
-    }, 5000);
+      reloadSettings();
+    }, 500);
   };
 
   const handleConfigPlugin = (row) => {
@@ -226,7 +244,7 @@ function Home() {
           <div className="MbfWindowHeader">
             <p className="MbfWindowHeaderText">Add remove plugin</p>
           </div>
-          <AddRemovePlugins ref={refAddRemove} plugins={plugins}/>
+          <AddRemovePlugins ref={refAddRemove} plugins={plugins} reloadSettings={reloadSettings}/>
         </div>
 
         <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
@@ -255,7 +273,7 @@ function Home() {
                     <td>{plugin.registeredDevices}</td>
                     <td>  
                       <>
-                        {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' ? <Tooltip title="Shows the QRCode or the fabrics"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleSelectQRCode(index)} size="small"><QrCode2 /></IconButton></Tooltip> : <></>}
+                        {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.error && plugin.enabled ? <Tooltip title="Shows the QRCode or the fabrics"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleSelectQRCode(index)} size="small"><QrCode2 /></IconButton></Tooltip> : <></>}
                         <Tooltip title="Plugin config"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleConfigPlugin(index)} size="small"><Settings /></IconButton></Tooltip>
                         <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleRemovePlugin(index)} size="small"><DeleteForever /></IconButton></Tooltip>
                         {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><Unpublished /></IconButton></Tooltip> : <></>}
@@ -328,45 +346,40 @@ function Home() {
 /*
 */
 
-function AddRemovePlugins({ plugins }) {
+function AddRemovePlugins({ plugins, reloadSettings }) {
   const [pluginName, setPluginName] = useState('matterbridge-');
   const [open, setSnack] = useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleSnackOpen = () => {
-    console.log('handleSnackOpen');
     setSnack(true);
-    setTimeout(() => {
-      window.location.reload();
-    }, 5000);
   };
 
   const handleSnackClose = (event, reason) => {
-    console.log('handleSnackClose:', reason);
     if (reason === 'clickaway') return;
     setSnack(false);
   };
 
-  // Function that sends the "addplugin" command
   const handleInstallPluginClick = () => {
-    handleSnackOpen();
-    console.log('handleInstallPluginClick', pluginName);
     sendCommandToMatterbridge('installplugin', pluginName);
-  };
+    setTimeout(() => {
+      reloadSettings();
+    }, 5000);
+};
 
-  // Function that sends the "addplugin" command
   const handleAddPluginClick = () => {
-    handleSnackOpen();
-    console.log('handleAddPluginClick', pluginName);
     sendCommandToMatterbridge('addplugin', pluginName);
-  };
+    setTimeout(() => {
+      reloadSettings();
+    }, 1000);
+};
 
-  // Function that sends the "removeplugin" command
   const handleRemovePluginClick = () => {
-    handleSnackOpen();
-    console.log('handleRemovePluginClick', pluginName);
     sendCommandToMatterbridge('removeplugin', pluginName);
-  };
+    setTimeout(() => {
+      reloadSettings();
+    }, 1000);
+};
 
   const handleClickVertical = (event) => {
     setAnchorEl(event.currentTarget);
@@ -651,7 +664,7 @@ function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
     sendCommandToMatterbridge('saveconfig', formData.name, config);
     // Close the dialog
     handleCloseConfig();
-    window.location.reload();
+    // window.location.reload();
   };    
   return (
   <ThemeProvider theme={theme}>

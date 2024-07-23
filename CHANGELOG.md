@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
+## [1.4.0] - 2024-07-23
+
+### Added
+
+### Changed
+
+- [package]: Update dependencies.
+- [matterbridge]: Added PluginsManager.ts.
+- [matterbridge]: Removed timeout on cleanup.
+- [matterbridge]: Removed write cache and expired interval for node storage.
+- [matterbridge]: Added matterbridgeTypes.ts
+- [frontend]: The frontend reconnects to WebSocket when the connection is closed.
+- [frontend]: Removed QR button for plugins in error and not enabled.
+- [frontend]: The Logs page and the log in the Home page persist till you close or reload the frontend (the last 1000 lines are available).
+
+
+### Fixed
+
+- [matterbridge]: Fixed utils export
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.3.13] - 2024-07-11
 
 ### Added
@@ -43,6 +67,7 @@ If you like this project and find it useful, please consider giving it a star on
 ## [1.3.11] - 2024-07-08
 
 ### Added
+
 - [device]: Added addRequiredClusterServers and addOptionalClusterServers methods.
 - [frontend]: Added separated settings for the two logging systems (Matterbridge and Matter.js).
 
@@ -78,6 +103,7 @@ If you like this project and find it useful, please consider giving it a star on
 ## [1.3.9] - 2024-07-02
 
 ### Fixed
+
 - [matterbridge]: Fixed nodeLabel in childbridge mode
 - [matterbridge]: Fixed MeasurementClusters
 
@@ -88,6 +114,7 @@ If you like this project and find it useful, please consider giving it a star on
 ## [1.3.8] - 2024-07-01
 
 ### Fixed
+
 - [matterbridge]: Fixed crash in childbridge mode
 
 <a href="https://www.buymeacoffee.com/luligugithub">
@@ -97,6 +124,7 @@ If you like this project and find it useful, please consider giving it a star on
 ## [1.3.7] - 2024-06-30
 
 ### Added
+
 - [matter.js]: Added -mdnsinterface command line parameter to limit the MdnsBroadcaster to a single interface (e.g. matterbridge -bridge -mdnsinterface eth0). Matterbridge will validate the given interface and log a message if the interface is not available and will use all available interfaces.
 
 ### Changed
@@ -139,7 +167,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [package]: Updated to use prettier and jest with the flat config
 - [matterbridge]: Updated dependencies
 - [matterbridgeDevice]: Updated ColorControl commandHandlers for improved compatibility with (https://github.com/Luligu/matterbridge-shelly)
-- [matterbridge]:  The "plugin disable" and "plugin remove" methods now also remove the registered devices from the bridge
+- [matterbridge]: The "plugin disable" and "plugin remove" methods now also remove the registered devices from the bridge
 - [matterbridge]: The "plugin add" method now loads, starts, and configures the plugin
 
 <a href="https://www.buymeacoffee.com/luligugithub">

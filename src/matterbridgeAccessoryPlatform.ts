@@ -40,6 +40,7 @@ export class MatterbridgeAccessoryPlatform extends MatterbridgePlatform {
     super(matterbridge, log, config);
 
     this.type = 'AccessoryPlatform';
+    config.type = this.type;
 
     this.log.debug(`Matterbridge${this.type} loaded`);
   }

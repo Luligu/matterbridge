@@ -196,5 +196,7 @@ TODO.md
 matterbridge.service
 docker
 
+/__mocks__
+
 migrationV8.txt
 migrationV8-answered.txt

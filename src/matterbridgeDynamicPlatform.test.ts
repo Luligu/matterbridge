@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-frontend', '0'];
+process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest'];
 
 import { jest } from '@jest/globals';
 
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
-import { waiter } from './utils.js';
+import { wait, waiter } from './utils/utils.js';
 import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
 
 describe('Matterbridge dynamic platform', () => {
@@ -33,25 +33,15 @@ describe('Matterbridge dynamic platform', () => {
     (AnsiLogger.prototype.log as jest.Mock).mockRestore();
   }, 60000);
 
-  test('unregisterAllDevices calls matterbridge.removeAllBridgedDevices with correct parameters', async () => {
+  test('create a MatterbridgeDynamicPlatform', async () => {
     const matterbridge = await Matterbridge.loadInstance(true);
+    expect((Matterbridge as any).instance).toBeDefined();
+
     const platform = new MatterbridgeDynamicPlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'test', type: 'type', debug: false, unregisterOnShutdown: false });
     expect(platform.type).toBe('DynamicPlatform');
 
     // Destroy the Matterbridge instance
-    // console.log('Destroying Matterbridge');
     await matterbridge.destroyInstance();
-
-    // Wait for the Matterbridge instance to be destroyed (give time to getGlobalNodeModules and getMatterbridgeLatestVersion)
-    await waiter(
-      'Matterbridge destroyInstance()',
-      () => {
-        return (Matterbridge as any).instance === undefined;
-      },
-      false,
-      20000,
-      500,
-      false,
-    );
+    expect((Matterbridge as any).instance).toBeUndefined();
   }, 60000);
 });

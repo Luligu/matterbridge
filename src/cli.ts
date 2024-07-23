@@ -5,7 +5,7 @@
  * @file cli.ts
  * @author Luca Liguori
  * @date 2023-12-29
- * @version 1.0.10
+ * @version 1.0.11
  *
  * Copyright 2023, 2024 Luca Liguori.
  *
@@ -27,12 +27,15 @@
 import { Matterbridge } from './matterbridge.js';
 
 let instance: Matterbridge | undefined;
+const cli = '\u001B[32m';
+const er = '\u001B[38;5;9m';
+const rs = '\u001B[40;0m';
 
 async function main() {
-  if (process.argv.includes('-debug')) console.log('CLI: Matterbridge.loadInstance() called');
+  if (process.argv.includes('-debug')) console.log(cli + 'CLI: Matterbridge.loadInstance() called' + rs);
   instance = await Matterbridge.loadInstance(true);
   registerHandlers();
-  if (process.argv.includes('-debug')) console.log('CLI: Matterbridge.loadInstance() exited');
+  if (process.argv.includes('-debug')) console.log(cli + 'CLI: Matterbridge.loadInstance() exited' + rs);
 }
 
 function registerHandlers() {
@@ -42,19 +45,19 @@ function registerHandlers() {
 }
 
 async function shutdown() {
-  if (process.argv.includes('-debug')) console.log('CLI: received shutdown event, exiting...');
+  if (process.argv.includes('-debug')) console.log(cli + 'CLI: received shutdown event, exiting...' + rs);
   // wtf.dump();
   process.exit(0);
 }
 
 async function restart() {
-  if (process.argv.includes('-debug')) console.log('CLI: received restart event, loading...');
+  if (process.argv.includes('-debug')) console.log(cli + 'CLI: received restart event, loading...' + rs);
   instance = await Matterbridge.loadInstance(true);
   registerHandlers();
 }
 
 async function update() {
-  if (process.argv.includes('-debug')) console.log('CLI: received update event, updating...');
+  if (process.argv.includes('-debug')) console.log(cli + 'CLI: received update event, updating...' + rs);
   instance = await Matterbridge.loadInstance(true);
   registerHandlers();
 }
@@ -62,5 +65,5 @@ async function update() {
 process.title = 'matterbridge';
 
 main().catch((error) => {
-  console.error(`CLI: Matterbridge.loadInstance() failed with error: ${error}`);
+  console.error(er + `CLI: Matterbridge.loadInstance() failed with error: ${error}` + rs);
 });

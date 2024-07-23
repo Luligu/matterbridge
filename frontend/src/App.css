@@ -160,6 +160,10 @@ nav {
   color: #007BFF;
 }
 
+.nav-link:hodddver {
+  color: #5c0e91;
+}
+
 /* Table style */
 table {
   border-collapse: collapse;

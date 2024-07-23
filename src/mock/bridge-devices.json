@@ -78,14 +78,8 @@
       "11": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "ssIasAce",
-            "genTime"
-          ],
-          "output": [
-            "ssIasZone",
-            "ssIasWd"
-          ]
+          "input": ["ssIasAce", "genTime"],
+          "output": ["ssIasZone", "ssIasWd"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -102,9 +96,7 @@
       "13": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genOta"
-          ],
+          "input": ["genOta"],
           "output": []
         },
         "configured_reportings": [],
@@ -223,10 +215,7 @@
           "name": "switch_type",
           "property": "switch_type",
           "type": "enum",
-          "values": [
-            "toggle",
-            "momentary"
-          ]
+          "values": ["toggle", "momentary"]
         },
         {
           "access": 1,
@@ -379,21 +368,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genDeviceTempCfg",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genAlarms",
-            "genTime",
-            "manuSpecificLumi"
-          ],
-          "output": [
-            "genTime",
-            "genOta",
-            "65535"
-          ]
+          "input": ["genBasic", "genDeviceTempCfg", "genIdentify", "genGroups", "genScenes", "genAlarms", "genTime", "manuSpecificLumi"],
+          "output": ["genTime", "genOta", "65535"]
         },
         "configured_reportings": [
           {
@@ -416,9 +392,7 @@
       "21": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genAnalogInput"
-          ],
+          "input": ["genAnalogInput"],
           "output": []
         },
         "configured_reportings": [],
@@ -427,9 +401,7 @@
       "31": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genAnalogInput"
-          ],
+          "input": ["genAnalogInput"],
           "output": []
         },
         "configured_reportings": [],
@@ -438,9 +410,7 @@
       "41": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genMultistateInput"
-          ],
+          "input": ["genMultistateInput"],
           "output": []
         },
         "configured_reportings": [],
@@ -450,9 +420,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -569,10 +537,7 @@
           "name": "switch_type",
           "property": "switch_type",
           "type": "enum",
-          "values": [
-            "toggle",
-            "momentary"
-          ]
+          "values": ["toggle", "momentary"]
         },
         {
           "access": 1,
@@ -688,21 +653,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genDeviceTempCfg",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genAlarms",
-            "genTime",
-            "manuSpecificLumi"
-          ],
-          "output": [
-            "genTime",
-            "genOta",
-            "65535"
-          ]
+          "input": ["genBasic", "genDeviceTempCfg", "genIdentify", "genGroups", "genScenes", "genAlarms", "genTime", "manuSpecificLumi"],
+          "output": ["genTime", "genOta", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -710,9 +662,7 @@
       "21": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genAnalogInput"
-          ],
+          "input": ["genAnalogInput"],
           "output": []
         },
         "configured_reportings": [],
@@ -721,9 +671,7 @@
       "31": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genAnalogInput"
-          ],
+          "input": ["genAnalogInput"],
           "output": []
         },
         "configured_reportings": [],
@@ -732,9 +680,7 @@
       "41": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genMultistateInput"
-          ],
+          "input": ["genMultistateInput"],
           "output": []
         },
         "configured_reportings": [],
@@ -744,9 +690,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -844,15 +788,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "ssIasZone",
-            "genPowerCfg"
-          ],
-          "output": [
-            "genIdentify"
-          ]
+          "input": ["genBasic", "genIdentify", "ssIasZone", "genPowerCfg"],
+          "output": ["genIdentify"]
         },
         "configured_reportings": [
           {
@@ -954,11 +891,7 @@
           "name": "light_type",
           "property": "light_type",
           "type": "enum",
-          "values": [
-            "led",
-            "incandescent",
-            "halogen"
-          ]
+          "values": ["led", "incandescent", "halogen"]
         },
         {
           "access": 3,
@@ -968,11 +901,7 @@
           "name": "power_on_behavior",
           "property": "power_on_behavior",
           "type": "enum",
-          "values": [
-            "off",
-            "previous",
-            "on"
-          ]
+          "values": ["off", "previous", "on"]
         },
         {
           "access": 3,
@@ -981,11 +910,7 @@
           "name": "backlight_mode",
           "property": "backlight_mode",
           "type": "enum",
-          "values": [
-            "off",
-            "normal",
-            "inverted"
-          ]
+          "values": ["off", "normal", "inverted"]
         },
         {
           "access": 1,
@@ -1010,16 +935,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genGroups",
-            "genScenes",
-            "manuSpecificTuya"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genBasic", "genGroups", "genScenes", "manuSpecificTuya"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -1074,14 +991,7 @@
           "name": "effect",
           "property": "effect",
           "type": "enum",
-          "values": [
-            "blink",
-            "breathe",
-            "okay",
-            "channel_change",
-            "finish_effect",
-            "stop_effect"
-          ]
+          "values": ["blink", "breathe", "okay", "channel_change", "finish_effect", "stop_effect"]
         },
         {
           "access": 1,
@@ -1126,18 +1036,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "genLevelCtrl",
-            "touchlink"
-          ],
-          "output": [
-            "genOta"
-          ]
+          "input": ["genBasic", "genIdentify", "genGroups", "genScenes", "genOnOff", "genLevelCtrl", "touchlink"],
+          "output": ["genOta"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -1235,15 +1135,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "ssIasZone",
-            "genPowerCfg"
-          ],
-          "output": [
-            "genIdentify"
-          ]
+          "input": ["genBasic", "genIdentify", "ssIasZone", "genPowerCfg"],
+          "output": ["genIdentify"]
         },
         "configured_reportings": [
           {
@@ -1323,13 +1216,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify"
-          ],
-          "output": [
-            "genBasic"
-          ]
+          "input": ["genBasic", "genIdentify"],
+          "output": ["genBasic"]
         },
         "configured_reportings": [
           {
@@ -1346,9 +1234,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -1400,10 +1286,7 @@
           "name": "click_mode",
           "property": "click_mode",
           "type": "enum",
-          "values": [
-            "fast",
-            "multi"
-          ]
+          "values": ["fast", "multi"]
         },
         {
           "access": 7,
@@ -1412,10 +1295,7 @@
           "name": "operation_mode",
           "property": "operation_mode",
           "type": "enum",
-          "values": [
-            "command",
-            "event"
-          ]
+          "values": ["command", "event"]
         },
         {
           "access": 1,
@@ -1425,20 +1305,7 @@
           "name": "action",
           "property": "action",
           "type": "enum",
-          "values": [
-            "single_left",
-            "single_right",
-            "single_both",
-            "double_left",
-            "double_right",
-            "double_both",
-            "triple_left",
-            "triple_right",
-            "triple_both",
-            "hold_left",
-            "hold_right",
-            "hold_both"
-          ]
+          "values": ["single_left", "single_right", "single_both", "double_left", "double_right", "double_both", "triple_left", "triple_right", "triple_both", "hold_left", "hold_right", "hold_both"]
         },
         {
           "access": 1,
@@ -1463,17 +1330,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genPowerCfg"
-          ],
-          "output": [
-            "genIdentify",
-            "genOnOff",
-            "genLevelCtrl",
-            "lightingColorCtrl"
-          ]
+          "input": ["genBasic", "genIdentify", "genPowerCfg"],
+          "output": ["genIdentify", "genOnOff", "genLevelCtrl", "lightingColorCtrl"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -1481,13 +1339,8 @@
       "2": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genIdentify"
-          ],
-          "output": [
-            "genOnOff",
-            "genIdentify"
-          ]
+          "input": ["genIdentify"],
+          "output": ["genOnOff", "genIdentify"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -1495,12 +1348,8 @@
       "3": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genIdentify"
-          ],
-          "output": [
-            "genOnOff"
-          ]
+          "input": ["genIdentify"],
+          "output": ["genOnOff"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -1508,13 +1357,8 @@
       "4": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genMultistateInput",
-            "genIdentify"
-          ],
-          "output": [
-            "genOnOff"
-          ]
+          "input": ["genMultistateInput", "genIdentify"],
+          "output": ["genOnOff"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -1522,13 +1366,8 @@
       "5": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genMultistateInput",
-            "genIdentify"
-          ],
-          "output": [
-            "genOnOff"
-          ]
+          "input": ["genMultistateInput", "genIdentify"],
+          "output": ["genOnOff"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -1605,11 +1444,7 @@
           "name": "sensitivity",
           "property": "sensitivity",
           "type": "enum",
-          "values": [
-            "low",
-            "medium",
-            "high"
-          ]
+          "values": ["low", "medium", "high"]
         },
         {
           "access": 1,
@@ -1692,11 +1527,7 @@
           "name": "action",
           "property": "action",
           "type": "enum",
-          "values": [
-            "vibration",
-            "tilt",
-            "drop"
-          ]
+          "values": ["vibration", "tilt", "drop"]
         },
         {
           "access": 1,
@@ -1763,20 +1594,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genOta",
-            "closuresDoorLock"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "genIdentify",
-            "genScenes",
-            "genOta",
-            "closuresDoorLock"
-          ]
+          "input": ["genBasic", "genIdentify", "genOta", "closuresDoorLock"],
+          "output": ["genBasic", "genGroups", "genIdentify", "genScenes", "genOta", "closuresDoorLock"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -1784,16 +1603,8 @@
       "2": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genIdentify",
-            "genMultistateInput"
-          ],
-          "output": [
-            "genGroups",
-            "genIdentify",
-            "genScenes",
-            "genMultistateInput"
-          ]
+          "input": ["genIdentify", "genMultistateInput"],
+          "output": ["genGroups", "genIdentify", "genScenes", "genMultistateInput"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -1861,11 +1672,7 @@
           "name": "sensitivity",
           "property": "sensitivity",
           "type": "enum",
-          "values": [
-            "low",
-            "medium",
-            "high"
-          ]
+          "values": ["low", "medium", "high"]
         },
         {
           "access": 1,
@@ -1948,11 +1755,7 @@
           "name": "action",
           "property": "action",
           "type": "enum",
-          "values": [
-            "vibration",
-            "tilt",
-            "drop"
-          ]
+          "values": ["vibration", "tilt", "drop"]
         },
         {
           "access": 1,
@@ -2019,20 +1822,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genOta",
-            "closuresDoorLock"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "genIdentify",
-            "genScenes",
-            "genOta",
-            "closuresDoorLock"
-          ]
+          "input": ["genBasic", "genIdentify", "genOta", "closuresDoorLock"],
+          "output": ["genBasic", "genGroups", "genIdentify", "genScenes", "genOta", "closuresDoorLock"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -2040,16 +1831,8 @@
       "2": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genIdentify",
-            "genMultistateInput"
-          ],
-          "output": [
-            "genGroups",
-            "genIdentify",
-            "genScenes",
-            "genMultistateInput"
-          ]
+          "input": ["genIdentify", "genMultistateInput"],
+          "output": ["genGroups", "genIdentify", "genScenes", "genMultistateInput"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -2117,11 +1900,7 @@
           "name": "sensitivity",
           "property": "sensitivity",
           "type": "enum",
-          "values": [
-            "low",
-            "medium",
-            "high"
-          ]
+          "values": ["low", "medium", "high"]
         },
         {
           "access": 1,
@@ -2204,11 +1983,7 @@
           "name": "action",
           "property": "action",
           "type": "enum",
-          "values": [
-            "vibration",
-            "tilt",
-            "drop"
-          ]
+          "values": ["vibration", "tilt", "drop"]
         },
         {
           "access": 1,
@@ -2275,20 +2050,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genOta",
-            "closuresDoorLock"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "genIdentify",
-            "genScenes",
-            "genOta",
-            "closuresDoorLock"
-          ]
+          "input": ["genBasic", "genIdentify", "genOta", "closuresDoorLock"],
+          "output": ["genBasic", "genGroups", "genIdentify", "genScenes", "genOta", "closuresDoorLock"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -2296,16 +2059,8 @@
       "2": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genIdentify",
-            "genMultistateInput"
-          ],
-          "output": [
-            "genGroups",
-            "genIdentify",
-            "genScenes",
-            "genMultistateInput"
-          ]
+          "input": ["genIdentify", "genMultistateInput"],
+          "output": ["genGroups", "genIdentify", "genScenes", "genMultistateInput"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -2355,11 +2110,7 @@
           "name": "battery_state",
           "property": "battery_state",
           "type": "enum",
-          "values": [
-            "low",
-            "medium",
-            "high"
-          ]
+          "values": ["low", "medium", "high"]
         },
         {
           "access": 1,
@@ -2425,16 +2176,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genGroups",
-            "genScenes",
-            "manuSpecificTuya",
-            "genBasic"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genGroups", "genScenes", "manuSpecificTuya", "genBasic"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -2483,11 +2226,7 @@
           "name": "battery_state",
           "property": "battery_state",
           "type": "enum",
-          "values": [
-            "low",
-            "medium",
-            "high"
-          ]
+          "values": ["low", "medium", "high"]
         },
         {
           "access": 1,
@@ -2553,16 +2292,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genGroups",
-            "genScenes",
-            "manuSpecificTuya",
-            "genBasic"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genGroups", "genScenes", "manuSpecificTuya", "genBasic"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -2687,14 +2418,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genPowerCfg"
-          ],
-          "output": [
-            "genOta"
-          ]
+          "input": ["genBasic", "genIdentify", "genPowerCfg"],
+          "output": ["genOta"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -2820,14 +2545,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genPowerCfg"
-          ],
-          "output": [
-            "genOta"
-          ]
+          "input": ["genBasic", "genIdentify", "genPowerCfg"],
+          "output": ["genOta"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -2953,14 +2672,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genPowerCfg"
-          ],
-          "output": [
-            "genOta"
-          ]
+          "input": ["genBasic", "genIdentify", "genPowerCfg"],
+          "output": ["genOta"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -3018,11 +2731,7 @@
           "name": "power_outage_memory",
           "property": "power_outage_memory",
           "type": "enum",
-          "values": [
-            "on",
-            "off",
-            "restore"
-          ]
+          "values": ["on", "off", "restore"]
         },
         {
           "access": 7,
@@ -3031,12 +2740,7 @@
           "name": "indicator_mode",
           "property": "indicator_mode",
           "type": "enum",
-          "values": [
-            "off",
-            "off/on",
-            "on/off",
-            "on"
-          ]
+          "values": ["off", "off/on", "on/off", "on"]
         },
         {
           "access": 1,
@@ -3224,21 +2928,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "seMetering",
-            "haElectricalMeasurement",
-            "manuSpecificBosch",
-            "manuSpecificTuya_3",
-            "genBasic"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genIdentify", "genGroups", "genScenes", "genOnOff", "seMetering", "haElectricalMeasurement", "manuSpecificBosch", "manuSpecificTuya_3", "genBasic"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [
           {
@@ -3267,10 +2958,7 @@
             "cluster": "seMetering",
             "maximum_report_interval": 3600,
             "minimum_report_interval": 5,
-            "reportable_change": [
-              1,
-              1
-            ]
+            "reportable_change": [1, 1]
           }
         ],
         "scenes": []
@@ -3279,9 +2967,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -3338,11 +3024,7 @@
           "name": "power_outage_memory",
           "property": "power_outage_memory",
           "type": "enum",
-          "values": [
-            "on",
-            "off",
-            "restore"
-          ]
+          "values": ["on", "off", "restore"]
         },
         {
           "access": 7,
@@ -3351,12 +3033,7 @@
           "name": "indicator_mode",
           "property": "indicator_mode",
           "type": "enum",
-          "values": [
-            "off",
-            "off/on",
-            "on/off",
-            "on"
-          ]
+          "values": ["off", "off/on", "on/off", "on"]
         },
         {
           "access": 1,
@@ -3544,21 +3221,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "seMetering",
-            "haElectricalMeasurement",
-            "manuSpecificBosch",
-            "manuSpecificTuya_3",
-            "genBasic"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genIdentify", "genGroups", "genScenes", "genOnOff", "seMetering", "haElectricalMeasurement", "manuSpecificBosch", "manuSpecificTuya_3", "genBasic"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [
           {
@@ -3587,10 +3251,7 @@
             "cluster": "seMetering",
             "maximum_report_interval": 3600,
             "minimum_report_interval": 5,
-            "reportable_change": [
-              1,
-              1
-            ]
+            "reportable_change": [1, 1]
           }
         ],
         "scenes": []
@@ -3599,9 +3260,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -3750,19 +3409,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "65535",
-            "msTemperatureMeasurement",
-            "msPressureMeasurement",
-            "msRelativeHumidity"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "65535"
-          ]
+          "input": ["genBasic", "genIdentify", "65535", "msTemperatureMeasurement", "msPressureMeasurement", "msRelativeHumidity"],
+          "output": ["genBasic", "genGroups", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -3912,19 +3560,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "65535",
-            "msTemperatureMeasurement",
-            "msPressureMeasurement",
-            "msRelativeHumidity"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "65535"
-          ]
+          "input": ["genBasic", "genIdentify", "65535", "msTemperatureMeasurement", "msPressureMeasurement", "msRelativeHumidity"],
+          "output": ["genBasic", "genGroups", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -4074,19 +3711,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "65535",
-            "msTemperatureMeasurement",
-            "msPressureMeasurement",
-            "msRelativeHumidity"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "65535"
-          ]
+          "input": ["genBasic", "genIdentify", "65535", "msTemperatureMeasurement", "msPressureMeasurement", "msRelativeHumidity"],
+          "output": ["genBasic", "genGroups", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -4144,11 +3770,7 @@
           "name": "power_outage_memory",
           "property": "power_outage_memory",
           "type": "enum",
-          "values": [
-            "on",
-            "off",
-            "restore"
-          ]
+          "values": ["on", "off", "restore"]
         },
         {
           "access": 7,
@@ -4157,12 +3779,7 @@
           "name": "indicator_mode",
           "property": "indicator_mode",
           "type": "enum",
-          "values": [
-            "off",
-            "off/on",
-            "on/off",
-            "on"
-          ]
+          "values": ["off", "off/on", "on/off", "on"]
         },
         {
           "access": 1,
@@ -4350,21 +3967,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "seMetering",
-            "haElectricalMeasurement",
-            "manuSpecificBosch",
-            "manuSpecificTuya_3",
-            "genBasic"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genIdentify", "genGroups", "genScenes", "genOnOff", "seMetering", "haElectricalMeasurement", "manuSpecificBosch", "manuSpecificTuya_3", "genBasic"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [
           {
@@ -4393,10 +3997,7 @@
             "cluster": "seMetering",
             "maximum_report_interval": 3600,
             "minimum_report_interval": 5,
-            "reportable_change": [
-              1,
-              1
-            ]
+            "reportable_change": [1, 1]
           }
         ],
         "scenes": []
@@ -4405,9 +4006,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -4464,11 +4063,7 @@
           "name": "power_outage_memory",
           "property": "power_outage_memory",
           "type": "enum",
-          "values": [
-            "on",
-            "off",
-            "restore"
-          ]
+          "values": ["on", "off", "restore"]
         },
         {
           "access": 7,
@@ -4477,12 +4072,7 @@
           "name": "indicator_mode",
           "property": "indicator_mode",
           "type": "enum",
-          "values": [
-            "off",
-            "off/on",
-            "on/off",
-            "on"
-          ]
+          "values": ["off", "off/on", "on/off", "on"]
         },
         {
           "access": 1,
@@ -4670,21 +4260,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "seMetering",
-            "haElectricalMeasurement",
-            "manuSpecificBosch",
-            "manuSpecificTuya_3",
-            "genBasic"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genIdentify", "genGroups", "genScenes", "genOnOff", "seMetering", "haElectricalMeasurement", "manuSpecificBosch", "manuSpecificTuya_3", "genBasic"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [
           {
@@ -4713,10 +4290,7 @@
             "cluster": "seMetering",
             "maximum_report_interval": 3600,
             "minimum_report_interval": 5,
-            "reportable_change": [
-              1,
-              1
-            ]
+            "reportable_change": [1, 1]
           }
         ],
         "scenes": []
@@ -4725,9 +4299,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -4779,17 +4351,7 @@
           "name": "action",
           "property": "action",
           "type": "enum",
-          "values": [
-            "single_left",
-            "single_right",
-            "single_both",
-            "double_left",
-            "double_right",
-            "double_both",
-            "hold_left",
-            "hold_right",
-            "hold_both"
-          ]
+          "values": ["single_left", "single_right", "single_both", "double_left", "double_right", "double_both", "hold_left", "hold_right", "hold_both"]
         },
         {
           "access": 1,
@@ -4825,22 +4387,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genOta",
-            "65535",
-            "genMultistateInput"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "genIdentify",
-            "genScenes",
-            "genOta",
-            "65535",
-            "genMultistateInput"
-          ]
+          "input": ["genBasic", "genIdentify", "genOta", "65535", "genMultistateInput"],
+          "output": ["genBasic", "genGroups", "genIdentify", "genScenes", "genOta", "65535", "genMultistateInput"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -4848,16 +4396,8 @@
       "2": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genIdentify",
-            "genMultistateInput"
-          ],
-          "output": [
-            "genGroups",
-            "genIdentify",
-            "genScenes",
-            "genMultistateInput"
-          ]
+          "input": ["genIdentify", "genMultistateInput"],
+          "output": ["genGroups", "genIdentify", "genScenes", "genMultistateInput"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -4865,16 +4405,8 @@
       "3": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genIdentify",
-            "genAnalogInput"
-          ],
-          "output": [
-            "genGroups",
-            "genIdentify",
-            "genScenes",
-            "genAnalogInput"
-          ]
+          "input": ["genIdentify", "genAnalogInput"],
+          "output": ["genGroups", "genIdentify", "genScenes", "genAnalogInput"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -4946,14 +4478,7 @@
           "name": "action",
           "property": "action",
           "type": "enum",
-          "values": [
-            "single",
-            "double",
-            "triple",
-            "quadruple",
-            "hold",
-            "release"
-          ]
+          "values": ["single", "double", "triple", "quadruple", "hold", "release"]
         },
         {
           "access": 1,
@@ -4997,14 +4522,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genMultistateInput",
-            "genIdentify"
-          ],
-          "output": [
-            "genBasic"
-          ]
+          "input": ["genBasic", "genMultistateInput", "genIdentify"],
+          "output": ["genBasic"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -5119,17 +4638,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "65535",
-            "genOnOff"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "65535"
-          ]
+          "input": ["genBasic", "genIdentify", "65535", "genOnOff"],
+          "output": ["genBasic", "genGroups", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -5244,17 +4754,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "65535",
-            "genOnOff"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "65535"
-          ]
+          "input": ["genBasic", "genIdentify", "65535", "genOnOff"],
+          "output": ["genBasic", "genGroups", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -5369,17 +4870,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "65535",
-            "genOnOff"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "65535"
-          ]
+          "input": ["genBasic", "genIdentify", "65535", "genOnOff"],
+          "output": ["genBasic", "genGroups", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -5494,17 +4986,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "65535",
-            "genOnOff"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "65535"
-          ]
+          "input": ["genBasic", "genIdentify", "65535", "genOnOff"],
+          "output": ["genBasic", "genGroups", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -5619,17 +5102,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "65535",
-            "genOnOff"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "65535"
-          ]
+          "input": ["genBasic", "genIdentify", "65535", "genOnOff"],
+          "output": ["genBasic", "genGroups", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -5744,17 +5218,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "65535",
-            "genOnOff"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "65535"
-          ]
+          "input": ["genBasic", "genIdentify", "65535", "genOnOff"],
+          "output": ["genBasic", "genGroups", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -5869,17 +5334,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "65535",
-            "genOnOff"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "65535"
-          ]
+          "input": ["genBasic", "genIdentify", "65535", "genOnOff"],
+          "output": ["genBasic", "genGroups", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -6029,19 +5485,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "65535",
-            "msTemperatureMeasurement",
-            "msPressureMeasurement",
-            "msRelativeHumidity"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "65535"
-          ]
+          "input": ["genBasic", "genIdentify", "65535", "msTemperatureMeasurement", "msPressureMeasurement", "msRelativeHumidity"],
+          "output": ["genBasic", "genGroups", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -6191,19 +5636,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "65535",
-            "msTemperatureMeasurement",
-            "msPressureMeasurement",
-            "msRelativeHumidity"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "65535"
-          ]
+          "input": ["genBasic", "genIdentify", "65535", "msTemperatureMeasurement", "msPressureMeasurement", "msRelativeHumidity"],
+          "output": ["genBasic", "genGroups", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -6353,19 +5787,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "65535",
-            "msTemperatureMeasurement",
-            "msPressureMeasurement",
-            "msRelativeHumidity"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "65535"
-          ]
+          "input": ["genBasic", "genIdentify", "65535", "msTemperatureMeasurement", "msPressureMeasurement", "msRelativeHumidity"],
+          "output": ["genBasic", "genGroups", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -6480,17 +5903,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "65535",
-            "genOnOff"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "65535"
-          ]
+          "input": ["genBasic", "genIdentify", "65535", "genOnOff"],
+          "output": ["genBasic", "genGroups", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -6605,17 +6019,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "65535",
-            "genOnOff"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "65535"
-          ]
+          "input": ["genBasic", "genIdentify", "65535", "genOnOff"],
+          "output": ["genBasic", "genGroups", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -6673,11 +6078,7 @@
           "name": "power_outage_memory",
           "property": "power_outage_memory",
           "type": "enum",
-          "values": [
-            "on",
-            "off",
-            "restore"
-          ]
+          "values": ["on", "off", "restore"]
         },
         {
           "access": 7,
@@ -6686,12 +6087,7 @@
           "name": "indicator_mode",
           "property": "indicator_mode",
           "type": "enum",
-          "values": [
-            "off",
-            "off/on",
-            "on/off",
-            "on"
-          ]
+          "values": ["off", "off/on", "on/off", "on"]
         },
         {
           "access": 1,
@@ -6879,21 +6275,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "seMetering",
-            "haElectricalMeasurement",
-            "manuSpecificBosch",
-            "manuSpecificTuya_3",
-            "genBasic"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genIdentify", "genGroups", "genScenes", "genOnOff", "seMetering", "haElectricalMeasurement", "manuSpecificBosch", "manuSpecificTuya_3", "genBasic"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [
           {
@@ -6922,10 +6305,7 @@
             "cluster": "seMetering",
             "maximum_report_interval": 3600,
             "minimum_report_interval": 5,
-            "reportable_change": [
-              1,
-              1
-            ]
+            "reportable_change": [1, 1]
           }
         ],
         "scenes": []
@@ -6934,9 +6314,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -6993,11 +6371,7 @@
           "name": "power_outage_memory",
           "property": "power_outage_memory",
           "type": "enum",
-          "values": [
-            "on",
-            "off",
-            "restore"
-          ]
+          "values": ["on", "off", "restore"]
         },
         {
           "access": 7,
@@ -7006,12 +6380,7 @@
           "name": "indicator_mode",
           "property": "indicator_mode",
           "type": "enum",
-          "values": [
-            "off",
-            "off/on",
-            "on/off",
-            "on"
-          ]
+          "values": ["off", "off/on", "on/off", "on"]
         },
         {
           "access": 1,
@@ -7199,21 +6568,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "seMetering",
-            "haElectricalMeasurement",
-            "manuSpecificBosch",
-            "manuSpecificTuya_3",
-            "genBasic"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genIdentify", "genGroups", "genScenes", "genOnOff", "seMetering", "haElectricalMeasurement", "manuSpecificBosch", "manuSpecificTuya_3", "genBasic"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [
           {
@@ -7242,10 +6598,7 @@
             "cluster": "seMetering",
             "maximum_report_interval": 3600,
             "minimum_report_interval": 5,
-            "reportable_change": [
-              1,
-              1
-            ]
+            "reportable_change": [1, 1]
           }
         ],
         "scenes": []
@@ -7254,9 +6607,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -7322,11 +6673,7 @@
           "name": "sensitivity",
           "property": "sensitivity",
           "type": "enum",
-          "values": [
-            "low",
-            "medium",
-            "high"
-          ]
+          "values": ["low", "medium", "high"]
         },
         {
           "access": 1,
@@ -7409,11 +6756,7 @@
           "name": "action",
           "property": "action",
           "type": "enum",
-          "values": [
-            "vibration",
-            "tilt",
-            "drop"
-          ]
+          "values": ["vibration", "tilt", "drop"]
         },
         {
           "access": 1,
@@ -7480,20 +6823,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genOta",
-            "closuresDoorLock"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "genIdentify",
-            "genScenes",
-            "genOta",
-            "closuresDoorLock"
-          ]
+          "input": ["genBasic", "genIdentify", "genOta", "closuresDoorLock"],
+          "output": ["genBasic", "genGroups", "genIdentify", "genScenes", "genOta", "closuresDoorLock"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -7551,11 +6882,7 @@
           "name": "battery_state",
           "property": "battery_state",
           "type": "enum",
-          "values": [
-            "low",
-            "medium",
-            "high"
-          ]
+          "values": ["low", "medium", "high"]
         },
         {
           "access": 1,
@@ -7621,16 +6948,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genGroups",
-            "genScenes",
-            "manuSpecificTuya",
-            "genBasic"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genGroups", "genScenes", "manuSpecificTuya", "genBasic"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -7679,11 +6998,7 @@
           "name": "battery_state",
           "property": "battery_state",
           "type": "enum",
-          "values": [
-            "low",
-            "medium",
-            "high"
-          ]
+          "values": ["low", "medium", "high"]
         },
         {
           "access": 1,
@@ -7749,16 +7064,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genGroups",
-            "genScenes",
-            "manuSpecificTuya",
-            "genBasic"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genGroups", "genScenes", "manuSpecificTuya", "genBasic"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -7815,11 +7122,7 @@
           "name": "power_outage_memory",
           "property": "power_outage_memory",
           "type": "enum",
-          "values": [
-            "on",
-            "off",
-            "restore"
-          ]
+          "values": ["on", "off", "restore"]
         },
         {
           "access": 7,
@@ -7828,12 +7131,7 @@
           "name": "indicator_mode",
           "property": "indicator_mode",
           "type": "enum",
-          "values": [
-            "off",
-            "off/on",
-            "on/off",
-            "on"
-          ]
+          "values": ["off", "off/on", "on/off", "on"]
         },
         {
           "access": 1,
@@ -8021,21 +7319,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "seMetering",
-            "haElectricalMeasurement",
-            "manuSpecificBosch",
-            "manuSpecificTuya_3",
-            "genBasic"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genIdentify", "genGroups", "genScenes", "genOnOff", "seMetering", "haElectricalMeasurement", "manuSpecificBosch", "manuSpecificTuya_3", "genBasic"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [
           {
@@ -8064,10 +7349,7 @@
             "cluster": "seMetering",
             "maximum_report_interval": 3600,
             "minimum_report_interval": 5,
-            "reportable_change": [
-              1,
-              1
-            ]
+            "reportable_change": [1, 1]
           }
         ],
         "scenes": []
@@ -8076,9 +7358,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -8133,14 +7413,7 @@
           "name": "effect",
           "property": "effect",
           "type": "enum",
-          "values": [
-            "blink",
-            "breathe",
-            "okay",
-            "channel_change",
-            "finish_effect",
-            "stop_effect"
-          ]
+          "values": ["blink", "breathe", "okay", "channel_change", "finish_effect", "stop_effect"]
         },
         {
           "access": 7,
@@ -8150,12 +7423,7 @@
           "name": "power_on_behavior",
           "property": "power_on_behavior",
           "type": "enum",
-          "values": [
-            "off",
-            "on",
-            "toggle",
-            "previous"
-          ]
+          "values": ["off", "on", "toggle", "previous"]
         },
         {
           "access": 5,
@@ -8344,21 +7612,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "genLevelCtrl",
-            "seMetering",
-            "haElectricalMeasurement",
-            "haDiagnostic",
-            "touchlink"
-          ],
-          "output": [
-            "genOta"
-          ]
+          "input": ["genBasic", "genIdentify", "genGroups", "genScenes", "genOnOff", "genLevelCtrl", "seMetering", "haElectricalMeasurement", "haDiagnostic", "touchlink"],
+          "output": ["genOta"]
         },
         "configured_reportings": [
           {
@@ -8401,10 +7656,7 @@
             "cluster": "seMetering",
             "maximum_report_interval": 65000,
             "minimum_report_interval": 10,
-            "reportable_change": [
-              0,
-              360000
-            ]
+            "reportable_change": [0, 360000]
           }
         ],
         "scenes": []
@@ -8412,12 +7664,8 @@
       "242": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "greenPower"
-          ],
-          "output": [
-            "greenPower"
-          ]
+          "input": ["greenPower"],
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -8483,13 +7731,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify"
-          ],
-          "output": [
-            "genBasic"
-          ]
+          "input": ["genBasic", "genIdentify"],
+          "output": ["genBasic"]
         },
         "configured_reportings": [
           {
@@ -8506,9 +7749,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -8596,11 +7837,7 @@
           "name": "light_type",
           "property": "light_type",
           "type": "enum",
-          "values": [
-            "led",
-            "incandescent",
-            "halogen"
-          ]
+          "values": ["led", "incandescent", "halogen"]
         },
         {
           "access": 3,
@@ -8610,11 +7847,7 @@
           "name": "power_on_behavior",
           "property": "power_on_behavior",
           "type": "enum",
-          "values": [
-            "off",
-            "previous",
-            "on"
-          ]
+          "values": ["off", "previous", "on"]
         },
         {
           "access": 3,
@@ -8623,11 +7856,7 @@
           "name": "backlight_mode",
           "property": "backlight_mode",
           "type": "enum",
-          "values": [
-            "off",
-            "normal",
-            "inverted"
-          ]
+          "values": ["off", "normal", "inverted"]
         },
         {
           "access": 1,
@@ -8652,16 +7881,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genGroups",
-            "genScenes",
-            "manuSpecificTuya"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genBasic", "genGroups", "genScenes", "manuSpecificTuya"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -8702,10 +7923,7 @@
           "name": "operation_mode",
           "property": "operation_mode",
           "type": "enum",
-          "values": [
-            "command",
-            "event"
-          ]
+          "values": ["command", "event"]
         },
         {
           "access": 1,
@@ -8806,24 +8024,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genPowerCfg",
-            "genIdentify",
-            "genGroups",
-            "genOnOff",
-            "touchlink"
-          ],
-          "output": [
-            "genOta",
-            "genTime",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "genLevelCtrl",
-            "touchlink"
-          ]
+          "input": ["genBasic", "genPowerCfg", "genIdentify", "genGroups", "genOnOff", "touchlink"],
+          "output": ["genOta", "genTime", "genIdentify", "genGroups", "genScenes", "genOnOff", "genLevelCtrl", "touchlink"]
         },
         "configured_reportings": [
           {
@@ -9002,16 +8204,7 @@
           "name": "effect",
           "property": "effect",
           "type": "enum",
-          "values": [
-            "blink",
-            "breathe",
-            "okay",
-            "channel_change",
-            "finish_effect",
-            "stop_effect",
-            "colorloop",
-            "stop_colorloop"
-          ]
+          "values": ["blink", "breathe", "okay", "channel_change", "finish_effect", "stop_effect", "colorloop", "stop_colorloop"]
         },
         {
           "access": 3,
@@ -9030,11 +8223,7 @@
           "name": "color_power_on_behavior",
           "property": "color_power_on_behavior",
           "type": "enum",
-          "values": [
-            "initial",
-            "previous",
-            "cutomized"
-          ]
+          "values": ["initial", "previous", "cutomized"]
         },
         {
           "access": 1,
@@ -9114,20 +8303,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "touchlink",
-            "genLevelCtrl",
-            "lightingColorCtrl"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genBasic", "genIdentify", "genGroups", "genScenes", "genOnOff", "touchlink", "genLevelCtrl", "lightingColorCtrl"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [
           {
@@ -9182,9 +8359,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -9242,11 +8417,7 @@
           "name": "motion_sensitivity",
           "property": "motion_sensitivity",
           "type": "enum",
-          "values": [
-            "low",
-            "medium",
-            "high"
-          ]
+          "values": ["low", "medium", "high"]
         },
         {
           "access": 7,
@@ -9376,17 +8547,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genPowerCfg",
-            "genIdentify",
-            "manuSpecificLumi"
-          ],
-          "output": [
-            "genIdentify",
-            "genOta",
-            "manuSpecificLumi"
-          ]
+          "input": ["genBasic", "genPowerCfg", "genIdentify", "manuSpecificLumi"],
+          "output": ["genIdentify", "genOta", "manuSpecificLumi"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -9474,11 +8636,7 @@
           "name": "light_type",
           "property": "light_type",
           "type": "enum",
-          "values": [
-            "led",
-            "incandescent",
-            "halogen"
-          ]
+          "values": ["led", "incandescent", "halogen"]
         },
         {
           "access": 3,
@@ -9488,11 +8646,7 @@
           "name": "power_on_behavior",
           "property": "power_on_behavior",
           "type": "enum",
-          "values": [
-            "off",
-            "previous",
-            "on"
-          ]
+          "values": ["off", "previous", "on"]
         },
         {
           "access": 3,
@@ -9501,11 +8655,7 @@
           "name": "backlight_mode",
           "property": "backlight_mode",
           "type": "enum",
-          "values": [
-            "off",
-            "normal",
-            "inverted"
-          ]
+          "values": ["off", "normal", "inverted"]
         },
         {
           "access": 1,
@@ -9530,16 +8680,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genGroups",
-            "genScenes",
-            "manuSpecificTuya"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genBasic", "genGroups", "genScenes", "manuSpecificTuya"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -9585,11 +8727,7 @@
           "name": "power_on_behavior",
           "property": "power_on_behavior",
           "type": "enum",
-          "values": [
-            "off",
-            "previous",
-            "on"
-          ]
+          "values": ["off", "previous", "on"]
         },
         {
           "access": 1,
@@ -9634,19 +8772,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "manuSpecificBosch",
-            "manuSpecificTuya_3"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genBasic", "genIdentify", "genGroups", "genScenes", "genOnOff", "manuSpecificBosch", "manuSpecificTuya_3"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [
           {
@@ -9663,9 +8790,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -9744,16 +8869,7 @@
           "name": "effect",
           "property": "effect",
           "type": "enum",
-          "values": [
-            "blink",
-            "breathe",
-            "okay",
-            "channel_change",
-            "finish_effect",
-            "stop_effect",
-            "colorloop",
-            "stop_colorloop"
-          ]
+          "values": ["blink", "breathe", "okay", "channel_change", "finish_effect", "stop_effect", "colorloop", "stop_colorloop"]
         },
         {
           "access": 3,
@@ -9772,11 +8888,7 @@
           "name": "color_power_on_behavior",
           "property": "color_power_on_behavior",
           "type": "enum",
-          "values": [
-            "initial",
-            "previous",
-            "cutomized"
-          ]
+          "values": ["initial", "previous", "cutomized"]
         },
         {
           "access": 1,
@@ -9831,21 +8943,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "touchlink",
-            "genLevelCtrl",
-            "lightingColorCtrl",
-            "manuSpecificTuya"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genBasic", "genIdentify", "genGroups", "genScenes", "genOnOff", "touchlink", "genLevelCtrl", "lightingColorCtrl", "manuSpecificTuya"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -9854,9 +8953,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -9902,11 +8999,7 @@
           "name": "power_on_behavior",
           "property": "power_on_behavior",
           "type": "enum",
-          "values": [
-            "off",
-            "previous",
-            "on"
-          ]
+          "values": ["off", "previous", "on"]
         },
         {
           "access": 1,
@@ -9951,16 +9044,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genGroups",
-            "genScenes",
-            "genOnOff"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genBasic", "genGroups", "genScenes", "genOnOff"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [
           {
@@ -10023,14 +9108,7 @@
           "name": "effect",
           "property": "effect",
           "type": "enum",
-          "values": [
-            "blink",
-            "breathe",
-            "okay",
-            "channel_change",
-            "finish_effect",
-            "stop_effect"
-          ]
+          "values": ["blink", "breathe", "okay", "channel_change", "finish_effect", "stop_effect"]
         },
         {
           "access": 7,
@@ -10040,12 +9118,7 @@
           "name": "power_on_behavior",
           "property": "power_on_behavior",
           "type": "enum",
-          "values": [
-            "off",
-            "on",
-            "toggle",
-            "previous"
-          ]
+          "values": ["off", "on", "toggle", "previous"]
         },
         {
           "access": 5,
@@ -10234,21 +9307,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "genLevelCtrl",
-            "seMetering",
-            "haElectricalMeasurement",
-            "haDiagnostic",
-            "touchlink"
-          ],
-          "output": [
-            "genOta"
-          ]
+          "input": ["genBasic", "genIdentify", "genGroups", "genScenes", "genOnOff", "genLevelCtrl", "seMetering", "haElectricalMeasurement", "haDiagnostic", "touchlink"],
+          "output": ["genOta"]
         },
         "configured_reportings": [
           {
@@ -10291,10 +9351,7 @@
             "cluster": "seMetering",
             "maximum_report_interval": 65000,
             "minimum_report_interval": 10,
-            "reportable_change": [
-              0,
-              360000
-            ]
+            "reportable_change": [0, 360000]
           }
         ],
         "scenes": []
@@ -10302,12 +9359,8 @@
       "242": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "greenPower"
-          ],
-          "output": [
-            "greenPower"
-          ]
+          "input": ["greenPower"],
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -10395,11 +9448,7 @@
           "name": "light_type",
           "property": "light_type",
           "type": "enum",
-          "values": [
-            "led",
-            "incandescent",
-            "halogen"
-          ]
+          "values": ["led", "incandescent", "halogen"]
         },
         {
           "access": 3,
@@ -10409,11 +9458,7 @@
           "name": "power_on_behavior",
           "property": "power_on_behavior",
           "type": "enum",
-          "values": [
-            "off",
-            "previous",
-            "on"
-          ]
+          "values": ["off", "previous", "on"]
         },
         {
           "access": 3,
@@ -10422,11 +9467,7 @@
           "name": "backlight_mode",
           "property": "backlight_mode",
           "type": "enum",
-          "values": [
-            "off",
-            "normal",
-            "inverted"
-          ]
+          "values": ["off", "normal", "inverted"]
         },
         {
           "access": 1,
@@ -10451,16 +9492,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genGroups",
-            "genScenes",
-            "manuSpecificTuya"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genBasic", "genGroups", "genScenes", "manuSpecificTuya"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -10547,11 +9580,7 @@
           "name": "light_type",
           "property": "light_type",
           "type": "enum",
-          "values": [
-            "led",
-            "incandescent",
-            "halogen"
-          ]
+          "values": ["led", "incandescent", "halogen"]
         },
         {
           "access": 3,
@@ -10561,11 +9590,7 @@
           "name": "power_on_behavior",
           "property": "power_on_behavior",
           "type": "enum",
-          "values": [
-            "off",
-            "previous",
-            "on"
-          ]
+          "values": ["off", "previous", "on"]
         },
         {
           "access": 3,
@@ -10574,11 +9599,7 @@
           "name": "backlight_mode",
           "property": "backlight_mode",
           "type": "enum",
-          "values": [
-            "off",
-            "normal",
-            "inverted"
-          ]
+          "values": ["off", "normal", "inverted"]
         },
         {
           "access": 1,
@@ -10603,16 +9624,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genGroups",
-            "genScenes",
-            "manuSpecificTuya"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genBasic", "genGroups", "genScenes", "manuSpecificTuya"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -10658,11 +9671,7 @@
           "name": "power_on_behavior",
           "property": "power_on_behavior",
           "type": "enum",
-          "values": [
-            "off",
-            "previous",
-            "on"
-          ]
+          "values": ["off", "previous", "on"]
         },
         {
           "access": 1,
@@ -10707,16 +9716,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genGroups",
-            "genScenes",
-            "genOnOff"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genBasic", "genGroups", "genScenes", "genOnOff"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [
           {
@@ -10770,11 +9771,7 @@
           "name": "power_on_behavior",
           "property": "power_on_behavior",
           "type": "enum",
-          "values": [
-            "off",
-            "previous",
-            "on"
-          ]
+          "values": ["off", "previous", "on"]
         },
         {
           "access": 1,
@@ -10819,19 +9816,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "manuSpecificBosch",
-            "manuSpecificTuya_3"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genBasic", "genIdentify", "genGroups", "genScenes", "genOnOff", "manuSpecificBosch", "manuSpecificTuya_3"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [
           {
@@ -10848,9 +9834,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -10969,11 +9953,7 @@
           "name": "power_outage_memory",
           "property": "power_outage_memory",
           "type": "enum",
-          "values": [
-            "on",
-            "off",
-            "restore"
-          ]
+          "values": ["on", "off", "restore"]
         },
         {
           "features": [
@@ -11034,14 +10014,7 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genOnOff",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "manuSpecificTuya_3"
-          ],
+          "input": ["genBasic", "genOnOff", "genIdentify", "genGroups", "genScenes", "manuSpecificTuya_3"],
           "output": []
         },
         "configured_reportings": [],
@@ -11059,14 +10032,7 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genOnOff",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "manuSpecificTuya_3"
-          ],
+          "input": ["genBasic", "genOnOff", "genIdentify", "genGroups", "genScenes", "manuSpecificTuya_3"],
           "output": []
         },
         "configured_reportings": [],
@@ -11084,14 +10050,7 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genOnOff",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "manuSpecificTuya_3"
-          ],
+          "input": ["genBasic", "genOnOff", "genIdentify", "genGroups", "genScenes", "manuSpecificTuya_3"],
           "output": []
         },
         "configured_reportings": [],
@@ -11109,14 +10068,7 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genOnOff",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "manuSpecificTuya_3"
-          ],
+          "input": ["genBasic", "genOnOff", "genIdentify", "genGroups", "genScenes", "manuSpecificTuya_3"],
           "output": []
         },
         "configured_reportings": [],
@@ -11134,14 +10086,7 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genOnOff",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "manuSpecificTuya_3"
-          ],
+          "input": ["genBasic", "genOnOff", "genIdentify", "genGroups", "genScenes", "manuSpecificTuya_3"],
           "output": []
         },
         "configured_reportings": [],
@@ -11200,11 +10145,7 @@
           "name": "power_outage_memory",
           "property": "power_outage_memory",
           "type": "enum",
-          "values": [
-            "on",
-            "off",
-            "restore"
-          ]
+          "values": ["on", "off", "restore"]
         },
         {
           "access": 7,
@@ -11213,12 +10154,7 @@
           "name": "indicator_mode",
           "property": "indicator_mode",
           "type": "enum",
-          "values": [
-            "off",
-            "off/on",
-            "on/off",
-            "on"
-          ]
+          "values": ["off", "off/on", "on/off", "on"]
         },
         {
           "access": 1,
@@ -11406,21 +10342,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "seMetering",
-            "haElectricalMeasurement",
-            "manuSpecificBosch",
-            "manuSpecificTuya_3",
-            "genBasic"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genIdentify", "genGroups", "genScenes", "genOnOff", "seMetering", "haElectricalMeasurement", "manuSpecificBosch", "manuSpecificTuya_3", "genBasic"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [
           {
@@ -11449,10 +10372,7 @@
             "cluster": "seMetering",
             "maximum_report_interval": 3600,
             "minimum_report_interval": 5,
-            "reportable_change": [
-              1,
-              1
-            ]
+            "reportable_change": [1, 1]
           }
         ],
         "scenes": []
@@ -11461,9 +10381,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -11625,19 +10543,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "65535",
-            "msOccupancySensing",
-            "msIlluminanceMeasurement",
-            "ssIasZone",
-            "genPowerCfg",
-            "genIdentify"
-          ],
-          "output": [
-            "genBasic",
-            "genOta"
-          ]
+          "input": ["genBasic", "65535", "msOccupancySensing", "msIlluminanceMeasurement", "ssIasZone", "genPowerCfg", "genIdentify"],
+          "output": ["genBasic", "genOta"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -11800,19 +10707,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "65535",
-            "msOccupancySensing",
-            "msIlluminanceMeasurement",
-            "ssIasZone",
-            "genPowerCfg",
-            "genIdentify"
-          ],
-          "output": [
-            "genBasic",
-            "genOta"
-          ]
+          "input": ["genBasic", "65535", "msOccupancySensing", "msIlluminanceMeasurement", "ssIasZone", "genPowerCfg", "genIdentify"],
+          "output": ["genBasic", "genOta"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -11871,11 +10767,7 @@
           "name": "motion_sensitivity",
           "property": "motion_sensitivity",
           "type": "enum",
-          "values": [
-            "low",
-            "medium",
-            "high"
-          ]
+          "values": ["low", "medium", "high"]
         },
         {
           "access": 7,
@@ -12005,17 +10897,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genPowerCfg",
-            "genIdentify",
-            "manuSpecificLumi"
-          ],
-          "output": [
-            "genIdentify",
-            "genOta",
-            "manuSpecificLumi"
-          ]
+          "input": ["genBasic", "genPowerCfg", "genIdentify", "manuSpecificLumi"],
+          "output": ["genIdentify", "genOta", "manuSpecificLumi"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -12178,19 +11061,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "65535",
-            "msOccupancySensing",
-            "msIlluminanceMeasurement",
-            "ssIasZone",
-            "genPowerCfg",
-            "genIdentify"
-          ],
-          "output": [
-            "genBasic",
-            "genOta"
-          ]
+          "input": ["genBasic", "65535", "msOccupancySensing", "msIlluminanceMeasurement", "ssIasZone", "genPowerCfg", "genIdentify"],
+          "output": ["genBasic", "genOta"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -12353,19 +11225,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "65535",
-            "msOccupancySensing",
-            "msIlluminanceMeasurement",
-            "ssIasZone",
-            "genPowerCfg",
-            "genIdentify"
-          ],
-          "output": [
-            "genBasic",
-            "genOta"
-          ]
+          "input": ["genBasic", "65535", "msOccupancySensing", "msIlluminanceMeasurement", "ssIasZone", "genPowerCfg", "genIdentify"],
+          "output": ["genBasic", "genOta"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -12424,11 +11285,7 @@
           "name": "motion_sensitivity",
           "property": "motion_sensitivity",
           "type": "enum",
-          "values": [
-            "low",
-            "medium",
-            "high"
-          ]
+          "values": ["low", "medium", "high"]
         },
         {
           "access": 7,
@@ -12558,17 +11415,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genPowerCfg",
-            "genIdentify",
-            "manuSpecificLumi"
-          ],
-          "output": [
-            "genIdentify",
-            "genOta",
-            "manuSpecificLumi"
-          ]
+          "input": ["genBasic", "genPowerCfg", "genIdentify", "manuSpecificLumi"],
+          "output": ["genIdentify", "genOta", "manuSpecificLumi"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -12666,15 +11514,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "ssIasZone",
-            "genPowerCfg"
-          ],
-          "output": [
-            "genIdentify"
-          ]
+          "input": ["genBasic", "genIdentify", "ssIasZone", "genPowerCfg"],
+          "output": ["genIdentify"]
         },
         "configured_reportings": [
           {
@@ -12838,19 +11679,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "65535",
-            "msTemperatureMeasurement",
-            "msPressureMeasurement",
-            "msRelativeHumidity"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "65535"
-          ]
+          "input": ["genBasic", "genIdentify", "65535", "msTemperatureMeasurement", "msPressureMeasurement", "msRelativeHumidity"],
+          "output": ["genBasic", "genGroups", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -12908,11 +11738,7 @@
           "name": "power_outage_memory",
           "property": "power_outage_memory",
           "type": "enum",
-          "values": [
-            "on",
-            "off",
-            "restore"
-          ]
+          "values": ["on", "off", "restore"]
         },
         {
           "access": 7,
@@ -12921,12 +11747,7 @@
           "name": "indicator_mode",
           "property": "indicator_mode",
           "type": "enum",
-          "values": [
-            "off",
-            "off/on",
-            "on/off",
-            "on"
-          ]
+          "values": ["off", "off/on", "on/off", "on"]
         },
         {
           "access": 1,
@@ -13114,21 +11935,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "seMetering",
-            "haElectricalMeasurement",
-            "manuSpecificBosch",
-            "manuSpecificTuya_3",
-            "genBasic"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genIdentify", "genGroups", "genScenes", "genOnOff", "seMetering", "haElectricalMeasurement", "manuSpecificBosch", "manuSpecificTuya_3", "genBasic"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [
           {
@@ -13157,10 +11965,7 @@
             "cluster": "seMetering",
             "maximum_report_interval": 3600,
             "minimum_report_interval": 5,
-            "reportable_change": [
-              1,
-              1
-            ]
+            "reportable_change": [1, 1]
           }
         ],
         "scenes": []
@@ -13169,9 +11974,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -13268,15 +12071,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "ssIasZone",
-            "genPowerCfg"
-          ],
-          "output": [
-            "genIdentify"
-          ]
+          "input": ["genBasic", "genIdentify", "ssIasZone", "genPowerCfg"],
+          "output": ["genIdentify"]
         },
         "configured_reportings": [
           {
@@ -13388,15 +12184,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "ssIasZone",
-            "genPowerCfg"
-          ],
-          "output": [
-            "genIdentify"
-          ]
+          "input": ["genBasic", "genIdentify", "ssIasZone", "genPowerCfg"],
+          "output": ["genIdentify"]
         },
         "configured_reportings": [
           {
@@ -13523,16 +12312,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "msIlluminanceMeasurement",
-            "genIdentify",
-            "genPowerCfg"
-          ],
-          "output": [
-            "genIdentify",
-            "genOta"
-          ]
+          "input": ["genBasic", "msIlluminanceMeasurement", "genIdentify", "genPowerCfg"],
+          "output": ["genIdentify", "genOta"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -13627,10 +12408,7 @@
           "name": "switch_type",
           "property": "switch_type",
           "type": "enum",
-          "values": [
-            "toggle",
-            "momentary"
-          ]
+          "values": ["toggle", "momentary"]
         },
         {
           "access": 1,
@@ -13783,21 +12561,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genDeviceTempCfg",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genAlarms",
-            "genTime",
-            "manuSpecificLumi"
-          ],
-          "output": [
-            "genTime",
-            "genOta",
-            "65535"
-          ]
+          "input": ["genBasic", "genDeviceTempCfg", "genIdentify", "genGroups", "genScenes", "genAlarms", "genTime", "manuSpecificLumi"],
+          "output": ["genTime", "genOta", "65535"]
         },
         "configured_reportings": [
           {
@@ -13820,9 +12585,7 @@
       "21": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genAnalogInput"
-          ],
+          "input": ["genAnalogInput"],
           "output": []
         },
         "configured_reportings": [],
@@ -13831,9 +12594,7 @@
       "31": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genAnalogInput"
-          ],
+          "input": ["genAnalogInput"],
           "output": []
         },
         "configured_reportings": [],
@@ -13842,9 +12603,7 @@
       "41": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genMultistateInput"
-          ],
+          "input": ["genMultistateInput"],
           "output": []
         },
         "configured_reportings": [],
@@ -13854,9 +12613,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -13954,15 +12711,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "ssIasZone",
-            "genPowerCfg"
-          ],
-          "output": [
-            "genIdentify"
-          ]
+          "input": ["genBasic", "genIdentify", "ssIasZone", "genPowerCfg"],
+          "output": ["genIdentify"]
         },
         "configured_reportings": [
           {
@@ -14074,15 +12824,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "ssIasZone",
-            "genPowerCfg"
-          ],
-          "output": [
-            "genIdentify"
-          ]
+          "input": ["genBasic", "genIdentify", "ssIasZone", "genPowerCfg"],
+          "output": ["genIdentify"]
         },
         "configured_reportings": [
           {
@@ -14191,10 +12934,7 @@
           "name": "switch_type",
           "property": "switch_type",
           "type": "enum",
-          "values": [
-            "toggle",
-            "momentary"
-          ]
+          "values": ["toggle", "momentary"]
         },
         {
           "access": 1,
@@ -14347,21 +13087,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genDeviceTempCfg",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genAlarms",
-            "genTime",
-            "manuSpecificLumi"
-          ],
-          "output": [
-            "genTime",
-            "genOta",
-            "65535"
-          ]
+          "input": ["genBasic", "genDeviceTempCfg", "genIdentify", "genGroups", "genScenes", "genAlarms", "genTime", "manuSpecificLumi"],
+          "output": ["genTime", "genOta", "65535"]
         },
         "configured_reportings": [
           {
@@ -14384,9 +13111,7 @@
       "21": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genAnalogInput"
-          ],
+          "input": ["genAnalogInput"],
           "output": []
         },
         "configured_reportings": [],
@@ -14395,9 +13120,7 @@
       "31": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genAnalogInput"
-          ],
+          "input": ["genAnalogInput"],
           "output": []
         },
         "configured_reportings": [],
@@ -14406,9 +13129,7 @@
       "41": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genMultistateInput"
-          ],
+          "input": ["genMultistateInput"],
           "output": []
         },
         "configured_reportings": [],
@@ -14418,9 +13139,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -14515,10 +13234,7 @@
           "name": "switch_type",
           "property": "switch_type",
           "type": "enum",
-          "values": [
-            "toggle",
-            "momentary"
-          ]
+          "values": ["toggle", "momentary"]
         },
         {
           "access": 1,
@@ -14671,21 +13387,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genDeviceTempCfg",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genAlarms",
-            "genTime",
-            "manuSpecificLumi"
-          ],
-          "output": [
-            "genTime",
-            "genOta",
-            "65535"
-          ]
+          "input": ["genBasic", "genDeviceTempCfg", "genIdentify", "genGroups", "genScenes", "genAlarms", "genTime", "manuSpecificLumi"],
+          "output": ["genTime", "genOta", "65535"]
         },
         "configured_reportings": [
           {
@@ -14708,9 +13411,7 @@
       "21": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genAnalogInput"
-          ],
+          "input": ["genAnalogInput"],
           "output": []
         },
         "configured_reportings": [],
@@ -14719,9 +13420,7 @@
       "31": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genAnalogInput"
-          ],
+          "input": ["genAnalogInput"],
           "output": []
         },
         "configured_reportings": [],
@@ -14730,9 +13429,7 @@
       "41": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genMultistateInput"
-          ],
+          "input": ["genMultistateInput"],
           "output": []
         },
         "configured_reportings": [],
@@ -14742,9 +13439,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -14842,15 +13537,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "ssIasZone",
-            "genPowerCfg"
-          ],
-          "output": [
-            "genIdentify"
-          ]
+          "input": ["genBasic", "genIdentify", "ssIasZone", "genPowerCfg"],
+          "output": ["genIdentify"]
         },
         "configured_reportings": [
           {
@@ -14958,14 +13646,7 @@
           "name": "effect",
           "property": "effect",
           "type": "enum",
-          "values": [
-            "blink",
-            "breathe",
-            "okay",
-            "channel_change",
-            "finish_effect",
-            "stop_effect"
-          ]
+          "values": ["blink", "breathe", "okay", "channel_change", "finish_effect", "stop_effect"]
         },
         {
           "access": 3,
@@ -15055,21 +13736,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "touchlink",
-            "genLevelCtrl",
-            "lightingColorCtrl",
-            "manuSpecificTuya",
-            "genBasic"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genIdentify", "genGroups", "genScenes", "genOnOff", "touchlink", "genLevelCtrl", "lightingColorCtrl", "manuSpecificTuya", "genBasic"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [
           {
@@ -15100,9 +13768,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -15251,19 +13917,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "65535",
-            "msTemperatureMeasurement",
-            "msPressureMeasurement",
-            "msRelativeHumidity"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "65535"
-          ]
+          "input": ["genBasic", "genIdentify", "65535", "msTemperatureMeasurement", "msPressureMeasurement", "msRelativeHumidity"],
+          "output": ["genBasic", "genGroups", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -15413,19 +14068,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "65535",
-            "msTemperatureMeasurement",
-            "msPressureMeasurement",
-            "msRelativeHumidity"
-          ],
-          "output": [
-            "genBasic",
-            "genGroups",
-            "65535"
-          ]
+          "input": ["genBasic", "genIdentify", "65535", "msTemperatureMeasurement", "msPressureMeasurement", "msRelativeHumidity"],
+          "output": ["genBasic", "genGroups", "65535"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -15491,13 +14135,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify"
-          ],
-          "output": [
-            "genBasic"
-          ]
+          "input": ["genBasic", "genIdentify"],
+          "output": ["genBasic"]
         },
         "configured_reportings": [
           {
@@ -15514,9 +14153,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -15810,21 +14447,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genDeviceTempCfg",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "genAlarms",
-            "seMetering",
-            "haElectricalMeasurement"
-          ],
-          "output": [
-            "genTime",
-            "genOta"
-          ]
+          "input": ["genBasic", "genDeviceTempCfg", "genIdentify", "genGroups", "genScenes", "genOnOff", "genAlarms", "seMetering", "haElectricalMeasurement"],
+          "output": ["genTime", "genOta"]
         },
         "configured_reportings": [
           {
@@ -15857,9 +14481,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -15914,14 +14536,7 @@
           "name": "effect",
           "property": "effect",
           "type": "enum",
-          "values": [
-            "blink",
-            "breathe",
-            "okay",
-            "channel_change",
-            "finish_effect",
-            "stop_effect"
-          ]
+          "values": ["blink", "breathe", "okay", "channel_change", "finish_effect", "stop_effect"]
         },
         {
           "access": 7,
@@ -15931,12 +14546,7 @@
           "name": "power_on_behavior",
           "property": "power_on_behavior",
           "type": "enum",
-          "values": [
-            "off",
-            "on",
-            "toggle",
-            "previous"
-          ]
+          "values": ["off", "on", "toggle", "previous"]
         },
         {
           "access": 5,
@@ -16125,21 +14735,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "genLevelCtrl",
-            "seMetering",
-            "haElectricalMeasurement",
-            "haDiagnostic",
-            "touchlink"
-          ],
-          "output": [
-            "genOta"
-          ]
+          "input": ["genBasic", "genIdentify", "genGroups", "genScenes", "genOnOff", "genLevelCtrl", "seMetering", "haElectricalMeasurement", "haDiagnostic", "touchlink"],
+          "output": ["genOta"]
         },
         "configured_reportings": [
           {
@@ -16182,10 +14779,7 @@
             "cluster": "seMetering",
             "maximum_report_interval": 65000,
             "minimum_report_interval": 10,
-            "reportable_change": [
-              0,
-              360000
-            ]
+            "reportable_change": [0, 360000]
           }
         ],
         "scenes": []
@@ -16193,12 +14787,8 @@
       "242": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "greenPower"
-          ],
-          "output": [
-            "greenPower"
-          ]
+          "input": ["greenPower"],
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -16254,14 +14844,7 @@
           "name": "effect",
           "property": "effect",
           "type": "enum",
-          "values": [
-            "blink",
-            "breathe",
-            "okay",
-            "channel_change",
-            "finish_effect",
-            "stop_effect"
-          ]
+          "values": ["blink", "breathe", "okay", "channel_change", "finish_effect", "stop_effect"]
         },
         {
           "access": 7,
@@ -16271,12 +14854,7 @@
           "name": "power_on_behavior",
           "property": "power_on_behavior",
           "type": "enum",
-          "values": [
-            "off",
-            "on",
-            "toggle",
-            "previous"
-          ]
+          "values": ["off", "on", "toggle", "previous"]
         },
         {
           "access": 5,
@@ -16465,21 +15043,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "genLevelCtrl",
-            "seMetering",
-            "haElectricalMeasurement",
-            "haDiagnostic",
-            "touchlink"
-          ],
-          "output": [
-            "genOta"
-          ]
+          "input": ["genBasic", "genIdentify", "genGroups", "genScenes", "genOnOff", "genLevelCtrl", "seMetering", "haElectricalMeasurement", "haDiagnostic", "touchlink"],
+          "output": ["genOta"]
         },
         "configured_reportings": [
           {
@@ -16522,10 +15087,7 @@
             "cluster": "seMetering",
             "maximum_report_interval": 65000,
             "minimum_report_interval": 10,
-            "reportable_change": [
-              0,
-              360000
-            ]
+            "reportable_change": [0, 360000]
           }
         ],
         "scenes": []
@@ -16533,12 +15095,8 @@
       "242": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "greenPower"
-          ],
-          "output": [
-            "greenPower"
-          ]
+          "input": ["greenPower"],
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -16594,14 +15152,7 @@
           "name": "effect",
           "property": "effect",
           "type": "enum",
-          "values": [
-            "blink",
-            "breathe",
-            "okay",
-            "channel_change",
-            "finish_effect",
-            "stop_effect"
-          ]
+          "values": ["blink", "breathe", "okay", "channel_change", "finish_effect", "stop_effect"]
         },
         {
           "access": 7,
@@ -16611,12 +15162,7 @@
           "name": "power_on_behavior",
           "property": "power_on_behavior",
           "type": "enum",
-          "values": [
-            "off",
-            "on",
-            "toggle",
-            "previous"
-          ]
+          "values": ["off", "on", "toggle", "previous"]
         },
         {
           "access": 5,
@@ -16805,21 +15351,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "genLevelCtrl",
-            "seMetering",
-            "haElectricalMeasurement",
-            "haDiagnostic",
-            "touchlink"
-          ],
-          "output": [
-            "genOta"
-          ]
+          "input": ["genBasic", "genIdentify", "genGroups", "genScenes", "genOnOff", "genLevelCtrl", "seMetering", "haElectricalMeasurement", "haDiagnostic", "touchlink"],
+          "output": ["genOta"]
         },
         "configured_reportings": [
           {
@@ -16862,10 +15395,7 @@
             "cluster": "seMetering",
             "maximum_report_interval": 65000,
             "minimum_report_interval": 10,
-            "reportable_change": [
-              0,
-              360000
-            ]
+            "reportable_change": [0, 360000]
           }
         ],
         "scenes": []
@@ -16873,12 +15403,8 @@
       "242": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "greenPower"
-          ],
-          "output": [
-            "greenPower"
-          ]
+          "input": ["greenPower"],
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -16934,14 +15460,7 @@
           "name": "effect",
           "property": "effect",
           "type": "enum",
-          "values": [
-            "blink",
-            "breathe",
-            "okay",
-            "channel_change",
-            "finish_effect",
-            "stop_effect"
-          ]
+          "values": ["blink", "breathe", "okay", "channel_change", "finish_effect", "stop_effect"]
         },
         {
           "access": 7,
@@ -16951,12 +15470,7 @@
           "name": "power_on_behavior",
           "property": "power_on_behavior",
           "type": "enum",
-          "values": [
-            "off",
-            "on",
-            "toggle",
-            "previous"
-          ]
+          "values": ["off", "on", "toggle", "previous"]
         },
         {
           "access": 5,
@@ -17145,21 +15659,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "genLevelCtrl",
-            "seMetering",
-            "haElectricalMeasurement",
-            "haDiagnostic",
-            "touchlink"
-          ],
-          "output": [
-            "genOta"
-          ]
+          "input": ["genBasic", "genIdentify", "genGroups", "genScenes", "genOnOff", "genLevelCtrl", "seMetering", "haElectricalMeasurement", "haDiagnostic", "touchlink"],
+          "output": ["genOta"]
         },
         "configured_reportings": [
           {
@@ -17202,10 +15703,7 @@
             "cluster": "seMetering",
             "maximum_report_interval": 65000,
             "minimum_report_interval": 10,
-            "reportable_change": [
-              0,
-              360000
-            ]
+            "reportable_change": [0, 360000]
           }
         ],
         "scenes": []
@@ -17213,12 +15711,8 @@
       "242": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "greenPower"
-          ],
-          "output": [
-            "greenPower"
-          ]
+          "input": ["greenPower"],
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -17265,12 +15759,7 @@
           "name": "power_on_behavior",
           "property": "power_on_behavior",
           "type": "enum",
-          "values": [
-            "off",
-            "on",
-            "toggle",
-            "previous"
-          ]
+          "values": ["off", "on", "toggle", "previous"]
         },
         {
           "access": 1,
@@ -17331,18 +15820,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "haDiagnostic",
-            "touchlink"
-          ],
-          "output": [
-            "genOta"
-          ]
+          "input": ["genBasic", "genIdentify", "genGroups", "genScenes", "genOnOff", "haDiagnostic", "touchlink"],
+          "output": ["genOta"]
         },
         "configured_reportings": [
           {
@@ -17358,12 +15837,8 @@
       "242": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "greenPower"
-          ],
-          "output": [
-            "greenPower"
-          ]
+          "input": ["greenPower"],
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -17481,16 +15956,7 @@
           "name": "effect",
           "property": "effect",
           "type": "enum",
-          "values": [
-            "blink",
-            "breathe",
-            "okay",
-            "channel_change",
-            "finish_effect",
-            "stop_effect",
-            "colorloop",
-            "stop_colorloop"
-          ]
+          "values": ["blink", "breathe", "okay", "channel_change", "finish_effect", "stop_effect", "colorloop", "stop_colorloop"]
         },
         {
           "access": 3,
@@ -17509,11 +15975,7 @@
           "name": "color_power_on_behavior",
           "property": "color_power_on_behavior",
           "type": "enum",
-          "values": [
-            "initial",
-            "previous",
-            "cutomized"
-          ]
+          "values": ["initial", "previous", "cutomized"]
         },
         {
           "access": 1,
@@ -17593,20 +16055,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "touchlink",
-            "genLevelCtrl",
-            "lightingColorCtrl"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genBasic", "genIdentify", "genGroups", "genScenes", "genOnOff", "touchlink", "genLevelCtrl", "lightingColorCtrl"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [
           {
@@ -17644,9 +16094,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -17763,16 +16211,7 @@
           "name": "effect",
           "property": "effect",
           "type": "enum",
-          "values": [
-            "blink",
-            "breathe",
-            "okay",
-            "channel_change",
-            "finish_effect",
-            "stop_effect",
-            "colorloop",
-            "stop_colorloop"
-          ]
+          "values": ["blink", "breathe", "okay", "channel_change", "finish_effect", "stop_effect", "colorloop", "stop_colorloop"]
         },
         {
           "access": 3,
@@ -17791,11 +16230,7 @@
           "name": "color_power_on_behavior",
           "property": "color_power_on_behavior",
           "type": "enum",
-          "values": [
-            "initial",
-            "previous",
-            "cutomized"
-          ]
+          "values": ["initial", "previous", "cutomized"]
         },
         {
           "access": 1,
@@ -17850,21 +16285,8 @@
       "1": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "touchlink",
-            "genLevelCtrl",
-            "lightingColorCtrl",
-            "manuSpecificTuya"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genBasic", "genIdentify", "genGroups", "genScenes", "genOnOff", "touchlink", "genLevelCtrl", "lightingColorCtrl", "manuSpecificTuya"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -17873,9 +16295,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -17992,16 +16412,7 @@
           "name": "effect",
           "property": "effect",
           "type": "enum",
-          "values": [
-            "blink",
-            "breathe",
-            "okay",
-            "channel_change",
-            "finish_effect",
-            "stop_effect",
-            "colorloop",
-            "stop_colorloop"
-          ]
+          "values": ["blink", "breathe", "okay", "channel_change", "finish_effect", "stop_effect", "colorloop", "stop_colorloop"]
         },
         {
           "access": 3,
@@ -18020,11 +16431,7 @@
           "name": "color_power_on_behavior",
           "property": "color_power_on_behavior",
           "type": "enum",
-          "values": [
-            "initial",
-            "previous",
-            "cutomized"
-          ]
+          "values": ["initial", "previous", "cutomized"]
         },
         {
           "access": 1,
@@ -18096,21 +16503,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "touchlink",
-            "genLevelCtrl",
-            "lightingColorCtrl",
-            "manuSpecificTuya"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genBasic", "genIdentify", "genGroups", "genScenes", "genOnOff", "touchlink", "genLevelCtrl", "lightingColorCtrl", "manuSpecificTuya"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [
           {
@@ -18134,9 +16528,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -18253,16 +16645,7 @@
           "name": "effect",
           "property": "effect",
           "type": "enum",
-          "values": [
-            "blink",
-            "breathe",
-            "okay",
-            "channel_change",
-            "finish_effect",
-            "stop_effect",
-            "colorloop",
-            "stop_colorloop"
-          ]
+          "values": ["blink", "breathe", "okay", "channel_change", "finish_effect", "stop_effect", "colorloop", "stop_colorloop"]
         },
         {
           "access": 3,
@@ -18281,11 +16664,7 @@
           "name": "color_power_on_behavior",
           "property": "color_power_on_behavior",
           "type": "enum",
-          "values": [
-            "initial",
-            "previous",
-            "cutomized"
-          ]
+          "values": ["initial", "previous", "cutomized"]
         },
         {
           "access": 1,
@@ -18357,21 +16736,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "touchlink",
-            "genLevelCtrl",
-            "lightingColorCtrl",
-            "manuSpecificTuya"
-          ],
-          "output": [
-            "genOta",
-            "genTime"
-          ]
+          "input": ["genBasic", "genIdentify", "genGroups", "genScenes", "genOnOff", "touchlink", "genLevelCtrl", "lightingColorCtrl", "manuSpecificTuya"],
+          "output": ["genOta", "genTime"]
         },
         "configured_reportings": [
           {
@@ -18395,9 +16761,7 @@
         "bindings": [],
         "clusters": {
           "input": [],
-          "output": [
-            "greenPower"
-          ]
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -18443,12 +16807,7 @@
           "name": "power_on_behavior",
           "property": "power_on_behavior",
           "type": "enum",
-          "values": [
-            "off",
-            "on",
-            "toggle",
-            "previous"
-          ]
+          "values": ["off", "on", "toggle", "previous"]
         },
         {
           "access": 1,
@@ -18493,18 +16852,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "haDiagnostic",
-            "touchlink"
-          ],
-          "output": [
-            "genOta"
-          ]
+          "input": ["genBasic", "genIdentify", "genGroups", "genScenes", "genOnOff", "haDiagnostic", "touchlink"],
+          "output": ["genOta"]
         },
         "configured_reportings": [
           {
@@ -18520,12 +16869,8 @@
       "242": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "greenPower"
-          ],
-          "output": [
-            "greenPower"
-          ]
+          "input": ["greenPower"],
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
@@ -18572,12 +16917,7 @@
           "name": "power_on_behavior",
           "property": "power_on_behavior",
           "type": "enum",
-          "values": [
-            "off",
-            "on",
-            "toggle",
-            "previous"
-          ]
+          "values": ["off", "on", "toggle", "previous"]
         },
         {
           "access": 1,
@@ -18622,18 +16962,8 @@
           }
         ],
         "clusters": {
-          "input": [
-            "genBasic",
-            "genIdentify",
-            "genGroups",
-            "genScenes",
-            "genOnOff",
-            "haDiagnostic",
-            "touchlink"
-          ],
-          "output": [
-            "genOta"
-          ]
+          "input": ["genBasic", "genIdentify", "genGroups", "genScenes", "genOnOff", "haDiagnostic", "touchlink"],
+          "output": ["genOta"]
         },
         "configured_reportings": [
           {
@@ -18649,12 +16979,8 @@
       "242": {
         "bindings": [],
         "clusters": {
-          "input": [
-            "greenPower"
-          ],
-          "output": [
-            "greenPower"
-          ]
+          "input": ["greenPower"],
+          "output": ["greenPower"]
         },
         "configured_reportings": [],
         "scenes": []
