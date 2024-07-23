@@ -11,8 +11,8 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [package]: Update dependencies.
-- [matterbridge]: Added PluginsManager.
-- [matterbridge]: Removed timeout on cleanup (saved 5 seconds on restart and shutdown).
+- [matterbridge]: Added PluginsManager.ts.
+- [matterbridge]: Removed timeout on cleanup.
 - [matterbridge]: Removed write cache and expired interval for node storage.
 - [matterbridge]: Added matterbridgeTypes.ts
 - [frontend]: The frontend reconnects to WebSocket when the connection is closed.
