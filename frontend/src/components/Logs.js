@@ -2,14 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import WebSocketComponent from './WebSocketComponent';
 import TextField from '@mui/material/TextField';
-
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 
 function Logs() {
   const [wssHost, setWssHost] = useState(null);
-  const [debugLevel, setDebugLevel] = useState(localStorage.getItem('logFilterLevel')??'debug');
+  const [debugLevel, setDebugLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
   const [searchCriteria, setSearchCriteria] = useState(localStorage.getItem('logFilterSearch')??'*');
 
   const handleChangeLevel = (event) => {
@@ -45,10 +44,12 @@ function Logs() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <InputLabel id="select-level">Filter by debug level</InputLabel>
           <Select style={{ height: '40px' }} labelId="select-level" id="debug-level" value={debugLevel} onChange={handleChangeLevel}>
-            <MenuItem value='debug' >Debug</MenuItem>
-            <MenuItem value='info' >Info</MenuItem>
-            <MenuItem value='warn' >Warn</MenuItem>
-            <MenuItem value='error' >Error</MenuItem>
+            <MenuItem value='debug'>Debug</MenuItem>
+            <MenuItem value='info'>Info</MenuItem>
+            <MenuItem value='notice'>Notice</MenuItem>
+            <MenuItem value='warn'>Warn</MenuItem>
+            <MenuItem value='error'>Error</MenuItem>
+            <MenuItem value='fatal'>Fatal</MenuItem>
           </Select>
           <InputLabel id="search">Filter by text</InputLabel>
           <TextField style={{ height: '40px', width: '300px'}} size="small" id="logsearch" label="Enter search criteria" variant="outlined" value={searchCriteria} onChange={handleChangeSearch}/>

@@ -1,10 +1,11 @@
- 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-console */
 import { useEffect, useRef, useState, useCallback } from 'react';
 
-function WebSocketUse(wssHost, debugLevel, searchCriteria) {
+function WebSocketUse(wssHost) {
+    const [debugLevel, setDebugLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
+    const [searchCriteria, setSearchCriteria] = useState(localStorage.getItem('logFilterSearch')??'*');
     const [messages, setMessages] = useState([]);
-    // const [retryCount, setRetryCount] = useState(0);
     const ws = useRef(null);
     const retryCountRef = useRef(1);
     const maxMessages = 1000;
@@ -30,30 +31,35 @@ function WebSocketUse(wssHost, debugLevel, searchCriteria) {
         ws.current = new WebSocket(wssHost);
         ws.current.onmessage = (event) => {
             const msg = JSON.parse(event.data);
+            console.log(`WebSocket message: ${msg.level} - ${msg.time} - ${msg.name}: ${msg.message}`);
             // console.log(`useWebSocket prefilter: debugLevel: '${debugLevel}'-'${msg.subType}' searchCriteria: '${searchCriteria}'`);
-            const normalSubTypes = ['debug', 'info', 'warn', 'error'];
-            if(normalSubTypes.includes(msg.subType)) {
-                if(debugLevel === 'info' && msg.subType === 'debug') return;
-                if(debugLevel === 'warn' && (msg.subType === 'debug' || msg.subType === 'info')) return;
-                if(debugLevel === 'error' && (msg.subType === 'debug' || msg.subType === 'info' || msg.subType === 'warn')) return;
+            const normalLevels = ['debug', 'info', 'notice', 'warn', 'error', 'fatal'];
+            if(normalLevels.includes(msg.level)) {
+                if(debugLevel === 'info' && msg.level === 'debug') return;
+                if(debugLevel === 'notice' && (msg.level === 'debug' || msg.level === 'info')) return;
+                if(debugLevel === 'warn' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice')) return;
+                if(debugLevel === 'error' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice' || msg.level === 'warn')) return;
+                if(debugLevel === 'fatal' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice' || msg.level === 'warn' || msg.level === 'error')) return;
             }
             if( searchCriteria !== '*' && !msg.message.toLowerCase().includes(searchCriteria.toLowerCase()) && !msg.type.toLowerCase().includes(searchCriteria.toLowerCase()) ) return;
             // console.log(`useWebSocket afterfilter: debugLevel: '${debugLevel}'-'${msg.subType}' searchCriteria: '${searchCriteria}'`);
 
             setMessages(prevMessages => {
                 // Create new array with new message
-                const now = new Date();
                 // const timeString = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}.${now.getMilliseconds().toString().padStart(3,'0')}`;
-                const timeString = `<span style="color: #505050;">[${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}.${now.getMilliseconds().toString().padStart(3,'0')}]</span>`;
-                const getsubTypeMessageBgColor = (subType) => {
-                    switch (subType.toLowerCase()) {
+                const timeString = `<span style="color: #505050;">[${msg.time}]</span>`;
+                const getsubTypeMessageBgColor = (level) => {
+                    switch (level.toLowerCase()) {
                         case 'debug':
                             return 'gray';
                         case 'info':
+                            return '#267fb7';
+                        case 'notice':
                             return 'green';
                         case 'warn':
                             return 'yellow';
                         case 'error':
+                        case 'fatal':    
                             return 'red';
                         case 'spawn':
                             return '#ff00d0';
@@ -61,16 +67,16 @@ function WebSocketUse(wssHost, debugLevel, searchCriteria) {
                             return 'lightblue'; // Default color if none of the cases match
                     }
                 };                
-                const getsubTypeMessageColor = (subType) => {
-                    switch (subType.toLowerCase()) {
+                const getsubTypeMessageColor = (level) => {
+                    switch (level.toLowerCase()) {
                         case 'warn':
                             return 'black';
                         default:
                             return 'white'; // Default color if none of the cases match#27509b 09516d
                     }
                 };                
-                const coloredSubType = `<span style="background-color: ${getsubTypeMessageBgColor(msg.subType)}; color: ${getsubTypeMessageColor(msg.subType)}; padding: 1px 5px; font-size: 12px; border-radius: 3px;">${msg.subType}</span>`;
-                const newMessage = `${coloredSubType} - ${timeString} <span style="color: #09516d;">[${msg.type}]</span>: ${msg.message}`;
+                const coloredSubType = `<span style="background-color: ${getsubTypeMessageBgColor(msg.level)}; color: ${getsubTypeMessageColor(msg.level)}; padding: 1px 5px; font-size: 12px; border-radius: 3px;">${msg.level}</span>`;
+                const newMessage = `${coloredSubType} - ${timeString} <span style="color: #09516d;">[${msg.name}]</span>: ${msg.message}`;
                 const newMessages = [...prevMessages, newMessage];
                 // Check if the new array length exceeds the maximum allowed
                 if (newMessages.length > maxMessages) {

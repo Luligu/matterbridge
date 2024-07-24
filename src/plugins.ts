@@ -4,7 +4,7 @@
  * @file plugins.ts
  * @author Luca Liguori
  * @date 2024-07-14
- * @version 1.2.8
+ * @version 1.0.8
  *
  * Copyright 2024 Luca Liguori.
  *
@@ -22,7 +22,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { AnsiLogger, BLUE, db, er, nf, pl, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, db, er, LogLevel, nf, pl, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 import { NodeStorage } from 'node-persist-manager';
@@ -38,7 +38,7 @@ const plg = '\u001B[38;5;33m';
 const dev = '\u001B[38;5;79m';
 const typ = '\u001B[38;5;207m';
 
-export class Plugins {
+export class PluginManager {
   private _plugins = new Map<string, RegisteredPlugin>();
   private nodeContext: NodeStorage;
   private matterbridge: Matterbridge;
@@ -48,7 +48,7 @@ export class Plugins {
     this.matterbridge = matterbridge;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.nodeContext = (matterbridge as any).nodeContext;
-    this.log = new AnsiLogger({ logName: 'MatterbridgePluginsManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: matterbridge.debugEnabled });
+    this.log = new AnsiLogger({ logName: 'PluginManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: matterbridge.log.logLevel });
     this.log.debug('Matterbridge plugin manager starting...');
   }
 
@@ -383,7 +383,7 @@ export class Plugins {
       // Call the default export function of the plugin, passing this MatterBridge instance, the log and the config
       if (pluginInstance.default) {
         const config: PlatformConfig = await this.loadConfig(plugin);
-        const log = new AnsiLogger({ logName: plugin.description ?? 'No description', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: (config.debug as boolean) ?? false });
+        const log = new AnsiLogger({ logName: plugin.description ?? 'No description', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: (config.debug as boolean) ? LogLevel.DEBUG : this.matterbridge.log.logLevel });
         const platform = pluginInstance.default(this.matterbridge, log, config) as MatterbridgePlatform;
         config.type = platform.type;
         platform.name = packageJson.name;
@@ -401,7 +401,7 @@ export class Plugins {
         plugin.configJson = config;
         plugin.schemaJson = await this.loadSchema(plugin);
 
-        this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${platform.type}${db} (entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
+        this.log.notice(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${platform.type}${db} (entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
 
         if (start) await this.start(plugin, message, false);
 
@@ -440,10 +440,10 @@ export class Plugins {
       this.log.error(`Plugin ${plg}${plugin.name}${er} already started`);
       return undefined;
     }
-    this.log.info(`Starting plugin ${plg}${plugin.name}${db} type ${typ}${plugin.type}${db}`);
+    this.log.info(`Starting plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
     try {
       await plugin.platform.onStart(message);
-      this.log.info(`Started plugin ${plg}${plugin.name}${db} type ${typ}${plugin.type}${db}`);
+      this.log.notice(`Started plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
       plugin.started = true;
       if (configure) await this.configure(plugin);
       return plugin;
@@ -480,7 +480,7 @@ export class Plugins {
     this.log.info(`Configuring plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
     try {
       await plugin.platform.onConfigure();
-      this.log.info(`Configured plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
+      this.log.notice(`Configured plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
       plugin.configured = true;
       await this.saveConfigFromPlugin(plugin);
       return plugin;
@@ -524,7 +524,7 @@ export class Plugins {
       }
       plugin.registeredDevices = undefined;
       plugin.addedDevices = undefined;
-      this.log.info(`Shutdown of plugin ${plg}${plugin.name}${nf} completed`);
+      this.log.notice(`Shutdown of plugin ${plg}${plugin.name}${nf} completed`);
       return plugin;
     } catch (err) {
       this.log.error(`Failed to shut down plugin ${plg}${plugin.name}${er}: ${err}`);

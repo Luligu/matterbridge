@@ -84,7 +84,7 @@ import { MatterHistory, Sensitivity, WeatherTrend, TemperatureDisplayUnits } fro
 import { EveHistory, EveHistoryCluster } from 'matter-history';
 
 import { AirQuality, AirQualityCluster } from './cluster/AirQualityCluster.js';
-import { AnsiLogger, CYAN, TimestampFormat, db, hk, zb } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, LogLevel, TimestampFormat, db, hk, zb } from 'node-ansi-logger';
 import { createHash } from 'crypto';
 import { TvocMeasurement, TvocMeasurementCluster } from './cluster/TvocCluster.js';
 import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
@@ -313,7 +313,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (Array.isArray(definition)) firstDefinition = definition[0];
     else firstDefinition = definition;
     super(firstDefinition, options);
-    this.log = new AnsiLogger({ logName: 'MatterbridgeDevice', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: debug });
+    this.log = new AnsiLogger({ logName: 'MatterbridgeDevice', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.debug(`new MatterbridgeDevice with deviceType: ${zb}${firstDefinition.code}${db}-${zb}${firstDefinition.name}${db}`);
     if (Array.isArray(definition)) {
       definition.forEach((deviceType) => {

@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
+## [1.4.1] - 2024-07-23
+
+### Added
+
+- [matterbridge]: Added logger levels: debug, info, notice, warn, error, fatal (parameter -logger with default info)
+
+### Changed
+
+- [package]: Update dependencies.
+- [dependencies]: Update matter.js to 0.9.4.
+
 ## [1.4.0] - 2024-07-23
 
 ### Added
@@ -18,7 +29,6 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: The frontend reconnects to WebSocket when the connection is closed.
 - [frontend]: Removed QR button for plugins in error and not enabled.
 - [frontend]: The Logs page and the log in the Home page persist till you close or reload the frontend (the last 1000 lines are available).
-
 
 ### Fixed
 

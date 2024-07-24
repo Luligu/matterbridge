@@ -10,7 +10,7 @@ jest.mock('@project-chip/matter-node.js/util');
 import { AnsiLogger, db, er, LogLevel, nf, pl, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
-import { Plugins } from './plugins.js';
+import { PluginManager } from './plugins.js';
 import { exec, execSync } from 'child_process';
 import { getMacAddress, waiter } from './utils/utils.js';
 import path from 'path';
@@ -23,7 +23,7 @@ const typ = '\u001B[38;5;207m';
 
 describe('PluginsManager', () => {
   let matterbridge: Matterbridge;
-  let plugins: Plugins;
+  let plugins: PluginManager;
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let loggerLogSpy: jest.SpiedFunction<(level: LogLevel, message: string, ...parameters: any[]) => void>;
 
@@ -49,7 +49,7 @@ describe('PluginsManager', () => {
   });
 
   test('constructor initializes correctly', () => {
-    expect(plugins).toBeInstanceOf(Plugins);
+    expect(plugins).toBeInstanceOf(PluginManager);
   });
 
   test('clear and load from storage', async () => {
@@ -272,7 +272,7 @@ describe('PluginsManager', () => {
 
 describe('PluginsManager load/start/configure/shutdown', () => {
   let matterbridge: Matterbridge;
-  let plugins: Plugins;
+  let plugins: PluginManager;
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let loggerLogSpy: jest.SpiedFunction<(level: LogLevel, message: string, ...parameters: any[]) => void>;
 
@@ -303,7 +303,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
   }, 60000);
 
   test('constructor initializes correctly', () => {
-    expect(plugins).toBeInstanceOf(Plugins);
+    expect(plugins).toBeInstanceOf(PluginManager);
   });
 
   test('clear and load from storage', async () => {
