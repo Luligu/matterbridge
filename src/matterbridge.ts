@@ -546,8 +546,8 @@ export class Matterbridge extends EventEmitter {
       await this.matterServer.addCommissioningServer(this.commissioningServer, { uniqueStorageKey: 'Matterbridge' });
 
       for (const plugin of this.plugins) {
-        plugin.configJson = await this.plugins.loadConfig(plugin); // this.loadPluginConfig(plugin);
-        plugin.schemaJson = await this.plugins.loadSchema(plugin); // this.loadPluginSchema(plugin);
+        plugin.configJson = await this.plugins.loadConfig(plugin);
+        plugin.schemaJson = await this.plugins.loadSchema(plugin);
         // Check if the plugin is available
         if (!(await this.plugins.resolve(plugin.path))) {
           this.log.error(`Plugin ${plg}${plugin.name}${er} not found. Disabling it.`);
@@ -587,8 +587,8 @@ export class Matterbridge extends EventEmitter {
       this.matterServer = this.createMatterServer(this.storageManager);
 
       for (const plugin of this.plugins) {
-        plugin.configJson = await this.plugins.loadConfig(plugin); // this.loadPluginConfig(plugin);
-        plugin.schemaJson = await this.plugins.loadSchema(plugin); // this.loadPluginSchema(plugin);
+        plugin.configJson = await this.plugins.loadConfig(plugin);
+        plugin.schemaJson = await this.plugins.loadSchema(plugin);
         // Check if the plugin is available
         if (!(await this.plugins.resolve(plugin.path))) {
           this.log.error(`Plugin ${plg}${plugin.name}${er} not found. Disabling it.`);
@@ -2422,7 +2422,7 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Sanitizes the fabric information by converting bigint properties to string cause res..
+   * Sanitizes the fabric information by converting bigint properties to string cause res.json doesn't know bigint.
    *
    * @param fabricInfo - The array of exposed fabric information objects.
    * @returns An array of sanitized exposed fabric information objects.

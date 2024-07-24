@@ -7,7 +7,7 @@ import { jest } from '@jest/globals';
 
 jest.mock('@project-chip/matter-node.js/util');
 
-import { AnsiLogger, db, er, LogLevel, nf, pl, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+import { AnsiLogger, db, er, LogLevel, nf, nt, pl, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 import { PluginManager } from './plugins.js';
@@ -576,8 +576,8 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     if (!plugin) return;
 
     plugin = await plugins.start(plugin, 'Test with Jest', false);
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Starting plugin ${plg}${plugin?.name}${db} type ${typ}${plugin?.type}${db}`);
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Started plugin ${plg}${plugin?.name}${db} type ${typ}${plugin?.type}${db}`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Starting plugin ${plg}${plugin?.name}${nf} type ${typ}${plugin?.type}${nf}`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Started plugin ${plg}${plugin?.name}${nt} type ${typ}${plugin?.type}${nt}`);
     if (!plugin) return;
     await waiter(
       'Plugin to start',
@@ -604,7 +604,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     if (!plugin) return;
     plugin = await plugins.configure(plugin);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Configuring plugin ${plg}${plugin?.name}${nf} type ${typ}${plugin?.type}${nf}`);
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Configured plugin ${plg}${plugin?.name}${nf} type ${typ}${plugin?.type}${nf}`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Configured plugin ${plg}${plugin?.name}${nt} type ${typ}${plugin?.type}${nt}`);
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
     /*
@@ -637,7 +637,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Shutting down plugin ${plg}${plugin.name}${nf}: Test with Jest...`);
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Shutdown of plugin ${plg}${plugin.name}${nf} completed`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Shutdown of plugin ${plg}${plugin.name}${nt} completed`);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Removing all bridged devices for plugin ${plg}${plugin.name}${db}`);
     if (!plugin) return;
     await waiter(

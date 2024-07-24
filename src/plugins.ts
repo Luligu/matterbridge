@@ -22,7 +22,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { AnsiLogger, BLUE, db, er, LogLevel, nf, pl, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, db, er, LogLevel, nf, nt, pl, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 import { NodeStorage } from 'node-persist-manager';
@@ -443,7 +443,7 @@ export class PluginManager {
     this.log.info(`Starting plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
     try {
       await plugin.platform.onStart(message);
-      this.log.notice(`Started plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
+      this.log.notice(`Started plugin ${plg}${plugin.name}${nt} type ${typ}${plugin.type}${nt}`);
       plugin.started = true;
       if (configure) await this.configure(plugin);
       return plugin;
@@ -480,7 +480,7 @@ export class PluginManager {
     this.log.info(`Configuring plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
     try {
       await plugin.platform.onConfigure();
-      this.log.notice(`Configured plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
+      this.log.notice(`Configured plugin ${plg}${plugin.name}${nt} type ${typ}${plugin.type}${nt}`);
       plugin.configured = true;
       await this.saveConfigFromPlugin(plugin);
       return plugin;
@@ -524,7 +524,7 @@ export class PluginManager {
       }
       plugin.registeredDevices = undefined;
       plugin.addedDevices = undefined;
-      this.log.notice(`Shutdown of plugin ${plg}${plugin.name}${nf} completed`);
+      this.log.notice(`Shutdown of plugin ${plg}${plugin.name}${nt} completed`);
       return plugin;
     } catch (err) {
       this.log.error(`Failed to shut down plugin ${plg}${plugin.name}${er}: ${err}`);
