@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // Header.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { Tooltip, Button, createTheme, Backdrop, CircularProgress, ThemeProvider } from '@mui/material';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
@@ -9,6 +9,7 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
 import { sendCommandToMatterbridge } from '../App';
+import { WebSocketContext } from './WebSocketContext';
 
 export const theme = createTheme({
   components: {
@@ -33,6 +34,7 @@ function Header() {
   const [pairingCode, setPairingCode] = useState('');
   const [systemInfo, setSystemInfo] = useState({});
   const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
+  const { messages, sendMessage, logMessage } = useContext(WebSocketContext);
 
   const handleClose = () => {
     setOpen(false);
@@ -52,6 +54,7 @@ function Header() {
 
 
   const handleUpdateClick = () => {
+    logMessage('Matterbridge', `Updating matterbridge...`);
     sendCommandToMatterbridge('update','now');
     /*
     setOpen(true);
@@ -63,10 +66,13 @@ function Header() {
   };
 
   const handleRestartClick = () => {
-    if(matterbridgeInfo.restartMode==='')
+    logMessage('Matterbridge', `Restarting matterbridge...`);
+    if(matterbridgeInfo.restartMode==='') {
       sendCommandToMatterbridge('restart','now');
-    else
+    }
+    else {
       sendCommandToMatterbridge('shutdown','now');
+    }
     /*
     setOpen(true);
     setTimeout(() => {
@@ -77,6 +83,7 @@ function Header() {
   };
 
   const handleShutdownClick = () => {
+    logMessage('Matterbridge', `Shutting down matterbridge...`);
     sendCommandToMatterbridge('shutdown','now');
     /*
     setOpen(true);

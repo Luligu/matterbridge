@@ -57,10 +57,11 @@ function WebSocketUse(wssHost) {
                         case 'notice':
                             return 'green';
                         case 'warn':
-                            return 'yellow';
+                            return '#e9db18';
                         case 'error':
-                        case 'fatal':    
                             return 'red';
+                        case 'fatal':    
+                            return '#ff0000';
                         case 'spawn':
                             return '#ff00d0';
                         default:

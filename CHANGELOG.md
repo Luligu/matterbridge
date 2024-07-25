@@ -13,9 +13,9 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [package]: Update dependencies.
-- [logger]: Update node-ansi-logger to 2.0.5.
+- [logger]: Update node-ansi-logger to 2.0.6.
 - [storage]: Update node-persist-manager to 1.0.8.
-- [dependencies]: Update matter.js to 0.9.4.
+- [matter]: Update matter.js to 0.9.4.
 
 ## [1.4.0] - 2024-07-23
 
