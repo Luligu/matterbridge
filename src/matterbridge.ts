@@ -470,14 +470,14 @@ export class Matterbridge extends EventEmitter {
     }
 
     // Start the matter storage and create the matterbridge context
-    await this.startStorage('json', path.join(this.matterbridgeDirectory, this.matterStorageName));
+    await this.startMatterStorage('json', path.join(this.matterbridgeDirectory, this.matterStorageName));
     this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
     this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
 
     if (hasParameter('reset') && getParameter('reset') === undefined) {
       this.log.info('Resetting Matterbridge commissioning information...');
       await this.matterbridgeContext?.clearAll();
-      await this.stopStorage();
+      await this.stopMatterStorage();
       this.log.info('Reset done! Remove the device from the controller.');
       this.emit('shutdown');
       return;
@@ -495,7 +495,7 @@ export class Matterbridge extends EventEmitter {
       } else {
         this.log.warn(`Plugin ${plg}${getParameter('reset')}${wr} not registerd in matterbridge`);
       }
-      await this.stopStorage();
+      await this.stopMatterStorage();
       this.emit('shutdown');
       return;
     }
@@ -1030,8 +1030,8 @@ export class Matterbridge extends EventEmitter {
       // Closing matter
       await this.stopMatterServer();
 
-      // Closing storage
-      await this.stopStorage();
+      // Closing matter storage
+      await this.stopMatterStorage();
 
       // Serialize registeredDevices
       if (this.nodeStorage && this.nodeContext) {
@@ -1635,7 +1635,7 @@ export class Matterbridge extends EventEmitter {
    * @param {string} storageName - The name of the storage file.
    * @returns {Promise<void>} - A promise that resolves when the storage process is started.
    */
-  private async startStorage(storageType: string, storageName: string): Promise<void> {
+  private async startMatterStorage(storageType: string, storageName: string): Promise<void> {
     this.log.debug(`Starting ${storageType} storage ${CYAN}${storageName}${db}`);
     if (storageType === 'disk') {
       const storageDisk = new StorageBackendDisk(storageName);
@@ -1653,7 +1653,7 @@ export class Matterbridge extends EventEmitter {
       await this.storageManager.initialize();
       this.log.debug('Storage initialized');
       if (storageType === 'json') {
-        await this.backupJsonStorage(storageName, storageName.replace('.json', '') + '.backup.json');
+        await this.backupJsonMatterStorage(storageName, storageName.replace('.json', '') + '.backup.json');
       }
     } catch (error) {
       this.log.error(`Storage initialize() error! The file .matterbridge/${storageName} may be corrupted.`);
@@ -1668,7 +1668,7 @@ export class Matterbridge extends EventEmitter {
    * @param storageName - The name of the JSON storage file to be backed up.
    * @param backupName - The name of the backup file to be created.
    */
-  private async backupJsonStorage(storageName: string, backupName: string) {
+  private async backupJsonMatterStorage(storageName: string, backupName: string) {
     try {
       this.log.debug(`Making backup copy of ${storageName}`);
       await fs.copyFile(storageName, backupName);
@@ -1690,7 +1690,7 @@ export class Matterbridge extends EventEmitter {
    * Stops the matter storage.
    * @returns {Promise<void>} A promise that resolves when the storage is stopped.
    */
-  private async stopStorage(): Promise<void> {
+  private async stopMatterStorage(): Promise<void> {
     this.log.debug('Stopping storage');
     await this.storageManager?.close();
     this.log.debug('Storage closed');
@@ -2952,7 +2952,7 @@ export class Matterbridge extends EventEmitter {
         if (clusterServer.name === 'ColorControl' && clusterServer.isAttributeSupportedByName('colorTemperatureMireds')) attributes += `ColorTemp: ${Math.round(clusterServer.getColorTemperatureMiredsAttribute())} `;
         if (clusterServer.name === 'BooleanState') attributes += `Contact: ${clusterServer.getStateValueAttribute()} `;
 
-        if (clusterServer.name === 'BooleanStateConfiguration' && clusterServer.isAttributeSupportedByName('alarmsActive')) attributes += `Active alarm: ${stringify(clusterServer.getAlarmsActiveAttribute())} `;
+        if (clusterServer.name === 'BooleanStateConfiguration' && clusterServer.isAttributeSupportedByName('alarmsActive')) attributes += `Active alarms: ${stringify(clusterServer.getAlarmsActiveAttribute())} `;
 
         if (clusterServer.name === 'FanControl') attributes += `Mode: ${clusterServer.getFanModeAttribute()} Speed: ${clusterServer.getPercentCurrentAttribute()} `;
         if (clusterServer.name === 'FanControl' && clusterServer.isAttributeSupportedByName('speedCurrent')) attributes += `MultiSpeed: ${clusterServer.getSpeedCurrentAttribute()} `;
@@ -3020,7 +3020,7 @@ export class Matterbridge extends EventEmitter {
     Logger.format = Format.ANSI;
 
     // Start the storage and create matterbridgeContext
-    await this.startStorage('json', path.join(this.matterbridgeDirectory, this.matterStorageName));
+    await this.startMatterStorage('json', path.join(this.matterbridgeDirectory, this.matterStorageName));
     if (!this.storageManager) return false;
     this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge zigbee2MQTT', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'zigbee2MQTT Matter extension');
     if (!this.matterbridgeContext) return false;
@@ -3063,7 +3063,7 @@ export class Matterbridge extends EventEmitter {
     // this.matterbridgeContext?.createContext('SessionManager').clear();
 
     // Closing storage
-    await this.stopStorage();
+    await this.stopMatterStorage();
 
     this.log.info('Matter server stopped');
   }

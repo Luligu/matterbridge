@@ -1429,9 +1429,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Get a default Electrical Energy Measurement Cluster Server.
+   * Get a default Power Topology Cluster Server.
    *
-   * @param energy - The total consumption value.
    */
   getDefaultPowerTopologyClusterServer() {
     return ClusterServer(PowerTopologyCluster.with(PowerTopology.Feature.TreeTopology), {}, {}, {});
@@ -1544,7 +1543,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Creates a default Dummy Thread Network Diagnostics Cluster server.
-   * @deprecated This method is deprecated and is only for testing.
+   * @deprecated This method is deprecated and is only used for testing.
    *
    * @remarks
    * This method adds a cluster server used only to give the networkName to Eve app.

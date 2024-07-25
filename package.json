@@ -126,8 +126,8 @@
     "express": "^4.19.2",
     "https": "^1.0.0",
     "matter-history": "^1.1.5",
-    "node-ansi-logger": "^2.0.4",
-    "node-persist-manager": "^1.0.7",
+    "node-ansi-logger": "^2.0.6",
+    "node-persist-manager": "^1.0.8",
     "ws": "^8.18.0"
   },
   "devDependencies": {

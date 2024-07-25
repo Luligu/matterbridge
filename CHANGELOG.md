@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
-## [1.4.1] - 2024-07-23
+## [1.4.1] - 2024-07-26
 
 ### Added
 
@@ -13,6 +13,8 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [package]: Update dependencies.
+- [logger]: Update node-ansi-logger to 2.0.5.
+- [storage]: Update node-persist-manager to 1.0.8.
 - [dependencies]: Update matter.js to 0.9.4.
 
 ## [1.4.0] - 2024-07-23
