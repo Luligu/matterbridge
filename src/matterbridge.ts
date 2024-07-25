@@ -1237,6 +1237,7 @@ export class Matterbridge extends EventEmitter {
       this.log.info(`Removed bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
       if (plugin.addedDevices !== undefined) plugin.addedDevices--;
+      // Remove the commissioning server in childbridge mode
       if (plugin.registeredDevices === 0 && plugin.addedDevices === 0 && plugin.commissioningServer) {
         this.matterServer?.removeCommissioningServer(plugin.commissioningServer);
         plugin.commissioningServer = undefined;
@@ -1263,308 +1264,6 @@ export class Matterbridge extends EventEmitter {
       this.removeBridgedDevice(pluginName, registeredDevice.device);
     }
   }
-
-  /**
-   * Loads the schema for a plugin.
-   * If the schema file exists in the plugin directory, it reads the file and returns the parsed JSON data and delete the schema form .matterbridge.
-   * If the schema file does not exist, it creates a new schema with the default configuration and returns it.
-   *
-   * @param plugin - The plugin for which to load the schema.
-   * @returns A promise that resolves to the loaded or created schema.
-   */
-  /*
-  private async loadPluginSchema(plugin: RegisteredPlugin): Promise<PlatformSchema> {
-    let schemaFile = plugin.path.replace('package.json', `${plugin.name}.schema.json`);
-    try {
-      await fs.access(schemaFile);
-      const data = await fs.readFile(schemaFile, 'utf8');
-      const schema = JSON.parse(data) as PlatformSchema;
-      schema.title = plugin.description;
-      schema.description = plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author;
-      this.log.debug(`Schema file found: ${schemaFile}.`);
-      // this.log.debug(`Schema file found: ${schemaFile}.\nSchema:${rs}\n`, schema);
-      schemaFile = path.join(this.matterbridgeDirectory, `${plugin.name}.schema.json`);
-      try {
-        await fs.unlink(schemaFile);
-        this.log.debug(`Schema file ${schemaFile} deleted.`);
-      } catch (err) {
-        this.log.debug(`Schema file ${schemaFile} to delete not found.`);
-      }
-      return schema;
-    } catch (err) {
-      this.log.debug(`Schema file ${schemaFile} not found. Loading default schema.`);
-      const schema: PlatformSchema = {
-        title: plugin.description,
-        description: plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author,
-        type: 'object',
-        properties: {
-          name: {
-            description: 'Plugin name',
-            type: 'string',
-            readOnly: true,
-          },
-          type: {
-            description: 'Plugin type',
-            type: 'string',
-            readOnly: true,
-          },
-          debug: {
-            description: 'Enable the debug for the plugin (development only)',
-            type: 'boolean',
-            default: false,
-          },
-          unregisterOnShutdown: {
-            description: 'Unregister all devices on shutdown (development only)',
-            type: 'boolean',
-            default: false,
-          },
-        },
-      };
-      return schema;
-    }
-  }
-  */
-
-  /**
-   * Loads the configuration for a plugin.
-   * If the configuration file exists, it reads the file and returns the parsed JSON data.
-   * If the configuration file does not exist, it creates a new file with default configuration and returns it.
-   * If any error occurs during file access or creation, it logs an error and return un empty config.
-   *
-   * @param plugin - The plugin for which to load the configuration.
-   * @returns A promise that resolves to the loaded or created configuration.
-   */
-  /*
-  private async loadPluginConfig(plugin: RegisteredPlugin): Promise<PlatformConfig> {
-    const configFile = path.join(this.matterbridgeDirectory, `${plugin.name}.config.json`);
-    try {
-      await fs.access(configFile);
-      const data = await fs.readFile(configFile, 'utf8');
-      const config = JSON.parse(data) as PlatformConfig;
-      this.log.debug(`Config file found: ${configFile}.`);
-      // this.log.debug(`Config file found: ${configFile}.\nConfig:${rs}\n`, config);
-      // The first time a plugin is added to the system, the config file is created with the plugin name and type "".
-      config.name = plugin.name;
-      config.type = plugin.type;
-      if (config.debug === undefined) config.debug = false;
-      if (config.unregisterOnShutdown === undefined) config.unregisterOnShutdown = false;
-      return config;
-    } catch (err) {
-      if (err instanceof Error) {
-        const nodeErr = err as NodeJS.ErrnoException;
-        if (nodeErr.code === 'ENOENT') {
-          let config: PlatformConfig;
-          if (plugin.name === 'matterbridge-zigbee2mqtt') config = zigbee2mqtt_config;
-          else if (plugin.name === 'matterbridge-somfy-tahoma') config = somfytahoma_config;
-          else if (plugin.name === 'matterbridge-shelly') config = shelly_config;
-          else config = { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
-          try {
-            await this.writeFile(configFile, JSON.stringify(config, null, 2));
-            this.log.debug(`Created config file: ${configFile}.`);
-            // this.log.debug(`Created config file: ${configFile}.\nConfig:${rs}\n`, config);
-            return config;
-          } catch (err) {
-            this.log.error(`Error creating config file ${configFile}: ${err}`);
-            return config;
-          }
-        } else {
-          this.log.error(`Error accessing config file ${configFile}: ${err}`);
-          return { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
-        }
-      }
-      this.log.error(`Error loading config file ${configFile}: ${err}`);
-      return { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
-    }
-  }
-  */
-
-  /**
-   * Saves the configuration of a registered plugin.
-   * @param {RegisteredPlugin} plugin - The plugin whose configuration needs to be saved.
-   * @returns {Promise<void>} - A promise that resolves when the configuration is successfully saved.
-   * @throws {Error} - If the plugin's configuration is not found or if there is an error while saving the configuration.
-   */
-  /*
-  private async savePluginConfig(plugin: RegisteredPlugin): Promise<void> {
-    if (!plugin.platform?.config) {
-      this.log.error(`Error saving plugin ${plg}${plugin.name}${er} config: config not found`);
-      return Promise.reject(new Error(`Error saving plugin ${plg}${plugin.name}${er} config: config not found`));
-    }
-    const configFile = path.join(this.matterbridgeDirectory, `${plugin.name}.config.json`);
-    try {
-      await this.writeFile(configFile, JSON.stringify(plugin.platform.config, null, 2));
-      this.log.debug(`Saved config file: ${configFile}.`);
-      // this.log.debug(`Saved config file: ${configFile}.\nConfig:${rs}\n`, plugin.platform.config);
-    } catch (err) {
-      this.log.error(`Error saving plugin ${plg}${plugin.name}${er} config: ${err}`);
-      return Promise.reject(err);
-    }
-  }
-  */
-
-  /**
-   * Writes data to a file.
-   *
-   * @param {string} filePath - The path of the file to write to.
-   * @param {string} data - The data to write to the file.
-   * @returns {Promise<void>} - A promise that resolves when the data is successfully written to the file.
-   */
-  /*
-  private async writeFile(filePath: string, data: string): Promise<void> {
-    try {
-      await fs.writeFile(`${filePath}`, data, 'utf8');
-      this.log.debug(`Successfully wrote to ${filePath}`);
-    } catch (error) {
-      this.log.error(`Error writing to ${filePath}:`, error);
-    }
-  }
-  */
-
-  /**
-   * Loads a plugin and returns the corresponding MatterbridgePlatform instance.
-   * @param plugin - The plugin to load.
-   * @param start - Optional flag indicating whether to start the plugin after loading. Default is false.
-   * @param message - Optional message to pass to the plugin when starting.
-   * @returns A Promise that resolves to the loaded MatterbridgePlatform instance.
-   * @throws An error if the plugin is not enabled, already loaded, or fails to load.
-   */
-  /*
-  private async loadPlugin(plugin: RegisteredPlugin, start = false, message = ''): Promise<MatterbridgePlatform | undefined> {
-    if (!plugin.enabled) {
-      this.log.error(`Plugin ${plg}${plugin.name}${er} not enabled`);
-      return Promise.resolve(undefined);
-    }
-    if (plugin.platform) {
-      this.log.error(`Plugin ${plg}${plugin.name}${er} already loaded`);
-      return Promise.resolve(plugin.platform);
-    }
-    this.log.info(`Loading plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
-    try {
-      // Load the package.json of the plugin
-      const packageJson = JSON.parse(await fs.readFile(plugin.path, 'utf8'));
-      // Resolve the main module path relative to package.json
-      const pluginEntry = path.resolve(path.dirname(plugin.path), packageJson.main);
-      // Dynamically import the plugin
-      const pluginUrl = pathToFileURL(pluginEntry);
-      this.log.debug(`Importing plugin ${plg}${plugin.name}${db} from ${pluginUrl.href}`);
-      const pluginInstance = await import(pluginUrl.href);
-      this.log.debug(`Imported plugin ${plg}${plugin.name}${db} from ${pluginUrl.href}`);
-
-      // Call the default export function of the plugin, passing this MatterBridge instance, the log and the config
-      if (pluginInstance.default) {
-        const config: PlatformConfig = await this.loadPluginConfig(plugin);
-        const log = new AnsiLogger({ logName: plugin.description ?? 'No description', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: (config.debug as boolean) ? LogLevel.DEBUG : LogLevel.INFO });
-        const platform = pluginInstance.default(this, log, config) as MatterbridgePlatform;
-        platform.name = packageJson.name;
-        platform.config = config;
-        platform.version = packageJson.version;
-        plugin.name = packageJson.name;
-        plugin.description = packageJson.description ?? 'No description';
-        plugin.version = packageJson.version;
-        plugin.author = packageJson.author ?? 'Unknown';
-        plugin.type = platform.type;
-        plugin.platform = platform;
-        plugin.loaded = true;
-        plugin.registeredDevices = 0;
-        plugin.addedDevices = 0;
-        plugin.configJson = config;
-        plugin.schemaJson = await this.loadPluginSchema(plugin);
-
-        this.log.info(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${platform.type} ${db}(entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
-        if (start) this.startPlugin(plugin, message); // No await do it asyncronously
-        return Promise.resolve(platform);
-      } else {
-        this.log.error(`Plugin ${plg}${plugin.name}${er} does not provide a default export`);
-        plugin.error = true;
-        return Promise.resolve(undefined);
-      }
-    } catch (err) {
-      this.log.error(`Failed to load plugin ${plg}${plugin.name}${er}: ${err}`);
-      plugin.error = true;
-      return Promise.resolve(undefined);
-    }
-  }
-  */
-
-  /**
-   * Starts a plugin.
-   *
-   * @param {RegisteredPlugin} plugin - The plugin to start.
-   * @param {string} [message] - Optional message to pass to the plugin's onStart method.
-   * @param {boolean} [configure] - Indicates whether to configure the plugin after starting (default false).
-   * @returns {Promise<void>} A promise that resolves when the plugin is started successfully, or rejects with an error if starting the plugin fails.
-   */
-  /*
-  private async startPlugin(plugin: RegisteredPlugin, message?: string, configure = false): Promise<void> {
-    if (!plugin.loaded || !plugin.platform) {
-      this.log.error(`Plugin ${plg}${plugin.name}${er} not loaded or no platform`);
-      return Promise.resolve();
-    }
-    if (plugin.started) {
-      this.log.debug(`Plugin ${plg}${plugin.name}${db} already started`);
-      return Promise.resolve();
-    }
-    this.log.info(`Starting plugin ${plg}${plugin.name}${db} type ${typ}${plugin.type}${db}`);
-    try {
-      plugin.platform
-        .onStart(message)
-        .then(() => {
-          plugin.started = true;
-          this.log.info(`Started plugin ${plg}${plugin.name}${db} type ${typ}${plugin.type}${db}`);
-          if (configure) this.configurePlugin(plugin); // No await do it asyncronously
-          return Promise.resolve();
-        })
-        .catch((err) => {
-          plugin.error = true;
-          this.log.error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err}`);
-          return Promise.resolve();
-        });
-    } catch (err) {
-      plugin.error = true;
-      this.log.error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err}`);
-      return Promise.resolve();
-    }
-  }
-  */
-
-  /**
-   * Configures a plugin.
-   *
-   * @param {RegisteredPlugin} plugin - The plugin to configure.
-   * @returns {Promise<void>} A promise that resolves when the plugin is configured successfully, or rejects with an error if configuration fails.
-   */
-  /*
-  private async configurePlugin(plugin: RegisteredPlugin): Promise<void> {
-    if (!plugin.loaded || !plugin.started || !plugin.platform) {
-      this.log.error(`Plugin ${plg}${plugin.name}${er} not loaded (${plugin.loaded}) or not started (${plugin.started}) or not platform (${plugin.platform?.name})`);
-      return Promise.resolve();
-    }
-    if (plugin.configured) {
-      this.log.info(`Plugin ${plg}${plugin.name}${nf} already configured`);
-      return Promise.resolve();
-    }
-    this.log.info(`Configuring plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
-    try {
-      plugin.platform
-        .onConfigure()
-        .then(() => {
-          plugin.configured = true;
-          this.log.info(`Configured plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
-          this.savePluginConfig(plugin);
-          return Promise.resolve();
-        })
-        .catch((err) => {
-          plugin.error = true;
-          this.log.error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`);
-          return Promise.resolve();
-        });
-    } catch (err) {
-      plugin.error = true;
-      this.log.error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`);
-      return Promise.resolve();
-    }
-  }
-  */
 
   private async startTest(): Promise<void> {
     // Start the Matterbridge
@@ -1615,7 +1314,7 @@ export class Matterbridge extends EventEmitter {
         for (const plugin of this.plugins) {
           if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
           try {
-            await this.plugins.configure(plugin); // No await do it asyncronously
+            await this.plugins.configure(plugin); // TODO No await do it in parallel
           } catch (error) {
             plugin.error = true;
             this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
@@ -1684,7 +1383,7 @@ export class Matterbridge extends EventEmitter {
         for (const plugin of this.plugins) {
           if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
           try {
-            await this.plugins.configure(plugin); // No await do it asyncronously
+            await this.plugins.configure(plugin); // TODO No await do it in parallel
           } catch (error) {
             plugin.error = true;
             this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
@@ -3247,7 +2946,9 @@ export class Matterbridge extends EventEmitter {
       if (clusterServer.name === 'DoorLock') attributes += `State: ${clusterServer.attributes.lockState.getLocal() === 1 ? 'Locked' : 'Not locked'} `;
       if (clusterServer.name === 'Thermostat') attributes += `Temperature: ${clusterServer.attributes.localTemperature.getLocal() / 100}°C `;
       if (clusterServer.name === 'LevelControl') attributes += `Level: ${clusterServer.getCurrentLevelAttribute()}% `;
-      if (clusterServer.name === 'ColorControl') attributes += `Hue: ${Math.round(clusterServer.getCurrentHueAttribute())} Saturation: ${Math.round(clusterServer.getCurrentSaturationAttribute())}% `;
+      if (clusterServer.name === 'ColorControl' && clusterServer.isAttributeSupportedByName('currentHue'))
+        attributes += `Hue: ${Math.round(clusterServer.getCurrentHueAttribute())} Saturation: ${Math.round(clusterServer.getCurrentSaturationAttribute())}% `;
+      if (clusterServer.name === 'ColorControl' && clusterServer.isAttributeSupportedByName('colorTemperatureMireds')) attributes += `ColorTemp: ${Math.round(clusterServer.getColorTemperatureMiredsAttribute())} `;
       if (clusterServer.name === 'BooleanState') attributes += `Contact: ${clusterServer.getStateValueAttribute()} `;
       if (clusterServer.name === 'OccupancySensing') attributes += `Occupancy: ${clusterServer.getOccupancyAttribute().occupied} `;
       if (clusterServer.name === 'IlluminanceMeasurement') attributes += `Illuminance: ${clusterServer.getMeasuredValueAttribute()} `;
