@@ -2951,6 +2951,8 @@ export class Matterbridge extends EventEmitter {
       if (clusterServer.name === 'ColorControl' && clusterServer.isAttributeSupportedByName('colorTemperatureMireds')) attributes += `ColorTemp: ${Math.round(clusterServer.getColorTemperatureMiredsAttribute())} `;
       if (clusterServer.name === 'BooleanState') attributes += `Contact: ${clusterServer.getStateValueAttribute()} `;
 
+      if (clusterServer.name === 'BooleanStateConfiguration' && clusterServer.isAttributeSupportedByName('alarmsActive')) attributes += `Active alarm: ${stringify(clusterServer.getAlarmsActiveAttribute())} `;
+
       if (clusterServer.name === 'FanControl') attributes += `Mode: ${clusterServer.getFanModeAttribute()} Speed: ${clusterServer.getPercentCurrentAttribute()} `;
       if (clusterServer.name === 'FanControl' && clusterServer.isAttributeSupportedByName('speedCurrent')) attributes += `MultiSpeed: ${clusterServer.getSpeedCurrentAttribute()} `;
 
