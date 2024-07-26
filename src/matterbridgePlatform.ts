@@ -22,7 +22,7 @@
  */
 
 import { Matterbridge } from './matterbridge.js';
-import { AnsiLogger } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 
 // Platform types
@@ -87,6 +87,14 @@ export class MatterbridgePlatform {
    */
   async onShutdown(reason?: string) {
     this.log.debug("The plugin doesn't override onShutdown.", reason);
+  }
+
+  /**
+   * Sets the logger level and logs a debug message indicating that the plugin doesn't override this method.
+   * @param {LogLevel} logLevel The new logger level.
+   */
+  async onChangeLoggerLevel(logLevel: LogLevel) {
+    this.log.debug(`The plugin doesn't override onChangeLoggerLevel. Logger level set to: ${logLevel}`);
   }
 
   /**

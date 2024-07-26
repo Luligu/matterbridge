@@ -2729,8 +2729,14 @@ export class Matterbridge extends EventEmitter {
         } else if (param === 'Fatal') {
           this.log.logLevel = LogLevel.FATAL;
         }
+        await this.nodeContext?.set('matterbridgeLogLevel', this.log.logLevel);
         MatterbridgeDevice.logLevel = this.log.logLevel;
         this.plugins.logLevel = this.log.logLevel;
+        for (const plugin of this.plugins) {
+          if (!plugin.platform || !plugin.platform.config) continue;
+          plugin.platform.log.logLevel = (plugin.platform.config.debug as boolean) ? LogLevel.DEBUG : this.log.logLevel;
+          await plugin.platform.onChangeLoggerLevel((plugin.platform.config.debug as boolean) ? LogLevel.DEBUG : this.log.logLevel);
+        }
         res.json({ message: 'Command received' });
         return;
       }
@@ -2751,6 +2757,7 @@ export class Matterbridge extends EventEmitter {
         } else if (param === 'Fatal') {
           Logger.defaultLogLevel = Level.FATAL;
         }
+        await this.nodeContext?.set('matterLogLevel', Logger.defaultLogLevel);
         res.json({ message: 'Command received' });
         return;
       }
