@@ -108,7 +108,7 @@ export interface MatterbridgeInformation {
   matterbridgeConnected: boolean;
   bridgeMode: string;
   restartMode: string;
-  // debugEnabled: boolean;
+  profile?: string;
   loggerLevel: LogLevel;
   matterLoggerLevel: number;
 }

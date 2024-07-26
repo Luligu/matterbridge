@@ -95,7 +95,6 @@ export class Matterbridge extends EventEmitter {
     matterbridgeConnected: false,
     bridgeMode: '',
     restartMode: '',
-    // debugEnabled: false,
     loggerLevel: LogLevel.INFO,
     matterLoggerLevel: Level.INFO,
   };
@@ -2355,12 +2354,7 @@ export class Matterbridge extends EventEmitter {
           const message = data.toString().trim();
           // this.log.info('\n' + message);
           // this.wssSendMessage('Matterbridge:spawn', 'spawn', message);
-          this.wssSendMessage(
-            'spawn',
-            `${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}:${new Date().getSeconds().toString().padStart(2, '0')}.${new Date().getMilliseconds().toString().padStart(3, '0')}`,
-            'Matterbridge:spawn',
-            message,
-          );
+          this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', message);
         });
       }
 
@@ -2369,12 +2363,7 @@ export class Matterbridge extends EventEmitter {
           const message = data.toString().trim();
           // this.log.debug('\n' + message);
           // this.wssSendMessage('Matterbridge:spawn', 'spawn', message);
-          this.wssSendMessage(
-            'spawn',
-            `${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}:${new Date().getSeconds().toString().padStart(2, '0')}.${new Date().getMilliseconds().toString().padStart(3, '0')}`,
-            'Matterbridge:spawn',
-            message,
-          );
+          this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', message);
         });
       }
     });
@@ -2392,13 +2381,18 @@ export class Matterbridge extends EventEmitter {
     if (!level || !time || !name || !message) return;
     // Remove ANSI escape codes from the message
     // eslint-disable-next-line no-control-regex
-    const cleanMessage = message.replace(/\x1B\[[0-9;]*[m|s|u|K]/g, '');
+    message = message.replace(/\x1B\[[0-9;]*[m|s|u|K]/g, '');
     // Remove leading asterisks from the message
-    const finalMessage = cleanMessage.replace(/^\*+/, '');
+    message = message.replace(/^\*+/, '');
+    // Reduce the message length to 300 characters
+    if (message.length > 300 /* && !finalMessage.includes(' ')*/) {
+      message = message.substring(0, 300);
+      // this.log.fatal(`Message too long from: ${level} ${time} ${name} ${message.substring(0, 200)} `);
+    }
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ level, time, name, message: finalMessage }));
+        client.send(JSON.stringify({ level, time, name, message: message }));
       }
     });
   }
@@ -2501,16 +2495,10 @@ export class Matterbridge extends EventEmitter {
 
     this.webSocketServer.on('connection', (ws: WebSocket, request: http.IncomingMessage) => {
       const clientIp = request.socket.remoteAddress;
-      this.log.info(`WebSocketServer client ${clientIp} connected`);
       this.log.setGlobalCallback(this.wssSendMessage.bind(this));
       this.log.debug('WebSocketServer logger global callback added');
-      // this.wssSendMessage('Matterbridge', 'info', `WebSocketServer client ${clientIp} connected to Matterbridge`);
-      this.wssSendMessage(
-        'info',
-        `${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}:${new Date().getSeconds().toString().padStart(2, '0')}.${new Date().getMilliseconds().toString().padStart(3, '0')}`,
-        'Matterbridge',
-        `WebSocketServer client ${clientIp} connected to Matterbridge`,
-      );
+      this.log.info(`WebSocketServer client "${clientIp}" connected to Matterbridge`);
+      // this.wssSendMessage('info', this.log.now(), 'Matterbridge', `WebSocketServer client "${clientIp}" connected to Matterbridge`);
 
       ws.on('message', (message) => {
         this.log.debug(`WebSocket client message: ${message}`);
@@ -2589,7 +2577,8 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.matterbridgeConnected = this.matterbridgeConnected;
       this.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridgeFabricInformations;
       this.matterbridgeInformation.matterbridgeSessionInformations = this.matterbridgeSessionInformations;
-      const response = { wssHost, qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
+      if (this.profile) this.matterbridgeInformation.profile = this.profile;
+      const response = { wssHost, ssl: hasParameter('ssl'), qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
       // this.log.debug('Response:', debugStringify(response));
       this.log.debug(`WebSocketServer logger local callback: ${this.log.getCallback() ? 'active' : 'inactive'}`);
       this.log.debug(`WebSocketServer logger global callback: ${this.log.getGlobalCallback() ? 'active' : 'inactive'}`);

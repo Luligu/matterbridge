@@ -4,8 +4,8 @@ import WebSocketUse from './WebSocketUse';
 
 export const WebSocketContext = createContext();
 
-export function WebSocketProvider({ children, wssHost }) {
-  const { messages, sendMessage, logMessage, setLogFilters } = WebSocketUse(wssHost);
+export function WebSocketProvider({ children, wssHost, ssl }) {
+  const { messages, sendMessage, logMessage, setLogFilters } = WebSocketUse(wssHost, ssl);
   // console.log(`WebSocketProvider: wssHost: ${wssHost} messages ${messages.length}`);
 
   return (

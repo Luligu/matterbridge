@@ -1,8 +1,8 @@
- 
-/* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useRef, useState, useCallback } from 'react';
 
-function WebSocketUse(wssHost) {
+// TODO: remove wssHost from WebSocketUse if no issues arise
+function WebSocketUse(wssHost, ssl) {
     const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
     const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');
     const [messages, setMessages] = useState([]);
@@ -14,7 +14,7 @@ function WebSocketUse(wssHost) {
     const logFilterLevelRef = useRef(logFilterLevel);
     const logFilterSearchRef = useRef(logFilterSearch);
 
-    // console.log(`WebSocketUse: wssHost: ${wssHost} logFilterLevel: ${logFilterLevel} logFilterSearch: ${logFilterSearch} messages: ${messages.length} available`);
+    // console.log(`WebSocketUse: wssHost: ${wssHost} ssl: ${ssl} logFilterLevel: ${logFilterLevel} logFilterSearch: ${logFilterSearch} messages: ${messages.length} available`);
     
     useEffect(() => {
         logFilterLevelRef.current = logFilterLevel;
@@ -44,6 +44,7 @@ function WebSocketUse(wssHost) {
 
     const connectWebSocket = useCallback(() => {
         if(wssHost === '' || wssHost === null || wssHost === undefined)  return;
+        wssHost = (ssl === true ? 'wss://' : 'ws://') + window.location.host;
         logMessage('WebSocket', `Connecting to WebSocket: ${wssHost}`);
         ws.current = new WebSocket(wssHost);
         ws.current.onmessage = (event) => {
@@ -105,12 +106,12 @@ function WebSocketUse(wssHost) {
             });
         };
         ws.current.onopen = () => { 
-            console.log(`Connected to WebSocket: ${wssHost}`); 
+            // console.log(`Connected to WebSocket: ${wssHost}`); 
             logMessage('WebSocket', `Connected to WebSocket: ${wssHost}`);
             retryCountRef.current = 1;
         };
         ws.current.onclose = () => { 
-            console.log(`Disconnected from WebSocket: ${wssHost}`); 
+            // console.log(`Disconnected from WebSocket: ${wssHost}`); 
             logMessage('WebSocket', `Disconnected from WebSocket: ${wssHost}`);
             logMessage('WebSocket', `Reconnecting (attempt ${retryCountRef.current} of ${maxRetries}) to WebSocket: ${wssHost}`);
             if( retryCountRef.current === 1 ) attemptReconnect();
@@ -119,10 +120,10 @@ function WebSocketUse(wssHost) {
             retryCountRef.current = retryCountRef.current + 1;
         };
         ws.current.onerror = (error) => {
-            console.error(`WebSocket error connecting to ${wssHost}`, error);
+            // console.error(`WebSocket error connecting to ${wssHost}`, error);
             logMessage('WebSocket', `WebSocket error connecting to ${wssHost}`);
         };
-    }, [wssHost]);
+    }, [wssHost, ssl]);
 
     const attemptReconnect = useCallback(() => {
         connectWebSocket();

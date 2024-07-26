@@ -83,28 +83,29 @@ function LoginForm() {
   const { loggedIn, logIn, errorMessage  } = useContext(AuthContext);
   // Settings
   const [wssHost, setWssHost] = useState(null);
-  const [qrCode, setQrCode] = useState('');
-  const [pairingCode, setPairingCode] = useState('');
-  const [systemInfo, setSystemInfo] = useState({});
-  const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
+  const [ssl, setSsl] = useState(false);
+  // const [qrCode, setQrCode] = useState('');
+  // const [pairingCode, setPairingCode] = useState('');
+  // const [systemInfo, setSystemInfo] = useState({});
+  // const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
   
   useEffect(() => {
-    fetch('/api/settings')
-      .then(response => response.json())
-      .then(data => { 
-        // console.log('From app.js /api/settings:', data); 
-        setWssHost(data.wssHost); 
-        setQrCode(data.qrPairingCode); 
-        setPairingCode(data.manualPairingCode);
-        setSystemInfo(data.systemInformation);
-        setMatterbridgeInfo(data.matterbridgeInformation);
-        localStorage.setItem('wssHost', data.wssHost);
-        localStorage.setItem('qrPairingCode', data.qrPairingCode); 
-        localStorage.setItem('manualPairingCode', data.manualPairingCode); 
-        localStorage.setItem('systemInformation', data.systemInformation); 
-        localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
-      })
-      .catch(error => console.error('From app.js error fetching settings:', error));
+    const fetchApiSettings = async () => {
+      try {
+        const response = await fetch('/api/settings');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        console.log('From app.js /api/settings:', data);
+        setWssHost(data.wssHost);
+        setSsl(data.ssl);
+      } catch (error) {
+        console.error('From app.js error fetching /api/settings:', error);
+      }
+    };
+
+    fetchApiSettings();  
   }, []);
 
   const handleSubmit = event => {
@@ -142,7 +143,7 @@ function LoginForm() {
 
   if (loggedIn) {
     return (
-      <WebSocketProvider wssHost={wssHost}>
+      <WebSocketProvider wssHost={wssHost} ssl={ssl}>
         <Router>
           <div className="MbfScreen">
             <Header />
@@ -189,55 +190,58 @@ function App() {
   const [noPassword, setNoPassword] = useState(false);
   // Settings
   const [wssHost, setWssHost] = useState(null);
-  const [qrCode, setQrCode] = useState('');
-  const [pairingCode, setPairingCode] = useState('');
-  const [systemInfo, setSystemInfo] = useState({});
-  const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
+  const [ssl, setSsl] = useState(false);
+  // const [qrCode, setQrCode] = useState('');
+  // const [pairingCode, setPairingCode] = useState('');
+  // const [systemInfo, setSystemInfo] = useState({});
+  // const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
 
   useEffect(() => {
-    fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: '' }),
-    })
-    .then(response => {
-      if (response.ok) {
-        return response.json();
-      } else {
-        throw new Error('Network response was not ok');
+    const fetchApiLogin = async () => {
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: '' }),
+        });
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        console.log('From app.js /api/login:', data);
+        if (data.valid === true) {
+          setNoPassword(true);
+        }
+      } catch (error) {
+        console.error('From app.js error fetching /api/login', error);
       }
-    })
-    .then(data => {
-      if (data.valid === true) {
-        setNoPassword(true);
-      }
-    })
-    .catch(error => console.error('Failed with no password', error));
+    };
+
+    fetchApiLogin();
   }, []);
 
   useEffect(() => {
-    fetch('/api/settings')
-      .then(response => response.json())
-      .then(data => { 
-        // console.log('From app.js /api/settings:', data); 
-        setWssHost(data.wssHost); 
-        setQrCode(data.qrPairingCode); 
-        setPairingCode(data.manualPairingCode);
-        setSystemInfo(data.systemInformation);
-        setMatterbridgeInfo(data.matterbridgeInformation);
-        localStorage.setItem('wssHost', data.wssHost);
-        localStorage.setItem('qrPairingCode', data.qrPairingCode); 
-        localStorage.setItem('manualPairingCode', data.manualPairingCode); 
-        localStorage.setItem('systemInformation', data.systemInformation); 
-        localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
-      })
-      .catch(error => console.error('From app.js error fetching settings:', error));
+    const fetchApiSettings = async () => {
+      try {
+        const response = await fetch('/api/settings');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        console.log('From app.js /api/settings:', data);
+        setWssHost(data.wssHost);
+        setSsl(data.ssl);
+      } catch (error) {
+        console.error('From app.js error fetching /api/settings:', error);
+      }
+    };
+
+    fetchApiSettings();  
   }, []);
 
   if (noPassword) {
-    // console.log('From app.js noPassword:');
     return (
-      <WebSocketProvider wssHost={wssHost}>
+      <WebSocketProvider wssHost={wssHost} ssl={ssl}>
         <Router>
           <div className="MbfScreen">
             <Header />
