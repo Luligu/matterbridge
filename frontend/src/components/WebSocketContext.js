@@ -5,11 +5,11 @@ import WebSocketUse from './WebSocketUse';
 export const WebSocketContext = createContext();
 
 export function WebSocketProvider({ children, wssHost }) {
-  const { messages, sendMessage, logMessage } = WebSocketUse(wssHost);
+  const { messages, sendMessage, logMessage, setLogFilters } = WebSocketUse(wssHost);
   // console.log(`WebSocketProvider: wssHost: ${wssHost} messages ${messages.length}`);
 
   return (
-    <WebSocketContext.Provider value={{ messages, sendMessage, logMessage }}>
+    <WebSocketContext.Provider value={{ messages, sendMessage, logMessage, setLogFilters }}>
       {children}
     </WebSocketContext.Provider>
   );

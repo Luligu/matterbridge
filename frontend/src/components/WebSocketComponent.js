@@ -13,14 +13,11 @@ const detectTouchscreen = () => {
     return hasTouchscreen;
   };
 
-function WebSocketComponent(props) {
-    const { wssHost, debugLevel, searchCriteria } = props;
-    // const { messages, sendMessage } = useWebSocket(wssHost, debugLevel, searchCriteria);
-    const { messages, sendMessage, logMessage } = useContext(WebSocketContext);
-    // console.log('WebSocketComponent: consuming messages', messages.length);
-
-    const endOfMessagesRef = useRef(null); // Create a ref for scrolling purposes
+function WebSocketComponent() {
+    const { messages, sendMessage, logMessage, setLogFilters } = useContext(WebSocketContext);
     const [isHovering, setIsHovering] = useState(false); // State to track mouse hover
+
+    const endOfMessagesRef = useRef(null); // Create a ref for scrolling
 
     const handleMouseEnter = () => setIsHovering(true);
     const handleMouseLeave = () => setIsHovering(false);

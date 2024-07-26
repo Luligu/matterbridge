@@ -52,6 +52,11 @@ describe('PluginsManager', () => {
     expect(plugins).toBeInstanceOf(PluginManager);
   });
 
+  test('logLevel changes correctly', () => {
+    plugins.logLevel = LogLevel.DEBUG;
+    expect(plugins.logLevel).toBe(LogLevel.DEBUG);
+  });
+
   test('clear and load from storage', async () => {
     plugins.clear();
     expect(await plugins.saveToStorage()).toBe(0);

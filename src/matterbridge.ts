@@ -22,7 +22,7 @@
  */
 
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
-import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, hk, or, idn, BLUE, CYAN } from 'node-ansi-logger';
+import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, hk, or, idn, BLUE, CYAN, nt } from 'node-ansi-logger';
 import { fileURLToPath } from 'url';
 import { promises as fs } from 'fs';
 import { ExecException, exec, spawn } from 'child_process';
@@ -250,8 +250,9 @@ export class Matterbridge extends EventEmitter {
         this.log.logLevel = LogLevel.INFO;
       }
     } else {
-      Logger.defaultLogLevel = Level.INFO;
+      this.log.logLevel = LogLevel.INFO;
     }
+    MatterbridgeDevice.logLevel = this.log.logLevel;
     this.log.debug('Matterbridge is starting...');
 
     // Set matter.js logger level and format
@@ -1864,11 +1865,11 @@ export class Matterbridge extends EventEmitter {
         let connected = false;
         sessionInformations.forEach((session) => {
           this.log.info(
-            `*Active session changed on fabric ${zb}${fabricIndex}${nf} id ${zb}${session.fabric?.fabricId}${nf} vendor ${zb}${session.fabric?.rootVendorId}${nf} ${this.getVendorIdName(session.fabric?.rootVendorId)} ${session.fabric?.label} for ${plg}${pluginName}${nf}`,
+            `Active session changed on fabric ${zb}${fabricIndex}${nf} id ${zb}${session.fabric?.fabricId}${nf} vendor ${zb}${session.fabric?.rootVendorId}${nf} ${this.getVendorIdName(session.fabric?.rootVendorId)} ${session.fabric?.label} for ${plg}${pluginName}${nf}`,
             debugStringify(session),
           );
           if (session.isPeerActive === true && session.secure === true && session.numberOfActiveSubscriptions >= 1) {
-            this.log.info(`*Controller ${zb}${session.fabric?.rootVendorId}${nf} ${this.getVendorIdName(session.fabric?.rootVendorId)} ${session.fabric?.label} connected to ${plg}${pluginName}${nf} on session ${session.name}`);
+            this.log.notice(`Controller ${zb}${session.fabric?.rootVendorId}${nt} ${this.getVendorIdName(session.fabric?.rootVendorId)} ${session.fabric?.label} connected to ${plg}${pluginName}${nt} on session ${session.name}`);
             connected = true;
           }
         });
@@ -1920,9 +1921,9 @@ export class Matterbridge extends EventEmitter {
       },
       commissioningChangedCallback: async (fabricIndex) => {
         const fabricInfo = commissioningServer.getCommissionedFabricInformation(fabricIndex);
-        this.log.debug(`*Commissioning changed on fabric ${zb}${fabricIndex}${nf} for ${plg}${pluginName}${nf}`, debugStringify(fabricInfo));
+        this.log.debug(`Commissioning changed on fabric ${zb}${fabricIndex}${db} for ${plg}${pluginName}${db}`, debugStringify(fabricInfo));
         if (commissioningServer.getCommissionedFabricInformation().length === 0) {
-          this.log.warn(`*Commissioning removed from fabric ${zb}${fabricIndex}${nf} for ${plg}${pluginName}${wr}. Resetting the commissioning server ...`);
+          this.log.warn(`Commissioning removed from fabric ${zb}${fabricIndex}${wr} for ${plg}${pluginName}${wr}. Resetting the commissioning server ...`);
           await commissioningServer.factoryReset();
           if (pluginName === 'Matterbridge') {
             await this.matterbridgeContext?.clearAll();
@@ -1942,7 +1943,7 @@ export class Matterbridge extends EventEmitter {
               }
             }
           }
-          this.log.warn(`*Restart to activate the pairing for ${plg}${pluginName}${wr}.`);
+          this.log.warn(`Restart to activate the pairing for ${plg}${pluginName}${wr}.`);
         } else {
           const fabricInfo = commissioningServer.getCommissionedFabricInformation();
           if (pluginName === 'Matterbridge') {
@@ -2739,6 +2740,8 @@ export class Matterbridge extends EventEmitter {
         } else if (param === 'Fatal') {
           this.log.logLevel = LogLevel.FATAL;
         }
+        MatterbridgeDevice.logLevel = this.log.logLevel;
+        this.plugins.logLevel = this.log.logLevel;
         res.json({ message: 'Command received' });
         return;
       }

@@ -92,6 +92,14 @@ export class PluginManager {
     await Promise.all(tasks);
   }
 
+  get logLevel(): LogLevel {
+    return this.log.logLevel;
+  }
+
+  set logLevel(logLevel: LogLevel) {
+    this.log.logLevel = logLevel;
+  }
+
   async loadFromStorage(): Promise<RegisteredPlugin[]> {
     // Load the array from storage and convert it to a map
     const pluginsArray = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);

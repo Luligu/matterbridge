@@ -80,11 +80,11 @@ import {
 import { ClusterId, EndpointNumber, GroupId, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Device, DeviceClasses, DeviceTypeDefinition, Endpoint, EndpointOptions } from '@project-chip/matter-node.js/device';
 import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
-import { MatterHistory, Sensitivity, WeatherTrend, TemperatureDisplayUnits } from 'matter-history';
-import { EveHistory, EveHistoryCluster } from 'matter-history';
+
+import { EveHistory, EveHistoryCluster, MatterHistory, Sensitivity, WeatherTrend, TemperatureDisplayUnits } from 'matter-history';
+import { AnsiLogger, CYAN, LogLevel, TimestampFormat, db, hk, zb } from 'node-ansi-logger';
 
 import { AirQuality, AirQualityCluster } from './cluster/AirQualityCluster.js';
-import { AnsiLogger, CYAN, LogLevel, TimestampFormat, db, hk, zb } from 'node-ansi-logger';
 import { createHash } from 'crypto';
 import { TvocMeasurement, TvocMeasurementCluster } from './cluster/TvocCluster.js';
 import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
@@ -296,6 +296,8 @@ export interface SerializedMatterbridgeDevice {
 
 export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device, MatterbridgeDeviceCommands>(Device) {
   public static bridgeMode = '';
+  public static logLevel = LogLevel.INFO;
+
   log: AnsiLogger;
   serialNumber: string | undefined = undefined;
   deviceName: string | undefined = undefined;
@@ -313,7 +315,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (Array.isArray(definition)) firstDefinition = definition[0];
     else firstDefinition = definition;
     super(firstDefinition, options);
-    this.log = new AnsiLogger({ logName: 'MatterbridgeDevice', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : LogLevel.INFO });
+    this.log = new AnsiLogger({ logName: 'MatterbridgeDevice', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeDevice.logLevel });
     this.log.debug(`new MatterbridgeDevice with deviceType: ${zb}${firstDefinition.code}${db}-${zb}${firstDefinition.name}${db}`);
     if (Array.isArray(definition)) {
       definition.forEach((deviceType) => {
