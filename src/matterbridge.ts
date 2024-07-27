@@ -1116,10 +1116,6 @@ export class Matterbridge extends EventEmitter {
    * @returns {Promise<void>} - A promise that resolves when the device is added.
    */
   async addBridgedDevice(pluginName: string, device: MatterbridgeDevice): Promise<void> {
-    if (this.bridgeMode === 'bridge' && !this.matterAggregator) {
-      this.log.error(`Adding bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er} error: matterAggregator not found`);
-      return;
-    }
     this.log.debug(`Adding bridged device ${dev}${device.deviceName}${db} (${dev}${device.name}${db}) for plugin ${plg}${pluginName}${db}`);
 
     // Check if the plugin is registered
@@ -1131,13 +1127,18 @@ export class Matterbridge extends EventEmitter {
 
     // Register and add the device to matterbridge aggregator in bridge mode
     if (this.bridgeMode === 'bridge') {
-      this.matterAggregator?.addBridgedDevice(device);
+      if (!this.matterAggregator) {
+        this.log.error(`Adding bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er} error: matterAggregator not found`);
+        return;
+      }
+      this.matterAggregator.addBridgedDevice(device);
     }
 
     // The first time create the commissioning server and the aggregator for DynamicPlatform
     // Register and add the device in childbridge mode
     if (this.bridgeMode === 'childbridge') {
       if (plugin.type === 'AccessoryPlatform') {
+        // Check if the plugin is locked with the commissioning server
         if (!plugin.locked) {
           plugin.locked = true;
           plugin.storageContext = await this.importCommissioningServerContext(plugin.name, device);
@@ -1152,6 +1153,7 @@ export class Matterbridge extends EventEmitter {
       }
 
       if (plugin.type === 'DynamicPlatform') {
+        // Check if the plugin is locked with the commissioning server and the aggregator
         if (!plugin.locked) {
           plugin.locked = true;
           this.log.debug(`Creating commissioning server context for ${plg}${plugin.name}${db}`);
@@ -1171,6 +1173,7 @@ export class Matterbridge extends EventEmitter {
     this.registeredDevices.push({ plugin: pluginName, device });
     if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
     if (plugin.addedDevices !== undefined) plugin.addedDevices++;
+    // Add the device to the DeviceManager
     this.devices.set(device);
     this.log.info(`Added and registered bridged device (${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
   }
@@ -1182,10 +1185,6 @@ export class Matterbridge extends EventEmitter {
    * @returns A Promise that resolves when the device is successfully removed.
    */
   async removeBridgedDevice(pluginName: string, device: MatterbridgeDevice): Promise<void> {
-    if (this.bridgeMode === 'bridge' && !this.matterAggregator) {
-      this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: matterAggregator not found`);
-      return;
-    }
     this.log.debug(`Removing bridged device ${dev}${device.deviceName}${db} (${dev}${device.name}${db}) for plugin ${plg}${pluginName}${db}`);
 
     // Check if the plugin is registered
@@ -1194,17 +1193,13 @@ export class Matterbridge extends EventEmitter {
       this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: plugin not found`);
       return;
     }
-    if (this.bridgeMode === 'childbridge' && plugin.type === 'AccessoryPlatfoem' && !plugin.aggregator) {
-      this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: aggregator not found`);
-      return;
-    }
-    if (this.bridgeMode === 'childbridge' && plugin.type === 'DynamicPlatfoem' && !plugin.commissioningServer) {
-      this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: commissioning server not found`);
-      return;
-    }
 
     // Remove the device from matterbridge aggregator in bridge mode
     if (this.bridgeMode === 'bridge') {
+      if (!this.matterAggregator) {
+        this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: matterAggregator not found`);
+        return;
+      }
       device.setBridgedDeviceReachability(false);
       device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
       // device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerShutDownEvent({});
@@ -1224,6 +1219,10 @@ export class Matterbridge extends EventEmitter {
     // Remove the device in childbridge mode
     if (this.bridgeMode === 'childbridge') {
       if (plugin.type === 'AccessoryPlatform') {
+        if (!plugin.commissioningServer) {
+          this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: commissioning server not found`);
+          return;
+        }
         this.registeredDevices.forEach((registeredDevice, index) => {
           if (registeredDevice.device === device) {
             this.registeredDevices.splice(index, 1);
@@ -1231,6 +1230,10 @@ export class Matterbridge extends EventEmitter {
           }
         });
       } else if (plugin.type === 'DynamicPlatform') {
+        if (!plugin.aggregator) {
+          this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: aggregator not found`);
+          return;
+        }
         this.registeredDevices.forEach((registeredDevice, index) => {
           if (registeredDevice.device === device) {
             this.registeredDevices.splice(index, 1);
@@ -1239,18 +1242,20 @@ export class Matterbridge extends EventEmitter {
         });
         device.setBridgedDeviceReachability(false);
         device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
-        plugin.aggregator?.removeBridgedDevice(device);
+        plugin.aggregator.removeBridgedDevice(device);
       }
       this.log.info(`Removed bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
       if (plugin.addedDevices !== undefined) plugin.addedDevices--;
-      // Remove the commissioning server in childbridge mode
+
+      // Remove the commissioning server
       if (plugin.registeredDevices === 0 && plugin.addedDevices === 0 && plugin.commissioningServer) {
         this.matterServer?.removeCommissioningServer(plugin.commissioningServer);
         plugin.commissioningServer = undefined;
         this.log.info(`Removed commissioning server for plugin ${plg}${pluginName}${nf}`);
       }
     }
+    // Remove the device from the DeviceManager
     this.devices.remove(device);
   }
 
