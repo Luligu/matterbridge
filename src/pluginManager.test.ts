@@ -10,18 +10,18 @@ jest.mock('@project-chip/matter-node.js/util');
 import { AnsiLogger, db, er, LogLevel, nf, nt, pl, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
-import { PluginManager } from './plugins.js';
-import { exec, execSync } from 'child_process';
+import { PluginManager } from './pluginManager.js';
+import { execSync } from 'child_process';
 import { getMacAddress, waiter } from './utils/utils.js';
-import path from 'path';
 import { promises as fs } from 'fs';
+import path from 'path';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
 const dev = '\u001B[38;5;79m';
 const typ = '\u001B[38;5;207m';
 
-describe('PluginsManager', () => {
+describe('PluginManager', () => {
   let matterbridge: Matterbridge;
   let plugins: PluginManager;
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -98,9 +98,9 @@ describe('PluginsManager', () => {
     expect(count).toBe(3);
   });
 
-  test('async forEach allows for iteration over plugins', () => {
+  test('async forEach allows for iteration over plugins', async () => {
     let count = 0;
-    plugins.forEach(async (plugin: RegisteredPlugin) => {
+    await plugins.forEach(async (plugin: RegisteredPlugin) => {
       expect(plugin.name).toBeDefined();
       expect(plugin.path).toBeDefined();
       expect(plugin.type).toBeDefined();
@@ -114,6 +114,17 @@ describe('PluginsManager', () => {
       count++;
     });
     expect(count).toBe(3);
+  });
+
+  test('async forEach to not throw', async () => {
+    loggerLogSpy.mockClear();
+    let count = 0;
+    await plugins.forEach(async (plugin: RegisteredPlugin) => {
+      count++;
+      throw new Error('Test error');
+    });
+    expect(count).toBe(3);
+    expect((plugins as any).log.log).toHaveBeenCalledTimes(3);
   });
 
   test('resolve plugin', async () => {

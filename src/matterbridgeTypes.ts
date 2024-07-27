@@ -31,6 +31,11 @@ import { CommissioningServer } from '@project-chip/matter-node.js';
 import { Aggregator } from '@project-chip/matter-node.js/device';
 import { LogLevel } from 'node-ansi-logger';
 
+// Default colors
+export const plg = '\u001B[38;5;33m';
+export const dev = '\u001B[38;5;79m';
+export const typ = '\u001B[38;5;207m';
+
 // Define an interface for storing the plugins
 export interface RegisteredPlugin extends BaseRegisteredPlugin {
   nodeContext?: NodeStorage;

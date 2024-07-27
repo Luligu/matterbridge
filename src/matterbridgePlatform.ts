@@ -102,6 +102,7 @@ export class MatterbridgePlatform {
    * @param {MatterbridgeDevice} device - The device to register.
    */
   async registerDevice(device: MatterbridgeDevice) {
+    device.plugin = this.name;
     await this.matterbridge.addBridgedDevice(this.name, device);
   }
 

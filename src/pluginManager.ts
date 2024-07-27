@@ -24,7 +24,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { AnsiLogger, BLUE, db, er, LogLevel, nf, nt, pl, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
-import { RegisteredPlugin } from './matterbridgeTypes.js';
+import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
 import { NodeStorage } from 'node-persist-manager';
 import path from 'path';
 import { promises as fs } from 'fs';
@@ -32,11 +32,6 @@ import { fileURLToPath, pathToFileURL } from 'url';
 import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import { exec, ExecException } from 'child_process';
 import { shelly_config, somfytahoma_config, zigbee2mqtt_config } from './defaultConfigSchema.js';
-
-// Default colors
-const plg = '\u001B[38;5;33m';
-const dev = '\u001B[38;5;79m';
-const typ = '\u001B[38;5;207m';
 
 export class PluginManager {
   private _plugins = new Map<string, RegisteredPlugin>();
@@ -87,7 +82,12 @@ export class PluginManager {
 
   async forEach(callback: (plugin: RegisteredPlugin) => Promise<void>): Promise<void> {
     const tasks = Array.from(this._plugins.values()).map(async (plugin) => {
-      await callback(plugin);
+      try {
+        await callback(plugin);
+      } catch (error) {
+        this.log.error(`Error processing forEach plugin ${plg}${plugin.name}${er}:`, error);
+        // throw error;
+      }
     });
     await Promise.all(tasks);
   }
@@ -601,6 +601,7 @@ export class PluginManager {
       await fs.writeFile(configFile, JSON.stringify(plugin.platform.config, null, 2), 'utf8');
       this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
       // this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, plugin.platform.config);
+      return Promise.resolve();
     } catch (err) {
       this.log.error(`Error saving config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err}`);
       return Promise.reject(err);

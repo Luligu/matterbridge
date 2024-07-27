@@ -53,7 +53,8 @@ import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } fr
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
-import { PluginManager } from './plugins.js';
+import { PluginManager } from './pluginManager.js';
+import { DeviceManager } from './deviceManager.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -118,6 +119,7 @@ export class Matterbridge extends EventEmitter {
 
   public log!: AnsiLogger;
   private plugins!: PluginManager;
+  private devices!: DeviceManager;
   private registeredDevices: RegisteredDevice[] = [];
   private nodeStorage: NodeStorageManager | undefined;
   private nodeContext: NodeStorage | undefined;
@@ -286,9 +288,12 @@ export class Matterbridge extends EventEmitter {
     this.log.debug('Creating node storage context for matterbridge');
     this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
 
-    // Initialize Plugins
+    // Initialize PluginManager
     this.plugins = new PluginManager(this);
     await this.plugins.loadFromStorage();
+
+    // Initialize DeviceManager
+    this.devices = new DeviceManager(this, this.nodeContext);
 
     // Get the plugins from node storage and create the plugins node storage contexts
     for (const plugin of this.plugins) {
@@ -1150,7 +1155,6 @@ export class Matterbridge extends EventEmitter {
         if (!plugin.locked) {
           plugin.locked = true;
           this.log.debug(`Creating commissioning server context for ${plg}${plugin.name}${db}`);
-          // plugin.storageContext = await this.createCommissioningServerContext(plugin.name, 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Dynamic Platform');
           plugin.storageContext = await this.createCommissioningServerContext(plugin.name, 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, plugin.description);
           this.log.debug(`Creating commissioning server for ${plg}${plugin.name}${db}`);
           plugin.commissioningServer = await this.createCommisioningServer(plugin.storageContext, plugin.name);
@@ -1167,6 +1171,7 @@ export class Matterbridge extends EventEmitter {
     this.registeredDevices.push({ plugin: pluginName, device });
     if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
     if (plugin.addedDevices !== undefined) plugin.addedDevices++;
+    this.devices.set(device);
     this.log.info(`Added and registered bridged device (${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
   }
 
@@ -1202,6 +1207,8 @@ export class Matterbridge extends EventEmitter {
     if (this.bridgeMode === 'bridge') {
       device.setBridgedDeviceReachability(false);
       device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
+      // device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerShutDownEvent({});
+      // device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerLeaveEvent({});
       this.matterAggregator?.removeBridgedDevice(device);
       this.registeredDevices.forEach((registeredDevice, index) => {
         if (registeredDevice.device === device) {
@@ -1244,6 +1251,7 @@ export class Matterbridge extends EventEmitter {
         this.log.info(`Removed commissioning server for plugin ${plg}${pluginName}${nf}`);
       }
     }
+    this.devices.remove(device);
   }
 
   /**
@@ -2252,10 +2260,9 @@ export class Matterbridge extends EventEmitter {
 
   /**
    * Retrieves the base registered plugins sanitized for res.json().
-   * @param {boolean} includeAll - Whether to include all information for each plugin.
    * @returns {BaseRegisteredPlugin[]} A promise that resolves to an array of BaseRegisteredPlugin objects.
    */
-  private async getBaseRegisteredPlugins(includeAll = false): Promise<BaseRegisteredPlugin[]> {
+  private async getBaseRegisteredPlugins(): Promise<BaseRegisteredPlugin[]> {
     const baseRegisteredPlugins: BaseRegisteredPlugin[] = [];
     for (const plugin of this.plugins) {
       baseRegisteredPlugins.push({
@@ -2274,14 +2281,14 @@ export class Matterbridge extends EventEmitter {
         configured: plugin.configured,
         paired: plugin.paired,
         connected: plugin.connected,
-        fabricInformations: includeAll ? plugin.fabricInformations : undefined,
-        sessionInformations: includeAll ? plugin.sessionInformations : undefined,
+        fabricInformations: plugin.fabricInformations,
+        sessionInformations: plugin.sessionInformations,
         registeredDevices: plugin.registeredDevices,
         addedDevices: plugin.addedDevices,
         qrPairingCode: plugin.qrPairingCode,
         manualPairingCode: plugin.manualPairingCode,
-        configJson: includeAll ? plugin.configJson : undefined,
-        schemaJson: includeAll ? plugin.schemaJson : undefined,
+        configJson: plugin.configJson,
+        schemaJson: plugin.schemaJson,
       });
     }
     return baseRegisteredPlugins;
@@ -2289,9 +2296,9 @@ export class Matterbridge extends EventEmitter {
 
   /**
    * Spawns a child process with the given command and arguments.
-   * @param command - The command to execute.
-   * @param args - The arguments to pass to the command (default: []).
-   * @returns A promise that resolves when the child process exits successfully, or rejects if there is an error.
+   * @param {string} command - The command to execute.
+   * @param {string[]} args - The arguments to pass to the command (default: []).
+   * @returns {Promise<void>} A promise that resolves when the child process exits successfully, or rejects if there is an error.
    */
   private async spawnCommand(command: string, args: string[] = []): Promise<void> {
     /*
@@ -2353,7 +2360,6 @@ export class Matterbridge extends EventEmitter {
         childProcess.stdout.on('data', (data: Buffer) => {
           const message = data.toString().trim();
           // this.log.info('\n' + message);
-          // this.wssSendMessage('Matterbridge:spawn', 'spawn', message);
           this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', message);
         });
       }
@@ -2362,7 +2368,6 @@ export class Matterbridge extends EventEmitter {
         childProcess.stderr.on('data', (data: Buffer) => {
           const message = data.toString().trim();
           // this.log.debug('\n' + message);
-          // this.wssSendMessage('Matterbridge:spawn', 'spawn', message);
           this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', message);
         });
       }
@@ -2372,11 +2377,11 @@ export class Matterbridge extends EventEmitter {
   /**
    * Sends a WebSocket message to all connected clients.
    *
-   * @param {string} type - The type of the message: Matterbridge, Plugin, Device, ...
-   * @param {string} subType - The subtype of the message: debug info warn error ....
+   * @param {string} level - The logger level of the message: debug info notice warn error fatal...
+   * @param {string} time - The time string of the message
+   * @param {string} name - The logger name of the message
    * @param {string} message - The content of the message.
    */
-  // private wssSendMessage(type: string, subType: string, message: string) {
   private wssSendMessage(level: string, time: string, name: string, message: string) {
     if (!level || !time || !name || !message) return;
     // Remove ANSI escape codes from the message
@@ -2392,7 +2397,7 @@ export class Matterbridge extends EventEmitter {
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ level, time, name, message: message }));
+        client.send(JSON.stringify({ level, time, name, message }));
       }
     });
   }
@@ -2592,7 +2597,7 @@ export class Matterbridge extends EventEmitter {
     // Endpoint to provide plugins
     this.expressApp.get('/api/plugins', async (req, res) => {
       this.log.debug('The frontend sent /api/plugins');
-      const response = await this.getBaseRegisteredPlugins(true);
+      const response = await this.getBaseRegisteredPlugins();
       // this.log.debug('Response:', debugStringify(response));
       res.json(response);
     });
@@ -2842,12 +2847,6 @@ export class Matterbridge extends EventEmitter {
         const plugin = await this.plugins.add(param);
         if (plugin) {
           this.plugins.load(plugin, true, 'The plugin has been added', true); // No await do it in the background
-          /*
-          plugin.platform = await this.plugins.load(plugin, false, 'The plugin has been added');
-          if (plugin.platform) {
-            await this.plugins.start(plugin, 'The plugin has been added', true);
-          }
-          */
         }
         res.json({ message: 'Command received' });
         return;
@@ -2881,14 +2880,7 @@ export class Matterbridge extends EventEmitter {
             plugin.registeredDevices = undefined;
             plugin.addedDevices = undefined;
             await this.plugins.enable(param);
-
             this.plugins.load(plugin, true, 'The plugin has been enabled', true); // No await do it in the background
-            /*
-            plugin.platform = await this.plugins.load(plugin, false, 'The plugin has been enabled');
-            if (plugin.platform) {
-              await this.plugins.start(plugin, 'The plugin has been enabled', true);
-            }
-            */
           }
         }
         res.json({ message: 'Command received' });
@@ -2921,11 +2913,11 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Retrieves the cluster text from a given device.
-   * @param device - The MatterbridgeDevice object.
-   * @returns The attributes of the cluster servers in the device.
+   * Retrieves the cluster text description from a given device.
+   * @param {MatterbridgeDevice} device - The MatterbridgeDevice object.
+   * @returns {string} The attributes description of the cluster servers in the device.
    */
-  private getClusterTextFromDevice(device: MatterbridgeDevice) {
+  private getClusterTextFromDevice(device: MatterbridgeDevice): string {
     const stringifyFixedLabel = (endpoint: Endpoint) => {
       const labelList = endpoint.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
       if (!labelList) return;
@@ -2978,7 +2970,7 @@ export class Matterbridge extends EventEmitter {
    *
    * @returns A Promise that resolves when the initialization is complete.
    */
-  public async startExtension(dataPath: string, debugEnabled: boolean, extensionVersion: string, port = 5560): Promise<boolean> {
+  public async startExtension(dataPath: string, extensionVersion: string, port = 5540): Promise<boolean> {
     // Set the bridge mode
     this.bridgeMode = 'bridge';
 

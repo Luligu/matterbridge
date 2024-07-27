@@ -299,6 +299,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   public static logLevel = LogLevel.INFO;
 
   log: AnsiLogger;
+  plugin: string | undefined = undefined;
   serialNumber: string | undefined = undefined;
   deviceName: string | undefined = undefined;
   uniqueId: string | undefined = undefined;
@@ -1395,6 +1396,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {},
       {
+        startUp: true,
+        shutDown: true,
+        leave: true,
         reachableChanged: true,
       },
     );
