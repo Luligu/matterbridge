@@ -2394,11 +2394,18 @@ export class Matterbridge extends EventEmitter {
     message = message.replace(/\x1B\[[0-9;]*[m|s|u|K]/g, '');
     // Remove leading asterisks from the message
     message = message.replace(/^\*+/, '');
-    // Reduce the message length to 300 characters
-    if (message.length > 300 /* && !finalMessage.includes(' ')*/) {
-      message = message.substring(0, 300);
-      // this.log.fatal(`Message too long from: ${level} ${time} ${name} ${message.substring(0, 200)} `);
+    // Replace all occurrences of \t and \n
+    message = message.replace(/[\t\n]/g, '');
+    // Remove non-printable characters
+    // eslint-disable-next-line no-control-regex
+    message = message.replace(/[\x00-\x1F\x7F]/g, '');
+    // Replace all occurrences of \" with "
+    message = message.replace(/\\"/g, '"');
+    /*
+    if (message.length > 500) {
+      console.error(`${er}Message long: ${level} ${time} ${name} ${message} `);
     }
+    */
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
