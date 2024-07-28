@@ -35,9 +35,9 @@ function Home() {
   const [selectedPluginSchema, setSelectedPluginSchema] = useState({}); 
   const [openSnack, setOpenSnack] = useState(false);
   const [openConfig, setOpenConfig] = useState(false);
-  const [logDebugLevel, setLogDebugLevel] = useState(localStorage.getItem('logFilterLevel')??'debug');
-  const [logSearchCriteria, setLogSearchCriteria] = useState(localStorage.getItem('logFilterSearch')??'*');
-  const { messages, sendMessage, logMessage } = useContext(WebSocketContext);
+  const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
+  const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');
+  const { messages, sendMessage, logMessage, setLogFilters } = useContext(WebSocketContext);
 
   const refAddRemove = useRef(null);
   const refRegisteredPlugins = useRef(null);
@@ -330,10 +330,10 @@ function Home() {
 
         <div className="MbfWindowDiv" style={{flex: '1 1 auto', width: '100%', overflow: 'hidden'}}>
           <div className="MbfWindowHeader" style={{ flexShrink: 0 }}>
-            <p className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>Logs <span style={{ fontWeight: 'normal', fontSize: '12px',marginTop: '2px' }}>Filter: logger level "{logDebugLevel}" and search "{logSearchCriteria}"</span></p>
+            <p className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>Logs <span style={{ fontWeight: 'normal', fontSize: '12px',marginTop: '2px' }}>Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}"</span></p>
           </div>
           <div style={{ flex: '1 1 auto', margin: '0px', padding: '0px', overflow: 'auto'}}>
-            <WebSocketComponent wssHost={wssHost} debugLevel={logDebugLevel} searchCriteria={logSearchCriteria}/>
+            <WebSocketComponent/>
           </div>
         </div>
 
@@ -350,6 +350,7 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
   const [pluginName, setPluginName] = useState('matterbridge-');
   const [open, setSnack] = useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const { messages, sendMessage, logMessage } = useContext(WebSocketContext);
 
   const handleSnackOpen = () => {
     setSnack(true);
@@ -361,6 +362,7 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
   };
 
   const handleInstallPluginClick = () => {
+    logMessage('Plugins', `Installing plugin: ${pluginName}`);
     sendCommandToMatterbridge('installplugin', pluginName);
     setTimeout(() => {
       reloadSettings();
@@ -368,6 +370,7 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
 };
 
   const handleAddPluginClick = () => {
+    logMessage('Plugins', `Adding plugin: ${pluginName}`);
     sendCommandToMatterbridge('addplugin', pluginName);
     setTimeout(() => {
       reloadSettings();
@@ -375,6 +378,7 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
 };
 
   const handleRemovePluginClick = () => {
+    logMessage('Plugins', `Removing plugin: ${pluginName}`);
     sendCommandToMatterbridge('removeplugin', pluginName);
     setTimeout(() => {
       reloadSettings();
@@ -484,7 +488,7 @@ function SystemInfoTable({ systemInfo, compact }) {
 
 // This function takes systemInfo as a parameter and returns a table element with the systemInfo
 function MatterbridgeInfoTable({ matterbridgeInfo }) {
-  const excludeKeys = ['matterbridgeVersion', 'matterbridgeLatestVersion', 'matterLoggerLevel', 'debugEnabled', 'bridgeMode', 'matterbridgeFabricInformations', 'matterbridgeSessionInformations'];
+  const excludeKeys = ['matterbridgeVersion', 'matterbridgeLatestVersion', 'matterLoggerLevel', 'debugEnabled', 'loggerLevel', 'bridgeMode', 'restartMode', 'matterbridgeFabricInformations', 'matterbridgeSessionInformations'];
   if(matterbridgeInfo.bridgeMode === 'childbridge') excludeKeys.push('matterbridgePaired', 'matterbridgeConnected');
   return (
     <div className="MbfWindowDiv" style={{ minWidth: '302px' }}>

@@ -64,7 +64,7 @@ Test the installation with:
 matterbridge -bridge
 ```
 
-Now it is possible to open the frontend at the link provided (default: http://localhost:8283)
+Now it is possible to open the frontend at the link provided in the log (default: http://localhost:8283)
 
 ## Usage
 
@@ -94,7 +94,7 @@ matterbridge -help
 
 Matterbridge has a frontend available on http://localhost:8283
 
-You can change the default port by adding the frontend parameter when you launch it.
+You can change the default port by adding the frontend parameter when you run it.
 
 Here's how to specify a different port number:
 
@@ -357,6 +357,8 @@ sudo nano /etc/systemd/system/matterbridge.service
 
 Add the following to this file, replacing twice (!) USER with your user name (e.g. WorkingDirectory=/home/pi/Matterbridge and User=pi):
 
+ExecStart on some linux distribution can also be ExecStart==/usr/bin/matterbridge -bridge -service 
+
 ```
 [Unit]
 Description=matterbridge
@@ -364,7 +366,7 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/matterbridge -bridge -service
+ExecStart=matterbridge -bridge -service
 WorkingDirectory=/home/<USER>/Matterbridge
 StandardOutput=inherit
 StandardError=inherit
@@ -376,6 +378,7 @@ User=<USER>
 [Install]
 WantedBy=multi-user.target
 ```
+
 
 If you modify it after, then run:
 
@@ -425,7 +428,7 @@ sudo systemctl enable matterbridge.service
 sudo systemctl disable matterbridge.service
 ```
 
-## Run matterbridge with docker (Linux only)
+## Run matterbridge with docker
 
 The Matterbridge Docker image, which includes a manifest list for the linux/amd64, linux/arm64 and linux/arm/v7 architectures, is published on Docker Hub.
 

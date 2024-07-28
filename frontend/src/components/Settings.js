@@ -54,7 +54,14 @@ function MatterbridgeInfo() {
         setMatterbridgeInfo(data.matterbridgeInformation); 
         setSelectedRestartMode(data.matterbridgeInformation.restartMode); 
         setSelectedBridgeMode(data.matterbridgeInformation.bridgeMode==='bridge'?'bridge':'childbridge'); 
-        setSelectedMbLoggerLevel(data.matterbridgeInformation.debugEnabled?'Debug':'Info'); 
+
+        if(data.matterbridgeInformation.loggerLevel === 'debug') setSelectedMbLoggerLevel('Debug');
+        if(data.matterbridgeInformation.loggerLevel === 'info') setSelectedMbLoggerLevel('Info');
+        if(data.matterbridgeInformation.loggerLevel === 'notice') setSelectedMbLoggerLevel('Notice');
+        if(data.matterbridgeInformation.loggerLevel === 'warn') setSelectedMbLoggerLevel('Warn');
+        if(data.matterbridgeInformation.loggerLevel === 'error') setSelectedMbLoggerLevel('Error');
+        if(data.matterbridgeInformation.loggerLevel === 'fatal') setSelectedMbLoggerLevel('Fatal');
+
         if(data.matterbridgeInformation.matterLoggerLevel === 0) setSelectedMjLoggerLevel('Debug');
         if(data.matterbridgeInformation.matterLoggerLevel === 1) setSelectedMjLoggerLevel('Info');
         if(data.matterbridgeInformation.matterLoggerLevel === 2) setSelectedMjLoggerLevel('Notice');
@@ -161,6 +168,10 @@ function MatterbridgeInfo() {
             <RadioGroup focused row name="debug-buttons-group" value={selectedMbLoggerLevel} onChange={handleChangeMbLoggerLevel}>
               <FormControlLabel value="Debug" control={<Radio />} label="Debug" />
               <FormControlLabel value="Info" control={<Radio />} label="Info" />
+              <FormControlLabel value="Notice" control={<Radio />} label="Notice" />
+              <FormControlLabel value="Warn" control={<Radio />} label="Warn" />
+              <FormControlLabel value="Error" control={<Radio />} label="Error" />
+              <FormControlLabel value="Fatal" control={<Radio />} label="Fatal" />
             </RadioGroup>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>

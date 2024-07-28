@@ -13,14 +13,11 @@ const detectTouchscreen = () => {
     return hasTouchscreen;
   };
 
-function WebSocketComponent(props) {
-    const { wssHost, debugLevel, searchCriteria } = props;
-    // const { messages, sendMessage } = useWebSocket(wssHost, debugLevel, searchCriteria);
-    const { messages, sendMessage, logMessage } = useContext(WebSocketContext);
-    // console.log('WebSocketComponent: consuming messages', messages.length);
-
-    const endOfMessagesRef = useRef(null); // Create a ref for scrolling purposes
+function WebSocketComponent() {
+    const { messages, sendMessage, logMessage, setLogFilters } = useContext(WebSocketContext);
     const [isHovering, setIsHovering] = useState(false); // State to track mouse hover
+
+    const endOfMessagesRef = useRef(null); // Create a ref for scrolling
 
     const handleMouseEnter = () => setIsHovering(true);
     const handleMouseLeave = () => setIsHovering(false);
@@ -33,11 +30,22 @@ function WebSocketComponent(props) {
         }
     }, [messages, isHovering]);
 
+    // Function to truncate and sanitize messages
+    /*
+    const sanitizeMessage = (message) => {
+        // Truncate message to 500 characters
+        const truncatedMessage = message.length > 1000 ? message.substring(0, 1000) + '...' : message;
+        return truncatedMessage;
+        // Sanitize HTML content
+        // return DOMPurify.sanitize(truncatedMessage);
+    };
+    */
+    
     return (
         <div style={{ margin: '0px', padding: '0px' }}>
             <ul onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
                 {messages.map((msg, index) => (
-                    <li key={index} dangerouslySetInnerHTML={{ __html: msg }} />
+                    <li key={index} style={{ wordWrap: 'break-word', maxHeight: '200px', overflow: 'hidden' }} dangerouslySetInnerHTML={{ __html: msg }} />
                 ))}
                 <div ref={endOfMessagesRef} /> {/* Invisible element to mark the end */}
             </ul>

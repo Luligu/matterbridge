@@ -22,7 +22,7 @@
  */
 
 import { Matterbridge } from './matterbridge.js';
-import { AnsiLogger } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 
 // Platform types
@@ -90,10 +90,19 @@ export class MatterbridgePlatform {
   }
 
   /**
+   * Sets the logger level and logs a debug message indicating that the plugin doesn't override this method.
+   * @param {LogLevel} logLevel The new logger level.
+   */
+  async onChangeLoggerLevel(logLevel: LogLevel) {
+    this.log.debug(`The plugin doesn't override onChangeLoggerLevel. Logger level set to: ${logLevel}`);
+  }
+
+  /**
    * Registers a device with the Matterbridge platform.
    * @param {MatterbridgeDevice} device - The device to register.
    */
   async registerDevice(device: MatterbridgeDevice) {
+    device.plugin = this.name;
     await this.matterbridge.addBridgedDevice(this.name, device);
   }
 

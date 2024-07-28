@@ -87,14 +87,14 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
       1000,
       true,
     );
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Matter server started`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Matter server started`);
     await wait(1000, 'Wait for matter to load', false);
   }, 60000);
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
     await matterbridge.destroyInstance();
     // console.error(`Matterbridge.destroyInstance() -bridge mode completed`);
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Cleanup completed. Shutting down...`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
     await wait(1000, 'Wait for matter to unload', false);
   }, 60000);
 });

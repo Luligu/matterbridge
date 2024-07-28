@@ -120,7 +120,7 @@ describe('Matterbridge loadInstance() and cleanup()', () => {
   });
 
   test('Matterbridge.loadInstance(true) with frontend', async () => {
-    process.argv = ['node', 'matterbridge.test.js', '-profile', 'Jest'];
+    process.argv = ['node', 'matterbridge.test.js', '-frontend', '8081', '-profile', 'Jest'];
 
     // console.log('Loading Matterbridge.loadInstance(false)');
     matterbridge = await Matterbridge.loadInstance(true);
@@ -486,21 +486,21 @@ describe('Matterbridge', () => {
     const plugins = (await (matterbridge as any).plugins.array()) as RegisteredPlugin[];
     expect(plugins).toHaveLength(3);
 
-    await (matterbridge as any).loadPlugin(plugins[0]);
+    await (matterbridge as any).plugins.load(plugins[0]);
     expect(plugins[0].loaded).toBeTruthy();
-    await (matterbridge as any).startPlugin(plugins[0], 'Jest test');
+    await (matterbridge as any).plugins.start(plugins[0], 'Jest test');
     expect(plugins[0].started).toBeTruthy();
     expect(plugins[0].configured).toBeFalsy();
 
-    await (matterbridge as any).loadPlugin(plugins[1]);
+    await (matterbridge as any).plugins.load(plugins[1]);
     expect(plugins[1].loaded).toBeTruthy();
-    await (matterbridge as any).startPlugin(plugins[1], 'Jest test');
+    await (matterbridge as any).plugins.start(plugins[1], 'Jest test');
     expect(plugins[1].started).toBeTruthy();
     expect(plugins[1].configured).toBeFalsy();
 
-    await (matterbridge as any).loadPlugin(plugins[2]);
+    await (matterbridge as any).plugins.load(plugins[2]);
     expect(plugins[2].loaded).toBeTruthy();
-    await (matterbridge as any).startPlugin(plugins[2], 'Jest test');
+    await (matterbridge as any).plugins.start(plugins[2], 'Jest test');
     expect(plugins[2].started).toBeTruthy();
     expect(plugins[2].configured).toBeFalsy();
   }, 10000);

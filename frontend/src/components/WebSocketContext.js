@@ -4,14 +4,12 @@ import WebSocketUse from './WebSocketUse';
 
 export const WebSocketContext = createContext();
 
-export function WebSocketProvider({ children, wssHost }) {
-  const [debugLevel, setDebugLevel] = useState(localStorage.getItem('logFilterLevel')??'debug');
-  const [searchCriteria, setSearchCriteria] = useState(localStorage.getItem('logFilterSearch')??'*');
-  const { messages, sendMessage, logMessage } = WebSocketUse(wssHost, debugLevel, searchCriteria);
-  // console.log(`WebSocketProvider: wssHost: ${wssHost} debugLevel: ${debugLevel} searchCriteria: ${searchCriteria} messages ${messages.length}`);
+export function WebSocketProvider({ children, wssHost, ssl }) {
+  const { messages, sendMessage, logMessage, setLogFilters } = WebSocketUse(wssHost, ssl);
+  // console.log(`WebSocketProvider: wssHost: ${wssHost} messages ${messages.length}`);
 
   return (
-    <WebSocketContext.Provider value={{ messages, sendMessage, logMessage }}>
+    <WebSocketContext.Provider value={{ messages, sendMessage, logMessage, setLogFilters }}>
       {children}
     </WebSocketContext.Provider>
   );
