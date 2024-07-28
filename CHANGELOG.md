@@ -17,6 +17,10 @@ If you like this project and find it useful, please consider giving it a star on
 - [storage]: Update node-persist-manager to 1.0.8.
 - [matter]: Update matter.js to 0.9.4.
 
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.4.0] - 2024-07-23
 
 ### Added
