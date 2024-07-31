@@ -11,6 +11,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [package]: Update dependencies.
+- [package]: Updated typescript-eslint to 8.0.0.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
