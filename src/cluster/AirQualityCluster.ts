@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 /**
  * This file contains the AirQuality cluster.
  *
@@ -93,7 +94,6 @@ export namespace AirQuality {
 
   export const ClusterInstance = MutableCluster.ExtensibleOnly(Base);
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-interface
   export interface Cluster extends Identity<typeof ClusterInstance> {}
 
   export const Cluster: Cluster = ClusterInstance;
@@ -109,7 +109,6 @@ export namespace AirQuality {
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-interface
   export interface Complete extends Identity<typeof CompleteInstance> {}
 
   export const Complete: Complete = CompleteInstance;

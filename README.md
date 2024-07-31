@@ -357,7 +357,7 @@ sudo nano /etc/systemd/system/matterbridge.service
 
 Add the following to this file, replacing twice (!) USER with your user name (e.g. WorkingDirectory=/home/pi/Matterbridge and User=pi):
 
-ExecStart on some linux distribution can also be ExecStart==/usr/bin/matterbridge -bridge -service 
+ExecStart on some linux distribution can also be ExecStart==/usr/bin/matterbridge -bridge -service
 
 ```
 [Unit]
@@ -378,7 +378,6 @@ User=<USER>
 [Install]
 WantedBy=multi-user.target
 ```
-
 
 If you modify it after, then run:
 

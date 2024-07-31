@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 /**
  * This file contains the TvocMeasurement cluster.
  *
@@ -199,7 +200,6 @@ export namespace TvocMeasurement {
 
   export const ClusterInstance = MutableCluster.ExtensibleOnly(Base);
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-interface
   export interface Cluster extends Identity<typeof ClusterInstance> {}
 
   export const Cluster: Cluster = ClusterInstance;
@@ -215,7 +215,6 @@ export namespace TvocMeasurement {
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-interface
   export interface Complete extends Identity<typeof CompleteInstance> {}
 
   export const Complete: Complete = CompleteInstance;

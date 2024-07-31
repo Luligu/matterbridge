@@ -305,6 +305,7 @@ export class Matterbridge extends EventEmitter {
           await this.spawnCommand('npm', ['install', '-g', plugin.name]);
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           plugin.error = true;
           plugin.enabled = false;
@@ -648,10 +649,10 @@ export class Matterbridge extends EventEmitter {
   private deregisterSignalHandlers() {
     this.log.debug(`Deregistering SIGINT and SIGTERM signal handlers...`);
 
-    this.sigintHandler && process.off('SIGINT', this.sigintHandler);
+    if (this.sigintHandler) process.off('SIGINT', this.sigintHandler);
     this.sigintHandler = undefined;
 
-    this.sigtermHandler && process.off('SIGTERM', this.sigtermHandler);
+    if (this.sigtermHandler) process.off('SIGTERM', this.sigtermHandler);
     this.sigtermHandler = undefined;
   }
 
@@ -1668,6 +1669,7 @@ export class Matterbridge extends EventEmitter {
       if (storageType === 'json') {
         await this.backupJsonMatterStorage(storageName, storageName.replace('.json', '') + '.backup.json');
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       this.log.error(`Storage initialize() error! The file .matterbridge/${storageName} may be corrupted.`);
       this.log.error(`Please delete it and rename ${storageName.replace('.json', '.backup.json')} to ${storageName} and try to restart Matterbridge.`);
@@ -2564,6 +2566,7 @@ export class Matterbridge extends EventEmitter {
           this.log.warn('/api/login error wrong password');
           res.json({ valid: false });
         }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         this.log.error('/api/login error getting password');
         res.json({ valid: false });
@@ -2583,6 +2586,7 @@ export class Matterbridge extends EventEmitter {
       try {
         qrPairingCode = await this.matterbridgeContext.get('qrPairingCode');
         manualPairingCode = await this.matterbridgeContext.get('manualPairingCode');
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         if (this.bridgeMode === 'bridge') this.log.warn('pairingCodes for /api/settings not found');
       }
@@ -2815,6 +2819,7 @@ export class Matterbridge extends EventEmitter {
         try {
           await this.spawnCommand('npm', ['install', '-g', 'matterbridge']);
           this.log.info('Matterbridge has been updated. Full restart required.');
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           this.log.error('Error updating matterbridge');
         }
@@ -2846,6 +2851,7 @@ export class Matterbridge extends EventEmitter {
         try {
           await this.spawnCommand('npm', ['install', '-g', param]);
           this.log.info(`Plugin ${plg}${param}${nf} installed. Full restart required.`);
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           this.log.error(`Error installing plugin ${plg}${param}${er}`);
         }
