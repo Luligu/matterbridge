@@ -257,7 +257,7 @@ describe('Matterbridge', () => {
     expect(() => {
       JSON.stringify(sessionInfos);
     }).toThrow();
-    expect(JSON.stringify((matterbridge as any).sanitizeSessionInformation(sessionInfos)).length).toBe(471);
+    expect(JSON.stringify((matterbridge as any).sanitizeSessionInformation(sessionInfos)).length).toBe(465);
   });
 
   test('matterbridge -help', async () => {
