@@ -2597,8 +2597,8 @@ export class Matterbridge extends EventEmitter {
       if (this.profile) this.matterbridgeInformation.profile = this.profile;
       const response = { wssHost, ssl: hasParameter('ssl'), qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
       // this.log.debug('Response:', debugStringify(response));
-      this.log.debug(`WebSocketServer logger local callback: ${this.log.getCallback() ? 'active' : 'inactive'}`);
-      this.log.debug(`WebSocketServer logger global callback: ${this.log.getGlobalCallback() ? 'active' : 'inactive'}`);
+      // this.log.debug(`WebSocketServer logger local callback: ${this.log.getCallback() ? 'active' : 'inactive'}`);
+      // this.log.debug(`WebSocketServer logger global callback: ${this.log.getGlobalCallback() ? 'active' : 'inactive'}`);
       if (this.webSocketServer && this.webSocketServer.clients.size > 0 && !this.log.getGlobalCallback()) {
         this.log.setGlobalCallback(this.wssSendMessage.bind(this));
         this.log.debug('WebSocketServer logger global callback added');
