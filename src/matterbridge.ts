@@ -2512,7 +2512,7 @@ export class Matterbridge extends EventEmitter {
 
     this.webSocketServer.on('connection', (ws: WebSocket, request: http.IncomingMessage) => {
       const clientIp = request.socket.remoteAddress;
-      this.log.setGlobalCallback(this.wssSendMessage.bind(this));
+      AnsiLogger.setGlobalCallback(this.wssSendMessage.bind(this));
       this.log.debug('WebSocketServer logger global callback added');
       this.log.info(`WebSocketServer client "${clientIp}" connected to Matterbridge`);
       // this.wssSendMessage('info', this.log.now(), 'Matterbridge', `WebSocketServer client "${clientIp}" connected to Matterbridge`);
@@ -2524,7 +2524,7 @@ export class Matterbridge extends EventEmitter {
       ws.on('close', () => {
         this.log.info('WebSocket client disconnected');
         if (this.webSocketServer?.clients.size === 0) {
-          this.log.setGlobalCallback(undefined);
+          AnsiLogger.setGlobalCallback(undefined);
           this.log.debug('All WebSocket clients disconnected. WebSocketServer logger global callback removed');
         }
       });
@@ -2598,9 +2598,9 @@ export class Matterbridge extends EventEmitter {
       const response = { wssHost, ssl: hasParameter('ssl'), qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
       // this.log.debug('Response:', debugStringify(response));
       this.log.debug(`WebSocketServer logger local callback: ${this.log.getCallback() ? 'active' : 'inactive'}`);
-      this.log.debug(`WebSocketServer logger global callback: ${this.log.getGlobalCallback() ? 'active' : 'inactive'}`);
-      if (this.webSocketServer && this.webSocketServer.clients.size > 0 && !this.log.getGlobalCallback()) {
-        this.log.setGlobalCallback(this.wssSendMessage.bind(this));
+      this.log.debug(`WebSocketServer logger global callback: ${AnsiLogger.getGlobalCallback() ? 'active' : 'inactive'}`);
+      if (this.webSocketServer && this.webSocketServer.clients.size > 0 && !AnsiLogger.getGlobalCallback()) {
+        AnsiLogger.setGlobalCallback(this.wssSendMessage.bind(this));
         this.log.debug('WebSocketServer logger global callback added');
       }
       res.json(response);
