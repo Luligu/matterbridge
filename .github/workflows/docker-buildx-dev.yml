@@ -33,6 +33,26 @@ jobs:
       with:
         version: latest
 
+    - name: Run Docker Buildx on dev_shelly
+      run: |
+        docker buildx build \
+          --platform linux/amd64,linux/arm64,linux/arm/v7 \
+          -f docker/Dockerfile.shelly \
+          -t luligu/matterbridge:dev_shelly \
+          --push .
+        docker manifest inspect luligu/matterbridge:dev_shelly
+      timeout-minutes: 60 
+  
+    - name: Run Docker Buildx on dev_alpine
+      run: |
+        docker buildx build \
+          --platform linux/amd64,linux/arm64,linux/arm/v7 \
+          -f docker/Dockerfile.alpine \
+          -t luligu/matterbridge:dev_alpine \
+          --push .
+        docker manifest inspect luligu/matterbridge:dev_alpine
+      timeout-minutes: 60 
+
     - name: Run Docker Buildx on dev
       run: |
         docker buildx build \
@@ -43,12 +63,3 @@ jobs:
         docker manifest inspect luligu/matterbridge:dev
       timeout-minutes: 60 
 
-    - name: Run Docker Buildx on dev_alpine
-      run: |
-        docker buildx build \
-          --platform linux/amd64,linux/arm64,linux/arm/v7 \
-          -f docker/Dockerfile.alpine \
-          -t luligu/matterbridge:dev_alpine \
-          --push .
-        docker manifest inspect luligu/matterbridge:dev_alpine
-      timeout-minutes: 60 
