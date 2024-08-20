@@ -1,4 +1,21 @@
-import { deepEqual, deepCopy, getIpv4InterfaceAddress, getIpv6InterfaceAddress, logInterfaces, isValidIpv4Address, waiter, wait, getMacAddress } from './utils';
+import {
+  deepEqual,
+  deepCopy,
+  getIpv4InterfaceAddress,
+  getIpv6InterfaceAddress,
+  logInterfaces,
+  isValidIpv4Address,
+  waiter,
+  wait,
+  getMacAddress,
+  isValidNumber,
+  isValidBoolean,
+  isValidString,
+  isValidObject,
+  isValidArray,
+  isValidNull,
+  isValidUndefined,
+} from './utils';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -217,4 +234,124 @@ describe('Utils test', () => {
   test('Wait function', async () => {
     expect(await wait(500, 'Test with jest')).toBeUndefined();
   }, 5000);
+
+  it('should validate number', () => {
+    expect(isValidNumber(1222222)).toBe(true);
+    expect(isValidNumber(NaN)).toBe(false);
+    expect(isValidNumber(true)).toBe(false);
+    expect(isValidNumber(false)).toBe(false);
+    expect(isValidNumber(1212222222222222222111122222222n)).toBe(false);
+    expect(isValidNumber('string')).toBe(false);
+    expect(isValidNumber(null)).toBe(false);
+    expect(isValidNumber(undefined)).toBe(false);
+    expect(isValidNumber({ x: 1, y: 4 })).toBe(false);
+    expect(isValidNumber([1, 4, 'string'])).toBe(false);
+  });
+  it('should validate number in range', () => {
+    expect(isValidNumber(5, 0, 100)).toBe(true);
+    expect(isValidNumber(-5, 0, 100)).toBe(false);
+    expect(isValidNumber(5555, 0, 100)).toBe(false);
+    expect(isValidNumber(5, -100, 100)).toBe(true);
+    expect(isValidNumber(-50, -100, 100)).toBe(true);
+    expect(isValidNumber(0, 0, 100)).toBe(true);
+    expect(isValidNumber(100, 0, 100)).toBe(true);
+    expect(isValidNumber(0, 0)).toBe(true);
+    expect(isValidNumber(-1, 0)).toBe(false);
+    expect(isValidNumber(123, 0)).toBe(true);
+    expect(isValidNumber(100, 0, 100)).toBe(true);
+  });
+
+  it('should validate boolean', () => {
+    expect(isValidBoolean(1222222)).toBe(false);
+    expect(isValidBoolean(NaN)).toBe(false);
+    expect(isValidBoolean(true)).toBe(true);
+    expect(isValidBoolean(false)).toBe(true);
+    expect(isValidBoolean(1212222222222222222111122222222n)).toBe(false);
+    expect(isValidBoolean('string')).toBe(false);
+    expect(isValidBoolean(null)).toBe(false);
+    expect(isValidBoolean(undefined)).toBe(false);
+    expect(isValidBoolean({ x: 1, y: 4 })).toBe(false);
+    expect(isValidBoolean([1, 4, 'string'])).toBe(false);
+  });
+
+  it('should validate string', () => {
+    expect(isValidString(1222222)).toBe(false);
+    expect(isValidString(NaN)).toBe(false);
+    expect(isValidString(true)).toBe(false);
+    expect(isValidString(false)).toBe(false);
+    expect(isValidString(1212222222222222222111122222222n)).toBe(false);
+    expect(isValidString('string')).toBe(true);
+    expect(isValidString('string', 1, 20)).toBe(true);
+    expect(isValidString('string', 0)).toBe(true);
+    expect(isValidString('string', 10)).toBe(false);
+    expect(isValidString('', 1)).toBe(false);
+    expect(isValidString('1234', 1, 3)).toBe(false);
+    expect(isValidString(null)).toBe(false);
+    expect(isValidString(undefined)).toBe(false);
+    expect(isValidString({ x: 1, y: 4 })).toBe(false);
+    expect(isValidString([1, 4, 'string'])).toBe(false);
+  });
+
+  it('should validate object', () => {
+    expect(isValidObject(1222222)).toBe(false);
+    expect(isValidObject(NaN)).toBe(false);
+    expect(isValidObject(true)).toBe(false);
+    expect(isValidObject(false)).toBe(false);
+    expect(isValidObject(1212222222222222222111122222222n)).toBe(false);
+    expect(isValidObject('string')).toBe(false);
+    expect(isValidObject(null)).toBe(false);
+    expect(isValidObject(undefined)).toBe(false);
+    expect(isValidObject({ x: 1, y: 4 })).toBe(true);
+    expect(isValidObject([1, 4, 'string'])).toBe(false);
+
+    expect(isValidObject({ x: 1, y: 4 }, 1, 2)).toBe(true);
+    expect(isValidObject({ x: 1, y: 4 }, 2, 2)).toBe(true);
+    expect(isValidObject({ x: 1, y: 4 }, 2, 3)).toBe(true);
+    expect(isValidObject({ x: 1, y: 4 }, 3, 3)).toBe(false);
+    expect(isValidObject({ x: 1, y: 4 }, 1, 1)).toBe(false);
+  });
+
+  it('should validate array', () => {
+    expect(isValidArray(1222222)).toBe(false);
+    expect(isValidArray(NaN)).toBe(false);
+    expect(isValidArray(true)).toBe(false);
+    expect(isValidArray(false)).toBe(false);
+    expect(isValidArray(1212222222222222222111122222222n)).toBe(false);
+    expect(isValidArray('string')).toBe(false);
+    expect(isValidArray(null)).toBe(false);
+    expect(isValidArray(undefined)).toBe(false);
+    expect(isValidArray({ x: 1, y: 4 })).toBe(false);
+    expect(isValidArray([1, 4, 'string'])).toBe(true);
+
+    expect(isValidArray([1, 4, 'string'], 3, 3)).toBe(true);
+    expect(isValidArray([1, 4, 'string'], 4, 4)).toBe(false);
+    expect(isValidArray([1, 4, 'string'], 1, 2)).toBe(false);
+    expect(isValidArray([1, 4, 'string'], 0, 3)).toBe(true);
+  });
+
+  it('should validate null', () => {
+    expect(isValidNull(1222222)).toBe(false);
+    expect(isValidNull(NaN)).toBe(false);
+    expect(isValidNull(true)).toBe(false);
+    expect(isValidNull(false)).toBe(false);
+    expect(isValidNull(1212222222222222222111122222222n)).toBe(false);
+    expect(isValidNull('string')).toBe(false);
+    expect(isValidNull(null)).toBe(true);
+    expect(isValidNull(undefined)).toBe(false);
+    expect(isValidNull({ x: 1, y: 4 })).toBe(false);
+    expect(isValidNull([1, 4, 'string'])).toBe(false);
+  });
+
+  it('should validate undefined', () => {
+    expect(isValidUndefined(1222222)).toBe(false);
+    expect(isValidUndefined(NaN)).toBe(false);
+    expect(isValidUndefined(true)).toBe(false);
+    expect(isValidUndefined(false)).toBe(false);
+    expect(isValidUndefined(1212222222222222222111122222222n)).toBe(false);
+    expect(isValidUndefined('string')).toBe(false);
+    expect(isValidUndefined(null)).toBe(false);
+    expect(isValidUndefined(undefined)).toBe(true);
+    expect(isValidUndefined({ x: 1, y: 4 })).toBe(false);
+    expect(isValidUndefined([1, 4, 'string'])).toBe(false);
+  });
 });

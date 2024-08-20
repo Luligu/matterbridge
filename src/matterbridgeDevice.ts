@@ -31,8 +31,6 @@ import {
   ColorControlCluster,
   DoorLock,
   DoorLockCluster,
-  ElectricalMeasurement,
-  ElectricalMeasurementCluster,
   FanControl,
   FanControlCluster,
   FixedLabelCluster,
@@ -82,7 +80,7 @@ import { Device, DeviceClasses, DeviceTypeDefinition, Endpoint, EndpointOptions 
 import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
 
 import { EveHistory, EveHistoryCluster, MatterHistory, Sensitivity, WeatherTrend, TemperatureDisplayUnits } from 'matter-history';
-import { AnsiLogger, CYAN, LogLevel, TimestampFormat, db, hk, zb } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from 'node-ansi-logger';
 
 import { AirQuality, AirQualityCluster } from './cluster/AirQualityCluster.js';
 import { createHash } from 'crypto';
@@ -122,9 +120,9 @@ interface MatterbridgeDeviceCommands {
   moveToLevel: MakeMandatory<ClusterServerHandlers<typeof LevelControl.Complete>['moveToLevel']>;
   moveToLevelWithOnOff: MakeMandatory<ClusterServerHandlers<typeof LevelControl.Complete>['moveToLevelWithOnOff']>;
 
-  moveToColor: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['moveToHue']>;
-  moveColor: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['moveToHue']>;
-  stepColor: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['moveToHue']>;
+  moveToColor: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['moveToColor']>;
+  moveColor: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['moveColor']>;
+  stepColor: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['stepColor']>;
   moveToHue: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['moveToHue']>;
   moveHue: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['moveHue']>;
   stepHue: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['stepHue']>;
@@ -553,8 +551,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(OccupancySensing.Cluster.id)) endpoint.addClusterServer(this.getDefaultOccupancySensingClusterServer());
     if (includeServerList.includes(IlluminanceMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer());
     if (includeServerList.includes(PowerSource.Cluster.id)) endpoint.addClusterServer(this.getDefaultPowerSourceWiredClusterServer());
-    if (includeServerList.includes(EveHistory.Cluster.id)) endpoint.addClusterServer(this.getDefaultStaticEveHistoryClusterServer());
-    if (includeServerList.includes(ElectricalMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalMeasurementClusterServer());
+    if (includeServerList.includes(EveHistory.Cluster.id)) endpoint.addClusterServer(MatterHistory.getEveHistoryClusterServer());
+    // if (includeServerList.includes(ElectricalMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalMeasurementClusterServer());
     if (includeServerList.includes(PowerTopology.Cluster.id)) endpoint.addClusterServer(this.getDefaultPowerTopologyClusterServer());
     if (includeServerList.includes(ElectricalPowerMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalPowerMeasurementClusterServer());
     if (includeServerList.includes(ElectricalEnergyMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalEnergyMeasurementClusterServer());
@@ -643,6 +641,90 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Retrieves the value of the specified attribute from the given endpoint and cluster.
+   *
+   * @param {ClusterId} clusterId - The ID of the cluster to retrieve the attribute from.
+   * @param {string} attribute - The name of the attribute to retrieve.
+   * @param {AnsiLogger} [log] - Optional logger for error and info messages.
+   * @param {Endpoint} [endpoint] - Optional the child endpoint to retrieve the attribute from.
+   * @returns {any} The value of the attribute, or undefined if the attribute is not found.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getAttribute(clusterId: ClusterId, attribute: string, log?: AnsiLogger, endpoint?: Endpoint): any {
+    if (!endpoint) endpoint = this as Endpoint;
+
+    const clusterServer = endpoint.getClusterServerById(clusterId);
+    if (!clusterServer) {
+      log?.error(`getAttribute error: Cluster ${clusterId} not found on endpoint ${endpoint.name}:${endpoint.number}`);
+      return undefined;
+    }
+    const capitalizedAttributeName = attribute.charAt(0).toUpperCase() + attribute.slice(1);
+    if (!clusterServer.isAttributeSupportedByName(attribute) && !clusterServer.isAttributeSupportedByName(capitalizedAttributeName)) {
+      if (log) log.error(`getAttribute error: Attribute ${attribute} not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+      return undefined;
+    }
+    // Find the getter method
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!(clusterServer as any)[`get${capitalizedAttributeName}Attribute`]) {
+      log?.error(`getAttribute error: Getter get${capitalizedAttributeName}Attribute not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+      return undefined;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type
+    const getter = (clusterServer as any)[`get${capitalizedAttributeName}Attribute`] as () => {};
+    const value = getter();
+    log?.info(`${db}Get endpoint ${or}${endpoint.name}:${endpoint.number}${db} attribute ${hk}${clusterServer.name}.${capitalizedAttributeName}${db} value ${YELLOW}${typeof value === 'object' ? debugStringify(value) : value}${db}`);
+    return value;
+  }
+
+  /**
+   * Sets the value of an attribute on a cluster server endpoint.
+   *
+   * @param {ClusterId} clusterId - The ID of the cluster.
+   * @param {string} attribute - The name of the attribute.
+   * @param {any} value - The value to set for the attribute.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging errors and information.
+   * @param {Endpoint} [endpoint] - (Optional) The endpoint to set the attribute on. If not provided, the attribute will be set on the current endpoint.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  setAttribute(clusterId: ClusterId, attribute: string, value: any, log?: AnsiLogger, endpoint?: Endpoint) {
+    if (!endpoint) endpoint = this as Endpoint;
+
+    const clusterServer = endpoint.getClusterServerById(clusterId);
+    if (!clusterServer) {
+      log?.error(`setAttribute error: Cluster ${clusterId} not found on endpoint ${endpoint.name}:${endpoint.number}`);
+      return;
+    }
+    const capitalizedAttributeName = attribute.charAt(0).toUpperCase() + attribute.slice(1);
+    if (!clusterServer.isAttributeSupportedByName(attribute) && !clusterServer.isAttributeSupportedByName(capitalizedAttributeName)) {
+      if (log) log.error(`setAttribute error: Attribute ${attribute} not found on Cluster ${clusterId} on endpoint ${endpoint.name}:${endpoint.number}`);
+      return;
+    }
+    // Find the getter method
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!(clusterServer as any)[`get${capitalizedAttributeName}Attribute`]) {
+      log?.error(`setAttribute error: Getter get${capitalizedAttributeName}Attribute not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+      return;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type
+    const getter = (clusterServer as any)[`get${capitalizedAttributeName}Attribute`] as () => {};
+    // Find the setter method
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!(clusterServer as any)[`set${capitalizedAttributeName}Attribute`]) {
+      log?.error(`setAttribute error: Setter set${capitalizedAttributeName}Attribute not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+      return;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type
+    const setter = (clusterServer as any)[`set${capitalizedAttributeName}Attribute`] as (value: any) => {};
+    const oldValue = getter();
+    setter(value);
+    log?.info(
+      `${db}Set endpoint ${or}${endpoint.name}:${endpoint.number}${db} attribute ${hk}${clusterServer.name}.${capitalizedAttributeName}${db} ` +
+        `from ${YELLOW}${typeof oldValue === 'object' ? debugStringify(oldValue) : oldValue}${db} ` +
+        `to ${YELLOW}${typeof value === 'object' ? debugStringify(value) : value}${db}`,
+    );
+  }
+
+  /**
    * Serializes the Matterbridge device into a serialized object.
    *
    * @param pluginName - The name of the plugin.
@@ -708,7 +790,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Returns a default static EveHistoryClusterServer object with the specified voltage, current, power, and consumption values.
    * This shows up in HA as a static sensor!
-   * @deprecated This method is deprecated and will be removed in a future version.
+   * @deprecated This method is deprecated and will be removed in a future version. Use MatterHistory.
    * @param voltage - The voltage value (default: 0).
    * @param current - The current value (default: 0).
    * @param power - The power value (default: 0).
@@ -745,7 +827,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Create a default static EveHistoryClusterServer object with the specified voltage, current, power, and consumption values.
    * This shows up in HA as a static sensor!
-   * @deprecated This method is deprecated and will be removed in a future version.
+   * @deprecated This method is deprecated and will be removed in a future version. Use MatterHistory.
    * @param voltage - The voltage value (default: 0).
    * @param current - The current value (default: 0).
    * @param power - The power value (default: 0).
@@ -758,7 +840,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Creates a room Eve History Cluster Server.
-   * @deprecated This method is deprecated and will be removed in a future version.
+   * @deprecated This method is deprecated and will be removed in a future version. Use MatterHistory.
    *
    * @param history - The MatterHistory object.
    * @param log - The AnsiLogger object.
@@ -830,7 +912,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Creates a Weather Eve History Cluster Server.
-   * @deprecated This method is deprecated and will be removed in a future version.
+   * @deprecated This method is deprecated and will be removed in a future version. Use MatterHistory.
    *
    * @param history - The MatterHistory instance.
    * @param log - The AnsiLogger instance.
@@ -905,7 +987,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Creates an Energy Eve History Cluster Server.
-   * @deprecated This method is deprecated and will be removed in a future version.
+   * @deprecated This method is deprecated and will be removed in a future version. Use MatterHistory.
    *
    * @param history - The MatterHistory object.
    * @param log - The AnsiLogger object.
@@ -998,7 +1080,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Creates a Motion Eve History Cluster Server.
-   * @deprecated This method is deprecated and will be removed in a future version.
+   * @deprecated This method is deprecated and will be removed in a future version. Use MatterHistory.
    *
    * @param history - The MatterHistory object.
    * @param log - The AnsiLogger object.
@@ -1076,7 +1158,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Creates a door EveHistoryCluster server.
-   * @deprecated This method is deprecated and will be removed in a future version.
+   * @deprecated This method is deprecated and will be removed in a future version. Use MatterHistory.
    *
    * @param history - The MatterHistory instance.
    * @param log - The AnsiLogger instance.
@@ -1520,6 +1602,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param power - The active power value.
    * @param consumption - The total active power consumption value.
    */
+  /*
   getDefaultElectricalMeasurementClusterServer(voltage = 0, current = 0, power = 0, consumption = 0) {
     return ClusterServer(
       ElectricalMeasurementCluster,
@@ -1533,6 +1616,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {},
     );
   }
+  */
 
   /**
    * @deprecated This method is deprecated and will be removed in a future version.
@@ -1543,9 +1627,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param power - The active power value.
    * @param consumption - The total active power consumption value.
    */
+  /*
   createDefaultElectricalMeasurementClusterServer(voltage = 0, current = 0, power = 0, consumption = 0) {
     this.addClusterServer(this.getDefaultElectricalMeasurementClusterServer(voltage, current, power, consumption));
   }
+  */
 
   /**
    * Creates a default Dummy Thread Network Diagnostics Cluster server.
@@ -1869,6 +1955,39 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Configures the color control cluster for a device.
+   *
+   * @param {boolean} hueSaturation - A boolean indicating whether the device supports hue and saturation control.
+   * @param {boolean} xy - A boolean indicating whether the device supports XY control.
+   * @param {boolean} colorTemperature - A boolean indicating whether the device supports color temperature control.
+   * @param {ColorControl.ColorMode} colorMode - An optional parameter specifying the color mode of the device.
+   * @param {Endpoint} endpoint - An optional parameter specifying the endpoint to configure. If not provided, the device endpoint will be used.
+   */
+  configureColorControlCluster(hueSaturation: boolean, xy: boolean, colorTemperature: boolean, colorMode?: ColorControl.ColorMode, endpoint?: Endpoint) {
+    if (!endpoint) endpoint = this as Endpoint;
+    endpoint.getClusterServer(ColorControlCluster)?.setFeatureMapAttribute({ hueSaturation, enhancedHue: false, colorLoop: false, xy, colorTemperature });
+    endpoint.getClusterServer(ColorControlCluster)?.setColorCapabilitiesAttribute({ hueSaturation, enhancedHue: false, colorLoop: false, xy, colorTemperature });
+    if (colorMode !== undefined && colorMode >= 0 && colorMode <= 2) {
+      endpoint.getClusterServer(ColorControlCluster)?.setColorModeAttribute(colorMode);
+      endpoint.getClusterServer(ColorControlCluster)?.setEnhancedColorModeAttribute(colorMode as unknown as ColorControl.EnhancedColorMode);
+    }
+  }
+
+  /**
+   * Configures the color control mode for the device.
+   *
+   * @param {ColorControl.ColorMode} colorMode - The color mode to set.
+   * @param {Endpoint} endpoint - The optional endpoint to configure. If not provided, the method will configure the current endpoint.
+   */
+  configureColorControlMode(colorMode: ColorControl.ColorMode, endpoint?: Endpoint) {
+    if (!endpoint) endpoint = this as Endpoint;
+    if (colorMode !== undefined && colorMode >= 0 && colorMode <= 2) {
+      endpoint.getClusterServer(ColorControlCluster)?.setColorModeAttribute(colorMode);
+      endpoint.getClusterServer(ColorControlCluster)?.setEnhancedColorModeAttribute(colorMode as unknown as ColorControl.EnhancedColorMode);
+    }
+  }
+
+  /**
    * Get a default window covering cluster server.
    *
    * @param positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0.
@@ -1930,6 +2049,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Sets the window covering target position as the current position and stops the movement.
+   * @param {Endpoint} endpoint - The endpoint on which to set the window covering (default the device endpoint).
    */
   setWindowCoveringTargetAsCurrentAndStopped(endpoint?: Endpoint) {
     if (!endpoint) endpoint = this as Endpoint;
@@ -1941,7 +2061,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         windowCoveringCluster.setOperationalStatusAttribute({
           global: WindowCovering.MovementStatus.Stopped,
           lift: WindowCovering.MovementStatus.Stopped,
-          tilt: 0,
+          tilt: WindowCovering.MovementStatus.Stopped,
         });
       }
       this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
@@ -1950,9 +2070,10 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Sets the current and target status of a window covering.
-   * @param current - The current position of the window covering.
-   * @param target - The target position of the window covering.
-   * @param status - The movement status of the window covering.
+   * @param {number} current - The current position of the window covering.
+   * @param {number} target - The target position of the window covering.
+   * @param {WindowCovering.MovementStatus} status - The movement status of the window covering.
+   * @param {Endpoint} endpoint - The endpoint on which to set the window covering (default the device endpoint).
    */
   setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus, endpoint?: Endpoint) {
     if (!endpoint) endpoint = this as Endpoint;
@@ -1963,7 +2084,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       windowCoveringCluster.setOperationalStatusAttribute({
         global: status,
         lift: status,
-        tilt: 0,
+        tilt: status,
       });
     }
     this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
@@ -1972,20 +2093,23 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Sets the status of the window covering.
    * @param {WindowCovering.MovementStatus} status - The movement status to set.
+   * @param {Endpoint} endpoint - The endpoint on which to set the window covering (default the device endpoint).
    */
   setWindowCoveringStatus(status: WindowCovering.MovementStatus, endpoint?: Endpoint) {
     if (!endpoint) endpoint = this as Endpoint;
     const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (!windowCovering) return;
-    windowCovering.setOperationalStatusAttribute({ global: status, lift: status, tilt: 0 });
+    windowCovering.setOperationalStatusAttribute({ global: status, lift: status, tilt: status });
     this.log.debug(`Set WindowCovering operationalStatus: ${status}`);
   }
 
   /**
    * Retrieves the status of the window covering.
+   * @param {Endpoint} endpoint - The endpoint on which to get the window covering (default the device endpoint).
+   *
    * @returns The global operational status of the window covering.
    */
-  getWindowCoveringStatus(endpoint?: Endpoint) {
+  getWindowCoveringStatus(endpoint?: Endpoint): WindowCovering.MovementStatus | undefined {
     if (!endpoint) endpoint = this as Endpoint;
     const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
     if (!windowCovering) return undefined;
@@ -1998,6 +2122,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * Sets the target and current position of the window covering.
    *
    * @param position - The position to set, specified as a number.
+   * @param {Endpoint} endpoint - The endpoint on which to set the window covering (default the device endpoint).
    */
   setWindowCoveringTargetAndCurrentPosition(position: number, endpoint?: Endpoint) {
     if (!endpoint) endpoint = this as Endpoint;
@@ -2121,6 +2246,74 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     this.addClusterServer(this.getDefaultLatchingSwitchClusterServer());
     this.addFixedLabel('orientation', 'Switch');
     this.addFixedLabel('label', 'Switch');
+  }
+
+  /**
+   * Triggers a switch event on the specified endpoint.
+   *
+   * @param {string} event - The type of event to trigger. Possible values are 'Single', 'Double', 'Long', 'Press', and 'Release'.
+   * @param {Endpoint} endpoint - The endpoint on which to trigger the event (default the device endpoint).
+   * @returns {void}
+   */
+  triggerSwitchEvent(event: 'Single' | 'Double' | 'Long' | 'Press' | 'Release', endpoint?: Endpoint, log?: AnsiLogger): void {
+    if (!endpoint) endpoint = this as Endpoint;
+
+    if (['Single', 'Double', 'Long'].includes(event)) {
+      const cluster = endpoint.getClusterServer(SwitchCluster.with(Switch.Feature.MomentarySwitch, Switch.Feature.MomentarySwitchRelease, Switch.Feature.MomentarySwitchLongPress, Switch.Feature.MomentarySwitchMultiPress));
+      if (!cluster || !cluster.getFeatureMapAttribute().momentarySwitch) {
+        log?.error(`triggerSwitchEvent ${event} error: Switch cluster with MomentarySwitch not found on endpoint ${endpoint.name}:${endpoint.number}`);
+        return;
+      }
+      if (event === 'Single') {
+        cluster.setCurrentPositionAttribute(1);
+        cluster.triggerInitialPressEvent({ newPosition: 1 });
+        cluster.setCurrentPositionAttribute(0);
+        cluster.triggerShortReleaseEvent({ previousPosition: 1 });
+        cluster.setCurrentPositionAttribute(0);
+        cluster.triggerMultiPressCompleteEvent({ previousPosition: 1, totalNumberOfPressesCounted: 1 });
+        log?.info(`${db}Trigger endpoint ${or}${endpoint.name}:${endpoint.number}${db} event ${hk}${cluster.name}.SinglePress${db}`);
+      }
+      if (event === 'Double') {
+        cluster.setCurrentPositionAttribute(1);
+        cluster.triggerInitialPressEvent({ newPosition: 1 });
+        cluster.setCurrentPositionAttribute(0);
+        cluster.triggerShortReleaseEvent({ previousPosition: 1 });
+        cluster.setCurrentPositionAttribute(1);
+        cluster.triggerInitialPressEvent({ newPosition: 1 });
+        cluster.triggerMultiPressOngoingEvent({ newPosition: 1, currentNumberOfPressesCounted: 2 });
+        cluster.setCurrentPositionAttribute(0);
+        cluster.triggerShortReleaseEvent({ previousPosition: 1 });
+        cluster.triggerMultiPressCompleteEvent({ previousPosition: 1, totalNumberOfPressesCounted: 2 });
+        log?.info(`${db}Trigger endpoint ${or}${endpoint.name}:${endpoint.number}${db} event ${hk}${cluster.name}.DoublePress${db}`);
+      }
+      if (event === 'Long') {
+        cluster.setCurrentPositionAttribute(1);
+        cluster.triggerInitialPressEvent({ newPosition: 1 });
+        cluster.triggerLongPressEvent({ newPosition: 1 });
+        cluster.setCurrentPositionAttribute(0);
+        cluster.triggerLongReleaseEvent({ previousPosition: 1 });
+        log?.info(`${db}Trigger endpoint ${or}${endpoint.name}:${endpoint.number}${db} event ${hk}${cluster.name}.LongPress${db}`);
+      }
+    }
+    if (['Press', 'Release'].includes(event)) {
+      const cluster = endpoint.getClusterServer(Switch.Complete);
+      if (!cluster || !cluster.getFeatureMapAttribute().latchingSwitch) {
+        log?.error(`triggerSwitchEvent ${event} error: Switch cluster with LatchingSwitch not found on endpoint ${endpoint.name}:${endpoint.number}`);
+        return;
+      }
+      if (event === 'Press') {
+        cluster.setCurrentPositionAttribute(1);
+        log?.info(`${db}Update endpoint ${or}${endpoint.name}:${endpoint.number}${db} attribute ${hk}${cluster.name}.CurrentPosition${db} to ${YELLOW}1${db}`);
+        if (cluster.triggerSwitchLatchedEvent) cluster.triggerSwitchLatchedEvent({ newPosition: 1 });
+        log?.info(`${db}Trigger endpoint ${or}${endpoint.name}:${endpoint.number}${db} event ${hk}${cluster.name}.Press${db}`);
+      }
+      if (event === 'Release') {
+        cluster.setCurrentPositionAttribute(0);
+        log?.info(`${db}Update endpoint ${or}${endpoint.name}:${endpoint.number}${db} attribute ${hk}${cluster.name}.CurrentPosition${db} to ${YELLOW}0${db}`);
+        if (cluster.triggerSwitchLatchedEvent) cluster.triggerSwitchLatchedEvent({ newPosition: 0 });
+        log?.info(`${db}Trigger endpoint ${or}${endpoint.name}:${endpoint.number}${db} event ${hk}${cluster.name}.Release${db}`);
+      }
+    }
   }
 
   /**

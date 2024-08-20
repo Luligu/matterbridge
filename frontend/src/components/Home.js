@@ -242,7 +242,7 @@ function Home() {
 
         <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
           <div className="MbfWindowHeader">
-            <p className="MbfWindowHeaderText">Add remove plugin</p>
+            <p className="MbfWindowHeaderText">Install add plugin</p>
           </div>
           <AddRemovePlugins ref={refAddRemove} plugins={plugins} reloadSettings={reloadSettings}/>
         </div>
@@ -267,7 +267,10 @@ function Home() {
 
                     <td><Tooltip title={plugin.path}>{plugin.name}</Tooltip></td>
                     <td>{plugin.description}</td>
-                    <td><Tooltip title="Update the plugin to the latest version">{plugin.latestVersion === undefined || plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning" onClick={() => handleUpdate(index)}>{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</Tooltip></td>
+                    {plugin.latestVersion === undefined || plugin.latestVersion === plugin.version ?
+                      <td><Tooltip title="Plugin version">{plugin.version}</Tooltip></td> :
+                      <td><Tooltip title="New plugin version available, click to install"><span className="status-warning" onClick={() => handleUpdate(index)}>Update to v.{plugin.latestVersion}</span></Tooltip></td>
+                    }
                     <td>{plugin.author.replace('https://github.com/', '')}</td>
                     <td>{plugin.type === 'DynamicPlatform'?'Dynamic':'Accessory'}</td>
                     <td>{plugin.registeredDevices}</td>
@@ -367,7 +370,7 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
     setTimeout(() => {
       reloadSettings();
     }, 5000);
-};
+  };
 
   const handleAddPluginClick = () => {
     logMessage('Plugins', `Adding plugin: ${pluginName}`);
@@ -375,15 +378,7 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
     setTimeout(() => {
       reloadSettings();
     }, 1000);
-};
-
-  const handleRemovePluginClick = () => {
-    logMessage('Plugins', `Removing plugin: ${pluginName}`);
-    sendCommandToMatterbridge('removeplugin', pluginName);
-    setTimeout(() => {
-      reloadSettings();
-    }, 1000);
-};
+  };
 
   const handleClickVertical = (event) => {
     setAnchorEl(event.currentTarget);
@@ -431,9 +426,6 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
       </Tooltip>        
       <Tooltip title="Add an installed plugin">
         <Button onClick={handleAddPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="add" endIcon={<Add />} style={{ color: '#ffffff', height: '30px', minWidth: '90px' }}> Add</Button>
-      </Tooltip>        
-      <Tooltip title="Remove a registered plugin">
-        <Button onClick={handleRemovePluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="remove" endIcon={<Remove />} style={{ color: '#ffffff', height: '30px', minWidth: '90px' }}> Remove</Button>
       </Tooltip>        
     </div>
   );

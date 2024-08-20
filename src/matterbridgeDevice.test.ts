@@ -304,7 +304,7 @@ describe('Matterbridge device', () => {
 
   test('create a power source device with EveHistory', async () => {
     const device = new MatterbridgeDevice(powerSource);
-    device.createDefaultStaticEveHistoryClusterServer();
+    MatterHistory.createEveHistoryClusterServer(device);
     expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
     expect(device.getDeviceTypes()).toHaveLength(1);
     expect(() => device.verifyRequiredClusters()).toThrow();
@@ -315,9 +315,9 @@ describe('Matterbridge device', () => {
 
   test('create a door device with EveHistory', async () => {
     const device = new MatterbridgeDevice(DeviceTypes.CONTACT_SENSOR);
-    device.log.setLogDebug(true);
+    device.log.logLevel = LogLevel.DEBUG;
     const history = new MatterHistory(device.log, 'Eve door');
-    device.createDoorEveHistoryClusterServer(history, device.log);
+    history.createDoorEveHistoryClusterServer(device, device.log);
     expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
     expect(device.getDeviceTypes()).toHaveLength(1);
     expect(() => device.verifyRequiredClusters()).toThrow();
@@ -358,7 +358,7 @@ describe('Matterbridge device', () => {
   test('create a motion device with EveHistory', async () => {
     const device = new MatterbridgeDevice(DeviceTypes.OCCUPANCY_SENSOR);
     const history = new MatterHistory(device.log, 'Eve motion');
-    device.createMotionEveHistoryClusterServer(history, device.log);
+    history.createMotionEveHistoryClusterServer(device, device.log);
     expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
     expect(device.getDeviceTypes()).toHaveLength(1);
     expect(() => device.verifyRequiredClusters()).toThrow();
@@ -396,7 +396,7 @@ describe('Matterbridge device', () => {
   test('create a energy device with EveHistory', async () => {
     const device = new MatterbridgeDevice(DeviceTypes.ON_OFF_PLUGIN_UNIT);
     const history = new MatterHistory(device.log, 'Eve energy');
-    device.createEnergyEveHistoryClusterServer(history, device.log);
+    history.createEnergyEveHistoryClusterServer(device, device.log);
     expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
     expect(device.getDeviceTypes()).toHaveLength(1);
     expect(() => device.verifyRequiredClusters()).toThrow();
@@ -436,7 +436,7 @@ describe('Matterbridge device', () => {
   test('create a room device with EveHistory', async () => {
     const device = new MatterbridgeDevice([airQualitySensor]);
     const history = new MatterHistory(device.log, 'Eve room');
-    device.createRoomEveHistoryClusterServer(history, device.log);
+    history.createRoomEveHistoryClusterServer(device, device.log);
     expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
     expect(device.getDeviceTypes()).toHaveLength(1);
     expect(() => device.verifyRequiredClusters()).toThrow();
@@ -474,7 +474,7 @@ describe('Matterbridge device', () => {
   test('create a weather device with EveHistory', async () => {
     const device = new MatterbridgeDevice([DeviceTypes.TEMPERATURE_SENSOR, DeviceTypes.HUMIDITY_SENSOR, DeviceTypes.PRESSURE_SENSOR]);
     const history = new MatterHistory(device.log, 'Eve weather');
-    device.createWeatherEveHistoryClusterServer(history, device.log);
+    history.createWeatherEveHistoryClusterServer(device, device.log);
     expect(device.getClusterServerById(EveHistoryCluster.id)).toBeDefined();
     expect(device.getDeviceTypes()).toHaveLength(3);
     expect(() => device.verifyRequiredClusters()).toThrow();
@@ -514,7 +514,7 @@ describe('Matterbridge device', () => {
     device.createDefaultIdentifyClusterServer();
     device.createDefaultGroupsClusterServer();
     device.createDefaultScenesClusterServer();
-    device.createDefaultElectricalMeasurementClusterServer();
+    // device.createDefaultElectricalMeasurementClusterServer();
     device.createDefaultDummyThreadNetworkDiagnosticsClusterServer();
     device.createDefaultOnOffClusterServer();
     device.createDefaultLevelControlClusterServer();

@@ -1,3 +1,4 @@
 # TODO list
 
-- after restart re add the listeners for kill
+- OTA for matterbridge
+- Add test for triggerSwitchEvent configureColorControlCluster  configureColorControlMode
