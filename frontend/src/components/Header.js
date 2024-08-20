@@ -3,10 +3,11 @@
 // Header.js
 import React, { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { Tooltip, Button, createTheme, Backdrop, CircularProgress, ThemeProvider } from '@mui/material';
+import { Tooltip, Button, createTheme, Backdrop, CircularProgress, ThemeProvider, IconButton, Menu, MenuItem } from '@mui/material';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
+import { MoreHoriz } from '@mui/icons-material';
 
 import { sendCommandToMatterbridge } from '../App';
 import { WebSocketContext } from './WebSocketContext';
@@ -35,6 +36,7 @@ function Header() {
   const [systemInfo, setSystemInfo] = useState({});
   const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
   const { messages, sendMessage, logMessage } = useContext(WebSocketContext);
+  const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleClose = () => {
     setOpen(false);
@@ -94,6 +96,22 @@ function Header() {
     */
   };
 
+  const handleClickCommand = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseCommand = (value) => {
+    console.log('handleCloseCommand:', value);
+    setAnchorEl(null);
+  };
+
+  const handleMbLoggerDownload = () => {
+    window.location.href = '/api/download-mblog';
+  };
+  const handleMjLoggerDownload = () => {
+    window.location.href = '/api/download-mjlog';
+  };
+
   useEffect(() => {
     // Fetch settings from the backend
     const fetchSettings = () => {
@@ -141,8 +159,8 @@ function Header() {
           <span className="status-sponsor" onClick={handleSponsorClick}>Sponsor</span> 
         </Tooltip>        
         {matterbridgeInfo.matterbridgeLatestVersion === undefined || matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion ?
-          <Tooltip title="Matterbridge version"><span className="status-information" onClick={handleChangelog}>v{matterbridgeInfo.matterbridgeVersion}</span></Tooltip> :
-          <Tooltip title="New Matterbridge version available"><span className="status-warning" onClick={handleChangelog}>current v{matterbridgeInfo.matterbridgeVersion} latest v{matterbridgeInfo.matterbridgeLatestVersion}</span></Tooltip> 
+          <Tooltip title="Matterbridge version"><span className="status-information" onClick={handleChangelog}>v.{matterbridgeInfo.matterbridgeVersion}</span></Tooltip> :
+          <Tooltip title="New Matterbridge version available, click to install"><span className="status-warning" onClick={handleUpdateClick}>Update to v.{matterbridgeInfo.matterbridgeLatestVersion}</span></Tooltip> 
         }  
         <Tooltip title="Matterbridge help">
           <span className="status-information" onClick={handleHelp}>help</span>
@@ -179,5 +197,14 @@ function Header() {
     </div>
   );
 }
-
+/*
+        <IconButton onClick={handleClickCommand}>
+          <MoreHoriz />
+        </IconButton>
+        <Menu id="command-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => handleCloseCommand('')}>
+          <MenuItem onClick={() => handleCloseCommand('download-log')}>Download log</MenuItem>
+          <MenuItem onClick={() => handleCloseCommand('download-log')}>Download storage</MenuItem>
+          <MenuItem onClick={() => handleCloseCommand('download-log')}>Download configs</MenuItem>
+        </Menu>
+*/
 export default Header;

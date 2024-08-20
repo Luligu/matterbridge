@@ -30,7 +30,6 @@ function Settings() {
 
 function MatterbridgeInfo() {
   const [open, setOpen] = useState(false);
-  const [selectedRestartMode, setSelectedRestartMode] = useState(''); 
   const [selectedBridgeMode, setSelectedBridgeMode] = useState('bridge'); 
   const [selectedMbLoggerLevel, setSelectedMbLoggerLevel] = useState('Info'); 
   const [selectedMjLoggerLevel, setSelectedMjLoggerLevel] = useState('Info'); 
@@ -52,7 +51,6 @@ function MatterbridgeInfo() {
       .then(response => response.json())
       .then(data => { 
         setMatterbridgeInfo(data.matterbridgeInformation); 
-        setSelectedRestartMode(data.matterbridgeInformation.restartMode); 
         setSelectedBridgeMode(data.matterbridgeInformation.bridgeMode==='bridge'?'bridge':'childbridge'); 
 
         if(data.matterbridgeInformation.loggerLevel === 'debug') setSelectedMbLoggerLevel('Debug');
@@ -78,13 +76,6 @@ function MatterbridgeInfo() {
     console.log('handleChangeBridgeMode called with value:', event.target.value);
     setSelectedBridgeMode(event.target.value);
     sendCommandToMatterbridge('setbridgemode', event.target.value);
-  };
-
-  // Define a function to handle change restart mode 
-  const handleChangeRestartMode = (event) => {
-    console.log('handleChangeRestartMode called with value:', event.target.value);
-    setSelectedBridgeMode(event.target.value);
-    sendCommandToMatterbridge('setrestartmode', event.target.value);
   };
 
   // Define a function to handle change debug level
@@ -153,14 +144,6 @@ function MatterbridgeInfo() {
             <RadioGroup focused row name="mode-buttons-group" value={selectedBridgeMode} onChange={handleChangeBridgeMode}>
               <FormControlLabel value="bridge" disabled control={<Radio />} label="Bridge" />
               <FormControlLabel value="childbridge" disabled control={<Radio />} label="Childbridge" />
-            </RadioGroup>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-restart">Matterbridge restart mode:</FormLabel>
-            <RadioGroup focused row name="mode-buttons-group" value={selectedRestartMode} onChange={handleChangeRestartMode}>
-              <FormControlLabel value="" disabled control={<Radio />} label="None" />
-              <FormControlLabel value="service" disabled control={<Radio />} label="Service" />
-              <FormControlLabel value="docker" disabled control={<Radio />} label="Docker" />
             </RadioGroup>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>

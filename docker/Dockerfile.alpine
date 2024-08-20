@@ -4,17 +4,13 @@ FROM alpine:3.18.4 AS base
 
 WORKDIR /app
 RUN apk add --no-cache nodejs npm icu-data-full
-# RUN npm install -g npm@10.7.0
-
-# FROM base as builder
 
 COPY ./package.json ./package-lock.json ./tsconfig.json ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
-RUN npm ci --no-audit --no-update-notifier --no-fund && \
+RUN npm install --no-audit --no-update-notifier --no-fund && \
     npm run build && \
     npm link
-
 
 # Install Matterbridge plugins
 RUN npm -g install matterbridge-example-accessory-platform

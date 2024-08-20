@@ -45,7 +45,7 @@ function Logs() {
     <div className="MbfPageDiv">
       <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '0px', gap: '10px' }}>
         <h3>Logs:</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <InputLabel id="select-level">Filter by debug level</InputLabel>
           <Select style={{ height: '40px' }} labelId="select-level" id="debug-level" value={logFilterLevel} onChange={handleChangeLevel}>
             <MenuItem value='debug'>Debug</MenuItem>

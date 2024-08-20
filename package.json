@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -101,7 +101,7 @@
     "cleanBuild": "npm run clean && npm run build",
     "deepClean": "rimraf tsconfig.tsbuildinfo package-lock.json ./dist ./node_modules",
     "deepCleanRebuild": "npm run deepClean && npm install && npm run build && npm ls rimraf inflight glob",
-    "prepublishOnly": "npm run wtf:uninstall && npm uninstall matter-history && npm install matter-history && npm run lint && npm run cleanBuild",
+    "prepublishOnly": "npm run wtf:uninstall && npm uninstall node-ansi-logger && npm install node-ansi-logger && npm uninstall matter-history && npm install matter-history && npm run lint && npm run cleanBuild",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u && npm install & npm run cleanBuild",
     "updateMatter:latest": "npm run deepClean && npm install @project-chip/matter-node.js@latest && npm install && npm run build",
@@ -123,29 +123,29 @@
     "eslint": "latest"
   },
   "dependencies": {
-    "@project-chip/matter-node.js": "^0.9.4",
-    "express": "^4.19.2",
-    "https": "^1.0.0",
-    "matter-history": "^1.1.5",
-    "node-ansi-logger": "^2.0.6",
-    "node-persist-manager": "^1.0.8",
-    "ws": "^8.18.0"
+    "@project-chip/matter-node.js": "0.9.4",
+    "express": "4.19.2",
+    "https": "1.0.0",
+    "matter-history": "1.1.6",
+    "node-ansi-logger": "2.0.8",
+    "node-persist-manager": "1.0.8",
+    "ws": "8.18.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.7.0",
-    "@types/eslint__js": "^8.42.3",
-    "@types/express": "^4.17.21",
-    "@types/jest": "^29.5.12",
-    "@types/node": "^20.14.12",
-    "@types/ws": "^8.5.11",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-jest": "^28.6.0",
-    "eslint-plugin-prettier": "^5.2.1",
-    "jest": "^29.7.0",
-    "prettier": "^3.3.3",
-    "rimraf": "^6.0.1",
-    "ts-jest": "^29.2.3",
-    "typescript": "^5.5.4",
-    "typescript-eslint": "^7.17.0"
+    "@eslint/js": "9.9.0",
+    "@types/eslint__js": "8.42.3",
+    "@types/express": "4.17.21",
+    "@types/jest": "29.5.12",
+    "@types/node": "22.4.1",
+    "@types/ws": "8.5.12",
+    "eslint-config-prettier": "9.1.0",
+    "eslint-plugin-jest": "28.8.0",
+    "eslint-plugin-prettier": "5.2.1",
+    "jest": "29.7.0",
+    "prettier": "3.3.3",
+    "rimraf": "6.0.1",
+    "ts-jest": "29.2.4",
+    "typescript": "5.5.4",
+    "typescript-eslint": "8.1.0"
   }
 }

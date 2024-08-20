@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-loss-of-precision */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest'];
@@ -249,8 +248,8 @@ describe('Matterbridge', () => {
         fabric: { fabricIndex: FabricIndex(2), fabricId: FabricId(456546212146567986n), nodeId: NodeId(1678420619586823323397986n), rootNodeId: NodeId(18446744060824623349729n), rootVendorId: VendorId(4362), label: 'SmartThings Hub 0503' },
         isPeerActive: false,
         secure: true,
-        lastInteractionTimestamp: 1720035723121269019,
-        lastActiveTimestamp: 1720035761223121934,
+        lastInteractionTimestamp: 1720035723121269,
+        lastActiveTimestamp: 1720035761223121,
         numberOfActiveSubscriptions: 0,
       },
     ];
@@ -258,7 +257,7 @@ describe('Matterbridge', () => {
     expect(() => {
       JSON.stringify(sessionInfos);
     }).toThrow();
-    expect(JSON.stringify((matterbridge as any).sanitizeSessionInformation(sessionInfos)).length).toBe(471);
+    expect(JSON.stringify((matterbridge as any).sanitizeSessionInformation(sessionInfos)).length).toBe(465);
   });
 
   test('matterbridge -help', async () => {

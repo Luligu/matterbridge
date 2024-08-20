@@ -46,7 +46,7 @@ import { CommissioningController, CommissioningServer, MatterServer, NodeCommiss
 import { BasicInformationCluster, ClusterServer, FixedLabelCluster, GeneralCommissioning, PowerSourceCluster, SwitchCluster, ThreadNetworkDiagnosticsCluster, getClusterNameById } from '@project-chip/matter-node.js/cluster';
 import { DeviceTypeId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter-node.js/device';
-import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
+import { createFileLogger, Format, Level, Logger } from '@project-chip/matter-node.js/log';
 import { ManualPairingCodeCodec, QrCodeSchema } from '@project-chip/matter-node.js/schema';
 import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageManager } from '@project-chip/matter-node.js/storage';
 import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } from '@project-chip/matter-node.js/util';
@@ -118,6 +118,8 @@ export class Matterbridge extends EventEmitter {
   public profile = getParameter('profile');
 
   public log!: AnsiLogger;
+  private matterbrideLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
+  private matterLoggerFile = 'matter' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
   private plugins!: PluginManager;
   private devices!: DeviceManager;
   private registeredDevices: RegisteredDevice[] = [];
@@ -229,9 +231,17 @@ export class Matterbridge extends EventEmitter {
     if (hasParameter('service')) this.restartMode = 'service';
     if (hasParameter('docker')) this.restartMode = 'docker';
 
-    // Set Matterbridge logger
+    // Set the matterbridge directory
+    this.homeDirectory = os.homedir();
+    this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
+
+    // Create the file logger for matterbridge
+    if (hasParameter('filelogger')) AnsiLogger.setGlobalLogfile(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), LogLevel.DEBUG, true);
+
+    // Create matterbridge logger
     this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
-    // Set matter.js logger level and format
+
+    // Set matterbridge logger level
     if (hasParameter('logger')) {
       const level = getParameter('logger');
       if (level === 'debug') {
@@ -256,7 +266,7 @@ export class Matterbridge extends EventEmitter {
     MatterbridgeDevice.logLevel = this.log.logLevel;
     this.log.debug('Matterbridge is starting...');
 
-    // Set matter.js logger level and format
+    // Set matter.js logger level, format and logger
     if (hasParameter('matterlogger')) {
       const level = getParameter('matterlogger');
       if (level === 'debug') {
@@ -279,10 +289,22 @@ export class Matterbridge extends EventEmitter {
       Logger.defaultLogLevel = Level.INFO;
     }
     Logger.format = Format.ANSI;
+    Logger.setLogger('default', this.createMatterLogger());
+
+    // Create the file logger for matter.js
+    if (hasParameter('matterfilelogger')) {
+      try {
+        await fs.unlink(path.join(this.matterbridgeDirectory, this.matterLoggerFile));
+      } catch (error) {
+        this.log.debug(`Error unlinking the log file ${CYAN}${path.join(this.matterbridgeDirectory, this.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
+      }
+      Logger.addLogger('filelogger', await createFileLogger(path.join(this.matterbridgeDirectory, this.matterLoggerFile)), {
+        defaultLogLevel: Level.DEBUG,
+        logFormat: Format.PLAIN,
+      });
+    }
 
     // Initialize nodeStorage and nodeContext
-    this.homeDirectory = os.homedir();
-    this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
     this.log.debug(`Creating node storage manager: ${CYAN}${this.nodeStorageName}${db}`);
     this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, this.nodeStorageName), writeQueue: false, expiredInterval: undefined, logging: false });
     this.log.debug('Creating node storage context for matterbridge');
@@ -305,6 +327,7 @@ export class Matterbridge extends EventEmitter {
           await this.spawnCommand('npm', ['install', '-g', plugin.name]);
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           plugin.error = true;
           plugin.enabled = false;
@@ -648,10 +671,10 @@ export class Matterbridge extends EventEmitter {
   private deregisterSignalHandlers() {
     this.log.debug(`Deregistering SIGINT and SIGTERM signal handlers...`);
 
-    this.sigintHandler && process.off('SIGINT', this.sigintHandler);
+    if (this.sigintHandler) process.off('SIGINT', this.sigintHandler);
     this.sigintHandler = undefined;
 
-    this.sigtermHandler && process.off('SIGTERM', this.sigtermHandler);
+    if (this.sigtermHandler) process.off('SIGTERM', this.sigtermHandler);
     this.sigtermHandler = undefined;
   }
 
@@ -901,6 +924,39 @@ export class Matterbridge extends EventEmitter {
         this.log.error(`Error getting ${plugin.name} latest version: ${error.message}`);
         // error.stack && this.log.debug(error.stack);
       });
+  }
+
+  private createMatterLogger() {
+    const matterLogger = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+
+    return (_level: Level, formattedLog: string) => {
+      const logger = formattedLog.slice(44, 44 + 20).trim();
+      const message = formattedLog.slice(65);
+      matterLogger.logName = logger;
+      switch (_level) {
+        case Level.DEBUG:
+          matterLogger.log(LogLevel.DEBUG, message);
+          break;
+        case Level.INFO:
+          matterLogger.log(LogLevel.INFO, message);
+          break;
+        case Level.NOTICE:
+          matterLogger.log(LogLevel.NOTICE, message);
+          break;
+        case Level.WARN:
+          matterLogger.log(LogLevel.WARN, message);
+          break;
+        case Level.ERROR:
+          matterLogger.log(LogLevel.ERROR, message);
+          break;
+        case Level.FATAL:
+          matterLogger.log(LogLevel.FATAL, message);
+          break;
+        default:
+          matterLogger.log(LogLevel.DEBUG, message);
+          break;
+      }
+    };
   }
 
   /**
@@ -1668,6 +1724,7 @@ export class Matterbridge extends EventEmitter {
       if (storageType === 'json') {
         await this.backupJsonMatterStorage(storageName, storageName.replace('.json', '') + '.backup.json');
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       this.log.error(`Storage initialize() error! The file .matterbridge/${storageName} may be corrupted.`);
       this.log.error(`Please delete it and rename ${storageName.replace('.json', '.backup.json')} to ${storageName} and try to restart Matterbridge.`);
@@ -2313,8 +2370,13 @@ export class Matterbridge extends EventEmitter {
     process.on('unhandledRejection', (reason, promise) => {
       this.log.error('Unhandled Rejection at:', promise, 'reason:', reason);
     });
-    */
 
+    spawn - [14:27:21.125] [Matterbridge:spawn]: changed 38 packages in 4s
+    spawn - [14:27:21.125] [Matterbridge:spawn]: 10 packages are looking for funding run `npm fund` for details
+    debug - [14:27:21.131] [Matterbridge]: Child process exited with code 0 and signal null
+    debug - [14:27:21.131] [Matterbridge]: Child process stdio streams have closed with code 0
+    */
+    const cmdLine = command + ' ' + args.join(' ');
     if (process.platform === 'win32' && command === 'npm') {
       // Must be spawn('cmd.exe', ['/c', 'npm -g install <package>']);
       const argstring = 'npm ' + args.join(' ');
@@ -2336,9 +2398,10 @@ export class Matterbridge extends EventEmitter {
         reject(err); // Reject the promise on error
       });
 
-      childProcess.on('close', (code) => {
+      childProcess.on('close', (code, signal) => {
+        this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', `child process closed with code ${code} and signal ${signal}`);
         if (code === 0) {
-          this.log.debug(`Child process stdio streams have closed with code ${code}`);
+          if (cmdLine.startsWith('npm install -g')) this.log.notice(`${cmdLine.replace('npm install -g ', '')} installed correctly`);
           resolve();
         } else {
           this.log.error(`Child process stdio streams have closed with code ${code}`);
@@ -2347,8 +2410,8 @@ export class Matterbridge extends EventEmitter {
       });
 
       childProcess.on('exit', (code, signal) => {
+        this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', `child process exited with code ${code} and signal ${signal}`);
         if (code === 0) {
-          this.log.debug(`Child process exited with code ${code} and signal ${signal}`);
           resolve();
         } else {
           this.log.error(`Child process exited with code ${code} and signal ${signal}`);
@@ -2364,7 +2427,6 @@ export class Matterbridge extends EventEmitter {
       if (childProcess.stdout) {
         childProcess.stdout.on('data', (data: Buffer) => {
           const message = data.toString().trim();
-          // this.log.info('\n' + message);
           this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', message);
         });
       }
@@ -2372,7 +2434,6 @@ export class Matterbridge extends EventEmitter {
       if (childProcess.stderr) {
         childProcess.stderr.on('data', (data: Buffer) => {
           const message = data.toString().trim();
-          // this.log.debug('\n' + message);
           this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', message);
         });
       }
@@ -2401,11 +2462,23 @@ export class Matterbridge extends EventEmitter {
     message = message.replace(/[\x00-\x1F\x7F]/g, '');
     // Replace all occurrences of \" with "
     message = message.replace(/\\"/g, '"');
-    /*
-    if (message.length > 500) {
-      console.error(`${er}Message long: ${level} ${time} ${name} ${message} `);
-    }
-    */
+
+    // Define the maximum allowed length for continuous characters without a space
+    const maxContinuousLength = 100;
+    const keepStartLength = 20;
+    const keepEndLength = 20;
+    // Split the message into words
+    message = message
+      .split(' ')
+      .map((word) => {
+        // If the word length exceeds the max continuous length, insert spaces and truncate
+        if (word.length > maxContinuousLength) {
+          return word.slice(0, keepStartLength) + ' ... ' + word.slice(-keepEndLength);
+        }
+        return word;
+      })
+      .join(' ');
+
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
@@ -2512,7 +2585,7 @@ export class Matterbridge extends EventEmitter {
 
     this.webSocketServer.on('connection', (ws: WebSocket, request: http.IncomingMessage) => {
       const clientIp = request.socket.remoteAddress;
-      this.log.setGlobalCallback(this.wssSendMessage.bind(this));
+      AnsiLogger.setGlobalCallback(this.wssSendMessage.bind(this), LogLevel.DEBUG);
       this.log.debug('WebSocketServer logger global callback added');
       this.log.info(`WebSocketServer client "${clientIp}" connected to Matterbridge`);
       // this.wssSendMessage('info', this.log.now(), 'Matterbridge', `WebSocketServer client "${clientIp}" connected to Matterbridge`);
@@ -2524,7 +2597,7 @@ export class Matterbridge extends EventEmitter {
       ws.on('close', () => {
         this.log.info('WebSocket client disconnected');
         if (this.webSocketServer?.clients.size === 0) {
-          this.log.setGlobalCallback(undefined);
+          AnsiLogger.setGlobalCallback(undefined);
           this.log.debug('All WebSocket clients disconnected. WebSocketServer logger global callback removed');
         }
       });
@@ -2564,6 +2637,7 @@ export class Matterbridge extends EventEmitter {
           this.log.warn('/api/login error wrong password');
           res.json({ valid: false });
         }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         this.log.error('/api/login error getting password');
         res.json({ valid: false });
@@ -2583,6 +2657,7 @@ export class Matterbridge extends EventEmitter {
       try {
         qrPairingCode = await this.matterbridgeContext.get('qrPairingCode');
         manualPairingCode = await this.matterbridgeContext.get('manualPairingCode');
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         if (this.bridgeMode === 'bridge') this.log.warn('pairingCodes for /api/settings not found');
       }
@@ -2597,12 +2672,12 @@ export class Matterbridge extends EventEmitter {
       if (this.profile) this.matterbridgeInformation.profile = this.profile;
       const response = { wssHost, ssl: hasParameter('ssl'), qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
       // this.log.debug('Response:', debugStringify(response));
-      this.log.debug(`WebSocketServer logger local callback: ${this.log.getCallback() ? 'active' : 'inactive'}`);
-      this.log.debug(`WebSocketServer logger global callback: ${this.log.getGlobalCallback() ? 'active' : 'inactive'}`);
-      if (this.webSocketServer && this.webSocketServer.clients.size > 0 && !this.log.getGlobalCallback()) {
-        this.log.setGlobalCallback(this.wssSendMessage.bind(this));
+      /*
+      if (this.webSocketServer && this.webSocketServer.clients.size > 0 && !AnsiLogger.getGlobalCallback()) {
+        AnsiLogger.setGlobalCallback(this.wssSendMessage.bind(this), LogLevel.DEBUG);
         this.log.debug('WebSocketServer logger global callback added');
       }
+      */
       res.json(response);
     });
 
@@ -2706,6 +2781,41 @@ export class Matterbridge extends EventEmitter {
         }
       });
       res.json(data);
+    });
+
+    // Endpoint to send the log
+    this.expressApp.get('/api/view-log', async (req, res) => {
+      this.log.debug('The frontend sent /api/log');
+      try {
+        const data = await fs.readFile(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), 'utf8');
+        res.type('text/plain');
+        res.send(data);
+      } catch (error) {
+        this.log.error(`Error reading log file ${this.matterbrideLoggerFile}: ${error instanceof Error ? error.message : error}`);
+        res.status(500).send('Error reading log file');
+      }
+    });
+
+    // Endpoint to download the log
+    this.expressApp.get('/api/download-mblog', (req, res) => {
+      this.log.debug('The frontend sent /api/download-mblog');
+      res.download(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), 'matterbridge.log', (error) => {
+        if (error) {
+          this.log.error(`Error downloading log file ${this.matterbrideLoggerFile}: ${error instanceof Error ? error.message : error}`);
+          res.status(500).send('Error downloading the matterbridge log file');
+        }
+      });
+    });
+
+    // Endpoint to download the log
+    this.expressApp.get('/api/download-mjlog', (req, res) => {
+      this.log.debug('The frontend sent /api/download-mjlog');
+      res.download(path.join(this.matterbridgeDirectory, this.matterLoggerFile), 'matter.log', (error) => {
+        if (error) {
+          this.log.error(`Error downloading log file ${this.matterLoggerFile}: ${error instanceof Error ? error.message : error}`);
+          res.status(500).send('Error downloading the matter log file');
+        }
+      });
     });
 
     // Endpoint to receive commands
@@ -2815,6 +2925,7 @@ export class Matterbridge extends EventEmitter {
         try {
           await this.spawnCommand('npm', ['install', '-g', 'matterbridge']);
           this.log.info('Matterbridge has been updated. Full restart required.');
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           this.log.error('Error updating matterbridge');
         }
@@ -2846,6 +2957,7 @@ export class Matterbridge extends EventEmitter {
         try {
           await this.spawnCommand('npm', ['install', '-g', param]);
           this.log.info(`Plugin ${plg}${param}${nf} installed. Full restart required.`);
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           this.log.error(`Error installing plugin ${plg}${param}${er}`);
         }

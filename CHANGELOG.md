@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
+## [1.4.2] - 2024-08-20
+
+### Added
+
+- [logger]: Integrated matter.js logger in the matterbridge logger.
+
+### Changed
+
+- [package]: Update dependencies.
+- [logger]: Update node-ansi-logger to 2.0.8.
+- [history]: Update matter-history to 1.1.6.
+- [frontend]: Removed duplicated buttons.
+
+### Fixed
+
+- [package]: Fixed dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.4.1] - 2024-07-28
 
 ### Added

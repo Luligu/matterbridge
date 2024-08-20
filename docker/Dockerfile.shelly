@@ -1,0 +1,20 @@
+FROM alpine:3.18.4 AS base
+# FROM alpine:latest as base not working
+# FROM node:20-alpine as base not working
+
+WORKDIR /app
+RUN apk add --no-cache nodejs npm icu-data-full
+
+COPY ./package.json ./package-lock.json ./tsconfig.json ./
+COPY ./src ./src
+COPY ./frontend/build ./frontend/build
+RUN npm install --no-audit --no-update-notifier --no-fund && \
+    npm run build && \
+    npm link
+
+# Install Matterbridge plugins
+RUN npm -g install matterbridge-shelly
+
+# Node modules: /usr/local/lib/node_modules/matterbridge/dist/cli.js
+# Bin: /usr/local/bin/matterbridge
+CMD ["/usr/local/bin/matterbridge", "-bridge", "-docker"]
