@@ -267,11 +267,15 @@ function Home() {
 
                     <td><Tooltip title={plugin.path}>{plugin.name}</Tooltip></td>
                     <td>{plugin.description}</td>
+
                     {plugin.latestVersion === undefined || plugin.latestVersion === plugin.version ?
                       <td><Tooltip title="Plugin version">{plugin.version}</Tooltip></td> :
                       <td><Tooltip title="New plugin version available, click to install"><span className="status-warning" onClick={() => handleUpdate(index)}>Update to v.{plugin.latestVersion}</span></Tooltip></td>
                     }
                     <td>{plugin.author.replace('https://github.com/', '')}</td>
+                    <td><Tooltip title="Update the plugin to the latest version">{plugin.latestVersion === undefined || plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning" onClick={() => handleUpdate(index)}>{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</Tooltip></td>
+                    <td>{plugin.author.replace('https://github.com/', '')}</td>
+
                     <td>{plugin.type === 'DynamicPlatform'?'Dynamic':'Accessory'}</td>
                     <td>{plugin.registeredDevices}</td>
                     <td>  
