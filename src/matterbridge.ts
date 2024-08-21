@@ -1164,6 +1164,14 @@ export class Matterbridge extends EventEmitter {
       // Closing matter storage
       await this.stopMatterStorage();
 
+      // Remove the matterfilelogger
+      try {
+        Logger.removeLogger('matterfilelogger');
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (error) {
+        // this.log.debug(`Error removing the matterfilelogger for file ${CYAN}${path.join(this.matterbridgeDirectory, this.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
+      }
+
       // Serialize registeredDevices
       if (this.nodeStorage && this.nodeContext) {
         this.log.info('Saving registered devices...');
