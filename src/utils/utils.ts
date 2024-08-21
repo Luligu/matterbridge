@@ -22,6 +22,8 @@
  */
 
 import os from 'os';
+import { promises as fs } from 'fs';
+import archiver from 'archiver';
 
 /**
  * Performs a deep comparison between two values to determine if they are equivalent.
@@ -438,5 +440,39 @@ export async function wait(timeout = 1000, name?: string, debug = false): Promis
       clearTimeout(timeoutId);
       resolve();
     }, timeout);
+  });
+}
+
+export async function zipDirectory(outputPath: string, sourceDir: string): Promise<number> {
+  // eslint-disable-next-line no-console
+  console.log(`Zipping directory ${sourceDir} to ${outputPath}...`);
+  const output = await fs.open(outputPath, 'w'); // Open the output file for writing
+  const archive = archiver('zip', {
+    zlib: { level: 9 },
+  });
+
+  return new Promise<number>((resolve, reject) => {
+    output.createWriteStream().on('close', () => {
+      // eslint-disable-next-line no-console
+      console.log(`Zipped ${archive.pointer()} total bytes`);
+      resolve(archive.pointer());
+    });
+
+    archive.on('error', (err: archiver.ArchiverError) => {
+      // eslint-disable-next-line no-console
+      console.error(`Zipped error: ${err.message}`);
+      reject(-1);
+    });
+
+    archive.pipe(output.createWriteStream());
+
+    // Append files from a directory, including subdirectories
+    archive.directory(sourceDir, false);
+
+    archive.finalize();
+  }).finally(async () => {
+    await output.close(); // Ensure the file is properly closed
+    // eslint-disable-next-line no-console
+    console.log(`Zipped closed with ${archive.pointer()} total bytes`);
   });
 }

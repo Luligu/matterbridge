@@ -107,8 +107,12 @@ function Header() {
       window.location.href = '/api/download-mblog';
     } else if(value==='download-mjlog') {
       window.location.href = '/api/download-mjlog';
+    } else if(value==='download-mbstorage') {
+      window.location.href = '/api/download-mbstorage';
     } else if(value==='download-mjstorage') {
       window.location.href = '/api/download-mjstorage';
+    } else if(value==='download-pluginstorage') {
+      window.location.href = '/api/download-pluginstorage';
     } else if(value==='update') {
       handleUpdateClick();
     } else if(value==='restart') {
@@ -199,13 +203,15 @@ function Header() {
           <MoreHoriz />
         </IconButton>
         <Menu id="command-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => handleCloseCommand('')} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
-          <MenuItem onClick={() => handleCloseCommand('download-mblog')}>Download matterbridge.log</MenuItem>
-          <MenuItem onClick={() => handleCloseCommand('download-mjlog')}>Download matter.log</MenuItem>
-          <MenuItem onClick={() => handleCloseCommand('download-mjstorage')}>Download storage</MenuItem>
-          <Divider />
           <MenuItem onClick={() => handleCloseCommand('update')}>Update</MenuItem>
           <MenuItem onClick={() => handleCloseCommand('restart')}>Restart</MenuItem>
           {matterbridgeInfo.restartMode === '' ? ( <MenuItem onClick={() => handleCloseCommand('shutdown')}>Shutdown</MenuItem> ) : null }
+          <Divider />
+          <MenuItem onClick={() => handleCloseCommand('download-mblog')}>Download matterbridge.log</MenuItem>
+          <MenuItem onClick={() => handleCloseCommand('download-mjlog')}>Download matter.log</MenuItem>
+          <MenuItem onClick={() => handleCloseCommand('download-mjstorage')}>Download matter storage</MenuItem>
+          <MenuItem onClick={() => handleCloseCommand('download-mbstorage')}>Download node storage</MenuItem>
+          <MenuItem onClick={() => handleCloseCommand('download-pluginstorage')}>Download plugin storage</MenuItem>
         </Menu>
         <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open} onClick={handleClose}>
           <CircularProgress color="inherit" />

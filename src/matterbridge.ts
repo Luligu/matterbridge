@@ -38,7 +38,7 @@ import WebSocket, { WebSocketServer } from 'ws';
 // Matterbridge
 import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
 import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
-import { logInterfaces, wait, waiter } from './utils/utils.js';
+import { logInterfaces, wait, waiter, zipDirectory } from './utils/utils.js';
 import { BaseRegisteredPlugin, MatterbridgeInformation, RegisteredDevice, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 
 // @project-chip/matter-node.js
@@ -2875,8 +2875,14 @@ export class Matterbridge extends EventEmitter {
     });
 
     // Endpoint to download the matterbridge log
-    this.expressApp.get('/api/download-mblog', (req, res) => {
+    this.expressApp.get('/api/download-mblog', async (req, res) => {
       this.log.debug('The frontend sent /api/download-mblog');
+      try {
+        await fs.access(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), fs.constants.F_OK);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (error) {
+        fs.appendFile(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), 'Enable the log on file in the settings to enable the file logger');
+      }
       res.download(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), 'matterbridge.log', (error) => {
         if (error) {
           this.log.error(`Error downloading log file ${this.matterbrideLoggerFile}: ${error instanceof Error ? error.message : error}`);
@@ -2886,8 +2892,14 @@ export class Matterbridge extends EventEmitter {
     });
 
     // Endpoint to download the matter log
-    this.expressApp.get('/api/download-mjlog', (req, res) => {
+    this.expressApp.get('/api/download-mjlog', async (req, res) => {
       this.log.debug('The frontend sent /api/download-mjlog');
+      try {
+        await fs.access(path.join(this.matterbridgeDirectory, this.matterLoggerFile), fs.constants.F_OK);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (error) {
+        fs.appendFile(path.join(this.matterbridgeDirectory, this.matterLoggerFile), 'Enable the log on file in the settings to enable the file logger');
+      }
       res.download(path.join(this.matterbridgeDirectory, this.matterLoggerFile), 'matter.log', (error) => {
         if (error) {
           this.log.error(`Error downloading log file ${this.matterLoggerFile}: ${error instanceof Error ? error.message : error}`);
@@ -2896,13 +2908,37 @@ export class Matterbridge extends EventEmitter {
       });
     });
 
-    // Endpoint to download the matter storage
+    // Endpoint to download the matter storage file
     this.expressApp.get('/api/download-mjstorage', (req, res) => {
-      this.log.debug('The frontend sent /api/download-storage');
+      this.log.debug('The frontend sent /api/download-mjstorage');
       res.download(path.join(this.matterbridgeDirectory, this.matterStorageName), 'matterbridge.json', (error) => {
         if (error) {
           this.log.error(`Error downloading log file ${this.matterStorageName}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matter storage file');
+        }
+      });
+    });
+
+    // Endpoint to download the matterbridge storage directory
+    this.expressApp.get('/api/download-mbstorage', async (req, res) => {
+      this.log.debug('The frontend sent /api/download-mbstorage');
+      await zipDirectory(path.join(this.matterbridgeDirectory, `matterbridge.${this.nodeStorageName}.zip`), path.join(this.matterbridgeDirectory, this.nodeStorageName));
+      res.download(path.join(this.matterbridgeDirectory, `matterbridge.${this.nodeStorageName}.zip`), `matterbridge.${this.nodeStorageName}.zip`, (error) => {
+        if (error) {
+          this.log.error(`Error downloading file ${`matterbridge.${this.nodeStorageName}.zip`}: ${error instanceof Error ? error.message : error}`);
+          res.status(500).send('Error downloading the matterbridge storage file');
+        }
+      });
+    });
+
+    // Endpoint to download the matterbridge plugin directory
+    this.expressApp.get('/api/download-pluginstorage', async (req, res) => {
+      this.log.debug('The frontend sent /api/download-pluginstorage');
+      await zipDirectory(path.join(this.matterbridgeDirectory, `matterbridge.pluginstorage.zip`), this.matterbridgePluginDirectory);
+      res.download(path.join(this.matterbridgeDirectory, `matterbridge.pluginstorage.zip`), `matterbridge.pluginstorage.zip`, (error) => {
+        if (error) {
+          this.log.error(`Error downloading file matterbridge.pluginstorage.zip: ${error instanceof Error ? error.message : error}`);
+          res.status(500).send('Error downloading the matterbridge plugin storage file');
         }
       });
     });
@@ -2980,7 +3016,7 @@ export class Matterbridge extends EventEmitter {
 
       // Handle the command setmbloglevel from Settings
       if (command === 'setmblogfile') {
-        this.log.notice('***Matterbridge file log:', param);
+        this.log.debug('Matterbridge file log:', param);
         this.matterbridgeInformation.fileLogger = param === 'true';
         await this.nodeContext?.set('matterbridgeFileLog', param === 'true');
         // Create the file logger for matterbridge
@@ -2992,7 +3028,7 @@ export class Matterbridge extends EventEmitter {
 
       // Handle the command setmbloglevel from Settings
       if (command === 'setmjlogfile') {
-        this.log.notice('***Matter file log:', param);
+        this.log.debug('Matter file log:', param);
         this.matterbridgeInformation.matterFileLogger = param === 'true';
         await this.nodeContext?.set('matterFileLog', param === 'true');
         if (param === 'true') {

@@ -409,6 +409,8 @@ export class PluginManager {
         plugin.configJson = config;
         plugin.schemaJson = await this.loadSchema(plugin);
 
+        await this.saveToStorage(); // Save the plugin to storage
+
         this.log.notice(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${platform.type}${db} (entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
 
         if (start) await this.start(plugin, message, false);
