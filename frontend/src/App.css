@@ -125,7 +125,10 @@ width: 120px;
   color: #4CAF50;
 }
 
-/* Table header style */
+.menu-background {
+  background-color: #e2e2e2;
+}
+
 .main-background {
   background-color: #c4c2c2;
 }

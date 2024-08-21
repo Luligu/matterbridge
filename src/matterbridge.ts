@@ -46,7 +46,7 @@ import { CommissioningController, CommissioningServer, MatterServer, NodeCommiss
 import { BasicInformationCluster, ClusterServer, FixedLabelCluster, GeneralCommissioning, PowerSourceCluster, SwitchCluster, ThreadNetworkDiagnosticsCluster, getClusterNameById } from '@project-chip/matter-node.js/cluster';
 import { DeviceTypeId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter-node.js/device';
-import { createFileLogger, Format, Level, Logger } from '@project-chip/matter-node.js/log';
+import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
 import { ManualPairingCodeCodec, QrCodeSchema } from '@project-chip/matter-node.js/schema';
 import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageManager } from '@project-chip/matter-node.js/storage';
 import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } from '@project-chip/matter-node.js/util';
@@ -97,7 +97,9 @@ export class Matterbridge extends EventEmitter {
     bridgeMode: '',
     restartMode: '',
     loggerLevel: LogLevel.INFO,
+    fileLogger: false,
     matterLoggerLevel: Level.INFO,
+    matterFileLogger: false,
   };
 
   public homeDirectory = '';
@@ -236,7 +238,10 @@ export class Matterbridge extends EventEmitter {
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
 
     // Create the file logger for matterbridge
-    if (hasParameter('filelogger')) AnsiLogger.setGlobalLogfile(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), LogLevel.DEBUG, true);
+    if (hasParameter('filelogger')) {
+      AnsiLogger.setGlobalLogfile(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), LogLevel.DEBUG, true);
+      this.matterbridgeInformation.fileLogger = true;
+    }
 
     // Create matterbridge logger
     this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
@@ -293,12 +298,15 @@ export class Matterbridge extends EventEmitter {
 
     // Create the file logger for matter.js
     if (hasParameter('matterfilelogger')) {
+      this.matterbridgeInformation.matterFileLogger = true;
+      /*
       try {
         await fs.unlink(path.join(this.matterbridgeDirectory, this.matterLoggerFile));
       } catch (error) {
         this.log.debug(`Error unlinking the log file ${CYAN}${path.join(this.matterbridgeDirectory, this.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
       }
-      Logger.addLogger('filelogger', await createFileLogger(path.join(this.matterbridgeDirectory, this.matterLoggerFile)), {
+      */
+      Logger.addLogger('matterfilelogger', await this.createMatterFileLogger(path.join(this.matterbridgeDirectory, this.matterLoggerFile), true), {
         defaultLogLevel: Level.DEBUG,
         logFormat: Format.PLAIN,
       });
@@ -926,6 +934,11 @@ export class Matterbridge extends EventEmitter {
       });
   }
 
+  /**
+   * Creates a MatterLogger function to show the matter.js log messages in AnsiLogger (for the frontend).
+   *
+   * @returns {Function} The MatterLogger function.
+   */
   private createMatterLogger() {
     const matterLogger = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
@@ -954,6 +967,63 @@ export class Matterbridge extends EventEmitter {
           break;
         default:
           matterLogger.log(LogLevel.DEBUG, message);
+          break;
+      }
+    };
+  }
+
+  /**
+   * Creates a Matter File Logger.
+   *
+   * @param {string} filePath - The path to the log file.
+   * @param {boolean} [unlink=false] - Whether to unlink the log file before creating a new one.
+   * @returns {Function} - A function that logs formatted messages to the log file.
+   */
+  private async createMatterFileLogger(filePath: string, unlink = false) {
+    // 2024-08-21 08:55:19.488 DEBUG InteractionMessenger Sending DataReport chunk with 28 attributes and 0 events: 1004 bytes
+    let fileSize = 0;
+    if (unlink) {
+      try {
+        await fs.unlink(filePath);
+      } catch (error) {
+        this.log.debug(`Error unlinking the log file ${CYAN}${filePath}${er}: ${error instanceof Error ? error.message : error}`);
+      }
+    }
+
+    return async (_level: Level, formattedLog: string) => {
+      fileSize += formattedLog.length;
+      if (fileSize > 100000000) {
+        return;
+      }
+      const now = new Date();
+      const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}.${now.getMilliseconds().toString().padStart(3, '0')}`;
+
+      const message = formattedLog.slice(24);
+      const parts = message.split(' ');
+      const logger = parts[1];
+      const finalMessage = parts.slice(2).join(' ') + os.EOL;
+
+      switch (_level) {
+        case Level.DEBUG:
+          await fs.appendFile(filePath, `[${timestamp}] [${logger}] [debug] ${finalMessage}`);
+          break;
+        case Level.INFO:
+          await fs.appendFile(filePath, `[${timestamp}] [${logger}] [info] ${finalMessage}`);
+          break;
+        case Level.NOTICE:
+          await fs.appendFile(filePath, `[${timestamp}] [${logger}] [notice] ${finalMessage}`);
+          break;
+        case Level.WARN:
+          await fs.appendFile(filePath, `[${timestamp}] [${logger}] [warn] ${finalMessage}`);
+          break;
+        case Level.ERROR:
+          await fs.appendFile(filePath, `[${timestamp}] [${logger}] [error] ${finalMessage}`);
+          break;
+        case Level.FATAL:
+          await fs.appendFile(filePath, `[${timestamp}] [${logger}] [fatal] ${finalMessage}`);
+          break;
+        default:
+          await fs.appendFile(filePath, `[${timestamp}] [${logger}] ${finalMessage}`);
           break;
       }
     };
@@ -2796,7 +2866,7 @@ export class Matterbridge extends EventEmitter {
       }
     });
 
-    // Endpoint to download the log
+    // Endpoint to download the matterbridge log
     this.expressApp.get('/api/download-mblog', (req, res) => {
       this.log.debug('The frontend sent /api/download-mblog');
       res.download(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), 'matterbridge.log', (error) => {
@@ -2807,13 +2877,24 @@ export class Matterbridge extends EventEmitter {
       });
     });
 
-    // Endpoint to download the log
+    // Endpoint to download the matter log
     this.expressApp.get('/api/download-mjlog', (req, res) => {
       this.log.debug('The frontend sent /api/download-mjlog');
       res.download(path.join(this.matterbridgeDirectory, this.matterLoggerFile), 'matter.log', (error) => {
         if (error) {
           this.log.error(`Error downloading log file ${this.matterLoggerFile}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matter log file');
+        }
+      });
+    });
+
+    // Endpoint to download the matter storage
+    this.expressApp.get('/api/download-mjstorage', (req, res) => {
+      this.log.debug('The frontend sent /api/download-storage');
+      res.download(path.join(this.matterbridgeDirectory, this.matterStorageName), 'matterbridge.json', (error) => {
+        if (error) {
+          this.log.error(`Error downloading log file ${this.matterStorageName}: ${error instanceof Error ? error.message : error}`);
+          res.status(500).send('Error downloading the matter storage file');
         }
       });
     });
@@ -2885,6 +2966,51 @@ export class Matterbridge extends EventEmitter {
           Logger.defaultLogLevel = Level.FATAL;
         }
         await this.nodeContext?.set('matterLogLevel', Logger.defaultLogLevel);
+        res.json({ message: 'Command received' });
+        return;
+      }
+
+      // Handle the command setmbloglevel from Settings
+      if (command === 'setmblogfile') {
+        this.log.notice('***Matterbridge file log:', param);
+        this.matterbridgeInformation.fileLogger = param === 'true';
+        await this.nodeContext?.set('matterbridgeFileLog', param === 'true');
+        // Create the file logger for matterbridge
+        if (param === 'true') AnsiLogger.setGlobalLogfile(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), LogLevel.DEBUG, true);
+        else AnsiLogger.setGlobalLogfile(undefined);
+        res.json({ message: 'Command received' });
+        return;
+      }
+
+      // Handle the command setmbloglevel from Settings
+      if (command === 'setmjlogfile') {
+        this.log.notice('***Matter file log:', param);
+        this.matterbridgeInformation.matterFileLogger = param === 'true';
+        await this.nodeContext?.set('matterFileLog', param === 'true');
+        if (param === 'true') {
+          /*
+          try {
+            await fs.unlink(path.join(this.matterbridgeDirectory, this.matterLoggerFile));
+          } catch (error) {
+            this.log.debug(`Error unlinking the log file ${CYAN}${path.join(this.matterbridgeDirectory, this.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
+          }
+          */
+          try {
+            Logger.addLogger('matterfilelogger', await this.createMatterFileLogger(path.join(this.matterbridgeDirectory, this.matterLoggerFile), true), {
+              defaultLogLevel: Level.DEBUG,
+              logFormat: Format.PLAIN,
+            });
+          } catch (error) {
+            this.log.debug(`Error adding the matterfilelogger for file ${CYAN}${path.join(this.matterbridgeDirectory, this.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
+          }
+        } else {
+          try {
+            Logger.removeLogger('matterfilelogger');
+          } catch (error) {
+            this.log.debug(`Error removing the matterfilelogger for file ${CYAN}${path.join(this.matterbridgeDirectory, this.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
+          }
+        }
+
         res.json({ message: 'Command received' });
         return;
       }

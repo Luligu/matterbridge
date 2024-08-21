@@ -46,7 +46,7 @@ jobs:
     - name: Run Docker Buildx on dev_shelly
       run: |
         docker buildx build \
-          --platform linux/amd64,linux/arm64,linux/arm/v7 \
+          --platform linux/arm64 \
           -f docker/Dockerfile.shelly \
           -t luligu/matterbridge:dev_shelly \
           --push .

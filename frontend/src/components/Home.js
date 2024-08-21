@@ -270,10 +270,8 @@ function Home() {
 
                     {plugin.latestVersion === undefined || plugin.latestVersion === plugin.version ?
                       <td><Tooltip title="Plugin version">{plugin.version}</Tooltip></td> :
-                      <td><Tooltip title="New plugin version available, click to install"><span className="status-warning" onClick={() => handleUpdate(index)}>Update to v.{plugin.latestVersion}</span></Tooltip></td>
+                      <td><Tooltip title="New plugin version available, click to install"><span className="status-warning" onClick={() => handleUpdate(index)}>Update v.{plugin.version} to v.{plugin.latestVersion}</span></Tooltip></td>
                     }
-                    <td>{plugin.author.replace('https://github.com/', '')}</td>
-                    <td><Tooltip title="Update the plugin to the latest version">{plugin.latestVersion === undefined || plugin.latestVersion === plugin.version ? plugin.version : <span className="status-warning" onClick={() => handleUpdate(index)}>{`${plugin.version} -> ${plugin.latestVersion}`}</span>}</Tooltip></td>
                     <td>{plugin.author.replace('https://github.com/', '')}</td>
 
                     <td>{plugin.type === 'DynamicPlatform'?'Dynamic':'Accessory'}</td>
@@ -412,7 +410,7 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
       <IconButton onClick={handleClickVertical}>
         <MoreVert />
       </IconButton>
-      <Menu id="simple-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => handleCloseMenu('')}>
+      <Menu id="simple-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => handleCloseMenu('')} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
         <MenuItem onClick={() => handleCloseMenu('matterbridge-zigbee2mqtt')}>matterbridge-zigbee2mqtt</MenuItem>
         <MenuItem onClick={() => handleCloseMenu('matterbridge-somfy-tahoma')}>matterbridge-somfy-tahoma</MenuItem>
         <MenuItem onClick={() => handleCloseMenu('matterbridge-shelly')}>matterbridge-shelly</MenuItem>

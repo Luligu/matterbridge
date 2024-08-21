@@ -115,7 +115,9 @@ export interface MatterbridgeInformation {
   restartMode: string;
   profile?: string;
   loggerLevel: LogLevel;
+  fileLogger: boolean;
   matterLoggerLevel: number;
+  matterFileLogger: boolean;
 }
 
 export interface SanitizedExposedFabricInformation {

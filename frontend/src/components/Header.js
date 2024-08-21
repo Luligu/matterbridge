@@ -3,7 +3,7 @@
 // Header.js
 import React, { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { Tooltip, Button, createTheme, Backdrop, CircularProgress, ThemeProvider, IconButton, Menu, MenuItem } from '@mui/material';
+import { Tooltip, Button, createTheme, Backdrop, CircularProgress, ThemeProvider, IconButton, Menu, MenuItem, Divider } from '@mui/material';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
@@ -103,13 +103,19 @@ function Header() {
   const handleCloseCommand = (value) => {
     console.log('handleCloseCommand:', value);
     setAnchorEl(null);
-  };
-
-  const handleMbLoggerDownload = () => {
-    window.location.href = '/api/download-mblog';
-  };
-  const handleMjLoggerDownload = () => {
-    window.location.href = '/api/download-mjlog';
+    if(value==='download-mblog') {
+      window.location.href = '/api/download-mblog';
+    } else if(value==='download-mjlog') {
+      window.location.href = '/api/download-mjlog';
+    } else if(value==='download-mjstorage') {
+      window.location.href = '/api/download-mjstorage';
+    } else if(value==='update') {
+      handleUpdateClick();
+    } else if(value==='restart') {
+      handleRestartClick();
+    } else if(value==='shutdown') {
+      handleShutdownClick();
+    }
   };
 
   useEffect(() => {
@@ -160,7 +166,7 @@ function Header() {
         </Tooltip>        
         {matterbridgeInfo.matterbridgeLatestVersion === undefined || matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion ?
           <Tooltip title="Matterbridge version"><span className="status-information" onClick={handleChangelog}>v.{matterbridgeInfo.matterbridgeVersion}</span></Tooltip> :
-          <Tooltip title="New Matterbridge version available, click to install"><span className="status-warning" onClick={handleUpdateClick}>Update to v.{matterbridgeInfo.matterbridgeLatestVersion}</span></Tooltip> 
+          <Tooltip title="New Matterbridge version available, click to install"><span className="status-warning" onClick={handleUpdateClick}>Update v.{matterbridgeInfo.matterbridgeVersion} to v.{matterbridgeInfo.matterbridgeLatestVersion}</span></Tooltip> 
         }  
         <Tooltip title="Matterbridge help">
           <span className="status-information" onClick={handleHelp}>help</span>
@@ -189,6 +195,18 @@ function Header() {
             <Button theme={theme} color="primary" variant="contained" size="small" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff' }} onClick={handleShutdownClick}>Shutdown</Button>
           </Tooltip>
         ) : null}        
+        <IconButton onClick={handleClickCommand}>
+          <MoreHoriz />
+        </IconButton>
+        <Menu id="command-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => handleCloseCommand('')} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+          <MenuItem onClick={() => handleCloseCommand('download-mblog')}>Download matterbridge.log</MenuItem>
+          <MenuItem onClick={() => handleCloseCommand('download-mjlog')}>Download matter.log</MenuItem>
+          <MenuItem onClick={() => handleCloseCommand('download-mjstorage')}>Download storage</MenuItem>
+          <Divider />
+          <MenuItem onClick={() => handleCloseCommand('update')}>Update</MenuItem>
+          <MenuItem onClick={() => handleCloseCommand('restart')}>Restart</MenuItem>
+          {matterbridgeInfo.restartMode === '' ? ( <MenuItem onClick={() => handleCloseCommand('shutdown')}>Shutdown</MenuItem> ) : null }
+        </Menu>
         <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open} onClick={handleClose}>
           <CircularProgress color="inherit" />
         </Backdrop>
@@ -198,6 +216,7 @@ function Header() {
   );
 }
 /*
+ sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}
         <IconButton onClick={handleClickCommand}>
           <MoreHoriz />
         </IconButton>
