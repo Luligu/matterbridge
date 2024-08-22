@@ -607,7 +607,7 @@ export class Matterbridge extends EventEmitter {
         plugin.addedDevices = undefined;
         plugin.qrPairingCode = undefined;
         plugin.manualPairingCode = undefined;
-        this.plugins.load(plugin, true, 'Matterbridge is starting'); // this.loadPlugin(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
+        this.plugins.load(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
       }
       await this.startBridge();
       return;
@@ -648,7 +648,7 @@ export class Matterbridge extends EventEmitter {
         plugin.addedDevices = undefined;
         plugin.qrPairingCode = (await plugin.nodeContext?.get<string>('qrPairingCode', undefined)) ?? undefined;
         plugin.manualPairingCode = (await plugin.nodeContext?.get<string>('manualPairingCode', undefined)) ?? undefined;
-        this.plugins.load(plugin, true, 'Matterbridge is starting'); // this.loadPlugin(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
+        this.plugins.load(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
       }
       await this.startChildbridge();
       return;
