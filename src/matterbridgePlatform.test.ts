@@ -63,7 +63,7 @@ describe('Matterbridge platform', () => {
     const log = new AnsiLogger({ logName: 'Mocked log' });
     expect(log).toBeDefined();
     log.log(LogLevel.INFO, 'Hello, world!');
-    log.setLogDebug(true);
+    log.logLevel = LogLevel.DEBUG;
     expect(log.log).toBeDefined();
     expect(log.log).toHaveBeenCalled();
   });
