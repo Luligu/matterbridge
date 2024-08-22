@@ -159,10 +159,10 @@ function MatterbridgeInfo() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '50%' }}>
         <FormControl style={{ gap: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-mode">Matterbridge mode:</FormLabel>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-mode">Matterbridge mode (restart required):</FormLabel>
             <RadioGroup focused row name="mode-buttons-group" value={selectedBridgeMode} onChange={handleChangeBridgeMode}>
-              <FormControlLabel value="bridge" disabled control={<Radio />} label="Bridge" />
-              <FormControlLabel value="childbridge" disabled control={<Radio />} label="Childbridge" />
+              <FormControlLabel value="bridge" control={<Radio />} label="Bridge" />
+              <FormControlLabel value="childbridge" control={<Radio />} label="Childbridge" />
             </RadioGroup>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>

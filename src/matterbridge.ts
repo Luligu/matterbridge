@@ -115,8 +115,6 @@ export class Matterbridge extends EventEmitter {
   public matterbridgeConnected = false;
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public restartMode: 'service' | 'docker' | '' = '';
-  // public debugEnabled = false;
-  // public loggerLevel: LogLevel = LogLevel.INFO;
   public profile = getParameter('profile');
 
   public log!: AnsiLogger;
@@ -237,16 +235,22 @@ export class Matterbridge extends EventEmitter {
     this.homeDirectory = os.homedir();
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
 
-    // Create the file logger for matterbridge
-    if (hasParameter('filelogger')) {
-      AnsiLogger.setGlobalLogfile(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), LogLevel.DEBUG, true);
-      this.matterbridgeInformation.fileLogger = true;
-    }
+    // Initialize nodeStorage and nodeContext
+    // this.log.debug(`Creating node storage manager: ${CYAN}${this.nodeStorageName}${db}`);
+    this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, this.nodeStorageName), writeQueue: false, expiredInterval: undefined, logging: false });
+    // this.log.debug('Creating node storage context for matterbridge');
+    this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
 
     // Create matterbridge logger
     this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
 
-    // Set matterbridge logger level
+    // Create the file logger for matterbridge (context: matterbridgeFileLog)
+    if (hasParameter('filelogger') || (await this.nodeContext.get<boolean>('matterbridgeFileLog', false))) {
+      AnsiLogger.setGlobalLogfile(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), LogLevel.DEBUG, true);
+      this.matterbridgeInformation.fileLogger = true;
+    }
+
+    // Set matterbridge logger level (context: matterbridgeLogLevel)
     if (hasParameter('logger')) {
       const level = getParameter('logger');
       if (level === 'debug') {
@@ -266,12 +270,15 @@ export class Matterbridge extends EventEmitter {
         this.log.logLevel = LogLevel.INFO;
       }
     } else {
-      this.log.logLevel = LogLevel.INFO;
+      this.log.logLevel = await this.nodeContext.get<LogLevel>('matterbridgeLogLevel', LogLevel.INFO);
     }
     MatterbridgeDevice.logLevel = this.log.logLevel;
+
     this.log.debug('Matterbridge is starting...');
 
-    // Set matter.js logger level, format and logger
+    this.log.debug(`Matterbridge logLevel: ${this.log.logLevel} fileLoger: ${this.matterbridgeInformation.fileLogger}.`);
+
+    // Set matter.js logger level, format and logger (context: matterLogLevel)
     if (hasParameter('matterlogger')) {
       const level = getParameter('matterlogger');
       if (level === 'debug') {
@@ -291,32 +298,20 @@ export class Matterbridge extends EventEmitter {
         Logger.defaultLogLevel = Level.INFO;
       }
     } else {
-      Logger.defaultLogLevel = Level.INFO;
+      Logger.defaultLogLevel = await this.nodeContext.get<number>('matterLogLevel', Level.INFO);
     }
     Logger.format = Format.ANSI;
     Logger.setLogger('default', this.createMatterLogger());
 
-    // Create the file logger for matter.js
-    if (hasParameter('matterfilelogger')) {
+    // Create the file logger for matter.js (context: matterFileLog)
+    if (hasParameter('matterfilelogger') || (await this.nodeContext.get<boolean>('matterFileLog', false))) {
       this.matterbridgeInformation.matterFileLogger = true;
-      /*
-      try {
-        await fs.unlink(path.join(this.matterbridgeDirectory, this.matterLoggerFile));
-      } catch (error) {
-        this.log.debug(`Error unlinking the log file ${CYAN}${path.join(this.matterbridgeDirectory, this.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
-      }
-      */
       Logger.addLogger('matterfilelogger', await this.createMatterFileLogger(path.join(this.matterbridgeDirectory, this.matterLoggerFile), true), {
         defaultLogLevel: Level.DEBUG,
         logFormat: Format.PLAIN,
       });
     }
-
-    // Initialize nodeStorage and nodeContext
-    this.log.debug(`Creating node storage manager: ${CYAN}${this.nodeStorageName}${db}`);
-    this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, this.nodeStorageName), writeQueue: false, expiredInterval: undefined, logging: false });
-    this.log.debug('Creating node storage context for matterbridge');
-    this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
+    this.log.debug(`Matter logLevel: ${Logger.defaultLogLevel} fileLoger: ${this.matterbridgeInformation.matterFileLogger}.`);
 
     // Initialize PluginManager
     this.plugins = new PluginManager(this);
@@ -563,7 +558,12 @@ export class Matterbridge extends EventEmitter {
       return;
     }
 
-    if (hasParameter('bridge')) {
+    // Check if the bridge mode is set and start matterbridge in bridge mode if not set
+    if (!hasParameter('bridge') && !hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === '') {
+      await this.nodeContext?.set<string>('bridgeMode', 'bridge');
+    }
+
+    if (hasParameter('bridge') || (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge') {
       this.bridgeMode = 'bridge';
       MatterbridgeDevice.bridgeMode = 'bridge';
 
@@ -613,7 +613,7 @@ export class Matterbridge extends EventEmitter {
       return;
     }
 
-    if (hasParameter('childbridge')) {
+    if (hasParameter('childbridge') || (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge') {
       this.bridgeMode = 'childbridge';
       MatterbridgeDevice.bridgeMode = 'childbridge';
 
@@ -2977,6 +2977,14 @@ export class Matterbridge extends EventEmitter {
         return;
       }
 
+      // Handle the command setbridgemode from Settings
+      if (command === 'setbridgemode') {
+        this.log.debug(`setbridgemode: ${param}`);
+        await this.nodeContext?.set('bridgeMode', param);
+        res.json({ message: 'Command received' });
+        return;
+      }
+
       // Handle the command setmbloglevel from Settings
       if (command === 'setmbloglevel') {
         this.log.debug('Matterbridge log level:', param);
@@ -3044,13 +3052,6 @@ export class Matterbridge extends EventEmitter {
         this.matterbridgeInformation.matterFileLogger = param === 'true';
         await this.nodeContext?.set('matterFileLog', param === 'true');
         if (param === 'true') {
-          /*
-          try {
-            await fs.unlink(path.join(this.matterbridgeDirectory, this.matterLoggerFile));
-          } catch (error) {
-            this.log.debug(`Error unlinking the log file ${CYAN}${path.join(this.matterbridgeDirectory, this.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
-          }
-          */
           try {
             Logger.addLogger('matterfilelogger', await this.createMatterFileLogger(path.join(this.matterbridgeDirectory, this.matterLoggerFile), true), {
               defaultLogLevel: Level.DEBUG,
