@@ -18,8 +18,8 @@ RUN npm -g install matterbridge-shelly
 
 # Copy and execute the entrypoint script
 COPY ./docker/shellyEntrypoint.sh ./
-RUN chmod +x /shellyEntrypoint.sh
-ENTRYPOINT ["/shellyEntrypoint.sh"]
+RUN chmod +x ./shellyEntrypoint.sh
+ENTRYPOINT ["./shellyEntrypoint.sh"]
 
 # Node modules: /usr/local/lib/node_modules/matterbridge/dist/cli.js
 # Bin: /usr/local/bin/matterbridge

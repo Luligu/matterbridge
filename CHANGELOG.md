@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
+## [1.5.0] - 2024-08-24
+
+### Added
+
+- [frontend]: Added menu item Unregister and shutdown.
+- [frontend]: Added menu item Reset commissioning and shutdown.
+- [frontend]: Added menu item Factory reset and shutdown.
+- [frontend]: Added menu item Download plugin config files.
+
+### Changed
+
+- [package]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.4.3] - 2024-08-22
 
 ### Added
