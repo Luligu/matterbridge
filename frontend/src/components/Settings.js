@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import React, { useState, useEffect } from 'react';
-import { Radio, RadioGroup, Button, Tooltip, FormControlLabel, FormControl, FormLabel, TextField, Backdrop, CircularProgress } from '@mui/material';
+import { Radio, RadioGroup, Button, Tooltip, FormControlLabel, FormControl, FormLabel, TextField, Backdrop, CircularProgress, Select, MenuItem, Checkbox } from '@mui/material';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
 import { sendCommandToMatterbridge } from '../App';
@@ -33,6 +33,8 @@ function MatterbridgeInfo() {
   const [selectedBridgeMode, setSelectedBridgeMode] = useState('bridge'); 
   const [selectedMbLoggerLevel, setSelectedMbLoggerLevel] = useState('Info'); 
   const [selectedMjLoggerLevel, setSelectedMjLoggerLevel] = useState('Info'); 
+  const [logOnFileMb, setLogOnFileMb] = useState(false);
+  const [logOnFileMj, setLogOnFileMj] = useState(false);  
   const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
   const [password, setPassword] = useState('');
 
@@ -59,6 +61,7 @@ function MatterbridgeInfo() {
         if(data.matterbridgeInformation.loggerLevel === 'warn') setSelectedMbLoggerLevel('Warn');
         if(data.matterbridgeInformation.loggerLevel === 'error') setSelectedMbLoggerLevel('Error');
         if(data.matterbridgeInformation.loggerLevel === 'fatal') setSelectedMbLoggerLevel('Fatal');
+        setLogOnFileMb(data.matterbridgeInformation.fileLogger);
 
         if(data.matterbridgeInformation.matterLoggerLevel === 0) setSelectedMjLoggerLevel('Debug');
         if(data.matterbridgeInformation.matterLoggerLevel === 1) setSelectedMjLoggerLevel('Info');
@@ -66,6 +69,8 @@ function MatterbridgeInfo() {
         if(data.matterbridgeInformation.matterLoggerLevel === 3) setSelectedMjLoggerLevel('Warn');
         if(data.matterbridgeInformation.matterLoggerLevel === 4) setSelectedMjLoggerLevel('Error');
         if(data.matterbridgeInformation.matterLoggerLevel === 5) setSelectedMjLoggerLevel('Fatal');
+        setLogOnFileMj(data.matterbridgeInformation.matterFileLogger);
+
         info = data.matterbridgeInformation; 
         console.log('/api/settings:', info) })
       .catch(error => console.error('Error fetching settings:', error));
@@ -85,11 +90,25 @@ function MatterbridgeInfo() {
     sendCommandToMatterbridge('setmbloglevel', event.target.value);
   };
 
+  // Define a function to handle change matterbridge log file
+  const handleLogOnFileMbChange = (event) => {
+    console.log('handleLogOnFileMbChange called with value:', event.target.checked);
+    setLogOnFileMb(event.target.checked);
+    sendCommandToMatterbridge('setmblogfile', event.target.checked ? 'true' : 'false');
+  };
+
   // Define a function to handle change debug level
   const handleChangeMjLoggerLevel = (event) => {
     console.log('handleChangeMjLoggerLevel called with value:', event.target.value);
     setSelectedMjLoggerLevel(event.target.value);
     sendCommandToMatterbridge('setmjloglevel', event.target.value);
+  };
+
+  // Define a function to handle change matter log file
+  const handleLogOnFileMjChange = (event) => {
+    console.log('handleLogOnFileMjChange called with value:', event.target.checked);
+    setLogOnFileMj(event.target.checked);
+    sendCommandToMatterbridge('setmjlogfile', event.target.checked ? 'true' : 'false');
   };
 
   // Define a function to handle change password
@@ -147,26 +166,28 @@ function MatterbridgeInfo() {
             </RadioGroup>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-debug">Matterbridge logger level:</FormLabel>
-            <RadioGroup focused row name="debug-buttons-group" value={selectedMbLoggerLevel} onChange={handleChangeMbLoggerLevel}>
-              <FormControlLabel value="Debug" control={<Radio />} label="Debug" />
-              <FormControlLabel value="Info" control={<Radio />} label="Info" />
-              <FormControlLabel value="Notice" control={<Radio />} label="Notice" />
-              <FormControlLabel value="Warn" control={<Radio />} label="Warn" />
-              <FormControlLabel value="Error" control={<Radio />} label="Error" />
-              <FormControlLabel value="Fatal" control={<Radio />} label="Fatal" />
-            </RadioGroup>
+            <FormLabel style={{padding: '0px', margin: '0px', color: 'rgba(0, 0, 0, 0.87)'}} id="mbdebug-info">Matterbridge logger level:</FormLabel>
+            <Select style={{ height: '30px' }} labelId="select-mblevel" id="mbdebug-level" value={selectedMbLoggerLevel} onChange={handleChangeMbLoggerLevel}>
+              <MenuItem value='Debug'>Debug</MenuItem>
+              <MenuItem value='Info'>Info</MenuItem>
+              <MenuItem value='Notice'>Notice</MenuItem>
+              <MenuItem value='Warn'>Warn</MenuItem>
+              <MenuItem value='Error'>Error</MenuItem>
+              <MenuItem value='Fatal'>Fatal</MenuItem>
+            </Select>
+            <FormControlLabel style={{padding: '0px', margin: '0px', color: 'rgba(0, 0, 0, 0.87)'}} control={<Checkbox checked={logOnFileMb} onChange={handleLogOnFileMbChange} name="logOnFileMb" />} label="Log on file:" labelPlacement="start"/>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-debug">Matter logger level:</FormLabel>
-            <RadioGroup focused row name="debug-buttons-group" value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
-              <FormControlLabel value="Debug" control={<Radio />} label="Debug" />
-              <FormControlLabel value="Info" control={<Radio />} label="Info" />
-              <FormControlLabel value="Notice" control={<Radio />} label="Notice" />
-              <FormControlLabel value="Warn" control={<Radio />} label="Warn" />
-              <FormControlLabel value="Error" control={<Radio />} label="Error" />
-              <FormControlLabel value="Fatal" control={<Radio />} label="Fatal" />
-            </RadioGroup>
+            <FormLabel style={{padding: '0px', margin: '0px', color: 'rgba(0, 0, 0, 0.87)'}} id="mjdebug-info">Matter logger level:</FormLabel>
+            <Select style={{ height: '30px' }} labelId="select-mjlevel" id="mjdebug-level" value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
+              <MenuItem value='Debug'>Debug</MenuItem>
+              <MenuItem value='Info'>Info</MenuItem>
+              <MenuItem value='Notice'>Notice</MenuItem>
+              <MenuItem value='Warn'>Warn</MenuItem>
+              <MenuItem value='Error'>Error</MenuItem>
+              <MenuItem value='Fatal'>Fatal</MenuItem>
+            </Select>
+            <FormControlLabel style={{padding: '0px', margin: '0px', color: 'rgba(0, 0, 0, 0.87)'}} control={<Checkbox checked={logOnFileMj} onChange={handleLogOnFileMjChange} name="logOnFileMj" />} label="Log on file:" labelPlacement="start"/>
           </div>
           <TextField focused value={password} onChange={handleChangePassword} size="small" id="matterbridgePassword" label="Matterbridge Password" type="password" autoComplete="current-password" variant="outlined" style={{ marginTop: '20px'}} />
           <Tooltip title="Unregister all bridged devices and shutdown.">
@@ -193,4 +214,24 @@ function MatterbridgeInfo() {
   );
 }
 
+/*
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-debug">Matterbridge logger level:</FormLabel>
+            <RadioGroup focused row name="debug-buttons-group" value={selectedMbLoggerLevel} onChange={handleChangeMbLoggerLevel}>
+              <FormControlLabel value="Debug" control={<Radio />} label="Debug" />
+              <FormControlLabel value="Info" control={<Radio />} label="Info" />
+              <FormControlLabel value="Notice" control={<Radio />} label="Notice" />
+              <FormControlLabel value="Warn" control={<Radio />} label="Warn" />
+              <FormControlLabel value="Error" control={<Radio />} label="Error" />
+              <FormControlLabel value="Fatal" control={<Radio />} label="Fatal" />
+            </RadioGroup>
+            <RadioGroup focused row name="debug-buttons-group" value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
+              <FormControlLabel value="Debug" control={<Radio />} label="Debug" />
+              <FormControlLabel value="Info" control={<Radio />} label="Info" />
+              <FormControlLabel value="Notice" control={<Radio />} label="Notice" />
+              <FormControlLabel value="Warn" control={<Radio />} label="Warn" />
+              <FormControlLabel value="Error" control={<Radio />} label="Error" />
+              <FormControlLabel value="Fatal" control={<Radio />} label="Fatal" />
+            </RadioGroup>
+
+*/
 export default Settings;
