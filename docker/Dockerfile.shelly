@@ -1,7 +1,6 @@
-# FROM alpine:3.18.4 AS base
 FROM alpine:latest AS base
-# FROM alpine:latest as base not working
-# FROM node:20-alpine as base not working
+# FROM alpine:latest as base not working for linux/arm/v7
+# FROM node:20-alpine as base not working for linux/arm/v7
 
 WORKDIR /app
 RUN apk add --no-cache nodejs npm icu-data-full
