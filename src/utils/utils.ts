@@ -495,10 +495,12 @@ export async function createZip(sourcePath: string, outputPath: string): Promise
 
   try {
     const files = await glob(sourcePath.replace(/\\/g, '/'), { nodir: true });
+    // eslint-disable-next-line no-console
     console.log(`createZip: glob found ${files.length} files`);
     if (files.length > 0) {
       // Add matched files to the archive
       files.forEach((file) => {
+        // eslint-disable-next-line no-console
         console.log('createZip: adding file:', file);
         archive.file(file, { name: path.basename(file) });
       });
@@ -506,6 +508,7 @@ export async function createZip(sourcePath: string, outputPath: string): Promise
       // If no files match the pattern, check if it's a directory
       const stats = await fs.stat(sourcePath);
       if (stats.isDirectory()) {
+        // eslint-disable-next-line no-console
         console.log('createZip: adding directory:', sourcePath);
         archive.directory(sourcePath, false);
       } else {
@@ -517,11 +520,13 @@ export async function createZip(sourcePath: string, outputPath: string): Promise
 
     await archive.finalize(); // Finalize after adding files or directories
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(`createZip error: ${error}`);
     return -1;
   } finally {
     await output.close(); // Ensure the file is properly closed
   }
+  // eslint-disable-next-line no-console
   console.log(`createZip from ${sourcePath} to ${outputPath} creted with ${archive.pointer()} total bytes.`);
   return archive.pointer(); // Return the number of bytes written
 }

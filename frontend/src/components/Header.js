@@ -214,7 +214,7 @@ function Header() {
           <MenuItem onClick={() => handleCloseCommand('download-mjstorage')}>Download matter storage</MenuItem>
           <MenuItem onClick={() => handleCloseCommand('download-mbstorage')}>Download node storage</MenuItem>
           <MenuItem onClick={() => handleCloseCommand('download-pluginstorage')}>Download plugin storage</MenuItem>
-          <MenuItem onClick={() => handleCloseCommand('download-pluginconfig')}>Download plugins config</MenuItem>
+          <MenuItem onClick={() => handleCloseCommand('download-pluginconfig')}>Download plugins config files</MenuItem>
         </Menu>
         <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open} onClick={handleClose}>
           <CircularProgress color="inherit" />
