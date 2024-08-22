@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
+## [1.4.3] - 2024-08-22
+
+### Added
+
+- [frontend]: Added menu with Update, Restart and Shutdown.
+- [frontend]: Added menu item Download matterbridge.log.
+- [frontend]: Added menu item Download matter.log.
+- [frontend]: Added menu item Download matter storage.
+- [frontend]: Added menu item Download node storage.
+- [frontend]: Added menu item Download plugin storage.
+- [frontend]: Added the option to write the logs on file.
+
+### Changed
+
+- [package]: Update dependencies.
+- [package]: Update node-ansi-logger to 3.0.0.
+- [package]: Update matter-history to 1.1.7.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.4.2] - 2024-08-20
 
 ### Added
