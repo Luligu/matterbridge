@@ -4,7 +4,7 @@
  * @file utils.ts
  * @author Luca Liguori
  * @date 2024-02-17
- * @version 1.2.8
+ * @version 1.2.9
  *
  * Copyright 2024 Luca Liguori.
  *
@@ -23,7 +23,9 @@
 
 import os from 'os';
 import { promises as fs } from 'fs';
-import archiver from 'archiver';
+import archiver, { ArchiverError } from 'archiver';
+import { glob } from 'glob';
+import path from 'path';
 
 /**
  * Performs a deep comparison between two values to determine if they are equivalent.
@@ -443,36 +445,83 @@ export async function wait(timeout = 1000, name?: string, debug = false): Promis
   });
 }
 
-export async function zipDirectory(outputPath: string, sourceDir: string): Promise<number> {
+/**
+ * Creates a ZIP archive from the specified source pattern or directory and writes it to the specified output path.
+ *
+ * @param {string} sourcePath - The source pattern or directory to be zipped (use path.join for sourcePath).
+ * @param {string} outputPath - The path where the output ZIP file will be written.
+ * @returns {Promise<number>} - A promise that resolves to the total number of bytes written to the ZIP file.
+ *
+ * @remarks
+ * This function uses the `archiver` library to create a ZIP archive. It sets the compression level to 9 (maximum compression).
+ * The function ensures that the output file is properly closed after the archiving process is complete.
+ * It logs the progress and the total number of bytes written to the console.
+ *
+ * This function uses the `glob` library to match files based on the source pattern (internally converted in posix).
+ *
+ * @example
+ * createZip('/path/to/source', '/path/to/output.zip')
+ *   .then(bytes => console.log(`ZIP file created with ${bytes} bytes`))
+ *   .catch(error => console.error(`Error creating ZIP file: ${error.message}`));
+ */
+export async function createZip(sourcePath: string, outputPath: string): Promise<number> {
   // eslint-disable-next-line no-console
-  console.log(`Zipping directory ${sourceDir} to ${outputPath}...`);
+  console.log(`createZip from ${sourcePath} to ${outputPath}...`);
   const output = await fs.open(outputPath, 'w'); // Open the output file for writing
   const archive = archiver('zip', {
-    zlib: { level: 9 },
+    zlib: { level: 9 }, // Set compression level
   });
 
-  return new Promise<number>((resolve, reject) => {
-    output.createWriteStream().on('close', () => {
-      // eslint-disable-next-line no-console
-      console.log(`Zipped ${archive.pointer()} total bytes`);
-      resolve(archive.pointer());
-    });
+  const stream = output.createWriteStream();
 
-    archive.on('error', (err: archiver.ArchiverError) => {
-      // eslint-disable-next-line no-console
-      console.error(`Zipped error: ${err.message}`);
-      reject(-1);
-    });
-
-    archive.pipe(output.createWriteStream());
-
-    // Append files from a directory, including subdirectories
-    archive.directory(sourceDir, false);
-
-    archive.finalize();
-  }).finally(async () => {
-    await output.close(); // Ensure the file is properly closed
+  stream.on('close', () => {
     // eslint-disable-next-line no-console
-    console.log(`Zipped closed with ${archive.pointer()} total bytes`);
+    console.log(`createZip close with ${archive.pointer()} total bytes`);
+    return archive.pointer();
   });
+
+  archive.on('error', (error: ArchiverError) => {
+    // eslint-disable-next-line no-console
+    console.error(`createZip error: ${error.message}`);
+    return -1;
+  });
+
+  archive.on('warning', (error: ArchiverError) => {
+    // eslint-disable-next-line no-console
+    console.error(`createZip warning: ${error.message}`);
+  });
+
+  archive.pipe(stream);
+
+  try {
+    const files = await glob(sourcePath.replace(/\\/g, '/'), { nodir: true });
+    console.log(`createZip: glob found ${files.length} files`);
+    if (files.length > 0) {
+      // Add matched files to the archive
+      files.forEach((file) => {
+        console.log('createZip: adding file:', file);
+        archive.file(file, { name: path.basename(file) });
+      });
+    } else {
+      // If no files match the pattern, check if it's a directory
+      const stats = await fs.stat(sourcePath);
+      if (stats.isDirectory()) {
+        console.log('createZip: adding directory:', sourcePath);
+        archive.directory(sourcePath, false);
+      } else {
+        // eslint-disable-next-line no-console
+        console.error(`createZip no files or directory found for pattern: ${sourcePath}`);
+        return -1;
+      }
+    }
+
+    await archive.finalize(); // Finalize after adding files or directories
+  } catch (error) {
+    console.error(`createZip error: ${error}`);
+    return -1;
+  } finally {
+    await output.close(); // Ensure the file is properly closed
+  }
+  console.log(`createZip from ${sourcePath} to ${outputPath} creted with ${archive.pointer()} total bytes.`);
+  return archive.pointer(); // Return the number of bytes written
 }

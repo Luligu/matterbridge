@@ -126,6 +126,7 @@
     "@project-chip/matter-node.js": "0.9.4",
     "archiver": "7.0.1",
     "express": "4.19.2",
+    "glob": "^11.0.0",
     "https": "1.0.0",
     "matter-history": "1.1.7",
     "node-ansi-logger": "3.0.0",

@@ -15,6 +15,7 @@ import {
   isValidArray,
   isValidNull,
   isValidUndefined,
+  createZip,
 } from './utils';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -353,5 +354,21 @@ describe('Utils test', () => {
     expect(isValidUndefined(undefined)).toBe(true);
     expect(isValidUndefined({ x: 1, y: 4 })).toBe(false);
     expect(isValidUndefined([1, 4, 'string'])).toBe(false);
+  });
+
+  it('should zip a file', async () => {
+    const size = await createZip(path.join('src', 'matterbridge.ts'), path.join('test', 'matterbridge.zip'));
+    // const size = await createZip('src/matterbridge.ts', path.join('test', 'matterbridge.zip'));
+    expect(size).toBeGreaterThan(0);
+  });
+
+  it('should zip a directory', async () => {
+    const size = await createZip('src', path.join('test', 'src.zip'));
+    expect(size).toBeGreaterThan(0);
+  });
+
+  it('should zip a glob', async () => {
+    const size = await createZip(path.join('src', '*.ts'), path.join('test', 'ts.zip'));
+    expect(size).toBeGreaterThan(0);
   });
 });

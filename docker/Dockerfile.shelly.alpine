@@ -1,0 +1,25 @@
+FROM alpine:latest AS base
+# FROM alpine:latest as base not working for linux/arm/v7
+# FROM node:20-alpine as base not working for linux/arm/v7
+
+WORKDIR /app
+RUN apk add --no-cache nodejs npm icu-data-full
+
+COPY ./package.json ./package-lock.json ./tsconfig.json ./
+COPY ./src ./src
+COPY ./frontend/build ./frontend/build
+RUN npm install --no-audit --no-update-notifier --no-fund && \
+    npm run build && \
+    npm link
+
+# Install Matterbridge plugins
+RUN npm -g install matterbridge-shelly
+
+# Copy and execute the entrypoint script
+COPY ./docker/shellyEntrypoint.sh ./
+RUN chmod +x ./shellyEntrypoint.sh
+ENTRYPOINT ["./shellyEntrypoint.sh"]
+
+# Node modules: /usr/local/lib/node_modules/matterbridge/dist/cli.js
+# Bin: /usr/local/bin/matterbridge
+CMD ["matterbridge", "-bridge", "-docker"]

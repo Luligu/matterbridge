@@ -38,7 +38,7 @@ import WebSocket, { WebSocketServer } from 'ws';
 // Matterbridge
 import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
 import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
-import { logInterfaces, wait, waiter, zipDirectory } from './utils/utils.js';
+import { logInterfaces, wait, waiter, createZip } from './utils/utils.js';
 import { BaseRegisteredPlugin, MatterbridgeInformation, RegisteredDevice, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 
 // @project-chip/matter-node.js
@@ -2922,7 +2922,7 @@ export class Matterbridge extends EventEmitter {
     // Endpoint to download the matterbridge storage directory
     this.expressApp.get('/api/download-mbstorage', async (req, res) => {
       this.log.debug('The frontend sent /api/download-mbstorage');
-      await zipDirectory(path.join(this.matterbridgeDirectory, `matterbridge.${this.nodeStorageName}.zip`), path.join(this.matterbridgeDirectory, this.nodeStorageName));
+      await createZip(path.join(this.matterbridgeDirectory, this.nodeStorageName), path.join(this.matterbridgeDirectory, `matterbridge.${this.nodeStorageName}.zip`));
       res.download(path.join(this.matterbridgeDirectory, `matterbridge.${this.nodeStorageName}.zip`), `matterbridge.${this.nodeStorageName}.zip`, (error) => {
         if (error) {
           this.log.error(`Error downloading file ${`matterbridge.${this.nodeStorageName}.zip`}: ${error instanceof Error ? error.message : error}`);
@@ -2934,8 +2934,20 @@ export class Matterbridge extends EventEmitter {
     // Endpoint to download the matterbridge plugin directory
     this.expressApp.get('/api/download-pluginstorage', async (req, res) => {
       this.log.debug('The frontend sent /api/download-pluginstorage');
-      await zipDirectory(path.join(this.matterbridgeDirectory, `matterbridge.pluginstorage.zip`), this.matterbridgePluginDirectory);
+      await createZip(this.matterbridgePluginDirectory, path.join(this.matterbridgeDirectory, `matterbridge.pluginstorage.zip`));
       res.download(path.join(this.matterbridgeDirectory, `matterbridge.pluginstorage.zip`), `matterbridge.pluginstorage.zip`, (error) => {
+        if (error) {
+          this.log.error(`Error downloading file matterbridge.pluginstorage.zip: ${error instanceof Error ? error.message : error}`);
+          res.status(500).send('Error downloading the matterbridge plugin storage file');
+        }
+      });
+    });
+
+    // Endpoint to download the matterbridge plugin config files
+    this.expressApp.get('/api/download-pluginconfig', async (req, res) => {
+      this.log.debug('The frontend sent /api/download-pluginconfig');
+      await createZip(path.join(this.matterbridgeDirectory, '*.config.json'), path.join(this.matterbridgeDirectory, `matterbridge.pluginconfig.zip`));
+      res.download(path.join(this.matterbridgeDirectory, `matterbridge.pluginconfig.zip`), `matterbridge.pluginconfig.zip`, (error) => {
         if (error) {
           this.log.error(`Error downloading file matterbridge.pluginstorage.zip: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge plugin storage file');

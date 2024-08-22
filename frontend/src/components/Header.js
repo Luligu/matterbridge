@@ -113,6 +113,8 @@ function Header() {
       window.location.href = '/api/download-mjstorage';
     } else if(value==='download-pluginstorage') {
       window.location.href = '/api/download-pluginstorage';
+    } else if(value==='download-pluginconfig') {
+      window.location.href = '/api/download-pluginconfig';
     } else if(value==='update') {
       handleUpdateClick();
     } else if(value==='restart') {
@@ -212,6 +214,7 @@ function Header() {
           <MenuItem onClick={() => handleCloseCommand('download-mjstorage')}>Download matter storage</MenuItem>
           <MenuItem onClick={() => handleCloseCommand('download-mbstorage')}>Download node storage</MenuItem>
           <MenuItem onClick={() => handleCloseCommand('download-pluginstorage')}>Download plugin storage</MenuItem>
+          <MenuItem onClick={() => handleCloseCommand('download-pluginconfig')}>Download plugins config</MenuItem>
         </Menu>
         <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open} onClick={handleClose}>
           <CircularProgress color="inherit" />
