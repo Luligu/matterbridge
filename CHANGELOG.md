@@ -8,11 +8,11 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Breaking Changes
 
-- [matterbridge]: You don't need anymore to add the parmeter -bridge or -childbridge on the command line or systemctl or docker command: the default is bridge mode and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.
-- [logger]: You don't need anymore to add the parmeter -logger [level]: the default is info and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.
-- [filelogger]: You don't need anymore to add the parmeter -filelogger: the default is false and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.
-- [matterlogger]: You don't need anymore to add the parmeter -matterlogger [level]: the default is info and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.
-- [matterfilelogger]: You don't need anymore to add the parmeter -matterfilelogger: the default is false and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.
+- [-bridge -childbridge]: You don't need anymore to add the parmeter -bridge or -childbridge on the command line or systemctl or docker command: the default is bridge mode and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.
+- [-logger]: You don't need anymore to add the parmeter -logger [level]: the default is info and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.
+- [-filelogger]: You don't need anymore to add the parmeter -filelogger: the default is false and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.
+- [-matterlogger]: You don't need anymore to add the parmeter -matterlogger [level]: the default is info and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.
+- [-matterfilelogger]: You don't need anymore to add the parmeter -matterfilelogger: the default is false and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.
 
 ### Added
 

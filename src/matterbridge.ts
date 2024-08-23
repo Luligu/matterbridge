@@ -21,8 +21,7 @@
  * limitations under the License. *
  */
 
-import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
-import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, hk, or, idn, BLUE, CYAN, nt } from 'node-ansi-logger';
+// Node.js modules
 import { fileURLToPath } from 'url';
 import { promises as fs } from 'fs';
 import { ExecException, exec, spawn } from 'child_process';
@@ -34,6 +33,10 @@ import express from 'express';
 import os from 'os';
 import path from 'path';
 import WebSocket, { WebSocketServer } from 'ws';
+
+// NodeStorage and AnsiLogger modules
+import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
+import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, hk, or, idn, BLUE, CYAN, nt } from 'node-ansi-logger';
 
 // Matterbridge
 import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
@@ -49,7 +52,7 @@ import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@projec
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
 import { ManualPairingCodeCodec, QrCodeSchema } from '@project-chip/matter-node.js/schema';
 import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageManager } from '@project-chip/matter-node.js/storage';
-import { requireMinNodeVersion, getParameter, getIntParameter, hasParameter } from '@project-chip/matter-node.js/util';
+import { getParameter, getIntParameter, hasParameter } from '@project-chip/matter-node.js/util';
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
@@ -350,12 +353,22 @@ export class Matterbridge extends EventEmitter {
     // Log system info and create .matterbridge directory
     await this.logNodeAndSystemInfo();
     this.log.notice(
-      `Matterbridge version ${this.matterbridgeVersion} ${hasParameter('bridge') ? 'mode bridge' : ''}${hasParameter('childbridge') ? 'mode childbridge' : ''}${hasParameter('controller') ? 'mode controller' : ''} ` +
-        `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}running on ${this.systemInformation.osType} ${this.systemInformation.osRelease} ${this.systemInformation.osPlatform} ${this.systemInformation.osArch} `,
+      `Matterbridge version ${this.matterbridgeVersion} ` +
+        `${hasParameter('bridge') || (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge' ? 'mode bridge ' : ''}` +
+        `${hasParameter('childbridge') || (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge' ? 'mode childbridge ' : ''}` +
+        `${hasParameter('controller') ? 'mode controller ' : ''}` +
+        `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}` +
+        `running on ${this.systemInformation.osType} (v.${this.systemInformation.osRelease}) platform ${this.systemInformation.osPlatform} arch ${this.systemInformation.osArch}`,
     );
 
     // Check node version and throw error
-    requireMinNodeVersion(18);
+    const minNodeVersion = 18;
+    const nodeVersion = process.versions.node;
+    const versionMajor = parseInt(nodeVersion.split('.')[0]);
+    if (versionMajor < minNodeVersion) {
+      this.log.error(`Node version ${versionMajor} is not supported. Please upgrade to ${minNodeVersion} or above.`);
+      throw new Error(`Node version ${versionMajor} is not supported. Please upgrade to ${minNodeVersion} or above.`);
+    }
 
     // Register SIGINT SIGTERM signal handlers
     this.registerSignalHandlers();
@@ -902,7 +915,9 @@ export class Matterbridge extends EventEmitter {
         this.log.debug(`Matterbridge Latest Version: ${this.matterbridgeLatestVersion}`);
         await this.nodeContext?.set<string>('matterbridgeLatestVersion', this.matterbridgeLatestVersion);
         if (this.matterbridgeVersion !== this.matterbridgeLatestVersion) {
-          this.log.warn(`Matterbridge is out of date. Current version: ${this.matterbridgeVersion}, Latest version: ${this.matterbridgeLatestVersion}`);
+          this.log.notice(`Matterbridge is out of date. Current version: ${this.matterbridgeVersion}. Latest version: ${this.matterbridgeLatestVersion}.`);
+        } else {
+          this.log.debug(`Matterbridge is up to date. Current version: ${this.matterbridgeVersion}. Latest version: ${this.matterbridgeLatestVersion}.`);
         }
       })
       .catch((error: Error) => {
@@ -925,11 +940,11 @@ export class Matterbridge extends EventEmitter {
     this.getLatestVersion(plugin.name)
       .then(async (latestVersion) => {
         plugin.latestVersion = latestVersion;
-        if (plugin.version !== latestVersion) this.log.warn(`The plugin ${plg}${plugin.name}${wr} is out of date. Current version: ${plugin.version}, Latest version: ${latestVersion}`);
-        else this.log.info(`The plugin ${plg}${plugin.name}${nf} is up to date. Current version: ${plugin.version}, Latest version: ${latestVersion}`);
+        if (plugin.version !== latestVersion) this.log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest version: ${latestVersion}.`);
+        else this.log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest version: ${latestVersion}.`);
       })
       .catch((error: Error) => {
-        this.log.error(`Error getting ${plugin.name} latest version: ${error.message}`);
+        this.log.error(`Error getting ${plg}${plugin.name}${er} latest version: ${error.message}`);
         // error.stack && this.log.debug(error.stack);
       });
   }
@@ -986,15 +1001,18 @@ export class Matterbridge extends EventEmitter {
       try {
         await fs.unlink(filePath);
       } catch (error) {
-        this.log.debug(`Error unlinking the log file ${CYAN}${filePath}${er}: ${error instanceof Error ? error.message : error}`);
+        this.log.debug(`Error unlinking the log file ${CYAN}${filePath}${db}: ${error instanceof Error ? error.message : error}`);
       }
     }
 
     return async (_level: Level, formattedLog: string) => {
+      if (fileSize > 100000000) return;
       fileSize += formattedLog.length;
       if (fileSize > 100000000) {
+        await fs.appendFile(filePath, `Logging on file has been stoppped because the file size is greater then 100MB.` + os.EOL);
         return;
       }
+
       const now = new Date();
       const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}.${now.getMilliseconds().toString().padStart(3, '0')}`;
 
