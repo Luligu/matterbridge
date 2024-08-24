@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-console */
 // App.js
 import './App.css';
@@ -10,8 +9,9 @@ import Devices from './components/Devices';
 import Settings from './components/Settings';
 import Test from './components/Test';
 import Logs from './components/Logs';
-import useWebSocket from './components/WebSocketUse';
+// import useWebSocket from './components/WebSocketUse';
 import { WebSocketProvider } from './components/WebSocketContext';
+import { OnlineProvider } from './components/OnlineContext';
 
 export function sendCommandToMatterbridge(command, param, body) {
   const sanitizedParam = param.replace(/\\/g, '*');
@@ -144,18 +144,20 @@ function LoginForm() {
   if (loggedIn) {
     return (
       <WebSocketProvider wssHost={wssHost} ssl={ssl}>
-        <Router>
-          <div className="MbfScreen">
-            <Header />
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/devices" element={<Devices />} />
-              <Route path="/log" element={<Logs />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/test" element={<Test />} />
-            </Routes>
-          </div>
-        </Router>
+        <OnlineProvider>
+          <Router>
+            <div className="MbfScreen">
+              <Header />
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/devices" element={<Devices />} />
+                <Route path="/log" element={<Logs />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/test" element={<Test />} />
+              </Routes>
+            </div>
+          </Router>
+        </OnlineProvider>
       </WebSocketProvider>
     );
   } else {
@@ -242,18 +244,20 @@ function App() {
   if (noPassword) {
     return (
       <WebSocketProvider wssHost={wssHost} ssl={ssl}>
-        <Router>
-          <div className="MbfScreen">
-            <Header />
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/devices" element={<Devices />} />
-                <Route path="/log" element={<Logs />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/test" element={<Test />} />
-              </Routes>
-          </div>
-        </Router>
+        <OnlineProvider>
+          <Router>
+            <div className="MbfScreen">
+              <Header />
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/devices" element={<Devices />} />
+                  <Route path="/log" element={<Logs />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/test" element={<Test />} />
+                </Routes>
+            </div>
+          </Router>
+        </OnlineProvider>
       </WebSocketProvider>
     );
   }
@@ -337,4 +341,8 @@ Find out more about deployment here:
   https://cra.link/deployment
 
 PS C:\Users\lligu\OneDrive\GitHub\matterbridge\frontend> 
+
+npm install @mui/material @emotion/react @emotion/styled
+npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
+npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8 @rjsf/mui
 */

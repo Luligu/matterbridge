@@ -3,10 +3,12 @@
 // Home.js
 import React, { useEffect, useState, useRef, useContext } from 'react';
 import { StatusIndicator } from './StatusIndicator';
-import { theme } from './Header';
+// import { theme } from './Header';
 import { sendCommandToMatterbridge } from '../App';
 import WebSocketComponent from './WebSocketComponent';
 import { WebSocketContext } from './WebSocketContext';
+import Connecting from './Connecting';
+import { OnlineContext } from './OnlineContext';
 
 // @mui
 import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip, IconButton, Button, createTheme, ThemeProvider, Select, MenuItem, Menu } from '@mui/material';
@@ -18,9 +20,21 @@ import validator from '@rjsf/validator-ajv8';
 
 import QRCode from 'qrcode.react';
 
-// npm install @mui/material @emotion/react @emotion/styled
-// npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
-// npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8 @rjsf/mui
+const theme = createTheme({
+  components: {
+    MuiTooltip: {
+      defaultProps: {
+        placement: 'top-start', 
+        arrow: true,
+      },
+    },
+  },
+  palette: {
+    primary: {
+      main: '#4CAF50',
+    },
+  },
+});
 
 function Home() {
   const [wssHost, setWssHost] = useState(null);
@@ -37,7 +51,9 @@ function Home() {
   const [openConfig, setOpenConfig] = useState(false);
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');
+
   const { messages, sendMessage, logMessage, setLogFilters } = useContext(WebSocketContext);
+  const { online } = useContext(OnlineContext);
 
   const refAddRemove = useRef(null);
   const refRegisteredPlugins = useRef(null);
@@ -207,13 +223,10 @@ function Home() {
   };
 
   /*
-        {matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
-      <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', maxHeight: 'calc(100vh - 60px - 40px)', width: '302px', minWidth: '302px', maxWidth: '302px', flex: '1 1 auto', gap: '20px' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', maxHeight: 'calc(100vh - 60px - 40px)', flex: '1 1 auto', gap: '20px' }}>
   */
 
-  if (wssHost === null) {
-    return <div>Loading settings...</div>;
+  if (!online) {
+    return ( <Connecting /> );
   }
   return (
     <div className="MbfPageDiv" style={{ flexDirection: 'row' }}>
@@ -337,7 +350,7 @@ function Home() {
           <div className="MbfWindowHeader" style={{ flexShrink: 0 }}>
             <p className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>Logs <span style={{ fontWeight: 'normal', fontSize: '12px',marginTop: '2px' }}>Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}"</span></p>
           </div>
-          <div style={{ flex: '1 1 auto', margin: '0px', padding: '0px', overflow: 'auto'}}>
+          <div style={{ flex: '1 1 auto', margin: '0px', padding: '10px', overflow: 'auto'}}>
             <WebSocketComponent/>
           </div>
         </div>

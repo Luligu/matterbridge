@@ -1,21 +1,19 @@
 /* eslint-disable no-console */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Radio, RadioGroup, Button, Tooltip, FormControlLabel, FormControl, FormLabel, TextField, Backdrop, CircularProgress, Select, MenuItem, Checkbox } from '@mui/material';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
 import { sendCommandToMatterbridge } from '../App';
 import { theme } from './Header';
-
-// export const MatterbridgeInfoContext = React.createContext();
-// Use with const matterbridgeInfo = useContext(MatterbridgeInfoContext);
-// <MatterbridgeInfoContext.Provider value={matterbridgeInfo}>
-// </MatterbridgeInfoContext.Provider>
-
-export var info = {};
+import Connecting from './Connecting';
+import { OnlineContext } from './OnlineContext';
 
 function Settings() {
+  const { online } = useContext(OnlineContext);
 
-//  <div style={{ display: 'flex', flex: 1, flexBasis: 'auto', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '10px' , margin: '0', padding: '0' }}>
+  if (!online) {
+    return ( <Connecting /> );
+  }
   return (
     <div className="MbfPageDiv">
       <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
@@ -71,8 +69,8 @@ function MatterbridgeInfo() {
         if(data.matterbridgeInformation.matterLoggerLevel === 5) setSelectedMjLoggerLevel('Fatal');
         setLogOnFileMj(data.matterbridgeInformation.matterFileLogger);
 
-        info = data.matterbridgeInformation; 
-        console.log('/api/settings:', info) })
+        // info = data.matterbridgeInformation; 
+        console.log('/api/settings:', data.matterbridgeInformation) })
       .catch(error => console.error('Error fetching settings:', error));
   }, []); // The empty array causes this effect to run only once
 
@@ -215,23 +213,5 @@ function MatterbridgeInfo() {
 }
 
 /*
-            <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-debug">Matterbridge logger level:</FormLabel>
-            <RadioGroup focused row name="debug-buttons-group" value={selectedMbLoggerLevel} onChange={handleChangeMbLoggerLevel}>
-              <FormControlLabel value="Debug" control={<Radio />} label="Debug" />
-              <FormControlLabel value="Info" control={<Radio />} label="Info" />
-              <FormControlLabel value="Notice" control={<Radio />} label="Notice" />
-              <FormControlLabel value="Warn" control={<Radio />} label="Warn" />
-              <FormControlLabel value="Error" control={<Radio />} label="Error" />
-              <FormControlLabel value="Fatal" control={<Radio />} label="Fatal" />
-            </RadioGroup>
-            <RadioGroup focused row name="debug-buttons-group" value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
-              <FormControlLabel value="Debug" control={<Radio />} label="Debug" />
-              <FormControlLabel value="Info" control={<Radio />} label="Info" />
-              <FormControlLabel value="Notice" control={<Radio />} label="Notice" />
-              <FormControlLabel value="Warn" control={<Radio />} label="Warn" />
-              <FormControlLabel value="Error" control={<Radio />} label="Error" />
-              <FormControlLabel value="Fatal" control={<Radio />} label="Fatal" />
-            </RadioGroup>
-
 */
 export default Settings;

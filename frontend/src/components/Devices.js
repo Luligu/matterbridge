@@ -1,6 +1,9 @@
 /* eslint-disable no-console */
+
 // Devices.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
+import Connecting from './Connecting';
+import { OnlineContext } from './OnlineContext';
 
 function Devices() {
   const [devices, setDevices] = useState([]);
@@ -10,6 +13,7 @@ function Devices() {
   const [selectedPluginName, setSelectedPluginName] = useState('none'); // -1 no selection, 0 or greater for selected row
   const [selectedDeviceEndpoint, setSelectedDeviceEndpoint] = useState('none'); // -1 no selection, 0 or greater for selected row
   const [clusters, setClusters] = useState([]);
+  const { online } = useContext(OnlineContext);
 
   useEffect(() => {
     // Fetch Devices
@@ -67,6 +71,9 @@ function Devices() {
     return 0;
   })
 
+  if (!online) {
+    return ( <Connecting /> );
+  }
   return (
     <div className="MbfPageDiv">
       <div className="MbfWindowDiv" style={{ flex: '1 1 auto', maxHeight: '50%', width: '100%', overflow: 'hidden' }}>
