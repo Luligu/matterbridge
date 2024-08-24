@@ -469,7 +469,7 @@ export async function wait(timeout = 1000, name?: string, debug = false): Promis
  */
 export async function createZip(outputPath: string, ...sourcePaths: string[]): Promise<number> {
   log.logLevel = LogLevel.DEBUG;
-  log.logName = 'CreateZip';
+  log.logName = 'Archive';
   log.debug(`creating archive ${outputPath} from ${sourcePaths.join(', ')} ...`);
 
   return new Promise((resolve, reject) => {
@@ -514,13 +514,10 @@ export async function createZip(outputPath: string, ...sourcePaths: string[]): P
         stats = statSync(sourcePath);
       } catch (error) {
         if (sourcePath.includes('*')) {
-          // const relativeSourcePath = path.relative(process.cwd(), sourcePath);
-          // const normalizedSourcePath = relativeSourcePath.replace(/\\/g, '/');
           const files = glob.sync(sourcePath.replace(/\\/g, '/'));
           log.debug(`adding files matching glob pattern: ${sourcePath}`);
           for (const file of files) {
             log.debug(`-glob file: ${file}`);
-            // archive.file(file, { name: path.basename(file) });
             archive.file(file, { name: file });
           }
         } else {
@@ -533,7 +530,7 @@ export async function createZip(outputPath: string, ...sourcePaths: string[]): P
         archive.file(sourcePath, { name: path.basename(sourcePath) });
       } else if (stats.isDirectory()) {
         log.debug(`adding directory: ${sourcePath}`);
-        archive.directory(sourcePath, false);
+        archive.directory(sourcePath, path.basename(sourcePath));
       }
     }
     // Finalize the archive (i.e., we are done appending files but streams have to finish yet)
@@ -541,3 +538,5 @@ export async function createZip(outputPath: string, ...sourcePaths: string[]): P
     archive.finalize().catch(reject);
   });
 }
+
+// await createZip('output.zip', path.join('C:\\Users\\lligu\\.matterbridge'), path.join('C:\\Users\\lligu\\Matterbridge'));

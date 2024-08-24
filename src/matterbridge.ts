@@ -2992,6 +2992,17 @@ export class Matterbridge extends EventEmitter {
       });
     });
 
+    // Endpoint to download the matterbridge plugin config files
+    this.expressApp.get('/api/download-backup', async (req, res) => {
+      this.log.debug('The frontend sent /api/download-backup');
+      res.download(path.join(os.tmpdir(), `matterbridge.backup.zip`), `matterbridge.backup.zip`, (error) => {
+        if (error) {
+          this.log.error(`Error downloading file matterbridge.backup.zip: ${error instanceof Error ? error.message : error}`);
+          res.status(500).send(`Error downloading file matterbridge.backup.zip: ${error instanceof Error ? error.message : error}`);
+        }
+      });
+    });
+
     // Endpoint to receive commands
     this.expressApp.post('/api/command/:command/:param', express.json(), async (req, res) => {
       const command = req.params.command;
@@ -3018,6 +3029,15 @@ export class Matterbridge extends EventEmitter {
       if (command === 'setbridgemode') {
         this.log.debug(`setbridgemode: ${param}`);
         await this.nodeContext?.set('bridgeMode', param);
+        res.json({ message: 'Command received' });
+        return;
+      }
+
+      // Handle the command backup from Settings
+      if (command === 'backup') {
+        this.log.notice(`Prepairing the backup...`);
+        await createZip(path.join(os.tmpdir(), `matterbridge.backup.zip`), path.join(this.matterbridgeDirectory), path.join(this.matterbridgePluginDirectory));
+        this.log.notice(`Backup ready to be downloaded.`);
         res.json({ message: 'Command received' });
         return;
       }

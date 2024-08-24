@@ -3,11 +3,13 @@
 // Header.js
 import React, { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { Tooltip, Button, createTheme, Backdrop, CircularProgress, ThemeProvider, IconButton, Menu, MenuItem, Divider } from '@mui/material';
+import { Tooltip, Button, createTheme, Backdrop, CircularProgress, ThemeProvider, IconButton, Menu, MenuItem, Divider, ListItemIcon, ListItemText } from '@mui/material';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import { MoreHoriz } from '@mui/icons-material';
+import SaveIcon from '@mui/icons-material/Save';
+import DownloadIcon from '@mui/icons-material/Download';
 
 import { sendCommandToMatterbridge } from '../App';
 import { WebSocketContext } from './WebSocketContext';
@@ -29,14 +31,16 @@ export const theme = createTheme({
 });
 
 function Header() {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   const [wssHost, setWssHost] = useState(null);
   const [qrCode, setQrCode] = useState('');
   const [pairingCode, setPairingCode] = useState('');
   const [systemInfo, setSystemInfo] = useState({});
   const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
   const { messages, sendMessage, logMessage } = useContext(WebSocketContext);
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
+  const [subMenuAnchorEl, setSubMenuAnchorEl] = useState(null);
+
 
   const handleClose = () => {
     setOpen(false);
@@ -96,13 +100,13 @@ function Header() {
     */
   };
 
-  const handleClickCommand = (event) => {
-    setAnchorEl(event.currentTarget);
+  const handleMenuClick = (event) => {
+    setMenuAnchorEl(event.currentTarget);
   };
 
-  const handleCloseCommand = (value) => {
+  const handleMenuClose = (value) => {
     console.log('handleCloseCommand:', value);
-    setAnchorEl(null);
+    setMenuAnchorEl(null);
     if(value==='download-mblog') {
       window.location.href = '/api/download-mblog';
     } else if(value==='download-mjlog') {
@@ -115,13 +119,25 @@ function Header() {
       window.location.href = '/api/download-pluginstorage';
     } else if(value==='download-pluginconfig') {
       window.location.href = '/api/download-pluginconfig';
+    } else if(value==='download-backup') {
+      window.location.href = '/api/download-backup';
     } else if(value==='update') {
       handleUpdateClick();
     } else if(value==='restart') {
       handleRestartClick();
     } else if(value==='shutdown') {
       handleShutdownClick();
+    } else if(value==='create-backup') {
+      sendCommandToMatterbridge('backup','create');
     }
+  };
+
+  const handleSubMenuClick = (event) => {
+    setSubMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleSubMenuClose = () => {
+    setSubMenuAnchorEl(null);
   };
 
   useEffect(() => {
@@ -201,20 +217,53 @@ function Header() {
             <Button theme={theme} color="primary" variant="contained" size="small" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff' }} onClick={handleShutdownClick}>Shutdown</Button>
           </Tooltip>
         ) : null}        
-        <IconButton onClick={handleClickCommand}>
+        <IconButton onClick={handleMenuClick}>
           <MoreHoriz />
         </IconButton>
-        <Menu id="command-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => handleCloseCommand('')} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
-          <MenuItem onClick={() => handleCloseCommand('update')}>Update</MenuItem>
-          <MenuItem onClick={() => handleCloseCommand('restart')}>Restart</MenuItem>
-          {matterbridgeInfo.restartMode === '' ? ( <MenuItem onClick={() => handleCloseCommand('shutdown')}>Shutdown</MenuItem> ) : null }
+        <Menu id="command-menu" anchorEl={menuAnchorEl} keepMounted open={Boolean(menuAnchorEl)} onClose={() => handleMenuClose('')} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+          <MenuItem onClick={() => handleMenuClose('update')}>
+            <ListItemIcon><SystemUpdateAltIcon /></ListItemIcon>
+            <ListItemText primary="Update" />
+          </MenuItem>
+          <MenuItem onClick={() => handleMenuClose('restart')}>
+            <ListItemIcon><RestartAltIcon /></ListItemIcon>
+            <ListItemText primary="Restart" />
+          </MenuItem>
+          {matterbridgeInfo.restartMode === '' ? 
+            <MenuItem onClick={() => handleMenuClose('shutdown')}>
+              <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
+              <ListItemText primary="Shutdown" />
+            </MenuItem>
+           : null }
           <Divider />
-          <MenuItem onClick={() => handleCloseCommand('download-mblog')}>Download matterbridge.log</MenuItem>
-          <MenuItem onClick={() => handleCloseCommand('download-mjlog')}>Download matter.log</MenuItem>
-          <MenuItem onClick={() => handleCloseCommand('download-mjstorage')}>Download matter storage</MenuItem>
-          <MenuItem onClick={() => handleCloseCommand('download-mbstorage')}>Download node storage</MenuItem>
-          <MenuItem onClick={() => handleCloseCommand('download-pluginstorage')}>Download plugin storage</MenuItem>
-          <MenuItem onClick={() => handleCloseCommand('download-pluginconfig')}>Download plugins config files</MenuItem>
+          <MenuItem onClick={() => handleMenuClose('download-mblog')}>
+              <ListItemIcon><DownloadIcon /></ListItemIcon>
+              <ListItemText primary="Download matterbridge.log" /></MenuItem>
+          <MenuItem onClick={() => handleMenuClose('download-mjlog')}>
+              <ListItemIcon><DownloadIcon /></ListItemIcon>
+              <ListItemText primary="Download matter.log" /></MenuItem>
+          <MenuItem onClick={() => handleMenuClose('download-mjstorage')}>
+              <ListItemIcon><DownloadIcon /></ListItemIcon>
+              <ListItemText primary="Download matter storage" /></MenuItem>
+          <MenuItem onClick={() => handleMenuClose('download-mbstorage')}>
+              <ListItemIcon><DownloadIcon /></ListItemIcon>
+              <ListItemText primary="Download node storage" /></MenuItem>
+          <Divider />
+          <MenuItem onClick={handleSubMenuClick}>
+            <ListItemIcon><SaveIcon /></ListItemIcon>
+            <ListItemText primary="Backup" />
+          </MenuItem>
+            <Menu
+              id="sub-menu"
+              anchorEl={subMenuAnchorEl}
+              keepMounted
+              open={Boolean(subMenuAnchorEl)}
+              onClose={handleSubMenuClose}
+              sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}
+            >
+              <MenuItem onClick={() => { handleMenuClose('create-backup'); handleSubMenuClose(); }}>Create backup</MenuItem>
+              <MenuItem onClick={() => { handleMenuClose('download-backup'); handleSubMenuClose(); }}>Download backup</MenuItem>
+            </Menu>
         </Menu>
         <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open} onClick={handleClose}>
           <CircularProgress color="inherit" />
@@ -225,14 +274,18 @@ function Header() {
   );
 }
 /*
- sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}
-        <IconButton onClick={handleClickCommand}>
-          <MoreHoriz />
-        </IconButton>
-        <Menu id="command-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => handleCloseCommand('')}>
-          <MenuItem onClick={() => handleCloseCommand('download-log')}>Download log</MenuItem>
-          <MenuItem onClick={() => handleCloseCommand('download-log')}>Download storage</MenuItem>
-          <MenuItem onClick={() => handleCloseCommand('download-log')}>Download configs</MenuItem>
-        </Menu>
+          <Divider />
+          <MenuItem onClick={handleSubMenuClick}>Backup Options</MenuItem>
+            <Menu
+              id="sub-menu"
+              anchorEl={subMenuAnchorEl}
+              keepMounted
+              open={Boolean(subMenuAnchorEl)}
+              onClose={handleSubMenuClose}
+              sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}
+            >
+              <MenuItem onClick={() => { handleMenuClose('create-backup'); handleSubMenuClose(); }}>Create backup</MenuItem>
+              <MenuItem onClick={() => { handleMenuClose('download-backup'); handleSubMenuClose(); }}>Download backup</MenuItem>
+            </Menu>
 */
 export default Header;
