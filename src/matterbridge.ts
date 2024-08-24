@@ -135,6 +135,7 @@ export class Matterbridge extends EventEmitter {
   private hasCleanupStarted = false;
   private initialized = false;
   private execRunningCount = 0;
+  private startMatterInterval: NodeJS.Timeout | undefined;
   private cleanupTimeout1: NodeJS.Timeout | undefined;
   private cleanupTimeout2: NodeJS.Timeout | undefined;
   private checkUpdateInterval: NodeJS.Timeout | undefined;
@@ -559,8 +560,8 @@ export class Matterbridge extends EventEmitter {
     );
 
     if (hasParameter('test')) {
-      this.bridgeMode = 'childbridge';
-      MatterbridgeDevice.bridgeMode = 'childbridge';
+      this.bridgeMode = 'bridge';
+      MatterbridgeDevice.bridgeMode = 'bridge';
       await this.startTest();
       return;
     }
@@ -1107,10 +1108,19 @@ export class Matterbridge extends EventEmitter {
       // Deregisters the SIGINT and SIGTERM signal handlers
       this.deregisterSignalHandlers();
 
+      // Clear the start matter interval
+      if (this.startMatterInterval) {
+        clearInterval(this.startMatterInterval);
+        this.startMatterInterval = undefined;
+        this.log.debug('Start matter interval cleared');
+      }
+
       // Clear the check update interval
-      if (this.checkUpdateInterval) clearInterval(this.checkUpdateInterval);
-      this.checkUpdateInterval = undefined;
-      this.log.debug('Check update interval cleared');
+      if (this.checkUpdateInterval) {
+        clearInterval(this.checkUpdateInterval);
+        this.checkUpdateInterval = undefined;
+        this.log.debug('Check update interval cleared');
+      }
 
       // Clear the configure timeout
       if (this.configureTimeout) {
@@ -1352,8 +1362,10 @@ export class Matterbridge extends EventEmitter {
         this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: matterAggregator not found`);
         return;
       }
-      device.setBridgedDeviceReachability(false);
-      device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
+      if (device.number !== undefined) {
+        device.setBridgedDeviceReachability(false);
+        device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
+      }
       // device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerShutDownEvent({});
       // device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerLeaveEvent({});
       this.matterAggregator?.removeBridgedDevice(device);
@@ -1392,8 +1404,10 @@ export class Matterbridge extends EventEmitter {
             return;
           }
         });
-        device.setBridgedDeviceReachability(false);
-        device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
+        if (device.number !== undefined) {
+          device.setBridgedDeviceReachability(false);
+          device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
+        }
         plugin.aggregator.removeBridgedDevice(device);
       }
       this.log.info(`Removed bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
@@ -1445,12 +1459,13 @@ export class Matterbridge extends EventEmitter {
 
     this.log.debug('***Starting startMatterInterval in bridge mode');
     let failCount = 0;
-    const startMatterInterval = setInterval(async () => {
+    this.startMatterInterval = setInterval(async () => {
       for (const plugin of this.plugins) {
         // new code to not start the bridge if one plugin is in error cause the controllers will delete the devices loosing all the configuration
         if (!plugin.enabled) continue;
         if (plugin.error) {
-          clearInterval(startMatterInterval);
+          clearInterval(this.startMatterInterval);
+          this.startMatterInterval = undefined;
           this.log.debug('***Cleared startMatterInterval interval for Matterbridge for plugin in error state');
           this.log.error(`The plugin ${plg}${plugin.name}${er} is in error state.`);
           this.log.error('The bridge will not start until the problem is solved to prevent the controllers from deleting all registered devices.');
@@ -1468,7 +1483,8 @@ export class Matterbridge extends EventEmitter {
           return;
         }
       }
-      clearInterval(startMatterInterval);
+      clearInterval(this.startMatterInterval);
+      this.startMatterInterval = undefined;
       this.log.debug('***Cleared startMatterInterval interval for Matterbridge');
 
       await this.startMatterServer();
@@ -1511,13 +1527,14 @@ export class Matterbridge extends EventEmitter {
 
     this.log.debug('***Starting start matter interval in childbridge mode...');
     let failCount = 0;
-    const startMatterInterval = setInterval(async () => {
+    this.startMatterInterval = setInterval(async () => {
       let allStarted = true;
       for (const plugin of this.plugins) {
         // new code to not start the bridge if one plugin is in error cause the controllers will delete the devices loosing all the configuration
         if (!plugin.enabled) continue;
         if (plugin.error) {
-          clearInterval(startMatterInterval);
+          clearInterval(this.startMatterInterval);
+          this.startMatterInterval = undefined;
           this.log.debug('***Cleared startMatterInterval interval for Matterbridge for plugin in error state');
           this.log.error(`The plugin ${plg}${plugin.name}${er} is in error state.`);
           this.log.error('The bridge will not start until the problem is solved to prevent the controllers from deleting all registered devices.');
@@ -1537,7 +1554,8 @@ export class Matterbridge extends EventEmitter {
         }
       }
       if (!allStarted) return;
-      clearInterval(startMatterInterval);
+      clearInterval(this.startMatterInterval);
+      this.startMatterInterval = undefined;
       this.log.debug('***Cleared startMatterInterval interval in childbridge mode');
 
       await this.startMatterServer();
@@ -2940,8 +2958,8 @@ export class Matterbridge extends EventEmitter {
     // Endpoint to download the matterbridge storage directory
     this.expressApp.get('/api/download-mbstorage', async (req, res) => {
       this.log.debug('The frontend sent /api/download-mbstorage');
-      await createZip(path.join(this.matterbridgeDirectory, this.nodeStorageName), path.join(this.matterbridgeDirectory, `matterbridge.${this.nodeStorageName}.zip`));
-      res.download(path.join(this.matterbridgeDirectory, `matterbridge.${this.nodeStorageName}.zip`), `matterbridge.${this.nodeStorageName}.zip`, (error) => {
+      await createZip(path.join(os.tmpdir(), `matterbridge.${this.nodeStorageName}.zip`), path.join(this.matterbridgeDirectory, this.nodeStorageName));
+      res.download(path.join(os.tmpdir(), `matterbridge.${this.nodeStorageName}.zip`), `matterbridge.${this.nodeStorageName}.zip`, (error) => {
         if (error) {
           this.log.error(`Error downloading file ${`matterbridge.${this.nodeStorageName}.zip`}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge storage file');
@@ -2952,8 +2970,8 @@ export class Matterbridge extends EventEmitter {
     // Endpoint to download the matterbridge plugin directory
     this.expressApp.get('/api/download-pluginstorage', async (req, res) => {
       this.log.debug('The frontend sent /api/download-pluginstorage');
-      await createZip(this.matterbridgePluginDirectory, path.join(this.matterbridgeDirectory, `matterbridge.pluginstorage.zip`));
-      res.download(path.join(this.matterbridgeDirectory, `matterbridge.pluginstorage.zip`), `matterbridge.pluginstorage.zip`, (error) => {
+      await createZip(path.join(os.tmpdir(), `matterbridge.pluginstorage.zip`), this.matterbridgePluginDirectory);
+      res.download(path.join(os.tmpdir(), `matterbridge.pluginstorage.zip`), `matterbridge.pluginstorage.zip`, (error) => {
         if (error) {
           this.log.error(`Error downloading file matterbridge.pluginstorage.zip: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge plugin storage file');
@@ -2964,8 +2982,9 @@ export class Matterbridge extends EventEmitter {
     // Endpoint to download the matterbridge plugin config files
     this.expressApp.get('/api/download-pluginconfig', async (req, res) => {
       this.log.debug('The frontend sent /api/download-pluginconfig');
-      await createZip(path.join(this.matterbridgeDirectory, '*.config.json'), path.join(this.matterbridgeDirectory, `matterbridge.pluginconfig.zip`));
-      res.download(path.join(this.matterbridgeDirectory, `matterbridge.pluginconfig.zip`), `matterbridge.pluginconfig.zip`, (error) => {
+      await createZip(path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), path.relative(process.cwd(), path.join(this.matterbridgeDirectory, '*.config.json')));
+      // await createZip(path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), path.relative(process.cwd(), path.join(this.matterbridgeDirectory, 'certs', '*.*')), path.relative(process.cwd(), path.join(this.matterbridgeDirectory, '*.config.json')));
+      res.download(path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), `matterbridge.pluginconfig.zip`, (error) => {
         if (error) {
           this.log.error(`Error downloading file matterbridge.pluginstorage.zip: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge plugin storage file');

@@ -22,10 +22,13 @@
  */
 
 import os from 'os';
-import { promises as fs } from 'fs';
-import archiver, { ArchiverError } from 'archiver';
-import { glob } from 'glob';
+import { createWriteStream, statSync } from 'fs';
+import archiver, { ArchiverError, EntryData } from 'archiver';
 import path from 'path';
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { glob } from 'glob';
+
+const log = new AnsiLogger({ logName: 'MatterbridgeUtils', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
 
 /**
  * Performs a deep comparison between two values to determine if they are equivalent.
@@ -464,69 +467,77 @@ export async function wait(timeout = 1000, name?: string, debug = false): Promis
  *   .then(bytes => console.log(`ZIP file created with ${bytes} bytes`))
  *   .catch(error => console.error(`Error creating ZIP file: ${error.message}`));
  */
-export async function createZip(sourcePath: string, outputPath: string): Promise<number> {
-  // eslint-disable-next-line no-console
-  console.log(`createZip from ${sourcePath} to ${outputPath}...`);
-  const output = await fs.open(outputPath, 'w'); // Open the output file for writing
-  const archive = archiver('zip', {
-    zlib: { level: 9 }, // Set compression level
-  });
+export async function createZip(outputPath: string, ...sourcePaths: string[]): Promise<number> {
+  log.logLevel = LogLevel.DEBUG;
+  log.logName = 'CreateZip';
+  log.debug(`creating archive ${outputPath} from ${sourcePaths.join(', ')} ...`);
 
-  const stream = output.createWriteStream();
+  return new Promise((resolve, reject) => {
+    const output = createWriteStream(outputPath);
+    const archive = archiver('zip', {
+      zlib: { level: 9 }, // Set compression level
+    });
 
-  stream.on('close', () => {
-    // eslint-disable-next-line no-console
-    console.log(`createZip close with ${archive.pointer()} total bytes`);
-    return archive.pointer();
-  });
+    output.on('close', () => {
+      log.debug(`archive ${outputPath} closed with ${archive.pointer()} total bytes`);
+      resolve(archive.pointer());
+    });
 
-  archive.on('error', (error: ArchiverError) => {
-    // eslint-disable-next-line no-console
-    console.error(`createZip error: ${error.message}`);
-    return -1;
-  });
+    output.on('end', () => {
+      log.debug(`archive ${outputPath} data has been drained ${archive.pointer()} total bytes`);
+    });
 
-  archive.on('warning', (error: ArchiverError) => {
-    // eslint-disable-next-line no-console
-    console.error(`createZip warning: ${error.message}`);
-  });
+    archive.on('error', (error: ArchiverError) => {
+      log.error(`archive error: ${error.message}`);
+      reject(error);
+    });
 
-  archive.pipe(stream);
-
-  try {
-    const files = await glob(sourcePath.replace(/\\/g, '/'), { nodir: true });
-    // eslint-disable-next-line no-console
-    console.log(`createZip: glob found ${files.length} files`);
-    if (files.length > 0) {
-      // Add matched files to the archive
-      files.forEach((file) => {
-        // eslint-disable-next-line no-console
-        console.log('createZip: adding file:', file);
-        archive.file(file, { name: path.basename(file) });
-      });
-    } else {
-      // If no files match the pattern, check if it's a directory
-      const stats = await fs.stat(sourcePath);
-      if (stats.isDirectory()) {
-        // eslint-disable-next-line no-console
-        console.log('createZip: adding directory:', sourcePath);
-        archive.directory(sourcePath, false);
+    archive.on('warning', (error: ArchiverError) => {
+      if (error.code === 'ENOENT') {
+        log.warn(`archive warning: ${error.message}`);
       } else {
-        // eslint-disable-next-line no-console
-        console.error(`createZip no files or directory found for pattern: ${sourcePath}`);
-        return -1;
+        log.error(`archive warning: ${error.message}`);
+        reject(error);
+      }
+    });
+
+    archive.on('entry', (entry: EntryData) => {
+      log.debug(`- entry: ${entry.name}`);
+    });
+
+    archive.pipe(output);
+
+    for (const sourcePath of sourcePaths) {
+      // Check if the sourcePath is a file or directory
+      let stats;
+      try {
+        stats = statSync(sourcePath);
+      } catch (error) {
+        if (sourcePath.includes('*')) {
+          // const relativeSourcePath = path.relative(process.cwd(), sourcePath);
+          // const normalizedSourcePath = relativeSourcePath.replace(/\\/g, '/');
+          const files = glob.sync(sourcePath.replace(/\\/g, '/'));
+          log.debug(`adding files matching glob pattern: ${sourcePath}`);
+          for (const file of files) {
+            log.debug(`-glob file: ${file}`);
+            // archive.file(file, { name: path.basename(file) });
+            archive.file(file, { name: file });
+          }
+        } else {
+          log.error(`no files or directory found for pattern ${sourcePath}: ${error}`);
+        }
+        continue;
+      }
+      if (stats.isFile()) {
+        log.debug(`adding file: ${sourcePath}`);
+        archive.file(sourcePath, { name: path.basename(sourcePath) });
+      } else if (stats.isDirectory()) {
+        log.debug(`adding directory: ${sourcePath}`);
+        archive.directory(sourcePath, false);
       }
     }
-
-    await archive.finalize(); // Finalize after adding files or directories
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(`createZip error: ${error}`);
-    return -1;
-  } finally {
-    await output.close(); // Ensure the file is properly closed
-  }
-  // eslint-disable-next-line no-console
-  console.log(`createZip from ${sourcePath} to ${outputPath} creted with ${archive.pointer()} total bytes.`);
-  return archive.pointer(); // Return the number of bytes written
+    // Finalize the archive (i.e., we are done appending files but streams have to finish yet)
+    log.debug(`finalizing archive ${outputPath}...`);
+    archive.finalize().catch(reject);
+  });
 }

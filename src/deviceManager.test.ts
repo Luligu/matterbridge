@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-debug', '-frontend', '0', '-profile', 'Jest'];
+process.argv = ['node', 'matterbridge.test.js', '-logger', 'info', '-matterlogger', 'info', '-bridge', '-frontend', '0', '-profile', 'Jest'];
 
 import { jest } from '@jest/globals';
 
@@ -13,7 +13,6 @@ import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { DeviceManager } from './deviceManager.js';
 import { DeviceTypes } from '@project-chip/matter-node.js/device';
 import { PluginManager } from './pluginManager.js';
-import exp from 'constants';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -183,11 +182,11 @@ describe('DeviceManager with real devices', () => {
   beforeAll(async () => {
     // Spy on and mock the AnsiLogger.log method
     loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
-      // console.log(`Mocked log: ${level} - ${message}`, ...parameters);
+      // console.error(`Mocked log: ${level} - ${message}`, ...parameters);
     });
     // Spy on and mock console.log
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
-      // Mock implementation or empty function
+      // console.error(`Mocked console:`, ...args);
     });
     matterbridge = await Matterbridge.loadInstance(true);
     plugins = (matterbridge as any).plugins;
@@ -223,16 +222,16 @@ describe('DeviceManager with real devices', () => {
     device2.addRequiredClusterServers(device2);
     device2.plugin = 'matterbridge-mock2';
 
-    matterbridge.addBridgedDevice('matterbridge-mock1', device1);
+    await matterbridge.addBridgedDevice('matterbridge-mock1', device1);
     expect(devices.size).toBe(1);
 
-    matterbridge.addBridgedDevice('matterbridge-mock2', device2);
+    await matterbridge.addBridgedDevice('matterbridge-mock2', device2);
     expect(devices.size).toBe(2);
 
-    matterbridge.removeBridgedDevice('matterbridge-mock1', device1);
+    await matterbridge.removeBridgedDevice('matterbridge-mock1', device1);
     expect(devices.size).toBe(1);
 
-    matterbridge.removeBridgedDevice('matterbridge-mock2', device2);
+    await matterbridge.removeBridgedDevice('matterbridge-mock2', device2);
     expect(devices.size).toBe(0);
   });
 });

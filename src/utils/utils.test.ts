@@ -357,18 +357,57 @@ describe('Utils test', () => {
   });
 
   it('should zip a file', async () => {
-    const size = await createZip(path.join('src', 'matterbridge.ts'), path.join('test', 'matterbridge.zip'));
-    // const size = await createZip('src/matterbridge.ts', path.join('test', 'matterbridge.zip'));
+    await fs.mkdir('test', { recursive: true });
+    const size = await createZip(path.join('test', 'tsconfig.zip'), 'tsconfig.json');
+    expect(size).toBeGreaterThan(0);
+  });
+
+  it('should zip a fullpath file', async () => {
+    const size = await createZip(path.join('test', 'fulltsconfig.zip'), path.resolve('tsconfig.json'));
     expect(size).toBeGreaterThan(0);
   });
 
   it('should zip a directory', async () => {
-    const size = await createZip('src', path.join('test', 'src.zip'));
+    const size = await createZip(path.join('test', 'docker.zip'), 'docker');
+    expect(size).toBeGreaterThan(0);
+  });
+
+  it('should zip a fullpath directory', async () => {
+    const size = await createZip(path.join('test', 'fulldocker.zip'), path.resolve('docker'));
+    expect(size).toBeGreaterThan(0);
+  });
+  it('should zip a sub directory', async () => {
+    const size = await createZip(path.join('test', 'utils.zip'), path.join('src', 'utils'));
+    expect(size).toBeGreaterThan(0);
+  });
+
+  it('should zip a fullpath sub directory', async () => {
+    const size = await createZip(path.join('test', 'fullutils.zip'), path.resolve('src', 'utils'));
     expect(size).toBeGreaterThan(0);
   });
 
   it('should zip a glob', async () => {
-    const size = await createZip(path.join('src', '*.ts'), path.join('test', 'ts.zip'));
+    const size = await createZip(path.join('test', 'glob.zip'), path.join('*.js'));
     expect(size).toBeGreaterThan(0);
-  });
+  }, 60000);
+
+  it('should zip a full glob path', async () => {
+    const size = await createZip(path.join('test', 'fullglob.zip'), path.resolve('*.js'));
+    expect(size).toBeGreaterThan(0);
+  }, 60000);
+
+  it('should zip a glob with **', async () => {
+    const size = await createZip(path.join('test', 'globstars.zip'), path.join('docker', '**', 'Dockerfile.*'));
+    expect(size).toBeGreaterThan(0);
+  }, 60000);
+
+  it('should zip a full glob path with **', async () => {
+    const size = await createZip(path.join('test', 'fullglobstars.zip'), path.resolve('docker', '**', 'Dockerfile.*'));
+    expect(size).toBeGreaterThan(0);
+  }, 60000);
+
+  it('should zip with an array', async () => {
+    const size = await createZip(path.join('test', 'array.zip'), 'package.json', '*.js', path.join('src', 'utils'));
+    expect(size).toBeGreaterThan(0);
+  }, 60000);
 });
