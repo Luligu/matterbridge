@@ -49,7 +49,7 @@ function Logs() {
         <h3>Logs:</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <InputLabel id="select-level">Filter by debug level</InputLabel>
-          <Select style={{ height: '40px' }} labelId="select-level" id="debug-level" value={logFilterLevel} onChange={handleChangeLevel}>
+          <Select style={{ height: '30px' }} labelId="select-level" id="debug-level" value={logFilterLevel} onChange={handleChangeLevel}>
             <MenuItem value='debug'>Debug</MenuItem>
             <MenuItem value='info'>Info</MenuItem>
             <MenuItem value='notice'>Notice</MenuItem>
@@ -58,7 +58,13 @@ function Logs() {
             <MenuItem value='fatal'>Fatal</MenuItem>
           </Select>
           <InputLabel id="search">Filter by text</InputLabel>
-          <TextField style={{ height: '40px', width: '300px'}} size="small" id="logsearch" label="Enter search criteria" variant="outlined" value={logFilterSearch} onChange={handleChangeSearch}/>
+          <TextField style={{ width: '300px'}} size="small" id="logsearch"variant="outlined" value={logFilterSearch} onChange={handleChangeSearch}
+            InputProps={{
+              style: {
+                height: '30px',
+                padding: '0 0px',
+              },
+            }}/>
         </div>
       </div>  
       <div style={{ flex: '1', overflow: 'auto', margin: '0px', padding: '0px' }}>

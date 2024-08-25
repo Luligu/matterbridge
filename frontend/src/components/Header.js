@@ -18,7 +18,7 @@ import { sendCommandToMatterbridge } from '../App';
 import { WebSocketContext } from './WebSocketContext';
 import { OnlineContext } from './OnlineContext';
 
-export const theme = createTheme({
+const theme = createTheme({
   components: {
     MuiTooltip: {
       defaultProps: {
@@ -125,6 +125,15 @@ function Header() {
     } else if(value==='create-backup') {
       logMessage('Matterbridge', `Creating backup...`);
       sendCommandToMatterbridge('backup','create');
+    } else if(value==='unregister') {
+      logMessage('Matterbridge', `Uregistering all bridged devices...`);
+      sendCommandToMatterbridge('unregister','now');
+    } else if(value==='reset') {
+      logMessage('Matterbridge', `Resetting matterbridge commissioning...`);
+      sendCommandToMatterbridge('reset','now');
+    } else if(value==='factoryreset') {
+      logMessage('Matterbridge', `Factory reset of matterbridge...`);
+      sendCommandToMatterbridge('factoryreset','now');
     }
   };
 
@@ -317,6 +326,22 @@ function Header() {
                 <ListItemText primary="Download backup" />
               </MenuItem>
             </Menu>
+
+          <Divider />
+          <MenuItem onClick={() => handleMenuClose('unregister')}>
+            <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
+            <ListItemText primary="Unregister all devices" />
+          </MenuItem>
+          <MenuItem onClick={() => handleMenuClose('reset')}>
+            <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
+            <ListItemText primary="Reset commissioning" />
+          </MenuItem>
+          <MenuItem onClick={() => handleMenuClose('factoryreset')}>
+            <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
+            <ListItemText primary="Factory reset" />
+          </MenuItem>
+
+
         </Menu>
         <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={backdropOpen} onClick={handleBackdropClose}>
           <CircularProgress color="inherit" />

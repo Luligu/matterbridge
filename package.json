@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.5.0-beta6",
+  "version": "1.5.0-beta7",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
