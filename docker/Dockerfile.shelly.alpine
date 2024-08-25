@@ -22,4 +22,4 @@ ENTRYPOINT ["./shellyEntrypoint.sh"]
 
 # Node modules: /usr/local/lib/node_modules/matterbridge/dist/cli.js
 # Bin: /usr/local/bin/matterbridge
-CMD ["matterbridge", "-bridge", "-docker"]
+CMD ["matterbridge", "-docker"]

@@ -5,6 +5,7 @@ import { Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, TextField,
 import { sendCommandToMatterbridge } from '../App';
 import Connecting from './Connecting';
 import { OnlineContext } from './OnlineContext';
+// import { ConfirmCancelForm } from './ConfirmCancelForm';
 
 const theme = createTheme({
   components: {
@@ -120,10 +121,39 @@ function MatterbridgeInfo() {
     sendCommandToMatterbridge('setpassword', '*'+event.target.value+'*');
   };
 
+  /*
+  const [showConfirmCancelForm, setShowConfirmCancelForm] = useState(true);
+  const [confirmCancelFormTitle, setConfirmCancelFormTitle] = useState('Restart Matterbridge');
+  const [confirmCancelFormMessage, setConfirmCancelFormMEssage] = useState('Are you sure you want to proceed? This action will restart Matterbridge.');
+
+  const handleAction = () => {
+    setShowConfirmCancelForm(true);
+  };
+  const handleConfirm = () => {
+    // Perform the action here
+    console.log("Action confirmed");
+    setShowConfirmCancelForm(false);
+  };
+
+  const handleCancel = () => {
+    console.log("Action canceled");
+    setShowConfirmCancelForm(false);
+  };
+  */
+
   return (
     <div style={{ display: 'flex', flexDirection: 'row', gap: '20px', marginTop: '10px', width: '100%'}}>
       <ThemeProvider theme={theme}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '50%' }}>
+        {/* showConfirmCancelForm && (
+          <ConfirmCancelForm 
+            open={showConfirmCancelForm}
+            title={confirmCancelFormTitle} 
+            message={confirmCancelFormMessage} 
+            onConfirm={handleConfirm}
+            onCancel={handleCancel}
+          />
+        )*/}
         <FormControl style={{ gap: '10px', border: '1px solid #9e9e9e', padding: '10px', borderRadius: '4px', maxWidth: '510px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-mode">Matterbridge mode (restart required):</FormLabel>
