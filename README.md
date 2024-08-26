@@ -46,13 +46,11 @@ A special thank to Apollon77 for his incredible work.
 
 Follow these steps to install Matterbridge:
 
-on Windows:
-
 ```
 npm install -g matterbridge
 ```
 
-on Linux (you need the necessary permissions):
+on Linux you may need the necessary permissions:
 
 ```
 sudo npm install -g matterbridge
@@ -64,7 +62,7 @@ Test the installation with:
 matterbridge -bridge
 ```
 
-Now it is possible to open the frontend at the link provided in the log (default: http://localhost:8283)
+Now it is possible to open the frontend at the link provided in the log (e.g. http://<MATTERBIDGE-IP>:8283)
 
 ## Usage
 
@@ -92,7 +90,7 @@ matterbridge -help
 
 ## Frontend
 
-Matterbridge has a frontend available on http://localhost:8283
+Matterbridge has a frontend available on http://<MATTERBIDGE-IP>:8283
 
 You can change the default port by adding the frontend parameter when you run it.
 
@@ -106,6 +104,8 @@ matterbridge -bridge -frontend [port number]
 matterbridge -childbridge -frontend [port number]
 ```
 
+From the frontend you can do all operations in an easy way.
+
 Home page:
 ![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/screenshot/Screenshot%20home.jpg)
 
@@ -118,21 +118,29 @@ Logs page:
 Config editor:
 ![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/screenshot/Screenshot%20config%20editor.jpg)
 
+## Advanced configurations
+
+![Advanced configurations](https://github.com/Luligu/matterbridge/blob/main/README-ADVANCED.md)
+
+## Development
+
+![Development](https://github.com/Luligu/matterbridge/blob/main/README-DEV.md)
+
 ## Plugins
 
 ### Production-level plugins
 
-[zigbee2mqtt](https://github.com/Luligu/matterbridge-zigbee2mqtt)
+[zigbee2mqtt plugin](https://github.com/Luligu/matterbridge-zigbee2mqtt)
 
 Matterbridge zigbee2mqtt is a matterbridge production-level plugin that expose all zigbee2mqtt devices and groups to Matter.
 
 No hub or dedicated hardware needed.
 
-[somy-tahoma](https://github.com/Luligu/matterbridge-somfy-tahoma)
+[somy-tahoma plugin](https://github.com/Luligu/matterbridge-somfy-tahoma)
 
 Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose all Somfy Tahoma devices to Matter.
 
-[shelly](https://github.com/Luligu/matterbridge-shelly)
+[shelly plugin](https://github.com/Luligu/matterbridge-shelly)
 
 Matterbridge shelly allows you to expose Shelly Gen 1, Gen 2, and Gen 3 devices to Matter.
 
@@ -187,7 +195,7 @@ The history works in both bridge and childbridge mode.
 
 The Eve app only shows the history when the plugins run like an AccessoryPlatform in childbridge mode (this means the plugin is paired directly).
 
-## How to install and register a production-level plugin (from npm)
+## How to install and register a production-level plugin from a terminal (from npm)
 
 To install i.e. https://github.com/Luligu/matterbridge-zigbee2mqtt
 
@@ -207,56 +215,25 @@ sudo npm install -g matterbridge-zigbee2mqtt
 matterbridge -add matterbridge-zigbee2mqtt
 ```
 
-## How to install and register a plugin for development (from github)
-
-To install i.e. https://github.com/Luligu/matterbridge-example-accessory-platform
-
-On windows:
-
-```
-cd $HOME\Matterbridge
-```
-
-On linux:
-
-```
-cd ~/Matterbridge
-```
-
-then clone the plugin
-
-```
-git clone https://github.com/Luligu/matterbridge-example-accessory-platform
-cd matterbridge-example-accessory-platform
-npm install
-npm run build
-```
-
-then add the plugin to Matterbridge
-
-```
-matterbridge -add .\
-```
-
-## How to add a plugin to Matterbridge
+## How to add a plugin to Matterbridge from a terminal
 
 ```
 matterbridge -add [plugin path or plugin name]
 ```
 
-## How to remove a plugin from Matterbridge
+## How to remove a plugin from Matterbridge from a terminal
 
 ```
 matterbridge -remove [plugin path or plugin name]
 ```
 
-## How to disable a registered plugin
+## How to disable a registered plugin from a terminal
 
 ```
 matterbridge -disable [plugin path or plugin name]
 ```
 
-## How to enable a registered plugin
+## How to enable a registered plugin from a terminal
 
 ```
 matterbridge -enable [plugin path or plugin name]
@@ -282,249 +259,6 @@ matterbridge -factoryreset
 
 This will reset the internal storages. All commissioning informations will be lost. All plugins will be unregistered.
 
-## How to create your plugin
-
-The easiest way is to clone:
-
-- https://github.com/Luligu/matterbridge-example-accessory-platform if you want to create an Accessory Platform Plugin.
-
-- https://github.com/Luligu/matterbridge-example-dynamic-platform if you want to create a Dynamic Platform Plugin.
-
-Then change the name (keep matterbridge- at the beginning of the name), version, description and author in the package.json.
-
-Add your plugin logic in platform.ts.
-
-## MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform api
-
-### public name: string
-
-The plugin name.
-
-### public type: string
-
-The plugin platform type.
-
-### public config: object
-
-The plugin config (loaded before the platform constructor is called and saved after onShutdown() is called).
-Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for example)
-
-### async onStart(reason?: string)
-
-The method onStart() is where you have to create your MatterbridgeDevice and add all needed clusters and command handlers.
-
-The MatterbridgeDevice class has the create cluster methods already done and all command handlers needed (see plugin examples).
-
-The method is called when Matterbridge load the plugin.
-
-### async onConfigure()
-
-The method onConfigure() is where you can configure or initialize your device.
-
-The method is called when the platform is commissioned.
-
-### async onShutdown(reason?: string)
-
-The method onShutdown() is where you have to eventually cleanup some resources.
-
-The method is called when Matterbridge is shutting down.
-
-### async registerDevice(device: MatterbridgeDevice)
-
-After you created your device, add it to the platform.
-
-### async unregisterDevice(device: MatterbridgeDevice)
-
-You can unregister one or more device.
-
-### async unregisterAllDevices()
-
-You can unregister all devices you added.
-
-It can be useful to call this method from onShutdown() if you don't want to keep all the devices during development.
-
-## MatterbridgeDevice api
-
-# Advanced configuration
-
-## Run matterbridge as a daemon with systemctl (Linux only)
-
-Create a systemctl configuration file for Matterbridge
-
-```
-sudo nano /etc/systemd/system/matterbridge.service
-```
-
-Add the following to this file, replacing twice (!) USER with your user name (e.g. WorkingDirectory=/home/pi/Matterbridge and User=pi):
-
-ExecStart on some linux distribution can also be ExecStart==/usr/bin/matterbridge -bridge -service
-
-```
-[Unit]
-Description=matterbridge
-After=network-online.target
-
-[Service]
-Type=simple
-ExecStart=matterbridge -bridge -service
-WorkingDirectory=/home/<USER>/Matterbridge
-StandardOutput=inherit
-StandardError=inherit
-Restart=always
-RestartSec=10s
-TimeoutStopSec=30s
-User=<USER>
-
-[Install]
-WantedBy=multi-user.target
-```
-
-If you modify it after, then run:
-
-```
-sudo systemctl daemon-reload
-```
-
-### Start Matterbridge
-
-```
-sudo systemctl start matterbridge
-```
-
-### Stop Matterbridge
-
-```
-sudo systemctl stop matterbridge
-```
-
-### Show Matterbridge status
-
-```
-sudo systemctl status matterbridge.service
-```
-
-### View the log of Matterbridge in real time (this will show the log with colors)
-
-```
-sudo journalctl -u matterbridge.service -f --output cat
-```
-
-### Delete the logs older then 3 days (all of them not only the ones of Matterbridge!)
-
-```
-sudo journalctl --vacuum-time=3d
-```
-
-### Enable Matterbridge to start automatically on boot
-
-```
-sudo systemctl enable matterbridge.service
-```
-
-### Disable Matterbridge from starting automatically on boot
-
-```
-sudo systemctl disable matterbridge.service
-```
-
-## Run matterbridge with docker
-
-The Matterbridge Docker image, which includes a manifest list for the linux/amd64, linux/arm64 and linux/arm/v7 architectures, is published on Docker Hub.
-
-### First create the Matterbridge directories
-
-This will create the required directories if they don't exist
-
-```
-cd ~
-mkdir -p ./Matterbridge
-mkdir -p ./.matterbridge
-sudo chown -R $USER:$USER ./Matterbridge ./.matterbridge
-```
-
-### Run the Docker container and start it
-
-The container has full access to the host network (needed for mdns).
-
-```
-docker run --name matterbridge \
-  -v ${HOME}/Matterbridge:/root/Matterbridge \
-  -v ${HOME}/.matterbridge:/root/.matterbridge \
-  --network host --restart always -d luligu/matterbridge:latest
-```
-
-### Run with docker compose
-
-The docker-compose.yml file is available in the docker directory of the package
-
-```
-services:
-  matterbridge:
-    container_name: matterbridge
-    image: luligu/matterbridge:latest # Matterbridge image with the latest tag
-    network_mode: host # Ensures the Matter mdns works
-    restart: always # Ensures the container always restarts automatically
-    volumes:
-      - "${HOME}/Matterbridge:/root/Matterbridge" # Mounts the Matterbridge plugin directory
-      - "${HOME}/.matterbridge:/root/.matterbridge" # Mounts the Matterbridge storage directory
-```
-
-copy it in the home directory or edit the existing one to add the matterbridge service.
-
-Then start docker compose with:
-
-```
-docker compose up -d
-```
-
-### Stop with docker compose
-
-```
-docker compose down
-```
-
-### Update with docker compose
-
-```
-docker compose pull
-```
-
-### Inspect the container
-
-```
-docker container inspect matterbridge
-```
-
-### Start the Docker container
-
-```
-docker start matterbridge
-```
-
-### Stop the Docker container
-
-```
-docker stop matterbridge
-```
-
-### Restart the Docker container
-
-```
-docker restart matterbridge
-```
-
-### Shows the logs
-
-```
-docker logs matterbridge
-```
-
-### Shows the logs real time (tail)
-
-```
-docker logs --tail 1000 -f matterbridge
-```
-
 # Known general issues
 
 ## Session XYZ does not exist
@@ -537,13 +271,7 @@ In this context, the message is not indicative of a problem.
 
 The HomePods, being a WiFi devices, sometimes pruduce message trasmission errors. The Apple TV with network cable is more reliable (but also more expensive).
 
-Solved with the version 17.5 of the HomePod/AppleTV. Now they are stable.
-
-### DoorLock issue
-
-The DoorLock cluster in the Home app takes a while to get online. The Home app shows no response for 1 or 2 seconds but then the accessory goes online. With the Eve app or the Controller app this issue is not present.
-
-Solved with the version 17.5 of the HomePod/AppleTV.
+All issues have been solved from the version 17.5 of the HomePod/AppleTV. Now they are stable.
 
 ## Home Assistant
 
@@ -563,7 +291,6 @@ HA also support electrical measurements from EveHistoryCluster (used in Matterbr
 
 - If HA doesn't show all devices, reload the Matter Server Integration or reboot HA
 - Home Assistant doesn't seem to always react when a device is removed from the bridge: they remain in HA unavailable forever...
-- Version 6.1.2 is stable.
 - Use Apple Home when you have to choose the controller type even if you pair Matterbridge directly with HA.
 
 ## Google Home
@@ -596,7 +323,7 @@ No issues reported so far.
 
 Supports also:
 
-- air Quality Sensor
+- air Quality Sensor (Matter 1.2)
 - smoke Co Alarm
 
 ## eWeLink
@@ -608,25 +335,6 @@ eWeLink needs the standard port 5540 for commissioning.
 ## Tuya/Smart Life
 
 Check the matter.js readme.
-
-# Contribution Guidelines
-
-Thank you for your interest in contributing to my project!
-
-I warmly welcome contributions to this project! Whether it's reporting bugs, proposing new features, updating documentation, or writing code, your help is greatly appreciated.
-
-## Getting Started
-
-- Fork this repository to your own GitHub account and clone it to your local device.
-- Make the necessary changes and test them out
-- Commit your changes and push to your forked repository
-
-## Submitting Changes
-
-- Create a new pull request against the dev from my repository and I'll be glad to check it out
-- Be sure to follow the existing code style
-- Add unit tests for any new or changed functionality if possible
-- In your pull request, do describe what your changes do and how they work
 
 ## Code of Conduct
 
