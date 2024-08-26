@@ -93,6 +93,8 @@ export class Matterbridge extends EventEmitter {
     globalModulesDirectory: '',
     matterbridgeVersion: '',
     matterbridgeLatestVersion: '',
+    matterbridgeQrPairingCode: undefined,
+    matterbridgeManualPairingCode: undefined,
     matterbridgeFabricInformations: [],
     matterbridgeSessionInformations: [],
     matterbridgePaired: false,
@@ -112,6 +114,8 @@ export class Matterbridge extends EventEmitter {
   public globalModulesDirectory = '';
   public matterbridgeVersion = '';
   public matterbridgeLatestVersion = '';
+  public matterbridgeQrPairingCode: string | undefined = undefined;
+  public matterbridgeManualPairingCode: string | undefined = undefined;
   public matterbridgeFabricInformations: SanitizedExposedFabricInformation[] = [];
   public matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
   public matterbridgePaired = false;
@@ -355,8 +359,8 @@ export class Matterbridge extends EventEmitter {
     await this.logNodeAndSystemInfo();
     this.log.notice(
       `Matterbridge version ${this.matterbridgeVersion} ` +
-        `${hasParameter('bridge') || (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge' ? 'mode bridge ' : ''}` +
-        `${hasParameter('childbridge') || (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge' ? 'mode childbridge ' : ''}` +
+        `${hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge') ? 'mode bridge ' : ''}` +
+        `${hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge') ? 'mode childbridge ' : ''}` +
         `${hasParameter('controller') ? 'mode controller ' : ''}` +
         `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}` +
         `running on ${this.systemInformation.osType} (v.${this.systemInformation.osRelease}) platform ${this.systemInformation.osPlatform} arch ${this.systemInformation.osArch}`,
@@ -574,10 +578,11 @@ export class Matterbridge extends EventEmitter {
 
     // Check if the bridge mode is set and start matterbridge in bridge mode if not set
     if (!hasParameter('bridge') && !hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === '') {
+      this.log.info('Setting default matterbridge start mode to bridge');
       await this.nodeContext?.set<string>('bridgeMode', 'bridge');
     }
 
-    if (hasParameter('bridge') || (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge') {
+    if (hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge')) {
       this.bridgeMode = 'bridge';
       MatterbridgeDevice.bridgeMode = 'bridge';
 
@@ -627,7 +632,7 @@ export class Matterbridge extends EventEmitter {
       return;
     }
 
-    if (hasParameter('childbridge') || (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge') {
+    if (hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge')) {
       this.bridgeMode = 'childbridge';
       MatterbridgeDevice.bridgeMode = 'childbridge';
 
@@ -660,8 +665,8 @@ export class Matterbridge extends EventEmitter {
         plugin.connected = false;
         plugin.registeredDevices = undefined;
         plugin.addedDevices = undefined;
-        plugin.qrPairingCode = (await plugin.nodeContext?.get<string>('qrPairingCode', undefined)) ?? undefined;
-        plugin.manualPairingCode = (await plugin.nodeContext?.get<string>('manualPairingCode', undefined)) ?? undefined;
+        plugin.qrPairingCode = undefined;
+        plugin.manualPairingCode = undefined;
         this.plugins.load(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
       }
       await this.startChildbridge();
@@ -2255,16 +2260,14 @@ export class Matterbridge extends EventEmitter {
     }
     if (!commissioningServer.isCommissioned()) {
       const { qrPairingCode, manualPairingCode } = commissioningServer.getPairingCode();
-      await storageContext.set('qrPairingCode', qrPairingCode);
-      await storageContext.set('manualPairingCode', manualPairingCode);
-      await nodeContext.set<string>('qrPairingCode', qrPairingCode);
-      await nodeContext.set<string>('manualPairingCode', manualPairingCode);
       const QrCode = new QrCodeSchema();
       this.log.info(`*The commissioning server on port ${commissioningServer.getPort()} for ${plg}${pluginName}${nf} is not commissioned. Pair it scanning the QR code:\n\n`);
       // eslint-disable-next-line no-console
       if (this.log.logLevel === LogLevel.DEBUG || this.log.logLevel === LogLevel.INFO) console.log(`${QrCode.encode(qrPairingCode)}\n`);
       this.log.info(`${plg}${pluginName}${nf} \n\nqrPairingCode: ${qrPairingCode} \n\nManual pairing code: ${manualPairingCode}\n`);
       if (pluginName === 'Matterbridge') {
+        this.matterbridgeQrPairingCode = qrPairingCode;
+        this.matterbridgeManualPairingCode = manualPairingCode;
         this.matterbridgeFabricInformations = [];
         this.matterbridgeSessionInformations = [];
         this.matterbridgePaired = false;
@@ -2761,37 +2764,20 @@ export class Matterbridge extends EventEmitter {
     // Endpoint to provide settings
     this.expressApp.get('/api/settings', express.json(), async (req, res) => {
       this.log.debug('The frontend sent /api/settings');
-      if (!this.matterbridgeContext) {
-        this.log.error('/api/settings matterbridgeContext not found');
-        res.json({});
-        return;
-      }
-      let qrPairingCode = '';
-      let manualPairingCode = '';
-      try {
-        qrPairingCode = await this.matterbridgeContext.get('qrPairingCode');
-        manualPairingCode = await this.matterbridgeContext.get('manualPairingCode');
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (error) {
-        if (this.bridgeMode === 'bridge') this.log.info('pairingCodes for /api/settings not found');
-      }
       this.matterbridgeInformation.bridgeMode = this.bridgeMode;
       this.matterbridgeInformation.restartMode = this.restartMode;
       this.matterbridgeInformation.loggerLevel = this.log.logLevel;
       this.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
       this.matterbridgeInformation.matterbridgePaired = this.matterbridgePaired;
       this.matterbridgeInformation.matterbridgeConnected = this.matterbridgeConnected;
+      this.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridgeQrPairingCode;
+      this.matterbridgeInformation.matterbridgeManualPairingCode = this.matterbridgeManualPairingCode;
       this.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridgeFabricInformations;
       this.matterbridgeInformation.matterbridgeSessionInformations = this.matterbridgeSessionInformations;
       if (this.profile) this.matterbridgeInformation.profile = this.profile;
-      const response = { wssHost, ssl: hasParameter('ssl'), qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
+      // const response = { wssHost, ssl: hasParameter('ssl'), qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
+      const response = { wssHost, ssl: hasParameter('ssl'), systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
       // this.log.debug('Response:', debugStringify(response));
-      /*
-      if (this.webSocketServer && this.webSocketServer.clients.size > 0 && !AnsiLogger.getGlobalCallback()) {
-        AnsiLogger.setGlobalCallback(this.wssSendMessage.bind(this), LogLevel.DEBUG);
-        this.log.debug('WebSocketServer logger global callback added');
-      }
-      */
       res.json(response);
     });
 

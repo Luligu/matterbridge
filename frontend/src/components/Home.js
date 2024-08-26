@@ -29,6 +29,19 @@ const theme = createTheme({
         arrow: true,
       },
     },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          color: '#ffffff',
+          backgroundColor: '#4CAF50', 
+        },
+      },
+      defaultProps: {
+        color: 'primary',
+        variant: 'contained',
+        size: 'small',
+      },
+    },
   },
   palette: {
     primary: {
@@ -103,8 +116,8 @@ function Home() {
         console.log('From home /api/settings:', data); 
         setWssHost(data.wssHost); 
         if(data.matterbridgeInformation.bridgeMode==='bridge') {
-          setQrCode(data.qrPairingCode); 
-          setPairingCode(data.manualPairingCode);
+          setQrCode(data.matterbridgeInformation.matterbridgeQrPairingCode); 
+          setPairingCode(data.matterbridgeInformation.matterbridgeManualPairingCode);
         }
         setSystemInfo(data.systemInformation);
         setMatterbridgeInfo(data.matterbridgeInformation);

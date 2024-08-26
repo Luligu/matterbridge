@@ -1,17 +1,16 @@
-/* eslint-disable no-console */
 import { Dialog, DialogTitle, DialogContent, Button } from '@mui/material';
 
 // Create a component for confirming or canceling an action
 export function ConfirmCancelForm({ open, title, message, onConfirm, onCancel }) {
 
   const handleConfirm = event => {
-    console.log('Confirmed');
+    // console.log('Confirmed');
     event.preventDefault();
     onConfirm();
   };
 
   const handleCancel = event => {
-    console.log('Canceled');
+    // console.log('Canceled');
     event.preventDefault();
     onCancel();
   };
@@ -29,28 +28,12 @@ export function ConfirmCancelForm({ open, title, message, onConfirm, onCancel })
           {message && <p style={{ color: 'black', margin: '0' }}>{message}</p>}
         </div>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around'}}>
-          <Button onClick={handleConfirm} variant="contained" color="primary" size="small">Confirm</Button>
-          <Button onClick={handleCancel} variant="contained" color="primary" size="small">Cancel</Button>
+          <Button onClick={handleConfirm} variant="contained" color="primary" size="small" style={{ color: '#ffffff' }}>Confirm</Button>
+          <Button onClick={handleCancel} variant="contained" color="primary" size="small" style={{ color: '#ffffff' }}>Cancel</Button>
         </div>
       </DialogContent>
     </Dialog>
   )
 }  
 /*
-    <div style={containerStyle}>
-      <form onSubmit={handleConfirm} style={formStyle}>
-        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-          <img src="matterbridge 32x32.png" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
-          <h3>{title}</h3>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', margin: 0, maxHeight: '50px', maxWidth: '250px' }}>
-          {message && <p style={{ color: 'black' }}>{message}</p>}
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', gap: '20px' }}>
-          <button type="submit">Confirm</button>
-          <button type="button" onClick={handleCancel} style={buttonStyle}>Cancel</button>
-        </div>
-      </form>
-    </div>
-
 */
