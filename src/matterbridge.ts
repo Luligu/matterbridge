@@ -399,6 +399,8 @@ export class Matterbridge extends EventEmitter {
       - childbridge:           start Matterbridge in childbridge mode
       - port [port]:           start the commissioning server on the given port (default 5540)
       - mdnsinterface [name]:  set the interface to use for the matter server mdnsInterface (default all interfaces)
+      - ipv4address [address]: set the ipv4 interface address to use for the matter listener (default all interfaces)
+      - ipv6address [address]: set the ipv6 interface address to use for the matter listener (default all interfaces)
       - frontend [port]:       start the frontend on the given port (default 8283)
       - logger:                set the matterbridge logger level: debug | info | notice | warn | error | fatal (default info)
       - matterlogger:          set the matter.js logger level: debug | info | notice | warn | error | fatal (default info)
@@ -2028,8 +2030,8 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with nodeLabel '${productName}' port ${this.port} passcode ${this.passcode} discriminator ${this.discriminator}`);
     const commissioningServer = new CommissioningServer({
       port: this.port++,
-      // listeningAddressIpv4
-      // listeningAddressIpv6
+      listeningAddressIpv4: getParameter('ipv4address'),
+      listeningAddressIpv6: getParameter('ipv6address'),
       passcode: this.passcode,
       discriminator: this.discriminator,
       deviceName,
