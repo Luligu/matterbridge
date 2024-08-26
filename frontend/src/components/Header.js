@@ -267,34 +267,34 @@ function Header() {
         <div className="header" style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: '5px' }}>
           <Tooltip title="Matterbridge help">
             <IconButton onClick={handleHelpClick}>
-              <HelpOutlineIcon fontSize="small"/>
+              <HelpOutlineIcon/>
             </IconButton>
           </Tooltip>
           <Tooltip title="Matterbridge changelog">
             <IconButton onClick={handleChangelogClick}>
-              <AnnouncementOutlinedIcon fontSize="small"/>
+              <AnnouncementOutlinedIcon/>
             </IconButton>
           </Tooltip>
           <Tooltip title="Update matterbridge">
             <IconButton onClick={handleUpdateClick}>
-              <SystemUpdateAltIcon fontSize="small"/>
+              <SystemUpdateAltIcon/>
             </IconButton>
           </Tooltip>
           <Tooltip title="Restart matterbridge">
             <IconButton onClick={handleRestartClick}>
-              <RestartAltIcon fontSize="small"/>
+              <RestartAltIcon/>
             </IconButton>
           </Tooltip>
           {matterbridgeInfo.restartMode === '' ? (        
             <Tooltip title="Shut down matterbridge">
               <IconButton onClick={handleShutdownClick}>
-                <PowerSettingsNewIcon fontSize="small"/>
+                <PowerSettingsNewIcon/>
               </IconButton>
             </Tooltip>
           ) : null}        
           <Tooltip title="Download, backup and more">
             <IconButton onClick={handleMenuOpen}>
-              <MoreHoriz fontSize="small"/>
+              <MoreHoriz/>
             </IconButton>
           </Tooltip>
           <Menu id="command-menu" anchorEl={menuAnchorEl} keepMounted open={Boolean(menuAnchorEl)} onClose={() => handleMenuClose('')} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>

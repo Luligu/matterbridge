@@ -4,22 +4,30 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
-## [1.5.0] - 2024-08-24
+## [1.5.0] - 2024-08-27
 
 ### Breaking Changes
 
-- [-bridge -childbridge]: You don't need anymore to add the parmeter -bridge or -childbridge on the command line or systemctl or docker command: the default is bridge mode and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.
+- [-bridge -childbridge]: You don't need anymore to add the parmeter -bridge or -childbridge on the command line or systemctl configuration or docker command: the default is bridge mode and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.
 - [-logger]: You don't need anymore to add the parmeter -logger [level]: the default is info and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.
 - [-filelogger]: You don't need anymore to add the parmeter -filelogger: the default is false and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.
 - [-matterlogger]: You don't need anymore to add the parmeter -matterlogger [level]: the default is info and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.
 - [-matterfilelogger]: You don't need anymore to add the parmeter -matterfilelogger: the default is false and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.
 
+### Breaking Changes for developers
+
+- please read this [Development guide lines](https://github.com/Luligu/matterbridge/blob/main/README-DEV.md)
+
 ### Added
 
-- [frontend]: Added menu item "Unregister and shutdown".
-- [frontend]: Added menu item "Reset commissioning and shutdown".
-- [frontend]: Added menu item "Factory reset and shutdown".
-- [frontend]: Added menu item "Download plugins config files".
+- [frontend]: Added menu item "Update".
+- [frontend]: Added menu item "Restart".
+- [frontend]: Added menu item "Shutdown".
+- [frontend]: Added menu item "Download".
+- [frontend]: Added menu item "Backup".
+- [frontend]: Added menu item "Unregister all devices" with a confirmation dialog.
+- [frontend]: Added menu item "Reset commissioning" with a confirmation dialog.
+- [frontend]: Added menu item "Factory reset" with a confirmation dialog.
 
 ### Changed
 

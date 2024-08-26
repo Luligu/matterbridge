@@ -120,11 +120,11 @@ Config editor:
 
 ## Advanced configurations
 
-![Advanced configurations](https://github.com/Luligu/matterbridge/blob/main/README-ADVANCED.md)
+[Advanced configurations](https://github.com/Luligu/matterbridge/blob/main/README-ADVANCED.md)
 
 ## Development
 
-![Development](https://github.com/Luligu/matterbridge/blob/main/README-DEV.md)
+[Development](https://github.com/Luligu/matterbridge/blob/main/README-DEV.md)
 
 ## Plugins
 

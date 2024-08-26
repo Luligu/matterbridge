@@ -24,7 +24,8 @@ sudo nano /etc/systemd/system/matterbridge.service
 
 Add the following to this file, replacing twice (!) USER with your user name (e.g. WorkingDirectory=/home/pi/Matterbridge and User=pi):
 
-ExecStart on some linux distribution can also be ExecStart==/usr/bin/matterbridge -bridge -service
+You may need to adapt the configuration to your setup:
+ - execStart on some linux distribution can also be ExecStart==/usr/bin/matterbridge -service
 
 ```
 [Unit]
@@ -33,7 +34,7 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=matterbridge -bridge -service
+ExecStart=matterbridge -service
 WorkingDirectory=/home/<USER>/Matterbridge
 StandardOutput=inherit
 StandardError=inherit
@@ -108,6 +109,7 @@ mkdir -p ./Matterbridge
 mkdir -p ./.matterbridge
 sudo chown -R $USER:$USER ./Matterbridge ./.matterbridge
 ```
+You may need to adapt the script to your setup.
 
 ### Run the Docker container and start it
 
@@ -119,6 +121,7 @@ docker run --name matterbridge \
   -v ${HOME}/.matterbridge:/root/.matterbridge \
   --network host --restart always -d luligu/matterbridge:latest
 ```
+You may need to adapt the script to your setup.
 
 ### Run with docker compose
 
