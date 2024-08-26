@@ -451,8 +451,8 @@ export async function wait(timeout = 1000, name?: string, debug = false): Promis
 /**
  * Creates a ZIP archive from the specified source pattern or directory and writes it to the specified output path.
  *
- * @param {string} sourcePath - The source pattern or directory to be zipped (use path.join for sourcePath).
  * @param {string} outputPath - The path where the output ZIP file will be written.
+ * @param {string[]} sourcePaths - The source pattern or directory to be zipped (use path.join for sourcePath).
  * @returns {Promise<number>} - A promise that resolves to the total number of bytes written to the ZIP file.
  *
  * @remarks
@@ -501,8 +501,9 @@ export async function createZip(outputPath: string, ...sourcePaths: string[]): P
       }
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     archive.on('entry', (entry: EntryData) => {
-      log.debug(`- entry: ${entry.name}`);
+      // log.debug(`- entry: ${entry.name}`);
     });
 
     archive.pipe(output);
@@ -517,7 +518,7 @@ export async function createZip(outputPath: string, ...sourcePaths: string[]): P
           const files = glob.sync(sourcePath.replace(/\\/g, '/'));
           log.debug(`adding files matching glob pattern: ${sourcePath}`);
           for (const file of files) {
-            log.debug(`-glob file: ${file}`);
+            // log.debug(`-glob file: ${file}`);
             archive.file(file, { name: file });
           }
         } else {

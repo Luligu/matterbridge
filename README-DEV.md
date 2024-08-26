@@ -32,16 +32,24 @@ Matterbridge export from:
 - MatterHistory class.
 
 "matterbridge/logger"
-- NodeAnsiLogger class
+- NodeAnsiLogger class.
 
 "matterbridge/storage"
-- NodeStorage classes
-
+- NodeStorage classes.
 
 # **********
 A plugin will never ever install and import from matter-node.js or matter.js directly cause this leads to a second instance of matter.js that causes instability and unpredictable errors like "The only instance is Enpoint". 
+
+In the next releases I will remove the duplicated exports so please update your plugins.
+
+I will also add some error messages when a plugin has wrong imports.
 # **********
 
+## Guidelines on the migration to matter.js V8
+
+I'm working with matter.js team to define the strategy for the migration of Matterbridge to the new API.
+
+More informations will be added soon.
 
 ## How to create your plugin
 
@@ -136,6 +144,8 @@ You can unregister all devices you added.
 It can be useful to call this method from onShutdown() if you don't want to keep all the devices during development.
 
 ## MatterbridgeDevice api
+
+Work in progress...
 
 # Contribution Guidelines
 
