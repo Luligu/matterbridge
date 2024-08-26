@@ -331,8 +331,9 @@ export class Matterbridge extends EventEmitter {
     // Get the plugins from node storage and create the plugins node storage contexts
     for (const plugin of this.plugins) {
       const packageJson = await this.plugins.parse(plugin);
-      if (packageJson === null) {
+      if (packageJson === null && !hasParameter('add')) {
         // Try to reinstall the plugin from npm (for Docker pull and external plugins)
+        // We don't do this when the add parameter is set because we shut down the process after adding the plugin
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm.`);
         try {
           await this.spawnCommand('npm', ['install', '-g', plugin.name]);
