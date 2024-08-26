@@ -17,6 +17,7 @@ import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 import { sendCommandToMatterbridge } from '../App';
 import { WebSocketContext } from './WebSocketContext';
 import { OnlineContext } from './OnlineContext';
+import { ConfirmCancelForm } from './ConfirmCancelForm';
 
 const theme = createTheme({
   components: {
@@ -206,6 +207,28 @@ function Header() {
     
   }, []); // The empty array causes this effect to run only once
 
+  const [showConfirmCancelForm, setShowConfirmCancelForm] = useState(false);
+  const [confirmCancelFormTitle, setConfirmCancelFormTitle] = useState('');
+  const [confirmCancelFormMessage, setConfirmCancelFormMessage] = useState('');
+  const [confirmCancelFormCommand, setConfirmCancelFormCommand] = useState('');
+
+  const handleActionWithConfirmCancel = (title, message, command) => {
+    setShowConfirmCancelForm(true);
+    setConfirmCancelFormTitle(title);
+    setConfirmCancelFormMessage(message);
+    setConfirmCancelFormCommand(command);
+  };
+  const handleConfirm = () => {
+    console.log("Action confirmed");
+    setShowConfirmCancelForm(false);
+    handleMenuClose(confirmCancelFormCommand);
+  };
+  const handleCancel = () => {
+    console.log("Action canceled");
+    setShowConfirmCancelForm(false);
+    setMenuAnchorEl(null);
+  };
+
   return (
     <div className="header" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
       <ThemeProvider theme={theme}>
@@ -220,8 +243,8 @@ function Header() {
           </nav>
         </div>
         <div className="header" style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-          <Tooltip title="Sponsor Matterbridge and its plugins">
-            {online ? <span className="status-enabled">Online</span> : <span className="status-disabled">Offline</span>}
+          <Tooltip title="Matterbridge status">
+            {online ? <span className="status-enabled"  style={{ cursor: 'default' }}>Online</span> : <span className="status-disabled" style={{ cursor: 'default' }}>Offline</span>}
           </Tooltip>        
           <Tooltip title="Sponsor Matterbridge and its plugins">
             <span className="status-sponsor" onClick={handleSponsorClick}>Sponsor</span> 
@@ -330,15 +353,15 @@ function Header() {
               </Menu>
 
             <Divider />
-            <MenuItem onClick={() => handleMenuClose('unregister')}>
+            <MenuItem onClick={() => handleActionWithConfirmCancel('Unregister all devices', 'Are you sure you want to unregister all devices? This will temporarily remove all devices from the controller.', 'unregister')}>
               <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
               <ListItemText primary="Unregister all devices" />
             </MenuItem>
-            <MenuItem onClick={() => handleMenuClose('reset')}>
+            <MenuItem onClick={() => handleActionWithConfirmCancel('Reset commissioning', 'Are you sure you want to reset the commissioning? You will have to manually remove Matterbridge from the controller.', 'reset')}>
               <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
               <ListItemText primary="Reset commissioning" />
             </MenuItem>
-            <MenuItem onClick={() => handleMenuClose('factoryreset')}>
+            <MenuItem onClick={() => handleActionWithConfirmCancel('Factory reset', 'Are you sure you want to factory reset Matterbridge? You will have to manually remove Matterbridge from the controller.', 'factoryreset')}>
               <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
               <ListItemText primary="Factory reset" />
             </MenuItem>
@@ -350,6 +373,7 @@ function Header() {
           <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={showSnackbar} onClose={handleSnackbarClose} autoHideDuration={10000}>
               <Alert onClose={handleSnackbarClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>{snackbarMessage}</Alert>
           </Snackbar>
+          <ConfirmCancelForm open={showConfirmCancelForm} title={confirmCancelFormTitle} message={confirmCancelFormMessage} onConfirm={handleConfirm} onCancel={handleCancel} />
         </div>
       </ThemeProvider>  
     </div>

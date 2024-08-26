@@ -2262,8 +2262,8 @@ export class Matterbridge extends EventEmitter {
       const QrCode = new QrCodeSchema();
       this.log.info(`*The commissioning server on port ${commissioningServer.getPort()} for ${plg}${pluginName}${nf} is not commissioned. Pair it scanning the QR code:\n\n`);
       // eslint-disable-next-line no-console
-      console.log(`${QrCode.encode(qrPairingCode)}\n`);
-      this.log.info(`${plg}${pluginName}${nf}\n\nqrPairingCode: ${qrPairingCode}\n\nManual pairing code: ${manualPairingCode}\n`);
+      if (this.log.logLevel === LogLevel.DEBUG || this.log.logLevel === LogLevel.INFO) console.log(`${QrCode.encode(qrPairingCode)}\n`);
+      this.log.info(`${plg}${pluginName}${nf} \n\nqrPairingCode: ${qrPairingCode} \n\nManual pairing code: ${manualPairingCode}\n`);
       if (pluginName === 'Matterbridge') {
         this.matterbridgeFabricInformations = [];
         this.matterbridgeSessionInformations = [];
@@ -2773,7 +2773,7 @@ export class Matterbridge extends EventEmitter {
         manualPairingCode = await this.matterbridgeContext.get('manualPairingCode');
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
-        if (this.bridgeMode === 'bridge') this.log.warn('pairingCodes for /api/settings not found');
+        if (this.bridgeMode === 'bridge') this.log.info('pairingCodes for /api/settings not found');
       }
       this.matterbridgeInformation.bridgeMode = this.bridgeMode;
       this.matterbridgeInformation.restartMode = this.restartMode;

@@ -242,7 +242,7 @@ function Home() {
       </Dialog>
 
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>
-        {qrCode && <QRDiv qrText={qrCode} pairingText={pairingCode} qrWidth={256} topText="QR pairing code" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName} matterbridgeInfo={matterbridgeInfo} plugin={selectedRow===-1?undefined:plugins[selectedRow]}/>}
+        <QRDiv qrText={qrCode} pairingText={pairingCode} qrWidth={256} topText="QR pairing code" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName} matterbridgeInfo={matterbridgeInfo} plugin={selectedRow===-1?undefined:plugins[selectedRow]}/>
         {systemInfo && <SystemInfoTable systemInfo={systemInfo} compact={true}/>}
         {qrCode==='' && matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
       </div>
@@ -483,7 +483,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
       </div>
     );
   } else if(matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired !== true) {
-    console.log(`QRDiv: qrText ${qrText}`);
+    console.log(`QRDiv: qrText ${qrText} pairingText ${pairingText}`);
     return (
       <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '302px'}}>
         <div className="MbfWindowHeader">
@@ -498,7 +498,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
       </div>
     );
   } else if(matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired !== true) {
-    console.log(`QRDiv: qrText ${qrText}`);
+    console.log(`QRDiv: qrText ${qrText} pairingText ${pairingText}`);
     return (
       <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '302px'}}>
         <div className="MbfWindowHeader">
