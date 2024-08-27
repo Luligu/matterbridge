@@ -22,6 +22,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
+- [matterbridgeDevice]: refactor WindowCovering cluster (removed AbsolutePosition).
+- [matterbridge]: Removed deprecated methods.
 - [package]: Update dependencies.
 
 <a href="https://www.buymeacoffee.com/luligugithub">

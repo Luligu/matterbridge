@@ -645,11 +645,17 @@ describe('Matterbridge device', () => {
     device.addRequiredClusterServers(device);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
     const windowCoveringCluster = device.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
+    expect(windowCoveringCluster).toBeDefined();
     invokeCommands(device.getClusterServerById(WindowCovering.Complete.id));
 
-    windowCoveringCluster?.getCurrentPositionLiftPercent100thsAttribute();
+    const current = windowCoveringCluster?.getCurrentPositionLiftPercent100thsAttribute();
+    expect(current).not.toBeNull();
+    expect(current).toBe(0); // Fully open
 
     device.setWindowCoveringTargetAsCurrentAndStopped();
+    const target = windowCoveringCluster?.getTargetPositionLiftPercent100thsAttribute();
+    expect(target).not.toBeNull();
+    expect(target).toBe(current);
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Stopped);
     expect(windowCoveringCluster?.getCurrentPositionLiftPercent100thsAttribute()).toBe(windowCoveringCluster?.getTargetPositionLiftPercent100thsAttribute());
 
@@ -664,6 +670,15 @@ describe('Matterbridge device', () => {
     device.setWindowCoveringTargetAndCurrentPosition(7000);
     expect(windowCoveringCluster?.getCurrentPositionLiftPercent100thsAttribute()).toBe(7000);
     expect(windowCoveringCluster?.getTargetPositionLiftPercent100thsAttribute()).toBe(7000);
+
+    const features = windowCoveringCluster?.getFeatureMapAttribute();
+    expect(features).toBeDefined();
+    if (!features) return;
+    expect(features.lift).toBe(true);
+    expect(features.tilt).toBe(false);
+    expect(features.positionAwareLift).toBe(true);
+    expect(features.absolutePosition).toBe(false);
+    expect(features.positionAwareTilt).toBe(false);
   });
 
   test('create a device identify', async () => {
@@ -755,12 +770,18 @@ describe('Matterbridge device', () => {
     device.createDefaultXYColorControlClusterServer();
     device.createDefaultColorControlClusterServer();
     device.createDefaultCompleteColorControlClusterServer();
-    device.configureColorControlCluster(true, true, true, ColorControl.ColorMode.CurrentXAndCurrentY);
+    device.configureColorControlCluster(true, true, true, ColorControl.ColorMode.CurrentHueAndCurrentSaturation);
+    expect(device.getAttribute(ColorControlCluster.id, 'colorMode')).toBe(ColorControl.ColorMode.CurrentHueAndCurrentSaturation);
+    expect(device.getAttribute(ColorControlCluster.id, 'colorMode')).toBe(ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation);
     device.configureColorControlCluster(true, true, true, ColorControl.ColorMode.CurrentXAndCurrentY, device);
+    expect(device.getAttribute(ColorControlCluster.id, 'colorMode')).toBe(ColorControl.ColorMode.CurrentXAndCurrentY);
+    expect(device.getAttribute(ColorControlCluster.id, 'colorMode')).toBe(ColorControl.EnhancedColorMode.CurrentXAndCurrentY);
     device.configureColorControlMode(ColorControl.ColorMode.CurrentXAndCurrentY);
     expect(device.getAttribute(ColorControlCluster.id, 'colorMode')).toBe(ColorControl.ColorMode.CurrentXAndCurrentY);
+    expect(device.getAttribute(ColorControlCluster.id, 'colorMode')).toBe(ColorControl.EnhancedColorMode.CurrentXAndCurrentY);
     device.configureColorControlMode(ColorControl.ColorMode.CurrentHueAndCurrentSaturation, device);
     expect(device.getAttribute(ColorControlCluster.id, 'colorMode')).toBe(ColorControl.ColorMode.CurrentHueAndCurrentSaturation);
+    expect(device.getAttribute(ColorControlCluster.id, 'colorMode')).toBe(ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation);
   });
 
   test('create a generic switch device type latching', async () => {

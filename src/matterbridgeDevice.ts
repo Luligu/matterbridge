@@ -2110,7 +2110,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   getDefaultWindowCoveringClusterServer(positionPercent100ths?: number) {
     return ClusterServer(
-      WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition),
+      WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift /* , WindowCovering.Feature.AbsolutePosition*/),
       {
         type: WindowCovering.WindowCoveringType.Rollershade,
         configStatus: {
@@ -2127,8 +2127,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false },
         targetPositionLiftPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
         currentPositionLiftPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
-        installedClosedLimitLift: 10000,
-        installedOpenLimitLift: 0,
+        // installedClosedLimitLift: 10000,
+        // installedOpenLimitLift: 0,
       },
       {
         upOrOpen: async (data) => {

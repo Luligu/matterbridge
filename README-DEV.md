@@ -20,7 +20,7 @@ Matterbridge export from:
 
 "matterbridge"
 - Matterbridge and MatterbridgeDevice class.
-- All relevant matter-node.js or matter.js classes and functions.
+- All relevant matter-node.js or matter.js clusters, classes and functions.
 
 "matterbridge/cluster"
 - All clusters not present in matter.js or modified.
