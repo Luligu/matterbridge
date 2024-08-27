@@ -79,7 +79,7 @@ import { ClusterId, EndpointNumber, GroupId, VendorId } from '@project-chip/matt
 import { Device, DeviceClasses, DeviceTypeDefinition, Endpoint, EndpointOptions } from '@project-chip/matter-node.js/device';
 import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
 
-import { EveHistory, EveHistoryCluster, MatterHistory } from 'matter-history';
+import { EveHistory, MatterHistory } from 'matter-history';
 import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from 'node-ansi-logger';
 
 import { AirQuality, AirQualityCluster } from './cluster/AirQualityCluster.js';
@@ -798,6 +798,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param consumption - The consumption value (default: 0).
    * @returns The default static EveHistoryClusterServer object.
    */
+  /*
   getDefaultStaticEveHistoryClusterServer(voltage = 0, current = 0, power = 0, consumption = 0) {
     return ClusterServer(
       EveHistoryCluster.with(EveHistory.Feature.EveEnergy),
@@ -824,6 +825,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {},
     );
   }
+  */
 
   /**
    * Create a default static EveHistoryClusterServer object with the specified voltage, current, power, and consumption values.
@@ -835,9 +837,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param consumption - The consumption value (default: 0).
    * @returns The default static EveHistoryClusterServer object.
    */
+  /*
   createDefaultStaticEveHistoryClusterServer(voltage = 0, current = 0, power = 0, consumption = 0) {
     this.addClusterServer(this.getDefaultStaticEveHistoryClusterServer(voltage, current, power, consumption));
   }
+  */
 
   /**
    * Creates a room Eve History Cluster Server.
