@@ -2169,7 +2169,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   setWindowCoveringTargetAsCurrentAndStopped(endpoint?: Endpoint) {
     if (!endpoint) endpoint = this as Endpoint;
-    const windowCoveringCluster = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
+    const windowCoveringCluster = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift));
     if (windowCoveringCluster) {
       const position = windowCoveringCluster.getCurrentPositionLiftPercent100thsAttribute();
       if (position !== null) {
@@ -2193,7 +2193,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus, endpoint?: Endpoint) {
     if (!endpoint) endpoint = this as Endpoint;
-    const windowCoveringCluster = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
+    const windowCoveringCluster = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift));
     if (windowCoveringCluster) {
       windowCoveringCluster.setCurrentPositionLiftPercent100thsAttribute(current);
       windowCoveringCluster.setTargetPositionLiftPercent100thsAttribute(target);
@@ -2213,7 +2213,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   setWindowCoveringStatus(status: WindowCovering.MovementStatus, endpoint?: Endpoint) {
     if (!endpoint) endpoint = this as Endpoint;
-    const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
+    const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift));
     if (!windowCovering) return;
     windowCovering.setOperationalStatusAttribute({ global: status, lift: status, tilt: status });
     this.log.debug(`Set WindowCovering operationalStatus: ${status}`);
@@ -2227,7 +2227,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   getWindowCoveringStatus(endpoint?: Endpoint): WindowCovering.MovementStatus | undefined {
     if (!endpoint) endpoint = this as Endpoint;
-    const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.AbsolutePosition));
+    const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift));
     if (!windowCovering) return undefined;
     const status = windowCovering.getOperationalStatusAttribute();
     this.log.debug(`Get WindowCovering operationalStatus: ${status.global}`);
