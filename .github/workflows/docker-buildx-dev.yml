@@ -1,4 +1,4 @@
-name: Build dev and Push Docker image dev, dev_alpine  and dev_shelly to Docker Hub with buildx
+name: Build dev and Push Docker image dev, dev_alpine and dev_shelly_alpine to Docker Hub with buildx
 
 on:
   push:
@@ -43,14 +43,14 @@ jobs:
       run: |
         echo "Extracted version is: $VERSION ${{ env.VERSION }}"
   
-    - name: Run Docker Buildx on dev_shelly
+    - name: Run Docker Buildx on dev_shelly_alpine
       run: |
         docker buildx build \
           --platform linux/arm64 \
-          -f docker/Dockerfile.shelly \
-          -t luligu/matterbridge:dev_shelly \
+          -f docker/Dockerfile.shelly.alpine \
+          -t luligu/matterbridge:dev_shelly_alpine \
           --push .
-        docker manifest inspect luligu/matterbridge:dev_shelly
+        docker manifest inspect luligu/matterbridge:dev_shelly_alpine
       timeout-minutes: 60 
   
     - name: Run Docker Buildx on dev_alpine

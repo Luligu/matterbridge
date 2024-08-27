@@ -107,6 +107,8 @@ export interface MatterbridgeInformation {
   globalModulesDirectory: string;
   matterbridgeVersion: string;
   matterbridgeLatestVersion: string;
+  matterbridgeQrPairingCode: string | undefined;
+  matterbridgeManualPairingCode: string | undefined;
   matterbridgeFabricInformations: SanitizedExposedFabricInformation[];
   matterbridgeSessionInformations: SanitizedSessionInformation[];
   matterbridgePaired: boolean;

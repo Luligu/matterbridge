@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-console */
 // App.js
 import './App.css';
@@ -10,8 +9,9 @@ import Devices from './components/Devices';
 import Settings from './components/Settings';
 import Test from './components/Test';
 import Logs from './components/Logs';
-import useWebSocket from './components/WebSocketUse';
+// import useWebSocket from './components/WebSocketUse';
 import { WebSocketProvider } from './components/WebSocketContext';
+import { OnlineProvider } from './components/OnlineContext';
 
 export function sendCommandToMatterbridge(command, param, body) {
   const sanitizedParam = param.replace(/\\/g, '*');
@@ -84,10 +84,6 @@ function LoginForm() {
   // Settings
   const [wssHost, setWssHost] = useState(null);
   const [ssl, setSsl] = useState(false);
-  // const [qrCode, setQrCode] = useState('');
-  // const [pairingCode, setPairingCode] = useState('');
-  // const [systemInfo, setSystemInfo] = useState({});
-  // const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
   
   useEffect(() => {
     const fetchApiSettings = async () => {
@@ -107,7 +103,7 @@ function LoginForm() {
 
     fetchApiSettings();  
   }, []);
-
+  
   const handleSubmit = event => {
     event.preventDefault();
     logIn(password);
@@ -144,18 +140,20 @@ function LoginForm() {
   if (loggedIn) {
     return (
       <WebSocketProvider wssHost={wssHost} ssl={ssl}>
-        <Router>
-          <div className="MbfScreen">
-            <Header />
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/devices" element={<Devices />} />
-              <Route path="/log" element={<Logs />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/test" element={<Test />} />
-            </Routes>
-          </div>
-        </Router>
+        <OnlineProvider>
+          <Router>
+            <div className="MbfScreen">
+              <Header />
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/devices" element={<Devices />} />
+                <Route path="/log" element={<Logs />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/test" element={<Test />} />
+              </Routes>
+            </div>
+          </Router>
+        </OnlineProvider>
       </WebSocketProvider>
     );
   } else {
@@ -188,72 +186,85 @@ function LoginForm() {
 function App() {
   // Login
   const [noPassword, setNoPassword] = useState(false);
+
   // Settings
   const [wssHost, setWssHost] = useState(null);
   const [ssl, setSsl] = useState(false);
-  // const [qrCode, setQrCode] = useState('');
-  // const [pairingCode, setPairingCode] = useState('');
-  // const [systemInfo, setSystemInfo] = useState({});
-  // const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
+
+  const fetchApiLogin = async () => {
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: '' }),
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      console.log('From app.js /api/login:', data);
+      if (data.valid === true) {
+        setNoPassword(true);
+      }
+    } catch (error) {
+      console.error('From app.js error fetching /api/login', error);
+    }
+  };
 
   useEffect(() => {
-    const fetchApiLogin = async () => {
+    const fetchLogin = async () => {
       try {
-        const response = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: '' }),
-        });
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        console.log('From app.js /api/login:', data);
-        if (data.valid === true) {
-          setNoPassword(true);
-        }
+        await fetchApiLogin();
       } catch (error) {
-        console.error('From app.js error fetching /api/login', error);
+        console.error('Error fetching API login:', error);
       }
     };
-
-    fetchApiLogin();
+    fetchLogin();
   }, []);
 
+  const fetchApiSettings = async () => {
+    try {
+      const response = await fetch('/api/settings');
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      console.log('From app.js /api/settings:', data);
+      setWssHost(data.wssHost);
+      setSsl(data.ssl);
+    } catch (error) {
+      console.error('From app.js error fetching /api/settings:', error);
+    }
+  };
+
   useEffect(() => {
-    const fetchApiSettings = async () => {
+    const fetchSettings = async () => {
       try {
-        const response = await fetch('/api/settings');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        console.log('From app.js /api/settings:', data);
-        setWssHost(data.wssHost);
-        setSsl(data.ssl);
+        await fetchApiSettings();
       } catch (error) {
-        console.error('From app.js error fetching /api/settings:', error);
+        console.error('Error fetching API settings:', error);
       }
     };
-
-    fetchApiSettings();  
+    fetchSettings();
   }, []);
 
   if (noPassword) {
     return (
       <WebSocketProvider wssHost={wssHost} ssl={ssl}>
-        <Router>
-          <div className="MbfScreen">
-            <Header />
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/devices" element={<Devices />} />
-                <Route path="/log" element={<Logs />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/test" element={<Test />} />
-              </Routes>
-          </div>
-        </Router>
+        <OnlineProvider>
+          <Router>
+            <div className="MbfScreen">
+              <Header />
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/devices" element={<Devices />} />
+                  <Route path="/log" element={<Logs />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/test" element={<Test />} />
+                </Routes>
+            </div>
+          </Router>
+        </OnlineProvider>
       </WebSocketProvider>
     );
   }
@@ -337,4 +348,8 @@ Find out more about deployment here:
   https://cra.link/deployment
 
 PS C:\Users\lligu\OneDrive\GitHub\matterbridge\frontend> 
+
+npm install @mui/material @emotion/react @emotion/styled
+npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
+npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8 @rjsf/mui
 */

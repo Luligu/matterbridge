@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.4.3",
+  "version": "1.5.0",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -90,8 +90,8 @@
     "test:bridgemode": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose matterbridge.bridge.test.ts",
     "test:device": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose matterbridgeDevice.test.ts",
     "test:platform": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose matterbridgePlatform.test.ts matterbridgeAccessoryPlatform.test.ts matterbridgeDynamicPlatform.test.ts",
-    "test:pluginManager": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose --coverage pluginManager.test.ts",
-    "test:deviceManager": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose --coverage deviceManager.test.ts",
+    "test:pluginManager": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage pluginManager.test.ts",
+    "test:deviceManager": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage deviceManager.test.ts",
     "test:utils": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose utils.test.ts",
     "lint": "eslint --max-warnings=0 .",
     "lint:fix": "eslint --fix --max-warnings=0 .",
@@ -119,13 +119,14 @@
     "install:prettier": "npm install --save-dev prettier eslint-config-prettier eslint-plugin-prettier",
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest"
   },
-  "overrides": {
+  "xxxoverrides": {
     "eslint": "latest"
   },
   "dependencies": {
     "@project-chip/matter-node.js": "0.9.4",
     "archiver": "7.0.1",
     "express": "4.19.2",
+    "glob": "^11.0.0",
     "https": "1.0.0",
     "matter-history": "1.1.7",
     "node-ansi-logger": "3.0.0",
@@ -133,7 +134,7 @@
     "ws": "8.18.0"
   },
   "devDependencies": {
-    "@eslint/js": "9.9.0",
+    "@eslint/js": "9.9.1",
     "@types/archiver": "6.0.2",
     "@types/eslint__js": "8.42.3",
     "@types/express": "4.17.21",
@@ -146,7 +147,7 @@
     "jest": "29.7.0",
     "prettier": "3.3.3",
     "rimraf": "6.0.1",
-    "ts-jest": "29.2.4",
+    "ts-jest": "29.2.5",
     "typescript": "5.5.4",
     "typescript-eslint": "8.2.0"
   }

@@ -3,14 +3,17 @@
 // Home.js
 import React, { useEffect, useState, useRef, useContext } from 'react';
 import { StatusIndicator } from './StatusIndicator';
-import { theme } from './Header';
 import { sendCommandToMatterbridge } from '../App';
 import WebSocketComponent from './WebSocketComponent';
 import { WebSocketContext } from './WebSocketContext';
+import Connecting from './Connecting';
+import { OnlineContext } from './OnlineContext';
+import { SystemInfoTable } from './SystemInfoTable';
+import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
 
 // @mui
 import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip, IconButton, Button, createTheme, ThemeProvider, Select, MenuItem, Menu } from '@mui/material';
-import { DeleteForever, Download, Remove, Add, Unpublished, PublishedWithChanges, Settings, Favorite, Help, Announcement, QrCode2, MoreVert } from '@mui/icons-material';
+import { DeleteForever, Download, Add, Unpublished, PublishedWithChanges, Settings, Favorite, Help, Announcement, QrCode2, MoreVert } from '@mui/icons-material';
 
 // @rjsf
 import Form from '@rjsf/mui';
@@ -18,9 +21,34 @@ import validator from '@rjsf/validator-ajv8';
 
 import QRCode from 'qrcode.react';
 
-// npm install @mui/material @emotion/react @emotion/styled
-// npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
-// npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8 @rjsf/mui
+const theme = createTheme({
+  components: {
+    MuiTooltip: {
+      defaultProps: {
+        placement: 'top-start', 
+        arrow: true,
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          color: '#ffffff',
+          backgroundColor: '#4CAF50', 
+        },
+      },
+      defaultProps: {
+        color: 'primary',
+        variant: 'contained',
+        size: 'small',
+      },
+    },
+  },
+  palette: {
+    primary: {
+      main: '#4CAF50',
+    },
+  },
+});
 
 function Home() {
   const [wssHost, setWssHost] = useState(null);
@@ -37,7 +65,9 @@ function Home() {
   const [openConfig, setOpenConfig] = useState(false);
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');
+
   const { messages, sendMessage, logMessage, setLogFilters } = useContext(WebSocketContext);
+  const { online, setOnline } = useContext(OnlineContext);
 
   const refAddRemove = useRef(null);
   const refRegisteredPlugins = useRef(null);
@@ -61,7 +91,7 @@ function Home() {
     setTimeout(() => {
       reloadSettings();
     }, 1000);
-};
+  };
 
 
   const columns = React.useMemo( () => [
@@ -78,6 +108,7 @@ function Home() {
   );
 
   const fetchSettings = () => {
+    console.log('From home fetchSettings');
 
     fetch('/api/settings')
       .then(response => response.json())
@@ -85,16 +116,11 @@ function Home() {
         console.log('From home /api/settings:', data); 
         setWssHost(data.wssHost); 
         if(data.matterbridgeInformation.bridgeMode==='bridge') {
-          setQrCode(data.qrPairingCode); 
-          setPairingCode(data.manualPairingCode);
+          setQrCode(data.matterbridgeInformation.matterbridgeQrPairingCode); 
+          setPairingCode(data.matterbridgeInformation.matterbridgeManualPairingCode);
         }
         setSystemInfo(data.systemInformation);
         setMatterbridgeInfo(data.matterbridgeInformation);
-        localStorage.setItem('wssHost', data.wssHost);
-        localStorage.setItem('manualPairingCode', data.manualPairingCode); 
-        localStorage.setItem('qrPairingCode', data.qrPairingCode); 
-        localStorage.setItem('systemInformation', data.systemInformation); 
-        localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
       })
       .catch(error => console.error('Error fetching settings:', error));
 
@@ -108,7 +134,7 @@ function Home() {
   };  
 
   useEffect(() => {
-    // Call fetchSettings immediately and then every 10 minutes
+    // Call fetchSettings immediately and then every 1 minute
     fetchSettings();
     const intervalId = setInterval(fetchSettings, 1 * 60 * 1000);
   
@@ -127,11 +153,10 @@ function Home() {
     if (selectedRow === row) {
       setSelectedRow(-1);
       setSelectedPluginName('none');
-      // setQrCode(localStorage.getItem('qrPairingCode'));
-      // setPairingCode(localStorage.getItem('manualPairingCode'));
       setQrCode('');
       setPairingCode('');
     } else {
+      reloadSettings();
       setSelectedRow(row);
       setSelectedPluginName(plugins[row].name);
       setQrCode(plugins[row].qrPairingCode);
@@ -140,7 +165,7 @@ function Home() {
     // console.log('Selected row:', row, 'plugin:', plugins[row].name, 'qrcode:', plugins[row].qrPairingCode);
   };
 
-  const handleEnableDisable = (row) => {
+  const handleEnableDisablePlugin = (row) => {
     console.log('Selected row:', row, 'plugin:', plugins[row].name, 'enabled:', plugins[row].enabled);
     if(plugins[row].enabled===true) {
       plugins[row].enabled=false;
@@ -164,7 +189,7 @@ function Home() {
     }
   };
 
-  const handleUpdate = (row) => {
+  const handleUpdatePlugin = (row) => {
     console.log('handleUpdate row:', row, 'plugin:', plugins[row].name);
     logMessage('Plugins', `Updating plugin: ${plugins[row].name}`);
     sendCommandToMatterbridge('installplugin', plugins[row].name);
@@ -207,13 +232,10 @@ function Home() {
   };
 
   /*
-        {matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
-      <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', maxHeight: 'calc(100vh - 60px - 40px)', width: '302px', minWidth: '302px', maxWidth: '302px', flex: '1 1 auto', gap: '20px' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', maxHeight: 'calc(100vh - 60px - 40px)', flex: '1 1 auto', gap: '20px' }}>
   */
 
-  if (wssHost === null) {
-    return <div>Loading settings...</div>;
+  if (!online) {
+    return ( <Connecting /> );
   }
   return (
     <div className="MbfPageDiv" style={{ flexDirection: 'row' }}>
@@ -233,7 +255,7 @@ function Home() {
       </Dialog>
 
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>
-        {qrCode && <QRDiv qrText={qrCode} pairingText={pairingCode} qrWidth={256} topText="QR pairing code" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName} matterbridgeInfo={matterbridgeInfo} plugin={selectedRow===-1?undefined:plugins[selectedRow]}/>}
+        <QRDiv qrText={qrCode} pairingText={pairingCode} qrWidth={256} topText="QR pairing code" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName} matterbridgeInfo={matterbridgeInfo} plugin={selectedRow===-1?undefined:plugins[selectedRow]}/>
         {systemInfo && <SystemInfoTable systemInfo={systemInfo} compact={true}/>}
         {qrCode==='' && matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
       </div>
@@ -270,7 +292,7 @@ function Home() {
 
                     {plugin.latestVersion === undefined || plugin.latestVersion === plugin.version ?
                       <td><Tooltip title="Plugin version">{plugin.version}</Tooltip></td> :
-                      <td><Tooltip title="New plugin version available, click to install"><span className="status-warning" onClick={() => handleUpdate(index)}>Update v.{plugin.version} to v.{plugin.latestVersion}</span></Tooltip></td>
+                      <td><Tooltip title="New plugin version available, click to install"><span className="status-warning" onClick={() => handleUpdatePlugin(index)}>Update v.{plugin.version} to v.{plugin.latestVersion}</span></Tooltip></td>
                     }
                     <td>{plugin.author.replace('https://github.com/', '')}</td>
 
@@ -281,8 +303,8 @@ function Home() {
                         {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.error && plugin.enabled ? <Tooltip title="Shows the QRCode or the fabrics"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleSelectQRCode(index)} size="small"><QrCode2 /></IconButton></Tooltip> : <></>}
                         <Tooltip title="Plugin config"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleConfigPlugin(index)} size="small"><Settings /></IconButton></Tooltip>
                         <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleRemovePlugin(index)} size="small"><DeleteForever /></IconButton></Tooltip>
-                        {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><Unpublished /></IconButton></Tooltip> : <></>}
-                        {!plugin.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisable(index)} size="small"><PublishedWithChanges /></IconButton></Tooltip> : <></>}
+                        {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisablePlugin(index)} size="small"><Unpublished /></IconButton></Tooltip> : <></>}
+                        {!plugin.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisablePlugin(index)} size="small"><PublishedWithChanges /></IconButton></Tooltip> : <></>}
                         <Tooltip title="Plugin help"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleHelpPlugin(index)} size="small"><Help /></IconButton></Tooltip>
                         <Tooltip title="Plugin version history"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleChangelogPlugin(index)} size="small"><Announcement /></IconButton></Tooltip>
                         <Tooltip title="Sponsor the plugin"><IconButton style={{padding: 0, color: '#b6409c'}} className="PluginsIconButton" onClick={() => handleSponsorPlugin(index)} size="small"><Favorite /></IconButton></Tooltip>
@@ -337,7 +359,7 @@ function Home() {
           <div className="MbfWindowHeader" style={{ flexShrink: 0 }}>
             <p className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>Logs <span style={{ fontWeight: 'normal', fontSize: '12px',marginTop: '2px' }}>Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}"</span></p>
           </div>
-          <div style={{ flex: '1 1 auto', margin: '0px', padding: '0px', overflow: 'auto'}}>
+          <div style={{ flex: '1 1 auto', margin: '0px', padding: '10px', overflow: 'auto'}}>
             <WebSocketComponent/>
           </div>
         </div>
@@ -433,112 +455,10 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
   );
 }
 
-// This function takes systemInfo as a parameter and returns a table element with the systemInfo
-function SystemInfoTable({ systemInfo, compact }) {
-  const excludeKeys = ['totalMemory', 'osRelease', 'osArch'];
-  if (compact && systemInfo.totalMemory) {
-    const totalMemory = systemInfo.totalMemory;
-    const freeMemory = systemInfo.freeMemory;
-    systemInfo.freeMemory = `${freeMemory} / ${totalMemory}`;
-    delete systemInfo.totalMemory;
-  }
-  if (compact && systemInfo.osRelease) {
-    const osType = systemInfo.osType;
-    const osRelease	= systemInfo.osRelease;
-    systemInfo.osType = `${osType} (${osRelease})`;
-    delete systemInfo.osRelease;
-  }
-  if(compact && systemInfo.osArch) {
-    const osPlatform = systemInfo.osPlatform;
-    const osArch = systemInfo.osArch;
-    systemInfo.osPlatform = `${osPlatform} (${osArch})`;
-    delete systemInfo.osArch;
-  }
-
-  return (
-    <div className="MbfWindowDiv" style={{ minWidth: '302px' }}>
-      <div className="MbfWindowDivTable">
-        <table>
-          <thead>
-            <tr>
-              <th colSpan="2">System Information</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.entries(systemInfo).filter(([key, _]) => !excludeKeys.includes(key)).map(([key, value], index) => (
-              <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ borderTop: '1px solid #ddd' }}>
-                <td>{key}</td>
-                <td>
-                  <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={26} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-// This function takes systemInfo as a parameter and returns a table element with the systemInfo
-function MatterbridgeInfoTable({ matterbridgeInfo }) {
-  const excludeKeys = ['matterbridgeVersion', 'matterbridgeLatestVersion', 'matterLoggerLevel', 'debugEnabled', 'loggerLevel', 'bridgeMode', 'restartMode', 'matterbridgeFabricInformations', 'matterbridgeSessionInformations'];
-  if(matterbridgeInfo.bridgeMode === 'childbridge') excludeKeys.push('matterbridgePaired', 'matterbridgeConnected');
-  return (
-    <div className="MbfWindowDiv" style={{ minWidth: '302px' }}>
-      <div className="MbfWindowDivTable">
-        <table>
-          <thead>
-            <tr>
-              <th colSpan="2">Matterbridge Information</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.entries(matterbridgeInfo)
-              .filter(([key, value]) => !excludeKeys.includes(key) && value !== undefined && value !== '')
-              .map(([key, value], index) => (
-              <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ borderTop: '1px solid #ddd' }}>
-                <td>{key.replace('matterbridgeConnected', 'connected').replace('matterbridgePaired', 'paired').replace('homeDirectory', 'home').replace('rootDirectory', 'root').replace('matterbridgeDirectory', 'storage').replace('matterbridgePluginDirectory', 'plugins').replace('globalModulesDirectory', 'modules')}</td>
-                <td>
-                  <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={30} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function TruncatedText({ value, maxChars }) {
-  let displayText = value;
-  if (value.length > maxChars && maxChars > 3) { 
-    const charsToShow = maxChars - 3; 
-    const start = value.substring(0, Math.ceil(charsToShow / 2));
-    const end = value.substring(value.length - Math.floor(charsToShow / 2), value.length);
-    displayText = `${start} … ${end}`;
-  }
-  if(value !== displayText) return (
-    <Tooltip title={value} placement="top" PopperProps={{
-      modifiers: [
-        {
-          name: 'offset',
-          options: {
-            offset: [0, 12], 
-          },
-        },
-      ],
-    }}>
-      <span>{displayText}</span>
-    </Tooltip>
-  )
-  else return <span>{displayText}</span>
-}
-
 function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridgeInfo, plugin }) {
   // console.log('QRDiv:', matterbridgeInfo, plugin);
-  if(matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === true) 
+  if(matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === true) {
+    console.log(`QRDiv: ${matterbridgeInfo.matterbridgeFabricInformations.length} fabrics, ${matterbridgeInfo.matterbridgeSessionInformations.length} sessions`);
     return ( 
       <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '302px', overflow: 'hidden'}} >
         <div className="MbfWindowHeader">
@@ -555,8 +475,9 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
           ))}
         </div>  
       </div>
-  )  
-  else if(matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired === true) 
+    );  
+  } else if(matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired === true) {
+    console.log(`QRDiv: ${plugin.fabricInformations.length} fabrics, ${plugin.sessionInformations.length} sessions`);
     return ( 
       <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '302px', overflow: 'hidden'}} >
         <div className="MbfWindowHeader">
@@ -573,8 +494,9 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
           ))}
         </div>  
       </div>
-  )
-  else if(matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired !== true) 
+    );
+  } else if(matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired !== true) {
+    console.log(`QRDiv: qrText ${qrText} pairingText ${pairingText}`);
     return (
       <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '302px'}}>
         <div className="MbfWindowHeader">
@@ -588,7 +510,8 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
         </div>
       </div>
     );
-  else if(matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired !== true)  
+  } else if(matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired !== true) {
+    console.log(`QRDiv: qrText ${qrText} pairingText ${pairingText}`);
     return (
       <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '302px'}}>
         <div className="MbfWindowHeader">
@@ -602,24 +525,12 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
         </div>
       </div>
     );
+  }
 }
 
 function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
   console.log('DialogConfigPlugin:', config, schema);
-  const uiSchema = {
-    "password": {
-      "ui:widget": "password",
-    },
-    "ui:submitButtonOptions": {
-      "props": {
-        "variant": "contained",
-        "disabled": false,
-      },
-      "norender": false,
-      "submitText": "Save the changes to the config file",
-    },
-    'ui:globalOptions': { orderable: false },
-  };
+
   const theme = createTheme({
     palette: {
       primary: {
@@ -656,6 +567,22 @@ function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
       },
     },
   });
+
+  const uiSchema = {
+    "password": {
+      "ui:widget": "password",
+    },
+    "ui:submitButtonOptions": {
+      "props": {
+        "variant": "contained",
+        "disabled": false,
+      },
+      "norender": false,
+      "submitText": "Save the changes to the config file",
+    },
+    'ui:globalOptions': { orderable: false },
+  };
+  
   const handleSaveChanges = ({ formData }, event) => {
     console.log('handleSaveChanges:', formData);
     const config = JSON.stringify(formData, null, 2)
@@ -664,13 +591,14 @@ function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
     handleCloseConfig();
     // window.location.reload();
   };    
+
   return (
-  <ThemeProvider theme={theme}>
-    <div style={{ maxWidth: '800px' }}>
-      <Form schema={schema} formData={config} uiSchema={uiSchema} validator={validator} onSubmit={handleSaveChanges} />
-      <div style={{ paddingTop: '10px' }}>Restart Matterbridge to apply the changes</div>
-    </div>
-  </ThemeProvider>  
+    <ThemeProvider theme={theme}>
+      <div style={{ maxWidth: '800px' }}>
+        <Form schema={schema} formData={config} uiSchema={uiSchema} validator={validator} onSubmit={handleSaveChanges} />
+        <div style={{ paddingTop: '10px' }}>Restart Matterbridge to apply the changes</div>
+      </div>
+    </ThemeProvider>  
   );
 }
   

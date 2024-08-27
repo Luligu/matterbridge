@@ -7,12 +7,15 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import { WebSocketContext } from './WebSocketContext';
+import Connecting from './Connecting';
+import { OnlineContext } from './OnlineContext';
 
 function Logs() {
   const [wssHost, setWssHost] = useState(null);
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');
   const { messages, sendMessage, logMessage, setLogFilters } = useContext(WebSocketContext);
+  const { online } = useContext(OnlineContext);
 
   const handleChangeLevel = (event) => {
     setLogFilterLevel(event.target.value);
@@ -37,17 +40,16 @@ function Logs() {
 
   }, []); 
 
-  if (wssHost === null) {
-    return <div>Loading settings...</div>;
+  if (!online) {
+    return ( <Connecting /> );
   }
-
   return (
     <div className="MbfPageDiv">
       <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '0px', gap: '10px' }}>
         <h3>Logs:</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <InputLabel id="select-level">Filter by debug level</InputLabel>
-          <Select style={{ height: '40px' }} labelId="select-level" id="debug-level" value={logFilterLevel} onChange={handleChangeLevel}>
+          <Select style={{ height: '30px' }} labelId="select-level" id="debug-level" value={logFilterLevel} onChange={handleChangeLevel}>
             <MenuItem value='debug'>Debug</MenuItem>
             <MenuItem value='info'>Info</MenuItem>
             <MenuItem value='notice'>Notice</MenuItem>
@@ -56,7 +58,13 @@ function Logs() {
             <MenuItem value='fatal'>Fatal</MenuItem>
           </Select>
           <InputLabel id="search">Filter by text</InputLabel>
-          <TextField style={{ height: '40px', width: '300px'}} size="small" id="logsearch" label="Enter search criteria" variant="outlined" value={logFilterSearch} onChange={handleChangeSearch}/>
+          <TextField style={{ width: '300px'}} size="small" id="logsearch"variant="outlined" value={logFilterSearch} onChange={handleChangeSearch}
+            InputProps={{
+              style: {
+                height: '30px',
+                padding: '0 0px',
+              },
+            }}/>
         </div>
       </div>  
       <div style={{ flex: '1', overflow: 'auto', margin: '0px', padding: '0px' }}>

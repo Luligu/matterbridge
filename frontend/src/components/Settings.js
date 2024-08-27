@@ -1,21 +1,33 @@
 /* eslint-disable no-console */
-import React, { useState, useEffect } from 'react';
-import { Radio, RadioGroup, Button, Tooltip, FormControlLabel, FormControl, FormLabel, TextField, Backdrop, CircularProgress, Select, MenuItem, Checkbox } from '@mui/material';
-import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
+import React, { useState, useEffect, useContext } from 'react';
+import { Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, TextField, Select, MenuItem, Checkbox, ThemeProvider, createTheme } from '@mui/material';
 
 import { sendCommandToMatterbridge } from '../App';
-import { theme } from './Header';
+import Connecting from './Connecting';
+import { OnlineContext } from './OnlineContext';
 
-// export const MatterbridgeInfoContext = React.createContext();
-// Use with const matterbridgeInfo = useContext(MatterbridgeInfoContext);
-// <MatterbridgeInfoContext.Provider value={matterbridgeInfo}>
-// </MatterbridgeInfoContext.Provider>
-
-export var info = {};
+const theme = createTheme({
+  components: {
+    MuiTooltip: {
+      defaultProps: {
+        placement: 'bottom', 
+        arrow: true,
+      },
+    },
+  },
+  palette: {
+    readonly: {
+      main: '#616161', 
+    },
+  },
+});
 
 function Settings() {
+  const { online } = useContext(OnlineContext);
 
-//  <div style={{ display: 'flex', flex: 1, flexBasis: 'auto', flexDirection: 'column', height: 'calc(100vh - 60px - 40px)', width: 'calc(100vw - 40px)', gap: '10px' , margin: '0', padding: '0' }}>
+  if (!online) {
+    return ( <Connecting /> );
+  }
   return (
     <div className="MbfPageDiv">
       <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
@@ -29,7 +41,6 @@ function Settings() {
 }
 
 function MatterbridgeInfo() {
-  const [open, setOpen] = useState(false);
   const [selectedBridgeMode, setSelectedBridgeMode] = useState('bridge'); 
   const [selectedMbLoggerLevel, setSelectedMbLoggerLevel] = useState('Info'); 
   const [selectedMjLoggerLevel, setSelectedMjLoggerLevel] = useState('Info'); 
@@ -37,15 +48,6 @@ function MatterbridgeInfo() {
   const [logOnFileMj, setLogOnFileMj] = useState(false);  
   const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
   const [password, setPassword] = useState('');
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
 
   useEffect(() => {
     // Fetch System Info
@@ -71,8 +73,8 @@ function MatterbridgeInfo() {
         if(data.matterbridgeInformation.matterLoggerLevel === 5) setSelectedMjLoggerLevel('Fatal');
         setLogOnFileMj(data.matterbridgeInformation.matterFileLogger);
 
-        info = data.matterbridgeInformation; 
-        console.log('/api/settings:', info) })
+        // info = data.matterbridgeInformation; 
+        console.log('/api/settings:', data.matterbridgeInformation) })
       .catch(error => console.error('Error fetching settings:', error));
   }, []); // The empty array causes this effect to run only once
 
@@ -118,55 +120,20 @@ function MatterbridgeInfo() {
     sendCommandToMatterbridge('setpassword', '*'+event.target.value+'*');
   };
 
-  // Define a function to handle unregister all devices
-  const handleUnregister = () => {
-    console.log('handleUnregister called');
-    sendCommandToMatterbridge('unregister', 'now');
-    setOpen(true);
-    setTimeout(() => {
-      setOpen(false);
-      window.location.reload();
-    }, 10 * 1000);
-  };
-
-  // Define a function to handle reset
-  const handleReset = () => {
-    console.log('handleReset called');
-    sendCommandToMatterbridge('reset', 'now');
-    setOpen(true);
-    setTimeout(() => {
-      setOpen(false);
-      window.location.reload();
-    }, 10 * 1000);
-  };
-
-  // Define a function to handle factory reset
-  const handleFactoryReset = () => {
-    console.log('handleFactoryReset called');
-    sendCommandToMatterbridge('factoryreset', 'now');
-    setOpen(true);
-    setTimeout(() => {
-      setOpen(false);
-      window.location.reload();
-    }, 10 * 1000);
-  };
-
   return (
     <div style={{ display: 'flex', flexDirection: 'row', gap: '20px', marginTop: '10px', width: '100%'}}>
-      <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open} onClick={handleClose}>
-        <CircularProgress color="inherit" />
-      </Backdrop>
+      <ThemeProvider theme={theme}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '50%' }}>
-        <FormControl style={{ gap: '10px' }}>
+        <FormControl style={{ gap: '10px', border: '1px solid #9e9e9e', boxShadow: '5px 5px 10px #888', padding: '10px', borderRadius: '4px', maxWidth: '510px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-mode">Matterbridge mode:</FormLabel>
+            <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-mode">Matterbridge mode (restart required):</FormLabel>
             <RadioGroup focused row name="mode-buttons-group" value={selectedBridgeMode} onChange={handleChangeBridgeMode}>
-              <FormControlLabel value="bridge" disabled control={<Radio />} label="Bridge" />
-              <FormControlLabel value="childbridge" disabled control={<Radio />} label="Childbridge" />
+              <FormControlLabel value="bridge" control={<Radio />} label="Bridge" />
+              <FormControlLabel value="childbridge" control={<Radio />} label="Childbridge" />
             </RadioGroup>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <FormLabel style={{padding: '0px', margin: '0px', color: 'rgba(0, 0, 0, 0.87)'}} id="mbdebug-info">Matterbridge logger level:</FormLabel>
+            <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="mbdebug-info">Matterbridge logger level:</FormLabel>
             <Select style={{ height: '30px' }} labelId="select-mblevel" id="mbdebug-level" value={selectedMbLoggerLevel} onChange={handleChangeMbLoggerLevel}>
               <MenuItem value='Debug'>Debug</MenuItem>
               <MenuItem value='Info'>Info</MenuItem>
@@ -178,7 +145,7 @@ function MatterbridgeInfo() {
             <FormControlLabel style={{padding: '0px', margin: '0px', color: 'rgba(0, 0, 0, 0.87)'}} control={<Checkbox checked={logOnFileMb} onChange={handleLogOnFileMbChange} name="logOnFileMb" />} label="Log on file:" labelPlacement="start"/>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <FormLabel style={{padding: '0px', margin: '0px', color: 'rgba(0, 0, 0, 0.87)'}} id="mjdebug-info">Matter logger level:</FormLabel>
+            <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="mjdebug-info">Matter logger level:</FormLabel>
             <Select style={{ height: '30px' }} labelId="select-mjlevel" id="mjdebug-level" value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
               <MenuItem value='Debug'>Debug</MenuItem>
               <MenuItem value='Info'>Info</MenuItem>
@@ -189,49 +156,34 @@ function MatterbridgeInfo() {
             </Select>
             <FormControlLabel style={{padding: '0px', margin: '0px', color: 'rgba(0, 0, 0, 0.87)'}} control={<Checkbox checked={logOnFileMj} onChange={handleLogOnFileMjChange} name="logOnFileMj" />} label="Log on file:" labelPlacement="start"/>
           </div>
-          <TextField focused value={password} onChange={handleChangePassword} size="small" id="matterbridgePassword" label="Matterbridge Password" type="password" autoComplete="current-password" variant="outlined" style={{ marginTop: '20px'}} />
-          <Tooltip title="Unregister all bridged devices and shutdown.">
-            <Button onClick={handleUnregister} theme={theme} color="primary" variant="contained" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff', marginTop: '20px'}}>Unregister all bridged devices</Button>
-          </Tooltip>        
-          <Tooltip title="Reset Matterbridge commissioning and shutdown.">
-            <Button onClick={handleReset} theme={theme} color="primary" variant="contained" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff', marginTop: '20px'}}>Reset Matterbridge commissioning</Button>
-          </Tooltip>        
-          <Tooltip title="Factory Reset Matterbridge and shutdown. You will loose all commissioning and settings.">
-            <Button onClick={handleFactoryReset} theme={theme} color="primary" variant="contained" endIcon={<PowerSettingsNewIcon />} style={{ color: '#ffffff', marginTop: '20px'}}>Factory Reset Matterbridge</Button>
-          </Tooltip>        
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="mjdebug-info">Frontend password:</FormLabel>
+            <TextField value={password} onChange={handleChangePassword} size="small" id="matterbridgePassword" type="password" autoComplete="current-password" variant="outlined" 
+              style={{ height: '30px', marginTop: '5px' }} InputProps={{
+                style: {
+                  height: '30px',
+                  padding: '0',
+                },
+              }}/>
+          </div>
         </FormControl>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '50%' }}>
-        <TextField focused value={matterbridgeInfo.matterbridgeVersion} size="small" id="matterbridgeVersion" label="Current Version" InputProps={{readOnly: true}} variant="standard" fullWidth/>
-        <TextField focused value={matterbridgeInfo.matterbridgeLatestVersion} size="small" id="matterbridgeLatestVersion" label="Latest Version" InputProps={{readOnly: true}} variant="standard" fullWidth/>
-        <TextField focused value={matterbridgeInfo.homeDirectory} size="small" id="homeDirectory" label="Home Directory" InputProps={{readOnly: true}} variant="standard"/>
-        <TextField focused value={matterbridgeInfo.rootDirectory} size="small" id="rootDirectory" label="Root Directory" InputProps={{readOnly: true}} variant="standard"/>
-        <TextField focused value={matterbridgeInfo.matterbridgeDirectory} size="small" id="matterbridgeDirectory" label="Matterbridge Storage Directory" InputProps={{readOnly: true}} variant="standard"/>
-        <TextField focused value={matterbridgeInfo.matterbridgePluginDirectory} size="small" id="matterbridgePluginDirectory" label="Matterbridge Plugin Directory" InputProps={{readOnly: true}} variant="standard"/>
-        <TextField focused value={matterbridgeInfo.globalModulesDirectory} size="small" id="globalModulesDirectory" label="Global Module Directory" InputProps={{readOnly: true}} variant="standard"/>
+        <FormControl style={{ gap: '10px', border: '1px solid #9e9e9e', boxShadow: '5px 5px 10px #888', padding: '10px', borderRadius: '4px', maxWidth: '510px' }}>
+          <TextField focused color='readonly' value={matterbridgeInfo.matterbridgeVersion} size="small" id="matterbridgeVersion" label="Current Version" variant="standard" fullWidth InputProps={{readOnly: true, sx: {'&:before': {borderBottomColor: '#9e9e9e' }, '&:after': {borderBottomColor: '#9e9e9e'}} }}/>
+          <TextField focused color='readonly' value={matterbridgeInfo.matterbridgeLatestVersion} size="small" id="matterbridgeLatestVersion" label="Latest Version" variant="standard" fullWidth InputProps={{readOnly: true, sx: {'&:before': {borderBottomColor: '#9e9e9e' }, '&:after': {borderBottomColor: '#9e9e9e'}} }}/>
+          <TextField focused color='readonly' value={matterbridgeInfo.homeDirectory} size="small" id="homeDirectory" label="Home Directory" variant="standard" fullWidth InputProps={{readOnly: true, sx: {'&:before': {borderBottomColor: '#9e9e9e' }, '&:after': {borderBottomColor: '#9e9e9e'}} }}/>
+          <TextField focused color='readonly' value={matterbridgeInfo.rootDirectory} size="small" id="rootDirectory" label="Root Directory" variant="standard" fullWidth InputProps={{readOnly: true, sx: {'&:before': {borderBottomColor: '#9e9e9e' }, '&:after': {borderBottomColor: '#9e9e9e'}} }}/>
+          <TextField focused color='readonly' value={matterbridgeInfo.matterbridgeDirectory} size="small" id="matterbridgeDirectory" label="Matterbridge Storage Directory" variant="standard" fullWidth InputProps={{readOnly: true, sx: {'&:before': {borderBottomColor: '#9e9e9e' }, '&:after': {borderBottomColor: '#9e9e9e'}} }}/>
+          <TextField focused color='readonly' value={matterbridgeInfo.matterbridgePluginDirectory} size="small" id="matterbridgePluginDirectory" label="Matterbridge Plugin Directory" variant="standard" fullWidth InputProps={{readOnly: true, sx: {'&:before': {borderBottomColor: '#9e9e9e' }, '&:after': {borderBottomColor: '#9e9e9e'}} }}/>
+          <TextField focused color='readonly' value={matterbridgeInfo.globalModulesDirectory} size="small" id="globalModulesDirectory" label="Global Module Directory" variant="standard" fullWidth InputProps={{readOnly: true, sx: {'&:before': {borderBottomColor: '#9e9e9e' }, '&:after': {borderBottomColor: '#9e9e9e'}} }}/>
+        </FormControl>
       </div>
+      </ThemeProvider>  
     </div>
   );
 }
 
 /*
-            <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-debug">Matterbridge logger level:</FormLabel>
-            <RadioGroup focused row name="debug-buttons-group" value={selectedMbLoggerLevel} onChange={handleChangeMbLoggerLevel}>
-              <FormControlLabel value="Debug" control={<Radio />} label="Debug" />
-              <FormControlLabel value="Info" control={<Radio />} label="Info" />
-              <FormControlLabel value="Notice" control={<Radio />} label="Notice" />
-              <FormControlLabel value="Warn" control={<Radio />} label="Warn" />
-              <FormControlLabel value="Error" control={<Radio />} label="Error" />
-              <FormControlLabel value="Fatal" control={<Radio />} label="Fatal" />
-            </RadioGroup>
-            <RadioGroup focused row name="debug-buttons-group" value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
-              <FormControlLabel value="Debug" control={<Radio />} label="Debug" />
-              <FormControlLabel value="Info" control={<Radio />} label="Info" />
-              <FormControlLabel value="Notice" control={<Radio />} label="Notice" />
-              <FormControlLabel value="Warn" control={<Radio />} label="Warn" />
-              <FormControlLabel value="Error" control={<Radio />} label="Error" />
-              <FormControlLabel value="Fatal" control={<Radio />} label="Fatal" />
-            </RadioGroup>
-
 */
 export default Settings;

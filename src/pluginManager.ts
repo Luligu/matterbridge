@@ -173,8 +173,13 @@ export class PluginManager {
     this.log.debug(`Parsing package.json of plugin ${plg}${plugin.name}${db}`);
     try {
       const packageJson = JSON.parse(await fs.readFile(plugin.path, 'utf8'));
-      if (!plugin.name) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no name in package.json`);
-      if (!plugin.version) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no version in package.json`);
+      if (!packageJson.name) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no name in package.json`);
+      if (!packageJson.version) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no version in package.json`);
+      if (!packageJson.description) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no description in package.json`);
+      if (!packageJson.author) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no author in package.json`);
+      if (!packageJson.type || packageJson.type !== 'module') this.log.error(`Plugin ${plg}${plugin.name}${er} is not a module`);
+      if (!packageJson.main) this.log.error(`Plugin ${plg}${plugin.name}${er} has no main entrypoint in package.json`);
+      if (!packageJson.types) this.log.error(`Plugin ${plg}${plugin.name}${er} has no types in package.json`);
       plugin.name = packageJson.name || 'Unknown name';
       plugin.version = packageJson.version || '1.0.0';
       plugin.description = packageJson.description || 'Unknown description';
@@ -293,7 +298,7 @@ export class PluginManager {
     try {
       const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
       if (this._plugins.get(packageJson.name)) {
-        this.log.warn(`Failed to add plugin ${plg}${nameOrPath}${wr}: plugin already registered`);
+        this.log.info(`Plugin ${plg}${nameOrPath}${nf} already registered`);
         return null;
       }
       this._plugins.set(packageJson.name, { name: packageJson.name, enabled: true, path: packageJsonPath, type: '', version: packageJson.version, description: packageJson.description, author: packageJson.author });

@@ -85,4 +85,4 @@ COPY --from=builder /matterbridge-eve-weather/*.tgz .
 RUN npm -g install *.tgz
 RUN rm *.tgz 
 
-CMD ["matterbridge", "-bridge", "-docker"]
+CMD ["matterbridge", "-docker"]
