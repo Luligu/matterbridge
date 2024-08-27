@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.5.0",
+  "version": "1.5.1-beta1",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -53,9 +53,9 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./cluster/*": {
-      "import": "./dist/cluster/*.js",
-      "types": "./dist/cluster/*.d.ts"
+    "./cluster": {
+      "import": "./dist/cluster/export.js",
+      "types": "./dist/cluster/export.d.ts"
     },
     "./utils": {
       "import": "./dist/utils/export.js",
@@ -88,7 +88,7 @@
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --watch",
     "test:matterbridge": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose matterbridge.test.ts",
     "test:bridgemode": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose matterbridge.bridge.test.ts",
-    "test:device": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose matterbridgeDevice.test.ts",
+    "test:device": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage matterbridgeDevice.test.ts",
     "test:platform": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose matterbridgePlatform.test.ts matterbridgeAccessoryPlatform.test.ts matterbridgeDynamicPlatform.test.ts",
     "test:pluginManager": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage pluginManager.test.ts",
     "test:deviceManager": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage deviceManager.test.ts",
@@ -101,7 +101,7 @@
     "cleanBuild": "npm run clean && npm run build",
     "deepClean": "rimraf tsconfig.tsbuildinfo package-lock.json ./dist ./node_modules",
     "deepCleanRebuild": "npm run deepClean && npm install && npm run build && npm ls rimraf inflight glob",
-    "prepublishOnly": "npm run wtf:uninstall && npm uninstall node-ansi-logger && npm install node-ansi-logger && npm uninstall matter-history && npm install matter-history && npm run lint && npm run cleanBuild",
+    "prepublishOnly": "npm run lint && npm run cleanBuild",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u && npm install & npm run cleanBuild",
     "updateMatter:latest": "npm run deepClean && npm install @project-chip/matter-node.js@latest && npm install && npm run build",
@@ -149,6 +149,6 @@
     "rimraf": "6.0.1",
     "ts-jest": "29.2.5",
     "typescript": "5.5.4",
-    "typescript-eslint": "8.2.0"
+    "typescript-eslint": "8.3.0"
   }
 }

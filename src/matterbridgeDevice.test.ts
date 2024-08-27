@@ -2,6 +2,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+process.argv = ['node', 'matterbridge.test.js', '-bridge', '-profile', 'Jest'];
+
 import { jest } from '@jest/globals';
 
 import { AnsiLogger, id, LogLevel } from 'node-ansi-logger';
@@ -29,9 +31,11 @@ import {
   Binding,
   ClusterServerObj,
   ColorControl,
+  ColorControlCluster,
   Descriptor,
   DoorLock,
   Events,
+  FlowMeasurementCluster,
   getClusterNameById,
   Groups,
   Identify,
@@ -54,6 +58,7 @@ import { BooleanStateConfiguration } from './cluster/BooleanStateConfigurationCl
 import { SmokeCoAlarm } from './cluster/SmokeCoAlarmCluster.js';
 import { DeviceEnergyManagement } from './cluster/DeviceEnergyManagementCluster.js';
 import { waiter } from './utils/utils.js';
+import { Matterbridge } from './matterbridge.js';
 
 describe('Matterbridge device serialize/deserialize', () => {
   test('create a basic device with all default clusters', async () => {
@@ -673,6 +678,26 @@ describe('Matterbridge device', () => {
     expect(identifyCluster?.isCommandSupportedByName('identify')).toBeTruthy();
     expect(identifyCluster?.isCommandSupportedByName('lock')).toBeFalsy();
 
+    let identifyTime = device.getAttribute(IdentifyCluster.id, 'identifyTime');
+    expect(identifyTime).toBeDefined();
+    expect(identifyTime).toBe(0);
+    device.setAttribute(IdentifyCluster.id, 'identifyTime', 5);
+    identifyTime = device.getAttribute(IdentifyCluster.id, 'identifyTime');
+    expect(identifyTime).toBeDefined();
+    expect(identifyTime).toBe(5);
+    identifyTime = device.getAttribute(FlowMeasurementCluster.id, 'identifyTime');
+    expect(identifyTime).toBeUndefined();
+    identifyTime = device.getAttribute(IdentifyCluster.id, 'IdentifyTime');
+    expect(identifyTime).toBeUndefined();
+    identifyTime = device.getAttribute(IdentifyCluster.id, 'Identify');
+    expect(identifyTime).toBeUndefined();
+
+    device.addRequiredClusterServers(device);
+    expect(device.setAttribute(FlowMeasurementCluster.id, 'identifyTime', 5)).toBeFalsy();
+    expect(device.setAttribute(FlowMeasurementCluster.id, 'measuredValue', 10)).toBeTruthy();
+    expect(device.setAttribute(ColorControlCluster.id, 'measuredValue', 10)).toBeFalsy();
+    expect(device.setAttribute(IdentifyCluster.id, 'measuredValue', 5)).toBeFalsy();
+
     device.addCommandHandler('identify', (data) => {
       device.log.debug('Identify command called with:', data.request);
     });
@@ -681,4 +706,139 @@ describe('Matterbridge device', () => {
     });
     invokeCommands(identifyCluster);
   });
+
+  test('create a device with ColorControl', async () => {
+    const device = new MatterbridgeDevice(DeviceTypes.COLOR_TEMPERATURE_LIGHT);
+    device.createDefaultIdentifyClusterServer(0, Identify.IdentifyType.None);
+    expect(device.getDeviceTypes()).toHaveLength(1);
+    expect(device.getDeviceTypes().includes(DeviceTypes.ON_OFF_LIGHT)).toBeFalsy();
+    expect(device.getDeviceTypes().includes(DeviceTypes.DIMMABLE_LIGHT)).toBeFalsy();
+    expect(device.getDeviceTypes().includes(DeviceTypes.COLOR_TEMPERATURE_LIGHT)).toBeTruthy();
+    expect(() => device.verifyRequiredClusters()).toThrow();
+    device.addRequiredClusterServers(device);
+    expect(() => device.verifyRequiredClusters()).not.toThrow();
+    const identifyCluster = device.getClusterServerById(IdentifyCluster.id);
+    expect(identifyCluster).toBeDefined();
+    const colorCluster = device.getClusterServerById(ColorControlCluster.id);
+    expect(colorCluster?.isCommandSupportedByName('identify')).toBeFalsy();
+    expect(colorCluster?.isCommandSupportedByName('moveToColor')).toBeTruthy();
+    expect(colorCluster?.isCommandSupportedByName('moveToHue')).toBeTruthy();
+    expect(colorCluster?.isCommandSupportedByName('moveToSaturation')).toBeTruthy();
+    expect(colorCluster?.isCommandSupportedByName('moveToHueAndSaturation')).toBeTruthy();
+    expect(colorCluster?.isCommandSupportedByName('moveToColorTemperature')).toBeTruthy();
+
+    device.addCommandHandler('identify', (data) => {
+      device.log.debug('Identify command called with:', data.request);
+    });
+    device.addCommandHandler('triggerEffect', (data) => {
+      device.log.debug('triggerEffect command called with:', data.request);
+    });
+    invokeCommands(identifyCluster);
+
+    device.addCommandHandler('moveToColor', (data) => {
+      device.log.debug('moveToColor command called with:', data.request);
+    });
+    device.addCommandHandler('moveToHue', (data) => {
+      device.log.debug('moveToHue command called with:', data.request);
+    });
+    device.addCommandHandler('moveToSaturation', (data) => {
+      device.log.debug('moveToSaturation command called with:', data.request);
+    });
+    device.addCommandHandler('moveToHueAndSaturation', (data) => {
+      device.log.debug('moveToHueAndSaturation command called with:', data.request);
+    });
+    device.addCommandHandler('moveToColorTemperature', (data) => {
+      device.log.debug('moveToColorTemperature command called with:', data.request);
+    });
+    invokeCommands(colorCluster);
+
+    device.createDefaultXYColorControlClusterServer();
+    device.createDefaultColorControlClusterServer();
+    device.createDefaultCompleteColorControlClusterServer();
+    device.configureColorControlCluster(true, true, true, ColorControl.ColorMode.CurrentXAndCurrentY);
+    device.configureColorControlCluster(true, true, true, ColorControl.ColorMode.CurrentXAndCurrentY, device);
+    device.configureColorControlMode(ColorControl.ColorMode.CurrentXAndCurrentY);
+    expect(device.getAttribute(ColorControlCluster.id, 'colorMode')).toBe(ColorControl.ColorMode.CurrentXAndCurrentY);
+    device.configureColorControlMode(ColorControl.ColorMode.CurrentHueAndCurrentSaturation, device);
+    expect(device.getAttribute(ColorControlCluster.id, 'colorMode')).toBe(ColorControl.ColorMode.CurrentHueAndCurrentSaturation);
+  });
+
+  test('create a generic switch device type latching', async () => {
+    const matterbridge = await Matterbridge.loadInstance(true);
+    await waiter(
+      'Matter server started',
+      () => {
+        return (matterbridge as any).configureTimeout !== undefined && (matterbridge as any).reachabilityTimeout !== undefined;
+      },
+      false,
+      60000,
+      1000,
+      true,
+    );
+    const device = new MatterbridgeDevice(DeviceTypes.GENERIC_SWITCH);
+    device.createDefaultIdentifyClusterServer(0, Identify.IdentifyType.None);
+    device.createDefaultLatchingSwitchClusterServer();
+    expect(device.getDeviceTypes()).toHaveLength(1);
+    expect(device.getDeviceTypes().includes(DeviceTypes.GENERIC_SWITCH)).toBeTruthy();
+    expect(() => device.verifyRequiredClusters()).not.toThrow();
+    const switchCluster = device.getClusterServerById(SwitchCluster.id);
+    expect(switchCluster).toBeDefined();
+    if (!switchCluster) return;
+    const features = switchCluster?.getFeatureMapAttribute();
+    expect(features).toBeDefined();
+    if (!features) return;
+    expect(features.latchingSwitch).toBe(true);
+    expect(features.momentarySwitch).toBe(false);
+    expect(features.momentarySwitchRelease).toBe(false);
+    expect(features.momentarySwitchLongPress).toBe(false);
+    expect(features.momentarySwitchMultiPress).toBe(false);
+    device.createDefaultBridgedDeviceBasicInformationClusterServer('Latching switch', 'Serial', 1, 'VendorName', 'ProductName');
+    expect(device.triggerSwitchEvent('Press')).toBeFalsy();
+    expect(device.triggerSwitchEvent('Release')).toBeFalsy();
+    await (matterbridge as any).matterAggregator.addBridgedDevice(device);
+    expect(device.triggerSwitchEvent('Press')).toBeTruthy();
+    expect(device.triggerSwitchEvent('Release')).toBeTruthy();
+    await matterbridge.destroyInstance();
+  }, 60000);
+
+  test('create a generic switch device type momentary', async () => {
+    const matterbridge = await Matterbridge.loadInstance(true);
+    await waiter(
+      'Matter server started',
+      () => {
+        return (matterbridge as any).configureTimeout !== undefined && (matterbridge as any).reachabilityTimeout !== undefined;
+      },
+      false,
+      60000,
+      1000,
+      true,
+    );
+
+    const device = new MatterbridgeDevice(DeviceTypes.GENERIC_SWITCH);
+    device.createDefaultIdentifyClusterServer(0, Identify.IdentifyType.None);
+    device.createDefaultSwitchClusterServer();
+    expect(device.getDeviceTypes()).toHaveLength(1);
+    expect(device.getDeviceTypes().includes(DeviceTypes.GENERIC_SWITCH)).toBeTruthy();
+    expect(() => device.verifyRequiredClusters()).not.toThrow();
+    const switchCluster = device.getClusterServerById(SwitchCluster.id);
+    expect(switchCluster).toBeDefined();
+    if (!switchCluster) return;
+    const features = switchCluster?.getFeatureMapAttribute();
+    expect(features).toBeDefined();
+    if (!features) return;
+    expect(features.latchingSwitch).toBe(false);
+    expect(features.momentarySwitch).toBe(true);
+    expect(features.momentarySwitchRelease).toBe(true);
+    expect(features.momentarySwitchLongPress).toBe(true);
+    expect(features.momentarySwitchMultiPress).toBe(true);
+    device.createDefaultBridgedDeviceBasicInformationClusterServer('Momentary switch', 'Serial', 1, 'VendorName', 'ProductName');
+    expect(device.triggerSwitchEvent('Single')).toBeFalsy();
+    expect(device.triggerSwitchEvent('Double')).toBeFalsy();
+    expect(device.triggerSwitchEvent('Long')).toBeFalsy();
+    await (matterbridge as any).matterAggregator.addBridgedDevice(device);
+    expect(device.triggerSwitchEvent('Single')).toBeTruthy();
+    expect(device.triggerSwitchEvent('Double')).toBeTruthy();
+    expect(device.triggerSwitchEvent('Long')).toBeTruthy();
+    await matterbridge.destroyInstance();
+  }, 60000);
 });

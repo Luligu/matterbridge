@@ -62,7 +62,7 @@ Test the installation with:
 matterbridge -bridge
 ```
 
-Now it is possible to open the frontend at the link provided in the log (e.g. http://<MATTERBIDGE-IP>:8283)
+Now it is possible to open the frontend at the link provided in the log (e.g. http://MATTERBIDGE-IPV4-ADDRESS:8283)
 
 ## Usage
 
@@ -90,7 +90,7 @@ matterbridge -help
 
 ## Frontend
 
-Matterbridge has a frontend available on http://<MATTERBIDGE-IP>:8283
+Matterbridge has a frontend available on http://MATTERBIDGE-IPV4-ADDRESS:8283 and http://[MATTERBIDGE-IPV6-ADDRESS]:8283
 
 You can change the default port by adding the frontend parameter when you run it.
 

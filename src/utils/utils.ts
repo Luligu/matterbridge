@@ -375,18 +375,18 @@ export function isValidUndefined(value: any): value is undefined {
  * @param {boolean} log - Whether to enable logging of network interface details.
  * @returns {string | undefined} The IPv6 address of the network interface, if available.
  */
-export function logInterfaces(log = true): string | undefined {
+export function logInterfaces(debug = true): string | undefined {
+  log.logLevel = LogLevel.INFO;
+  log.logName = 'LogInterfaces';
+
   let ipv6Address: string | undefined;
   const networkInterfaces = os.networkInterfaces();
-
-  // console.log('Available Network Interfaces:', networkInterfaces);
+  if (debug) log.info('Available Network Interfaces:', networkInterfaces);
   for (const [interfaceName, networkInterface] of Object.entries(networkInterfaces)) {
     if (!networkInterface) break;
-    // eslint-disable-next-line no-console
-    if (log) console.log('Interface:', '\u001B[48;5;21m\u001B[38;5;255m', interfaceName, '\u001B[40;0m');
+    if (debug) log.info('Interface:', '\u001B[48;5;21m\u001B[38;5;255m', interfaceName, '\u001B[40;0m');
     for (const detail of networkInterface) {
-      // eslint-disable-next-line no-console
-      if (log) console.log('Details:', detail);
+      if (debug) log.info('Details:', detail);
     }
   }
   return ipv6Address;
@@ -403,12 +403,12 @@ export function logInterfaces(log = true): string | undefined {
  * @returns {Promise<boolean>} A promise that resolves to true when the condition is met, or false if the timeout occurs.
  */
 export async function waiter(name: string, check: () => boolean, exitWithReject = false, resolveTimeout = 5000, resolveInterval = 500, debug = false) {
-  // eslint-disable-next-line no-console
-  if (debug) console.log(`Waiter "${name}" started...`);
+  log.logLevel = LogLevel.DEBUG;
+  log.logName = 'Waiter';
+  if (debug) log.debug(`Waiter "${name}" started...`);
   return new Promise<boolean>((resolve, reject) => {
     const timeoutId = setTimeout(() => {
-      // eslint-disable-next-line no-console
-      if (debug) console.log(`Waiter "${name}" finished for timeout...`);
+      if (debug) log.debug(`Waiter "${name}" finished for timeout...`);
       clearTimeout(timeoutId);
       clearInterval(intervalId);
       if (exitWithReject) reject(new Error(`Waiter "${name}" finished due to timeout`));
@@ -417,8 +417,7 @@ export async function waiter(name: string, check: () => boolean, exitWithReject 
 
     const intervalId = setInterval(() => {
       if (check()) {
-        // eslint-disable-next-line no-console
-        if (debug) console.log(`Waiter "${name}" finished for true condition...`);
+        if (debug) log.debug(`Waiter "${name}" finished for true condition...`);
         clearTimeout(timeoutId);
         clearInterval(intervalId);
         resolve(true);
@@ -435,13 +434,13 @@ export async function waiter(name: string, check: () => boolean, exitWithReject 
  * @returns {Promise<void>} A Promise that resolves after the specified timeout.
  */
 export async function wait(timeout = 1000, name?: string, debug = false): Promise<void> {
-  // eslint-disable-next-line no-console
-  if (debug) console.log(`Wait "${name}" started...`);
+  log.logLevel = LogLevel.DEBUG;
+  log.logName = 'Wait';
+  if (debug) log.debug(`Wait "${name}" started...`);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   return new Promise<void>((resolve, reject) => {
     const timeoutId = setTimeout(() => {
-      // eslint-disable-next-line no-console
-      if (debug) console.log(`Wait "${name}" finished...`);
+      if (debug) log.debug(`Wait "${name}" finished...`);
       clearTimeout(timeoutId);
       resolve();
     }, timeout);
@@ -468,7 +467,7 @@ export async function wait(timeout = 1000, name?: string, debug = false): Promis
  *   .catch(error => console.error(`Error creating ZIP file: ${error.message}`));
  */
 export async function createZip(outputPath: string, ...sourcePaths: string[]): Promise<number> {
-  log.logLevel = LogLevel.DEBUG;
+  log.logLevel = LogLevel.INFO;
   log.logName = 'Archive';
   log.debug(`creating archive ${outputPath} from ${sourcePaths.join(', ')} ...`);
 

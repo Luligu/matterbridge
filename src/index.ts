@@ -22,6 +22,7 @@
  */
 
 import '@project-chip/matter-node.js';
+
 import { Matterbridge } from './matterbridge.js';
 
 export * from '@project-chip/matter-node.js/device';
@@ -40,9 +41,11 @@ export * from './matterbridgeDynamicPlatform.js';
 export * from './matterbridgeTypes.js';
 
 // TODO Remove in august 2024
+/*
 export * from 'matter-history';
 export * from './utils/utils.js';
 export * from './utils/colorUtils.js';
+*/
 
 // TODO Refactor all plugins to import from matterbridge/cluster and remove in september 2024
 export * from './cluster/AirQualityCluster.js';
