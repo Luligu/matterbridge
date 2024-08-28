@@ -20,7 +20,7 @@ Matterbridge export from:
 
 "matterbridge"
 - Matterbridge and MatterbridgeDevice class.
-- All relevant matter-node.js or matter.js classes and functions.
+- All relevant matter-node.js or matter.js clusters, classes and functions.
 
 "matterbridge/cluster"
 - All clusters not present in matter.js or modified.
@@ -39,11 +39,11 @@ Matterbridge export from:
 
 # **********
 A plugin will never ever install and import from matter-node.js or matter.js directly cause this leads to a second instance of matter.js that causes instability and unpredictable errors like "The only instance is Enpoint". 
+# **********
 
 In the next releases I will remove the duplicated exports so please update your plugins.
 
 I will also add some error messages when a plugin has wrong imports.
-# **********
 
 ## Guidelines on the migration to matter.js V8
 
