@@ -3019,6 +3019,7 @@ export class Matterbridge extends EventEmitter {
       // Handle the command setbridgemode from Settings
       if (command === 'setbridgemode') {
         this.log.debug(`setbridgemode: ${param}`);
+        this.matterbridgeInformation.restartRequired = true;
         await this.nodeContext?.set('bridgeMode', param);
         res.json({ message: 'Command received' });
         return;
@@ -3161,6 +3162,7 @@ export class Matterbridge extends EventEmitter {
           this.log.error('Error updating matterbridge');
         }
         await this.updateProcess();
+        this.matterbridgeInformation.restartRequired = true;
         res.json({ message: 'Command received' });
         return;
       }
@@ -3177,6 +3179,7 @@ export class Matterbridge extends EventEmitter {
           if (!plugin) return;
           this.plugins.saveConfigFromJson(plugin, req.body);
         }
+        this.matterbridgeInformation.restartRequired = true;
         res.json({ message: 'Command received' });
         return;
       }
@@ -3192,7 +3195,8 @@ export class Matterbridge extends EventEmitter {
         } catch (error) {
           this.log.error(`Error installing plugin ${plg}${param}${er}`);
         }
-        // Also add the plugin to matterbridge
+        this.matterbridgeInformation.restartRequired = true;
+        // Also add the plugin to matterbridge so no return!
         // res.json({ message: 'Command received' });
         // return;
       }
