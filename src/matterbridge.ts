@@ -105,6 +105,8 @@ export class Matterbridge extends EventEmitter {
     fileLogger: false,
     matterLoggerLevel: Level.INFO,
     matterFileLogger: false,
+    restartRequired: false,
+    refreshRequired: false,
   };
 
   public homeDirectory = '';
