@@ -460,11 +460,6 @@ export async function wait(timeout = 1000, name?: string, debug = false): Promis
  * It logs the progress and the total number of bytes written to the console.
  *
  * This function uses the `glob` library to match files based on the source pattern (internally converted in posix).
- *
- * @example
- * createZip('/path/to/source', '/path/to/output.zip')
- *   .then(bytes => console.log(`ZIP file created with ${bytes} bytes`))
- *   .catch(error => console.error(`Error creating ZIP file: ${error.message}`));
  */
 export async function createZip(outputPath: string, ...sourcePaths: string[]): Promise<number> {
   log.logLevel = LogLevel.INFO;
