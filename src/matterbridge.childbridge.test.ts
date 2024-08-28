@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-matterlogger', 'fatal', '-bridge', '-profile', 'Jest', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
+process.argv = ['node', 'matterbridge.test.js', '-matterlogger', 'debug', '-childbridge', '-profile', 'Jest', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
 
 import { jest } from '@jest/globals';
 
@@ -17,7 +17,7 @@ const plg = '\u001B[38;5;33m';
 const dev = '\u001B[38;5;79m';
 const typ = '\u001B[38;5;207m';
 
-describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
+describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   let matterbridge: Matterbridge;
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let loggerLogSpy: jest.SpiedFunction<(level: LogLevel, message: string, ...parameters: any[]) => void>;
@@ -43,12 +43,12 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     consoleLogSpy.mockRestore();
   }, 60000);
 
-  test('Matterbridge.loadInstance(true) -bridge mode', async () => {
+  test('Matterbridge.loadInstance(true) -childbridge mode', async () => {
     matterbridge = await Matterbridge.loadInstance(true);
 
     expect(matterbridge).toBeDefined();
     expect(matterbridge.profile).toBe('Jest');
-    expect(matterbridge.bridgeMode).toBe('bridge');
+    expect(matterbridge.bridgeMode).toBe('childbridge');
 
     expect((matterbridge as any).initialized).toBeTruthy();
     expect((matterbridge as any).log).toBeDefined();
@@ -73,19 +73,19 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect((matterbridge as any).matterbridgeContext).toBeDefined();
     expect((matterbridge as any).mattercontrollerContext).toBeUndefined();
     expect((matterbridge as any).matterServer).toBeDefined();
-    expect((matterbridge as any).matterAggregator).toBeDefined();
-    expect((matterbridge as any).commissioningServer).toBeDefined();
+    expect((matterbridge as any).matterAggregator).toBeUndefined();
+    expect((matterbridge as any).commissioningServer).toBeUndefined();
     expect((matterbridge as any).commissioningController).toBeUndefined();
 
     expect((matterbridge as any).mdnsInterface).toBe(undefined);
-    expect((matterbridge as any).port).toBe(5555 + 1);
-    expect((matterbridge as any).passcode).toBe(123456 + 1);
-    expect((matterbridge as any).discriminator).toBe(3860 + 1);
+    expect((matterbridge as any).port).toBe(5555);
+    expect((matterbridge as any).passcode).toBe(123456);
+    expect((matterbridge as any).discriminator).toBe(3860);
 
     await waiter(
       'Matter server started',
       () => {
-        return (matterbridge as any).configureTimeout !== undefined && (matterbridge as any).reachabilityTimeout !== undefined;
+        return (matterbridge as any).configureTimeout !== undefined;
       },
       false,
       60000,
@@ -96,7 +96,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     await wait(1000, 'Wait for matter to load', false);
   }, 60000);
 
-  test('Matterbridge.destroyInstance() -bridge mode', async () => {
+  test('Matterbridge.destroyInstance() -childbridge mode', async () => {
     await matterbridge.destroyInstance();
     // console.error(`Matterbridge.destroyInstance() -bridge mode completed`);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
