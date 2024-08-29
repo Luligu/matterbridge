@@ -2,26 +2,6 @@
   "name": "frontend",
   "version": "1.4.0",
   "private": true,
-  "dependencies": {
-    "@emotion/react": "^11.11.4",
-    "@emotion/styled": "^11.11.0",
-    "@mui/icons-material": "^5.15.13",
-    "@mui/material": "^5.15.13",
-    "@rjsf/core": "^5.18.3",
-    "@rjsf/mui": "^5.18.3",
-    "@rjsf/utils": "^5.18.3",
-    "@rjsf/validator-ajv8": "^5.18.3",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
-    "qrcode.react": "^3.1.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.22.1",
-    "react-scripts": "5.0.1",
-    "react-table": "^7.8.0",
-    "web-vitals": "^2.1.4"
-  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
@@ -32,7 +12,10 @@
     "deepClean": "rimraf package-lock.json ./dist ./node_modules",
     "deepCleanRebuild": "npm run deepClean && npm install && npm run build",
     "checkDependencies": "npx npm-check-updates",
-    "updateDependencies": "npx npm-check-updates -u && npm install & npm run cleanBuild"
+    "updateDependencies": "npx npm-check-updates -u && npm install & npm run cleanBuild",
+    "install:react": "npm install react@latest react-dom@latest react-router-dom@latest react-scripts@latest react-table@latest",
+    "install:mui-material": "npm install @mui/material@latest @emotion/react@latest @emotion/styled@latest @mui/icons-material@latest",
+    "install:rjsf": "npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8 @rjsf/mui"
   },
   "eslintConfig": {
     "extends": [
@@ -51,6 +34,26 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.15.13",
+    "@mui/material": "^5.15.13",
+    "@rjsf/core": "^5.18.3",
+    "@rjsf/mui": "^5.18.3",
+    "@rjsf/utils": "^5.18.3",
+    "@rjsf/validator-ajv8": "^5.18.3",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "qrcode.react": "^3.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.1",
+    "react-scripts": "^5.0.1",
+    "react-table": "^7.8.0",
+    "web-vitals": "^2.1.4"
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11"
