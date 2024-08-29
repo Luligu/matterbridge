@@ -233,21 +233,30 @@ function Home() {
   };
 
   /*
+                        {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => { handleActionWithConfirmCancel('Disable the plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'disable', index); } } size="small"><Unpublished /></IconButton></Tooltip> : <></>}
+                        <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => { handleRemovePlugin(index); }} size="small"><DeleteForever /></IconButton></Tooltip>
   */
   const [showConfirmCancelForm, setShowConfirmCancelForm] = useState(false);
   const [confirmCancelFormTitle, setConfirmCancelFormTitle] = useState('');
   const [confirmCancelFormMessage, setConfirmCancelFormMessage] = useState('');
   const [confirmCancelFormCommand, setConfirmCancelFormCommand] = useState('');
+  const [confirmCancelFormRow, setConfirmCancelFormRow] = useState(-1);
 
-  const handleActionWithConfirmCancel = (title, message, command) => {
-    setShowConfirmCancelForm(true);
+  const handleActionWithConfirmCancel = (title, message, command, index) => {
     setConfirmCancelFormTitle(title);
     setConfirmCancelFormMessage(message);
     setConfirmCancelFormCommand(command);
+    setConfirmCancelFormRow(index);
+    setShowConfirmCancelForm(true);
   };
   const handleConfirm = () => {
-    console.log("Action confirmed");
+    console.log(`Action confirmed ${confirmCancelFormCommand} ${confirmCancelFormRow}`);
     setShowConfirmCancelForm(false);
+    if(confirmCancelFormCommand === 'remove' && confirmCancelFormRow !== -1) {
+      handleRemovePlugin(confirmCancelFormRow);
+    } else if(confirmCancelFormCommand === 'disable' && confirmCancelFormRow !== -1) {
+      handleEnableDisablePlugin(confirmCancelFormRow);
+    }
   };
   const handleCancel = () => {
     console.log("Action canceled");
@@ -322,9 +331,9 @@ function Home() {
                       <>
                         {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.error && plugin.enabled ? <Tooltip title="Shows the QRCode or the fabrics"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleSelectQRCode(index)} size="small"><QrCode2 /></IconButton></Tooltip> : <></>}
                         <Tooltip title="Plugin config"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleConfigPlugin(index)} size="small"><Settings /></IconButton></Tooltip>
-                        <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleRemovePlugin(index)} size="small"><DeleteForever /></IconButton></Tooltip>
-                        {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisablePlugin(index)} size="small"><Unpublished /></IconButton></Tooltip> : <></>}
-                        {!plugin.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisablePlugin(index)} size="small"><PublishedWithChanges /></IconButton></Tooltip> : <></>}
+                        <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => { handleActionWithConfirmCancel('Remove plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'remove', index); {/* handleRemovePlugin(index);*/} } } size="small"><DeleteForever /></IconButton></Tooltip>
+                        {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => { handleActionWithConfirmCancel('Disable plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'disable', index); {/* handleEnableDisablePlugin(index);*/}} } size="small"><Unpublished /></IconButton></Tooltip> : <></>}
+                        {!plugin.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisablePlugin(index) } size="small"><PublishedWithChanges /></IconButton></Tooltip> : <></>}
                         <Tooltip title="Plugin help"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleHelpPlugin(index)} size="small"><Help /></IconButton></Tooltip>
                         <Tooltip title="Plugin version history"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleChangelogPlugin(index)} size="small"><Announcement /></IconButton></Tooltip>
                         <Tooltip title="Sponsor the plugin"><IconButton style={{padding: 0, color: '#b6409c'}} className="PluginsIconButton" onClick={() => handleSponsorPlugin(index)} size="small"><Favorite /></IconButton></Tooltip>
