@@ -10,6 +10,7 @@ import Connecting from './Connecting';
 import { OnlineContext } from './OnlineContext';
 import { SystemInfoTable } from './SystemInfoTable';
 import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
+import { ConfirmCancelForm } from './ConfirmCancelForm';
 
 // @mui
 import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip, IconButton, Button, createTheme, ThemeProvider, Select, MenuItem, Menu } from '@mui/material';
@@ -233,6 +234,25 @@ function Home() {
 
   /*
   */
+  const [showConfirmCancelForm, setShowConfirmCancelForm] = useState(false);
+  const [confirmCancelFormTitle, setConfirmCancelFormTitle] = useState('');
+  const [confirmCancelFormMessage, setConfirmCancelFormMessage] = useState('');
+  const [confirmCancelFormCommand, setConfirmCancelFormCommand] = useState('');
+
+  const handleActionWithConfirmCancel = (title, message, command) => {
+    setShowConfirmCancelForm(true);
+    setConfirmCancelFormTitle(title);
+    setConfirmCancelFormMessage(message);
+    setConfirmCancelFormCommand(command);
+  };
+  const handleConfirm = () => {
+    console.log("Action confirmed");
+    setShowConfirmCancelForm(false);
+  };
+  const handleCancel = () => {
+    console.log("Action canceled");
+    setShowConfirmCancelForm(false);
+  };
 
   if (!online) {
     return ( <Connecting /> );
@@ -308,6 +328,7 @@ function Home() {
                         <Tooltip title="Plugin help"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleHelpPlugin(index)} size="small"><Help /></IconButton></Tooltip>
                         <Tooltip title="Plugin version history"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleChangelogPlugin(index)} size="small"><Announcement /></IconButton></Tooltip>
                         <Tooltip title="Sponsor the plugin"><IconButton style={{padding: 0, color: '#b6409c'}} className="PluginsIconButton" onClick={() => handleSponsorPlugin(index)} size="small"><Favorite /></IconButton></Tooltip>
+                        <ConfirmCancelForm open={showConfirmCancelForm} title={confirmCancelFormTitle} message={confirmCancelFormMessage} onConfirm={handleConfirm} onCancel={handleCancel} />
                       </>
                     </td>
                     <td>
@@ -415,20 +436,28 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
   };
 
   const theme = createTheme({
+    components: {
+      MuiTooltip: {
+        defaultProps: {
+          placement: 'bottom', 
+          arrow: true,
+        },
+      },
+    },
     palette: {
       primary: {
-        main: '#4CAF50', // your custom primary color
+        main: '#4CAF50',
       },
     },
   });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '10px', gap: '20px' }}>
+      <ThemeProvider theme={theme}>
       <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={open} onClose={handleSnackClose} autoHideDuration={5000}>
         <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart required</Alert>
       </Snackbar>
       <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth/>
-
       <IconButton onClick={handleClickVertical}>
         <MoreVert />
       </IconButton>
@@ -444,13 +473,13 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
         <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-weather')}>matterbridge-eve-weather</MenuItem>
         <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-room')}>matterbridge-eve-room</MenuItem>
       </Menu>
-
       <Tooltip title="Install or update a plugin from npm">
         <Button onClick={handleInstallPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="install" endIcon={<Download />} style={{ color: '#ffffff', height: '30px', minWidth: '90px' }}> Install</Button>
       </Tooltip>        
       <Tooltip title="Add an installed plugin">
         <Button onClick={handleAddPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="add" endIcon={<Add />} style={{ color: '#ffffff', height: '30px', minWidth: '90px' }}> Add</Button>
       </Tooltip>        
+      </ThemeProvider>  
     </div>
   );
 }

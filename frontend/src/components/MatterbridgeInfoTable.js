@@ -2,7 +2,7 @@ import { TruncatedText } from './TruncatedText';
 
 // This function takes systemInfo as a parameter and returns a table element with the systemInfo
 export function MatterbridgeInfoTable({ matterbridgeInfo }) {
-  const excludeKeys = ['matterbridgeVersion', 'matterbridgeLatestVersion', 'matterFileLogger', 'fileLogger', 'matterLoggerLevel', 'debugEnabled', 'loggerLevel', 'bridgeMode', 'restartMode', 'matterbridgeFabricInformations', 'matterbridgeSessionInformations'];
+  const excludeKeys = ['matterbridgeVersion', 'matterbridgeLatestVersion', 'matterFileLogger', 'fileLogger', 'matterLoggerLevel', 'debugEnabled', 'loggerLevel', 'bridgeMode', 'restartMode', 'matterbridgeFabricInformations', 'matterbridgeSessionInformations', 'restartRequired', 'refreshRequired'];
   if(matterbridgeInfo.bridgeMode === 'childbridge') excludeKeys.push('matterbridgePaired', 'matterbridgeConnected');
   return (
     <div className="MbfWindowDiv" style={{ minWidth: '302px' }}>
