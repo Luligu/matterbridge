@@ -27,7 +27,12 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "checkDependencies": "npx npm-check-updates"
+    "clean": "rimraf ./build",
+    "cleanBuild": "npm run clean && npm run build",
+    "deepClean": "rimraf package-lock.json ./dist ./node_modules",
+    "deepCleanRebuild": "npm run deepClean && npm install && npm run build",
+    "checkDependencies": "npx npm-check-updates",
+    "updateDependencies": "npx npm-check-updates -u && npm install & npm run cleanBuild"
   },
   "eslintConfig": {
     "extends": [
