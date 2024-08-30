@@ -133,7 +133,7 @@ Config editor:
 ![Shelly plugin logo](https://github.com/Luligu/matterbridge/blob/dev/screenshot/Shelly.png)
 [Shelly plugin](https://github.com/Luligu/matterbridge-shelly)
 
-Matterbridge shelly allows you to expose all Shelly Gen 1, Gen 2, Gen 3 and BLU devices to Matter.
+Matterbridge shelly plugin allows you to expose all Shelly Gen 1, Gen 2, Gen 3 and BLU devices to Matter.
 
 Features:
 
