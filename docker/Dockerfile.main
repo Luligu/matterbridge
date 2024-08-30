@@ -33,4 +33,4 @@ RUN npm -g install matterbridge-eve-room
 RUN npm -g install matterbridge-eve-weather
 
 WORKDIR /app
-CMD ["matterbridge", "-bridge", "-docker"]
+CMD ["matterbridge", "-docker"]
