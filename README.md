@@ -130,9 +130,9 @@ Config editor:
 
 ### Shelly
 
-<img src="https://github.com/Luligu/matterbridge/blob/dev/screenshot/Shelly.png" alt="Shelly plugin logo" width="100" />
-
-[Shelly plugin](https://github.com/Luligu/matterbridge-shelly)
+<a href="https://github.com/Luligu/matterbridge-shelly">
+  <img src="https://github.com/Luligu/matterbridge/blob/dev/screenshot/Shelly.png" alt="Shelly plugin logo" width="100" />
+</a>
 
 Matterbridge shelly plugin allows you to expose all Shelly Gen 1, Gen 2, Gen 3 and BLU devices to Matter.
 
@@ -154,15 +154,20 @@ Features:
 - If the device cover/roller component is not calibrated, a message is displayed.
 - A 10-minute timer checks if the device has reported within that time frame, and fetch un update.
 
+
+
 ### Zigbee2MQTT
 
-<img src="https://github.com/Luligu/matterbridge/blob/dev/screenshot/Zigbee2MQTT.png" alt="Zigbee2MQTT plugin logo" width="100" />
-
-[zigbee2mqtt plugin](https://github.com/Luligu/matterbridge-zigbee2mqtt)
+<a href="https://github.com/Luligu/matterbridge-zigbee2mqtt">
+  <img src="https://github.com/Luligu/matterbridge/blob/dev/screenshot/Zigbee2MQTT.png" alt="Zigbee2MQTT plugin logo" width="100" />
+</a>
 
 Matterbridge zigbee2mqtt is a matterbridge production-level plugin that expose all zigbee2mqtt devices and groups to Matter.
 
 No hub or dedicated hardware needed.
+
+
+### Somfy tahoma
 
 [somy-tahoma plugin](https://github.com/Luligu/matterbridge-somfy-tahoma)
 
