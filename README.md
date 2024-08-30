@@ -124,7 +124,13 @@ Config editor:
 
 ## Advanced configurations
 
-[Advanced configurations](https://github.com/Luligu/matterbridge/blob/main/README-ADVANCED.md)
+### Run matterbridge as a daemon with systemctl (Linux only)
+
+[Advanced configurations](https://github.com/Luligu/matterbridge/blob/main/README-SERVICE.md)
+
+### Run matterbridge with docker and docker compose
+
+[Advanced configurations](https://github.com/Luligu/matterbridge/blob/main/README-DOCKER.md)
 
 ## Development
 
@@ -147,7 +153,7 @@ Features:
 - Shelly wifi battery-powered devices with sleep_mode are supported.
 - Shelly BLU devices are supported through local devices configured as ble gateway.
 - Discovered shellies are stored in local storage for quick loading on startup.
-- The components exposed are Light (with brightness and RGB color), Switch, Relay, Roller, Cover, PowerMeter and Input.
+- The components exposed are Light (with brightness and RGB color), Switch, Relay, Roller, Cover, PowerMeter, Temperature, Humidity and Input.
 - All components expose the electrical measurements with the EveHistory cluster (displayed on HA), waiting for the controllers to upgrade to the Matter 1.3 specs.
 - Shellies are controlled locally, eliminating the need for cloud or MQTT (which can both be disabled).
 - Shelly Gen 1 devices are controlled using the CoIoT protocol (see the note below).
@@ -221,7 +227,12 @@ The history works in both bridge and childbridge mode.
 
 The Eve app only shows the history when the plugins run like an AccessoryPlatform in childbridge mode (this means the plugin is paired directly).
 
-## How to install and register a production-level plugin from a terminal (from npm)
+## How to install and add a plugin with the frontend (best option)
+
+Just open the frontend on the link provided in the log, select a plugin and click install.
+
+
+## How to install and add a plugin manually from a terminal (from npm)
 
 To install i.e. https://github.com/Luligu/matterbridge-zigbee2mqtt
 
