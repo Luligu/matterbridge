@@ -24,8 +24,8 @@ export function ConfirmCancelForm({ open, title, message, onConfirm, onCancel })
         </div>
       </DialogTitle>
       <DialogContent>
-        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', margin: '0', marginBottom: '20px', maxHeight: '80px', maxWidth: '250px' }}>
-          {message && <p style={{ color: 'black', margin: '0' }}>{message}</p>}
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', margin: '0', marginBottom: '20px', maxHeight: '350px', maxWidth: '350px' }}>
+          <p style={{ flex: 1, color: 'black', margin: '0' }}>{message}</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around'}}>
           <Button onClick={handleConfirm} variant="contained" color="primary" size="small" style={{ color: '#ffffff' }}>Confirm</Button>

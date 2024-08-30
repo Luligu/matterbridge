@@ -120,6 +120,8 @@ export interface MatterbridgeInformation {
   fileLogger: boolean;
   matterLoggerLevel: number;
   matterFileLogger: boolean;
+  restartRequired: boolean;
+  refreshRequired: boolean;
 }
 
 export interface SanitizedExposedFabricInformation {

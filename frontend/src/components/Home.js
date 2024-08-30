@@ -10,6 +10,7 @@ import Connecting from './Connecting';
 import { OnlineContext } from './OnlineContext';
 import { SystemInfoTable } from './SystemInfoTable';
 import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
+import { ConfirmCancelForm } from './ConfirmCancelForm';
 
 // @mui
 import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip, IconButton, Button, createTheme, ThemeProvider, Select, MenuItem, Menu } from '@mui/material';
@@ -232,7 +233,35 @@ function Home() {
   };
 
   /*
+                        {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => { handleActionWithConfirmCancel('Disable the plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'disable', index); } } size="small"><Unpublished /></IconButton></Tooltip> : <></>}
+                        <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => { handleRemovePlugin(index); }} size="small"><DeleteForever /></IconButton></Tooltip>
   */
+  const [showConfirmCancelForm, setShowConfirmCancelForm] = useState(false);
+  const [confirmCancelFormTitle, setConfirmCancelFormTitle] = useState('');
+  const [confirmCancelFormMessage, setConfirmCancelFormMessage] = useState('');
+  const [confirmCancelFormCommand, setConfirmCancelFormCommand] = useState('');
+  const [confirmCancelFormRow, setConfirmCancelFormRow] = useState(-1);
+
+  const handleActionWithConfirmCancel = (title, message, command, index) => {
+    setConfirmCancelFormTitle(title);
+    setConfirmCancelFormMessage(message);
+    setConfirmCancelFormCommand(command);
+    setConfirmCancelFormRow(index);
+    setShowConfirmCancelForm(true);
+  };
+  const handleConfirm = () => {
+    console.log(`Action confirmed ${confirmCancelFormCommand} ${confirmCancelFormRow}`);
+    setShowConfirmCancelForm(false);
+    if(confirmCancelFormCommand === 'remove' && confirmCancelFormRow !== -1) {
+      handleRemovePlugin(confirmCancelFormRow);
+    } else if(confirmCancelFormCommand === 'disable' && confirmCancelFormRow !== -1) {
+      handleEnableDisablePlugin(confirmCancelFormRow);
+    }
+  };
+  const handleCancel = () => {
+    console.log("Action canceled");
+    setShowConfirmCancelForm(false);
+  };
 
   if (!online) {
     return ( <Connecting /> );
@@ -253,6 +282,8 @@ function Home() {
           <DialogConfigPlugin config={selectedPluginConfig} schema={selectedPluginSchema} handleCloseConfig={handleCloseConfig}/>
         </DialogContent>
       </Dialog>
+
+      <ConfirmCancelForm open={showConfirmCancelForm} title={confirmCancelFormTitle} message={confirmCancelFormMessage} onConfirm={handleConfirm} onCancel={handleCancel} />
 
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>
         <QRDiv qrText={qrCode} pairingText={pairingCode} qrWidth={256} topText="QR pairing code" bottomText={selectedPluginName==='none'?'Matterbridge':selectedPluginName} matterbridgeInfo={matterbridgeInfo} plugin={selectedRow===-1?undefined:plugins[selectedRow]}/>
@@ -302,9 +333,9 @@ function Home() {
                       <>
                         {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.error && plugin.enabled ? <Tooltip title="Shows the QRCode or the fabrics"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleSelectQRCode(index)} size="small"><QrCode2 /></IconButton></Tooltip> : <></>}
                         <Tooltip title="Plugin config"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleConfigPlugin(index)} size="small"><Settings /></IconButton></Tooltip>
-                        <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleRemovePlugin(index)} size="small"><DeleteForever /></IconButton></Tooltip>
-                        {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisablePlugin(index)} size="small"><Unpublished /></IconButton></Tooltip> : <></>}
-                        {!plugin.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisablePlugin(index)} size="small"><PublishedWithChanges /></IconButton></Tooltip> : <></>}
+                        <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => { handleActionWithConfirmCancel('Remove plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'remove', index); {/* handleRemovePlugin(index);*/} } } size="small"><DeleteForever /></IconButton></Tooltip>
+                        {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => { handleActionWithConfirmCancel('Disable plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'disable', index); {/* handleEnableDisablePlugin(index);*/}} } size="small"><Unpublished /></IconButton></Tooltip> : <></>}
+                        {!plugin.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisablePlugin(index) } size="small"><PublishedWithChanges /></IconButton></Tooltip> : <></>}
                         <Tooltip title="Plugin help"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleHelpPlugin(index)} size="small"><Help /></IconButton></Tooltip>
                         <Tooltip title="Plugin version history"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleChangelogPlugin(index)} size="small"><Announcement /></IconButton></Tooltip>
                         <Tooltip title="Sponsor the plugin"><IconButton style={{padding: 0, color: '#b6409c'}} className="PluginsIconButton" onClick={() => handleSponsorPlugin(index)} size="small"><Favorite /></IconButton></Tooltip>
@@ -415,20 +446,28 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
   };
 
   const theme = createTheme({
+    components: {
+      MuiTooltip: {
+        defaultProps: {
+          placement: 'bottom', 
+          arrow: true,
+        },
+      },
+    },
     palette: {
       primary: {
-        main: '#4CAF50', // your custom primary color
+        main: '#4CAF50',
       },
     },
   });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '10px', gap: '20px' }}>
+      <ThemeProvider theme={theme}>
       <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={open} onClose={handleSnackClose} autoHideDuration={5000}>
         <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart required</Alert>
       </Snackbar>
       <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth/>
-
       <IconButton onClick={handleClickVertical}>
         <MoreVert />
       </IconButton>
@@ -444,13 +483,13 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
         <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-weather')}>matterbridge-eve-weather</MenuItem>
         <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-room')}>matterbridge-eve-room</MenuItem>
       </Menu>
-
       <Tooltip title="Install or update a plugin from npm">
         <Button onClick={handleInstallPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="install" endIcon={<Download />} style={{ color: '#ffffff', height: '30px', minWidth: '90px' }}> Install</Button>
       </Tooltip>        
       <Tooltip title="Add an installed plugin">
         <Button onClick={handleAddPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="add" endIcon={<Add />} style={{ color: '#ffffff', height: '30px', minWidth: '90px' }}> Add</Button>
       </Tooltip>        
+      </ThemeProvider>  
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-debug', '-matterlogger', 'fatal', '-bridge', '-profile', 'Jest'];
+process.argv = ['node', 'matterbridge.test.js', '-matterlogger', 'fatal', '-bridge', '-profile', 'Jest', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
 
 import { jest } from '@jest/globals';
 
@@ -76,6 +76,11 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect((matterbridge as any).matterAggregator).toBeDefined();
     expect((matterbridge as any).commissioningServer).toBeDefined();
     expect((matterbridge as any).commissioningController).toBeUndefined();
+
+    expect((matterbridge as any).mdnsInterface).toBe(undefined);
+    expect((matterbridge as any).port).toBe(5555 + 1);
+    expect((matterbridge as any).passcode).toBe(123456 + 1);
+    expect((matterbridge as any).discriminator).toBe(3860 + 1);
 
     await waiter(
       'Matter server started',

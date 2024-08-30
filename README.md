@@ -42,6 +42,10 @@ The project is build on top of https://github.com/project-chip/matter.js.
 
 A special thank to Apollon77 for his incredible work.
 
+## Prerequisites
+
+To run Matterbridge, you need either a [Node.js](https://nodejs.org/en/download/package-manager) environment or [Docker](https://docs.docker.com/get-started/get-docker/) installed on your system.
+
 ## Installation
 
 Follow these steps to install Matterbridge:
@@ -120,7 +124,13 @@ Config editor:
 
 ## Advanced configurations
 
-[Advanced configurations](https://github.com/Luligu/matterbridge/blob/main/README-ADVANCED.md)
+### Run matterbridge as a daemon with systemctl (Linux only)
+
+[Advanced configurations](https://github.com/Luligu/matterbridge/blob/main/README-SERVICE.md)
+
+### Run matterbridge with docker and docker compose
+
+[Advanced configurations](https://github.com/Luligu/matterbridge/blob/main/README-DOCKER.md)
 
 ## Development
 
@@ -128,32 +138,54 @@ Config editor:
 
 ## Plugins
 
-### Production-level plugins
+### Shelly
 
-[zigbee2mqtt plugin](https://github.com/Luligu/matterbridge-zigbee2mqtt)
+<a href="https://github.com/Luligu/matterbridge-shelly">
+  <img src="https://github.com/Luligu/matterbridge/blob/dev/screenshot/Shelly.png" alt="Shelly plugin logo" width="100" />
+</a>
+
+Matterbridge shelly plugin allows you to expose all Shelly Gen 1, Gen 2, Gen 3 and BLU devices to Matter.
+
+Features:
+
+- Shellies are automatically discovered using mDNS.
+- Shelly wifi battery-powered devices are supported.
+- Shelly wifi battery-powered devices with sleep_mode are supported.
+- Shelly BLU devices are supported through local devices configured as ble gateway.
+- Discovered shellies are stored in local storage for quick loading on startup.
+- The components exposed are Light (with brightness and RGB color), Switch, Relay, Roller, Cover, PowerMeter, Temperature, Humidity and Input.
+- All components expose the electrical measurements with the EveHistory cluster (displayed on HA), waiting for the controllers to upgrade to the Matter 1.3 specs.
+- Shellies are controlled locally, eliminating the need for cloud or MQTT (which can both be disabled).
+- Shelly Gen 1 devices are controlled using the CoIoT protocol (see the note below).
+- Shelly Gen 2 and Gen 3 devices are controlled using WebSocket.
+- The Matter device takes the name configured in the Shelly device's web page.
+- If the device has a firmware update available, a message is displayed.
+- If the device's CoIoT protocol is not correctly configured, a message is displayed.
+- If the device cover/roller component is not calibrated, a message is displayed.
+- A 10-minute timer checks if the device has reported within that time frame, and fetch un update.
+
+
+
+### Zigbee2MQTT
+
+<a href="https://github.com/Luligu/matterbridge-zigbee2mqtt">
+  <img src="https://github.com/Luligu/matterbridge/blob/dev/screenshot/Zigbee2MQTT.png" alt="Zigbee2MQTT plugin logo" width="100" />
+</a>
 
 Matterbridge zigbee2mqtt is a matterbridge production-level plugin that expose all zigbee2mqtt devices and groups to Matter.
 
 No hub or dedicated hardware needed.
 
-[somy-tahoma plugin](https://github.com/Luligu/matterbridge-somfy-tahoma)
 
-Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose all Somfy Tahoma devices to Matter.
 
-[shelly plugin](https://github.com/Luligu/matterbridge-shelly)
+### Somfy tahoma
 
-Matterbridge shelly allows you to expose Shelly Gen 1, Gen 2, and Gen 3 devices to Matter.
+<a href="https://github.com/Luligu/matterbridge-somfy-tahoma">
+  <img src="https://github.com/Luligu/matterbridge/blob/dev/screenshot/Somfy.png" alt="Somfy plugin logo" width="100" />
+</a>
 
-Features:
+Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose the Somfy Tahoma screen devices to Matter.
 
-- Shellies are automatically discovered using mDNS.
-- Discovered shellies are stored in local storage for quick loading on startup.
-- In this first release, the components exposed are lights (with brightness), switches, rollers and meters.
-- Shellies are controlled locally, eliminating the need for cloud or MQTT (which can be disabled).
-- Shelly Gen 1 devices are controlled using the CoIoT protocol (see the note below).
-- Shelly Gen 2 and Gen 3 devices are controlled using WebSocket.
-- The Matter device takes the name configured in the Shelly device's web page.
-- A 10-minute timer checks if the device has reported in that time.
 
 ### Accessory platform example
 
@@ -195,7 +227,12 @@ The history works in both bridge and childbridge mode.
 
 The Eve app only shows the history when the plugins run like an AccessoryPlatform in childbridge mode (this means the plugin is paired directly).
 
-## How to install and register a production-level plugin from a terminal (from npm)
+## How to install and add a plugin with the frontend (best option)
+
+Just open the frontend on the link provided in the log, select a plugin and click install.
+
+
+## How to install and add a plugin manually from a terminal (from npm)
 
 To install i.e. https://github.com/Luligu/matterbridge-zigbee2mqtt
 

@@ -13,6 +13,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import DownloadIcon from '@mui/icons-material/Download';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
+import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 
 import { sendCommandToMatterbridge } from '../App';
 import { WebSocketContext } from './WebSocketContext';
@@ -49,6 +50,7 @@ function Header() {
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [backupMenuAnchorEl, setBackupMenuAnchorEl] = useState(null);
   const [downloadMenuAnchorEl, setDownloadMenuAnchorEl] = useState(null);
+  const [resetMenuAnchorEl, setResetMenuAnchorEl] = useState(null);
 
   const handleBackdropClose = () => {
     setShowBackdrop(false);
@@ -170,6 +172,14 @@ function Header() {
 
   const handleDownloadMenuClose = () => {
     setDownloadMenuAnchorEl(null);
+  };
+
+  const handleResetMenuOpen = (event) => {
+    setResetMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleResetMenuClose = () => {
+    setResetMenuAnchorEl(null);
   };
 
   // Fetch settings from the backend
@@ -317,54 +327,60 @@ function Header() {
               <ListItemIcon><DownloadIcon /></ListItemIcon>
               <ListItemText primary="Download" />
             </MenuItem>
-              <Menu id="sub-menu-download" anchorEl={downloadMenuAnchorEl} keepMounted open={Boolean(downloadMenuAnchorEl)} onClose={handleDownloadMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
-                <MenuItem onClick={() => { handleMenuClose('download-mblog'); handleDownloadMenuClose(); }}>
-                    <ListItemIcon><DownloadIcon /></ListItemIcon>
-                    <ListItemText primary="Matterbridge log" />
-                </MenuItem>
-                <MenuItem onClick={() => { handleMenuClose('download-mjlog'); handleDownloadMenuClose(); }}>
-                    <ListItemIcon><DownloadIcon /></ListItemIcon>
-                    <ListItemText primary="Matter log" />
-                </MenuItem>
-                <MenuItem onClick={() => { handleMenuClose('download-mbstorage'); handleDownloadMenuClose(); }}>
-                    <ListItemIcon><DownloadIcon /></ListItemIcon>
-                    <ListItemText primary="Matterbridge storage" />
-                </MenuItem>
-                <MenuItem onClick={() => { handleMenuClose('download-mjstorage'); handleDownloadMenuClose(); }}>
-                    <ListItemIcon><DownloadIcon /></ListItemIcon>
-                    <ListItemText primary="Matter storage" />
-                </MenuItem>
-              </Menu>
+            <Menu id="sub-menu-download" anchorEl={downloadMenuAnchorEl} keepMounted open={Boolean(downloadMenuAnchorEl)} onClose={handleDownloadMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+              <MenuItem onClick={() => { handleMenuClose('download-mblog'); handleDownloadMenuClose(); }}>
+                  <ListItemIcon><DownloadIcon /></ListItemIcon>
+                  <ListItemText primary="Matterbridge log" />
+              </MenuItem>
+              <MenuItem onClick={() => { handleMenuClose('download-mjlog'); handleDownloadMenuClose(); }}>
+                  <ListItemIcon><DownloadIcon /></ListItemIcon>
+                  <ListItemText primary="Matter log" />
+              </MenuItem>
+              <MenuItem onClick={() => { handleMenuClose('download-mbstorage'); handleDownloadMenuClose(); }}>
+                  <ListItemIcon><DownloadIcon /></ListItemIcon>
+                  <ListItemText primary="Matterbridge storage" />
+              </MenuItem>
+              <MenuItem onClick={() => { handleMenuClose('download-mjstorage'); handleDownloadMenuClose(); }}>
+                  <ListItemIcon><DownloadIcon /></ListItemIcon>
+                  <ListItemText primary="Matter storage" />
+              </MenuItem>
+            </Menu>
 
             <Divider />
             <MenuItem onClick={handleBackupMenuOpen}>
               <ListItemIcon><SaveIcon /></ListItemIcon>
               <ListItemText primary="Backup" />
             </MenuItem>
-              <Menu id="sub-menu-backup" anchorEl={backupMenuAnchorEl} keepMounted open={Boolean(backupMenuAnchorEl)} onClose={handleBackupMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
-                <MenuItem onClick={() => { handleMenuClose('create-backup'); handleBackupMenuClose(); }}>
-                  <ListItemIcon><SaveIcon /></ListItemIcon>
-                  <ListItemText primary="Create backup" />
-                </MenuItem>
-                <MenuItem onClick={() => { handleMenuClose('download-backup'); handleBackupMenuClose(); }}>
-                  <ListItemIcon><SaveIcon /></ListItemIcon>
-                  <ListItemText primary="Download backup" />
-                </MenuItem>
-              </Menu>
+            <Menu id="sub-menu-backup" anchorEl={backupMenuAnchorEl} keepMounted open={Boolean(backupMenuAnchorEl)} onClose={handleBackupMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+              <MenuItem onClick={() => { handleMenuClose('create-backup'); handleBackupMenuClose(); }}>
+                <ListItemIcon><SaveIcon /></ListItemIcon>
+                <ListItemText primary="Create backup" />
+              </MenuItem>
+              <MenuItem onClick={() => { handleMenuClose('download-backup'); handleBackupMenuClose(); }}>
+                <ListItemIcon><SaveIcon /></ListItemIcon>
+                <ListItemText primary="Download backup" />
+              </MenuItem>
+            </Menu>
 
             <Divider />
-            <MenuItem onClick={() => handleActionWithConfirmCancel('Unregister all devices', 'Are you sure you want to unregister all devices? This will temporarily remove all devices from the controller.', 'unregister')}>
-              <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
-              <ListItemText primary="Unregister all devices" />
+            <MenuItem onClick={handleResetMenuOpen}>
+              <ListItemIcon><ReportProblemIcon /></ListItemIcon>
+              <ListItemText primary="Reset" />
             </MenuItem>
-            <MenuItem onClick={() => handleActionWithConfirmCancel('Reset commissioning', 'Are you sure you want to reset the commissioning? You will have to manually remove Matterbridge from the controller.', 'reset')}>
-              <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
-              <ListItemText primary="Reset commissioning" />
-            </MenuItem>
-            <MenuItem onClick={() => handleActionWithConfirmCancel('Factory reset', 'Are you sure you want to factory reset Matterbridge? You will have to manually remove Matterbridge from the controller.', 'factoryreset')}>
-              <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
-              <ListItemText primary="Factory reset" />
-            </MenuItem>
+            <Menu id="sub-menu-reset" anchorEl={resetMenuAnchorEl} keepMounted open={Boolean(resetMenuAnchorEl)} onClose={handleResetMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+              <MenuItem onClick={() => { handleResetMenuClose(); handleActionWithConfirmCancel('Reset all devices and shutdown', 'Are you sure you want to unregister all devices? This will temporarily remove all devices from the controller and you may loose the controller configuration.', 'unregister'); }}>
+                <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
+                <ListItemText primary="Reset all devices..." />
+              </MenuItem>
+              <MenuItem onClick={() => { handleResetMenuClose(); handleActionWithConfirmCancel('Reset commissioning and shutdown', 'Are you sure you want to reset the commissioning? You will have to manually remove Matterbridge from the controller.', 'reset'); }}>
+                <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
+                <ListItemText primary="Reset commissioning..." />
+              </MenuItem>
+              <MenuItem onClick={() => { handleResetMenuClose(); handleActionWithConfirmCancel('Factory reset and shutdown', 'Are you sure you want to factory reset Matterbridge? You will have to manually remove Matterbridge from the controller.', 'factoryreset'); }}>
+                <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
+                <ListItemText primary="Factory reset..." />
+              </MenuItem>
+            </Menu>
 
           </Menu>
           <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={showBackdrop} onClick={handleBackdropClose}>

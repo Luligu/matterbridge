@@ -25,7 +25,7 @@ import os from 'os';
 import { createWriteStream, statSync } from 'fs';
 import archiver, { ArchiverError, EntryData } from 'archiver';
 import path from 'path';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, idn, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
 import { glob } from 'glob';
 
 const log = new AnsiLogger({ logName: 'MatterbridgeUtils', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
@@ -381,10 +381,10 @@ export function logInterfaces(debug = true): string | undefined {
 
   let ipv6Address: string | undefined;
   const networkInterfaces = os.networkInterfaces();
-  if (debug) log.info('Available Network Interfaces:', networkInterfaces);
+  if (debug) log.info('Available Network Interfaces:');
   for (const [interfaceName, networkInterface] of Object.entries(networkInterfaces)) {
     if (!networkInterface) break;
-    if (debug) log.info('Interface:', '\u001B[48;5;21m\u001B[38;5;255m', interfaceName, '\u001B[40;0m');
+    if (debug) log.info(`Interface: ${idn}${interfaceName}${rs}`);
     for (const detail of networkInterface) {
       if (debug) log.info('Details:', detail);
     }
@@ -460,11 +460,6 @@ export async function wait(timeout = 1000, name?: string, debug = false): Promis
  * It logs the progress and the total number of bytes written to the console.
  *
  * This function uses the `glob` library to match files based on the source pattern (internally converted in posix).
- *
- * @example
- * createZip('/path/to/source', '/path/to/output.zip')
- *   .then(bytes => console.log(`ZIP file created with ${bytes} bytes`))
- *   .catch(error => console.error(`Error creating ZIP file: ${error.message}`));
  */
 export async function createZip(outputPath: string, ...sourcePaths: string[]): Promise<number> {
   log.logLevel = LogLevel.INFO;
@@ -500,9 +495,8 @@ export async function createZip(outputPath: string, ...sourcePaths: string[]): P
       }
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     archive.on('entry', (entry: EntryData) => {
-      // log.debug(`- entry: ${entry.name}`);
+      log.debug(`- archive entry: ${entry.name}`);
     });
 
     archive.pipe(output);
@@ -517,7 +511,7 @@ export async function createZip(outputPath: string, ...sourcePaths: string[]): P
           const files = glob.sync(sourcePath.replace(/\\/g, '/'));
           log.debug(`adding files matching glob pattern: ${sourcePath}`);
           for (const file of files) {
-            // log.debug(`-glob file: ${file}`);
+            log.debug(`- glob file: ${file}`);
             archive.file(file, { name: file });
           }
         } else {
@@ -538,5 +532,3 @@ export async function createZip(outputPath: string, ...sourcePaths: string[]): P
     archive.finalize().catch(reject);
   });
 }
-
-// await createZip('output.zip', path.join('C:\\Users\\lligu\\.matterbridge'), path.join('C:\\Users\\lligu\\Matterbridge'));

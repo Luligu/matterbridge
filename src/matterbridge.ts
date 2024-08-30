@@ -4,9 +4,9 @@
  * @file matterbridge.ts
  * @author Luca Liguori
  * @date 2023-12-29
- * @version 1.4.0
+ * @version 1.5.2
  *
- * Copyright 2023, 2024 Luca Liguori.
+ * Copyright 2023, 2024, 2025 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,8 @@ import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridge
 import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
 import { logInterfaces, wait, waiter, createZip } from './utils/utils.js';
 import { BaseRegisteredPlugin, MatterbridgeInformation, RegisteredDevice, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
+import { PluginManager } from './pluginManager.js';
+import { DeviceManager } from './deviceManager.js';
 
 // @project-chip/matter-node.js
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
@@ -56,8 +58,6 @@ import { getParameter, getIntParameter, hasParameter } from '@project-chip/matte
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
-import { PluginManager } from './pluginManager.js';
-import { DeviceManager } from './deviceManager.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -105,6 +105,8 @@ export class Matterbridge extends EventEmitter {
     fileLogger: false,
     matterLoggerLevel: Level.INFO,
     matterFileLogger: false,
+    restartRequired: false,
+    refreshRequired: false,
   };
 
   public homeDirectory = '';
@@ -409,6 +411,8 @@ export class Matterbridge extends EventEmitter {
       - list:                  list the registered plugins
       - loginterfaces:         log the network interfaces (usefull for finding the name of the interface to use with -mdnsinterface option)
       - logstorage:            log the node storage
+      - sudo:                  force the use of sudo to install or update packages
+      - nosudo:                force not to use sudo to install or update packages
       - ssl:                   enable SSL for the frontend and WebSockerServer (certificates in .matterbridge/certs directory cert.pem, key.pem and ca.pem (optional))
       - add [plugin path]:     register the plugin from the given absolute or relative path
       - add [plugin name]:     register the globally installed plugin with the given name
@@ -2503,7 +2507,10 @@ export class Matterbridge extends EventEmitter {
       args.splice(0, args.length, '/c', argstring);
       command = 'cmd.exe';
     }
-    if (process.platform === 'linux' && command === 'npm' && !hasParameter('docker')) {
+    // Decide when using sudo on linux
+    // When you need sudo: Spawn stderr: npm error Error: EACCES: permission denied
+    // When you don't need sudo: Failed to start child process "npm install -g matterbridge-eve-door": spawn sudo ENOENT
+    if (hasParameter('sudo') || (process.platform === 'linux' && command === 'npm' && !hasParameter('docker') && !hasParameter('nosudo'))) {
       args.unshift(command);
       command = 'sudo';
     }
@@ -2514,39 +2521,42 @@ export class Matterbridge extends EventEmitter {
       });
 
       childProcess.on('error', (err) => {
-        this.log.error(`Failed to start child process: ${err.message}`);
-        reject(err); // Reject the promise on error
+        this.log.error(`Failed to start child process "${cmdLine}": ${err.message}`);
+        reject(err);
       });
 
       childProcess.on('close', (code, signal) => {
         this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', `child process closed with code ${code} and signal ${signal}`);
         if (code === 0) {
           if (cmdLine.startsWith('npm install -g')) this.log.notice(`${cmdLine.replace('npm install -g ', '')} installed correctly`);
+          this.log.debug(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
           resolve();
         } else {
-          this.log.error(`Child process stdio streams have closed with code ${code}`);
-          reject(new Error(`Child process stdio streams have closed with code  ${code}`));
+          this.log.error(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
+          reject(new Error(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`));
         }
       });
 
       childProcess.on('exit', (code, signal) => {
         this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', `child process exited with code ${code} and signal ${signal}`);
         if (code === 0) {
+          this.log.debug(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`);
           resolve();
         } else {
-          this.log.error(`Child process exited with code ${code} and signal ${signal}`);
-          reject(new Error(`Child process exited with code ${code} and signal ${signal}`));
+          this.log.error(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`);
+          reject(new Error(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`));
         }
       });
 
       childProcess.on('disconnect', () => {
-        this.log.debug('Child process has been disconnected from the parent');
+        this.log.debug(`Child process "${cmdLine}" has been disconnected from the parent`);
         resolve();
       });
 
       if (childProcess.stdout) {
         childProcess.stdout.on('data', (data: Buffer) => {
           const message = data.toString().trim();
+          this.log.debug(`Spawn stdout: ${message}`);
           this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', message);
         });
       }
@@ -2554,6 +2564,7 @@ export class Matterbridge extends EventEmitter {
       if (childProcess.stderr) {
         childProcess.stderr.on('data', (data: Buffer) => {
           const message = data.toString().trim();
+          this.log.debug(`Spawn stderr: ${message}`);
           this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', message);
         });
       }
@@ -3017,6 +3028,7 @@ export class Matterbridge extends EventEmitter {
       // Handle the command setbridgemode from Settings
       if (command === 'setbridgemode') {
         this.log.debug(`setbridgemode: ${param}`);
+        this.matterbridgeInformation.restartRequired = true;
         await this.nodeContext?.set('bridgeMode', param);
         res.json({ message: 'Command received' });
         return;
@@ -3159,6 +3171,7 @@ export class Matterbridge extends EventEmitter {
           this.log.error('Error updating matterbridge');
         }
         await this.updateProcess();
+        this.matterbridgeInformation.restartRequired = true;
         res.json({ message: 'Command received' });
         return;
       }
@@ -3175,6 +3188,7 @@ export class Matterbridge extends EventEmitter {
           if (!plugin) return;
           this.plugins.saveConfigFromJson(plugin, req.body);
         }
+        this.matterbridgeInformation.restartRequired = true;
         res.json({ message: 'Command received' });
         return;
       }
@@ -3190,7 +3204,8 @@ export class Matterbridge extends EventEmitter {
         } catch (error) {
           this.log.error(`Error installing plugin ${plg}${param}${er}`);
         }
-        // Also add the plugin to matterbridge
+        this.matterbridgeInformation.restartRequired = true;
+        // Also add the plugin to matterbridge so no return!
         // res.json({ message: 'Command received' });
         // return;
       }

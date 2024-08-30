@@ -186,6 +186,24 @@ export class PluginManager {
       plugin.author = packageJson.author || 'Unknown author';
       if (!plugin.path) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no path`);
       if (!plugin.type) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no type`);
+
+      // Check for @project-chip packages in dependencies and devDependencies
+      const checkForProjectChipPackages = (dependencies: Record<string, string>) => {
+        return Object.keys(dependencies).filter((pkg) => pkg.startsWith('@project-chip'));
+      };
+      const projectChipDependencies = checkForProjectChipPackages(packageJson.dependencies || {});
+      const projectChipDevDependencies = checkForProjectChipPackages(packageJson.devDependencies || {});
+      if (projectChipDependencies.length > 0) {
+        this.log.error(`Found @project-chip packages "${projectChipDependencies.join(', ')}" in plugin ${plg}${plugin.name}${er} dependencies.`);
+        this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        this.log.error(`In the next release this plugin will not be loaded.`);
+      }
+      if (projectChipDevDependencies.length > 0) {
+        this.log.error(`Found @project-chip packages "${projectChipDevDependencies.join(', ')}" in plugin ${plg}${plugin.name}${er} devDependencies.`);
+        this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        this.log.error(`In the next release this plugin will not be loaded.`);
+      }
+
       // await this.saveToStorage();
       return packageJson;
     } catch (err) {

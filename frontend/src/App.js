@@ -349,7 +349,6 @@ Find out more about deployment here:
 
 PS C:\Users\lligu\OneDrive\GitHub\matterbridge\frontend> 
 
-npm install @mui/material @emotion/react @emotion/styled
-npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
+npm install @mui/material @emotion/react @emotion/styled @mui/icons-material
 npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8 @rjsf/mui
 */
