@@ -101,7 +101,7 @@
     "clean": "rimraf tsconfig.tsbuildinfo ./dist",
     "cleanBuild": "npm run clean && npm run build",
     "deepClean": "rimraf tsconfig.tsbuildinfo package-lock.json ./dist ./node_modules",
-    "deepCleanRebuild": "npm run deepClean && npm install && npm run build && npm ls rimraf inflight glob",
+    "deepCleanRebuild": "npm run deepClean && npm install && npm run build",
     "prepublishOnly": "npm run lint && npm run cleanBuild",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u && npm install & npm run cleanBuild",
@@ -116,12 +116,9 @@
     "version:major": "npm version major",
     "install:dependencies": "npm install @project-chip/matter-node.js express https matter-history node-ansi-logger node-persist-manager ws && npm install --save-dev rimraf",
     "install:typescript": "npm install --save-dev @types/express @types/node @types/ws typescript && npm run build",
-    "install:eslint": "npm install --save-dev @eslint/js @types/eslint__js typescript-eslint",
+    "install:eslint": "npm install --save-dev eslint @eslint/js @types/eslint__js typescript-eslint",
     "install:prettier": "npm install --save-dev prettier eslint-config-prettier eslint-plugin-prettier",
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest"
-  },
-  "xxxoverrides": {
-    "eslint": "latest"
   },
   "dependencies": {
     "@project-chip/matter-node.js": "0.9.4",
@@ -142,6 +139,7 @@
     "@types/jest": "29.5.12",
     "@types/node": "22.5.1",
     "@types/ws": "8.5.12",
+    "eslint": "^9.9.1",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-jest": "28.8.0",
     "eslint-plugin-prettier": "5.2.1",

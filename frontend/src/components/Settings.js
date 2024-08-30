@@ -61,7 +61,7 @@ function Settings() {
       </Snackbar>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%', height: '100%' }}>
         <h3>Matterbridge settings:</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridAutoFlow: 'row', gap: '20px', width: '100%', }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, auto)', gridTemplateRows: 'repeat(3, auto)', gap: '20px', width: '100%', height: '100%' }}>
           <MatterbridgeSettings matterbridgeInfo={matterbridgeInfo} showSnackbarMessage={showSnackbarMessage}/>
           <MatterSettings matterbridgeInfo={matterbridgeInfo} showSnackbarMessage={showSnackbarMessage}/>
           <MatterbridgeInfo matterbridgeInfo={matterbridgeInfo}/>
@@ -120,7 +120,7 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '500px' }}>
-      <FormControl style={{ gap: '10px', border: '1px solid #9e9e9e', boxShadow: '5px 5px 10px #888', padding: '10px', borderRadius: '4px', maxWidth: '500px' }}>
+      <WindowForm >
         <WindowTitle>Matterbridge settings</WindowTitle>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-mode">Matterbridge mode:</FormLabel>
@@ -141,18 +141,6 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
           </Select>
           <FormControlLabel style={{padding: '0px', margin: '0px', color: 'rgba(0, 0, 0, 0.87)'}} control={<Checkbox checked={logOnFileMb} onChange={handleLogOnFileMbChange} name="logOnFileMb" />} label="Log on file:" labelPlacement="start"/>
         </div>
-        {/* <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="mjdebug-info">Matter logger level:</FormLabel>
-          <Select style={{ height: '30px' }} labelId="select-mjlevel" id="mjdebug-level" value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
-            <MenuItem value='Debug'>Debug</MenuItem>
-            <MenuItem value='Info'>Info</MenuItem>
-            <MenuItem value='Notice'>Notice</MenuItem>
-            <MenuItem value='Warn'>Warn</MenuItem>
-            <MenuItem value='Error'>Error</MenuItem>
-            <MenuItem value='Fatal'>Fatal</MenuItem>
-          </Select>
-          <FormControlLabel style={{padding: '0px', margin: '0px', color: 'rgba(0, 0, 0, 0.87)'}} control={<Checkbox checked={logOnFileMj} onChange={handleLogOnFileMjChange} name="logOnFileMj" />} label="Log on file:" labelPlacement="start"/>
-        </div>*/}
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="mb-password">Frontend password:</FormLabel>
           <TextField value={password} onChange={handleChangePassword} size="small" id="matterbridgePassword" type="password" autoComplete="current-password" variant="outlined" 
@@ -163,7 +151,7 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
               },
             }}/>
         </div>
-      </FormControl>
+      </WindowForm>
     </div>
   );
 }
@@ -223,7 +211,7 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '500px' }}>
-      <FormControl style={{ gap: '10px', border: '1px solid #9e9e9e', boxShadow: '5px 5px 10px #888', padding: '10px', borderRadius: '4px', maxWidth: '500px' }}>
+      <WindowForm>
         <WindowTitle>Matter settings</WindowTitle>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="mjdebug-info">Matter logger level:</FormLabel>
@@ -267,7 +255,7 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
               },
             }}/>
         </div>
-      </FormControl>
+      </WindowForm>
     </div>
   );
 }
@@ -275,7 +263,7 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
 function MatterbridgeInfo({ matterbridgeInfo }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '500px' }}>
-      <FormControl style={{ gap: '10px', border: '1px solid #9e9e9e', boxShadow: '5px 5px 10px #888', padding: '10px', borderRadius: '4px', maxWidth: '500px' }}>
+      <WindowForm>
         <WindowTitle>Matterbridge info</WindowTitle>
         <ReadOnlyTextField value={matterbridgeInfo.matterbridgeVersion} label="Current Version" />
         <ReadOnlyTextField value={matterbridgeInfo.matterbridgeLatestVersion} label="Latest Version" />
@@ -284,15 +272,33 @@ function MatterbridgeInfo({ matterbridgeInfo }) {
         <ReadOnlyTextField value={matterbridgeInfo.matterbridgeDirectory} label="Matterbridge Storage Directory" />
         <ReadOnlyTextField value={matterbridgeInfo.matterbridgePluginDirectory} label="Matterbridge Plugin Directory" />
         <ReadOnlyTextField value={matterbridgeInfo.globalModulesDirectory} label="Global Module Directory" />
-      </FormControl>
+      </WindowForm>
     </div>
+  );
+};
+
+// Define the StyledFormControl component
+function WindowForm({ children }) {
+  return (
+    <FormControl
+      style={{
+        gap: '10px',
+        border: '1px solid #9e9e9e',
+        boxShadow: '5px 5px 10px #888',
+        padding: '10px',
+        borderRadius: '5px',
+        maxWidth: '500px',
+      }}
+    >
+      {children}
+    </FormControl>
   );
 };
 
 // Define the WindowTitle component
 function WindowTitle({ children }) {
   return (
-    <FormLabel style={{ fontSize: '12px', color: 'black', backgroundColor: '#9e9e9e', textAlign: 'center', padding: '5px', margin: '0px' }}>
+    <FormLabel style={{ fontSize: '14px', color: 'black', backgroundColor: '#9e9e9e', borderRadius: '5px', textAlign: 'center', padding: '5px', margin: '0px' }}>
       {children}
     </FormLabel>
   );
