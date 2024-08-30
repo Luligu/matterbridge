@@ -169,6 +169,10 @@ No hub or dedicated hardware needed.
 
 ### Somfy tahoma
 
+<a href="https://github.com/Luligu/matterbridge-somfy-tahoma">
+  <img src="https://github.com/Luligu/matterbridge/blob/dev/screenshot/somfy.svg" alt="Somfy plugin logo" width="100" />
+</a>
+
 [somy-tahoma plugin](https://github.com/Luligu/matterbridge-somfy-tahoma)
 
 Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose all Somfy Tahoma devices to Matter.
