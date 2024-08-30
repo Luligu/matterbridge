@@ -16,6 +16,20 @@ If you like this project and find it useful, please consider giving it a star on
 
 - please read this [Development guide lines](https://github.com/Luligu/matterbridge/blob/main/README-DEV.md)
 
+## [1.5.2] - 2024-08-30
+
+### Added
+
+- [frontend]: Added a confirmation message to remove plugin and disable plugin.
+
+### Changed
+
+- [package]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.5.1] - 2024-08-28
 
 ### Added

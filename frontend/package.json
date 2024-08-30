@@ -9,12 +9,12 @@
     "eject": "react-scripts eject",
     "clean": "rimraf ./build",
     "cleanBuild": "npm run clean && npm run build",
-    "deepClean": "rimraf package-lock.json ./dist ./node_modules",
+    "deepClean": "rimraf package-lock.json ./build ./node_modules",
     "deepCleanRebuild": "npm run deepClean && npm install && npm run build",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u && npm install & npm run cleanBuild",
     "install:react": "npm install react@latest react-dom@latest react-router-dom@latest react-scripts@latest react-table@latest",
-    "install:mui-material": "npm install @mui/material@latest @emotion/react@latest @emotion/styled@latest @mui/icons-material@latest",
+    "install:muimaterial": "npm install @mui/material@latest @emotion/react@latest @emotion/styled@latest @mui/icons-material@latest",
     "install:rjsf": "npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8 @rjsf/mui"
   },
   "eslintConfig": {
