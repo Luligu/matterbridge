@@ -170,7 +170,7 @@ No hub or dedicated hardware needed.
 ### Somfy tahoma
 
 <a href="https://github.com/Luligu/matterbridge-somfy-tahoma">
-  <img src="https://github.com/Luligu/matterbridge/blob/dev/screenshot/somfy.svg" alt="Somfy plugin logo" width="100" />
+  <img src="https://github.com/Luligu/matterbridge/blob/dev/screenshot/Somfy.png" alt="Somfy plugin logo" width="100" />
 </a>
 
 [somy-tahoma plugin](https://github.com/Luligu/matterbridge-somfy-tahoma)
