@@ -63,7 +63,7 @@ function Settings() {
         <h3>Matterbridge settings:</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridAutoFlow: 'row', gap: '20px', width: '100%', }}>
           <MatterbridgeSettings matterbridgeInfo={matterbridgeInfo} showSnackbarMessage={showSnackbarMessage}/>
-          {/* <MatterSettings matterbridgeInfo={matterbridgeInfo} showSnackbarMessage={showSnackbarMessage}/>*/}
+          <MatterSettings matterbridgeInfo={matterbridgeInfo} showSnackbarMessage={showSnackbarMessage}/>
           <MatterbridgeInfo matterbridgeInfo={matterbridgeInfo}/>
         </div>  
       </div>  
@@ -75,9 +75,7 @@ function Settings() {
 function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
   const [selectedBridgeMode, setSelectedBridgeMode] = useState('bridge'); 
   const [selectedMbLoggerLevel, setSelectedMbLoggerLevel] = useState('Info'); 
-  const [selectedMjLoggerLevel, setSelectedMjLoggerLevel] = useState('Info'); 
   const [logOnFileMb, setLogOnFileMb] = useState(false);
-  const [logOnFileMj, setLogOnFileMj] = useState(false);  
   const [password, setPassword] = useState('');
 
   useEffect(() => {
@@ -89,9 +87,6 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
 
     setLogOnFileMb(matterbridgeInfo.fileLogger);
 
-    setSelectedMjLoggerLevel(['Debug', 'Info', 'Notice', 'Warn', 'Error', 'Fatal'][matterbridgeInfo.matterLoggerLevel]);
-
-    setLogOnFileMj(matterbridgeInfo.matterFileLogger);
   }, [matterbridgeInfo]);
 
   // Define a function to handle change bridge mode 
@@ -116,20 +111,6 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
     sendCommandToMatterbridge('setmblogfile', event.target.checked ? 'true' : 'false');
   };
 
-  // Define a function to handle change debug level
-  const handleChangeMjLoggerLevel = (event) => {
-    console.log('handleChangeMjLoggerLevel called with value:', event.target.value);
-    setSelectedMjLoggerLevel(event.target.value);
-    sendCommandToMatterbridge('setmjloglevel', event.target.value);
-  };
-
-  // Define a function to handle change matter log file
-  const handleLogOnFileMjChange = (event) => {
-    console.log('handleLogOnFileMjChange called with value:', event.target.checked);
-    setLogOnFileMj(event.target.checked);
-    sendCommandToMatterbridge('setmjlogfile', event.target.checked ? 'true' : 'false');
-  };
-
   // Define a function to handle change password
   const handleChangePassword = (event) => {
     console.log('handleChangePassword called with value:', event.target.value);
@@ -140,6 +121,7 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '500px' }}>
       <FormControl style={{ gap: '10px', border: '1px solid #9e9e9e', boxShadow: '5px 5px 10px #888', padding: '10px', borderRadius: '4px', maxWidth: '500px' }}>
+        <WindowTitle>Matterbridge settings</WindowTitle>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-mode">Matterbridge mode:</FormLabel>
           <RadioGroup focused row name="mode-buttons-group" value={selectedBridgeMode} onChange={handleChangeBridgeMode}>
@@ -159,7 +141,7 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
           </Select>
           <FormControlLabel style={{padding: '0px', margin: '0px', color: 'rgba(0, 0, 0, 0.87)'}} control={<Checkbox checked={logOnFileMb} onChange={handleLogOnFileMbChange} name="logOnFileMb" />} label="Log on file:" labelPlacement="start"/>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+        {/* <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="mjdebug-info">Matter logger level:</FormLabel>
           <Select style={{ height: '30px' }} labelId="select-mjlevel" id="mjdebug-level" value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
             <MenuItem value='Debug'>Debug</MenuItem>
@@ -170,9 +152,9 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
             <MenuItem value='Fatal'>Fatal</MenuItem>
           </Select>
           <FormControlLabel style={{padding: '0px', margin: '0px', color: 'rgba(0, 0, 0, 0.87)'}} control={<Checkbox checked={logOnFileMj} onChange={handleLogOnFileMjChange} name="logOnFileMj" />} label="Log on file:" labelPlacement="start"/>
-        </div>
+        </div>*/}
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="mjdebug-info">Frontend password:</FormLabel>
+          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="mb-password">Frontend password:</FormLabel>
           <TextField value={password} onChange={handleChangePassword} size="small" id="matterbridgePassword" type="password" autoComplete="current-password" variant="outlined" 
             style={{ height: '30px', marginTop: '5px' }} InputProps={{
               style: {
@@ -186,7 +168,6 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
   );
 }
 
-/*
 function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
   const [selectedMjLoggerLevel, setSelectedMjLoggerLevel] = useState('Info'); 
   const [logOnFileMj, setLogOnFileMj] = useState(false);  
@@ -243,6 +224,7 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '500px' }}>
       <FormControl style={{ gap: '10px', border: '1px solid #9e9e9e', boxShadow: '5px 5px 10px #888', padding: '10px', borderRadius: '4px', maxWidth: '500px' }}>
+        <WindowTitle>Matter settings</WindowTitle>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="mjdebug-info">Matter logger level:</FormLabel>
           <Select style={{ height: '30px' }} labelId="select-mjlevel" id="mjdebug-level" value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
@@ -257,7 +239,7 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Mdns interface:</FormLabel>
-          <TextField value={mdnsInterface} onChange={handleChangeMdnsInterface} size="small" variant="outlined" 
+          <TextField disabled value={mdnsInterface} onChange={handleChangeMdnsInterface} size="small" variant="outlined" 
             style={{ height: '30px', marginTop: '5px' }} InputProps={{
               style: {
                 height: '30px',
@@ -267,7 +249,7 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Ipv4 address:</FormLabel>
-          <TextField value={mdnsInterface} onChange={handleChangeIpv4Address} size="small" variant="outlined" 
+          <TextField disabled value={ipv4Address} onChange={handleChangeIpv4Address} size="small" variant="outlined" 
             style={{ height: '30px', marginTop: '5px' }} InputProps={{
               style: {
                 height: '30px',
@@ -277,7 +259,7 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Ipv6 address:</FormLabel>
-          <TextField value={mdnsInterface} onChange={handleChangeIpv6Address} size="small" variant="outlined" 
+          <TextField disabled value={ipv6Address} onChange={handleChangeIpv6Address} size="small" variant="outlined" 
             style={{ height: '30px', marginTop: '5px' }} InputProps={{
               style: {
                 height: '30px',
@@ -289,12 +271,12 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
     </div>
   );
 }
-*/
 
 function MatterbridgeInfo({ matterbridgeInfo }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '500px' }}>
       <FormControl style={{ gap: '10px', border: '1px solid #9e9e9e', boxShadow: '5px 5px 10px #888', padding: '10px', borderRadius: '4px', maxWidth: '500px' }}>
+        <WindowTitle>Matterbridge info</WindowTitle>
         <ReadOnlyTextField value={matterbridgeInfo.matterbridgeVersion} label="Current Version" />
         <ReadOnlyTextField value={matterbridgeInfo.matterbridgeLatestVersion} label="Latest Version" />
         <ReadOnlyTextField value={matterbridgeInfo.homeDirectory} label="Home Directory" />
@@ -307,6 +289,16 @@ function MatterbridgeInfo({ matterbridgeInfo }) {
   );
 };
 
+// Define the WindowTitle component
+function WindowTitle({ children }) {
+  return (
+    <FormLabel style={{ fontSize: '12px', color: 'black', backgroundColor: '#9e9e9e', textAlign: 'center', padding: '5px', margin: '0px' }}>
+      {children}
+    </FormLabel>
+  );
+};
+
+// Use the WindowTitle component
 function ReadOnlyTextField({ value, label }) {
   return (
     <TextField

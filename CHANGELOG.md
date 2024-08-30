@@ -20,12 +20,14 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
-- [frontend]: Added a confirmation message to remove plugin and disable plugin.
+- [frontend]: Added a confirmation message for removing and disabling plugins.
+- [matterbridge cli]: Added the parameter `-sudo` to force the use of sudo when installing or updating a package (this is useful when the internal logic is not working in your setup).
+- [matterbridge cli]: Added the parameter `-nosudo` to force not using sudo when installing or updating a package (this is useful when the internal logic is not working in your setup).
 
 ### Changed
 
 - [package]: Update dependencies.
-- [spawn]: Modified the install / update function to add more info in the log.
+- [spawn]: Modified the install or update function to add more info in the log.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">

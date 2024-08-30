@@ -4,9 +4,9 @@
  * @file matterbridge.ts
  * @author Luca Liguori
  * @date 2023-12-29
- * @version 1.4.0
+ * @version 1.5.2
  *
- * Copyright 2023, 2024 Luca Liguori.
+ * Copyright 2023, 2024, 2025 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,8 @@ import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridge
 import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
 import { logInterfaces, wait, waiter, createZip } from './utils/utils.js';
 import { BaseRegisteredPlugin, MatterbridgeInformation, RegisteredDevice, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
+import { PluginManager } from './pluginManager.js';
+import { DeviceManager } from './deviceManager.js';
 
 // @project-chip/matter-node.js
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
@@ -56,8 +58,6 @@ import { getParameter, getIntParameter, hasParameter } from '@project-chip/matte
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
-import { PluginManager } from './pluginManager.js';
-import { DeviceManager } from './deviceManager.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -411,6 +411,8 @@ export class Matterbridge extends EventEmitter {
       - list:                  list the registered plugins
       - loginterfaces:         log the network interfaces (usefull for finding the name of the interface to use with -mdnsinterface option)
       - logstorage:            log the node storage
+      - sudo:                  force the use of sudo to install or update packages
+      - nosudo:                force not to use sudo to install or update packages
       - ssl:                   enable SSL for the frontend and WebSockerServer (certificates in .matterbridge/certs directory cert.pem, key.pem and ca.pem (optional))
       - add [plugin path]:     register the plugin from the given absolute or relative path
       - add [plugin name]:     register the globally installed plugin with the given name
