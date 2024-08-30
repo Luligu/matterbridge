@@ -42,6 +42,12 @@ The project is build on top of https://github.com/project-chip/matter.js.
 
 A special thank to Apollon77 for his incredible work.
 
+## Prerequisites
+
+## Prerequisites
+
+To run Matterbridge, you need either a [Node.js](https://nodejs.org/en/download/package-manager) environment or [Docker](https://docs.docker.com/get-started/get-docker/) installed on your system.
+
 ## Installation
 
 Follow these steps to install Matterbridge:
@@ -167,15 +173,15 @@ Matterbridge zigbee2mqtt is a matterbridge production-level plugin that expose a
 No hub or dedicated hardware needed.
 
 
+
 ### Somfy tahoma
 
 <a href="https://github.com/Luligu/matterbridge-somfy-tahoma">
   <img src="https://github.com/Luligu/matterbridge/blob/dev/screenshot/Somfy.png" alt="Somfy plugin logo" width="100" />
 </a>
 
-[somy-tahoma plugin](https://github.com/Luligu/matterbridge-somfy-tahoma)
+Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose the Somfy Tahoma screen devices to Matter.
 
-Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose all Somfy Tahoma devices to Matter.
 
 ### Accessory platform example
 
