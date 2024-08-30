@@ -2505,7 +2505,10 @@ export class Matterbridge extends EventEmitter {
       args.splice(0, args.length, '/c', argstring);
       command = 'cmd.exe';
     }
-    if (process.platform === 'linux' && command === 'npm' && !hasParameter('docker')) {
+    // Decide when using sudo on linux
+    // When you need sudo: Spawn stderr: npm error Error: EACCES: permission denied
+    // When you don't need sudo: Failed to start child process "npm install -g matterbridge-eve-door": spawn sudo ENOENT
+    if (hasParameter('sudo') || (process.platform === 'linux' && command === 'npm' && !hasParameter('docker') && !hasParameter('nosudo'))) {
       args.unshift(command);
       command = 'sudo';
     }
@@ -2516,39 +2519,42 @@ export class Matterbridge extends EventEmitter {
       });
 
       childProcess.on('error', (err) => {
-        this.log.error(`Failed to start child process: ${err.message}`);
-        reject(err); // Reject the promise on error
+        this.log.error(`Failed to start child process "${cmdLine}": ${err.message}`);
+        reject(err);
       });
 
       childProcess.on('close', (code, signal) => {
         this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', `child process closed with code ${code} and signal ${signal}`);
         if (code === 0) {
           if (cmdLine.startsWith('npm install -g')) this.log.notice(`${cmdLine.replace('npm install -g ', '')} installed correctly`);
+          this.log.debug(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
           resolve();
         } else {
-          this.log.error(`Child process stdio streams have closed with code ${code}`);
-          reject(new Error(`Child process stdio streams have closed with code  ${code}`));
+          this.log.error(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
+          reject(new Error(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`));
         }
       });
 
       childProcess.on('exit', (code, signal) => {
         this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', `child process exited with code ${code} and signal ${signal}`);
         if (code === 0) {
+          this.log.debug(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`);
           resolve();
         } else {
-          this.log.error(`Child process exited with code ${code} and signal ${signal}`);
-          reject(new Error(`Child process exited with code ${code} and signal ${signal}`));
+          this.log.error(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`);
+          reject(new Error(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`));
         }
       });
 
       childProcess.on('disconnect', () => {
-        this.log.debug('Child process has been disconnected from the parent');
+        this.log.debug(`Child process "${cmdLine}" has been disconnected from the parent`);
         resolve();
       });
 
       if (childProcess.stdout) {
         childProcess.stdout.on('data', (data: Buffer) => {
           const message = data.toString().trim();
+          this.log.debug(`Spawn stdout: ${message}`);
           this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', message);
         });
       }
@@ -2556,6 +2562,7 @@ export class Matterbridge extends EventEmitter {
       if (childProcess.stderr) {
         childProcess.stderr.on('data', (data: Buffer) => {
           const message = data.toString().trim();
+          this.log.debug(`Spawn stderr: ${message}`);
           this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', message);
         });
       }
