@@ -44,8 +44,6 @@ A special thank to Apollon77 for his incredible work.
 
 ## Prerequisites
 
-## Prerequisites
-
 To run Matterbridge, you need either a [Node.js](https://nodejs.org/en/download/package-manager) environment or [Docker](https://docs.docker.com/get-started/get-docker/) installed on your system.
 
 ## Installation
