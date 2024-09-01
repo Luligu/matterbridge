@@ -2709,7 +2709,7 @@ export class Matterbridge extends EventEmitter {
       // Listen on the specified port
       this.httpServer.listen(port, () => {
         if (this.systemInformation.ipv4Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
-        if (this.systemInformation.ipv6Address !== '') this.log.debug(`The frontend http server is listening on ${UNDERLINE}http://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
+        if (this.systemInformation.ipv6Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
       });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2759,7 +2759,7 @@ export class Matterbridge extends EventEmitter {
       // Listen on the specified port
       this.httpsServer.listen(port, () => {
         if (this.systemInformation.ipv4Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
-        if (this.systemInformation.ipv6Address !== '') this.log.debug(`The frontend https server is listening on ${UNDERLINE}https://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
+        if (this.systemInformation.ipv6Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
       });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

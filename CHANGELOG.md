@@ -6,6 +6,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [1.5.3] - 2024-09-02
 
+### Added
+
+- [frontend]: Added mattermdnsinterface, matteripv4address and matteripv6address to the matter settings. If no parameters are added, Matterbridge will use the settings from the frontend that are saved. The default is all interfaces.
+
 ### Changed
 
 - [package]: Update dependencies.
