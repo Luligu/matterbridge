@@ -116,6 +116,9 @@ export class Matterbridge extends EventEmitter {
     fileLogger: false,
     matterLoggerLevel: Level.INFO,
     matterFileLogger: false,
+    mattermdnsinterface: undefined,
+    matteripv4address: undefined,
+    matteripv6address: undefined,
     restartRequired: false,
     refreshRequired: false,
   };
@@ -169,6 +172,8 @@ export class Matterbridge extends EventEmitter {
 
   // Matter
   private mdnsInterface: string | undefined; // matter server mdnsInterface: e.g. 'eth0' or 'wlan0' or 'WiFi'
+  private ipv4address: string | undefined; // matter commissioning server listeningAddressIpv4
+  private ipv6address: string | undefined; // matter commissioning server listeningAddressIpv6
   private port = 5540; // first commissioning server port
   private passcode?: number; // first commissioning server passcode
   private discriminator?: number; // first commissioning server discriminator
@@ -239,8 +244,6 @@ export class Matterbridge extends EventEmitter {
    * @returns A Promise that resolves when the initialization is complete.
    */
   public async initialize() {
-    // Set the interface to use for the matter server mdnsInterface
-    this.mdnsInterface = getParameter('mdnsinterface');
     // Set the first port to use for the commissioning server (will be incremented in childbridge mode)
     this.port = getIntParameter('port') ?? 5540;
     // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode)
@@ -333,6 +336,30 @@ export class Matterbridge extends EventEmitter {
       });
     }
     this.log.debug(`Matter logLevel: ${Logger.defaultLogLevel} fileLoger: ${this.matterbridgeInformation.matterFileLogger}.`);
+
+    // Set the interface to use for the matter server mdnsInterface
+    if (hasParameter('mdnsinterface')) {
+      this.mdnsInterface = getParameter('mdnsinterface');
+    } else {
+      this.mdnsInterface = await this.nodeContext?.get<string>('mattermdnsinterface', undefined);
+      if (this.mdnsInterface === '') this.mdnsInterface = undefined;
+    }
+
+    // Set the listeningAddressIpv4 for the matter commissioning server
+    if (hasParameter('ipv4address')) {
+      this.ipv4address = getParameter('ipv4address');
+    } else {
+      this.ipv4address = await this.nodeContext?.get<string>('matteripv4address', undefined);
+      if (this.ipv4address === '') this.ipv4address = undefined;
+    }
+
+    // Set the listeningAddressIpv6 for the matter commissioning server
+    if (hasParameter('ipv6address')) {
+      this.ipv6address = getParameter('ipv6address');
+    } else {
+      this.ipv6address = await this.nodeContext?.get<string>('matteripv6address', undefined);
+      if (this.ipv6address === '') this.ipv6address = undefined;
+    }
 
     // Initialize PluginManager
     this.plugins = new PluginManager(this);
@@ -2045,10 +2072,41 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with softwareVersion ${softwareVersion} softwareVersionString ${softwareVersionString}`);
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with hardwareVersion ${hardwareVersion} hardwareVersionString ${hardwareVersionString}`);
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with nodeLabel '${productName}' port ${this.port} passcode ${this.passcode} discriminator ${this.discriminator}`);
+
+    // Validate ipv4address
+    if (this.ipv4address) {
+      const networkInterfaces = os.networkInterfaces();
+      const availableAddresses = Object.values(networkInterfaces)
+        .flat()
+        .filter((iface): iface is os.NetworkInterfaceInfo => iface !== undefined && iface.family === 'IPv4' && !iface.internal)
+        .map((iface) => iface.address);
+      if (!availableAddresses.includes(this.ipv4address)) {
+        this.log.error(`Invalid ipv4address: ${this.ipv4address}. Available addresses are: ${availableAddresses.join(', ')}. Using all available addresses.`);
+        this.mdnsInterface = undefined;
+      } else {
+        this.log.info(`Using ipv4address '${this.ipv4address}' for the Matter commissioning server.`);
+      }
+    }
+
+    // Validate ipv6address
+    if (this.ipv6address) {
+      const networkInterfaces = os.networkInterfaces();
+      const availableAddresses = Object.values(networkInterfaces)
+        .flat()
+        .filter((iface): iface is os.NetworkInterfaceInfo => iface !== undefined && iface.family === 'IPv6' && !iface.internal)
+        .map((iface) => iface.address);
+      if (!availableAddresses.includes(this.ipv6address)) {
+        this.log.error(`Invalid ipv6address: ${this.ipv6address}. Available addresses are: ${availableAddresses.join(', ')}. Using all available addresses.`);
+        this.mdnsInterface = undefined;
+      } else {
+        this.log.info(`Using ipv6address '${this.ipv6address}' for the Matter commissioning server.`);
+      }
+    }
+
     const commissioningServer = new CommissioningServer({
       port: this.port++,
-      listeningAddressIpv4: getParameter('ipv4address'),
-      listeningAddressIpv6: getParameter('ipv6address'),
+      listeningAddressIpv4: this.ipv4address,
+      listeningAddressIpv6: this.ipv6address,
       passcode: this.passcode,
       discriminator: this.discriminator,
       deviceName,
@@ -2795,6 +2853,9 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.restartMode = this.restartMode;
       this.matterbridgeInformation.loggerLevel = this.log.logLevel;
       this.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
+      this.matterbridgeInformation.mattermdnsinterface = (await this.nodeContext?.get<string>('mattermdnsinterface', '')) || '';
+      this.matterbridgeInformation.matteripv4address = (await this.nodeContext?.get<string>('matteripv4address', '')) || '';
+      this.matterbridgeInformation.matteripv6address = (await this.nodeContext?.get<string>('matteripv6address', '')) || '';
       this.matterbridgeInformation.matterbridgePaired = this.matterbridgePaired;
       this.matterbridgeInformation.matterbridgeConnected = this.matterbridgeConnected;
       this.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridgeQrPairingCode;
@@ -3101,6 +3162,36 @@ export class Matterbridge extends EventEmitter {
           Logger.defaultLogLevel = Level.FATAL;
         }
         await this.nodeContext?.set('matterLogLevel', Logger.defaultLogLevel);
+        res.json({ message: 'Command received' });
+        return;
+      }
+
+      // Handle the command setmdnsinterface from Settings
+      if (command === 'setmdnsinterface') {
+        param = param.slice(1, -1); // Remove the first and last characters *mdns*
+        this.matterbridgeInformation.mattermdnsinterface = param;
+        this.log.debug('Matter.js mdns interface:', param === '' ? 'All interfaces' : param);
+        await this.nodeContext?.set('mattermdnsinterface', param);
+        res.json({ message: 'Command received' });
+        return;
+      }
+
+      // Handle the command setipv4address from Settings
+      if (command === 'setipv4address') {
+        param = param.slice(1, -1); // Remove the first and last characters *ip*
+        this.matterbridgeInformation.matteripv4address = param;
+        this.log.debug('Matter.js ipv4 address:', param === '' ? 'All ipv4 addresses' : param);
+        await this.nodeContext?.set('matteripv4address', param);
+        res.json({ message: 'Command received' });
+        return;
+      }
+
+      // Handle the command setipv6address from Settings
+      if (command === 'setipv6address') {
+        param = param.slice(1, -1); // Remove the first and last characters *ip*
+        this.matterbridgeInformation.matteripv6address = param;
+        this.log.debug('Matter.js ipv6 address:', param === '' ? 'All ipv6 addresses' : param);
+        await this.nodeContext?.set('matteripv6address', param);
         res.json({ message: 'Command received' });
         return;
       }
