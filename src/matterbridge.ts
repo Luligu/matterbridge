@@ -1926,7 +1926,7 @@ export class Matterbridge extends EventEmitter {
       }
     }
     const matterServer = new MatterServer(storageManager, { mdnsInterface: this.mdnsInterface });
-    this.log.debug('Created matter server');
+    this.log.debug(`Created matter server with mdnsInterface: ${this.mdnsInterface ?? 'all available interfaces'}`);
     return matterServer;
   }
 
