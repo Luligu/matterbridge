@@ -29,9 +29,9 @@ export * from '@project-chip/matter-node.js/device';
 export * from '@project-chip/matter-node.js/cluster';
 export * from '@project-chip/matter-node.js/log';
 export * from '@project-chip/matter-node.js/datatype';
-export * from '@project-chip/matter.js/util';
-export * from '@project-chip/matter.js/schema';
-export * from '@project-chip/matter.js/tlv';
+export * from '@project-chip/matter-node.js/util';
+export * from '@project-chip/matter-node.js/schema';
+export * from '@project-chip/matter-node.js/tlv';
 
 export * from './matterbridge.js';
 export * from './matterbridgeDevice.js';
@@ -48,6 +48,7 @@ export * from './utils/colorUtils.js';
 */
 
 // TODO Refactor all plugins to import from matterbridge/cluster and remove in september 2024
+/*
 export * from './cluster/AirQualityCluster.js';
 export * from './cluster/BooleanStateConfigurationCluster.js';
 export * from './cluster/CarbonDioxideConcentrationMeasurementCluster.js';
@@ -70,6 +71,7 @@ export * from './cluster/PowerTopologyCluster.js';
 export * from './cluster/RadonConcentrationMeasurementCluster.js';
 export * from './cluster/SmokeCoAlarmCluster.js';
 export * from './cluster/TvocCluster.js';
+*/
 
 const cli = '\u001B[32m';
 const er = '\u001B[38;5;9m';

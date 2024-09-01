@@ -43,12 +43,11 @@ import {
   LevelControl,
   ModeSelect,
   OnOff,
-  Scenes,
   Switch,
   SwitchCluster,
   Thermostat,
   ThreadNetworkDiagnostics,
-  TimeSync,
+  TimeSynchronization,
   WindowCovering,
   WindowCoveringCluster,
 } from '@project-chip/matter-node.js/cluster';
@@ -70,18 +69,18 @@ describe('Matterbridge device serialize/deserialize', () => {
     device.createDefaultBasicInformationClusterServer('Name', 'Serial', 1, 'VendorName', 1, 'ProductName', 1, '1.0.0', 1, '1.0.0');
     device.createDefaultIdentifyClusterServer();
     device.createDefaultGroupsClusterServer();
-    device.createDefaultScenesClusterServer();
+    // device.createDefaultScenesClusterServer();
     device.createDefaultOnOffClusterServer();
     expect(device.getDeviceTypes()).toHaveLength(1);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
-    expect(device.getAllClusterServers()).toHaveLength(8);
+    expect(device.getAllClusterServers()).toHaveLength(7);
     const serialized = device.serialize('matterbridge-test');
     expect(serialized).toBeDefined();
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const deserialized = MatterbridgeDevice.deserialize(serialized!);
     expect(deserialized).toBeDefined();
     expect(deserialized.getDeviceTypes()).toHaveLength(1);
-    expect(deserialized.getAllClusterServers()).toHaveLength(8);
+    expect(deserialized.getAllClusterServers()).toHaveLength(7);
     expect(() => deserialized.verifyRequiredClusters()).not.toThrow();
   });
 
@@ -91,26 +90,26 @@ describe('Matterbridge device serialize/deserialize', () => {
     device.createDefaultBridgedDeviceBasicInformationClusterServer('Name', 'Serial', 1, 'VendorName', 'ProductName', 1, '1.0.0', 1, '1.0.0');
     device.createDefaultIdentifyClusterServer();
     device.createDefaultGroupsClusterServer();
-    device.createDefaultScenesClusterServer();
+    // device.createDefaultScenesClusterServer();
     device.createDefaultOnOffClusterServer();
     expect(device.getDeviceTypes()).toHaveLength(1);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
-    expect(device.getAllClusterServers()).toHaveLength(6);
+    expect(device.getAllClusterServers()).toHaveLength(5);
     const serialized = device.serialize('matterbridge-test');
     expect(serialized).toBeDefined();
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const deserialized = MatterbridgeDevice.deserialize(serialized!);
     expect(deserialized).toBeDefined();
     expect(deserialized.getDeviceTypes()).toHaveLength(1);
-    expect(deserialized.getAllClusterServers()).toHaveLength(6);
+    expect(deserialized.getAllClusterServers()).toHaveLength(5);
     expect(() => deserialized.verifyRequiredClusters()).not.toThrow();
   });
 });
 
 describe('Matterbridge device', () => {
-  function invokeCommands(cluster: ClusterServerObj<Attributes, Events> | undefined): void {
-    // console.log('Identify cluster commands:', (identifyCluster as any)._commands);
-    const commands = (cluster as any)._commands as object;
+  function invokeCommands(cluster: ClusterServerObj | undefined): void {
+    // console.log('Cluster commands:', cluster);
+    const commands = (cluster as any).commands as object;
     Object.entries(commands).forEach(([key, value]) => {
       // console.log(`Key "${key}": ${value}`, typeof value.handler, value.handler);
       if (typeof value.handler === 'function') value.handler({});
@@ -576,7 +575,7 @@ describe('Matterbridge device', () => {
     invokeCommands(device.getClusterServerById(SmokeCoAlarm.Complete.id));
     invokeCommands(device.getClusterServerById(ModeSelect.Complete.id));
     invokeCommands(device.getClusterServerById(Switch.Complete.id));
-    invokeCommands(device.getClusterServerById(TimeSync.Complete.id));
+    invokeCommands(device.getClusterServerById(TimeSynchronization.Complete.id));
     invokeCommands(device.getClusterServerById(DeviceEnergyManagement.Complete.id));
     invokeCommands(device.getClusterServerById(ThreadNetworkDiagnostics.Complete.id));
   });

@@ -40,7 +40,6 @@ import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW,
 
 // Matterbridge
 import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
-import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
 import { logInterfaces, wait, waiter, createZip } from './utils/utils.js';
 import { BaseRegisteredPlugin, MatterbridgeInformation, RegisteredDevice, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
@@ -48,7 +47,18 @@ import { DeviceManager } from './deviceManager.js';
 
 // @project-chip/matter-node.js
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
-import { BasicInformationCluster, ClusterServer, FixedLabelCluster, GeneralCommissioning, PowerSourceCluster, SwitchCluster, ThreadNetworkDiagnosticsCluster, getClusterNameById } from '@project-chip/matter-node.js/cluster';
+import {
+  BasicInformationCluster,
+  BridgedDeviceBasicInformation,
+  BridgedDeviceBasicInformationCluster,
+  ClusterServer,
+  FixedLabelCluster,
+  GeneralCommissioning,
+  PowerSourceCluster,
+  SwitchCluster,
+  ThreadNetworkDiagnosticsCluster,
+  getClusterNameById,
+} from '@project-chip/matter-node.js/cluster';
 import { DeviceTypeId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter-node.js/device';
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
@@ -58,6 +68,7 @@ import { getParameter, getIntParameter, hasParameter } from '@project-chip/matte
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
+import { Specification } from '@project-chip/matter-node.js/model';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -1685,7 +1696,7 @@ export class Matterbridge extends EventEmitter {
       } as NodeCommissioningOptions;
       this.log.info('Commissioning with options:', options);
       const nodeId = await this.commissioningController.commissionNode(options);
-      this.log.info(`Commissioning successfully done with nodeId: ${nodeId.nodeId}`);
+      this.log.info(`Commissioning successfully done with nodeId: ${nodeId}`);
       this.log.info('ActiveSessionInformation:', this.commissioningController.getActiveSessionInformation());
     } // (hasParameter('pairingcode'))
 
@@ -1987,6 +1998,8 @@ export class Matterbridge extends EventEmitter {
           hardwareVersionString: await context.get<string>('hardwareVersionString', '1.0.0'),
           reachable: true,
           capabilityMinima: { caseSessionsPerFabric: 3, subscriptionsPerFabric: 3 },
+          specificationVersion: Specification.SPECIFICATION_VERSION,
+          maxPathsPerInvoke: 1,
         },
         {},
         {
@@ -3073,7 +3086,7 @@ export class Matterbridge extends EventEmitter {
 
       // Handle the command setmbloglevel from Settings
       if (command === 'setmjloglevel') {
-        this.log.debug('Matter.js log level::', param);
+        this.log.debug('Matter.js log level:', param);
         if (param === 'Debug') {
           Logger.defaultLogLevel = Level.DEBUG;
         } else if (param === 'Info') {

@@ -6,7 +6,7 @@
  * @date 2023-12-29
  * @version 1.2.0
  *
- * Copyright 2023, 2024 Luca Liguori.
+ * Copyright 2023, 2024, 2025 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import {
   BasicInformationCluster,
   BooleanState,
   BooleanStateCluster,
+  BridgedDeviceBasicInformation,
+  BridgedDeviceBasicInformationCluster,
   ClusterServer,
   ClusterServerHandlers,
   ColorControl,
@@ -58,9 +60,6 @@ import {
   PressureMeasurementCluster,
   RelativeHumidityMeasurement,
   RelativeHumidityMeasurementCluster,
-  Scenes,
-  ScenesCluster,
-  ScenesClusterHandler,
   Switch,
   SwitchCluster,
   TemperatureMeasurement,
@@ -69,23 +68,21 @@ import {
   ThermostatCluster,
   ThreadNetworkDiagnostics,
   ThreadNetworkDiagnosticsCluster,
-  TimeSync,
-  TimeSyncCluster,
+  TimeSynchronization,
+  TimeSynchronizationCluster,
   WindowCovering,
   WindowCoveringCluster,
   getClusterNameById,
 } from '@project-chip/matter-node.js/cluster';
-import { ClusterId, EndpointNumber, GroupId, VendorId } from '@project-chip/matter-node.js/datatype';
+import { Specification } from '@project-chip/matter-node.js/model';
+import { ClusterId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Device, DeviceClasses, DeviceTypeDefinition, Endpoint, EndpointOptions } from '@project-chip/matter-node.js/device';
 import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
 
-import { EveHistory, MatterHistory } from 'matter-history';
-import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from 'node-ansi-logger';
-
+// Custom cluster types
 import { AirQuality, AirQualityCluster } from './cluster/AirQualityCluster.js';
-import { createHash } from 'crypto';
 import { TvocMeasurement, TvocMeasurementCluster } from './cluster/TvocCluster.js';
-import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
+// import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
 import { PowerTopology, PowerTopologyCluster } from './cluster/PowerTopologyCluster.js';
 import { ElectricalPowerMeasurement, ElectricalPowerMeasurementCluster } from './cluster/ElectricalPowerMeasurementCluster.js';
 import { ElectricalEnergyMeasurement, ElectricalEnergyMeasurementCluster } from './cluster/ElectricalEnergyMeasurementCluster.js';
@@ -105,6 +102,12 @@ import { Pm10ConcentrationMeasurement, Pm10ConcentrationMeasurementCluster } fro
 import { RadonConcentrationMeasurement, RadonConcentrationMeasurementCluster } from './cluster/RadonConcentrationMeasurementCluster.js';
 import { NitrogenDioxideConcentrationMeasurement, NitrogenDioxideConcentrationMeasurementCluster } from './cluster/NitrogenDioxideConcentrationMeasurementCluster.js';
 import { FormaldehydeConcentrationMeasurement, FormaldehydeConcentrationMeasurementCluster } from './cluster/FormaldehydeConcentrationMeasurementCluster.js';
+
+import { EveHistory, MatterHistory } from 'matter-history';
+
+import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from 'node-ansi-logger';
+
+import { createHash } from 'crypto';
 
 type MakeMandatory<T> = Exclude<T, undefined>;
 
@@ -255,7 +258,7 @@ export const onOffSwitch = DeviceTypeDefinition({
   code: 0x0103,
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, Scenes.Cluster.id, OnOff.Cluster.id],
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* Scenes.Cluster.id,*/ OnOff.Cluster.id],
   optionalServerClusters: [LevelControl.Cluster.id, ColorControl.Cluster.id],
 });
 
@@ -264,7 +267,7 @@ export const dimmableSwitch = DeviceTypeDefinition({
   code: 0x0104,
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, Scenes.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id],
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* Scenes.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id],
   optionalServerClusters: [ColorControl.Cluster.id],
 });
 
@@ -273,7 +276,7 @@ export const colorTemperatureSwitch = DeviceTypeDefinition({
   code: 0x0105,
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, Scenes.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* Scenes.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
   optionalServerClusters: [],
 });
 
@@ -533,14 +536,14 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   addClusterServerFromList(endpoint: Endpoint, includeServerList: ClusterId[]): Endpoint {
     if (includeServerList.includes(Identify.Cluster.id)) endpoint.addClusterServer(this.getDefaultIdentifyClusterServer());
     if (includeServerList.includes(Groups.Cluster.id)) endpoint.addClusterServer(this.getDefaultGroupsClusterServer());
-    if (includeServerList.includes(Scenes.Cluster.id)) endpoint.addClusterServer(this.getDefaultScenesClusterServer());
+    // if (includeServerList.includes(ScenesManagement.Cluster.id)) endpoint.addClusterServer(this.getDefaultScenesClusterServer());
     if (includeServerList.includes(OnOff.Cluster.id)) endpoint.addClusterServer(this.getDefaultOnOffClusterServer());
     if (includeServerList.includes(LevelControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultLevelControlClusterServer());
     if (includeServerList.includes(ColorControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultCompleteColorControlClusterServer());
     if (includeServerList.includes(Switch.Cluster.id)) endpoint.addClusterServer(this.getDefaultSwitchClusterServer());
     if (includeServerList.includes(DoorLock.Cluster.id)) endpoint.addClusterServer(this.getDefaultDoorLockClusterServer());
     if (includeServerList.includes(Thermostat.Cluster.id)) endpoint.addClusterServer(this.getDefaultThermostatClusterServer());
-    if (includeServerList.includes(TimeSync.Cluster.id)) endpoint.addClusterServer(this.getDefaultTimeSyncClusterServer());
+    if (includeServerList.includes(TimeSynchronization.Cluster.id)) endpoint.addClusterServer(this.getDefaultTimeSyncClusterServer());
     if (includeServerList.includes(WindowCovering.Cluster.id)) endpoint.addClusterServer(this.getDefaultWindowCoveringClusterServer());
     if (includeServerList.includes(TemperatureMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultTemperatureMeasurementClusterServer());
     if (includeServerList.includes(RelativeHumidityMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultRelativeHumidityMeasurementClusterServer());
@@ -552,7 +555,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(IlluminanceMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer());
     if (includeServerList.includes(PowerSource.Cluster.id)) endpoint.addClusterServer(this.getDefaultPowerSourceWiredClusterServer());
     if (includeServerList.includes(EveHistory.Cluster.id)) endpoint.addClusterServer(MatterHistory.getEveHistoryClusterServer());
-    // if (includeServerList.includes(ElectricalMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalMeasurementClusterServer());
     if (includeServerList.includes(PowerTopology.Cluster.id)) endpoint.addClusterServer(this.getDefaultPowerTopologyClusterServer());
     if (includeServerList.includes(ElectricalPowerMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalPowerMeasurementClusterServer());
     if (includeServerList.includes(ElectricalEnergyMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalEnergyMeasurementClusterServer());
@@ -740,7 +742,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       serialNumber: this.serialNumber,
       deviceName: this.deviceName,
       uniqueId: this.uniqueId,
-      productId: cluster.attributes.productId?.getLocal(),
       productName: cluster.attributes.productName?.getLocal(),
       vendorId: cluster.attributes.vendorId?.getLocal(),
       vendorName: cluster.attributes.vendorName?.getLocal(),
@@ -787,482 +788,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     }
     return device;
   }
-
-  /**
-   * Returns a default static EveHistoryClusterServer object with the specified voltage, current, power, and consumption values.
-   * This shows up in HA as a static sensor!
-   * @deprecated This method is deprecated and will be removed in a future version. Use MatterHistory.
-   * @param voltage - The voltage value (default: 0).
-   * @param current - The current value (default: 0).
-   * @param power - The power value (default: 0).
-   * @param consumption - The consumption value (default: 0).
-   * @returns The default static EveHistoryClusterServer object.
-   */
-  /*
-  getDefaultStaticEveHistoryClusterServer(voltage = 0, current = 0, power = 0, consumption = 0) {
-    return ClusterServer(
-      EveHistoryCluster.with(EveHistory.Feature.EveEnergy),
-      {
-        // Dynamic attributes
-        ConfigDataGet: Uint8Array.fromHex(''),
-        ConfigDataSet: Uint8Array.fromHex(''),
-        HistoryStatus: Uint8Array.fromHex(''),
-        HistoryEntries: Uint8Array.fromHex(''),
-        HistoryRequest: Uint8Array.fromHex(''),
-        HistorySetTime: Uint8Array.fromHex(''),
-        LastEvent: 0,
-        ResetTotal: 0,
-        // Normal static attributes
-        Voltage: voltage,
-        Current: current,
-        Consumption: power,
-        TotalConsumption: consumption,
-        EnergyUnknown: 1,
-        ChildLock: false,
-        RLoc: 46080,
-      },
-      {},
-      {},
-    );
-  }
-  */
-
-  /**
-   * Create a default static EveHistoryClusterServer object with the specified voltage, current, power, and consumption values.
-   * This shows up in HA as a static sensor!
-   * @deprecated This method is deprecated and will be removed in a future version. Use MatterHistory.
-   * @param voltage - The voltage value (default: 0).
-   * @param current - The current value (default: 0).
-   * @param power - The power value (default: 0).
-   * @param consumption - The consumption value (default: 0).
-   * @returns The default static EveHistoryClusterServer object.
-   */
-  /*
-  createDefaultStaticEveHistoryClusterServer(voltage = 0, current = 0, power = 0, consumption = 0) {
-    this.addClusterServer(this.getDefaultStaticEveHistoryClusterServer(voltage, current, power, consumption));
-  }
-  */
-
-  /**
-   * Creates a room Eve History Cluster Server.
-   * @deprecated This method is deprecated and will be removed in a future version. Use MatterHistory.
-   *
-   * @param history - The MatterHistory object.
-   * @param log - The AnsiLogger object.
-   */
-  /*
-  createRoomEveHistoryClusterServer(history: MatterHistory, log: AnsiLogger) {
-    history.setMatterHystoryType('room', this.serialNumber);
-    this.addClusterServer(
-      ClusterServer(
-        EveHistoryCluster.with(EveHistory.Feature.EveRoom),
-        {
-          // Dynamic attributes
-          ConfigDataGet: Uint8Array.fromHex(''),
-          ConfigDataSet: Uint8Array.fromHex(''),
-          HistoryStatus: Uint8Array.fromHex(''),
-          HistoryEntries: Uint8Array.fromHex(''),
-          HistoryRequest: Uint8Array.fromHex(''),
-          HistorySetTime: Uint8Array.fromHex(''),
-          // Normal attributes
-          TemperatureDisplayUnits: TemperatureDisplayUnits.CELSIUS,
-          RLoc: 46080,
-        },
-        {
-          ConfigDataGetAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`ConfigDataGetAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetConfigData(isFabricFiltered);
-          },
-
-          ConfigDataSetAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`ConfigDataSetAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return Uint8Array.fromHex('');
-          },
-          ConfigDataSetAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
-            log.debug(`ConfigDataSetAttributeSetter [${value.toHex()}] ${attributes.ConfigDataSet} endpoint: ${endpoint?.name} session: ${session?.name}`);
-            return history.OnSetConfigData(value);
-          },
-
-          HistoryStatusAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistoryStatusAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetHistoryStatus(isFabricFiltered);
-          },
-
-          HistoryEntriesAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistoryEntriesAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetHistoryEntries();
-          },
-
-          HistorySetTimeAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistorySetTimeAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return Uint8Array.fromHex('');
-          },
-          HistorySetTimeAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
-            log.debug(`HistorySetTimeAttributeSetter ${value.toHex()} ${attributes.HistorySetTime} endpoint: ${endpoint?.name} session: ${session?.name}`);
-            return history.OnSetHistorySetTime(value);
-          },
-
-          HistoryRequestAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistoryRequestAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return Uint8Array.fromHex('');
-          },
-          HistoryRequestAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
-            log.debug(`HistoryRequestAttributeSetter ${value.toHex()} ${attributes.HistoryRequest} endpoint: ${endpoint?.name} session: ${session?.name}`);
-            return history.OnSetHistoryRequest(value);
-          },
-        },
-        {},
-      ),
-    );
-  }
-  */
-
-  /**
-   * Creates a Weather Eve History Cluster Server.
-   * @deprecated This method is deprecated and will be removed in a future version. Use MatterHistory.
-   *
-   * @param history - The MatterHistory instance.
-   * @param log - The AnsiLogger instance.
-   */
-  /*
-  createWeatherEveHistoryClusterServer(history: MatterHistory, log: AnsiLogger) {
-    history.setMatterHystoryType('weather', this.serialNumber);
-    this.addClusterServer(
-      ClusterServer(
-        EveHistoryCluster.with(EveHistory.Feature.EveWeather),
-        {
-          // Dynamic attributes
-          ConfigDataGet: Uint8Array.fromHex(''),
-          ConfigDataSet: Uint8Array.fromHex(''),
-          HistoryStatus: Uint8Array.fromHex(''),
-          HistoryEntries: Uint8Array.fromHex(''),
-          HistoryRequest: Uint8Array.fromHex(''),
-          HistorySetTime: Uint8Array.fromHex(''),
-          // Normal attributes
-          Elevation: 0,
-          AirPressure: 1000,
-          WeatherTrend: WeatherTrend.SUN,
-          TemperatureDisplayUnits: TemperatureDisplayUnits.CELSIUS,
-          RLoc: 46080,
-        },
-        {
-          ConfigDataGetAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`ConfigDataGetAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetConfigData(isFabricFiltered);
-          },
-
-          ConfigDataSetAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`ConfigDataSetAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return Uint8Array.fromHex('');
-          },
-          ConfigDataSetAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
-            log.debug(`ConfigDataSetAttributeSetter [${value.toHex()}] ${attributes.ConfigDataSet} endpoint: ${endpoint?.name} session: ${session?.name}`);
-            return history.OnSetConfigData(value);
-          },
-
-          HistoryStatusAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistoryStatusAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetHistoryStatus(isFabricFiltered);
-          },
-
-          HistoryEntriesAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistoryEntriesAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetHistoryEntries();
-          },
-
-          HistorySetTimeAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistorySetTimeAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return Uint8Array.fromHex('');
-          },
-          HistorySetTimeAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
-            log.debug(`HistorySetTimeAttributeSetter ${value.toHex()} ${attributes.HistorySetTime} endpoint: ${endpoint?.name} session: ${session?.name}`);
-            return history.OnSetHistorySetTime(value);
-          },
-
-          HistoryRequestAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistoryRequestAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return Uint8Array.fromHex('');
-          },
-          HistoryRequestAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
-            log.debug(`HistoryRequestAttributeSetter ${value.toHex()} ${attributes.HistoryRequest} endpoint: ${endpoint?.name} session: ${session?.name}`);
-            return history.OnSetHistoryRequest(value);
-          },
-        },
-        {},
-      ),
-    );
-  }
-  */
-
-  /**
-   * Creates an Energy Eve History Cluster Server.
-   * @deprecated This method is deprecated and will be removed in a future version. Use MatterHistory.
-   *
-   * @param history - The MatterHistory object.
-   * @param log - The AnsiLogger object.
-   */
-  /*
-  createEnergyEveHistoryClusterServer(history: MatterHistory, log: AnsiLogger) {
-    history.setMatterHystoryType('energy');
-    this.addClusterServer(
-      ClusterServer(
-        EveHistoryCluster.with(EveHistory.Feature.EveEnergy),
-        {
-          // Dynamic attributes
-          ConfigDataGet: Uint8Array.fromHex(''),
-          ConfigDataSet: Uint8Array.fromHex(''),
-          HistoryStatus: Uint8Array.fromHex(''),
-          HistoryEntries: Uint8Array.fromHex(''),
-          HistoryRequest: Uint8Array.fromHex(''),
-          HistorySetTime: Uint8Array.fromHex(''),
-          LastEvent: 0,
-          ResetTotal: 0,
-          // Normal attributes
-          Voltage: 0,
-          Current: 0,
-          Consumption: 0,
-          TotalConsumption: 0,
-          EnergyUnknown: 1,
-          ChildLock: false,
-          RLoc: 46080,
-        },
-        {
-          ConfigDataGetAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`ConfigDataGetAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetConfigData(isFabricFiltered);
-          },
-
-          ConfigDataSetAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`ConfigDataSetAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return Uint8Array.fromHex('');
-          },
-          ConfigDataSetAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
-            log.debug(`ConfigDataSetAttributeSetter [${value.toHex()}] ${attributes.ConfigDataSet} endpoint: ${endpoint?.name} session: ${session?.name}`);
-            return history.OnSetConfigData(value);
-          },
-
-          HistoryStatusAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistoryStatusAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetHistoryStatus(isFabricFiltered);
-          },
-
-          HistoryEntriesAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistoryEntriesAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetHistoryEntries();
-          },
-
-          HistorySetTimeAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistorySetTimeAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return Uint8Array.fromHex('');
-          },
-          HistorySetTimeAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
-            log.debug(`HistorySetTimeAttributeSetter ${value.toHex()} ${attributes.HistorySetTime} endpoint: ${endpoint?.name} session: ${session?.name}`);
-            return history.OnSetHistorySetTime(value);
-          },
-
-          HistoryRequestAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistoryRequestAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return Uint8Array.fromHex('');
-          },
-          HistoryRequestAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
-            log.debug(`HistoryRequestAttributeSetter ${value.toHex()} ${attributes.HistoryRequest} endpoint: ${endpoint?.name} session: ${session?.name}`);
-            return history.OnSetHistoryRequest(value);
-          },
-
-          LastEventAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`LastEventAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetLastEvent();
-          },
-
-          ResetTotalAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`LastResetTotalAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetLastReset();
-          },
-          ResetTotalAttributeSetter: (value: number, { attributes, endpoint, session }) => {
-            log.debug(`LastResetTotalAttributeSetter ${value} ${attributes.ResetTotal} endpoint: ${endpoint?.name} session: ${session?.name}`);
-            return history.OnSetLastReset(value);
-          },
-        },
-        {},
-      ),
-    );
-  }
-  */
-
-  /**
-   * Creates a Motion Eve History Cluster Server.
-   * @deprecated This method is deprecated and will be removed in a future version. Use MatterHistory.
-   *
-   * @param history - The MatterHistory object.
-   * @param log - The AnsiLogger object.
-   */
-  /*
-  createMotionEveHistoryClusterServer(history: MatterHistory, log: AnsiLogger) {
-    history.setMatterHystoryType('motion');
-    this.addClusterServer(
-      ClusterServer(
-        EveHistoryCluster.with(EveHistory.Feature.EveMotion),
-        {
-          // Dynamic attributes
-          ConfigDataGet: Uint8Array.fromHex(''),
-          ConfigDataSet: Uint8Array.fromHex(''),
-          HistoryStatus: Uint8Array.fromHex(''),
-          HistoryEntries: Uint8Array.fromHex(''),
-          HistoryRequest: Uint8Array.fromHex(''),
-          HistorySetTime: Uint8Array.fromHex(''),
-          LastEvent: 0,
-          // Normal attributes
-          MotionSensitivity: Sensitivity.HIGH,
-          RLoc: 46080,
-        },
-        {
-          ConfigDataGetAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`ConfigDataGetAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetConfigData(isFabricFiltered);
-          },
-
-          ConfigDataSetAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`ConfigDataSetAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return Uint8Array.fromHex('');
-          },
-          ConfigDataSetAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
-            log.debug(`ConfigDataSetAttributeSetter [${value.toHex()}] ${attributes.ConfigDataSet} endpoint: ${endpoint?.name} session: ${session?.name}`);
-            return history.OnSetConfigData(value);
-          },
-
-          HistoryStatusAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistoryStatusAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetHistoryStatus(isFabricFiltered);
-          },
-
-          HistoryEntriesAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistoryEntriesAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetHistoryEntries();
-          },
-
-          HistorySetTimeAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistorySetTimeAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return Uint8Array.fromHex('');
-          },
-          HistorySetTimeAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
-            log.debug(`HistorySetTimeAttributeSetter ${value.toHex()} ${attributes.HistorySetTime} endpoint: ${endpoint?.name} session: ${session?.name}`);
-            return history.OnSetHistorySetTime(value);
-          },
-
-          HistoryRequestAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistoryRequestAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return Uint8Array.fromHex('');
-          },
-          HistoryRequestAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
-            log.debug(`HistoryRequestAttributeSetter ${value.toHex()} ${attributes.HistoryRequest} endpoint: ${endpoint?.name} session: ${session?.name}`);
-            return history.OnSetHistoryRequest(value);
-          },
-
-          LastEventAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`LastEventAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetLastEvent();
-          },
-        },
-        {},
-      ),
-    );
-  }
-  */
-
-  /**
-   * Creates a door EveHistoryCluster server.
-   * @deprecated This method is deprecated and will be removed in a future version. Use MatterHistory.
-   *
-   * @param history - The MatterHistory instance.
-   * @param log - The AnsiLogger instance.
-   */
-  /*
-  createDoorEveHistoryClusterServer(history: MatterHistory, log: AnsiLogger) {
-    history.setMatterHystoryType('door');
-    this.addClusterServer(
-      ClusterServer(
-        EveHistoryCluster.with(EveHistory.Feature.EveDoor),
-        {
-          // Dynamic attributes
-          ConfigDataGet: Uint8Array.fromHex(''),
-          ConfigDataSet: Uint8Array.fromHex(''),
-          HistoryStatus: Uint8Array.fromHex(''),
-          HistoryEntries: Uint8Array.fromHex(''),
-          HistoryRequest: Uint8Array.fromHex(''),
-          HistorySetTime: Uint8Array.fromHex(''),
-          TimesOpened: 0,
-          LastEvent: 0,
-          ResetTotal: 0,
-          // Normal attributes
-          RLoc: 46080,
-        },
-        {
-          ConfigDataGetAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`ConfigDataGetAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetConfigData(isFabricFiltered);
-          },
-
-          ConfigDataSetAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`ConfigDataSetAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return Uint8Array.fromHex('');
-          },
-          ConfigDataSetAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
-            log.debug(`ConfigDataSetAttributeSetter [${value.toHex()}] ${attributes.ConfigDataSet} endpoint: ${endpoint?.name} session: ${session?.name}`);
-            return history.OnSetConfigData(value);
-          },
-
-          HistoryStatusAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistoryStatusAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetHistoryStatus(isFabricFiltered);
-          },
-
-          HistoryEntriesAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistoryEntriesAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetHistoryEntries();
-          },
-
-          HistorySetTimeAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistorySetTimeAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return Uint8Array.fromHex('');
-          },
-          HistorySetTimeAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
-            log.debug(`HistorySetTimeAttributeSetter ${value.toHex()} ${attributes.HistorySetTime} endpoint: ${endpoint?.name} session: ${session?.name}`);
-            return history.OnSetHistorySetTime(value);
-          },
-
-          HistoryRequestAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`HistoryRequestAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return Uint8Array.fromHex('');
-          },
-          HistoryRequestAttributeSetter: (value: Uint8Array, { attributes, endpoint, session }) => {
-            log.debug(`HistoryRequestAttributeSetter ${value.toHex()} ${attributes.HistoryRequest} endpoint: ${endpoint?.name} session: ${session?.name}`);
-            return history.OnSetHistoryRequest(value);
-          },
-
-          LastEventAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`LastEventAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetLastEvent();
-          },
-
-          TimesOpenedAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`TimesOpenedAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetimesOpened();
-          },
-
-          ResetTotalAttributeGetter: ({ session, isFabricFiltered }) => {
-            log.debug(`LastResetTotalAttributeGetter session: ${session?.name} ${isFabricFiltered?.valueOf()}`);
-            return history.OnGetLastReset();
-          },
-          ResetTotalAttributeSetter: (value: number, { attributes, endpoint, session }) => {
-            log.debug(`LastResetTotalAttributeSetter ${value} ${attributes.ResetTotal} endpoint: ${endpoint?.name} session: ${session?.name}`);
-            return history.OnSetLastReset(value);
-          },
-        },
-        {},
-      ),
-    );
-  }
-  */
 
   /**
    * Get a default IdentifyCluster server.
@@ -1319,10 +844,13 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Get a default scenes cluster server and adds it to the current instance.
+   * @deprecated This method is deprecated.
+   *
    */
   getDefaultScenesClusterServer() {
+    /*
     return ClusterServer(
-      ScenesCluster,
+      ScenesManagementCluster,
       {
         sceneCount: 0,
         currentScene: 0,
@@ -1333,16 +861,20 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         },
         lastConfiguredBy: null,
       },
-      ScenesClusterHandler(),
+      ScenesManagementClusterHandler(),
     );
     // return createDefaultScenesClusterServer();
+    */
   }
 
   /**
    * Creates a default scenes cluster server and adds it to the current instance.
+   * @deprecated This method is deprecated.
    */
   createDefaultScenesClusterServer() {
+    /*
     this.addClusterServer(this.getDefaultScenesClusterServer());
+    */
   }
 
   /**
@@ -1404,6 +936,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         hardwareVersionString: hardwareVersionString.slice(0, 64),
         reachable: true,
         capabilityMinima: { caseSessionsPerFabric: 3, subscriptionsPerFabric: 3 },
+        specificationVersion: Specification.SPECIFICATION_VERSION,
+        maxPathsPerInvoke: 1,
       },
       {},
       {
@@ -1479,7 +1013,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         vendorId: vendorId !== undefined ? VendorId(vendorId) : undefined, // 4874
         vendorName: vendorName.slice(0, 32),
-        productId: 0x8000,
         productName: productName.slice(0, 32),
         productLabel: deviceName.slice(0, 64),
         nodeLabel: deviceName.slice(0, 32),
@@ -1609,46 +1142,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * @deprecated This method is deprecated and will be removed in a future version.
-   * Get a default Electrical Measurement Cluster Server.
-   *
-   * @param voltage - The RMS voltage value.
-   * @param current - The RMS current value.
-   * @param power - The active power value.
-   * @param consumption - The total active power consumption value.
-   */
-  /*
-  getDefaultElectricalMeasurementClusterServer(voltage = 0, current = 0, power = 0, consumption = 0) {
-    return ClusterServer(
-      ElectricalMeasurementCluster,
-      {
-        rmsVoltage: voltage,
-        rmsCurrent: current,
-        activePower: power,
-        totalActivePower: consumption,
-      },
-      {},
-      {},
-    );
-  }
-  */
-
-  /**
-   * @deprecated This method is deprecated and will be removed in a future version.
-   * Creates a default Electrical Measurement Cluster Server.
-   *
-   * @param voltage - The RMS voltage value.
-   * @param current - The RMS current value.
-   * @param power - The active power value.
-   * @param consumption - The total active power consumption value.
-   */
-  /*
-  createDefaultElectricalMeasurementClusterServer(voltage = 0, current = 0, power = 0, consumption = 0) {
-    this.addClusterServer(this.getDefaultElectricalMeasurementClusterServer(voltage, current, power, consumption));
-  }
-  */
-
-  /**
    * Creates a default Dummy Thread Network Diagnostics Cluster server.
    * @deprecated This method is deprecated and is only used for testing.
    *
@@ -1679,7 +1172,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           channelPage0Mask: null,
           operationalDatasetComponents: null,
           overrunCount: 0,
-          activeNetworkFaults: [],
+          activeNetworkFaultsList: [],
         },
         {
           resetCounts: async (data) => {
@@ -2256,7 +1749,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * This method adds a cluster server for a door lock cluster with default settings.
    *
    */
-  getDefaultDoorLockClusterServer(lockState = DoorLock.LockState.Locked, lockType = DoorLock.LockType.Deadbolt) {
+  getDefaultDoorLockClusterServer(lockState = DoorLock.LockState.Locked, lockType = DoorLock.LockType.DeadBolt) {
     return ClusterServer(
       DoorLockCluster,
       {
@@ -2290,7 +1783,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * This method adds a cluster server for a door lock cluster with default settings.
    *
    */
-  createDefaultDoorLockClusterServer(lockState = DoorLock.LockState.Locked, lockType = DoorLock.LockType.Deadbolt) {
+  createDefaultDoorLockClusterServer(lockState = DoorLock.LockState.Locked, lockType = DoorLock.LockType.DeadBolt) {
     this.addClusterServer(this.getDefaultDoorLockClusterServer(lockState, lockType));
   }
 
@@ -2452,7 +1945,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param startUpMode - The startup mode of the cluster server. Defaults to 0.
    * @returns The default mode select cluster server.
    */
-  getDefaultModeSelectClusterServer(description: string, supportedModes: ModeSelect.ModeOptionStruct[], currentMode = 0, startUpMode = 0) {
+  getDefaultModeSelectClusterServer(description: string, supportedModes: ModeSelect.ModeOption[], currentMode = 0, startUpMode = 0) {
     return ClusterServer(
       ModeSelectCluster,
       {
@@ -2744,6 +2237,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         activeBatFaults: undefined,
         batReplacementDescription,
         batQuantity,
+        endpointList: [],
       },
       {},
       {},
@@ -2786,6 +2280,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         activeBatFaults: undefined,
         batChargeState: PowerSource.BatChargeState.IsNotCharging,
         batFunctionalWhileCharging: true,
+        endpointList: [],
       },
       {},
       {},
@@ -2816,6 +2311,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         description: wiredCurrentType === PowerSource.WiredCurrentType.Ac ? 'AC Power' : 'DC Power',
         status: PowerSource.PowerSourceStatus.Active,
         order: 0,
+        endpointList: [],
       },
       {},
       {},
@@ -2953,17 +2449,27 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   getDefaultTimeSyncClusterServer() {
     return ClusterServer(
-      TimeSyncCluster.with(TimeSync.Feature.TimeZone),
+      TimeSynchronizationCluster.with(TimeSynchronization.Feature.TimeZone),
       {
         utcTime: null,
-        granularity: TimeSync.Granularity.NoTimeGranularity,
+        granularity: TimeSynchronization.Granularity.NoTimeGranularity,
         timeZone: [{ offset: 0, validAt: 0 }],
-        trustedTimeNodeId: null,
         dstOffset: [],
         localTime: null,
-        timeZoneDatabase: true,
+        timeZoneDatabase: TimeSynchronization.TimeZoneDatabase.None,
+        timeZoneListMaxSize: 1,
+        dstOffsetListMaxSize: 1,
       },
       {
+        setTimeZone: async ({ request, attributes }) => {
+          this.log.debug('Matter command: setTimeZone', request);
+          await this.commandHandler.executeHandler('setTimeZone', { request, attributes });
+          return { dstOffsetsRequired: false };
+        },
+        setDstOffset: async ({ request, attributes }) => {
+          this.log.debug('Matter command: setDstOffset', request);
+          await this.commandHandler.executeHandler('setDstOffset', { request, attributes });
+        },
         setUtcTime: async ({ request, attributes }) => {
           this.log.debug('Matter command: setUtcTime', request);
           await this.commandHandler.executeHandler('setUtcTime', { request, attributes });
@@ -2973,6 +2479,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         dstTableEmpty: true,
         dstStatus: true,
         timeZoneStatus: true,
+        timeFailure: true,
       },
     );
   }

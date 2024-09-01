@@ -1,9 +1,9 @@
-FROM alpine:latest AS base
+FROM node:20-alpine AS base
 # FROM alpine:latest as base not working for linux/arm/v7
 # FROM node:20-alpine as base not working for linux/arm/v7
 
 WORKDIR /app
-RUN apk add --no-cache nodejs npm icu-data-full
+# RUN apk add --no-cache nodejs npm icu-data-full
 
 COPY ./package.json ./package-lock.json ./tsconfig.json ./
 COPY ./src ./src
@@ -20,6 +20,4 @@ COPY ./docker/shellyEntrypoint.sh ./
 RUN chmod +x ./shellyEntrypoint.sh
 ENTRYPOINT ["./shellyEntrypoint.sh"]
 
-# Node modules: /usr/local/lib/node_modules/matterbridge/dist/cli.js
-# Bin: /usr/local/bin/matterbridge
 CMD ["matterbridge", "-docker"]
