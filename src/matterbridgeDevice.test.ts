@@ -29,6 +29,7 @@ import {
   BasicInformation,
   BasicInformationCluster,
   Binding,
+  BooleanStateConfiguration,
   ClusterServerObj,
   ColorControl,
   ColorControlCluster,
@@ -53,7 +54,6 @@ import {
 } from '@project-chip/matter-node.js/cluster';
 import { DeviceTypes, logEndpoint } from '@project-chip/matter-node.js/device';
 import { EndpointNumber, GroupId } from '@project-chip/matter-node.js/datatype';
-import { BooleanStateConfiguration } from './cluster/BooleanStateConfigurationCluster.js';
 import { SmokeCoAlarm } from './cluster/SmokeCoAlarmCluster.js';
 import { DeviceEnergyManagement } from './cluster/DeviceEnergyManagementCluster.js';
 import { waiter } from './utils/utils.js';
