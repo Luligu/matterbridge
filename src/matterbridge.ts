@@ -133,7 +133,8 @@ export class Matterbridge extends EventEmitter {
   public matterbridgeQrPairingCode: string | undefined = undefined;
   public matterbridgeManualPairingCode: string | undefined = undefined;
   public matterbridgeFabricInformations: SanitizedExposedFabricInformation[] = [];
-  public matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
+  // public matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
+  public matterbridgeSessionInformations = new Map<string, SanitizedSessionInformation>();
   public matterbridgePaired = false;
   public matterbridgeConnected = false;
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
@@ -2143,7 +2144,10 @@ export class Matterbridge extends EventEmitter {
           if (this.bridgeMode === 'bridge') {
             this.matterbridgePaired = true;
             this.matterbridgeConnected = true;
-            this.matterbridgeSessionInformations = this.sanitizeSessionInformation(sessionInformations);
+            // this.matterbridgeSessionInformations = this.sanitizeSessionInformation(sessionInformations);
+            sessionInformations.forEach((session) => {
+              this.matterbridgeSessionInformations.set(session.name, this.sanitizeSessionInformation([session])[0]);
+            });
           }
           if (this.bridgeMode === 'childbridge') {
             const plugin = this.plugins.get(pluginName);
@@ -2194,7 +2198,8 @@ export class Matterbridge extends EventEmitter {
           if (pluginName === 'Matterbridge') {
             await this.matterbridgeContext?.clearAll();
             this.matterbridgeFabricInformations = [];
-            this.matterbridgeSessionInformations = [];
+            // this.matterbridgeSessionInformations = [];
+            this.matterbridgeSessionInformations.clear();
             this.matterbridgePaired = false;
             this.matterbridgeConnected = false;
           } else {
@@ -2347,7 +2352,8 @@ export class Matterbridge extends EventEmitter {
         this.matterbridgeQrPairingCode = qrPairingCode;
         this.matterbridgeManualPairingCode = manualPairingCode;
         this.matterbridgeFabricInformations = [];
-        this.matterbridgeSessionInformations = [];
+        // this.matterbridgeSessionInformations = [];
+        this.matterbridgeSessionInformations.clear();
         this.matterbridgePaired = false;
         this.matterbridgeConnected = false;
       }
@@ -2371,7 +2377,8 @@ export class Matterbridge extends EventEmitter {
       });
       if (pluginName === 'Matterbridge') {
         this.matterbridgeFabricInformations = this.sanitizeFabricInformations(fabricInfo);
-        this.matterbridgeSessionInformations = [];
+        // this.matterbridgeSessionInformations = [];
+        this.matterbridgeSessionInformations.clear();
         this.matterbridgePaired = true;
       }
       if (pluginName !== 'Matterbridge') {
@@ -2861,7 +2868,9 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridgeQrPairingCode;
       this.matterbridgeInformation.matterbridgeManualPairingCode = this.matterbridgeManualPairingCode;
       this.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridgeFabricInformations;
-      this.matterbridgeInformation.matterbridgeSessionInformations = this.matterbridgeSessionInformations;
+      // this.matterbridgeInformation.matterbridgeSessionInformations = this.matterbridgeSessionInformations;
+      this.matterbridgeInformation.matterbridgeSessionInformations = Array.from(this.matterbridgeSessionInformations.values());
+      // console.log('this.matterbridgeSessionInformations:', this.matterbridgeSessionInformations);
       if (this.profile) this.matterbridgeInformation.profile = this.profile;
       // const response = { wssHost, ssl: hasParameter('ssl'), qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
       const response = { wssHost, ssl: hasParameter('ssl'), systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
@@ -3410,6 +3419,7 @@ export class Matterbridge extends EventEmitter {
         if (clusterServer.name === 'DoorLock') attributes += `State: ${clusterServer.attributes.lockState.getLocal() === 1 ? 'Locked' : 'Not locked'} `;
         if (clusterServer.name === 'Thermostat') attributes += `Temperature: ${clusterServer.attributes.localTemperature.getLocal() / 100}°C `;
         if (clusterServer.name === 'LevelControl') attributes += `Level: ${clusterServer.getCurrentLevelAttribute()}% `;
+        if (clusterServer.name === 'ColorControl' && clusterServer.isAttributeSupportedByName('currentX')) attributes += `X: ${Math.round(clusterServer.getCurrentXAttribute())} Y: ${Math.round(clusterServer.getCurrentYAttribute())} `;
         if (clusterServer.name === 'ColorControl' && clusterServer.isAttributeSupportedByName('currentHue'))
           attributes += `Hue: ${Math.round(clusterServer.getCurrentHueAttribute())} Saturation: ${Math.round(clusterServer.getCurrentSaturationAttribute())}% `;
         if (clusterServer.name === 'ColorControl' && clusterServer.isAttributeSupportedByName('colorTemperatureMireds')) attributes += `ColorTemp: ${Math.round(clusterServer.getColorTemperatureMiredsAttribute())} `;

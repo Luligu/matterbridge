@@ -25,6 +25,8 @@ import {
   BasicInformationCluster,
   BooleanState,
   BooleanStateCluster,
+  BooleanStateConfiguration,
+  BooleanStateConfigurationCluster,
   BridgedDeviceBasicInformation,
   BridgedDeviceBasicInformationCluster,
   ClusterServer,
@@ -82,17 +84,15 @@ import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-nod
 // Custom cluster types
 import { AirQuality, AirQualityCluster } from './cluster/AirQualityCluster.js';
 import { TvocMeasurement, TvocMeasurementCluster } from './cluster/TvocCluster.js';
-// import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
 import { PowerTopology, PowerTopologyCluster } from './cluster/PowerTopologyCluster.js';
 import { ElectricalPowerMeasurement, ElectricalPowerMeasurementCluster } from './cluster/ElectricalPowerMeasurementCluster.js';
 import { ElectricalEnergyMeasurement, ElectricalEnergyMeasurementCluster } from './cluster/ElectricalEnergyMeasurementCluster.js';
 import { MeasurementType } from './cluster/MeasurementType.js';
 import { CarbonMonoxideConcentrationMeasurement, CarbonMonoxideConcentrationMeasurementCluster } from './cluster/CarbonMonoxideConcentrationMeasurementCluster.js';
 import { SmokeCoAlarm, SmokeCoAlarmCluster } from './cluster/SmokeCoAlarmCluster.js';
-import { BooleanStateConfiguration, BooleanStateConfigurationCluster } from './cluster/BooleanStateConfigurationCluster.js';
+// import { BooleanStateConfiguration, BooleanStateConfigurationCluster } from './cluster/BooleanStateConfigurationCluster.js';
 import { DeviceEnergyManagement, DeviceEnergyManagementCluster } from './cluster/DeviceEnergyManagementCluster.js';
 import { DeviceEnergyManagementMode, DeviceEnergyManagementModeCluster } from './cluster/DeviceEnergyManagementModeCluster.js';
-// import { FanControl, FanControlCluster } from './cluster/FanControlCluster.js';
 import { ConcentrationMeasurement } from './cluster/ConcentrationMeasurementCluster.js';
 import { CarbonDioxideConcentrationMeasurement, CarbonDioxideConcentrationMeasurementCluster } from './cluster/CarbonDioxideConcentrationMeasurementCluster.js';
 import { OzoneConcentrationMeasurement, OzoneConcentrationMeasurementCluster } from './cluster/OzoneConcentrationMeasurementCluster.js';
@@ -728,6 +728,44 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Subscribes to an attribute on a cluster.
+   *
+   * @param {ClusterId} clusterId - The ID of the cluster.
+   * @param {string} attribute - The name of the attribute to subscribe to.
+   * @param listener - A callback function that will be called when the attribute value changes.
+   * @param {AnsiLogger} log - (Optional) An AnsiLogger instance for logging errors and information.
+   * @param {Endpoint} endpoint - (Optional) The endpoint to subscribe the attribute on. If not provided, the current endpoint will be used.
+   * @returns A boolean indicating whether the subscription was successful.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  subscribeAttribute(clusterId: ClusterId, attribute: string, listener: (newValue: any, oldValue: any) => void, log?: AnsiLogger, endpoint?: Endpoint): boolean {
+    if (!endpoint) endpoint = this as Endpoint;
+
+    const clusterServer = endpoint.getClusterServerById(clusterId);
+    if (!clusterServer) {
+      log?.error(`subscribeAttribute error: Cluster ${clusterId} not found on endpoint ${endpoint.name}:${endpoint.number}`);
+      return false;
+    }
+    const capitalizedAttributeName = attribute.charAt(0).toUpperCase() + attribute.slice(1);
+    if (!clusterServer.isAttributeSupportedByName(attribute) && !clusterServer.isAttributeSupportedByName(capitalizedAttributeName)) {
+      if (log) log.error(`subscribeAttribute error: Attribute ${attribute} not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+      return false;
+    }
+    // Find the subscribe method
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!(clusterServer as any)[`subscribe${capitalizedAttributeName}Attribute`]) {
+      log?.error(`subscribeAttribute error: subscribe${capitalizedAttributeName}Attribute not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+      return false;
+    }
+    // Subscribe to the attribute
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type
+    const subscribe = (clusterServer as any)[`subscribe${capitalizedAttributeName}Attribute`] as (listener: (newValue: any, oldValue: any) => void) => {};
+    subscribe(listener);
+    log?.info(`${db}Subscribe endpoint ${or}${endpoint.name}:${endpoint.number}${db} attribute ${hk}${clusterServer.name}.${capitalizedAttributeName}${db}`);
+    return true;
+  }
+
+  /**
    * Serializes the Matterbridge device into a serialized object.
    *
    * @param pluginName - The name of the plugin.
@@ -850,7 +888,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   getDefaultScenesClusterServer() {
     /*
     return ClusterServer(
-      ScenesManagementCluster,
+      ScenesCluster,
       {
         sceneCount: 0,
         currentScene: 0,
@@ -861,9 +899,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         },
         lastConfiguredBy: null,
       },
-      ScenesManagementClusterHandler(),
+      {},
     );
-    // return createDefaultScenesClusterServer();
     */
   }
 
@@ -1477,28 +1514,28 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
    * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
    */
-  getDefaultCompleteColorControlClusterServer(currentX = 0, currentY = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+  getDefaultCompleteColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     return ClusterServer(
       ColorControlCluster.with(ColorControl.Feature.Xy, ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature),
       {
         colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
+        enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
+        colorCapabilities: { xy: true, hueSaturation: true, colorLoop: false, enhancedHue: false, colorTemperature: true },
         options: {
           executeIfOff: false,
         },
         numberOfPrimaries: null,
-        enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
-        colorCapabilities: { xy: true, hueSaturation: true, colorLoop: false, enhancedHue: false, colorTemperature: true },
-        currentHue: 0,
-        currentSaturation: 0,
         currentX,
         currentY,
+        currentHue,
+        currentSaturation,
         colorTemperatureMireds,
         colorTempPhysicalMinMireds,
         colorTempPhysicalMaxMireds,
       },
       {
         moveToColor: async (data) => {
-          this.log.debug('Matter command: moveToColor request:', data.request, 'attributes.currentHue:', data.attributes.currentX.getLocal(), data.attributes.currentY.getLocal());
+          this.log.debug('Matter command: moveToColor request:', data.request, 'attributes.currentX:', data.attributes.currentX.getLocal(), 'attributes.currentY:', data.attributes.currentY.getLocal());
           this.commandHandler.executeHandler('moveToColor', data);
         },
         moveColor: async () => {
@@ -1559,8 +1596,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
    * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
    */
-  createDefaultCompleteColorControlClusterServer(currentX = 0, currentY = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
-    this.addClusterServer(this.getDefaultCompleteColorControlClusterServer(currentX, currentY, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
+  createDefaultCompleteColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+    this.addClusterServer(this.getDefaultCompleteColorControlClusterServer(currentX, currentY, currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
   }
 
   /**
@@ -1860,7 +1897,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Triggers a switch event on the specified endpoint.
    *
-   * @param {string} event - The type of event to trigger. Possible values are 'Single', 'Double', 'Long', 'Press', and 'Release'.
+   * @param {string} event - The type of event to trigger. Possible values are 'Single', 'Double', 'Long' for momentarySwitch and 'Press', 'Release' for latchingSwitch.
    * @param {Endpoint} endpoint - The endpoint on which to trigger the event (default the device endpoint).
    * @returns {void}
    */
