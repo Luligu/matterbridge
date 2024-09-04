@@ -144,7 +144,7 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="mb-password">Frontend password:</FormLabel>
           <TextField value={password} onChange={handleChangePassword} size="small" id="matterbridgePassword" type="password" autoComplete="current-password" variant="outlined" 
-            style={{ height: '30px', marginTop: '5px' }} InputProps={{
+            style={{ height: '30px', flexGrow: 1 }} InputProps={{
               style: {
                 height: '30px',
                 padding: '0',
@@ -165,10 +165,11 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
 
   useEffect(() => {
     if (matterbridgeInfo.bridgeMode === undefined) return;
-    
     setSelectedMjLoggerLevel(['Debug', 'Info', 'Notice', 'Warn', 'Error', 'Fatal'][matterbridgeInfo.matterLoggerLevel]);
-
     setLogOnFileMj(matterbridgeInfo.matterFileLogger);
+    setmdnsInterface(matterbridgeInfo.mattermdnsinterface);
+    setIpv4Address(matterbridgeInfo.matteripv4address);
+    setIpv6Address(matterbridgeInfo.matteripv6address);
   }, [matterbridgeInfo]);
 
   // Define a function to handle change debug level
@@ -227,8 +228,8 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Mdns interface:</FormLabel>
-          <TextField disabled value={mdnsInterface} onChange={handleChangeMdnsInterface} size="small" variant="outlined" 
-            style={{ height: '30px', marginTop: '5px' }} InputProps={{
+          <TextField value={mdnsInterface} onChange={handleChangeMdnsInterface} size="small" variant="outlined" 
+            style={{ height: '30px', flexGrow: 1 }} InputProps={{
               style: {
                 height: '30px',
                 padding: '0',
@@ -237,8 +238,8 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Ipv4 address:</FormLabel>
-          <TextField disabled value={ipv4Address} onChange={handleChangeIpv4Address} size="small" variant="outlined" 
-            style={{ height: '30px', marginTop: '5px' }} InputProps={{
+          <TextField value={ipv4Address} onChange={handleChangeIpv4Address} size="small" variant="outlined" 
+            style={{ height: '30px', flexGrow: 1  }} InputProps={{
               style: {
                 height: '30px',
                 padding: '0',
@@ -247,8 +248,8 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Ipv6 address:</FormLabel>
-          <TextField disabled value={ipv6Address} onChange={handleChangeIpv6Address} size="small" variant="outlined" 
-            style={{ height: '30px', marginTop: '5px' }} InputProps={{
+          <TextField value={ipv6Address} onChange={handleChangeIpv6Address} size="small" variant="outlined"
+            style={{ height: '30px', flexGrow: 1 }} InputProps={{
               style: {
                 height: '30px',
                 padding: '0',

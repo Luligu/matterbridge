@@ -40,7 +40,6 @@ import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW,
 
 // Matterbridge
 import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
-import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from './cluster/BridgedDeviceBasicInformationCluster.js';
 import { logInterfaces, wait, waiter, createZip } from './utils/utils.js';
 import { BaseRegisteredPlugin, MatterbridgeInformation, RegisteredDevice, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
@@ -48,7 +47,18 @@ import { DeviceManager } from './deviceManager.js';
 
 // @project-chip/matter-node.js
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
-import { BasicInformationCluster, ClusterServer, FixedLabelCluster, GeneralCommissioning, PowerSourceCluster, SwitchCluster, ThreadNetworkDiagnosticsCluster, getClusterNameById } from '@project-chip/matter-node.js/cluster';
+import {
+  BasicInformationCluster,
+  BridgedDeviceBasicInformation,
+  BridgedDeviceBasicInformationCluster,
+  ClusterServer,
+  FixedLabelCluster,
+  GeneralCommissioning,
+  PowerSourceCluster,
+  SwitchCluster,
+  ThreadNetworkDiagnosticsCluster,
+  getClusterNameById,
+} from '@project-chip/matter-node.js/cluster';
 import { DeviceTypeId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter-node.js/device';
 import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
@@ -58,6 +68,7 @@ import { getParameter, getIntParameter, hasParameter } from '@project-chip/matte
 import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
+import { Specification } from '@project-chip/matter-node.js/model';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -105,6 +116,9 @@ export class Matterbridge extends EventEmitter {
     fileLogger: false,
     matterLoggerLevel: Level.INFO,
     matterFileLogger: false,
+    mattermdnsinterface: undefined,
+    matteripv4address: undefined,
+    matteripv6address: undefined,
     restartRequired: false,
     refreshRequired: false,
   };
@@ -119,7 +133,8 @@ export class Matterbridge extends EventEmitter {
   public matterbridgeQrPairingCode: string | undefined = undefined;
   public matterbridgeManualPairingCode: string | undefined = undefined;
   public matterbridgeFabricInformations: SanitizedExposedFabricInformation[] = [];
-  public matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
+  // public matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
+  public matterbridgeSessionInformations = new Map<string, SanitizedSessionInformation>();
   public matterbridgePaired = false;
   public matterbridgeConnected = false;
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
@@ -158,6 +173,8 @@ export class Matterbridge extends EventEmitter {
 
   // Matter
   private mdnsInterface: string | undefined; // matter server mdnsInterface: e.g. 'eth0' or 'wlan0' or 'WiFi'
+  private ipv4address: string | undefined; // matter commissioning server listeningAddressIpv4
+  private ipv6address: string | undefined; // matter commissioning server listeningAddressIpv6
   private port = 5540; // first commissioning server port
   private passcode?: number; // first commissioning server passcode
   private discriminator?: number; // first commissioning server discriminator
@@ -228,8 +245,6 @@ export class Matterbridge extends EventEmitter {
    * @returns A Promise that resolves when the initialization is complete.
    */
   public async initialize() {
-    // Set the interface to use for the matter server mdnsInterface
-    this.mdnsInterface = getParameter('mdnsinterface');
     // Set the first port to use for the commissioning server (will be incremented in childbridge mode)
     this.port = getIntParameter('port') ?? 5540;
     // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode)
@@ -322,6 +337,30 @@ export class Matterbridge extends EventEmitter {
       });
     }
     this.log.debug(`Matter logLevel: ${Logger.defaultLogLevel} fileLoger: ${this.matterbridgeInformation.matterFileLogger}.`);
+
+    // Set the interface to use for the matter server mdnsInterface
+    if (hasParameter('mdnsinterface')) {
+      this.mdnsInterface = getParameter('mdnsinterface');
+    } else {
+      this.mdnsInterface = await this.nodeContext?.get<string>('mattermdnsinterface', undefined);
+      if (this.mdnsInterface === '') this.mdnsInterface = undefined;
+    }
+
+    // Set the listeningAddressIpv4 for the matter commissioning server
+    if (hasParameter('ipv4address')) {
+      this.ipv4address = getParameter('ipv4address');
+    } else {
+      this.ipv4address = await this.nodeContext?.get<string>('matteripv4address', undefined);
+      if (this.ipv4address === '') this.ipv4address = undefined;
+    }
+
+    // Set the listeningAddressIpv6 for the matter commissioning server
+    if (hasParameter('ipv6address')) {
+      this.ipv6address = getParameter('ipv6address');
+    } else {
+      this.ipv6address = await this.nodeContext?.get<string>('matteripv6address', undefined);
+      if (this.ipv6address === '') this.ipv6address = undefined;
+    }
 
     // Initialize PluginManager
     this.plugins = new PluginManager(this);
@@ -1685,7 +1724,7 @@ export class Matterbridge extends EventEmitter {
       } as NodeCommissioningOptions;
       this.log.info('Commissioning with options:', options);
       const nodeId = await this.commissioningController.commissionNode(options);
-      this.log.info(`Commissioning successfully done with nodeId: ${nodeId.nodeId}`);
+      this.log.info(`Commissioning successfully done with nodeId: ${nodeId}`);
       this.log.info('ActiveSessionInformation:', this.commissioningController.getActiveSessionInformation());
     } // (hasParameter('pairingcode'))
 
@@ -1915,7 +1954,7 @@ export class Matterbridge extends EventEmitter {
       }
     }
     const matterServer = new MatterServer(storageManager, { mdnsInterface: this.mdnsInterface });
-    this.log.debug('Created matter server');
+    this.log.debug(`Created matter server with mdnsInterface: ${this.mdnsInterface ?? 'all available interfaces'}`);
     return matterServer;
   }
 
@@ -1987,6 +2026,8 @@ export class Matterbridge extends EventEmitter {
           hardwareVersionString: await context.get<string>('hardwareVersionString', '1.0.0'),
           reachable: true,
           capabilityMinima: { caseSessionsPerFabric: 3, subscriptionsPerFabric: 3 },
+          specificationVersion: Specification.SPECIFICATION_VERSION,
+          maxPathsPerInvoke: 1,
         },
         {},
         {
@@ -2032,10 +2073,41 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with softwareVersion ${softwareVersion} softwareVersionString ${softwareVersionString}`);
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with hardwareVersion ${hardwareVersion} hardwareVersionString ${hardwareVersionString}`);
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with nodeLabel '${productName}' port ${this.port} passcode ${this.passcode} discriminator ${this.discriminator}`);
+
+    // Validate ipv4address
+    if (this.ipv4address) {
+      const networkInterfaces = os.networkInterfaces();
+      const availableAddresses = Object.values(networkInterfaces)
+        .flat()
+        .filter((iface): iface is os.NetworkInterfaceInfo => iface !== undefined && iface.family === 'IPv4' && !iface.internal)
+        .map((iface) => iface.address);
+      if (!availableAddresses.includes(this.ipv4address)) {
+        this.log.error(`Invalid ipv4address: ${this.ipv4address}. Available addresses are: ${availableAddresses.join(', ')}. Using all available addresses.`);
+        this.mdnsInterface = undefined;
+      } else {
+        this.log.info(`Using ipv4address '${this.ipv4address}' for the Matter commissioning server.`);
+      }
+    }
+
+    // Validate ipv6address
+    if (this.ipv6address) {
+      const networkInterfaces = os.networkInterfaces();
+      const availableAddresses = Object.values(networkInterfaces)
+        .flat()
+        .filter((iface): iface is os.NetworkInterfaceInfo => iface !== undefined && iface.family === 'IPv6' && !iface.internal)
+        .map((iface) => iface.address);
+      if (!availableAddresses.includes(this.ipv6address)) {
+        this.log.error(`Invalid ipv6address: ${this.ipv6address}. Available addresses are: ${availableAddresses.join(', ')}. Using all available addresses.`);
+        this.mdnsInterface = undefined;
+      } else {
+        this.log.info(`Using ipv6address '${this.ipv6address}' for the Matter commissioning server.`);
+      }
+    }
+
     const commissioningServer = new CommissioningServer({
       port: this.port++,
-      listeningAddressIpv4: getParameter('ipv4address'),
-      listeningAddressIpv6: getParameter('ipv6address'),
+      listeningAddressIpv4: this.ipv4address,
+      listeningAddressIpv6: this.ipv6address,
       passcode: this.passcode,
       discriminator: this.discriminator,
       deviceName,
@@ -2072,7 +2144,10 @@ export class Matterbridge extends EventEmitter {
           if (this.bridgeMode === 'bridge') {
             this.matterbridgePaired = true;
             this.matterbridgeConnected = true;
-            this.matterbridgeSessionInformations = this.sanitizeSessionInformation(sessionInformations);
+            // this.matterbridgeSessionInformations = this.sanitizeSessionInformation(sessionInformations);
+            sessionInformations.forEach((session) => {
+              this.matterbridgeSessionInformations.set(session.name, this.sanitizeSessionInformation([session])[0]);
+            });
           }
           if (this.bridgeMode === 'childbridge') {
             const plugin = this.plugins.get(pluginName);
@@ -2123,7 +2198,8 @@ export class Matterbridge extends EventEmitter {
           if (pluginName === 'Matterbridge') {
             await this.matterbridgeContext?.clearAll();
             this.matterbridgeFabricInformations = [];
-            this.matterbridgeSessionInformations = [];
+            // this.matterbridgeSessionInformations = [];
+            this.matterbridgeSessionInformations.clear();
             this.matterbridgePaired = false;
             this.matterbridgeConnected = false;
           } else {
@@ -2276,7 +2352,8 @@ export class Matterbridge extends EventEmitter {
         this.matterbridgeQrPairingCode = qrPairingCode;
         this.matterbridgeManualPairingCode = manualPairingCode;
         this.matterbridgeFabricInformations = [];
-        this.matterbridgeSessionInformations = [];
+        // this.matterbridgeSessionInformations = [];
+        this.matterbridgeSessionInformations.clear();
         this.matterbridgePaired = false;
         this.matterbridgeConnected = false;
       }
@@ -2300,7 +2377,8 @@ export class Matterbridge extends EventEmitter {
       });
       if (pluginName === 'Matterbridge') {
         this.matterbridgeFabricInformations = this.sanitizeFabricInformations(fabricInfo);
-        this.matterbridgeSessionInformations = [];
+        // this.matterbridgeSessionInformations = [];
+        this.matterbridgeSessionInformations.clear();
         this.matterbridgePaired = true;
       }
       if (pluginName !== 'Matterbridge') {
@@ -2638,7 +2716,7 @@ export class Matterbridge extends EventEmitter {
       // Listen on the specified port
       this.httpServer.listen(port, () => {
         if (this.systemInformation.ipv4Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
-        if (this.systemInformation.ipv6Address !== '') this.log.debug(`The frontend http server is listening on ${UNDERLINE}http://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
+        if (this.systemInformation.ipv6Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
       });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2688,7 +2766,7 @@ export class Matterbridge extends EventEmitter {
       // Listen on the specified port
       this.httpsServer.listen(port, () => {
         if (this.systemInformation.ipv4Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
-        if (this.systemInformation.ipv6Address !== '') this.log.debug(`The frontend https server is listening on ${UNDERLINE}https://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
+        if (this.systemInformation.ipv6Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
       });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2782,12 +2860,17 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.restartMode = this.restartMode;
       this.matterbridgeInformation.loggerLevel = this.log.logLevel;
       this.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
+      this.matterbridgeInformation.mattermdnsinterface = (await this.nodeContext?.get<string>('mattermdnsinterface', '')) || '';
+      this.matterbridgeInformation.matteripv4address = (await this.nodeContext?.get<string>('matteripv4address', '')) || '';
+      this.matterbridgeInformation.matteripv6address = (await this.nodeContext?.get<string>('matteripv6address', '')) || '';
       this.matterbridgeInformation.matterbridgePaired = this.matterbridgePaired;
       this.matterbridgeInformation.matterbridgeConnected = this.matterbridgeConnected;
       this.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridgeQrPairingCode;
       this.matterbridgeInformation.matterbridgeManualPairingCode = this.matterbridgeManualPairingCode;
       this.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridgeFabricInformations;
-      this.matterbridgeInformation.matterbridgeSessionInformations = this.matterbridgeSessionInformations;
+      // this.matterbridgeInformation.matterbridgeSessionInformations = this.matterbridgeSessionInformations;
+      this.matterbridgeInformation.matterbridgeSessionInformations = Array.from(this.matterbridgeSessionInformations.values());
+      // console.log('this.matterbridgeSessionInformations:', this.matterbridgeSessionInformations);
       if (this.profile) this.matterbridgeInformation.profile = this.profile;
       // const response = { wssHost, ssl: hasParameter('ssl'), qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
       const response = { wssHost, ssl: hasParameter('ssl'), systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
@@ -3073,7 +3156,7 @@ export class Matterbridge extends EventEmitter {
 
       // Handle the command setmbloglevel from Settings
       if (command === 'setmjloglevel') {
-        this.log.debug('Matter.js log level::', param);
+        this.log.debug('Matter.js log level:', param);
         if (param === 'Debug') {
           Logger.defaultLogLevel = Level.DEBUG;
         } else if (param === 'Info') {
@@ -3088,6 +3171,36 @@ export class Matterbridge extends EventEmitter {
           Logger.defaultLogLevel = Level.FATAL;
         }
         await this.nodeContext?.set('matterLogLevel', Logger.defaultLogLevel);
+        res.json({ message: 'Command received' });
+        return;
+      }
+
+      // Handle the command setmdnsinterface from Settings
+      if (command === 'setmdnsinterface') {
+        param = param.slice(1, -1); // Remove the first and last characters *mdns*
+        this.matterbridgeInformation.mattermdnsinterface = param;
+        this.log.debug('Matter.js mdns interface:', param === '' ? 'All interfaces' : param);
+        await this.nodeContext?.set('mattermdnsinterface', param);
+        res.json({ message: 'Command received' });
+        return;
+      }
+
+      // Handle the command setipv4address from Settings
+      if (command === 'setipv4address') {
+        param = param.slice(1, -1); // Remove the first and last characters *ip*
+        this.matterbridgeInformation.matteripv4address = param;
+        this.log.debug('Matter.js ipv4 address:', param === '' ? 'All ipv4 addresses' : param);
+        await this.nodeContext?.set('matteripv4address', param);
+        res.json({ message: 'Command received' });
+        return;
+      }
+
+      // Handle the command setipv6address from Settings
+      if (command === 'setipv6address') {
+        param = param.slice(1, -1); // Remove the first and last characters *ip*
+        this.matterbridgeInformation.matteripv6address = param;
+        this.log.debug('Matter.js ipv6 address:', param === '' ? 'All ipv6 addresses' : param);
+        await this.nodeContext?.set('matteripv6address', param);
         res.json({ message: 'Command received' });
         return;
       }
@@ -3306,12 +3419,16 @@ export class Matterbridge extends EventEmitter {
         if (clusterServer.name === 'DoorLock') attributes += `State: ${clusterServer.attributes.lockState.getLocal() === 1 ? 'Locked' : 'Not locked'} `;
         if (clusterServer.name === 'Thermostat') attributes += `Temperature: ${clusterServer.attributes.localTemperature.getLocal() / 100}°C `;
         if (clusterServer.name === 'LevelControl') attributes += `Level: ${clusterServer.getCurrentLevelAttribute()}% `;
+        if (clusterServer.name === 'ColorControl' && clusterServer.isAttributeSupportedByName('currentX')) attributes += `X: ${Math.round(clusterServer.getCurrentXAttribute())} Y: ${Math.round(clusterServer.getCurrentYAttribute())} `;
         if (clusterServer.name === 'ColorControl' && clusterServer.isAttributeSupportedByName('currentHue'))
           attributes += `Hue: ${Math.round(clusterServer.getCurrentHueAttribute())} Saturation: ${Math.round(clusterServer.getCurrentSaturationAttribute())}% `;
         if (clusterServer.name === 'ColorControl' && clusterServer.isAttributeSupportedByName('colorTemperatureMireds')) attributes += `ColorTemp: ${Math.round(clusterServer.getColorTemperatureMiredsAttribute())} `;
         if (clusterServer.name === 'BooleanState') attributes += `Contact: ${clusterServer.getStateValueAttribute()} `;
 
         if (clusterServer.name === 'BooleanStateConfiguration' && clusterServer.isAttributeSupportedByName('alarmsActive')) attributes += `Active alarms: ${stringify(clusterServer.getAlarmsActiveAttribute())} `;
+
+        if (clusterServer.name === 'SmokeCoAlarm' && clusterServer.isAttributeSupportedByName('smokeState')) attributes += `Smoke: ${clusterServer.getSmokeStateAttribute()} `;
+        if (clusterServer.name === 'SmokeCoAlarm' && clusterServer.isAttributeSupportedByName('coState')) attributes += `Co: ${clusterServer.getCoStateAttribute()} `;
 
         if (clusterServer.name === 'FanControl') attributes += `Mode: ${clusterServer.getFanModeAttribute()} Speed: ${clusterServer.getPercentCurrentAttribute()} `;
         if (clusterServer.name === 'FanControl' && clusterServer.isAttributeSupportedByName('speedCurrent')) attributes += `MultiSpeed: ${clusterServer.getSpeedCurrentAttribute()} `;

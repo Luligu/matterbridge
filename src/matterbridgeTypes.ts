@@ -120,6 +120,9 @@ export interface MatterbridgeInformation {
   fileLogger: boolean;
   matterLoggerLevel: number;
   matterFileLogger: boolean;
+  mattermdnsinterface: string | undefined;
+  matteripv4address: string | undefined;
+  matteripv6address: string | undefined;
   restartRequired: boolean;
   refreshRequired: boolean;
 }

@@ -1,5 +1,4 @@
 export * from './AirQualityCluster.js';
-export * from './BooleanStateConfigurationCluster.js';
 export * from './CarbonDioxideConcentrationMeasurementCluster.js';
 export * from './CarbonMonoxideConcentrationMeasurementCluster.js';
 export * from './ConcentrationMeasurementCluster.js';

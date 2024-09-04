@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
+## [1.5.3] - 2024-09-04
+
+### Added
+
+- [frontend]: Added mattermdnsinterface, matteripv4address and matteripv6address to the matter settings. If no parameters are added, Matterbridge will use the settings from the frontend that are saved. The default is all interfaces. If you are facing issues with pairing, I suggest to try first to put the interfaceName (e.g eth0, WiFi) in the MdnsInterface field. When nothing is selected, NodeJs will choose the interface but sometimes the choice is not correct at all.
+
+### Changed
+
+- [package]: Update dependencies.
+- [package]: Update matter-node.js to 0.10.0 and removed the Scene cluster to follow matter.js.
+- [package]: Update matter-history to 1.1.8.
+- [package]: Removed long deprecated exports.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
+## [1.5.2] - 2024-08-30
+
 ### Breaking Changes
 
 - [-bridge -childbridge]: You don't need anymore to add the parmeter -bridge or -childbridge on the command line or systemctl configuration or docker command: the default is bridge mode and if no parameter is added, Matterbridge uses the settings from the frontend that are saved.
@@ -15,8 +34,6 @@ If you like this project and find it useful, please consider giving it a star on
 ### Breaking Changes for developers
 
 - please read this [Development guide lines](https://github.com/Luligu/matterbridge/blob/main/README-DEV.md)
-
-## [1.5.2] - 2024-08-30
 
 ### Added
 
