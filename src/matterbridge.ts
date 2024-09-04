@@ -3427,6 +3427,9 @@ export class Matterbridge extends EventEmitter {
 
         if (clusterServer.name === 'BooleanStateConfiguration' && clusterServer.isAttributeSupportedByName('alarmsActive')) attributes += `Active alarms: ${stringify(clusterServer.getAlarmsActiveAttribute())} `;
 
+        if (clusterServer.name === 'SmokeCoAlarm' && clusterServer.isAttributeSupportedByName('smokeState')) attributes += `Smoke: ${clusterServer.getSmokeStateAttribute()} `;
+        if (clusterServer.name === 'SmokeCoAlarm' && clusterServer.isAttributeSupportedByName('coState')) attributes += `Co: ${clusterServer.getCoStateAttribute()} `;
+
         if (clusterServer.name === 'FanControl') attributes += `Mode: ${clusterServer.getFanModeAttribute()} Speed: ${clusterServer.getPercentCurrentAttribute()} `;
         if (clusterServer.name === 'FanControl' && clusterServer.isAttributeSupportedByName('speedCurrent')) attributes += `MultiSpeed: ${clusterServer.getSpeedCurrentAttribute()} `;
 

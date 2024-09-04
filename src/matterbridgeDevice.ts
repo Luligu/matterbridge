@@ -251,6 +251,42 @@ export const bridgedNode = DeviceTypeDefinition({
   optionalServerClusters: [PowerSource.Cluster.id],
 });
 
+export const genericSwitch = DeviceTypeDefinition({
+  name: 'MA-genericswitch',
+  code: 0x000f,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [IdentifyCluster.id, SwitchCluster.id],
+  optionalServerClusters: [FixedLabelCluster.id],
+});
+
+export const onOffLight = DeviceTypeDefinition({
+  name: 'MA-onofflight',
+  code: 0x0100,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* Scenes.Cluster.id,*/ OnOff.Cluster.id],
+  optionalServerClusters: [LevelControl.Cluster.id, ColorControl.Cluster.id],
+});
+
+export const dimmableLight = DeviceTypeDefinition({
+  name: 'MA-dimmablelight',
+  code: 0x0101,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* Scenes.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id],
+  optionalServerClusters: [ColorControl.Cluster.id],
+});
+
+export const colorTemperatureLight = DeviceTypeDefinition({
+  name: 'MA-colortemperaturelight',
+  code: 0x010c,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* Scenes.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
+  optionalServerClusters: [],
+});
+
 // Custom device types: switch without ClientClusters
 
 export const onOffSwitch = DeviceTypeDefinition({
@@ -732,7 +768,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param {ClusterId} clusterId - The ID of the cluster.
    * @param {string} attribute - The name of the attribute to subscribe to.
-   * @param listener - A callback function that will be called when the attribute value changes.
+   * @param {(newValue: any, oldValue: any) => void} listener - A callback function that will be called when the attribute value changes.
    * @param {AnsiLogger} log - (Optional) An AnsiLogger instance for logging errors and information.
    * @param {Endpoint} endpoint - (Optional) The endpoint to subscribe the attribute on. If not provided, the current endpoint will be used.
    * @returns A boolean indicating whether the subscription was successful.

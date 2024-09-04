@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
-## [1.5.3] - 2024-09-03
+## [1.5.3] - 2024-09-04
 
 ### Added
 
@@ -14,6 +14,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [package]: Update dependencies.
 - [package]: Update matter-node.js to 0.10.0 and removed the Scene cluster to follow matter.js.
+- [package]: Update matter-history to 1.1.8.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
