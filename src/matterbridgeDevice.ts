@@ -287,6 +287,24 @@ export const colorTemperatureLight = DeviceTypeDefinition({
   optionalServerClusters: [],
 });
 
+export const onOffOutlet = DeviceTypeDefinition({
+  name: 'MA-onoffpluginunit',
+  code: 0x010a,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* Scenes.Cluster.id,*/ OnOff.Cluster.id],
+  optionalServerClusters: [LevelControl.Cluster.id],
+});
+
+export const dimmableOutlet = DeviceTypeDefinition({
+  name: 'MA-dimmablepluginunit',
+  code: 0x010b,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* Scenes.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id],
+  optionalServerClusters: [],
+});
+
 // Custom device types: switch without ClientClusters
 
 export const onOffSwitch = DeviceTypeDefinition({
