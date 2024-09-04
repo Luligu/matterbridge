@@ -15,6 +15,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [package]: Update dependencies.
 - [package]: Update matter-node.js to 0.10.0 and removed the Scene cluster to follow matter.js.
 - [package]: Update matter-history to 1.1.8.
+- [package]: Removed long deprecated exports.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
