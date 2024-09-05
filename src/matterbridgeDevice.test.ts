@@ -51,11 +51,11 @@ import {
   TimeSynchronization,
   WindowCovering,
   WindowCoveringCluster,
+  SmokeCoAlarm,
+  DeviceEnergyManagement,
 } from '@project-chip/matter-node.js/cluster';
 import { DeviceTypes, logEndpoint } from '@project-chip/matter-node.js/device';
 import { EndpointNumber, GroupId } from '@project-chip/matter-node.js/datatype';
-import { SmokeCoAlarm } from './cluster/SmokeCoAlarmCluster.js';
-import { DeviceEnergyManagement } from './cluster/DeviceEnergyManagementCluster.js';
 import { waiter } from './utils/utils.js';
 import { Matterbridge } from './matterbridge.js';
 

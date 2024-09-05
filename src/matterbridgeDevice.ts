@@ -4,7 +4,7 @@
  * @file matterbridgeDevice.ts
  * @author Luca Liguori
  * @date 2023-12-29
- * @version 1.2.0
+ * @version 2.0.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
  *
@@ -22,6 +22,8 @@
  */
 
 import {
+  AirQuality,
+  AirQualityCluster,
   BasicInformationCluster,
   BooleanState,
   BooleanStateCluster,
@@ -29,17 +31,32 @@ import {
   BooleanStateConfigurationCluster,
   BridgedDeviceBasicInformation,
   BridgedDeviceBasicInformationCluster,
+  CarbonDioxideConcentrationMeasurement,
+  CarbonDioxideConcentrationMeasurementCluster,
+  CarbonMonoxideConcentrationMeasurement,
+  CarbonMonoxideConcentrationMeasurementCluster,
   ClusterServer,
   ClusterServerHandlers,
   ColorControl,
   ColorControlCluster,
+  ConcentrationMeasurement,
+  DeviceEnergyManagement,
+  DeviceEnergyManagementCluster,
+  DeviceEnergyManagementMode,
+  DeviceEnergyManagementModeCluster,
   DoorLock,
   DoorLockCluster,
+  ElectricalEnergyMeasurement,
+  ElectricalEnergyMeasurementCluster,
+  ElectricalPowerMeasurement,
+  ElectricalPowerMeasurementCluster,
   FanControl,
   FanControlCluster,
   FixedLabelCluster,
   FlowMeasurement,
   FlowMeasurementCluster,
+  FormaldehydeConcentrationMeasurement,
+  FormaldehydeConcentrationMeasurementCluster,
   Groups,
   GroupsCluster,
   GroupsClusterHandler,
@@ -49,19 +66,36 @@ import {
   IlluminanceMeasurementCluster,
   LevelControl,
   LevelControlCluster,
+  MeasurementType,
   ModeSelect,
   ModeSelectCluster,
+  NitrogenDioxideConcentrationMeasurement,
+  NitrogenDioxideConcentrationMeasurementCluster,
   OccupancySensing,
   OccupancySensingCluster,
   OnOff,
   OnOffCluster,
+  OzoneConcentrationMeasurement,
+  OzoneConcentrationMeasurementCluster,
+  Pm10ConcentrationMeasurement,
+  Pm10ConcentrationMeasurementCluster,
+  Pm1ConcentrationMeasurement,
+  Pm1ConcentrationMeasurementCluster,
+  Pm25ConcentrationMeasurement,
+  Pm25ConcentrationMeasurementCluster,
   PowerSource,
   PowerSourceCluster,
   PowerSourceConfigurationCluster,
+  PowerTopology,
+  PowerTopologyCluster,
   PressureMeasurement,
   PressureMeasurementCluster,
+  RadonConcentrationMeasurement,
+  RadonConcentrationMeasurementCluster,
   RelativeHumidityMeasurement,
   RelativeHumidityMeasurementCluster,
+  SmokeCoAlarm,
+  SmokeCoAlarmCluster,
   Switch,
   SwitchCluster,
   TemperatureMeasurement,
@@ -72,6 +106,8 @@ import {
   ThreadNetworkDiagnosticsCluster,
   TimeSynchronization,
   TimeSynchronizationCluster,
+  TotalVolatileOrganicCompoundsConcentrationMeasurement,
+  TotalVolatileOrganicCompoundsConcentrationMeasurementCluster,
   WindowCovering,
   WindowCoveringCluster,
   getClusterNameById,
@@ -80,28 +116,6 @@ import { Specification } from '@project-chip/matter-node.js/model';
 import { ClusterId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
 import { Device, DeviceClasses, DeviceTypeDefinition, Endpoint, EndpointOptions } from '@project-chip/matter-node.js/device';
 import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
-
-// Custom cluster types
-import { AirQuality, AirQualityCluster } from './cluster/AirQualityCluster.js';
-import { TvocMeasurement, TvocMeasurementCluster } from './cluster/TvocCluster.js';
-import { PowerTopology, PowerTopologyCluster } from './cluster/PowerTopologyCluster.js';
-import { ElectricalPowerMeasurement, ElectricalPowerMeasurementCluster } from './cluster/ElectricalPowerMeasurementCluster.js';
-import { ElectricalEnergyMeasurement, ElectricalEnergyMeasurementCluster } from './cluster/ElectricalEnergyMeasurementCluster.js';
-import { MeasurementType } from './cluster/MeasurementType.js';
-import { CarbonMonoxideConcentrationMeasurement, CarbonMonoxideConcentrationMeasurementCluster } from './cluster/CarbonMonoxideConcentrationMeasurementCluster.js';
-import { SmokeCoAlarm, SmokeCoAlarmCluster } from './cluster/SmokeCoAlarmCluster.js';
-// import { BooleanStateConfiguration, BooleanStateConfigurationCluster } from './cluster/BooleanStateConfigurationCluster.js';
-import { DeviceEnergyManagement, DeviceEnergyManagementCluster } from './cluster/DeviceEnergyManagementCluster.js';
-import { DeviceEnergyManagementMode, DeviceEnergyManagementModeCluster } from './cluster/DeviceEnergyManagementModeCluster.js';
-import { ConcentrationMeasurement } from './cluster/ConcentrationMeasurementCluster.js';
-import { CarbonDioxideConcentrationMeasurement, CarbonDioxideConcentrationMeasurementCluster } from './cluster/CarbonDioxideConcentrationMeasurementCluster.js';
-import { OzoneConcentrationMeasurement, OzoneConcentrationMeasurementCluster } from './cluster/OzoneConcentrationMeasurementCluster.js';
-import { Pm1ConcentrationMeasurement, Pm1ConcentrationMeasurementCluster } from './cluster/Pm1ConcentrationMeasurementCluster.js';
-import { Pm25ConcentrationMeasurement, Pm25ConcentrationMeasurementCluster } from './cluster/Pm25ConcentrationMeasurementCluster.js';
-import { Pm10ConcentrationMeasurement, Pm10ConcentrationMeasurementCluster } from './cluster/Pm10ConcentrationMeasurementCluster.js';
-import { RadonConcentrationMeasurement, RadonConcentrationMeasurementCluster } from './cluster/RadonConcentrationMeasurementCluster.js';
-import { NitrogenDioxideConcentrationMeasurement, NitrogenDioxideConcentrationMeasurementCluster } from './cluster/NitrogenDioxideConcentrationMeasurementCluster.js';
-import { FormaldehydeConcentrationMeasurement, FormaldehydeConcentrationMeasurementCluster } from './cluster/FormaldehydeConcentrationMeasurementCluster.js';
 
 import { EveHistory, MatterHistory } from 'matter-history';
 
@@ -145,7 +159,8 @@ interface MatterbridgeDeviceCommands {
 
   setpointRaiseLower: MakeMandatory<ClusterServerHandlers<typeof Thermostat.Complete>['setpointRaiseLower']>;
 
-  changeToMode: MakeMandatory<ClusterServerHandlers<typeof ModeSelect.Complete>['changeToMode']>;
+  // changeToMode: MakeMandatory<ClusterServerHandlers<typeof ModeSelect.Complete>['changeToMode']>;
+  changeToMode: MakeMandatory<ClusterServerHandlers<typeof DeviceEnergyManagementMode.Complete>['changeToMode']>;
 
   // step: MakeMandatory<ClusterServerHandlers<typeof FanControl.Complete>['step']>; // Rev > 2
 
@@ -175,7 +190,7 @@ export const airQualitySensor = DeviceTypeDefinition({
     Pm25ConcentrationMeasurement.Cluster.id,
     Pm10ConcentrationMeasurement.Cluster.id,
     RadonConcentrationMeasurement.Cluster.id,
-    TvocMeasurement.Cluster.id,
+    TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id,
   ],
 });
 
@@ -623,7 +638,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(Pm25ConcentrationMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultPm25ConcentrationMeasurementClusterServer());
     if (includeServerList.includes(Pm10ConcentrationMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultPm10ConcentrationMeasurementClusterServer());
     if (includeServerList.includes(RadonConcentrationMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultRadonConcentrationMeasurementClusterServer());
-    if (includeServerList.includes(TvocMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultTvocMeasurementClusterServer());
+    if (includeServerList.includes(TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultTvocMeasurementClusterServer());
     if (includeServerList.includes(FanControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultFanControlClusterServer());
     if (includeServerList.includes(DeviceEnergyManagement.Cluster.id)) endpoint.addClusterServer(this.getDefaultDeviceEnergyManagementClusterServer());
     if (includeServerList.includes(DeviceEnergyManagementMode.Cluster.id)) endpoint.addClusterServer(this.getDefaultDeviceEnergyManagementModeClusterServer());
@@ -1177,7 +1192,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           measured: true,
           minMeasuredValue: 0,
           maxMeasuredValue: 0,
-          accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62, fixedMin: 10, fixedMax: 10, fixedTypical: 0 }],
+          accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62 /* , fixedMin: 10, fixedMax: 10, fixedTypical: 0*/ }],
         },
         cumulativeEnergyImported: { energy },
         cumulativeEnergyExported: null,
@@ -1206,21 +1221,21 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
             measured: true,
             minMeasuredValue: 0,
             maxMeasuredValue: 100,
-            accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62, fixedMin: 10, fixedMax: 10, fixedTypical: 0 }],
+            accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62 /* , fixedMin: 10, fixedMax: 10, fixedTypical: 0*/ }],
           },
           {
             measurementType: MeasurementType.ActiveCurrent,
             measured: true,
             minMeasuredValue: 0,
             maxMeasuredValue: 100,
-            accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62, fixedMin: 10, fixedMax: 10, fixedTypical: 0 }],
+            accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62 /* , fixedMin: 10, fixedMax: 10, fixedTypical: 0 */ }],
           },
           {
             measurementType: MeasurementType.ActivePower,
             measured: true,
             minMeasuredValue: 0,
             maxMeasuredValue: 100,
-            accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62, fixedMin: 10, fixedMax: 10, fixedTypical: 0 }],
+            accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62 /* , fixedMin: 10, fixedMax: 10, fixedTypical: 0 */ }],
           },
         ],
         voltage: voltage,
@@ -2439,9 +2454,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param airQuality The air quality type. Defaults to `AirQuality.AirQualityType.Unknown`.
    */
-  getDefaultAirQualityClusterServer(airQuality = AirQuality.AirQualityType.Unknown) {
+  getDefaultAirQualityClusterServer(airQuality = AirQuality.AirQualityEnum.Unknown) {
     return ClusterServer(
-      AirQualityCluster.with(AirQuality.Feature.FairAirQuality, AirQuality.Feature.ModerateAirQuality, AirQuality.Feature.VeryPoorAirQuality),
+      AirQualityCluster.with(AirQuality.Feature.Fair, AirQuality.Feature.Moderate, AirQuality.Feature.VeryPoor, AirQuality.Feature.ExtremelyPoor),
       {
         airQuality,
       },
@@ -2454,7 +2469,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param airQuality The air quality type. Defaults to `AirQuality.AirQualityType.Unknown`.
    */
-  createDefaultAirQualityClusterServer(airQuality = AirQuality.AirQualityType.Unknown) {
+  createDefaultAirQualityClusterServer(airQuality = AirQuality.AirQualityEnum.Unknown) {
     this.addClusterServer(this.getDefaultAirQualityClusterServer(airQuality));
   }
 
@@ -2463,13 +2478,16 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param measuredValue - The measured value for TVOC.
    */
-  getDefaultTvocMeasurementClusterServer(measuredValue = 0) {
+  getDefaultTvocMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     return ClusterServer(
-      TvocMeasurementCluster.with(TvocMeasurement.Feature.NumericMeasurement),
+      TotalVolatileOrganicCompoundsConcentrationMeasurementCluster.with('NumericMeasurement'),
       {
         measuredValue,
         minMeasuredValue: null,
         maxMeasuredValue: null,
+        uncertainty: 0,
+        measurementUnit,
+        measurementMedium,
       },
       {},
       {},
@@ -2481,8 +2499,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param measuredValue - The measured value for TVOC.
    */
-  createDefaultTvocMeasurementClusterServer(measuredValue = 0) {
-    this.addClusterServer(this.getDefaultTvocMeasurementClusterServer(measuredValue));
+  createDefaultTvocMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+    this.addClusterServer(this.getDefaultTvocMeasurementClusterServer(measuredValue, measurementUnit, measurementMedium));
   }
 
   /**
@@ -3015,14 +3033,19 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     return ClusterServer(
       DeviceEnergyManagementModeCluster,
       {
-        esaType: DeviceEnergyManagement.EsaType.Other,
-        esaCanGenerate: false,
-        esaState: DeviceEnergyManagement.EsaState.Online,
-        absMinPower: 0,
-        absMaxPower: 0,
-        optOutState: DeviceEnergyManagement.OptOutState.NoOptOut,
+        supportedModes: [
+          { label: 'Normal', mode: 1, modeTags: [{ value: 1 }] },
+          { label: 'Eco', mode: 2, modeTags: [{ value: 2 }] },
+        ],
+        currentMode: 1,
+        startUpMode: 1,
       },
-      {},
+      {
+        changeToMode: async ({ request, attributes }) => {
+          this.log.debug('Matter command: DeviceEnergyManagementMode.changeToMode', request);
+          await this.commandHandler.executeHandler('changeToMode', { request, attributes });
+        },
+      },
       {},
     );
   }

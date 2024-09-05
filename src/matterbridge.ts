@@ -2606,7 +2606,7 @@ export class Matterbridge extends EventEmitter {
       childProcess.on('close', (code, signal) => {
         this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', `child process closed with code ${code} and signal ${signal}`);
         if (code === 0) {
-          if (cmdLine.startsWith('npm install -g')) this.log.notice(`${cmdLine.replace('npm install -g ', '')} installed correctly`);
+          if (cmdLine.startsWith('npm install -g')) this.log.notice(`${cmdLine.replace('npm install -g ', '').replace('--verbose', '')} installed correctly`);
           this.log.debug(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
           resolve();
         } else {
@@ -3277,7 +3277,7 @@ export class Matterbridge extends EventEmitter {
       if (command === 'update') {
         this.log.info('Updating matterbridge...');
         try {
-          await this.spawnCommand('npm', ['install', '-g', 'matterbridge']);
+          await this.spawnCommand('npm', ['install', '-g', 'matterbridge', '--verbose']);
           this.log.info('Matterbridge has been updated. Full restart required.');
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
@@ -3311,7 +3311,7 @@ export class Matterbridge extends EventEmitter {
         param = param.replace(/\*/g, '\\');
         this.log.info(`Installing plugin ${plg}${param}${nf}...`);
         try {
-          await this.spawnCommand('npm', ['install', '-g', param]);
+          await this.spawnCommand('npm', ['install', '-g', param, '--verbose']);
           this.log.info(`Plugin ${plg}${param}${nf} installed. Full restart required.`);
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
