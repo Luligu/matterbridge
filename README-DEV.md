@@ -40,7 +40,7 @@ Matterbridge exports from:
 # **********
 A plugin will never ever install and import from matter-node.js or matter.js directly cause this leads to a second instance of matter.js that causes instability and unpredictable errors like "The only instance is Enpoint". 
 # **********
-A plugin will never ever install and import from matterbridge. Matterbridge must be linked to the plugin.
+A plugin will never ever install matterbridge (not dependencies and not devDependencies). Matterbridge must be linked to the plugin.
 # **********
 
 In the next releases I will remove the duplicated exports so please update your plugins.

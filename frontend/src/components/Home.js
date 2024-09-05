@@ -496,7 +496,7 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
 
 function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridgeInfo, plugin }) {
   // console.log('QRDiv:', matterbridgeInfo, plugin);
-  if(matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === true) {
+  if(matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === true && matterbridgeInfo.matterbridgeFabricInformations && matterbridgeInfo.matterbridgeSessionInformations) {
     console.log(`QRDiv: ${matterbridgeInfo.matterbridgeFabricInformations.length} fabrics, ${matterbridgeInfo.matterbridgeSessionInformations.length} sessions`);
     return ( 
       <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '302px', overflow: 'hidden'}} >
@@ -515,7 +515,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
         </div>  
       </div>
     );  
-  } else if(matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired === true) {
+  } else if(matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired === true && plugin.fabricInformations && plugin.sessionInformations) {
     console.log(`QRDiv: ${plugin.fabricInformations.length} fabrics, ${plugin.sessionInformations.length} sessions`);
     return ( 
       <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '302px', overflow: 'hidden'}} >
