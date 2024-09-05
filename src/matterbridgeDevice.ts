@@ -159,7 +159,8 @@ interface MatterbridgeDeviceCommands {
 
   setpointRaiseLower: MakeMandatory<ClusterServerHandlers<typeof Thermostat.Complete>['setpointRaiseLower']>;
 
-  changeToMode: MakeMandatory<ClusterServerHandlers<typeof ModeSelect.Complete>['changeToMode']>;
+  // changeToMode: MakeMandatory<ClusterServerHandlers<typeof ModeSelect.Complete>['changeToMode']>;
+  changeToMode: MakeMandatory<ClusterServerHandlers<typeof DeviceEnergyManagementMode.Complete>['changeToMode']>;
 
   // step: MakeMandatory<ClusterServerHandlers<typeof FanControl.Complete>['step']>; // Rev > 2
 
@@ -3041,7 +3042,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {
         changeToMode: async ({ request, attributes }) => {
-          this.log.debug('Matter command: changeToMode', request);
+          this.log.debug('Matter command: DeviceEnergyManagementMode.changeToMode', request);
           await this.commandHandler.executeHandler('changeToMode', { request, attributes });
         },
       },
