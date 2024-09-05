@@ -9,7 +9,8 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [package]: Update dependencies.
-- [package]: Final update to matter-node.js to 0.10.0 and removed all local matter 1.3 clusters now present in matter.js.
+- [package]: Final update to matter-node.js 0.10.0.
+- [package]: Removed all local matter 1.3 clusters now present in matter.js.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
