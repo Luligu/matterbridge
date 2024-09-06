@@ -156,6 +156,41 @@ export class PluginManager {
         this.log.debug(`Package.json name not found at ${packageJsonPath}`);
         return null;
       }
+
+      // Check for @project-chip packages in dependencies and devDependencies
+      const checkForProjectChipPackages = (dependencies: Record<string, string>) => {
+        return Object.keys(dependencies).filter((pkg) => pkg.startsWith('@project-chip'));
+      };
+      const projectChipDependencies = checkForProjectChipPackages(packageJson.dependencies || {});
+      if (projectChipDependencies.length > 0) {
+        this.log.error(`Found @project-chip packages "${projectChipDependencies.join(', ')}" in plugin dependencies.`);
+        this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        return null;
+      }
+      const projectChipDevDependencies = checkForProjectChipPackages(packageJson.devDependencies || {});
+      if (projectChipDevDependencies.length > 0) {
+        this.log.error(`Found @project-chip packages "${projectChipDevDependencies.join(', ')}" in plugin devDependencies.`);
+        this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        return null;
+      }
+
+      // Check for matterbridge package in dependencies and devDependencies
+      const checkForMatterbridgePackage = (dependencies: Record<string, string>) => {
+        return Object.keys(dependencies).filter((pkg) => pkg === 'matterbridge');
+      };
+      const matterbridgeDependencies = checkForMatterbridgePackage(packageJson.dependencies || {});
+      if (matterbridgeDependencies.length > 0) {
+        this.log.error(`Found matterbridge package in the plugin dependencies.`);
+        this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        return null;
+      }
+      const matterbridgeDevDependencies = checkForMatterbridgePackage(packageJson.devDependencies || {});
+      if (matterbridgeDevDependencies.length > 0) {
+        this.log.error(`Found matterbridge package in the plugin devDependencies.`);
+        this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        return null;
+      }
+
       this.log.debug(`Resolved plugin path ${plg}${pluginPath}${db}: ${packageJsonPath}`);
       return packageJsonPath;
     } catch (err) {

@@ -1927,8 +1927,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createDefaultSwitchClusterServer() {
     this.addClusterServer(this.getDefaultSwitchClusterServer());
-    this.addFixedLabel('orientation', 'Switch');
-    this.addFixedLabel('label', 'Switch');
   }
 
   /**
@@ -1959,8 +1957,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createDefaultLatchingSwitchClusterServer() {
     this.addClusterServer(this.getDefaultLatchingSwitchClusterServer());
-    this.addFixedLabel('orientation', 'Switch');
-    this.addFixedLabel('label', 'Switch');
   }
 
   /**
@@ -2063,7 +2059,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       },
       {
         changeToMode: async (data) => {
-          this.log.debug('Matter command: changeToMode', data.request);
+          this.log.debug('Matter command: ModeSelectCluster.changeToMode', data.request);
           await this.commandHandler.executeHandler('changeToMode', data);
         },
       },

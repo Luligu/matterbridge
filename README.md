@@ -201,13 +201,28 @@ An Accessory platform plugin only exposes one device.
 
 This an example of a dynamic platform plugin.
 
-It exposes a switch with onOff, a light with onOff-levelControl-colorControl, an outlet with onOff and a WindoweCovering device.
+It exposes:
+- a switch with onOff cluster
+- a light with onOff
+- a light with onOff and levelControl (dimmer)
+- a light with onOff, levelControl and colorControl (with XY, HS and CT) clusters
+- a light with onOff, levelControl and colorControl (with HS only) clusters
+- a light with onOff, levelControl and colorControl (with XY only) clusters
+- a light with onOff, levelControl and colorControl (with CT only) clusters
+- an outlet (plug) with onOff cluster
+- a cover with windowCovering cluster
+- a lock with doorLock cluster
+- a thermo with thermostat cluster and 3 sub endpoints with flowMeasurement cluster, temperatureMeasurement cluster
+  and relativeHumidityMeasurement cluster (to show how to create a composed device with sub endpoints)
+- a fan with FanControl cluster
+- a rainSensor device
+- a waterFreezeDetector device
+- a waterLeakDetector device
+- a smokeCoAlarm device
 
 All these virtual devices continuously change state and position. The plugin also shows how to use all the command handlers (you can control all the devices).
 
 A Dynamic platform plugin exposes as many devices as you need (the limit for the Home app is 150 accessories for bridge).
-
-Matterbridge can run as many plugins as you want.
 
 [See the plugin homepage here](https://github.com/Luligu/matterbridge-example-dynamic-platform)
 
@@ -230,7 +245,6 @@ The Eve app only shows the history when the plugins run like an AccessoryPlatfor
 ## How to install and add a plugin with the frontend (best option)
 
 Just open the frontend on the link provided in the log, select a plugin and click install.
-
 
 ## How to install and add a plugin manually from a terminal (from npm)
 
