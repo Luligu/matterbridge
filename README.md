@@ -328,15 +328,18 @@ All issues have been solved from the version 17.5 of the HomePod/AppleTV. Now th
 
 So far is the only controller supporting some Matter 1.2 and 1.3 device type:
 
-- air quality sensor (Matter 1.2)
+- airQualitySensor code 0x002c (Matter 1.2)
+- waterFreezeDetector code 0x0041 (Matter 1.3 with only BooleanState cluster)
+- waterLeakDetector code 0x0043 (Matter 1.3 with only BooleanState cluster)
+- rainSensor code 0x0044 (Matter 1.3 with only BooleanState cluster)
+- deviceEnergyManagement code 0x050d (Matter 1.3 with only DeviceEnergyManagementMode cluster)
 
-Also supports (probably only like BooleanState cluster):
+Electrical measurements:
+- electrical measurements from EveHistoryCluster (used in Matterbridge plugins)
+- electricalSensor code 0x0510 with clusters: ElectricalPowerMeasurement and ElectricalEnergyMeasurement (still in dev but fully working!)
 
-- waterFreezeDetector (Matter 1.3)
-- waterLeakDetector (Matter 1.3)
-- rainSensor (Matter 1.3)
-
-HA also support electrical measurements from EveHistoryCluster (used in Matterbridge plugins)
+Other supported cluster:
+- ModeSelect
 
 ## Home Assistant issues (Matter Server for HA is still in Beta)
 
