@@ -77,6 +77,7 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
+    "start": "node ./dist/cli.js",
     "start:test": "node ./dist/cli.js -test",
     "start:bridge": "node ./dist/cli.js -bridge",
     "start:childbridge": "node ./dist/cli.js -childbridge",
