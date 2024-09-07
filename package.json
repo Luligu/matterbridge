@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.5.5",
+  "version": "1.5.5-dev.1",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -126,34 +126,34 @@
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest"
   },
   "dependencies": {
-    "@project-chip/matter-node.js": "0.10.0",
-    "@project-chip/matter.js": "0.10.0",
+    "@project-chip/matter-node.js": "0.10.1-alpha.0-20240906-86b97420",
+    "@project-chip/matter.js": "0.10.1-alpha.0-20240906-86b97420",
     "archiver": "7.0.1",
     "express": "4.19.2",
     "glob": "11.0.0",
     "https": "1.0.0",
-    "matter-history": "^1.1.8",
+    "matter-history": "1.1.11-dev.1",
     "node-ansi-logger": "3.0.0",
     "node-persist-manager": "1.0.8",
     "ws": "8.18.0"
   },
   "devDependencies": {
-    "@eslint/js": "9.9.1",
+    "@eslint/js": "9.10.0",
     "@types/archiver": "6.0.2",
     "@types/eslint__js": "8.42.3",
     "@types/express": "4.17.21",
     "@types/jest": "29.5.12",
-    "@types/node": "22.5.1",
+    "@types/node": "22.5.4",
     "@types/ws": "8.5.12",
-    "eslint": "9.9.1",
+    "eslint": "9.10.0",
     "eslint-config-prettier": "9.1.0",
-    "eslint-plugin-jest": "28.8.1",
+    "eslint-plugin-jest": "28.8.3",
     "eslint-plugin-prettier": "5.2.1",
     "jest": "29.7.0",
     "prettier": "3.3.3",
     "rimraf": "6.0.1",
     "ts-jest": "29.2.5",
     "typescript": "5.5.4",
-    "typescript-eslint": "8.3.0"
+    "typescript-eslint": "8.4.0"
   }
 }
