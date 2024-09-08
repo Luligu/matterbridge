@@ -4,10 +4,11 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
-## [1.5.5] - 2024-09-07
+## [1.5.5] - 2024-09-08
 
 ### Changed
 
+- [matterbridge]: Changed startMatterInterval from 30 to 60 secods.
 - [package]: Update dependencies.
 
 <a href="https://www.buymeacoffee.com/luligugithub">

@@ -651,7 +651,7 @@ export class Matterbridge extends EventEmitter {
         plugin.schemaJson = await this.plugins.loadSchema(plugin);
         // Check if the plugin is available
         if (!(await this.plugins.resolve(plugin.path))) {
-          this.log.error(`Plugin ${plg}${plugin.name}${er} not found. Disabling it.`);
+          this.log.error(`Plugin ${plg}${plugin.name}${er} not found or not validated. Disabling it.`);
           plugin.enabled = false;
           plugin.error = true;
           continue;
@@ -692,7 +692,7 @@ export class Matterbridge extends EventEmitter {
         plugin.schemaJson = await this.plugins.loadSchema(plugin);
         // Check if the plugin is available
         if (!(await this.plugins.resolve(plugin.path))) {
-          this.log.error(`Plugin ${plg}${plugin.name}${er} not found. Disabling it.`);
+          this.log.error(`Plugin ${plg}${plugin.name}${er} not found or not validated. Disabling it.`);
           plugin.enabled = false;
           plugin.error = true;
           continue;
@@ -1527,7 +1527,7 @@ export class Matterbridge extends EventEmitter {
         if (!plugin.loaded || !plugin.started) {
           this.log.debug(`***Waiting (failSafeCount=${failCount}/30) in startMatterInterval interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
           failCount++;
-          if (failCount > 30) {
+          if (failCount > 60) {
             this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error state.`);
             plugin.error = true;
           }
@@ -1598,7 +1598,7 @@ export class Matterbridge extends EventEmitter {
           allStarted = false;
           this.log.debug(`***Waiting (failSafeCount=${failCount}/30) for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
           failCount++;
-          if (failCount > 30) {
+          if (failCount > 60) {
             this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error mode.`);
             plugin.error = true;
           }
