@@ -1525,7 +1525,7 @@ export class Matterbridge extends EventEmitter {
         }
 
         if (!plugin.loaded || !plugin.started) {
-          this.log.debug(`Waiting (failSafeCount=${failCount}/30) in startMatterInterval interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
+          this.log.debug(`Waiting (failSafeCount=${failCount}/60) in startMatterInterval interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
           failCount++;
           if (failCount > 60) {
             this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error state.`);
@@ -1596,7 +1596,7 @@ export class Matterbridge extends EventEmitter {
         this.log.debug(`Checking plugin ${plg}${plugin.name}${db} to start matter in childbridge mode...`);
         if (!plugin.loaded || !plugin.started) {
           allStarted = false;
-          this.log.debug(`Waiting (failSafeCount=${failCount}/30) for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
+          this.log.debug(`Waiting (failSafeCount=${failCount}/60) for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
           failCount++;
           if (failCount > 60) {
             this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error mode.`);
