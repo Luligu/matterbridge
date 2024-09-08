@@ -153,7 +153,21 @@ export class PluginManager {
       // Load the package.json of the plugin
       const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
       if (!packageJson.name) {
-        this.log.debug(`Package.json name not found at ${packageJsonPath}`);
+        this.log.error(`Package.json name not found at ${packageJsonPath}`);
+        return null;
+      }
+
+      // Check for main issues
+      if (!packageJson.type || packageJson.type !== 'module') {
+        this.log.error(`Plugin at ${packageJsonPath} is not a module`);
+        return null;
+      }
+      if (!packageJson.main) {
+        this.log.error(`Plugin at ${packageJsonPath} has no main entrypoint in package.json`);
+        return null;
+      }
+      if (!packageJson.types) {
+        this.log.error(`Plugin at ${packageJsonPath} has no types in package.json`);
         return null;
       }
 

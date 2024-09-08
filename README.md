@@ -134,7 +134,7 @@ Config editor:
 
 ### Home Assistant Community Add-ons
 
-The Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. If you use them and find an issue (and you will cause some of them don't meet the Matterbridge guidelines), please don't open an issue in the Matterbridge repository.
+The Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. I strongly advise against using them. If you do use them and encounter an issue (which is likely because some do not meet the Matterbridge guidelines), please do not open an issue in the Matterbridge repository.
 
 ## Development
 
