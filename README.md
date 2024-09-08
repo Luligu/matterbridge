@@ -132,6 +132,10 @@ Config editor:
 
 [Advanced configurations](https://github.com/Luligu/matterbridge/blob/main/README-DOCKER.md)
 
+### Home Assistant Community Add-ons
+
+The Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. If you use them and find an issue (and you will cause some of them don't meet the Matterbridge guidelines), please don't open an issue in the Matterbridge repository.
+
 ## Development
 
 [Development](https://github.com/Luligu/matterbridge/blob/main/README-DEV.md)

@@ -38,14 +38,21 @@ Matterbridge exports from:
 - NodeStorage classes.
 
 # **********
-A plugin will never ever install and import from matter-node.js or matter.js directly cause this leads to a second instance of matter.js that causes instability and unpredictable errors like "The only instance is Enpoint". 
+A plugin should never install and import from matter-node.js or matter.js directly cause this leads to a second instance of matter.js that causes instability and unpredictable errors like "The only instance is Enpoint". Also when Matterbridge update the matter.js version, that should be the same for all plugins.
 # **********
-A plugin will never ever install matterbridge (not dependencies and not devDependencies). Matterbridge must be linked to the plugin.
+A plugin should never install Matterbridge (neither as dependencies nor as devDependencies). Matterbridge must be linked to the plugin:
+```json
+"scripts": {
+    '''
+    "install": "node link-matterbridge-script.js",
+    '''
+}    
+```
 # **********
 
 In the next releases I will remove the duplicated exports so please update your plugins.
 
-I will also add some error messages when a plugin has wrong imports.
+I added some error messages when a plugin has wrong imports and the plugin will be disabled to prevent instability and crashes.
 
 ## Guidelines on the migration to matter.js V8
 
