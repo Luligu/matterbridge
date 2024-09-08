@@ -52,7 +52,7 @@ A plugin must never install Matterbridge (neither as dependencies nor as devDepe
 
 In the next releases I will remove the duplicated exports so please update your plugins.
 
-I added some error messages when a plugin has wrong imports and the plugin will be disabled to prevent instability and crashes.
+I added some error messages when a plugin has wrong imports or configurations and the plugin will be disabled to prevent instability and crashes.
 
 ## Guidelines on the migration to matter.js V8
 
