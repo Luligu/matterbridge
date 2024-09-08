@@ -13,6 +13,8 @@ The Home Assistant Community Add-ons and plugins are not verified to work with M
 ### Changed
 
 - [matterbridge]: Changed startMatterInterval from 30 to 60 seconds.
+- [package]: Update matter-node.js to 0.10.1.
+- [package]: Update matter-history to 1.1.11.
 - [package]: Update dependencies.
 
 <a href="https://www.buymeacoffee.com/luligugithub">

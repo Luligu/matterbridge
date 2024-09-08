@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.5.5-dev.2",
+  "version": "1.5.5",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -126,13 +126,13 @@
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest"
   },
   "dependencies": {
-    "@project-chip/matter-node.js": "0.10.1-alpha.0-20240906-86b97420",
-    "@project-chip/matter.js": "0.10.1-alpha.0-20240906-86b97420",
+    "@project-chip/matter-node.js": "0.10.1",
+    "@project-chip/matter.js": "0.10.1",
     "archiver": "7.0.1",
     "express": "4.19.2",
     "glob": "11.0.0",
     "https": "1.0.0",
-    "matter-history": "1.1.11-dev.1",
+    "matter-history": "1.1.11",
     "node-ansi-logger": "3.0.0",
     "node-persist-manager": "1.0.8",
     "ws": "8.18.0"
