@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
+### Home Assistant Community Add-ons
+
+The Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. I strongly advise against using them. If you do use them and encounter an issue (which is likely because some do not meet the Matterbridge guidelines), please do not open an issue in the Matterbridge repository.
+
+## [1.5.5] - 2024-09-09
+
+### Changed
+
+- [matterbridge]: Changed startMatterInterval from 30 to 60 seconds.
+- [package]: Update matter-node.js to 0.10.1.
+- [package]: Update matter-history to 1.1.11.
+- [package]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.5.4] - 2024-09-05
 
 ### Changed

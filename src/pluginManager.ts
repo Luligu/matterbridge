@@ -153,9 +153,62 @@ export class PluginManager {
       // Load the package.json of the plugin
       const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
       if (!packageJson.name) {
-        this.log.debug(`Package.json name not found at ${packageJsonPath}`);
+        this.log.error(`Package.json name not found at ${packageJsonPath}`);
         return null;
       }
+
+      // Check for main issues
+      if (!packageJson.type || packageJson.type !== 'module') {
+        this.log.error(`Plugin at ${packageJsonPath} is not a module`);
+        return null;
+      }
+      if (!packageJson.main) {
+        this.log.error(`Plugin at ${packageJsonPath} has no main entrypoint in package.json`);
+        return null;
+      }
+      if (!packageJson.types) {
+        this.log.error(`Plugin at ${packageJsonPath} has no types in package.json`);
+        return null;
+      }
+      if (!packageJson.scripts.install || packageJson.scripts.install !== 'node link-matterbridge-script.js') {
+        this.log.error(`Plugin at ${packageJsonPath} has not the correct install script in package.json`);
+        return null;
+      }
+
+      // Check for @project-chip packages in dependencies and devDependencies
+      const checkForProjectChipPackages = (dependencies: Record<string, string>) => {
+        return Object.keys(dependencies).filter((pkg) => pkg.startsWith('@project-chip'));
+      };
+      const projectChipDependencies = checkForProjectChipPackages(packageJson.dependencies || {});
+      if (projectChipDependencies.length > 0) {
+        this.log.error(`Found @project-chip packages "${projectChipDependencies.join(', ')}" in plugin dependencies.`);
+        this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        return null;
+      }
+      const projectChipDevDependencies = checkForProjectChipPackages(packageJson.devDependencies || {});
+      if (projectChipDevDependencies.length > 0) {
+        this.log.error(`Found @project-chip packages "${projectChipDevDependencies.join(', ')}" in plugin devDependencies.`);
+        this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        return null;
+      }
+
+      // Check for matterbridge package in dependencies and devDependencies
+      const checkForMatterbridgePackage = (dependencies: Record<string, string>) => {
+        return Object.keys(dependencies).filter((pkg) => pkg === 'matterbridge');
+      };
+      const matterbridgeDependencies = checkForMatterbridgePackage(packageJson.dependencies || {});
+      if (matterbridgeDependencies.length > 0) {
+        this.log.error(`Found matterbridge package in the plugin dependencies.`);
+        this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        return null;
+      }
+      const matterbridgeDevDependencies = checkForMatterbridgePackage(packageJson.devDependencies || {});
+      if (matterbridgeDevDependencies.length > 0) {
+        this.log.error(`Found matterbridge package in the plugin devDependencies.`);
+        this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        return null;
+      }
+
       this.log.debug(`Resolved plugin path ${plg}${pluginPath}${db}: ${packageJsonPath}`);
       return packageJsonPath;
     } catch (err) {
@@ -180,6 +233,7 @@ export class PluginManager {
       if (!packageJson.type || packageJson.type !== 'module') this.log.error(`Plugin ${plg}${plugin.name}${er} is not a module`);
       if (!packageJson.main) this.log.error(`Plugin ${plg}${plugin.name}${er} has no main entrypoint in package.json`);
       if (!packageJson.types) this.log.error(`Plugin ${plg}${plugin.name}${er} has no types in package.json`);
+      if (!packageJson.scripts.install || packageJson.scripts.install !== 'node link-matterbridge-script.js') this.log.error(`Plugin ${plg}${plugin.name}${er} has not the correct install script in package.json`);
       plugin.name = packageJson.name || 'Unknown name';
       plugin.version = packageJson.version || '1.0.0';
       plugin.description = packageJson.description || 'Unknown description';

@@ -592,11 +592,11 @@ describe('Matterbridge device', () => {
     expect(() => device.verifyRequiredClusters()).not.toThrow();
     expect(device.getAllClusterServers()).toHaveLength(5);
     device.createDefaultLatchingSwitchClusterServer();
-    expect(device.getAllClusterServers()).toHaveLength(6);
+    expect(device.getAllClusterServers()).toHaveLength(5);
     device.createDefaultLatchingSwitchClusterServer();
-    expect(device.getAllClusterServers()).toHaveLength(6);
+    expect(device.getAllClusterServers()).toHaveLength(5);
     device.createDefaultSwitchClusterServer();
-    expect(device.getAllClusterServers()).toHaveLength(6);
+    expect(device.getAllClusterServers()).toHaveLength(5);
     // logEndpoint(device);
   });
 

@@ -132,6 +132,10 @@ Config editor:
 
 [Advanced configurations](https://github.com/Luligu/matterbridge/blob/main/README-DOCKER.md)
 
+### Home Assistant Community Add-ons
+
+The Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. I strongly advise against using them. If you do use them and encounter an issue (which is likely because some do not meet the Matterbridge guidelines), please do not open an issue in the Matterbridge repository.
+
 ## Development
 
 [Development](https://github.com/Luligu/matterbridge/blob/main/README-DEV.md)
@@ -201,13 +205,28 @@ An Accessory platform plugin only exposes one device.
 
 This an example of a dynamic platform plugin.
 
-It exposes a switch with onOff, a light with onOff-levelControl-colorControl, an outlet with onOff and a WindoweCovering device.
+It exposes:
+- a switch with onOff cluster
+- a light with onOff
+- a light with onOff and levelControl (dimmer)
+- a light with onOff, levelControl and colorControl (with XY, HS and CT) clusters
+- a light with onOff, levelControl and colorControl (with HS only) clusters
+- a light with onOff, levelControl and colorControl (with XY only) clusters
+- a light with onOff, levelControl and colorControl (with CT only) clusters
+- an outlet (plug) with onOff cluster
+- a cover with windowCovering cluster
+- a lock with doorLock cluster
+- a thermo with thermostat cluster and 3 sub endpoints with flowMeasurement cluster, temperatureMeasurement cluster
+  and relativeHumidityMeasurement cluster (to show how to create a composed device with sub endpoints)
+- a fan with FanControl cluster
+- a rainSensor device
+- a waterFreezeDetector device
+- a waterLeakDetector device
+- a smokeCoAlarm device
 
 All these virtual devices continuously change state and position. The plugin also shows how to use all the command handlers (you can control all the devices).
 
 A Dynamic platform plugin exposes as many devices as you need (the limit for the Home app is 150 accessories for bridge).
-
-Matterbridge can run as many plugins as you want.
 
 [See the plugin homepage here](https://github.com/Luligu/matterbridge-example-dynamic-platform)
 
@@ -230,7 +249,6 @@ The Eve app only shows the history when the plugins run like an AccessoryPlatfor
 ## How to install and add a plugin with the frontend (best option)
 
 Just open the frontend on the link provided in the log, select a plugin and click install.
-
 
 ## How to install and add a plugin manually from a terminal (from npm)
 
@@ -314,15 +332,18 @@ All issues have been solved from the version 17.5 of the HomePod/AppleTV. Now th
 
 So far is the only controller supporting some Matter 1.2 and 1.3 device type:
 
-- air quality sensor (Matter 1.2)
+- airQualitySensor code 0x002c (Matter 1.2)
+- waterFreezeDetector code 0x0041 (Matter 1.3 with only BooleanState cluster)
+- waterLeakDetector code 0x0043 (Matter 1.3 with only BooleanState cluster)
+- rainSensor code 0x0044 (Matter 1.3 with only BooleanState cluster)
+- deviceEnergyManagement code 0x050d (Matter 1.3 with only DeviceEnergyManagementMode cluster)
 
-Also supports (probably only like BooleanState cluster):
+Electrical measurements:
+- electrical measurements from EveHistoryCluster (used in Matterbridge plugins)
+- electricalSensor code 0x0510 with clusters: ElectricalPowerMeasurement and ElectricalEnergyMeasurement (still in dev but fully working!)
 
-- waterFreezeDetector (Matter 1.3)
-- waterLeakDetector (Matter 1.3)
-- rainSensor (Matter 1.3)
-
-HA also support electrical measurements from EveHistoryCluster (used in Matterbridge plugins)
+Other supported cluster:
+- ModeSelect
 
 ## Home Assistant issues (Matter Server for HA is still in Beta)
 

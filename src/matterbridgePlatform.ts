@@ -120,4 +120,30 @@ export class MatterbridgePlatform {
   async unregisterAllDevices() {
     await this.matterbridge.removeAllBridgedDevices(this.name);
   }
+
+  /**
+   * Verifies if the Matterbridge version meets the required version.
+   * @param {string} requiredVersion - The required version to compare against.
+   * @returns {boolean} True if the Matterbridge version meets or exceeds the required version, false otherwise.
+   */
+  verifyMatterbridgeVersion(requiredVersion: string): boolean {
+    const compareVersions = (matterbridgeVersion: string, requiredVersion: string): boolean => {
+      const stripTag = (v: string) => v.split('-')[0];
+      const v1Parts = stripTag(matterbridgeVersion).split('.').map(Number);
+      const v2Parts = stripTag(requiredVersion).split('.').map(Number);
+      for (let i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
+        const v1Part = v1Parts[i] || 0;
+        const v2Part = v2Parts[i] || 0;
+        if (v1Part < v2Part) {
+          return false;
+        } else if (v1Part > v2Part) {
+          return true;
+        }
+      }
+      return true;
+    };
+
+    if (!compareVersions(this.matterbridge.matterbridgeVersion, requiredVersion)) return false;
+    return true;
+  }
 }

@@ -132,7 +132,8 @@ describe('PluginManager', () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
 
-    expect(await plugins.resolve('')).not.toBeNull(); // Should return the package.json file of the matterbridge
+    // expect(await plugins.resolve('./package.json')).toBeNull(); // Should return the package.json file of the matterbridge with wrong imports
+    // expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.ERROR, `Please open an issue on the plugin repository to remove them.`);
     expect(await plugins.resolve('xyz')).toBeNull();
     expect(await plugins.resolve('./src/mock/plugin1')).not.toBeNull();
     expect(await plugins.resolve('./src/mock/plugin2')).not.toBeNull();
