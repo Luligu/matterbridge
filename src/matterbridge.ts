@@ -257,7 +257,7 @@ export class Matterbridge extends EventEmitter {
     if (hasParameter('docker')) this.restartMode = 'docker';
 
     // Set the matterbridge directory
-    this.homeDirectory = os.homedir();
+    this.homeDirectory = getParameter('homedir') ?? os.homedir();
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
 
     // Initialize nodeStorage and nodeContext
@@ -818,7 +818,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`- System Uptime: ${this.systemInformation.systemUptime}`);
 
     // Home directory
-    this.homeDirectory = os.homedir();
+    this.homeDirectory = getParameter('homedir') ?? os.homedir();
     this.matterbridgeInformation.homeDirectory = this.homeDirectory;
     this.log.debug(`Home Directory: ${this.homeDirectory}`);
 

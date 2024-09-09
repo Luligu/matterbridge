@@ -8,7 +8,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 The Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. I strongly advise against using them. If you do use them and encounter an issue (which is likely because some do not meet the Matterbridge guidelines), please do not open an issue in the Matterbridge repository.
 
-## [1.5.5] - 2024-09-08
+## [1.5.5] - 2024-09-09
 
 ### Changed
 
