@@ -450,8 +450,8 @@ export class Matterbridge extends EventEmitter {
       - list:                  list the registered plugins
       - loginterfaces:         log the network interfaces (usefull for finding the name of the interface to use with -mdnsinterface option)
       - logstorage:            log the node storage
-      - sudo:                  force the use of sudo to install or update packages
-      - nosudo:                force not to use sudo to install or update packages
+      - sudo:                  force the use of sudo to install or update packages if the internal logic fails
+      - nosudo:                force not to use sudo to install or update packages if the internal logic fails
       - ssl:                   enable SSL for the frontend and WebSockerServer (certificates in .matterbridge/certs directory cert.pem, key.pem and ca.pem (optional))
       - add [plugin path]:     register the plugin from the given absolute or relative path
       - add [plugin name]:     register the globally installed plugin with the given name
