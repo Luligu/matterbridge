@@ -12,7 +12,7 @@ export function OnlineProvider({ children }) {
   // Fetch settings from the backend
   const fetchSettings = () => {
 
-    fetch('/api/settings')
+    fetch('./api/settings')
       .then(response => response.json())
       .then(data => { 
         console.log('From OnlineProvider /api/settings:', data); 

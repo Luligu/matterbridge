@@ -88,7 +88,7 @@ function LoginForm() {
   useEffect(() => {
     const fetchApiSettings = async () => {
       try {
-        const response = await fetch('/api/settings');
+        const response = await fetch('./api/settings');
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -224,7 +224,7 @@ function App() {
 
   const fetchApiSettings = async () => {
     try {
-      const response = await fetch('/api/settings');
+      const response = await fetch('./api/settings');
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }

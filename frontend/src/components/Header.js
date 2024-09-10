@@ -185,7 +185,7 @@ function Header() {
   // Fetch settings from the backend
   const fetchSettings = () => {
 
-    fetch('/api/settings')
+    fetch('./api/settings')
       .then(response => response.json())
       .then(data => { 
         console.log('From header /api/settings (header):', data); 

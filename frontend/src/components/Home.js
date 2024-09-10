@@ -111,7 +111,7 @@ function Home() {
   const fetchSettings = () => {
     console.log('From home fetchSettings');
 
-    fetch('/api/settings')
+    fetch('./api/settings')
       .then(response => response.json())
       .then(data => { 
         console.log('From home /api/settings:', data); 
@@ -125,7 +125,7 @@ function Home() {
       })
       .catch(error => console.error('Error fetching settings:', error));
 
-    fetch('/api/plugins')
+    fetch('./api/plugins')
       .then(response => response.json())
       .then(data => { 
         console.log('From home /api/plugins:', data)
