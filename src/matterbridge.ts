@@ -2781,7 +2781,7 @@ export class Matterbridge extends EventEmitter {
       // Listen on the specified port
       if (getParameter('homedir')) {
         this.httpsServer.listen(port, '0.0.0.0', () => {
-          this.log.info(`The frontend https server is listening on ${UNDERLINE}http://localhost:${port}${UNDERLINEOFF}${rs}`);
+          this.log.info(`The frontend https server is listening on ${UNDERLINE}https://localhost:${port}${UNDERLINEOFF}${rs}`);
         });
       } else {
         this.httpsServer.listen(port, () => {
