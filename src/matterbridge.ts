@@ -2716,12 +2716,8 @@ export class Matterbridge extends EventEmitter {
       });
     }
 
-    this.expressApp.use(express.static(path.join(this.rootDirectory, 'frontend/build')));
-
     // Serve static files from '/static' endpoint
-    if (hasParameter('homedir')) {
-      // this.expressApp.use('/static', express.static(path.join(this.rootDirectory, 'frontend/build/static')));
-    }
+    this.expressApp.use(express.static(path.join(this.rootDirectory, 'frontend/build')));
 
     if (!hasParameter('ssl')) {
       // Create an HTTP server and attach the express app
@@ -2821,9 +2817,7 @@ export class Matterbridge extends EventEmitter {
     this.webSocketServer.on('connection', (ws: WebSocket, request: http.IncomingMessage) => {
       const clientIp = request.socket.remoteAddress;
       AnsiLogger.setGlobalCallback(this.wssSendMessage.bind(this), LogLevel.DEBUG);
-      this.log.debug('WebSocketServer logger global callback added');
       this.log.info(`WebSocketServer client "${clientIp}" connected to Matterbridge`);
-      // this.wssSendMessage('info', this.log.now(), 'Matterbridge', `WebSocketServer client "${clientIp}" connected to Matterbridge`);
 
       ws.on('message', (message) => {
         this.log.debug(`WebSocket client message: ${message}`);
