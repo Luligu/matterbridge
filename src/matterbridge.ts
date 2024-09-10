@@ -2723,7 +2723,7 @@ export class Matterbridge extends EventEmitter {
       this.httpServer = createServer(this.expressApp);
 
       // Listen on the specified port
-      if (getParameter('homedir')) {
+      if (hasParameter('homedir')) {
         this.httpServer.listen(port, '0.0.0.0', () => {
           this.log.info(`The frontend http server is listening on ${UNDERLINE}http://localhost:${port}${UNDERLINEOFF}${rs}`);
         });
@@ -2779,7 +2779,7 @@ export class Matterbridge extends EventEmitter {
       this.httpsServer = https.createServer(serverOptions, this.expressApp);
 
       // Listen on the specified port
-      if (getParameter('homedir')) {
+      if (hasParameter('homedir')) {
         this.httpsServer.listen(port, '0.0.0.0', () => {
           this.log.info(`The frontend https server is listening on ${UNDERLINE}https://localhost:${port}${UNDERLINEOFF}${rs}`);
         });
