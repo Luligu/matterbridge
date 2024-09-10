@@ -2707,6 +2707,13 @@ export class Matterbridge extends EventEmitter {
 
     // Create the express app that serves the frontend
     this.expressApp = express();
+
+    // Log all requests to the server for debugging
+    this.expressApp.use((req, res, next) => {
+      this.log.info(`Received request: ${req.method} ${req.url}`);
+      next();
+    });
+
     this.expressApp.use(express.static(path.join(this.rootDirectory, 'frontend/build')));
 
     if (!hasParameter('ssl')) {
