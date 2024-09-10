@@ -2709,7 +2709,7 @@ export class Matterbridge extends EventEmitter {
     this.expressApp = express();
 
     // Log all requests to the server for debugging
-    if (getParameter('homedir')) {
+    if (hasParameter('homedir')) {
       this.expressApp.use((req, res, next) => {
         this.log.debug(`Received request on expressApp: ${req.method} ${req.url}`);
         next();
