@@ -2709,10 +2709,12 @@ export class Matterbridge extends EventEmitter {
     this.expressApp = express();
 
     // Log all requests to the server for debugging
-    this.expressApp.use((req, res, next) => {
-      this.log.info(`Received request: ${req.method} ${req.url}`);
-      next();
-    });
+    if (getParameter('homedir')) {
+      this.expressApp.use((req, res, next) => {
+        this.log.info(`Received request: ${req.method} ${req.url}`);
+        next();
+      });
+    }
 
     this.expressApp.use(express.static(path.join(this.rootDirectory, 'frontend/build')));
 
@@ -2721,10 +2723,17 @@ export class Matterbridge extends EventEmitter {
       this.httpServer = createServer(this.expressApp);
 
       // Listen on the specified port
-      this.httpServer.listen(port, getParameter('homedir') ? '0.0.0.0' : undefined, () => {
-        if (this.systemInformation.ipv4Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
-        if (this.systemInformation.ipv6Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
-      });
+      if (getParameter('homedir')) {
+        this.httpServer.listen(port, 'localhost', () => {
+          if (this.systemInformation.ipv4Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
+          if (this.systemInformation.ipv6Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
+        });
+      } else {
+        this.httpServer.listen(port, () => {
+          if (this.systemInformation.ipv4Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
+          if (this.systemInformation.ipv6Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
+        });
+      }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.httpServer.on('error', (error: any) => {
