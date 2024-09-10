@@ -2718,6 +2718,9 @@ export class Matterbridge extends EventEmitter {
 
     this.expressApp.use(express.static(path.join(this.rootDirectory, 'frontend/build')));
 
+    // Serve static files from '/static' endpoint
+    if (hasParameter('homedir')) this.expressApp.use('/static', express.static(path.join(this.rootDirectory, 'frontend/build/static')));
+
     if (!hasParameter('ssl')) {
       // Create an HTTP server and attach the express app
       this.httpServer = createServer(this.expressApp);
