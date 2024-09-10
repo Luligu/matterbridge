@@ -2724,7 +2724,7 @@ export class Matterbridge extends EventEmitter {
 
       // Listen on the specified port
       if (getParameter('homedir')) {
-        this.httpServer.listen(port, 'localhost', () => {
+        this.httpServer.listen(port, '0.0.0.0', () => {
           this.log.info(`The frontend http server is listening on ${UNDERLINE}http://localhost:${port}${UNDERLINEOFF}${rs}`);
         });
       } else {
@@ -2779,10 +2779,16 @@ export class Matterbridge extends EventEmitter {
       this.httpsServer = https.createServer(serverOptions, this.expressApp);
 
       // Listen on the specified port
-      this.httpsServer.listen(port, () => {
-        if (this.systemInformation.ipv4Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
-        if (this.systemInformation.ipv6Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
-      });
+      if (getParameter('homedir')) {
+        this.httpsServer.listen(port, '0.0.0.0', () => {
+          this.log.info(`The frontend https server is listening on ${UNDERLINE}http://localhost:${port}${UNDERLINEOFF}${rs}`);
+        });
+      } else {
+        this.httpsServer.listen(port, () => {
+          if (this.systemInformation.ipv4Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
+          if (this.systemInformation.ipv6Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
+        });
+      }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.httpsServer.on('error', (error: any) => {
