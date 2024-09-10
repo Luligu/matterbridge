@@ -17,7 +17,7 @@ export function sendCommandToMatterbridge(command, param, body) {
   const sanitizedParam = param.replace(/\\/g, '*');
   console.log('sendCommandToMatterbridge:', command, param, sanitizedParam);
   // Send a POST request to the Matterbridge API
-  fetch(`/api/command/${command}/${sanitizedParam}`, {
+  fetch(`./api/command/${command}/${sanitizedParam}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
