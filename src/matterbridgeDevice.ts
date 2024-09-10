@@ -1209,7 +1209,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param energy - The total consumption value.
    */
-  getDefaultElectricalPowerMeasurementClusterServer(voltage = 0, current = 0, power = 0) {
+  getDefaultElectricalPowerMeasurementClusterServer(voltage = 0, current = 0, power = 0, frequency = 0) {
     return ClusterServer(
       ElectricalPowerMeasurementCluster.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent),
       {
@@ -1241,6 +1241,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         voltage: voltage,
         activeCurrent: current,
         activePower: power,
+        frequency: frequency,
       },
       {},
       {},
