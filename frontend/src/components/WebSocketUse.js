@@ -47,6 +47,19 @@ function WebSocketUse(wssHost, ssl) {
         wssHost = (ssl === true ? 'wss://' : 'ws://') + window.location.host;
         // eslint-disable-next-line no-console
         console.log('WebSocketUse', `window.location.host: ${window.location.host}`, `window.location.href: ${window.location.href}`, `Connecting to WebSocket: ${wssHost}`);
+        if(window.location.href.includes("/api/hassio_ingress/")) {
+            wssHost = `ws://${window.location.host}/api/hassio_ingress/${window.location.pathname.split("/api/hassio_ingress/")[1].split("/")[0]}/`;
+            // eslint-disable-next-line no-console
+            console.log('WebSocketUse', `window.location.host: ${window.location.host}`, `window.location.href: ${window.location.href}`, `Connecting to WebSocket: ${wssHost}`);
+        }
+        /*
+        Direct: WebSocketUse window.location.host: localhost:8443 window.location.href: https://localhost:8443/ Connecting to WebSocket: wss://localhost:8443
+        */
+        const isIngress = window.location.href.includes("/api/hassio_ingress/");
+        if(isIngress) {
+            wssHost = wssHost.replace('http://', 'ws://').replace('https://', 'wss://');
+            wssHost = wssHost.replace('/api/hassio_ingress/', '');
+        }
         logMessage('WebSocket', `Connecting to WebSocket: ${wssHost}`);
         ws.current = new WebSocket(wssHost);
         ws.current.onmessage = (event) => {
