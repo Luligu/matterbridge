@@ -48,7 +48,7 @@ function AuthProvider({ children }) {
 
   const logIn = async password => {
     try {
-      const response = await fetch('/api/login', {
+      const response = await fetch('./api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
@@ -193,7 +193,7 @@ function App() {
 
   const fetchApiLogin = async () => {
     try {
-      const response = await fetch('/api/login', {
+      const response = await fetch('./api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: '' }),
