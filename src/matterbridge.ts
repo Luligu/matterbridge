@@ -2711,7 +2711,7 @@ export class Matterbridge extends EventEmitter {
     // Log all requests to the server for debugging
     if (getParameter('homedir')) {
       this.expressApp.use((req, res, next) => {
-        this.log.info(`Received request: ${req.method} ${req.url}`);
+        this.log.debug(`Received request on expressApp: ${req.method} ${req.url}`);
         next();
       });
     }
@@ -2725,8 +2725,7 @@ export class Matterbridge extends EventEmitter {
       // Listen on the specified port
       if (getParameter('homedir')) {
         this.httpServer.listen(port, 'localhost', () => {
-          if (this.systemInformation.ipv4Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
-          if (this.systemInformation.ipv6Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
+          this.log.info(`The frontend http server is listening on ${UNDERLINE}http://localhost:${port}${UNDERLINEOFF}${rs}`);
         });
       } else {
         this.httpServer.listen(port, () => {
