@@ -45,6 +45,8 @@ function WebSocketUse(wssHost, ssl) {
     const connectWebSocket = useCallback(() => {
         if(wssHost === '' || wssHost === null || wssHost === undefined)  return;
         wssHost = (ssl === true ? 'wss://' : 'ws://') + window.location.host;
+        // eslint-disable-next-line no-console
+        console.log('WebSocketUse', `window.location.host: ${window.location.host}`, `window.location.href: ${window.location.href}`, `Connecting to WebSocket: ${wssHost}`);
         logMessage('WebSocket', `Connecting to WebSocket: ${wssHost}`);
         ws.current = new WebSocket(wssHost);
         ws.current.onmessage = (event) => {
