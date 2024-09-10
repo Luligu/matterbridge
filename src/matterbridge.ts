@@ -2714,7 +2714,7 @@ export class Matterbridge extends EventEmitter {
       this.httpServer = createServer(this.expressApp);
 
       // Listen on the specified port
-      this.httpServer.listen(port, () => {
+      this.httpServer.listen(port, getParameter('homedir') ? '0.0.0.0' : undefined, () => {
         if (this.systemInformation.ipv4Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
         if (this.systemInformation.ipv6Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
       });
