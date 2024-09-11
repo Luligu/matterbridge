@@ -49,18 +49,10 @@ function WebSocketUse(wssHost, ssl) {
         Direct https: WebSocketUse: window.location.host=localhost:8443 window.location.href=https://localhost:8443/ wssHost=wss://localhost:8443
         Ingress: WebSocketUse window.location.host: homeassistant.local:8123 window.location.href: http://homeassistant.local:8123/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/ Connecting to WebSocket: ws://homeassistant.local:8123/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/
         */
-        // wssHost = (ssl === true ? 'wss://' : 'ws://') + window.location.host;
         // Replace "http" or "https" with "ws" or "wss"
         wssHost = window.location.href.replace(/^http/, 'ws');  
         // eslint-disable-next-line no-console
         console.log(`WebSocketUse: window.location.host=${window.location.host} window.location.protocol=${window.location.protocol} window.location.href=${window.location.href} wssHost=${wssHost}`);
-        /*
-        if(window.location.href.includes("/api/hassio_ingress/")) {
-            wssHost = `ws://${window.location.host}/api/hassio_ingress/${window.location.pathname.split("/api/hassio_ingress/")[1].split("/")[0]}/`;
-            // eslint-disable-next-line no-console
-            console.log(`WebSocketUse with Ingress: window.location.host=${window.location.host} window.location.href=${window.location.href} wssHost=${wssHost}`);
-        }
-        */
         logMessage('WebSocket', `Connecting to WebSocket: ${wssHost}`);
         ws.current = new WebSocket(wssHost);
         ws.current.onmessage = (event) => {
