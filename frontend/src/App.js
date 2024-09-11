@@ -252,7 +252,7 @@ function App() {
   }, []);
 
   const baseName = window.location.href.includes("/api/hassio_ingress/") ? window.location.pathname : "/";
-  console.log('Ingress check: window.location.href', window.location.href, 'baseName:', baseName);
+  console.log(`Ingress check: window.location.href=${window.location.href} baseName=${baseName}`);
 
   if (noPassword) {
     return (
