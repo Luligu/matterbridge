@@ -15,7 +15,7 @@ import { OnlineProvider } from './components/OnlineContext';
 
 export function sendCommandToMatterbridge(command, param, body) {
   const sanitizedParam = param.replace(/\\/g, '*');
-  console.log('sendCommandToMatterbridge:', command, param, sanitizedParam);
+  // console.log('sendCommandToMatterbridge:', command, param, sanitizedParam);
   // Send a POST request to the Matterbridge API
   fetch(`./api/command/${command}/${sanitizedParam}`, {
     method: 'POST',
@@ -30,8 +30,9 @@ export function sendCommandToMatterbridge(command, param, body) {
     }
     return response.json();
   })
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .then(json => {
-    console.log('Command sent successfully:', json);
+    // console.log('Command sent successfully:', json);
   })
   .catch(error => {
     console.error('Error sending command:', error);
@@ -93,7 +94,7 @@ function LoginForm() {
           throw new Error('Network response was not ok');
         }
         const data = await response.json();
-        console.log('From app.js /api/settings:', data);
+        // console.log('From app.js /api/settings:', data);
         setWssHost(data.wssHost);
         setSsl(data.ssl);
       } catch (error) {
@@ -137,13 +138,15 @@ function LoginForm() {
     width: '230px',
   };
 
-  // <Route path="*" element={<Navigate to="/" />} />
+  const baseName = window.location.href.includes("/api/hassio_ingress/") ? window.location.pathname : "/";
+  console.log(`Ingress check: window.location.href=${window.location.href} baseName=${baseName}`);
+  // Ingress check: window.location.href=http://homeassistant.local:8123/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/ baseName=/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/
 
   if (loggedIn) {
     return (
       <WebSocketProvider wssHost={wssHost} ssl={ssl}>
         <OnlineProvider>
-          <Router>
+          <Router basename={baseName}>
             <div className="MbfScreen">
               <Header />
               <Routes>
@@ -152,7 +155,7 @@ function LoginForm() {
                 <Route path="/log" element={<Logs />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/test" element={<Test />} />
-                
+                <Route path="*" element={<Navigate to="/" />} /> {/* Fallback to the home page for Ingress*/}
               </Routes>
             </div>
           </Router>
@@ -205,7 +208,7 @@ function App() {
         throw new Error('Network response was not ok');
       }
       const data = await response.json();
-      console.log('From app.js /api/login:', data);
+      // console.log('From app.js /api/login:', data);
       if (data.valid === true) {
         setNoPassword(true);
       }
@@ -232,7 +235,7 @@ function App() {
         throw new Error('Network response was not ok');
       }
       const data = await response.json();
-      console.log('From app.js /api/settings:', data);
+      // console.log('From app.js /api/settings:', data);
       setWssHost(data.wssHost);
       setSsl(data.ssl);
     } catch (error) {
@@ -253,7 +256,8 @@ function App() {
 
   const baseName = window.location.href.includes("/api/hassio_ingress/") ? window.location.pathname : "/";
   console.log(`Ingress check: window.location.href=${window.location.href} baseName=${baseName}`);
-
+  // Ingress check: window.location.href=http://homeassistant.local:8123/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/ baseName=/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/
+  
   if (noPassword) {
     return (
       <WebSocketProvider wssHost={wssHost} ssl={ssl}>

@@ -188,7 +188,7 @@ function Header() {
     fetch('./api/settings')
       .then(response => response.json())
       .then(data => { 
-        console.log('From header /api/settings (header):', data); 
+        // console.log('From header /api/settings (header):', data); 
         // setOnline(true);
         // setWssHost(data.wssHost); 
         // setQrCode(data.qrPairingCode); 
@@ -202,7 +202,7 @@ function Header() {
         localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
       })
       .catch(error => {
-        console.log('Error fetching settings:', error);
+        console.error('Error fetching settings:', error);
         // setOnline(false);
       });
   };
@@ -229,12 +229,12 @@ function Header() {
     setConfirmCancelFormCommand(command);
   };
   const handleConfirm = () => {
-    console.log("Action confirmed");
+    // console.log("Action confirmed");
     setShowConfirmCancelForm(false);
     handleMenuClose(confirmCancelFormCommand);
   };
   const handleCancel = () => {
-    console.log("Action canceled");
+    // console.log("Action canceled");
     setShowConfirmCancelForm(false);
     setMenuAnchorEl(null);
   };
@@ -397,6 +397,3 @@ function Header() {
 }
 
 export default Header;
-
-/*
-*/
