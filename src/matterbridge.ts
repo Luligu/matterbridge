@@ -2606,7 +2606,7 @@ export class Matterbridge extends EventEmitter {
       childProcess.on('close', (code, signal) => {
         this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', `child process closed with code ${code} and signal ${signal}`);
         if (code === 0) {
-          if (cmdLine.startsWith('npm install -g')) this.log.notice(`${cmdLine.replace('npm install -g ', '').replace('--verbose', '')} installed correctly`);
+          if (cmdLine.startsWith('npm install -g')) this.log.notice(`Package ${cmdLine.replace('npm install -g ', '').replace('--verbose', '')} installed correctly`);
           this.log.debug(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
           resolve();
         } else {
@@ -2634,7 +2634,7 @@ export class Matterbridge extends EventEmitter {
       if (childProcess.stdout) {
         childProcess.stdout.on('data', (data: Buffer) => {
           const message = data.toString().trim();
-          this.log.debug(`Spawn stdout: ${message}`);
+          this.log.debug(`Spawn log (stdout): ${message}`);
           this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', message);
         });
       }
@@ -2642,7 +2642,7 @@ export class Matterbridge extends EventEmitter {
       if (childProcess.stderr) {
         childProcess.stderr.on('data', (data: Buffer) => {
           const message = data.toString().trim();
-          this.log.debug(`Spawn stderr: ${message}`);
+          this.log.debug(`Spawn verbose (stderr): ${message}`);
           this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', message);
         });
       }
