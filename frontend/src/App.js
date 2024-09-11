@@ -252,8 +252,7 @@ function App() {
   }, []);
 
   const baseName = window.location.href.includes("/hassio/ingress/") ? window.location.pathname : "/";
-
-  // <Route path="*" element={<Navigate to="/" />} />
+  console.log('window.location.href', window.location.href, 'baseName:', baseName);
 
   if (noPassword) {
     return (
@@ -268,7 +267,7 @@ function App() {
                   <Route path="/log" element={<Logs />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/test" element={<Test />} />
-                  
+                  <Route path="*" element={<Navigate to="/" />} /> {/* Fallback to the home page for Ingress*/}
                 </Routes>
             </div>
           </Router>
