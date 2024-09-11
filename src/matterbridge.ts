@@ -2634,7 +2634,7 @@ export class Matterbridge extends EventEmitter {
       if (childProcess.stdout) {
         childProcess.stdout.on('data', (data: Buffer) => {
           const message = data.toString().trim();
-          this.log.debug(`Spawn log (stdout): ${message}`);
+          this.log.debug(`Spawn output (stdout): ${message}`);
           this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', message);
         });
       }
