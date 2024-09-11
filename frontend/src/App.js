@@ -2,7 +2,7 @@
 // App.js
 import './App.css';
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Home from './components/Home';
 import Devices from './components/Devices';
