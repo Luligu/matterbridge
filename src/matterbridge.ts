@@ -299,7 +299,7 @@ export class Matterbridge extends EventEmitter {
     }
     MatterbridgeDevice.logLevel = this.log.logLevel;
 
-    this.log.debug('Matterbridge is starting...');
+    this.log.notice('Matterbridge is starting...');
 
     this.log.debug(`Matterbridge logLevel: ${this.log.logLevel} fileLoger: ${this.matterbridgeInformation.fileLogger}.`);
 
