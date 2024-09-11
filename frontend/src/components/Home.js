@@ -440,7 +440,7 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
   };
 
   const handleCloseMenu = (value) => {
-    console.log('handleCloseMenu:', value);
+    // console.log('handleCloseMenu:', value);
     if(value !== '') setPluginName(value);
     setAnchorEl(null);
   };
