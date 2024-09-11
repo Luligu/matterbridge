@@ -2,7 +2,7 @@
 // App.js
 import './App.css';
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Header from './components/Header';
 import Home from './components/Home';
 import Devices from './components/Devices';
@@ -137,6 +137,8 @@ function LoginForm() {
     width: '230px',
   };
 
+  // <Route path="*" element={<Navigate to="/" />} />
+
   if (loggedIn) {
     return (
       <WebSocketProvider wssHost={wssHost} ssl={ssl}>
@@ -150,7 +152,7 @@ function LoginForm() {
                 <Route path="/log" element={<Logs />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/test" element={<Test />} />
-                <Route path="*" element={<Navigate to="/" />} />
+                
               </Routes>
             </div>
           </Router>
@@ -249,6 +251,8 @@ function App() {
     fetchSettings();
   }, []);
 
+  // <Route path="*" element={<Navigate to="/" />} />
+
   if (noPassword) {
     return (
       <WebSocketProvider wssHost={wssHost} ssl={ssl}>
@@ -262,7 +266,7 @@ function App() {
                   <Route path="/log" element={<Logs />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/test" element={<Test />} />
-                  <Route path="*" element={<Navigate to="/" />} />
+                  
                 </Routes>
             </div>
           </Router>
