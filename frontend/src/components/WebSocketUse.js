@@ -47,14 +47,6 @@ function WebSocketUse(wssHost, ssl) {
         wssHost = (ssl === true ? 'wss://' : 'ws://') + window.location.host;
         // eslint-disable-next-line no-console
         console.log('WebSocketUse', `window.location.host: ${window.location.host}`, `window.location.href: ${window.location.href}`, `Connecting to WebSocket: ${wssHost}`);
-        /*
-        if (window.location.href.includes("/hassio/ingress/")) {
-            const ingressToken = window.location.pathname.split("/hassio/ingress/")[1].split("/")[0];
-            wssHost = `ws://${window.location.host}/hassio/ingress/${ingressToken}/`;
-            // eslint-disable-next-line no-console
-            console.log('WebSocketUse', `window.location.host: ${window.location.host}`, `window.location.href: ${window.location.href}`, `Connecting to WebSocket: ${wssHost}`);
-        }
-        */
         if(window.location.href.includes("/api/hassio_ingress/")) {
             wssHost = `ws://${window.location.host}/api/hassio_ingress/${window.location.pathname.split("/api/hassio_ingress/")[1].split("/")[0]}/`;
             // eslint-disable-next-line no-console

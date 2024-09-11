@@ -1,4 +1,4 @@
-name: Build dev and Push Docker image dev, dev_alpine and dev_shelly_alpine to Docker Hub with buildx
+name: Build Docker image dev and dev_shelly_alpine with buildx
 
 on:
   push:

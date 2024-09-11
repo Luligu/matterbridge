@@ -1673,6 +1673,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Configures the color control cluster for a device.
    *
+   * @remark This method must be called only after creating the cluster with getDefaultCompleteColorControlClusterServer or createDefaultCompleteColorControlClusterServer
+   * and before starting the matter server.
+   *
    * @param {boolean} hueSaturation - A boolean indicating whether the device supports hue and saturation control.
    * @param {boolean} xy - A boolean indicating whether the device supports XY control.
    * @param {boolean} colorTemperature - A boolean indicating whether the device supports color temperature control.

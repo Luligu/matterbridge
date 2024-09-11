@@ -251,13 +251,15 @@ function App() {
     fetchSettings();
   }, []);
 
+  const baseName = window.location.href.includes("/hassio/ingress/") ? window.location.pathname : "/";
+
   // <Route path="*" element={<Navigate to="/" />} />
 
   if (noPassword) {
     return (
       <WebSocketProvider wssHost={wssHost} ssl={ssl}>
         <OnlineProvider>
-          <Router>
+          <Router basename={baseName}>
             <div className="MbfScreen">
               <Header />
                 <Routes>
