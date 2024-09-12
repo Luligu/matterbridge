@@ -17,7 +17,6 @@ RUN npm ci && \
     npm shrinkwrap --omit=dev && \
     npm pack && \
     npm install -g matterbridge-*.tgz && \
-    npm list -g && \
     cd / && \
     rm -rf /matterbridge
 
@@ -33,12 +32,13 @@ RUN npm ci && \
     cd / && \
     rm -rf /matterbridge-shelly
 
-# Uninstall git to reduce image size
-RUN apk del git
 
 # Copy and execute the entrypoint script
 WORKDIR /app
 COPY ./docker/shellyEntrypoint.sh ./
-RUN chmod +x ./shellyEntrypoint.sh
+RUN chmod +x ./shellyEntrypoint.sh && \
+    apk del git && \
+    npm list -g && \
+    ls ./
 ENTRYPOINT ["./shellyEntrypoint.sh"]
 CMD ["matterbridge", "-docker"]
