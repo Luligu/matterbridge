@@ -17,6 +17,7 @@ The Home Assistant Community Add-ons and plugins are not verified to work with M
 
 ### Changed
 
+- [package]: Updated typescript to 5.6.2.
 - [package]: Update dependencies.
 
 <a href="https://www.buymeacoffee.com/luligugithub">

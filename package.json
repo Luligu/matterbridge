@@ -129,7 +129,7 @@
     "@project-chip/matter-node.js": "0.10.1",
     "@project-chip/matter.js": "0.10.1",
     "archiver": "7.0.1",
-    "express": "4.19.2",
+    "express": "4.21.0",
     "glob": "11.0.0",
     "https": "1.0.0",
     "matter-history": "1.1.11",
@@ -153,7 +153,7 @@
     "prettier": "3.3.3",
     "rimraf": "6.0.1",
     "ts-jest": "29.2.5",
-    "typescript": "5.5.4",
-    "typescript-eslint": "8.4.0"
+    "typescript": "5.6.2",
+    "typescript-eslint": "8.5.0"
   }
 }
