@@ -12,7 +12,7 @@ COPY ./src ./src
 COPY ./frontend/build ./frontend/build
 RUN npm ci && npm run build && npm link
 
-# Install Matterbridge plugins
+# Build shelly plugin
 WORKDIR /matterbridge-shelly
 RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-shelly.git .
 COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
