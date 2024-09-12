@@ -8,26 +8,28 @@ RUN apk update && \
     npm -v
 
 # Build Matterbridge
-WORKDIR /app
+WORKDIR /matterbridge
 COPY ./package.json ./package-lock.json ./tsconfig.json ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
-COPY ./docker/shellyEntrypoint.sh ./
 RUN npm ci && \
     npm run build && \
-    npm link && \
-    chmod +x ./shellyEntrypoint.sh
+    npm install -g . && \
+    cd / && \
+    rm -rf /matterbridge
 
 # Build shelly plugin
 WORKDIR /matterbridge-shelly
-RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-shelly.git .
-COPY ./docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
-RUN npm ci && \
+RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-shelly.git . && \
+    npm ci && \
     npm run build && \
-    npm link
+    npm install -g . && \
+    cd / && \
+    rm -rf /matterbridge-shelly
 
 # Copy and execute the entrypoint script
 WORKDIR /app
+COPY ./docker/shellyEntrypoint.sh ./
+RUN chmod +x ./shellyEntrypoint.sh
 ENTRYPOINT ["./shellyEntrypoint.sh"]
-
 CMD ["matterbridge", "-docker"]
