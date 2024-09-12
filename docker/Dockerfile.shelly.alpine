@@ -20,8 +20,9 @@ RUN npm ci && \
 
 # Build shelly plugin
 WORKDIR /matterbridge-shelly
-RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-shelly.git . && \
-    npm ci && \
+RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-shelly.git .
+COPY ./docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm ci && \
     npm run build && \
     npm install -g . && \
     cd / && \
