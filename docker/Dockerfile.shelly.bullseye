@@ -15,7 +15,11 @@ COPY ./package.json ./package-lock.json ./tsconfig.json ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
 COPY ./docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
-RUN npm ci && npm run build && npm link
+COPY ./docker/shellyEntrypoint.sh ./
+RUN chmod +x ./shellyEntrypoint.sh && \
+    npm ci && \
+    npm run build && \
+    npm link
 
 # Build shelly plugin
 WORKDIR /matterbridge-shelly
@@ -27,8 +31,7 @@ RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbrid
 
 # Copy and execute the entrypoint script
 WORKDIR /app
-COPY ./docker/shellyEntrypoint.sh ./
-RUN chmod +x ./shellyEntrypoint.sh
+
 ENTRYPOINT ["./shellyEntrypoint.sh"]
 
 CMD ["matterbridge", "-docker"]
