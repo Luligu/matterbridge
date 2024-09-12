@@ -1700,7 +1700,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   configureColorControlMode(colorMode: ColorControl.ColorMode, endpoint?: Endpoint) {
     if (!endpoint) endpoint = this as Endpoint;
-    if (colorMode !== undefined && colorMode >= 0 && colorMode <= 2) {
+    if (colorMode !== undefined && colorMode >= ColorControl.ColorMode.CurrentHueAndCurrentSaturation && colorMode <= ColorControl.ColorMode.ColorTemperatureMireds) {
       endpoint.getClusterServer(ColorControlCluster)?.setColorModeAttribute(colorMode);
       endpoint.getClusterServer(ColorControlCluster)?.setEnhancedColorModeAttribute(colorMode as unknown as ColorControl.EnhancedColorMode);
     }
