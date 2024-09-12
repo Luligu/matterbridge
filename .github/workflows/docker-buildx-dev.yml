@@ -53,6 +53,16 @@ jobs:
         docker manifest inspect luligu/matterbridge:dev_shelly_alpine
       timeout-minutes: 60 
   
+    - name: Run Docker Buildx on dev_shelly_bullseye
+      run: |
+        docker buildx build \
+          --platform linux/arm64 \
+          -f docker/Dockerfile.shelly.bullseye \
+          -t luligu/matterbridge:dev_shelly_bullseye \
+          --push .
+        docker manifest inspect luligu/matterbridge:dev_shelly_bullseye
+      timeout-minutes: 60 
+
     - name: Run Docker Buildx on dev_shelly_bookworm
       run: |
         docker buildx build \

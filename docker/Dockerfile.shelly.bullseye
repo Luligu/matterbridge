@@ -1,0 +1,34 @@
+FROM node:22-bullseye-slim AS base
+
+# Install git
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    npm install -g npm@latest && \
+    node -v && \
+    npm -v
+
+# Build Matterbridge
+WORKDIR /app
+COPY ./package.json ./package-lock.json ./tsconfig.json ./
+COPY ./src ./src
+COPY ./frontend/build ./frontend/build
+COPY ./docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
+RUN npm ci && npm run build && npm link
+
+# Build shelly plugin
+WORKDIR /matterbridge-shelly
+RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-shelly.git . && \
+    npm ci  && \
+    npm run build  && \
+    npm link
+# RUN npm -g install matterbridge-shelly
+
+# Copy and execute the entrypoint script
+WORKDIR /app
+COPY ./docker/shellyEntrypoint.sh ./
+RUN chmod +x ./shellyEntrypoint.sh
+ENTRYPOINT ["./shellyEntrypoint.sh"]
+
+CMD ["matterbridge", "-docker"]
