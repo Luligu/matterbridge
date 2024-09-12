@@ -14,7 +14,8 @@ COPY ./src ./src
 COPY ./frontend/build ./frontend/build
 RUN npm ci && \
     npm run build && \
-    npm install -g . && \
+    npm install -g ./ && \
+    npm list -g && \
     cd / && \
     rm -rf /matterbridge
 
@@ -24,7 +25,7 @@ RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbrid
 COPY ./docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
 RUN npm ci && \
     npm run build && \
-    npm install -g . && \
+    npm install -g ./ && \
     cd / && \
     rm -rf /matterbridge-shelly
 
