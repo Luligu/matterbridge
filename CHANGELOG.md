@@ -18,7 +18,8 @@ The Home Assistant Community Add-ons and plugins are not verified to work with M
 ### Changed
 
 - [package]: Updated typescript to 5.6.2.
-- [package]: Update dependencies.
+- [package]: Updated express to 4.21.0.
+- [package]: Updated dependencies.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
