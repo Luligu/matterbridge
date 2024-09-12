@@ -14,7 +14,8 @@ COPY ./src ./src
 COPY ./frontend/build ./frontend/build
 RUN npm ci && \
     npm run build && \
-    npm install -g ./ && \
+    npm pack && \
+    npm install -g matterbridge-*.tgz && \
     npm list -g && \
     cd / && \
     rm -rf /matterbridge
