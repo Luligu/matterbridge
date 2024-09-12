@@ -33,6 +33,9 @@ RUN npm ci && \
     cd / && \
     rm -rf /matterbridge-shelly
 
+# Uninstall git to reduce image size
+RUN apk del git
+
 # Copy and execute the entrypoint script
 WORKDIR /app
 COPY ./docker/shellyEntrypoint.sh ./
