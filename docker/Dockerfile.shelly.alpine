@@ -32,7 +32,6 @@ RUN npm ci && \
     cd / && \
     rm -rf /matterbridge-shelly
 
-
 # Copy and execute the entrypoint script
 WORKDIR /app
 COPY ./docker/shellyEntrypoint.sh ./
