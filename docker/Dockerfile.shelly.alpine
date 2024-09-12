@@ -4,6 +4,10 @@ FROM node:22-alpine AS base
 RUN apk update && \
     apk add --no-cache git
 
+RUN npm install -g npm@latest
+RUN node -v
+RUN npm -v
+
 # Build Matterbridge
 WORKDIR /app
 COPY ./package.json ./package-lock.json ./tsconfig.json ./

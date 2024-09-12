@@ -5,6 +5,10 @@ RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git && \
     apt-get clean
 
+RUN npm install -g npm@latest
+RUN node -v
+RUN npm -v
+
 # Build Matterbridge
 WORKDIR /app
 COPY ./package.json ./package-lock.json ./tsconfig.json ./
