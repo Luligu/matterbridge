@@ -17,7 +17,7 @@ function Devices() {
 
   useEffect(() => {
     // Fetch Devices
-    fetch('/api/devices')
+    fetch('./api/devices')
       .then(response => response.json())
       .then(data => setDevices(data))
       .catch(error => console.error('Error fetching devices:', error));

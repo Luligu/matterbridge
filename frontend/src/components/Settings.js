@@ -42,7 +42,7 @@ function Settings() {
   };
 
   useEffect(() => {
-    fetch('/api/settings')
+    fetch('./api/settings')
       .then(response => response.json())
       .then(data => { 
         setMatterbridgeInfo(data.matterbridgeInformation); 

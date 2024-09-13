@@ -33,7 +33,7 @@ function Logs() {
 
   useEffect(() => {
     // Fetch settinggs from the backend
-    fetch('/api/settings')
+    fetch('./api/settings')
       .then(response => response.json())
       .then(data => { console.log('/api/settings:', data); setWssHost(data.wssHost); localStorage.setItem('wssHost', data.wssHost); })
       .catch(error => console.error('Error fetching settings:', error));

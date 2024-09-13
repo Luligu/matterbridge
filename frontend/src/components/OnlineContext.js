@@ -12,24 +12,24 @@ export function OnlineProvider({ children }) {
   // Fetch settings from the backend
   const fetchSettings = () => {
 
-    fetch('/api/settings')
+    fetch('./api/settings')
       .then(response => response.json())
       .then(data => { 
-        console.log('From OnlineProvider /api/settings:', data); 
+        // console.log('From OnlineProvider /api/settings:', data); 
         setOnline(true);
         setMatterbridgeInfo(data.matterbridgeInformation);
         localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
       })
       .catch(error => {
-        console.log('From OnlineProvider error fetching settings:', error);
+        console.error('From OnlineProvider error fetching settings:', error);
         setOnline(false);
       });
   };
   
-  // Function to reload settings on demand
+  // TODO use function to reload settings on demand
   const reloadSettings = () => {
     fetchSettings();
-    console.log('From OnlineProvider reloadSettings called');
+    // console.log('From OnlineProvider reloadSettings called');
   };
 
   useEffect(() => {

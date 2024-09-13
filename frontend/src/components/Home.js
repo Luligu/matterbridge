@@ -109,12 +109,12 @@ function Home() {
   );
 
   const fetchSettings = () => {
-    console.log('From home fetchSettings');
+    // console.log('From home fetchSettings');
 
-    fetch('/api/settings')
+    fetch('./api/settings')
       .then(response => response.json())
       .then(data => { 
-        console.log('From home /api/settings:', data); 
+        // console.log('From home /api/settings:', data); 
         setWssHost(data.wssHost); 
         if(data.matterbridgeInformation.bridgeMode==='bridge') {
           setQrCode(data.matterbridgeInformation.matterbridgeQrPairingCode); 
@@ -125,10 +125,10 @@ function Home() {
       })
       .catch(error => console.error('Error fetching settings:', error));
 
-    fetch('/api/plugins')
+    fetch('./api/plugins')
       .then(response => response.json())
       .then(data => { 
-        console.log('From home /api/plugins:', data)
+        // console.log('From home /api/plugins:', data)
         setPlugins(data); 
       })
       .catch(error => console.error('Error fetching plugins:', error));
@@ -147,7 +147,7 @@ function Home() {
   // Function to reload settings on demand
   const reloadSettings = () => {
     fetchSettings();
-    console.log('reloadSettings');
+    // console.log('reloadSettings');
   };
 
   const handleSelectQRCode = (row) => {
@@ -167,7 +167,7 @@ function Home() {
   };
 
   const handleEnableDisablePlugin = (row) => {
-    console.log('Selected row:', row, 'plugin:', plugins[row].name, 'enabled:', plugins[row].enabled);
+    // console.log('Selected row:', row, 'plugin:', plugins[row].name, 'enabled:', plugins[row].enabled);
     if(plugins[row].enabled===true) {
       plugins[row].enabled=false;
       logMessage('Plugins', `Disabling plugin: ${plugins[row].name}`);
@@ -191,7 +191,7 @@ function Home() {
   };
 
   const handleUpdatePlugin = (row) => {
-    console.log('handleUpdate row:', row, 'plugin:', plugins[row].name);
+    // console.log('handleUpdate row:', row, 'plugin:', plugins[row].name);
     logMessage('Plugins', `Updating plugin: ${plugins[row].name}`);
     sendCommandToMatterbridge('installplugin', plugins[row].name);
     handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
@@ -202,7 +202,7 @@ function Home() {
   };
 
   const handleRemovePlugin = (row) => {
-    console.log('handleRemovePluginClick row:', row, 'plugin:', plugins[row].name);
+    // console.log('handleRemovePluginClick row:', row, 'plugin:', plugins[row].name);
     logMessage('Plugins', `Removing plugin: ${plugins[row].name}`);
     sendCommandToMatterbridge('removeplugin', plugins[row].name);
     setTimeout(() => {
@@ -211,24 +211,24 @@ function Home() {
   };
 
   const handleConfigPlugin = (row) => {
-    console.log('handleConfigPlugin row:', row, 'plugin:', plugins[row].name);
+    // console.log('handleConfigPlugin row:', row, 'plugin:', plugins[row].name);
     setSelectedPluginConfig(plugins[row].configJson);
     setSelectedPluginSchema(plugins[row].schemaJson);
     handleOpenConfig();
   };
 
   const handleSponsorPlugin = (row) => {
-    console.log('handleSponsorPlugin row:', row, 'plugin:', plugins[row].name);
+    // console.log('handleSponsorPlugin row:', row, 'plugin:', plugins[row].name);
     window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
   };
 
   const handleHelpPlugin = (row) => {
-    console.log('handleHelpPlugin row:', row, 'plugin:', plugins[row].name);
+    // console.log('handleHelpPlugin row:', row, 'plugin:', plugins[row].name);
     window.open(`https://github.com/Luligu/${plugins[row].name}/blob/main/README.md`, '_blank');
   };
 
   const handleChangelogPlugin = (row) => {
-    console.log('handleChangelogPlugin row:', row, 'plugin:', plugins[row].name);
+    // console.log('handleChangelogPlugin row:', row, 'plugin:', plugins[row].name);
     window.open(`https://github.com/Luligu/${plugins[row].name}/blob/main/CHANGELOG.md`, '_blank');
   };
 
@@ -250,7 +250,7 @@ function Home() {
     setShowConfirmCancelForm(true);
   };
   const handleConfirm = () => {
-    console.log(`Action confirmed ${confirmCancelFormCommand} ${confirmCancelFormRow}`);
+    // console.log(`Action confirmed ${confirmCancelFormCommand} ${confirmCancelFormRow}`);
     setShowConfirmCancelForm(false);
     if(confirmCancelFormCommand === 'remove' && confirmCancelFormRow !== -1) {
       handleRemovePlugin(confirmCancelFormRow);
@@ -259,7 +259,7 @@ function Home() {
     }
   };
   const handleCancel = () => {
-    console.log("Action canceled");
+    // console.log("Action canceled");
     setShowConfirmCancelForm(false);
   };
 
@@ -440,7 +440,7 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
   };
 
   const handleCloseMenu = (value) => {
-    console.log('handleCloseMenu:', value);
+    // console.log('handleCloseMenu:', value);
     if(value !== '') setPluginName(value);
     setAnchorEl(null);
   };
@@ -497,7 +497,7 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
 function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridgeInfo, plugin }) {
   // console.log('QRDiv:', matterbridgeInfo, plugin);
   if(matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === true && matterbridgeInfo.matterbridgeFabricInformations && matterbridgeInfo.matterbridgeSessionInformations) {
-    console.log(`QRDiv: ${matterbridgeInfo.matterbridgeFabricInformations.length} fabrics, ${matterbridgeInfo.matterbridgeSessionInformations.length} sessions`);
+    // console.log(`QRDiv: ${matterbridgeInfo.matterbridgeFabricInformations.length} fabrics, ${matterbridgeInfo.matterbridgeSessionInformations.length} sessions`);
     return ( 
       <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '302px', overflow: 'hidden'}} >
         <div className="MbfWindowHeader">
@@ -516,7 +516,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
       </div>
     );  
   } else if(matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired === true && plugin.fabricInformations && plugin.sessionInformations) {
-    console.log(`QRDiv: ${plugin.fabricInformations.length} fabrics, ${plugin.sessionInformations.length} sessions`);
+    // console.log(`QRDiv: ${plugin.fabricInformations.length} fabrics, ${plugin.sessionInformations.length} sessions`);
     return ( 
       <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '302px', overflow: 'hidden'}} >
         <div className="MbfWindowHeader">
@@ -535,7 +535,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
       </div>
     );
   } else if(matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired !== true) {
-    console.log(`QRDiv: qrText ${qrText} pairingText ${pairingText}`);
+    // console.log(`QRDiv: qrText ${qrText} pairingText ${pairingText}`);
     return (
       <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '302px'}}>
         <div className="MbfWindowHeader">
@@ -550,7 +550,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
       </div>
     );
   } else if(matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired !== true) {
-    console.log(`QRDiv: qrText ${qrText} pairingText ${pairingText}`);
+    // console.log(`QRDiv: qrText ${qrText} pairingText ${pairingText}`);
     return (
       <div className="MbfWindowDiv" style={{alignItems: 'center', minWidth: '302px'}}>
         <div className="MbfWindowHeader">
@@ -568,7 +568,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
 }
 
 function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
-  console.log('DialogConfigPlugin:', config, schema);
+  // console.log('DialogConfigPlugin:', config, schema);
 
   const theme = createTheme({
     palette: {
@@ -623,7 +623,7 @@ function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
   };
   
   const handleSaveChanges = ({ formData }, event) => {
-    console.log('handleSaveChanges:', formData);
+    // console.log('handleSaveChanges:', formData);
     const config = JSON.stringify(formData, null, 2)
     sendCommandToMatterbridge('saveconfig', formData.name, config);
     // Close the dialog

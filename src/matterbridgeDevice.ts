@@ -1209,7 +1209,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param energy - The total consumption value.
    */
-  getDefaultElectricalPowerMeasurementClusterServer(voltage = 0, current = 0, power = 0) {
+  getDefaultElectricalPowerMeasurementClusterServer(voltage = 0, current = 0, power = 0, frequency = 0) {
     return ClusterServer(
       ElectricalPowerMeasurementCluster.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent),
       {
@@ -1241,6 +1241,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         voltage: voltage,
         activeCurrent: current,
         activePower: power,
+        frequency: frequency,
       },
       {},
       {},
@@ -1672,6 +1673,9 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Configures the color control cluster for a device.
    *
+   * @remark This method must be called only after creating the cluster with getDefaultCompleteColorControlClusterServer or createDefaultCompleteColorControlClusterServer
+   * and before starting the matter server.
+   *
    * @param {boolean} hueSaturation - A boolean indicating whether the device supports hue and saturation control.
    * @param {boolean} xy - A boolean indicating whether the device supports XY control.
    * @param {boolean} colorTemperature - A boolean indicating whether the device supports color temperature control.
@@ -1696,7 +1700,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   configureColorControlMode(colorMode: ColorControl.ColorMode, endpoint?: Endpoint) {
     if (!endpoint) endpoint = this as Endpoint;
-    if (colorMode !== undefined && colorMode >= 0 && colorMode <= 2) {
+    if (colorMode !== undefined && colorMode >= ColorControl.ColorMode.CurrentHueAndCurrentSaturation && colorMode <= ColorControl.ColorMode.ColorTemperatureMireds) {
       endpoint.getClusterServer(ColorControlCluster)?.setColorModeAttribute(colorMode);
       endpoint.getClusterServer(ColorControlCluster)?.setEnhancedColorModeAttribute(colorMode as unknown as ColorControl.EnhancedColorMode);
     }

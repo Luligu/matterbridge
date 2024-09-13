@@ -9,7 +9,7 @@ if [ ! -f "$FLAG_FILE" ]; then
   echo "Npm version:"
   npm -v
   echo "Adding matterbridge-shelly plugin..."
-  # Add your initialization commands here
+  
   matterbridge -add matterbridge-shelly
 
   # Create the flag file to indicate initialization has been done

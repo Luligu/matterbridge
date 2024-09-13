@@ -2,7 +2,7 @@
 // App.js
 import './App.css';
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Home from './components/Home';
 import Devices from './components/Devices';
@@ -15,9 +15,9 @@ import { OnlineProvider } from './components/OnlineContext';
 
 export function sendCommandToMatterbridge(command, param, body) {
   const sanitizedParam = param.replace(/\\/g, '*');
-  console.log('sendCommandToMatterbridge:', command, param, sanitizedParam);
+  // console.log('sendCommandToMatterbridge:', command, param, sanitizedParam);
   // Send a POST request to the Matterbridge API
-  fetch(`/api/command/${command}/${sanitizedParam}`, {
+  fetch(`./api/command/${command}/${sanitizedParam}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -30,8 +30,9 @@ export function sendCommandToMatterbridge(command, param, body) {
     }
     return response.json();
   })
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .then(json => {
-    console.log('Command sent successfully:', json);
+    // console.log('Command sent successfully:', json);
   })
   .catch(error => {
     console.error('Error sending command:', error);
@@ -48,7 +49,7 @@ function AuthProvider({ children }) {
 
   const logIn = async password => {
     try {
-      const response = await fetch('/api/login', {
+      const response = await fetch('./api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
@@ -88,12 +89,12 @@ function LoginForm() {
   useEffect(() => {
     const fetchApiSettings = async () => {
       try {
-        const response = await fetch('/api/settings');
+        const response = await fetch('./api/settings');
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
         const data = await response.json();
-        console.log('From app.js /api/settings:', data);
+        // console.log('From app.js /api/settings:', data);
         setWssHost(data.wssHost);
         setSsl(data.ssl);
       } catch (error) {
@@ -137,11 +138,15 @@ function LoginForm() {
     width: '230px',
   };
 
+  const baseName = window.location.href.includes("/api/hassio_ingress/") ? window.location.pathname : "/";
+  console.log(`Ingress check: window.location.href=${window.location.href} baseName=${baseName}`);
+  // Ingress check: window.location.href=http://homeassistant.local:8123/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/ baseName=/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/
+
   if (loggedIn) {
     return (
       <WebSocketProvider wssHost={wssHost} ssl={ssl}>
         <OnlineProvider>
-          <Router>
+          <Router basename={baseName}>
             <div className="MbfScreen">
               <Header />
               <Routes>
@@ -150,6 +155,7 @@ function LoginForm() {
                 <Route path="/log" element={<Logs />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/test" element={<Test />} />
+                <Route path="*" element={<Navigate to="/" />} /> {/* Fallback to the home page for Ingress*/}
               </Routes>
             </div>
           </Router>
@@ -193,7 +199,7 @@ function App() {
 
   const fetchApiLogin = async () => {
     try {
-      const response = await fetch('/api/login', {
+      const response = await fetch('./api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: '' }),
@@ -202,7 +208,7 @@ function App() {
         throw new Error('Network response was not ok');
       }
       const data = await response.json();
-      console.log('From app.js /api/login:', data);
+      // console.log('From app.js /api/login:', data);
       if (data.valid === true) {
         setNoPassword(true);
       }
@@ -224,12 +230,12 @@ function App() {
 
   const fetchApiSettings = async () => {
     try {
-      const response = await fetch('/api/settings');
+      const response = await fetch('./api/settings');
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
       const data = await response.json();
-      console.log('From app.js /api/settings:', data);
+      // console.log('From app.js /api/settings:', data);
       setWssHost(data.wssHost);
       setSsl(data.ssl);
     } catch (error) {
@@ -248,11 +254,15 @@ function App() {
     fetchSettings();
   }, []);
 
+  const baseName = window.location.href.includes("/api/hassio_ingress/") ? window.location.pathname : "/";
+  console.log(`Ingress check: window.location.href=${window.location.href} baseName=${baseName}`);
+  // Ingress check: window.location.href=http://homeassistant.local:8123/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/ baseName=/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/
+  
   if (noPassword) {
     return (
       <WebSocketProvider wssHost={wssHost} ssl={ssl}>
         <OnlineProvider>
-          <Router>
+          <Router basename={baseName}>
             <div className="MbfScreen">
               <Header />
                 <Routes>
@@ -261,6 +271,7 @@ function App() {
                   <Route path="/log" element={<Logs />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/test" element={<Test />} />
+                  <Route path="*" element={<Navigate to="/" />} /> {/* Fallback to the home page for Ingress*/}
                 </Routes>
             </div>
           </Router>

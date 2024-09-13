@@ -299,7 +299,7 @@ export class Matterbridge extends EventEmitter {
     }
     MatterbridgeDevice.logLevel = this.log.logLevel;
 
-    this.log.debug('Matterbridge is starting...');
+    this.log.notice('Matterbridge is starting...');
 
     this.log.debug(`Matterbridge logLevel: ${this.log.logLevel} fileLoger: ${this.matterbridgeInformation.fileLogger}.`);
 
@@ -450,8 +450,8 @@ export class Matterbridge extends EventEmitter {
       - list:                  list the registered plugins
       - loginterfaces:         log the network interfaces (usefull for finding the name of the interface to use with -mdnsinterface option)
       - logstorage:            log the node storage
-      - sudo:                  force the use of sudo to install or update packages
-      - nosudo:                force not to use sudo to install or update packages
+      - sudo:                  force the use of sudo to install or update packages if the internal logic fails
+      - nosudo:                force not to use sudo to install or update packages if the internal logic fails
       - ssl:                   enable SSL for the frontend and WebSockerServer (certificates in .matterbridge/certs directory cert.pem, key.pem and ca.pem (optional))
       - add [plugin path]:     register the plugin from the given absolute or relative path
       - add [plugin name]:     register the globally installed plugin with the given name
@@ -2606,7 +2606,7 @@ export class Matterbridge extends EventEmitter {
       childProcess.on('close', (code, signal) => {
         this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', `child process closed with code ${code} and signal ${signal}`);
         if (code === 0) {
-          if (cmdLine.startsWith('npm install -g')) this.log.notice(`${cmdLine.replace('npm install -g ', '').replace('--verbose', '')} installed correctly`);
+          if (cmdLine.startsWith('npm install -g')) this.log.notice(`Package ${cmdLine.replace('npm install -g ', '').replace('--verbose', '')} installed correctly`);
           this.log.debug(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
           resolve();
         } else {
@@ -2634,7 +2634,7 @@ export class Matterbridge extends EventEmitter {
       if (childProcess.stdout) {
         childProcess.stdout.on('data', (data: Buffer) => {
           const message = data.toString().trim();
-          this.log.debug(`Spawn stdout: ${message}`);
+          this.log.debug(`Spawn output (stdout): ${message}`);
           this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', message);
         });
       }
@@ -2642,7 +2642,7 @@ export class Matterbridge extends EventEmitter {
       if (childProcess.stderr) {
         childProcess.stderr.on('data', (data: Buffer) => {
           const message = data.toString().trim();
-          this.log.debug(`Spawn stderr: ${message}`);
+          this.log.debug(`Spawn verbose (stderr): ${message}`);
           this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', message);
         });
       }
@@ -2707,6 +2707,18 @@ export class Matterbridge extends EventEmitter {
 
     // Create the express app that serves the frontend
     this.expressApp = express();
+
+    // Log all requests to the server for debugging
+    /*
+    if (hasParameter('homedir')) {
+      this.expressApp.use((req, res, next) => {
+        this.log.debug(`Received request on expressApp: ${req.method} ${req.url}`);
+        next();
+      });
+    }
+    */
+
+    // Serve static files from '/static' endpoint
     this.expressApp.use(express.static(path.join(this.rootDirectory, 'frontend/build')));
 
     if (!hasParameter('ssl')) {
@@ -2714,10 +2726,16 @@ export class Matterbridge extends EventEmitter {
       this.httpServer = createServer(this.expressApp);
 
       // Listen on the specified port
-      this.httpServer.listen(port, () => {
-        if (this.systemInformation.ipv4Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
-        if (this.systemInformation.ipv6Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
-      });
+      if (hasParameter('ingress')) {
+        this.httpServer.listen(port, '0.0.0.0', () => {
+          this.log.info(`The frontend http server is listening on ${UNDERLINE}http://0.0.0.0:${port}${UNDERLINEOFF}${rs}`);
+        });
+      } else {
+        this.httpServer.listen(port, () => {
+          if (this.systemInformation.ipv4Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
+          if (this.systemInformation.ipv6Address !== '') this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
+        });
+      }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.httpServer.on('error', (error: any) => {
@@ -2764,10 +2782,16 @@ export class Matterbridge extends EventEmitter {
       this.httpsServer = https.createServer(serverOptions, this.expressApp);
 
       // Listen on the specified port
-      this.httpsServer.listen(port, () => {
-        if (this.systemInformation.ipv4Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
-        if (this.systemInformation.ipv6Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
-      });
+      if (hasParameter('ingress')) {
+        this.httpsServer.listen(port, '0.0.0.0', () => {
+          this.log.info(`The frontend https server is listening on ${UNDERLINE}https://0.0.0.0:${port}${UNDERLINEOFF}${rs}`);
+        });
+      } else {
+        this.httpsServer.listen(port, () => {
+          if (this.systemInformation.ipv4Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://${this.systemInformation.ipv4Address}:${port}${UNDERLINEOFF}${rs}`);
+          if (this.systemInformation.ipv6Address !== '') this.log.info(`The frontend https server is listening on ${UNDERLINE}https://[${this.systemInformation.ipv6Address}]:${port}${UNDERLINEOFF}${rs}`);
+        });
+      }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.httpsServer.on('error', (error: any) => {
@@ -2795,9 +2819,7 @@ export class Matterbridge extends EventEmitter {
     this.webSocketServer.on('connection', (ws: WebSocket, request: http.IncomingMessage) => {
       const clientIp = request.socket.remoteAddress;
       AnsiLogger.setGlobalCallback(this.wssSendMessage.bind(this), LogLevel.DEBUG);
-      this.log.debug('WebSocketServer logger global callback added');
       this.log.info(`WebSocketServer client "${clientIp}" connected to Matterbridge`);
-      // this.wssSendMessage('info', this.log.now(), 'Matterbridge', `WebSocketServer client "${clientIp}" connected to Matterbridge`);
 
       ws.on('message', (message) => {
         this.log.debug(`WebSocket client message: ${message}`);
