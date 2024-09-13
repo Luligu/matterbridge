@@ -128,7 +128,10 @@ export class MatterbridgePlatform {
    */
   verifyMatterbridgeVersion(requiredVersion: string): boolean {
     const compareVersions = (matterbridgeVersion: string, requiredVersion: string): boolean => {
-      const stripTag = (v: string) => v.split('-')[0];
+      const stripTag = (v: string) => {
+        const parts = v.split('-');
+        return parts.length > 0 ? parts[0] : v;
+      };
       const v1Parts = stripTag(matterbridgeVersion).split('.').map(Number);
       const v2Parts = stripTag(requiredVersion).split('.').map(Number);
       for (let i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
