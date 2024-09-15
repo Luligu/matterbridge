@@ -126,13 +126,13 @@
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest"
   },
   "dependencies": {
-    "@project-chip/matter-node.js": "0.10.3",
-    "@project-chip/matter.js": "0.10.3",
+    "@project-chip/matter-node.js": "0.10.1",
+    "@project-chip/matter.js": "0.10.1",
     "archiver": "7.0.1",
     "express": "4.21.0",
     "glob": "11.0.0",
     "https": "1.0.0",
-    "matter-history": "1.1.12",
+    "matter-history": "1.1.13",
     "node-ansi-logger": "3.0.0",
     "node-persist-manager": "1.0.8",
     "ws": "8.18.0"
