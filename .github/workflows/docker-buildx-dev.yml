@@ -42,35 +42,15 @@ jobs:
     - name: Echo main version ${{ env.VERSION }}
       run: |
         echo "Extracted version is: $VERSION ${{ env.VERSION }}"
-
-    - name: Run Docker Buildx on dev_shelly_alpine
-      run: |
-        docker buildx build \
-          --platform linux/arm64 \
-          -f docker/Dockerfile.shelly.alpine \
-          -t luligu/matterbridge:dev_shelly_alpine \
-          --push .
-        docker manifest inspect luligu/matterbridge:dev_shelly_alpine
-      timeout-minutes: 60 
-  
-    - name: Run Docker Buildx on dev_shelly_bullseye
-      run: |
-        docker buildx build \
-          --platform linux/arm64 \
-          -f docker/Dockerfile.shelly.bullseye \
-          -t luligu/matterbridge:dev_shelly_bullseye \
-          --push .
-        docker manifest inspect luligu/matterbridge:dev_shelly_bullseye
-      timeout-minutes: 60 
-
-    - name: Run Docker Buildx on dev_shelly_bookworm
+ 
+    - name: Run Docker Buildx on dev_shelly
       run: |
         docker buildx build \
           --platform linux/arm64 \
           -f docker/Dockerfile.shelly.bookworm \
-          -t luligu/matterbridge:dev_shelly_bookworm \
+          -t luligu/matterbridge:dev_shelly \
           --push .
-        docker manifest inspect luligu/matterbridge:dev_shelly_bookworm
+        docker manifest inspect luligu/matterbridge:dev_shelly
       timeout-minutes: 60 
 
     - name: Run Docker Buildx on dev
