@@ -10,8 +10,13 @@ The Home Assistant Community Add-ons and plugins are not verified to work with M
 
 ## [1.5.7] - 2024-09-16
 
+### Added
+
+- [matterbridge]: Added the [Official Matterbridge Home Assistant Add-on](https://github.com/Luligu/matterbridge-home-assistant-addon)
+
 ### Changed
 
+- [electricalSensor]: Refactor the getDefaultElectricalEnergyMeasurementClusterServer and getDefaultElectricalPowerMeasurementClusterServer
 - [package]: Update matter-node.js to 0.10.3.
 - [package]: Update matter-history to 1.1.12.
 - [package]: Update dependencies.
