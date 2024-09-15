@@ -25,7 +25,8 @@ sudo nano /etc/systemd/system/matterbridge.service
 Add the following to this file, replacing twice (!) USER with your user name (e.g. WorkingDirectory=/home/pi/Matterbridge and User=pi):
 
 You may need to adapt the configuration to your setup:
- - execStart on some linux distribution can also be ExecStart==/usr/bin/matterbridge -service
+
+- execStart on some linux distribution can also be ExecStart==/usr/bin/matterbridge -service
 
 ```
 [Unit]

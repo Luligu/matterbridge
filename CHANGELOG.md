@@ -8,6 +8,18 @@ If you like this project and find it useful, please consider giving it a star on
 
 The Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. I strongly advise against using them. If you do use them and encounter an issue (which is likely because some do not meet the Matterbridge guidelines), please do not open an issue in the Matterbridge repository.
 
+## [1.5.7] - 2024-09-16
+
+### Changed
+
+- [package]: Update matter-node.js to 0.10.3.
+- [package]: Update matter-history to 1.1.12.
+- [package]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.5.6] - 2024-09-13
 
 ### Added

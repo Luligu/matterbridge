@@ -19,36 +19,47 @@
 Matterbridge exports from:
 
 "matterbridge"
+
 - Matterbridge and all Matterbridge related classes.
 - All relevant matter-node.js or matter.js clusters, classes and functions.
 
 "matterbridge/cluster"
+
 - All clusters not present in matter.js or modified.
 
 "matterbridge/utils"
+
 - All general utils and colorUtils functions.
 
 "matterbridge/history"
+
 - MatterHistory class.
 
 "matterbridge/logger"
+
 - NodeAnsiLogger class.
 
 "matterbridge/storage"
+
 - NodeStorage classes.
 
-# **********
+# ****\*\*****
+
 A plugin must never install or import from `matter-node.js` or `matter.js` directly, as this leads to a second instance of `matter.js`, causing instability and unpredictable errors such as "The only instance is Endpoint". Additionally, when Matterbridge updates the `matter.js` version, it should be consistent across all plugins.
-# **********
+
+# ****\*\*****
+
 A plugin must never install Matterbridge (neither as dependencies nor as devDependencies). Matterbridge must be linked to the plugin:
+
 ```json
 "scripts": {
     '''
     "install": "node link-matterbridge-script.js",
     '''
-}    
+}
 ```
-# **********
+
+# ****\*\*****
 
 In the next releases I will remove the duplicated exports so please update your plugins.
 

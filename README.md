@@ -168,8 +168,6 @@ Features:
 - If the device cover/roller component is not calibrated, a message is displayed.
 - A 10-minute timer checks if the device has reported within that time frame, and fetch un update.
 
-
-
 ### Zigbee2MQTT
 
 <a href="https://github.com/Luligu/matterbridge-zigbee2mqtt">
@@ -180,8 +178,6 @@ Matterbridge zigbee2mqtt is a matterbridge production-level plugin that expose a
 
 No hub or dedicated hardware needed.
 
-
-
 ### Somfy tahoma
 
 <a href="https://github.com/Luligu/matterbridge-somfy-tahoma">
@@ -189,7 +185,6 @@ No hub or dedicated hardware needed.
 </a>
 
 Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose the Somfy Tahoma screen devices to Matter.
-
 
 ### Accessory platform example
 
@@ -206,6 +201,7 @@ An Accessory platform plugin only exposes one device.
 This an example of a dynamic platform plugin.
 
 It exposes:
+
 - a switch with onOff cluster
 - a light with onOff
 - a light with onOff and levelControl (dimmer)
@@ -339,10 +335,12 @@ So far is the only controller supporting some Matter 1.2 and 1.3 device type:
 - deviceEnergyManagement code 0x050d (Matter 1.3 with only DeviceEnergyManagementMode cluster)
 
 Electrical measurements:
+
 - electrical measurements from EveHistoryCluster (used in Matterbridge plugins)
 - electricalSensor code 0x0510 with clusters: ElectricalPowerMeasurement and ElectricalEnergyMeasurement (still in dev but fully working!)
 
 Other supported cluster:
+
 - ModeSelect
 
 ## Home Assistant issues (Matter Server for HA is still in Beta)

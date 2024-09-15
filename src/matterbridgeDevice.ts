@@ -530,7 +530,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName);
     if (!child) {
       child = new Endpoint(deviceTypes, { uniqueStorageKey: endpointName });
-      child.addFixedLabel('endpointName', endpointName);
+      child.addFixedLabel('endpointName', endpointName.slice(0, 16));
       this.addChildEndpoint(child);
     }
     deviceTypes.forEach((deviceType) => {
@@ -660,6 +660,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param {Endpoint} child - The child endpoint to retrieve the name.
    * @returns {string | undefined} The child endpoint name, or undefined if not found.
+   *
+   * @deprecated This method is deprecated and will be removed in a future version. Use endpoint.uniqueStorageKey instead.
    */
   getChildEndpointName(child: Endpoint): string | undefined {
     // Find the endpoint name (l1...)
@@ -674,6 +676,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param {Endpoint} child - The child endpoint.
    * @param {string} endpointName - The name of the endpoint.
+   *
+   * @deprecated This method is deprecated and will be removed in a future version.
    */
   setChildEndpointName(child: Endpoint, endpointName: string) {
     child.addFixedLabel('endpointName', endpointName);
@@ -683,6 +687,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * Retrieves the label associated with the specified endpoint number.
    * @param {EndpointNumber | undefined} endpointNumber - The number of the endpoint.
    * @returns {string | undefined} The label associated with the endpoint number, or undefined if not found.
+   *
+   * @deprecated This method is deprecated and will be removed in a future version.
    */
   getEndpointLabel(endpointNumber: EndpointNumber | undefined): string | undefined {
     if (!endpointNumber) return undefined;
@@ -698,6 +704,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param {string} label - The label of the child endpoint to retrieve.
    * @returns {Endpoint | undefined} The child endpoint with the specified label, or undefined if not found.
+   *
+   * @deprecated This method is deprecated and will be removed in a future version. Use getChildEndpointByName instead.
    */
   getChildEndpointWithLabel(label: string): Endpoint | undefined {
     for (const endpoint of this.getChildEndpoints()) {

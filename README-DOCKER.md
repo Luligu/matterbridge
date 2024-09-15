@@ -28,6 +28,7 @@ mkdir -p ./Matterbridge
 mkdir -p ./.matterbridge
 sudo chown -R $USER:$USER ./Matterbridge ./.matterbridge
 ```
+
 You may need to adapt the script to your setup.
 
 ### Run the Docker container and start it
@@ -40,6 +41,7 @@ docker run --name matterbridge \
   -v ${HOME}/.matterbridge:/root/.matterbridge \
   --network host --restart always -d luligu/matterbridge:latest
 ```
+
 You may need to adapt the script to your setup.
 
 ### Run with docker compose
@@ -113,4 +115,3 @@ docker logs matterbridge
 ```
 docker logs --tail 1000 -f matterbridge
 ```
-
