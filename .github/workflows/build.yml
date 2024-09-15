@@ -34,7 +34,7 @@ jobs:
         run: npm -v
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Lint the project
         run: npm run lint
