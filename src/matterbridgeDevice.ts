@@ -1245,6 +1245,13 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
             maxMeasuredValue: Number.MAX_SAFE_INTEGER,
             accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
           },
+          {
+            measurementType: MeasurementType.Frequency,
+            measured: true,
+            minMeasuredValue: Number.MIN_SAFE_INTEGER,
+            maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+            accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+          },
         ],
         voltage: voltage,
         activeCurrent: current,
