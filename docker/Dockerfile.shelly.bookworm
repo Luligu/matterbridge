@@ -13,7 +13,7 @@ WORKDIR /matterbridge
 COPY ./package.json ./package-lock.json ./tsconfig.json ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
-RUN npm ci && \
+RUN npm install && \
     npm run build && \
     npm shrinkwrap --omit=dev && \
     npm pack
@@ -22,7 +22,7 @@ RUN npm ci && \
 WORKDIR /matterbridge-shelly
 RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-shelly.git .
 COPY ./docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
-RUN npm ci && \
+RUN npm install && \
     npm run build && \
     npm shrinkwrap --omit=dev && \
     npm pack
