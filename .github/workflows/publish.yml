@@ -18,12 +18,18 @@ jobs:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Clean cache
+        run: npm cache clean --force
+  
+      - name: Install latest npm
+        run: npm install -g npm@latest
+    
       - name: Verify Node.js version
         run: node -v
     
       - name: Verify Npm version
         run: npm -v
-                
+                  
       - name: Install dependencies
         run: npm install
     
