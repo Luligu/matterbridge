@@ -1189,7 +1189,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Get a default Electrical Energy Measurement Cluster Server.
    *
-   * @param energy - The total consumption value.
+   * @param energy - The total consumption value in mW/h.
    */
   getDefaultElectricalEnergyMeasurementClusterServer(energy = 0) {
     return ClusterServer(
@@ -1215,7 +1215,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Get a default Electrical Power Measurement Cluster Server.
    *
-   * @param energy - The total consumption value.
+   * @param {number} voltage - The voltage value in millivolts.
+   * @param {number} current - The current value in milliamperes.
+   * @param {number} power - The power value in milliwatts.
+   * @param {number} frequency - The frequency value in millihertz.
+   * @returns {ClusterServer} - The configured Electrical Power Measurement Cluster Server.
    */
   getDefaultElectricalPowerMeasurementClusterServer(voltage = 0, current = 0, power = 0, frequency = 0) {
     return ClusterServer(
