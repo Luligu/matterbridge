@@ -30,6 +30,9 @@ jobs:
       - name: Clean cache
         run: npm cache clean --force
 
+      - name: Install matterbridge
+        run: npm install -g matterbridge --force
+
       - name: Install dependencies
         run: npm install
 
