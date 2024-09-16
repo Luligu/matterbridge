@@ -18,7 +18,7 @@ The Home Assistant Community Add-ons and plugins are not verified to work with M
 
 - [electricalSensor]: Refactor the getDefaultElectricalEnergyMeasurementClusterServer and getDefaultElectricalPowerMeasurementClusterServer
 - [package]: Update matter-node.js to 0.10.3.
-- [package]: Update matter-history to 1.1.12.
+- [package]: Update matter-history to 1.1.14.
 - [package]: Update dependencies.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
