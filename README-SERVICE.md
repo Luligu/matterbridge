@@ -84,6 +84,19 @@ sudo journalctl -u matterbridge.service -f --output cat
 sudo journalctl --vacuum-time=3d
 ```
 
+If you want (is a good idea) to make the setting permanent edit
+```
+sudo nano /etc/systemd/journald.conf
+```
+add
+```
+SystemMaxUse=3d
+```
+save it and run
+```
+sudo systemctl restart systemd-journald
+```
+
 ### Enable Matterbridge to start automatically on boot
 
 ```
