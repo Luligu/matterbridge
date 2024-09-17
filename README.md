@@ -66,7 +66,9 @@ Test the installation with:
 matterbridge
 ```
 
-Now it is possible to open the frontend at the link provided in the log (e.g. http://MATTERBIDGE-IPV4-ADDRESS:8283)
+Now it is possible to open the frontend at the link provided in the log (e.g. http://MATTERBIDGE-IPV4-ADDRESS:8283).
+
+You can then change the bridge mode from the frontend.
 
 ## Usage
 
@@ -76,6 +78,8 @@ Now it is possible to open the frontend at the link provided in the log (e.g. ht
 matterbridge -bridge
 ```
 
+This force Matterbridge to load in bridge mode.
+
 Matterbridge only exposes itself, and you have to pair it scanning the QR code shown in the frontend or in the console.
 
 ### mode childbridge
@@ -83,6 +87,8 @@ Matterbridge only exposes itself, and you have to pair it scanning the QR code s
 ```
 matterbridge -childbridge
 ```
+
+This force Matterbridge to load in childbridge mode.
 
 Matterbridge exposes each registered plugins, and you have to pair each one by scanning the QR code shown in the frontend or in the console.
 
