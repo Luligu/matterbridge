@@ -97,6 +97,18 @@ save it and run
 sudo systemctl restart systemd-journald
 ```
 
+### Verify that with your distro you can run sudo npm install -g matterbridge without putting a password
+
+If that is not the case run 
+```
+sudo visudo
+```
+add this line replacing USER with your user name (e.g. radxa ALL=(ALL) NOPASSWD: ALL)
+```
+<USER> ALL=(ALL) NOPASSWD: ALL
+```
+save the file and restart
+
 ### Enable Matterbridge to start automatically on boot
 
 ```
