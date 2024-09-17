@@ -530,7 +530,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName);
     if (!child) {
       child = new Endpoint(deviceTypes, { uniqueStorageKey: endpointName });
-      child.addFixedLabel('endpointName', endpointName);
+      child.addFixedLabel('endpointName', endpointName.slice(0, 16));
       this.addChildEndpoint(child);
     }
     deviceTypes.forEach((deviceType) => {
@@ -660,6 +660,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param {Endpoint} child - The child endpoint to retrieve the name.
    * @returns {string | undefined} The child endpoint name, or undefined if not found.
+   *
+   * @deprecated This method is deprecated and will be removed in a future version. Use endpoint.uniqueStorageKey instead.
    */
   getChildEndpointName(child: Endpoint): string | undefined {
     // Find the endpoint name (l1...)
@@ -674,6 +676,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param {Endpoint} child - The child endpoint.
    * @param {string} endpointName - The name of the endpoint.
+   *
+   * @deprecated This method is deprecated and will be removed in a future version.
    */
   setChildEndpointName(child: Endpoint, endpointName: string) {
     child.addFixedLabel('endpointName', endpointName);
@@ -683,6 +687,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * Retrieves the label associated with the specified endpoint number.
    * @param {EndpointNumber | undefined} endpointNumber - The number of the endpoint.
    * @returns {string | undefined} The label associated with the endpoint number, or undefined if not found.
+   *
+   * @deprecated This method is deprecated and will be removed in a future version.
    */
   getEndpointLabel(endpointNumber: EndpointNumber | undefined): string | undefined {
     if (!endpointNumber) return undefined;
@@ -698,6 +704,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param {string} label - The label of the child endpoint to retrieve.
    * @returns {Endpoint | undefined} The child endpoint with the specified label, or undefined if not found.
+   *
+   * @deprecated This method is deprecated and will be removed in a future version. Use getChildEndpointByName instead.
    */
   getChildEndpointWithLabel(label: string): Endpoint | undefined {
     for (const endpoint of this.getChildEndpoints()) {
@@ -1173,6 +1181,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Get a default Power Topology Cluster Server.
    *
+   * @returns {ClusterServer} - The configured Power Topology Cluster Server.
    */
   getDefaultPowerTopologyClusterServer() {
     return ClusterServer(PowerTopologyCluster.with(PowerTopology.Feature.TreeTopology), {}, {}, {});
@@ -1181,20 +1190,21 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Get a default Electrical Energy Measurement Cluster Server.
    *
-   * @param energy - The total consumption value.
+   * @param {number} energy - The total consumption value in mW/h.
+   * @returns {ClusterServer} - The configured Electrical Energy Measurement Cluster Server.
    */
-  getDefaultElectricalEnergyMeasurementClusterServer(energy = 0) {
+  getDefaultElectricalEnergyMeasurementClusterServer(energy = null) {
     return ClusterServer(
       ElectricalEnergyMeasurementCluster.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
       {
         accuracy: {
           measurementType: MeasurementType.ElectricalEnergy,
           measured: true,
-          minMeasuredValue: 0,
-          maxMeasuredValue: 0,
-          accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62 /* , fixedMin: 10, fixedMax: 10, fixedTypical: 0*/ }],
+          minMeasuredValue: Number.MIN_SAFE_INTEGER,
+          maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+          accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
         },
-        cumulativeEnergyImported: { energy },
+        cumulativeEnergyImported: energy ? { energy } : null,
         cumulativeEnergyExported: null,
       },
       {},
@@ -1207,9 +1217,13 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Get a default Electrical Power Measurement Cluster Server.
    *
-   * @param energy - The total consumption value.
+   * @param {number} voltage - The voltage value in millivolts.
+   * @param {number} current - The current value in milliamperes.
+   * @param {number} power - The power value in milliwatts.
+   * @param {number} frequency - The frequency value in millihertz.
+   * @returns {ClusterServer} - The configured Electrical Power Measurement Cluster Server.
    */
-  getDefaultElectricalPowerMeasurementClusterServer(voltage = 0, current = 0, power = 0, frequency = 0) {
+  getDefaultElectricalPowerMeasurementClusterServer(voltage = null, current = null, power = null, frequency = null) {
     return ClusterServer(
       ElectricalPowerMeasurementCluster.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent),
       {
@@ -1219,23 +1233,30 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           {
             measurementType: MeasurementType.Voltage,
             measured: true,
-            minMeasuredValue: 0,
-            maxMeasuredValue: 100,
-            accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62 /* , fixedMin: 10, fixedMax: 10, fixedTypical: 0*/ }],
+            minMeasuredValue: Number.MIN_SAFE_INTEGER,
+            maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+            accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
           },
           {
             measurementType: MeasurementType.ActiveCurrent,
             measured: true,
-            minMeasuredValue: 0,
-            maxMeasuredValue: 100,
-            accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62 /* , fixedMin: 10, fixedMax: 10, fixedTypical: 0 */ }],
+            minMeasuredValue: Number.MIN_SAFE_INTEGER,
+            maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+            accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
           },
           {
             measurementType: MeasurementType.ActivePower,
             measured: true,
-            minMeasuredValue: 0,
-            maxMeasuredValue: 100,
-            accuracyRanges: [{ rangeMin: 0, rangeMax: 2 ** 62 /* , fixedMin: 10, fixedMax: 10, fixedTypical: 0 */ }],
+            minMeasuredValue: Number.MIN_SAFE_INTEGER,
+            maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+            accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+          },
+          {
+            measurementType: MeasurementType.Frequency,
+            measured: true,
+            minMeasuredValue: Number.MIN_SAFE_INTEGER,
+            maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+            accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
           },
         ],
         voltage: voltage,

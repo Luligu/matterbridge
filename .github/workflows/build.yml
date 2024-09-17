@@ -21,29 +21,32 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
+      - name: Clean cache
+        run: npm cache clean --force
+
+      - name: Install latest npm
+        run: npm install -g npm@latest
+  
       - name: Verify Node.js version
         run: node -v
   
       - name: Verify Npm version
         run: npm -v
-              
-      - name: Clean cache
-        run: npm cache clean --force
-
-      - name: Install matterbridge
-        run: npm install -g matterbridge --force
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Lint the project
         run: npm run lint
 
-      - name: Test the project
-        run: npm run test
-
       - name: Build the project
         run: npm run build
+
+      - name: Install matterbridge
+        run: npm install -g .
+
+      - name: Test the project
+        run: npm run test
 
       - name: List, audit, fix outdated dependencies and build again
         run: |
