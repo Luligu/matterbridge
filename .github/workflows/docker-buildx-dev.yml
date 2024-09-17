@@ -43,6 +43,16 @@ jobs:
       run: |
         echo "Extracted version is: $VERSION ${{ env.VERSION }}"
  
+    - name: Run Docker Buildx on shelly
+      run: |
+        docker buildx build \
+          --platform linux/arm64 \
+          -f docker/Dockerfile.shelly \
+          -t luligu/matterbridge:shelly \
+          --push .
+        docker manifest inspect luligu/matterbridge:shelly
+      timeout-minutes: 60 
+  
     - name: Run Docker Buildx on dev_shelly
       run: |
         docker buildx build \
