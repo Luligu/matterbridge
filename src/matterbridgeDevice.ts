@@ -1189,7 +1189,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Get a default Electrical Energy Measurement Cluster Server.
    *
-   * @param energy - The total consumption value in mW/h.
+   * @param {number} energy - The total consumption value in mW/h.
+   * @returns {ClusterServer} - The configured Electrical Energy Measurement Cluster Server.
    */
   getDefaultElectricalEnergyMeasurementClusterServer(energy = null) {
     return ClusterServer(

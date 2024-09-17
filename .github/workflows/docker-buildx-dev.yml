@@ -1,4 +1,4 @@
-name: Build Docker image dev and dev_shelly_alpine with buildx
+name: Build Docker image dev and dev_shelly with buildx
 
 on:
   push:
