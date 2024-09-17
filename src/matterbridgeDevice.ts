@@ -1181,6 +1181,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Get a default Power Topology Cluster Server.
    *
+   * @returns {ClusterServer} - The configured Power Topology Cluster Server.
    */
   getDefaultPowerTopologyClusterServer() {
     return ClusterServer(PowerTopologyCluster.with(PowerTopology.Feature.TreeTopology), {}, {}, {});
