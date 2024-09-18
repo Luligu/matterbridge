@@ -72,6 +72,18 @@ sudo systemctl stop matterbridge
 sudo systemctl status matterbridge.service
 ```
 
+### Enable Matterbridge to start automatically on boot
+
+```
+sudo systemctl enable matterbridge.service
+```
+
+### Disable Matterbridge from starting automatically on boot
+
+```
+sudo systemctl disable matterbridge.service
+```
+
 ### View the log of Matterbridge in real time (this will show the log with colors)
 
 ```
@@ -84,7 +96,7 @@ sudo journalctl -u matterbridge.service -f --output cat
 sudo journalctl --vacuum-time=3d
 ```
 
-If you want (is a good idea) to make the setting permanent edit
+If you want to make the setting permanent edit
 ```
 sudo nano /etc/systemd/journald.conf
 ```
@@ -97,7 +109,7 @@ save it and run
 sudo systemctl restart systemd-journald
 ```
 
-### Verify that with your distro you can run sudo npm install -g matterbridge without putting a password
+### Verify that with your distro you can run sudo npm install -g matterbridge without the password
 
 If that is not the case run 
 ```
@@ -109,14 +121,3 @@ add this line replacing USER with your user name (e.g. radxa ALL=(ALL) NOPASSWD:
 ```
 save the file and restart
 
-### Enable Matterbridge to start automatically on boot
-
-```
-sudo systemctl enable matterbridge.service
-```
-
-### Disable Matterbridge from starting automatically on boot
-
-```
-sudo systemctl disable matterbridge.service
-```
