@@ -133,8 +133,7 @@ export class Matterbridge extends EventEmitter {
   public matterbridgeQrPairingCode: string | undefined = undefined;
   public matterbridgeManualPairingCode: string | undefined = undefined;
   public matterbridgeFabricInformations: SanitizedExposedFabricInformation[] = [];
-  // public matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
-  public matterbridgeSessionInformations = new Map<string, SanitizedSessionInformation>();
+  public matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
   public matterbridgePaired = false;
   public matterbridgeConnected = false;
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
@@ -2144,10 +2143,7 @@ export class Matterbridge extends EventEmitter {
           if (this.bridgeMode === 'bridge') {
             this.matterbridgePaired = true;
             this.matterbridgeConnected = true;
-            // this.matterbridgeSessionInformations = this.sanitizeSessionInformation(sessionInformations);
-            sessionInformations.forEach((session) => {
-              this.matterbridgeSessionInformations.set(session.name, this.sanitizeSessionInformation([session])[0]);
-            });
+            this.matterbridgeSessionInformations = this.sanitizeSessionInformation(sessionInformations);
           }
           if (this.bridgeMode === 'childbridge') {
             const plugin = this.plugins.get(pluginName);
@@ -2157,36 +2153,16 @@ export class Matterbridge extends EventEmitter {
               plugin.sessionInformations = this.sanitizeSessionInformation(sessionInformations);
             }
           }
-
-          /*
-          setTimeout(() => {
-            // We just need to configure the plugins after the controllers are connected
-            if (this.bridgeMode === 'bridge') {
-              for (const plugin of this.plugins) {
-                if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
-                try {
-                  this.configurePlugin(plugin); // No await do it asyncronously
-                } catch (error) {
-                  plugin.error = true;
-                  this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
-                }
-              }
+        } else {
+          if (this.bridgeMode === 'bridge') {
+            this.matterbridgeSessionInformations = [];
+          }
+          if (this.bridgeMode === 'childbridge') {
+            const plugin = this.plugins.get(pluginName);
+            if (plugin) {
+              plugin.sessionInformations = [];
             }
-            if (this.bridgeMode === 'childbridge') {
-              for (const plugin of this.plugins) {
-                if (plugin.name === pluginName && plugin.loaded === true && plugin.started === true && plugin.configured !== true) {
-                  try {
-                    this.configurePlugin(plugin); // No await do it asyncronously
-                  } catch (error) {
-                    plugin.error = true;
-                    this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
-                  }
-                }
-              }
-            }
-            // logEndpoint(commissioningServer.getRootEndpoint());
-          }, 2000);
-          */
+          }
         }
       },
       commissioningChangedCallback: async (fabricIndex) => {
@@ -2198,8 +2174,7 @@ export class Matterbridge extends EventEmitter {
           if (pluginName === 'Matterbridge') {
             await this.matterbridgeContext?.clearAll();
             this.matterbridgeFabricInformations = [];
-            // this.matterbridgeSessionInformations = [];
-            this.matterbridgeSessionInformations.clear();
+            this.matterbridgeSessionInformations = [];
             this.matterbridgePaired = false;
             this.matterbridgeConnected = false;
           } else {
@@ -2352,8 +2327,7 @@ export class Matterbridge extends EventEmitter {
         this.matterbridgeQrPairingCode = qrPairingCode;
         this.matterbridgeManualPairingCode = manualPairingCode;
         this.matterbridgeFabricInformations = [];
-        // this.matterbridgeSessionInformations = [];
-        this.matterbridgeSessionInformations.clear();
+        this.matterbridgeSessionInformations = [];
         this.matterbridgePaired = false;
         this.matterbridgeConnected = false;
       }
@@ -2377,8 +2351,7 @@ export class Matterbridge extends EventEmitter {
       });
       if (pluginName === 'Matterbridge') {
         this.matterbridgeFabricInformations = this.sanitizeFabricInformations(fabricInfo);
-        // this.matterbridgeSessionInformations = [];
-        this.matterbridgeSessionInformations.clear();
+        this.matterbridgeSessionInformations = [];
         this.matterbridgePaired = true;
       }
       if (pluginName !== 'Matterbridge') {
