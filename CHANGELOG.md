@@ -19,7 +19,7 @@ The Home Assistant Community Add-ons and plugins are not verified to work with M
 
 ### Changed
 
-- [package]: Update matter-node.js to 0.10.4.
+- [package]: Update matter-node.js to 0.10.5.
 - [package]: Update matter-history to 1.1.15.
 - [package]: Update dependencies.
 - [matterbridge]: Reset session informations when the controllers are not connected.
