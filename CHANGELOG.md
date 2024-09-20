@@ -10,11 +10,19 @@ The Home Assistant Community Add-ons and plugins are not verified to work with M
 
 ## [1.5.8] - 2024-09-20
 
+### Added
+
+- [readme]: Added podman guidelines to the README.md
+- [readme]: Added instructions for setting permanent journalctl settings in service mode to prevent journal to grow
+- [readme]: Added instructions for removing sudo password for npm install in service mode
+- [readme]: Refactor systemd instructions for Matterbridge service
+
 ### Changed
 
 - [package]: Update matter-node.js to 0.10.4.
 - [package]: Update matter-history to 1.1.15.
 - [package]: Update dependencies.
+- [matterbridge]: Reset session informations when the controllers are not connected.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
