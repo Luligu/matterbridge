@@ -2393,28 +2393,28 @@ export class Matterbridge extends EventEmitter {
    */
   private sanitizeSessionInformation(sessionInfo: SessionInformation[]) {
     return sessionInfo
-      .filter((info) => info.isPeerActive)
-      .map((info) => {
+      .filter((session) => session.isPeerActive)
+      .map((session) => {
         return {
-          name: info.name,
-          nodeId: info.nodeId.toString(),
-          peerNodeId: info.peerNodeId.toString(),
-          fabric: info.fabric
+          name: session.name,
+          nodeId: session.nodeId.toString(),
+          peerNodeId: session.peerNodeId.toString(),
+          fabric: session.fabric
             ? {
-                fabricIndex: info.fabric.fabricIndex,
-                fabricId: info.fabric.fabricId.toString(),
-                nodeId: info.fabric.nodeId.toString(),
-                rootNodeId: info.fabric.rootNodeId.toString(),
-                rootVendorId: info.fabric.rootVendorId,
-                rootVendorName: this.getVendorIdName(info.fabric.rootVendorId),
-                label: info.fabric.label,
+                fabricIndex: session.fabric.fabricIndex,
+                fabricId: session.fabric.fabricId.toString(),
+                nodeId: session.fabric.nodeId.toString(),
+                rootNodeId: session.fabric.rootNodeId.toString(),
+                rootVendorId: session.fabric.rootVendorId,
+                rootVendorName: this.getVendorIdName(session.fabric.rootVendorId),
+                label: session.fabric.label,
               }
             : undefined,
-          isPeerActive: info.isPeerActive,
-          secure: info.secure,
-          lastInteractionTimestamp: info.lastInteractionTimestamp?.toString(),
-          lastActiveTimestamp: info.lastActiveTimestamp?.toString(),
-          numberOfActiveSubscriptions: info.numberOfActiveSubscriptions,
+          isPeerActive: session.isPeerActive,
+          secure: session.secure,
+          lastInteractionTimestamp: session.lastInteractionTimestamp?.toString(),
+          lastActiveTimestamp: session.lastActiveTimestamp?.toString(),
+          numberOfActiveSubscriptions: session.numberOfActiveSubscriptions,
         } as SanitizedSessionInformation;
       });
   }
