@@ -240,7 +240,25 @@ describe('Matterbridge', () => {
   });
 
   test('Sanitize sessions', () => {
-    const sessionInfos: SessionInformation[] = [
+    let sessionInfos: SessionInformation[] = [
+      {
+        name: 'secure/64351',
+        nodeId: NodeId(16784206195868397986n),
+        peerNodeId: NodeId(1604858123872676291n),
+        fabric: { fabricIndex: FabricIndex(2), fabricId: FabricId(456546212146567986n), nodeId: NodeId(1678420619586823323397986n), rootNodeId: NodeId(18446744060824623349729n), rootVendorId: VendorId(4362), label: 'SmartThings Hub 0503' },
+        isPeerActive: true,
+        secure: true,
+        lastInteractionTimestamp: 1720035723121269,
+        lastActiveTimestamp: 1720035761223121,
+        numberOfActiveSubscriptions: 0,
+      },
+    ];
+    expect(() => {
+      JSON.stringify(sessionInfos);
+    }).toThrow();
+    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos).length).toBe(1);
+    expect(JSON.stringify((matterbridge as any).sanitizeSessionInformation(sessionInfos)).length).toBe(464);
+    sessionInfos = [
       {
         name: 'secure/64351',
         nodeId: NodeId(16784206195868397986n),
@@ -253,11 +271,7 @@ describe('Matterbridge', () => {
         numberOfActiveSubscriptions: 0,
       },
     ];
-    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos).length).toBe(1);
-    expect(() => {
-      JSON.stringify(sessionInfos);
-    }).toThrow();
-    expect(JSON.stringify((matterbridge as any).sanitizeSessionInformation(sessionInfos)).length).toBe(465);
+    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos).length).toBe(0);
   });
 
   test('matterbridge -help', async () => {

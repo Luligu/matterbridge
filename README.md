@@ -134,6 +134,10 @@ Config editor:
 
 [Advanced configurations](https://github.com/Luligu/matterbridge/blob/main/README-DOCKER.md)
 
+### Run matterbridge with podman
+
+[Advanced configurations](https://github.com/Luligu/matterbridge/blob/main/README-PODMAN.md)
+
 ### Run matterbridge as an home assistant add-on with the official add-on
 
 [Advanced configurations](https://github.com/Luligu/matterbridge-home-assistant-addon)

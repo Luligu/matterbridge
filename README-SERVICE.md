@@ -72,6 +72,18 @@ sudo systemctl stop matterbridge
 sudo systemctl status matterbridge.service
 ```
 
+### Enable Matterbridge to start automatically on boot
+
+```
+sudo systemctl enable matterbridge.service
+```
+
+### Disable Matterbridge from starting automatically on boot
+
+```
+sudo systemctl disable matterbridge.service
+```
+
 ### View the log of Matterbridge in real time (this will show the log with colors)
 
 ```
@@ -84,14 +96,44 @@ sudo journalctl -u matterbridge.service -f --output cat
 sudo journalctl --vacuum-time=3d
 ```
 
-### Enable Matterbridge to start automatically on boot
+If you want to make the setting permanent edit
+```
+sudo nano /etc/systemd/journald.conf
+```
+add
+```
+SystemMaxUse=3d
+```
+save it and run
+```
+sudo systemctl restart systemd-journald
+```
+
+### Verify that with your distro you can run sudo npm install -g matterbridge without the password
+
+Run the following command to verify if you can install Matterbridge globally without being prompted for a password:
 
 ```
-sudo systemctl enable matterbridge.service
+sudo npm install -g matterbridge
+```
+If you are not prompted for a password, no further action is required.
+
+If that is not the case open the sudoers file for editing using visudo
+```
+sudo visudo
 ```
 
-### Disable Matterbridge from starting automatically on boot
+add this line replacing USER with your user name (e.g. radxa ALL=(ALL) NOPASSWD: ALL)
 
 ```
-sudo systemctl disable matterbridge.service
+<USER> ALL=(ALL) NOPASSWD: ALL
 ```
+
+or if you prefers to only give access to npm without password try (e.g. radxa ALL=(ALL) NOPASSWD: /usr/bin/npm)
+
+```
+<USER> ALL=(ALL) NOPASSWD: /usr/bin/npm
+```
+
+save the file and restart the system.
+
