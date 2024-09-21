@@ -115,9 +115,18 @@ If that is not the case run
 ```
 sudo visudo
 ```
+
 add this line replacing USER with your user name (e.g. radxa ALL=(ALL) NOPASSWD: ALL)
+
 ```
 <USER> ALL=(ALL) NOPASSWD: ALL
 ```
-save the file and restart
+
+or if you prefers to only give access to npm without password (e.g. radxa ALL=(ALL) NOPASSWD: /usr/bin/npm)
+
+```
+<USER> ALL=(ALL) NOPASSWD: /usr/bin/npm
+```
+
+save the file and restart the system.
 
