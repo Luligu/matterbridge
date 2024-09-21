@@ -47,7 +47,7 @@ jobs:
       run: |
         docker buildx build \
           --platform linux/amd64,linux/arm64,linux/arm/v7 \
-          -f docker/Dockerfile.main \
+          -f docker/Dockerfile.latest \
           -t luligu/matterbridge:latest \
           -t luligu/matterbridge:${{ env.VERSION }} \
           --push .
