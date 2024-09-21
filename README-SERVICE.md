@@ -122,7 +122,7 @@ add this line replacing USER with your user name (e.g. radxa ALL=(ALL) NOPASSWD:
 <USER> ALL=(ALL) NOPASSWD: ALL
 ```
 
-or if you prefers to only give access to npm without password (e.g. radxa ALL=(ALL) NOPASSWD: /usr/bin/npm)
+or if you prefers to only give access to npm without password try (e.g. radxa ALL=(ALL) NOPASSWD: /usr/bin/npm)
 
 ```
 <USER> ALL=(ALL) NOPASSWD: /usr/bin/npm
