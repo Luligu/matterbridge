@@ -111,7 +111,14 @@ sudo systemctl restart systemd-journald
 
 ### Verify that with your distro you can run sudo npm install -g matterbridge without the password
 
-If that is not the case run 
+Run the following command to verify if you can install Matterbridge globally without being prompted for a password:
+
+```
+sudo npm install -g matterbridge
+```
+If you are not prompted for a password, no further action is required.
+
+If that is not the case open the sudoers file for editing using visudo
 ```
 sudo visudo
 ```
