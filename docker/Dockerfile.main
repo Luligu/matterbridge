@@ -1,15 +1,15 @@
 FROM node:22-bookworm-slim AS base
 WORKDIR /app
-# RUN npm install -g npm@10.7.0
 
 
 FROM base AS builder
 WORKDIR /app
 COPY ./package.json ./
+COPY ./package-lock.json ./
 COPY ./tsconfig.json ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
-RUN npm install && npm run build && npm link
+RUN npm ci && npm run build && npm link
 
 
 FROM base AS release
@@ -21,16 +21,16 @@ COPY --from=builder /app/frontend/build ./frontend/build
 RUN npm link
 
 # Install Matterbridge plugins
-RUN npm -g install matterbridge-example-accessory-platform
-RUN npm -g install matterbridge-example-dynamic-platform
-RUN npm -g install matterbridge-zigbee2mqtt
-RUN npm -g install matterbridge-somfy-tahoma
-RUN npm -g install matterbridge-shelly
-RUN npm -g install matterbridge-eve-door
-RUN npm -g install matterbridge-eve-motion
-RUN npm -g install matterbridge-eve-energy
-RUN npm -g install matterbridge-eve-room
-RUN npm -g install matterbridge-eve-weather
+RUN npm install -g matterbridge-example-accessory-platform
+RUN npm install -g matterbridge-example-dynamic-platform
+RUN npm install -g matterbridge-zigbee2mqtt
+RUN npm install -g matterbridge-somfy-tahoma
+RUN npm install -g matterbridge-shelly
+RUN npm install -g matterbridge-eve-door
+RUN npm install -g matterbridge-eve-motion
+RUN npm install -g matterbridge-eve-energy
+RUN npm install -g matterbridge-eve-room
+RUN npm install -g matterbridge-eve-weather
 
 WORKDIR /app
 CMD ["matterbridge", "-docker"]
