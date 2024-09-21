@@ -8,11 +8,11 @@ If you like this project and find it useful, please consider giving it a star on
 
 The Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. I strongly advise against using them. If you do use them and encounter an issue (which is likely because some do not meet the Matterbridge guidelines), please do not open an issue in the Matterbridge repository.
 
-### New Apple firmware
+### New Apple firmware v. 18.0
 
 Please read this: https://github.com/Luligu/matterbridge/discussions/135
 
-## [1.5.8] - 2024-09-20
+## [1.5.8] - 2024-09-21
 
 ### Added
 

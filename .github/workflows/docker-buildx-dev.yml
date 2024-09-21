@@ -63,6 +63,16 @@ jobs:
         docker manifest inspect luligu/matterbridge:dev_shelly
       timeout-minutes: 60 
 
+    - name: Run Docker Buildx on test
+      run: |
+        docker buildx build \
+          --platform linux/amd64,linux/arm64,linux/arm/v7 \
+          -f docker/Dockerfile.test \
+          -t luligu/matterbridge:test \
+          --push .
+        docker manifest inspect luligu/matterbridge:test
+      timeout-minutes: 60 
+
     - name: Run Docker Buildx on dev
       run: |
         docker buildx build \
