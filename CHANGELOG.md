@@ -8,6 +8,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 The Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. I strongly advise against using them. If you do use them and encounter an issue (which is likely because some do not meet the Matterbridge guidelines), please do not open an issue in the Matterbridge repository.
 
+### New Apple firmware
+
+Please read this: https://github.com/Luligu/matterbridge/discussions/135
+
 ## [1.5.8] - 2024-09-20
 
 ### Added
@@ -16,6 +20,7 @@ The Home Assistant Community Add-ons and plugins are not verified to work with M
 - [readme]: Added instructions for setting permanent journalctl settings in service mode to prevent journal to grow
 - [readme]: Added instructions for removing sudo password for npm install in service mode
 - [readme]: Refactor systemd instructions for Matterbridge service
+- [readme]: Added link to install matterbridge like ha addon https://github.com/Luligu/matterbridge-home-assistant-addon
 
 ### Changed
 
