@@ -16,6 +16,19 @@
 
 ## Run matterbridge as a daemon with systemctl (Linux only)
 
+### First create the Matterbridge directories
+
+This will create the required directories if they don't exist
+
+```
+cd ~
+mkdir -p ./Matterbridge
+mkdir -p ./.matterbridge
+sudo chown -R $USER:$USER ./Matterbridge ./.matterbridge
+```
+
+### Then create a systemctl configuration file for Matterbridge
+
 Create a systemctl configuration file for Matterbridge
 
 ```

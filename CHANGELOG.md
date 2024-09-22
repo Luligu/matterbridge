@@ -13,6 +13,12 @@ If you want to run Matterbridge in Home Assistant please use the official add-on
 
 Please read this: https://github.com/Luligu/matterbridge/discussions/135
 
+### Discord
+
+Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/raWywpD4.
+
+Feel free to join!
+
 ## [1.5.9] - 2024-09-23
 
 ### Fixed
