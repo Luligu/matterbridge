@@ -12,6 +12,22 @@ The Home Assistant Community Add-ons and plugins are not verified to work with M
 
 Please read this: https://github.com/Luligu/matterbridge/discussions/135
 
+## [1.5.9] - 2024-09-23
+
+### Fixed
+
+- [ingress]: Fixed download routes with Ingress from the ha addon
+
+### Changed
+
+- [package]: Update matter-node.js to 0.10.6.
+- [package]: Update matter-history to 1.1.16.
+- [package]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.5.8] - 2024-09-21
 
 ### Added
