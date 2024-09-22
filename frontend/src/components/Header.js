@@ -123,19 +123,19 @@ function Header() {
     } else if(value==='download-mjlog') {
       logMessage('Matterbridge', `Downloading matter log...`);
       showSnackbarMessage('Downloading matter log...', 5);
-      window.location.href = '/api/download-mjlog';
+      window.location.href = './api/download-mjlog';
     } else if(value==='download-mbstorage') {
       logMessage('Matterbridge', `Downloading matterbridge storage...`);
       showSnackbarMessage('Downloading matterbridge storage...', 5);
-      window.location.href = '/api/download-mbstorage';
+      window.location.href = './api/download-mbstorage';
     } else if(value==='download-mjstorage') {
       logMessage('Matterbridge', `Downloading matter storage...`);
       showSnackbarMessage('Downloading matter storage...', 5);
-      window.location.href = '/api/download-mjstorage';
+      window.location.href = './api/download-mjstorage';
     } else if(value==='download-backup') {
       logMessage('Matterbridge', `Downloading backup...`);
       showSnackbarMessage('Downloading backup...', 10);
-      window.location.href = '/api/download-backup';
+      window.location.href = './api/download-backup';
     } else if(value==='update') {
       handleUpdateClick();
     } else if(value==='restart') {
