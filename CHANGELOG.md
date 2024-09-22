@@ -7,6 +7,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Home Assistant Community Add-ons
 
 The Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. I strongly advise against using them. If you do use them and encounter an issue (which is likely because some do not meet the Matterbridge guidelines), please do not open an issue in the Matterbridge repository.
+If you want to run Matterbridge in Home Assistant please use the official add-on https://github.com/Luligu/matterbridge-home-assistant-addon.
 
 ### New Apple firmware v. 18.0
 
@@ -16,7 +17,7 @@ Please read this: https://github.com/Luligu/matterbridge/discussions/135
 
 ### Fixed
 
-- [ingress]: Fixed download routes with Ingress from the ha addon
+- [ingress]: Fixed download routes with Ingress from the ha addon. The add-on https://github.com/Luligu/matterbridge-home-assistant-addon has been updated to v. 1.0.4.
 
 ### Changed
 

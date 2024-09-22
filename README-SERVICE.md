@@ -118,7 +118,7 @@ sudo npm install -g matterbridge
 ```
 If you are not prompted for a password, no further action is required.
 
-If that is not the case open the sudoers file for editing using visudo
+If that is not the case, open the sudoers file for editing using visudo
 ```
 sudo visudo
 ```
