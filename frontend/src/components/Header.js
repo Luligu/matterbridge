@@ -111,12 +111,15 @@ function Header() {
   };
 
   const handleMenuClose = (value) => {
+    const baseName = window.location.href.includes("/api/hassio_ingress/") ? window.location.pathname : "/";
+    console.log(`HandleCloseCommand ingress check: window.location.href=${window.location.href} baseName=${baseName}`);
+  
     console.log('handleCloseCommand:', value);
     setMenuAnchorEl(null);
     if(value==='download-mblog') {
       logMessage('Matterbridge', `Downloading matterbridge log...`);
       showSnackbarMessage('Downloading matterbridge log...', 5);
-      window.location.href = '/api/download-mblog';
+      window.location.href = baseName + 'api/download-mblog';
     } else if(value==='download-mjlog') {
       logMessage('Matterbridge', `Downloading matter log...`);
       showSnackbarMessage('Downloading matter log...', 5);
