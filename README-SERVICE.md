@@ -16,6 +16,19 @@
 
 ## Run matterbridge as a daemon with systemctl (Linux only)
 
+### First create the Matterbridge directories
+
+This will create the required directories if they don't exist
+
+```
+cd ~
+mkdir -p ./Matterbridge
+mkdir -p ./.matterbridge
+sudo chown -R $USER:$USER ./Matterbridge ./.matterbridge
+```
+
+### Then create a systemctl configuration file for Matterbridge
+
 Create a systemctl configuration file for Matterbridge
 
 ```
@@ -118,7 +131,7 @@ sudo npm install -g matterbridge
 ```
 If you are not prompted for a password, no further action is required.
 
-If that is not the case open the sudoers file for editing using visudo
+If that is not the case, open the sudoers file for editing using visudo
 ```
 sudo visudo
 ```

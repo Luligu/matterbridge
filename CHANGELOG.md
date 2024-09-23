@@ -7,10 +7,33 @@ If you like this project and find it useful, please consider giving it a star on
 ### Home Assistant Community Add-ons
 
 The Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. I strongly advise against using them. If you do use them and encounter an issue (which is likely because some do not meet the Matterbridge guidelines), please do not open an issue in the Matterbridge repository.
+If you want to run Matterbridge in Home Assistant please use the official add-on https://github.com/Luligu/matterbridge-home-assistant-addon.
 
 ### New Apple firmware v. 18.0
 
 Please read this: https://github.com/Luligu/matterbridge/discussions/135
+
+### Discord
+
+Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/raWywpD4.
+
+Feel free to join!
+
+## [1.5.9] - 2024-09-23
+
+### Fixed
+
+- [ingress]: Fixed download routes with Ingress from the ha addon. The add-on https://github.com/Luligu/matterbridge-home-assistant-addon has been updated to v. 1.0.4.
+
+### Changed
+
+- [package]: Update matter-node.js to 0.10.6.
+- [package]: Update matter-history to 1.1.16.
+- [package]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
 
 ## [1.5.8] - 2024-09-21
 
