@@ -848,12 +848,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param pluginName - The name of the plugin.
    * @returns The serialized Matterbridge device object.
    */
-  serialize(pluginName: string): SerializedMatterbridgeDevice | undefined {
+  serialize(): SerializedMatterbridgeDevice | undefined {
     if (!this.serialNumber || !this.deviceName || !this.uniqueId) return;
     const cluster = this.getClusterServer(BasicInformationCluster) ?? this.getClusterServer(BridgedDeviceBasicInformationCluster);
     if (!cluster) return;
     const serialized: SerializedMatterbridgeDevice = {
-      pluginName,
+      pluginName: this.plugin ?? 'Unknown',
       serialNumber: this.serialNumber,
       deviceName: this.deviceName,
       uniqueId: this.uniqueId,
