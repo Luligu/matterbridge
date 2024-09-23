@@ -20,7 +20,7 @@ The Matterbridge Docker image, which includes a manifest list for the linux/amd6
 
 ### First create the Matterbridge directories
 
-This will create the required directories if they don't exist
+This will create the required directories in your home directory if they don't exist
 
 ```
 cd ~
@@ -31,9 +31,18 @@ sudo chown -R $USER:$USER ./Matterbridge ./.matterbridge
 
 You may need to adapt the script to your setup.
 
+### Add your user to docker group
+
+If you don't want to use sudo with docker commands, run this command:
+
+```
+sudo groupadd docker
+sudo usermod -aG docker $USER
+```
+
 ### Run the Docker container and start it
 
-The container has full access to the host network (needed for mdns).
+The container must have full access to the host network (needed for mdns).
 
 ```
 docker run --name matterbridge \
