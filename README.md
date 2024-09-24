@@ -347,6 +347,24 @@ If the certificate are correctly made, you will be able to connect with https to
 
 ![image](https://github.com/user-attachments/assets/9c38776d-064f-4d91-9359-a2cd3319b1ff)
 
+## How to send the debug log files
+
+### Enable debug and log on file
+
+In the frontend go to settings and set the debug in this way:
+
+![image](https://github.com/user-attachments/assets/83181dc2-969a-4b71-aff4-f1498fa1d665)
+
+![image](https://github.com/user-attachments/assets/617961a9-7cb0-46cf-9878-981f61738f8c)
+
+### Restart
+
+Wait a few minutes to allow the logs to be meaningful
+
+Then from the dots menu in the frontend download the matterbridge.log and matter.log files.
+
+![image](https://github.com/user-attachments/assets/04ba65f6-594a-4ff8-9732-3df049f5a33e)
+
 
 # Known general issues
 
