@@ -343,7 +343,7 @@ matterbridge -ssl -frontend 443
 
 ### Restart
 
-If the certificate are correctly made, you will be able to connect with https to the frontend.
+If the certificate are correctly configured, you will be able to connect with https to the frontend.
 
 ![image](https://github.com/user-attachments/assets/9c38776d-064f-4d91-9359-a2cd3319b1ff)
 
