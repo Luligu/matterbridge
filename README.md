@@ -322,23 +322,23 @@ This will reset the internal storages. All commissioning informations will be lo
 
 # Frequently asked questions
 
-## How to enable https for the frontend
+## How to enable HTTPS for the frontend
 
 ### Provide your own certificates
 
-Provide your own certificate in the .matterbridge/cert directory:
-- cert.pem
-- key.pem
-- ca.pem (optional)
+Place your own certificates in the `.matterbridge/cert` directory:
+- `cert.pem`
+- `key.pem`
+- `ca.pem` (optional)
 
 ![image](https://github.com/user-attachments/assets/846785ca-6f5c-458b-b786-a6417a4da319)
 
 ### Change the command line
 
-Add the **-ssl** parameter to the command line. If you want you can also chang the frontend port with **-frontend 443**.
+Add the **-ssl** parameter to the command line. If desired, you can also change the frontend port with **-frontend 443**.
 
-```
-matterbridge -ssl -frontnend 443
+```sh
+matterbridge -ssl -frontend 443
 ```
 
 ### Restart
@@ -351,17 +351,17 @@ If the certificate are correctly made, you will be able to connect with https to
 
 ### Enable debug and log on file
 
-In the frontend go to settings and set the debug in this way:
+In the frontend, go to settings and enable debug mode as shown below:
 
-![image](https://github.com/user-attachments/assets/83181dc2-969a-4b71-aff4-f1498fa1d665)
+![Debug Matterbridge Settings](https://github.com/user-attachments/assets/83181dc2-969a-4b71-aff4-f1498fa1d665)
 
-![image](https://github.com/user-attachments/assets/617961a9-7cb0-46cf-9878-981f61738f8c)
+![Debug Matter Settings](https://github.com/user-attachments/assets/617961a9-7cb0-46cf-9878-981f61738f8c)
 
 ### Restart
 
-Wait a few minutes to allow the logs to be meaningful
+Wait a few minutes to allow the logs to to accumulate.
 
-Then from the dots menu in the frontend download the matterbridge.log and matter.log files.
+Then, from the dots menu in the frontend, download the `matterbridge.log` and `matter.log` files.
 
 ![image](https://github.com/user-attachments/assets/04ba65f6-594a-4ff8-9732-3df049f5a33e)
 
