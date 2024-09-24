@@ -320,6 +320,34 @@ matterbridge -factoryreset
 
 This will reset the internal storages. All commissioning informations will be lost. All plugins will be unregistered.
 
+# Frequently asked questions
+
+## How to enable https for the frontend
+
+### Provide your own certificates
+
+Provide your own certificate in the .matterbridge/cert directory:
+- cert.pem
+- key.pem
+- ca.pem (optional)
+
+![image](https://github.com/user-attachments/assets/846785ca-6f5c-458b-b786-a6417a4da319)
+
+### Change the command line
+
+Add the **-ssl** parameter to the command line. If you want you can also chang the frontend port with **-frontend 443**.
+
+```
+matterbridge -ssl -frontnend 443
+```
+
+### Restart
+
+If the certificate are correctly made, you will be able to connect with https to the frontend.
+
+![image](https://github.com/user-attachments/assets/9c38776d-064f-4d91-9359-a2cd3319b1ff)
+
+
 # Known general issues
 
 ## Session XYZ does not exist
