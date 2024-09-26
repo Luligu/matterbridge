@@ -105,7 +105,14 @@ sudo journalctl -u matterbridge.service -f --output cat
 
 ### Delete the logs older then 3 days (all of them not only the ones of Matterbridge!)
 
+Check the space used
 ```
+sudo journalctl --disk-usage
+```
+
+remove all log older then 3 days
+```
+sudo journalctl --rotate
 sudo journalctl --vacuum-time=3d
 ```
 
@@ -115,7 +122,11 @@ sudo nano /etc/systemd/journald.conf
 ```
 add
 ```
-SystemMaxUse=3d
+MaxRetentionSec=3days   # Keep logs for a maximum of 3 days.
+MaxFileSec=1day         # Rotate logs daily within the 3-day retention period.
+ForwardToSyslog=no      # Disable forwarding to syslog to prevent duplicate logging.
+SystemMaxUse=100M       # Limit persistent logs in /var/log/journal to 100 MB.
+RuntimeMaxUse=100M      # Limit runtime logs in /run/log/journal to 100 MB.
 ```
 save it and run
 ```
@@ -129,11 +140,25 @@ Run the following command to verify if you can install Matterbridge globally wit
 ```
 sudo npm install -g matterbridge
 ```
+
 If you are not prompted for a password, no further action is required.
 
 If that is not the case, open the sudoers file for editing using visudo
+
 ```
 sudo visudo
+```
+
+verify the presence of of a line 
+
+```
+@includedir /etc/sudoers.d
+```
+
+exit and create a configuration file for sudoers
+
+```
+sudo nano  /etc/sudoers.d/matterbridge
 ```
 
 add this line replacing USER with your user name (e.g. radxa ALL=(ALL) NOPASSWD: ALL)
@@ -142,11 +167,15 @@ add this line replacing USER with your user name (e.g. radxa ALL=(ALL) NOPASSWD:
 <USER> ALL=(ALL) NOPASSWD: ALL
 ```
 
-or if you prefers to only give access to npm without password try (e.g. radxa ALL=(ALL) NOPASSWD: /usr/bin/npm)
+or if you prefers to only give access to npm without password try with (e.g. radxa ALL=(ALL) NOPASSWD: /usr/bin/npm)
 
 ```
 <USER> ALL=(ALL) NOPASSWD: /usr/bin/npm
 ```
 
-save the file and restart the system.
+save the file and reload the settings with:
+
+```
+sudo visudo -c
+```
 
