@@ -116,7 +116,9 @@ sudo journalctl --rotate
 sudo journalctl --vacuum-time=3d
 ```
 
-If you want to make the setting permanent edit
+## Prevent the journal logs to grow
+
+If you want to make the setting permanent to prevent the journal logs to grow too much, run
 ```
 sudo nano /etc/systemd/journald.conf
 ```
@@ -133,7 +135,7 @@ save it and run
 sudo systemctl restart systemd-journald
 ```
 
-### Verify that with your distro you can run sudo npm install -g matterbridge without the password
+## Verify that with your distro you can run sudo npm install -g matterbridge without the password
 
 Run the following command to verify if you can install Matterbridge globally without being prompted for a password:
 
