@@ -26,7 +26,7 @@ Add  '--omit=dev' to all install commands
 
 ### Changed
 
-- [matterbridge]: Added '--omit=dev' to all install commands to save space and time on low powered devices
+- [matterbridge]: Added '--omit=dev' to all install commands to save space and time on low powered devices.
 - [matterbridge]: Integrated the DeviceManager class and removed the old array.
 - [package]: Update dependencies.
 
