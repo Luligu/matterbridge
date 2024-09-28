@@ -10,7 +10,7 @@ RUN apt-get update && \
 
 # Build Matterbridge
 WORKDIR /matterbridge
-COPY ./package.json ./package-lock.json ./tsconfig.json ./
+COPY ./package.json ./package-lock.json ./tsconfig.json ./.npmignore ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
 RUN npm ci && \
