@@ -21,16 +21,16 @@ COPY --from=builder /app/frontend/build ./frontend/build
 RUN npm link
 
 # Install Matterbridge plugins
-RUN npm install -g matterbridge-example-accessory-platform
-RUN npm install -g matterbridge-example-dynamic-platform
-RUN npm install -g matterbridge-zigbee2mqtt
-RUN npm install -g matterbridge-somfy-tahoma
-RUN npm install -g matterbridge-shelly
-RUN npm install -g matterbridge-eve-door
-RUN npm install -g matterbridge-eve-motion
-RUN npm install -g matterbridge-eve-energy
-RUN npm install -g matterbridge-eve-room
-RUN npm install -g matterbridge-eve-weather
+RUN npm install -g --omit=dev matterbridge-example-accessory-platform
+RUN npm install -g --omit=dev matterbridge-example-dynamic-platform
+RUN npm install -g --omit=dev matterbridge-zigbee2mqtt
+RUN npm install -g --omit=dev matterbridge-somfy-tahoma
+RUN npm install -g --omit=dev matterbridge-shelly
+RUN npm install -g --omit=dev matterbridge-eve-door
+RUN npm install -g --omit=dev matterbridge-eve-motion
+RUN npm install -g --omit=dev matterbridge-eve-energy
+RUN npm install -g --omit=dev matterbridge-eve-room
+RUN npm install -g --omit=dev matterbridge-eve-weather
 
 WORKDIR /app
 CMD ["matterbridge", "-docker"]

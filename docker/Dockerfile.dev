@@ -15,7 +15,7 @@ WORKDIR /app
 COPY ./package.json ./package-lock.json ./tsconfig.json ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
-RUN npm ci && npm run build && npm shrinkwrap && npm pack && npm link
+RUN npm ci && npm run build && npm link && npm shrinkwrap && npm pack 
 
 WORKDIR /matterbridge-zigbee2mqtt
 RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-zigbee2mqtt.git .
