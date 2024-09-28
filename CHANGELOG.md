@@ -19,6 +19,21 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 Feel free to join!
 
+
+Add  '--omit=dev' to all install commands
+
+## [1.5.10] - 2024-09-30
+
+### Changed
+
+- [matterbridge]: Added '--omit=dev' to all install commands to save space and time on low powered devices.
+- [matterbridge]: Integrated the DeviceManager class and removed the old array.
+- [package]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.5.9] - 2024-09-23
 
 ### Fixed

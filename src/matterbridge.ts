@@ -375,7 +375,7 @@ export class Matterbridge extends EventEmitter {
         // We don't do this when the add parameter is set because we shut down the process after adding the plugin
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm.`);
         try {
-          await this.spawnCommand('npm', ['install', '-g', plugin.name]);
+          await this.spawnCommand('npm', ['install', '-g', '--omit=dev', plugin.name]);
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -3253,7 +3253,7 @@ export class Matterbridge extends EventEmitter {
       if (command === 'update') {
         this.log.info('Updating matterbridge...');
         try {
-          await this.spawnCommand('npm', ['install', '-g', 'matterbridge', '--verbose']);
+          await this.spawnCommand('npm', ['install', '-g', '--omit=dev', 'matterbridge', '--verbose']);
           this.log.info('Matterbridge has been updated. Full restart required.');
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
@@ -3287,7 +3287,7 @@ export class Matterbridge extends EventEmitter {
         param = param.replace(/\*/g, '\\');
         this.log.info(`Installing plugin ${plg}${param}${nf}...`);
         try {
-          await this.spawnCommand('npm', ['install', '-g', param, '--verbose']);
+          await this.spawnCommand('npm', ['install', '-g', '--omit=dev', param, '--verbose']);
           this.log.info(`Plugin ${plg}${param}${nf} installed. Full restart required.`);
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
