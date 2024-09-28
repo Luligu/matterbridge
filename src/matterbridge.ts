@@ -3253,7 +3253,7 @@ export class Matterbridge extends EventEmitter {
       if (command === 'update') {
         this.log.info('Updating matterbridge...');
         try {
-          await this.spawnCommand('npm', ['install', '-g', '--omit=dev', 'matterbridge', '--verbose']);
+          await this.spawnCommand('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose']);
           this.log.info('Matterbridge has been updated. Full restart required.');
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
@@ -3287,7 +3287,7 @@ export class Matterbridge extends EventEmitter {
         param = param.replace(/\*/g, '\\');
         this.log.info(`Installing plugin ${plg}${param}${nf}...`);
         try {
-          await this.spawnCommand('npm', ['install', '-g', '--omit=dev', param, '--verbose']);
+          await this.spawnCommand('npm', ['install', '-g', param, '--omit=dev', '--verbose']);
           this.log.info(`Plugin ${plg}${param}${nf} installed. Full restart required.`);
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
