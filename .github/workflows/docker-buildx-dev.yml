@@ -57,7 +57,7 @@ jobs:
       run: |
         docker buildx build \
           --platform linux/arm64 \
-          -f docker/Dockerfile.shelly.bookworm \
+          -f docker/Dockerfile.dev_shelly.bookworm \
           -t luligu/matterbridge:dev_shelly \
           --push .
         docker manifest inspect luligu/matterbridge:dev_shelly

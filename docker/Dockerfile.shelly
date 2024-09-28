@@ -3,8 +3,8 @@ WORKDIR /app
 COPY ./docker/shellyEntrypoint.sh ./
 RUN chmod +x ./shellyEntrypoint.sh && \
     npm install -g npm@latest && \
-    npm install -g matterbridge && \
-    npm install -g matterbridge-shelly && \
+    npm install -g --omit=dev matterbridge && \
+    npm install -g --omit=dev matterbridge-shelly && \
     node -v && \
     npm -v && \
     npm list -g
