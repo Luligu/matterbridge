@@ -191,6 +191,12 @@ export class PluginManager {
         this.log.error(`Please open an issue on the plugin repository to remove them.`);
         return null;
       }
+      const projectChipPeerDependencies = checkForProjectChipPackages(packageJson.peerDependencies || {});
+      if (projectChipPeerDependencies.length > 0) {
+        this.log.error(`Found @project-chip packages "${projectChipPeerDependencies.join(', ')}" in plugin peerDependencies.`);
+        this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        return null;
+      }
 
       // Check for matterbridge package in dependencies and devDependencies
       const checkForMatterbridgePackage = (dependencies: Record<string, string>) => {
@@ -205,6 +211,12 @@ export class PluginManager {
       const matterbridgeDevDependencies = checkForMatterbridgePackage(packageJson.devDependencies || {});
       if (matterbridgeDevDependencies.length > 0) {
         this.log.error(`Found matterbridge package in the plugin devDependencies.`);
+        this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        return null;
+      }
+      const matterbridgePeerDependencies = checkForMatterbridgePackage(packageJson.peerDependencies || {});
+      if (matterbridgePeerDependencies.length > 0) {
+        this.log.error(`Found matterbridge package in the plugin peerDependencies.`);
         this.log.error(`Please open an issue on the plugin repository to remove them.`);
         return null;
       }
@@ -257,6 +269,12 @@ export class PluginManager {
         this.log.error(`Please open an issue on the plugin repository to remove them.`);
         this.log.error(`In the next release this plugin will not be loaded cause it doesn't meet the requirements.`);
       }
+      const projectChipPeerDependencies = checkForProjectChipPackages(packageJson.peerDependencies || {});
+      if (projectChipPeerDependencies.length > 0) {
+        this.log.error(`Found @project-chip packages "${projectChipPeerDependencies.join(', ')}" in plugin ${plg}${plugin.name}${er} peerDependencies.`);
+        this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        this.log.error(`In the next release this plugin will not be loaded cause it doesn't meet the requirements.`);
+      }
 
       // Check for matterbridge package in dependencies and devDependencies
       const checkForMatterbridgePackage = (dependencies: Record<string, string>) => {
@@ -271,6 +289,12 @@ export class PluginManager {
       const matterbridgeDevDependencies = checkForMatterbridgePackage(packageJson.devDependencies || {});
       if (matterbridgeDevDependencies.length > 0) {
         this.log.error(`Found matterbridge package in the plugin ${plg}${plugin.name}${er} devDependencies.`);
+        this.log.error(`Please open an issue on the plugin repository to remove them.`);
+        this.log.error(`In the next release this plugin will not be loaded cause it doesn't meet the requirements.`);
+      }
+      const matterbridgePeerDependencies = checkForMatterbridgePackage(packageJson.peerDependencies || {});
+      if (matterbridgePeerDependencies.length > 0) {
+        this.log.error(`Found matterbridge package in the plugin ${plg}${plugin.name}${er} peerDependencies.`);
         this.log.error(`Please open an issue on the plugin repository to remove them.`);
         this.log.error(`In the next release this plugin will not be loaded cause it doesn't meet the requirements.`);
       }
