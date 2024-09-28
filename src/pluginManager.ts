@@ -170,10 +170,6 @@ export class PluginManager {
         this.log.error(`Plugin at ${packageJsonPath} has no types in package.json`);
         return null;
       }
-      if (!packageJson.scripts.install || packageJson.scripts.install !== 'node link-matterbridge-script.js') {
-        this.log.error(`Plugin at ${packageJsonPath} has not the correct install script in package.json`);
-        return null;
-      }
 
       // Check for @project-chip packages in dependencies and devDependencies
       const checkForProjectChipPackages = (dependencies: Record<string, string>) => {
