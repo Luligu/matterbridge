@@ -264,6 +264,9 @@ export class Matterbridge extends EventEmitter {
     // this.log.debug('Creating node storage context for matterbridge');
     this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
 
+    // Check if the storage is corrupted and remove it
+    // TODO: Check if the storage is corrupted and remove it
+
     // Create matterbridge logger
     this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
 
@@ -513,28 +516,24 @@ export class Matterbridge extends EventEmitter {
 
     if (getParameter('add')) {
       this.log.debug(`Adding plugin ${getParameter('add')}`);
-      // await this.executeCommandLine(getParameter('add') as string, 'add');
       await this.plugins.add(getParameter('add') as string);
       this.emit('shutdown');
       return;
     }
     if (getParameter('remove')) {
       this.log.debug(`Removing plugin ${getParameter('remove')}`);
-      // await this.executeCommandLine(getParameter('remove') as string, 'remove');
       await this.plugins.remove(getParameter('remove') as string);
       this.emit('shutdown');
       return;
     }
     if (getParameter('enable')) {
       this.log.debug(`Enabling plugin ${getParameter('enable')}`);
-      // await this.executeCommandLine(getParameter('enable') as string, 'enable');
       await this.plugins.enable(getParameter('enable') as string);
       this.emit('shutdown');
       return;
     }
     if (getParameter('disable')) {
       this.log.debug(`Disabling plugin ${getParameter('disable')}`);
-      // await this.executeCommandLine(getParameter('disable') as string, 'disable');
       await this.plugins.disable(getParameter('disable') as string);
       this.emit('shutdown');
       return;
@@ -558,7 +557,6 @@ export class Matterbridge extends EventEmitter {
       this.nodeStorage = undefined;
       this.plugins.clear();
       this.devices.clear();
-      // this.registeredDevices = [];
       this.emit('shutdown');
       return;
     }
