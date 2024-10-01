@@ -124,6 +124,7 @@ sudo nano /etc/systemd/journald.conf
 ```
 add
 ```
+Compress=yes            # Compress logs
 MaxRetentionSec=3days   # Keep logs for a maximum of 3 days.
 MaxFileSec=1day         # Rotate logs daily within the 3-day retention period.
 ForwardToSyslog=no      # Disable forwarding to syslog to prevent duplicate logging.
