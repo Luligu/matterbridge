@@ -106,11 +106,13 @@ sudo journalctl -u matterbridge.service -f --output cat
 ### Delete the logs older then 3 days (all of them not only the ones of Matterbridge!)
 
 Check the space used
+
 ```
 sudo journalctl --disk-usage
 ```
 
 remove all log older then 3 days
+
 ```
 sudo journalctl --rotate
 sudo journalctl --vacuum-time=3d
@@ -119,10 +121,13 @@ sudo journalctl --vacuum-time=3d
 ## Prevent the journal logs to grow
 
 If you want to make the setting permanent to prevent the journal logs to grow too much, run
+
 ```
 sudo nano /etc/systemd/journald.conf
 ```
+
 add
+
 ```
 Compress=yes            # Compress logs
 MaxRetentionSec=3days   # Keep logs for a maximum of 3 days.
@@ -131,7 +136,9 @@ ForwardToSyslog=no      # Disable forwarding to syslog to prevent duplicate logg
 SystemMaxUse=100M       # Limit persistent logs in /var/log/journal to 100 MB.
 RuntimeMaxUse=100M      # Limit runtime logs in /run/log/journal to 100 MB.
 ```
+
 save it and run
+
 ```
 sudo systemctl restart systemd-journald
 ```
@@ -152,7 +159,7 @@ If that is not the case, open the sudoers file for editing using visudo
 sudo visudo
 ```
 
-verify the presence of of a line 
+verify the presence of of a line
 
 ```
 @includedir /etc/sudoers.d
@@ -181,4 +188,3 @@ save the file and reload the settings with:
 ```
 sudo visudo -c
 ```
-

@@ -327,6 +327,7 @@ This will reset the internal storages. All commissioning informations will be lo
 ### Provide your own certificates
 
 Place your own certificates in the `.matterbridge/cert` directory:
+
 - `cert.pem`
 - `key.pem`
 - `ca.pem` (optional)
@@ -364,7 +365,6 @@ Wait a few minutes to allow the logs to to accumulate.
 Then, from the dots menu in the frontend, download the `matterbridge.log` and `matter.log` files.
 
 ![image](https://github.com/user-attachments/assets/04ba65f6-594a-4ff8-9732-3df049f5a33e)
-
 
 # Known general issues
 
