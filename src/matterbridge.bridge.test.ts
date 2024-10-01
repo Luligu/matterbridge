@@ -57,7 +57,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect((matterbridge as any).nodeStorage).toBeDefined();
     expect((matterbridge as any).nodeContext).toBeDefined();
     expect((matterbridge as any).plugins).toBeDefined();
-    expect((matterbridge as any).registeredDevices).toHaveLength(0);
+    expect((matterbridge as any).devices.size).toBe(0);
 
     expect((matterbridge as any).httpServer).toBeDefined();
     expect((matterbridge as any).httpsServer).toBeUndefined();

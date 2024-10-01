@@ -43,23 +43,27 @@ Matterbridge exports from:
 
 - NodeStorage classes.
 
-# ****\*\*****
+# \***\*\*\*\*\***
 
-A plugin must never install or import from `matter-node.js` or `matter.js` directly, as this leads to a second instance of `matter.js`, causing instability and unpredictable errors such as "The only instance is Endpoint". Additionally, when Matterbridge updates the `matter.js` version, it should be consistent across all plugins.
+A plugin must never install or import from `matter-node.js` or `matter.js` directly (neither as a dependency, devDependency, nor peerDependency), as this leads to a second instance of `matter.js`, causing instability and unpredictable errors such as "The only instance is Endpoint".
 
-# ****\*\*****
+Additionally, when Matterbridge updates the `matter.js` version, it should be consistent across all plugins.
 
-A plugin must never install Matterbridge (neither as dependencies nor as devDependencies). Matterbridge must be linked to the plugin:
+# \***\*\*\*\*\***
+
+A plugin must never install Matterbridge (neither as a dependency, devDependency, nor peerDependency).
+
+Matterbridge must be linked to the plugin in development only.
 
 ```json
 "scripts": {
     '''
-    "install": "node link-matterbridge-script.js",
+    "dev:link": "npm link matterbridge",
     '''
 }
 ```
 
-# ****\*\*****
+# \***\*\*\*\*\***
 
 In the next releases I will remove the duplicated exports so please update your plugins.
 

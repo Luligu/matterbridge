@@ -41,7 +41,7 @@ import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW,
 // Matterbridge
 import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
 import { logInterfaces, wait, waiter, createZip } from './utils/utils.js';
-import { BaseRegisteredPlugin, MatterbridgeInformation, RegisteredDevice, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
+import { BaseRegisteredPlugin, MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
 
@@ -145,7 +145,6 @@ export class Matterbridge extends EventEmitter {
   private matterLoggerFile = 'matter' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
   private plugins!: PluginManager;
   private devices!: DeviceManager;
-  private registeredDevices: RegisteredDevice[] = [];
   private nodeStorage: NodeStorageManager | undefined;
   private nodeContext: NodeStorage | undefined;
   private matterStorageName = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.json';
@@ -265,6 +264,9 @@ export class Matterbridge extends EventEmitter {
     // this.log.debug('Creating node storage context for matterbridge');
     this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
 
+    // Check if the storage is corrupted and remove it
+    // TODO: Check if the storage is corrupted and remove it
+
     // Create matterbridge logger
     this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
 
@@ -376,7 +378,7 @@ export class Matterbridge extends EventEmitter {
         // We don't do this when the add parameter is set because we shut down the process after adding the plugin
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm.`);
         try {
-          await this.spawnCommand('npm', ['install', '-g', plugin.name]);
+          await this.spawnCommand('npm', ['install', '-g', '--omit=dev', plugin.name]);
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -514,28 +516,24 @@ export class Matterbridge extends EventEmitter {
 
     if (getParameter('add')) {
       this.log.debug(`Adding plugin ${getParameter('add')}`);
-      // await this.executeCommandLine(getParameter('add') as string, 'add');
       await this.plugins.add(getParameter('add') as string);
       this.emit('shutdown');
       return;
     }
     if (getParameter('remove')) {
       this.log.debug(`Removing plugin ${getParameter('remove')}`);
-      // await this.executeCommandLine(getParameter('remove') as string, 'remove');
       await this.plugins.remove(getParameter('remove') as string);
       this.emit('shutdown');
       return;
     }
     if (getParameter('enable')) {
       this.log.debug(`Enabling plugin ${getParameter('enable')}`);
-      // await this.executeCommandLine(getParameter('enable') as string, 'enable');
       await this.plugins.enable(getParameter('enable') as string);
       this.emit('shutdown');
       return;
     }
     if (getParameter('disable')) {
       this.log.debug(`Disabling plugin ${getParameter('disable')}`);
-      // await this.executeCommandLine(getParameter('disable') as string, 'disable');
       await this.plugins.disable(getParameter('disable') as string);
       this.emit('shutdown');
       return;
@@ -558,7 +556,7 @@ export class Matterbridge extends EventEmitter {
       this.nodeContext = undefined;
       this.nodeStorage = undefined;
       this.plugins.clear();
-      this.registeredDevices = [];
+      this.devices.clear();
       this.emit('shutdown');
       return;
     }
@@ -1254,13 +1252,14 @@ export class Matterbridge extends EventEmitter {
       if (this.nodeStorage && this.nodeContext) {
         this.log.info('Saving registered devices...');
         const serializedRegisteredDevices: SerializedMatterbridgeDevice[] = [];
-        this.registeredDevices.forEach((registeredDevice) => {
-          const serializedMatterbridgeDevice = registeredDevice.device.serialize(registeredDevice.plugin);
+        this.devices.forEach(async (device) => {
+          const serializedMatterbridgeDevice = device.serialize();
           // this.log.info(`- ${serializedMatterbridgeDevice.deviceName}${rs}\n`, serializedMatterbridgeDevice);
           if (serializedMatterbridgeDevice) serializedRegisteredDevices.push(serializedMatterbridgeDevice);
         });
         await this.nodeContext.set<SerializedMatterbridgeDevice[]>('devices', serializedRegisteredDevices);
         this.log.info(`Saved registered devices (${serializedRegisteredDevices?.length})`);
+
         // Clear nodeContext and nodeStorage (they just need 1000ms to write the data to disk)
         this.log.debug(`Closing node storage context for ${plg}Matterbridge${db}...`);
         await this.nodeContext.close();
@@ -1280,7 +1279,8 @@ export class Matterbridge extends EventEmitter {
         this.log.error('Error saving registered devices: nodeContext not found!');
       }
       this.plugins.clear();
-      this.registeredDevices = [];
+      this.devices.clear();
+      // this.registeredDevices = [];
 
       // this.log.info('Waiting for matter to deliver last messages...');
       // this.cleanupTimeout2 = setTimeout(async () => {
@@ -1382,7 +1382,6 @@ export class Matterbridge extends EventEmitter {
         plugin.aggregator?.addBridgedDevice(device);
       }
     }
-    this.registeredDevices.push({ plugin: pluginName, device });
     if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
     if (plugin.addedDevices !== undefined) plugin.addedDevices++;
     // Add the device to the DeviceManager
@@ -1419,12 +1418,6 @@ export class Matterbridge extends EventEmitter {
       // device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerShutDownEvent({});
       // device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerLeaveEvent({});
       this.matterAggregator?.removeBridgedDevice(device);
-      this.registeredDevices.forEach((registeredDevice, index) => {
-        if (registeredDevice.device === device) {
-          this.registeredDevices.splice(index, 1);
-          return;
-        }
-      });
       this.log.info(`Removed bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
       if (plugin.addedDevices !== undefined) plugin.addedDevices--;
@@ -1437,23 +1430,11 @@ export class Matterbridge extends EventEmitter {
           this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: commissioning server not found`);
           return;
         }
-        this.registeredDevices.forEach((registeredDevice, index) => {
-          if (registeredDevice.device === device) {
-            this.registeredDevices.splice(index, 1);
-            return;
-          }
-        });
       } else if (plugin.type === 'DynamicPlatform') {
         if (!plugin.aggregator) {
           this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: aggregator not found`);
           return;
         }
-        this.registeredDevices.forEach((registeredDevice, index) => {
-          if (registeredDevice.device === device) {
-            this.registeredDevices.splice(index, 1);
-            return;
-          }
-        });
         if (device.number !== undefined) {
           device.setBridgedDeviceReachability(false);
           device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerReachableChangedEvent({ reachableNewValue: false });
@@ -1483,19 +1464,15 @@ export class Matterbridge extends EventEmitter {
    */
   async removeAllBridgedDevices(pluginName: string): Promise<void> {
     this.log.debug(`Removing all bridged devices for plugin ${plg}${pluginName}${db}`);
-    const devicesToRemove: RegisteredDevice[] = [];
-    for (const registeredDevice of this.registeredDevices) {
-      if (registeredDevice.plugin === pluginName) {
-        devicesToRemove.push(registeredDevice);
+    this.devices.forEach(async (device) => {
+      if (device.plugin === pluginName) {
+        await this.removeBridgedDevice(pluginName, device);
       }
-    }
-    for (const registeredDevice of devicesToRemove) {
-      this.removeBridgedDevice(pluginName, registeredDevice.device);
-    }
+    });
   }
 
   private async startTest(): Promise<void> {
-    // Start the Matterbridge
+    // Start the Matterbridge test
   }
 
   /**
@@ -2581,7 +2558,7 @@ export class Matterbridge extends EventEmitter {
       childProcess.on('close', (code, signal) => {
         this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', `child process closed with code ${code} and signal ${signal}`);
         if (code === 0) {
-          if (cmdLine.startsWith('npm install -g')) this.log.notice(`Package ${cmdLine.replace('npm install -g ', '').replace('--verbose', '')} installed correctly`);
+          if (cmdLine.startsWith('npm install -g')) this.log.notice(`Package ${cmdLine.replace('npm install -g ', '').replace('--verbose', '').replace('--omit=dev', '')} installed correctly`);
           this.log.debug(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
           resolve();
         } else {
@@ -2887,18 +2864,18 @@ export class Matterbridge extends EventEmitter {
     this.expressApp.get('/api/devices', (req, res) => {
       this.log.debug('The frontend sent /api/devices');
       const data: { pluginName: string; type: string; endpoint: EndpointNumber | undefined; name: string; serial: string; uniqueId: string; cluster: string }[] = [];
-      this.registeredDevices.forEach((registeredDevice) => {
-        let name = registeredDevice.device.getClusterServer(BasicInformationCluster)?.attributes.nodeLabel?.getLocal();
-        if (!name) name = registeredDevice.device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.nodeLabel?.getLocal() ?? 'Unknown';
-        let serial = registeredDevice.device.getClusterServer(BasicInformationCluster)?.attributes.serialNumber?.getLocal();
-        if (!serial) serial = registeredDevice.device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.serialNumber?.getLocal() ?? 'Unknown';
-        let uniqueId = registeredDevice.device.getClusterServer(BasicInformationCluster)?.attributes.uniqueId?.getLocal();
-        if (!uniqueId) uniqueId = registeredDevice.device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.uniqueId?.getLocal() ?? 'Unknown';
-        const cluster = this.getClusterTextFromDevice(registeredDevice.device);
+      this.devices.forEach(async (device) => {
+        let name = device.getClusterServer(BasicInformationCluster)?.attributes.nodeLabel?.getLocal();
+        if (!name) name = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.nodeLabel?.getLocal() ?? 'Unknown';
+        let serial = device.getClusterServer(BasicInformationCluster)?.attributes.serialNumber?.getLocal();
+        if (!serial) serial = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.serialNumber?.getLocal() ?? 'Unknown';
+        let uniqueId = device.getClusterServer(BasicInformationCluster)?.attributes.uniqueId?.getLocal();
+        if (!uniqueId) uniqueId = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.uniqueId?.getLocal() ?? 'Unknown';
+        const cluster = this.getClusterTextFromDevice(device);
         data.push({
-          pluginName: registeredDevice.plugin,
-          type: registeredDevice.device.name + ' (0x' + registeredDevice.device.deviceType.toString(16).padStart(4, '0') + ')',
-          endpoint: registeredDevice.device.number,
+          pluginName: device.plugin ?? 'Unknown',
+          type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
+          endpoint: device.number,
           name,
           serial,
           uniqueId,
@@ -2919,9 +2896,9 @@ export class Matterbridge extends EventEmitter {
         return;
       }
       const data: { endpoint: string; clusterName: string; clusterId: string; attributeName: string; attributeId: string; attributeValue: string }[] = [];
-      this.registeredDevices.forEach((registeredDevice) => {
-        if (registeredDevice.plugin === selectedPluginName && registeredDevice.device.number === selectedDeviceEndpoint) {
-          const clusterServers = registeredDevice.device.getAllClusterServers();
+      this.devices.forEach(async (device) => {
+        if (device.plugin === selectedPluginName && device.number === selectedDeviceEndpoint) {
+          const clusterServers = device.getAllClusterServers();
           clusterServers.forEach((clusterServer) => {
             Object.entries(clusterServer.attributes).forEach(([key, value]) => {
               if (clusterServer.name === 'EveHistory') return;
@@ -2936,7 +2913,7 @@ export class Matterbridge extends EventEmitter {
                 // console.log(error);
               }
               data.push({
-                endpoint: registeredDevice.device.number ? registeredDevice.device.number.toString() : '...',
+                endpoint: device.number ? device.number.toString() : '...',
                 clusterName: clusterServer.name,
                 clusterId: '0x' + clusterServer.id.toString(16).padStart(2, '0'),
                 attributeName: key,
@@ -2945,8 +2922,8 @@ export class Matterbridge extends EventEmitter {
               });
             });
           });
-          registeredDevice.device.getChildEndpoints().forEach((childEndpoint) => {
-            const name = registeredDevice.device.getChildEndpointName(childEndpoint);
+          device.getChildEndpoints().forEach((childEndpoint) => {
+            const name = device.getChildEndpointName(childEndpoint);
             const clusterServers = childEndpoint.getAllClusterServers();
             clusterServers.forEach((clusterServer) => {
               Object.entries(clusterServer.attributes).forEach(([key, value]) => {
@@ -3274,7 +3251,7 @@ export class Matterbridge extends EventEmitter {
       if (command === 'update') {
         this.log.info('Updating matterbridge...');
         try {
-          await this.spawnCommand('npm', ['install', '-g', 'matterbridge', '--verbose']);
+          await this.spawnCommand('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose']);
           this.log.info('Matterbridge has been updated. Full restart required.');
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
@@ -3308,7 +3285,7 @@ export class Matterbridge extends EventEmitter {
         param = param.replace(/\*/g, '\\');
         this.log.info(`Installing plugin ${plg}${param}${nf}...`);
         try {
-          await this.spawnCommand('npm', ['install', '-g', param, '--verbose']);
+          await this.spawnCommand('npm', ['install', '-g', param, '--omit=dev', '--verbose']);
           this.log.info(`Plugin ${plg}${param}${nf} installed. Full restart required.`);
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {

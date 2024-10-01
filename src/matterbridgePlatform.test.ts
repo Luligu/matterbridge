@@ -79,9 +79,29 @@ describe('Matterbridge platform', () => {
     }
   });
 
+  it('should validate version', () => {
+    matterbridge.matterbridgeVersion = '1.5.4';
+    expect(platform.verifyMatterbridgeVersion('1.5.3')).toBe(true);
+    expect(platform.verifyMatterbridgeVersion('1.5.4')).toBe(true);
+    expect(platform.verifyMatterbridgeVersion('2.0.0')).toBe(false);
+    expect(platform.verifyMatterbridgeVersion('2.0.0-dev.1')).toBe(false);
+  });
+
+  it('should validate version beta', () => {
+    matterbridge.matterbridgeVersion = '1.5.4-dev.1';
+    expect(platform.verifyMatterbridgeVersion('1.5.3')).toBe(true);
+    expect(platform.verifyMatterbridgeVersion('1.5.4')).toBe(true);
+    expect(platform.verifyMatterbridgeVersion('2.0.0')).toBe(false);
+  });
+
   test('onConfigure should log a debug message if not overridden', async () => {
     await platform.onConfigure();
     expect(platform.log.debug).toHaveBeenCalledWith("The plugin doesn't override onConfigure.");
+  });
+
+  test('onChangeLoggerLevel should log a debug message if not overridden', async () => {
+    await platform.onChangeLoggerLevel(LogLevel.DEBUG);
+    expect(platform.log.debug).toHaveBeenCalledWith("The plugin doesn't override onChangeLoggerLevel. Logger level set to: debug");
   });
 
   test('onShutdown should log a debug message if not overridden', async () => {

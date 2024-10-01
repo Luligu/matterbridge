@@ -57,7 +57,7 @@ jobs:
       run: |
         docker buildx build \
           --platform linux/arm64 \
-          -f docker/Dockerfile.shelly.bookworm \
+          -f docker/Dockerfile.dev_shelly.bookworm \
           -t luligu/matterbridge:dev_shelly \
           --push .
         docker manifest inspect luligu/matterbridge:dev_shelly
@@ -71,5 +71,15 @@ jobs:
           -t luligu/matterbridge:dev \
           --push .
         docker manifest inspect luligu/matterbridge:dev
+      timeout-minutes: 60 
+
+    - name: Run Docker Buildx on test
+      run: |
+        docker buildx build \
+          --platform linux/amd64,linux/arm64,linux/arm/v7 \
+          -f docker/Dockerfile.latest \
+          -t luligu/matterbridge:test \
+          --push .
+        docker manifest inspect luligu/matterbridge:test
       timeout-minutes: 60 
 

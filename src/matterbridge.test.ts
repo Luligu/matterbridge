@@ -74,7 +74,7 @@ describe('Matterbridge loadInstance() and cleanup()', () => {
     expect((matterbridge as any).nodeStorage).toBeUndefined();
     expect((matterbridge as any).nodeContext).toBeUndefined();
     expect((matterbridge as any).plugins).toBeUndefined();
-    expect((matterbridge as any).registeredDevices).toHaveLength(0);
+    expect((matterbridge as any).devices).toBeUndefined();
     expect((matterbridge as any).globalModulesDirectory).toBe('');
     expect((matterbridge as any).matterbridgeLatestVersion).toBe('');
 
@@ -105,7 +105,7 @@ describe('Matterbridge loadInstance() and cleanup()', () => {
     expect((matterbridge as any).nodeStorage).toBeDefined();
     expect((matterbridge as any).nodeContext).toBeDefined();
     expect((matterbridge as any).plugins).toBeDefined();
-    expect((matterbridge as any).registeredDevices).toHaveLength(0);
+    expect((matterbridge as any).devices.size).toBe(0);
 
     expect((matterbridge as any).httpServer).toBeUndefined();
     expect((matterbridge as any).httpsServer).toBeUndefined();
@@ -136,7 +136,7 @@ describe('Matterbridge loadInstance() and cleanup()', () => {
     expect((matterbridge as any).nodeStorage).toBeDefined();
     expect((matterbridge as any).nodeContext).toBeDefined();
     expect((matterbridge as any).plugins).toBeDefined();
-    expect((matterbridge as any).registeredDevices).toHaveLength(0);
+    expect((matterbridge as any).devices.size).toBe(0);
 
     expect((matterbridge as any).httpServer).toBeDefined();
     expect((matterbridge as any).httpsServer).toBeUndefined();

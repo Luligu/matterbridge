@@ -74,7 +74,7 @@ describe('Matterbridge device serialize/deserialize', () => {
     expect(device.getDeviceTypes()).toHaveLength(1);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
     expect(device.getAllClusterServers()).toHaveLength(7);
-    const serialized = device.serialize('matterbridge-test');
+    const serialized = device.serialize();
     expect(serialized).toBeDefined();
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const deserialized = MatterbridgeDevice.deserialize(serialized!);
@@ -95,7 +95,7 @@ describe('Matterbridge device serialize/deserialize', () => {
     expect(device.getDeviceTypes()).toHaveLength(1);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
     expect(device.getAllClusterServers()).toHaveLength(5);
-    const serialized = device.serialize('matterbridge-test');
+    const serialized = device.serialize();
     expect(serialized).toBeDefined();
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const deserialized = MatterbridgeDevice.deserialize(serialized!);

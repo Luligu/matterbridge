@@ -41,6 +41,7 @@ sudo chown -R $USER:$USER ./Matterbridge ./.matterbridge
 ```
 
 You may need to adapt the script to your setup:
+
 - ./Matterbridge is the position outside of the container of your matterbridge plugin directory (inside your home directory).
 - ./.matterbridge is the position outside of the container of your matterbridge storage directory (inside your home directory).
 
@@ -56,6 +57,7 @@ podman run --name matterbridge \
 ```
 
 You may need to adapt the script to your setup:
+
 - ~/Matterbridge is the position outside of the container of your matterbridge plugin directory.
 - ~/.matterbridge is the position outside of the container of your matterbridge storage directory.
 

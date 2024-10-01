@@ -4,7 +4,7 @@
  * @file matterbridgeTypes.ts
  * @author Luca Liguori
  * @date 2024-07-12
- * @version 1.0.1
+ * @version 1.0.2
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
  *
@@ -72,12 +72,6 @@ export interface BaseRegisteredPlugin {
   manualPairingCode?: string;
   configJson?: PlatformConfig;
   schemaJson?: PlatformSchema;
-}
-
-// Define an interface for storing the devices
-export interface RegisteredDevice {
-  plugin: string;
-  device: MatterbridgeDevice;
 }
 
 // Define an interface for storing the system information
