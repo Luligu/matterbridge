@@ -20,7 +20,7 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 Feel free to join!
 
-## [1.5.10] - 2024-09-30
+## [1.5.10] - 2024-10-01
 
 ### Changed
 
