@@ -402,11 +402,11 @@ export class Matterbridge extends EventEmitter {
     await this.logNodeAndSystemInfo();
     this.log.notice(
       `Matterbridge version ${this.matterbridgeVersion} ` +
-        `${hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge') ? 'mode bridge ' : ''}` +
-        `${hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge') ? 'mode childbridge ' : ''}` +
-        `${hasParameter('controller') ? 'mode controller ' : ''}` +
-        `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}` +
-        `running on ${this.systemInformation.osType} (v.${this.systemInformation.osRelease}) platform ${this.systemInformation.osPlatform} arch ${this.systemInformation.osArch}`,
+      `${hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge') ? 'mode bridge ' : ''}` +
+      `${hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge') ? 'mode childbridge ' : ''}` +
+      `${hasParameter('controller') ? 'mode controller ' : ''}` +
+      `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}` +
+      `running on ${this.systemInformation.osType} (v.${this.systemInformation.osRelease}) platform ${this.systemInformation.osPlatform} arch ${this.systemInformation.osArch}`,
     );
 
     // Check node version and throw error
@@ -2378,14 +2378,14 @@ export class Matterbridge extends EventEmitter {
           peerNodeId: session.peerNodeId.toString(),
           fabric: session.fabric
             ? {
-                fabricIndex: session.fabric.fabricIndex,
-                fabricId: session.fabric.fabricId.toString(),
-                nodeId: session.fabric.nodeId.toString(),
-                rootNodeId: session.fabric.rootNodeId.toString(),
-                rootVendorId: session.fabric.rootVendorId,
-                rootVendorName: this.getVendorIdName(session.fabric.rootVendorId),
-                label: session.fabric.label,
-              }
+              fabricIndex: session.fabric.fabricIndex,
+              fabricId: session.fabric.fabricId.toString(),
+              nodeId: session.fabric.nodeId.toString(),
+              rootNodeId: session.fabric.rootNodeId.toString(),
+              rootVendorId: session.fabric.rootVendorId,
+              rootVendorName: this.getVendorIdName(session.fabric.rootVendorId),
+              label: session.fabric.label,
+            }
             : undefined,
           isPeerActive: session.isPeerActive,
           secure: session.secure,
@@ -2558,7 +2558,7 @@ export class Matterbridge extends EventEmitter {
       childProcess.on('close', (code, signal) => {
         this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', `child process closed with code ${code} and signal ${signal}`);
         if (code === 0) {
-          if (cmdLine.startsWith('npm install -g')) this.log.notice(`Package ${cmdLine.replace('npm install -g ', '').replace('--verbose', '')} installed correctly`);
+          if (cmdLine.startsWith('npm install -g')) this.log.notice(`Package ${cmdLine.replace('npm install -g ', '').replace('--verbose', '').replace('--omit=dev', '')} installed correctly`);
           this.log.debug(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
           resolve();
         } else {
