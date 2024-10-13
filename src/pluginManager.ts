@@ -4,7 +4,7 @@
  * @file plugins.ts
  * @author Luca Liguori
  * @date 2024-07-14
- * @version 1.0.8
+ * @version 1.1.0
  *
  * Copyright 2024 Luca Liguori.
  *
@@ -100,6 +100,14 @@ export class PluginManager {
     this.log.logLevel = logLevel;
   }
 
+  /**
+   * Loads registered plugins from storage.
+   *
+   * This method retrieves an array of registered plugins from the storage and converts it
+   * into a map where the plugin names are the keys and the plugin objects are the values.
+   *
+   * @returns {Promise<RegisteredPlugin[]>} A promise that resolves to an array of registered plugins.
+   */
   async loadFromStorage(): Promise<RegisteredPlugin[]> {
     // Load the array from storage and convert it to a map
     const pluginsArray = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
@@ -107,6 +115,14 @@ export class PluginManager {
     return pluginsArray;
   }
 
+  /**
+   * Loads registered plugins from storage.
+   *
+   * This method retrieves an array of registered plugins from the storage and converts it
+   * into a map where the plugin names are the keys and the plugin objects are the values.
+   *
+   * @returns {Promise<RegisteredPlugin[]>} A promise that resolves to an array of registered plugins.
+   */
   async saveToStorage(): Promise<number> {
     // Convert the map to an array
     const plugins: RegisteredPlugin[] = [];
@@ -128,6 +144,48 @@ export class PluginManager {
     this.log.debug(`Saved ${BLUE}${plugins.length}${db} plugins to storage`);
     return plugins.length;
   }
+
+  /**
+   * Asynchronously loads and starts the registered plugins.
+   *
+   * This method is responsible for initializing and configuring all necessary plugins
+   * required by the application. It ensures that each plugin is properly loaded and
+   * configured before the application starts using them.
+   *
+   * @returns {Promise<void>} A promise that resolves when all plugins have been loaded and configured.
+   */
+  /*
+  private async startPlugins() {
+    this.forEach(async (plugin) => {
+      plugin.configJson = await this.loadConfig(plugin);
+      plugin.schemaJson = await this.loadSchema(plugin);
+      // Check if the plugin is available
+      if (!(await this.resolve(plugin.path))) {
+        this.log.error(`Plugin ${plg}${plugin.name}${er} not found or not validated. Disabling it.`);
+        plugin.enabled = false;
+        plugin.error = true;
+        return;
+      }
+      // Check if the plugin has a new version
+      this.getPluginLatestVersion(plugin); // No await do it asyncronously
+      if (!plugin.enabled) {
+        this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
+        return;
+      }
+      plugin.error = false;
+      plugin.locked = false;
+      plugin.loaded = false;
+      plugin.started = false;
+      plugin.configured = false;
+      plugin.connected = undefined;
+      plugin.registeredDevices = undefined;
+      plugin.addedDevices = undefined;
+      plugin.qrPairingCode = undefined;
+      plugin.manualPairingCode = undefined;
+      this.load(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
+    });
+  }
+  */
 
   /**
    * Resolves the name of a plugin by loading and parsing its package.json file.
@@ -304,6 +362,16 @@ export class PluginManager {
     }
   }
 
+  /**
+   * Enables a plugin by its name or path.
+   *
+   * This method enables a plugin by setting its `enabled` property to `true` and saving the updated
+   * plugin information to storage. It first checks if the plugin is already registered in the `_plugins` map.
+   * If not, it attempts to resolve the plugin's `package.json` file to retrieve its name and enable it.
+   *
+   * @param {string} nameOrPath - The name or path of the plugin to enable.
+   * @returns {Promise<RegisteredPlugin | null>} A promise that resolves to the enabled plugin object, or null if the plugin could not be enabled.
+   */
   async enable(nameOrPath: string): Promise<RegisteredPlugin | null> {
     if (!nameOrPath || nameOrPath === '') return null;
     if (this._plugins.has(nameOrPath)) {
@@ -335,6 +403,16 @@ export class PluginManager {
     }
   }
 
+  /**
+   * Enables a plugin by its name or path.
+   *
+   * This method enables a plugin by setting its `enabled` property to `true` and saving the updated
+   * plugin information to storage. It first checks if the plugin is already registered in the `_plugins` map.
+   * If not, it attempts to resolve the plugin's `package.json` file to retrieve its name and enable it.
+   *
+   * @param {string} nameOrPath - The name or path of the plugin to enable.
+   * @returns {Promise<RegisteredPlugin | null>} A promise that resolves to the enabled plugin object, or null if the plugin could not be enabled.
+   */
   async disable(nameOrPath: string): Promise<RegisteredPlugin | null> {
     if (!nameOrPath || nameOrPath === '') return null;
     if (this._plugins.has(nameOrPath)) {
@@ -366,6 +444,16 @@ export class PluginManager {
     }
   }
 
+  /**
+   * Removes a plugin by its name or path.
+   *
+   * This method removes a plugin from the `_plugins` map and saves the updated plugin information to storage.
+   * It first checks if the plugin is already registered in the `_plugins` map. If not, it attempts to resolve
+   * the plugin's `package.json` file to retrieve its name and remove it.
+   *
+   * @param {string} nameOrPath - The name or path of the plugin to remove.
+   * @returns {Promise<RegisteredPlugin | null>} A promise that resolves to the removed plugin object, or null if the plugin could not be removed.
+   */
   async remove(nameOrPath: string): Promise<RegisteredPlugin | null> {
     if (!nameOrPath || nameOrPath === '') return null;
     if (this._plugins.has(nameOrPath)) {
@@ -397,6 +485,17 @@ export class PluginManager {
     }
   }
 
+  /**
+   * Adds a plugin by its name or path.
+   *
+   * This method adds a plugin to the `_plugins` map and saves the updated plugin information to storage.
+   * It first resolves the plugin's `package.json` file to retrieve its details. If the plugin is already
+   * registered, it logs an info message and returns null. Otherwise, it registers the plugin, enables it,
+   * and saves the updated plugin information to storage.
+   *
+   * @param {string} nameOrPath - The name or path of the plugin to add.
+   * @returns {Promise<RegisteredPlugin | null>} A promise that resolves to the added plugin object, or null if the plugin could not be added.
+   */
   async add(nameOrPath: string): Promise<RegisteredPlugin | null> {
     if (!nameOrPath || nameOrPath === '') return null;
     const packageJsonPath = await this.resolve(nameOrPath);
@@ -421,6 +520,15 @@ export class PluginManager {
     }
   }
 
+  /**
+   * Installs a plugin by its name.
+   *
+   * This method first uninstalls any existing version of the plugin, then installs the plugin globally using npm.
+   * It logs the installation process and retrieves the installed version of the plugin.
+   *
+   * @param {string} name - The name of the plugin to install.
+   * @returns {Promise<string | undefined>} A promise that resolves to the installed version of the plugin, or undefined if the installation failed.
+   */
   async install(name: string): Promise<string | undefined> {
     await this.uninstall(name);
     this.log.info(`Installing plugin ${plg}${name}${nf}`);
@@ -455,6 +563,15 @@ export class PluginManager {
     });
   }
 
+  /**
+   * Uninstalls a plugin by its name.
+   *
+   * This method uninstalls a globally installed plugin using npm. It logs the uninstallation process
+   * and returns the name of the uninstalled plugin if successful, or undefined if the uninstallation failed.
+   *
+   * @param {string} name - The name of the plugin to uninstall.
+   * @returns {Promise<string | undefined>} A promise that resolves to the name of the uninstalled plugin, or undefined if the uninstallation failed.
+   */
   async uninstall(name: string): Promise<string | undefined> {
     this.log.info(`Uninstalling plugin ${plg}${name}${nf}`);
     return new Promise((resolve, reject) => {
@@ -617,6 +734,18 @@ export class PluginManager {
     return undefined;
   }
 
+  /**
+   * Shuts down a plugin.
+   *
+   * This method shuts down a plugin by calling its `onShutdown` method and resetting its state.
+   * It logs the shutdown process and optionally removes all devices associated with the plugin.
+   *
+   * @param {RegisteredPlugin} plugin - The plugin to shut down.
+   * @param {string} [reason] - The reason for shutting down the plugin.
+   * @param {boolean} [removeAllDevices=false] - Whether to remove all devices associated with the plugin.
+   * @param {boolean} [force=false] - Whether to force the shutdown even if the plugin is not loaded or started.
+   * @returns {Promise<RegisteredPlugin | undefined>} A promise that resolves to the shut down plugin object, or undefined if the shutdown failed.
+   */
   async shutdown(plugin: RegisteredPlugin, reason?: string, removeAllDevices = false, force = false): Promise<RegisteredPlugin | undefined> {
     this.log.debug(`Shutting down plugin ${plg}${plugin.name}${db}`);
     if (!plugin.loaded) {
@@ -709,6 +838,18 @@ export class PluginManager {
     }
   }
 
+  /**
+   * Saves the configuration of a plugin to a file.
+   *
+   * This method saves the configuration of the specified plugin to a JSON file in the matterbridge directory.
+   * If the plugin's configuration is not found, it logs an error and rejects the promise. If the configuration
+   * is successfully saved, it logs a debug message. If an error occurs during the file write operation, it logs
+   * the error and rejects the promise.
+   *
+   * @param {RegisteredPlugin} plugin - The plugin whose configuration is to be saved.
+   * @returns {Promise<void>} A promise that resolves when the configuration is successfully saved, or rejects if an error occurs.
+   * @throws {Error} If the plugin's configuration is not found.
+   */
   async saveConfigFromPlugin(plugin: RegisteredPlugin): Promise<void> {
     if (!plugin.platform?.config) {
       this.log.error(`Error saving config file for plugin ${plg}${plugin.name}${er}: config not found`);
@@ -726,6 +867,19 @@ export class PluginManager {
     }
   }
 
+  /**
+   * Saves the configuration of a plugin from a JSON object to a file.
+   *
+   * This method saves the provided configuration of the specified plugin to a JSON file in the matterbridge directory.
+   * It first checks if the configuration data is valid by ensuring it contains the correct name and type, and matches
+   * the plugin's name. If the configuration data is invalid, it logs an error and returns. If the configuration is
+   * successfully saved, it updates the plugin's `configJson` property and logs a debug message. If an error occurs
+   * during the file write operation, it logs the error and returns.
+   *
+   * @param {RegisteredPlugin} plugin - The plugin whose configuration is to be saved.
+   * @param {PlatformConfig} config - The configuration data to be saved.
+   * @returns {Promise<void>} A promise that resolves when the configuration is successfully saved, or returns if an error occurs.
+   */
   async saveConfigFromJson(plugin: RegisteredPlugin, config: PlatformConfig): Promise<void> {
     if (!config.name || !config.type || config.name !== plugin.name) {
       this.log.error(`Error saving config file for plugin ${plg}${plugin.name}${er}. Wrong config data content:${rs}\n`, config);
@@ -743,6 +897,17 @@ export class PluginManager {
     }
   }
 
+  /**
+   * Loads the schema for a plugin.
+   *
+   * This method attempts to load the schema file for the specified plugin. If the schema file is found,
+   * it reads and parses the file, updates the schema's title and description, and logs the process.
+   * It also attempts to delete any old schema file from the matterbridge directory. If the schema file
+   * is not found, it logs the event and loads a default schema for the plugin.
+   *
+   * @param {RegisteredPlugin} plugin - The plugin whose schema is to be loaded.
+   * @returns {Promise<PlatformSchema>} A promise that resolves to the loaded schema object, or the default schema if the schema file is not found.
+   */
   async loadSchema(plugin: RegisteredPlugin): Promise<PlatformSchema> {
     let schemaFile = plugin.path.replace('package.json', `${plugin.name}.schema.json`);
     try {
@@ -768,6 +933,16 @@ export class PluginManager {
     }
   }
 
+  /**
+   * Returns the default schema for a plugin.
+   *
+   * This method generates a default schema object for the specified plugin. The schema includes
+   * metadata such as the plugin's title, description, version, and author. It also defines the
+   * properties of the schema, including the plugin's name, type, debug flag, and unregisterOnShutdown flag.
+   *
+   * @param {RegisteredPlugin} plugin - The plugin for which the default schema is to be generated.
+   * @returns {PlatformSchema} The default schema object for the plugin.
+   */
   getDefaultSchema(plugin: RegisteredPlugin): PlatformSchema {
     return {
       title: plugin.description,

@@ -630,7 +630,6 @@ export class Matterbridge extends EventEmitter {
       MatterbridgeDevice.bridgeMode = 'bridge';
       this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
       await this.startBridge();
-      await this.startPlugins();
       return;
     }
 
@@ -640,7 +639,6 @@ export class Matterbridge extends EventEmitter {
       MatterbridgeDevice.bridgeMode = 'childbridge';
       this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
       await this.startChildbridge();
-      await this.startPlugins();
       return;
     }
   }
@@ -1435,14 +1433,18 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Starts the Matterbridge in bridge mode.
-   * @private
-   * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
+   * Initializes the bridge.
+   *
+   * This method ensures that the storage manager and matterbridge context are initialized.
+   * It then creates a Matter server using the storage manager and a commissioning server
+   * using the matterbridge context. Additionally, it creates a matter aggregator and adds
+   * it to the commissioning server. Finally, it adds the commissioning server to the matter server.
+   *
+   * @throws {Error} If the storage manager is not initialized.
+   * @throws {Error} If the matterbridge context is not initialized.
+   * @returns {Promise<void>} A promise that resolves when the bridge is initialized.
    */
-  protected async startBridge(): Promise<void> {
-    // Plugins are loaded and started by plugin.load on startup and plugin.loaded and plugin.started are set to true
-    // Plugins are configured by a timer when matter server is started and plugin.configured is set to true
-
+  protected async initBridge(): Promise<void> {
     if (!this.storageManager) throw new Error('No storage manager initialized');
     if (!this.matterbridgeContext) throw new Error('No storage context initialized');
     this.matterServer = this.createMatterServer(this.storageManager);
@@ -1454,6 +1456,19 @@ export class Matterbridge extends EventEmitter {
     this.commissioningServer.addDevice(this.matterAggregator);
     this.log.debug('Adding matterbridge commissioning server to matter server');
     await this.matterServer.addCommissioningServer(this.commissioningServer, { uniqueStorageKey: 'Matterbridge' });
+  }
+
+  /**
+   * Starts the Matterbridge in bridge mode.
+   * @private
+   * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
+   */
+  protected async startBridge(): Promise<void> {
+    // Plugins are configured by a timer when matter server is started and plugin.configured is set to true
+
+    await this.initBridge();
+
+    await this.startPlugins();
 
     this.log.debug('Starting start matter interval in bridge mode');
     let failCount = 0;
@@ -1514,17 +1529,32 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
+   * Initializes the child bridge.
+   *
+   * This method ensures that the storage manager is initialized and then creates
+   * a Matter server using the storage manager. If the storage manager is not initialized,
+   * it throws an error.
+   *
+   * @throws {Error} If the storage manager is not initialized.
+   * @returns {Promise<void>} A promise that resolves when the child bridge is initialized.
+   */
+  protected async initChildbridge(): Promise<void> {
+    if (!this.storageManager) throw new Error('No storage manager initialized');
+    this.matterServer = this.createMatterServer(this.storageManager);
+  }
+
+  /**
    * Starts the Matterbridge in childbridge mode.
    * @private
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
   protected async startChildbridge(): Promise<void> {
-    // Plugins are loaded and started by plugin.load  on startup and plugin.loaded and plugin.started are set to true
-    // Matterbridge.addBridgedDevice create the commissionig servers and add the devices to the the commissioning server or to the aggregator
+    // Matterbridge.addBridgedDevice creates the commissionig servers and add the devices to the the commissioning server or to the aggregator
     // Plugins are configured by a timer when matter server is started and plugin.configured is set to true
 
-    if (!this.storageManager) throw new Error('No storage manager initialized');
-    this.matterServer = this.createMatterServer(this.storageManager);
+    await this.initChildbridge();
+
+    await this.startPlugins();
 
     this.log.debug('Starting start matter interval in childbridge mode...');
     let failCount = 0;
