@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.5.10",
+  "version": "1.6.0-dev.1",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -115,11 +115,6 @@
     "updateHistory:loc": "npm run deepClean && npm install ../matter-history && npm install && npm run build",
     "wtf:install": "npm install wtfnode && npm install --save-dev @types/wtfnode",
     "wtf:uninstall": "npm uninstall wtfnode @types/wtfnode",
-    "preversion": "npm run build && npm run lint",
-    "postversion": "git push && git push --tags",
-    "version:patch": "npm version patch",
-    "version:minor": "npm version minor",
-    "version:major": "npm version major",
     "install:dependencies": "npm install @project-chip/matter-node.js express https matter-history node-ansi-logger node-persist-manager ws && npm install --save-dev rimraf",
     "install:typescript": "npm install --save-dev @types/express @types/node @types/ws typescript && npm run build",
     "install:eslint": "npm install --save-dev eslint @eslint/js @types/eslint__js typescript-eslint",
@@ -130,23 +125,23 @@
     "@project-chip/matter-node.js": "0.10.6",
     "@project-chip/matter.js": "0.10.6",
     "archiver": "7.0.1",
-    "express": "4.21.0",
+    "express": "4.21.1",
     "glob": "11.0.0",
     "https": "1.0.0",
-    "matter-history": "1.1.16",
+    "matter-history": "file:../matter-history",
     "node-ansi-logger": "3.0.0",
     "node-persist-manager": "1.0.8",
     "ws": "8.18.0"
   },
   "devDependencies": {
-    "@eslint/js": "9.11.1",
+    "@eslint/js": "9.12.0",
     "@types/archiver": "6.0.2",
     "@types/eslint__js": "8.42.3",
     "@types/express": "5.0.0",
     "@types/jest": "29.5.13",
-    "@types/node": "22.7.4",
+    "@types/node": "22.7.5",
     "@types/ws": "8.5.12",
-    "eslint": "9.11.1",
+    "eslint": "9.12.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-jest": "28.8.3",
     "eslint-plugin-prettier": "5.2.1",
@@ -154,7 +149,7 @@
     "prettier": "3.3.3",
     "rimraf": "^6.0.1",
     "ts-jest": "29.2.5",
-    "typescript": "5.6.2",
-    "typescript-eslint": "8.8.0"
+    "typescript": "5.6.3",
+    "typescript-eslint": "8.8.1"
   }
 }

@@ -39,6 +39,7 @@ replay_pid*
 # local
 migrationV8.txt
 migrationV8-answered.txt
+matterbridgeEdge.ts
 
 coverage
 TODO.md

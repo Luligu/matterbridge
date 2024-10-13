@@ -184,10 +184,10 @@ export class Matterbridge extends EventEmitter {
   private commissioningServer: CommissioningServer | undefined;
   private commissioningController: CommissioningController | undefined;
 
-  private static instance: Matterbridge | undefined;
+  protected static instance: Matterbridge | undefined;
 
   // We load asyncronously so is private
-  private constructor() {
+  protected constructor() {
     super();
   }
 
@@ -563,8 +563,6 @@ export class Matterbridge extends EventEmitter {
 
     // Start the matter storage and create the matterbridge context
     await this.startMatterStorage('json', path.join(this.matterbridgeDirectory, this.matterStorageName));
-    this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
-    this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
 
     if (hasParameter('reset') && getParameter('reset') === undefined) {
       this.log.info('Resetting Matterbridge commissioning information...');
@@ -606,17 +604,48 @@ export class Matterbridge extends EventEmitter {
       60 * 60 * 1000,
     );
 
+    // Start the matterbridge in mode test
     if (hasParameter('test')) {
       this.bridgeMode = 'bridge';
       MatterbridgeDevice.bridgeMode = 'bridge';
-      await this.startTest();
       return;
     }
 
+    // Start the matterbridge in mode controller
     if (hasParameter('controller')) {
       this.bridgeMode = 'controller';
       await this.startController();
       return;
+    }
+
+    // Check, load and start the plugins
+    for (const plugin of this.plugins) {
+      plugin.configJson = await this.plugins.loadConfig(plugin);
+      plugin.schemaJson = await this.plugins.loadSchema(plugin);
+      // Check if the plugin is available
+      if (!(await this.plugins.resolve(plugin.path))) {
+        this.log.error(`Plugin ${plg}${plugin.name}${er} not found or not validated. Disabling it.`);
+        plugin.enabled = false;
+        plugin.error = true;
+        continue;
+      }
+      // Check if the plugin has a new version
+      this.getPluginLatestVersion(plugin); // No await do it asyncronously
+      if (!plugin.enabled) {
+        this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
+        continue;
+      }
+      plugin.error = false;
+      plugin.locked = false;
+      plugin.loaded = false;
+      plugin.started = false;
+      plugin.configured = false;
+      plugin.connected = undefined;
+      plugin.registeredDevices = undefined;
+      plugin.addedDevices = undefined;
+      plugin.qrPairingCode = undefined;
+      plugin.manualPairingCode = undefined;
+      this.plugins.load(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
     }
 
     // Check if the bridge mode is set and start matterbridge in bridge mode if not set
@@ -625,93 +654,20 @@ export class Matterbridge extends EventEmitter {
       await this.nodeContext?.set<string>('bridgeMode', 'bridge');
     }
 
+    // Start matterbridge in bridge mode
     if (hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge')) {
       this.bridgeMode = 'bridge';
       MatterbridgeDevice.bridgeMode = 'bridge';
-
-      if (!this.storageManager) throw new Error('No storage manager initialized');
-
-      this.log.debug('Starting matterbridge in mode', this.bridgeMode);
-      this.matterServer = this.createMatterServer(this.storageManager);
-
-      this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
-      this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
-      this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
-      this.matterAggregator = await this.createMatterAggregator(this.matterbridgeContext, 'Matterbridge');
-      this.log.debug('Adding matterbridge aggregator to commissioning server');
-      this.commissioningServer.addDevice(this.matterAggregator);
-      this.log.debug('Adding matterbridge commissioning server to matter server');
-      await this.matterServer.addCommissioningServer(this.commissioningServer, { uniqueStorageKey: 'Matterbridge' });
-
-      for (const plugin of this.plugins) {
-        plugin.configJson = await this.plugins.loadConfig(plugin);
-        plugin.schemaJson = await this.plugins.loadSchema(plugin);
-        // Check if the plugin is available
-        if (!(await this.plugins.resolve(plugin.path))) {
-          this.log.error(`Plugin ${plg}${plugin.name}${er} not found or not validated. Disabling it.`);
-          plugin.enabled = false;
-          plugin.error = true;
-          continue;
-        }
-        // Check if the plugin has a new version
-        this.getPluginLatestVersion(plugin); // No await do it asyncronously
-        if (!plugin.enabled) {
-          this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
-          continue;
-        }
-        plugin.error = false;
-        plugin.locked = false;
-        plugin.loaded = false;
-        plugin.started = false;
-        plugin.configured = false;
-        plugin.connected = undefined;
-        plugin.registeredDevices = undefined;
-        plugin.addedDevices = undefined;
-        plugin.qrPairingCode = undefined;
-        plugin.manualPairingCode = undefined;
-        this.plugins.load(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
-      }
+      this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
       await this.startBridge();
       return;
     }
 
+    // Start matterbridge in childbridge mode
     if (hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge')) {
       this.bridgeMode = 'childbridge';
       MatterbridgeDevice.bridgeMode = 'childbridge';
-
-      if (!this.storageManager) throw new Error('No storage manager initialized');
-
-      this.log.debug('Starting matterbridge in mode', this.bridgeMode);
-      this.matterServer = this.createMatterServer(this.storageManager);
-
-      for (const plugin of this.plugins) {
-        plugin.configJson = await this.plugins.loadConfig(plugin);
-        plugin.schemaJson = await this.plugins.loadSchema(plugin);
-        // Check if the plugin is available
-        if (!(await this.plugins.resolve(plugin.path))) {
-          this.log.error(`Plugin ${plg}${plugin.name}${er} not found or not validated. Disabling it.`);
-          plugin.enabled = false;
-          plugin.error = true;
-          continue;
-        }
-        // Check if the plugin has a new version
-        this.getPluginLatestVersion(plugin); // No await do it asyncronously
-        if (!plugin.enabled) {
-          this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
-          continue;
-        }
-        plugin.error = false;
-        plugin.locked = false;
-        plugin.loaded = false;
-        plugin.started = false;
-        plugin.configured = false;
-        plugin.connected = false;
-        plugin.registeredDevices = undefined;
-        plugin.addedDevices = undefined;
-        plugin.qrPairingCode = undefined;
-        plugin.manualPairingCode = undefined;
-        this.plugins.load(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
-      }
+      this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
       await this.startChildbridge();
       return;
     }
@@ -1148,7 +1104,7 @@ export class Matterbridge extends EventEmitter {
    * @param restart - Indicates whether to restart the instance after cleanup. Default is `false`.
    * @returns A promise that resolves when the cleanup is completed.
    */
-  private async cleanup(message: string, restart = false) {
+  protected async cleanup(message: string, restart = false) {
     if (this.initialized && !this.hasCleanupStarted) {
       this.hasCleanupStarted = true;
       this.log.info(message);
@@ -1233,7 +1189,6 @@ export class Matterbridge extends EventEmitter {
         this.webSocketServer = undefined;
       }
 
-      // this.cleanupTimeout1 = setTimeout(async () => {
       // Closing matter
       await this.stopMatterServer();
 
@@ -1280,10 +1235,7 @@ export class Matterbridge extends EventEmitter {
       }
       this.plugins.clear();
       this.devices.clear();
-      // this.registeredDevices = [];
 
-      // this.log.info('Waiting for matter to deliver last messages...');
-      // this.cleanupTimeout2 = setTimeout(async () => {
       if (restart) {
         if (message === 'updating...') {
           this.log.info('Cleanup completed. Updating...');
@@ -1316,8 +1268,6 @@ export class Matterbridge extends EventEmitter {
       }
       this.hasCleanupStarted = false;
       this.initialized = false;
-      // }, 2 * 1000);
-      // }, 3 * 1000);
     }
   }
 
@@ -1328,19 +1278,19 @@ export class Matterbridge extends EventEmitter {
    * @returns {Promise<void>} - A promise that resolves when the device is added.
    */
   async addBridgedDevice(pluginName: string, device: MatterbridgeDevice): Promise<void> {
-    this.log.debug(`Adding bridged device ${dev}${device.deviceName}${db} (${dev}${device.name}${db}) for plugin ${plg}${pluginName}${db}`);
+    this.log.debug(`Adding bridged device ${dev}${device.deviceName}${db} (${zb}${device.name}${db}) for plugin ${plg}${pluginName}${db}`);
 
     // Check if the plugin is registered
     const plugin = this.plugins.get(pluginName);
     if (!plugin) {
-      this.log.error(`Error adding bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) plugin ${plg}${pluginName}${er} not found`);
+      this.log.error(`Error adding bridged device ${dev}${device.deviceName}${er} (${zb}${device.name}${er}) plugin ${plg}${pluginName}${er} not found`);
       return;
     }
 
     // Register and add the device to matterbridge aggregator in bridge mode
     if (this.bridgeMode === 'bridge') {
       if (!this.matterAggregator) {
-        this.log.error(`Adding bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er} error: matterAggregator not found`);
+        this.log.error(`Adding bridged device ${dev}${device.deviceName}${er} (${zb}${device.name}${er}) for plugin ${plg}${pluginName}${er} error: matterAggregator not found`);
         return;
       }
       this.matterAggregator.addBridgedDevice(device);
@@ -1396,19 +1346,19 @@ export class Matterbridge extends EventEmitter {
    * @returns A Promise that resolves when the device is successfully removed.
    */
   async removeBridgedDevice(pluginName: string, device: MatterbridgeDevice): Promise<void> {
-    this.log.debug(`Removing bridged device ${dev}${device.deviceName}${db} (${dev}${device.name}${db}) for plugin ${plg}${pluginName}${db}`);
+    this.log.debug(`Removing bridged device ${dev}${device.deviceName}${db} (${zb}${device.name}${db}) for plugin ${plg}${pluginName}${db}`);
 
     // Check if the plugin is registered
     const plugin = this.plugins.get(pluginName);
     if (!plugin) {
-      this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: plugin not found`);
+      this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${zb}${device.name}${er}) for plugin ${plg}${pluginName}${er}: plugin not found`);
       return;
     }
 
     // Remove the device from matterbridge aggregator in bridge mode
     if (this.bridgeMode === 'bridge') {
       if (!this.matterAggregator) {
-        this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: matterAggregator not found`);
+        this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${zb}${device.name}${er}) for plugin ${plg}${pluginName}${er}: matterAggregator not found`);
         return;
       }
       if (device.number !== undefined) {
@@ -1418,7 +1368,7 @@ export class Matterbridge extends EventEmitter {
       // device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerShutDownEvent({});
       // device.getClusterServerById(BridgedDeviceBasicInformation.Cluster.id)?.triggerLeaveEvent({});
       this.matterAggregator?.removeBridgedDevice(device);
-      this.log.info(`Removed bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
+      this.log.info(`Removed bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${zb}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
       if (plugin.addedDevices !== undefined) plugin.addedDevices--;
     }
@@ -1427,12 +1377,12 @@ export class Matterbridge extends EventEmitter {
     if (this.bridgeMode === 'childbridge') {
       if (plugin.type === 'AccessoryPlatform') {
         if (!plugin.commissioningServer) {
-          this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: commissioning server not found`);
+          this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${zb}${device.name}${er}) for plugin ${plg}${pluginName}${er}: commissioning server not found`);
           return;
         }
       } else if (plugin.type === 'DynamicPlatform') {
         if (!plugin.aggregator) {
-          this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${dev}${device.name}${er}) for plugin ${plg}${pluginName}${er}: aggregator not found`);
+          this.log.error(`Error removing bridged device ${dev}${device.deviceName}${er} (${zb}${device.name}${er}) for plugin ${plg}${pluginName}${er}: aggregator not found`);
           return;
         }
         if (device.number !== undefined) {
@@ -1441,7 +1391,7 @@ export class Matterbridge extends EventEmitter {
         }
         plugin.aggregator.removeBridgedDevice(device);
       }
-      this.log.info(`Removed bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
+      this.log.info(`Removed bridged device(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${zb}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
       if (plugin.addedDevices !== undefined) plugin.addedDevices--;
 
@@ -1471,20 +1421,28 @@ export class Matterbridge extends EventEmitter {
     });
   }
 
-  private async startTest(): Promise<void> {
-    // Start the Matterbridge test
-  }
-
   /**
    * Starts the Matterbridge in bridge mode.
    * @private
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
-  private async startBridge(): Promise<void> {
-    // Plugins are loaded and started by loadPlugin on startup and plugin.loaded and plugin.started are set to true
+  protected async startBridge(): Promise<void> {
+    // Plugins are loaded and started by plugin.load on startup and plugin.loaded and plugin.started are set to true
     // Plugins are configured by a timer when matter server is started and plugin.configured is set to true
 
-    this.log.debug('Starting startMatterInterval in bridge mode');
+    if (!this.storageManager) throw new Error('No storage manager initialized');
+    if (!this.matterbridgeContext) throw new Error('No storage context initialized');
+    this.matterServer = this.createMatterServer(this.storageManager);
+    this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
+    this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
+    this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
+    this.matterAggregator = await this.createMatterAggregator(this.matterbridgeContext, 'Matterbridge');
+    this.log.debug('Adding matterbridge aggregator to commissioning server');
+    this.commissioningServer.addDevice(this.matterAggregator);
+    this.log.debug('Adding matterbridge commissioning server to matter server');
+    await this.matterServer.addCommissioningServer(this.commissioningServer, { uniqueStorageKey: 'Matterbridge' });
+
+    this.log.debug('Starting start matter interval in bridge mode');
     let failCount = 0;
     this.startMatterInterval = setInterval(async () => {
       for (const plugin of this.plugins) {
@@ -1547,10 +1505,13 @@ export class Matterbridge extends EventEmitter {
    * @private
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
-  private async startChildbridge(): Promise<void> {
-    // Plugins are loaded and started by loadPlugin on startup and plugin.loaded and plugin.started are set to true
-    // addDevice and addBridgedDeevice create the commissionig servers and add the devices to the the commissioning server or to the aggregator
+  protected async startChildbridge(): Promise<void> {
+    // Plugins are loaded and started by plugin.load  on startup and plugin.loaded and plugin.started are set to true
+    // Matterbridge.addBridgedDevice create the commissionig servers and add the devices to the the commissioning server or to the aggregator
     // Plugins are configured by a timer when matter server is started and plugin.configured is set to true
+
+    if (!this.storageManager) throw new Error('No storage manager initialized');
+    this.matterServer = this.createMatterServer(this.storageManager);
 
     this.log.debug('Starting start matter interval in childbridge mode...');
     let failCount = 0;
@@ -1637,7 +1598,7 @@ export class Matterbridge extends EventEmitter {
    * @private
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
-  private async startController(): Promise<void> {
+  protected async startController(): Promise<void> {
     if (!this.storageManager) {
       this.log.error('No storage manager initialized');
       await this.cleanup('No storage manager initialized');
@@ -1845,7 +1806,7 @@ export class Matterbridge extends EventEmitter {
    * @param {string} storageName - The name of the storage file.
    * @returns {Promise<void>} - A promise that resolves when the storage process is started.
    */
-  private async startMatterStorage(storageType: string, storageName: string): Promise<void> {
+  protected async startMatterStorage(storageType: string, storageName: string): Promise<void> {
     this.log.debug(`Starting ${storageType} storage ${CYAN}${storageName}${db}`);
     if (storageType === 'disk') {
       const storageDisk = new StorageBackendDisk(storageName);
@@ -1863,7 +1824,7 @@ export class Matterbridge extends EventEmitter {
       await this.storageManager.initialize();
       this.log.debug('Storage initialized');
       if (storageType === 'json') {
-        await this.backupJsonMatterStorage(storageName, storageName.replace('.json', '') + '.backup.json');
+        await this.backupMatterStorage(storageName, storageName.replace('.json', '') + '.backup.json');
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
@@ -1871,6 +1832,9 @@ export class Matterbridge extends EventEmitter {
       this.log.error(`Please delete it and rename ${storageName.replace('.json', '.backup.json')} to ${storageName} and try to restart Matterbridge.`);
       await this.cleanup('Storage initialize() error!');
     }
+
+    this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
+    this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
   }
 
   /**
@@ -1879,7 +1843,7 @@ export class Matterbridge extends EventEmitter {
    * @param storageName - The name of the JSON storage file to be backed up.
    * @param backupName - The name of the backup file to be created.
    */
-  private async backupJsonMatterStorage(storageName: string, backupName: string) {
+  protected async backupMatterStorage(storageName: string, backupName: string) {
     try {
       this.log.debug(`Making backup copy of ${storageName}`);
       await fs.copyFile(storageName, backupName);
@@ -1901,7 +1865,7 @@ export class Matterbridge extends EventEmitter {
    * Stops the matter storage.
    * @returns {Promise<void>} A promise that resolves when the storage is stopped.
    */
-  private async stopMatterStorage(): Promise<void> {
+  protected async stopMatterStorage(): Promise<void> {
     this.log.debug('Stopping storage');
     await this.storageManager?.close();
     this.log.debug('Storage closed');
@@ -1915,7 +1879,7 @@ export class Matterbridge extends EventEmitter {
    * @param storageManager The storage manager to be used by the Matter server.
    *
    */
-  private createMatterServer(storageManager: StorageManager): MatterServer {
+  protected createMatterServer(storageManager: StorageManager): MatterServer {
     this.log.debug('Creating matter server');
 
     // Validate mdnsInterface
@@ -1938,7 +1902,7 @@ export class Matterbridge extends EventEmitter {
    * Starts the Matter server.
    * If the Matter server is not initialized, it logs an error and performs cleanup.
    */
-  private async startMatterServer() {
+  protected async startMatterServer() {
     if (!this.matterServer) {
       this.log.error('No matter server initialized');
       await this.cleanup('No matter server initialized');
@@ -1953,7 +1917,7 @@ export class Matterbridge extends EventEmitter {
   /**
    * Stops the Matter server, commissioningServer and commissioningController.
    */
-  private async stopMatterServer() {
+  protected async stopMatterServer() {
     this.log.debug('Stopping matter commissioningServer');
     await this.commissioningServer?.close();
     this.log.debug('Stopping matter commissioningController');
@@ -1972,7 +1936,7 @@ export class Matterbridge extends EventEmitter {
    * @param {StorageContext} context - The storage context.
    * @returns {Aggregator} - The created Matter Aggregator.
    */
-  private async createMatterAggregator(context: StorageContext, pluginName: string): Promise<Aggregator> {
+  protected async createMatterAggregator(context: StorageContext, pluginName: string): Promise<Aggregator> {
     const random = 'AG' + CryptoNode.getRandomData(8).toHex();
     await context.set('aggregatorSerialNumber', await context.get('aggregatorSerialNumber', random));
     await context.set('aggregatorUniqueId', await context.get('aggregatorUniqueId', random));
@@ -2024,7 +1988,7 @@ export class Matterbridge extends EventEmitter {
    * @param {string} pluginName - The name of the commissioning server.
    * @returns {CommissioningServer} The created commissioning server.
    */
-  private async createCommisioningServer(context: StorageContext, pluginName: string): Promise<CommissioningServer> {
+  protected async createCommisioningServer(context: StorageContext, pluginName: string): Promise<CommissioningServer> {
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db}`);
     const deviceName = await context.get<string>('deviceName');
     const deviceType = await context.get<DeviceTypeId>('deviceType');
@@ -2207,7 +2171,7 @@ export class Matterbridge extends EventEmitter {
    * @param hardwareVersionString - The hardware version string of the device (optional).
    * @returns The storage context for the commissioning server.
    */
-  private async createCommissioningServerContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string) {
+  protected async createCommissioningServerContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string) {
     if (!this.storageManager) throw new Error('No storage manager initialized');
     this.log.debug(`Creating commissioning server storage context for ${plg}${pluginName}${db}`);
     const random = 'CS' + CryptoNode.getRandomData(8).toHex();
@@ -2242,7 +2206,7 @@ export class Matterbridge extends EventEmitter {
    * @returns The commissioning server context.
    * @throws Error if the BasicInformationCluster is not found.
    */
-  private async importCommissioningServerContext(pluginName: string, device: MatterbridgeDevice) {
+  protected async importCommissioningServerContext(pluginName: string, device: MatterbridgeDevice) {
     this.log.debug(`Importing matter commissioning server storage context from device for ${plg}${pluginName}${db}`);
     const basic = device.getClusterServer(BasicInformationCluster);
     if (!basic) {
@@ -2287,7 +2251,7 @@ export class Matterbridge extends EventEmitter {
    * @param {string} pluginName - The name of the plugin of Matterbridge in bridge mode.
    * @returns {Promise<void>} - A promise that resolves when the QR code is shown.
    */
-  private async showCommissioningQRCode(commissioningServer: CommissioningServer | undefined, storageContext: StorageContext | undefined, nodeContext: NodeStorage | undefined, pluginName: string) {
+  protected async showCommissioningQRCode(commissioningServer: CommissioningServer | undefined, storageContext: StorageContext | undefined, nodeContext: NodeStorage | undefined, pluginName: string) {
     if (!commissioningServer || !storageContext || !nodeContext || !pluginName) {
       this.log.error(`showCommissioningQRCode error: commissioningServer: ${!commissioningServer} storageContext: ${!storageContext} nodeContext: ${!nodeContext} pluginName: ${pluginName}`);
       await this.cleanup('No storage initialized in showCommissioningQRCode');
@@ -2402,7 +2366,7 @@ export class Matterbridge extends EventEmitter {
    * @param {CommissioningServer} commissioningServer - The commissioning server to set the reachability for.
    * @param {boolean} reachable - The new reachability status.
    */
-  private setCommissioningServerReachability(commissioningServer: CommissioningServer, reachable: boolean) {
+  protected setCommissioningServerReachability(commissioningServer: CommissioningServer, reachable: boolean) {
     const basicInformationCluster = commissioningServer?.getRootClusterServer(BasicInformationCluster);
     if (basicInformationCluster && basicInformationCluster.attributes.reachable !== undefined) basicInformationCluster.setReachableAttribute(reachable);
     if (basicInformationCluster && basicInformationCluster.triggerReachableChangedEvent) basicInformationCluster.triggerReachableChangedEvent({ reachableNewValue: reachable });
@@ -2430,7 +2394,7 @@ export class Matterbridge extends EventEmitter {
    * @param {MatterbridgeDevice} device - The device to set the reachability for.
    * @param {boolean} reachable - The new reachability status of the device.
    */
-  private setDeviceReachability(device: MatterbridgeDevice, reachable: boolean) {
+  protected setDeviceReachability(device: MatterbridgeDevice, reachable: boolean) {
     const basicInformationCluster = device.getClusterServer(BasicInformationCluster);
     if (basicInformationCluster && basicInformationCluster.attributes.reachable !== undefined) basicInformationCluster.setReachableAttribute(reachable);
     if (basicInformationCluster && basicInformationCluster.triggerReachableChangedEvent) basicInformationCluster.triggerReachableChangedEvent({ reachableNewValue: reachable });
@@ -2460,6 +2424,9 @@ export class Matterbridge extends EventEmitter {
         break;
       case 4701:
         vendorName = '(Tuya)';
+        break;
+      case 4718:
+        vendorName = '(Xiaomi)';
         break;
       case 4742:
         vendorName = '(eWeLink)';
@@ -2923,7 +2890,7 @@ export class Matterbridge extends EventEmitter {
             });
           });
           device.getChildEndpoints().forEach((childEndpoint) => {
-            const name = device.getChildEndpointName(childEndpoint);
+            const name = childEndpoint.uniqueStorageKey;
             const clusterServers = childEndpoint.getAllClusterServers();
             clusterServers.forEach((clusterServer) => {
               Object.entries(clusterServer.attributes).forEach(([key, value]) => {
@@ -3372,7 +3339,7 @@ export class Matterbridge extends EventEmitter {
    * @param {MatterbridgeDevice} device - The MatterbridgeDevice object.
    * @returns {string} The attributes description of the cluster servers in the device.
    */
-  private getClusterTextFromDevice(device: MatterbridgeDevice): string {
+  protected getClusterTextFromDevice(device: MatterbridgeDevice): string {
     const stringifyFixedLabel = (endpoint: Endpoint) => {
       const labelList = endpoint.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
       if (!labelList) return;

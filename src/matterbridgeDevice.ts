@@ -117,7 +117,7 @@ import { ClusterId, EndpointNumber, VendorId } from '@project-chip/matter-node.j
 import { Device, DeviceClasses, DeviceTypeDefinition, Endpoint, EndpointOptions } from '@project-chip/matter-node.js/device';
 import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
 
-import { EveHistory, MatterHistory } from 'matter-history';
+// import { EveHistory, MatterHistory } from 'matter-history';
 
 import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from 'node-ansi-logger';
 
@@ -417,7 +417,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @returns {Promise<MatterbridgeDevice>} The MatterbridgeDevice instance.
    *
   static async createWithClusterServer(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, clusterServerList: ClusterId[] = [], debug = false): Promise<MatterbridgeDevice> {
-    const device = new MatterbridgeDevice(definition, options, debug);
+  attributeInitialValues?: Record<ClusterId, AttributeInitialValues<any>>  
+  const device = new MatterbridgeDevice(definition, options, debug);
     if (Array.isArray(definition)) {
       definition.forEach((deviceType) => {
         deviceType.requiredServerClusters.forEach((clusterId) => {
@@ -530,7 +531,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName);
     if (!child) {
       child = new Endpoint(deviceTypes, { uniqueStorageKey: endpointName });
-      child.addFixedLabel('endpointName', endpointName.slice(0, 16));
       this.addChildEndpoint(child);
     }
     deviceTypes.forEach((deviceType) => {
@@ -563,7 +563,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     endpoint.getDeviceTypes().forEach((deviceType) => {
       this.log.debug(`- for deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
       deviceType.requiredServerClusters.forEach((clusterId) => {
-        if (!requiredServerList.includes(clusterId) && !endpoint.getClusterClientById(clusterId)) requiredServerList.push(clusterId);
+        if (!requiredServerList.includes(clusterId) && !endpoint.getClusterServerById(clusterId)) requiredServerList.push(clusterId);
       });
     });
     requiredServerList.forEach((clusterId) => {
@@ -623,7 +623,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(OccupancySensing.Cluster.id)) endpoint.addClusterServer(this.getDefaultOccupancySensingClusterServer());
     if (includeServerList.includes(IlluminanceMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer());
     if (includeServerList.includes(PowerSource.Cluster.id)) endpoint.addClusterServer(this.getDefaultPowerSourceWiredClusterServer());
-    if (includeServerList.includes(EveHistory.Cluster.id)) endpoint.addClusterServer(MatterHistory.getEveHistoryClusterServer());
+    // if (includeServerList.includes(EveHistory.Cluster.id)) endpoint.addClusterServer(MatterHistory.getEveHistoryClusterServer());
     if (includeServerList.includes(PowerTopology.Cluster.id)) endpoint.addClusterServer(this.getDefaultPowerTopologyClusterServer());
     if (includeServerList.includes(ElectricalPowerMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalPowerMeasurementClusterServer());
     if (includeServerList.includes(ElectricalEnergyMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalEnergyMeasurementClusterServer());
@@ -662,7 +662,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @returns {string | undefined} The child endpoint name, or undefined if not found.
    *
    * @deprecated This method is deprecated and will be removed in a future version. Use endpoint.uniqueStorageKey instead.
-   */
   getChildEndpointName(child: Endpoint): string | undefined {
     // Find the endpoint name (l1...)
     const labelList = child.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
@@ -670,6 +669,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     const endpointNameLabel = labelList.find((entry) => entry.label === 'endpointName');
     if (endpointNameLabel) return endpointNameLabel.value;
   }
+   */
 
   /**
    * Sets the endpoint name for a child endpoint.
@@ -678,10 +678,10 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {string} endpointName - The name of the endpoint.
    *
    * @deprecated This method is deprecated and will be removed in a future version.
-   */
   setChildEndpointName(child: Endpoint, endpointName: string) {
     child.addFixedLabel('endpointName', endpointName);
   }
+   */
 
   /**
    * Retrieves the label associated with the specified endpoint number.
@@ -689,7 +689,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @returns {string | undefined} The label associated with the endpoint number, or undefined if not found.
    *
    * @deprecated This method is deprecated and will be removed in a future version.
-   */
   getEndpointLabel(endpointNumber: EndpointNumber | undefined): string | undefined {
     if (!endpointNumber) return undefined;
     const labelList = this.getChildEndpoint(endpointNumber)?.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
@@ -698,6 +697,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       if (entry.label === 'endpointName') return entry.value;
     }
   }
+   */
 
   /**
    * Retrieves the child endpoint with the specified label.
@@ -706,7 +706,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @returns {Endpoint | undefined} The child endpoint with the specified label, or undefined if not found.
    *
    * @deprecated This method is deprecated and will be removed in a future version. Use getChildEndpointByName instead.
-   */
   getChildEndpointWithLabel(label: string): Endpoint | undefined {
     for (const endpoint of this.getChildEndpoints()) {
       const labelList = endpoint.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
@@ -718,6 +717,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       if (endpointName === label) return endpoint;
     }
   }
+   */
 
   /**
    * Retrieves the value of the specified attribute from the given endpoint and cluster.
@@ -1204,6 +1204,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           maxMeasuredValue: Number.MAX_SAFE_INTEGER,
           accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
         },
+        cumulativeEnergyReset: null,
         cumulativeEnergyImported: energy ? { energy } : null,
         cumulativeEnergyExported: null,
       },
@@ -2064,8 +2065,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Retrieves the default mode select cluster server.
    *
-   * @deprecated This method is currently under development and should not be used.
-   *
    * @param description - The description of the cluster server.
    * @param supportedModes - The supported modes for the cluster server.
    * @param currentMode - The current mode of the cluster server. Defaults to 0.
@@ -2097,18 +2096,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @remarks
    * This method adds a cluster server for a mode select cluster with default settings.
    *
-   * @deprecated This method is currently under development and should not be used.
-   *
    * @param endpoint - The endpoint to add the cluster server to. Defaults to `this` if not provided.
    */
-  createDefaultModeSelectClusterServer(endpoint?: Endpoint) {
+  createDefaultModeSelectClusterServer(description: string, supportedModes: ModeSelect.ModeOption[], currentMode = 0, startUpMode = 0, endpoint?: Endpoint) {
     if (!endpoint) endpoint = this as Endpoint;
-    endpoint.addClusterServer(
-      this.getDefaultModeSelectClusterServer('Mode select', [
-        { label: 'Mode 0', mode: 0, semanticTags: [{ mfgCode: VendorId(0xfff1), value: 0 }] },
-        { label: 'Mode 1', mode: 1, semanticTags: [{ mfgCode: VendorId(0xfff1), value: 1 }] },
-      ]),
-    );
+    endpoint.addClusterServer(this.getDefaultModeSelectClusterServer(description, supportedModes, currentMode, startUpMode));
   }
 
   /**
@@ -2527,27 +2519,41 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Get a default thermostat cluster server with the specified parameters.
    *
-   * @param localTemperature - The local temperature value in degrees Celsius. Defaults to 23.
-   * @param occupiedHeatingSetpoint - The occupied heating setpoint value in degrees Celsius. Defaults to 21.
-   * @param occupiedCoolingSetpoint - The occupied cooling setpoint value in degrees Celsius. Defaults to 25.
-   * @param minSetpointDeadBand - The minimum setpoint dead band value.
+   * @param {number} [localTemperature=23] - The local temperature value in degrees Celsius. Defaults to 23°.
+   * @param {number} [occupiedHeatingSetpoint=21] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
+   * @param {number} [occupiedCoolingSetpoint=25] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
+   * @param {number} [minSetpointDeadBand=1] - The minimum setpoint dead band value. Defaults to 1°.
+   * @param {number} [minHeatSetpointLimit=0] - The minimum heat setpoint limit value. Defaults to 0°.
+   * @param {number} [maxHeatSetpointLimit=50] - The maximum heat setpoint limit value. Defaults to 50°.
+   * @param {number} [minCoolSetpointLimit=0] - The minimum cool setpoint limit value. Defaults to 0°.
+   * @param {number} [maxCoolSetpointLimit=50] - The maximum cool setpoint limit value. Defaults to 50°.
+   * @returns {ThermostatClusterServer} A default thermostat cluster server configured with the specified parameters.
    */
-  getDefaultThermostatClusterServer(localTemperature = 23, occupiedHeatingSetpoint = 21, occupiedCoolingSetpoint = 25, minSetpointDeadBand = 1) {
+  getDefaultThermostatClusterServer(
+    localTemperature = 23,
+    occupiedHeatingSetpoint = 21,
+    occupiedCoolingSetpoint = 25,
+    minSetpointDeadBand = 1,
+    minHeatSetpointLimit = 0,
+    maxHeatSetpointLimit = 50,
+    minCoolSetpointLimit = 0,
+    maxCoolSetpointLimit = 50,
+  ) {
     return ClusterServer(
       ThermostatCluster.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode),
       {
         localTemperature: localTemperature * 100,
         occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
         occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
-        minHeatSetpointLimit: 0,
-        maxHeatSetpointLimit: 5000,
-        absMinHeatSetpointLimit: 0,
-        absMaxHeatSetpointLimit: 5000,
-        minCoolSetpointLimit: 0,
-        maxCoolSetpointLimit: 5000,
-        absMinCoolSetpointLimit: 0,
-        absMaxCoolSetpointLimit: 5000,
-        minSetpointDeadBand,
+        minHeatSetpointLimit: minHeatSetpointLimit * 100,
+        maxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+        absMinHeatSetpointLimit: minHeatSetpointLimit * 100,
+        absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+        minCoolSetpointLimit: minCoolSetpointLimit * 100,
+        maxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+        absMinCoolSetpointLimit: minCoolSetpointLimit * 100,
+        absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+        minSetpointDeadBand: minSetpointDeadBand * 100,
         systemMode: Thermostat.SystemMode.Off,
         controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
         thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
@@ -2565,13 +2571,26 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Creates and adds a default thermostat cluster server to the device.
    *
-   * @param localTemperature - The local temperature value.
-   * @param occupiedHeatingSetpoint - The occupied heating setpoint value.
-   * @param occupiedCoolingSetpoint - The occupied cooling setpoint value.
-   * @param minSetpointDeadBand - The minimum setpoint dead band value.
+   * @param {number} [localTemperature=23] - The local temperature value in degrees Celsius. Defaults to 23°.
+   * @param {number} [occupiedHeatingSetpoint=21] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
+   * @param {number} [occupiedCoolingSetpoint=25] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
+   * @param {number} [minSetpointDeadBand=1] - The minimum setpoint dead band value. Defaults to 1°.
+   * @param {number} [minHeatSetpointLimit=0] - The minimum heat setpoint limit value. Defaults to 0°.
+   * @param {number} [maxHeatSetpointLimit=50] - The maximum heat setpoint limit value. Defaults to 50°.
+   * @param {number} [minCoolSetpointLimit=0] - The minimum cool setpoint limit value. Defaults to 0°.
+   * @param {number} [maxCoolSetpointLimit=50] - The maximum cool setpoint limit value. Defaults to 50°.
    */
-  createDefaultThermostatClusterServer(localTemperature = 23, occupiedHeatingSetpoint = 21, occupiedCoolingSetpoint = 25, minSetpointDeadBand = 1) {
-    this.addClusterServer(this.getDefaultThermostatClusterServer(localTemperature, occupiedHeatingSetpoint, occupiedCoolingSetpoint, minSetpointDeadBand));
+  createDefaultThermostatClusterServer(
+    localTemperature = 23,
+    occupiedHeatingSetpoint = 21,
+    occupiedCoolingSetpoint = 25,
+    minSetpointDeadBand = 1,
+    minHeatSetpointLimit = 0,
+    maxHeatSetpointLimit = 50,
+    minCoolSetpointLimit = 0,
+    maxCoolSetpointLimit = 50,
+  ) {
+    this.addClusterServer(this.getDefaultThermostatClusterServer(localTemperature, occupiedHeatingSetpoint, occupiedCoolingSetpoint, minSetpointDeadBand, minHeatSetpointLimit, maxHeatSetpointLimit, minCoolSetpointLimit, maxCoolSetpointLimit));
   }
 
   /**

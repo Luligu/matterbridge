@@ -16,9 +16,23 @@ Please read this: https://github.com/Luligu/matterbridge/discussions/135
 
 ### Discord
 
-Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/raWywpD4.
+Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
 Feel free to join!
+
+## [1.6.0] - 2024-10-15
+
+### Changed
+
+- [discord]: Discord group: https://discord.gg/QX58CDe6hd.
+- [matterbridge]: Preliminary code update to move to edge (matter.js new API).
+- [matterbridgeDevice]: Refactor Thermostat cluster methods to accept minHeatSetpointLimit, maxHeatSetpointLimit, minCoolSetpointLimit and maxCoolSetpointLimit.
+- [config]: The config is rewritten only after onStart and no more after onConfigure (after the plugin starts is possible to change the config and it will not be rewritten after the plugin configuration).
+- [package]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
 
 ## [1.5.10] - 2024-10-01
 

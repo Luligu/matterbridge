@@ -569,6 +569,7 @@ export class PluginManager {
       await plugin.platform.onStart(message);
       this.log.notice(`Started plugin ${plg}${plugin.name}${nt} type ${typ}${plugin.type}${nt}`);
       plugin.started = true;
+      await this.saveConfigFromPlugin(plugin);
       if (configure) await this.configure(plugin);
       return plugin;
     } catch (err) {
@@ -606,7 +607,7 @@ export class PluginManager {
       await plugin.platform.onConfigure();
       this.log.notice(`Configured plugin ${plg}${plugin.name}${nt} type ${typ}${plugin.type}${nt}`);
       plugin.configured = true;
-      await this.saveConfigFromPlugin(plugin);
+      // await this.saveConfigFromPlugin(plugin);
       return plugin;
     } catch (err) {
       plugin.error = true;

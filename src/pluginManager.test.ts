@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-logger', 'info', '-matterlogger', 'info', '-test', '-frontend', '0', '-profile', 'Jest'];
+process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-profile', 'Jest'];
 
 import { jest } from '@jest/globals';
 
@@ -16,6 +16,7 @@ import { getMacAddress, waiter } from './utils/utils.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
+import { DeviceManager } from './deviceManager.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -25,6 +26,7 @@ const typ = '\u001B[38;5;207m';
 describe('PluginManager', () => {
   let matterbridge: Matterbridge;
   let plugins: PluginManager;
+  let devices: DeviceManager;
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let loggerLogSpy: jest.SpiedFunction<(level: LogLevel, message: string, ...parameters: any[]) => void>;
 
@@ -291,6 +293,7 @@ describe('PluginManager', () => {
 describe('PluginsManager load/start/configure/shutdown', () => {
   let matterbridge: Matterbridge;
   let plugins: PluginManager;
+  let devices: DeviceManager;
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let loggerLogSpy: jest.SpiedFunction<(level: LogLevel, message: string, ...parameters: any[]) => void>;
 
@@ -710,7 +713,6 @@ describe('PluginsManager load/start/configure/shutdown', () => {
   test('cleanup Jest profile', async () => {
     plugins.clear();
     expect(await plugins.saveToStorage()).toBe(0);
-    (matterbridge as any).registeredDevices = [];
     if (getMacAddress() === '30:f6:ef:69:2b:c5') {
       execSync('npm uninstall -g matterbridge-eve-door');
     }
