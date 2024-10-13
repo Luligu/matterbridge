@@ -424,7 +424,7 @@ export class PluginManager {
   async install(name: string): Promise<string | undefined> {
     this.log.info(`Installing plugin ${plg}${name}${nf}`);
     return new Promise((resolve, reject) => {
-      exec(`npm install -g ${name} --omit=dev`, (error: ExecException | null, stdout: string, stderr: string) => {
+      exec(`npm install -g ${name} --omit=dev --force`, (error: ExecException | null, stdout: string, stderr: string) => {
         if (error) {
           this.log.error(`Failed to install plugin ${plg}${name}${er}: ${error}`);
           this.log.debug(`Failed to install plugin ${plg}${name}${db}: ${stderr}`);
