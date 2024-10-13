@@ -630,7 +630,7 @@ export class Matterbridge extends EventEmitter {
       MatterbridgeDevice.bridgeMode = 'bridge';
       this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
       await this.startBridge();
-      await this.loadStartConfigurePlugins();
+      await this.startPlugins();
       return;
     }
 
@@ -638,10 +638,9 @@ export class Matterbridge extends EventEmitter {
     if (hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge')) {
       this.bridgeMode = 'childbridge';
       MatterbridgeDevice.bridgeMode = 'childbridge';
-      await this.loadStartConfigurePlugins();
       this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
       await this.startChildbridge();
-      await this.loadStartConfigurePlugins();
+      await this.startPlugins();
       return;
     }
   }
@@ -655,7 +654,7 @@ export class Matterbridge extends EventEmitter {
    *
    * @returns {Promise<void>} A promise that resolves when all plugins have been loaded and configured.
    */
-  private async loadStartConfigurePlugins() {
+  private async startPlugins() {
     // Check, load and start the plugins
     for (const plugin of this.plugins) {
       plugin.configJson = await this.plugins.loadConfig(plugin);
