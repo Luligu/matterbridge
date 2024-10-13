@@ -422,6 +422,7 @@ export class PluginManager {
   }
 
   async install(name: string): Promise<string | undefined> {
+    await this.uninstall(name);
     this.log.info(`Installing plugin ${plg}${name}${nf}`);
     return new Promise((resolve, reject) => {
       exec(`npm install -g ${name} --omit=dev --force`, (error: ExecException | null, stdout: string, stderr: string) => {
@@ -457,7 +458,7 @@ export class PluginManager {
   async uninstall(name: string): Promise<string | undefined> {
     this.log.info(`Uninstalling plugin ${plg}${name}${nf}`);
     return new Promise((resolve, reject) => {
-      exec(`npm uninstall -g ${name}`, (error: ExecException | null, stdout: string, stderr: string) => {
+      exec(`npm uninstall -g ${name} --force`, (error: ExecException | null, stdout: string, stderr: string) => {
         if (error) {
           this.log.error(`Failed to uninstall plugin ${plg}${name}${er}: ${error}`);
           this.log.debug(`Failed to uninstall plugin ${plg}${name}${db}: ${stderr}`);
