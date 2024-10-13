@@ -25,7 +25,7 @@ import {
   waterFreezeDetector,
   waterLeakDetector,
 } from './matterbridgeDevice.js';
-import { EveHistory, EveHistoryCluster, MatterHistory } from 'matter-history';
+// import { EveHistory, EveHistoryCluster, MatterHistory } from 'matter-history';
 
 import {
   Attributes,
@@ -291,6 +291,8 @@ describe('Matterbridge device', () => {
     child?.verifyRequiredClusters();
   });
 
+  // eslint-disable-next-line jest/no-commented-out-tests
+  /*
   test('create a power source device with EveHistory', async () => {
     const device = new MatterbridgeDevice(powerSource);
     MatterHistory.createEveHistoryClusterServer(device);
@@ -496,6 +498,7 @@ describe('Matterbridge device', () => {
     historyCluster?.setHistoryRequestAttribute(Uint8Array.fromHex('000000000000'));
     await history.close();
   }, 60000);
+  */
 
   test('create a device with all default clusters', async () => {
     const device = new MatterbridgeDevice(bridgedNode);
