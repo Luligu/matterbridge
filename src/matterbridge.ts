@@ -618,6 +618,43 @@ export class Matterbridge extends EventEmitter {
       return;
     }
 
+    // Check if the bridge mode is set and start matterbridge in bridge mode if not set
+    if (!hasParameter('bridge') && !hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === '') {
+      this.log.info('Setting default matterbridge start mode to bridge');
+      await this.nodeContext?.set<string>('bridgeMode', 'bridge');
+    }
+
+    // Start matterbridge in bridge mode
+    if (hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge')) {
+      this.bridgeMode = 'bridge';
+      MatterbridgeDevice.bridgeMode = 'bridge';
+      await this.loadStartConfigurePlugins();
+      this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
+      await this.startBridge();
+      return;
+    }
+
+    // Start matterbridge in childbridge mode
+    if (hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge')) {
+      this.bridgeMode = 'childbridge';
+      MatterbridgeDevice.bridgeMode = 'childbridge';
+      await this.loadStartConfigurePlugins();
+      this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
+      await this.startChildbridge();
+      return;
+    }
+  }
+
+  /**
+   * Asynchronously loads, starts the configures the registered plugins.
+   *
+   * This method is responsible for initializing and configuring all necessary plugins
+   * required by the application. It ensures that each plugin is properly loaded and
+   * configured before the application starts using them.
+   *
+   * @returns {Promise<void>} A promise that resolves when all plugins have been loaded and configured.
+   */
+  private async loadStartConfigurePlugins() {
     // Check, load and start the plugins
     for (const plugin of this.plugins) {
       plugin.configJson = await this.plugins.loadConfig(plugin);
@@ -646,30 +683,6 @@ export class Matterbridge extends EventEmitter {
       plugin.qrPairingCode = undefined;
       plugin.manualPairingCode = undefined;
       this.plugins.load(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
-    }
-
-    // Check if the bridge mode is set and start matterbridge in bridge mode if not set
-    if (!hasParameter('bridge') && !hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === '') {
-      this.log.info('Setting default matterbridge start mode to bridge');
-      await this.nodeContext?.set<string>('bridgeMode', 'bridge');
-    }
-
-    // Start matterbridge in bridge mode
-    if (hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge')) {
-      this.bridgeMode = 'bridge';
-      MatterbridgeDevice.bridgeMode = 'bridge';
-      this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
-      await this.startBridge();
-      return;
-    }
-
-    // Start matterbridge in childbridge mode
-    if (hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge')) {
-      this.bridgeMode = 'childbridge';
-      MatterbridgeDevice.bridgeMode = 'childbridge';
-      this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
-      await this.startChildbridge();
-      return;
     }
   }
 
