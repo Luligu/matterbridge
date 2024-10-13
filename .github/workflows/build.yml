@@ -22,7 +22,16 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Clean cache
-        run: npm cache clean --force
+        run: |
+          npm cache clean --force
+          npm uninstall -g matterbridge-example-accessory-platform --force
+          npm uninstall -g matterbridge-example-dynamic-platform --force
+          npm uninstall -g matterbridge-example-dynamic-platform --force
+          npm uninstall -g matterbridge-eve-door --force
+          npm uninstall -g matterbridge-eve-motion --force
+
+      - name: Remove temporary directories
+        run: rm -rf /Users/runner/.npm /Users/runner/work/_temp
 
       - name: Install latest npm
         run: npm install -g npm@latest
