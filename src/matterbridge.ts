@@ -1169,6 +1169,7 @@ export class Matterbridge extends EventEmitter {
         this.httpServer = undefined;
         this.log.debug('Frontend http server closed successfully');
       }
+
       // Close the https server
       if (this.httpsServer) {
         this.httpsServer.close();
@@ -1176,12 +1177,14 @@ export class Matterbridge extends EventEmitter {
         this.httpsServer = undefined;
         this.log.debug('Frontend https server closed successfully');
       }
+
       // Remove listeners from the express app
       if (this.expressApp) {
         this.expressApp.removeAllListeners();
         this.expressApp = undefined;
         this.log.debug('Frontend app closed successfully');
       }
+
       // Close the WebSocket server
       if (this.webSocketServer) {
         // Close all active connections
@@ -1500,8 +1503,7 @@ export class Matterbridge extends EventEmitter {
       this.startMatterInterval = undefined;
       this.log.debug('Cleared startMatterInterval interval for Matterbridge');
 
-      await this.startMatterServer();
-      this.log.notice('Matter server started');
+      await this.runBridge();
 
       // Configure the plugins
       this.configureTimeout = setTimeout(async () => {
@@ -1516,9 +1518,6 @@ export class Matterbridge extends EventEmitter {
         }
       }, 30 * 1000);
 
-      // Show the QR code for commissioning or log the already commissioned message
-      await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
-
       // Setting reachability to true
       this.reachabilityTimeout = setTimeout(() => {
         this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
@@ -1526,6 +1525,15 @@ export class Matterbridge extends EventEmitter {
         if (this.matterAggregator) this.setAggregatorReachability(this.matterAggregator, true);
       }, 60 * 1000);
     }, 1000);
+  }
+
+  protected async runBridge(): Promise<void> {
+    // Start the Matter server
+    await this.startMatterServer();
+    this.log.notice('Matter server started');
+
+    // Show the QR code for commissioning or log the already commissioned message
+    await this.showCommissioningQRCode(this.commissioningServer, this.matterbridgeContext, this.nodeContext, 'Matterbridge');
   }
 
   /**
@@ -1589,8 +1597,7 @@ export class Matterbridge extends EventEmitter {
       this.startMatterInterval = undefined;
       this.log.debug('Cleared startMatterInterval interval in childbridge mode');
 
-      await this.startMatterServer();
-      this.log.notice('Matter server started');
+      await this.runChildbridge();
 
       // Configure the plugins
       this.configureTimeout = setTimeout(async () => {
@@ -1634,6 +1641,12 @@ export class Matterbridge extends EventEmitter {
         }, 60 * 1000);
       }
     }, 1000);
+  }
+
+  protected async runChildbridge(): Promise<void> {
+    // Start the Matter server
+    await this.startMatterServer();
+    this.log.notice('Matter server started');
   }
 
   /**
