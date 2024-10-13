@@ -128,7 +128,7 @@
     "express": "4.21.1",
     "glob": "11.0.0",
     "https": "1.0.0",
-    "matter-history": "file:../matter-history",
+    "matter-history": "^1.1.17-dev.2",
     "node-ansi-logger": "3.0.0",
     "node-persist-manager": "1.0.8",
     "ws": "8.18.0"
