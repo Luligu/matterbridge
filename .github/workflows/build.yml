@@ -24,14 +24,10 @@ jobs:
       - name: Clean cache
         run: |
           npm cache clean --force
-          npm uninstall -g matterbridge-example-accessory-platform --force
-          npm uninstall -g matterbridge-example-dynamic-platform --force
-          npm uninstall -g matterbridge-example-dynamic-platform --force
-          npm uninstall -g matterbridge-eve-door --force
-          npm uninstall -g matterbridge-eve-motion --force
-
-      - name: Remove temporary directories
-        run: rm -rf /Users/runner/.npm /Users/runner/work/_temp
+          npm install -g matterbridge-example-accessory-platform --force
+          npm install -g matterbridge-example-dynamic-platform --force
+          npm install -g matterbridge-eve-door --force
+          npm install -g matterbridge-eve-motion --force
 
       - name: Install latest npm
         run: npm install -g npm@latest
