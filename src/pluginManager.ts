@@ -299,7 +299,6 @@ export class PluginManager {
       if (!packageJson.type || packageJson.type !== 'module') this.log.error(`Plugin ${plg}${plugin.name}${er} is not a module`);
       if (!packageJson.main) this.log.error(`Plugin ${plg}${plugin.name}${er} has no main entrypoint in package.json`);
       if (!packageJson.types) this.log.error(`Plugin ${plg}${plugin.name}${er} has no types in package.json`);
-      if (!packageJson.scripts.install || packageJson.scripts.install !== 'node link-matterbridge-script.js') this.log.error(`Plugin ${plg}${plugin.name}${er} has not the correct install script in package.json`);
       plugin.name = packageJson.name || 'Unknown name';
       plugin.version = packageJson.version || '1.0.0';
       plugin.description = packageJson.description || 'Unknown description';

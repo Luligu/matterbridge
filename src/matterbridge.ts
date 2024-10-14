@@ -143,7 +143,7 @@ export class Matterbridge extends EventEmitter {
   public log!: AnsiLogger;
   private matterbrideLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
   private matterLoggerFile = 'matter' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
-  private plugins!: PluginManager;
+  protected plugins!: PluginManager;
   private devices!: DeviceManager;
   private nodeStorage: NodeStorageManager | undefined;
   private nodeContext: NodeStorage | undefined;
@@ -170,12 +170,12 @@ export class Matterbridge extends EventEmitter {
   private webSocketServer: WebSocketServer | undefined;
 
   // Matter
-  private mdnsInterface: string | undefined; // matter server mdnsInterface: e.g. 'eth0' or 'wlan0' or 'WiFi'
-  private ipv4address: string | undefined; // matter commissioning server listeningAddressIpv4
-  private ipv6address: string | undefined; // matter commissioning server listeningAddressIpv6
-  private port = 5540; // first commissioning server port
-  private passcode?: number; // first commissioning server passcode
-  private discriminator?: number; // first commissioning server discriminator
+  protected mdnsInterface: string | undefined; // matter server mdnsInterface: e.g. 'eth0' or 'wlan0' or 'WiFi'
+  protected ipv4address: string | undefined; // matter commissioning server listeningAddressIpv4
+  protected ipv6address: string | undefined; // matter commissioning server listeningAddressIpv6
+  protected port = 5540; // first commissioning server port
+  protected passcode?: number; // first commissioning server passcode
+  protected discriminator?: number; // first commissioning server discriminator
   private storageManager: StorageManager | undefined;
   private matterbridgeContext: StorageContext | undefined;
   private mattercontrollerContext: StorageContext | undefined;
@@ -402,11 +402,11 @@ export class Matterbridge extends EventEmitter {
     await this.logNodeAndSystemInfo();
     this.log.notice(
       `Matterbridge version ${this.matterbridgeVersion} ` +
-        `${hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge') ? 'mode bridge ' : ''}` +
-        `${hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge') ? 'mode childbridge ' : ''}` +
-        `${hasParameter('controller') ? 'mode controller ' : ''}` +
-        `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}` +
-        `running on ${this.systemInformation.osType} (v.${this.systemInformation.osRelease}) platform ${this.systemInformation.osPlatform} arch ${this.systemInformation.osArch}`,
+      `${hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge') ? 'mode bridge ' : ''}` +
+      `${hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge') ? 'mode childbridge ' : ''}` +
+      `${hasParameter('controller') ? 'mode controller ' : ''}` +
+      `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}` +
+      `running on ${this.systemInformation.osType} (v.${this.systemInformation.osRelease}) platform ${this.systemInformation.osPlatform} arch ${this.systemInformation.osArch}`,
     );
 
     // Check node version and throw error
@@ -1574,7 +1574,7 @@ export class Matterbridge extends EventEmitter {
         if (plugin.error) {
           clearInterval(this.startMatterInterval);
           this.startMatterInterval = undefined;
-          this.log.debug('Cleared startMatterInterval interval for Matterbridge for plugin in error state');
+          this.log.debug('Cleared startMatterInterval interval for a plugin in error state');
           this.log.error(`The plugin ${plg}${plugin.name}${er} is in error state.`);
           this.log.error('The bridge will not start until the problem is solved to prevent the controllers from deleting all registered devices.');
           this.log.error('If you want to start the bridge disable the plugin in error state and restart.');
@@ -2227,7 +2227,7 @@ export class Matterbridge extends EventEmitter {
    * @param hardwareVersionString - The hardware version string of the device (optional).
    * @returns The storage context for the commissioning server.
    */
-  protected async createCommissioningServerContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string) {
+  protected async createCommissioningServerContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string): Promise<StorageContext<any>> {
     if (!this.storageManager) throw new Error('No storage manager initialized');
     this.log.debug(`Creating commissioning server storage context for ${plg}${pluginName}${db}`);
     const random = 'CS' + CryptoNode.getRandomData(8).toHex();
@@ -2262,7 +2262,7 @@ export class Matterbridge extends EventEmitter {
    * @returns The commissioning server context.
    * @throws Error if the BasicInformationCluster is not found.
    */
-  protected async importCommissioningServerContext(pluginName: string, device: MatterbridgeDevice) {
+  protected async importCommissioningServerContext(pluginName: string, device: MatterbridgeDevice): Promise<StorageContext<any>> {
     this.log.debug(`Importing matter commissioning server storage context from device for ${plg}${pluginName}${db}`);
     const basic = device.getClusterServer(BasicInformationCluster);
     if (!basic) {
@@ -2398,14 +2398,14 @@ export class Matterbridge extends EventEmitter {
           peerNodeId: session.peerNodeId.toString(),
           fabric: session.fabric
             ? {
-                fabricIndex: session.fabric.fabricIndex,
-                fabricId: session.fabric.fabricId.toString(),
-                nodeId: session.fabric.nodeId.toString(),
-                rootNodeId: session.fabric.rootNodeId.toString(),
-                rootVendorId: session.fabric.rootVendorId,
-                rootVendorName: this.getVendorIdName(session.fabric.rootVendorId),
-                label: session.fabric.label,
-              }
+              fabricIndex: session.fabric.fabricIndex,
+              fabricId: session.fabric.fabricId.toString(),
+              nodeId: session.fabric.nodeId.toString(),
+              rootNodeId: session.fabric.rootNodeId.toString(),
+              rootVendorId: session.fabric.rootVendorId,
+              rootVendorName: this.getVendorIdName(session.fabric.rootVendorId),
+              label: session.fabric.label,
+            }
             : undefined,
           isPeerActive: session.isPeerActive,
           secure: session.secure,
@@ -2433,7 +2433,7 @@ export class Matterbridge extends EventEmitter {
    * @param {Aggregator} matterAggregator - The matter aggregator to set the reachability for.
    * @param {boolean} reachable - A boolean indicating the reachability status to set.
    */
-  private setAggregatorReachability(matterAggregator: Aggregator, reachable: boolean) {
+  protected setAggregatorReachability(matterAggregator: Aggregator, reachable: boolean) {
     const basicInformationCluster = matterAggregator.getClusterServer(BasicInformationCluster);
     if (basicInformationCluster && basicInformationCluster.attributes.reachable !== undefined) basicInformationCluster.setReachableAttribute(reachable);
     if (basicInformationCluster && basicInformationCluster.triggerReachableChangedEvent) basicInformationCluster.triggerReachableChangedEvent({ reachableNewValue: reachable });
