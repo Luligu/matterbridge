@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.6.0-dev.7",
+  "version": "1.6.0-dev.8",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -102,7 +102,7 @@
     "prepublishOnly": "npm pkg delete devDependencies && npm pkg delete scripts && npm install --omit=dev && npm shrinkwrap",
     "npmPack": "npm run cleanBuild && copy package.json package.log && npm pkg delete devDependencies && npm pkg delete scripts && npm install --omit=dev && npm shrinkwrap && npm pack && copy package.log package.json && npm run deepCleanBuild",
     "checkDependencies": "npx npm-check-updates",
-    "updateDependencies": "npx npm-check-updates -u && npm install && npm run cleanBuild",
+    "updateDependencies": "npx npm-check-updates -u && npm install && npm run cleanBuild && npm link",
     "updateMatter:latest": "npm run deepClean && npm install @project-chip/matter-node.js@latest @project-chip/matter.js@latest && npm install && npm run build",
     "updateMatter:dev": "npm run deepClean && npm install @project-chip/matter-node.js@dev @project-chip/matter.js@dev && npm install && npm run build",
     "updateMatter:loc": "npm run deepClean && npm install ../matter.js/packages/matter-node.js ../matter.js/packages/matter.js && npm install && npm run build",
@@ -144,6 +144,6 @@
     "prettier": "3.3.3",
     "ts-jest": "29.2.5",
     "typescript": "5.6.3",
-    "typescript-eslint": "8.8.1"
+    "typescript-eslint": "8.9.0"
   }
 }
