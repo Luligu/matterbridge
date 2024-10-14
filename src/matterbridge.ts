@@ -402,11 +402,11 @@ export class Matterbridge extends EventEmitter {
     await this.logNodeAndSystemInfo();
     this.log.notice(
       `Matterbridge version ${this.matterbridgeVersion} ` +
-      `${hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge') ? 'mode bridge ' : ''}` +
-      `${hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge') ? 'mode childbridge ' : ''}` +
-      `${hasParameter('controller') ? 'mode controller ' : ''}` +
-      `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}` +
-      `running on ${this.systemInformation.osType} (v.${this.systemInformation.osRelease}) platform ${this.systemInformation.osPlatform} arch ${this.systemInformation.osArch}`,
+        `${hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge') ? 'mode bridge ' : ''}` +
+        `${hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge') ? 'mode childbridge ' : ''}` +
+        `${hasParameter('controller') ? 'mode controller ' : ''}` +
+        `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}` +
+        `running on ${this.systemInformation.osType} (v.${this.systemInformation.osRelease}) platform ${this.systemInformation.osPlatform} arch ${this.systemInformation.osArch}`,
     );
 
     // Check node version and throw error
@@ -2227,6 +2227,7 @@ export class Matterbridge extends EventEmitter {
    * @param hardwareVersionString - The hardware version string of the device (optional).
    * @returns The storage context for the commissioning server.
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected async createCommissioningServerContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string): Promise<StorageContext<any>> {
     if (!this.storageManager) throw new Error('No storage manager initialized');
     this.log.debug(`Creating commissioning server storage context for ${plg}${pluginName}${db}`);
@@ -2262,6 +2263,7 @@ export class Matterbridge extends EventEmitter {
    * @returns The commissioning server context.
    * @throws Error if the BasicInformationCluster is not found.
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected async importCommissioningServerContext(pluginName: string, device: MatterbridgeDevice): Promise<StorageContext<any>> {
     this.log.debug(`Importing matter commissioning server storage context from device for ${plg}${pluginName}${db}`);
     const basic = device.getClusterServer(BasicInformationCluster);
@@ -2398,14 +2400,14 @@ export class Matterbridge extends EventEmitter {
           peerNodeId: session.peerNodeId.toString(),
           fabric: session.fabric
             ? {
-              fabricIndex: session.fabric.fabricIndex,
-              fabricId: session.fabric.fabricId.toString(),
-              nodeId: session.fabric.nodeId.toString(),
-              rootNodeId: session.fabric.rootNodeId.toString(),
-              rootVendorId: session.fabric.rootVendorId,
-              rootVendorName: this.getVendorIdName(session.fabric.rootVendorId),
-              label: session.fabric.label,
-            }
+                fabricIndex: session.fabric.fabricIndex,
+                fabricId: session.fabric.fabricId.toString(),
+                nodeId: session.fabric.nodeId.toString(),
+                rootNodeId: session.fabric.rootNodeId.toString(),
+                rootVendorId: session.fabric.rootVendorId,
+                rootVendorName: this.getVendorIdName(session.fabric.rootVendorId),
+                label: session.fabric.label,
+              }
             : undefined,
           isPeerActive: session.isPeerActive,
           secure: session.secure,
