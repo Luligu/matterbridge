@@ -28,6 +28,7 @@ Feel free to join!
 - [matterbridge]: Preliminary code update to move to edge (matter.js new API).
 - [matterbridgeDevice]: Refactor Thermostat cluster methods to accept minHeatSetpointLimit, maxHeatSetpointLimit, minCoolSetpointLimit and maxCoolSetpointLimit.
 - [config]: The config is rewritten only after onStart and no more after onConfigure (after the plugin starts is possible to change the config and it will not be rewritten after the plugin configuration).
+- [package]: Removed EveHistory.
 - [package]: Update dependencies.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
