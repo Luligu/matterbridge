@@ -45,7 +45,7 @@ RUN npm ci && npm link matterbridge && npm run build && npm shrinkwrap && npm pa
 WORKDIR /matterbridge-eve-door
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-door.git .
 # COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
-RUN npm ci && npm run build && npm shrinkwrap && npm pack
+RUN npm ci && npm link matterbridge && npm run build && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-eve-motion
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-motion.git .
@@ -55,7 +55,7 @@ RUN npm ci && npm link matterbridge && npm run build && npm shrinkwrap && npm pa
 WORKDIR /matterbridge-eve-energy
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-energy.git .
 # COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
-RUN npm ci && npm run build && npm shrinkwrap && npm pack
+RUN npm ci && npm link matterbridge && npm run build && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-eve-room
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-room.git .
