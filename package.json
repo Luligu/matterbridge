@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.6.0-dev.4",
+  "version": "1.6.0-dev.5",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -128,6 +128,7 @@
     "express": "4.21.1",
     "glob": "11.0.0",
     "https": "1.0.0",
+    "matter-history": "1.1.17-dev.4",
     "node-ansi-logger": "3.0.0",
     "node-persist-manager": "1.0.8",
     "ws": "8.18.0"
