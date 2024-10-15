@@ -162,7 +162,7 @@ interface MatterbridgeDeviceCommands {
   // changeToMode: MakeMandatory<ClusterServerHandlers<typeof ModeSelect.Complete>['changeToMode']>;
   changeToMode: MakeMandatory<ClusterServerHandlers<typeof DeviceEnergyManagementMode.Complete>['changeToMode']>;
 
-  // step: MakeMandatory<ClusterServerHandlers<typeof FanControl.Complete>['step']>; // Rev > 2
+  step: MakeMandatory<ClusterServerHandlers<typeof FanControl.Complete>['step']>;
 
   suppressAlarm: MakeMandatory<ClusterServerHandlers<typeof BooleanStateConfiguration.Complete>['suppressAlarm']>;
   enableDisableAlarm: MakeMandatory<ClusterServerHandlers<typeof BooleanStateConfiguration.Complete>['enableDisableAlarm']>;
@@ -408,75 +408,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Create asyncronously a device with one or more device types and with the required cluster servers and the specified cluster servers.
-   *
-   * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The device types to add.
-   * @param {EndpointOptions} [options={}] - The options for the device.
-   * @param {ClusterId[]} clusterServerList - The list of cluster IDs to include.
-   * @param {boolean} [debug=false] - The debug level for the device.
-   * @returns {Promise<MatterbridgeDevice>} The MatterbridgeDevice instance.
-   *
-  static async createWithClusterServer(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, clusterServerList: ClusterId[] = [], debug = false): Promise<MatterbridgeDevice> {
-  attributeInitialValues?: Record<ClusterId, AttributeInitialValues<any>>  
-  const device = new MatterbridgeDevice(definition, options, debug);
-    if (Array.isArray(definition)) {
-      definition.forEach((deviceType) => {
-        deviceType.requiredServerClusters.forEach((clusterId) => {
-          if (!clusterServerList.includes(clusterId)) clusterServerList.push(clusterId);
-        });
-      });
-    } else {
-      definition.requiredServerClusters.forEach((clusterId) => {
-        if (!clusterServerList.includes(clusterId)) clusterServerList.push(clusterId);
-      });
-    }
-    device.log.debug(`createWithClusterServer:`);
-    const deviceTypes = device.getDeviceTypes();
-    deviceTypes.forEach((deviceType) => {
-      device.log.debug(`- with deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
-    });
-    clusterServerList.forEach((clusterId) => {
-      device.log.debug(`- with cluster: ${hk}${clusterId}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
-    });
-    device.addClusterServerFromList(device, clusterServerList);
-    // TODO must by typed and tested
-    Object.entries(options).forEach(([key, value]) => {
-      if (key === 'basicInformation') {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const basicInformation = value as any;
-        device.createDefaultBasicInformationClusterServer(
-          basicInformation.deviceName,
-          basicInformation.serialNumber,
-          basicInformation.vendorId,
-          basicInformation.vendorName,
-          basicInformation.productId,
-          basicInformation.productName,
-          basicInformation.softwareVersion,
-          basicInformation.softwareVersionString,
-          basicInformation.hardwareVersion,
-          basicInformation.hardwareVersionString,
-        );
-      } else if (key === 'bridgedDeviceBasicInformation') {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const bridgedDeviceBasicInformation = value as any;
-        device.createDefaultBridgedDeviceBasicInformationClusterServer(
-          bridgedDeviceBasicInformation.deviceName,
-          bridgedDeviceBasicInformation.serialNumber,
-          bridgedDeviceBasicInformation.vendorId,
-          bridgedDeviceBasicInformation.vendorName,
-          bridgedDeviceBasicInformation.productName,
-          bridgedDeviceBasicInformation.softwareVersion,
-          bridgedDeviceBasicInformation.softwareVersionString,
-          bridgedDeviceBasicInformation.hardwareVersion,
-          bridgedDeviceBasicInformation.hardwareVersionString,
-        );
-      }
-    });
-    return device;
-  }
-  */
-
-  /**
    * Adds a device type to the list of device types of the MatterbridgeDevice endpoint.
    * If the device type is not already present in the list, it will be added.
    *
@@ -585,7 +516,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     endpoint.getDeviceTypes().forEach((deviceType) => {
       this.log.debug(`- for deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
       deviceType.optionalServerClusters.forEach((clusterId) => {
-        if (!optionalServerList.includes(clusterId) && !endpoint.getClusterClientById(clusterId)) optionalServerList.push(clusterId);
+        if (!optionalServerList.includes(clusterId) && !endpoint.getClusterServerById(clusterId)) optionalServerList.push(clusterId);
       });
     });
     optionalServerList.forEach((clusterId) => {
@@ -614,6 +545,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(Thermostat.Cluster.id)) endpoint.addClusterServer(this.getDefaultThermostatClusterServer());
     if (includeServerList.includes(TimeSynchronization.Cluster.id)) endpoint.addClusterServer(this.getDefaultTimeSyncClusterServer());
     if (includeServerList.includes(WindowCovering.Cluster.id)) endpoint.addClusterServer(this.getDefaultWindowCoveringClusterServer());
+    if (includeServerList.includes(FanControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultFanControlClusterServer());
     if (includeServerList.includes(TemperatureMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultTemperatureMeasurementClusterServer());
     if (includeServerList.includes(RelativeHumidityMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultRelativeHumidityMeasurementClusterServer());
     if (includeServerList.includes(PressureMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultPressureMeasurementClusterServer());
@@ -623,7 +555,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(OccupancySensing.Cluster.id)) endpoint.addClusterServer(this.getDefaultOccupancySensingClusterServer());
     if (includeServerList.includes(IlluminanceMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer());
     if (includeServerList.includes(PowerSource.Cluster.id)) endpoint.addClusterServer(this.getDefaultPowerSourceWiredClusterServer());
-    // if (includeServerList.includes(EveHistory.Cluster.id)) endpoint.addClusterServer(MatterHistory.getEveHistoryClusterServer());
     if (includeServerList.includes(PowerTopology.Cluster.id)) endpoint.addClusterServer(this.getDefaultPowerTopologyClusterServer());
     if (includeServerList.includes(ElectricalPowerMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalPowerMeasurementClusterServer());
     if (includeServerList.includes(ElectricalEnergyMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalEnergyMeasurementClusterServer());
@@ -639,7 +570,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(Pm10ConcentrationMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultPm10ConcentrationMeasurementClusterServer());
     if (includeServerList.includes(RadonConcentrationMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultRadonConcentrationMeasurementClusterServer());
     if (includeServerList.includes(TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultTvocMeasurementClusterServer());
-    if (includeServerList.includes(FanControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultFanControlClusterServer());
     if (includeServerList.includes(DeviceEnergyManagement.Cluster.id)) endpoint.addClusterServer(this.getDefaultDeviceEnergyManagementClusterServer());
     if (includeServerList.includes(DeviceEnergyManagementMode.Cluster.id)) endpoint.addClusterServer(this.getDefaultDeviceEnergyManagementModeClusterServer());
     return endpoint;
@@ -654,70 +584,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   getChildEndpointByName(endpointName: string): Endpoint | undefined {
     return this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName);
   }
-
-  /**
-   * Retrieves a child endpoint name.
-   *
-   * @param {Endpoint} child - The child endpoint to retrieve the name.
-   * @returns {string | undefined} The child endpoint name, or undefined if not found.
-   *
-   * @deprecated This method is deprecated and will be removed in a future version. Use endpoint.uniqueStorageKey instead.
-  getChildEndpointName(child: Endpoint): string | undefined {
-    // Find the endpoint name (l1...)
-    const labelList = child.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
-    if (!labelList) return undefined;
-    const endpointNameLabel = labelList.find((entry) => entry.label === 'endpointName');
-    if (endpointNameLabel) return endpointNameLabel.value;
-  }
-   */
-
-  /**
-   * Sets the endpoint name for a child endpoint.
-   *
-   * @param {Endpoint} child - The child endpoint.
-   * @param {string} endpointName - The name of the endpoint.
-   *
-   * @deprecated This method is deprecated and will be removed in a future version.
-  setChildEndpointName(child: Endpoint, endpointName: string) {
-    child.addFixedLabel('endpointName', endpointName);
-  }
-   */
-
-  /**
-   * Retrieves the label associated with the specified endpoint number.
-   * @param {EndpointNumber | undefined} endpointNumber - The number of the endpoint.
-   * @returns {string | undefined} The label associated with the endpoint number, or undefined if not found.
-   *
-   * @deprecated This method is deprecated and will be removed in a future version.
-  getEndpointLabel(endpointNumber: EndpointNumber | undefined): string | undefined {
-    if (!endpointNumber) return undefined;
-    const labelList = this.getChildEndpoint(endpointNumber)?.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
-    if (!labelList) return undefined;
-    for (const entry of labelList) {
-      if (entry.label === 'endpointName') return entry.value;
-    }
-  }
-   */
-
-  /**
-   * Retrieves the child endpoint with the specified label.
-   *
-   * @param {string} label - The label of the child endpoint to retrieve.
-   * @returns {Endpoint | undefined} The child endpoint with the specified label, or undefined if not found.
-   *
-   * @deprecated This method is deprecated and will be removed in a future version. Use getChildEndpointByName instead.
-  getChildEndpointWithLabel(label: string): Endpoint | undefined {
-    for (const endpoint of this.getChildEndpoints()) {
-      const labelList = endpoint.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
-      if (!labelList) return undefined;
-      let endpointName = '';
-      for (const entry of labelList) {
-        if (entry.label === 'endpointName') endpointName = entry.value;
-      }
-      if (endpointName === label) return endpoint;
-    }
-  }
-   */
 
   /**
    * Retrieves the value of the specified attribute from the given endpoint and cluster.
@@ -3007,7 +2873,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   getDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
     return ClusterServer(
-      FanControlCluster.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto /* , FanControl.Feature.Step*/),
+      FanControlCluster.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step),
       {
         fanMode,
         fanModeSequence: FanControl.FanModeSequence.OffLowMedHighAuto,
@@ -3018,12 +2884,10 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         speedCurrent: 0,
       },
       {
-        /*
-        step: async ({ request, attributes }) => {
-          this.log.debug('Matter command: step', request);
-          await this.commandHandler.executeHandler('step', { request, attributes });
+        step: async (data) => {
+          this.log.debug('Matter command: step', data.request);
+          await this.commandHandler.executeHandler('step', data);
         },
-        */
       },
       {},
     );

@@ -144,7 +144,7 @@ export class Matterbridge extends EventEmitter {
   private matterbrideLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
   private matterLoggerFile = 'matter' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
   protected plugins!: PluginManager;
-  private devices!: DeviceManager;
+  protected devices!: DeviceManager;
   private nodeStorage: NodeStorageManager | undefined;
   private nodeContext: NodeStorage | undefined;
   private matterStorageName = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.json';
@@ -155,8 +155,6 @@ export class Matterbridge extends EventEmitter {
   private initialized = false;
   private execRunningCount = 0;
   private startMatterInterval: NodeJS.Timeout | undefined;
-  private cleanupTimeout1: NodeJS.Timeout | undefined;
-  private cleanupTimeout2: NodeJS.Timeout | undefined;
   private checkUpdateInterval: NodeJS.Timeout | undefined;
   private configureTimeout: NodeJS.Timeout | undefined;
   private reachabilityTimeout: NodeJS.Timeout | undefined;
