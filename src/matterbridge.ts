@@ -176,8 +176,8 @@ export class Matterbridge extends EventEmitter {
   protected port = 5540; // first commissioning server port
   protected passcode?: number; // first commissioning server passcode
   protected discriminator?: number; // first commissioning server discriminator
-  private storageManager: StorageManager | undefined;
-  private matterbridgeContext: StorageContext | undefined;
+  protected storageManager: StorageManager | undefined;
+  protected matterbridgeContext: StorageContext | undefined;
   private mattercontrollerContext: StorageContext | undefined;
   private matterServer: MatterServer | undefined;
   private matterAggregator: Aggregator | undefined;
@@ -2227,8 +2227,7 @@ export class Matterbridge extends EventEmitter {
    * @param hardwareVersionString - The hardware version string of the device (optional).
    * @returns The storage context for the commissioning server.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected async createCommissioningServerContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string): Promise<StorageContext<any>> {
+  protected async createCommissioningServerContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string): Promise<StorageContext> {
     if (!this.storageManager) throw new Error('No storage manager initialized');
     this.log.debug(`Creating commissioning server storage context for ${plg}${pluginName}${db}`);
     const random = 'CS' + CryptoNode.getRandomData(8).toHex();
@@ -2263,8 +2262,7 @@ export class Matterbridge extends EventEmitter {
    * @returns The commissioning server context.
    * @throws Error if the BasicInformationCluster is not found.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected async importCommissioningServerContext(pluginName: string, device: MatterbridgeDevice): Promise<StorageContext<any>> {
+  protected async importCommissioningServerContext(pluginName: string, device: MatterbridgeDevice): Promise<StorageContext> {
     this.log.debug(`Importing matter commissioning server storage context from device for ${plg}${pluginName}${db}`);
     const basic = device.getClusterServer(BasicInformationCluster);
     if (!basic) {
