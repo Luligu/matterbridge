@@ -202,7 +202,10 @@ test
 migrationV8.txt
 migrationV8-answered.txt
 matterbridgeEdge.ts
-matterbridgeDeviceEdge.ts
+matterbridgeEdge.test.ts
+matterbridgeEndpoint.ts
+matterbridgeEndpoint.test.ts
+matterstorage
 
 TODO.md
 CODEOWNERS

@@ -22,6 +22,7 @@
  */
 
 import {
+  ActionsCluster,
   AirQuality,
   AirQualityCluster,
   BasicInformationCluster,
@@ -246,6 +247,14 @@ export const deviceEnergyManagement = DeviceTypeDefinition({
   revision: 1,
   requiredServerClusters: [DeviceEnergyManagement.Cluster.id, DeviceEnergyManagementMode.Cluster.id],
   optionalServerClusters: [],
+});
+
+export const bridge = DeviceTypeDefinition({
+  name: 'MA-aggregator',
+  code: 0x000e,
+  deviceClass: DeviceClasses.Dynamic,
+  revision: 1,
+  optionalServerClusters: [ActionsCluster.id],
 });
 
 export const powerSource = DeviceTypeDefinition({
@@ -539,7 +548,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     // if (includeServerList.includes(ScenesManagement.Cluster.id)) endpoint.addClusterServer(this.getDefaultScenesClusterServer());
     if (includeServerList.includes(OnOff.Cluster.id)) endpoint.addClusterServer(this.getDefaultOnOffClusterServer());
     if (includeServerList.includes(LevelControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultLevelControlClusterServer());
-    if (includeServerList.includes(ColorControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultCompleteColorControlClusterServer());
+    if (includeServerList.includes(ColorControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultColorControlClusterServer());
     if (includeServerList.includes(Switch.Cluster.id)) endpoint.addClusterServer(this.getDefaultSwitchClusterServer());
     if (includeServerList.includes(DoorLock.Cluster.id)) endpoint.addClusterServer(this.getDefaultDoorLockClusterServer());
     if (includeServerList.includes(Thermostat.Cluster.id)) endpoint.addClusterServer(this.getDefaultThermostatClusterServer());
@@ -1276,95 +1285,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Get a default color control cluster server.
-   * @deprecated This method is deprecated and will be removed in a future version. Use getDefaultCompleteColorControlClusterServer.
-   *
-   * @param currentHue - The current hue value.
-   * @param currentSaturation - The current saturation value.
-   * @param colorTemperatureMireds - The color temperature in mireds.
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
-   */
-  getDefaultColorControlClusterServer(currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
-    return ClusterServer(
-      ColorControlCluster.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature),
-      {
-        colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
-        options: {
-          executeIfOff: false,
-        },
-        numberOfPrimaries: null,
-        enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
-        colorCapabilities: { xy: false, hueSaturation: true, colorLoop: false, enhancedHue: false, colorTemperature: true },
-        currentHue,
-        currentSaturation,
-        colorTemperatureMireds,
-        colorTempPhysicalMinMireds,
-        colorTempPhysicalMaxMireds,
-      },
-      {
-        moveToHue: async ({ request, attributes, endpoint }) => {
-          this.log.debug('Matter command: moveToHue request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal());
-          // attributes.currentHue.setLocal(request.hue);
-          this.commandHandler.executeHandler('moveToHue', { request, attributes, endpoint });
-        },
-        moveHue: async () => {
-          this.log.error('Matter command: moveHue not implemented');
-        },
-        stepHue: async () => {
-          this.log.error('Matter command: stepHue not implemented');
-        },
-        moveToSaturation: async ({ request, attributes, endpoint }) => {
-          this.log.debug('Matter command: moveToSaturation request:', request, 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
-          // attributes.currentSaturation.setLocal(request.saturation);
-          this.commandHandler.executeHandler('moveToSaturation', { request, attributes, endpoint });
-        },
-        moveSaturation: async () => {
-          this.log.error('Matter command: moveSaturation not implemented');
-        },
-        stepSaturation: async () => {
-          this.log.error('Matter command: stepSaturation not implemented');
-        },
-        moveToHueAndSaturation: async ({ request, attributes, endpoint }) => {
-          this.log.debug('Matter command: moveToHueAndSaturation request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal(), 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
-          // attributes.currentHue.setLocal(request.hue);
-          // attributes.currentSaturation.setLocal(request.saturation);
-          this.commandHandler.executeHandler('moveToHueAndSaturation', { request, attributes, endpoint });
-        },
-        stopMoveStep: async () => {
-          this.log.error('Matter command: stopMoveStep not implemented');
-        },
-        moveToColorTemperature: async ({ request, attributes, endpoint }) => {
-          this.log.debug('Matter command: moveToColorTemperature request:', request, 'attributes.colorTemperatureMireds:', attributes.colorTemperatureMireds.getLocal());
-          // attributes.colorTemperatureMireds.setLocal(request.colorTemperatureMireds);
-          this.commandHandler.executeHandler('moveToColorTemperature', { request, attributes, endpoint });
-        },
-        moveColorTemperature: async () => {
-          this.log.error('Matter command: moveColorTemperature not implemented');
-        },
-        stepColorTemperature: async () => {
-          this.log.error('Matter command: stepColorTemperature not implemented');
-        },
-      },
-      {},
-    );
-  }
-  /**
-   * Creates a default color control cluster server.
-   * @deprecated This method is deprecated and will be removed in a future version. Use createDefaultCompleteColorControlClusterServer.
-   *
-   * @param currentHue - The current hue value.
-   * @param currentSaturation - The current saturation value.
-   * @param colorTemperatureMireds - The color temperature in mireds.
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
-   */
-  createDefaultColorControlClusterServer(currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
-    this.addClusterServer(this.getDefaultColorControlClusterServer(currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
-  }
-
-  /**
-   * Get a default color control cluster server.
-   * @deprecated This method is deprecated and will be removed in a future version. Use getDefaultCompleteColorControlClusterServer.
    *
    * @param currentX - The current X value.
    * @param currentY - The current Y value.
@@ -1374,105 +1294,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
    * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
    */
-  getDefaultXYColorControlClusterServer(currentX = 0, currentY = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
-    return ClusterServer(
-      ColorControlCluster.with(ColorControl.Feature.Xy, ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature),
-      {
-        colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
-        options: {
-          executeIfOff: false,
-        },
-        numberOfPrimaries: null,
-        enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
-        colorCapabilities: { xy: true, hueSaturation: true, colorLoop: false, enhancedHue: false, colorTemperature: true },
-        currentHue: 0,
-        currentSaturation: 0,
-        currentX,
-        currentY,
-        colorTemperatureMireds,
-        colorTempPhysicalMinMireds,
-        colorTempPhysicalMaxMireds,
-      },
-      {
-        moveToColor: async (data) => {
-          this.log.debug('Matter command: moveToColor request:', data.request, 'attributes.currentHue:', data.attributes.currentX.getLocal(), data.attributes.currentY.getLocal());
-          this.commandHandler.executeHandler('moveToColor', data);
-        },
-        moveColor: async () => {
-          this.log.error('Matter command: moveColor not implemented');
-        },
-        stepColor: async () => {
-          this.log.error('Matter command: stepColor not implemented');
-        },
-        moveToHue: async ({ request, attributes, endpoint }) => {
-          this.log.debug('Matter command: moveToHue request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal());
-          this.commandHandler.executeHandler('moveToHue', { request, attributes, endpoint });
-        },
-        moveHue: async () => {
-          this.log.error('Matter command: moveHue not implemented');
-        },
-        stepHue: async () => {
-          this.log.error('Matter command: stepHue not implemented');
-        },
-        moveToSaturation: async ({ request, attributes, endpoint }) => {
-          this.log.debug('Matter command: moveToSaturation request:', request, 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
-          this.commandHandler.executeHandler('moveToSaturation', { request, attributes, endpoint });
-        },
-        moveSaturation: async () => {
-          this.log.error('Matter command: moveSaturation not implemented');
-        },
-        stepSaturation: async () => {
-          this.log.error('Matter command: stepSaturation not implemented');
-        },
-        moveToHueAndSaturation: async ({ request, attributes, endpoint }) => {
-          this.log.debug('Matter command: moveToHueAndSaturation request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal(), 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
-          this.commandHandler.executeHandler('moveToHueAndSaturation', { request, attributes, endpoint });
-        },
-        stopMoveStep: async () => {
-          this.log.error('Matter command: stopMoveStep not implemented');
-        },
-        moveToColorTemperature: async ({ request, attributes, endpoint }) => {
-          this.log.debug('Matter command: moveToColorTemperature request:', request, 'attributes.colorTemperatureMireds:', attributes.colorTemperatureMireds.getLocal());
-          this.commandHandler.executeHandler('moveToColorTemperature', { request, attributes, endpoint });
-        },
-        moveColorTemperature: async () => {
-          this.log.error('Matter command: moveColorTemperature not implemented');
-        },
-        stepColorTemperature: async () => {
-          this.log.error('Matter command: stepColorTemperature not implemented');
-        },
-      },
-      {},
-    );
-  }
-  /**
-   * Creates a default color control cluster server.
-   * @deprecated This method is deprecated and will be removed in a future version. Use createDefaultCompleteColorControlClusterServer.
-   *
-   * @param currentX - The current X value.
-   * @param currentY - The current Y value.
-   * @param currentHue - The current hue value.
-   * @param currentSaturation - The current saturation value.
-   * @param colorTemperatureMireds - The color temperature in mireds.
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
-   */
-  createDefaultXYColorControlClusterServer(currentX = 0, currentY = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
-    this.addClusterServer(this.getDefaultXYColorControlClusterServer(currentX, currentY, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
-  }
-
-  /**
-   * Get a default color control cluster server.
-   *
-   * @param currentX - The current X value.
-   * @param currentY - The current Y value.
-   * @param currentHue - The current hue value.
-   * @param currentSaturation - The current saturation value.
-   * @param colorTemperatureMireds - The color temperature in mireds.
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
-   */
-  getDefaultCompleteColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+  getDefaultColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     return ClusterServer(
       ColorControlCluster.with(ColorControl.Feature.Xy, ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature),
       {
@@ -1554,8 +1376,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
    * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
    */
-  createDefaultCompleteColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
-    this.addClusterServer(this.getDefaultCompleteColorControlClusterServer(currentX, currentY, currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
+  createDefaultColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+    this.addClusterServer(this.getDefaultColorControlClusterServer(currentX, currentY, currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
   }
 
   /**
