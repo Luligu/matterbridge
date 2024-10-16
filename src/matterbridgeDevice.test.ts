@@ -513,7 +513,7 @@ describe('Matterbridge device', () => {
     device.createDefaultLevelControlClusterServer();
     device.createDefaultColorControlClusterServer();
     invokeCommands(device.getClusterServerById(ColorControl.Complete.id));
-    device.createDefaultXYColorControlClusterServer();
+    device.createDefaultColorControlClusterServer();
     device.createDefaultWindowCoveringClusterServer();
     device.createDefaultDoorLockClusterServer();
     device.createDefaultSwitchClusterServer();
@@ -758,9 +758,7 @@ describe('Matterbridge device', () => {
     });
     invokeCommands(colorCluster);
 
-    device.createDefaultXYColorControlClusterServer();
     device.createDefaultColorControlClusterServer();
-    device.createDefaultCompleteColorControlClusterServer();
     device.configureColorControlCluster(true, true, true, ColorControl.ColorMode.CurrentHueAndCurrentSaturation);
     expect(device.getAttribute(ColorControlCluster.id, 'colorMode')).toBe(ColorControl.ColorMode.CurrentHueAndCurrentSaturation);
     expect(device.getAttribute(ColorControlCluster.id, 'colorMode')).toBe(ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation);
