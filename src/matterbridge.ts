@@ -69,6 +69,7 @@ import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
 import { Specification } from '@project-chip/matter-node.js/model';
+import { wsMessageHandler } from './matterbridgeWebsocket.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -79,7 +80,7 @@ const typ = '\u001B[38;5;207m';
  * Represents the Matterbridge application.
  */
 export class Matterbridge extends EventEmitter {
-  public systemInformation: SystemInformation = {
+  protected systemInformation: SystemInformation = {
     interfaceName: '',
     macAddress: '',
     ipv4Address: '',
@@ -96,7 +97,7 @@ export class Matterbridge extends EventEmitter {
     systemUptime: '',
   };
 
-  public matterbridgeInformation: MatterbridgeInformation = {
+  protected matterbridgeInformation: MatterbridgeInformation = {
     homeDirectory: '',
     rootDirectory: '',
     matterbridgeDirectory: '',
@@ -130,25 +131,25 @@ export class Matterbridge extends EventEmitter {
   public globalModulesDirectory = '';
   public matterbridgeVersion = '';
   public matterbridgeLatestVersion = '';
-  public matterbridgeQrPairingCode: string | undefined = undefined;
-  public matterbridgeManualPairingCode: string | undefined = undefined;
-  public matterbridgeFabricInformations: SanitizedExposedFabricInformation[] = [];
-  public matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
-  public matterbridgePaired = false;
-  public matterbridgeConnected = false;
-  public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
-  public restartMode: 'service' | 'docker' | '' = '';
-  public profile = getParameter('profile');
+  protected matterbridgeQrPairingCode: string | undefined = undefined;
+  protected matterbridgeManualPairingCode: string | undefined = undefined;
+  protected matterbridgeFabricInformations: SanitizedExposedFabricInformation[] = [];
+  protected matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
+  protected matterbridgePaired = false;
+  protected matterbridgeConnected = false;
+  protected bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
+  protected restartMode: 'service' | 'docker' | '' = '';
+  protected profile = getParameter('profile');
 
   public log!: AnsiLogger;
-  private matterbrideLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
-  private matterLoggerFile = 'matter' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
+  protected matterbrideLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
+  protected matterLoggerFile = 'matter' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
   protected plugins!: PluginManager;
   protected devices!: DeviceManager;
-  private nodeStorage: NodeStorageManager | undefined;
-  private nodeContext: NodeStorage | undefined;
-  private matterStorageName = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.json';
-  private nodeStorageName = 'storage' + (getParameter('profile') ? '.' + getParameter('profile') : '');
+  protected nodeStorage: NodeStorageManager | undefined;
+  protected nodeContext: NodeStorage | undefined;
+  protected matterStorageName = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.json';
+  protected nodeStorageName = 'storage' + (getParameter('profile') ? '.' + getParameter('profile') : '');
 
   // Cleanup
   private hasCleanupStarted = false;
@@ -187,7 +188,11 @@ export class Matterbridge extends EventEmitter {
   // We load asyncronously so is private
   protected constructor() {
     super();
+    // Bind the handler to the instance
+    this.matterbridgeMessageHandler = wsMessageHandler.bind(this);
   }
+
+  public matterbridgeMessageHandler: (client: WebSocket, message: WebSocket.RawData) => Promise<void>;
 
   /** ***********************************************************************************************************************************/
   /**                                              loadInstance() and cleanup() methods                                                 */
@@ -2758,6 +2763,12 @@ export class Matterbridge extends EventEmitter {
 
       ws.on('message', (message) => {
         this.log.debug(`WebSocket client message: ${message}`);
+        this.matterbridgeMessageHandler(ws, message);
+      });
+
+      ws.on('ping', () => {
+        this.log.debug('WebSocket client ping');
+        ws.pong();
       });
 
       ws.on('close', () => {
@@ -2825,11 +2836,8 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridgeQrPairingCode;
       this.matterbridgeInformation.matterbridgeManualPairingCode = this.matterbridgeManualPairingCode;
       this.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridgeFabricInformations;
-      // this.matterbridgeInformation.matterbridgeSessionInformations = this.matterbridgeSessionInformations;
       this.matterbridgeInformation.matterbridgeSessionInformations = Array.from(this.matterbridgeSessionInformations.values());
-      // console.log('this.matterbridgeSessionInformations:', this.matterbridgeSessionInformations);
-      if (this.profile) this.matterbridgeInformation.profile = this.profile;
-      // const response = { wssHost, ssl: hasParameter('ssl'), qrPairingCode, manualPairingCode, systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
+      this.matterbridgeInformation.profile = this.profile;
       const response = { wssHost, ssl: hasParameter('ssl'), systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
       // this.log.debug('Response:', debugStringify(response));
       res.json(response);

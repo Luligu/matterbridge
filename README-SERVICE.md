@@ -100,7 +100,7 @@ sudo systemctl disable matterbridge.service
 ### View the log of Matterbridge in real time (this will show the log with colors)
 
 ```
-sudo journalctl -u matterbridge.service -f --output cat
+sudo journalctl -u matterbridge.service -n 100 -f --output cat
 ```
 
 ### Delete the logs older then 3 days (all of them not only the ones of Matterbridge!)
