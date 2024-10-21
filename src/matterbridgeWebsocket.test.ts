@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -27,11 +26,11 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   beforeAll(async () => {
     // Spy on and mock the AnsiLogger.log method
     loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
-      console.error(`Mocked log: ${level} - ${message}`, ...parameters);
+      // console.error(`Mocked log: ${level} - ${message}`, ...parameters);
     });
     // Spy on and mock console.log
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
-      console.error(args);
+      // console.error(args);
     });
   });
 
@@ -233,17 +232,17 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `WebSocket client disconnected`);
   }, 60000);
 
-  test('Remove plugin 1', async () => {
+  test('Remove mock plugin 1', async () => {
     await (matterbridge as any).plugins.remove('./src/mock/plugin1');
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Removed plugin ${plg}matterbridge-mock1${nf}`);
   }, 60000);
 
-  test('Remove plugin 2', async () => {
+  test('Remove mock plugin 2', async () => {
     await (matterbridge as any).plugins.remove('./src/mock/plugin2');
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Removed plugin ${plg}matterbridge-mock2${nf}`);
   }, 60000);
 
-  test('Remove plugin 3', async () => {
+  test('Remove mock plugin 3', async () => {
     await (matterbridge as any).plugins.remove('./src/mock/plugin3');
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Removed plugin ${plg}matterbridge-mock3${nf}`);
   }, 60000);
