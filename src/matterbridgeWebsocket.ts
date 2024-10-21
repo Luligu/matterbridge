@@ -34,10 +34,11 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
   try {
     data = JSON.parse(message.toString());
     if (!isValidNumber(data.id) || !isValidString(data.dst) || !isValidString(data.src) || !isValidString(data.method) || !isValidObject(data.params) || data.dst !== 'Matterbridge') {
-      this.log.error(`Invalid message from websocket client ${client.url}: ${debugStringify(data)}`);
+      this.log.error(`Invalid message from websocket client: ${debugStringify(data)}`);
       client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', error: 'Invalid message' }));
       return;
     }
+    this.log.debug(`Received message from websocket client: ${debugStringify(data)}`);
     if (data.method === '/api/settings') {
       this.matterbridgeInformation.bridgeMode = this.bridgeMode;
       this.matterbridgeInformation.restartMode = this.restartMode;
@@ -56,8 +57,12 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
       const response = { systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
       client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', response }));
       return;
+    } else if (data.method === '/api/plugins') {
+      const response = await this.getBaseRegisteredPlugins();
+      client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', response }));
+      return;
     } else if (data.method === '/api/devices') {
-      const data: { pluginName: string; type: string; endpoint: EndpointNumber | undefined; name: string; serial: string; uniqueId: string; cluster: string }[] = [];
+      const devices: { pluginName: string; type: string; endpoint: EndpointNumber | undefined; name: string; serial: string; uniqueId: string; cluster: string }[] = [];
       this.devices.forEach(async (device) => {
         let name = device.getClusterServer(BasicInformationCluster)?.attributes.nodeLabel?.getLocal();
         if (!name) name = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.nodeLabel?.getLocal() ?? 'Unknown';
@@ -66,7 +71,7 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
         let uniqueId = device.getClusterServer(BasicInformationCluster)?.attributes.uniqueId?.getLocal();
         if (!uniqueId) uniqueId = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.uniqueId?.getLocal() ?? 'Unknown';
         const cluster = this.getClusterTextFromDevice(device);
-        data.push({
+        devices.push({
           pluginName: device.plugin ?? 'Unknown',
           type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
           endpoint: device.number,
@@ -76,10 +81,15 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
           cluster: cluster,
         });
       });
+      client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', response: devices }));
+      return;
+    } else {
+      this.log.error(`Invalid method from websocket client: ${debugStringify(data)}`);
+      client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', error: 'Invalid method' }));
+      return;
     }
   } catch (error) {
     this.log.error(`Error parsing message from websocket client:`, error instanceof Error ? error.message : error);
     return;
   }
-  this.log.debug(`Received message from websocket client ${client.url}: ${debugStringify(data)}`);
 }

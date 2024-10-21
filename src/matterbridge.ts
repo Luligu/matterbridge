@@ -80,7 +80,7 @@ const typ = '\u001B[38;5;207m';
  * Represents the Matterbridge application.
  */
 export class Matterbridge extends EventEmitter {
-  protected systemInformation: SystemInformation = {
+  public systemInformation: SystemInformation = {
     interfaceName: '',
     macAddress: '',
     ipv4Address: '',
@@ -97,7 +97,7 @@ export class Matterbridge extends EventEmitter {
     systemUptime: '',
   };
 
-  protected matterbridgeInformation: MatterbridgeInformation = {
+  public matterbridgeInformation: MatterbridgeInformation = {
     homeDirectory: '',
     rootDirectory: '',
     matterbridgeDirectory: '',
@@ -137,9 +137,9 @@ export class Matterbridge extends EventEmitter {
   protected matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
   protected matterbridgePaired = false;
   protected matterbridgeConnected = false;
-  protected bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
-  protected restartMode: 'service' | 'docker' | '' = '';
-  protected profile = getParameter('profile');
+  public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
+  public restartMode: 'service' | 'docker' | '' = '';
+  public profile = getParameter('profile');
 
   public log!: AnsiLogger;
   protected matterbrideLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
@@ -2466,7 +2466,7 @@ export class Matterbridge extends EventEmitter {
    * Retrieves the base registered plugins sanitized for res.json().
    * @returns {BaseRegisteredPlugin[]} A promise that resolves to an array of BaseRegisteredPlugin objects.
    */
-  private async getBaseRegisteredPlugins(): Promise<BaseRegisteredPlugin[]> {
+  protected async getBaseRegisteredPlugins(): Promise<BaseRegisteredPlugin[]> {
     const baseRegisteredPlugins: BaseRegisteredPlugin[] = [];
     for (const plugin of this.plugins) {
       baseRegisteredPlugins.push({
@@ -2769,6 +2769,10 @@ export class Matterbridge extends EventEmitter {
       ws.on('ping', () => {
         this.log.debug('WebSocket client ping');
         ws.pong();
+      });
+
+      ws.on('pong', () => {
+        this.log.debug('WebSocket client pong');
       });
 
       ws.on('close', () => {

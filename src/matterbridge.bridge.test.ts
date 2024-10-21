@@ -8,7 +8,7 @@ import { jest } from '@jest/globals';
 
 jest.mock('@project-chip/matter-node.js/util');
 
-import { AnsiLogger, db, LogLevel, nf } from 'node-ansi-logger';
+import { AnsiLogger, db, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { wait, waiter } from './utils/utils.js';
 
@@ -44,6 +44,9 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   }, 60000);
 
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+
     matterbridge = await Matterbridge.loadInstance(true);
 
     expect(matterbridge).toBeDefined();
@@ -81,6 +84,9 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect((matterbridge as any).port).toBe(5555 + 1);
     expect((matterbridge as any).passcode).toBe(123456 + 1);
     expect((matterbridge as any).discriminator).toBe(3860 + 1);
+
+    await wait(5000);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
 
     await waiter(
       'Matter server started',

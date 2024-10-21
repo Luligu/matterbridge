@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.6.0-dev.13",
+  "version": "1.6.0-dev.14",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -92,6 +92,7 @@
     "test:pluginManager": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage pluginManager.test.ts",
     "test:deviceManager": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage deviceManager.test.ts",
     "test:utils": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose utils.test.ts",
+    "test:websocket": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose  --coverage matterbridgeWebsocket.test.ts",
     "lint": "eslint --max-warnings=0 .",
     "lint:fix": "eslint --fix --max-warnings=0 .",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",

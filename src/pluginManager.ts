@@ -146,48 +146,6 @@ export class PluginManager {
   }
 
   /**
-   * Asynchronously loads and starts the registered plugins.
-   *
-   * This method is responsible for initializing and configuring all necessary plugins
-   * required by the application. It ensures that each plugin is properly loaded and
-   * configured before the application starts using them.
-   *
-   * @returns {Promise<void>} A promise that resolves when all plugins have been loaded and configured.
-   */
-  /*
-  private async startPlugins() {
-    this.forEach(async (plugin) => {
-      plugin.configJson = await this.loadConfig(plugin);
-      plugin.schemaJson = await this.loadSchema(plugin);
-      // Check if the plugin is available
-      if (!(await this.resolve(plugin.path))) {
-        this.log.error(`Plugin ${plg}${plugin.name}${er} not found or not validated. Disabling it.`);
-        plugin.enabled = false;
-        plugin.error = true;
-        return;
-      }
-      // Check if the plugin has a new version
-      this.getPluginLatestVersion(plugin); // No await do it asyncronously
-      if (!plugin.enabled) {
-        this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
-        return;
-      }
-      plugin.error = false;
-      plugin.locked = false;
-      plugin.loaded = false;
-      plugin.started = false;
-      plugin.configured = false;
-      plugin.connected = undefined;
-      plugin.registeredDevices = undefined;
-      plugin.addedDevices = undefined;
-      plugin.qrPairingCode = undefined;
-      plugin.manualPairingCode = undefined;
-      this.load(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
-    });
-  }
-  */
-
-  /**
    * Resolves the name of a plugin by loading and parsing its package.json file.
    * @param pluginPath - The path to the plugin or the path to the plugin's package.json file.
    * @returns The path to the resolved package.json file, or null if the package.json file is not found or does not contain a name.
