@@ -12,7 +12,7 @@ import { Matterbridge } from './matterbridge.js';
 import { wait, waiter } from './utils/utils.js';
 import WebSocket from 'ws';
 import { MatterbridgeDevice, onOffLight, onOffOutlet, onOffSwitch } from './matterbridgeDevice.js';
-import { Identify } from '@project-chip/matter.js/cluster';
+import { Identify } from '@project-chip/matter-node.js/cluster';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 
 // Default colors
