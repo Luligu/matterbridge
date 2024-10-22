@@ -11,6 +11,9 @@ import { AnsiLogger, db, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-
 import { Matterbridge } from './matterbridge.js';
 import { wait, waiter } from './utils/utils.js';
 import WebSocket from 'ws';
+import { MatterbridgeDevice, onOffLight, onOffOutlet, onOffSwitch } from './matterbridgeDevice.js';
+import { Identify } from '@project-chip/matter.js/cluster';
+import { RegisteredPlugin } from './matterbridgeTypes.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -62,42 +65,84 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   }, 60000);
 
   test('Add mock plugin 1', async () => {
-    // loggerLogSpy.mockRestore();
-    // consoleLogSpy.mockRestore();
-
     await (matterbridge as any).plugins.add('./src/mock/plugin1');
-    const plugins = (matterbridge as any).plugins.array();
+    const plugins: RegisteredPlugin[] = (matterbridge as any).plugins.array();
     expect(plugins).toBeDefined();
     expect(plugins.length).toBe(1);
     expect(plugins[0].name).toBe('matterbridge-mock1');
     expect(plugins[0].version).toBe('1.0.1');
     expect(plugins[0].description).toBe('Matterbridge mock plugin 1');
+    expect((matterbridge as any).plugins.size).toBe(1);
+    expect((matterbridge as any).plugins.has('matterbridge-mock1')).toBeTruthy();
+    expect((matterbridge as any).plugins.get('matterbridge-mock1')).toBeDefined();
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-mock1${nf}`);
   }, 60000);
 
   test('Add mock plugin 2', async () => {
-    // loggerLogSpy.mockRestore();
-    // consoleLogSpy.mockRestore();
-
     await (matterbridge as any).plugins.add('./src/mock/plugin2');
-    const plugins = (matterbridge as any).plugins.array();
+    const plugins: RegisteredPlugin[] = (matterbridge as any).plugins.array();
     expect(plugins).toBeDefined();
     expect(plugins.length).toBe(2);
     expect(plugins[1].name).toBe('matterbridge-mock2');
     expect(plugins[1].version).toBe('1.0.2');
     expect(plugins[1].description).toBe('Matterbridge mock plugin 2');
+    expect((matterbridge as any).plugins.size).toBe(2);
+    expect((matterbridge as any).plugins.has('matterbridge-mock2')).toBeTruthy();
+    expect((matterbridge as any).plugins.get('matterbridge-mock2')).toBeDefined();
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-mock2${nf}`);
   }, 60000);
 
   test('Add mock plugin 3', async () => {
-    // loggerLogSpy.mockRestore();
-    // consoleLogSpy.mockRestore();
-
     await (matterbridge as any).plugins.add('./src/mock/plugin3');
-    const plugins = (matterbridge as any).plugins.array();
+    const plugins: RegisteredPlugin[] = (matterbridge as any).plugins.array();
     expect(plugins).toBeDefined();
     expect(plugins.length).toBe(3);
     expect(plugins[2].name).toBe('matterbridge-mock3');
     expect(plugins[2].version).toBe('1.0.3');
     expect(plugins[2].description).toBe('Matterbridge mock plugin 3');
+    expect((matterbridge as any).plugins.size).toBe(3);
+    expect((matterbridge as any).plugins.has('matterbridge-mock3')).toBeTruthy();
+    expect((matterbridge as any).plugins.get('matterbridge-mock3')).toBeDefined();
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-mock3${nf}`);
+  }, 60000);
+
+  test('create an switch device: Switch 1 for plugin matterbridge-mock1', async () => {
+    const device = new MatterbridgeDevice(onOffSwitch);
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer(0, Identify.IdentifyType.None);
+    device.createDefaultGroupsClusterServer();
+    device.createDefaultOnOffClusterServer(false);
+    device.createDefaultBridgedDeviceBasicInformationClusterServer('Switch 1', 'SerialSwitch1', 1, 'VendorName', 'ProductName');
+    device.plugin = 'matterbridge-mock1';
+    await matterbridge.addBridgedDevice('matterbridge-mock1', device);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Adding bridged device/));
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Added and registered bridged device/));
+  }, 60000);
+
+  test('create an light device: Light 1 for plugin matterbridge-mock2', async () => {
+    const device = new MatterbridgeDevice(onOffLight);
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer(0, Identify.IdentifyType.None);
+    device.createDefaultGroupsClusterServer();
+    device.createDefaultOnOffClusterServer(false);
+    device.createDefaultBridgedDeviceBasicInformationClusterServer('Light 1', 'SerialLight1', 1, 'VendorName', 'ProductName');
+    device.plugin = 'matterbridge-mock2';
+    await matterbridge.addBridgedDevice('matterbridge-mock2', device);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Adding bridged device/));
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Added and registered bridged device/));
+  }, 60000);
+
+  test('create an outlet device: Outlet 1 for plugin matterbridge-mock3', async () => {
+    const device = new MatterbridgeDevice(onOffOutlet);
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer(0, Identify.IdentifyType.None);
+    device.createDefaultGroupsClusterServer();
+    device.createDefaultOnOffClusterServer(false);
+    device.createDefaultBridgedDeviceBasicInformationClusterServer('Outlet 1', 'SerialOutlet1', 1, 'VendorName', 'ProductName');
+    device.plugin = 'matterbridge-mock3';
+    await matterbridge.addBridgedDevice('matterbridge-mock3', device);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Adding bridged device/));
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Added and registered bridged device/));
   }, 60000);
 
   test('Websocket API connect', async () => {
@@ -107,6 +152,15 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     await waiter('Websocket connected', () => { return ws.readyState === WebSocket.OPEN; });
     expect(ws.readyState).toBe(WebSocket.OPEN);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/WebSocketServer client ".*" connected to Matterbridge/));
+  }, 60000);
+
+  test('Websocket API send bad json message', async () => {
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const message = 'This is not a JSON message';
+    ws.send(message);
+    await wait(1000, 'Wait for send', true);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^Error parsing message from websocket client/), expect.stringMatching(/^Unexpected token/));
   }, 60000);
 
   test('Websocket API send wrong message', async () => {
@@ -125,6 +179,49 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     ws.send(message);
     await wait(1000, 'Wait for send', true);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^Invalid method from websocket client/));
+  }, 60000);
+
+  test('Websocket API send /api/login with no nodeContext', async () => {
+    const context = (matterbridge as any).nodeContext;
+    (matterbridge as any).nodeContext = undefined;
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const message = JSON.stringify({ id: 1, dst: 'Matterbridge', src: 'Jest test', method: '/api/login', params: { password: '' } });
+    ws.send(message);
+    await wait(1000, 'Wait for send', true);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^Login nodeContext not found/));
+    (matterbridge as any).nodeContext = context;
+  }, 60000);
+
+  test('Websocket API send /api/login with empty password', async () => {
+    await (matterbridge as any).nodeContext.set('password', '');
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const message = JSON.stringify({ id: 1, dst: 'Matterbridge', src: 'Jest test', method: '/api/login', params: { password: '' } });
+    ws.send(message);
+    await wait(1000, 'Wait for send', true);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Login password valid/));
+  }, 60000);
+
+  test('Websocket API send /api/login with password', async () => {
+    await (matterbridge as any).nodeContext.set('password', '');
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const message = JSON.stringify({ id: 1, dst: 'Matterbridge', src: 'Jest test', method: '/api/login', params: { password: 'test' } });
+    ws.send(message);
+    await wait(1000, 'Wait for send', true);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Login password valid/));
+  }, 60000);
+
+  test('Websocket API send /api/login with wrong password', async () => {
+    await (matterbridge as any).nodeContext.set('password', 'abcdef');
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const message = JSON.stringify({ id: 1, dst: 'Matterbridge', src: 'Jest test', method: '/api/login', params: { password: 'test' } });
+    ws.send(message);
+    await wait(1000, 'Wait for send', true);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Error wrong password/));
+    await (matterbridge as any).nodeContext.set('password', '');
   }, 60000);
 
   test('Websocket API send /api/settings', async () => {
@@ -201,7 +298,33 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(data.id).toBe(1);
     expect(data.src).toBe('Matterbridge');
     expect(data.response).toBeDefined();
-    expect(data.response.length).toBe(0);
+    expect(data.response.length).toBe(3);
+
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+  }, 60000);
+
+  test('Websocket API send /api/devices with params', async () => {
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const message = JSON.stringify({ id: 1, dst: 'Matterbridge', src: 'Jest test', method: '/api/devices', params: { pluginName: 'matterbridge-mock1' } });
+    ws.send(message);
+
+    // Set up a promise to wait for the response
+    const responsePromise = new Promise((resolve) => {
+      ws.onmessage = (event) => {
+        resolve(event.data);
+      };
+    });
+
+    // Wait for the response
+    const response = await responsePromise;
+    expect(response).toBeDefined();
+    const data = JSON.parse(response as string);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(1);
+    expect(data.src).toBe('Matterbridge');
+    expect(data.response).toBeDefined();
+    expect(data.response.length).toBe(1);
 
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   }, 60000);
@@ -233,21 +356,28 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   }, 60000);
 
   test('Remove mock plugin 1', async () => {
+    expect((matterbridge as any).plugins.has('matterbridge-mock1')).toBeTruthy();
     await (matterbridge as any).plugins.remove('./src/mock/plugin1');
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Removed plugin ${plg}matterbridge-mock1${nf}`);
+    expect((matterbridge as any).plugins.has('matterbridge-mock1')).toBeFalsy();
   }, 60000);
 
   test('Remove mock plugin 2', async () => {
+    expect((matterbridge as any).plugins.has('matterbridge-mock2')).toBeTruthy();
     await (matterbridge as any).plugins.remove('./src/mock/plugin2');
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Removed plugin ${plg}matterbridge-mock2${nf}`);
+    expect((matterbridge as any).plugins.has('matterbridge-mock2')).toBeFalsy();
   }, 60000);
 
   test('Remove mock plugin 3', async () => {
+    expect((matterbridge as any).plugins.has('matterbridge-mock3')).toBeTruthy();
     await (matterbridge as any).plugins.remove('./src/mock/plugin3');
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Removed plugin ${plg}matterbridge-mock3${nf}`);
+    expect((matterbridge as any).plugins.has('matterbridge-mock3')).toBeFalsy();
   }, 60000);
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
+    expect((matterbridge as any).plugins.size).toBe(0);
     await matterbridge.destroyInstance();
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
     await wait(1000, 'Wait for matter to unload', false);

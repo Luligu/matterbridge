@@ -39,7 +39,24 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
       return;
     }
     this.log.debug(`Received message from websocket client: ${debugStringify(data)}`);
-    if (data.method === '/api/settings') {
+
+    if (data.method === '/api/login') {
+      if (!this.nodeContext) {
+        this.log.error('Login nodeContext not found');
+        client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', error: 'Internal error: nodeContext not found' }));
+        return;
+      }
+      const storedPassword = await this.nodeContext.get('password', '');
+      if (storedPassword === '' || storedPassword === data.params.password) {
+        this.log.debug('Login password valid');
+        client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', response: { valid: true } }));
+        return;
+      } else {
+        this.log.debug('Error wrong password');
+        client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', error: 'Wrong password' }));
+        return;
+      }
+    } else if (data.method === '/api/settings') {
       this.matterbridgeInformation.bridgeMode = this.bridgeMode;
       this.matterbridgeInformation.restartMode = this.restartMode;
       this.matterbridgeInformation.loggerLevel = this.log.logLevel;
@@ -64,6 +81,7 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
     } else if (data.method === '/api/devices') {
       const devices: { pluginName: string; type: string; endpoint: EndpointNumber | undefined; name: string; serial: string; uniqueId: string; cluster: string }[] = [];
       this.devices.forEach(async (device) => {
+        if (data.params.pluginName && data.params.pluginName !== device.plugin) return;
         let name = device.getClusterServer(BasicInformationCluster)?.attributes.nodeLabel?.getLocal();
         if (!name) name = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.nodeLabel?.getLocal() ?? 'Unknown';
         let serial = device.getClusterServer(BasicInformationCluster)?.attributes.serialNumber?.getLocal();
