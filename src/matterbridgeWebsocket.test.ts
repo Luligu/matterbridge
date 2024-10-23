@@ -224,6 +224,33 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     await (matterbridge as any).nodeContext.set('password', '');
   }, 60000);
 
+  test('Websocket API send ping', async () => {
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const message = JSON.stringify({ id: 1, dst: 'Matterbridge', src: 'Jest test', method: 'ping', params: {} });
+    ws.send(message);
+
+    // Set up a promise to wait for the response
+    const responsePromise = new Promise((resolve) => {
+      ws.onmessage = (event) => {
+        resolve(event.data);
+      };
+    });
+
+    // Wait for the response
+    const response = await responsePromise;
+    expect(response).toBeDefined();
+    const data = JSON.parse(response as string);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(1);
+    expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Jest test');
+    expect(data.response).toBeDefined();
+    expect(data.response).toBe('pong');
+
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+  }, 60000);
+
   test('Websocket API send /api/settings', async () => {
     expect(ws).toBeDefined();
     expect(ws.readyState).toBe(WebSocket.OPEN);
@@ -244,6 +271,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(data).toBeDefined();
     expect(data.id).toBe(1);
     expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Jest test');
     expect(data.response).toBeDefined();
     expect(data.response.matterbridgeInformation).toBeDefined();
     expect(data.response.systemInformation).toBeDefined();
@@ -271,6 +299,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(data).toBeDefined();
     expect(data.id).toBe(1);
     expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Jest test');
     expect(data.response).toBeDefined();
     expect(data.response.length).toBe(3);
 
@@ -297,6 +326,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(data).toBeDefined();
     expect(data.id).toBe(1);
     expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Jest test');
     expect(data.response).toBeDefined();
     expect(data.response.length).toBe(3);
 
@@ -323,6 +353,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(data).toBeDefined();
     expect(data.id).toBe(1);
     expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Jest test');
     expect(data.response).toBeDefined();
     expect(data.response.length).toBe(1);
 
