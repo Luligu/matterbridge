@@ -2631,7 +2631,7 @@ export class Matterbridge extends EventEmitter {
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ level, time, name, message }));
+        client.send(JSON.stringify({ id: 0, src: 'Matterbridge', level, time, name, message }));
       }
     });
   }
