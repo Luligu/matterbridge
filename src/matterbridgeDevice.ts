@@ -118,8 +118,6 @@ import { ClusterId, EndpointNumber, VendorId } from '@project-chip/matter-node.j
 import { Device, DeviceClasses, DeviceTypeDefinition, Endpoint, EndpointOptions } from '@project-chip/matter-node.js/device';
 import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
 
-// import { EveHistory, MatterHistory } from 'matter-history';
-
 import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from 'node-ansi-logger';
 
 import { createHash } from 'crypto';

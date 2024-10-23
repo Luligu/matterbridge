@@ -131,12 +131,12 @@ export class Matterbridge extends EventEmitter {
   public globalModulesDirectory = '';
   public matterbridgeVersion = '';
   public matterbridgeLatestVersion = '';
-  protected matterbridgeQrPairingCode: string | undefined = undefined;
-  protected matterbridgeManualPairingCode: string | undefined = undefined;
-  protected matterbridgeFabricInformations: SanitizedExposedFabricInformation[] = [];
-  protected matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
-  protected matterbridgePaired = false;
-  protected matterbridgeConnected = false;
+  public matterbridgeQrPairingCode: string | undefined = undefined;
+  public matterbridgeManualPairingCode: string | undefined = undefined;
+  public matterbridgeFabricInformations: SanitizedExposedFabricInformation[] = [];
+  public matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
+  public matterbridgePaired = false;
+  public matterbridgeConnected = false;
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public restartMode: 'service' | 'docker' | '' = '';
   public profile = getParameter('profile');
@@ -177,11 +177,11 @@ export class Matterbridge extends EventEmitter {
   protected discriminator?: number; // first commissioning server discriminator
   protected storageManager: StorageManager | undefined;
   protected matterbridgeContext: StorageContext | undefined;
-  private mattercontrollerContext: StorageContext | undefined;
-  private matterServer: MatterServer | undefined;
-  private matterAggregator: Aggregator | undefined;
-  private commissioningServer: CommissioningServer | undefined;
-  private commissioningController: CommissioningController | undefined;
+  protected mattercontrollerContext: StorageContext | undefined;
+  protected matterServer: MatterServer | undefined;
+  protected matterAggregator: Aggregator | undefined;
+  protected commissioningServer: CommissioningServer | undefined;
+  protected commissioningController: CommissioningController | undefined;
 
   protected static instance: Matterbridge | undefined;
 

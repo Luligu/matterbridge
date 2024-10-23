@@ -18,18 +18,22 @@ Please read this: https://github.com/Luligu/matterbridge/discussions/135
 
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
-Feel free to join!
+Feel free to join (the link is now permanent)!
 
-## [1.6.0] - 2024-10-15
+## [1.6.0] - 2024-10-24
+
+### Added
+
+- [matterbridge]: Added WebSocket for the Matetrbridge cockpit dashboard (Shelly gateway).
 
 ### Changed
 
 - [discord]: Discord group: https://discord.gg/QX58CDe6hd.
-- [matterbridge]: Preliminary code update to move to edge (matter.js new API).
-- [matterbridgeDevice]: Refactor Thermostat cluster methods to accept minHeatSetpointLimit, maxHeatSetpointLimit, minCoolSetpointLimit and maxCoolSetpointLimit.
-- [config]: The config is rewritten only after onStart and no more after onConfigure (after the plugin starts is possible to change the config and it will not be rewritten after the plugin configuration).
-- [matterbridgeDevice]: Removed deprecated methods on ColorControl cluster.
-- [package]: Removed EveHistory.
+- [matterbridge]: Completed phase 1 of transition to edge (matter.js new API).
+- [matterbridgeDevice]: Refactor Thermostat cluster method to accept minHeatSetpointLimit, maxHeatSetpointLimit, minCoolSetpointLimit and maxCoolSetpointLimit.
+- [config]: The plugins config is rewritten only after onStart and no more after onConfigure (after the plugin starts is possible to change the config and it will not be rewritten after the plugin configuration).
+- [matterbridgeDevice]: Removed deprecated methods of ColorControl cluster.
+- [package]: Removed EveHistory (it will be used only by single plugins).
 - [package]: Update dependencies.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
