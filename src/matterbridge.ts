@@ -69,7 +69,7 @@ import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
 import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
 import { Specification } from '@project-chip/matter-node.js/model';
-import { wsMessageHandler } from './matterbridgeWebsocket.js';
+import { WS_ID_LOG, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, wsMessageHandler } from './matterbridgeWebsocket.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -647,15 +647,14 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Asynchronously loads, starts the configures the registered plugins.
+   * Asynchronously loads and starts the registered plugins.
    *
-   * This method is responsible for initializing and configuring all necessary plugins
-   * required by the application. It ensures that each plugin is properly loaded and
-   * configured before the application starts using them.
+   * This method is responsible for initializing and staarting all enabled plugins.
+   * It ensures that each plugin is properly loaded and started before the ridge starts.
    *
-   * @returns {Promise<void>} A promise that resolves when all plugins have been loaded and configured.
+   * @returns {Promise<void>} A promise that resolves when all plugins have been loaded and started.
    */
-  private async startPlugins() {
+  private async startPlugins(): Promise<void> {
     // Check, load and start the plugins
     for (const plugin of this.plugins) {
       plugin.configJson = await this.plugins.loadConfig(plugin);
@@ -685,6 +684,7 @@ export class Matterbridge extends EventEmitter {
       plugin.manualPairingCode = undefined;
       this.plugins.load(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
     }
+    this.wssSendRefreshRequired();
   }
 
   /**
@@ -1508,6 +1508,7 @@ export class Matterbridge extends EventEmitter {
             this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
           }
         }
+        this.wssSendRefreshRequired();
       }, 30 * 1000);
 
       // Setting reachability to true
@@ -1581,6 +1582,7 @@ export class Matterbridge extends EventEmitter {
             this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
           }
         }
+        this.wssSendRefreshRequired();
       }, 30 * 1000);
 
       for (const plugin of this.plugins) {
@@ -2126,6 +2128,7 @@ export class Matterbridge extends EventEmitter {
             }
           }
         }
+        this.wssSendRefreshRequired();
       },
       commissioningChangedCallback: async (fabricIndex) => {
         const fabricInfo = commissioningServer.getCommissionedFabricInformation(fabricIndex);
@@ -2165,6 +2168,7 @@ export class Matterbridge extends EventEmitter {
             }
           }
         }
+        this.wssSendRefreshRequired();
       },
     });
     if (this.passcode !== undefined) this.passcode++;
@@ -2325,6 +2329,7 @@ export class Matterbridge extends EventEmitter {
         }
       }
     }
+    this.wssSendRefreshRequired();
   }
 
   /**
@@ -2631,7 +2636,35 @@ export class Matterbridge extends EventEmitter {
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ id: 0, src: 'Matterbridge', level, time, name, message }));
+        client.send(JSON.stringify({ id: WS_ID_LOG, src: 'Matterbridge', level, time, name, message }));
+      }
+    });
+  }
+
+  /**
+   * Sends a need to refresh WebSocket message to all connected clients.
+   *
+   */
+  private wssSendRefreshRequired() {
+    this.matterbridgeInformation.refreshRequired = true;
+    // Send the message to all connected clients
+    this.webSocketServer?.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ id: WS_ID_REFRESH_NEEDED, src: 'Matterbridge', dst: 'Matterbridge', method: 'refresh_required', params: {} }));
+      }
+    });
+  }
+
+  /**
+   * Sends a need to restart WebSocket message to all connected clients.
+   *
+   */
+  private wssSendRestartRequired() {
+    this.matterbridgeInformation.restartRequired = true;
+    // Send the message to all connected clients
+    this.webSocketServer?.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ id: WS_ID_RESTART_NEEDED, src: 'Matterbridge', dst: 'Matterbridge', method: 'restart_required', params: {} }));
       }
     });
   }
@@ -2751,7 +2784,7 @@ export class Matterbridge extends EventEmitter {
 
     if (initializeError) return;
 
-    // Createe a WebSocket server and attach it to the http server
+    // Createe a WebSocket server and attach it to the http or https server
     const wssPort = port;
     const wssHost = hasParameter('ssl') ? `wss://${this.systemInformation.ipv4Address}:${wssPort}` : `ws://${this.systemInformation.ipv4Address}:${wssPort}`;
     this.webSocketServer = new WebSocketServer(hasParameter('ssl') ? { server: this.httpsServer } : { server: this.httpServer });
@@ -2949,7 +2982,7 @@ export class Matterbridge extends EventEmitter {
       res.json(data);
     });
 
-    // Endpoint to send the log
+    // Endpoint to view the log
     this.expressApp.get('/api/view-log', async (req, res) => {
       this.log.debug('The frontend sent /api/log');
       try {
@@ -3080,7 +3113,7 @@ export class Matterbridge extends EventEmitter {
       // Handle the command setbridgemode from Settings
       if (command === 'setbridgemode') {
         this.log.debug(`setbridgemode: ${param}`);
-        this.matterbridgeInformation.restartRequired = true;
+        this.wssSendRestartRequired();
         await this.nodeContext?.set('bridgeMode', param);
         res.json({ message: 'Command received' });
         return;
@@ -3253,7 +3286,7 @@ export class Matterbridge extends EventEmitter {
           this.log.error('Error updating matterbridge');
         }
         await this.updateProcess();
-        this.matterbridgeInformation.restartRequired = true;
+        this.wssSendRestartRequired();
         res.json({ message: 'Command received' });
         return;
       }
@@ -3270,11 +3303,10 @@ export class Matterbridge extends EventEmitter {
           if (!plugin) return;
           this.plugins.saveConfigFromJson(plugin, req.body);
         }
-        this.matterbridgeInformation.restartRequired = true;
+        this.wssSendRestartRequired();
         res.json({ message: 'Command received' });
         return;
       }
-
       // Handle the command installplugin from Home
       if (command === 'installplugin') {
         param = param.replace(/\*/g, '\\');
@@ -3286,7 +3318,7 @@ export class Matterbridge extends EventEmitter {
         } catch (error) {
           this.log.error(`Error installing plugin ${plg}${param}${er}`);
         }
-        this.matterbridgeInformation.restartRequired = true;
+        this.wssSendRestartRequired();
         // Also add the plugin to matterbridge so no return!
         // res.json({ message: 'Command received' });
         // return;
@@ -3299,6 +3331,7 @@ export class Matterbridge extends EventEmitter {
           this.plugins.load(plugin, true, 'The plugin has been added', true); // No await do it in the background
         }
         res.json({ message: 'Command received' });
+        this.wssSendRefreshRequired();
         return;
       }
       // Handle the command removeplugin from Home
@@ -3311,6 +3344,7 @@ export class Matterbridge extends EventEmitter {
           await this.plugins.remove(param);
         }
         res.json({ message: 'Command received' });
+        this.wssSendRefreshRequired();
         return;
       }
       // Handle the command enableplugin from Home
@@ -3334,6 +3368,7 @@ export class Matterbridge extends EventEmitter {
           }
         }
         res.json({ message: 'Command received' });
+        this.wssSendRefreshRequired();
         return;
       }
       // Handle the command disableplugin from Home
@@ -3348,6 +3383,7 @@ export class Matterbridge extends EventEmitter {
           }
         }
         res.json({ message: 'Command received' });
+        this.wssSendRefreshRequired();
         return;
       }
     });

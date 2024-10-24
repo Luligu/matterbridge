@@ -29,6 +29,32 @@ import { Logger } from '@project-chip/matter-node.js/log';
 import { EndpointNumber } from '@project-chip/matter-node.js/datatype';
 import { BasicInformationCluster, BridgedDeviceBasicInformationCluster } from '@project-chip/matter-node.js/cluster';
 
+/**
+ * Websocket message ID for logging.
+ * @constant {number}
+ */
+export const WS_ID_LOG = 0;
+
+/**
+ * Websocket message ID indicating a refresh is needed.
+ * @constant {number}
+ */
+export const WS_ID_REFRESH_NEEDED = 1;
+
+/**
+ * Websocket message ID indicating a restart is needed.
+ * @constant {number}
+ */
+export const WS_ID_RESTART_NEEDED = 2;
+
+/**
+ * Handles incoming websocket messages for the Matterbridge.
+ *
+ * @param {Matterbridge} this - The Matterbridge instance.
+ * @param {WebSocket} client - The websocket client that sent the message.
+ * @param {WebSocket.RawData} message - The raw data of the message received from the client.
+ * @returns {Promise<void>} A promise that resolves when the message has been handled.
+ */
 export async function wsMessageHandler(this: Matterbridge, client: WebSocket, message: WebSocket.RawData): Promise<void> {
   let data: { id: number; dst: string; src: string; method: string; params: Record<string, string | number | boolean> };
   try {
