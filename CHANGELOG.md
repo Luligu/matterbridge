@@ -20,6 +20,22 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 Feel free to join (the link is now permanent)!
 
+## [1.6.1] - 2024-10-29
+
+### Added
+
+- [matterbridge]: Added automatic recovery for matterbridge node storage when it gets corrupted for a power outage or hardware failure. Unattended setups can automatically recover restoring the previous automatic backup.
+
+### Changed
+
+- [package]: Update dependencies.
+
+### Fixed
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.6.0] - 2024-10-28
 
 ### Added

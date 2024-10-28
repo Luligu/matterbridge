@@ -261,17 +261,66 @@ export class Matterbridge extends EventEmitter {
     this.homeDirectory = getParameter('homedir') ?? os.homedir();
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
 
-    // Initialize nodeStorage and nodeContext
-    // this.log.debug(`Creating node storage manager: ${CYAN}${this.nodeStorageName}${db}`);
-    this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, this.nodeStorageName), writeQueue: false, expiredInterval: undefined, logging: false });
-    // this.log.debug('Creating node storage context for matterbridge');
-    this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
-
-    // Check if the storage is corrupted and remove it
-    // TODO: Check if the storage is corrupted and remove it
-
     // Create matterbridge logger
     this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
+
+    // Initialize nodeStorage and nodeContext
+    const copyDirectory = async function (srcDir: string, destDir: string): Promise<void> {
+      // Create destination directory if it doesn't exist
+      await fs.mkdir(destDir, { recursive: true });
+      // Read contents of the source directory
+      const entries = await fs.readdir(srcDir, { withFileTypes: true });
+      for (const entry of entries) {
+        const srcPath = path.join(srcDir, entry.name);
+        const destPath = path.join(destDir, entry.name);
+        if (entry.isDirectory()) {
+          // Recursive call if entry is a directory
+          await copyDirectory(srcPath, destPath);
+        } else if (entry.isFile()) {
+          // Copy file if entry is a file
+          await fs.copyFile(srcPath, destPath);
+        }
+      }
+    };
+
+    try {
+      this.log.debug(`Creating node storage manager: ${CYAN}${this.nodeStorageName}${db}`);
+      this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, this.nodeStorageName), writeQueue: false, expiredInterval: undefined, logging: false });
+      this.log.debug('Creating node storage context for matterbridge');
+      this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
+      // Check if the storage is corrupted and make a backup or restore it
+      await this.nodeContext.get<LogLevel>('matterbridgeLogLevel', LogLevel.INFO);
+      await this.nodeContext.get<boolean>('matterbridgeFileLog', false);
+      await this.nodeContext.get<number>('matterLogLevel', Level.INFO);
+      await this.nodeContext.get<boolean>('matterFileLog', false);
+      await this.nodeContext.get<string>('mattermdnsinterface', undefined);
+      await this.nodeContext.get<string>('matteripv4address', undefined);
+      await this.nodeContext.get<string>('matteripv6address', undefined);
+      await this.nodeContext.get<string>('bridgeMode', '');
+      const pluginsArray = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
+      for (const plugin of pluginsArray) {
+        const nodeContext = await this.nodeStorage.createStorage(plugin.name);
+        await nodeContext.get<string>('name', '');
+        await nodeContext.get<string>('type', '');
+        await nodeContext.get<string>('path', '');
+        await nodeContext.get<string>('version', '');
+        await nodeContext.get<string>('description', '');
+        await nodeContext.get<string>('author', '');
+      }
+      await this.nodeContext.get<SerializedMatterbridgeDevice[]>('devices', []);
+      // Creating a backup of the node storage since it is not corrupted
+      this.log.info('Creating node storage backup for matterbridge');
+      await copyDirectory(path.join(this.matterbridgeDirectory, this.nodeStorageName), path.join(this.matterbridgeDirectory, this.nodeStorageName + '.backup'));
+    } catch (error) {
+      // Restoring the backup of the node storage since it is corrupted
+      this.log.error(`Error creating node storage manager and context: ${error instanceof Error ? error.message : error}`);
+      this.log.error(`The matterbridge storage is corrupted. Restoring it with backup values.`);
+      await copyDirectory(path.join(this.matterbridgeDirectory, this.nodeStorageName + '.backup'), path.join(this.matterbridgeDirectory, this.nodeStorageName));
+    }
+    if (!this.nodeStorage || !this.nodeContext) {
+      this.log.fatal('Fatal error creating node storage manager and context for matterbridge');
+      throw new Error('Fatal error creating node storage manager and context for matterbridge');
+    }
 
     // Create the file logger for matterbridge (context: matterbridgeFileLog)
     if (hasParameter('filelogger') || (await this.nodeContext.get<boolean>('matterbridgeFileLog', false))) {
@@ -565,7 +614,12 @@ export class Matterbridge extends EventEmitter {
     }
 
     // Start the matter storage and create the matterbridge context
-    await this.startMatterStorage('json', path.join(this.matterbridgeDirectory, this.matterStorageName));
+    try {
+      await this.startMatterStorage('json', path.join(this.matterbridgeDirectory, this.matterStorageName));
+    } catch (error) {
+      this.log.fatal(`Fatal error creating matter storage: ${error instanceof Error ? error.message : error}`);
+      throw new Error(`Fatal error creating matter storage: ${error instanceof Error ? error.message : error}`);
+    }
 
     if (hasParameter('reset') && getParameter('reset') === undefined) {
       this.log.info('Resetting Matterbridge commissioning information...');
@@ -1851,8 +1905,8 @@ export class Matterbridge extends EventEmitter {
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      this.log.error(`Storage initialize() error! The file .matterbridge/${storageName} may be corrupted.`);
-      this.log.error(`Please delete it and rename ${storageName.replace('.json', '.backup.json')} to ${storageName} and try to restart Matterbridge.`);
+      this.log.fatal(`Storage initialize() error! The file .matterbridge/${storageName} may be corrupted.`);
+      this.log.fatal(`Please delete it and rename ${storageName.replace('.json', '.backup.json')} to ${storageName} and try to restart Matterbridge.`);
       await this.cleanup('Storage initialize() error!');
     }
 
