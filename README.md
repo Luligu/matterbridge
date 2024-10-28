@@ -51,13 +51,13 @@ To run Matterbridge, you need either a [Node.js](https://nodejs.org/en/download/
 Follow these steps to install Matterbridge:
 
 ```
-npm install -g matterbridge
+npm install -g matterbridge --omit=dev
 ```
 
 on Linux you may need the necessary permissions:
 
 ```
-sudo npm install -g matterbridge
+sudo npm install -g matterbridge --omit=dev
 ```
 
 Test the installation with:
@@ -68,7 +68,7 @@ matterbridge
 
 Now it is possible to open the frontend at the link provided in the log (e.g. http://MATTERBIDGE-IPV4-ADDRESS:8283).
 
-You can then change the bridge mode from the frontend.
+You can then change the bridge mode and other parameters from the frontend.
 
 ## Usage
 
@@ -128,19 +128,19 @@ Config editor:
 
 ### Run matterbridge as a daemon with systemctl (Linux only)
 
-[Advanced configurations](https://github.com/Luligu/matterbridge/blob/main/README-SERVICE.md)
+[Service configurations](https://github.com/Luligu/matterbridge/blob/main/README-SERVICE.md)
 
 ### Run matterbridge with docker and docker compose
 
-[Advanced configurations](https://github.com/Luligu/matterbridge/blob/main/README-DOCKER.md)
+[Docker configurations](https://github.com/Luligu/matterbridge/blob/main/README-DOCKER.md)
 
 ### Run matterbridge with podman
 
-[Advanced configurations](https://github.com/Luligu/matterbridge/blob/main/README-PODMAN.md)
+[Podman configurations](https://github.com/Luligu/matterbridge/blob/main/README-PODMAN.md)
 
 ### Run matterbridge as an home assistant add-on with the official add-on
 
-[Advanced configurations](https://github.com/Luligu/matterbridge-home-assistant-addon)
+[Home assistant add-on configurations](https://github.com/Luligu/matterbridge-home-assistant-addon)
 
 ### Other Home Assistant Community Add-ons
 
