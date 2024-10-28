@@ -10,11 +10,14 @@ import { AnsiLogger, id, LogLevel } from 'node-ansi-logger';
 import {
   airQualitySensor,
   bridgedNode,
+  colorTemperatureLight,
   colorTemperatureSwitch,
   deviceEnergyManagement,
+  dimmableLight,
   dimmableSwitch,
   electricalSensor,
   MatterbridgeDevice,
+  onOffLight,
   onOffSwitch,
   powerSource,
   rainSensor,
@@ -22,7 +25,7 @@ import {
   waterFreezeDetector,
   waterLeakDetector,
 } from './matterbridgeDevice.js';
-import { EveHistory, EveHistoryCluster, MatterHistory } from 'matter-history';
+// import { EveHistory, EveHistoryCluster, MatterHistory } from 'matter-history';
 
 import {
   Attributes,
@@ -55,7 +58,7 @@ import {
   DeviceEnergyManagement,
 } from '@project-chip/matter-node.js/cluster';
 import { DeviceTypes, logEndpoint } from '@project-chip/matter-node.js/device';
-import { EndpointNumber, GroupId } from '@project-chip/matter-node.js/datatype';
+import { EndpointNumber, GroupId, VendorId } from '@project-chip/matter-node.js/datatype';
 import { waiter } from './utils/utils.js';
 import { Matterbridge } from './matterbridge.js';
 
@@ -190,8 +193,8 @@ describe('Matterbridge device', () => {
     const deviceTypes = device.getDeviceTypes();
     deviceTypes.forEach((deviceType) => {
       deviceType.requiredServerClusters.forEach((clusterId) => {
-        if (!device.getClusterServerById(clusterId)) console.log(`Cluster ${clusterId}-${getClusterNameById(clusterId)} not found in device ${deviceType.name}`);
         expect(device.getClusterServerById(clusterId)).toBeDefined();
+        if (!device.getClusterServerById(clusterId)) console.log(`Cluster ${clusterId}-${getClusterNameById(clusterId)} not found in device ${deviceType.name}`);
       });
     });
   });
@@ -199,41 +202,41 @@ describe('Matterbridge device', () => {
   test('create a device with child endpoints of type light', async () => {
     const device = new MatterbridgeDevice(bridgedNode);
     device.createDefaultBridgedDeviceBasicInformationClusterServer('Name', 'Serial', 1, 'VendorName', 'ProductName');
-    const child1 = device.addChildDeviceTypeWithClusterServer('ComposedDevice1', [DeviceTypes.ON_OFF_LIGHT]);
+
+    const child1 = device.addChildDeviceTypeWithClusterServer('ComposedDevice1', [onOffLight]);
     expect(child1.uniqueStorageKey).toBe('ComposedDevice1');
-    expect(child1.deviceType).toBe(DeviceTypes.ON_OFF_LIGHT.code);
+    expect(child1.deviceType).toBe(onOffLight.code);
     expect(child1.getDeviceTypes()).toHaveLength(1);
-    child1.number = EndpointNumber(2);
-    expect(device.getEndpointLabel(EndpointNumber(2))).toBeDefined();
-
-    let child = device.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === 'ComposedDevice1');
-    expect(child).toBeDefined();
-    expect(child?.deviceType).toBe(DeviceTypes.ON_OFF_LIGHT.code);
-    expect(child?.uniqueStorageKey).toBe('ComposedDevice1');
     expect(device.getDeviceTypes().length).toBe(1);
-    expect(device.deviceType).toBe(bridgedNode.code);
     expect(device.getChildEndpoints().length).toBe(1);
+    expect(device.deviceType).toBe(bridgedNode.code);
 
-    const child2 = device.addChildDeviceTypeWithClusterServer('ComposedDevice2', [DeviceTypes.DIMMABLE_LIGHT]);
+    let child = device.getChildEndpointByName('ComposedDevice1');
+    expect(child).toBeDefined();
+    if (!child) return;
+    expect(child.deviceType).toBe(onOffLight.code);
+    expect(child.uniqueStorageKey).toBe('ComposedDevice1');
+
+    const child2 = device.addChildDeviceTypeWithClusterServer('ComposedDevice2', [dimmableLight]);
     expect(child2.uniqueStorageKey).toBe('ComposedDevice2');
-    expect(child2.deviceType).toBe(DeviceTypes.DIMMABLE_LIGHT.code);
+    expect(child2.deviceType).toBe(dimmableLight.code);
     expect(child2.getDeviceTypes()).toHaveLength(1);
     expect(device.getDeviceTypes().length).toBe(1);
     expect(device.deviceType).toBe(bridgedNode.code);
     expect(device.getChildEndpoints().length).toBe(2);
 
-    child = device.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === 'ComposedDevice1');
+    child = device.getChildEndpointByName('ComposedDevice1');
     expect(child).toBeDefined();
     expect(child?.uniqueStorageKey).toBe('ComposedDevice1');
-    child = device.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === 'ComposedDevice2');
+    child = device.getChildEndpointByName('ComposedDevice2');
     expect(child).toBeDefined();
     expect(child?.uniqueStorageKey).toBe('ComposedDevice2');
-    child = device.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === 'ComposedDevice3');
+    child = device.getChildEndpointByName('ComposedDevice3');
     expect(child).not.toBeDefined();
 
-    const child3 = device.addChildDeviceTypeWithClusterServer('ComposedDevice3', [DeviceTypes.COLOR_TEMPERATURE_LIGHT]);
+    const child3 = device.addChildDeviceTypeWithClusterServer('ComposedDevice3', [colorTemperatureLight]);
     expect(child3.uniqueStorageKey).toBe('ComposedDevice3');
-    expect(child3.deviceType).toBe(DeviceTypes.COLOR_TEMPERATURE_LIGHT.code);
+    expect(child3.deviceType).toBe(colorTemperatureLight.code);
     expect(child3.getDeviceTypes()).toHaveLength(1);
     expect(device.getDeviceTypes().length).toBe(1);
     expect(device.deviceType).toBe(bridgedNode.code);
@@ -249,17 +252,17 @@ describe('Matterbridge device', () => {
     expect(child).toBeDefined();
     expect(child?.uniqueStorageKey).toBe('ComposedDevice3');
 
-    child = device.addChildDeviceTypeWithClusterServer('ComposedDevice1', [DeviceTypes.DIMMABLE_LIGHT]);
+    child = device.addChildDeviceTypeWithClusterServer('ComposedDevice1', [dimmableLight]);
     expect(child?.uniqueStorageKey).toBe('ComposedDevice1');
     expect(device.getChildEndpoints().length).toBe(3);
     expect(child.getDeviceTypes()).toHaveLength(2);
 
-    child = device.addChildDeviceTypeWithClusterServer('ComposedDevice2', [DeviceTypes.COLOR_TEMPERATURE_LIGHT]);
+    child = device.addChildDeviceTypeWithClusterServer('ComposedDevice2', [colorTemperatureLight]);
     expect(child?.uniqueStorageKey).toBe('ComposedDevice2');
     expect(device.getChildEndpoints().length).toBe(3);
     expect(child.getDeviceTypes()).toHaveLength(2);
 
-    child = device.addChildDeviceTypeWithClusterServer('ComposedDevice3', [DeviceTypes.COLOR_TEMPERATURE_LIGHT]);
+    child = device.addChildDeviceTypeWithClusterServer('ComposedDevice3', [colorTemperatureLight]);
     expect(child?.uniqueStorageKey).toBe('ComposedDevice3');
     expect(device.getChildEndpoints().length).toBe(3);
     expect(child.getDeviceTypes()).toHaveLength(1);
@@ -273,39 +276,23 @@ describe('Matterbridge device', () => {
     device?.verifyRequiredClusters();
 
     child = device.getChildEndpointByName('ComposedDevice1');
-    child?.verifyRequiredClusters();
-    // eslint-disable-next-line jest/no-conditional-expect
-    if (child) expect(device.getChildEndpointName(child)).toBe('ComposedDevice1');
-    if (child) device.setChildEndpointName(child, 'ComposedDevice5');
-    // eslint-disable-next-line jest/no-conditional-expect
-    if (child) expect(device.getChildEndpointName(child)).toBe('ComposedDevice5');
-    if (child) device.setChildEndpointName(child, 'ComposedDevice1');
-    // eslint-disable-next-line jest/no-conditional-expect
-    if (child) expect(device.getChildEndpointName(child)).toBe('ComposedDevice1');
+    expect(child).toBeDefined();
+    if (!child) return;
+    child.verifyRequiredClusters();
 
     child = device.getChildEndpointByName('ComposedDevice2');
-    child?.verifyRequiredClusters();
-    // eslint-disable-next-line jest/no-conditional-expect
-    if (child) expect(device.getChildEndpointName(child)).toBe('ComposedDevice2');
+    expect(child).toBeDefined();
+    if (!child) return;
+    child.verifyRequiredClusters();
 
     child = device.getChildEndpointByName('ComposedDevice3');
+    expect(child).toBeDefined();
+    if (!child) return;
     child?.verifyRequiredClusters();
-    // eslint-disable-next-line jest/no-conditional-expect
-    if (child) expect(device.getChildEndpointName(child)).toBe('ComposedDevice3');
-
-    child = device.getChildEndpointWithLabel('ComposedDevice1');
-    // eslint-disable-next-line jest/no-conditional-expect
-    if (child) expect(device.getChildEndpointName(child)).toBe('ComposedDevice1');
-
-    child = device.getChildEndpointWithLabel('ComposedDevice2');
-    // eslint-disable-next-line jest/no-conditional-expect
-    if (child) expect(device.getChildEndpointName(child)).toBe('ComposedDevice2');
-
-    child = device.getChildEndpointWithLabel('ComposedDevice3');
-    // eslint-disable-next-line jest/no-conditional-expect
-    if (child) expect(device.getChildEndpointName(child)).toBe('ComposedDevice3');
   });
 
+  // eslint-disable-next-line jest/no-commented-out-tests
+  /*
   test('create a power source device with EveHistory', async () => {
     const device = new MatterbridgeDevice(powerSource);
     MatterHistory.createEveHistoryClusterServer(device);
@@ -314,7 +301,7 @@ describe('Matterbridge device', () => {
     expect(() => device.verifyRequiredClusters()).toThrow();
     device.addRequiredClusterServers(device);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
-    invokeCommands(device.getClusterServerById(EveHistory.Complete.id));
+    invokeCommands(device.getClusterServerById(EveHistoryCluster.id));
   });
 
   test('create a door device with EveHistory', async () => {
@@ -511,6 +498,7 @@ describe('Matterbridge device', () => {
     historyCluster?.setHistoryRequestAttribute(Uint8Array.fromHex('000000000000'));
     await history.close();
   }, 60000);
+  */
 
   test('create a device with all default clusters', async () => {
     const device = new MatterbridgeDevice(bridgedNode);
@@ -518,18 +506,22 @@ describe('Matterbridge device', () => {
     device.createDefaultIdentifyClusterServer();
     device.createDefaultGroupsClusterServer();
     device.createDefaultScenesClusterServer();
-    // device.createDefaultElectricalMeasurementClusterServer();
+    device.addClusterServer(device.getDefaultElectricalEnergyMeasurementClusterServer());
+    device.addClusterServer(device.getDefaultElectricalPowerMeasurementClusterServer());
     device.createDefaultDummyThreadNetworkDiagnosticsClusterServer();
     device.createDefaultOnOffClusterServer();
     device.createDefaultLevelControlClusterServer();
     device.createDefaultColorControlClusterServer();
     invokeCommands(device.getClusterServerById(ColorControl.Complete.id));
-    device.createDefaultXYColorControlClusterServer();
+    device.createDefaultColorControlClusterServer();
     device.createDefaultWindowCoveringClusterServer();
     device.createDefaultDoorLockClusterServer();
     device.createDefaultSwitchClusterServer();
     device.createDefaultLatchingSwitchClusterServer();
-    device.createDefaultModeSelectClusterServer();
+    device.createDefaultModeSelectClusterServer('Mode select', [
+      { mode: 1, label: 'Mode 1', semanticTags: [{ mfgCode: VendorId(0xfff1), value: 0 }] },
+      { mode: 2, label: 'Mode 2', semanticTags: [{ mfgCode: VendorId(0xfff1), value: 0 }] },
+    ]);
     device.createDefaultOccupancySensingClusterServer();
     device.createDefaultIlluminanceMeasurementClusterServer();
     device.createDefaultFlowMeasurementClusterServer();
@@ -766,9 +758,7 @@ describe('Matterbridge device', () => {
     });
     invokeCommands(colorCluster);
 
-    device.createDefaultXYColorControlClusterServer();
     device.createDefaultColorControlClusterServer();
-    device.createDefaultCompleteColorControlClusterServer();
     device.configureColorControlCluster(true, true, true, ColorControl.ColorMode.CurrentHueAndCurrentSaturation);
     expect(device.getAttribute(ColorControlCluster.id, 'colorMode')).toBe(ColorControl.ColorMode.CurrentHueAndCurrentSaturation);
     expect(device.getAttribute(ColorControlCluster.id, 'colorMode')).toBe(ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation);

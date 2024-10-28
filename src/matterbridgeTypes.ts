@@ -31,6 +31,11 @@ import { CommissioningServer } from '@project-chip/matter-node.js';
 import { Aggregator } from '@project-chip/matter-node.js/device';
 import { LogLevel } from 'node-ansi-logger';
 
+// Import for API V8
+import { ServerNode } from '@project-chip/matter.js/node';
+import { AggregatorEndpoint } from '@project-chip/matter.js/endpoints/AggregatorEndpoint';
+import { Endpoint } from '@project-chip/matter.js/endpoint';
+
 // Default colors
 export const plg = '\u001B[38;5;33m';
 export const dev = '\u001B[38;5;79m';
@@ -45,6 +50,9 @@ export interface RegisteredPlugin extends BaseRegisteredPlugin {
   device?: MatterbridgeDevice;
   platform?: MatterbridgePlatform;
   reachabilityTimeout?: NodeJS.Timeout;
+  // Matter API V8
+  serverNode?: ServerNode<ServerNode.RootEndpoint>;
+  aggregatorNode?: Endpoint<AggregatorEndpoint>;
 }
 
 // Simplified interface for saving the plugins in node storage

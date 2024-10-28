@@ -15,57 +15,47 @@ WORKDIR /app
 COPY ./package.json ./package-lock.json ./tsconfig.json ./.npmignore ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
-RUN npm ci && npm run build && npm link && npm shrinkwrap && npm pack 
+RUN npm ci && npm run build && npm pkg delete devDependencies && npm pkg delete scripts && npm install --omit=dev && npm link && npm shrinkwrap && npm pack 
 
 WORKDIR /matterbridge-zigbee2mqtt
 RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-zigbee2mqtt.git .
-COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
-RUN npm ci && npm run build && npm shrinkwrap && npm pack
+RUN npm ci && npm link matterbridge && npm run build && npm pkg delete devDependencies && npm pkg delete scripts && npm install --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-somfy-tahoma
 RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-somfy-tahoma.git .
-COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
-RUN npm ci && npm run build && npm shrinkwrap && npm pack
+RUN npm ci && npm link matterbridge && npm run build && npm pkg delete devDependencies && npm pkg delete scripts && npm install --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-shelly
 RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-shelly.git .
-# COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
-RUN npm ci && npm link matterbridge && npm run build && npm shrinkwrap && npm pack
+RUN npm ci && npm link matterbridge && npm run build && npm pkg delete devDependencies && npm pkg delete scripts && npm install --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-example-accessory-platform
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-example-accessory-platform.git .
-COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
-RUN npm ci && npm run build && npm shrinkwrap && npm pack
+RUN npm ci && npm link matterbridge && npm run build && npm pkg delete devDependencies && npm pkg delete scripts && npm install --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-example-dynamic-platform
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-example-dynamic-platform.git .
-COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
-RUN npm ci && npm run build && npm shrinkwrap && npm pack
+RUN npm ci && npm link matterbridge && npm run build && npm pkg delete devDependencies && npm pkg delete scripts && npm install --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-eve-door
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-door.git .
-COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
-RUN npm ci && npm run build && npm shrinkwrap && npm pack
+RUN npm ci && npm link matterbridge && npm run build && npm pkg delete devDependencies && npm pkg delete scripts && npm install --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-eve-motion
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-motion.git .
-COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
-RUN npm ci && npm run build && npm shrinkwrap && npm pack
+RUN npm ci && npm link matterbridge && npm run build && npm pkg delete devDependencies && npm pkg delete scripts && npm install --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-eve-energy
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-energy.git .
-COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
-RUN npm ci && npm run build && npm shrinkwrap && npm pack
+RUN npm ci && npm link matterbridge && npm run build && npm pkg delete devDependencies && npm pkg delete scripts && npm install --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-eve-room
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-room.git .
-COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
-RUN npm ci && npm run build && npm shrinkwrap && npm pack
+RUN npm ci && npm link matterbridge && npm run build && npm pkg delete devDependencies && npm pkg delete scripts && npm install --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-eve-weather
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-weather.git .
-COPY docker/link-matterbridge-docker-script.js ./link-matterbridge-script.js
-RUN npm ci && npm run build && npm shrinkwrap && npm pack
+RUN npm ci && npm link matterbridge && npm run build && npm pkg delete devDependencies && npm pkg delete scripts && npm install --omit=dev && npm shrinkwrap && npm pack
 
 
 
@@ -85,6 +75,6 @@ COPY --from=builder /matterbridge-eve-motion/*.tgz .
 COPY --from=builder /matterbridge-eve-energy/*.tgz .
 COPY --from=builder /matterbridge-eve-room/*.tgz .
 COPY --from=builder /matterbridge-eve-weather/*.tgz .
-RUN npm install -g --omit=dev *.tgz && rm *.tgz && node -v && npm -v && npm list -g
+RUN npm install -g --omit=dev *.tgz && rm *.tgz && node -v && npm -v && npm list -g && npm cache clean --force && rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 CMD ["matterbridge", "-docker"]

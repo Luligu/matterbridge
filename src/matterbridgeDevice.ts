@@ -22,6 +22,7 @@
  */
 
 import {
+  ActionsCluster,
   AirQuality,
   AirQualityCluster,
   BasicInformationCluster,
@@ -117,8 +118,6 @@ import { ClusterId, EndpointNumber, VendorId } from '@project-chip/matter-node.j
 import { Device, DeviceClasses, DeviceTypeDefinition, Endpoint, EndpointOptions } from '@project-chip/matter-node.js/device';
 import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
 
-import { EveHistory, MatterHistory } from 'matter-history';
-
 import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from 'node-ansi-logger';
 
 import { createHash } from 'crypto';
@@ -162,7 +161,7 @@ interface MatterbridgeDeviceCommands {
   // changeToMode: MakeMandatory<ClusterServerHandlers<typeof ModeSelect.Complete>['changeToMode']>;
   changeToMode: MakeMandatory<ClusterServerHandlers<typeof DeviceEnergyManagementMode.Complete>['changeToMode']>;
 
-  // step: MakeMandatory<ClusterServerHandlers<typeof FanControl.Complete>['step']>; // Rev > 2
+  step: MakeMandatory<ClusterServerHandlers<typeof FanControl.Complete>['step']>;
 
   suppressAlarm: MakeMandatory<ClusterServerHandlers<typeof BooleanStateConfiguration.Complete>['suppressAlarm']>;
   enableDisableAlarm: MakeMandatory<ClusterServerHandlers<typeof BooleanStateConfiguration.Complete>['enableDisableAlarm']>;
@@ -246,6 +245,14 @@ export const deviceEnergyManagement = DeviceTypeDefinition({
   revision: 1,
   requiredServerClusters: [DeviceEnergyManagement.Cluster.id, DeviceEnergyManagementMode.Cluster.id],
   optionalServerClusters: [],
+});
+
+export const bridge = DeviceTypeDefinition({
+  name: 'MA-aggregator',
+  code: 0x000e,
+  deviceClass: DeviceClasses.Dynamic,
+  revision: 1,
+  optionalServerClusters: [ActionsCluster.id],
 });
 
 export const powerSource = DeviceTypeDefinition({
@@ -408,74 +415,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Create asyncronously a device with one or more device types and with the required cluster servers and the specified cluster servers.
-   *
-   * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The device types to add.
-   * @param {EndpointOptions} [options={}] - The options for the device.
-   * @param {ClusterId[]} clusterServerList - The list of cluster IDs to include.
-   * @param {boolean} [debug=false] - The debug level for the device.
-   * @returns {Promise<MatterbridgeDevice>} The MatterbridgeDevice instance.
-   *
-  static async createWithClusterServer(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, clusterServerList: ClusterId[] = [], debug = false): Promise<MatterbridgeDevice> {
-    const device = new MatterbridgeDevice(definition, options, debug);
-    if (Array.isArray(definition)) {
-      definition.forEach((deviceType) => {
-        deviceType.requiredServerClusters.forEach((clusterId) => {
-          if (!clusterServerList.includes(clusterId)) clusterServerList.push(clusterId);
-        });
-      });
-    } else {
-      definition.requiredServerClusters.forEach((clusterId) => {
-        if (!clusterServerList.includes(clusterId)) clusterServerList.push(clusterId);
-      });
-    }
-    device.log.debug(`createWithClusterServer:`);
-    const deviceTypes = device.getDeviceTypes();
-    deviceTypes.forEach((deviceType) => {
-      device.log.debug(`- with deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
-    });
-    clusterServerList.forEach((clusterId) => {
-      device.log.debug(`- with cluster: ${hk}${clusterId}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
-    });
-    device.addClusterServerFromList(device, clusterServerList);
-    // TODO must by typed and tested
-    Object.entries(options).forEach(([key, value]) => {
-      if (key === 'basicInformation') {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const basicInformation = value as any;
-        device.createDefaultBasicInformationClusterServer(
-          basicInformation.deviceName,
-          basicInformation.serialNumber,
-          basicInformation.vendorId,
-          basicInformation.vendorName,
-          basicInformation.productId,
-          basicInformation.productName,
-          basicInformation.softwareVersion,
-          basicInformation.softwareVersionString,
-          basicInformation.hardwareVersion,
-          basicInformation.hardwareVersionString,
-        );
-      } else if (key === 'bridgedDeviceBasicInformation') {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const bridgedDeviceBasicInformation = value as any;
-        device.createDefaultBridgedDeviceBasicInformationClusterServer(
-          bridgedDeviceBasicInformation.deviceName,
-          bridgedDeviceBasicInformation.serialNumber,
-          bridgedDeviceBasicInformation.vendorId,
-          bridgedDeviceBasicInformation.vendorName,
-          bridgedDeviceBasicInformation.productName,
-          bridgedDeviceBasicInformation.softwareVersion,
-          bridgedDeviceBasicInformation.softwareVersionString,
-          bridgedDeviceBasicInformation.hardwareVersion,
-          bridgedDeviceBasicInformation.hardwareVersionString,
-        );
-      }
-    });
-    return device;
-  }
-  */
-
-  /**
    * Adds a device type to the list of device types of the MatterbridgeDevice endpoint.
    * If the device type is not already present in the list, it will be added.
    *
@@ -530,7 +469,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName);
     if (!child) {
       child = new Endpoint(deviceTypes, { uniqueStorageKey: endpointName });
-      child.addFixedLabel('endpointName', endpointName.slice(0, 16));
       this.addChildEndpoint(child);
     }
     deviceTypes.forEach((deviceType) => {
@@ -563,7 +501,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     endpoint.getDeviceTypes().forEach((deviceType) => {
       this.log.debug(`- for deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
       deviceType.requiredServerClusters.forEach((clusterId) => {
-        if (!requiredServerList.includes(clusterId) && !endpoint.getClusterClientById(clusterId)) requiredServerList.push(clusterId);
+        if (!requiredServerList.includes(clusterId) && !endpoint.getClusterServerById(clusterId)) requiredServerList.push(clusterId);
       });
     });
     requiredServerList.forEach((clusterId) => {
@@ -585,7 +523,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     endpoint.getDeviceTypes().forEach((deviceType) => {
       this.log.debug(`- for deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
       deviceType.optionalServerClusters.forEach((clusterId) => {
-        if (!optionalServerList.includes(clusterId) && !endpoint.getClusterClientById(clusterId)) optionalServerList.push(clusterId);
+        if (!optionalServerList.includes(clusterId) && !endpoint.getClusterServerById(clusterId)) optionalServerList.push(clusterId);
       });
     });
     optionalServerList.forEach((clusterId) => {
@@ -608,12 +546,13 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     // if (includeServerList.includes(ScenesManagement.Cluster.id)) endpoint.addClusterServer(this.getDefaultScenesClusterServer());
     if (includeServerList.includes(OnOff.Cluster.id)) endpoint.addClusterServer(this.getDefaultOnOffClusterServer());
     if (includeServerList.includes(LevelControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultLevelControlClusterServer());
-    if (includeServerList.includes(ColorControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultCompleteColorControlClusterServer());
+    if (includeServerList.includes(ColorControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultColorControlClusterServer());
     if (includeServerList.includes(Switch.Cluster.id)) endpoint.addClusterServer(this.getDefaultSwitchClusterServer());
     if (includeServerList.includes(DoorLock.Cluster.id)) endpoint.addClusterServer(this.getDefaultDoorLockClusterServer());
     if (includeServerList.includes(Thermostat.Cluster.id)) endpoint.addClusterServer(this.getDefaultThermostatClusterServer());
     if (includeServerList.includes(TimeSynchronization.Cluster.id)) endpoint.addClusterServer(this.getDefaultTimeSyncClusterServer());
     if (includeServerList.includes(WindowCovering.Cluster.id)) endpoint.addClusterServer(this.getDefaultWindowCoveringClusterServer());
+    if (includeServerList.includes(FanControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultFanControlClusterServer());
     if (includeServerList.includes(TemperatureMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultTemperatureMeasurementClusterServer());
     if (includeServerList.includes(RelativeHumidityMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultRelativeHumidityMeasurementClusterServer());
     if (includeServerList.includes(PressureMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultPressureMeasurementClusterServer());
@@ -623,7 +562,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(OccupancySensing.Cluster.id)) endpoint.addClusterServer(this.getDefaultOccupancySensingClusterServer());
     if (includeServerList.includes(IlluminanceMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultIlluminanceMeasurementClusterServer());
     if (includeServerList.includes(PowerSource.Cluster.id)) endpoint.addClusterServer(this.getDefaultPowerSourceWiredClusterServer());
-    if (includeServerList.includes(EveHistory.Cluster.id)) endpoint.addClusterServer(MatterHistory.getEveHistoryClusterServer());
     if (includeServerList.includes(PowerTopology.Cluster.id)) endpoint.addClusterServer(this.getDefaultPowerTopologyClusterServer());
     if (includeServerList.includes(ElectricalPowerMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalPowerMeasurementClusterServer());
     if (includeServerList.includes(ElectricalEnergyMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultElectricalEnergyMeasurementClusterServer());
@@ -639,7 +577,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (includeServerList.includes(Pm10ConcentrationMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultPm10ConcentrationMeasurementClusterServer());
     if (includeServerList.includes(RadonConcentrationMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultRadonConcentrationMeasurementClusterServer());
     if (includeServerList.includes(TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultTvocMeasurementClusterServer());
-    if (includeServerList.includes(FanControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultFanControlClusterServer());
     if (includeServerList.includes(DeviceEnergyManagement.Cluster.id)) endpoint.addClusterServer(this.getDefaultDeviceEnergyManagementClusterServer());
     if (includeServerList.includes(DeviceEnergyManagementMode.Cluster.id)) endpoint.addClusterServer(this.getDefaultDeviceEnergyManagementModeClusterServer());
     return endpoint;
@@ -653,70 +590,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   getChildEndpointByName(endpointName: string): Endpoint | undefined {
     return this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName);
-  }
-
-  /**
-   * Retrieves a child endpoint name.
-   *
-   * @param {Endpoint} child - The child endpoint to retrieve the name.
-   * @returns {string | undefined} The child endpoint name, or undefined if not found.
-   *
-   * @deprecated This method is deprecated and will be removed in a future version. Use endpoint.uniqueStorageKey instead.
-   */
-  getChildEndpointName(child: Endpoint): string | undefined {
-    // Find the endpoint name (l1...)
-    const labelList = child.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
-    if (!labelList) return undefined;
-    const endpointNameLabel = labelList.find((entry) => entry.label === 'endpointName');
-    if (endpointNameLabel) return endpointNameLabel.value;
-  }
-
-  /**
-   * Sets the endpoint name for a child endpoint.
-   *
-   * @param {Endpoint} child - The child endpoint.
-   * @param {string} endpointName - The name of the endpoint.
-   *
-   * @deprecated This method is deprecated and will be removed in a future version.
-   */
-  setChildEndpointName(child: Endpoint, endpointName: string) {
-    child.addFixedLabel('endpointName', endpointName);
-  }
-
-  /**
-   * Retrieves the label associated with the specified endpoint number.
-   * @param {EndpointNumber | undefined} endpointNumber - The number of the endpoint.
-   * @returns {string | undefined} The label associated with the endpoint number, or undefined if not found.
-   *
-   * @deprecated This method is deprecated and will be removed in a future version.
-   */
-  getEndpointLabel(endpointNumber: EndpointNumber | undefined): string | undefined {
-    if (!endpointNumber) return undefined;
-    const labelList = this.getChildEndpoint(endpointNumber)?.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
-    if (!labelList) return undefined;
-    for (const entry of labelList) {
-      if (entry.label === 'endpointName') return entry.value;
-    }
-  }
-
-  /**
-   * Retrieves the child endpoint with the specified label.
-   *
-   * @param {string} label - The label of the child endpoint to retrieve.
-   * @returns {Endpoint | undefined} The child endpoint with the specified label, or undefined if not found.
-   *
-   * @deprecated This method is deprecated and will be removed in a future version. Use getChildEndpointByName instead.
-   */
-  getChildEndpointWithLabel(label: string): Endpoint | undefined {
-    for (const endpoint of this.getChildEndpoints()) {
-      const labelList = endpoint.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
-      if (!labelList) return undefined;
-      let endpointName = '';
-      for (const entry of labelList) {
-        if (entry.label === 'endpointName') endpointName = entry.value;
-      }
-      if (endpointName === label) return endpoint;
-    }
   }
 
   /**
@@ -1204,6 +1077,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
           maxMeasuredValue: Number.MAX_SAFE_INTEGER,
           accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
         },
+        cumulativeEnergyReset: null,
         cumulativeEnergyImported: energy ? { energy } : null,
         cumulativeEnergyExported: null,
       },
@@ -1409,95 +1283,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
   /**
    * Get a default color control cluster server.
-   * @deprecated This method is deprecated and will be removed in a future version. Use getDefaultCompleteColorControlClusterServer.
-   *
-   * @param currentHue - The current hue value.
-   * @param currentSaturation - The current saturation value.
-   * @param colorTemperatureMireds - The color temperature in mireds.
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
-   */
-  getDefaultColorControlClusterServer(currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
-    return ClusterServer(
-      ColorControlCluster.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature),
-      {
-        colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
-        options: {
-          executeIfOff: false,
-        },
-        numberOfPrimaries: null,
-        enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
-        colorCapabilities: { xy: false, hueSaturation: true, colorLoop: false, enhancedHue: false, colorTemperature: true },
-        currentHue,
-        currentSaturation,
-        colorTemperatureMireds,
-        colorTempPhysicalMinMireds,
-        colorTempPhysicalMaxMireds,
-      },
-      {
-        moveToHue: async ({ request, attributes, endpoint }) => {
-          this.log.debug('Matter command: moveToHue request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal());
-          // attributes.currentHue.setLocal(request.hue);
-          this.commandHandler.executeHandler('moveToHue', { request, attributes, endpoint });
-        },
-        moveHue: async () => {
-          this.log.error('Matter command: moveHue not implemented');
-        },
-        stepHue: async () => {
-          this.log.error('Matter command: stepHue not implemented');
-        },
-        moveToSaturation: async ({ request, attributes, endpoint }) => {
-          this.log.debug('Matter command: moveToSaturation request:', request, 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
-          // attributes.currentSaturation.setLocal(request.saturation);
-          this.commandHandler.executeHandler('moveToSaturation', { request, attributes, endpoint });
-        },
-        moveSaturation: async () => {
-          this.log.error('Matter command: moveSaturation not implemented');
-        },
-        stepSaturation: async () => {
-          this.log.error('Matter command: stepSaturation not implemented');
-        },
-        moveToHueAndSaturation: async ({ request, attributes, endpoint }) => {
-          this.log.debug('Matter command: moveToHueAndSaturation request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal(), 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
-          // attributes.currentHue.setLocal(request.hue);
-          // attributes.currentSaturation.setLocal(request.saturation);
-          this.commandHandler.executeHandler('moveToHueAndSaturation', { request, attributes, endpoint });
-        },
-        stopMoveStep: async () => {
-          this.log.error('Matter command: stopMoveStep not implemented');
-        },
-        moveToColorTemperature: async ({ request, attributes, endpoint }) => {
-          this.log.debug('Matter command: moveToColorTemperature request:', request, 'attributes.colorTemperatureMireds:', attributes.colorTemperatureMireds.getLocal());
-          // attributes.colorTemperatureMireds.setLocal(request.colorTemperatureMireds);
-          this.commandHandler.executeHandler('moveToColorTemperature', { request, attributes, endpoint });
-        },
-        moveColorTemperature: async () => {
-          this.log.error('Matter command: moveColorTemperature not implemented');
-        },
-        stepColorTemperature: async () => {
-          this.log.error('Matter command: stepColorTemperature not implemented');
-        },
-      },
-      {},
-    );
-  }
-  /**
-   * Creates a default color control cluster server.
-   * @deprecated This method is deprecated and will be removed in a future version. Use createDefaultCompleteColorControlClusterServer.
-   *
-   * @param currentHue - The current hue value.
-   * @param currentSaturation - The current saturation value.
-   * @param colorTemperatureMireds - The color temperature in mireds.
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
-   */
-  createDefaultColorControlClusterServer(currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
-    this.addClusterServer(this.getDefaultColorControlClusterServer(currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
-  }
-
-  /**
-   * Get a default color control cluster server.
-   * @deprecated This method is deprecated and will be removed in a future version. Use getDefaultCompleteColorControlClusterServer.
    *
    * @param currentX - The current X value.
    * @param currentY - The current Y value.
@@ -1507,105 +1292,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
    * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
    */
-  getDefaultXYColorControlClusterServer(currentX = 0, currentY = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
-    return ClusterServer(
-      ColorControlCluster.with(ColorControl.Feature.Xy, ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature),
-      {
-        colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
-        options: {
-          executeIfOff: false,
-        },
-        numberOfPrimaries: null,
-        enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
-        colorCapabilities: { xy: true, hueSaturation: true, colorLoop: false, enhancedHue: false, colorTemperature: true },
-        currentHue: 0,
-        currentSaturation: 0,
-        currentX,
-        currentY,
-        colorTemperatureMireds,
-        colorTempPhysicalMinMireds,
-        colorTempPhysicalMaxMireds,
-      },
-      {
-        moveToColor: async (data) => {
-          this.log.debug('Matter command: moveToColor request:', data.request, 'attributes.currentHue:', data.attributes.currentX.getLocal(), data.attributes.currentY.getLocal());
-          this.commandHandler.executeHandler('moveToColor', data);
-        },
-        moveColor: async () => {
-          this.log.error('Matter command: moveColor not implemented');
-        },
-        stepColor: async () => {
-          this.log.error('Matter command: stepColor not implemented');
-        },
-        moveToHue: async ({ request, attributes, endpoint }) => {
-          this.log.debug('Matter command: moveToHue request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal());
-          this.commandHandler.executeHandler('moveToHue', { request, attributes, endpoint });
-        },
-        moveHue: async () => {
-          this.log.error('Matter command: moveHue not implemented');
-        },
-        stepHue: async () => {
-          this.log.error('Matter command: stepHue not implemented');
-        },
-        moveToSaturation: async ({ request, attributes, endpoint }) => {
-          this.log.debug('Matter command: moveToSaturation request:', request, 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
-          this.commandHandler.executeHandler('moveToSaturation', { request, attributes, endpoint });
-        },
-        moveSaturation: async () => {
-          this.log.error('Matter command: moveSaturation not implemented');
-        },
-        stepSaturation: async () => {
-          this.log.error('Matter command: stepSaturation not implemented');
-        },
-        moveToHueAndSaturation: async ({ request, attributes, endpoint }) => {
-          this.log.debug('Matter command: moveToHueAndSaturation request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal(), 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
-          this.commandHandler.executeHandler('moveToHueAndSaturation', { request, attributes, endpoint });
-        },
-        stopMoveStep: async () => {
-          this.log.error('Matter command: stopMoveStep not implemented');
-        },
-        moveToColorTemperature: async ({ request, attributes, endpoint }) => {
-          this.log.debug('Matter command: moveToColorTemperature request:', request, 'attributes.colorTemperatureMireds:', attributes.colorTemperatureMireds.getLocal());
-          this.commandHandler.executeHandler('moveToColorTemperature', { request, attributes, endpoint });
-        },
-        moveColorTemperature: async () => {
-          this.log.error('Matter command: moveColorTemperature not implemented');
-        },
-        stepColorTemperature: async () => {
-          this.log.error('Matter command: stepColorTemperature not implemented');
-        },
-      },
-      {},
-    );
-  }
-  /**
-   * Creates a default color control cluster server.
-   * @deprecated This method is deprecated and will be removed in a future version. Use createDefaultCompleteColorControlClusterServer.
-   *
-   * @param currentX - The current X value.
-   * @param currentY - The current Y value.
-   * @param currentHue - The current hue value.
-   * @param currentSaturation - The current saturation value.
-   * @param colorTemperatureMireds - The color temperature in mireds.
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
-   */
-  createDefaultXYColorControlClusterServer(currentX = 0, currentY = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
-    this.addClusterServer(this.getDefaultXYColorControlClusterServer(currentX, currentY, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
-  }
-
-  /**
-   * Get a default color control cluster server.
-   *
-   * @param currentX - The current X value.
-   * @param currentY - The current Y value.
-   * @param currentHue - The current hue value.
-   * @param currentSaturation - The current saturation value.
-   * @param colorTemperatureMireds - The color temperature in mireds.
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
-   */
-  getDefaultCompleteColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+  getDefaultColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     return ClusterServer(
       ColorControlCluster.with(ColorControl.Feature.Xy, ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature),
       {
@@ -1687,8 +1374,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
    * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
    */
-  createDefaultCompleteColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
-    this.addClusterServer(this.getDefaultCompleteColorControlClusterServer(currentX, currentY, currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
+  createDefaultColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+    this.addClusterServer(this.getDefaultColorControlClusterServer(currentX, currentY, currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
   }
 
   /**
@@ -1707,7 +1394,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     if (!endpoint) endpoint = this as Endpoint;
     endpoint.getClusterServer(ColorControlCluster)?.setFeatureMapAttribute({ hueSaturation, enhancedHue: false, colorLoop: false, xy, colorTemperature });
     endpoint.getClusterServer(ColorControlCluster)?.setColorCapabilitiesAttribute({ hueSaturation, enhancedHue: false, colorLoop: false, xy, colorTemperature });
-    if (colorMode !== undefined && colorMode >= 0 && colorMode <= 2) {
+    if (colorMode !== undefined && colorMode >= ColorControl.ColorMode.CurrentHueAndCurrentSaturation && colorMode <= ColorControl.ColorMode.ColorTemperatureMireds) {
       endpoint.getClusterServer(ColorControlCluster)?.setColorModeAttribute(colorMode);
       endpoint.getClusterServer(ColorControlCluster)?.setEnhancedColorModeAttribute(colorMode as unknown as ColorControl.EnhancedColorMode);
     }
@@ -2064,8 +1751,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Retrieves the default mode select cluster server.
    *
-   * @deprecated This method is currently under development and should not be used.
-   *
    * @param description - The description of the cluster server.
    * @param supportedModes - The supported modes for the cluster server.
    * @param currentMode - The current mode of the cluster server. Defaults to 0.
@@ -2097,18 +1782,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @remarks
    * This method adds a cluster server for a mode select cluster with default settings.
    *
-   * @deprecated This method is currently under development and should not be used.
-   *
    * @param endpoint - The endpoint to add the cluster server to. Defaults to `this` if not provided.
    */
-  createDefaultModeSelectClusterServer(endpoint?: Endpoint) {
+  createDefaultModeSelectClusterServer(description: string, supportedModes: ModeSelect.ModeOption[], currentMode = 0, startUpMode = 0, endpoint?: Endpoint) {
     if (!endpoint) endpoint = this as Endpoint;
-    endpoint.addClusterServer(
-      this.getDefaultModeSelectClusterServer('Mode select', [
-        { label: 'Mode 0', mode: 0, semanticTags: [{ mfgCode: VendorId(0xfff1), value: 0 }] },
-        { label: 'Mode 1', mode: 1, semanticTags: [{ mfgCode: VendorId(0xfff1), value: 1 }] },
-      ]),
-    );
+    endpoint.addClusterServer(this.getDefaultModeSelectClusterServer(description, supportedModes, currentMode, startUpMode));
   }
 
   /**
@@ -2527,27 +2205,41 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Get a default thermostat cluster server with the specified parameters.
    *
-   * @param localTemperature - The local temperature value in degrees Celsius. Defaults to 23.
-   * @param occupiedHeatingSetpoint - The occupied heating setpoint value in degrees Celsius. Defaults to 21.
-   * @param occupiedCoolingSetpoint - The occupied cooling setpoint value in degrees Celsius. Defaults to 25.
-   * @param minSetpointDeadBand - The minimum setpoint dead band value.
+   * @param {number} [localTemperature=23] - The local temperature value in degrees Celsius. Defaults to 23°.
+   * @param {number} [occupiedHeatingSetpoint=21] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
+   * @param {number} [occupiedCoolingSetpoint=25] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
+   * @param {number} [minSetpointDeadBand=1] - The minimum setpoint dead band value. Defaults to 1°.
+   * @param {number} [minHeatSetpointLimit=0] - The minimum heat setpoint limit value. Defaults to 0°.
+   * @param {number} [maxHeatSetpointLimit=50] - The maximum heat setpoint limit value. Defaults to 50°.
+   * @param {number} [minCoolSetpointLimit=0] - The minimum cool setpoint limit value. Defaults to 0°.
+   * @param {number} [maxCoolSetpointLimit=50] - The maximum cool setpoint limit value. Defaults to 50°.
+   * @returns {ThermostatClusterServer} A default thermostat cluster server configured with the specified parameters.
    */
-  getDefaultThermostatClusterServer(localTemperature = 23, occupiedHeatingSetpoint = 21, occupiedCoolingSetpoint = 25, minSetpointDeadBand = 1) {
+  getDefaultThermostatClusterServer(
+    localTemperature = 23,
+    occupiedHeatingSetpoint = 21,
+    occupiedCoolingSetpoint = 25,
+    minSetpointDeadBand = 1,
+    minHeatSetpointLimit = 0,
+    maxHeatSetpointLimit = 50,
+    minCoolSetpointLimit = 0,
+    maxCoolSetpointLimit = 50,
+  ) {
     return ClusterServer(
       ThermostatCluster.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode),
       {
         localTemperature: localTemperature * 100,
         occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
         occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
-        minHeatSetpointLimit: 0,
-        maxHeatSetpointLimit: 5000,
-        absMinHeatSetpointLimit: 0,
-        absMaxHeatSetpointLimit: 5000,
-        minCoolSetpointLimit: 0,
-        maxCoolSetpointLimit: 5000,
-        absMinCoolSetpointLimit: 0,
-        absMaxCoolSetpointLimit: 5000,
-        minSetpointDeadBand,
+        minHeatSetpointLimit: minHeatSetpointLimit * 100,
+        maxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+        absMinHeatSetpointLimit: minHeatSetpointLimit * 100,
+        absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+        minCoolSetpointLimit: minCoolSetpointLimit * 100,
+        maxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+        absMinCoolSetpointLimit: minCoolSetpointLimit * 100,
+        absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+        minSetpointDeadBand: minSetpointDeadBand * 100,
         systemMode: Thermostat.SystemMode.Off,
         controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
         thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
@@ -2565,13 +2257,26 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Creates and adds a default thermostat cluster server to the device.
    *
-   * @param localTemperature - The local temperature value.
-   * @param occupiedHeatingSetpoint - The occupied heating setpoint value.
-   * @param occupiedCoolingSetpoint - The occupied cooling setpoint value.
-   * @param minSetpointDeadBand - The minimum setpoint dead band value.
+   * @param {number} [localTemperature=23] - The local temperature value in degrees Celsius. Defaults to 23°.
+   * @param {number} [occupiedHeatingSetpoint=21] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
+   * @param {number} [occupiedCoolingSetpoint=25] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
+   * @param {number} [minSetpointDeadBand=1] - The minimum setpoint dead band value. Defaults to 1°.
+   * @param {number} [minHeatSetpointLimit=0] - The minimum heat setpoint limit value. Defaults to 0°.
+   * @param {number} [maxHeatSetpointLimit=50] - The maximum heat setpoint limit value. Defaults to 50°.
+   * @param {number} [minCoolSetpointLimit=0] - The minimum cool setpoint limit value. Defaults to 0°.
+   * @param {number} [maxCoolSetpointLimit=50] - The maximum cool setpoint limit value. Defaults to 50°.
    */
-  createDefaultThermostatClusterServer(localTemperature = 23, occupiedHeatingSetpoint = 21, occupiedCoolingSetpoint = 25, minSetpointDeadBand = 1) {
-    this.addClusterServer(this.getDefaultThermostatClusterServer(localTemperature, occupiedHeatingSetpoint, occupiedCoolingSetpoint, minSetpointDeadBand));
+  createDefaultThermostatClusterServer(
+    localTemperature = 23,
+    occupiedHeatingSetpoint = 21,
+    occupiedCoolingSetpoint = 25,
+    minSetpointDeadBand = 1,
+    minHeatSetpointLimit = 0,
+    maxHeatSetpointLimit = 50,
+    minCoolSetpointLimit = 0,
+    maxCoolSetpointLimit = 50,
+  ) {
+    this.addClusterServer(this.getDefaultThermostatClusterServer(localTemperature, occupiedHeatingSetpoint, occupiedCoolingSetpoint, minSetpointDeadBand, minHeatSetpointLimit, maxHeatSetpointLimit, minCoolSetpointLimit, maxCoolSetpointLimit));
   }
 
   /**
@@ -2988,7 +2693,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   getDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
     return ClusterServer(
-      FanControlCluster.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto /* , FanControl.Feature.Step*/),
+      FanControlCluster.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step),
       {
         fanMode,
         fanModeSequence: FanControl.FanModeSequence.OffLowMedHighAuto,
@@ -2999,12 +2704,10 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         speedCurrent: 0,
       },
       {
-        /*
-        step: async ({ request, attributes }) => {
-          this.log.debug('Matter command: step', request);
-          await this.commandHandler.executeHandler('step', { request, attributes });
+        step: async (data) => {
+          this.log.debug('Matter command: step', data.request);
+          await this.commandHandler.executeHandler('step', data);
         },
-        */
       },
       {},
     );

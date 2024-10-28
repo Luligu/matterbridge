@@ -55,62 +55,68 @@ function WebSocketUse(wssHost, ssl) {
         logMessage('WebSocket', `Connecting to WebSocket: ${wssHost}`);
         ws.current = new WebSocket(wssHost);
         ws.current.onmessage = (event) => {
-            const msg = JSON.parse(event.data);
-            // console.log(`WebSocketUse message: ${msg.level} - ${msg.time} - ${msg.name}: ${msg.message}`);
-            // console.log(`WebSocketUse logFilterLevel: "${logFilterLevelRef.current}" logFilterSearch: "${logFilterSearchRef.current}"`);
-            const normalLevels = ['debug', 'info', 'notice', 'warn', 'error', 'fatal'];
-            if(normalLevels.includes(msg.level)) {
-                if(logFilterLevelRef.current === 'info' && msg.level === 'debug') return;
-                if(logFilterLevelRef.current === 'notice' && (msg.level === 'debug' || msg.level === 'info')) return;
-                if(logFilterLevelRef.current === 'warn' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice')) return;
-                if(logFilterLevelRef.current === 'error' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice' || msg.level === 'warn')) return;
-                if(logFilterLevelRef.current === 'fatal' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice' || msg.level === 'warn' || msg.level === 'error')) return;
-            }
-            if( logFilterSearchRef.current !== '*' && logFilterSearchRef.current !== '' && !msg.message.toLowerCase().includes(logFilterSearchRef.current.toLowerCase()) && !msg.name.toLowerCase().includes(logFilterSearchRef.current.toLowerCase()) ) return;
-            // console.log(`useWebSocket afterfilter: debugLevel: '${debugLevel}'-'${msg.subType}' searchCriteria: '${searchCriteria}'`);
-
-            setMessages(prevMessages => {
-                // Create new array with new message
-                // const timeString = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}.${now.getMilliseconds().toString().padStart(3,'0')}`;
-                const timeString = `<span style="color: #505050;">[${msg.time}]</span>`;
-                const getsubTypeMessageBgColor = (level) => {
-                    switch (level.toLowerCase()) {
-                        case 'debug':
-                            return 'gray';
-                        case 'info':
-                            return '#267fb7';
-                        case 'notice':
-                            return 'green';
-                        case 'warn':
-                            return '#e9db18';
-                        case 'error':
-                            return 'red';
-                        case 'fatal':    
-                            return '#ff0000';
-                        case 'spawn':
-                            return '#ff00d0';
-                        default:
-                            return 'lightblue'; 
-                    }
-                };                
-                const getsubTypeMessageColor = (level) => {
-                    switch (level.toLowerCase()) {
-                        case 'warn':
-                            return 'black';
-                        default:
-                            return 'white'; 
-                    }
-                };                
-                const coloredSubType = `<span style="background-color: ${getsubTypeMessageBgColor(msg.level)}; color: ${getsubTypeMessageColor(msg.level)}; padding: 1px 5px; font-size: 12px; border-radius: 3px;">${msg.level}</span>`;
-                const newMessage = `${coloredSubType} - ${timeString} <span style="color: #09516d;">[${msg.name}]</span>: ${msg.message}`;
-                const newMessages = [...prevMessages, newMessage];
-                // Check if the new array length exceeds the maximum allowed
-                if (newMessages.length > maxMessages) {
-                    // Remove the oldest messages to maintain maxMessages count
-                    return newMessages.slice(newMessages.length - maxMessages);
+            try {
+                const msg = JSON.parse(event.data);
+                if(msg.id===undefined || msg.id!==0 || !msg.level || !msg.time || !msg.name || !msg.message) return;
+                // console.log(`WebSocketUse message: ${msg.level} - ${msg.time} - ${msg.name}: ${msg.message}`);
+                // console.log(`WebSocketUse logFilterLevel: "${logFilterLevelRef.current}" logFilterSearch: "${logFilterSearchRef.current}"`);
+                const normalLevels = ['debug', 'info', 'notice', 'warn', 'error', 'fatal'];
+                if(normalLevels.includes(msg.level)) {
+                    if(logFilterLevelRef.current === 'info' && msg.level === 'debug') return;
+                    if(logFilterLevelRef.current === 'notice' && (msg.level === 'debug' || msg.level === 'info')) return;
+                    if(logFilterLevelRef.current === 'warn' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice')) return;
+                    if(logFilterLevelRef.current === 'error' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice' || msg.level === 'warn')) return;
+                    if(logFilterLevelRef.current === 'fatal' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice' || msg.level === 'warn' || msg.level === 'error')) return;
                 }
-                return newMessages;
-            });
+                if( logFilterSearchRef.current !== '*' && logFilterSearchRef.current !== '' && !msg.message.toLowerCase().includes(logFilterSearchRef.current.toLowerCase()) && !msg.name.toLowerCase().includes(logFilterSearchRef.current.toLowerCase()) ) return;
+                // console.log(`useWebSocket afterfilter: debugLevel: '${debugLevel}'-'${msg.subType}' searchCriteria: '${searchCriteria}'`);
+
+                setMessages(prevMessages => {
+                    // Create new array with new message
+                    // const timeString = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}.${now.getMilliseconds().toString().padStart(3,'0')}`;
+                    const timeString = `<span style="color: #505050;">[${msg.time}]</span>`;
+                    const getsubTypeMessageBgColor = (level) => {
+                        switch (level.toLowerCase()) {
+                            case 'debug':
+                                return 'gray';
+                            case 'info':
+                                return '#267fb7';
+                            case 'notice':
+                                return 'green';
+                            case 'warn':
+                                return '#e9db18';
+                            case 'error':
+                                return 'red';
+                            case 'fatal':    
+                                return '#ff0000';
+                            case 'spawn':
+                                return '#ff00d0';
+                            default:
+                                return 'lightblue'; 
+                        }
+                    };                
+                    const getsubTypeMessageColor = (level) => {
+                        switch (level.toLowerCase()) {
+                            case 'warn':
+                                return 'black';
+                            default:
+                                return 'white'; 
+                        }
+                    };                
+                    const coloredSubType = `<span style="background-color: ${getsubTypeMessageBgColor(msg.level)}; color: ${getsubTypeMessageColor(msg.level)}; padding: 1px 5px; font-size: 12px; border-radius: 3px;">${msg.level}</span>`;
+                    const newMessage = `${coloredSubType} - ${timeString} <span style="color: #09516d;">[${msg.name}]</span>: ${msg.message}`;
+                    const newMessages = [...prevMessages, newMessage];
+                    // Check if the new array length exceeds the maximum allowed
+                    if (newMessages.length > maxMessages) {
+                        // Remove the oldest messages to maintain maxMessages count
+                        return newMessages.slice(newMessages.length - maxMessages);
+                    }
+                    return newMessages;
+                });
+            } catch (error) {
+                // eslint-disable-next-line no-console
+                console.error(`WebSocketUse error parsing message: ${error}`);
+            }
         };
         ws.current.onopen = () => { 
             // console.log(`Connected to WebSocket: ${wssHost}`); 
