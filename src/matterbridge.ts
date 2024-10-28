@@ -40,7 +40,7 @@ import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW,
 
 // Matterbridge
 import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
-import { logInterfaces, wait, waiter, createZip } from './utils/utils.js';
+import { logInterfaces, wait, waiter, createZip, copyDirectory } from './utils/utils.js';
 import { BaseRegisteredPlugin, MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
@@ -265,24 +265,6 @@ export class Matterbridge extends EventEmitter {
     this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
 
     // Initialize nodeStorage and nodeContext
-    const copyDirectory = async function (srcDir: string, destDir: string): Promise<void> {
-      // Create destination directory if it doesn't exist
-      await fs.mkdir(destDir, { recursive: true });
-      // Read contents of the source directory
-      const entries = await fs.readdir(srcDir, { withFileTypes: true });
-      for (const entry of entries) {
-        const srcPath = path.join(srcDir, entry.name);
-        const destPath = path.join(destDir, entry.name);
-        if (entry.isDirectory()) {
-          // Recursive call if entry is a directory
-          await copyDirectory(srcPath, destPath);
-        } else if (entry.isFile()) {
-          // Copy file if entry is a file
-          await fs.copyFile(srcPath, destPath);
-        }
-      }
-    };
-
     try {
       this.log.debug(`Creating node storage manager: ${CYAN}${this.nodeStorageName}${db}`);
       this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, this.nodeStorageName), writeQueue: false, expiredInterval: undefined, logging: false });

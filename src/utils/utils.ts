@@ -27,6 +27,7 @@ import archiver, { ArchiverError, EntryData } from 'archiver';
 import path from 'path';
 import { AnsiLogger, idn, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
 import { glob } from 'glob';
+import { promises as fs } from 'fs';
 
 const log = new AnsiLogger({ logName: 'MatterbridgeUtils', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
 
@@ -531,4 +532,40 @@ export async function createZip(outputPath: string, ...sourcePaths: string[]): P
     log.debug(`finalizing archive ${outputPath}...`);
     archive.finalize().catch(reject);
   });
+}
+
+/**
+ * Copies a directory and all its subdirectories and files to a new location.
+ *
+ * @param {string} srcDir - The path to the source directory.
+ * @param {string} destDir - The path to the destination directory.
+ * @returns {Promise<boolean>} - A promise that resolves when the copy operation is complete or fails for error.
+ * @throws {Error} - Throws an error if the copy operation fails.
+ */
+export async function copyDirectory(srcDir: string, destDir: string): Promise<boolean> {
+  log.debug(`copyDirectory: copying directory from ${srcDir} to ${destDir}`);
+  try {
+    // Create destination directory if it doesn't exist
+    await fs.mkdir(destDir, { recursive: true });
+
+    // Read contents of the source directory
+    const entries = await fs.readdir(srcDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const srcPath = path.join(srcDir, entry.name);
+      const destPath = path.join(destDir, entry.name);
+
+      if (entry.isDirectory()) {
+        // Recursive call if entry is a directory
+        await copyDirectory(srcPath, destPath);
+      } else if (entry.isFile()) {
+        // Copy file if entry is a file
+        await fs.copyFile(srcPath, destPath);
+      }
+    }
+    return true;
+  } catch (error) {
+    log.error(`copyDirectory error copying from ${srcDir} to ${destDir}: ${error instanceof Error ? error.message : error}`);
+    return false;
+  }
 }
