@@ -360,6 +360,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
 
     const version = await plugins.install('matterbridge-example-dynamic-platform');
     expect(version).not.toBeUndefined();
+    // eslint-disable-next-line no-console
     console.error(`Plugin installed: ${version}`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Installing plugin ${plg}matterbridge-example-dynamic-platform${nf}`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Installed plugin ${plg}matterbridge-example-dynamic-platform${nf}`);
