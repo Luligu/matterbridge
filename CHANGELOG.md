@@ -10,7 +10,7 @@ The Home Assistant Community Add-ons and plugins are not verified to work with M
 
 If you want to run Matterbridge in Home Assistant please use the official add-on https://github.com/Luligu/matterbridge-home-assistant-addon that also has Ingress and side panel.
 
-### New Apple firmware v. 18.0
+### New Apple firmware v. 18.x
 
 Please read this: https://github.com/Luligu/matterbridge/discussions/135
 

@@ -360,8 +360,6 @@ describe('PluginsManager load/start/configure/shutdown', () => {
 
     const version = await plugins.install('matterbridge-example-dynamic-platform');
     expect(version).not.toBeUndefined();
-    // eslint-disable-next-line no-console
-    console.error(`Plugin installed: ${version}`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Installing plugin ${plg}matterbridge-example-dynamic-platform${nf}`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Installed plugin ${plg}matterbridge-example-dynamic-platform${nf}`);
   }, 300000);
@@ -579,7 +577,6 @@ describe('PluginsManager load/start/configure/shutdown', () => {
   test('wait for plugin matterbridge-example-dynamic-platform to load and start', async () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
-    // if (getMacAddress() !== '30:f6:ef:69:2b:c5') return; // TODO remove this line
     if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     const plugin = plugins.get('matterbridge-example-dynamic-platform');
@@ -640,22 +637,11 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect(plugin.started).toBeTruthy();
     expect(plugin.configured).toBeFalsy();
     plugin = await plugins.configure(plugin);
+    expect(plugin).not.toBeUndefined();
+    if (!plugin) return;
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Configuring plugin ${plg}${plugin?.name}${nf} type ${typ}${plugin?.type}${nf}`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Configured plugin ${plg}${plugin?.name}${nt} type ${typ}${plugin?.type}${nt}`);
     expect(plugin).not.toBeUndefined();
-    if (!plugin) return;
-    /*
-    await waiter(
-      'Plugin to configure',
-      () => {
-        return plugin.configured === true;
-      },
-      false,
-      5000,
-      1000,
-      true,
-    );
-    */
     expect(plugin.configured).toBe(true);
   }, 60000);
 
@@ -701,7 +687,6 @@ describe('PluginsManager load/start/configure/shutdown', () => {
   test('shutdown plugin matterbridge-example-dynamic-platform', async () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
-    // if (getMacAddress() !== '30:f6:ef:69:2b:c5') return; // TODO remove this line
     if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     let plugin = plugins.get('matterbridge-example-dynamic-platform');
