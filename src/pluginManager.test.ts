@@ -249,11 +249,11 @@ describe('PluginManager', () => {
     expect(plugins.length).toBe(0);
   });
 
-  test('add plugin with name', async () => {
+  test('add/disable/enable/remove plugin matterbridge-eve-door', async () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
 
-    execSync('npm install -g matterbridge-eve-door');
+    execSync('npm install -g matterbridge-eve-door --omit=dev');
     expect(plugins.length).toBe(0);
     expect(await plugins.add('matterbridge-eve-door')).not.toBeNull();
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-eve-door${nf}`);
@@ -359,8 +359,8 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     const version = await plugins.install('matterbridge-example-dynamic-platform');
-    // expect(version).not.toBeUndefined();
-    // console.error(`Plugin installed: ${version}`);
+    expect(version).not.toBeUndefined();
+    console.error(`Plugin installed: ${version}`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Installing plugin ${plg}matterbridge-example-dynamic-platform${nf}`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Installed plugin ${plg}matterbridge-example-dynamic-platform${nf}`);
   }, 300000);
@@ -575,12 +575,10 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect(plugin.configured).toBe(undefined);
   });
 
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /*
   test('wait for plugin matterbridge-example-dynamic-platform to load and start', async () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
-    if (getMacAddress() !== '30:f6:ef:69:2b:c5') return; // TODO remove this line
+    // if (getMacAddress() !== '30:f6:ef:69:2b:c5') return; // TODO remove this line
     if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     const plugin = plugins.get('matterbridge-example-dynamic-platform');
@@ -599,7 +597,6 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect(plugin.started).toBe(true);
     expect(plugin.configured).toBe(true);
   }, 60000);
-  */
 
   test('start plugin matterbridge-example-accessory-platform', async () => {
     // loggerLogSpy.mockRestore();
@@ -608,10 +605,10 @@ describe('PluginsManager load/start/configure/shutdown', () => {
 
     let plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
-    expect(plugin?.loaded).toBeTruthy();
-    expect(plugin?.started).toBeFalsy();
-    expect(plugin?.configured).toBeFalsy();
     if (!plugin) return;
+    expect(plugin.loaded).toBeTruthy();
+    expect(plugin.started).toBeFalsy();
+    expect(plugin.configured).toBeFalsy();
 
     plugin = await plugins.start(plugin, 'Test with Jest', false);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Starting plugin ${plg}${plugin?.name}${nf} type ${typ}${plugin?.type}${nf}`);
@@ -637,10 +634,10 @@ describe('PluginsManager load/start/configure/shutdown', () => {
 
     let plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
-    expect(plugin?.loaded).toBeTruthy();
-    expect(plugin?.started).toBeTruthy();
-    expect(plugin?.configured).toBeFalsy();
     if (!plugin) return;
+    expect(plugin.loaded).toBeTruthy();
+    expect(plugin.started).toBeTruthy();
+    expect(plugin.configured).toBeFalsy();
     plugin = await plugins.configure(plugin);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Configuring plugin ${plg}${plugin?.name}${nf} type ${typ}${plugin?.type}${nf}`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Configured plugin ${plg}${plugin?.name}${nt} type ${typ}${plugin?.type}${nt}`);
@@ -668,10 +665,10 @@ describe('PluginsManager load/start/configure/shutdown', () => {
 
     let plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
-    expect(plugin?.loaded).toBeTruthy();
-    expect(plugin?.started).toBeTruthy();
-    expect(plugin?.configured).toBeTruthy();
     if (!plugin) return;
+    expect(plugin.loaded).toBeTruthy();
+    expect(plugin.started).toBeTruthy();
+    expect(plugin.configured).toBeTruthy();
 
     plugin = await plugins.shutdown(plugin, 'Test with Jest', true);
     expect(plugin).not.toBeUndefined();
@@ -700,12 +697,10 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect(await plugins.saveToStorage()).toBe(2);
   }, 60000);
 
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /*
   test('shutdown plugin matterbridge-example-dynamic-platform', async () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
-    if (getMacAddress() !== '30:f6:ef:69:2b:c5') return; // TODO remove this line
+    // if (getMacAddress() !== '30:f6:ef:69:2b:c5') return; // TODO remove this line
     if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     let plugin = plugins.get('matterbridge-example-dynamic-platform');
@@ -718,7 +713,6 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     plugin = await plugins.shutdown(plugin, 'Test with Jest', true);
     expect(plugin).not.toBeUndefined();
   }, 60000);
-  */
 
   test('uninstall not existing plugin matterbridge-xyz', async () => {
     // loggerLogSpy.mockRestore();
