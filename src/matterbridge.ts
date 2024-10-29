@@ -1885,11 +1885,17 @@ export class Matterbridge extends EventEmitter {
       if (storageType === 'json') {
         await this.backupMatterStorage(storageName, storageName.replace('.json', '') + '.backup.json');
       }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      this.log.fatal(`Storage initialize() error! The file .matterbridge/${storageName} may be corrupted.`);
-      this.log.fatal(`Please delete it and rename ${storageName.replace('.json', '.backup.json')} to ${storageName} and try to restart Matterbridge.`);
-      await this.cleanup('Storage initialize() error!');
+      this.log.error(`Storage initialize() error! The file .matterbridge/${storageName} may be corrupted: ${error instanceof Error ? error.message : error}`);
+      // this.log.fatal(`Please delete it and rename ${storageName.replace('.json', '.backup.json')} to ${storageName} and try to restart Matterbridge.`);
+      await this.restoreMatterStorage(storageName.replace('.json', '') + '.backup.json', storageName);
+      try {
+        await this.storageManager.initialize();
+        this.log.debug('Storage initialized from the backup file');
+      } catch (error) {
+        this.log.error(`Storage initialize() error! The backup file for .matterbridge/${storageName} may be corrupted too:`, error instanceof Error ? error.message : error);
+        await this.cleanup('Storage initialize() error!');
+      }
     }
 
     this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
@@ -1902,7 +1908,7 @@ export class Matterbridge extends EventEmitter {
    * @param storageName - The name of the JSON storage file to be backed up.
    * @param backupName - The name of the backup file to be created.
    */
-  protected async backupMatterStorage(storageName: string, backupName: string) {
+  protected async backupMatterStorage(storageName: string, backupName: string): Promise<void> {
     try {
       this.log.debug(`Making backup copy of ${storageName}`);
       await fs.copyFile(storageName, backupName);
@@ -1916,6 +1922,30 @@ export class Matterbridge extends EventEmitter {
         }
       } else {
         this.log.error(`An unexpected error occurred during the backup of ${storageName}: ${String(err)}`);
+      }
+    }
+  }
+
+  /**
+   * Restore the specified matter JSON storage file.
+   *
+   * @param backupName - The name of the backup file to restore from.
+   * @param storageName - The name of the JSON storage file to restored.
+   */
+  protected async restoreMatterStorage(backupName: string, storageName: string): Promise<void> {
+    try {
+      this.log.info(`Restoring the backup copy of ${storageName}`);
+      await fs.copyFile(backupName, storageName);
+      this.log.info(`Successfully restored ${backupName} to ${storageName}`);
+    } catch (err) {
+      if (err instanceof Error && 'code' in err) {
+        if (err.code === 'ENOENT') {
+          this.log.info(`No existing file to restore: ${backupName}.`);
+        } else {
+          this.log.error(`Error restoring ${backupName}: ${err.message}`);
+        }
+      } else {
+        this.log.error(`An unexpected error occurred during the restore of ${backupName}: ${String(err)}`);
       }
     }
   }
