@@ -20,12 +20,13 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 Feel free to join (the link is now permanent)!
 
-## [1.6.1] - 2024-10-29
+## [1.6.1] - 2024-11-01
 
 ### Added
 
 - [matterbridge]: Added automatic recovery for matterbridge node storage when it gets corrupted for a power outage or hardware failure. Unattended setups can automatically recover restoring the previous automatic backup.
 - [matterbridge]: Added automatic recovery for matter storage when it gets corrupted for a power outage or hardware failure. Unattended setups can automatically recover restoring the previous automatic backup.
+- [matterbridge]: Added parameter "-norestore" to force not to restore automatically. In this case you need to manually restore a full backup made from the frontend.
 
 ### Changed
 
