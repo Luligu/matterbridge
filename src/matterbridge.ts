@@ -262,52 +262,53 @@ export class Matterbridge extends EventEmitter {
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
 
     // Create matterbridge logger
-    this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
+    this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 
     // Initialize nodeStorage and nodeContext
     try {
       this.log.debug(`Creating node storage manager: ${CYAN}${this.nodeStorageName}${db}`);
       this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, this.nodeStorageName), writeQueue: false, expiredInterval: undefined, logging: false });
+      // TODO: Remove this code when node-persist-manager is updated
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const keys = (await (this.nodeStorage as any)?.storage.keys()) as string[];
+      for (const key of keys) {
+        this.log.debug(`Checking node storage manager key: ${CYAN}${key}${db}`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (this.nodeStorage as any)?.storage.get(key);
+      }
+      const storages = await this.nodeStorage.getStorageNames();
+      for (const storage of storages) {
+        this.log.debug(`Checking storage: ${CYAN}${storage}${db}`);
+        const nodeContext = await this.nodeStorage?.createStorage(storage);
+        // TODO: Remove this code when node-persist-manager is updated
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const keys = (await (nodeContext as any)?.storage.keys()) as string[];
+        keys.forEach(async (key) => {
+          this.log.debug(`Checking key: ${CYAN}${storage}:${key}${db}`);
+          await nodeContext?.get(key);
+        });
+      }
       this.log.debug('Creating node storage context for matterbridge');
       this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
-      // Check if the storage is corrupted and make a backup or restore it
-      await this.nodeContext.get<LogLevel>('matterbridgeLogLevel', LogLevel.INFO);
-      await this.nodeContext.get<boolean>('matterbridgeFileLog', false);
-      await this.nodeContext.get<number>('matterLogLevel', Level.INFO);
-      await this.nodeContext.get<boolean>('matterFileLog', false);
-      await this.nodeContext.get<string>('mattermdnsinterface', undefined);
-      await this.nodeContext.get<string>('matteripv4address', undefined);
-      await this.nodeContext.get<string>('matteripv6address', undefined);
-      await this.nodeContext.get<string>('bridgeMode', '');
-      const pluginsArray = await this.nodeContext.get<RegisteredPlugin[]>('plugins', []);
-      for (const plugin of pluginsArray) {
-        const nodeContext = await this.nodeStorage.createStorage(plugin.name);
-        await nodeContext.get<string>('name', '');
-        await nodeContext.get<string>('type', '');
-        await nodeContext.get<string>('path', '');
-        await nodeContext.get<string>('version', '');
-        await nodeContext.get<string>('description', '');
-        await nodeContext.get<string>('author', '');
-      }
-      await this.nodeContext.get<SerializedMatterbridgeDevice[]>('devices', []);
       // Creating a backup of the node storage since it is not corrupted
-      this.log.info('Creating node storage backup for matterbridge');
+      this.log.debug('Creating node storage backup...');
       await copyDirectory(path.join(this.matterbridgeDirectory, this.nodeStorageName), path.join(this.matterbridgeDirectory, this.nodeStorageName + '.backup'));
+      this.log.debug('Created node storage backup');
     } catch (error) {
       // Restoring the backup of the node storage since it is corrupted
       this.log.error(`Error creating node storage manager and context: ${error instanceof Error ? error.message : error}`);
-      this.log.error(`The matterbridge storage is corrupted. Restoring it with backup values.`);
+      if (hasParameter('norestore')) {
+        this.log.fatal(`The matterbridge node storage is corrupted. Parameter -norestore found: exiting...`);
+        await this.cleanup('Fatal error creating node storage manager and context for matterbridge');
+        return;
+      }
+      this.log.notice(`The matterbridge storage is corrupted. Restoring it with backup values...`);
       await copyDirectory(path.join(this.matterbridgeDirectory, this.nodeStorageName + '.backup'), path.join(this.matterbridgeDirectory, this.nodeStorageName));
+      this.log.notice(`The matterbridge storage has been restored with backup values`);
     }
     if (!this.nodeStorage || !this.nodeContext) {
       this.log.fatal('Fatal error creating node storage manager and context for matterbridge');
       throw new Error('Fatal error creating node storage manager and context for matterbridge');
-    }
-
-    // Create the file logger for matterbridge (context: matterbridgeFileLog)
-    if (hasParameter('filelogger') || (await this.nodeContext.get<boolean>('matterbridgeFileLog', false))) {
-      AnsiLogger.setGlobalLogfile(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), LogLevel.DEBUG, true);
-      this.matterbridgeInformation.fileLogger = true;
     }
 
     // Set matterbridge logger level (context: matterbridgeLogLevel)
@@ -333,6 +334,12 @@ export class Matterbridge extends EventEmitter {
       this.log.logLevel = await this.nodeContext.get<LogLevel>('matterbridgeLogLevel', LogLevel.INFO);
     }
     MatterbridgeDevice.logLevel = this.log.logLevel;
+
+    // Create the file logger for matterbridge (context: matterbridgeFileLog)
+    if (hasParameter('filelogger') || (await this.nodeContext.get<boolean>('matterbridgeFileLog', false))) {
+      AnsiLogger.setGlobalLogfile(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), this.log.logLevel, true);
+      this.matterbridgeInformation.fileLogger = true;
+    }
 
     this.log.notice('Matterbridge is starting...');
 
@@ -487,6 +494,7 @@ export class Matterbridge extends EventEmitter {
       - logstorage:            log the node storage
       - sudo:                  force the use of sudo to install or update packages if the internal logic fails
       - nosudo:                force not to use sudo to install or update packages if the internal logic fails
+      - norestore:             force not to automatically restore the matterbridge node storage and the matter storage from backup if it is corrupted
       - ssl:                   enable SSL for the frontend and WebSockerServer (certificates in .matterbridge/certs directory cert.pem, key.pem and ca.pem (optional))
       - add [plugin path]:     register the plugin from the given absolute or relative path
       - add [plugin name]:     register the globally installed plugin with the given name
@@ -1866,7 +1874,7 @@ export class Matterbridge extends EventEmitter {
    * @returns {Promise<void>} - A promise that resolves when the storage process is started.
    */
   protected async startMatterStorage(storageType: string, storageName: string): Promise<void> {
-    this.log.debug(`Starting ${storageType} storage ${CYAN}${storageName}${db}`);
+    this.log.debug(`Starting matter ${storageType} storage ${CYAN}${storageName}${db}`);
     if (storageType === 'disk') {
       const storageDisk = new StorageBackendDisk(storageName);
       this.storageManager = new StorageManager(storageDisk);
@@ -1875,26 +1883,31 @@ export class Matterbridge extends EventEmitter {
       const storageJson = new StorageBackendJsonFile(storageName);
       this.storageManager = new StorageManager(storageJson);
     } else {
-      this.log.error(`Unsupported storage type ${storageType}`);
-      await this.cleanup('Unsupported storage type');
+      this.log.error(`Unsupported matter storage type ${storageType}`);
+      await this.cleanup('Unsupported matter storage type');
       return;
     }
     try {
       await this.storageManager.initialize();
-      this.log.debug('Storage initialized');
+      this.log.debug('Matter storage initialized');
       if (storageType === 'json') {
         await this.backupMatterStorage(storageName, storageName.replace('.json', '') + '.backup.json');
       }
     } catch (error) {
-      this.log.error(`Storage initialize() error! The file .matterbridge/${storageName} may be corrupted: ${error instanceof Error ? error.message : error}`);
-      // this.log.fatal(`Please delete it and rename ${storageName.replace('.json', '.backup.json')} to ${storageName} and try to restart Matterbridge.`);
+      this.log.error(`Matter storage initialize error! The file .matterbridge/${storageName} may be corrupted: ${error instanceof Error ? error.message : error}`);
+      if (hasParameter('norestore')) {
+        this.log.fatal(`Please delete it and rename ${storageName.replace('.json', '.backup.json')} to ${storageName} and try to restart Matterbridge.`);
+        await this.cleanup('Matter storage initialize error and -norestore parameter found!');
+        return;
+      }
       await this.restoreMatterStorage(storageName.replace('.json', '') + '.backup.json', storageName);
       try {
         await this.storageManager.initialize();
-        this.log.debug('Storage initialized from the backup file');
+        this.log.notice('Matter storage initialized from the backup file');
       } catch (error) {
-        this.log.error(`Storage initialize() error! The backup file for .matterbridge/${storageName} may be corrupted too:`, error instanceof Error ? error.message : error);
-        await this.cleanup('Storage initialize() error!');
+        this.log.error(`Matter storage initialize error! The backup file for .matterbridge/${storageName} may be corrupted too:`, error instanceof Error ? error.message : error);
+        await this.cleanup('Matter storage initialize error from backup!');
+        return;
       }
     }
 
@@ -1916,7 +1929,7 @@ export class Matterbridge extends EventEmitter {
     } catch (err) {
       if (err instanceof Error && 'code' in err) {
         if (err.code === 'ENOENT') {
-          this.log.info(`No existing file to back up for ${storageName}. This is expected on the first run.`);
+          this.log.debug(`No existing file to back up for ${storageName}. This is expected on the first run.`);
         } else {
           this.log.error(`Error making backup copy of ${storageName}: ${err.message}`);
         }
@@ -1934,9 +1947,9 @@ export class Matterbridge extends EventEmitter {
    */
   protected async restoreMatterStorage(backupName: string, storageName: string): Promise<void> {
     try {
-      this.log.info(`Restoring the backup copy of ${storageName}`);
+      this.log.notice(`Restoring the backup copy of ${storageName}`);
       await fs.copyFile(backupName, storageName);
-      this.log.info(`Successfully restored ${backupName} to ${storageName}`);
+      this.log.notice(`Successfully restored ${backupName} to ${storageName}`);
     } catch (err) {
       if (err instanceof Error && 'code' in err) {
         if (err.code === 'ENOENT') {
