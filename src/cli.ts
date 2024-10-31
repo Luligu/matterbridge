@@ -65,22 +65,6 @@ async function update() {
 
 process.title = 'matterbridge';
 
-// Remove all existing listeners for uncaughtException and unhandledRejection
-process.removeAllListeners('uncaughtException');
-process.removeAllListeners('unhandledRejection');
-
-// Register new listeners for uncaughtException
-process.on('uncaughtException', (error) => {
-  console.error(er + 'CLI: Matterbridge Unhandled Exception detected at:', error.stack || error, rs);
-  process.exit(1);
-});
-
-// Register new listeners for unhandledRejection
-process.on('unhandledRejection', (reason, promise) => {
-  console.error(er + 'CLI: Matterbridge Unhandled Rejection detected at:', promise, 'reason:', reason instanceof Error ? reason.stack : reason, rs);
-  process.exit(1);
-});
-
 // Run the main function
 main().catch((error) => {
   console.error(er + `CLI: Matterbridge.loadInstance() failed with error: ${error}` + rs);

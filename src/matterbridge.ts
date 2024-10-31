@@ -161,6 +161,8 @@ export class Matterbridge extends EventEmitter {
   private reachabilityTimeout: NodeJS.Timeout | undefined;
   private sigintHandler: NodeJS.SignalsListener | undefined;
   private sigtermHandler: NodeJS.SignalsListener | undefined;
+  private exceptionHandler: NodeJS.UncaughtExceptionListener | undefined;
+  private rejectionHandler: NodeJS.UnhandledRejectionListener | undefined;
 
   // Frontend
   private expressApp: express.Express | undefined;
@@ -461,8 +463,8 @@ export class Matterbridge extends EventEmitter {
       throw new Error(`Node version ${versionMajor} is not supported. Please upgrade to ${minNodeVersion} or above.`);
     }
 
-    // Register SIGINT SIGTERM signal handlers
-    this.registerSignalHandlers();
+    // Register process handlers
+    this.registerProcessHandlers();
 
     // Parse command line
     await this.parseCommandLine();
@@ -734,10 +736,26 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Registers the signal handlers for SIGINT and SIGTERM.
+   * Registers the process handlers for uncaughtException, unhandledRejection, SIGINT and SIGTERM.
    * When either of these signals are received, the cleanup method is called with an appropriate message.
    */
-  private registerSignalHandlers() {
+  private registerProcessHandlers() {
+    this.log.debug(`Registering uncaughtException and unhandledRejection handlers...`);
+    process.removeAllListeners('uncaughtException');
+    process.removeAllListeners('unhandledRejection');
+
+    this.exceptionHandler = async (error: Error) => {
+      this.log.fatal('Unhandled Exception detected at:', error.stack || error, rs);
+      await this.cleanup('Unhandled Exception detected, cleaning up...');
+    };
+    process.on('uncaughtException', this.exceptionHandler);
+
+    this.rejectionHandler = async (reason, promise) => {
+      this.log.fatal('Unhandled Rejection detected at:', promise, 'reason:', reason instanceof Error ? reason.stack : reason, rs);
+      await this.cleanup('Unhandled Rejection detected, cleaning up...');
+    };
+    process.on('unhandledRejection', this.rejectionHandler);
+
     this.log.debug(`Registering SIGINT and SIGTERM signal handlers...`);
 
     this.sigintHandler = async () => {
@@ -752,9 +770,17 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Deregisters the SIGINT and SIGTERM signal handlers.
+   * Deregisters the process uncaughtException, unhandledRejection, SIGINT and SIGTERM signal handlers.
    */
-  private deregisterSignalHandlers() {
+  private deregisterProcesslHandlers() {
+    this.log.debug(`Deregistering uncaughtException and unhandledRejection handlers...`);
+
+    if (this.exceptionHandler) process.off('uncaughtException', this.exceptionHandler);
+    this.exceptionHandler = undefined;
+
+    if (this.rejectionHandler) process.off('unhandledRejection', this.rejectionHandler);
+    this.rejectionHandler = undefined;
+
     this.log.debug(`Deregistering SIGINT and SIGTERM signal handlers...`);
 
     if (this.sigintHandler) process.off('SIGINT', this.sigintHandler);
@@ -1169,8 +1195,8 @@ export class Matterbridge extends EventEmitter {
       this.hasCleanupStarted = true;
       this.log.info(message);
 
-      // Deregisters the SIGINT and SIGTERM signal handlers
-      this.deregisterSignalHandlers();
+      // Deregisters the process handlers
+      this.deregisterProcesslHandlers();
 
       // Clear the start matter interval
       if (this.startMatterInterval) {
