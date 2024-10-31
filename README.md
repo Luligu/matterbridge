@@ -411,6 +411,8 @@ Other supported cluster:
 
 If you face a problem pairing to Google Home from Ios app the solution is there https://github.com/Luligu/matterbridge/issues/61.
 
+If you face a problem changing the brightness check this for the explanation: https://github.com/Luligu/matterbridge-zigbee2mqtt/issues/80
+
 No other issues reported so far.
 
 ## Alexa

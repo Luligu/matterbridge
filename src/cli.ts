@@ -7,7 +7,7 @@
  * @date 2023-12-29
  * @version 1.0.11
  *
- * Copyright 2023, 2024 Luca Liguori.
+ * Copyright 2023, 2024, 2025 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,12 +58,30 @@ async function restart() {
 
 async function update() {
   if (process.argv.includes('-debug')) console.log(cli + 'CLI: received update event, updating...' + rs);
+  // TODO: Implement update logic outside of matterbridge
   instance = await Matterbridge.loadInstance(true);
   registerHandlers();
 }
 
 process.title = 'matterbridge';
 
+// Remove all existing listeners for uncaughtException and unhandledRejection
+process.removeAllListeners('uncaughtException');
+process.removeAllListeners('unhandledRejection');
+
+// Register new listeners for uncaughtException
+process.on('uncaughtException', (error) => {
+  console.error(er + 'CLI: Matterbridge Unhandled Exception detected at:', error.stack || error, rs);
+  process.exit(1);
+});
+
+// Register new listeners for unhandledRejection
+process.on('unhandledRejection', (reason, promise) => {
+  console.error(er + 'CLI: Matterbridge Unhandled Rejection detected at:', promise, 'reason:', reason instanceof Error ? reason.stack : reason, rs);
+  process.exit(1);
+});
+
+// Run the main function
 main().catch((error) => {
   console.error(er + `CLI: Matterbridge.loadInstance() failed with error: ${error}` + rs);
 });

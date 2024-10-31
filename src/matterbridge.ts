@@ -182,6 +182,8 @@ export class Matterbridge extends EventEmitter {
   protected matterAggregator: Aggregator | undefined;
   protected commissioningServer: CommissioningServer | undefined;
   protected commissioningController: CommissioningController | undefined;
+  protected aggregatorVendorId = VendorId(0xfff1);
+  protected aggregatorProductId = 0x8000;
 
   protected static instance: Matterbridge | undefined;
 
@@ -268,6 +270,8 @@ export class Matterbridge extends EventEmitter {
     try {
       this.log.debug(`Creating node storage manager: ${CYAN}${this.nodeStorageName}${db}`);
       this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, this.nodeStorageName), writeQueue: false, expiredInterval: undefined, logging: false });
+      this.log.debug('Creating node storage context for matterbridge');
+      this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
       // TODO: Remove this code when node-persist-manager is updated
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const keys = (await (this.nodeStorage as any)?.storage.keys()) as string[];
@@ -288,8 +292,6 @@ export class Matterbridge extends EventEmitter {
           await nodeContext?.get(key);
         });
       }
-      this.log.debug('Creating node storage context for matterbridge');
-      this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
       // Creating a backup of the node storage since it is not corrupted
       this.log.debug('Creating node storage backup...');
       await copyDirectory(path.join(this.matterbridgeDirectory, this.nodeStorageName), path.join(this.matterbridgeDirectory, this.nodeStorageName + '.backup'));
@@ -302,9 +304,9 @@ export class Matterbridge extends EventEmitter {
         await this.cleanup('Fatal error creating node storage manager and context for matterbridge');
         return;
       }
-      this.log.notice(`The matterbridge storage is corrupted. Restoring it with backup values...`);
+      this.log.notice(`The matterbridge storage is corrupted. Restoring it with backup...`);
       await copyDirectory(path.join(this.matterbridgeDirectory, this.nodeStorageName + '.backup'), path.join(this.matterbridgeDirectory, this.nodeStorageName));
-      this.log.notice(`The matterbridge storage has been restored with backup values`);
+      this.log.notice(`The matterbridge storage has been restored with backup`);
     }
     if (!this.nodeStorage || !this.nodeContext) {
       this.log.fatal('Fatal error creating node storage manager and context for matterbridge');
@@ -374,7 +376,7 @@ export class Matterbridge extends EventEmitter {
     if (hasParameter('matterfilelogger') || (await this.nodeContext.get<boolean>('matterFileLog', false))) {
       this.matterbridgeInformation.matterFileLogger = true;
       Logger.addLogger('matterfilelogger', await this.createMatterFileLogger(path.join(this.matterbridgeDirectory, this.matterLoggerFile), true), {
-        defaultLogLevel: Level.DEBUG,
+        defaultLogLevel: Logger.defaultLogLevel,
         logFormat: Format.PLAIN,
       });
     }

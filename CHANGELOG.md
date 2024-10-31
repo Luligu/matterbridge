@@ -26,10 +26,11 @@ Feel free to join (the link is now permanent)!
 
 - [matterbridge]: Added automatic recovery for matterbridge node storage when it gets corrupted for a power outage or hardware failure. Unattended setups can automatically recover restoring the previous automatic backup.
 - [matterbridge]: Added automatic recovery for matter storage when it gets corrupted for a power outage or hardware failure. Unattended setups can automatically recover restoring the previous automatic backup.
-- [matterbridge]: Added parameter "-norestore" to force not to restore automatically. In this case you need to manually restore a full backup made from the frontend.
+- [matterbridge]: Added parameter "-norestore" to force not to restore automatically. In this case you need to manually restore the storages from a full backup made from the frontend.
 
 ### Changed
 
+- [loggers]: Logging on file keeps the logger level of the logger (matterbridge and matter logs).
 - [package]: Update dependencies.
 
 ### Fixed

@@ -6,7 +6,7 @@
  * @date 2024-07-14
  * @version 1.1.0
  *
- * Copyright 2024 Luca Liguori.
+ * Copyright 2024, 2025, 2026 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
