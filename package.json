@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -91,7 +91,7 @@
     "test:platform": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose  --coverage matterbridgePlatform.test.ts matterbridgeAccessoryPlatform.test.ts matterbridgeDynamicPlatform.test.ts",
     "test:pluginManager": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage pluginManager.test.ts",
     "test:deviceManager": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage deviceManager.test.ts",
-    "test:utils": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose utils.test.ts",
+    "test:utils": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage utils.test.ts",
     "test:websocket": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose  --coverage matterbridgeWebsocket.test.ts",
     "lint": "eslint --max-warnings=0 .",
     "lint:fix": "eslint --fix --max-warnings=0 .",
@@ -129,11 +129,11 @@
   },
   "devDependencies": {
     "@eslint/js": "9.13.0",
-    "@types/archiver": "6.0.2",
+    "@types/archiver": "6.0.3",
     "@types/eslint__js": "8.42.3",
     "@types/express": "5.0.0",
-    "@types/jest": "29.5.13",
-    "@types/node": "22.7.8",
+    "@types/jest": "29.5.14",
+    "@types/node": "22.8.4",
     "@types/ws": "8.5.12",
     "eslint": "9.13.0",
     "eslint-config-prettier": "9.1.0",
@@ -143,6 +143,6 @@
     "prettier": "3.3.3",
     "ts-jest": "29.2.5",
     "typescript": "5.6.3",
-    "typescript-eslint": "8.11.0"
+    "typescript-eslint": "8.12.2"
   }
 }

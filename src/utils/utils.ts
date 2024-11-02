@@ -6,7 +6,7 @@
  * @date 2024-02-17
  * @version 1.2.9
  *
- * Copyright 2024 Luca Liguori.
+ * Copyright 2024, 2025, 2026 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,10 @@ import os from 'os';
 import { createWriteStream, statSync } from 'fs';
 import archiver, { ArchiverError, EntryData } from 'archiver';
 import path from 'path';
+import * as dns from 'dns';
 import { AnsiLogger, idn, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
 import { glob } from 'glob';
+import { promises as fs } from 'fs';
 
 const log = new AnsiLogger({ logName: 'MatterbridgeUtils', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
 
@@ -531,4 +533,60 @@ export async function createZip(outputPath: string, ...sourcePaths: string[]): P
     log.debug(`finalizing archive ${outputPath}...`);
     archive.finalize().catch(reject);
   });
+}
+
+/**
+ * Copies a directory and all its subdirectories and files to a new location.
+ *
+ * @param {string} srcDir - The path to the source directory.
+ * @param {string} destDir - The path to the destination directory.
+ * @returns {Promise<boolean>} - A promise that resolves when the copy operation is complete or fails for error.
+ * @throws {Error} - Throws an error if the copy operation fails.
+ */
+export async function copyDirectory(srcDir: string, destDir: string): Promise<boolean> {
+  log.debug(`copyDirectory: copying directory from ${srcDir} to ${destDir}`);
+  try {
+    // Create destination directory if it doesn't exist
+    await fs.mkdir(destDir, { recursive: true });
+
+    // Read contents of the source directory
+    const entries = await fs.readdir(srcDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const srcPath = path.join(srcDir, entry.name);
+      const destPath = path.join(destDir, entry.name);
+
+      if (entry.isDirectory()) {
+        // Recursive call if entry is a directory
+        await copyDirectory(srcPath, destPath);
+      } else if (entry.isFile()) {
+        // Copy file if entry is a file
+        await fs.copyFile(srcPath, destPath);
+      }
+    }
+    return true;
+  } catch (error) {
+    log.error(`copyDirectory error copying from ${srcDir} to ${destDir}: ${error instanceof Error ? error.message : error}`);
+    return false;
+  }
+}
+
+/**
+ * Resolves the given hostname to an IP address.
+ *
+ * @param {string} hostname - The hostname to resolve.
+ * @param {0 | 4 | 6} [family=4] - The address family to use (0 for any, 4 for IPv4, 6 for IPv6). Default is 4.
+ * @returns {Promise<string | null>} - A promise that resolves to the IP address or null if not found.
+ *
+ * @remarks
+ * This function uses DNS lookup to resolve the hostname, which can take some time to complete.
+ */
+export async function resolveHostname(hostname: string, family: 0 | 4 | 6 = 4): Promise<string | null> {
+  try {
+    const addresses = await dns.promises.lookup(hostname.toLowerCase() + '.local', { family });
+    return addresses.address;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error) {
+    return null;
+  }
 }

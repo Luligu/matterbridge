@@ -40,7 +40,7 @@ import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW,
 
 // Matterbridge
 import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
-import { logInterfaces, wait, waiter, createZip } from './utils/utils.js';
+import { logInterfaces, wait, waiter, createZip, copyDirectory } from './utils/utils.js';
 import { BaseRegisteredPlugin, MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
@@ -161,6 +161,8 @@ export class Matterbridge extends EventEmitter {
   private reachabilityTimeout: NodeJS.Timeout | undefined;
   private sigintHandler: NodeJS.SignalsListener | undefined;
   private sigtermHandler: NodeJS.SignalsListener | undefined;
+  private exceptionHandler: NodeJS.UncaughtExceptionListener | undefined;
+  private rejectionHandler: NodeJS.UnhandledRejectionListener | undefined;
 
   // Frontend
   private expressApp: express.Express | undefined;
@@ -182,6 +184,8 @@ export class Matterbridge extends EventEmitter {
   protected matterAggregator: Aggregator | undefined;
   protected commissioningServer: CommissioningServer | undefined;
   protected commissioningController: CommissioningController | undefined;
+  protected aggregatorVendorId = VendorId(0xfff1);
+  protected aggregatorProductId = 0x8000;
 
   protected static instance: Matterbridge | undefined;
 
@@ -261,22 +265,54 @@ export class Matterbridge extends EventEmitter {
     this.homeDirectory = getParameter('homedir') ?? os.homedir();
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
 
-    // Initialize nodeStorage and nodeContext
-    // this.log.debug(`Creating node storage manager: ${CYAN}${this.nodeStorageName}${db}`);
-    this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, this.nodeStorageName), writeQueue: false, expiredInterval: undefined, logging: false });
-    // this.log.debug('Creating node storage context for matterbridge');
-    this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
-
-    // Check if the storage is corrupted and remove it
-    // TODO: Check if the storage is corrupted and remove it
-
     // Create matterbridge logger
-    this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
+    this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 
-    // Create the file logger for matterbridge (context: matterbridgeFileLog)
-    if (hasParameter('filelogger') || (await this.nodeContext.get<boolean>('matterbridgeFileLog', false))) {
-      AnsiLogger.setGlobalLogfile(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), LogLevel.DEBUG, true);
-      this.matterbridgeInformation.fileLogger = true;
+    // Initialize nodeStorage and nodeContext
+    try {
+      this.log.debug(`Creating node storage manager: ${CYAN}${this.nodeStorageName}${db}`);
+      this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, this.nodeStorageName), writeQueue: false, expiredInterval: undefined, logging: false });
+      this.log.debug('Creating node storage context for matterbridge');
+      this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
+      // TODO: Remove this code when node-persist-manager is updated
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const keys = (await (this.nodeStorage as any)?.storage.keys()) as string[];
+      for (const key of keys) {
+        this.log.debug(`Checking node storage manager key: ${CYAN}${key}${db}`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (this.nodeStorage as any)?.storage.get(key);
+      }
+      const storages = await this.nodeStorage.getStorageNames();
+      for (const storage of storages) {
+        this.log.debug(`Checking storage: ${CYAN}${storage}${db}`);
+        const nodeContext = await this.nodeStorage?.createStorage(storage);
+        // TODO: Remove this code when node-persist-manager is updated
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const keys = (await (nodeContext as any)?.storage.keys()) as string[];
+        keys.forEach(async (key) => {
+          this.log.debug(`Checking key: ${CYAN}${storage}:${key}${db}`);
+          await nodeContext?.get(key);
+        });
+      }
+      // Creating a backup of the node storage since it is not corrupted
+      this.log.debug('Creating node storage backup...');
+      await copyDirectory(path.join(this.matterbridgeDirectory, this.nodeStorageName), path.join(this.matterbridgeDirectory, this.nodeStorageName + '.backup'));
+      this.log.debug('Created node storage backup');
+    } catch (error) {
+      // Restoring the backup of the node storage since it is corrupted
+      this.log.error(`Error creating node storage manager and context: ${error instanceof Error ? error.message : error}`);
+      if (hasParameter('norestore')) {
+        this.log.fatal(`The matterbridge node storage is corrupted. Parameter -norestore found: exiting...`);
+        await this.cleanup('Fatal error creating node storage manager and context for matterbridge');
+        return;
+      }
+      this.log.notice(`The matterbridge storage is corrupted. Restoring it with backup...`);
+      await copyDirectory(path.join(this.matterbridgeDirectory, this.nodeStorageName + '.backup'), path.join(this.matterbridgeDirectory, this.nodeStorageName));
+      this.log.notice(`The matterbridge storage has been restored with backup`);
+    }
+    if (!this.nodeStorage || !this.nodeContext) {
+      this.log.fatal('Fatal error creating node storage manager and context for matterbridge');
+      throw new Error('Fatal error creating node storage manager and context for matterbridge');
     }
 
     // Set matterbridge logger level (context: matterbridgeLogLevel)
@@ -302,6 +338,12 @@ export class Matterbridge extends EventEmitter {
       this.log.logLevel = await this.nodeContext.get<LogLevel>('matterbridgeLogLevel', LogLevel.INFO);
     }
     MatterbridgeDevice.logLevel = this.log.logLevel;
+
+    // Create the file logger for matterbridge (context: matterbridgeFileLog)
+    if (hasParameter('filelogger') || (await this.nodeContext.get<boolean>('matterbridgeFileLog', false))) {
+      AnsiLogger.setGlobalLogfile(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), this.log.logLevel, true);
+      this.matterbridgeInformation.fileLogger = true;
+    }
 
     this.log.notice('Matterbridge is starting...');
 
@@ -336,7 +378,7 @@ export class Matterbridge extends EventEmitter {
     if (hasParameter('matterfilelogger') || (await this.nodeContext.get<boolean>('matterFileLog', false))) {
       this.matterbridgeInformation.matterFileLogger = true;
       Logger.addLogger('matterfilelogger', await this.createMatterFileLogger(path.join(this.matterbridgeDirectory, this.matterLoggerFile), true), {
-        defaultLogLevel: Level.DEBUG,
+        defaultLogLevel: Logger.defaultLogLevel,
         logFormat: Format.PLAIN,
       });
     }
@@ -381,7 +423,7 @@ export class Matterbridge extends EventEmitter {
         // We don't do this when the add parameter is set because we shut down the process after adding the plugin
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm.`);
         try {
-          await this.spawnCommand('npm', ['install', '-g', '--omit=dev', plugin.name]);
+          await this.spawnCommand('npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose']);
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -421,8 +463,8 @@ export class Matterbridge extends EventEmitter {
       throw new Error(`Node version ${versionMajor} is not supported. Please upgrade to ${minNodeVersion} or above.`);
     }
 
-    // Register SIGINT SIGTERM signal handlers
-    this.registerSignalHandlers();
+    // Register process handlers
+    this.registerProcessHandlers();
 
     // Parse command line
     await this.parseCommandLine();
@@ -456,6 +498,7 @@ export class Matterbridge extends EventEmitter {
       - logstorage:            log the node storage
       - sudo:                  force the use of sudo to install or update packages if the internal logic fails
       - nosudo:                force not to use sudo to install or update packages if the internal logic fails
+      - norestore:             force not to automatically restore the matterbridge node storage and the matter storage from backup if it is corrupted
       - ssl:                   enable SSL for the frontend and WebSockerServer (certificates in .matterbridge/certs directory cert.pem, key.pem and ca.pem (optional))
       - add [plugin path]:     register the plugin from the given absolute or relative path
       - add [plugin name]:     register the globally installed plugin with the given name
@@ -565,7 +608,12 @@ export class Matterbridge extends EventEmitter {
     }
 
     // Start the matter storage and create the matterbridge context
-    await this.startMatterStorage('json', path.join(this.matterbridgeDirectory, this.matterStorageName));
+    try {
+      await this.startMatterStorage('json', path.join(this.matterbridgeDirectory, this.matterStorageName));
+    } catch (error) {
+      this.log.fatal(`Fatal error creating matter storage: ${error instanceof Error ? error.message : error}`);
+      throw new Error(`Fatal error creating matter storage: ${error instanceof Error ? error.message : error}`);
+    }
 
     if (hasParameter('reset') && getParameter('reset') === undefined) {
       this.log.info('Resetting Matterbridge commissioning information...');
@@ -688,10 +736,26 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Registers the signal handlers for SIGINT and SIGTERM.
+   * Registers the process handlers for uncaughtException, unhandledRejection, SIGINT and SIGTERM.
    * When either of these signals are received, the cleanup method is called with an appropriate message.
    */
-  private registerSignalHandlers() {
+  private registerProcessHandlers() {
+    this.log.debug(`Registering uncaughtException and unhandledRejection handlers...`);
+    process.removeAllListeners('uncaughtException');
+    process.removeAllListeners('unhandledRejection');
+
+    this.exceptionHandler = async (error: Error) => {
+      this.log.fatal('Unhandled Exception detected at:', error.stack || error, rs);
+      await this.cleanup('Unhandled Exception detected, cleaning up...');
+    };
+    process.on('uncaughtException', this.exceptionHandler);
+
+    this.rejectionHandler = async (reason, promise) => {
+      this.log.fatal('Unhandled Rejection detected at:', promise, 'reason:', reason instanceof Error ? reason.stack : reason, rs);
+      await this.cleanup('Unhandled Rejection detected, cleaning up...');
+    };
+    process.on('unhandledRejection', this.rejectionHandler);
+
     this.log.debug(`Registering SIGINT and SIGTERM signal handlers...`);
 
     this.sigintHandler = async () => {
@@ -706,9 +770,17 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Deregisters the SIGINT and SIGTERM signal handlers.
+   * Deregisters the process uncaughtException, unhandledRejection, SIGINT and SIGTERM signal handlers.
    */
-  private deregisterSignalHandlers() {
+  private deregisterProcesslHandlers() {
+    this.log.debug(`Deregistering uncaughtException and unhandledRejection handlers...`);
+
+    if (this.exceptionHandler) process.off('uncaughtException', this.exceptionHandler);
+    this.exceptionHandler = undefined;
+
+    if (this.rejectionHandler) process.off('unhandledRejection', this.rejectionHandler);
+    this.rejectionHandler = undefined;
+
     this.log.debug(`Deregistering SIGINT and SIGTERM signal handlers...`);
 
     if (this.sigintHandler) process.off('SIGINT', this.sigintHandler);
@@ -1069,21 +1141,21 @@ export class Matterbridge extends EventEmitter {
   /**
    * Update matterbridge and cleanup.
    */
-  private async updateProcess() {
+  protected async updateProcess() {
     await this.cleanup('updating...', false);
   }
 
   /**
    * Restarts the process by spawning a new process and exiting the current process.
    */
-  private async restartProcess() {
+  protected async restartProcess() {
     await this.cleanup('restarting...', true);
   }
 
   /**
    * Shut down the process by exiting the current process.
    */
-  private async shutdownProcess() {
+  protected async shutdownProcess() {
     await this.cleanup('shutting down...', false);
   }
 
@@ -1123,8 +1195,8 @@ export class Matterbridge extends EventEmitter {
       this.hasCleanupStarted = true;
       this.log.info(message);
 
-      // Deregisters the SIGINT and SIGTERM signal handlers
-      this.deregisterSignalHandlers();
+      // Deregisters the process handlers
+      this.deregisterProcesslHandlers();
 
       // Clear the start matter interval
       if (this.startMatterInterval) {
@@ -1830,7 +1902,7 @@ export class Matterbridge extends EventEmitter {
    * @returns {Promise<void>} - A promise that resolves when the storage process is started.
    */
   protected async startMatterStorage(storageType: string, storageName: string): Promise<void> {
-    this.log.debug(`Starting ${storageType} storage ${CYAN}${storageName}${db}`);
+    this.log.debug(`Starting matter ${storageType} storage ${CYAN}${storageName}${db}`);
     if (storageType === 'disk') {
       const storageDisk = new StorageBackendDisk(storageName);
       this.storageManager = new StorageManager(storageDisk);
@@ -1839,21 +1911,32 @@ export class Matterbridge extends EventEmitter {
       const storageJson = new StorageBackendJsonFile(storageName);
       this.storageManager = new StorageManager(storageJson);
     } else {
-      this.log.error(`Unsupported storage type ${storageType}`);
-      await this.cleanup('Unsupported storage type');
+      this.log.error(`Unsupported matter storage type ${storageType}`);
+      await this.cleanup('Unsupported matter storage type');
       return;
     }
     try {
       await this.storageManager.initialize();
-      this.log.debug('Storage initialized');
+      this.log.debug('Matter storage initialized');
       if (storageType === 'json') {
         await this.backupMatterStorage(storageName, storageName.replace('.json', '') + '.backup.json');
       }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      this.log.error(`Storage initialize() error! The file .matterbridge/${storageName} may be corrupted.`);
-      this.log.error(`Please delete it and rename ${storageName.replace('.json', '.backup.json')} to ${storageName} and try to restart Matterbridge.`);
-      await this.cleanup('Storage initialize() error!');
+      this.log.error(`Matter storage initialize error! The file .matterbridge/${storageName} may be corrupted: ${error instanceof Error ? error.message : error}`);
+      if (hasParameter('norestore')) {
+        this.log.fatal(`Please delete it and rename ${storageName.replace('.json', '.backup.json')} to ${storageName} and try to restart Matterbridge.`);
+        await this.cleanup('Matter storage initialize error and -norestore parameter found!');
+        return;
+      }
+      await this.restoreMatterStorage(storageName.replace('.json', '') + '.backup.json', storageName);
+      try {
+        await this.storageManager.initialize();
+        this.log.notice('Matter storage initialized from the backup file');
+      } catch (error) {
+        this.log.error(`Matter storage initialize error! The backup file for .matterbridge/${storageName} may be corrupted too:`, error instanceof Error ? error.message : error);
+        await this.cleanup('Matter storage initialize error from backup!');
+        return;
+      }
     }
 
     this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
@@ -1866,7 +1949,7 @@ export class Matterbridge extends EventEmitter {
    * @param storageName - The name of the JSON storage file to be backed up.
    * @param backupName - The name of the backup file to be created.
    */
-  protected async backupMatterStorage(storageName: string, backupName: string) {
+  protected async backupMatterStorage(storageName: string, backupName: string): Promise<void> {
     try {
       this.log.debug(`Making backup copy of ${storageName}`);
       await fs.copyFile(storageName, backupName);
@@ -1874,12 +1957,36 @@ export class Matterbridge extends EventEmitter {
     } catch (err) {
       if (err instanceof Error && 'code' in err) {
         if (err.code === 'ENOENT') {
-          this.log.info(`No existing file to back up for ${storageName}. This is expected on the first run.`);
+          this.log.debug(`No existing file to back up for ${storageName}. This is expected on the first run.`);
         } else {
           this.log.error(`Error making backup copy of ${storageName}: ${err.message}`);
         }
       } else {
         this.log.error(`An unexpected error occurred during the backup of ${storageName}: ${String(err)}`);
+      }
+    }
+  }
+
+  /**
+   * Restore the specified matter JSON storage file.
+   *
+   * @param backupName - The name of the backup file to restore from.
+   * @param storageName - The name of the JSON storage file to restored.
+   */
+  protected async restoreMatterStorage(backupName: string, storageName: string): Promise<void> {
+    try {
+      this.log.notice(`Restoring the backup copy of ${storageName}`);
+      await fs.copyFile(backupName, storageName);
+      this.log.notice(`Successfully restored ${backupName} to ${storageName}`);
+    } catch (err) {
+      if (err instanceof Error && 'code' in err) {
+        if (err.code === 'ENOENT') {
+          this.log.info(`No existing file to restore: ${backupName}.`);
+        } else {
+          this.log.error(`Error restoring ${backupName}: ${err.message}`);
+        }
+      } else {
+        this.log.error(`An unexpected error occurred during the restore of ${backupName}: ${String(err)}`);
       }
     }
   }
@@ -2507,9 +2614,9 @@ export class Matterbridge extends EventEmitter {
    * Spawns a child process with the given command and arguments.
    * @param {string} command - The command to execute.
    * @param {string[]} args - The arguments to pass to the command (default: []).
-   * @returns {Promise<void>} A promise that resolves when the child process exits successfully, or rejects if there is an error.
+   * @returns {Promise<boolean>} A promise that resolves when the child process exits successfully, or rejects if there is an error.
    */
-  private async spawnCommand(command: string, args: string[] = []): Promise<void> {
+  protected async spawnCommand(command: string, args: string[] = []): Promise<boolean> {
     /*
     npm > npm.cmd on windows
     cmd.exe ['dir'] on windows
@@ -2553,7 +2660,7 @@ export class Matterbridge extends EventEmitter {
         if (code === 0) {
           if (cmdLine.startsWith('npm install -g')) this.log.notice(`Package ${cmdLine.replace('npm install -g ', '').replace('--verbose', '').replace('--omit=dev', '')} installed correctly`);
           this.log.debug(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
-          resolve();
+          resolve(true);
         } else {
           this.log.error(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
           reject(new Error(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`));
@@ -2564,7 +2671,7 @@ export class Matterbridge extends EventEmitter {
         this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', `child process exited with code ${code} and signal ${signal}`);
         if (code === 0) {
           this.log.debug(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`);
-          resolve();
+          resolve(true);
         } else {
           this.log.error(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`);
           reject(new Error(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`));
@@ -2573,7 +2680,7 @@ export class Matterbridge extends EventEmitter {
 
       childProcess.on('disconnect', () => {
         this.log.debug(`Child process "${cmdLine}" has been disconnected from the parent`);
-        resolve();
+        resolve(true);
       });
 
       if (childProcess.stdout) {

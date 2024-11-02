@@ -10,7 +10,7 @@ The Home Assistant Community Add-ons and plugins are not verified to work with M
 
 If you want to run Matterbridge in Home Assistant please use the official add-on https://github.com/Luligu/matterbridge-home-assistant-addon that also has Ingress and side panel.
 
-### New Apple firmware v. 18.0
+### New Apple firmware v. 18.x
 
 Please read this: https://github.com/Luligu/matterbridge/discussions/135
 
@@ -19,6 +19,24 @@ Please read this: https://github.com/Luligu/matterbridge/discussions/135
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
 Feel free to join (the link is now permanent)!
+
+## [1.6.1] - 2024-11-02
+
+### Added
+
+- [matterbridge]: Added automatic recovery for matterbridge node storage when it gets corrupted for a power outage or hardware failure. Unattended setups can automatically recover restoring the previous automatic backup.
+- [matterbridge]: Added automatic recovery for matter storage when it gets corrupted for a power outage or hardware failure. Unattended setups can automatically recover restoring the previous automatic backup.
+- [matterbridge]: Added parameter "-norestore" to avoid to restore automatically. In this case you need to manually restore the storages from a full backup made from the frontend.
+
+### Changed
+
+- [loggers]: Logging on file keeps the logger level of the logger (matterbridge and matter logs).
+- [matterbridge]: Added more api to WebSocket for the Matterbridge cockpit dashboard (Shelly gateway).
+- [package]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
 
 ## [1.6.0] - 2024-10-28
 

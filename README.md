@@ -380,6 +380,8 @@ The HomePods, being a WiFi devices, sometimes pruduce message trasmission errors
 
 All issues have been solved from the version 17.5 of the HomePod/AppleTV. Now they are stable.
 
+If you have more then one Apple TV or Home Pod, I get better results setting to disabled "Automatic Selection" in "Home Setting", "Home Hubs & Bridges". Once "Automatic selection" is disabled, select your Apple Tv if you have one or any of your Home Pod. In this way you should not have anymore more then one session for fabric.
+
 ## Home Assistant
 
 So far is the only controller supporting some Matter 1.2 and 1.3 device type:
@@ -408,6 +410,8 @@ Other supported cluster:
 ## Google Home
 
 If you face a problem pairing to Google Home from Ios app the solution is there https://github.com/Luligu/matterbridge/issues/61.
+
+If you face a problem changing the brightness check this for the explanation: https://github.com/Luligu/matterbridge-zigbee2mqtt/issues/80
 
 No other issues reported so far.
 
