@@ -36,11 +36,14 @@ jobs:
       - name: Lint the project
         run: npm run lint
 
-      - name: Test the project
-        run: npm run test
-
       - name: Build the project
         run: npm run build
+
+      - name: Install matterbridge
+        run: npm install -g .
+
+      - name: Test the project
+        run: npm run test
 
       - name: Publish to npm
         run: npm publish
