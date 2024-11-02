@@ -47,6 +47,74 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     consoleLogSpy.mockRestore();
   }, 60000);
 
+  test('Matterbridge.loadInstance(true) -bridge mode and send /api/restart', async () => {
+    matterbridge = await Matterbridge.loadInstance(true);
+    expect(matterbridge).toBeDefined();
+    expect(matterbridge.profile).toBe('Jest');
+    expect(matterbridge.bridgeMode).toBe('bridge');
+    expect((matterbridge as any).initialized).toBe(true);
+
+    // prettier-ignore
+    await waiter('Initialize done', () => { return (matterbridge as any).initialized === true; });
+    // prettier-ignore
+    await waiter('Frontend Initialize done', () => { return (matterbridge as any).httpServer; });
+    // prettier-ignore
+    await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).webSocketServer; });
+    // prettier-ignore
+    await waiter('Matter server started', () => { return (matterbridge as any).reachabilityTimeout; });
+
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `The WebSocketServer is listening on ${UNDERLINE}ws://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Matter server started`);
+
+    ws = new WebSocket(`ws://localhost:8283`);
+    expect(ws).toBeDefined();
+    // prettier-ignore
+    await waiter('Websocket connected', () => { return ws.readyState === WebSocket.OPEN; });
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/WebSocketServer client ".*" connected to Matterbridge/));
+
+    const message = JSON.stringify({ id: 15, dst: 'Matterbridge', src: 'Jest test', method: '/api/restart', params: {} });
+    ws.send(message);
+
+    // prettier-ignore
+    await waiter('Cleanup done', () => { return (matterbridge as any).initialized === false; });
+  }, 60000);
+
+  test('Matterbridge.loadInstance(true) -bridge mode and send /api/shutdown', async () => {
+    matterbridge = await Matterbridge.loadInstance(true);
+    expect(matterbridge).toBeDefined();
+    expect(matterbridge.profile).toBe('Jest');
+    expect(matterbridge.bridgeMode).toBe('bridge');
+    expect((matterbridge as any).initialized).toBe(true);
+
+    // prettier-ignore
+    await waiter('Initialize done', () => { return (matterbridge as any).initialized === true; });
+    // prettier-ignore
+    await waiter('Frontend Initialize done', () => { return (matterbridge as any).httpServer; });
+    // prettier-ignore
+    await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).webSocketServer; });
+    // prettier-ignore
+    await waiter('Matter server started', () => { return (matterbridge as any).reachabilityTimeout; });
+
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `The WebSocketServer is listening on ${UNDERLINE}ws://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Matter server started`);
+
+    ws = new WebSocket(`ws://localhost:8283`);
+    expect(ws).toBeDefined();
+    // prettier-ignore
+    await waiter('Websocket connected', () => { return ws.readyState === WebSocket.OPEN; });
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/WebSocketServer client ".*" connected to Matterbridge/));
+
+    const message = JSON.stringify({ id: 15, dst: 'Matterbridge', src: 'Jest test', method: '/api/shutdown', params: {} });
+    ws.send(message);
+
+    // prettier-ignore
+    await waiter('Cleanup done', () => { return (matterbridge as any).initialized === false; });
+  }, 60000);
+
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
@@ -55,13 +123,20 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(matterbridge).toBeDefined();
     expect(matterbridge.profile).toBe('Jest');
     expect(matterbridge.bridgeMode).toBe('bridge');
+    expect((matterbridge as any).initialized).toBe(true);
 
-    await wait(5000);
+    // prettier-ignore
+    await waiter('Initialize done', () => { return (matterbridge as any).initialized === true; });
+    // prettier-ignore
+    await waiter('Frontend Initialize done', () => { return (matterbridge as any).httpServer; });
+    // prettier-ignore
+    await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).webSocketServer; });
+    // prettier-ignore
+    await waiter('Matter server started', () => { return (matterbridge as any).reachabilityTimeout; });
 
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `The WebSocketServer is listening on ${UNDERLINE}ws://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Matter server started`);
-
-    await wait(1000, 'Wait for matter to load', false);
   }, 60000);
 
   test('Add mock plugin 1', async () => {
@@ -358,6 +433,201 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(data.response.length).toBe(1);
 
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+  }, 60000);
+
+  test('Websocket API install without params', async () => {
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const message = JSON.stringify({ id: 10, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: {} });
+    ws.send(message);
+
+    // Set up a promise to wait for the response
+    const responsePromise = new Promise((resolve) => {
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data as string);
+        if (data.id === 10) resolve(event.data);
+      };
+    });
+
+    // Wait for the response
+    const response = await responsePromise;
+    expect(response).toBeDefined();
+    const data = JSON.parse(response as string);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(10);
+    expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Jest test');
+    expect(data.response).not.toBeDefined();
+    expect(data.error).toBeDefined();
+    expect(data.error).toBe('Wrong parameter packageName in /api/install');
+  }, 60000);
+
+  test('Websocket API install with wrong params', async () => {
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const message = JSON.stringify({ id: 10, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbri' } });
+    ws.send(message);
+
+    // Set up a promise to wait for the response
+    const responsePromise = new Promise((resolve) => {
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data as string);
+        if (data.id === 10) resolve(event.data);
+      };
+    });
+
+    // Wait for the response
+    const response = await responsePromise;
+    expect(response).toBeDefined();
+    const data = JSON.parse(response as string);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(10);
+    expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Jest test');
+    expect(data.response).not.toBeDefined();
+    expect(data.error).toBeDefined();
+    expect(data.error).toBe('Wrong parameter packageName in /api/install');
+  }, 60000);
+
+  test('Websocket API install', async () => {
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const message = JSON.stringify({ id: 10, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-test' } });
+    ws.send(message);
+
+    // Set up a promise to wait for the response
+    const responsePromise = new Promise((resolve) => {
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data as string);
+        if (data.id === 10) resolve(event.data);
+      };
+    });
+
+    // Wait for the response
+    const response = await responsePromise;
+    expect(response).toBeDefined();
+    const data = JSON.parse(response as string);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(10);
+    expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Jest test');
+    expect(data.response).toBe(true);
+    expect(data.error).not.toBeDefined();
+
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('installed correctly'));
+  }, 60000);
+
+  test('Websocket API install with wrong package name', async () => {
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const message = JSON.stringify({ id: 10, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-xxxtest' } });
+    ws.send(message);
+
+    // Set up a promise to wait for the response
+    const responsePromise = new Promise((resolve) => {
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data as string);
+        if (data.id === 10) resolve(event.data);
+      };
+    });
+
+    // Wait for the response
+    const response = await responsePromise;
+    expect(response).toBeDefined();
+    const data = JSON.parse(response as string);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(10);
+    expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Jest test');
+    expect(data.response).toBeUndefined();
+    expect(data.error).toBeDefined();
+
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
+  }, 60000);
+
+  test('Websocket API uninstall with wrong params', async () => {
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const message = JSON.stringify({ id: 10, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbri' } });
+    ws.send(message);
+
+    // Set up a promise to wait for the response
+    const responsePromise = new Promise((resolve) => {
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data as string);
+        if (data.id === 10) resolve(event.data);
+      };
+    });
+
+    // Wait for the response
+    const response = await responsePromise;
+    expect(response).toBeDefined();
+    const data = JSON.parse(response as string);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(10);
+    expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Jest test');
+    expect(data.response).not.toBeDefined();
+    expect(data.error).toBeDefined();
+    expect(data.error).toBe('Wrong parameter packageName in /api/uninstall');
+  }, 60000);
+
+  test('Websocket API uninstall', async () => {
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const message = JSON.stringify({ id: 10, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbridge-test' } });
+    ws.send(message);
+
+    // Set up a promise to wait for the response
+    const responsePromise = new Promise((resolve) => {
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data as string);
+        if (data.id === 10) resolve(event.data);
+      };
+    });
+
+    // Wait for the response
+    const response = await responsePromise;
+    expect(response).toBeDefined();
+    const data = JSON.parse(response as string);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(10);
+    expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Jest test');
+    expect(data.response).toBe(true);
+    expect(data.error).not.toBeDefined();
+
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('closed with code 0'));
+  }, 60000);
+
+  test('Websocket API uninstall wrong package name', async () => {
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const message = JSON.stringify({ id: 10, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbridge-st' } });
+    ws.send(message);
+
+    // Set up a promise to wait for the response
+    const responsePromise = new Promise((resolve) => {
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data as string);
+        if (data.id === 10) resolve(event.data);
+      };
+    });
+
+    // Wait for the response
+    const response = await responsePromise;
+    expect(response).toBeDefined();
+    const data = JSON.parse(response as string);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(10);
+    expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Jest test');
+    expect(data.response).toBeDefined();
+    expect(data.error).toBeUndefined();
+
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
   }, 60000);
 
   test('Websocket API ping', async () => {

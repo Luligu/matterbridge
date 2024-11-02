@@ -1141,21 +1141,21 @@ export class Matterbridge extends EventEmitter {
   /**
    * Update matterbridge and cleanup.
    */
-  private async updateProcess() {
+  protected async updateProcess() {
     await this.cleanup('updating...', false);
   }
 
   /**
    * Restarts the process by spawning a new process and exiting the current process.
    */
-  private async restartProcess() {
+  protected async restartProcess() {
     await this.cleanup('restarting...', true);
   }
 
   /**
    * Shut down the process by exiting the current process.
    */
-  private async shutdownProcess() {
+  protected async shutdownProcess() {
     await this.cleanup('shutting down...', false);
   }
 
@@ -2614,9 +2614,9 @@ export class Matterbridge extends EventEmitter {
    * Spawns a child process with the given command and arguments.
    * @param {string} command - The command to execute.
    * @param {string[]} args - The arguments to pass to the command (default: []).
-   * @returns {Promise<void>} A promise that resolves when the child process exits successfully, or rejects if there is an error.
+   * @returns {Promise<boolean>} A promise that resolves when the child process exits successfully, or rejects if there is an error.
    */
-  private async spawnCommand(command: string, args: string[] = []): Promise<void> {
+  protected async spawnCommand(command: string, args: string[] = []): Promise<boolean> {
     /*
     npm > npm.cmd on windows
     cmd.exe ['dir'] on windows
@@ -2660,7 +2660,7 @@ export class Matterbridge extends EventEmitter {
         if (code === 0) {
           if (cmdLine.startsWith('npm install -g')) this.log.notice(`Package ${cmdLine.replace('npm install -g ', '').replace('--verbose', '').replace('--omit=dev', '')} installed correctly`);
           this.log.debug(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
-          resolve();
+          resolve(true);
         } else {
           this.log.error(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
           reject(new Error(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`));
@@ -2671,7 +2671,7 @@ export class Matterbridge extends EventEmitter {
         this.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', `child process exited with code ${code} and signal ${signal}`);
         if (code === 0) {
           this.log.debug(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`);
-          resolve();
+          resolve(true);
         } else {
           this.log.error(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`);
           reject(new Error(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`));
@@ -2680,7 +2680,7 @@ export class Matterbridge extends EventEmitter {
 
       childProcess.on('disconnect', () => {
         this.log.debug(`Child process "${cmdLine}" has been disconnected from the parent`);
-        resolve();
+        resolve(true);
       });
 
       if (childProcess.stdout) {

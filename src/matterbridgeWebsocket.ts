@@ -85,6 +85,32 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
         client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: 'Wrong password' }));
         return;
       }
+    } else if (data.method === '/api/install') {
+      if (!isValidString(data.params.packageName, 10)) {
+        client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/install' }));
+        return;
+      }
+      try {
+        const response = await this.spawnCommand('npm', ['install', '-g', data.params.packageName, '--omit=dev', '--verbose']);
+        client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response }));
+      } catch (error) {
+        client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error }));
+      }
+      return;
+    } else if (data.method === '/api/uninstall') {
+      if (!isValidString(data.params.packageName, 10)) {
+        client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/uninstall' }));
+        return;
+      }
+      const response = await this.spawnCommand('npm', ['uninstall', '-g', data.params.packageName, '--verbose']);
+      client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response }));
+      return;
+    } else if (data.method === '/api/restart') {
+      await this.restartProcess();
+      return;
+    } else if (data.method === '/api/shutdown') {
+      await this.shutdownProcess();
+      return;
     } else if (data.method === '/api/settings') {
       this.matterbridgeInformation.bridgeMode = this.bridgeMode;
       this.matterbridgeInformation.restartMode = this.restartMode;
