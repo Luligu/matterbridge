@@ -31,7 +31,7 @@ Feel free to join (the link is now permanent)!
 ### Changed
 
 - [loggers]: Logging on file keeps the logger level of the logger (matterbridge and matter logs).
-- [matterbridge]: Added more api to WebSocket for the Matetrbridge cockpit dashboard (Shelly gateway).
+- [matterbridge]: Added more api to WebSocket for the Matterbridge cockpit dashboard (Shelly gateway).
 - [package]: Update dependencies.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
