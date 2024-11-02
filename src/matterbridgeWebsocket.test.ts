@@ -630,6 +630,35 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
   }, 60000);
 
+  test('Websocket API uninstall wrong package name with mock', async () => {
+    // Mock `spawnCommand` to reject with an error
+    jest.spyOn(matterbridge as any, 'spawnCommand').mockRejectedValue(new Error('Package not found'));
+
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const message = JSON.stringify({ id: 10, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbridge-st' } });
+    ws.send(message);
+
+    // Set up a promise to wait for the response
+    const responsePromise = new Promise((resolve) => {
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data as string);
+        if (data.id === 10) resolve(event.data);
+      };
+    });
+
+    // Wait for the response
+    const response = await responsePromise;
+    expect(response).toBeDefined();
+    const data = JSON.parse(response as string);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(10);
+    expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Jest test');
+    expect(data.response).toBeUndefined();
+    expect(data.error).toBeDefined();
+  }, 60000);
+
   test('Websocket API ping', async () => {
     expect(ws).toBeDefined();
     expect(ws.readyState).toBe(WebSocket.OPEN);
