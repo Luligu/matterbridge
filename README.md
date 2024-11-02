@@ -380,7 +380,7 @@ The HomePods, being a WiFi devices, sometimes pruduce message trasmission errors
 
 All issues have been solved from the version 17.5 of the HomePod/AppleTV. Now they are stable.
 
-If you have more then one Apple TV or Home Pod, I get better results setting to disabled "Automatic Selection" in "Home Setting", "Home Hubs & Bridges". Once "Automatic selection" is disabled, select your Apple Tv if you have one or any of your Home Pod. In this way you should not have anymore more then one session for fabric.
+If you have more then one Apple TV or Home Pod, you can herve better results setting to disabled "Automatic Selection" in "Home Setting", "Home Hubs & Bridges". When "Automatic selection" is disabled, select your Apple Tv if you have one or any of your Home Pod. In this way you should not have anymore more then one session for fabric.
 
 ## Home Assistant
 
