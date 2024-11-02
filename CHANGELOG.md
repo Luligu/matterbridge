@@ -32,7 +32,7 @@ Feel free to join (the link is now permanent)!
 
 - [loggers]: Logging on file keeps the logger level of the logger (matterbridge and matter logs).
 - [matterbridge]: Added more api to WebSocket for the Matterbridge cockpit dashboard (Shelly gateway).
-- [package]: Update dependencies.
+- [package]: Update dependencies. 
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
