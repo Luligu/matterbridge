@@ -423,7 +423,7 @@ export class Matterbridge extends EventEmitter {
         // We don't do this when the add parameter is set because we shut down the process after adding the plugin
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm.`);
         try {
-          await this.spawnCommand('npm', ['install', '-g', '--omit=dev', plugin.name]);
+          await this.spawnCommand('npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose']);
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
