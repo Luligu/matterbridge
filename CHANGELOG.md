@@ -20,7 +20,7 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 Feel free to join (the link is now permanent)!
 
-## [1.6.1] - 2024-11-01
+## [1.6.1] - 2024-11-02
 
 ### Added
 
@@ -31,9 +31,8 @@ Feel free to join (the link is now permanent)!
 ### Changed
 
 - [loggers]: Logging on file keeps the logger level of the logger (matterbridge and matter logs).
+- [matterbridge]: Added more api to WebSocket for the Matetrbridge cockpit dashboard (Shelly gateway).
 - [package]: Update dependencies.
-
-### Fixed
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
