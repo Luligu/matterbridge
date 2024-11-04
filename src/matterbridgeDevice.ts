@@ -147,6 +147,8 @@ interface MatterbridgeDeviceCommands {
   stepSaturation: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['stepSaturation']>;
   moveToHueAndSaturation: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['moveToHueAndSaturation']>;
   moveToColorTemperature: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['moveToColorTemperature']>;
+  moveColorTemperature: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['moveColorTemperature']>;
+  stepColorTemperature: MakeMandatory<ClusterServerHandlers<typeof ColorControl.Complete>['stepColorTemperature']>;
 
   upOrOpen: MakeMandatory<ClusterServerHandlers<typeof WindowCovering.Complete>['upOrOpen']>;
   downOrClose: MakeMandatory<ClusterServerHandlers<typeof WindowCovering.Complete>['downOrClose']>;

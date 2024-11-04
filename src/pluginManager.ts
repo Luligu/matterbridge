@@ -466,7 +466,7 @@ export class PluginManager {
         this.log.info(`Plugin ${plg}${nameOrPath}${nf} already registered`);
         return null;
       }
-      this._plugins.set(packageJson.name, { name: packageJson.name, enabled: true, path: packageJsonPath, type: '', version: packageJson.version, description: packageJson.description, author: packageJson.author });
+      this._plugins.set(packageJson.name, { name: packageJson.name, enabled: true, path: packageJsonPath, type: 'AnyPlatform', version: packageJson.version, description: packageJson.description, author: packageJson.author });
       this.log.info(`Added plugin ${plg}${packageJson.name}${nf}`);
       await this.saveToStorage();
       const plugin = this._plugins.get(packageJson.name);
@@ -761,7 +761,7 @@ export class PluginManager {
       const config = JSON.parse(data) as PlatformConfig;
       this.log.debug(`Loaded config file ${configFile} for plugin ${plg}${plugin.name}${db}.`);
       // this.log.debug(`Loaded config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
-      /* The first time a plugin is added to the system, the config file is created with the plugin name and type "".*/
+      // The first time a plugin is added to the system, the config file is created with the plugin name and type "AnyPlatform".
       config.name = plugin.name;
       config.type = plugin.type;
       if (config.debug === undefined) config.debug = false;

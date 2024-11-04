@@ -20,6 +20,20 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 Feel free to join (the link is now permanent)!
 
+## [1.6.2] - 2024-11-05
+
+### Added
+
+### Changed
+
+- [matter.js]: Update to matter.js 0.11.2.
+- [PluginManager]: On first load the type is AnyPlatform.
+- [package]: Update dependencies. 
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.6.1] - 2024-11-02
 
 ### Added
