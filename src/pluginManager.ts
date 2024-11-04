@@ -580,6 +580,17 @@ export class PluginManager {
       // Call the default export function of the plugin, passing this MatterBridge instance, the log and the config
       if (pluginInstance.default) {
         const config: PlatformConfig = await this.loadConfig(plugin);
+
+        // Preset the plugin properties here in case the plugin throws an error during loading. In this case the user can change the config and restart the plugin.
+        plugin.name = packageJson.name;
+        plugin.description = packageJson.description ?? 'No description';
+        plugin.version = packageJson.version;
+        plugin.author = packageJson.author ?? 'Unknown';
+        plugin.configJson = config;
+        plugin.schemaJson = await this.loadSchema(plugin);
+        config.name = plugin.name;
+        config.version = packageJson.version;
+
         const log = new AnsiLogger({ logName: plugin.description ?? 'No description', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: (config.debug as boolean) ? LogLevel.DEBUG : this.matterbridge.log.logLevel });
         const platform = pluginInstance.default(this.matterbridge, log, config) as MatterbridgePlatform;
         config.type = platform.type;

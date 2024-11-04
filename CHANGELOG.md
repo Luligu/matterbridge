@@ -24,6 +24,9 @@ Feel free to join (the link is now permanent)!
 
 ### Added
 
+- [config]: Config and schema are loaded before loading the plugin to allow to configure the plugin even when it throws error on load. 
+- [config]: Added version to the config. 
+
 ### Changed
 
 - [matter.js]: Maybe update to matter.js 0.11.2.
