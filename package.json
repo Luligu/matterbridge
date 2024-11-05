@@ -53,6 +53,10 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
+    "./matter": {
+      "import": "./dist/matter/export.js",
+      "types": "./dist/matter/export.d.ts"
+    },
     "./cluster": {
       "import": "./dist/cluster/export.js",
       "types": "./dist/cluster/export.d.ts"
@@ -117,8 +121,10 @@
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest"
   },
   "dependencies": {
-    "@project-chip/matter-node.js": "0.10.6",
-    "@project-chip/matter.js": "0.10.6",
+    "@matter/main": "0.11.2",
+    "@matter/nodejs": "0.11.2",
+    "@project-chip/matter.js": "0.11.2",
+    "@project-chip/matter-node.js": "0.11.2",
     "archiver": "7.0.1",
     "express": "4.21.1",
     "glob": "11.0.0",

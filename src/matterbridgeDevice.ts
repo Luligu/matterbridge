@@ -21,6 +21,7 @@
  * limitations under the License. *
  */
 
+// @matter
 import {
   ActionsCluster,
   AirQuality,
@@ -36,8 +37,6 @@ import {
   CarbonDioxideConcentrationMeasurementCluster,
   CarbonMonoxideConcentrationMeasurement,
   CarbonMonoxideConcentrationMeasurementCluster,
-  ClusterServer,
-  ClusterServerHandlers,
   ColorControl,
   ColorControlCluster,
   ConcentrationMeasurement,
@@ -60,14 +59,12 @@ import {
   FormaldehydeConcentrationMeasurementCluster,
   Groups,
   GroupsCluster,
-  GroupsClusterHandler,
   Identify,
   IdentifyCluster,
   IlluminanceMeasurement,
   IlluminanceMeasurementCluster,
   LevelControl,
   LevelControlCluster,
-  MeasurementType,
   ModeSelect,
   ModeSelectCluster,
   NitrogenDioxideConcentrationMeasurement,
@@ -111,15 +108,19 @@ import {
   TotalVolatileOrganicCompoundsConcentrationMeasurementCluster,
   WindowCovering,
   WindowCoveringCluster,
-  getClusterNameById,
-} from '@project-chip/matter-node.js/cluster';
-import { Specification } from '@project-chip/matter-node.js/model';
-import { ClusterId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
-import { Device, DeviceClasses, DeviceTypeDefinition, Endpoint, EndpointOptions } from '@project-chip/matter-node.js/device';
-import { AtLeastOne, extendPublicHandlerMethods } from '@project-chip/matter-node.js/util';
+} from '@matter/main/clusters';
+import { Specification } from '@matter/main/model';
+import { ClusterId, EndpointNumber, extendPublicHandlerMethods, VendorId, AtLeastOne } from '@matter/main';
+import { MeasurementType } from '@matter/main/types';
 
+// @project-chip
+import { Device, DeviceClasses, DeviceTypeDefinition, Endpoint, EndpointOptions } from '@project-chip/matter.js/device';
+import { ClusterServer, ClusterServerHandlers, getClusterNameById, GroupsClusterHandler } from '@project-chip/matter.js/cluster';
+
+// AnsiLogger module
 import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from 'node-ansi-logger';
 
+// Node.js modules
 import { createHash } from 'crypto';
 
 type MakeMandatory<T> = Exclude<T, undefined>;

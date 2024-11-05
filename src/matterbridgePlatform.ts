@@ -22,8 +22,9 @@
  */
 
 import { Matterbridge } from './matterbridge.js';
-import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
+
+import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
 // Platform types
 export type PlatformConfigValue = string | number | boolean | bigint | object | undefined | null;

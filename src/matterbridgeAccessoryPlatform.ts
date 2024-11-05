@@ -23,6 +23,7 @@
 
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
+
 import { AnsiLogger } from 'node-ansi-logger';
 
 /**

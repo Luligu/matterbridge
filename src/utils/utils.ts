@@ -590,3 +590,9 @@ export async function resolveHostname(hostname: string, family: 0 | 4 | 6 = 4): 
     return null;
   }
 }
+
+export function uint8ArrayToHex(uint8Array: Uint8Array): string {
+  return Array.from(uint8Array)
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+}

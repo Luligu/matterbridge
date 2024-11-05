@@ -21,10 +21,16 @@
  * limitations under the License. *
  */
 
-import '@project-chip/matter-node.js';
-
 import { Matterbridge } from './matterbridge.js';
 
+// @matter
+export * from '@matter/main/clusters';
+export * from '@matter/main/types';
+
+// @project-chip
+export * from '@project-chip/matter.js/device';
+
+/*
 export * from '@project-chip/matter-node.js/device';
 export * from '@project-chip/matter-node.js/cluster';
 export * from '@project-chip/matter-node.js/log';
@@ -32,7 +38,9 @@ export * from '@project-chip/matter-node.js/datatype';
 export * from '@project-chip/matter-node.js/util';
 export * from '@project-chip/matter-node.js/schema';
 export * from '@project-chip/matter-node.js/tlv';
+*/
 
+// Matterbridge
 export * from './matterbridge.js';
 export * from './matterbridgeDevice.js';
 export * from './matterbridgePlatform.js';
