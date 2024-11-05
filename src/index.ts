@@ -29,15 +29,13 @@ export * from '@matter/main/types';
 
 // @project-chip
 export * from '@project-chip/matter.js/device';
-
 /*
-export * from '@project-chip/matter-node.js/device';
-export * from '@project-chip/matter-node.js/cluster';
-export * from '@project-chip/matter-node.js/log';
-export * from '@project-chip/matter-node.js/datatype';
-export * from '@project-chip/matter-node.js/util';
-export * from '@project-chip/matter-node.js/schema';
-export * from '@project-chip/matter-node.js/tlv';
+export * from '@project-chip/matter.js/cluster';
+export * from '@project-chip/matter.js/log';
+export * from '@project-chip/matter.js/datatype';
+export * from '@project-chip/matter.js/util';
+export * from '@project-chip/matter.js/schema';
+export * from '@project-chip/matter.js/tlv';
 */
 
 // Matterbridge
