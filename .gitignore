@@ -39,10 +39,6 @@ replay_pid*
 # local
 migrationV8.txt
 migrationV8-answered.txt
-matterbridgeEdge.ts
-matterbridgeEdge.test.ts
-matterbridgeEndpoint.ts
-matterbridgeEndpoint.test.ts
 matterstorage
 
 coverage
