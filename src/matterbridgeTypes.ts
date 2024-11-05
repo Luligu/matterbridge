@@ -21,7 +21,7 @@
  * limitations under the License. *
  */
 
-// Package modules
+// NodeStorage and AnsiLogger modules
 import { NodeStorage } from 'node-persist-manager';
 import { LogLevel } from 'node-ansi-logger';
 

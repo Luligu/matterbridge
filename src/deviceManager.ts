@@ -21,9 +21,12 @@
  * limitations under the License. *
  */
 
+// NodeStorage and AnsiLogger modules
 import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
-import { Matterbridge } from './matterbridge.js';
 import { NodeStorage } from 'node-persist-manager';
+
+// Matterbridge
+import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { dev } from './matterbridgeTypes.js';
 

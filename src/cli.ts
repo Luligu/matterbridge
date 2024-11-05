@@ -24,17 +24,19 @@
 
 /* eslint-disable no-console */
 import { Matterbridge } from './matterbridge.js';
+import { MatterbridgeEdge } from './matterbridgeEdge.js';
 
-let instance: Matterbridge | undefined;
+let instance: Matterbridge | MatterbridgeEdge | undefined;
 const cli = '\u001B[32m';
 const er = '\u001B[38;5;9m';
 const rs = '\u001B[40;0m';
 
 async function main() {
-  if (process.argv.includes('-debug')) console.log(cli + 'CLI: Matterbridge.loadInstance() called' + rs);
-  instance = await Matterbridge.loadInstance(true);
+  if (process.argv.includes('-debug')) console.log(cli + `CLI: ${process.argv.includes('-edge') ? 'MatterbridgeEdge' : 'Matterbridge'}.loadInstance() called` + rs);
+  if (process.argv.includes('-edge')) instance = await MatterbridgeEdge.loadInstance(true);
+  else instance = await Matterbridge.loadInstance(true);
   registerHandlers();
-  if (process.argv.includes('-debug')) console.log(cli + 'CLI: Matterbridge.loadInstance() exited' + rs);
+  if (process.argv.includes('-debug')) console.log(cli + `CLI: ${process.argv.includes('-edge') ? 'MatterbridgeEdge' : 'Matterbridge'}.loadInstance() exited` + rs);
 }
 
 function registerHandlers() {
@@ -45,20 +47,21 @@ function registerHandlers() {
 
 async function shutdown() {
   if (process.argv.includes('-debug')) console.log(cli + 'CLI: received shutdown event, exiting...' + rs);
-  // wtf.dump();
   process.exit(0);
 }
 
 async function restart() {
   if (process.argv.includes('-debug')) console.log(cli + 'CLI: received restart event, loading...' + rs);
-  instance = await Matterbridge.loadInstance(true);
+  if (process.argv.includes('-edge')) instance = await MatterbridgeEdge.loadInstance(true);
+  else instance = await Matterbridge.loadInstance(true);
   registerHandlers();
 }
 
 async function update() {
   if (process.argv.includes('-debug')) console.log(cli + 'CLI: received update event, updating...' + rs);
   // TODO: Implement update logic outside of matterbridge
-  instance = await Matterbridge.loadInstance(true);
+  if (process.argv.includes('-edge')) instance = await MatterbridgeEdge.loadInstance();
+  else instance = await Matterbridge.loadInstance(true);
   registerHandlers();
 }
 

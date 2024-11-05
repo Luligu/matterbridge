@@ -22,13 +22,16 @@
  */
 
 import { Matterbridge } from './matterbridge.js';
+import { MatterbridgeEdge } from './matterbridgeEdge.js';
 
 // @matter
+export { Identity } from '@matter/main';
 export * from '@matter/main/clusters';
 export * from '@matter/main/types';
 
 // @project-chip
 export * from '@project-chip/matter.js/device';
+export * from '@project-chip/matter.js/cluster';
 /*
 export * from '@project-chip/matter.js/cluster';
 export * from '@project-chip/matter.js/log';
@@ -53,7 +56,8 @@ const rs = '\u001B[40;0m';
 async function main() {
   // eslint-disable-next-line no-console
   if (process.argv.includes('-debug')) console.log(cli + 'MAIN: Matterbridge.loadInstance() called' + rs);
-  await Matterbridge.loadInstance();
+  if (process.argv.includes('-edge')) await MatterbridgeEdge.loadInstance();
+  else await Matterbridge.loadInstance();
   // eslint-disable-next-line no-console
   if (process.argv.includes('-debug')) console.log(cli + 'MAIN: Matterbridge.loadInstance() exited' + rs);
 }

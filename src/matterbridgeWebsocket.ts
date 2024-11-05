@@ -25,8 +25,10 @@
 import { Matterbridge } from './matterbridge.js';
 import { isValidNumber, isValidObject, isValidString } from './utils/utils.js';
 
-// Package modules
+// AnsiLogger module
 import { debugStringify } from 'node-ansi-logger';
+
+// Package modules
 import WebSocket from 'ws';
 
 // @matter
