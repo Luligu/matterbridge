@@ -23,7 +23,6 @@
 
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
-
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
 // Platform types

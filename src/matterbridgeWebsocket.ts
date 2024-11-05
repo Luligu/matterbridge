@@ -21,9 +21,11 @@
  * limitations under the License. *
  */
 
+// Matterbridge
 import { Matterbridge } from './matterbridge.js';
 import { isValidNumber, isValidObject, isValidString } from './utils/utils.js';
 
+// Package modules
 import { debugStringify } from 'node-ansi-logger';
 import WebSocket from 'ws';
 

@@ -23,7 +23,6 @@
  */
 
 /* eslint-disable no-console */
-// import wtf from 'wtfnode';
 import { Matterbridge } from './matterbridge.js';
 
 let instance: Matterbridge | undefined;

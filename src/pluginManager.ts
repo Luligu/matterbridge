@@ -22,15 +22,21 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { AnsiLogger, BLUE, db, er, LogLevel, nf, nt, pl, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
-import { Matterbridge } from './matterbridge.js';
-import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
+
+// NodeStorage and AnsiLogger modules
+import { AnsiLogger, BLUE, db, er, LogLevel, nf, nt, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
 import { NodeStorage } from 'node-persist-manager';
+
+// Node.js modules
 import path from 'path';
 import { promises as fs } from 'fs';
-import { fileURLToPath, pathToFileURL } from 'url';
-import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
+import { pathToFileURL } from 'url';
 import { exec, ExecException } from 'child_process';
+
+// Matterbridge
+import { Matterbridge } from './matterbridge.js';
+import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
+import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import { shelly_config, somfytahoma_config, zigbee2mqtt_config } from './defaultConfigSchema.js';
 
 export class PluginManager {

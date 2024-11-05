@@ -21,8 +21,11 @@
  * limitations under the License. *
  */
 
+// Package modules
 import { NodeStorage } from 'node-persist-manager';
 import { LogLevel } from 'node-ansi-logger';
+
+// Matterbridge
 import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 
