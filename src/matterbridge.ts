@@ -30,6 +30,7 @@ import * as http from 'http';
 import EventEmitter from 'events';
 import os from 'os';
 import path from 'path';
+import { randomBytes } from 'crypto';
 
 // Package modules
 import https from 'https';
@@ -43,7 +44,7 @@ import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW,
 // Matterbridge
 import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
 import { WS_ID_LOG, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, wsMessageHandler } from './matterbridgeWebsocket.js';
-import { logInterfaces, wait, waiter, createZip, copyDirectory, uint8ArrayToHex } from './utils/utils.js';
+import { logInterfaces, wait, waiter, createZip, copyDirectory } from './utils/utils.js';
 import { BaseRegisteredPlugin, MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
@@ -61,7 +62,6 @@ import { CommissioningController, CommissioningServer, MatterServer, NodeCommiss
 import { ClusterServer } from '@project-chip/matter.js/cluster';
 import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter.js/device';
 import { getParameter, getIntParameter, hasParameter } from '@project-chip/matter-node.js/util';
-import { CryptoNode } from '@project-chip/matter-node.js/crypto';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -2059,7 +2059,7 @@ export class Matterbridge extends EventEmitter {
    * @returns {Aggregator} - The created Matter Aggregator.
    */
   protected async createMatterAggregator(context: StorageContext, pluginName: string): Promise<Aggregator> {
-    const random = 'AG' + uint8ArrayToHex(CryptoNode.getRandomData(8));
+    const random = 'AG' + randomBytes(8).toString('hex'); // + uint8ArrayToHex(CryptoNode.getRandomData(8));
     await context.set('aggregatorSerialNumber', await context.get('aggregatorSerialNumber', random));
     await context.set('aggregatorUniqueId', await context.get('aggregatorUniqueId', random));
 
@@ -2298,7 +2298,7 @@ export class Matterbridge extends EventEmitter {
   protected async createCommissioningServerContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string): Promise<StorageContext> {
     if (!this.storageManager) throw new Error('No storage manager initialized');
     this.log.debug(`Creating commissioning server storage context for ${plg}${pluginName}${db}`);
-    const random = 'CS' + uint8ArrayToHex(CryptoNode.getRandomData(8));
+    const random = 'CS' + randomBytes(8).toString('hex'); //  uint8ArrayToHex(CryptoNode.getRandomData(8));
     const storageContext = this.storageManager.createContext(pluginName);
     await storageContext.set('deviceName', deviceName);
     await storageContext.set('deviceType', deviceType);
