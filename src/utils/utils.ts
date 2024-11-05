@@ -21,14 +21,19 @@
  * limitations under the License. *
  */
 
+// Node.js modules
 import os from 'os';
 import { createWriteStream, statSync } from 'fs';
-import archiver, { ArchiverError, EntryData } from 'archiver';
 import path from 'path';
 import * as dns from 'dns';
-import { AnsiLogger, idn, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
-import { glob } from 'glob';
 import { promises as fs } from 'fs';
+
+// Package modules
+import archiver, { ArchiverError, EntryData } from 'archiver';
+import { glob } from 'glob';
+
+// AnsiLogger module
+import { AnsiLogger, idn, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
 
 const log = new AnsiLogger({ logName: 'MatterbridgeUtils', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
 

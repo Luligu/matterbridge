@@ -53,13 +53,11 @@ import { DeviceManager } from './deviceManager.js';
 import { DeviceTypeId, EndpointNumber, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager } from '@matter/main';
 import { BasicInformationCluster, BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster, FixedLabelCluster, PowerSourceCluster, SwitchCluster, ThreadNetworkDiagnosticsCluster } from '@matter/main/clusters';
 import { CommissioningOptions, getClusterNameById, ManualPairingCodeCodec, QrCodeSchema } from '@matter/main/types';
-import { Specification } from '@matter/main/model';
 import { ExposedFabricInformation } from '@matter/main/protocol';
 import { StorageBackendDisk, StorageBackendJsonFile } from '@matter/nodejs';
 
 // @project-chip
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter.js';
-import { ClusterServer } from '@project-chip/matter.js/cluster';
 import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter.js/device';
 
 // Default colors
@@ -2057,16 +2055,19 @@ export class Matterbridge extends EventEmitter {
    * @param {StorageContext} context - The storage context.
    * @returns {Aggregator} - The created Matter Aggregator.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected async createMatterAggregator(context: StorageContext, pluginName: string): Promise<Aggregator> {
-    const random = 'AG' + randomBytes(8).toString('hex'); // + uint8ArrayToHex(CryptoNode.getRandomData(8));
+    /*
+    const random = randomBytes(8).toString('hex');
     await context.set('aggregatorSerialNumber', await context.get('aggregatorSerialNumber', random));
     await context.set('aggregatorUniqueId', await context.get('aggregatorUniqueId', random));
 
     this.log.debug(`Creating matter aggregator for plugin ${plg}${pluginName}${db} with uniqueId ${await context.get<string>('aggregatorUniqueId')} serialNumber ${await context.get<string>('aggregatorSerialNumber')}`);
     this.log.debug(`Creating matter aggregator for plugin ${plg}${pluginName}${db} with softwareVersion ${await context.get<number>('softwareVersion', 1)} softwareVersionString ${await context.get<string>('softwareVersionString', '1.0.0')}`);
     this.log.debug(`Creating matter aggregator for plugin ${plg}${pluginName}${db} with hardwareVersion ${await context.get<number>('hardwareVersion', 1)} hardwareVersionString ${await context.get<string>('hardwareVersionString', '1.0.0')}`);
-
+    */
     const matterAggregator = new Aggregator();
+    /*
     matterAggregator.addClusterServer(
       ClusterServer(
         BasicInformationCluster,
@@ -2099,6 +2100,7 @@ export class Matterbridge extends EventEmitter {
         },
       ),
     );
+    */
     return matterAggregator;
   }
 
@@ -2297,7 +2299,7 @@ export class Matterbridge extends EventEmitter {
   protected async createCommissioningServerContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string): Promise<StorageContext> {
     if (!this.storageManager) throw new Error('No storage manager initialized');
     this.log.debug(`Creating commissioning server storage context for ${plg}${pluginName}${db}`);
-    const random = 'CS' + randomBytes(8).toString('hex'); //  uint8ArrayToHex(CryptoNode.getRandomData(8));
+    const random = randomBytes(8).toString('hex');
     const storageContext = this.storageManager.createContext(pluginName);
     await storageContext.set('deviceName', deviceName);
     await storageContext.set('deviceType', deviceType);
