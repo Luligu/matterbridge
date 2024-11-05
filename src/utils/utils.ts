@@ -591,8 +591,43 @@ export async function resolveHostname(hostname: string, family: 0 | 4 | 6 = 4): 
   }
 }
 
-export function uint8ArrayToHex(uint8Array: Uint8Array): string {
-  return Array.from(uint8Array)
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('');
+/**
+ * Retrieves the value of a command-line parameter.
+ *
+ * @param {string} name - The name of the parameter to retrieve.
+ * @returns {string | undefined} The value of the parameter, or undefined if not found.
+ */
+export function getParameter(name: string): string | undefined {
+  const commandArguments = process.argv.slice(2);
+  let markerIndex = commandArguments.indexOf(`-${name}`);
+  if (markerIndex === -1) markerIndex = commandArguments.indexOf(`--${name}`);
+  if (markerIndex === -1 || markerIndex + 1 === commandArguments.length) return undefined;
+  return commandArguments[markerIndex + 1];
+}
+
+/**
+ * Checks if a command-line parameter is present.
+ *
+ * @param {string} name - The name of the parameter to check.
+ * @returns {boolean} True if the parameter is present, otherwise false.
+ */
+export function hasParameter(name: string): boolean {
+  const commandArguments = process.argv.slice(2);
+  let markerIncluded = commandArguments.includes(`-${name}`);
+  if (!markerIncluded) markerIncluded = commandArguments.includes(`--${name}`);
+  return markerIncluded;
+}
+
+/**
+ * Retrieves the value of a command-line parameter as an integer.
+ *
+ * @param {string} name - The name of the parameter to retrieve.
+ * @returns {number | undefined} The integer value of the parameter, or undefined if not found or invalid.
+ */
+export function getIntParameter(name: string): number | undefined {
+  const value = getParameter(name);
+  if (value === undefined) return undefined;
+  const intValue = parseInt(value, 10);
+  if (!isValidNumber(intValue)) return undefined;
+  return intValue;
 }

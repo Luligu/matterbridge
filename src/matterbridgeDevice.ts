@@ -111,11 +111,11 @@ import {
 } from '@matter/main/clusters';
 import { Specification } from '@matter/main/model';
 import { ClusterId, EndpointNumber, extendPublicHandlerMethods, VendorId, AtLeastOne } from '@matter/main';
-import { MeasurementType } from '@matter/main/types';
+import { MeasurementType, getClusterNameById } from '@matter/main/types';
 
 // @project-chip
 import { Device, DeviceClasses, DeviceTypeDefinition, Endpoint, EndpointOptions } from '@project-chip/matter.js/device';
-import { ClusterServer, ClusterServerHandlers, getClusterNameById, GroupsClusterHandler } from '@project-chip/matter.js/cluster';
+import { ClusterServerHandlers, GroupsClusterHandler, ClusterServer } from '@project-chip/matter.js/cluster';
 
 // AnsiLogger module
 import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from 'node-ansi-logger';

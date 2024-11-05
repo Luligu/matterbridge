@@ -44,7 +44,7 @@ import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW,
 // Matterbridge
 import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
 import { WS_ID_LOG, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, wsMessageHandler } from './matterbridgeWebsocket.js';
-import { logInterfaces, wait, waiter, createZip, copyDirectory } from './utils/utils.js';
+import { logInterfaces, wait, waiter, createZip, copyDirectory, getParameter, getIntParameter, hasParameter } from './utils/utils.js';
 import { BaseRegisteredPlugin, MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
@@ -61,7 +61,6 @@ import { StorageBackendDisk, StorageBackendJsonFile } from '@matter/nodejs';
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter.js';
 import { ClusterServer } from '@project-chip/matter.js/cluster';
 import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter.js/device';
-import { getParameter, getIntParameter, hasParameter } from '@project-chip/matter-node.js/util';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
