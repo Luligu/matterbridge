@@ -513,10 +513,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {Endpoint} [endpoint] - (Optional) The endpoint to set the attribute on. If not provided, the attribute will be set on the current endpoint.
    */
 
-  /*
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAttribute(clusterId: ClusterId, attribute: string, value: any, log?: AnsiLogger, endpoint?: Endpoint): boolean {
     if (!endpoint) endpoint = this as Endpoint;
 
+    const clusterName = getClusterNameById(clusterId);
+    /*
     const clusterServer = endpoint.getClusterServerById(clusterId);
     if (!clusterServer) {
       log?.error(`setAttribute error: Cluster ${clusterId} not found on endpoint ${endpoint.name}:${endpoint.number}`);
@@ -550,9 +552,9 @@ export class MatterbridgeEndpoint extends Endpoint {
         `from ${YELLOW}${typeof oldValue === 'object' ? debugStringify(oldValue) : oldValue}${db} ` +
         `to ${YELLOW}${typeof value === 'object' ? debugStringify(value) : value}${db}`,
     );
+    */
     return true;
   }
-  */
 
   /**
    * Subscribes to an attribute on a cluster.
