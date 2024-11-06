@@ -41,10 +41,6 @@ server {
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
-
-        # Preserve the base path in the proxied requests
-        # sub_filter '/api' '/matterbridge/api';
-        # sub_filter_once off;
     }
 }
 ```
