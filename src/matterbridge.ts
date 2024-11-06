@@ -51,9 +51,9 @@ import { DeviceManager } from './deviceManager.js';
 
 // @matter
 import { DeviceTypeId, EndpointNumber, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager } from '@matter/main';
-import { BasicInformationCluster, BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster, FixedLabelCluster, PowerSourceCluster, SwitchCluster, ThreadNetworkDiagnosticsCluster } from '@matter/main/clusters';
-import { CommissioningOptions, getClusterNameById, ManualPairingCodeCodec, QrCodeSchema } from '@matter/main/types';
-import { ExposedFabricInformation } from '@matter/main/protocol';
+import { BasicInformationCluster, BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster, FixedLabelCluster, GeneralCommissioning, PowerSourceCluster, SwitchCluster, ThreadNetworkDiagnosticsCluster } from '@matter/main/clusters';
+import { getClusterNameById, ManualPairingCodeCodec, QrCodeSchema } from '@matter/main/types';
+import { ControllerCommissioningFlowOptions, ExposedFabricInformation } from '@matter/main/protocol';
 import { StorageBackendDisk, StorageBackendJsonFile } from '@matter/nodejs';
 
 // @project-chip
@@ -1731,9 +1731,9 @@ export class Matterbridge extends EventEmitter {
         throw new Error('Please specify the longDiscriminator of the device to commission with -longDiscriminator or provide a valid passcode with -passcode');
       }
 
-      const commissioningOptions: CommissioningOptions = {
-        // regulatoryLocation: GeneralCommissioning.RegulatoryLocationType.IndoorOutdoor,
-        // regulatoryCountryCode: 'XX',
+      const commissioningOptions: ControllerCommissioningFlowOptions = {
+        regulatoryLocation: GeneralCommissioning.RegulatoryLocationType.IndoorOutdoor,
+        regulatoryCountryCode: 'XX',
       };
       const options = {
         commissioning: commissioningOptions,

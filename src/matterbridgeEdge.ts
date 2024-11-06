@@ -38,11 +38,13 @@ import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { getParameter, hasParameter } from './utils/utils.js';
 
 // @matter
-import { DeviceTypeId, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, FabricIndex } from '@matter/main';
+import { DeviceTypeId, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, FabricIndex, Endpoint } from '@matter/main';
 import { ServerNode, Endpoint as EndpointNode, Environment, StorageService, StorageContext, StorageManager } from '@matter/main';
 import { BasicInformationCluster } from '@matter/main/clusters';
 import { FabricAction } from '@matter/main/protocol';
+import { OnOffLightDevice } from '@matter/main/devices';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
+import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors';
 
 // @project-chip
 import { CommissioningServer, MatterServer, NodeOptions } from '@project-chip/matter.js';
@@ -397,15 +399,20 @@ export class MatterbridgeEdge extends Matterbridge {
     const serverNode = await this.createServerNode(context, this.port++, this.passcode ? this.passcode++ : 20242025, this.discriminator ? this.discriminator++ : 3840);
     const commissioningServer = {
       getPort: () => port,
-      addDevice: (device: Device | Aggregator) => {
+      addDevice: async (device: Device | Aggregator) => {
+        if (hasParameter('debug')) this.log.warn('CommissioningServer.addDevice()', device.name);
         if (device instanceof Device) {
           if (hasParameter('debug')) this.log.warn('CommissioningServer.addDevice() => Device');
-        } else if (device instanceof Aggregator) {
+        } else if (device.name === 'MA-aggregator') {
           if (hasParameter('debug')) this.log.warn('CommissioningServer.addDevice() => Aggregator');
           const serverNode = this.csToMatterNode.get(pluginName)?.serverNode;
           const aggregatorNode = this.agToMatterNode.get(pluginName)?.aggregatorNode;
           if (!serverNode || !aggregatorNode) return;
-          serverNode.add(aggregatorNode);
+          await serverNode.add(aggregatorNode);
+          if (!this.add) {
+            this.add = true;
+            await this.testLight1();
+          }
         }
       },
     } as unknown as CommissioningServer;
@@ -413,10 +420,13 @@ export class MatterbridgeEdge extends Matterbridge {
     return commissioningServer;
   }
 
+  add = false;
+
   override async createMatterAggregator(context: StorageContext, pluginName: string): Promise<Aggregator> {
     if (hasParameter('debug')) this.log.warn(`createMatterAggregator: ${pluginName} => createAggregatorNode`);
     const aggregatorNode = await this.createAggregatorNode(context);
     const aggregator = {
+      name: 'MA-aggregator',
       addBridgedDevice: (device: Device) => {
         if (hasParameter('debug')) this.log.warn('Aggregator.addBridgedDevice() => not inplemented');
       },
@@ -449,6 +459,41 @@ export class MatterbridgeEdge extends Matterbridge {
 
   override async startController() {
     if (hasParameter('debug')) this.log.warn(`setDeviceReachability() => not inplemented`);
+  }
+
+  async testLight1() {
+    if (!this.matterbridgeContext) return;
+    const aggregatorNode = this.agToMatterNode.get('Matterbridge')?.aggregatorNode;
+    this.log.notice(`Creating lightEndpoint1`);
+    const lightEndpoint1 = new Endpoint(OnOffLightDevice.with(BridgedDeviceBasicInformationServer), {
+      id: 'OnOffLight',
+      bridgedDeviceBasicInformation: {
+        vendorId: VendorId(await this.matterbridgeContext.get<number>('vendorId')),
+        vendorName: await this.matterbridgeContext.get<string>('vendorName'),
+
+        productName: 'Light',
+        productLabel: 'Light',
+        nodeLabel: 'Light',
+
+        serialNumber: 'SN 0x123456789',
+        uniqueId: '0x123456789',
+        reachable: true,
+      },
+    });
+    this.log.notice(`Adding lightEndpoint1 to ${await this.matterbridgeContext.get<string>('storeId')} aggregator`);
+    await aggregatorNode?.add(lightEndpoint1);
+    setInterval(async () => {
+      console.log('lightendpoint1', lightEndpoint1);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      console.log('lightendpoint1 behaviors', (lightEndpoint1.behaviors.supported['onOff'] as any).cluster);
+      lightEndpoint1.act(async (agent) => {
+        console.log('lightendpoint1 state', agent['onOff'].state);
+      });
+      const state = lightEndpoint1.state['onOff']['onOff'];
+      this.log.notice('Setting state from:', state);
+      lightEndpoint1.set({ ['onOff']: { ['onOff']: !state } });
+      this.log.notice('to:', !state);
+    }, 10000);
   }
 }
 

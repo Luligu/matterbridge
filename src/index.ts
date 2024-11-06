@@ -25,7 +25,7 @@ import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEdge } from './matterbridgeEdge.js';
 
 // @matter
-export { Identity } from '@matter/main';
+export { Identity, AtLeastOne } from '@matter/main';
 export * from '@matter/main/clusters';
 export * from '@matter/main/types';
 

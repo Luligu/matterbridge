@@ -474,11 +474,15 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {Endpoint} [endpoint] - Optional the child endpoint to retrieve the attribute from.
    * @returns {any} The value of the attribute, or undefined if the attribute is not found.
    */
-
-  /*
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getAttribute(clusterId: ClusterId, attribute: string, log?: AnsiLogger, endpoint?: Endpoint): any {
     if (!endpoint) endpoint = this as Endpoint;
 
+    const clusterName = getClusterNameById(clusterId);
+    endpoint.behaviors.has(MatterbridgeEndpoint.getBehaviourTypeFromClusterServerId(clusterId));
+    // const value = endpoint.state[clusterName][attribute];
+    return undefined;
+    /*
     const clusterServer = endpoint.getClusterServerById(clusterId);
     if (!clusterServer) {
       log?.error(`getAttribute error: Cluster ${clusterId} not found on endpoint ${endpoint.name}:${endpoint.number}`);
@@ -500,8 +504,8 @@ export class MatterbridgeEndpoint extends Endpoint {
     const value = getter();
     log?.info(`${db}Get endpoint ${or}${endpoint.name}:${endpoint.number}${db} attribute ${hk}${clusterServer.name}.${capitalizedAttributeName}${db} value ${YELLOW}${typeof value === 'object' ? debugStringify(value) : value}${db}`);
     return value;
+    */
   }
-  */
 
   /**
    * Sets the value of an attribute on a cluster server endpoint.
@@ -512,12 +516,17 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {AnsiLogger} [log] - (Optional) The logger to use for logging errors and information.
    * @param {Endpoint} [endpoint] - (Optional) The endpoint to set the attribute on. If not provided, the attribute will be set on the current endpoint.
    */
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAttribute(clusterId: ClusterId, attribute: string, value: any, log?: AnsiLogger, endpoint?: Endpoint): boolean {
     if (!endpoint) endpoint = this as Endpoint;
 
     const clusterName = getClusterNameById(clusterId);
+    endpoint.set({ [clusterName]: { [attribute]: value } });
+    log?.info(
+      `${db}Set endpoint ${or}${endpoint.id}:${endpoint.number}${db} attribute ${hk}${clusterName}.${attribute}${db} ` +
+        // `from ${YELLOW}${typeof oldValue === 'object' ? debugStringify(oldValue) : oldValue}${db} ` +
+        `to ${YELLOW}${typeof value === 'object' ? debugStringify(value) : value}${db}`,
+    );
     /*
     const clusterServer = endpoint.getClusterServerById(clusterId);
     if (!clusterServer) {

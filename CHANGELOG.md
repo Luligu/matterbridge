@@ -29,7 +29,7 @@ Feel free to join (the link is now permanent)!
 
 ### Changed
 
-- [matter.js]: Maybe update to matter.js 0.11.2.
+- [matter.js]: Update to matter.js 0.11.3.
 - [PluginManager]: On first load the type is AnyPlatform.
 - [package]: Update dependencies. 
 
