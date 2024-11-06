@@ -31,10 +31,6 @@ Matterbridge exports from:
 
 - All general utils and colorUtils functions.
 
-"matterbridge/history"
-
-- MatterHistory class.
-
 "matterbridge/logger"
 
 - NodeAnsiLogger class.
