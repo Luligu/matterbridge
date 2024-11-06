@@ -66,6 +66,12 @@ describe('Matterbridge endpoint', () => {
   });
 
   describe('Server node with aggregator', () => {
+    test('create a context for server node', async () => {
+      const deviceType = bridge;
+      context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      expect(context).toBeDefined();
+    });
+
     if (getMacAddress() !== '30:f6:ef:69:2b:c5') return;
 
     test('create a server node', async () => {
@@ -129,6 +135,12 @@ describe('Matterbridge endpoint', () => {
   });
 
   describe('Server node with devices', () => {
+    test('create a context for server node', async () => {
+      const deviceType = bridge;
+      context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      expect(context).toBeDefined();
+    });
+
     if (getMacAddress() !== '30:f6:ef:69:2b:c5') return;
 
     test('create a onOffLight device', async () => {
