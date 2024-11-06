@@ -21,11 +21,13 @@
  * limitations under the License. *
  */
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { AnsiLogger, BLUE, db, er, LogLevel, nf, nt, pl, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
-import { Matterbridge } from './matterbridge.js';
+// NodeStorage and AnsiLogger modules
+import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { NodeStorage } from 'node-persist-manager';
-import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
+
+// Matterbridge
+import { Matterbridge } from './matterbridge.js';
+import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { dev } from './matterbridgeTypes.js';
 
 export class DeviceManager {

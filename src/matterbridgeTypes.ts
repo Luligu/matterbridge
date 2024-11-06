@@ -21,19 +21,22 @@
  * limitations under the License. *
  */
 
+// NodeStorage and AnsiLogger modules
 import { NodeStorage } from 'node-persist-manager';
-import { FabricIndex, NodeId, VendorId } from '@project-chip/matter-node.js/datatype';
-import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
-import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
-import { MatterbridgeDevice } from './matterbridgeDevice.js';
-import { StorageContext } from '@project-chip/matter-node.js/storage';
-import { CommissioningServer } from '@project-chip/matter-node.js';
-import { Aggregator } from '@project-chip/matter-node.js/device';
 import { LogLevel } from 'node-ansi-logger';
 
-// Import for API V8
-import { ServerNode } from '@project-chip/matter.js/node';
-import { AggregatorEndpoint } from '@project-chip/matter.js/endpoints/AggregatorEndpoint';
+// Matterbridge
+import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
+import { MatterbridgeDevice } from './matterbridgeDevice.js';
+
+// @matter
+import { FabricIndex, NodeId, VendorId, StorageContext, ServerNode } from '@matter/main';
+import { ExposedFabricInformation } from '@matter/main/protocol';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+
+// @project-chip
+import { CommissioningServer } from '@project-chip/matter.js';
+import { Aggregator } from '@project-chip/matter.js/device';
 import { Endpoint } from '@project-chip/matter.js/endpoint';
 
 // Default colors
