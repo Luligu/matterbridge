@@ -24,14 +24,14 @@ Feel free to join (the link is now permanent)!
 
 ### Added
 
-- [config]: Config and schema are loaded before loading the plugin to allow to configure the plugin even when it throws error on load. 
-- [config]: Added version to the config. 
+- [config]: Config and schema are loaded before loading the plugin to allow to configure the plugin even when it throws error on load.
+- [config]: Added version to the config.
 
 ### Changed
 
 - [matter.js]: Update to matter.js 0.11.3.
 - [PluginManager]: On first load the type is AnyPlatform.
-- [package]: Update dependencies. 
+- [package]: Update dependencies.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
@@ -49,7 +49,7 @@ Feel free to join (the link is now permanent)!
 
 - [loggers]: Logging on file keeps the logger level of the logger (matterbridge and matter logs).
 - [matterbridge]: Added more api to WebSocket for the Matterbridge cockpit dashboard (Shelly gateway).
-- [package]: Update dependencies. 
+- [package]: Update dependencies.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
