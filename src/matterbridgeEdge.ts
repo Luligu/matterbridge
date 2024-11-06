@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * This file contains the class MatterbridgeEdge that extends the Matterbridge class.
  *
@@ -76,7 +77,6 @@ export class MatterbridgeEdge extends Matterbridge {
 
   static override async loadInstance(initialize = false) {
     if (!MatterbridgeEdge.instance) {
-      // eslint-disable-next-line no-console
       if (hasParameter('debug')) console.log(GREEN + 'Creating a new instance of MatterbridgeEdge.', initialize ? 'Initializing...' : 'Not initializing...', rs);
       MatterbridgeEdge.instance = new MatterbridgeEdge();
       if (initialize) await MatterbridgeEdge.instance.initialize();
@@ -85,7 +85,6 @@ export class MatterbridgeEdge extends Matterbridge {
   }
 
   public override async initialize() {
-    // eslint-disable-next-line no-console
     if (hasParameter('debug')) console.log('Initializing MatterbridgeEdge...');
 
     // Set the matterbridge directory
