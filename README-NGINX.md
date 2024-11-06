@@ -12,7 +12,7 @@
 
 ---
 
-# Advanced configuration
+# Advanced configuration to use NGINX
 
 ## Run matterbridge with nginx
 
@@ -22,7 +22,7 @@
 sudo nano /etc/nginx/sites-available/matterbridge
 ```
 
-paste this configuration and change the port and server_name using yours:
+paste this configuration and change the port to listen and the server_name using yours:
 
 ```
 server {
