@@ -51,7 +51,8 @@ function WebSocketUse(wssHost, ssl) {
         */
         // Replace "http" or "https" with "ws" or "wss"
         wssHost = window.location.href.replace(/^http/, 'ws');  
-        // console.log(`WebSocketUse: window.location.host=${window.location.host} window.location.protocol=${window.location.protocol} window.location.href=${window.location.href} wssHost=${wssHost}`);
+        // eslint-disable-next-line no-console
+        console.log(`WebSocketUse: window.location.host=${window.location.host} window.location.protocol=${window.location.protocol} window.location.href=${window.location.href} wssHost=${wssHost}`);
         logMessage('WebSocket', `Connecting to WebSocket: ${wssHost}`);
         ws.current = new WebSocket(wssHost);
         ws.current.onmessage = (event) => {
