@@ -28,20 +28,11 @@ import {
 // import { EveHistory, EveHistoryCluster, MatterHistory } from 'matter-history';
 
 import {
-  Attributes,
-  BasicInformation,
-  BasicInformationCluster,
-  Binding,
   BooleanStateConfiguration,
-  ClusterServerObj,
   ColorControl,
   ColorControlCluster,
-  Descriptor,
   DoorLock,
-  Events,
   FlowMeasurementCluster,
-  getClusterNameById,
-  Groups,
   Identify,
   IdentifyCluster,
   LevelControl,
@@ -56,9 +47,10 @@ import {
   WindowCoveringCluster,
   SmokeCoAlarm,
   DeviceEnergyManagement,
-} from '@project-chip/matter-node.js/cluster';
-import { DeviceTypes, logEndpoint } from '@project-chip/matter-node.js/device';
-import { EndpointNumber, GroupId, VendorId } from '@project-chip/matter-node.js/datatype';
+} from '@matter/main/clusters';
+import { VendorId } from '@matter/main';
+import { DeviceTypes } from '@project-chip/matter.js/device';
+import { ClusterServerObj, getClusterNameById } from '@project-chip/matter.js/cluster';
 import { waiter } from './utils/utils.js';
 import { Matterbridge } from './matterbridge.js';
 

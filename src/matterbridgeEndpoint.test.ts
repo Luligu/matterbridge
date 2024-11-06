@@ -4,25 +4,14 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { MatterbridgeEdge } from './matterbridgeEdge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { bridge, bridgedNode, dimmableLight, onOffLight, onOffOutlet, onOffSwitch } from './matterbridgeDevice.js';
+import { bridge, dimmableLight, onOffLight, onOffOutlet, onOffSwitch } from './matterbridgeDevice.js';
 
-import { DeviceTypeId, VendorId } from '@project-chip/matter-node.js/datatype';
-import { Endpoint, EndpointServer } from '@project-chip/matter.js/endpoint';
-import { Format, Level } from '@project-chip/matter-node.js/log';
-import { Environment } from '@project-chip/matter.js/environment';
+import { DeviceTypeId, VendorId, Environment, ServerNode, Endpoint, EndpointServer, StorageContext } from '@matter/main';
+import { LogFormat as Format, LogLevel as Level } from '@matter/main';
+import { PressureMeasurement, RelativeHumidityMeasurement } from '@matter/main/clusters';
+import { AggregatorEndpoint, AggregatorEndpointDefinition } from '@matter/main/endpoints';
 
-import { OnOffLightDevice } from '@project-chip/matter.js/devices/OnOffLightDevice';
-
-import { BridgedDeviceBasicInformationServer } from '@project-chip/matter.js/behaviors/bridged-device-basic-information';
-import { BasicInformationServer } from '@project-chip/matter.js/behaviors/basic-information';
-import { IdentifyServer } from '@project-chip/matter.js/behaviors/identify';
-import { OnOffServer } from '@project-chip/matter.js/behaviors/on-off';
-import { GroupsServer } from '@project-chip/matter.js/behaviors/groups';
-import { ServerNode } from '@project-chip/matter.js/node';
 import { DeviceTypes, logEndpoint } from '@project-chip/matter.js/device';
-import { AggregatorEndpoint, AggregatorEndpointDefinition } from '@project-chip/matter.js/endpoints/AggregatorEndpoint';
-import { StorageContext } from '@project-chip/matter.js/storage';
-import { PressureMeasurement, RelativeHumidityMeasurement, RelativeHumidityMeasurementCluster } from '@project-chip/matter.js/cluster';
 
 describe('Matterbridge endpoint', () => {
   let edge: MatterbridgeEdge;
@@ -103,7 +92,7 @@ describe('Matterbridge endpoint', () => {
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
       expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
       expect(device.type.deviceType).toBe(deviceType.code);
-      expect(device.type.deviceClass).toBe(deviceType.deviceClass);
+      expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
       expect(device.type.deviceRevision).toBe(deviceType.revision);
       await aggregator.add(device);
       // logEndpoint(EndpointServer.forEndpoint(device));
@@ -116,7 +105,7 @@ describe('Matterbridge endpoint', () => {
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
       expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
       expect(device.type.deviceType).toBe(deviceType.code);
-      expect(device.type.deviceClass).toBe(deviceType.deviceClass);
+      expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
       expect(device.type.deviceRevision).toBe(deviceType.revision);
       await aggregator.add(device);
       // logEndpoint(EndpointServer.forEndpoint(device));
@@ -146,7 +135,7 @@ describe('Matterbridge endpoint', () => {
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
       expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
       expect(device.type.deviceType).toBe(deviceType.code);
-      expect(device.type.deviceClass).toBe(deviceType.deviceClass);
+      expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
       expect(device.type.deviceRevision).toBe(deviceType.revision);
       expect(device.type.behaviors.identify).toBeDefined();
       expect(device.type.behaviors.groups).toBeDefined();
@@ -168,7 +157,7 @@ describe('Matterbridge endpoint', () => {
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
       expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
       expect(device.type.deviceType).toBe(deviceType.code);
-      expect(device.type.deviceClass).toBe(deviceType.deviceClass);
+      expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
       expect(device.type.deviceRevision).toBe(deviceType.revision);
       expect(device.type.behaviors.identify).toBeDefined();
       expect(device.type.behaviors.groups).toBeDefined();
@@ -190,7 +179,7 @@ describe('Matterbridge endpoint', () => {
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
       expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
       expect(device.type.deviceType).toBe(deviceType.code);
-      expect(device.type.deviceClass).toBe(deviceType.deviceClass);
+      expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
       expect(device.type.deviceRevision).toBe(deviceType.revision);
       expect(device.type.behaviors.identify).toBeDefined();
       expect(device.type.behaviors.groups).toBeDefined();
@@ -212,7 +201,7 @@ describe('Matterbridge endpoint', () => {
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
       expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
       expect(device.type.deviceType).toBe(deviceType.code);
-      expect(device.type.deviceClass).toBe(deviceType.deviceClass);
+      expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
       expect(device.type.deviceRevision).toBe(deviceType.revision);
       expect(device.type.behaviors.identify).toBeDefined();
       expect(device.type.behaviors.temperatureMeasurement).toBeDefined();

@@ -17,15 +17,14 @@ interface SessionInformation {
 
 import { jest } from '@jest/globals';
 
-jest.mock('@project-chip/matter-node.js/util');
+// jest.mock('@project-chip/matter-node.js/util');
 
 import { AnsiLogger, db, LogLevel, nf } from 'node-ansi-logger';
-import { hasParameter } from '@project-chip/matter-node.js/util';
+import { hasParameter } from './utils/utils.js';
 import { Matterbridge } from './matterbridge.js';
-import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
-import { FabricId, FabricIndex, NodeId, VendorId } from '@project-chip/matter-node.js/datatype';
-import path from 'path';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
+import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/main';
+import { ExposedFabricInformation } from '@matter/main/protocol';
 
 // Default colors
 const plg = '\u001B[38;5;33m';

@@ -11,7 +11,7 @@ import { AnsiLogger, BLUE, db, er, LogLevel, nf, nt, pl, UNDERLINE, UNDERLINEOFF
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { DeviceManager } from './deviceManager.js';
-import { DeviceTypes } from '@project-chip/matter-node.js/device';
+import { DeviceTypes } from '@project-chip/matter.js/device';
 import { PluginManager } from './pluginManager.js';
 
 // Default colors

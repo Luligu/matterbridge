@@ -15,7 +15,6 @@ import { execSync } from 'child_process';
 import { getMacAddress, waiter } from './utils/utils.js';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { DeviceManager } from './deviceManager.js';
 
 // Default colors

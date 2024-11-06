@@ -6,7 +6,7 @@ process.argv = ['node', 'matterbridge.test.js', '-matterlogger', 'fatal', '-brid
 
 import { jest } from '@jest/globals';
 
-jest.mock('@project-chip/matter-node.js/util');
+// jest.mock('@project-chip/matter-node.js/util');
 
 import { AnsiLogger, db, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';

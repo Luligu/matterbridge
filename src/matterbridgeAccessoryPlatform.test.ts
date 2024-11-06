@@ -5,9 +5,8 @@ process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'J
 
 import { jest } from '@jest/globals';
 
-import { AnsiLogger, LogLevel } from 'node-ansi-logger';
+import { AnsiLogger } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
-import { wait, waiter } from './utils/utils.js';
 import { MatterbridgeAccessoryPlatform } from './matterbridgeAccessoryPlatform.js';
 
 describe('Matterbridge accessory platform', () => {
