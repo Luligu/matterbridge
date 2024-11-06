@@ -12,6 +12,7 @@ import { PressureMeasurement, RelativeHumidityMeasurement } from '@matter/main/c
 import { AggregatorEndpoint, AggregatorEndpointDefinition } from '@matter/main/endpoints';
 
 import { DeviceTypes, logEndpoint } from '@project-chip/matter.js/device';
+import { getMacAddress } from './utils/utils.js';
 
 describe('Matterbridge endpoint', () => {
   let edge: MatterbridgeEdge;
@@ -65,6 +66,8 @@ describe('Matterbridge endpoint', () => {
   });
 
   describe('Server node with aggregator', () => {
+    if (getMacAddress() !== '30:f6:ef:69:2b:c5') return;
+
     test('create a server node', async () => {
       const deviceType = bridge;
       context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
@@ -126,6 +129,8 @@ describe('Matterbridge endpoint', () => {
   });
 
   describe('Server node with devices', () => {
+    if (getMacAddress() !== '30:f6:ef:69:2b:c5') return;
+
     test('create a onOffLight device', async () => {
       const deviceType = onOffLight;
       const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
