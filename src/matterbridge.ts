@@ -129,6 +129,7 @@ export class Matterbridge extends EventEmitter {
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public restartMode: 'service' | 'docker' | '' = '';
   public profile = getParameter('profile');
+  public edge = hasParameter('edge');
 
   public log!: AnsiLogger;
   protected matterbrideLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';

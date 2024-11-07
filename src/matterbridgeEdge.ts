@@ -36,7 +36,7 @@ import { NodeStorage } from 'node-persist-manager';
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
-import { getParameter, hasParameter } from './utils/utils.js';
+import { copyDirectory, getParameter, hasParameter } from './utils/utils.js';
 
 // @matter
 import { DeviceTypeId, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, FabricIndex, Endpoint } from '@matter/main';
@@ -90,11 +90,12 @@ export class MatterbridgeEdge extends Matterbridge {
     // Set the matterbridge directory
     this.homeDirectory = getParameter('homedir') ?? os.homedir();
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
+    this.matterStorageName = 'matterstorage' + (getParameter('profile') ? '.' + getParameter('profile') : '');
 
     // Setup matter environment
     this.environment.vars.set('log.level', MatterLogLevel.INFO);
     this.environment.vars.set('log.format', MatterLogFormat.ANSI);
-    this.environment.vars.set('path.root', path.join(this.matterbridgeDirectory, 'matterstorage'));
+    this.environment.vars.set('path.root', path.join(this.matterbridgeDirectory, this.matterStorageName));
     this.environment.vars.set('runtime.signals', false);
     this.environment.vars.set('runtime.exitcode', false);
 
@@ -117,14 +118,18 @@ export class MatterbridgeEdge extends Matterbridge {
     this.storageManager = await this.matterStorageService.open('Matterbridge');
     this.log.info('Matter node storage manager "Matterbridge" created');
 
-    // this.matterbridgeContext = this.storageManager.createContext('persist');
     this.matterbridgeContext = await this.createServerNodeContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
 
     this.log.info('Matter node storage started');
+
+    // Backup matter storage since it is created/opened correctly
+    await this.backupMatterStorage(path.join(this.matterbridgeDirectory, this.matterStorageName), path.join(this.matterbridgeDirectory, this.matterStorageName + '.backup'));
   }
 
   override async backupMatterStorage(storageName: string, backupName: string) {
-    // TODO: Implement backupMatterStorage
+    this.log.info('Creating matter node storage backup...');
+    await copyDirectory(storageName, backupName);
+    this.log.info('Created matter node storage backup');
   }
 
   override async stopMatterStorage(): Promise<void> {
