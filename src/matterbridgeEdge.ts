@@ -481,6 +481,8 @@ export class MatterbridgeEdge extends Matterbridge {
     });
     this.log.notice(`Adding lightEndpoint1 to ${await this.matterbridgeContext.get<string>('storeId')} aggregator`);
     await aggregatorNode?.add(lightEndpoint1);
+
+    lightEndpoint1.events.identify.startIdentifying.on(() => this.log.notice('Light.identify logic, ideally blink a light every 0.5s ...'));
     setInterval(async () => {
       console.log('lightendpoint1', lightEndpoint1);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

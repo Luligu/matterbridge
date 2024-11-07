@@ -275,7 +275,6 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === RelativeHumidityMeasurement.Cluster.id) return RelativeHumidityMeasurementServer;
     if (clusterId === PressureMeasurement.Cluster.id) return PressureMeasurementServer.with(PressureMeasurement.Feature.Extended);
     if (clusterId === FlowMeasurement.Cluster.id) return FlowMeasurementServer;
-
     if (clusterId === BooleanState.Cluster.id) return BooleanStateServer;
     if (clusterId === BooleanStateConfiguration.Cluster.id) return BooleanStateConfigurationServer;
     if (clusterId === OccupancySensing.Cluster.id) return OccupancySensingServer;
@@ -450,10 +449,6 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * From here copy paste from MatterbridgeDevice
-   */
-
-  /**
    * Retrieves a child endpoint by its name.
    *
    * @param {string} endpointName - The name of the endpoint to retrieve.
@@ -464,6 +459,16 @@ export class MatterbridgeEndpoint extends Endpoint {
     return this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName);
   }
   */
+
+  private capitalizeFirstLetter(name: string): string {
+    if (!name) return name;
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  }
+
+  private lowercaseFirstLetter(name: string): string {
+    if (!name) return name;
+    return name.charAt(0).toLowerCase() + name.slice(1);
+  }
 
   /**
    * Retrieves the value of the specified attribute from the given endpoint and cluster.
@@ -478,33 +483,24 @@ export class MatterbridgeEndpoint extends Endpoint {
   getAttribute(clusterId: ClusterId, attribute: string, log?: AnsiLogger, endpoint?: Endpoint): any {
     if (!endpoint) endpoint = this as Endpoint;
 
-    const clusterName = getClusterNameById(clusterId);
-    endpoint.behaviors.has(MatterbridgeEndpoint.getBehaviourTypeFromClusterServerId(clusterId));
-    // const value = endpoint.state[clusterName][attribute];
-    return undefined;
-    /*
-    const clusterServer = endpoint.getClusterServerById(clusterId);
-    if (!clusterServer) {
-      log?.error(`getAttribute error: Cluster ${clusterId} not found on endpoint ${endpoint.name}:${endpoint.number}`);
-      return undefined;
-    }
-    const capitalizedAttributeName = attribute.charAt(0).toUpperCase() + attribute.slice(1);
-    if (!clusterServer.isAttributeSupportedByName(attribute) && !clusterServer.isAttributeSupportedByName(capitalizedAttributeName)) {
-      if (log) log.error(`getAttribute error: Attribute ${attribute} not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
-      return undefined;
-    }
-    // Find the getter method
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (!(clusterServer as any)[`get${capitalizedAttributeName}Attribute`]) {
-      log?.error(`getAttribute error: Getter get${capitalizedAttributeName}Attribute not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+    const state = endpoint.state as Record<string, Record<string, any>>;
+
+    const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
+    if (!(clusterName in state)) {
+      log?.error(`getAttribute error: Cluster ${clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${endpoint.id}:${endpoint.number}`);
       return undefined;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type
-    const getter = (clusterServer as any)[`get${capitalizedAttributeName}Attribute`] as () => {};
-    const value = getter();
-    log?.info(`${db}Get endpoint ${or}${endpoint.name}:${endpoint.number}${db} attribute ${hk}${clusterServer.name}.${capitalizedAttributeName}${db} value ${YELLOW}${typeof value === 'object' ? debugStringify(value) : value}${db}`);
+    attribute = this.lowercaseFirstLetter(attribute);
+    if (!(attribute in state[clusterName])) {
+      log?.error(`getAttribute error: Attribute ${attribute} not found on Cluster ${clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${endpoint.id}:${endpoint.number}`);
+      return undefined;
+    }
+    const value = state[clusterName][attribute];
+    log?.info(
+      `${db}Get endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${this.capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db} value ${YELLOW}${typeof value === 'object' ? debugStringify(value) : value}${db}`,
+    );
     return value;
-    */
   }
 
   /**
@@ -517,51 +513,29 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {Endpoint} [endpoint] - (Optional) The endpoint to set the attribute on. If not provided, the attribute will be set on the current endpoint.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setAttribute(clusterId: ClusterId, attribute: string, value: any, log?: AnsiLogger, endpoint?: Endpoint): boolean {
+  async setAttribute(clusterId: ClusterId, attribute: string, value: any, log?: AnsiLogger, endpoint?: Endpoint): Promise<boolean> {
     if (!endpoint) endpoint = this as Endpoint;
 
-    const clusterName = getClusterNameById(clusterId);
-    endpoint.set({ [clusterName]: { [attribute]: value } });
-    log?.info(
-      `${db}Set endpoint ${or}${endpoint.id}:${endpoint.number}${db} attribute ${hk}${clusterName}.${attribute}${db} ` +
-        // `from ${YELLOW}${typeof oldValue === 'object' ? debugStringify(oldValue) : oldValue}${db} ` +
-        `to ${YELLOW}${typeof value === 'object' ? debugStringify(value) : value}${db}`,
-    );
-    /*
-    const clusterServer = endpoint.getClusterServerById(clusterId);
-    if (!clusterServer) {
-      log?.error(`setAttribute error: Cluster ${clusterId} not found on endpoint ${endpoint.name}:${endpoint.number}`);
-      return false;
-    }
-    const capitalizedAttributeName = attribute.charAt(0).toUpperCase() + attribute.slice(1);
-    if (!clusterServer.isAttributeSupportedByName(attribute) && !clusterServer.isAttributeSupportedByName(capitalizedAttributeName)) {
-      if (log) log.error(`setAttribute error: Attribute ${attribute} not found on Cluster ${clusterId} on endpoint ${endpoint.name}:${endpoint.number}`);
-      return false;
-    }
-    // Find the getter method
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (!(clusterServer as any)[`get${capitalizedAttributeName}Attribute`]) {
-      log?.error(`setAttribute error: Getter get${capitalizedAttributeName}Attribute not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+    const state = endpoint.state as Record<string, Record<string, any>>;
+
+    const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
+    if (!(clusterName in state)) {
+      log?.error(`setAttribute error: Cluster ${clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${endpoint.id}:${endpoint.number}`);
       return false;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type
-    const getter = (clusterServer as any)[`get${capitalizedAttributeName}Attribute`] as () => {};
-    // Find the setter method
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (!(clusterServer as any)[`set${capitalizedAttributeName}Attribute`]) {
-      log?.error(`setAttribute error: Setter set${capitalizedAttributeName}Attribute not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+    attribute = this.lowercaseFirstLetter(attribute);
+    if (!(attribute in state[clusterName])) {
+      log?.error(`setAttribute error: Attribute ${attribute} not found on Cluster ${clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${endpoint.id}:${endpoint.number}`);
       return false;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type
-    const setter = (clusterServer as any)[`set${capitalizedAttributeName}Attribute`] as (value: any) => {};
-    const oldValue = getter();
-    setter(value);
+    const oldValue = state[clusterName][attribute];
+    await endpoint.set({ [clusterName]: { [attribute]: value } });
     log?.info(
-      `${db}Set endpoint ${or}${endpoint.name}:${endpoint.number}${db} attribute ${hk}${clusterServer.name}.${capitalizedAttributeName}${db} ` +
+      `${db}Set endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${this.capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db} ` +
         `from ${YELLOW}${typeof oldValue === 'object' ? debugStringify(oldValue) : oldValue}${db} ` +
         `to ${YELLOW}${typeof value === 'object' ? debugStringify(value) : value}${db}`,
     );
-    */
     return true;
   }
 
@@ -576,34 +550,27 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns A boolean indicating whether the subscription was successful.
    */
 
-  /*
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   subscribeAttribute(clusterId: ClusterId, attribute: string, listener: (newValue: any, oldValue: any) => void, log?: AnsiLogger, endpoint?: Endpoint): boolean {
     if (!endpoint) endpoint = this as Endpoint;
 
-    const clusterServer = endpoint.getClusterServerById(clusterId);
-    if (!clusterServer) {
-      log?.error(`subscribeAttribute error: Cluster ${clusterId} not found on endpoint ${endpoint.name}:${endpoint.number}`);
-      return false;
-    }
-    const capitalizedAttributeName = attribute.charAt(0).toUpperCase() + attribute.slice(1);
-    if (!clusterServer.isAttributeSupportedByName(attribute) && !clusterServer.isAttributeSupportedByName(capitalizedAttributeName)) {
-      if (log) log.error(`subscribeAttribute error: Attribute ${attribute} not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
-      return false;
-    }
-    // Find the subscribe method
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (!(clusterServer as any)[`subscribe${capitalizedAttributeName}Attribute`]) {
-      log?.error(`subscribeAttribute error: subscribe${capitalizedAttributeName}Attribute not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+    const events = endpoint.events as Record<string, Record<string, any>>;
+
+    const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
+    if (!(clusterName in events)) {
+      log?.error(`subscribeAttribute error: Cluster ${clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${endpoint.id}:${endpoint.number}`);
       return false;
     }
-    // Subscribe to the attribute
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type
-    const subscribe = (clusterServer as any)[`subscribe${capitalizedAttributeName}Attribute`] as (listener: (newValue: any, oldValue: any) => void) => {};
-    subscribe(listener);
-    log?.info(`${db}Subscribe endpoint ${or}${endpoint.name}:${endpoint.number}${db} attribute ${hk}${clusterServer.name}.${capitalizedAttributeName}${db}`);
+    attribute = this.lowercaseFirstLetter(attribute) + '$Changed';
+    if (!(attribute in events[clusterName])) {
+      log?.error(`subscribeAttribute error: Attribute ${attribute} not found on Cluster ${clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${endpoint.id}:${endpoint.number}`);
+      return false;
+    }
+    events[clusterName][attribute].on(listener);
+    log?.info(`${db}Subscribe endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${this.capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db}`);
     return true;
   }
-  */
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   addCommandHandler(clusterId: ClusterId, command: string, handler: (data: any) => void): boolean {
@@ -696,6 +663,10 @@ export class MatterbridgeEndpoint extends Endpoint {
     return device;
   }
   */
+
+  /**
+   * From here copy paste from MatterbridgeDevice
+   */
 
   /**
    * Get a default IdentifyCluster server.

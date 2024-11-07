@@ -24,6 +24,7 @@ Feel free to join (the link is now permanent)!
 
 ### Added
 
+- [nginx]: Added the route /matterbridge/ to be used with nginx proxy server https://github.com/Luligu/matterbridge/blob/main/README-NGINX.md.
 - [config]: Config and schema are loaded before loading the plugin to allow to configure the plugin even when it throws error on load.
 - [config]: Added version to the config.
 
