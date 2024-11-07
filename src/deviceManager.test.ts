@@ -4,9 +4,6 @@
 process.argv = ['node', 'matterbridge.test.js', '-logger', 'info', '-matterlogger', 'info', '-bridge', '-frontend', '0', '-profile', 'Jest'];
 
 import { jest } from '@jest/globals';
-
-jest.mock('@project-chip/matter-node.js/util');
-
 import { AnsiLogger, BLUE, db, er, LogLevel, nf, nt, pl, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
