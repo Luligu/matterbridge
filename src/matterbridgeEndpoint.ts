@@ -27,7 +27,7 @@
 import { createHash } from 'crypto';
 
 // AnsiLogger module
-import { AnsiLogger, TimestampFormat, YELLOW, db, debugStringify, er, hk, or, rs, zb } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, TimestampFormat, YELLOW, db, debugStringify, er, hk, or, rs, zb } from 'node-ansi-logger';
 
 // @matter
 import { Endpoint, MutableEndpoint, EndpointType, Behavior, SupportedBehaviors, NamedHandler } from '@matter/main';
@@ -213,32 +213,42 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {DeviceTypeDefinition} definition - The definition of the device.
    * @param {EndpointOptions} [options={}] - The options for the device.
    */
-  constructor(definition: DeviceTypeDefinition, options: EndpointOptions = {}) {
+  constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}) {
+    let firstDefinition: DeviceTypeDefinition;
+    if (Array.isArray(definition)) firstDefinition = definition[0];
+    else firstDefinition = definition;
+
     // Convert the DeviceTypeDefinition to a EndpointType.Options
     const deviceTypeDefinitionV8: EndpointType.Options = {
-      name: definition.name.replace('-', '_'),
-      deviceType: definition.code,
-      deviceRevision: definition.revision,
-      deviceClass: definition.deviceClass.toLowerCase() as unknown as DeviceClassification,
+      name: firstDefinition.name.replace('-', '_'),
+      deviceType: firstDefinition.code,
+      deviceRevision: firstDefinition.revision,
+      deviceClass: firstDefinition.deviceClass.toLowerCase() as unknown as DeviceClassification,
       requirements: {
         server: {
-          mandatory: SupportedBehaviors(...MatterbridgeEndpoint.getBehaviourTypesFromClusterServerIds(definition.requiredServerClusters)),
-          optional: SupportedBehaviors(...MatterbridgeEndpoint.getBehaviourTypesFromClusterServerIds(definition.optionalServerClusters)),
+          mandatory: SupportedBehaviors(...MatterbridgeEndpoint.getBehaviourTypesFromClusterServerIds(firstDefinition.requiredServerClusters)),
+          optional: SupportedBehaviors(...MatterbridgeEndpoint.getBehaviourTypesFromClusterServerIds(firstDefinition.optionalServerClusters)),
         },
         client: {
-          mandatory: SupportedBehaviors(...MatterbridgeEndpoint.getBehaviourTypesFromClusterClientIds(definition.requiredClientClusters)),
-          optional: SupportedBehaviors(...MatterbridgeEndpoint.getBehaviourTypesFromClusterClientIds(definition.optionalClientClusters)),
+          mandatory: SupportedBehaviors(...MatterbridgeEndpoint.getBehaviourTypesFromClusterClientIds(firstDefinition.requiredClientClusters)),
+          optional: SupportedBehaviors(...MatterbridgeEndpoint.getBehaviourTypesFromClusterClientIds(firstDefinition.optionalClientClusters)),
         },
       },
-      behaviors: SupportedBehaviors(...MatterbridgeEndpoint.getBehaviourTypesFromClusterServerIds(definition.requiredServerClusters)),
+      behaviors: SupportedBehaviors(...MatterbridgeEndpoint.getBehaviourTypesFromClusterServerIds(firstDefinition.requiredServerClusters)),
     };
     const endpointV8 = MutableEndpoint(deviceTypeDefinitionV8);
     const optionsV8: Endpoint.Options = {
       id: options.uniqueStorageKey,
     };
     super(endpointV8, optionsV8);
-    this.log = new AnsiLogger({ logName: 'MatterbridgeDevice', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: true });
-    this.deviceTypes.set(definition.code, definition);
+    this.log = new AnsiLogger({ logName: 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: true });
+    this.deviceTypes.set(firstDefinition.code, firstDefinition);
+    // Add the other device types to the descriptor server
+    if (Array.isArray(definition)) {
+      definition.forEach((deviceType) => {
+        this.addDeviceType(deviceType);
+      });
+    }
   }
 
   static getBehaviourTypesFromClusterServerIds(clusterServerList: ClusterId[]) {
@@ -290,7 +300,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {DeviceTypeDefinition} definition - The DeviceTypeDefinition of the device.
    * @returns MatterbridgeDevice instance.
    */
-  static async loadInstance(definition: DeviceTypeDefinition, options: EndpointOptions = {}) {
+  static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}) {
     return new MatterbridgeEndpoint(definition, options);
   }
 
@@ -350,12 +360,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {Endpoint} - The child endpoint that was found or added.
    */
   addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]) {
-    /*
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
-    let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName);
+    let child = this.getChildEndpointByName(endpointName);
     if (!child) {
-      child = new Endpoint(deviceTypes, { uniqueStorageKey: endpointName });
-      child.addFixedLabel('endpointName', endpointName);
+      child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName });
     }
     deviceTypes.forEach((deviceType) => {
       this.log.debug(`- with deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
@@ -367,9 +375,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       this.log.debug(`- with cluster: ${hk}${clusterId}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
     });
     this.addClusterServerFromList(child, includeServerList);
-    this.addChildEndpoint(child);
+    this.add(child);
     return child;
-    */
   }
 
   getClusterServer<const T extends ClusterType>(cluster: T): ClusterServerObj<T> | undefined {
@@ -454,11 +461,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} endpointName - The name of the endpoint to retrieve.
    * @returns {Endpoint | undefined} The child endpoint with the specified name, or undefined if not found.
    */
-  /*
-  getChildEndpointByName(endpointName: string): Endpoint | undefined {
-    return this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName);
+  getChildEndpointByName(endpointName: string): MatterbridgeEndpoint | undefined {
+    return this.parts.find((part) => part.id === endpointName) as MatterbridgeEndpoint | undefined;
   }
-  */
 
   private capitalizeFirstLetter(name: string): string {
     if (!name) return name;
