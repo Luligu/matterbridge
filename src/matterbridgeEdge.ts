@@ -49,7 +49,7 @@ import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors';
 
 // @project-chip
 import { CommissioningServer, MatterServer, NodeOptions } from '@project-chip/matter.js';
-import { Aggregator, Device } from '@project-chip/matter.js/device';
+import { Aggregator, Device, DeviceTypes } from '@project-chip/matter.js/device';
 
 const verbose = hasParameter('verbose');
 
@@ -115,8 +115,10 @@ export class MatterbridgeEdge extends Matterbridge {
     this.log.info(`Matter node storage service created: ${this.matterStorageService.location}`);
 
     this.storageManager = await this.matterStorageService.open('Matterbridge');
-    this.matterbridgeContext = this.storageManager.createContext('persist');
     this.log.info('Matter node storage manager "Matterbridge" created');
+
+    // this.matterbridgeContext = this.storageManager.createContext('persist');
+    this.matterbridgeContext = await this.createServerNodeContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
 
     this.log.info('Matter node storage started');
   }
@@ -190,7 +192,7 @@ export class MatterbridgeEdge extends Matterbridge {
   async createServerNodeContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string, serialNumber?: string): Promise<StorageContext> {
     if (!this.matterStorageService) throw new Error('No storage service initialized');
 
-    this.log.notice(`Creating server node storage context "${pluginName}.persist" for ${pluginName}...`);
+    this.log.info(`Creating server node storage context "${pluginName}.persist" for ${pluginName}...`);
     const storageManager = await this.matterStorageService.open(pluginName);
     const storageContext = storageManager.createContext('persist');
     const random = randomBytes(8).toString('hex');
@@ -211,6 +213,7 @@ export class MatterbridgeEdge extends Matterbridge {
     await storageContext.set('hardwareVersionString', this.systemInformation.osRelease !== '' ? this.systemInformation.osRelease : '1.0.0');
 
     this.log.debug(`Created server node storage context "${pluginName}.persist" for ${pluginName}:`);
+    this.log.debug(`- storeId: ${await storageContext.get('storeId')}`);
     this.log.debug(`- deviceName: ${await storageContext.get('deviceName')}`);
     this.log.debug(`- deviceType: ${await storageContext.get('deviceType')}(0x${(await storageContext.get('deviceType'))?.toString(16).padStart(4, '0')})`);
     this.log.debug(`- serialNumber: ${await storageContext.get('serialNumber')}`);
@@ -221,9 +224,11 @@ export class MatterbridgeEdge extends Matterbridge {
   }
 
   async createServerNode(storageContext: StorageContext, port = 5540, passcode = 20242025, discriminator = 3850) {
-    this.log.notice(`Creating server node for ${await storageContext.get<string>('storeId')} with:`);
-    this.log.debug(`- deviceName: ${await storageContext.get('deviceName')} deviceType: ${await storageContext.get('deviceType')}(0x${(await storageContext.get('deviceType'))?.toString(16).padStart(4, '0')})`);
-    this.log.debug(`- serialNumber: ${await storageContext.get('serialNumber')} uniqueId: ${await storageContext.get('uniqueId')}`);
+    this.log.info(`Creating server node for ${await storageContext.get<string>('storeId')}...`);
+    this.log.debug(`- deviceName: ${await storageContext.get('deviceName')}`);
+    this.log.debug(`- deviceType: ${await storageContext.get('deviceType')}(0x${(await storageContext.get('deviceType'))?.toString(16).padStart(4, '0')})`);
+    this.log.debug(`- serialNumber: ${await storageContext.get('serialNumber')}`);
+    this.log.debug(`- uniqueId: ${await storageContext.get('uniqueId')}`);
     this.log.debug(`- softwareVersion: ${await storageContext.get('softwareVersion')} softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
     this.log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')} hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
 
@@ -329,6 +334,7 @@ export class MatterbridgeEdge extends Matterbridge {
       this.log.notice('Status of all sessions', serverNode.state.sessions.sessions);
     });
 
+    this.log.info(`Created server node for ${await storageContext.get<string>('storeId')}`);
     return serverNode;
   }
 
@@ -484,12 +490,12 @@ export class MatterbridgeEdge extends Matterbridge {
 
     lightEndpoint1.events.identify.startIdentifying.on(() => this.log.notice('Light.identify logic, ideally blink a light every 0.5s ...'));
     setInterval(async () => {
-      console.log('lightendpoint1', lightEndpoint1);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      console.log('lightendpoint1 behaviors', (lightEndpoint1.behaviors.supported['onOff'] as any).cluster);
-      lightEndpoint1.act(async (agent) => {
-        console.log('lightendpoint1 state', agent['onOff'].state);
-      });
+      // console.log('lightendpoint1', lightEndpoint1);
+
+      // console.log('lightendpoint1 behaviors', (lightEndpoint1.behaviors.supported['onOff'] as any).cluster);
+      // lightEndpoint1.act(async (agent) => {
+      // console.log('lightendpoint1 state', agent['onOff'].state);
+      // });
       const state = lightEndpoint1.state['onOff']['onOff'];
       this.log.notice('Setting state from:', state);
       lightEndpoint1.set({ ['onOff']: { ['onOff']: !state } });
