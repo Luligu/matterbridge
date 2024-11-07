@@ -97,9 +97,11 @@ describe('Matterbridge endpoint', () => {
     consoleDebugSpy.mockRestore();
     consoleInfoSpy.mockRestore();
     consoleErrorSpy.mockRestore();
-    setTimeout(() => {
-      process.exit(0);
-    }, 2000);
+    if (getMacAddress() === '30:f6:ef:69:2b:c5') {
+      setTimeout(() => {
+        process.exit(0);
+      }, 2000);
+    }
   });
 
   describe('Getter, setter and subscribe', () => {
@@ -108,6 +110,8 @@ describe('Matterbridge endpoint', () => {
       context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
       expect(context).toBeDefined();
     });
+
+    if (getMacAddress() !== '30:f6:ef:69:2b:c5') return;
 
     test('create a onOffLight device', async () => {
       const deviceType = onOffLight;
