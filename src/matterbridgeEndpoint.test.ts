@@ -172,8 +172,6 @@ describe('Matterbridge endpoint', () => {
     });
   });
 
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /*
   describe('Server node with aggregator', () => {
     test('create a context for server node', async () => {
       const deviceType = bridge;
@@ -343,5 +341,4 @@ describe('Matterbridge endpoint', () => {
       expect(server.lifecycle.isOnline).toBe(false);
     });
   });
-  */
 });
