@@ -110,7 +110,7 @@ import {
   WindowCoveringCluster,
 } from '@matter/main/clusters';
 import { Specification } from '@matter/main/model';
-import { ClusterId, EndpointNumber, extendPublicHandlerMethods, VendorId, AtLeastOne } from '@matter/main';
+import { ClusterId, EndpointNumber, extendPublicHandlerMethods, VendorId, AtLeastOne, MakeMandatory } from '@matter/main';
 import { MeasurementType, getClusterNameById } from '@matter/main/types';
 
 // @project-chip
@@ -118,12 +118,10 @@ import { Device, DeviceClasses, DeviceTypeDefinition, Endpoint, EndpointOptions 
 import { ClusterServerHandlers, GroupsClusterHandler, ClusterServer } from '@project-chip/matter.js/cluster';
 
 // AnsiLogger module
-import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, TimestampFormat, CYAN, YELLOW, db, hk, or, zb, debugStringify } from 'node-ansi-logger';
 
 // Node.js modules
 import { createHash } from 'crypto';
-
-type MakeMandatory<T> = Exclude<T, undefined>;
 
 interface MatterbridgeDeviceCommands {
   identify: MakeMandatory<ClusterServerHandlers<typeof Identify.Complete>['identify']>;
@@ -1848,7 +1846,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Get a default flow measurement cluster server.
    *
-   * @param measuredValue - The measured value of the temperature.
+   * @param measuredValue - The measured value of the flow in 10 x m/h.
    */
   getDefaultFlowMeasurementClusterServer(measuredValue = 0) {
     return ClusterServer(
@@ -1867,7 +1865,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Creates a default flow measurement cluster server.
    *
-   * @param measuredValue - The measured value of the temperature.
+   * @param measuredValue - The measured value of the of the flow in 10 x m/h.
    */
   createDefaultFlowMeasurementClusterServer(measuredValue = 0) {
     this.addClusterServer(this.getDefaultFlowMeasurementClusterServer(measuredValue));
@@ -1876,7 +1874,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Get a default temperature measurement cluster server.
    *
-   * @param measuredValue - The measured value of the temperature.
+   * @param measuredValue - The measured value of the temperature x 100.
    */
   getDefaultTemperatureMeasurementClusterServer(measuredValue = 0) {
     return ClusterServer(
@@ -1895,7 +1893,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Creates a default temperature measurement cluster server.
    *
-   * @param measuredValue - The measured value of the temperature.
+   * @param measuredValue - The measured value of the temperature x 100.
    */
   createDefaultTemperatureMeasurementClusterServer(measuredValue = 0) {
     this.addClusterServer(this.getDefaultTemperatureMeasurementClusterServer(measuredValue));
@@ -1904,7 +1902,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Get a default RelativeHumidityMeasurementCluster server.
    *
-   * @param measuredValue - The measured value of the relative humidity.
+   * @param measuredValue - The measured value of the relative humidity x 100.
    */
   getDefaultRelativeHumidityMeasurementClusterServer(measuredValue = 0) {
     return ClusterServer(
@@ -1922,7 +1920,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Creates a default RelativeHumidityMeasurementCluster server.
    *
-   * @param measuredValue - The measured value of the relative humidity.
+   * @param measuredValue - The measured value of the relative humidity x 100.
    */
   createDefaultRelativeHumidityMeasurementClusterServer(measuredValue = 0) {
     this.addClusterServer(this.getDefaultRelativeHumidityMeasurementClusterServer(measuredValue));

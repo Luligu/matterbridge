@@ -35,6 +35,7 @@ import { ClusterId, EndpointNumber, VendorId, AtLeastOne, MakeMandatory } from '
 import {
   AirQuality,
   AirQualityCluster,
+  BasicInformation,
   BasicInformationCluster,
   BooleanState,
   BooleanStateCluster,
@@ -140,6 +141,7 @@ import { OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing
 // @project-chip
 import { DeviceTypeDefinition, DeviceTypes, EndpointOptions } from '@project-chip/matter.js/device';
 import { ClusterClientObj, ClusterServer, ClusterServerHandlers, ClusterServerObj, GroupsClusterHandler } from '@project-chip/matter.js/cluster';
+import { BasicInformationServer } from '@matter/main/behaviors';
 
 export interface MatterbridgeEndpointCommands {
   identify: MakeMandatory<ClusterServerHandlers<typeof Identify.Complete>['identify']>;
@@ -208,9 +210,9 @@ export class MatterbridgeEndpoint extends Endpoint {
   private readonly commandHandler = new NamedHandler<MatterbridgeEndpointCommands>();
 
   /**
-   * Represents a MatterbridgeEndpoint device.
+   * Represents a MatterbridgeEndpoint.
    * @constructor
-   * @param {DeviceTypeDefinition} definition - The definition of the device.
+   * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the endpoint.
    * @param {EndpointOptions} [options={}] - The options for the device.
    */
   constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}) {
@@ -218,7 +220,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (Array.isArray(definition)) firstDefinition = definition[0];
     else firstDefinition = definition;
 
-    // Convert the DeviceTypeDefinition to a EndpointType.Options
+    // Convert the first DeviceTypeDefinition to an EndpointType.Options
     const deviceTypeDefinitionV8: EndpointType.Options = {
       name: firstDefinition.name.replace('-', '_'),
       deviceType: firstDefinition.code,
@@ -243,6 +245,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     super(endpointV8, optionsV8);
     this.log = new AnsiLogger({ logName: 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: true });
     this.deviceTypes.set(firstDefinition.code, firstDefinition);
+
     // Add the other device types to the descriptor server
     if (Array.isArray(definition)) {
       definition.forEach((deviceType) => {
@@ -283,13 +286,14 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === FanControl.Cluster.id) return FanControlServer.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step);
     if (clusterId === TemperatureMeasurement.Cluster.id) return TemperatureMeasurementServer;
     if (clusterId === RelativeHumidityMeasurement.Cluster.id) return RelativeHumidityMeasurementServer;
-    if (clusterId === PressureMeasurement.Cluster.id) return PressureMeasurementServer.with(PressureMeasurement.Feature.Extended);
+    if (clusterId === PressureMeasurement.Cluster.id) return PressureMeasurementServer /* .with(PressureMeasurement.Feature.Extended)*/;
     if (clusterId === FlowMeasurement.Cluster.id) return FlowMeasurementServer;
     if (clusterId === BooleanState.Cluster.id) return BooleanStateServer;
     if (clusterId === BooleanStateConfiguration.Cluster.id) return BooleanStateConfigurationServer;
     if (clusterId === OccupancySensing.Cluster.id) return OccupancySensingServer;
     if (clusterId === IlluminanceMeasurement.Cluster.id) return IlluminanceMeasurementServer;
 
+    if (clusterId === BasicInformation.Cluster.id) return BasicInformationServer;
     if (clusterId === BridgedDeviceBasicInformation.Cluster.id) return BridgedDeviceBasicInformationServer;
     return IdentifyServer;
   }
@@ -297,7 +301,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Loads an instance of the MatterbridgeDevice class.
    *
-   * @param {DeviceTypeDefinition} definition - The DeviceTypeDefinition of the device.
+   * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the device.
    * @returns MatterbridgeDevice instance.
    */
   static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}) {
@@ -313,7 +317,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   addDeviceType(deviceType: DeviceTypeDefinition) {
     if (!this.deviceTypes.has(deviceType.code)) {
       // Keep the Matterbridge internal map
-      this.log.debug(`addDeviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
+      this.log.debug(`addDeviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
       this.deviceTypes.set(deviceType.code, deviceType);
       // Add the device types to the descriptor server
       const deviceTypeList = Array.from(this.deviceTypes.values()).map((dt) => ({
@@ -335,13 +339,13 @@ export class MatterbridgeEndpoint extends Endpoint {
   addDeviceTypeWithClusterServer(deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]) {
     this.log.debug('addDeviceTypeWithClusterServer:');
     deviceTypes.forEach((deviceType) => {
-      this.log.debug(`- with deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
+      this.log.debug(`- with deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
       deviceType.requiredServerClusters.forEach((clusterId) => {
         if (!includeServerList.includes(clusterId)) includeServerList.push(clusterId);
       });
     });
     includeServerList.forEach((clusterId) => {
-      this.log.debug(`- with cluster: ${hk}${clusterId}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
+      this.log.debug(`- with cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
     });
     deviceTypes.forEach((deviceType) => {
       this.addDeviceType(deviceType);
@@ -357,7 +361,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} endpointName - The name of the new enpoint to add.
    * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
    * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
-   * @returns {Endpoint} - The child endpoint that was found or added.
+   * @returns {MatterbridgeEndpoint} - The child endpoint that was found or added.
    */
   addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]) {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
@@ -366,17 +370,33 @@ export class MatterbridgeEndpoint extends Endpoint {
       child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName });
     }
     deviceTypes.forEach((deviceType) => {
-      this.log.debug(`- with deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
+      this.log.debug(`- with deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
       deviceType.requiredServerClusters.forEach((clusterId) => {
         if (!includeServerList.includes(clusterId)) includeServerList.push(clusterId);
       });
     });
     includeServerList.forEach((clusterId) => {
-      this.log.debug(`- with cluster: ${hk}${clusterId}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
+      this.log.debug(`- with cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
     });
     this.addClusterServerFromList(child, includeServerList);
-    this.add(child);
+    if (this.lifecycle.isInstalled) {
+      this.log.debug(`- with lifecycle installed`);
+      this.add(child);
+    } else {
+      this.log.debug(`- with lifecycle NOT installed`);
+      this.parts.add(child);
+    }
     return child;
+  }
+
+  /**
+   * Retrieves a child endpoint by its name.
+   *
+   * @param {string} endpointName - The name of the endpoint to retrieve.
+   * @returns {Endpoint | undefined} The child endpoint with the specified name, or undefined if not found.
+   */
+  getChildEndpointByName(endpointName: string): MatterbridgeEndpoint | undefined {
+    return this.parts.find((part) => part.id === endpointName) as MatterbridgeEndpoint | undefined;
   }
 
   getClusterServer<const T extends ClusterType>(cluster: T): ClusterServerObj<T> | undefined {
@@ -401,7 +421,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         options[(attribute as any).name] = (attribute as any).value;
       }
     }
-    this.log.debug(`addClusterServer: ${hk}${cluster.id}${db}-${hk}${getClusterNameById(cluster.id)}${db} with options: ${debugStringify(options)}${rs}`);
+    this.log.debug(`addClusterServer: ${hk}${'0x' + cluster.id.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(cluster.id)}${db} with options: ${debugStringify(options)}${rs}`);
     const behavior = MatterbridgeEndpoint.getBehaviourTypeFromClusterServerId(cluster.id);
     this.behaviors.require(behavior, options);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -455,16 +475,6 @@ export class MatterbridgeEndpoint extends Endpoint {
     // if (includeServerList.includes(DeviceEnergyManagementMode.Cluster.id)) endpoint.addClusterServer(this.getDefaultDeviceEnergyManagementModeClusterServer());
   }
 
-  /**
-   * Retrieves a child endpoint by its name.
-   *
-   * @param {string} endpointName - The name of the endpoint to retrieve.
-   * @returns {Endpoint | undefined} The child endpoint with the specified name, or undefined if not found.
-   */
-  getChildEndpointByName(endpointName: string): MatterbridgeEndpoint | undefined {
-    return this.parts.find((part) => part.id === endpointName) as MatterbridgeEndpoint | undefined;
-  }
-
   private capitalizeFirstLetter(name: string): string {
     if (!name) return name;
     return name.charAt(0).toUpperCase() + name.slice(1);
@@ -493,12 +503,12 @@ export class MatterbridgeEndpoint extends Endpoint {
 
     const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
     if (!(clusterName in state)) {
-      log?.error(`getAttribute error: Cluster ${clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${endpoint.id}:${endpoint.number}`);
+      log?.error(`getAttribute error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${endpoint.id}:${endpoint.number}`);
       return undefined;
     }
     attribute = this.lowercaseFirstLetter(attribute);
     if (!(attribute in state[clusterName])) {
-      log?.error(`getAttribute error: Attribute ${attribute} not found on Cluster ${clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${endpoint.id}:${endpoint.number}`);
+      log?.error(`getAttribute error: Attribute ${attribute} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${endpoint.id}:${endpoint.number}`);
       return undefined;
     }
     const value = state[clusterName][attribute];
@@ -526,12 +536,12 @@ export class MatterbridgeEndpoint extends Endpoint {
 
     const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
     if (!(clusterName in state)) {
-      log?.error(`setAttribute error: Cluster ${clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${endpoint.id}:${endpoint.number}`);
+      log?.error(`setAttribute error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${endpoint.id}:${endpoint.number}`);
       return false;
     }
     attribute = this.lowercaseFirstLetter(attribute);
     if (!(attribute in state[clusterName])) {
-      log?.error(`setAttribute error: Attribute ${attribute} not found on Cluster ${clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${endpoint.id}:${endpoint.number}`);
+      log?.error(`setAttribute error: Attribute ${attribute} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${endpoint.id}:${endpoint.number}`);
       return false;
     }
     const oldValue = state[clusterName][attribute];
@@ -564,12 +574,12 @@ export class MatterbridgeEndpoint extends Endpoint {
 
     const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
     if (!(clusterName in events)) {
-      log?.error(`subscribeAttribute error: Cluster ${clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${endpoint.id}:${endpoint.number}`);
+      log?.error(`subscribeAttribute error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${endpoint.id}:${endpoint.number}`);
       return false;
     }
     attribute = this.lowercaseFirstLetter(attribute) + '$Changed';
     if (!(attribute in events[clusterName])) {
-      log?.error(`subscribeAttribute error: Attribute ${attribute} not found on Cluster ${clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${endpoint.id}:${endpoint.number}`);
+      log?.error(`subscribeAttribute error: Attribute ${attribute} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${endpoint.id}:${endpoint.number}`);
       return false;
     }
     events[clusterName][attribute].on(listener);
@@ -1741,7 +1751,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Get a default flow measurement cluster server.
    *
-   * @param measuredValue - The measured value of the temperature.
+   * @param measuredValue - The measured value of the flow in 10 x m/h.
    */
   getDefaultFlowMeasurementClusterServer(measuredValue = 0) {
     return ClusterServer(
@@ -1760,7 +1770,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default flow measurement cluster server.
    *
-   * @param measuredValue - The measured value of the temperature.
+   * @param measuredValue - The measured value of the flow in 10 x m/h.
    */
   createDefaultFlowMeasurementClusterServer(measuredValue = 0) {
     this.addClusterServer(this.getDefaultFlowMeasurementClusterServer(measuredValue));
@@ -1769,7 +1779,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Get a default temperature measurement cluster server.
    *
-   * @param measuredValue - The measured value of the temperature.
+   * @param measuredValue - The measured value of the temperature x 100.
    */
   getDefaultTemperatureMeasurementClusterServer(measuredValue = 0) {
     return ClusterServer(
@@ -1788,7 +1798,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default temperature measurement cluster server.
    *
-   * @param measuredValue - The measured value of the temperature.
+   * @param measuredValue - The measured value of the temperature x 100.
    */
   createDefaultTemperatureMeasurementClusterServer(measuredValue = 0) {
     this.addClusterServer(this.getDefaultTemperatureMeasurementClusterServer(measuredValue));
@@ -1797,7 +1807,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Get a default RelativeHumidityMeasurementCluster server.
    *
-   * @param measuredValue - The measured value of the relative humidity.
+   * @param measuredValue - The measured value of the relative humidity x 100.
    */
   getDefaultRelativeHumidityMeasurementClusterServer(measuredValue = 0) {
     return ClusterServer(
@@ -1815,7 +1825,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default RelativeHumidityMeasurementCluster server.
    *
-   * @param measuredValue - The measured value of the relative humidity.
+   * @param measuredValue - The measured value of the relative humidity x 100.
    */
   createDefaultRelativeHumidityMeasurementClusterServer(measuredValue = 0) {
     this.addClusterServer(this.getDefaultRelativeHumidityMeasurementClusterServer(measuredValue));

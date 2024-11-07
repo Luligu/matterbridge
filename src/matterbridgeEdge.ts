@@ -60,7 +60,7 @@ export class MatterbridgeEdge extends Matterbridge {
   static override instance: MatterbridgeEdge | undefined;
 
   // Matter environment
-  private environment = Environment.default;
+  public environment = Environment.default;
 
   // Matter storage
   public matterStorageService?: StorageService;

@@ -6,16 +6,28 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { MatterbridgeEdge } from './matterbridgeEdge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { bridge, dimmableLight, onOffLight, onOffOutlet, onOffSwitch } from './matterbridgeDevice.js';
+import { getMacAddress } from './utils/utils.js';
 
 import { DeviceTypeId, VendorId, Environment, ServerNode, Endpoint, EndpointServer, StorageContext } from '@matter/main';
 import { LogFormat as Format, LogLevel as Level } from '@matter/main';
-import { OnOffCluster, PressureMeasurement, RelativeHumidityMeasurement } from '@matter/main/clusters';
+import {
+  BooleanStateCluster,
+  FlowMeasurementCluster,
+  IlluminanceMeasurementCluster,
+  OccupancySensingCluster,
+  OnOffCluster,
+  PressureMeasurement,
+  PressureMeasurementCluster,
+  RelativeHumidityMeasurement,
+  RelativeHumidityMeasurementCluster,
+  TemperatureMeasurementCluster,
+} from '@matter/main/clusters';
 import { AggregatorEndpoint, AggregatorEndpointDefinition } from '@matter/main/endpoints';
 
 import { DeviceTypes, logEndpoint } from '@project-chip/matter.js/device';
-import { getMacAddress } from './utils/utils.js';
+import { MdnsService } from '@matter/main/protocol';
 
-describe('Matterbridge endpoint', () => {
+describe('MatterbridgeEndpoint class', () => {
   let edge: MatterbridgeEdge;
   let context: StorageContext;
   let server: ServerNode<ServerNode.RootEndpoint>;
@@ -33,26 +45,6 @@ describe('Matterbridge endpoint', () => {
     jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
       // console.log(`Mocked log: ${level} - ${message}`, ...parameters);
     });
-    /*
-    jest.spyOn(AnsiLogger.prototype, 'debug').mockImplementation((message: string, ...parameters: any[]) => {
-      // console.log(`Mocked debug: ${message}`, ...parameters);
-    });
-    jest.spyOn(AnsiLogger.prototype, 'info').mockImplementation((message: string, ...parameters: any[]) => {
-      // console.log(`Mocked info: ${message}`, ...parameters);
-    });
-    jest.spyOn(AnsiLogger.prototype, 'notice').mockImplementation((message: string, ...parameters: any[]) => {
-      // console.log(`Mocked notice: ${message}`, ...parameters);
-    });
-    jest.spyOn(AnsiLogger.prototype, 'warn').mockImplementation((message: string, ...parameters: any[]) => {
-      // console.log(`Mocked warn: ${message}`, ...parameters);
-    });
-    jest.spyOn(AnsiLogger.prototype, 'error').mockImplementation((message: string, ...parameters: any[]) => {
-      // console.log(`Mocked error: ${message}`, ...parameters);
-    });
-    jest.spyOn(AnsiLogger.prototype, 'fatal').mockImplementation((message: string, ...parameters: any[]) => {
-      // console.log(`Mocked fatal: ${message}`, ...parameters);
-    });
-    */
     // Spy on and mock console.log
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
       // console.error(args);
@@ -70,17 +62,15 @@ describe('Matterbridge endpoint', () => {
       // console.error(args);
     });
 
-    // Setup matter environment
-    const environment = Environment.default;
-    environment.vars.set('log.level', Level.DEBUG);
-    environment.vars.set('log.format', Format.ANSI);
-    environment.vars.set('path.root', 'matterstorage');
-    environment.vars.set('runtime.signals', false);
-    environment.vars.set('runtime.exitcode', false);
-
     // Create a MatterbridgeEdge instance
     edge = await MatterbridgeEdge.loadInstance(false);
     edge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+    // Setup matter environment
+    edge.environment.vars.set('log.level', Level.DEBUG);
+    edge.environment.vars.set('log.format', Format.ANSI);
+    edge.environment.vars.set('path.root', 'matterstorage');
+    edge.environment.vars.set('runtime.signals', false);
+    edge.environment.vars.set('runtime.exitcode', false);
     await edge.startMatterStorage('test', 'Matterbridge');
   });
 
@@ -91,16 +81,122 @@ describe('Matterbridge endpoint', () => {
 
   afterAll(async () => {
     // Restore the mocked AnsiLogger.log method
-    (AnsiLogger.prototype.log as jest.Mock).mockRestore();
-    consoleLogSpy.mockRestore();
-    consoleDebugSpy.mockRestore();
-    consoleInfoSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
+    if ((AnsiLogger.prototype.log as jest.Mock).mockRestore) (AnsiLogger.prototype.log as jest.Mock).mockRestore();
+    consoleLogSpy?.mockRestore();
+    consoleDebugSpy?.mockRestore();
+    consoleInfoSpy?.mockRestore();
+    consoleErrorSpy?.mockRestore();
+
+    await edge.environment.get(MdnsService)[Symbol.asyncDispose]();
+    edge.environment.close(MdnsService);
     if (getMacAddress() === '30:f6:ef:69:2b:c5') {
       setTimeout(() => {
         process.exit(0);
       }, 2000);
     }
+  });
+
+  describe('onOffLight with child endpoints', () => {
+    const deviceType = onOffLight;
+
+    test('create a context for server node', async () => {
+      /*
+      (AnsiLogger.prototype.log as jest.Mock).mockRestore();
+      consoleLogSpy.mockRestore();
+      consoleDebugSpy.mockRestore();
+      consoleInfoSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
+      */
+      context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      expect(context).toBeDefined();
+    });
+
+    if (getMacAddress() !== '30:f6:ef:69:2b:c5') return;
+
+    test('create the server node', async () => {
+      server = await edge.createServerNode(context);
+      expect(server).toBeDefined();
+    });
+
+    test('create a onOffLight device', async () => {
+      server = await edge.createServerNode(context);
+      device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight with sensors' });
+      expect(device).toBeDefined();
+      expect(device.id).toBe('OnOffLight with sensors');
+      expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
+      expect(device.type.deviceType).toBe(deviceType.code);
+      expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
+      expect(device.type.deviceRevision).toBe(deviceType.revision);
+      expect(device.type.behaviors.identify).toBeDefined();
+      expect(device.type.behaviors.groups).toBeDefined();
+      expect(device.type.behaviors.onOff).toBeDefined();
+      // device.addClusterServer(device.getDefaultBasicInformationClusterServer('Light with sensors', '123456789', 0xfff1, 'Matterbridge', 0x8000, 'Light with sensors'));
+    });
+
+    test('add contact child to onOffLight', async () => {
+      const deviceType = DeviceTypes.CONTACT_SENSOR;
+      const childEndpoint = device.addChildDeviceTypeWithClusterServer('contactChild-1', [deviceType], [BooleanStateCluster.id]);
+      expect(childEndpoint).toBeDefined();
+      childEndpoint.addClusterServer(childEndpoint.getDefaultBooleanStateClusterServer(false));
+      expect(device.getChildEndpointByName('contactChild-1')).toBeDefined();
+    });
+
+    test('add motion child to onOffLight', async () => {
+      const deviceType = DeviceTypes.OCCUPANCY_SENSOR;
+      const childEndpoint = device.addChildDeviceTypeWithClusterServer('occupancyChild-2', [deviceType], [OccupancySensingCluster.id]);
+      expect(childEndpoint).toBeDefined();
+      childEndpoint.addClusterServer(childEndpoint.getDefaultOccupancySensingClusterServer(false));
+      expect(device.getChildEndpointByName('occupancyChild-2')).toBeDefined();
+    });
+
+    test('add illuminance child to onOffLight', async () => {
+      const deviceType = DeviceTypes.LIGHT_SENSOR;
+      const childEndpoint = device.addChildDeviceTypeWithClusterServer('illuminanceChild-3', [deviceType], [IlluminanceMeasurementCluster.id]);
+      expect(childEndpoint).toBeDefined();
+      childEndpoint.addClusterServer(childEndpoint.getDefaultIlluminanceMeasurementClusterServer(200));
+      expect(device.getChildEndpointByName('illuminanceChild-3')).toBeDefined();
+    });
+
+    test('add temperature child to onOffLight', async () => {
+      const deviceType = DeviceTypes.TEMPERATURE_SENSOR;
+      const childEndpoint = device.addChildDeviceTypeWithClusterServer('temperatureChild-4', [deviceType], [TemperatureMeasurementCluster.id]);
+      expect(childEndpoint).toBeDefined();
+      childEndpoint.addClusterServer(childEndpoint.getDefaultTemperatureMeasurementClusterServer(2500));
+      expect(device.getChildEndpointByName('temperatureChild-4')).toBeDefined();
+    });
+
+    test('add humidity child to onOffLight', async () => {
+      const deviceType = DeviceTypes.HUMIDITY_SENSOR;
+      const childEndpoint = device.addChildDeviceTypeWithClusterServer('humidityChild-5', [deviceType], [RelativeHumidityMeasurementCluster.id]);
+      expect(childEndpoint).toBeDefined();
+      childEndpoint.addClusterServer(childEndpoint.getDefaultRelativeHumidityMeasurementClusterServer(8000));
+      expect(device.getChildEndpointByName('humidityChild-5')).toBeDefined();
+    });
+
+    test('add pressure child to onOffLight', async () => {
+      const deviceType = DeviceTypes.PRESSURE_SENSOR;
+      const childEndpoint = device.addChildDeviceTypeWithClusterServer('pressureChild-6', [deviceType], [PressureMeasurementCluster.id]);
+      expect(childEndpoint).toBeDefined();
+      childEndpoint.addClusterServer(childEndpoint.getDefaultPressureMeasurementClusterServer(900));
+      expect(device.getChildEndpointByName('pressureChild-6')).toBeDefined();
+    });
+
+    test('add flow child to onOffLight', async () => {
+      const deviceType = DeviceTypes.FLOW_SENSOR;
+      const childEndpoint = device.addChildDeviceTypeWithClusterServer('flowChild-7', [deviceType], [FlowMeasurementCluster.id]);
+      expect(childEndpoint).toBeDefined();
+      childEndpoint.addClusterServer(childEndpoint.getDefaultFlowMeasurementClusterServer(900));
+      expect(device.getChildEndpointByName('flowChild-7')).toBeDefined();
+    });
+
+    test('add onOffLight device to serverNode', async () => {
+      expect(await server.add(device)).toBeDefined();
+    });
+
+    test('log onOffLight', async () => {
+      expect(device).toBeDefined();
+      logEndpoint(EndpointServer.forEndpoint(device));
+    });
   });
 
   describe('Getter, setter and subscribe', () => {
