@@ -9,7 +9,8 @@ import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
-import { MatterbridgeDevice, powerSource } from './matterbridgeDevice.js';
+import { MatterbridgeDevice } from './matterbridgeDevice.js';
+import { powerSource } from './matterbridgeDeviceTypes.js';
 
 describe('Matterbridge platform', () => {
   let matterbridge: Matterbridge;

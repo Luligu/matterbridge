@@ -8,7 +8,8 @@ import { AnsiLogger, db, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-
 import { Matterbridge } from './matterbridge.js';
 import { wait, waiter } from './utils/utils.js';
 import WebSocket from 'ws';
-import { MatterbridgeDevice, onOffLight, onOffOutlet, onOffSwitch } from './matterbridgeDevice.js';
+import { MatterbridgeDevice } from './matterbridgeDevice.js';
+import { onOffLight, onOffOutlet, onOffSwitch } from './matterbridgeDeviceTypes.js';
 import { Identify } from '@matter/main/clusters';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 
