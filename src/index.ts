@@ -43,11 +43,13 @@ export * from '@project-chip/matter.js/tlv';
 
 // Matterbridge
 export * from './matterbridge.js';
+export * from './matterbridgeTypes.js';
 export * from './matterbridgeDevice.js';
+export * from './matterbridgeEndpoint.js';
+export * from './matterbridgeDeviceTypes.js';
 export * from './matterbridgePlatform.js';
 export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
-export * from './matterbridgeTypes.js';
 
 const cli = '\u001B[32m';
 const er = '\u001B[38;5;9m';

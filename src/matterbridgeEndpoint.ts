@@ -29,6 +29,9 @@ import { createHash } from 'crypto';
 // AnsiLogger module
 import { AnsiLogger, CYAN, TimestampFormat, YELLOW, db, debugStringify, er, hk, or, rs, zb } from 'node-ansi-logger';
 
+// Matterbridge
+import { MatterbridgeBehavior, MatterbridgeBehaviorDevice, MatterbridgeOnOffServer } from './matterbridgeBehaviors.js';
+
 // @matter
 import { Endpoint, MutableEndpoint, EndpointType, Behavior, SupportedBehaviors, NamedHandler } from '@matter/main';
 import { ClusterId, EndpointNumber, VendorId, AtLeastOne, MakeMandatory } from '@matter/main';
@@ -116,7 +119,7 @@ import {
   WindowCoveringCluster,
 } from '@matter/main/clusters';
 import { ClusterType, MeasurementType, getClusterNameById } from '@matter/main/types';
-import { Specification, DeviceClassification } from '@matter/main/model';
+import { Specification, DeviceClassification, any } from '@matter/main/model';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { IdentifyServer } from '@matter/node/behaviors/identify';
 import { GroupsServer } from '@matter/node/behaviors/groups';
@@ -252,6 +255,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         this.addDeviceType(deviceType);
       });
     }
+    this.behaviors.require(MatterbridgeBehavior, { deviceCommand: new MatterbridgeBehaviorDevice(this.log, undefined) });
   }
 
   static getBehaviourTypesFromClusterServerIds(clusterServerList: ClusterId[]) {
@@ -276,7 +280,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     // Map ClusterId to Behavior.Type
     if (clusterId === Identify.Cluster.id) return IdentifyServer;
     if (clusterId === Groups.Cluster.id) return GroupsServer;
-    if (clusterId === OnOff.Cluster.id) return OnOffServer;
+    if (clusterId === OnOff.Cluster.id) return MatterbridgeOnOffServer;
     if (clusterId === LevelControl.Cluster.id) return LevelControlServer;
     if (clusterId === ColorControl.Cluster.id) return ColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.Xy, ColorControl.Feature.ColorTemperature);
     if (clusterId === DoorLock.Cluster.id) return DoorLockServer;
@@ -588,29 +592,8 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  addCommandHandler(clusterId: ClusterId, command: string, handler: (data: any) => void): boolean {
-    const clusterServer = this.getClusterServerById(clusterId);
-    if (!clusterServer) {
-      this.log.error(`addCommandHandler error: Cluster ${clusterId} not found on endpoint ${this.id}:${this.number}`);
-      return false;
-    }
-    if (!clusterServer.isCommandSupportedByName(command)) {
-      this.log.error(`addCommandHandler error: Command ${command} not found on Cluster ${clusterServer.name} on endpoint ${this.id}:${this.number}`);
-      return false;
-    }
-    // Find the command
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const commands = (clusterServer as any).commands as object;
-    for (const [key, value] of Object.entries(commands)) {
-      // console.log(`Key "${key}": ${debugStringify(value)}`);
-      if (key === command) {
-        value.handler = handler;
-        this.log.info(`${db}Command handler added for endpoint ${or}${this.id}:${this.number}${db} ${hk}${clusterServer.name}.${command}${db}`);
-        return true;
-      }
-    }
-    this.log.error(`Command handler not found for endpoint ${or}${this.id}:${this.number}${er} ${hk}${clusterServer.name}.${command}${er}`);
-    return false;
+  addCommandHandler(command: keyof MatterbridgeEndpointCommands, handler: (data: any) => void): void {
+    this.commandHandler.addHandler(command, handler);
   }
 
   /**

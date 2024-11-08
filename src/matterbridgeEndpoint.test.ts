@@ -5,7 +5,7 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { MatterbridgeEdge } from './matterbridgeEdge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { bridge, dimmableLight, onOffLight, onOffOutlet, onOffSwitch } from './matterbridgeDevice.js';
+import { bridge, dimmableLight, onOffLight, onOffOutlet, onOffSwitch } from './matterbridgeDeviceTypes.js';
 import { getMacAddress } from './utils/utils.js';
 
 import { DeviceTypeId, VendorId, Environment, ServerNode, Endpoint, EndpointServer, StorageContext } from '@matter/main';
@@ -87,13 +87,59 @@ describe('MatterbridgeEndpoint class', () => {
     consoleInfoSpy?.mockRestore();
     consoleErrorSpy?.mockRestore();
 
-    await edge.environment.get(MdnsService)[Symbol.asyncDispose]();
+    // await edge.environment.get(MdnsService)[Symbol.asyncDispose]();
     edge.environment.close(MdnsService);
     if (getMacAddress() === '30:f6:ef:69:2b:c5') {
       setTimeout(() => {
         process.exit(0);
-      }, 2000);
+      }, 5000);
     }
+  });
+
+  describe('MatterbridgeBehavior', () => {
+    const deviceType = onOffLight;
+
+    test('create a context for server node', async () => {
+      /*
+      (AnsiLogger.prototype.log as jest.Mock).mockRestore();
+      consoleLogSpy.mockRestore();
+      consoleDebugSpy.mockRestore();
+      consoleInfoSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
+      */
+      context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      expect(context).toBeDefined();
+    });
+
+    if (getMacAddress() !== '30:f6:ef:69:2b:c5') return;
+
+    test('create the server node', async () => {
+      server = await edge.createServerNode(context);
+      expect(server).toBeDefined();
+    });
+
+    test('create a onOffLight device', async () => {
+      server = await edge.createServerNode(context);
+      device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight with MatterbridgeOnOffServer' });
+      expect(device).toBeDefined();
+      expect(device.id).toBe('OnOffLight with MatterbridgeOnOffServer');
+      expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
+      expect(device.type.deviceType).toBe(deviceType.code);
+      expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
+      expect(device.type.deviceRevision).toBe(deviceType.revision);
+      expect(device.type.behaviors.identify).toBeDefined();
+      expect(device.type.behaviors.groups).toBeDefined();
+      expect(device.type.behaviors.onOff).toBeDefined();
+    });
+
+    test('add onOffLight device to serverNode', async () => {
+      expect(await server.add(device)).toBeDefined();
+    });
+
+    test('log onOffLight', async () => {
+      expect(device).toBeDefined();
+      logEndpoint(EndpointServer.forEndpoint(device));
+    });
   });
 
   describe('onOffLight with child endpoints', () => {

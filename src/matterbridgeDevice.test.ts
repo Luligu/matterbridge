@@ -16,7 +16,6 @@ import {
   dimmableLight,
   dimmableSwitch,
   electricalSensor,
-  MatterbridgeDevice,
   onOffLight,
   onOffSwitch,
   powerSource,
@@ -24,8 +23,7 @@ import {
   smokeCoAlarm,
   waterFreezeDetector,
   waterLeakDetector,
-} from './matterbridgeDevice.js';
-// import { EveHistory, EveHistoryCluster, MatterHistory } from 'matter-history';
+} from './matterbridgeDeviceTypes.js';
 
 import {
   BooleanStateConfiguration,
@@ -53,6 +51,7 @@ import { DeviceTypes } from '@project-chip/matter.js/device';
 import { ClusterServerObj, getClusterNameById } from '@project-chip/matter.js/cluster';
 import { waiter } from './utils/utils.js';
 import { Matterbridge } from './matterbridge.js';
+import { MatterbridgeDevice } from './matterbridgeDevice.js';
 
 describe('Matterbridge device serialize/deserialize', () => {
   test('create a basic device with all default clusters', async () => {

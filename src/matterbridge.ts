@@ -2439,7 +2439,7 @@ export class Matterbridge extends EventEmitter {
    * @param fabricInfo - The array of exposed fabric information objects.
    * @returns An array of sanitized exposed fabric information objects.
    */
-  private sanitizeFabricInformations(fabricInfo: ExposedFabricInformation[]) {
+  protected sanitizeFabricInformations(fabricInfo: ExposedFabricInformation[]) {
     return fabricInfo.map((info) => {
       return {
         fabricIndex: info.fabricIndex,
@@ -2459,7 +2459,7 @@ export class Matterbridge extends EventEmitter {
    * @param sessionInfo - The array of session information objects.
    * @returns An array of sanitized session information objects.
    */
-  private sanitizeSessionInformation(sessionInfo: SessionInformation[]) {
+  protected sanitizeSessionInformation(sessionInfo: SessionInformation[]) {
     return sessionInfo
       .filter((session) => session.isPeerActive)
       .map((session) => {
