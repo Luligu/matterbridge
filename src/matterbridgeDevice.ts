@@ -119,6 +119,7 @@ import { AnsiLogger, LogLevel, TimestampFormat, CYAN, YELLOW, db, hk, or, zb, de
 
 // Node.js modules
 import { createHash } from 'crypto';
+import { bridgedNode } from './matterbridgeDeviceTypes.js';
 
 interface MatterbridgeDeviceCommands {
   identify: MakeMandatory<ClusterServerHandlers<typeof Identify.Complete>['identify']>;
@@ -776,6 +777,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     this.serialNumber = serialNumber;
     this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
     if (MatterbridgeDevice.bridgeMode === 'bridge') {
+      this.addDeviceType(bridgedNode);
       this.createDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString);
       return;
     }

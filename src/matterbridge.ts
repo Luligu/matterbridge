@@ -48,6 +48,7 @@ import { logInterfaces, wait, waiter, createZip, copyDirectory, getParameter, ge
 import { BaseRegisteredPlugin, MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // @matter
 import { DeviceTypeId, EndpointNumber, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager } from '@matter/main';
@@ -669,6 +670,7 @@ export class Matterbridge extends EventEmitter {
     if (hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge')) {
       this.bridgeMode = 'bridge';
       MatterbridgeDevice.bridgeMode = 'bridge';
+      MatterbridgeEndpoint.bridgeMode = 'bridge';
       this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
       await this.startBridge();
       return;
@@ -678,6 +680,7 @@ export class Matterbridge extends EventEmitter {
     if (hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge')) {
       this.bridgeMode = 'childbridge';
       MatterbridgeDevice.bridgeMode = 'childbridge';
+      MatterbridgeEndpoint.bridgeMode = 'childbridge';
       this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
       await this.startChildbridge();
       return;
@@ -736,13 +739,13 @@ export class Matterbridge extends EventEmitter {
 
     this.exceptionHandler = async (error: Error) => {
       this.log.fatal('Unhandled Exception detected at:', error.stack || error, rs);
-      await this.cleanup('Unhandled Exception detected, cleaning up...');
+      // await this.cleanup('Unhandled Exception detected, cleaning up...');
     };
     process.on('uncaughtException', this.exceptionHandler);
 
     this.rejectionHandler = async (reason, promise) => {
       this.log.fatal('Unhandled Rejection detected at:', promise, 'reason:', reason instanceof Error ? reason.stack : reason, rs);
-      await this.cleanup('Unhandled Rejection detected, cleaning up...');
+      // await this.cleanup('Unhandled Rejection detected, cleaning up...');
     };
     process.on('unhandledRejection', this.rejectionHandler);
 
@@ -1348,6 +1351,21 @@ export class Matterbridge extends EventEmitter {
       this.hasCleanupStarted = false;
       this.initialized = false;
     }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async addBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void> {
+    // Nothing to do here
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async removeBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void> {
+    // Nothing to do here
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async removeAllBridgedEndpoints(pluginName: string): Promise<void> {
+    // Nothing to do here
   }
 
   /**

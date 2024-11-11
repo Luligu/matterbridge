@@ -30,7 +30,7 @@ import os from 'os';
 import { randomBytes } from 'crypto';
 
 // NodeStorage and AnsiLogger modules
-import { rs, GREEN } from 'node-ansi-logger';
+import { rs, GREEN, debugStringify } from 'node-ansi-logger';
 import { NodeStorage } from 'node-persist-manager';
 
 // Matterbridge
@@ -38,18 +38,22 @@ import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { onOffLight, onOffOutlet } from './matterbridgeDeviceTypes.js';
-import { copyDirectory, getParameter, hasParameter } from './utils/utils.js';
+import { copyDirectory, getParameter, hasParameter, waiter } from './utils/utils.js';
 
 // @matter
-import { DeviceTypeId, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, FabricIndex } from '@matter/main';
+import { DeviceTypeId, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, FabricIndex, Lifecycle, SessionsBehavior } from '@matter/main';
 import { ServerNode, Endpoint as EndpointNode, Environment, StorageService, StorageContext, StorageManager } from '@matter/main';
-import { BasicInformationCluster, OnOffCluster } from '@matter/main/clusters';
+import { BasicInformationCluster, ColorControl, ColorControlCluster, OnOffCluster, LevelControl, Identify } from '@matter/main/clusters';
 import { ExposedFabricInformation, FabricAction } from '@matter/main/protocol';
+import { ColorTemperatureLightDevice, GenericSwitchDevice, OnOffLightDevice } from '@matter/main/devices';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
+import { BridgedDeviceBasicInformationServer, ColorControlServer, IdentifyServer, LevelControlServer, OnOffServer, GroupsServer, SwitchServer } from '@matter/main/behaviors';
 
 // @project-chip
 import { CommissioningServer, MatterServer, NodeOptions } from '@project-chip/matter.js';
 import { Aggregator, Device, DeviceTypes } from '@project-chip/matter.js/device';
+import { MatterbridgeColorControlServer, MatterbridgeIdentifyServer, MatterbridgeLevelControlServer, MatterbridgeOnOffServer } from './matterbridgeBehaviors.js';
+import { SanitizedSessionInformation } from './matterbridgeTypes.js';
 
 const verbose = hasParameter('verbose');
 
@@ -70,6 +74,9 @@ export class MatterbridgeEdge extends Matterbridge {
 
   // Mapping of Aggregator to AggregatorEndpoint
   private agToAggregatorEndpoint = new Map<string, { aggregator: Aggregator; aggregatorNode: EndpointNode<AggregatorEndpoint> }>();
+
+  // Mapping of sessions
+  private activeSessions = new Map<string, SanitizedSessionInformation>();
 
   private constructor() {
     super();
@@ -288,6 +295,17 @@ export class MatterbridgeEdge extends Matterbridge {
       },
     });
 
+    const sanitizeFabrics = (fabrics: Record<FabricIndex, ExposedFabricInformation>) => {
+      // New type of fabric information: Record<FabricIndex, ExposedFabricInformation>
+      const sanitizedFabrics = this.sanitizeFabricInformations(Array.from(Object.values(serverNode.state.commissioning.fabrics)));
+      this.log.info(`Fabrics: ${debugStringify(sanitizedFabrics)}`);
+      if (this.bridgeMode === 'bridge') {
+        this.matterbridgeFabricInformations = sanitizedFabrics;
+        this.matterbridgeSessionInformations = [];
+        this.matterbridgePaired = true;
+      }
+    };
+
     /**
      * This event is triggered when the device is initially commissioned successfully.
      * This means: It is added to the first fabric.
@@ -301,7 +319,7 @@ export class MatterbridgeEdge extends Matterbridge {
     serverNode.lifecycle.online.on(() => {
       this.log.notice(`Server node for ${storeId} is online`);
       if (!serverNode.lifecycle.isCommissioned) {
-        this.log.notice(`${storeId} is not commissioned. Pair to commission ...`);
+        this.log.notice(`Server node for ${storeId} is not commissioned. Pair to commission ...`);
         const { qrPairingCode, manualPairingCode } = serverNode.state.commissioning.pairingCodes;
         if (this.bridgeMode === 'bridge') {
           this.matterbridgeQrPairingCode = qrPairingCode;
@@ -314,27 +332,23 @@ export class MatterbridgeEdge extends Matterbridge {
           this.log.notice(`Manual pairing code: ${manualPairingCode}`);
         }
       } else {
-        this.log.notice(`${storeId} is already commissioned. Waiting for controllers to connect ...`);
-        this.log.debug('Fabrics:', serverNode.state.commissioning.fabrics);
-        this.log.notice('Fabrics:');
-        // New type of fabric information: Record<FabricIndex, ExposedFabricInformation>
-        const fabrics: ExposedFabricInformation[] = [];
-        for (const key in serverNode.state.commissioning.fabrics) {
-          const fabric = serverNode.state.commissioning.fabrics[FabricIndex(Number(key))];
-          fabrics.push(fabric);
-          this.log.notice(`- index ${fabric.fabricIndex} id ${fabric.fabricId} nodeId ${fabric.nodeId} rootVendor ${fabric.rootVendorId} rootNodeId ${fabric.rootNodeId}`);
-        }
-        if (this.bridgeMode === 'bridge') {
-          this.matterbridgeFabricInformations = this.sanitizeFabricInformations(fabrics);
-          this.matterbridgeSessionInformations = [];
-          this.matterbridgePaired = true;
-          this.log.debug('Sanitized fabrics:', this.matterbridgeFabricInformations);
-        }
+        this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
+        sanitizeFabrics(serverNode.state.commissioning.fabrics);
       }
     });
 
     /** This event is triggered when the device went offline. it is not longer discoverable or connectable in the network. */
-    serverNode.lifecycle.offline.on(() => this.log.notice(`Server node for ${storeId} is offline`));
+    serverNode.lifecycle.offline.on(() => {
+      this.log.notice(`Server node for ${storeId} is offline`);
+      if (this.bridgeMode === 'bridge') {
+        this.matterbridgeQrPairingCode = undefined;
+        this.matterbridgeManualPairingCode = undefined;
+        this.matterbridgeFabricInformations = [];
+        this.matterbridgeSessionInformations = [];
+        this.matterbridgePaired = false;
+        this.matterbridgeConnected = false;
+      }
+    });
 
     /**
      * This event is triggered when a fabric is added, removed or updated on the device. Use this if more granular
@@ -353,47 +367,48 @@ export class MatterbridgeEdge extends Matterbridge {
           action = 'updated';
           break;
       }
-      this.log.notice(`Commissioned fabric index ${fabricIndex} ${action} on server node for ${storeId}`, serverNode.state.commissioning.fabrics[fabricIndex]);
+      this.log.notice(`Commissioned fabric index ${fabricIndex} ${action} on server node for ${storeId}: ${debugStringify(serverNode.state.commissioning.fabrics[fabricIndex])}`);
+      sanitizeFabrics(serverNode.state.commissioning.fabrics);
     });
+
+    const sanitizeSessions = (sessions: SessionsBehavior.Session[]) => {
+      const sanitizedSessions = this.sanitizeSessionInformation(
+        sessions.map((session) => ({
+          ...session,
+          secure: session.name.startsWith('secure'),
+        })),
+      );
+      this.log.debug(`Sessions: ${debugStringify(sanitizedSessions)}`);
+      if (this.bridgeMode === 'bridge') {
+        this.matterbridgeSessionInformations = sanitizedSessions;
+      }
+    };
 
     /**
      * This event is triggered when an operative new session was opened by a Controller.
      * It is not triggered for the initial commissioning process, just afterwards for real connections.
      */
-    serverNode.events.sessions.opened.on((session) => this.log.notice(`Session opened on server node for ${storeId}`, session));
+    serverNode.events.sessions.opened.on((session) => {
+      this.log.notice(`Session opened on server node for ${storeId}: ${debugStringify(session)}`);
+      sanitizeSessions(Object.values(serverNode.state.sessions.sessions));
+    });
 
     /**
      * This event is triggered when an operative session is closed by a Controller or because the Device goes offline.
      */
-    serverNode.events.sessions.closed.on((session) => this.log.notice(`Session closed on server node for ${storeId}`, session));
+    serverNode.events.sessions.closed.on((session) => {
+      this.log.notice(`Session closed on server node for ${storeId}: ${debugStringify(session)}`);
+      sanitizeSessions(Object.values(serverNode.state.sessions.sessions));
+    });
 
     /** This event is triggered when a subscription gets added or removed on an operative session. */
     serverNode.events.sessions.subscriptionsChanged.on((session) => {
-      this.log.notice(`Session subscriptions changed on server node for ${storeId}`, session);
-      this.log.notice('Status of all sessions', serverNode.state.sessions.sessions);
+      this.log.notice(`Session subscriptions changed on server node for ${storeId}: ${debugStringify(session)}`);
+      sanitizeSessions(Object.values(serverNode.state.sessions.sessions));
     });
 
     this.log.info(`Created server node for ${storeId}`);
     return serverNode;
-  }
-
-  async showServerNodeQR(matterServerNode: ServerNode, storageContext: StorageContext) {
-    if (!matterServerNode || !storageContext) return;
-    const node = await storageContext.get<string>('storeId');
-    if (!matterServerNode.lifecycle.isCommissioned) {
-      this.log.notice(`${node} is not commissioned. Pair to commission ...`);
-      const { qrPairingCode, manualPairingCode } = matterServerNode.state.commissioning.pairingCodes;
-      // console.log(QrCode.get(qrPairingCode));
-      this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
-      this.log.notice(`Manual pairing code: ${manualPairingCode}`);
-    } else {
-      this.log.notice(`${node} is already commissioned. Waiting for controllers to connect ...`);
-      this.log.notice('Fabrics:', matterServerNode.state.commissioning.fabrics);
-      for (const key in matterServerNode.state.commissioning.fabrics) {
-        const fabric = matterServerNode.state.commissioning.fabrics[FabricIndex(Number(key))];
-        this.log.notice(`- index ${fabric.fabricIndex} id ${fabric.fabricId} nodeId ${fabric.nodeId} rootVendor ${fabric.rootVendorId} rootNodeId ${fabric.rootNodeId}`);
-      }
-    }
   }
 
   async startServerNode(matterServerNode: ServerNode) {
@@ -404,14 +419,35 @@ export class MatterbridgeEdge extends Matterbridge {
 
   async stopServerNode(matterServerNode: ServerNode) {
     if (!matterServerNode) return;
-    this.log.notice(`Stopping ${matterServerNode.id} server node`);
+    this.log.notice(`Closing ${matterServerNode.id} server node`);
     await matterServerNode.close();
   }
 
   async createAggregatorNode(storageContext: StorageContext) {
     this.log.notice(`Creating ${await storageContext.get<string>('storeId')} aggregator `);
-    const aggregator = new EndpointNode(AggregatorEndpoint, { id: `${await storageContext.get<string>('storeId')} aggregator` });
+    const aggregator = new EndpointNode(AggregatorEndpoint, { id: `${await storageContext.get<string>('storeId')}` });
     return aggregator;
+  }
+
+  override async addBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void> {
+    if (this.bridgeMode === 'bridge') {
+      this.log.info(`Adding ${pluginName}:${device.deviceName} to Matterbridge aggregator node`);
+      const aggregatorNode = this.agToAggregatorEndpoint.get('Matterbridge')?.aggregatorNode;
+      await aggregatorNode?.add(device);
+    } else if (this.bridgeMode === 'childbridge') {
+      this.log.info(`Adding ${pluginName}:${device.deviceName} to ${pluginName} aggregator node`);
+      const aggregatorNode = this.agToAggregatorEndpoint.get(pluginName)?.aggregatorNode;
+      await aggregatorNode?.add(device);
+    }
+    // TODO: Implement plugins and devices
+  }
+
+  override async removeBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void> {
+    // TODO: Implement removeBridgedEndpoint
+  }
+
+  override async removeAllBridgedEndpoints(pluginName: string): Promise<void> {
+    // TODO: Implement removeAllBridgedEndpoints
   }
 
   override async createCommissioningServerContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string): Promise<StorageContext> {
@@ -457,7 +493,7 @@ export class MatterbridgeEdge extends Matterbridge {
           await serverNode.add(aggregatorNode);
           if (!this.test) {
             this.test = true;
-            await this.testEndpoints();
+            // await this.testEndpoints();
           }
         }
       },
@@ -483,7 +519,7 @@ export class MatterbridgeEdge extends Matterbridge {
   }
 
   override async showCommissioningQRCode(commissioningServer: CommissioningServer | undefined, storageContext: StorageContext | undefined, nodeContext: NodeStorage | undefined, pluginName: string) {
-    if (hasParameter('debug')) this.log.warn(`showCommissioningQRCode: ${pluginName} => startServerNode`);
+    if (hasParameter('debug')) this.log.warn(`showCommissioningQRCode() for ${pluginName} => startServerNode()`);
     const serverNode = this.csToServerNode.get(pluginName)?.serverNode;
     if (!commissioningServer || !storageContext || !serverNode) return;
     await this.startServerNode(serverNode);
@@ -509,6 +545,129 @@ export class MatterbridgeEdge extends Matterbridge {
     const max = 10;
     if (!this.matterbridgeContext) return;
     const aggregatorNode = this.agToAggregatorEndpoint.get('Matterbridge')?.aggregatorNode;
+
+    this.log.notice(`Creating TestLight`);
+    const matterbridgeDevice = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'Test .Light:2' }, true);
+    matterbridgeDevice.behaviors.require(MatterbridgeIdentifyServer, {
+      identifyTime: 0,
+      identifyType: Identify.IdentifyType.None,
+    });
+    matterbridgeDevice.behaviors.require(GroupsServer);
+    matterbridgeDevice.behaviors.require(MatterbridgeOnOffServer, {
+      onOff: false,
+    });
+    matterbridgeDevice.behaviors.require(MatterbridgeLevelControlServer, {
+      currentLevel: 0,
+      options: { executeIfOff: false },
+    });
+    matterbridgeDevice.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.Xy, ColorControl.Feature.ColorTemperature), {
+      colorCapabilities: { xy: true, hueSaturation: true, colorLoop: false, enhancedHue: false, colorTemperature: true },
+      colorMode: ColorControl.ColorMode.ColorTemperatureMireds,
+      enhancedColorMode: ColorControl.EnhancedColorMode.ColorTemperatureMireds,
+      options: { executeIfOff: false },
+      numberOfPrimaries: null,
+      currentX: 24939,
+      currentY: 24701,
+      currentHue: 0,
+      currentSaturation: 0,
+      colorTemperatureMireds: 450,
+      colorTempPhysicalMinMireds: 150,
+      colorTempPhysicalMaxMireds: 450,
+      coupleColorTempToLevelMinMireds: 150,
+      startUpColorTemperatureMireds: null,
+    });
+    matterbridgeDevice.behaviors.require(BridgedDeviceBasicInformationServer, {
+      vendorId: VendorId(await this.matterbridgeContext.get<number>('vendorId')),
+      vendorName: await this.matterbridgeContext.get<string>('vendorName'),
+      productName: 'TestLight2',
+      productLabel: 'TestLight2',
+      nodeLabel: 'TestLight2',
+      serialNumber: 'SN 0x123456789',
+      uniqueId: '0x123456789',
+      reachable: true,
+    });
+
+    await matterbridgeDevice.configureColorControlCluster(false, false, true, ColorControl.ColorMode.ColorTemperatureMireds);
+
+    this.log.notice(`Adding TestLight`);
+    await aggregatorNode?.add(matterbridgeDevice);
+    /*
+    const lightEndpoint1 = new EndpointNode(ColorTemperatureLightDevice.with(BridgedDeviceBasicInformationServer), {
+      // }, MatterbridgeIdentifyServer, MatterbridgeOnOffServer, MatterbridgeLevelControlServer, MatterbridgeColorControlServer), {
+      id: 'OnOffLight',
+      bridgedDeviceBasicInformation: {
+        vendorId: VendorId(await this.matterbridgeContext.get<number>('vendorId')),
+        vendorName: await this.matterbridgeContext.get<string>('vendorName'),
+
+        productName: 'Light',
+        productLabel: 'Light',
+        nodeLabel: 'Light',
+
+        serialNumber: 'SN 0x123456789',
+        uniqueId: '0x123456789',
+        reachable: true,
+      },
+      levelControl: {
+        currentLevel: 0,
+        options: { executeIfOff: false, coupleColorTempToLevel: false },
+      },
+      colorControl: {
+        colorTemperatureMireds: 450,
+        colorMode: ColorControl.ColorMode.ColorTemperatureMireds,
+        colorTempPhysicalMinMireds: 150,
+        colorTempPhysicalMaxMireds: 450,
+        coupleColorTempToLevelMinMireds: 150,
+        startUpColorTemperatureMireds: 450,
+      },
+    });
+    lightEndpoint1.behaviors.require(ColorControlServer.with('ColorTemperature'), {
+      colorTemperatureMireds: 450,
+      colorMode: ColorControl.ColorMode.ColorTemperatureMireds,
+      colorTempPhysicalMinMireds: 150,
+      colorTempPhysicalMaxMireds: 450,
+      coupleColorTempToLevelMinMireds: 150,
+      startUpColorTemperatureMireds: 450,
+    });
+    await aggregatorNode?.add(lightEndpoint1);
+
+    /*
+    lightEndpoint1.behaviors.require(MatterbridgeIdentifyServer);
+    lightEndpoint1.behaviors.require(MatterbridgeOnOffServer);
+    lightEndpoint1.behaviors.require(MatterbridgeLevelControlServer);
+    lightEndpoint1.behaviors.require(MatterbridgeColorControlServer, {
+      colorTemperatureMireds: 250,
+      colorMode: ColorControl.ColorMode.ColorTemperatureMireds,
+      colorTempPhysicalMinMireds: 150,
+      colorTempPhysicalMaxMireds: 450,
+      coupleColorTempToLevelMinMireds: 150,
+      startUpColorTemperatureMireds: 450,
+    });
+    await aggregatorNode?.add(lightEndpoint1);
+
+    this.log.notice(`Creating switchEnpoint2`);
+    const switchEnpoint2 = new EndpointNode(GenericSwitchDevice.with(BridgedDeviceBasicInformationServer, SwitchServer.with('MomentarySwitch', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress', 'MomentarySwitchRelease')), {
+      id: 'GenericSwitch',
+      bridgedDeviceBasicInformation: {
+        vendorId: VendorId(await this.matterbridgeContext.get<number>('vendorId')),
+        vendorName: await this.matterbridgeContext.get<string>('vendorName'),
+
+        productName: 'GenericSwitch',
+        productLabel: 'GenericSwitch',
+        nodeLabel: 'GenericSwitch',
+
+        serialNumber: 'SN 0x123456739',
+        uniqueId: '0x123456739',
+        reachable: true,
+      },
+      switch: {
+        numberOfPositions: 2,
+        currentPosition: 0,
+        multiPressMax: 2,
+      },
+    });
+    await aggregatorNode?.add(switchEnpoint2);
+    */
+    /*
     for (let i = 1; i <= max; i++) {
       this.log.notice(`Creating lightEndpoint${i}`);
       const lightEndpoint = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight' + i });
@@ -533,10 +692,53 @@ export class MatterbridgeEdge extends Matterbridge {
         this.log.notice(`Setting state for outletEndpoint${i} from:`, state, 'to:', !state);
       }, 10000);
     }
+    */
   }
 }
 
 /*
+    /*
+    matterbridgeDevice.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.Xy, ColorControl.Feature.ColorTemperature), {
+      colorCapabilities: { xy: true, hueSaturation: true, colorLoop: false, enhancedHue: false, colorTemperature: true },
+      colorMode: ColorControl.ColorMode.ColorTemperatureMireds,
+      enhancedColorMode: ColorControl.EnhancedColorMode.ColorTemperatureMireds,
+      options: { executeIfOff: false },
+      numberOfPrimaries: null,
+      currentX: 24939,
+      currentY: 24701,
+      currentHue: 0,
+      currentSaturation: 0,
+      colorTemperatureMireds: 450,
+      colorTempPhysicalMinMireds: 150,
+      colorTempPhysicalMaxMireds: 450,
+      coupleColorTempToLevelMinMireds: 150,
+      startUpColorTemperatureMireds: null,
+    });
+    matterbridgeDevice.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.ColorTemperature), {
+      colorCapabilities: { xy: false, hueSaturation: false, colorLoop: false, enhancedHue: false, colorTemperature: true },
+      colorMode: ColorControl.ColorMode.ColorTemperatureMireds,
+      enhancedColorMode: ColorControl.EnhancedColorMode.ColorTemperatureMireds,
+      options: { executeIfOff: false },
+      numberOfPrimaries: null,
+      colorTemperatureMireds: 450,
+      colorTempPhysicalMinMireds: 150,
+      colorTempPhysicalMaxMireds: 450,
+      coupleColorTempToLevelMinMireds: 150,
+      startUpColorTemperatureMireds: null,
+    });
+    */
+/*
+    matterbridgeDevice.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.Xy), {
+      colorCapabilities: { xy: true, hueSaturation: true, colorLoop: false, enhancedHue: false, colorTemperature: false },
+      colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
+      enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
+      options: { executeIfOff: false },
+      numberOfPrimaries: null,
+      currentX: 24939,
+      currentY: 24701,
+      currentHue: 0,
+      currentSaturation: 0,
+    });
 // node dist/matterbridgeEdge.js MatterbridgeEdge -debug -ssl -frontend 443
 if (process.argv.includes('MatterbridgeEdge')) {
   const matterbridge = await MatterbridgeEdge.loadInstance(true);

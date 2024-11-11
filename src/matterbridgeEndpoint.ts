@@ -27,13 +27,27 @@
 import { createHash } from 'crypto';
 
 // AnsiLogger module
-import { AnsiLogger, CYAN, TimestampFormat, YELLOW, db, debugStringify, er, hk, or, rs, zb } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, er, hk, or, rs, zb } from 'node-ansi-logger';
 
 // Matterbridge
-import { MatterbridgeBehavior, MatterbridgeBehaviorDevice, MatterbridgeOnOffServer } from './matterbridgeBehaviors.js';
+import {
+  MatterbridgeBehavior,
+  MatterbridgeBehaviorDevice,
+  MatterbridgeBooleanStateConfigurationServer,
+  MatterbridgeColorControlServer,
+  MatterbridgeDoorLockServer,
+  MatterbridgeFanControlServer,
+  MatterbridgeIdentifyServer,
+  MatterbridgeLevelControlServer,
+  MatterbridgeOnOffServer,
+  MatterbridgeThermostatServer,
+  MatterbridgeWindowCoveringServer,
+} from './matterbridgeBehaviors.js';
+import { bridgedNode } from './matterbridgeDeviceTypes.js';
+import { deepCopy, isValidNumber, waiter } from './utils/utils.js';
 
 // @matter
-import { Endpoint, MutableEndpoint, EndpointType, Behavior, SupportedBehaviors, NamedHandler } from '@matter/main';
+import { Endpoint, MutableEndpoint, EndpointType, Behavior, SupportedBehaviors, NamedHandler, Lifecycle } from '@matter/main';
 import { ClusterId, EndpointNumber, VendorId, AtLeastOne, MakeMandatory } from '@matter/main';
 import {
   AirQuality,
@@ -119,32 +133,38 @@ import {
   WindowCoveringCluster,
 } from '@matter/main/clusters';
 import { ClusterType, MeasurementType, getClusterNameById } from '@matter/main/types';
-import { Specification, DeviceClassification, any } from '@matter/main/model';
+import { Specification, DeviceClassification } from '@matter/main/model';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
-import { IdentifyServer } from '@matter/node/behaviors/identify';
+import { IdentifyBehavior } from '@matter/node/behaviors/identify';
 import { GroupsServer } from '@matter/node/behaviors/groups';
-import { OnOffServer } from '@matter/node/behaviors/on-off';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
 import { RelativeHumidityMeasurementServer } from '@matter/node/behaviors/relative-humidity-measurement';
 import { PressureMeasurementServer } from '@matter/node/behaviors/pressure-measurement';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
-import { LevelControlServer } from '@matter/node/behaviors/level-control';
-import { ColorControlServer } from '@matter/node/behaviors/color-control';
 import { FlowMeasurementServer } from '@matter/node/behaviors/flow-measurement';
-import { DoorLockServer } from '@matter/node/behaviors/door-lock';
-import { ThermostatServer } from '@matter/node/behaviors/thermostat';
-import { WindowCoveringServer } from '@matter/node/behaviors/window-covering';
-import { FanControlServer } from '@matter/node/behaviors/fan-control';
 import { TimeSynchronizationServer } from '@matter/node/behaviors/time-synchronization';
 import { IlluminanceMeasurementServer } from '@matter/node/behaviors/illuminance-measurement';
 import { BooleanStateServer } from '@matter/node/behaviors/boolean-state';
-import { BooleanStateConfigurationServer } from '@matter/node/behaviors/boolean-state-configuration';
 import { OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
+import {
+  AirQualityServer,
+  BasicInformationServer,
+  CarbonDioxideConcentrationMeasurementServer,
+  CarbonMonoxideConcentrationMeasurementServer,
+  FormaldehydeConcentrationMeasurementServer,
+  NitrogenDioxideConcentrationMeasurementServer,
+  OzoneConcentrationMeasurementServer,
+  Pm10ConcentrationMeasurementServer,
+  Pm1ConcentrationMeasurementServer,
+  Pm25ConcentrationMeasurementServer,
+  RadonConcentrationMeasurementServer,
+  SmokeCoAlarmServer,
+  TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
+} from '@matter/main/behaviors';
 
 // @project-chip
-import { DeviceTypeDefinition, DeviceTypes, EndpointOptions } from '@project-chip/matter.js/device';
+import { DeviceTypeDefinition, EndpointOptions } from '@project-chip/matter.js/device';
 import { ClusterClientObj, ClusterServer, ClusterServerHandlers, ClusterServerObj, GroupsClusterHandler } from '@project-chip/matter.js/cluster';
-import { BasicInformationServer } from '@matter/main/behaviors';
 
 export interface MatterbridgeEndpointCommands {
   identify: MakeMandatory<ClusterServerHandlers<typeof Identify.Complete>['identify']>;
@@ -201,7 +221,11 @@ export interface MatterbridgeEndpointCommands {
 
 export class MatterbridgeEndpoint extends Endpoint {
   public static bridgeMode = '';
+  public static logLevel = LogLevel.INFO;
+  public static deviceCount = 1;
+
   log: AnsiLogger;
+  plugin: string | undefined = undefined;
   serialNumber: string | undefined = undefined;
   deviceName: string | undefined = undefined;
   uniqueId: string | undefined = undefined;
@@ -210,7 +234,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   private readonly deviceTypes = new Map<number, DeviceTypeDefinition>();
   private readonly clusterServers = new Map<ClusterId, ClusterServerObj>();
   private readonly clusterClients = new Map<ClusterId, ClusterClientObj>();
-  private readonly commandHandler = new NamedHandler<MatterbridgeEndpointCommands>();
+  readonly commandHandler = new NamedHandler<MatterbridgeEndpointCommands>();
 
   /**
    * Represents a MatterbridgeEndpoint.
@@ -218,7 +242,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the endpoint.
    * @param {EndpointOptions} [options={}] - The options for the device.
    */
-  constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}) {
+  constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, debug = false) {
     let firstDefinition: DeviceTypeDefinition;
     if (Array.isArray(definition)) firstDefinition = definition[0];
     else firstDefinition = definition;
@@ -239,14 +263,22 @@ export class MatterbridgeEndpoint extends Endpoint {
           optional: SupportedBehaviors(...MatterbridgeEndpoint.getBehaviourTypesFromClusterClientIds(firstDefinition.optionalClientClusters)),
         },
       },
-      behaviors: SupportedBehaviors(...MatterbridgeEndpoint.getBehaviourTypesFromClusterServerIds(firstDefinition.requiredServerClusters)),
+      behaviors: {},
     };
     const endpointV8 = MutableEndpoint(deviceTypeDefinitionV8);
+
+    // Convert the options to an Endpoint.Options
+    const { uniqueStorageKey, ...otherOptions } = options;
     const optionsV8: Endpoint.Options = {
-      id: options.uniqueStorageKey,
+      id: uniqueStorageKey?.replace(/[ :.]/g, ''),
+      ...otherOptions,
     };
+    MatterbridgeEndpoint.deviceCount++;
     super(endpointV8, optionsV8);
-    this.log = new AnsiLogger({ logName: 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logDebug: true });
+
+    // Update the endpoint
+    this.log = new AnsiLogger({ logName: 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
+    this.log.debug(`${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} id: ${CYAN}${this.id}${db}`);
     this.deviceTypes.set(firstDefinition.code, firstDefinition);
 
     // Add the other device types to the descriptor server
@@ -255,7 +287,9 @@ export class MatterbridgeEndpoint extends Endpoint {
         this.addDeviceType(deviceType);
       });
     }
-    this.behaviors.require(MatterbridgeBehavior, { deviceCommand: new MatterbridgeBehaviorDevice(this.log, undefined) });
+
+    // Add our behavior
+    this.behaviors.require(MatterbridgeBehavior, { deviceCommand: new MatterbridgeBehaviorDevice(this.log, this.commandHandler, undefined) });
   }
 
   static getBehaviourTypesFromClusterServerIds(clusterServerList: ClusterId[]) {
@@ -278,28 +312,45 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   static getBehaviourTypeFromClusterServerId(clusterId: ClusterId) {
     // Map ClusterId to Behavior.Type
-    if (clusterId === Identify.Cluster.id) return IdentifyServer;
+    if (clusterId === Identify.Cluster.id) return MatterbridgeIdentifyServer;
     if (clusterId === Groups.Cluster.id) return GroupsServer;
     if (clusterId === OnOff.Cluster.id) return MatterbridgeOnOffServer;
-    if (clusterId === LevelControl.Cluster.id) return LevelControlServer;
-    if (clusterId === ColorControl.Cluster.id) return ColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.Xy, ColorControl.Feature.ColorTemperature);
-    if (clusterId === DoorLock.Cluster.id) return DoorLockServer;
-    if (clusterId === Thermostat.Cluster.id) return ThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode);
+    if (clusterId === LevelControl.Cluster.id) return MatterbridgeLevelControlServer;
+    if (clusterId === ColorControl.Cluster.id) return MatterbridgeColorControlServer;
+    if (clusterId === DoorLock.Cluster.id) return MatterbridgeDoorLockServer;
+    if (clusterId === Thermostat.Cluster.id) return MatterbridgeThermostatServer;
     if (clusterId === TimeSynchronization.Cluster.id) return TimeSynchronizationServer.with(TimeSynchronization.Feature.TimeZone);
-    if (clusterId === WindowCovering.Cluster.id) return WindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift);
-    if (clusterId === FanControl.Cluster.id) return FanControlServer.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step);
+    if (clusterId === WindowCovering.Cluster.id) return MatterbridgeWindowCoveringServer;
+    if (clusterId === FanControl.Cluster.id) return MatterbridgeFanControlServer;
     if (clusterId === TemperatureMeasurement.Cluster.id) return TemperatureMeasurementServer;
     if (clusterId === RelativeHumidityMeasurement.Cluster.id) return RelativeHumidityMeasurementServer;
-    if (clusterId === PressureMeasurement.Cluster.id) return PressureMeasurementServer /* .with(PressureMeasurement.Feature.Extended)*/;
+    if (clusterId === PressureMeasurement.Cluster.id) return PressureMeasurementServer;
     if (clusterId === FlowMeasurement.Cluster.id) return FlowMeasurementServer;
     if (clusterId === BooleanState.Cluster.id) return BooleanStateServer;
-    if (clusterId === BooleanStateConfiguration.Cluster.id) return BooleanStateConfigurationServer;
+    if (clusterId === BooleanStateConfiguration.Cluster.id) return MatterbridgeBooleanStateConfigurationServer;
     if (clusterId === OccupancySensing.Cluster.id) return OccupancySensingServer;
     if (clusterId === IlluminanceMeasurement.Cluster.id) return IlluminanceMeasurementServer;
+    if (clusterId === SmokeCoAlarm.Cluster.id) return SmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm);
+    if (clusterId === AirQuality.Cluster.id) return AirQualityServer.with(AirQuality.Feature.Fair, AirQuality.Feature.Moderate, AirQuality.Feature.VeryPoor, AirQuality.Feature.ExtremelyPoor);
+    if (clusterId === CarbonMonoxideConcentrationMeasurement.Cluster.id) return CarbonMonoxideConcentrationMeasurementServer.with('NumericMeasurement');
+    if (clusterId === CarbonDioxideConcentrationMeasurement.Cluster.id) return CarbonDioxideConcentrationMeasurementServer.with('NumericMeasurement');
+    if (clusterId === NitrogenDioxideConcentrationMeasurement.Cluster.id) return NitrogenDioxideConcentrationMeasurementServer.with('NumericMeasurement');
+    if (clusterId === OzoneConcentrationMeasurement.Cluster.id) return OzoneConcentrationMeasurementServer.with('NumericMeasurement');
+    if (clusterId === FormaldehydeConcentrationMeasurement.Cluster.id) return FormaldehydeConcentrationMeasurementServer.with('NumericMeasurement');
+    if (clusterId === Pm1ConcentrationMeasurement.Cluster.id) return Pm1ConcentrationMeasurementServer.with('NumericMeasurement');
+    if (clusterId === Pm25ConcentrationMeasurement.Cluster.id) return Pm25ConcentrationMeasurementServer.with('NumericMeasurement');
+    if (clusterId === Pm10ConcentrationMeasurement.Cluster.id) return Pm10ConcentrationMeasurementServer.with('NumericMeasurement');
+    if (clusterId === RadonConcentrationMeasurement.Cluster.id) return RadonConcentrationMeasurementServer.with('NumericMeasurement');
+    if (clusterId === TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id) return TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with('NumericMeasurement');
 
     if (clusterId === BasicInformation.Cluster.id) return BasicInformationServer;
     if (clusterId === BridgedDeviceBasicInformation.Cluster.id) return BridgedDeviceBasicInformationServer;
-    return IdentifyServer;
+    return MatterbridgeIdentifyServer;
+  }
+
+  static getBehaviourTypeFromClusterClientId(clusterId: ClusterId) {
+    // Map ClusterId to Behavior.Type
+    return IdentifyBehavior;
   }
 
   /**
@@ -308,8 +359,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the device.
    * @returns MatterbridgeDevice instance.
    */
-  static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}) {
-    return new MatterbridgeEndpoint(definition, options);
+  static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, debug = false) {
+    return new MatterbridgeEndpoint(definition, options, debug);
   }
 
   /**
@@ -358,6 +409,50 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Adds the required cluster servers (only if they are not present) for the device types of the specified endpoint.
+   *
+   * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the required cluster servers to.
+   * @returns {MatterbridgeEndpoint} The updated endpoint with the required cluster servers added.
+   */
+  addRequiredClusterServers(endpoint: MatterbridgeEndpoint): MatterbridgeEndpoint {
+    const requiredServerList: ClusterId[] = [];
+    this.log.debug(`addRequiredClusterServer for ${CYAN}${endpoint.id}${db}`);
+    endpoint.getDeviceTypes().forEach((deviceType) => {
+      this.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
+      deviceType.requiredServerClusters.forEach((clusterId) => {
+        if (!requiredServerList.includes(clusterId) && !endpoint.getClusterServerById(clusterId)) requiredServerList.push(clusterId);
+      });
+    });
+    requiredServerList.forEach((clusterId) => {
+      this.log.debug(`- with cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
+    });
+    this.addClusterServerFromList(endpoint, requiredServerList);
+    return endpoint;
+  }
+
+  /**
+   * Adds the optional cluster servers (only if they are not present) for the device types of the specified endpoint.
+   *
+   * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the required cluster servers to.
+   * @returns {MatterbridgeEndpoint} The updated endpoint with the required cluster servers added.
+   */
+  addOptionalClusterServers(endpoint: MatterbridgeEndpoint): MatterbridgeEndpoint {
+    const optionalServerList: ClusterId[] = [];
+    this.log.debug(`addRequiredClusterServer for ${CYAN}${endpoint.id}${db}`);
+    endpoint.getDeviceTypes().forEach((deviceType) => {
+      this.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
+      deviceType.optionalServerClusters.forEach((clusterId) => {
+        if (!optionalServerList.includes(clusterId) && !endpoint.getClusterServerById(clusterId)) optionalServerList.push(clusterId);
+      });
+    });
+    optionalServerList.forEach((clusterId) => {
+      this.log.debug(`- with cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
+    });
+    this.addClusterServerFromList(endpoint, optionalServerList);
+    return endpoint;
+  }
+
+  /**
    * Adds a child endpoint with one or more device types with the required cluster servers and the specified cluster servers.
    * If the child endpoint is not already present in the childEndpoints, it will be added.
    * If the child endpoint is already present in the childEndpoints, the device types and cluster servers will be added to the existing child endpoint.
@@ -403,6 +498,10 @@ export class MatterbridgeEndpoint extends Endpoint {
     return this.parts.find((part) => part.id === endpointName) as MatterbridgeEndpoint | undefined;
   }
 
+  getDeviceTypes(): DeviceTypeDefinition[] {
+    return Array.from(this.deviceTypes.values());
+  }
+
   getClusterServer<const T extends ClusterType>(cluster: T): ClusterServerObj<T> | undefined {
     const clusterServer = this.clusterServers.get(cluster.id);
     if (clusterServer !== undefined) {
@@ -444,7 +543,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (includeServerList.includes(Groups.Cluster.id)) endpoint.addClusterServer(this.getDefaultGroupsClusterServer());
     if (includeServerList.includes(OnOff.Cluster.id)) endpoint.addClusterServer(this.getDefaultOnOffClusterServer());
     if (includeServerList.includes(LevelControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultLevelControlClusterServer());
-    if (includeServerList.includes(ColorControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultCompleteColorControlClusterServer());
+    if (includeServerList.includes(ColorControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultColorControlClusterServer());
     if (includeServerList.includes(Switch.Cluster.id)) endpoint.addClusterServer(this.getDefaultSwitchClusterServer());
     if (includeServerList.includes(DoorLock.Cluster.id)) endpoint.addClusterServer(this.getDefaultDoorLockClusterServer());
     if (includeServerList.includes(Thermostat.Cluster.id)) endpoint.addClusterServer(this.getDefaultThermostatClusterServer());
@@ -501,18 +600,23 @@ export class MatterbridgeEndpoint extends Endpoint {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getAttribute(clusterId: ClusterId, attribute: string, log?: AnsiLogger, endpoint?: Endpoint): any {
     if (!endpoint) endpoint = this as Endpoint;
+    const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
+
+    if (endpoint.construction.status !== Lifecycle.Status.Active) {
+      log?.error(`getAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+      return undefined;
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const state = endpoint.state as Record<string, Record<string, any>>;
 
-    const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
     if (!(clusterName in state)) {
-      log?.error(`getAttribute error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${endpoint.id}:${endpoint.number}`);
+      log?.error(`getAttribute error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return undefined;
     }
     attribute = this.lowercaseFirstLetter(attribute);
     if (!(attribute in state[clusterName])) {
-      log?.error(`getAttribute error: Attribute ${attribute} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${endpoint.id}:${endpoint.number}`);
+      log?.error(`getAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return undefined;
     }
     const value = state[clusterName][attribute];
@@ -534,22 +638,29 @@ export class MatterbridgeEndpoint extends Endpoint {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async setAttribute(clusterId: ClusterId, attribute: string, value: any, log?: AnsiLogger, endpoint?: Endpoint): Promise<boolean> {
     if (!endpoint) endpoint = this as Endpoint;
+    const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
+
+    if (endpoint.construction.status !== Lifecycle.Status.Active) {
+      log?.error(`setAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+      return false;
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const state = endpoint.state as Record<string, Record<string, any>>;
 
-    const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
     if (!(clusterName in state)) {
-      log?.error(`setAttribute error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${endpoint.id}:${endpoint.number}`);
+      log?.error(`setAttribute ${hk}${attribute}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return false;
     }
     attribute = this.lowercaseFirstLetter(attribute);
     if (!(attribute in state[clusterName])) {
-      log?.error(`setAttribute error: Attribute ${attribute} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${endpoint.id}:${endpoint.number}`);
+      log?.error(`setAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return false;
     }
-    const oldValue = state[clusterName][attribute];
-    await endpoint.set({ [clusterName]: { [attribute]: value } });
+    let oldValue = state[clusterName][attribute];
+    if (typeof oldValue === 'object') oldValue = deepCopy(oldValue);
+    await endpoint.setStateOf(endpoint.behaviors.supported[clusterName], { [attribute]: value });
+    // await endpoint.set({ [clusterName]: { [attribute]: value } });
     log?.info(
       `${db}Set endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${this.capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db} ` +
         `from ${YELLOW}${typeof oldValue === 'object' ? debugStringify(oldValue) : oldValue}${db} ` +
@@ -572,18 +683,18 @@ export class MatterbridgeEndpoint extends Endpoint {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   subscribeAttribute(clusterId: ClusterId, attribute: string, listener: (newValue: any, oldValue: any) => void, log?: AnsiLogger, endpoint?: Endpoint): boolean {
     if (!endpoint) endpoint = this as Endpoint;
+    const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const events = endpoint.events as Record<string, Record<string, any>>;
 
-    const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
     if (!(clusterName in events)) {
-      log?.error(`subscribeAttribute error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${endpoint.id}:${endpoint.number}`);
+      log?.error(`subscribeAttribute ${hk}${attribute}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return false;
     }
     attribute = this.lowercaseFirstLetter(attribute) + '$Changed';
     if (!(attribute in events[clusterName])) {
-      log?.error(`subscribeAttribute error: Attribute ${attribute} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${endpoint.id}:${endpoint.number}`);
+      log?.error(`subscribeAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return false;
     }
     events[clusterName][attribute].on(listener);
@@ -854,6 +965,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.serialNumber = serialNumber;
     this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
     if (MatterbridgeEndpoint.bridgeMode === 'bridge') {
+      this.addDeviceType(bridgedNode);
       this.createDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString);
       return;
     }
@@ -1181,7 +1293,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
    * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
    */
-  getDefaultCompleteColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+  getDefaultColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     return ClusterServer(
       ColorControlCluster.with(ColorControl.Feature.Xy, ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature),
       {
@@ -1199,6 +1311,8 @@ export class MatterbridgeEndpoint extends Endpoint {
         colorTemperatureMireds,
         colorTempPhysicalMinMireds,
         colorTempPhysicalMaxMireds,
+        coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
+        startUpColorTemperatureMireds: null,
       },
       {
         moveToColor: async (data) => {
@@ -1263,15 +1377,17 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
    * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
    */
-  createDefaultCompleteColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
-    this.addClusterServer(this.getDefaultCompleteColorControlClusterServer(currentX, currentY, currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
+  createDefaultColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+    this.addClusterServer(this.getDefaultColorControlClusterServer(currentX, currentY, currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
   }
+
+  private isColorControlClusterConfigured = false;
 
   /**
    * Configures the color control cluster for a device.
    *
-   * @remark This method must be called only after creating the cluster with getDefaultCompleteColorControlClusterServer or createDefaultCompleteColorControlClusterServer
-   * and before starting the matter server.
+   * @remark This method must be called only after creating the cluster with getDefaultColorControlClusterServer or createDefaultColorControlClusterServer
+   * and before starting the matter node.
    *
    * @param {boolean} hueSaturation - A boolean indicating whether the device supports hue and saturation control.
    * @param {boolean} xy - A boolean indicating whether the device supports XY control.
@@ -1279,14 +1395,26 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ColorControl.ColorMode} colorMode - An optional parameter specifying the color mode of the device.
    * @param {Endpoint} endpoint - An optional parameter specifying the endpoint to configure. If not provided, the device endpoint will be used.
    */
-  configureColorControlCluster(hueSaturation: boolean, xy: boolean, colorTemperature: boolean, colorMode?: ColorControl.ColorMode, endpoint?: MatterbridgeEndpoint) {
+  async configureColorControlCluster(hueSaturation: boolean, xy: boolean, colorTemperature: boolean, colorMode?: ColorControl.ColorMode, endpoint?: MatterbridgeEndpoint) {
     if (!endpoint) endpoint = this as MatterbridgeEndpoint;
-    endpoint.getClusterServer(ColorControlCluster)?.setFeatureMapAttribute({ hueSaturation, enhancedHue: false, colorLoop: false, xy, colorTemperature });
-    endpoint.getClusterServer(ColorControlCluster)?.setColorCapabilitiesAttribute({ hueSaturation, enhancedHue: false, colorLoop: false, xy, colorTemperature });
-    if (colorMode !== undefined && colorMode >= 0 && colorMode <= 2) {
-      endpoint.getClusterServer(ColorControlCluster)?.setColorModeAttribute(colorMode);
-      endpoint.getClusterServer(ColorControlCluster)?.setEnhancedColorModeAttribute(colorMode as unknown as ColorControl.EnhancedColorMode);
+    if (this.isColorControlClusterConfigured) return;
+
+    if (endpoint.construction.status !== Lifecycle.Status.Active) {
+      this.log.debug(`**configureColorControlCluster() delaying for endpoint construction ${endpoint.construction.status}`);
+      setTimeout(async () => {
+        await endpoint.configureColorControlCluster(hueSaturation, xy, colorTemperature, colorMode, endpoint);
+        this.isColorControlClusterConfigured = true;
+      }, 500);
+      return;
     }
+    this.log.debug(`**configureColorControlCluster()`);
+    await endpoint.setAttribute(ColorControlCluster.id, 'featureMap', { hueSaturation, enhancedHue: false, colorLoop: false, xy, colorTemperature }, this.log, endpoint);
+    await endpoint.setAttribute(ColorControlCluster.id, 'colorCapabilities', { hueSaturation, enhancedHue: false, colorLoop: false, xy, colorTemperature }, this.log, endpoint);
+    if (isValidNumber(colorMode, ColorControl.ColorMode.CurrentHueAndCurrentSaturation, ColorControl.ColorMode.ColorTemperatureMireds)) {
+      await endpoint.setAttribute(ColorControlCluster.id, 'colorMode', colorMode, this.log, endpoint);
+      await endpoint.setAttribute(ColorControlCluster.id, 'enhancedColorMode', colorMode, this.log, endpoint);
+    }
+    this.isColorControlClusterConfigured = true;
   }
 
   /**
@@ -1295,11 +1423,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ColorControl.ColorMode} colorMode - The color mode to set.
    * @param {Endpoint} endpoint - The optional endpoint to configure. If not provided, the method will configure the current endpoint.
    */
-  configureColorControlMode(colorMode: ColorControl.ColorMode, endpoint?: MatterbridgeEndpoint) {
+  async configureColorControlMode(colorMode: ColorControl.ColorMode, endpoint?: MatterbridgeEndpoint) {
     if (!endpoint) endpoint = this as MatterbridgeEndpoint;
-    if (colorMode !== undefined && colorMode >= ColorControl.ColorMode.CurrentHueAndCurrentSaturation && colorMode <= ColorControl.ColorMode.ColorTemperatureMireds) {
-      endpoint.getClusterServer(ColorControlCluster)?.setColorModeAttribute(colorMode);
-      endpoint.getClusterServer(ColorControlCluster)?.setEnhancedColorModeAttribute(colorMode as unknown as ColorControl.EnhancedColorMode);
+    if (isValidNumber(colorMode, ColorControl.ColorMode.CurrentHueAndCurrentSaturation, ColorControl.ColorMode.ColorTemperatureMireds)) {
+      await endpoint.setAttribute(ColorControlCluster.id, 'colorMode', colorMode, this.log, endpoint);
+      await endpoint.setAttribute(ColorControlCluster.id, 'enhancedColorMode', colorMode, this.log, endpoint);
     }
   }
 
@@ -1327,8 +1455,6 @@ export class MatterbridgeEndpoint extends Endpoint {
         mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false },
         targetPositionLiftPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
         currentPositionLiftPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
-        // installedClosedLimitLift: 10000,
-        // installedOpenLimitLift: 0,
       },
       {
         upOrOpen: async (data) => {
@@ -1367,21 +1493,24 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Sets the window covering target position as the current position and stops the movement.
    * @param {Endpoint} endpoint - The endpoint on which to set the window covering (default the device endpoint).
    */
-  setWindowCoveringTargetAsCurrentAndStopped(endpoint?: MatterbridgeEndpoint) {
+  async setWindowCoveringTargetAsCurrentAndStopped(endpoint?: MatterbridgeEndpoint) {
     if (!endpoint) endpoint = this as MatterbridgeEndpoint;
-    const windowCoveringCluster = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift));
-    if (windowCoveringCluster) {
-      const position = windowCoveringCluster.getCurrentPositionLiftPercent100thsAttribute();
-      if (position !== null) {
-        windowCoveringCluster.setTargetPositionLiftPercent100thsAttribute(position);
-        windowCoveringCluster.setOperationalStatusAttribute({
+    const position = endpoint.getAttribute(WindowCoveringCluster.id, 'currentPositionLiftPercent100ths', this.log, endpoint); // windowCoveringCluster.getCurrentPositionLiftPercent100thsAttribute();
+    if (position !== null) {
+      await endpoint.setAttribute(WindowCoveringCluster.id, 'targetPositionLiftPercent100ths', position, this.log, endpoint);
+      await endpoint.setAttribute(
+        WindowCoveringCluster.id,
+        'operationalStatus',
+        {
           global: WindowCovering.MovementStatus.Stopped,
           lift: WindowCovering.MovementStatus.Stopped,
           tilt: WindowCovering.MovementStatus.Stopped,
-        });
-      }
-      this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
+        },
+        this.log,
+        endpoint,
+      );
     }
+    this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
   }
 
   /**
@@ -1391,18 +1520,21 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {WindowCovering.MovementStatus} status - The movement status of the window covering.
    * @param {Endpoint} endpoint - The endpoint on which to set the window covering (default the device endpoint).
    */
-  setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus, endpoint?: MatterbridgeEndpoint) {
+  async setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus, endpoint?: MatterbridgeEndpoint) {
     if (!endpoint) endpoint = this as MatterbridgeEndpoint;
-    const windowCoveringCluster = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift));
-    if (windowCoveringCluster) {
-      windowCoveringCluster.setCurrentPositionLiftPercent100thsAttribute(current);
-      windowCoveringCluster.setTargetPositionLiftPercent100thsAttribute(target);
-      windowCoveringCluster.setOperationalStatusAttribute({
+    await endpoint.setAttribute(WindowCoveringCluster.id, 'currentPositionLiftPercent100ths', current, this.log, endpoint);
+    await endpoint.setAttribute(WindowCoveringCluster.id, 'targetPositionLiftPercent100ths', target, this.log, endpoint);
+    await endpoint.setAttribute(
+      WindowCoveringCluster.id,
+      'operationalStatus',
+      {
         global: status,
         lift: status,
         tilt: status,
-      });
-    }
+      },
+      this.log,
+      endpoint,
+    );
     this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
   }
 
@@ -1411,11 +1543,19 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {WindowCovering.MovementStatus} status - The movement status to set.
    * @param {Endpoint} endpoint - The endpoint on which to set the window covering (default the device endpoint).
    */
-  setWindowCoveringStatus(status: WindowCovering.MovementStatus, endpoint?: MatterbridgeEndpoint) {
+  async setWindowCoveringStatus(status: WindowCovering.MovementStatus, endpoint?: MatterbridgeEndpoint) {
     if (!endpoint) endpoint = this as MatterbridgeEndpoint;
-    const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift));
-    if (!windowCovering) return;
-    windowCovering.setOperationalStatusAttribute({ global: status, lift: status, tilt: status });
+    await endpoint.setAttribute(
+      WindowCoveringCluster.id,
+      'operationalStatus',
+      {
+        global: status,
+        lift: status,
+        tilt: status,
+      },
+      this.log,
+      endpoint,
+    );
     this.log.debug(`Set WindowCovering operationalStatus: ${status}`);
   }
 
@@ -1427,9 +1567,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   getWindowCoveringStatus(endpoint?: MatterbridgeEndpoint): WindowCovering.MovementStatus | undefined {
     if (!endpoint) endpoint = this as MatterbridgeEndpoint;
-    const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift));
-    if (!windowCovering) return undefined;
-    const status = windowCovering.getOperationalStatusAttribute();
+    const status = endpoint.getAttribute(WindowCoveringCluster.id, 'operationalStatus', this.log, endpoint);
     this.log.debug(`Get WindowCovering operationalStatus: ${status.global}`);
     return status.global;
   }
@@ -1440,12 +1578,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param position - The position to set, specified as a number.
    * @param {Endpoint} endpoint - The endpoint on which to set the window covering (default the device endpoint).
    */
-  setWindowCoveringTargetAndCurrentPosition(position: number, endpoint?: MatterbridgeEndpoint) {
+  async setWindowCoveringTargetAndCurrentPosition(position: number, endpoint?: MatterbridgeEndpoint) {
     if (!endpoint) endpoint = this as MatterbridgeEndpoint;
-    const windowCovering = endpoint.getClusterServer(WindowCoveringCluster.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift));
-    if (!windowCovering) return;
-    windowCovering.setCurrentPositionLiftPercent100thsAttribute(position);
-    windowCovering.setTargetPositionLiftPercent100thsAttribute(position);
+    await endpoint.setAttribute(WindowCoveringCluster.id, 'currentPositionLiftPercent100ths', position, this.log, endpoint);
+    await endpoint.setAttribute(WindowCoveringCluster.id, 'targetPositionLiftPercent100ths', position, this.log, endpoint);
     this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.6.2-dev.5",
+  "version": "1.6.2-dev.7",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -82,6 +82,7 @@
     "start:bridge": "node ./dist/cli.js -bridge",
     "start:childbridge": "node ./dist/cli.js -childbridge",
     "start:controller": "node ./dist/cli.js -controller",
+    "start:edge": "node ./dist/cli.js -edge -debug -logger debug -matterlogger debug",
     "start:help": "node ./dist/cli.js -help",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose",
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage",
