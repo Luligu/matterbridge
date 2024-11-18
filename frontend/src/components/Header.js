@@ -263,6 +263,11 @@ function Header() {
             <Tooltip title="Matterbridge version"><span className="status-information" onClick={handleChangelogClick}>v.{matterbridgeInfo.matterbridgeVersion}</span></Tooltip> :
             <Tooltip title="New Matterbridge version available, click to install"><span className="status-warning" onClick={handleUpdateClick}>Update v.{matterbridgeInfo.matterbridgeVersion} to v.{matterbridgeInfo.matterbridgeLatestVersion}</span></Tooltip> 
           }  
+          {matterbridgeInfo.edge === true ? (        
+            <Tooltip title="Edge mode">
+              <span className="status-information" style={{ cursor: 'default' }}>edge</span>
+            </Tooltip>
+          ) : null}
           {matterbridgeInfo.bridgeMode !== '' ? (        
             <Tooltip title="Bridge mode">
               <span className="status-information" style={{ cursor: 'default' }}>{matterbridgeInfo.bridgeMode}</span>

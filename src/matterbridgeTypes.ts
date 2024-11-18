@@ -120,6 +120,7 @@ export interface MatterbridgeInformation {
   matterbridgeConnected: boolean;
   bridgeMode: string;
   restartMode: string;
+  edge: boolean;
   profile?: string;
   loggerLevel: LogLevel;
   fileLogger: boolean;

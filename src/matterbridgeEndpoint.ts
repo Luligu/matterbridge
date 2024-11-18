@@ -67,6 +67,8 @@ import {
   ColorControl,
   ColorControlCluster,
   ConcentrationMeasurement,
+  Descriptor,
+  DescriptorCluster,
   DeviceEnergyManagement,
   DoorLock,
   DoorLockCluster,
@@ -76,6 +78,8 @@ import {
   ElectricalPowerMeasurementCluster,
   FanControl,
   FanControlCluster,
+  FixedLabel,
+  FixedLabelCluster,
   FlowMeasurement,
   FlowMeasurementCluster,
   FormaldehydeConcentrationMeasurement,
@@ -129,10 +133,12 @@ import {
   TimeSynchronizationCluster,
   TotalVolatileOrganicCompoundsConcentrationMeasurement,
   TotalVolatileOrganicCompoundsConcentrationMeasurementCluster,
+  UserLabel,
+  UserLabelCluster,
   WindowCovering,
   WindowCoveringCluster,
 } from '@matter/main/clusters';
-import { ClusterType, MeasurementType, getClusterNameById } from '@matter/main/types';
+import { ClusterType, MeasurementType, getClusterNameById, Semtag } from '@matter/main/types';
 import { Specification, DeviceClassification } from '@matter/main/model';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { IdentifyBehavior } from '@matter/node/behaviors/identify';
@@ -151,7 +157,9 @@ import {
   BasicInformationServer,
   CarbonDioxideConcentrationMeasurementServer,
   CarbonMonoxideConcentrationMeasurementServer,
+  FixedLabelServer,
   FormaldehydeConcentrationMeasurementServer,
+  ModeSelectServer,
   NitrogenDioxideConcentrationMeasurementServer,
   OzoneConcentrationMeasurementServer,
   Pm10ConcentrationMeasurementServer,
@@ -159,7 +167,9 @@ import {
   Pm25ConcentrationMeasurementServer,
   RadonConcentrationMeasurementServer,
   SmokeCoAlarmServer,
+  SwitchServer,
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
+  UserLabelServer,
 } from '@matter/main/behaviors';
 
 // @project-chip
@@ -226,9 +236,20 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   log: AnsiLogger;
   plugin: string | undefined = undefined;
-  serialNumber: string | undefined = undefined;
+
   deviceName: string | undefined = undefined;
+  serialNumber: string | undefined = undefined;
   uniqueId: string | undefined = undefined;
+  vendorId: number | undefined = undefined;
+  vendorName: string | undefined = undefined;
+  productId: number | undefined = undefined;
+  productName: string | undefined = undefined;
+  softwareVersion: number | undefined = undefined;
+  softwareVersionString: string | undefined = undefined;
+  hardwareVersion: number | undefined = undefined;
+  hardwareVersionString: string | undefined = undefined;
+
+  tagList?: Semtag[] = undefined;
 
   // Maps matter deviceTypes and endpoints
   private readonly deviceTypes = new Map<number, DeviceTypeDefinition>();
@@ -243,6 +264,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {EndpointOptions} [options={}] - The options for the device.
    */
   constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, debug = false) {
+    const { uniqueStorageKey, endpointId, tagList, colorControlFeatures } = options as { uniqueStorageKey?: string; endpointId?: EndpointNumber; tagList?: Semtag[]; colorControlFeatures?: object };
+
+    // Get the first DeviceTypeDefinition
     let firstDefinition: DeviceTypeDefinition;
     if (Array.isArray(definition)) firstDefinition = definition[0];
     else firstDefinition = definition;
@@ -263,18 +287,21 @@ export class MatterbridgeEndpoint extends Endpoint {
           optional: SupportedBehaviors(...MatterbridgeEndpoint.getBehaviourTypesFromClusterClientIds(firstDefinition.optionalClientClusters)),
         },
       },
-      behaviors: {},
+      behaviors: tagList ? SupportedBehaviors(DescriptorServer.with(Descriptor.Feature.TagList)) : {},
     };
     const endpointV8 = MutableEndpoint(deviceTypeDefinitionV8);
 
     // Convert the options to an Endpoint.Options
-    const { uniqueStorageKey, ...otherOptions } = options;
-    const optionsV8: Endpoint.Options = {
+    // [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }]
+    const optionsV8 = {
       id: uniqueStorageKey?.replace(/[ :.]/g, ''),
-      ...otherOptions,
-    };
+      number: endpointId,
+      descriptor: tagList ? { tagList } : undefined,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, any> };
     MatterbridgeEndpoint.deviceCount++;
     super(endpointV8, optionsV8);
+    this.tagList = tagList;
 
     // Update the endpoint
     this.log = new AnsiLogger({ logName: 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
@@ -288,8 +315,18 @@ export class MatterbridgeEndpoint extends Endpoint {
       });
     }
 
-    // Add our behavior
+    // Add MatterbridgeBehavior with MatterbridgeBehaviorDevice
     this.behaviors.require(MatterbridgeBehavior, { deviceCommand: new MatterbridgeBehaviorDevice(this.log, this.commandHandler, undefined) });
+  }
+
+  /**
+   * Loads an instance of the MatterbridgeDevice class.
+   *
+   * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the device.
+   * @returns MatterbridgeDevice instance.
+   */
+  static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, debug = false) {
+    return new MatterbridgeEndpoint(definition, options, debug);
   }
 
   static getBehaviourTypesFromClusterServerIds(clusterServerList: ClusterId[]) {
@@ -322,6 +359,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === TimeSynchronization.Cluster.id) return TimeSynchronizationServer.with(TimeSynchronization.Feature.TimeZone);
     if (clusterId === WindowCovering.Cluster.id) return MatterbridgeWindowCoveringServer;
     if (clusterId === FanControl.Cluster.id) return MatterbridgeFanControlServer;
+    if (clusterId === Switch.Cluster.id) return SwitchServer.with('MomentarySwitch', 'MomentarySwitchRelease', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress');
     if (clusterId === TemperatureMeasurement.Cluster.id) return TemperatureMeasurementServer;
     if (clusterId === RelativeHumidityMeasurement.Cluster.id) return RelativeHumidityMeasurementServer;
     if (clusterId === PressureMeasurement.Cluster.id) return PressureMeasurementServer;
@@ -331,6 +369,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === OccupancySensing.Cluster.id) return OccupancySensingServer;
     if (clusterId === IlluminanceMeasurement.Cluster.id) return IlluminanceMeasurementServer;
     if (clusterId === SmokeCoAlarm.Cluster.id) return SmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm);
+
     if (clusterId === AirQuality.Cluster.id) return AirQualityServer.with(AirQuality.Feature.Fair, AirQuality.Feature.Moderate, AirQuality.Feature.VeryPoor, AirQuality.Feature.ExtremelyPoor);
     if (clusterId === CarbonMonoxideConcentrationMeasurement.Cluster.id) return CarbonMonoxideConcentrationMeasurementServer.with('NumericMeasurement');
     if (clusterId === CarbonDioxideConcentrationMeasurement.Cluster.id) return CarbonDioxideConcentrationMeasurementServer.with('NumericMeasurement');
@@ -343,6 +382,10 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === RadonConcentrationMeasurement.Cluster.id) return RadonConcentrationMeasurementServer.with('NumericMeasurement');
     if (clusterId === TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id) return TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with('NumericMeasurement');
 
+    if (clusterId === ModeSelect.Cluster.id) return ModeSelectServer;
+    if (clusterId === UserLabel.Cluster.id) return UserLabelServer;
+    if (clusterId === FixedLabel.Cluster.id) return FixedLabelServer;
+
     if (clusterId === BasicInformation.Cluster.id) return BasicInformationServer;
     if (clusterId === BridgedDeviceBasicInformation.Cluster.id) return BridgedDeviceBasicInformationServer;
     return MatterbridgeIdentifyServer;
@@ -351,16 +394,6 @@ export class MatterbridgeEndpoint extends Endpoint {
   static getBehaviourTypeFromClusterClientId(clusterId: ClusterId) {
     // Map ClusterId to Behavior.Type
     return IdentifyBehavior;
-  }
-
-  /**
-   * Loads an instance of the MatterbridgeDevice class.
-   *
-   * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the device.
-   * @returns MatterbridgeDevice instance.
-   */
-  static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, debug = false) {
-    return new MatterbridgeEndpoint(definition, options, debug);
   }
 
   /**
@@ -379,9 +412,16 @@ export class MatterbridgeEndpoint extends Endpoint {
         deviceType: dt.code,
         revision: dt.revision,
       }));
-      this.behaviors.require(DescriptorServer, {
-        deviceTypeList,
-      });
+      if (this.tagList) {
+        this.behaviors.require(DescriptorServer.with(Descriptor.Feature.TagList), {
+          tagList: this.tagList,
+          deviceTypeList,
+        });
+      } else {
+        this.behaviors.require(DescriptorServer, {
+          deviceTypeList,
+        });
+      }
     }
   }
 
@@ -459,14 +499,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {string} endpointName - The name of the new enpoint to add.
    * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
-   * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
+   * @param {ClusterId[]} [includeServerList=[]] - The list of cluster IDs to include.
+   * @param {EndpointOptions} [options={}] - The options for the device.
+   * @param {boolean} [debug=false] - Whether to enable debug logging.
    * @returns {MatterbridgeEndpoint} - The child endpoint that was found or added.
    */
-  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]) {
+  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: EndpointOptions = {}, debug = false) {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
     let child = this.getChildEndpointByName(endpointName);
     if (!child) {
-      child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName });
+      child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName }, debug);
     }
     deviceTypes.forEach((deviceType) => {
       this.log.debug(`- with deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
@@ -578,6 +620,40 @@ export class MatterbridgeEndpoint extends Endpoint {
     // if (includeServerList.includes(DeviceEnergyManagementMode.Cluster.id)) endpoint.addClusterServer(this.getDefaultDeviceEnergyManagementModeClusterServer());
   }
 
+  async addFixedLabel(label: string, value: string) {
+    if (!this.clusterServers.get(FixedLabelCluster.id)) {
+      this.addClusterServer(
+        ClusterServer(
+          FixedLabelCluster,
+          {
+            labelList: [],
+          },
+          {},
+        ),
+      );
+    }
+    const labelList = (this.getAttribute(FixedLabelCluster.id, 'labelList', this.log) ?? []).filter((entryLabel: { label: string; value: string }) => entryLabel.label !== label);
+    labelList.push({ label, value });
+    await this.setAttribute(FixedLabelCluster.id, 'labelList', labelList, this.log);
+  }
+
+  async addUserLabel(label: string, value: string) {
+    if (!this.clusterServers.get(UserLabelCluster.id)) {
+      this.addClusterServer(
+        ClusterServer(
+          UserLabelCluster,
+          {
+            labelList: [],
+          },
+          {},
+        ),
+      );
+    }
+    const labelList = (this.getAttribute(UserLabelCluster.id, 'labelList', this.log) ?? []).filter((entryLabel: { label: string; value: string }) => entryLabel.label !== label);
+    labelList.push({ label, value });
+    await this.setAttribute(UserLabelCluster.id, 'labelList', labelList, this.log);
+  }
+
   private capitalizeFirstLetter(name: string): string {
     if (!name) return name;
     return name.charAt(0).toUpperCase() + name.slice(1);
@@ -598,8 +674,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {any} The value of the attribute, or undefined if the attribute is not found.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getAttribute(clusterId: ClusterId, attribute: string, log?: AnsiLogger, endpoint?: Endpoint): any {
-    if (!endpoint) endpoint = this as Endpoint;
+  getAttribute(clusterId: ClusterId, attribute: string, log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): any {
+    if (!endpoint) endpoint = this as MatterbridgeEndpoint;
     const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
 
     if (endpoint.construction.status !== Lifecycle.Status.Active) {
@@ -636,8 +712,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {Endpoint} [endpoint] - (Optional) The endpoint to set the attribute on. If not provided, the attribute will be set on the current endpoint.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async setAttribute(clusterId: ClusterId, attribute: string, value: any, log?: AnsiLogger, endpoint?: Endpoint): Promise<boolean> {
-    if (!endpoint) endpoint = this as Endpoint;
+  async setAttribute(clusterId: ClusterId, attribute: string, value: any, log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): Promise<boolean> {
+    if (!endpoint) endpoint = this as MatterbridgeEndpoint;
     const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
 
     if (endpoint.construction.status !== Lifecycle.Status.Active) {
@@ -681,8 +757,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  subscribeAttribute(clusterId: ClusterId, attribute: string, listener: (newValue: any, oldValue: any) => void, log?: AnsiLogger, endpoint?: Endpoint): boolean {
-    if (!endpoint) endpoint = this as Endpoint;
+  subscribeAttribute(clusterId: ClusterId, attribute: string, listener: (newValue: any, oldValue: any) => void, log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): boolean {
+    if (!endpoint) endpoint = this as MatterbridgeEndpoint;
     const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -904,6 +980,17 @@ export class MatterbridgeEndpoint extends Endpoint {
     hardwareVersion = 1,
     hardwareVersionString = '1.0.0',
   ) {
+    this.deviceName = deviceName;
+    this.serialNumber = serialNumber;
+    this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
+    this.productId = productId;
+    this.productName = productName;
+    this.vendorId = vendorId;
+    this.vendorName = vendorName;
+    this.softwareVersion = softwareVersion;
+    this.softwareVersionString = softwareVersionString;
+    this.hardwareVersion = hardwareVersion;
+    this.hardwareVersionString = hardwareVersionString;
     return ClusterServer(
       BasicInformationCluster,
       {
@@ -961,9 +1048,6 @@ export class MatterbridgeEndpoint extends Endpoint {
     hardwareVersion = 1,
     hardwareVersionString = '1.0.0',
   ) {
-    this.deviceName = deviceName;
-    this.serialNumber = serialNumber;
-    this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
     if (MatterbridgeEndpoint.bridgeMode === 'bridge') {
       this.addDeviceType(bridgedNode);
       this.createDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString);
@@ -996,6 +1080,16 @@ export class MatterbridgeEndpoint extends Endpoint {
     hardwareVersion = 1,
     hardwareVersionString = '1.0.0',
   ) {
+    this.deviceName = deviceName;
+    this.serialNumber = serialNumber;
+    this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
+    this.productName = productName;
+    this.vendorId = vendorId;
+    this.vendorName = vendorName;
+    this.softwareVersion = softwareVersion;
+    this.softwareVersionString = softwareVersionString;
+    this.hardwareVersion = hardwareVersion;
+    this.hardwareVersionString = hardwareVersionString;
     return ClusterServer(
       BridgedDeviceBasicInformationCluster,
       {
@@ -1046,9 +1140,6 @@ export class MatterbridgeEndpoint extends Endpoint {
     hardwareVersion = 1,
     hardwareVersionString = '1.0.0',
   ) {
-    this.deviceName = deviceName;
-    this.serialNumber = serialNumber;
-    this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
     this.addClusterServer(this.getDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString));
   }
 
@@ -1381,7 +1472,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.addClusterServer(this.getDefaultColorControlClusterServer(currentX, currentY, currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
   }
 
-  private isColorControlClusterConfigured = false;
+  private isTagListAdded = false;
 
   /**
    * Configures the color control cluster for a device.
@@ -1397,13 +1488,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   async configureColorControlCluster(hueSaturation: boolean, xy: boolean, colorTemperature: boolean, colorMode?: ColorControl.ColorMode, endpoint?: MatterbridgeEndpoint) {
     if (!endpoint) endpoint = this as MatterbridgeEndpoint;
-    if (this.isColorControlClusterConfigured) return;
+    if (this.isTagListAdded) return;
 
     if (endpoint.construction.status !== Lifecycle.Status.Active) {
       this.log.debug(`**configureColorControlCluster() delaying for endpoint construction ${endpoint.construction.status}`);
       setTimeout(async () => {
         await endpoint.configureColorControlCluster(hueSaturation, xy, colorTemperature, colorMode, endpoint);
-        this.isColorControlClusterConfigured = true;
+        this.isTagListAdded = true;
       }, 500);
       return;
     }
@@ -1414,7 +1505,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       await endpoint.setAttribute(ColorControlCluster.id, 'colorMode', colorMode, this.log, endpoint);
       await endpoint.setAttribute(ColorControlCluster.id, 'enhancedColorMode', colorMode, this.log, endpoint);
     }
-    this.isColorControlClusterConfigured = true;
+    this.isTagListAdded = true;
   }
 
   /**
@@ -1804,10 +1895,12 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default mode select cluster server.
    *
-   * @remarks
-   * This method adds a cluster server for a mode select cluster with default settings.
-   *
+   * @param description - The description of the cluster server.
+   * @param supportedModes - The supported modes for the cluster server.
+   * @param currentMode - The current mode of the cluster server. Defaults to 0.
+   * @param startUpMode - The startup mode of the cluster server. Defaults to 0.
    * @param endpoint - The endpoint to add the cluster server to. Defaults to `this` if not provided.
+   *
    */
   createDefaultModeSelectClusterServer(description: string, supportedModes: ModeSelect.ModeOption[], currentMode = 0, startUpMode = 0, endpoint?: MatterbridgeEndpoint) {
     if (!endpoint) endpoint = this as MatterbridgeEndpoint;

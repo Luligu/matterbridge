@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useRef, useState, useCallback } from 'react';
 
-// TODO: remove wssHost from WebSocketUse if no issues arise
+// TODO: remove wssHost and ssl from WebSocketUse if no issues arise
 function WebSocketUse(wssHost, ssl) {
     const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
     const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');

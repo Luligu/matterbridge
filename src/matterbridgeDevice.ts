@@ -192,6 +192,14 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   serialNumber: string | undefined = undefined;
   deviceName: string | undefined = undefined;
   uniqueId: string | undefined = undefined;
+  vendorId: number | undefined = undefined;
+  vendorName: string | undefined = undefined;
+  productId: number | undefined = undefined;
+  productName: string | undefined = undefined;
+  softwareVersion: number | undefined = undefined;
+  softwareVersionString: string | undefined = undefined;
+  hardwareVersion: number | undefined = undefined;
+  hardwareVersionString: string | undefined = undefined;
 
   /**
    * Create a Matterbridge device.
@@ -273,10 +281,13 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    *
    * @param {string} endpointName - The name of the new enpoint to add.
    * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
-   * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
+   * @param {ClusterId[]} [includeServerList=[]] - The list of cluster IDs to include.
+   * @param {EndpointOptions} [options={}] - The options for the device.
+   * @param {boolean} [debug=false] - Whether to enable debug logging.
    * @returns {Endpoint} - The child endpoint that was found or added.
    */
-  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = []): Endpoint {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: EndpointOptions = {}, debug = false): Endpoint {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
     let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName);
     if (!child) {
@@ -776,6 +787,14 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     this.deviceName = deviceName;
     this.serialNumber = serialNumber;
     this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
+    this.productId = productId;
+    this.productName = productName;
+    this.vendorId = vendorId;
+    this.vendorName = vendorName;
+    this.softwareVersion = softwareVersion;
+    this.softwareVersionString = softwareVersionString;
+    this.hardwareVersion = hardwareVersion;
+    this.hardwareVersionString = hardwareVersionString;
     if (MatterbridgeDevice.bridgeMode === 'bridge') {
       this.addDeviceType(bridgedNode);
       this.createDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString);
@@ -861,6 +880,13 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     this.deviceName = deviceName;
     this.serialNumber = serialNumber;
     this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
+    this.productName = productName;
+    this.vendorId = vendorId;
+    this.vendorName = vendorName;
+    this.softwareVersion = softwareVersion;
+    this.softwareVersionString = softwareVersionString;
+    this.hardwareVersion = hardwareVersion;
+    this.hardwareVersionString = hardwareVersionString;
     this.addClusterServer(this.getDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString));
   }
 

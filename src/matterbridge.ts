@@ -103,6 +103,8 @@ export class Matterbridge extends EventEmitter {
     matterbridgeConnected: false,
     bridgeMode: '',
     restartMode: '',
+    edge: hasParameter('edge'),
+    profile: getParameter('profile'),
     loggerLevel: LogLevel.INFO,
     fileLogger: false,
     matterLoggerLevel: MatterLogLevel.INFO,
@@ -175,8 +177,8 @@ export class Matterbridge extends EventEmitter {
   protected matterAggregator: Aggregator | undefined;
   protected commissioningServer: CommissioningServer | undefined;
   protected commissioningController: CommissioningController | undefined;
-  protected aggregatorVendorId = VendorId(0xfff1);
-  protected aggregatorProductId = 0x8000;
+  protected aggregatorVendorId = VendorId(getIntParameter('vendorId') ?? 0xfff1);
+  protected aggregatorProductId = getIntParameter('productId') ?? 0x8000;
 
   protected static instance: Matterbridge | undefined;
 

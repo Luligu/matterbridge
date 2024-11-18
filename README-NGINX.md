@@ -51,7 +51,7 @@ add matterbridge to enabled sites
 sudo ln -s /etc/nginx/sites-available/matterbridge /etc/nginx/sites-enabled/
 ```
 
-### Restart nginx and test the configuration 
+### Restart nginx and test the configuration
 
 ```
 sudo systemctl restart nginx
@@ -61,4 +61,3 @@ sudo nginx -t
 ### Use matterbridge with nginx
 
 http://ubuntu.local:8099/matterbridge/
-

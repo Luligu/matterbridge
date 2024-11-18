@@ -37,21 +37,21 @@ import { NodeStorage } from 'node-persist-manager';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { onOffLight, onOffOutlet } from './matterbridgeDeviceTypes.js';
+import { bridge, genericSwitch, onOffLight, onOffOutlet } from './matterbridgeDeviceTypes.js';
 import { copyDirectory, getParameter, hasParameter, waiter } from './utils/utils.js';
 
 // @matter
-import { DeviceTypeId, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, FabricIndex, Lifecycle, SessionsBehavior } from '@matter/main';
+import { DeviceTypeId, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, FabricIndex, Lifecycle, SessionsBehavior, NumberTag, EndpointServer } from '@matter/main';
 import { ServerNode, Endpoint as EndpointNode, Environment, StorageService, StorageContext, StorageManager } from '@matter/main';
-import { BasicInformationCluster, ColorControl, ColorControlCluster, OnOffCluster, LevelControl, Identify } from '@matter/main/clusters';
-import { ExposedFabricInformation, FabricAction } from '@matter/main/protocol';
+import { BasicInformationCluster, ColorControl, ColorControlCluster, OnOffCluster, LevelControl, Identify, Descriptor } from '@matter/main/clusters';
+import { ExposedFabricInformation, FabricAction, MdnsService } from '@matter/main/protocol';
 import { ColorTemperatureLightDevice, GenericSwitchDevice, OnOffLightDevice } from '@matter/main/devices';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
-import { BridgedDeviceBasicInformationServer, ColorControlServer, IdentifyServer, LevelControlServer, OnOffServer, GroupsServer, SwitchServer } from '@matter/main/behaviors';
+import { BridgedDeviceBasicInformationServer, ColorControlServer, IdentifyServer, LevelControlServer, OnOffServer, GroupsServer, SwitchServer, DescriptorServer } from '@matter/main/behaviors';
 
 // @project-chip
 import { CommissioningServer, MatterServer, NodeOptions } from '@project-chip/matter.js';
-import { Aggregator, Device, DeviceTypes } from '@project-chip/matter.js/device';
+import { Aggregator, Device, DeviceTypes, logEndpoint } from '@project-chip/matter.js/device';
 import { MatterbridgeColorControlServer, MatterbridgeIdentifyServer, MatterbridgeLevelControlServer, MatterbridgeOnOffServer } from './matterbridgeBehaviors.js';
 import { SanitizedSessionInformation } from './matterbridgeTypes.js';
 
@@ -109,6 +109,9 @@ export class MatterbridgeEdge extends Matterbridge {
     // Initialize the base Matterbridge class
     await super.initialize();
 
+    // Setup Matter mdnsInterface
+    if (this.mdnsInterface) this.environment.vars.set('mdns.networkInterface', this.mdnsInterface);
+
     // Setup Matter commissioning server
     this.port = 5540;
     this.passcode = 20242025;
@@ -125,7 +128,7 @@ export class MatterbridgeEdge extends Matterbridge {
     this.storageManager = await this.matterStorageService.open('Matterbridge');
     this.log.info('Matter node storage manager "Matterbridge" created');
 
-    this.matterbridgeContext = await this.createServerNodeContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
+    this.matterbridgeContext = await this.createServerNodeContext('Matterbridge', 'Matterbridge', bridge.code, this.aggregatorVendorId, 'Matterbridge', this.aggregatorProductId, 'Matterbridge aggregator');
 
     this.log.info('Matter node storage started');
 
@@ -181,6 +184,9 @@ export class MatterbridgeEdge extends Matterbridge {
       });
     }
     this.log.info('Stopped matter server nodes');
+
+    await this.environment.get(MdnsService)[Symbol.asyncDispose]();
+    this.log.info('Stopped MdnsService');
   }
 
   /**
@@ -493,7 +499,7 @@ export class MatterbridgeEdge extends Matterbridge {
           await serverNode.add(aggregatorNode);
           if (!this.test) {
             this.test = true;
-            // await this.testEndpoints();
+            await this.testEndpoints();
           }
         }
       },
@@ -545,7 +551,31 @@ export class MatterbridgeEdge extends Matterbridge {
     const max = 10;
     if (!this.matterbridgeContext) return;
     const aggregatorNode = this.agToAggregatorEndpoint.get('Matterbridge')?.aggregatorNode;
+    if (!aggregatorNode) return;
 
+    this.log.notice(`Creating OnOffLight1`);
+    const lightEndpoint = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight1' }, true);
+    lightEndpoint.createDefaultBridgedDeviceBasicInformationClusterServer('OnOffLight 1', '123456789', 0xfff1, 'Matterbridge', 'Light');
+    lightEndpoint.addRequiredClusterServers(lightEndpoint);
+    this.log.notice(`Adding OnOffLight1 to ${await this.matterbridgeContext.get<string>('storeId')} aggregator`);
+    await aggregatorNode.add(lightEndpoint);
+    logEndpoint(EndpointServer.forEndpoint(lightEndpoint));
+
+    this.log.notice(`Creating Outlet1`);
+    const outletEndpoint = new MatterbridgeEndpoint(onOffOutlet, { uniqueStorageKey: 'OnOffOutlet1' }, true);
+    outletEndpoint.createDefaultBridgedDeviceBasicInformationClusterServer('OnOffOutlet 1', '123456789', 0xfff1, 'Matterbridge', 'Outlet');
+    outletEndpoint.addRequiredClusterServers(outletEndpoint);
+    const input0 = outletEndpoint.addChildDeviceTypeWithClusterServer('Input:0', [genericSwitch], undefined, undefined, true);
+    // input0.behaviors.require(SwitchServer.with('MomentarySwitch', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress', 'MomentarySwitchRelease'));
+    // input0.createDefaultLatchingSwitchClusterServer();
+    const input1 = outletEndpoint.addChildDeviceTypeWithClusterServer('Input:1', [genericSwitch], undefined, undefined, true);
+    // input1.behaviors.require(SwitchServer.with('MomentarySwitch', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress', 'MomentarySwitchRelease'));
+    // input1.createDefaultLatchingSwitchClusterServer();
+    this.log.notice(`Adding OnOffOutlet1 to ${await this.matterbridgeContext.get<string>('storeId')} aggregator`);
+    await aggregatorNode.add(outletEndpoint);
+    logEndpoint(EndpointServer.forEndpoint(outletEndpoint));
+
+    /*
     this.log.notice(`Creating TestLight`);
     const matterbridgeDevice = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'Test .Light:2' }, true);
     matterbridgeDevice.behaviors.require(MatterbridgeIdentifyServer, {
@@ -587,10 +617,43 @@ export class MatterbridgeEdge extends Matterbridge {
       reachable: true,
     });
 
-    await matterbridgeDevice.configureColorControlCluster(false, false, true, ColorControl.ColorMode.ColorTemperatureMireds);
+    // await matterbridgeDevice.setTagList(null, 0x07, 1, 'endpoint 2');
+    // await matterbridgeDevice.configureColorControlCluster(false, false, true, ColorControl.ColorMode.ColorTemperatureMireds);
 
     this.log.notice(`Adding TestLight`);
     await aggregatorNode?.add(matterbridgeDevice);
+
+    this.log.notice(`Creating switchEnpoint1`);
+    const switchEnpoint2 = new EndpointNode(
+      GenericSwitchDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), BridgedDeviceBasicInformationServer, SwitchServer.with('MomentarySwitch', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress', 'MomentarySwitchRelease')),
+      {
+        id: 'GenericSwitch1',
+        descriptor: {
+          tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }],
+        },
+        bridgedDeviceBasicInformation: {
+          vendorId: VendorId(await this.matterbridgeContext.get<number>('vendorId')),
+          vendorName: await this.matterbridgeContext.get<string>('vendorName'),
+
+          productName: 'GenericSwitch',
+          productLabel: 'GenericSwitch',
+          nodeLabel: 'GenericSwitch',
+
+          serialNumber: 'SN 0x1234567397',
+          uniqueId: '0x1234567397',
+          reachable: true,
+        },
+        switch: {
+          numberOfPositions: 2,
+          currentPosition: 0,
+          multiPressMax: 2,
+        },
+      },
+    );
+    this.log.notice(`Creating switchEnpoint2`);
+    await aggregatorNode?.add(switchEnpoint2);
+    */
+
     /*
     const lightEndpoint1 = new EndpointNode(ColorTemperatureLightDevice.with(BridgedDeviceBasicInformationServer), {
       // }, MatterbridgeIdentifyServer, MatterbridgeOnOffServer, MatterbridgeLevelControlServer, MatterbridgeColorControlServer), {
