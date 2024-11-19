@@ -232,7 +232,6 @@ export interface MatterbridgeEndpointCommands {
 export class MatterbridgeEndpoint extends Endpoint {
   public static bridgeMode = '';
   public static logLevel = LogLevel.INFO;
-  public static deviceCount = 1;
 
   log: AnsiLogger;
   plugin: string | undefined = undefined;
@@ -294,12 +293,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     // Convert the options to an Endpoint.Options
     // [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }]
     const optionsV8 = {
-      id: uniqueStorageKey?.replace(/[ :.]/g, ''),
+      id: uniqueStorageKey?.replace(/[ .]/g, ''),
       number: endpointId,
       descriptor: tagList ? { tagList } : undefined,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, any> };
-    MatterbridgeEndpoint.deviceCount++;
     super(endpointV8, optionsV8);
     this.tagList = tagList;
 
@@ -347,7 +345,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     return behaviorTypes;
   }
 
-  static getBehaviourTypeFromClusterServerId(clusterId: ClusterId) {
+  static getBehaviourTypeFromClusterServerId(clusterId: ClusterId, switchType = 'MomentarySwitch') {
     // Map ClusterId to Behavior.Type
     if (clusterId === Identify.Cluster.id) return MatterbridgeIdentifyServer;
     if (clusterId === Groups.Cluster.id) return GroupsServer;
@@ -356,10 +354,10 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === ColorControl.Cluster.id) return MatterbridgeColorControlServer;
     if (clusterId === DoorLock.Cluster.id) return MatterbridgeDoorLockServer;
     if (clusterId === Thermostat.Cluster.id) return MatterbridgeThermostatServer;
-    if (clusterId === TimeSynchronization.Cluster.id) return TimeSynchronizationServer.with(TimeSynchronization.Feature.TimeZone);
     if (clusterId === WindowCovering.Cluster.id) return MatterbridgeWindowCoveringServer;
     if (clusterId === FanControl.Cluster.id) return MatterbridgeFanControlServer;
-    if (clusterId === Switch.Cluster.id) return SwitchServer.with('MomentarySwitch', 'MomentarySwitchRelease', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress');
+    if (clusterId === Switch.Cluster.id && switchType === 'MomentarySwitch') return SwitchServer.with('MomentarySwitch', 'MomentarySwitchRelease', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress');
+    if (clusterId === Switch.Cluster.id && switchType === 'LatchingSwitch') return SwitchServer.with('LatchingSwitch');
     if (clusterId === TemperatureMeasurement.Cluster.id) return TemperatureMeasurementServer;
     if (clusterId === RelativeHumidityMeasurement.Cluster.id) return RelativeHumidityMeasurementServer;
     if (clusterId === PressureMeasurement.Cluster.id) return PressureMeasurementServer;
@@ -540,8 +538,18 @@ export class MatterbridgeEndpoint extends Endpoint {
     return this.parts.find((part) => part.id === endpointName) as MatterbridgeEndpoint | undefined;
   }
 
+  getChildEndpoints(): Endpoint[] {
+    return Array.from(this.parts);
+  }
+
   getDeviceTypes(): DeviceTypeDefinition[] {
     return Array.from(this.deviceTypes.values());
+  }
+
+  setDeviceTypes(deviceTypes: AtLeastOne<DeviceTypeDefinition>): void {
+    deviceTypes.forEach((deviceType) => {
+      this.addDeviceType(deviceType);
+    });
   }
 
   getClusterServer<const T extends ClusterType>(cluster: T): ClusterServerObj<T> | undefined {
@@ -567,10 +575,12 @@ export class MatterbridgeEndpoint extends Endpoint {
       }
     }
     this.log.debug(`addClusterServer: ${hk}${'0x' + cluster.id.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(cluster.id)}${db} with options: ${debugStringify(options)}${rs}`);
-    const behavior = MatterbridgeEndpoint.getBehaviourTypeFromClusterServerId(cluster.id);
-    this.behaviors.require(behavior, options);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.clusterServers.set(cluster.id, cluster as any);
+    let switchType = undefined;
+    if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('multiPressComplete')) switchType = 'MomentarySwitch';
+    if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('switchLatched')) switchType = 'LatchingSwitch';
+    const behavior = MatterbridgeEndpoint.getBehaviourTypeFromClusterServerId(cluster.id, switchType);
+    if (cluster.id !== BasicInformationCluster.id) this.behaviors.require(behavior, options);
+    this.clusterServers.set(cluster.id, cluster as unknown as ClusterServerObj);
   }
 
   /**
@@ -589,7 +599,6 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (includeServerList.includes(Switch.Cluster.id)) endpoint.addClusterServer(this.getDefaultSwitchClusterServer());
     if (includeServerList.includes(DoorLock.Cluster.id)) endpoint.addClusterServer(this.getDefaultDoorLockClusterServer());
     if (includeServerList.includes(Thermostat.Cluster.id)) endpoint.addClusterServer(this.getDefaultThermostatClusterServer());
-    if (includeServerList.includes(TimeSynchronization.Cluster.id)) endpoint.addClusterServer(this.getDefaultTimeSyncClusterServer());
     if (includeServerList.includes(WindowCovering.Cluster.id)) endpoint.addClusterServer(this.getDefaultWindowCoveringClusterServer());
     if (includeServerList.includes(FanControl.Cluster.id)) endpoint.addClusterServer(this.getDefaultFanControlClusterServer());
     if (includeServerList.includes(TemperatureMeasurement.Cluster.id)) endpoint.addClusterServer(this.getDefaultTemperatureMeasurementClusterServer());
@@ -626,11 +635,12 @@ export class MatterbridgeEndpoint extends Endpoint {
         ClusterServer(
           FixedLabelCluster,
           {
-            labelList: [],
+            labelList: [{ label, value }],
           },
           {},
         ),
       );
+      return;
     }
     const labelList = (this.getAttribute(FixedLabelCluster.id, 'labelList', this.log) ?? []).filter((entryLabel: { label: string; value: string }) => entryLabel.label !== label);
     labelList.push({ label, value });
@@ -643,11 +653,12 @@ export class MatterbridgeEndpoint extends Endpoint {
         ClusterServer(
           UserLabelCluster,
           {
-            labelList: [],
+            labelList: [{ label, value }],
           },
           {},
         ),
       );
+      return;
     }
     const labelList = (this.getAttribute(UserLabelCluster.id, 'labelList', this.log) ?? []).filter((entryLabel: { label: string; value: string }) => entryLabel.label !== label);
     labelList.push({ label, value });
@@ -980,6 +991,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     hardwareVersion = 1,
     hardwareVersionString = '1.0.0',
   ) {
+    this.log.logName = deviceName;
     this.deviceName = deviceName;
     this.serialNumber = serialNumber;
     this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
@@ -1080,9 +1092,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     hardwareVersion = 1,
     hardwareVersionString = '1.0.0',
   ) {
+    this.log.logName = deviceName;
     this.deviceName = deviceName;
     this.serialNumber = serialNumber;
     this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
+    this.productId = undefined;
     this.productName = productName;
     this.vendorId = vendorId;
     this.vendorName = vendorName;
@@ -1236,50 +1250,6 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default Dummy Thread Network Diagnostics Cluster server.
-   * @deprecated This method is deprecated and is only used for testing.
-   *
-   * @remarks
-   * This method adds a cluster server used only to give the networkName to Eve app.
-   *
-   * @returns void
-   */
-  createDefaultDummyThreadNetworkDiagnosticsClusterServer() {
-    this.addClusterServer(
-      ClusterServer(
-        ThreadNetworkDiagnosticsCluster.with(ThreadNetworkDiagnostics.Feature.PacketCounts, ThreadNetworkDiagnostics.Feature.ErrorCounts),
-        {
-          channel: 1,
-          routingRole: ThreadNetworkDiagnostics.RoutingRole.Router,
-          networkName: 'MyMatterThread',
-          panId: 0,
-          extendedPanId: 0,
-          meshLocalPrefix: null,
-          neighborTable: [],
-          routeTable: [],
-          partitionId: null,
-          weighting: null,
-          dataVersion: null,
-          stableDataVersion: null,
-          leaderRouterId: null,
-          securityPolicy: null,
-          channelPage0Mask: null,
-          operationalDatasetComponents: null,
-          overrunCount: 0,
-          activeNetworkFaultsList: [],
-        },
-        {
-          resetCounts: async (data) => {
-            this.log.debug('Matter command: resetCounts');
-            await this.commandHandler.executeHandler('resetCounts', data);
-          },
-        },
-        {},
-      ),
-    );
-  }
-
-  /**
    * Get a default OnOff cluster server.
    *
    * @param onOff - The initial state of the OnOff cluster (default: false).
@@ -1312,6 +1282,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default OnOff cluster server.
    *
    * @param onOff - The initial state of the OnOff cluster (default: false).
+   * @returns {void}
    */
   createDefaultOnOffClusterServer(onOff = false) {
     this.addClusterServer(this.getDefaultOnOffClusterServer(onOff));
@@ -1320,14 +1291,17 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Get a default level control cluster server.
    *
-   * @param currentLevel - The current level (default: 0).
+   * @param currentLevel - The current level (default: 254).
+   * @param maxLevel - The maximum level (default: 254).
+   * @param onLevel - The on level (default: null).
    */
-  getDefaultLevelControlClusterServer(currentLevel = 0) {
+  getDefaultLevelControlClusterServer(currentLevel = 254, maxLevel = 254, onLevel = null) {
     return ClusterServer(
       LevelControlCluster.with(LevelControl.Feature.OnOff),
       {
         currentLevel,
-        onLevel: 0,
+        maxLevel,
+        onLevel,
         options: {
           executeIfOff: false,
           coupleColorTempToLevel: false,
@@ -1367,10 +1341,12 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default level control cluster server.
    *
-   * @param currentLevel - The current level (default: 0).
+   * @param currentLevel - The current level (default: 254).
+   * @param maxLevel - The maximum level (default: 254).
+   * @param onLevel - The on level (default: null).
    */
-  createDefaultLevelControlClusterServer(currentLevel = 0) {
-    this.addClusterServer(this.getDefaultLevelControlClusterServer(currentLevel));
+  createDefaultLevelControlClusterServer(currentLevel = 254, maxLevel = 254, onLevel = null) {
+    this.addClusterServer(this.getDefaultLevelControlClusterServer(currentLevel, maxLevel, onLevel));
   }
 
   /**
@@ -1472,7 +1448,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.addClusterServer(this.getDefaultColorControlClusterServer(currentX, currentY, currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
   }
 
-  private isTagListAdded = false;
+  private isColorControlConfigured = false;
 
   /**
    * Configures the color control cluster for a device.
@@ -1488,13 +1464,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   async configureColorControlCluster(hueSaturation: boolean, xy: boolean, colorTemperature: boolean, colorMode?: ColorControl.ColorMode, endpoint?: MatterbridgeEndpoint) {
     if (!endpoint) endpoint = this as MatterbridgeEndpoint;
-    if (this.isTagListAdded) return;
+    if (this.isColorControlConfigured) return;
 
     if (endpoint.construction.status !== Lifecycle.Status.Active) {
       this.log.debug(`**configureColorControlCluster() delaying for endpoint construction ${endpoint.construction.status}`);
       setTimeout(async () => {
         await endpoint.configureColorControlCluster(hueSaturation, xy, colorTemperature, colorMode, endpoint);
-        this.isTagListAdded = true;
+        this.isColorControlConfigured = true;
       }, 500);
       return;
     }
@@ -1505,7 +1481,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       await endpoint.setAttribute(ColorControlCluster.id, 'colorMode', colorMode, this.log, endpoint);
       await endpoint.setAttribute(ColorControlCluster.id, 'enhancedColorMode', colorMode, this.log, endpoint);
     }
-    this.isTagListAdded = true;
+    this.isColorControlConfigured = true;
   }
 
   /**
@@ -1525,7 +1501,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Get a default window covering cluster server.
    *
-   * @param positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0.
+   * @param positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
    */
   getDefaultWindowCoveringClusterServer(positionPercent100ths?: number) {
     return ClusterServer(
@@ -1574,7 +1550,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default window covering cluster server.
    *
-   * @param positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0.
+   * @param positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
    */
   createDefaultWindowCoveringClusterServer(positionPercent100ths?: number) {
     this.addClusterServer(this.getDefaultWindowCoveringClusterServer(positionPercent100ths));
@@ -1808,38 +1784,38 @@ export class MatterbridgeEndpoint extends Endpoint {
         return false;
       }
       if (event === 'Single') {
-        cluster.setCurrentPositionAttribute(1);
+        endpoint.setAttribute(cluster.id, 'currentPosition', 1, log);
         cluster.triggerInitialPressEvent({ newPosition: 1 });
-        cluster.setCurrentPositionAttribute(0);
+        endpoint.setAttribute(cluster.id, 'currentPosition', 0, log);
         cluster.triggerShortReleaseEvent({ previousPosition: 1 });
-        cluster.setCurrentPositionAttribute(0);
+        endpoint.setAttribute(cluster.id, 'currentPosition', 0, log);
         cluster.triggerMultiPressCompleteEvent({ previousPosition: 1, totalNumberOfPressesCounted: 1 });
         log?.info(`${db}Trigger endpoint ${or}${endpoint.id}:${endpoint.number}${db} event ${hk}${cluster.name}.SinglePress${db}`);
       }
       if (event === 'Double') {
-        cluster.setCurrentPositionAttribute(1);
+        endpoint.setAttribute(cluster.id, 'currentPosition', 1, log);
         cluster.triggerInitialPressEvent({ newPosition: 1 });
-        cluster.setCurrentPositionAttribute(0);
+        endpoint.setAttribute(cluster.id, 'currentPosition', 0, log);
         cluster.triggerShortReleaseEvent({ previousPosition: 1 });
-        cluster.setCurrentPositionAttribute(1);
+        endpoint.setAttribute(cluster.id, 'currentPosition', 1, log);
         cluster.triggerInitialPressEvent({ newPosition: 1 });
         cluster.triggerMultiPressOngoingEvent({ newPosition: 1, currentNumberOfPressesCounted: 2 });
-        cluster.setCurrentPositionAttribute(0);
+        endpoint.setAttribute(cluster.id, 'currentPosition', 0, log);
         cluster.triggerShortReleaseEvent({ previousPosition: 1 });
         cluster.triggerMultiPressCompleteEvent({ previousPosition: 1, totalNumberOfPressesCounted: 2 });
         log?.info(`${db}Trigger endpoint ${or}${endpoint.id}:${endpoint.number}${db} event ${hk}${cluster.name}.DoublePress${db}`);
       }
       if (event === 'Long') {
-        cluster.setCurrentPositionAttribute(1);
+        endpoint.setAttribute(cluster.id, 'currentPosition', 1, log);
         cluster.triggerInitialPressEvent({ newPosition: 1 });
         cluster.triggerLongPressEvent({ newPosition: 1 });
-        cluster.setCurrentPositionAttribute(0);
+        endpoint.setAttribute(cluster.id, 'currentPosition', 0, log);
         cluster.triggerLongReleaseEvent({ previousPosition: 1 });
         log?.info(`${db}Trigger endpoint ${or}${endpoint.id}:${endpoint.number}${db} event ${hk}${cluster.name}.LongPress${db}`);
       }
     }
     if (['Press', 'Release'].includes(event)) {
-      const cluster = endpoint.getClusterServer(Switch.Complete);
+      const cluster = endpoint.getClusterServer(SwitchCluster.with(Switch.Feature.LatchingSwitch));
       if (!cluster || !cluster.getFeatureMapAttribute().latchingSwitch) {
         log?.error(`triggerSwitchEvent ${event} error: Switch cluster with LatchingSwitch not found on endpoint ${endpoint.id}:${endpoint.number}`);
         return false;
@@ -1849,15 +1825,13 @@ export class MatterbridgeEndpoint extends Endpoint {
         return false;
       }
       if (event === 'Press') {
-        cluster.setCurrentPositionAttribute(1);
-        log?.info(`${db}Update endpoint ${or}${endpoint.id}:${endpoint.number}${db} attribute ${hk}${cluster.name}.CurrentPosition${db} to ${YELLOW}1${db}`);
-        if (cluster.triggerSwitchLatchedEvent) cluster.triggerSwitchLatchedEvent({ newPosition: 1 });
+        endpoint.setAttribute(cluster.id, 'currentPosition', 1, log);
+        cluster.triggerSwitchLatchedEvent({ newPosition: 1 });
         log?.info(`${db}Trigger endpoint ${or}${endpoint.id}:${endpoint.number}${db} event ${hk}${cluster.name}.Press${db}`);
       }
       if (event === 'Release') {
-        cluster.setCurrentPositionAttribute(0);
-        log?.info(`${db}Update endpoint ${or}${endpoint.id}:${endpoint.number}${db} attribute ${hk}${cluster.name}.CurrentPosition${db} to ${YELLOW}0${db}`);
-        if (cluster.triggerSwitchLatchedEvent) cluster.triggerSwitchLatchedEvent({ newPosition: 0 });
+        endpoint.setAttribute(cluster.id, 'currentPosition', 0, log);
+        cluster.triggerSwitchLatchedEvent({ newPosition: 0 });
         log?.info(`${db}Trigger endpoint ${or}${endpoint.id}:${endpoint.number}${db} event ${hk}${cluster.name}.Release${db}`);
       }
     }
@@ -2395,52 +2369,6 @@ export class MatterbridgeEndpoint extends Endpoint {
     maxCoolSetpointLimit = 50,
   ) {
     this.addClusterServer(this.getDefaultThermostatClusterServer(localTemperature, occupiedHeatingSetpoint, occupiedCoolingSetpoint, minSetpointDeadBand, minHeatSetpointLimit, maxHeatSetpointLimit, minCoolSetpointLimit, maxCoolSetpointLimit));
-  }
-
-  /**
-   * Get a default dummy time sync cluster server. Only needed to create a thermostat.
-   */
-  getDefaultTimeSyncClusterServer() {
-    return ClusterServer(
-      TimeSynchronizationCluster.with(TimeSynchronization.Feature.TimeZone),
-      {
-        utcTime: null,
-        granularity: TimeSynchronization.Granularity.NoTimeGranularity,
-        timeZone: [{ offset: 0, validAt: 0 }],
-        dstOffset: [],
-        localTime: null,
-        timeZoneDatabase: TimeSynchronization.TimeZoneDatabase.None,
-        timeZoneListMaxSize: 1,
-        dstOffsetListMaxSize: 1,
-      },
-      {
-        setTimeZone: async (data) => {
-          this.log.debug('Matter command: setTimeZone', data.request);
-          await this.commandHandler.executeHandler('setTimeZone', data);
-          return { dstOffsetsRequired: false };
-        },
-        setDstOffset: async (data) => {
-          this.log.debug('Matter command: setDstOffset', data.request);
-          await this.commandHandler.executeHandler('setDstOffset', data);
-        },
-        setUtcTime: async (data) => {
-          this.log.debug('Matter command: setUtcTime', data.request);
-          await this.commandHandler.executeHandler('setUtcTime', data);
-        },
-      },
-      {
-        dstTableEmpty: true,
-        dstStatus: true,
-        timeZoneStatus: true,
-        timeFailure: true,
-      },
-    );
-  }
-  /**
-   * Creates a default dummy time sync cluster server. Only needed to create a thermostat.
-   */
-  createDefaultTimeSyncClusterServer() {
-    this.addClusterServer(this.getDefaultTimeSyncClusterServer());
   }
 
   /**

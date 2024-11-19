@@ -727,6 +727,18 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     hardwareVersion = 1,
     hardwareVersionString = '1.0.0',
   ) {
+    this.log.logName = deviceName;
+    this.deviceName = deviceName;
+    this.serialNumber = serialNumber;
+    this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
+    this.productId = productId;
+    this.productName = productName;
+    this.vendorId = vendorId;
+    this.vendorName = vendorName;
+    this.softwareVersion = softwareVersion;
+    this.softwareVersionString = softwareVersionString;
+    this.hardwareVersion = hardwareVersion;
+    this.hardwareVersionString = hardwareVersionString;
     return ClusterServer(
       BasicInformationCluster,
       {
@@ -784,17 +796,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     hardwareVersion = 1,
     hardwareVersionString = '1.0.0',
   ) {
-    this.deviceName = deviceName;
-    this.serialNumber = serialNumber;
-    this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
-    this.productId = productId;
-    this.productName = productName;
-    this.vendorId = vendorId;
-    this.vendorName = vendorName;
-    this.softwareVersion = softwareVersion;
-    this.softwareVersionString = softwareVersionString;
-    this.hardwareVersion = hardwareVersion;
-    this.hardwareVersionString = hardwareVersionString;
     if (MatterbridgeDevice.bridgeMode === 'bridge') {
       this.addDeviceType(bridgedNode);
       this.createDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString);
@@ -827,6 +828,18 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     hardwareVersion = 1,
     hardwareVersionString = '1.0.0',
   ) {
+    this.log.logName = deviceName;
+    this.deviceName = deviceName;
+    this.serialNumber = serialNumber;
+    this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
+    this.productId = undefined;
+    this.productName = productName;
+    this.vendorId = vendorId;
+    this.vendorName = vendorName;
+    this.softwareVersion = softwareVersion;
+    this.softwareVersionString = softwareVersionString;
+    this.hardwareVersion = hardwareVersion;
+    this.hardwareVersionString = hardwareVersionString;
     return ClusterServer(
       BridgedDeviceBasicInformationCluster,
       {
@@ -877,16 +890,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     hardwareVersion = 1,
     hardwareVersionString = '1.0.0',
   ) {
-    this.deviceName = deviceName;
-    this.serialNumber = serialNumber;
-    this.uniqueId = this.createUniqueId(deviceName, serialNumber, vendorName, productName);
-    this.productName = productName;
-    this.vendorId = vendorId;
-    this.vendorName = vendorName;
-    this.softwareVersion = softwareVersion;
-    this.softwareVersionString = softwareVersionString;
-    this.hardwareVersion = hardwareVersion;
-    this.hardwareVersionString = hardwareVersionString;
     this.addClusterServer(this.getDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString));
   }
 
@@ -1067,14 +1070,17 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Get a default level control cluster server.
    *
-   * @param currentLevel - The current level (default: 0).
+   * @param currentLevel - The current level (default: 254).
+   * @param maxLevel - The maximum level (default: 254).
+   * @param onLevel - The on level (default: null).
    */
-  getDefaultLevelControlClusterServer(currentLevel = 0) {
+  getDefaultLevelControlClusterServer(currentLevel = 254, maxLevel = 254, onLevel = null) {
     return ClusterServer(
       LevelControlCluster.with(LevelControl.Feature.OnOff),
       {
         currentLevel,
-        onLevel: 0,
+        maxLevel,
+        onLevel,
         options: {
           executeIfOff: false,
           coupleColorTempToLevel: false,
@@ -1114,10 +1120,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Creates a default level control cluster server.
    *
-   * @param currentLevel - The current level (default: 0).
+   * @param currentLevel - The current level (default: 254).
+   * @param maxLevel - The maximum level (default: 254).
+   * @param onLevel - The on level (default: null).
    */
-  createDefaultLevelControlClusterServer(currentLevel = 0) {
-    this.addClusterServer(this.getDefaultLevelControlClusterServer(currentLevel));
+  createDefaultLevelControlClusterServer(currentLevel = 254, maxLevel = 254, onLevel = null) {
+    this.addClusterServer(this.getDefaultLevelControlClusterServer(currentLevel, maxLevel, onLevel));
   }
 
   /**

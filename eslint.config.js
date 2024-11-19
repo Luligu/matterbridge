@@ -20,13 +20,6 @@ export default [
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
-      /*
-      parser: tseslint.parser,
-      parserOptions: {
-        project: './tsconfig.eslint.json',
-        tsconfigRootDir: import.meta.dirname,
-      },
-      */
     },
     linterOptions: {
       reportUnusedDisableDirectives: 'warn',
@@ -40,7 +33,7 @@ export default [
   {
     name: 'javascript',
     files: ['**/*.js'],
-    // ...tseslint.configs.disableTypeChecked,
+    ...tseslint.configs.disableTypeChecked,
   },
   {
     name: 'typescript',
@@ -62,13 +55,11 @@ export default [
   {
     name: 'jest',
     files: ['**/__test__/*', '**/*.test.ts', '**/*.spec.ts'],
-    // ...tseslint.configs.disableTypeChecked,
     plugins: {
       '@typescript-eslint': tseslint.plugin,
       jest: jesteslint,
     },
-    rules: {
-      ...jesteslint.configs['flat/recommended'].rules,
-    },
+    ...tseslint.configs.disableTypeChecked,
+    ...jesteslint.configs['flat/recommended'],
   },
 ];
