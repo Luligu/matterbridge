@@ -20,11 +20,12 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 Feel free to join (the link is now permanent)!
 
-## [1.6.2] - 2024-11-12
+## [1.6.2] - 2024-11-20
 
 ### Added
 
-- [nginx]: Added the route /matterbridge/ to be used with nginx proxy server https://github.com/Luligu/matterbridge/blob/main/README-NGINX.md.
+- [matter.js]: Almost completed the phase 2 of migration to edge (matter.js new API).
+- [nginx]: Added the route /matterbridge/ to be used with nginx proxy server https://github.com/Luligu/matterbridge/blob/dev/README-NGINX.md.
 - [config]: Config and schema are loaded before loading the plugin to allow to configure the plugin even when it throws error on load.
 - [config]: Added version to the config.
 
@@ -33,7 +34,7 @@ Feel free to join (the link is now permanent)!
 - [matter.js]: Update to matter.js 0.11.2.
 - [matter.js]: Update to matter.js 0.11.3.
 - [matter.js]: Update to matter.js 0.11.4.
-- [PluginManager]: On first load the type is AnyPlatform.
+- [PluginManager]: On first load the plugin type is AnyPlatform.
 - [package]: Update dependencies.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
