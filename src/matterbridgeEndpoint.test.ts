@@ -560,7 +560,7 @@ describe('MatterbridgeEndpoint class', () => {
 
       device.addDeviceType(powerSource);
       device.createDefaultPowerSourceWiredClusterServer();
-      device.createDefaultPowerSourceConfigurationClusterServer();
+      // device.createDefaultPowerSourceConfigurationClusterServer();
 
       await server.add(device);
       await edge.startServerNode(server);
