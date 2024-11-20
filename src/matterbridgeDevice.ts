@@ -944,7 +944,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       ElectricalPowerMeasurementCluster.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent),
       {
         powerMode: ElectricalPowerMeasurement.PowerMode.Ac,
-        numberOfMeasurementTypes: 3,
+        numberOfMeasurementTypes: 4,
         accuracy: [
           {
             measurementType: MeasurementType.Voltage,

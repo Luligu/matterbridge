@@ -30,20 +30,21 @@ import os from 'os';
 import { randomBytes } from 'crypto';
 
 // NodeStorage and AnsiLogger modules
-import { rs, GREEN, debugStringify } from 'node-ansi-logger';
+import { rs, GREEN, debugStringify, er, zb, nf } from 'node-ansi-logger';
 import { NodeStorage } from 'node-persist-manager';
 
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { bridge, genericSwitch, onOffLight, onOffOutlet } from './matterbridgeDeviceTypes.js';
+import { bridge, bridgedNode, electricalSensor, genericSwitch, onOffLight, onOffOutlet, powerSource } from './matterbridgeDeviceTypes.js';
+import { dev, plg, SanitizedSessionInformation } from './matterbridgeTypes.js';
 import { copyDirectory, getParameter, hasParameter, waiter } from './utils/utils.js';
 
 // @matter
 import { DeviceTypeId, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, FabricIndex, Lifecycle, SessionsBehavior, NumberTag, EndpointServer } from '@matter/main';
 import { ServerNode, Endpoint as EndpointNode, Environment, StorageService, StorageContext, StorageManager } from '@matter/main';
-import { BasicInformationCluster, ColorControl, ColorControlCluster, OnOffCluster, LevelControl, Identify, Descriptor } from '@matter/main/clusters';
+import { BasicInformationCluster, ColorControl, ColorControlCluster, OnOffCluster, LevelControl, Identify, Descriptor, SwitchCluster } from '@matter/main/clusters';
 import { ExposedFabricInformation, FabricAction, MdnsService } from '@matter/main/protocol';
 import { ColorTemperatureLightDevice, GenericSwitchDevice, OnOffLightDevice } from '@matter/main/devices';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
@@ -53,9 +54,6 @@ import { BridgedDeviceBasicInformationServer, ColorControlServer, IdentifyServer
 import { CommissioningServer, MatterServer, NodeOptions } from '@project-chip/matter.js';
 import { Aggregator, Device, DeviceTypes, logEndpoint } from '@project-chip/matter.js/device';
 import { MatterbridgeColorControlServer, MatterbridgeIdentifyServer, MatterbridgeLevelControlServer, MatterbridgeOnOffServer } from './matterbridgeBehaviors.js';
-import { SanitizedSessionInformation } from './matterbridgeTypes.js';
-
-const verbose = hasParameter('verbose');
 
 /**
  * Represents the MatterbridgeEdge application.
@@ -436,16 +434,31 @@ export class MatterbridgeEdge extends Matterbridge {
   }
 
   override async addBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void> {
+    // Check if the plugin is registered
+    const plugin = this.plugins.get(pluginName);
+    if (!plugin) {
+      this.log.error(`Error adding bridged device ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) plugin ${plg}${pluginName}${er} not found`);
+      return;
+    }
+
+    // Register and add the device to the matterbridge aggregator node
     if (this.bridgeMode === 'bridge') {
       this.log.info(`Adding ${pluginName}:${device.deviceName} to Matterbridge aggregator node`);
       const aggregatorNode = this.agToAggregatorEndpoint.get('Matterbridge')?.aggregatorNode;
       await aggregatorNode?.add(device);
     } else if (this.bridgeMode === 'childbridge') {
-      this.log.info(`Adding ${pluginName}:${device.deviceName} to ${pluginName} aggregator node`);
-      const aggregatorNode = this.agToAggregatorEndpoint.get(pluginName)?.aggregatorNode;
-      await aggregatorNode?.add(device);
+      if (plugin.type === 'DynamicPlatform') {
+        this.log.info(`Adding ${pluginName}:${device.deviceName} to ${pluginName} aggregator node`);
+        const aggregatorNode = this.agToAggregatorEndpoint.get(pluginName)?.aggregatorNode;
+        await aggregatorNode?.add(device);
+      }
     }
     // TODO: Implement plugins and devices
+    if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
+    if (plugin.addedDevices !== undefined) plugin.addedDevices++;
+    // Add the device to the DeviceManager
+    this.devices.set(device as unknown as MatterbridgeDevice);
+    this.log.info(`Added and registered bridged device (${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) for plugin ${plg}${pluginName}${nf}`);
   }
 
   override async removeBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void> {
@@ -553,9 +566,16 @@ export class MatterbridgeEdge extends Matterbridge {
     const aggregatorNode = this.agToAggregatorEndpoint.get('Matterbridge')?.aggregatorNode;
     if (!aggregatorNode) return;
 
+    /*
     this.log.notice(`Creating OnOffLight1`);
     const lightEndpoint = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight1' }, true);
+    lightEndpoint.addDeviceType(bridgedNode);
     lightEndpoint.createDefaultBridgedDeviceBasicInformationClusterServer('OnOffLight 1', '123456789', 0xfff1, 'Matterbridge', 'Light');
+    lightEndpoint.addDeviceType(powerSource);
+    lightEndpoint.createDefaultPowerSourceWiredClusterServer();
+    lightEndpoint.addDeviceType(electricalSensor);
+    lightEndpoint.addClusterServer(lightEndpoint.getDefaultElectricalEnergyMeasurementClusterServer());
+    lightEndpoint.addClusterServer(lightEndpoint.getDefaultElectricalPowerMeasurementClusterServer());
     lightEndpoint.addRequiredClusterServers(lightEndpoint);
     this.log.notice(`Adding OnOffLight1 to ${await this.matterbridgeContext.get<string>('storeId')} aggregator`);
     await aggregatorNode.add(lightEndpoint);
@@ -563,17 +583,64 @@ export class MatterbridgeEdge extends Matterbridge {
 
     this.log.notice(`Creating Outlet1`);
     const outletEndpoint = new MatterbridgeEndpoint(onOffOutlet, { uniqueStorageKey: 'OnOffOutlet1' }, true);
+    outletEndpoint.addDeviceType(bridgedNode);
     outletEndpoint.createDefaultBridgedDeviceBasicInformationClusterServer('OnOffOutlet 1', '123456789', 0xfff1, 'Matterbridge', 'Outlet');
+    outletEndpoint.addDeviceType(powerSource);
+    outletEndpoint.createDefaultPowerSourceReplaceableBatteryClusterServer();
+    outletEndpoint.addDeviceType(electricalSensor);
+    outletEndpoint.addClusterServer(outletEndpoint.getDefaultElectricalEnergyMeasurementClusterServer());
+    outletEndpoint.addClusterServer(outletEndpoint.getDefaultElectricalPowerMeasurementClusterServer());
     outletEndpoint.addRequiredClusterServers(outletEndpoint);
     const input0 = outletEndpoint.addChildDeviceTypeWithClusterServer('Input:0', [genericSwitch], undefined, undefined, true);
-    // input0.behaviors.require(SwitchServer.with('MomentarySwitch', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress', 'MomentarySwitchRelease'));
-    // input0.createDefaultLatchingSwitchClusterServer();
     const input1 = outletEndpoint.addChildDeviceTypeWithClusterServer('Input:1', [genericSwitch], undefined, undefined, true);
-    // input1.behaviors.require(SwitchServer.with('MomentarySwitch', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress', 'MomentarySwitchRelease'));
-    // input1.createDefaultLatchingSwitchClusterServer();
     this.log.notice(`Adding OnOffOutlet1 to ${await this.matterbridgeContext.get<string>('storeId')} aggregator`);
     await aggregatorNode.add(outletEndpoint);
     logEndpoint(EndpointServer.forEndpoint(outletEndpoint));
+    */
+
+    this.log.notice(`Creating switchEnpoint2`);
+    const switchEnpoint2 = new EndpointNode(GenericSwitchDevice.with(BridgedDeviceBasicInformationServer, SwitchServer.with('MomentarySwitch', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress', 'MomentarySwitchRelease')), {
+      id: 'GenericSwitch',
+      bridgedDeviceBasicInformation: {
+        vendorId: VendorId(await this.matterbridgeContext.get<number>('vendorId')),
+        vendorName: await this.matterbridgeContext.get<string>('vendorName'),
+
+        productName: 'GenericSwitch',
+        productLabel: 'GenericSwitch',
+        nodeLabel: 'GenericSwitch',
+
+        serialNumber: 'SN 0x123456739',
+        uniqueId: '0x123456739',
+        reachable: true,
+      },
+      switch: {
+        numberOfPositions: 2,
+        currentPosition: 0,
+        multiPressMax: 2,
+      },
+    });
+    this.log.notice(`Adding switchEnpoint2 to ${await this.matterbridgeContext.get<string>('storeId')} aggregator`);
+    await aggregatorNode.add(switchEnpoint2);
+    logEndpoint(EndpointServer.forEndpoint(switchEnpoint2));
+    if (switchEnpoint2.behaviors.has(SwitchServer)) this.log.notice(`SwitchServer found`);
+    switchEnpoint2.act((agent) => agent['switch'].events['initialPress'].emit({ newPosition: 1 }, agent.context));
+
+    const device = new MatterbridgeEndpoint(genericSwitch, { uniqueStorageKey: 'GenericSwitch 2' }, true);
+    device.createDefaultSwitchClusterServer();
+    device.addRequiredClusterServers(device);
+    await aggregatorNode.add(device);
+    logEndpoint(EndpointServer.forEndpoint(device));
+    await device.triggerSwitchEvent('Single', this.log);
+    await device.triggerSwitchEvent('Double', this.log);
+    await device.triggerSwitchEvent('Long', this.log);
+
+    const device1 = new MatterbridgeEndpoint(genericSwitch, { uniqueStorageKey: 'GenericSwitch 3' }, true);
+    device1.createDefaultLatchingSwitchClusterServer();
+    device1.addRequiredClusterServers(device1);
+    await aggregatorNode.add(device1);
+    logEndpoint(EndpointServer.forEndpoint(device1));
+    await device1.triggerSwitchEvent('Press', this.log);
+    await device1.triggerSwitchEvent('Release', this.log);
 
     /*
     this.log.notice(`Creating TestLight`);

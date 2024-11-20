@@ -42,6 +42,7 @@ export class MatterbridgeBehaviorDevice {
   log: AnsiLogger;
   commandHandler: NamedHandler<MatterbridgeEndpointCommands>;
   device: any;
+  endpointNumber: number | undefined = undefined;
 
   constructor(log: AnsiLogger, commandHandler: NamedHandler<MatterbridgeEndpointCommands>, device: any) {
     this.log = log;
@@ -51,87 +52,91 @@ export class MatterbridgeBehaviorDevice {
 
   identify({ identifyTime }: Identify.IdentifyRequest) {
     this.log.info(`Identifying device for ${identifyTime} seconds`);
-    this.commandHandler.executeHandler('identify', { request: { identifyTime }, attributes: {} } as any);
+    this.commandHandler.executeHandler('identify', { request: { identifyTime }, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
 
   on() {
     this.log.info(`Switching device on`);
-    this.commandHandler.executeHandler('on', { request: {}, attributes: {} } as any);
+    this.commandHandler.executeHandler('on', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
   off() {
     this.log.info(`Switching device off`);
-    this.commandHandler.executeHandler('off', { request: {}, attributes: {} } as any);
+    this.commandHandler.executeHandler('off', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
+  }
+  toggle() {
+    this.log.info(`Toggle device on/off`);
+    this.commandHandler.executeHandler('toggle', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
 
   moveToLevel({ level, transitionTime, optionsMask, optionsOverride }: LevelControl.MoveToLevelRequest) {
     this.log.info(`Setting level to ${level} with transitionTime ${transitionTime}`);
-    this.commandHandler.executeHandler('moveToLevel', { request: { level, transitionTime, optionsMask, optionsOverride }, attributes: {} } as any);
+    this.commandHandler.executeHandler('moveToLevel', { request: { level, transitionTime, optionsMask, optionsOverride }, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
   moveToLevelWithOnOff({ level, transitionTime, optionsMask, optionsOverride }: LevelControl.MoveToLevelRequest) {
     this.log.info(`Setting level to ${level} with transitionTime ${transitionTime}`);
-    this.commandHandler.executeHandler('moveToLevelWithOnOff', { request: { level, transitionTime, optionsMask, optionsOverride }, attributes: {} } as any);
+    this.commandHandler.executeHandler('moveToLevelWithOnOff', { request: { level, transitionTime, optionsMask, optionsOverride }, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
 
   moveToHue({ optionsMask, optionsOverride, hue, direction, transitionTime }: ColorControl.MoveToHueRequest) {
     this.log.info(`Setting hue to ${hue} with transitionTime ${transitionTime}`);
-    this.commandHandler.executeHandler('moveToHue', { request: { optionsMask, optionsOverride, hue, direction, transitionTime }, attributes: {} } as any);
+    this.commandHandler.executeHandler('moveToHue', { request: { optionsMask, optionsOverride, hue, direction, transitionTime }, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
   moveToSaturation({ optionsMask, optionsOverride, saturation, transitionTime }: ColorControl.MoveToSaturationRequest) {
     this.log.info(`Setting saturation to ${saturation} with transitionTime ${transitionTime}`);
-    this.commandHandler.executeHandler('moveToSaturation', { request: { optionsMask, optionsOverride, saturation, transitionTime }, attributes: {} } as any);
+    this.commandHandler.executeHandler('moveToSaturation', { request: { optionsMask, optionsOverride, saturation, transitionTime }, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
   moveToHueAndSaturation({ optionsOverride, optionsMask, saturation, hue, transitionTime }: ColorControl.MoveToHueAndSaturationRequest) {
     this.log.info(`Setting hue to ${hue} and saturation to ${saturation} with transitionTime ${transitionTime}`);
-    this.commandHandler.executeHandler('moveToHueAndSaturation', { request: { optionsOverride, optionsMask, saturation, hue, transitionTime }, attributes: {} } as any);
+    this.commandHandler.executeHandler('moveToHueAndSaturation', { request: { optionsOverride, optionsMask, saturation, hue, transitionTime }, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
   moveToColor({ optionsMask, optionsOverride, colorX, colorY, transitionTime }: ColorControl.MoveToColorRequest) {
     this.log.info(`Setting color to ${colorX}, ${colorY} with transitionTime ${transitionTime}`);
-    this.commandHandler.executeHandler('moveToColor', { request: { optionsMask, optionsOverride, colorX, colorY, transitionTime }, attributes: {} } as any);
+    this.commandHandler.executeHandler('moveToColor', { request: { optionsMask, optionsOverride, colorX, colorY, transitionTime }, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
   moveToColorTemperature({ optionsOverride, optionsMask, colorTemperatureMireds, transitionTime }: ColorControl.MoveToColorTemperatureRequest) {
     this.log.info(`Setting color temperature to ${colorTemperatureMireds} with transitionTime ${transitionTime}`);
-    this.commandHandler.executeHandler('moveToColorTemperature', { request: { optionsOverride, optionsMask, colorTemperatureMireds, transitionTime }, attributes: {} } as any);
+    this.commandHandler.executeHandler('moveToColorTemperature', { request: { optionsOverride, optionsMask, colorTemperatureMireds, transitionTime }, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
 
   upOrOpen() {
     this.log.info(`Opening cover`);
-    this.commandHandler.executeHandler('upOrOpen', { request: {}, attributes: {} } as any);
+    this.commandHandler.executeHandler('upOrOpen', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
   downOrClose() {
     this.log.info(`Closing cover`);
-    this.commandHandler.executeHandler('downOrClose', { request: {}, attributes: {} } as any);
+    this.commandHandler.executeHandler('downOrClose', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
   stopMotion() {
     this.log.info(`Stopping cover`);
-    this.commandHandler.executeHandler('stopMotion', { request: {}, attributes: {} } as any);
+    this.commandHandler.executeHandler('stopMotion', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
   goToLiftPercentage({ liftPercent100thsValue }: WindowCovering.GoToLiftPercentageRequest) {
     this.log.info(`Setting cover lift percentage to ${liftPercent100thsValue}`);
-    this.commandHandler.executeHandler('goToLiftPercentage', { request: { liftPercent100thsValue }, attributes: {} } as any);
+    this.commandHandler.executeHandler('goToLiftPercentage', { request: { liftPercent100thsValue }, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
 
   lockDoor() {
     this.log.info(`Locking door`);
-    this.commandHandler.executeHandler('lockDoor', { request: {}, attributes: {} } as any);
+    this.commandHandler.executeHandler('lockDoor', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
   unlockDoor() {
     this.log.info(`Unlocking door`);
-    this.commandHandler.executeHandler('unlockDoor', { request: {}, attributes: {} } as any);
+    this.commandHandler.executeHandler('unlockDoor', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
 
   step({ direction, wrap, lowestOff }: FanControl.StepRequest) {
     this.log.info(`Stepping fan with direction ${direction}`);
-    this.commandHandler.executeHandler('step', { request: { direction, wrap, lowestOff }, attributes: {} } as any);
+    this.commandHandler.executeHandler('step', { request: { direction, wrap, lowestOff }, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
 
   setpointRaiseLower({ mode, amount }: Thermostat.SetpointRaiseLowerRequest) {
     this.log.info(`Setting setpoint to ${amount} in mode ${mode}`);
-    this.commandHandler.executeHandler('setpointRaiseLower', { request: { mode, amount }, attributes: {} } as any);
+    this.commandHandler.executeHandler('setpointRaiseLower', { request: { mode, amount }, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
 
   enableDisableAlarm({ alarmsToEnableDisable }: BooleanStateConfiguration.EnableDisableAlarmRequest) {
     this.log.info(`Enabling/disabling alarm ${alarmsToEnableDisable}`);
-    this.commandHandler.executeHandler('enableDisableAlarm', { request: { alarmsToEnableDisable }, attributes: {} } as any);
+    this.commandHandler.executeHandler('enableDisableAlarm', { request: { alarmsToEnableDisable }, attributes: {}, endpoint: { number: this.endpointNumber } } as any);
   }
 }
 
@@ -164,6 +169,11 @@ export class MatterbridgeOnOffServer extends OnOffServer {
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     device.off();
     super.off();
+  }
+  override async toggle() {
+    const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
+    device.toggle();
+    super.toggle();
   }
 }
 

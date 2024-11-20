@@ -141,7 +141,7 @@ import {
 import { ClusterType, MeasurementType, getClusterNameById, Semtag } from '@matter/main/types';
 import { Specification, DeviceClassification } from '@matter/main/model';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
-import { IdentifyBehavior } from '@matter/node/behaviors/identify';
+import { IdentifyBehavior, IdentifyServer } from '@matter/node/behaviors/identify';
 import { GroupsServer } from '@matter/node/behaviors/groups';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
 import { RelativeHumidityMeasurementServer } from '@matter/node/behaviors/relative-humidity-measurement';
@@ -157,6 +157,8 @@ import {
   BasicInformationServer,
   CarbonDioxideConcentrationMeasurementServer,
   CarbonMonoxideConcentrationMeasurementServer,
+  ElectricalEnergyMeasurementServer,
+  ElectricalPowerMeasurementServer,
   FixedLabelServer,
   FormaldehydeConcentrationMeasurementServer,
   ModeSelectServer,
@@ -165,6 +167,8 @@ import {
   Pm10ConcentrationMeasurementServer,
   Pm1ConcentrationMeasurementServer,
   Pm25ConcentrationMeasurementServer,
+  PowerSourceServer,
+  PowerTopologyServer,
   RadonConcentrationMeasurementServer,
   SmokeCoAlarmServer,
   SwitchServer,
@@ -175,6 +179,7 @@ import {
 // @project-chip
 import { DeviceTypeDefinition, EndpointOptions } from '@project-chip/matter.js/device';
 import { ClusterClientObj, ClusterServer, ClusterServerHandlers, ClusterServerObj, GroupsClusterHandler } from '@project-chip/matter.js/cluster';
+import { SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
 
 export interface MatterbridgeEndpointCommands {
   identify: MakeMandatory<ClusterServerHandlers<typeof Identify.Complete>['identify']>;
@@ -248,6 +253,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   hardwareVersion: number | undefined = undefined;
   hardwareVersionString: string | undefined = undefined;
 
+  uniqueStorageKey: string | undefined = undefined;
   tagList?: Semtag[] = undefined;
 
   // Maps matter deviceTypes and endpoints
@@ -293,12 +299,13 @@ export class MatterbridgeEndpoint extends Endpoint {
     // Convert the options to an Endpoint.Options
     // [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }]
     const optionsV8 = {
-      id: uniqueStorageKey?.replace(/[ .]/g, ''),
+      id: uniqueStorageKey?.replace(/[ :.]/g, ''),
       number: endpointId,
       descriptor: tagList ? { tagList } : undefined,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, any> };
     super(endpointV8, optionsV8);
+    this.uniqueStorageKey = uniqueStorageKey;
     this.tagList = tagList;
 
     // Update the endpoint
@@ -345,7 +352,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     return behaviorTypes;
   }
 
-  static getBehaviourTypeFromClusterServerId(clusterId: ClusterId, switchType = 'MomentarySwitch') {
+  static getBehaviourTypeFromClusterServerId(clusterId: ClusterId, type?: string) {
     // Map ClusterId to Behavior.Type
     if (clusterId === Identify.Cluster.id) return MatterbridgeIdentifyServer;
     if (clusterId === Groups.Cluster.id) return GroupsServer;
@@ -356,8 +363,8 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === Thermostat.Cluster.id) return MatterbridgeThermostatServer;
     if (clusterId === WindowCovering.Cluster.id) return MatterbridgeWindowCoveringServer;
     if (clusterId === FanControl.Cluster.id) return MatterbridgeFanControlServer;
-    if (clusterId === Switch.Cluster.id && switchType === 'MomentarySwitch') return SwitchServer.with('MomentarySwitch', 'MomentarySwitchRelease', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress');
-    if (clusterId === Switch.Cluster.id && switchType === 'LatchingSwitch') return SwitchServer.with('LatchingSwitch');
+    if (clusterId === Switch.Cluster.id && type === 'MomentarySwitch') return SwitchServer.with('MomentarySwitch', 'MomentarySwitchRelease', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress');
+    if (clusterId === Switch.Cluster.id && type === 'LatchingSwitch') return SwitchServer.with('LatchingSwitch');
     if (clusterId === TemperatureMeasurement.Cluster.id) return TemperatureMeasurementServer;
     if (clusterId === RelativeHumidityMeasurement.Cluster.id) return RelativeHumidityMeasurementServer;
     if (clusterId === PressureMeasurement.Cluster.id) return PressureMeasurementServer;
@@ -383,6 +390,14 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === ModeSelect.Cluster.id) return ModeSelectServer;
     if (clusterId === UserLabel.Cluster.id) return UserLabelServer;
     if (clusterId === FixedLabel.Cluster.id) return FixedLabelServer;
+
+    if (clusterId === PowerTopology.Cluster.id) return PowerTopologyServer.with('TreeTopology');
+    if (clusterId === ElectricalPowerMeasurement.Cluster.id) return ElectricalPowerMeasurementServer.with('AlternatingCurrent');
+    if (clusterId === ElectricalEnergyMeasurement.Cluster.id) return ElectricalEnergyMeasurementServer.with('ImportedEnergy', 'ExportedEnergy', 'CumulativeEnergy');
+
+    if (clusterId === PowerSource.Cluster.id && type === 'WiredPowerSource') return PowerSourceServer.with(PowerSource.Feature.Wired);
+    if (clusterId === PowerSource.Cluster.id && type === 'BatteryReplaceablePowerSource') return PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Replaceable);
+    if (clusterId === PowerSource.Cluster.id && type === 'BatteryRechargeablePowerSource') return PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable);
 
     if (clusterId === BasicInformation.Cluster.id) return BasicInformationServer;
     if (clusterId === BridgedDeviceBasicInformation.Cluster.id) return BridgedDeviceBasicInformationServer;
@@ -538,6 +553,10 @@ export class MatterbridgeEndpoint extends Endpoint {
     return this.parts.find((part) => part.id === endpointName) as MatterbridgeEndpoint | undefined;
   }
 
+  getChildEndpoint(endpointNumber: EndpointNumber): MatterbridgeEndpoint | undefined {
+    return this.parts.find((part) => part.number === endpointNumber) as MatterbridgeEndpoint | undefined;
+  }
+
   getChildEndpoints(): Endpoint[] {
     return Array.from(this.parts);
   }
@@ -567,18 +586,21 @@ export class MatterbridgeEndpoint extends Endpoint {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const options: Record<string, any> = {};
     for (const attribute of Object.values(cluster.attributes)) {
+      // console.error('Attribute:', (attribute as any).id, (attribute as any).name, (attribute as any).value);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((attribute as any).id < 0xfff0) {
-        // No issue here for value, as cluster here is just a definition without getter setter
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         options[(attribute as any).name] = (attribute as any).value;
       }
     }
     this.log.debug(`addClusterServer: ${hk}${'0x' + cluster.id.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(cluster.id)}${db} with options: ${debugStringify(options)}${rs}`);
-    let switchType = undefined;
-    if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('multiPressComplete')) switchType = 'MomentarySwitch';
-    if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('switchLatched')) switchType = 'LatchingSwitch';
-    const behavior = MatterbridgeEndpoint.getBehaviourTypeFromClusterServerId(cluster.id, switchType);
+    let type = undefined;
+    if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('multiPressComplete')) type = 'MomentarySwitch';
+    if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('switchLatched')) type = 'LatchingSwitch';
+    if (cluster.id === PowerSourceCluster.id && cluster.isAttributeSupportedByName('wiredCurrentType')) type = 'WiredPowerSource';
+    if (cluster.id === PowerSourceCluster.id && cluster.isAttributeSupportedByName('batReplacementDescription')) type = 'BatteryReplaceablePowerSource';
+    if (cluster.id === PowerSourceCluster.id && cluster.isAttributeSupportedByName('batChargeState')) type = 'BatteryRechargeablePowerSource';
+    const behavior = MatterbridgeEndpoint.getBehaviourTypeFromClusterServerId(cluster.id, type);
     if (cluster.id !== BasicInformationCluster.id) this.behaviors.require(behavior, options);
     this.clusterServers.set(cluster.id, cluster as unknown as ClusterServerObj);
   }
@@ -790,6 +812,31 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async triggerEvent(clusterId: ClusterId, event: string, payload: Record<string, any>, log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): Promise<boolean> {
+    if (!endpoint) endpoint = this as MatterbridgeEndpoint;
+
+    const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
+
+    if (endpoint.construction.status !== Lifecycle.Status.Active) {
+      log?.error(`triggerEvent ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+      return false;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const events = endpoint.events as Record<string, Record<string, any>>;
+    if (!(clusterName in events) || !(event in events[clusterName])) {
+      log?.error(`triggerEvent ${hk}${event}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+      return false;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    await endpoint.act((agent) => agent[clusterName].events[event].emit(payload, agent.context));
+    log?.info(`${db}Trigger event ${hk}${this.capitalizeFirstLetter(clusterName)}${db}.${hk}${event}${db} with ${debugStringify(payload)}${db} on endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} `);
+    return true;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   addCommandHandler(command: keyof MatterbridgeEndpointCommands, handler: (data: any) => void): void {
     this.commandHandler.addHandler(command, handler);
   }
@@ -800,8 +847,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param pluginName - The name of the plugin.
    * @returns The serialized Matterbridge device object.
    */
-  /*
   serialize(): SerializedMatterbridgeDevice | undefined {
+    return undefined;
+    /*
     if (!this.serialNumber || !this.deviceName || !this.uniqueId) return;
     const cluster = this.getClusterServer(BasicInformationCluster) ?? this.getClusterServer(BridgedDeviceBasicInformationCluster);
     if (!cluster) return;
@@ -813,25 +861,26 @@ export class MatterbridgeEndpoint extends Endpoint {
       productName: cluster.attributes.productName?.getLocal(),
       vendorId: cluster.attributes.vendorId?.getLocal(),
       vendorName: cluster.attributes.vendorName?.getLocal(),
-      deviceTypes: this.getDeviceTypes(),
+      deviceTypes: Array.from(this.deviceTypes.values()),
       endpoint: this.number,
-      endpointName: this.name,
+      endpointName: this.id,
       clusterServersId: [],
     };
     this.getAllClusterServers().forEach((clusterServer) => {
       serialized.clusterServersId.push(clusterServer.id);
     });
     return serialized;
+    */
   }
-  */
 
   /**
    * Deserializes the device into a serialized object.
    *
    * @returns The deserialized MatterbridgeDevice.
    */
-  /*
-  static deserialize(serializedDevice: SerializedMatterbridgeDevice): MatterbridgeDevice {
+  static deserialize(serializedDevice: SerializedMatterbridgeDevice): MatterbridgeEndpoint | undefined {
+    return undefined;
+    /*
     const device = new MatterbridgeDevice(serializedDevice.deviceTypes);
     device.serialNumber = serializedDevice.serialNumber;
     device.deviceName = serializedDevice.deviceName;
@@ -857,8 +906,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       else device.addClusterServerFromList(device, [clusterId]);
     }
     return device;
+    */
   }
-  */
 
   /**
    * From here copy paste from MatterbridgeDevice
@@ -1208,7 +1257,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       ElectricalPowerMeasurementCluster.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent),
       {
         powerMode: ElectricalPowerMeasurement.PowerMode.Ac,
-        numberOfMeasurementTypes: 3,
+        numberOfMeasurementTypes: 4,
         accuracy: [
           {
             measurementType: MeasurementType.Voltage,
@@ -1770,7 +1819,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {Endpoint} endpoint - The endpoint on which to trigger the event (default the device endpoint).
    * @returns {void}
    */
-  triggerSwitchEvent(event: 'Single' | 'Double' | 'Long' | 'Press' | 'Release', log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): boolean {
+  async triggerSwitchEvent(event: 'Single' | 'Double' | 'Long' | 'Press' | 'Release', log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): Promise<boolean> {
     if (!endpoint) endpoint = this as MatterbridgeEndpoint;
 
     if (['Single', 'Double', 'Long'].includes(event)) {
@@ -1784,33 +1833,33 @@ export class MatterbridgeEndpoint extends Endpoint {
         return false;
       }
       if (event === 'Single') {
-        endpoint.setAttribute(cluster.id, 'currentPosition', 1, log);
-        cluster.triggerInitialPressEvent({ newPosition: 1 });
-        endpoint.setAttribute(cluster.id, 'currentPosition', 0, log);
-        cluster.triggerShortReleaseEvent({ previousPosition: 1 });
-        endpoint.setAttribute(cluster.id, 'currentPosition', 0, log);
-        cluster.triggerMultiPressCompleteEvent({ previousPosition: 1, totalNumberOfPressesCounted: 1 });
+        await endpoint.setAttribute(cluster.id, 'currentPosition', 1, log);
+        endpoint.triggerEvent(cluster.id, 'initialPress', { newPosition: 1 }, log);
+        await endpoint.setAttribute(cluster.id, 'currentPosition', 0, log);
+        endpoint.triggerEvent(cluster.id, 'shortRelease', { previousPosition: 1 }, log);
+        await endpoint.setAttribute(cluster.id, 'currentPosition', 0, log);
+        endpoint.triggerEvent(cluster.id, 'multiPressComplete', { previousPosition: 1, totalNumberOfPressesCounted: 1 }, log);
         log?.info(`${db}Trigger endpoint ${or}${endpoint.id}:${endpoint.number}${db} event ${hk}${cluster.name}.SinglePress${db}`);
       }
       if (event === 'Double') {
-        endpoint.setAttribute(cluster.id, 'currentPosition', 1, log);
-        cluster.triggerInitialPressEvent({ newPosition: 1 });
-        endpoint.setAttribute(cluster.id, 'currentPosition', 0, log);
-        cluster.triggerShortReleaseEvent({ previousPosition: 1 });
-        endpoint.setAttribute(cluster.id, 'currentPosition', 1, log);
-        cluster.triggerInitialPressEvent({ newPosition: 1 });
-        cluster.triggerMultiPressOngoingEvent({ newPosition: 1, currentNumberOfPressesCounted: 2 });
-        endpoint.setAttribute(cluster.id, 'currentPosition', 0, log);
-        cluster.triggerShortReleaseEvent({ previousPosition: 1 });
-        cluster.triggerMultiPressCompleteEvent({ previousPosition: 1, totalNumberOfPressesCounted: 2 });
+        await endpoint.setAttribute(cluster.id, 'currentPosition', 1, log);
+        endpoint.triggerEvent(cluster.id, 'initialPress', { newPosition: 1 }, log);
+        await endpoint.setAttribute(cluster.id, 'currentPosition', 0, log);
+        endpoint.triggerEvent(cluster.id, 'shortRelease', { previousPosition: 1 }, log);
+        await endpoint.setAttribute(cluster.id, 'currentPosition', 1, log);
+        endpoint.triggerEvent(cluster.id, 'initialPress', { newPosition: 1 }, log);
+        endpoint.triggerEvent(cluster.id, 'multiPressOngoing', { newPosition: 1, currentNumberOfPressesCounted: 2 }, log);
+        await endpoint.setAttribute(cluster.id, 'currentPosition', 0, log);
+        endpoint.triggerEvent(cluster.id, 'shortRelease', { previousPosition: 1 }, log);
+        endpoint.triggerEvent(cluster.id, 'multiPressComplete', { previousPosition: 1, totalNumberOfPressesCounted: 2 }, log);
         log?.info(`${db}Trigger endpoint ${or}${endpoint.id}:${endpoint.number}${db} event ${hk}${cluster.name}.DoublePress${db}`);
       }
       if (event === 'Long') {
-        endpoint.setAttribute(cluster.id, 'currentPosition', 1, log);
-        cluster.triggerInitialPressEvent({ newPosition: 1 });
-        cluster.triggerLongPressEvent({ newPosition: 1 });
-        endpoint.setAttribute(cluster.id, 'currentPosition', 0, log);
-        cluster.triggerLongReleaseEvent({ previousPosition: 1 });
+        await endpoint.setAttribute(cluster.id, 'currentPosition', 1, log);
+        endpoint.triggerEvent(cluster.id, 'initialPress', { newPosition: 1 }, log);
+        endpoint.triggerEvent(cluster.id, 'longPress', { newPosition: 1 }, log);
+        await endpoint.setAttribute(cluster.id, 'currentPosition', 0, log);
+        endpoint.triggerEvent(cluster.id, 'longRelease', { previousPosition: 1 }, log);
         log?.info(`${db}Trigger endpoint ${or}${endpoint.id}:${endpoint.number}${db} event ${hk}${cluster.name}.LongPress${db}`);
       }
     }
@@ -1825,13 +1874,13 @@ export class MatterbridgeEndpoint extends Endpoint {
         return false;
       }
       if (event === 'Press') {
-        endpoint.setAttribute(cluster.id, 'currentPosition', 1, log);
-        cluster.triggerSwitchLatchedEvent({ newPosition: 1 });
+        await endpoint.setAttribute(cluster.id, 'currentPosition', 1, log);
+        endpoint.triggerEvent(cluster.id, 'switchLatched', { newPosition: 1 }, log);
         log?.info(`${db}Trigger endpoint ${or}${endpoint.id}:${endpoint.number}${db} event ${hk}${cluster.name}.Press${db}`);
       }
       if (event === 'Release') {
-        endpoint.setAttribute(cluster.id, 'currentPosition', 0, log);
-        cluster.triggerSwitchLatchedEvent({ newPosition: 0 });
+        await endpoint.setAttribute(cluster.id, 'currentPosition', 0, log);
+        endpoint.triggerEvent(cluster.id, 'switchLatched', { newPosition: 0 }, log);
         log?.info(`${db}Trigger endpoint ${or}${endpoint.id}:${endpoint.number}${db} event ${hk}${cluster.name}.Release${db}`);
       }
     }
