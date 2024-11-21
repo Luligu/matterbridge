@@ -37,6 +37,10 @@ Feel free to join (the link is now permanent)!
 - [PluginManager]: On first load the plugin type is AnyPlatform.
 - [package]: Update dependencies.
 
+### Fixed
+
+- [energySensor]: Fixed wrong types on ElectricalEnergyMeasurementCluster ElectricalPowerMeasurementCluster.
+
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
 </a>

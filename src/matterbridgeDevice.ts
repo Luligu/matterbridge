@@ -908,7 +908,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {number} energy - The total consumption value in mW/h.
    * @returns {ClusterServer} - The configured Electrical Energy Measurement Cluster Server.
    */
-  getDefaultElectricalEnergyMeasurementClusterServer(energy = null) {
+  getDefaultElectricalEnergyMeasurementClusterServer(energy: number | bigint | null = null) {
     return ClusterServer(
       ElectricalEnergyMeasurementCluster.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
       {
@@ -939,7 +939,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {number} frequency - The frequency value in millihertz.
    * @returns {ClusterServer} - The configured Electrical Power Measurement Cluster Server.
    */
-  getDefaultElectricalPowerMeasurementClusterServer(voltage = null, current = null, power = null, frequency = null) {
+  getDefaultElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, current: number | bigint | null = null, power: number | bigint | null = null, frequency: number | bigint | null = null) {
     return ClusterServer(
       ElectricalPowerMeasurementCluster.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent),
       {

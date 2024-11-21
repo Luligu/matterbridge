@@ -299,7 +299,8 @@ export class MatterbridgeEndpoint extends Endpoint {
     // Convert the options to an Endpoint.Options
     // [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }]
     const optionsV8 = {
-      id: uniqueStorageKey?.replace(/[ :.]/g, ''),
+      // id: uniqueStorageKey?.replace(/[ :.]/g, ''),
+      id: uniqueStorageKey?.replace(/[^a-zA-Z0-9_-]/g, ''),
       number: endpointId,
       descriptor: tagList ? { tagList } : undefined,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1221,7 +1222,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} energy - The total consumption value in mW/h.
    * @returns {ClusterServer} - The configured Electrical Energy Measurement Cluster Server.
    */
-  getDefaultElectricalEnergyMeasurementClusterServer(energy = null) {
+  getDefaultElectricalEnergyMeasurementClusterServer(energy: number | bigint | null = null) {
     return ClusterServer(
       ElectricalEnergyMeasurementCluster.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
       {
@@ -1252,7 +1253,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} frequency - The frequency value in millihertz.
    * @returns {ClusterServer} - The configured Electrical Power Measurement Cluster Server.
    */
-  getDefaultElectricalPowerMeasurementClusterServer(voltage = null, current = null, power = null, frequency = null) {
+  getDefaultElectricalPowerMeasurementClusterServer(voltage: number | bigint | null = null, current: number | bigint | null = null, power: number | bigint | null = null, frequency: number | bigint | null = null) {
     return ClusterServer(
       ElectricalPowerMeasurementCluster.with(ElectricalPowerMeasurement.Feature.AlternatingCurrent),
       {

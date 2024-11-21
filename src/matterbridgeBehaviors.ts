@@ -27,7 +27,18 @@
 
 // @matter
 import { Behavior, NamedHandler } from '@matter/main';
-import { ColorControlServer, DoorLockServer, IdentifyServer, LevelControlServer, WindowCoveringServer, ThermostatServer, FanControlServer, BooleanStateConfigurationBehavior, BooleanStateConfigurationServer } from '@matter/main/behaviors';
+import {
+  ColorControlServer,
+  DoorLockServer,
+  IdentifyServer,
+  LevelControlServer,
+  WindowCoveringServer,
+  ThermostatServer,
+  FanControlServer,
+  BooleanStateConfigurationBehavior,
+  BooleanStateConfigurationServer,
+  WindowCoveringBehavior,
+} from '@matter/main/behaviors';
 import { BooleanStateConfiguration, ColorControl, FanControl, Identify, LevelControl, Thermostat, WindowCovering } from '@matter/main/clusters';
 import { TypeFromPartialBitSchema } from '@matter/main/types';
 import { OnOffServer } from '@matter/node/behaviors/on-off';
@@ -218,26 +229,26 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
   }
 }
 
-export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift) {
+export class MatterbridgeWindowCoveringServer extends WindowCoveringBehavior.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift) {
   override async upOrOpen() {
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     device.upOrOpen();
-    super.upOrOpen();
+    // super.upOrOpen();
   }
   override async downOrClose() {
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     device.downOrClose();
-    super.downOrClose();
+    // super.downOrClose();
   }
   override stopMotion() {
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     device.stopMotion();
-    super.stopMotion();
+    // super.stopMotion();
   }
   override goToLiftPercentage({ liftPercent100thsValue }: WindowCovering.GoToLiftPercentageRequest) {
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     device.goToLiftPercentage({ liftPercent100thsValue });
-    super.goToLiftPercentage({ liftPercent100thsValue });
+    // super.goToLiftPercentage({ liftPercent100thsValue });
   }
 }
 
