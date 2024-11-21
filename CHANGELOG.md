@@ -28,14 +28,21 @@ Feel free to join (the link is now permanent)!
 - [nginx]: Added the route /matterbridge/ to be used with nginx proxy server https://github.com/Luligu/matterbridge/blob/dev/README-NGINX.md.
 - [config]: Config and schema are loaded before loading the plugin to allow to configure the plugin even when it throws error on load.
 - [config]: Added version to the config.
+- [frontend]: Added badge "edge" when running in edge mode.
 
 ### Changed
 
 - [matter.js]: Update to matter.js 0.11.2.
 - [matter.js]: Update to matter.js 0.11.3.
 - [matter.js]: Update to matter.js 0.11.4.
+- [matter.js]: Update to the new matter.js packages @matter/main and @mater/nodejs.
 - [PluginManager]: On first load the plugin type is AnyPlatform.
 - [package]: Update dependencies.
+- [frontend]: Update package dependencies.
+- [frontend]: Update QRCode package and QRCode level to M.
+- [frontend]: Added font roboto.
+- [matterbridge]: Removed BasicInformationCluster from Aggregator.
+- [matterbridge]: Added maxLevel and onLevel to LevelControlCluster utility methods.
 
 ### Fixed
 
