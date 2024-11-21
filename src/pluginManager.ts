@@ -195,7 +195,7 @@ export class PluginManager {
 
       // Check for @project-chip packages in dependencies and devDependencies
       const checkForProjectChipPackages = (dependencies: Record<string, string>) => {
-        return Object.keys(dependencies).filter((pkg) => pkg.startsWith('@project-chip'));
+        return Object.keys(dependencies).filter((pkg) => pkg.startsWith('@project-chip') || pkg.startsWith('@matter'));
       };
       const projectChipDependencies = checkForProjectChipPackages(packageJson.dependencies || {});
       if (projectChipDependencies.length > 0) {
@@ -272,7 +272,7 @@ export class PluginManager {
 
       // Check for @project-chip packages in dependencies and devDependencies
       const checkForProjectChipPackages = (dependencies: Record<string, string>) => {
-        return Object.keys(dependencies).filter((pkg) => pkg.startsWith('@project-chip'));
+        return Object.keys(dependencies).filter((pkg) => pkg.startsWith('@project-chip') || pkg.startsWith('@matter'));
       };
       const projectChipDependencies = checkForProjectChipPackages(packageJson.dependencies || {});
       if (projectChipDependencies.length > 0) {
