@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.6.2-dev.11",
+  "version": "1.6.2-dev.12",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -111,7 +111,7 @@
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u && npm install && npm run cleanBuild && npm link",
     "updateMatter:latest": "npm run deepClean && npm install @project-chip/matter-node.js@latest @project-chip/matter.js@latest && npm install && npm run build",
-    "updateMatter:dev": "npm run deepClean && npm install @project-chip/matter-node.js@dev @project-chip/matter.js@dev && npm install && npm run build",
+    "updateMatter:dev": "npm run deepClean && npm install @matter/main@dev @matter/nodejs@dev @project-chip/matter.js@dev && npm install && npm run build",
     "updateMatter:loc": "npm run deepClean && npm install ../matter.js/packages/matter-node.js ../matter.js/packages/matter.js && npm install && npm run build",
     "install:dependencies": "npm install @matter/main @matter/nodejs @project-chip/matter.js archiver express glob https node-ansi-logger node-persist-manager ws",
     "install:typescript": "npm install --save-dev @types/express @types/node @types/ws typescript && npm run build",
@@ -120,9 +120,9 @@
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest"
   },
   "dependencies": {
-    "@matter/main": "0.11.4",
-    "@matter/nodejs": "0.11.4",
-    "@project-chip/matter.js": "0.11.4",
+    "@matter/main": "^0.11.5-alpha.0-20241121-c31bc6998",
+    "@matter/nodejs": "^0.11.5-alpha.0-20241121-c31bc6998",
+    "@project-chip/matter.js": "^0.11.5-alpha.0-20241121-c31bc6998",
     "archiver": "7.0.1",
     "express": "4.21.1",
     "glob": "11.0.0",

@@ -299,8 +299,9 @@ export class MatterbridgeEndpoint extends Endpoint {
     // Convert the options to an Endpoint.Options
     // [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }]
     const optionsV8 = {
+      id: uniqueStorageKey,
       // id: uniqueStorageKey?.replace(/[ :.]/g, ''),
-      id: uniqueStorageKey?.replace(/[^a-zA-Z0-9_-]/g, ''),
+      // id: uniqueStorageKey?.replace(/[^a-zA-Z0-9_-]/g, ''),
       number: endpointId,
       descriptor: tagList ? { tagList } : undefined,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

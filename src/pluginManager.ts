@@ -542,12 +542,10 @@ export class PluginManager {
         if (error) {
           this.log.error(`Failed to uninstall plugin ${plg}${name}${er}: ${error}`);
           this.log.debug(`Failed to uninstall plugin ${plg}${name}${db}: ${stderr}`);
-          // console.error(`Failed to uninstall plugin ${plg}${name}${er}: ${stderr}`);
           resolve(undefined);
         } else {
           this.log.info(`Uninstalled plugin ${plg}${name}${nf}`);
           this.log.debug(`Uninstalled plugin ${plg}${name}${db}: ${stdout}`);
-          // console.error(`Uninstalled plugin ${plg}${name}${nf}: ${stdout}`);
           resolve(name);
         }
       });
