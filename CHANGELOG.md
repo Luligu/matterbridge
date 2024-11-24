@@ -36,7 +36,7 @@ Feel free to join (the link is now permanent)!
 - [matter.js]: Update to matter.js 0.11.2.
 - [matter.js]: Update to matter.js 0.11.3.
 - [matter.js]: Update to matter.js 0.11.4.
-- [matter.js]: Update to matter.js 0.11.5-alpha.
+- [matter.js]: Update to matter.js 0.11.5-alpha.0-20241124-c836aa892.
 - [matter.js]: Update to the new matter.js packages @matter/main and @mater/nodejs.
 - [PluginManager]: On first load the plugin type is AnyPlatform.
 - [package]: Update dependencies.
