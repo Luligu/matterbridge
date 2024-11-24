@@ -28,6 +28,23 @@ import { MatterbridgeEdge } from './matterbridgeEdge.js';
 export { Identity, AtLeastOne } from '@matter/main';
 export * from '@matter/main/clusters';
 export * from '@matter/main/types';
+export {
+  SemanticNamespace,
+  ClosureTag,
+  CompassDirectionTag,
+  CompassLocationTag,
+  DirectionTag,
+  ElectricalMeasurementTag,
+  LaundryTag,
+  LevelTag,
+  LocationTag,
+  NumberTag,
+  PositionTag,
+  PowerSourceTag,
+  RefrigeratorTag,
+  RoomAirConditionerTag,
+  SwitchesTag,
+} from '@matter/node';
 
 // @project-chip
 export * from '@project-chip/matter.js/device';

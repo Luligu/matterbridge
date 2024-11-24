@@ -38,6 +38,8 @@ import {
   ColorControl,
   ColorControlCluster,
   ConcentrationMeasurement,
+  Descriptor,
+  DescriptorCluster,
   DeviceEnergyManagement,
   DeviceEnergyManagementCluster,
   DeviceEnergyManagementMode,
@@ -536,6 +538,58 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     subscribe(listener);
     log?.info(`${db}Subscribe endpoint ${or}${endpoint.name}:${endpoint.number}${db} attribute ${hk}${clusterServer.name}.${capitalizedAttributeName}${db}`);
     return true;
+  }
+
+  /**
+   * Adds a tag to the tag list of the specified endpoint.
+   *
+   * @param {Endpoint} endpoint - The endpoint to add the tag to.
+   * @param {VendorId | null} mfgCode - The manufacturer code.
+   * @param {number} namespaceId - The namespace ID of the tag.
+   * @param {number} tag - The tag number.
+   * @param {string | null} [label=null] - The label for the tag.
+   *
+   * @remarks
+   * This method is used to add a tag to the tag list of a given endpoint.
+   * If the tag list already exists, the new tag is added to the existing list. Otherwise, a new tag list is created with the provided tag.
+   *
+   * Example usage:
+   * ```typescript
+   * this.addTagList(endpoint, null, NumberTag.One.namespaceId, NumberTag.One.tag, 'Label');
+   * this.addTagList(endpoint, null, SwitchesTag.Custom.namespaceId, SwitchesTag.Custom.tag, 'Label');
+   * ```
+   */
+  addTagList(endpoint: Endpoint, mfgCode: VendorId | null, namespaceId: number, tag: number, label?: string | null) {
+    const descriptor = endpoint.getClusterServer(DescriptorCluster.with(Descriptor.Feature.TagList));
+    if (!descriptor) {
+      this.log.error(`addTagList: descriptor cluster not found on endpoint ${endpoint.name}:${endpoint.number}`);
+      return;
+    }
+
+    // tagList: { mfgCode: VendorId | null; namespaceId: number; tag: number; label?: string | null }[] = [];
+
+    if (descriptor.attributes.tagList) {
+      this.log.debug(`addTagList: adding ${CYAN}tagList${db} mfCode: ${mfgCode}, namespaceId: ${namespaceId}, tag: ${tag}, label: ${label} on endpoint $${endpoint.name}:${endpoint.number}`);
+      const tagList = descriptor.attributes.tagList.getLocal();
+      tagList.push({ mfgCode, namespaceId, tag, label });
+      return;
+    }
+
+    this.log.debug(`addTagList: creating ${CYAN}tagList${db} mfCode: ${mfgCode}, namespaceId: ${namespaceId}, tag: ${tag}, label: ${label} on endpoint $${endpoint.name}:${endpoint.number}`);
+    endpoint.addClusterServer(
+      ClusterServer(
+        DescriptorCluster.with(Descriptor.Feature.TagList),
+        {
+          tagList: [{ mfgCode, namespaceId, tag, label }],
+          deviceTypeList: [...descriptor.attributes.deviceTypeList.getLocal()],
+          serverList: [...descriptor.attributes.serverList.getLocal()],
+          clientList: [...descriptor.attributes.clientList.getLocal()],
+          partsList: [...descriptor.attributes.partsList.getLocal()],
+        },
+        {},
+        {},
+      ),
+    );
   }
 
   /**

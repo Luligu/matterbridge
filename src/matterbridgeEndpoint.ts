@@ -298,6 +298,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
     // Convert the options to an Endpoint.Options
     // [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }]
+    // endpoint = endpoint.enable({features: { tagList: true }});
     const optionsV8 = {
       id: uniqueStorageKey,
       // id: uniqueStorageKey?.replace(/[ :.]/g, ''),
@@ -774,8 +775,8 @@ export class MatterbridgeEndpoint extends Endpoint {
     // await endpoint.set({ [clusterName]: { [attribute]: value } });
     log?.info(
       `${db}Set endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${this.capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db} ` +
-        `from ${YELLOW}${typeof oldValue === 'object' ? debugStringify(oldValue) : oldValue}${db} ` +
-        `to ${YELLOW}${typeof value === 'object' ? debugStringify(value) : value}${db}`,
+      `from ${YELLOW}${typeof oldValue === 'object' ? debugStringify(oldValue) : oldValue}${db} ` +
+      `to ${YELLOW}${typeof value === 'object' ? debugStringify(value) : value}${db}`,
     );
     return true;
   }
@@ -1590,7 +1591,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         goToLiftPercentage: async (data) => {
           this.log.debug(
             `Matter command: goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
-              `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
+            `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
           );
           await this.commandHandler.executeHandler('goToLiftPercentage', data);
         },

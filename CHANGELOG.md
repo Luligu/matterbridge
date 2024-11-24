@@ -29,12 +29,14 @@ Feel free to join (the link is now permanent)!
 - [config]: Config and schema are loaded before loading the plugin to allow to configure the plugin even when it throws error on load.
 - [config]: Added version to the config.
 - [frontend]: Added badge "edge" when running in edge mode.
+- [matterbridge]: Added addTagList method.
 
 ### Changed
 
 - [matter.js]: Update to matter.js 0.11.2.
 - [matter.js]: Update to matter.js 0.11.3.
 - [matter.js]: Update to matter.js 0.11.4.
+- [matter.js]: Update to matter.js 0.11.5-alpha.
 - [matter.js]: Update to the new matter.js packages @matter/main and @mater/nodejs.
 - [PluginManager]: On first load the plugin type is AnyPlatform.
 - [package]: Update dependencies.
