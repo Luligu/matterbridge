@@ -168,7 +168,7 @@ export function xyColorToRgbColor(x: number, y: number, brightness = 254): RGB {
     blue = 0;
   }
 
-  return { r: red, g: green, b: blue };
+  return { r: Math.round(red), g: Math.round(green), b: Math.round(blue) };
 }
 
 export function rgbColorToHslColor(rgb: RGB): HSL {

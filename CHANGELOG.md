@@ -20,7 +20,7 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 Feel free to join (the link is now permanent)!
 
-## [1.6.2] - 2024-11-20
+## [1.6.2] - 2024-11-24
 
 ### Added
 
@@ -36,7 +36,7 @@ Feel free to join (the link is now permanent)!
 - [matter.js]: Update to matter.js 0.11.2.
 - [matter.js]: Update to matter.js 0.11.3.
 - [matter.js]: Update to matter.js 0.11.4.
-- [matter.js]: Update to matter.js 0.11.5-alpha.0-20241124-c836aa892.
+- [matter.js]: Update to matter.js 0.11.5.
 - [matter.js]: Update to the new matter.js packages @matter/main and @mater/nodejs.
 - [PluginManager]: On first load the plugin type is AnyPlatform.
 - [package]: Update dependencies.
@@ -44,7 +44,7 @@ Feel free to join (the link is now permanent)!
 - [frontend]: Update QRCode package and QRCode level to M.
 - [frontend]: Added font roboto.
 - [matterbridge]: Removed BasicInformationCluster from Aggregator.
-- [matterbridge]: Added maxLevel and onLevel to LevelControlCluster utility methods.
+- [matterbridge]: Added minLevel, maxLevel and onLevel to LevelControlCluster utility methods.
 
 ### Fixed
 

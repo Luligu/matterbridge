@@ -23,7 +23,6 @@
 
 // @matter
 import {
-  ActionsCluster,
   AirQuality,
   BooleanState,
   BooleanStateConfiguration,
@@ -38,13 +37,15 @@ import {
   ElectricalPowerMeasurement,
   EnergyPreference,
   FanControl,
-  FixedLabelCluster,
+  FlowMeasurement,
   FormaldehydeConcentrationMeasurement,
   Groups,
   Identify,
-  IdentifyCluster,
+  IlluminanceMeasurement,
   LevelControl,
+  ModeSelect,
   NitrogenDioxideConcentrationMeasurement,
+  OccupancySensing,
   OnOff,
   OzoneConcentrationMeasurement,
   Pm10ConcentrationMeasurement,
@@ -52,6 +53,7 @@ import {
   Pm25ConcentrationMeasurement,
   PowerSource,
   PowerTopology,
+  PressureMeasurement,
   RadonConcentrationMeasurement,
   RelativeHumidityMeasurement,
   SmokeCoAlarm,
@@ -62,6 +64,14 @@ import {
   TimeSynchronization,
   TotalVolatileOrganicCompoundsConcentrationMeasurement,
   WindowCovering,
+  ValveConfigurationAndControl,
+  HepaFilterMonitoring,
+  ActivatedCarbonFilterMonitoring,
+  Actions,
+  FixedLabel,
+  RvcRunMode,
+  RvcOperationalState,
+  RvcCleanMode,
 } from '@matter/main/clusters';
 
 // @project-chip
@@ -74,7 +84,7 @@ export const bridge = DeviceTypeDefinition({
   code: 0x000e,
   deviceClass: DeviceClasses.Dynamic,
   revision: 1,
-  optionalServerClusters: [ActionsCluster.id],
+  optionalServerClusters: [Identify.Cluster.id, Actions.Cluster.id],
 });
 
 export const powerSource = DeviceTypeDefinition({
@@ -100,8 +110,8 @@ export const genericSwitch = DeviceTypeDefinition({
   code: 0x000f,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [IdentifyCluster.id, SwitchCluster.id],
-  optionalServerClusters: [FixedLabelCluster.id],
+  requiredServerClusters: [Identify.Cluster.id, SwitchCluster.id],
+  optionalServerClusters: [FixedLabel.Cluster.id],
 });
 
 export const onOffLight = DeviceTypeDefinition({
@@ -185,7 +195,81 @@ export const thermostatDevice = DeviceTypeDefinition({
   optionalServerClusters: [Groups.Cluster.id /* , Scenes.Cluster.id,*/, ThermostatUserInterfaceConfiguration.Cluster.id, EnergyPreference.Cluster.id, TimeSynchronization.Cluster.id],
 });
 
-// Custom device types: switch without ClientClusters
+export const contactSensor = DeviceTypeDefinition({
+  name: 'MA-contactsensor',
+  code: 0x0015,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, BooleanState.Cluster.id],
+});
+
+export const lightSensor = DeviceTypeDefinition({
+  name: 'MA-lightsensor',
+  code: 0x0106,
+  deviceClass: DeviceClasses.Simple,
+  revision: 3,
+  requiredServerClusters: [Identify.Cluster.id, IlluminanceMeasurement.Cluster.id],
+  optionalClientClusters: [Groups.Cluster.id],
+});
+
+export const occupanceySensor = DeviceTypeDefinition({
+  name: 'MA-occupancysensor',
+  code: 0x0107,
+  deviceClass: DeviceClasses.Simple,
+  revision: 3,
+  requiredServerClusters: [Identify.Cluster.id, OccupancySensing.Cluster.id],
+});
+
+export const temperatureSensor = DeviceTypeDefinition({
+  name: 'MA-tempsensor',
+  code: 0x0302,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, TemperatureMeasurement.Cluster.id],
+});
+
+export const pressureSensor = DeviceTypeDefinition({
+  name: 'MA-pressuresensor',
+  code: 0x0305,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, PressureMeasurement.Cluster.id],
+});
+
+export const flowSensor = DeviceTypeDefinition({
+  name: 'MA-flowsensor',
+  code: 0x0306,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, FlowMeasurement.Cluster.id],
+});
+
+export const humiditySensor = DeviceTypeDefinition({
+  name: 'MA-humiditysensor',
+  code: 0x0307,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, RelativeHumidityMeasurement.Cluster.id],
+});
+
+export const modeSelect = DeviceTypeDefinition({
+  name: 'MA-modeselect',
+  code: 0x27,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [ModeSelect.Cluster.id],
+});
+
+export const roboticVacuumCleaner = DeviceTypeDefinition({
+  name: 'MA-roboticvacuumcleaner',
+  code: 0x74,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, RvcRunMode.Cluster.id, RvcOperationalState.Cluster.id],
+  optionalServerClusters: [RvcCleanMode.Cluster.id],
+});
+
+// Custom device types without ClientClusters
 
 export const onOffSwitch = DeviceTypeDefinition({
   name: 'MA-onoffswitch',
@@ -265,6 +349,7 @@ export const rainSensor = DeviceTypeDefinition({
   optionalServerClusters: [BooleanStateConfiguration.Cluster.id],
 });
 
+// Remark:  A Smoke CO Alarm device type SHALL support an instance of a Power Source device type on some endpoint.
 export const smokeCoAlarm = DeviceTypeDefinition({
   name: 'MA-smokeCoAlarm',
   code: 0x0076,
@@ -272,6 +357,24 @@ export const smokeCoAlarm = DeviceTypeDefinition({
   revision: 1,
   requiredServerClusters: [Identify.Cluster.id, SmokeCoAlarm.Cluster.id],
   optionalServerClusters: [Groups.Cluster.id, TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id, CarbonMonoxideConcentrationMeasurement.Cluster.id],
+});
+
+export const waterValve = DeviceTypeDefinition({
+  name: 'MA-waterValve',
+  code: 0x42,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [Identify.Cluster.id, ValveConfigurationAndControl.Cluster.id],
+  optionalServerClusters: [FlowMeasurement.Cluster.id],
+});
+
+export const airPurifier = DeviceTypeDefinition({
+  name: 'MA-airPurifier',
+  code: 0x2d,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [Identify.Cluster.id, FanControl.Cluster.id],
+  optionalServerClusters: [Groups.Cluster.id, HepaFilterMonitoring.Cluster.id, ActivatedCarbonFilterMonitoring.Cluster.id],
 });
 
 export const electricalSensor = DeviceTypeDefinition({

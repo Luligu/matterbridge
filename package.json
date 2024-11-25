@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.6.2-dev.15",
+  "version": "1.6.2",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -97,6 +97,7 @@
     "test:pluginManager": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage pluginManager.test.ts",
     "test:deviceManager": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage deviceManager.test.ts",
     "test:utils": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage utils.test.ts",
+    "test:colorUtils": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage colorUtils.test.ts",
     "test:websocket": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose  --coverage matterbridgeWebsocket.test.ts",
     "lint": "eslint --max-warnings=0 .",
     "lint:fix": "eslint --fix --max-warnings=0 .",
@@ -120,9 +121,9 @@
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest"
   },
   "dependencies": {
-    "@matter/main": "^0.11.5-alpha.0-20241124-c836aa892",
-    "@matter/nodejs": "^0.11.5-alpha.0-20241124-c836aa892",
-    "@project-chip/matter.js": "^0.11.5-alpha.0-20241124-c836aa892",
+    "@matter/main": "^0.11.5",
+    "@matter/nodejs": "^0.11.5",
+    "@project-chip/matter.js": "^0.11.5",
     "archiver": "7.0.1",
     "express": "4.21.1",
     "glob": "11.0.0",

@@ -1125,14 +1125,16 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * Get a default level control cluster server.
    *
    * @param currentLevel - The current level (default: 254).
+   * @param minLevel - The minimum level (default: 1).
    * @param maxLevel - The maximum level (default: 254).
    * @param onLevel - The on level (default: null).
    */
-  getDefaultLevelControlClusterServer(currentLevel = 254, maxLevel = 254, onLevel = null) {
+  getDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 1, maxLevel = 254, onLevel: number | null = null) {
     return ClusterServer(
       LevelControlCluster.with(LevelControl.Feature.OnOff),
       {
         currentLevel,
+        minLevel,
         maxLevel,
         onLevel,
         options: {
@@ -1175,11 +1177,12 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * Creates a default level control cluster server.
    *
    * @param currentLevel - The current level (default: 254).
+   * @param minLevel - The minimum level (default: 1).
    * @param maxLevel - The maximum level (default: 254).
    * @param onLevel - The on level (default: null).
    */
-  createDefaultLevelControlClusterServer(currentLevel = 254, maxLevel = 254, onLevel = null) {
-    this.addClusterServer(this.getDefaultLevelControlClusterServer(currentLevel, maxLevel, onLevel));
+  createDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 1, maxLevel = 254, onLevel: number | null = null) {
+    this.addClusterServer(this.getDefaultLevelControlClusterServer(currentLevel, minLevel, maxLevel, onLevel));
   }
 
   /**
@@ -2104,6 +2107,94 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Get a default heating thermostat cluster server with the specified parameters.
+   * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
+   * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
+   * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
+   * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit value. Defaults to 50°.
+   * @returns {ThermostatClusterServer} A default thermostat cluster server configured with the specified parameters.
+   */
+  getDefaultHeatingThermostatClusterServer(localTemperature = 23, occupiedHeatingSetpoint = 21, minHeatSetpointLimit = 0, maxHeatSetpointLimit = 50) {
+    return ClusterServer(
+      ThermostatCluster.with(Thermostat.Feature.Heating),
+      {
+        localTemperature: localTemperature * 100,
+        systemMode: Thermostat.SystemMode.Heat,
+        controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.HeatingOnly,
+        // Thermostat.Feature.Heating
+        occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
+        minHeatSetpointLimit: minHeatSetpointLimit * 100,
+        maxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+        absMinHeatSetpointLimit: minHeatSetpointLimit * 100,
+        absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+      },
+      {
+        setpointRaiseLower: async ({ request, attributes }) => {
+          this.log.debug('Matter command: setpointRaiseLower', request);
+          await this.commandHandler.executeHandler('setpointRaiseLower', { request, attributes });
+        },
+      },
+      {},
+    );
+  }
+
+  /**
+   * Creates and adds a default heating thermostat cluster server to the device.
+   *
+   * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
+   * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
+   * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
+   * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit value. Defaults to 50°.
+   */
+  createDefaultHeatingThermostatClusterServer(localTemperature = 23, occupiedHeatingSetpoint = 25, minHeatSetpointLimit = 0, maxHeatSetpointLimit = 50) {
+    this.addClusterServer(this.getDefaultHeatingThermostatClusterServer(localTemperature, occupiedHeatingSetpoint, minHeatSetpointLimit, maxHeatSetpointLimit));
+  }
+
+  /**
+   * Get a default cooling thermostat cluster server with the specified parameters.
+   * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
+   * @param {number} [occupiedCoolingSetpoint] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
+   * @param {number} [minCoolSetpointLimit] - The minimum cool setpoint limit value. Defaults to 0°.
+   * @param {number} [maxCoolSetpointLimit] - The maximum cool setpoint limit value. Defaults to 50°.
+   * @returns {ThermostatClusterServer} A default thermostat cluster server configured with the specified parameters.
+   */
+  getDefaultCoolingThermostatClusterServer(localTemperature = 23, occupiedCoolingSetpoint = 25, minCoolSetpointLimit = 0, maxCoolSetpointLimit = 50) {
+    return ClusterServer(
+      ThermostatCluster.with(Thermostat.Feature.Cooling),
+      {
+        localTemperature: localTemperature * 100,
+        systemMode: Thermostat.SystemMode.Cool,
+        controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingOnly,
+        // Thermostat.Feature.Cooling
+        occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
+        minCoolSetpointLimit: minCoolSetpointLimit * 100,
+        maxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+        absMinCoolSetpointLimit: minCoolSetpointLimit * 100,
+        absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+      },
+      {
+        setpointRaiseLower: async ({ request, attributes }) => {
+          this.log.debug('Matter command: setpointRaiseLower', request);
+          await this.commandHandler.executeHandler('setpointRaiseLower', { request, attributes });
+        },
+      },
+      {},
+    );
+  }
+
+  /**
+   * Creates and adds a default cooling thermostat cluster server to the device.
+   *
+   * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
+   * @param {number} [occupiedCoolingSetpoint] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
+   * @param {number} [minCoolSetpointLimit] - The minimum cool setpoint limit value. Defaults to 0°.
+   * @param {number} [maxCoolSetpointLimit] - The maximum cool setpoint limit value. Defaults to 50°.
+   */
+  createDefaultCoolingThermostatClusterServer(localTemperature = 23, occupiedCoolingSetpoint = 25, minCoolSetpointLimit = 0, maxCoolSetpointLimit = 50) {
+    this.addClusterServer(this.getDefaultCoolingThermostatClusterServer(localTemperature, occupiedCoolingSetpoint, minCoolSetpointLimit, maxCoolSetpointLimit));
+  }
+
+  /**
    * Get a default thermostat cluster server with the specified parameters.
    *
    * @param {number} [localTemperature=23] - The local temperature value in degrees Celsius. Defaults to 23°.
@@ -2130,19 +2221,22 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       ThermostatCluster.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode),
       {
         localTemperature: localTemperature * 100,
+        systemMode: Thermostat.SystemMode.Auto,
+        controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
+        // Thermostat.Feature.Heating
         occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
-        occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
         minHeatSetpointLimit: minHeatSetpointLimit * 100,
         maxHeatSetpointLimit: maxHeatSetpointLimit * 100,
         absMinHeatSetpointLimit: minHeatSetpointLimit * 100,
         absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+        // Thermostat.Feature.Cooling
+        occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
         minCoolSetpointLimit: minCoolSetpointLimit * 100,
         maxCoolSetpointLimit: maxCoolSetpointLimit * 100,
         absMinCoolSetpointLimit: minCoolSetpointLimit * 100,
         absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+        // Thermostat.Feature.AutoMode
         minSetpointDeadBand: minSetpointDeadBand * 100,
-        systemMode: Thermostat.SystemMode.Off,
-        controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
         thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
       },
       {
