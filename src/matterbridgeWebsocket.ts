@@ -21,13 +21,19 @@
  * limitations under the License. *
  */
 
-import WebSocket from 'ws';
+// Matterbridge
 import { Matterbridge } from './matterbridge.js';
-import { debugStringify } from 'node-ansi-logger';
 import { isValidNumber, isValidObject, isValidString } from './utils/utils.js';
-import { Logger } from '@project-chip/matter-node.js/log';
-import { EndpointNumber } from '@project-chip/matter-node.js/datatype';
-import { BasicInformationCluster, BridgedDeviceBasicInformationCluster } from '@project-chip/matter-node.js/cluster';
+
+// AnsiLogger module
+import { debugStringify } from 'node-ansi-logger';
+
+// Package modules
+import WebSocket from 'ws';
+
+// @matter
+import { EndpointNumber, Logger } from '@matter/main';
+import { BasicInformationCluster, BridgedDeviceBasicInformationCluster } from '@matter/main/clusters';
 
 /**
  * Websocket message ID for logging.

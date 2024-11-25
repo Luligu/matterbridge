@@ -16,7 +16,6 @@ import {
   dimmableLight,
   dimmableSwitch,
   electricalSensor,
-  MatterbridgeDevice,
   onOffLight,
   onOffSwitch,
   powerSource,
@@ -24,24 +23,14 @@ import {
   smokeCoAlarm,
   waterFreezeDetector,
   waterLeakDetector,
-} from './matterbridgeDevice.js';
-// import { EveHistory, EveHistoryCluster, MatterHistory } from 'matter-history';
+} from './matterbridgeDeviceTypes.js';
 
 import {
-  Attributes,
-  BasicInformation,
-  BasicInformationCluster,
-  Binding,
   BooleanStateConfiguration,
-  ClusterServerObj,
   ColorControl,
   ColorControlCluster,
-  Descriptor,
   DoorLock,
-  Events,
   FlowMeasurementCluster,
-  getClusterNameById,
-  Groups,
   Identify,
   IdentifyCluster,
   LevelControl,
@@ -56,18 +45,23 @@ import {
   WindowCoveringCluster,
   SmokeCoAlarm,
   DeviceEnergyManagement,
-} from '@project-chip/matter-node.js/cluster';
-import { DeviceTypes, logEndpoint } from '@project-chip/matter-node.js/device';
-import { EndpointNumber, GroupId, VendorId } from '@project-chip/matter-node.js/datatype';
+} from '@matter/main/clusters';
+import { VendorId } from '@matter/main';
+import { DeviceTypes } from '@project-chip/matter.js/device';
+import { ClusterServerObj, getClusterNameById } from '@project-chip/matter.js/cluster';
 import { waiter } from './utils/utils.js';
 import { Matterbridge } from './matterbridge.js';
+import { MatterbridgeDevice } from './matterbridgeDevice.js';
 
 describe('Matterbridge device serialize/deserialize', () => {
   test('create a basic device with all default clusters', async () => {
-    const device = new MatterbridgeDevice(DeviceTypes.ON_OFF_LIGHT);
+    let device = new MatterbridgeDevice(DeviceTypes.ON_OFF_LIGHT);
+    expect(device.getDeviceTypes()).toHaveLength(1);
     MatterbridgeDevice.bridgeMode = 'bridge';
     device.createDefaultBasicInformationClusterServer('Name', 'Serial', 1, 'VendorName', 1, 'ProductName');
+    expect(device.getDeviceTypes()).toHaveLength(2);
     MatterbridgeDevice.bridgeMode = '';
+    device = new MatterbridgeDevice(DeviceTypes.ON_OFF_LIGHT);
     device.createDefaultBasicInformationClusterServer('Name', 'Serial', 1, 'VendorName', 1, 'ProductName');
     device.createDefaultBasicInformationClusterServer('Name', 'Serial', 1, 'VendorName', 1, 'ProductName', 1, '1.0.0', 1, '1.0.0');
     device.createDefaultIdentifyClusterServer();
@@ -76,14 +70,14 @@ describe('Matterbridge device serialize/deserialize', () => {
     device.createDefaultOnOffClusterServer();
     expect(device.getDeviceTypes()).toHaveLength(1);
     expect(() => device.verifyRequiredClusters()).not.toThrow();
-    expect(device.getAllClusterServers()).toHaveLength(7);
+    expect(device.getAllClusterServers()).toHaveLength(6);
     const serialized = device.serialize();
     expect(serialized).toBeDefined();
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const deserialized = MatterbridgeDevice.deserialize(serialized!);
     expect(deserialized).toBeDefined();
     expect(deserialized.getDeviceTypes()).toHaveLength(1);
-    expect(deserialized.getAllClusterServers()).toHaveLength(7);
+    expect(deserialized.getAllClusterServers()).toHaveLength(6);
     expect(() => deserialized.verifyRequiredClusters()).not.toThrow();
   });
 

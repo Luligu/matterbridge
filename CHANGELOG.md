@@ -20,6 +20,40 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 Feel free to join (the link is now permanent)!
 
+## [1.6.2] - 2024-11-25
+
+### Added
+
+- [matter.js]: Almost completed the phase 2 of migration to edge (matter.js new API).
+- [nginx]: Added the route /matterbridge/ to be used with nginx proxy server https://github.com/Luligu/matterbridge/blob/dev/README-NGINX.md.
+- [config]: Config and schema are loaded before loading the plugin to allow to configure the plugin even when it throws error on load.
+- [config]: Added version to the config.
+- [frontend]: Added badge "edge" when running in edge mode.
+- [matterbridge]: Added addTagList method.
+
+### Changed
+
+- [matter.js]: Update to matter.js 0.11.2.
+- [matter.js]: Update to matter.js 0.11.3.
+- [matter.js]: Update to matter.js 0.11.4.
+- [matter.js]: Update to matter.js 0.11.5.
+- [matter.js]: Update to the new matter.js packages @matter/main and @mater/nodejs.
+- [PluginManager]: On first load the plugin type is AnyPlatform.
+- [package]: Update dependencies.
+- [frontend]: Update package dependencies.
+- [frontend]: Update QRCode package and QRCode level to M.
+- [frontend]: Added font roboto.
+- [matterbridge]: Removed BasicInformationCluster from Aggregator.
+- [matterbridge]: Added minLevel, maxLevel and onLevel to LevelControlCluster utility methods.
+
+### Fixed
+
+- [energySensor]: Fixed wrong types on ElectricalEnergyMeasurementCluster ElectricalPowerMeasurementCluster.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.6.1] - 2024-11-02
 
 ### Added
@@ -32,7 +66,7 @@ Feel free to join (the link is now permanent)!
 
 - [loggers]: Logging on file keeps the logger level of the logger (matterbridge and matter logs).
 - [matterbridge]: Added more api to WebSocket for the Matterbridge cockpit dashboard (Shelly gateway).
-- [package]: Update dependencies. 
+- [package]: Update dependencies.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">

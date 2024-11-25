@@ -20,7 +20,7 @@ import { DeleteForever, Download, Add, Unpublished, PublishedWithChanges, Settin
 import Form from '@rjsf/mui';
 import validator from '@rjsf/validator-ajv8';
 
-import QRCode from 'qrcode.react';
+import { QRCodeSVG} from 'qrcode.react';
 
 const theme = createTheme({
   components: {
@@ -541,7 +541,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
         <div className="MbfWindowHeader">
           <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>{topText}</p>
         </div>
-        <QRCode value={qrText} size={qrWidth} bgColor='#9e9e9e' style={{ margin: '20px' }}/>
+        <QRCodeSVG value={qrText} size={qrWidth} level='M' bgColor='#9e9e9e' style={{ margin: '20px' }}/>
         <div className="MbfWindowFooter" style={{padding: 0, marginTop: '-5px', height: '30px'}}>
           <div>
             <p style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>Manual pairing code: {pairingText}</p>
@@ -556,7 +556,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
         <div className="MbfWindowHeader">
           <p className="MbfWindowHeaderText" style={{textAlign: 'left'}}>{topText}</p>
         </div>
-        <QRCode value={qrText} size={qrWidth} bgColor='#9e9e9e' style={{ margin: '20px' }}/>
+        <QRCodeSVG value={qrText} size={qrWidth} level='M' bgColor='#9e9e9e' style={{ margin: '20px' }}/>
         <div className="MbfWindowFooter" style={{padding: 0, marginTop: '-5px', height: '30px'}}>
           <div>
             <p style={{ margin: 0, textAlign: 'center', fontSize: '14px' }}>Manual pairing code: {pairingText}</p>

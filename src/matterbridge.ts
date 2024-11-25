@@ -27,49 +27,39 @@ import { promises as fs } from 'fs';
 import { ExecException, exec, spawn } from 'child_process';
 import { Server, createServer } from 'http';
 import * as http from 'http';
-import https from 'https';
 import EventEmitter from 'events';
-import express from 'express';
 import os from 'os';
 import path from 'path';
+import { randomBytes } from 'crypto';
+
+// Package modules
+import https from 'https';
+import express from 'express';
 import WebSocket, { WebSocketServer } from 'ws';
 
 // NodeStorage and AnsiLogger modules
 import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
-import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, hk, or, idn, BLUE, CYAN, nt } from 'node-ansi-logger';
+import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, stringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN, nt, idn, or, hk, BLUE } from 'node-ansi-logger';
 
 // Matterbridge
 import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
-import { logInterfaces, wait, waiter, createZip, copyDirectory } from './utils/utils.js';
+import { WS_ID_LOG, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, wsMessageHandler } from './matterbridgeWebsocket.js';
+import { logInterfaces, wait, waiter, createZip, copyDirectory, getParameter, getIntParameter, hasParameter } from './utils/utils.js';
 import { BaseRegisteredPlugin, MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
-// @project-chip/matter-node.js
-import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter-node.js';
-import {
-  BasicInformationCluster,
-  BridgedDeviceBasicInformation,
-  BridgedDeviceBasicInformationCluster,
-  ClusterServer,
-  FixedLabelCluster,
-  GeneralCommissioning,
-  PowerSourceCluster,
-  SwitchCluster,
-  ThreadNetworkDiagnosticsCluster,
-  getClusterNameById,
-} from '@project-chip/matter-node.js/cluster';
-import { DeviceTypeId, EndpointNumber, VendorId } from '@project-chip/matter-node.js/datatype';
-import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter-node.js/device';
-import { Format, Level, Logger } from '@project-chip/matter-node.js/log';
-import { ManualPairingCodeCodec, QrCodeSchema } from '@project-chip/matter-node.js/schema';
-import { StorageBackendDisk, StorageBackendJsonFile, StorageContext, StorageManager } from '@project-chip/matter-node.js/storage';
-import { getParameter, getIntParameter, hasParameter } from '@project-chip/matter-node.js/util';
-import { CryptoNode } from '@project-chip/matter-node.js/crypto';
-import { CommissioningOptions } from '@project-chip/matter-node.js/protocol';
-import { ExposedFabricInformation } from '@project-chip/matter-node.js/fabric';
-import { Specification } from '@project-chip/matter-node.js/model';
-import { WS_ID_LOG, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, wsMessageHandler } from './matterbridgeWebsocket.js';
+// @matter
+import { DeviceTypeId, EndpointNumber, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager } from '@matter/main';
+import { BasicInformationCluster, BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster, FixedLabelCluster, GeneralCommissioning, PowerSourceCluster, SwitchCluster, ThreadNetworkDiagnosticsCluster } from '@matter/main/clusters';
+import { getClusterNameById, ManualPairingCodeCodec, QrCodeSchema } from '@matter/main/types';
+import { ControllerCommissioningFlowOptions, ExposedFabricInformation } from '@matter/main/protocol';
+import { StorageBackendDisk, StorageBackendJsonFile } from '@matter/nodejs';
+
+// @project-chip
+import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter.js';
+import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter.js/device';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -113,9 +103,11 @@ export class Matterbridge extends EventEmitter {
     matterbridgeConnected: false,
     bridgeMode: '',
     restartMode: '',
+    edge: hasParameter('edge'),
+    profile: getParameter('profile'),
     loggerLevel: LogLevel.INFO,
     fileLogger: false,
-    matterLoggerLevel: Level.INFO,
+    matterLoggerLevel: MatterLogLevel.INFO,
     matterFileLogger: false,
     mattermdnsinterface: undefined,
     matteripv4address: undefined,
@@ -140,6 +132,7 @@ export class Matterbridge extends EventEmitter {
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public restartMode: 'service' | 'docker' | '' = '';
   public profile = getParameter('profile');
+  public edge = hasParameter('edge');
 
   public log!: AnsiLogger;
   protected matterbrideLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
@@ -184,8 +177,8 @@ export class Matterbridge extends EventEmitter {
   protected matterAggregator: Aggregator | undefined;
   protected commissioningServer: CommissioningServer | undefined;
   protected commissioningController: CommissioningController | undefined;
-  protected aggregatorVendorId = VendorId(0xfff1);
-  protected aggregatorProductId = 0x8000;
+  protected aggregatorVendorId = VendorId(getIntParameter('vendorId') ?? 0xfff1);
+  protected aggregatorProductId = getIntParameter('productId') ?? 0x8000;
 
   protected static instance: Matterbridge | undefined;
 
@@ -353,25 +346,25 @@ export class Matterbridge extends EventEmitter {
     if (hasParameter('matterlogger')) {
       const level = getParameter('matterlogger');
       if (level === 'debug') {
-        Logger.defaultLogLevel = Level.DEBUG;
+        Logger.defaultLogLevel = MatterLogLevel.DEBUG;
       } else if (level === 'info') {
-        Logger.defaultLogLevel = Level.INFO;
+        Logger.defaultLogLevel = MatterLogLevel.INFO;
       } else if (level === 'notice') {
-        Logger.defaultLogLevel = Level.NOTICE;
+        Logger.defaultLogLevel = MatterLogLevel.NOTICE;
       } else if (level === 'warn') {
-        Logger.defaultLogLevel = Level.WARN;
+        Logger.defaultLogLevel = MatterLogLevel.WARN;
       } else if (level === 'error') {
-        Logger.defaultLogLevel = Level.ERROR;
+        Logger.defaultLogLevel = MatterLogLevel.ERROR;
       } else if (level === 'fatal') {
-        Logger.defaultLogLevel = Level.FATAL;
+        Logger.defaultLogLevel = MatterLogLevel.FATAL;
       } else {
         this.log.warn(`Invalid matter.js logger level: ${level}. Using default level "info".`);
-        Logger.defaultLogLevel = Level.INFO;
+        Logger.defaultLogLevel = MatterLogLevel.INFO;
       }
     } else {
-      Logger.defaultLogLevel = await this.nodeContext.get<number>('matterLogLevel', Level.INFO);
+      Logger.defaultLogLevel = await this.nodeContext.get<number>('matterLogLevel', MatterLogLevel.INFO);
     }
-    Logger.format = Format.ANSI;
+    Logger.format = MatterLogFormat.ANSI;
     Logger.setLogger('default', this.createMatterLogger());
 
     // Create the file logger for matter.js (context: matterFileLog)
@@ -379,7 +372,7 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.matterFileLogger = true;
       Logger.addLogger('matterfilelogger', await this.createMatterFileLogger(path.join(this.matterbridgeDirectory, this.matterLoggerFile), true), {
         defaultLogLevel: Logger.defaultLogLevel,
-        logFormat: Format.PLAIN,
+        logFormat: MatterLogFormat.PLAIN,
       });
     }
     this.log.debug(`Matter logLevel: ${Logger.defaultLogLevel} fileLoger: ${this.matterbridgeInformation.matterFileLogger}.`);
@@ -679,6 +672,7 @@ export class Matterbridge extends EventEmitter {
     if (hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge')) {
       this.bridgeMode = 'bridge';
       MatterbridgeDevice.bridgeMode = 'bridge';
+      MatterbridgeEndpoint.bridgeMode = 'bridge';
       this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
       await this.startBridge();
       return;
@@ -688,6 +682,7 @@ export class Matterbridge extends EventEmitter {
     if (hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge')) {
       this.bridgeMode = 'childbridge';
       MatterbridgeDevice.bridgeMode = 'childbridge';
+      MatterbridgeEndpoint.bridgeMode = 'childbridge';
       this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
       await this.startChildbridge();
       return;
@@ -746,13 +741,13 @@ export class Matterbridge extends EventEmitter {
 
     this.exceptionHandler = async (error: Error) => {
       this.log.fatal('Unhandled Exception detected at:', error.stack || error, rs);
-      await this.cleanup('Unhandled Exception detected, cleaning up...');
+      // await this.cleanup('Unhandled Exception detected, cleaning up...');
     };
     process.on('uncaughtException', this.exceptionHandler);
 
     this.rejectionHandler = async (reason, promise) => {
       this.log.fatal('Unhandled Rejection detected at:', promise, 'reason:', reason instanceof Error ? reason.stack : reason, rs);
-      await this.cleanup('Unhandled Rejection detected, cleaning up...');
+      // await this.cleanup('Unhandled Rejection detected, cleaning up...');
     };
     process.on('unhandledRejection', this.rejectionHandler);
 
@@ -1048,27 +1043,27 @@ export class Matterbridge extends EventEmitter {
   private createMatterLogger() {
     const matterLogger = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
-    return (_level: Level, formattedLog: string) => {
+    return (_level: MatterLogLevel, formattedLog: string) => {
       const logger = formattedLog.slice(44, 44 + 20).trim();
       const message = formattedLog.slice(65);
       matterLogger.logName = logger;
       switch (_level) {
-        case Level.DEBUG:
+        case MatterLogLevel.DEBUG:
           matterLogger.log(LogLevel.DEBUG, message);
           break;
-        case Level.INFO:
+        case MatterLogLevel.INFO:
           matterLogger.log(LogLevel.INFO, message);
           break;
-        case Level.NOTICE:
+        case MatterLogLevel.NOTICE:
           matterLogger.log(LogLevel.NOTICE, message);
           break;
-        case Level.WARN:
+        case MatterLogLevel.WARN:
           matterLogger.log(LogLevel.WARN, message);
           break;
-        case Level.ERROR:
+        case MatterLogLevel.ERROR:
           matterLogger.log(LogLevel.ERROR, message);
           break;
-        case Level.FATAL:
+        case MatterLogLevel.FATAL:
           matterLogger.log(LogLevel.FATAL, message);
           break;
         default:
@@ -1096,7 +1091,7 @@ export class Matterbridge extends EventEmitter {
       }
     }
 
-    return async (_level: Level, formattedLog: string) => {
+    return async (_level: MatterLogLevel, formattedLog: string) => {
       if (fileSize > 100000000) return;
       fileSize += formattedLog.length;
       if (fileSize > 100000000) {
@@ -1113,22 +1108,22 @@ export class Matterbridge extends EventEmitter {
       const finalMessage = parts.slice(2).join(' ') + os.EOL;
 
       switch (_level) {
-        case Level.DEBUG:
+        case MatterLogLevel.DEBUG:
           await fs.appendFile(filePath, `[${timestamp}] [${logger}] [debug] ${finalMessage}`);
           break;
-        case Level.INFO:
+        case MatterLogLevel.INFO:
           await fs.appendFile(filePath, `[${timestamp}] [${logger}] [info] ${finalMessage}`);
           break;
-        case Level.NOTICE:
+        case MatterLogLevel.NOTICE:
           await fs.appendFile(filePath, `[${timestamp}] [${logger}] [notice] ${finalMessage}`);
           break;
-        case Level.WARN:
+        case MatterLogLevel.WARN:
           await fs.appendFile(filePath, `[${timestamp}] [${logger}] [warn] ${finalMessage}`);
           break;
-        case Level.ERROR:
+        case MatterLogLevel.ERROR:
           await fs.appendFile(filePath, `[${timestamp}] [${logger}] [error] ${finalMessage}`);
           break;
-        case Level.FATAL:
+        case MatterLogLevel.FATAL:
           await fs.appendFile(filePath, `[${timestamp}] [${logger}] [fatal] ${finalMessage}`);
           break;
         default:
@@ -1358,6 +1353,21 @@ export class Matterbridge extends EventEmitter {
       this.hasCleanupStarted = false;
       this.initialized = false;
     }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async addBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void> {
+    // Nothing to do here
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async removeBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void> {
+    // Nothing to do here
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async removeAllBridgedEndpoints(pluginName: string): Promise<void> {
+    // Nothing to do here
   }
 
   /**
@@ -1742,7 +1752,7 @@ export class Matterbridge extends EventEmitter {
         throw new Error('Please specify the longDiscriminator of the device to commission with -longDiscriminator or provide a valid passcode with -passcode');
       }
 
-      const commissioningOptions: CommissioningOptions = {
+      const commissioningOptions: ControllerCommissioningFlowOptions = {
         regulatoryLocation: GeneralCommissioning.RegulatoryLocationType.IndoorOutdoor,
         regulatoryCountryCode: 'XX',
       };
@@ -2066,16 +2076,19 @@ export class Matterbridge extends EventEmitter {
    * @param {StorageContext} context - The storage context.
    * @returns {Aggregator} - The created Matter Aggregator.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected async createMatterAggregator(context: StorageContext, pluginName: string): Promise<Aggregator> {
-    const random = 'AG' + CryptoNode.getRandomData(8).toHex();
+    /*
+    const random = randomBytes(8).toString('hex');
     await context.set('aggregatorSerialNumber', await context.get('aggregatorSerialNumber', random));
     await context.set('aggregatorUniqueId', await context.get('aggregatorUniqueId', random));
 
     this.log.debug(`Creating matter aggregator for plugin ${plg}${pluginName}${db} with uniqueId ${await context.get<string>('aggregatorUniqueId')} serialNumber ${await context.get<string>('aggregatorSerialNumber')}`);
     this.log.debug(`Creating matter aggregator for plugin ${plg}${pluginName}${db} with softwareVersion ${await context.get<number>('softwareVersion', 1)} softwareVersionString ${await context.get<string>('softwareVersionString', '1.0.0')}`);
     this.log.debug(`Creating matter aggregator for plugin ${plg}${pluginName}${db} with hardwareVersion ${await context.get<number>('hardwareVersion', 1)} hardwareVersionString ${await context.get<string>('hardwareVersionString', '1.0.0')}`);
-
+    */
     const matterAggregator = new Aggregator();
+    /*
     matterAggregator.addClusterServer(
       ClusterServer(
         BasicInformationCluster,
@@ -2108,6 +2121,7 @@ export class Matterbridge extends EventEmitter {
         },
       ),
     );
+    */
     return matterAggregator;
   }
 
@@ -2306,7 +2320,7 @@ export class Matterbridge extends EventEmitter {
   protected async createCommissioningServerContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string): Promise<StorageContext> {
     if (!this.storageManager) throw new Error('No storage manager initialized');
     this.log.debug(`Creating commissioning server storage context for ${plg}${pluginName}${db}`);
-    const random = 'CS' + CryptoNode.getRandomData(8).toHex();
+    const random = randomBytes(8).toString('hex');
     const storageContext = this.storageManager.createContext(pluginName);
     await storageContext.set('deviceName', deviceName);
     await storageContext.set('deviceType', deviceType);
@@ -2445,7 +2459,7 @@ export class Matterbridge extends EventEmitter {
    * @param fabricInfo - The array of exposed fabric information objects.
    * @returns An array of sanitized exposed fabric information objects.
    */
-  private sanitizeFabricInformations(fabricInfo: ExposedFabricInformation[]) {
+  protected sanitizeFabricInformations(fabricInfo: ExposedFabricInformation[]) {
     return fabricInfo.map((info) => {
       return {
         fabricIndex: info.fabricIndex,
@@ -2465,7 +2479,7 @@ export class Matterbridge extends EventEmitter {
    * @param sessionInfo - The array of session information objects.
    * @returns An array of sanitized session information objects.
    */
-  private sanitizeSessionInformation(sessionInfo: SessionInformation[]) {
+  protected sanitizeSessionInformation(sessionInfo: SessionInformation[]) {
     return sessionInfo
       .filter((session) => session.isPeerActive)
       .map((session) => {
@@ -3267,17 +3281,17 @@ export class Matterbridge extends EventEmitter {
       if (command === 'setmjloglevel') {
         this.log.debug('Matter.js log level:', param);
         if (param === 'Debug') {
-          Logger.defaultLogLevel = Level.DEBUG;
+          Logger.defaultLogLevel = MatterLogLevel.DEBUG;
         } else if (param === 'Info') {
-          Logger.defaultLogLevel = Level.INFO;
+          Logger.defaultLogLevel = MatterLogLevel.INFO;
         } else if (param === 'Notice') {
-          Logger.defaultLogLevel = Level.NOTICE;
+          Logger.defaultLogLevel = MatterLogLevel.NOTICE;
         } else if (param === 'Warn') {
-          Logger.defaultLogLevel = Level.WARN;
+          Logger.defaultLogLevel = MatterLogLevel.WARN;
         } else if (param === 'Error') {
-          Logger.defaultLogLevel = Level.ERROR;
+          Logger.defaultLogLevel = MatterLogLevel.ERROR;
         } else if (param === 'Fatal') {
-          Logger.defaultLogLevel = Level.FATAL;
+          Logger.defaultLogLevel = MatterLogLevel.FATAL;
         }
         await this.nodeContext?.set('matterLogLevel', Logger.defaultLogLevel);
         res.json({ message: 'Command received' });
@@ -3334,8 +3348,8 @@ export class Matterbridge extends EventEmitter {
         if (param === 'true') {
           try {
             Logger.addLogger('matterfilelogger', await this.createMatterFileLogger(path.join(this.matterbridgeDirectory, this.matterLoggerFile), true), {
-              defaultLogLevel: Level.DEBUG,
-              logFormat: Format.PLAIN,
+              defaultLogLevel: MatterLogLevel.DEBUG,
+              logFormat: MatterLogFormat.PLAIN,
             });
           } catch (error) {
             this.log.debug(`Error adding the matterfilelogger for file ${CYAN}${path.join(this.matterbridgeDirectory, this.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
@@ -3604,8 +3618,8 @@ export class Matterbridge extends EventEmitter {
     this.matterbridgeDirectory = dataPath;
 
     // Set matter.js logger level and format
-    Logger.defaultLogLevel = Level.INFO;
-    Logger.format = Format.ANSI;
+    Logger.defaultLogLevel = MatterLogLevel.INFO;
+    Logger.format = MatterLogFormat.ANSI;
 
     // Start the storage and create matterbridgeContext
     await this.startMatterStorage('json', path.join(this.matterbridgeDirectory, this.matterStorageName));

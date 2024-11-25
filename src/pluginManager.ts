@@ -22,15 +22,21 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { AnsiLogger, BLUE, db, er, LogLevel, nf, nt, pl, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
-import { Matterbridge } from './matterbridge.js';
-import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
+
+// NodeStorage and AnsiLogger modules
+import { AnsiLogger, BLUE, db, er, LogLevel, nf, nt, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
 import { NodeStorage } from 'node-persist-manager';
+
+// Node.js modules
 import path from 'path';
 import { promises as fs } from 'fs';
-import { fileURLToPath, pathToFileURL } from 'url';
-import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
+import { pathToFileURL } from 'url';
 import { exec, ExecException } from 'child_process';
+
+// Matterbridge
+import { Matterbridge } from './matterbridge.js';
+import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
+import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
 import { shelly_config, somfytahoma_config, zigbee2mqtt_config } from './defaultConfigSchema.js';
 
 export class PluginManager {
@@ -189,7 +195,7 @@ export class PluginManager {
 
       // Check for @project-chip packages in dependencies and devDependencies
       const checkForProjectChipPackages = (dependencies: Record<string, string>) => {
-        return Object.keys(dependencies).filter((pkg) => pkg.startsWith('@project-chip'));
+        return Object.keys(dependencies).filter((pkg) => pkg.startsWith('@project-chip') || pkg.startsWith('@matter'));
       };
       const projectChipDependencies = checkForProjectChipPackages(packageJson.dependencies || {});
       if (projectChipDependencies.length > 0) {
@@ -266,7 +272,7 @@ export class PluginManager {
 
       // Check for @project-chip packages in dependencies and devDependencies
       const checkForProjectChipPackages = (dependencies: Record<string, string>) => {
-        return Object.keys(dependencies).filter((pkg) => pkg.startsWith('@project-chip'));
+        return Object.keys(dependencies).filter((pkg) => pkg.startsWith('@project-chip') || pkg.startsWith('@matter'));
       };
       const projectChipDependencies = checkForProjectChipPackages(packageJson.dependencies || {});
       if (projectChipDependencies.length > 0) {
@@ -466,7 +472,7 @@ export class PluginManager {
         this.log.info(`Plugin ${plg}${nameOrPath}${nf} already registered`);
         return null;
       }
-      this._plugins.set(packageJson.name, { name: packageJson.name, enabled: true, path: packageJsonPath, type: '', version: packageJson.version, description: packageJson.description, author: packageJson.author });
+      this._plugins.set(packageJson.name, { name: packageJson.name, enabled: true, path: packageJsonPath, type: 'AnyPlatform', version: packageJson.version, description: packageJson.description, author: packageJson.author });
       this.log.info(`Added plugin ${plg}${packageJson.name}${nf}`);
       await this.saveToStorage();
       const plugin = this._plugins.get(packageJson.name);
@@ -536,12 +542,10 @@ export class PluginManager {
         if (error) {
           this.log.error(`Failed to uninstall plugin ${plg}${name}${er}: ${error}`);
           this.log.debug(`Failed to uninstall plugin ${plg}${name}${db}: ${stderr}`);
-          // console.error(`Failed to uninstall plugin ${plg}${name}${er}: ${stderr}`);
           resolve(undefined);
         } else {
           this.log.info(`Uninstalled plugin ${plg}${name}${nf}`);
           this.log.debug(`Uninstalled plugin ${plg}${name}${db}: ${stdout}`);
-          // console.error(`Uninstalled plugin ${plg}${name}${nf}: ${stdout}`);
           resolve(name);
         }
       });
@@ -580,6 +584,17 @@ export class PluginManager {
       // Call the default export function of the plugin, passing this MatterBridge instance, the log and the config
       if (pluginInstance.default) {
         const config: PlatformConfig = await this.loadConfig(plugin);
+
+        // Preset the plugin properties here in case the plugin throws an error during loading. In this case the user can change the config and restart the plugin.
+        plugin.name = packageJson.name;
+        plugin.description = packageJson.description ?? 'No description';
+        plugin.version = packageJson.version;
+        plugin.author = packageJson.author ?? 'Unknown';
+        plugin.configJson = config;
+        plugin.schemaJson = await this.loadSchema(plugin);
+        config.name = plugin.name;
+        config.version = packageJson.version;
+
         const log = new AnsiLogger({ logName: plugin.description ?? 'No description', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: (config.debug as boolean) ? LogLevel.DEBUG : this.matterbridge.log.logLevel });
         const platform = pluginInstance.default(this.matterbridge, log, config) as MatterbridgePlatform;
         config.type = platform.type;
@@ -761,7 +776,7 @@ export class PluginManager {
       const config = JSON.parse(data) as PlatformConfig;
       this.log.debug(`Loaded config file ${configFile} for plugin ${plg}${plugin.name}${db}.`);
       // this.log.debug(`Loaded config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
-      /* The first time a plugin is added to the system, the config file is created with the plugin name and type "".*/
+      // The first time a plugin is added to the system, the config file is created with the plugin name and type "AnyPlatform".
       config.name = plugin.name;
       config.type = plugin.type;
       if (config.debug === undefined) config.debug = false;

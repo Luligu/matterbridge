@@ -138,6 +138,10 @@ Config editor:
 
 [Podman configurations](https://github.com/Luligu/matterbridge/blob/main/README-PODMAN.md)
 
+### Run matterbridge with nginx
+
+[Nginx configurations](https://github.com/Luligu/matterbridge/blob/main/README-NGINX.md)
+
 ### Run matterbridge as an home assistant add-on with the official add-on
 
 [Home assistant add-on configurations](https://github.com/Luligu/matterbridge-home-assistant-addon)

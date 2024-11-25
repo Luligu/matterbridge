@@ -4,15 +4,13 @@
 process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'fatal', '-bridge', '-profile', 'Jest', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
 
 import { jest } from '@jest/globals';
-
-jest.mock('@project-chip/matter-node.js/util');
-
 import { AnsiLogger, db, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { wait, waiter } from './utils/utils.js';
 import WebSocket from 'ws';
-import { MatterbridgeDevice, onOffLight, onOffOutlet, onOffSwitch } from './matterbridgeDevice.js';
-import { Identify } from '@project-chip/matter-node.js/cluster';
+import { MatterbridgeDevice } from './matterbridgeDevice.js';
+import { onOffLight, onOffOutlet, onOffSwitch } from './matterbridgeDeviceTypes.js';
+import { Identify } from '@matter/main/clusters';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 
 // Default colors

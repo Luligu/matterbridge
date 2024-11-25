@@ -21,8 +21,11 @@
  * limitations under the License. *
  */
 
+// Matterbridge
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
+
+// AnsiLogger module
 import { AnsiLogger } from 'node-ansi-logger';
 
 /**

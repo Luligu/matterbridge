@@ -4,9 +4,6 @@
 process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-profile', 'Jest'];
 
 import { jest } from '@jest/globals';
-
-jest.mock('@project-chip/matter-node.js/util');
-
 import { AnsiLogger, db, er, LogLevel, nf, nt, pl, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
@@ -15,7 +12,6 @@ import { execSync } from 'child_process';
 import { getMacAddress, waiter } from './utils/utils.js';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { DeviceManager } from './deviceManager.js';
 
 // Default colors
@@ -386,6 +382,12 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-example-accessory-platform${nf}`);
     expect(plugin).not.toBeNull();
     expect(plugins.length).toBe(1);
+
+    const newPlugin = plugins.get('matterbridge-example-accessory-platform');
+    expect(newPlugin).not.toBeUndefined();
+    if (!newPlugin) return;
+    expect(newPlugin.name).toBe('matterbridge-example-accessory-platform');
+    expect(newPlugin.type).toBe('AnyPlatform');
   }, 60000);
 
   test('add plugin matterbridge-example-dynamic-platform', async () => {
@@ -398,6 +400,12 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-example-dynamic-platform${nf}`);
     expect(plugin).not.toBeNull();
     expect(plugins.length).toBe(2);
+
+    const newPlugin = plugins.get('matterbridge-example-dynamic-platform');
+    expect(newPlugin).not.toBeUndefined();
+    if (!newPlugin) return;
+    expect(newPlugin.name).toBe('matterbridge-example-dynamic-platform');
+    expect(newPlugin.type).toBe('AnyPlatform');
   }, 60000);
 
   test('load default config plugin matterbridge-example-accessory-platform', async () => {
@@ -419,14 +427,12 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Created config file ${configFile} for plugin ${plg}${plugin.name}${db}.`);
 
     config = await plugins.loadConfig(plugin);
-    // if (getMacAddress() === '30:f6:ef:69:2b:c5') {
-
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded config file ${configFile} for plugin ${plg}${plugin.name}${db}.`);
-    // }
     expect(config).not.toBeUndefined();
     expect(config).not.toBeNull();
     expect(config.name).toBe(plugin.name);
     expect(config.type).toBe(plugin.type);
+    expect(config.type).toBe('AnyPlatform');
     expect(config.debug).toBeDefined();
     expect(config.unregisterOnShutdown).toBeDefined();
   }, 60000);
@@ -440,7 +446,10 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
-    await plugins.load(plugin);
+    const platform = await plugins.load(plugin);
+    expect(platform).toBeDefined();
+    expect(plugin.name).toBe('matterbridge-example-accessory-platform');
+    expect(plugin.type).toBe('AccessoryPlatform');
     await plugins.saveConfigFromPlugin(plugin);
     const configFile = path.join(matterbridge.matterbridgeDirectory, `${plugin.name}.config.json`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
@@ -456,7 +465,10 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
-    await plugins.load(plugin);
+    const platform = await plugins.load(plugin);
+    expect(platform).toBeDefined();
+    expect(plugin.name).toBe('matterbridge-example-accessory-platform');
+    expect(plugin.type).toBe('AccessoryPlatform');
     const config = await plugins.loadConfig(plugin);
     await plugins.saveConfigFromJson(plugin, config);
     const configFile = path.join(matterbridge.matterbridgeDirectory, `${plugin.name}.config.json`);

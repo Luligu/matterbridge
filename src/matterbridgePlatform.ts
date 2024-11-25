@@ -21,9 +21,13 @@
  * limitations under the License. *
  */
 
+// Matterbridge
 import { Matterbridge } from './matterbridge.js';
-import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
+
+// AnsiLogger module
+import { AnsiLogger, LogLevel } from 'node-ansi-logger';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // Platform types
 export type PlatformConfigValue = string | number | boolean | bigint | object | undefined | null;
@@ -101,17 +105,19 @@ export class MatterbridgePlatform {
    * Registers a device with the Matterbridge platform.
    * @param {MatterbridgeDevice} device - The device to register.
    */
-  async registerDevice(device: MatterbridgeDevice) {
+  async registerDevice(device: MatterbridgeDevice | MatterbridgeEndpoint) {
     device.plugin = this.name;
-    await this.matterbridge.addBridgedDevice(this.name, device);
+    if (device instanceof MatterbridgeDevice) await this.matterbridge.addBridgedDevice(this.name, device);
+    if (device instanceof MatterbridgeEndpoint) await this.matterbridge.addBridgedEndpoint(this.name, device);
   }
 
   /**
    * Unregisters a device registered with the Matterbridge platform.
    * @param {MatterbridgeDevice} device - The device to unregister.
    */
-  async unregisterDevice(device: MatterbridgeDevice) {
-    await this.matterbridge.removeBridgedDevice(this.name, device);
+  async unregisterDevice(device: MatterbridgeDevice | MatterbridgeEndpoint) {
+    if (device instanceof MatterbridgeDevice) await this.matterbridge.removeBridgedDevice(this.name, device);
+    if (device instanceof MatterbridgeEndpoint) await this.matterbridge.removeBridgedEndpoint(this.name, device);
   }
 
   /**
