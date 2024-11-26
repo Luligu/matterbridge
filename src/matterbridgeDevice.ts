@@ -541,6 +541,41 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Triggers the specified event of the specified cluster from the given endpoint and cluster.
+   *
+   * @param {ClusterId} clusterId - The ID of the cluster to retrieve the event from.
+   * @param {string} event - The name of the event to trigger.
+   * @param {Record<string, any>} payload - The payload of the event to trigger.
+   * @param {AnsiLogger} [log] - Optional logger for error and info messages.
+   * @param {Endpoint} [endpoint] - Optional the child endpoint to retrieve the event from.
+   */
+  triggerEvent(clusterId: ClusterId, event: string, payload: Record<string, boolean | number | bigint | string | object | undefined | null>, log?: AnsiLogger, endpoint?: Endpoint) {
+    if (!endpoint) endpoint = this as Endpoint;
+    if (!endpoint.number) return;
+
+    const clusterServer = endpoint.getClusterServerById(clusterId);
+    if (!clusterServer) {
+      log?.error(`triggerEvent error: Cluster ${clusterId} not found on endpoint ${endpoint.name}:${endpoint.number}`);
+      return;
+    }
+    const capitalizedEventName = event.charAt(0).toUpperCase() + event.slice(1);
+    if (!clusterServer.isEventSupportedByName(event) && !clusterServer.isEventSupportedByName(capitalizedEventName)) {
+      if (log) log.error(`triggerEvent error: Event ${event} not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+      return;
+    }
+    // Find the getter method
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!(clusterServer as any)[`trigger${capitalizedEventName}Event`]) {
+      log?.error(`triggerEvent error: Trigger trigger${capitalizedEventName}Event not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+      return;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type
+    const trigger = (clusterServer as any)[`trigger${capitalizedEventName}Event`] as (payload: Record<string, boolean | number | bigint | string | object | undefined | null>) => {};
+    trigger(payload);
+    log?.info(`${db}Trigger event ${hk}${clusterServer.name}.${capitalizedEventName}${db} on endpoint ${or}${endpoint.name}:${endpoint.number}${db}`);
+  }
+
+  /**
    * Adds a tag to the tag list of the specified endpoint.
    *
    * @param {Endpoint} endpoint - The endpoint to add the tag to.
