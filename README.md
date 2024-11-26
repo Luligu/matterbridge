@@ -429,7 +429,6 @@ There is no support for these Matter device types:
 
 - pressure sensor
 - flow sensor
-- light sensor
 
 In the zigbee2mqtt and shelly plugins select the option to expose
 the switch devices like light or outlet cause they don't show up like switch
