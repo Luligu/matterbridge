@@ -1344,11 +1344,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Get a default level control cluster server.
    *
    * @param currentLevel - The current level (default: 254).
-   * @param minLevel - The minimum level (default: 1).
+   * @param minLevel - The minimum level (default: 0).
    * @param maxLevel - The maximum level (default: 254).
    * @param onLevel - The on level (default: null).
    */
-  getDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 1, maxLevel = 254, onLevel: number | null = null) {
+  getDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 0, maxLevel = 254, onLevel: number | null = null) {
     return ClusterServer(
       LevelControlCluster.with(LevelControl.Feature.OnOff),
       {
@@ -1396,11 +1396,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default level control cluster server.
    *
    * @param currentLevel - The current level (default: 254).
-   * @param minLevel - The minimum level (default: 1).
+   * @param minLevel - The minimum level (default: 0).
    * @param maxLevel - The maximum level (default: 254).
    * @param onLevel - The on level (default: null).
    */
-  createDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 1, maxLevel = 254, onLevel: number | null = null) {
+  createDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 0, maxLevel = 254, onLevel: number | null = null) {
     this.addClusterServer(this.getDefaultLevelControlClusterServer(currentLevel, minLevel, maxLevel, onLevel));
   }
 

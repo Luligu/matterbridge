@@ -20,6 +20,12 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 Feel free to join (the link is now permanent)!
 
+## [1.6.3] - 2024-11-xx
+
+### Changed
+
+- [matterbridge]: Changed default minLevel to 0 in LevelControlCluster utility methods.
+
 ## [1.6.2] - 2024-11-25
 
 ### Added
@@ -30,6 +36,7 @@ Feel free to join (the link is now permanent)!
 - [config]: Added version to the config.
 - [frontend]: Added badge "edge" when running in edge mode.
 - [matterbridge]: Added addTagList method.
+- [matterbridge]: Added minLevel, maxLevel and onLevel to LevelControlCluster utility methods.
 
 ### Changed
 
@@ -44,7 +51,6 @@ Feel free to join (the link is now permanent)!
 - [frontend]: Update QRCode package and QRCode level to M.
 - [frontend]: Added font roboto.
 - [matterbridge]: Removed BasicInformationCluster from Aggregator.
-- [matterbridge]: Added minLevel, maxLevel and onLevel to LevelControlCluster utility methods.
 
 ### Fixed
 
