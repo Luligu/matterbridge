@@ -706,7 +706,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ClusterId} clusterId - The ID of the cluster to retrieve the attribute from.
    * @param {string} attribute - The name of the attribute to retrieve.
    * @param {AnsiLogger} [log] - Optional logger for error and info messages.
-   * @param {Endpoint} [endpoint] - Optional the child endpoint to retrieve the attribute from.
+   * @param {MatterbridgeEndpoint} [endpoint] - Optional the child endpoint to retrieve the attribute from.
    * @returns {any} The value of the attribute, or undefined if the attribute is not found.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -715,7 +715,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
 
     if (endpoint.construction.status !== Lifecycle.Status.Active) {
-      log?.error(`getAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+      this.log.error(`getAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
       return undefined;
     }
 
@@ -723,12 +723,12 @@ export class MatterbridgeEndpoint extends Endpoint {
     const state = endpoint.state as Record<string, Record<string, any>>;
 
     if (!(clusterName in state)) {
-      log?.error(`getAttribute error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+      this.log.error(`getAttribute error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return undefined;
     }
     attribute = this.lowercaseFirstLetter(attribute);
     if (!(attribute in state[clusterName])) {
-      log?.error(`getAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+      this.log.error(`getAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return undefined;
     }
     const value = state[clusterName][attribute];
@@ -745,7 +745,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} attribute - The name of the attribute.
    * @param {any} value - The value to set for the attribute.
    * @param {AnsiLogger} [log] - (Optional) The logger to use for logging errors and information.
-   * @param {Endpoint} [endpoint] - (Optional) The endpoint to set the attribute on. If not provided, the attribute will be set on the current endpoint.
+   * @param {MatterbridgeEndpoint} [endpoint] - (Optional) The endpoint to set the attribute on. If not provided, the attribute will be set on the current endpoint.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async setAttribute(clusterId: ClusterId, attribute: string, value: any, log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): Promise<boolean> {
@@ -753,7 +754,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
 
     if (endpoint.construction.status !== Lifecycle.Status.Active) {
-      log?.error(`setAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+      this.log.error(`setAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
       return false;
     }
 
@@ -761,12 +762,12 @@ export class MatterbridgeEndpoint extends Endpoint {
     const state = endpoint.state as Record<string, Record<string, any>>;
 
     if (!(clusterName in state)) {
-      log?.error(`setAttribute ${hk}${attribute}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+      this.log.error(`setAttribute ${hk}${attribute}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return false;
     }
     attribute = this.lowercaseFirstLetter(attribute);
     if (!(attribute in state[clusterName])) {
-      log?.error(`setAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+      this.log.error(`setAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return false;
     }
     let oldValue = state[clusterName][attribute];
@@ -787,11 +788,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ClusterId} clusterId - The ID of the cluster.
    * @param {string} attribute - The name of the attribute to subscribe to.
    * @param {(newValue: any, oldValue: any) => void} listener - A callback function that will be called when the attribute value changes.
-   * @param {AnsiLogger} log - (Optional) An AnsiLogger instance for logging errors and information.
-   * @param {Endpoint} endpoint - (Optional) The endpoint to subscribe the attribute on. If not provided, the current endpoint will be used.
-   * @returns A boolean indicating whether the subscription was successful.
+   * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
+   * @param {MatterbridgeEndpoint} [endpoint] - Optional endpoint to subscribe the attribute on. Defaults to the current endpoint.
+   * @returns {boolean} - A boolean indicating whether the subscription was successful.
    */
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   subscribeAttribute(clusterId: ClusterId, attribute: string, listener: (newValue: any, oldValue: any) => void, log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): boolean {
     if (!endpoint) endpoint = this as MatterbridgeEndpoint;
@@ -801,12 +801,12 @@ export class MatterbridgeEndpoint extends Endpoint {
     const events = endpoint.events as Record<string, Record<string, any>>;
 
     if (!(clusterName in events)) {
-      log?.error(`subscribeAttribute ${hk}${attribute}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+      this.log.error(`subscribeAttribute ${hk}${attribute}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return false;
     }
     attribute = this.lowercaseFirstLetter(attribute) + '$Changed';
     if (!(attribute in events[clusterName])) {
-      log?.error(`subscribeAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+      this.log.error(`subscribeAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return false;
     }
     events[clusterName][attribute].on(listener);
@@ -814,21 +814,30 @@ export class MatterbridgeEndpoint extends Endpoint {
     return true;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async triggerEvent(clusterId: ClusterId, event: string, payload: Record<string, any>, log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): Promise<boolean> {
+  /**
+   * Triggers an event on the specified cluster.
+   *
+   * @param {ClusterId} clusterId - The ID of the cluster.
+   * @param {string} event - The name of the event to trigger.
+   * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} payload - The payload to pass to the event.
+   * @param {AnsiLogger} [log] - Optional logger for logging information.
+   * @param {MatterbridgeEndpoint} [endpoint] - Optional endpoint to trigger the event on. Defaults to the current endpoint.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the event was successfully triggered.
+   */
+  async triggerEvent(clusterId: ClusterId, event: string, payload: Record<string, boolean | number | bigint | string | object | undefined | null>, log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): Promise<boolean> {
     if (!endpoint) endpoint = this as MatterbridgeEndpoint;
 
     const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
 
     if (endpoint.construction.status !== Lifecycle.Status.Active) {
-      log?.error(`triggerEvent ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+      this.log.error(`triggerEvent ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
       return false;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const events = endpoint.events as Record<string, Record<string, any>>;
     if (!(clusterName in events) || !(event in events[clusterName])) {
-      log?.error(`triggerEvent ${hk}${event}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+      this.log.error(`triggerEvent ${hk}${event}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return false;
     }
 
@@ -839,6 +848,13 @@ export class MatterbridgeEndpoint extends Endpoint {
     return true;
   }
 
+  /**
+   * Adds a command handler for the specified command.
+   *
+   * @param {keyof MatterbridgeEndpointCommands} command - The command to add the handler for.
+   * @param {(data: any) => void} handler - The handler function to execute when the command is received.
+   * @returns {void}
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   addCommandHandler(command: keyof MatterbridgeEndpointCommands, handler: (data: any) => void): void {
     this.commandHandler.addHandler(command, handler);
