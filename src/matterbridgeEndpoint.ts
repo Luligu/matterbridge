@@ -365,7 +365,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === LevelControl.Cluster.id) return MatterbridgeLevelControlServer;
     if (clusterId === ColorControl.Cluster.id) return MatterbridgeColorControlServer;
     if (clusterId === DoorLock.Cluster.id) return MatterbridgeDoorLockServer;
-    if (clusterId === Thermostat.Cluster.id) return MatterbridgeThermostatServer;
+
+    if (clusterId === Thermostat.Cluster.id && type === 'AutoModeThermostat') return MatterbridgeThermostatServer.with('AutoMode', 'Heating', 'Cooling');
+    if (clusterId === Thermostat.Cluster.id && type === 'HeatingThermostat') return MatterbridgeThermostatServer.with('Heating');
+    if (clusterId === Thermostat.Cluster.id && type === 'CoolingThermostat') return MatterbridgeThermostatServer.with('Cooling');
+
     if (clusterId === WindowCovering.Cluster.id) return MatterbridgeWindowCoveringServer;
     if (clusterId === FanControl.Cluster.id) return MatterbridgeFanControlServer;
     if (clusterId === Switch.Cluster.id && type === 'MomentarySwitch') return SwitchServer.with('MomentarySwitch', 'MomentarySwitchRelease', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress');
@@ -378,9 +382,9 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === BooleanStateConfiguration.Cluster.id) return MatterbridgeBooleanStateConfigurationServer;
     if (clusterId === OccupancySensing.Cluster.id) return OccupancySensingServer;
     if (clusterId === IlluminanceMeasurement.Cluster.id) return IlluminanceMeasurementServer;
-    if (clusterId === SmokeCoAlarm.Cluster.id) return SmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm);
+    if (clusterId === SmokeCoAlarm.Cluster.id) return SmokeCoAlarmServer.with('SmokeAlarm', 'CoAlarm');
 
-    if (clusterId === AirQuality.Cluster.id) return AirQualityServer.with(AirQuality.Feature.Fair, AirQuality.Feature.Moderate, AirQuality.Feature.VeryPoor, AirQuality.Feature.ExtremelyPoor);
+    if (clusterId === AirQuality.Cluster.id) return AirQualityServer.with('Fair', 'Moderate', 'VeryPoor', 'ExtremelyPoor');
     if (clusterId === CarbonMonoxideConcentrationMeasurement.Cluster.id) return CarbonMonoxideConcentrationMeasurementServer.with('NumericMeasurement');
     if (clusterId === CarbonDioxideConcentrationMeasurement.Cluster.id) return CarbonDioxideConcentrationMeasurementServer.with('NumericMeasurement');
     if (clusterId === NitrogenDioxideConcentrationMeasurement.Cluster.id) return NitrogenDioxideConcentrationMeasurementServer.with('NumericMeasurement');
@@ -614,15 +618,28 @@ export class MatterbridgeEndpoint extends Endpoint {
       }
     }
     this.log.debug(`addClusterServer: ${hk}${'0x' + cluster.id.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(cluster.id)}${db} with options: ${debugStringify(options)}${rs}`);
+    if (this.clusterServers.has(cluster.id)) {
+      this.log.debug(`****cluster ${hk}${'0x' + cluster.id.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(cluster.id)}${db} already added`);
+    }
     let type = undefined;
     if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('multiPressComplete')) type = 'MomentarySwitch';
     if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('switchLatched')) type = 'LatchingSwitch';
+
     if (cluster.id === PowerSourceCluster.id && cluster.isAttributeSupportedByName('wiredCurrentType')) type = 'WiredPowerSource';
     if (cluster.id === PowerSourceCluster.id && cluster.isAttributeSupportedByName('batReplacementDescription')) type = 'BatteryReplaceablePowerSource';
     if (cluster.id === PowerSourceCluster.id && cluster.isAttributeSupportedByName('batChargeState')) type = 'BatteryRechargeablePowerSource';
+
+    if (cluster.id === ThermostatCluster.id && cluster.isAttributeSupportedByName('occupiedCoolingSetpoint')) type = 'CoolingThermostat';
+    if (cluster.id === ThermostatCluster.id && cluster.isAttributeSupportedByName('occupiedHeatingSetpoint')) type = 'HeatingThermostat';
+    if (cluster.id === ThermostatCluster.id && cluster.isAttributeSupportedByName('minSetpointDeadBand')) type = 'AutoModeThermostat';
+
     const behavior = MatterbridgeEndpoint.getBehaviourTypeFromClusterServerId(cluster.id, type);
-    if (cluster.id !== BasicInformationCluster.id) this.behaviors.require(behavior, options);
+    if (cluster.id === PowerTopologyCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
+    if (cluster.id === ElectricalPowerMeasurementCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
+    if (cluster.id === ElectricalEnergyMeasurementCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
     this.clusterServers.set(cluster.id, cluster as unknown as ClusterServerObj);
+    if (cluster.id === BasicInformationCluster.id) return; // Not used in Matterbridge edge for devices. Only on server node.
+    this.behaviors.require(behavior, options);
   }
 
   /**
