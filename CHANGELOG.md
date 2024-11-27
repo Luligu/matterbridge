@@ -20,11 +20,15 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 Feel free to join (the link is now permanent)!
 
-## [1.6.3] - 2024-11-xx
+## [1.6.3] - 2024-11-27
 
 ### Changed
 
 - [matterbridge]: Changed default minLevel to 0 in LevelControlCluster utility methods.
+
+### Fixed
+
+- [matter.js]: Temporary fix the crash of matter.js on close when using command line parameters.
 
 ## [1.6.2] - 2024-11-25
 

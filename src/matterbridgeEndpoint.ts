@@ -306,6 +306,9 @@ export class MatterbridgeEndpoint extends Endpoint {
     super(endpointV8, optionsV8);
     this.uniqueStorageKey = options.uniqueStorageKey;
     this.tagList = options.tagList;
+    // console.log('MatterbridgeEndpoint.option', options);
+    // console.log('MatterbridgeEndpoint.endpointV8', endpointV8);
+    // console.log('MatterbridgeEndpoint.optionsV8', optionsV8);
 
     // Update the endpoint
     this.log = new AnsiLogger({ logName: 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
@@ -515,11 +518,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} endpointName - The name of the new enpoint to add.
    * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
    * @param {ClusterId[]} [includeServerList=[]] - The list of cluster IDs to include.
-   * @param {EndpointOptions} [options={}] - The options for the device.
+   * @param {MatterbridgeEndpointOptions} [options={}] - The options for the device.
    * @param {boolean} [debug=false] - Whether to enable debug logging.
    * @returns {MatterbridgeEndpoint} - The child endpoint that was found or added.
    */
-  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: EndpointOptions = {}, debug = false) {
+  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug = false) {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
     let child = this.getChildEndpointByName(endpointName);
     if (!child) {
@@ -527,7 +530,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         for (const tag of options.tagList as Semtag[]) {
           this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
         }
-        child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName, taglist: options.tagList } as EndpointOptions, debug);
+        child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName, tagList: options.tagList }, debug);
       } else {
         child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName }, debug);
       }
@@ -596,7 +599,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   addTagList(endpoint: Endpoint, mfgCode: VendorId | null, namespaceId: number, tag: number, label?: string | null) {
-    // Do nothing here
+    // Do nothing here only for old api compatibility
   }
 
   addClusterServer<const T extends ClusterType>(cluster: ClusterServerObj<T>) {
@@ -670,6 +673,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   async addFixedLabel(label: string, value: string) {
     if (!this.clusterServers.get(FixedLabelCluster.id)) {
+      this.log.debug(`addFixedLabel: add cluster ${hk}FixedLabelCluster${db} with label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
       this.addClusterServer(
         ClusterServer(
           FixedLabelCluster,
@@ -681,6 +685,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       );
       return;
     }
+    this.log.debug(`addFixedLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
     const labelList = (this.getAttribute(FixedLabelCluster.id, 'labelList', this.log) ?? []).filter((entryLabel: { label: string; value: string }) => entryLabel.label !== label);
     labelList.push({ label, value });
     await this.setAttribute(FixedLabelCluster.id, 'labelList', labelList, this.log);
@@ -688,6 +693,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   async addUserLabel(label: string, value: string) {
     if (!this.clusterServers.get(UserLabelCluster.id)) {
+      this.log.debug(`addUserLabel: add cluster ${hk}UserLabelCluster${db} with label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
       this.addClusterServer(
         ClusterServer(
           UserLabelCluster,
@@ -699,6 +705,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       );
       return;
     }
+    this.log.debug(`addUserLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
     const labelList = (this.getAttribute(UserLabelCluster.id, 'labelList', this.log) ?? []).filter((entryLabel: { label: string; value: string }) => entryLabel.label !== label);
     labelList.push({ label, value });
     await this.setAttribute(UserLabelCluster.id, 'labelList', labelList, this.log);
