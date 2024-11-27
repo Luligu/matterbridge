@@ -110,7 +110,7 @@ import {
 } from '@matter/main/clusters';
 import { Specification } from '@matter/main/model';
 import { ClusterId, EndpointNumber, extendPublicHandlerMethods, VendorId, AtLeastOne, MakeMandatory } from '@matter/main';
-import { MeasurementType, getClusterNameById } from '@matter/main/types';
+import { MeasurementType, Semtag, getClusterNameById } from '@matter/main/types';
 
 // @project-chip
 import { Device, DeviceTypeDefinition, Endpoint, EndpointOptions } from '@project-chip/matter.js/device';
@@ -121,7 +121,7 @@ import { AnsiLogger, LogLevel, TimestampFormat, CYAN, YELLOW, db, hk, or, zb, de
 
 // Node.js modules
 import { createHash } from 'crypto';
-import { bridgedNode } from './matterbridgeDeviceTypes.js';
+import { bridgedNode, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
 
 interface MatterbridgeDeviceCommands {
   identify: MakeMandatory<ClusterServerHandlers<typeof Identify.Complete>['identify']>;
@@ -289,11 +289,17 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @returns {Endpoint} - The child endpoint that was found or added.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: EndpointOptions = {}, debug = false): Endpoint {
+  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug = false): Endpoint {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
     let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName);
     if (!child) {
       child = new Endpoint(deviceTypes, { uniqueStorageKey: endpointName });
+      if ('tagList' in options) {
+        for (const tag of options.tagList as Semtag[]) {
+          this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
+          this.addTagList(child, tag.mfgCode, tag.namespaceId, tag.tag, tag.label);
+        }
+      }
       this.addChildEndpoint(child);
     }
     deviceTypes.forEach((deviceType) => {
@@ -604,13 +610,13 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     // tagList: { mfgCode: VendorId | null; namespaceId: number; tag: number; label?: string | null }[] = [];
 
     if (descriptor.attributes.tagList) {
-      this.log.debug(`addTagList: adding ${CYAN}tagList${db} mfCode: ${mfgCode}, namespaceId: ${namespaceId}, tag: ${tag}, label: ${label} on endpoint $${endpoint.name}:${endpoint.number}`);
+      this.log.debug(`addTagList: adding ${CYAN}tagList${db} mfCode: ${mfgCode}, namespaceId: ${namespaceId}, tag: ${tag}, label: ${label} on endpoint ${endpoint.name}:${endpoint.number}`);
       const tagList = descriptor.attributes.tagList.getLocal();
       tagList.push({ mfgCode, namespaceId, tag, label });
       return;
     }
 
-    this.log.debug(`addTagList: creating ${CYAN}tagList${db} mfCode: ${mfgCode}, namespaceId: ${namespaceId}, tag: ${tag}, label: ${label} on endpoint $${endpoint.name}:${endpoint.number}`);
+    this.log.debug(`addTagList: creating ${CYAN}tagList${db} mfCode: ${mfgCode}, namespaceId: ${namespaceId}, tag: ${tag}, label: ${label} on endpoint ${endpoint.name}:${endpoint.number}`);
     endpoint.addClusterServer(
       ClusterServer(
         DescriptorCluster.with(Descriptor.Feature.TagList),

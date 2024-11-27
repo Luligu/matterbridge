@@ -43,7 +43,7 @@ import {
   MatterbridgeThermostatServer,
   MatterbridgeWindowCoveringServer,
 } from './matterbridgeBehaviors.js';
-import { bridgedNode } from './matterbridgeDeviceTypes.js';
+import { bridgedNode, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
 import { deepCopy, isValidNumber, waiter } from './utils/utils.js';
 
 // @matter
@@ -138,7 +138,7 @@ import {
   WindowCovering,
   WindowCoveringCluster,
 } from '@matter/main/clusters';
-import { ClusterType, MeasurementType, getClusterNameById, Semtag } from '@matter/main/types';
+import { ClusterType, MeasurementType, getClusterNameById, Semtag, BitSchema, TypeFromPartialBitSchema, Attributes, Commands, Events, Cluster } from '@matter/main/types';
 import { Specification, DeviceClassification } from '@matter/main/model';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { IdentifyBehavior, IdentifyServer } from '@matter/node/behaviors/identify';
@@ -266,11 +266,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Represents a MatterbridgeEndpoint.
    * @constructor
    * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the endpoint.
-   * @param {EndpointOptions} [options={}] - The options for the device.
+   * @param {MatterbridgeEndpointOptions} [options={}] - The options for the device.
    */
-  constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, debug = false) {
-    const { uniqueStorageKey, endpointId, tagList, colorControlFeatures } = options as { uniqueStorageKey?: string; endpointId?: EndpointNumber; tagList?: Semtag[]; colorControlFeatures?: object };
-
+  constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false) {
     // Get the first DeviceTypeDefinition
     let firstDefinition: DeviceTypeDefinition;
     if (Array.isArray(definition)) firstDefinition = definition[0];
@@ -292,7 +290,7 @@ export class MatterbridgeEndpoint extends Endpoint {
           optional: SupportedBehaviors(...MatterbridgeEndpoint.getBehaviourTypesFromClusterClientIds(firstDefinition.optionalClientClusters)),
         },
       },
-      behaviors: tagList ? SupportedBehaviors(DescriptorServer.with(Descriptor.Feature.TagList)) : {},
+      behaviors: options.tagList ? SupportedBehaviors(DescriptorServer.with(Descriptor.Feature.TagList)) : {},
     };
     const endpointV8 = MutableEndpoint(deviceTypeDefinitionV8);
 
@@ -300,20 +298,21 @@ export class MatterbridgeEndpoint extends Endpoint {
     // [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }]
     // endpoint = endpoint.enable({features: { tagList: true }});
     const optionsV8 = {
-      // id: uniqueStorageKey,
-      id: uniqueStorageKey?.replace(/[ .]/g, ''),
-      // id: uniqueStorageKey?.replace(/[^a-zA-Z0-9_-]/g, ''),
-      number: endpointId,
-      descriptor: tagList ? { tagList } : undefined,
+      id: options.uniqueStorageKey?.replace(/[ .]/g, ''),
+      number: options.endpointId,
+      descriptor: options.tagList ? { tagList: options.tagList } : undefined,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, any> };
     super(endpointV8, optionsV8);
-    this.uniqueStorageKey = uniqueStorageKey;
-    this.tagList = tagList;
+    this.uniqueStorageKey = options.uniqueStorageKey;
+    this.tagList = options.tagList;
 
     // Update the endpoint
     this.log = new AnsiLogger({ logName: 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
-    this.log.debug(`${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} id: ${CYAN}${this.id}${db}`);
+    this.log.debug(
+      `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} ` +
+        `id: ${CYAN}${options.uniqueStorageKey}${db} number: ${CYAN}${options.endpointId}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
+    );
     this.deviceTypes.set(firstDefinition.code, firstDefinition);
 
     // Add the other device types to the descriptor server
@@ -524,7 +523,14 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
     let child = this.getChildEndpointByName(endpointName);
     if (!child) {
-      child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName }, debug);
+      if ('tagList' in options) {
+        for (const tag of options.tagList as Semtag[]) {
+          this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
+        }
+        child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName, taglist: options.tagList } as EndpointOptions, debug);
+      } else {
+        child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName }, debug);
+      }
     }
     deviceTypes.forEach((deviceType) => {
       this.log.debug(`- with deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
@@ -574,6 +580,10 @@ export class MatterbridgeEndpoint extends Endpoint {
     });
   }
 
+  hasClusterServer<F extends BitSchema, SF extends TypeFromPartialBitSchema<F>, A extends Attributes, C extends Commands, E extends Events>(cluster: Cluster<F, SF, A, C, E>): boolean {
+    return this.clusterServers.has(cluster.id);
+  }
+
   getClusterServer<const T extends ClusterType>(cluster: T): ClusterServerObj<T> | undefined {
     const clusterServer = this.clusterServers.get(cluster.id);
     if (clusterServer !== undefined) {
@@ -583,6 +593,10 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   getClusterServerById(clusterId: ClusterId): ClusterServerObj | undefined {
     return this.clusterServers.get(clusterId);
+  }
+
+  addTagList(endpoint: Endpoint, mfgCode: VendorId | null, namespaceId: number, tag: number, label?: string | null) {
+    // Do nothing here
   }
 
   addClusterServer<const T extends ClusterType>(cluster: ClusterServerObj<T>) {
