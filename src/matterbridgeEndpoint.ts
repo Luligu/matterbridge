@@ -637,6 +637,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (cluster.id === PowerTopologyCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
     if (cluster.id === ElectricalPowerMeasurementCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
     if (cluster.id === ElectricalEnergyMeasurementCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
+    if (cluster.id === ThermostatCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
     this.clusterServers.set(cluster.id, cluster as unknown as ClusterServerObj);
     if (cluster.id === BasicInformationCluster.id) return; // Not used in Matterbridge edge for devices. Only on server node.
     this.behaviors.require(behavior, options);
@@ -703,6 +704,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       return;
     }
     this.log.debug(`addFixedLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
+    // if (this.construction.status !== Lifecycle.Status.Active) await this.construction.ready;
     const labelList = (this.getAttribute(FixedLabelCluster.id, 'labelList', this.log) ?? []).filter((entryLabel: { label: string; value: string }) => entryLabel.label !== label);
     labelList.push({ label, value });
     await this.setAttribute(FixedLabelCluster.id, 'labelList', labelList, this.log);
@@ -723,6 +725,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       return;
     }
     this.log.debug(`addUserLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
+    // if (this.construction.status !== Lifecycle.Status.Active) await this.construction.ready;
     const labelList = (this.getAttribute(UserLabelCluster.id, 'labelList', this.log) ?? []).filter((entryLabel: { label: string; value: string }) => entryLabel.label !== label);
     labelList.push({ label, value });
     await this.setAttribute(UserLabelCluster.id, 'labelList', labelList, this.log);
@@ -793,6 +796,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
     if (endpoint.construction.status !== Lifecycle.Status.Active) {
       this.log.error(`setAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+      // await endpoint.construction.ready;
       return false;
     }
 
@@ -831,9 +835,14 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {boolean} - A boolean indicating whether the subscription was successful.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  subscribeAttribute(clusterId: ClusterId, attribute: string, listener: (newValue: any, oldValue: any) => void, log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): boolean {
+  async subscribeAttribute(clusterId: ClusterId, attribute: string, listener: (newValue: any, oldValue: any) => void, log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): Promise<boolean> {
     if (!endpoint) endpoint = this as MatterbridgeEndpoint;
     const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
+
+    if (endpoint.construction.status !== Lifecycle.Status.Active) {
+      // this.log.error(`subscribeAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+      await endpoint.construction.ready;
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const events = endpoint.events as Record<string, Record<string, any>>;
@@ -868,8 +877,9 @@ export class MatterbridgeEndpoint extends Endpoint {
     const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
 
     if (endpoint.construction.status !== Lifecycle.Status.Active) {
-      this.log.error(`triggerEvent ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
-      return false;
+      // this.log.error(`triggerEvent ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+      await endpoint.construction.ready;
+      // return false;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
