@@ -503,7 +503,7 @@ export class Matterbridge extends EventEmitter {
       - disable [plugin name]: disable the globally installed plugin with the given name
       - reset [plugin path]:   remove the commissioning for the plugin from the given absolute or relative path (childbridge mode). Shutdown Matterbridge before using it!
       - reset [plugin name]:   remove the commissioning for the globally installed plugin (childbridge mode). Shutdown Matterbridge before using it!${rs}`);
-      await this.cleanup('Exiting...');
+      this.emit('shutdown');
       return;
     }
 
@@ -531,7 +531,7 @@ export class Matterbridge extends EventEmitter {
           this.log.info(`  └─ endpoint ${RED}${device.endpoint}${nf} ${typ}${device.endpointName}${nf} ${debugStringify(device.clusterServersId)}`);
         }
       });
-      await this.cleanup('Exiting...');
+      this.emit('shutdown');
       return;
     }
 
@@ -542,39 +542,39 @@ export class Matterbridge extends EventEmitter {
         this.log.info(`${plg}${plugin.name}${nf} storage log`);
         await plugin.nodeContext?.logStorage();
       }
-      await this.cleanup('Exiting...');
+      this.emit('shutdown');
       return;
     }
 
     if (hasParameter('loginterfaces')) {
       this.log.info(`${plg}Matterbridge${nf} network interfaces log`);
       logInterfaces();
-      await this.cleanup('Exiting...');
+      this.emit('shutdown');
       return;
     }
 
     if (getParameter('add')) {
       this.log.debug(`Adding plugin ${getParameter('add')}`);
       await this.plugins.add(getParameter('add') as string);
-      await this.cleanup('Exiting...');
+      this.emit('shutdown');
       return;
     }
     if (getParameter('remove')) {
       this.log.debug(`Removing plugin ${getParameter('remove')}`);
       await this.plugins.remove(getParameter('remove') as string);
-      await this.cleanup('Exiting...');
+      this.emit('shutdown');
       return;
     }
     if (getParameter('enable')) {
       this.log.debug(`Enabling plugin ${getParameter('enable')}`);
       await this.plugins.enable(getParameter('enable') as string);
-      await this.cleanup('Exiting...');
+      this.emit('shutdown');
       return;
     }
     if (getParameter('disable')) {
       this.log.debug(`Disabling plugin ${getParameter('disable')}`);
       await this.plugins.disable(getParameter('disable') as string);
-      await this.cleanup('Exiting...');
+      this.emit('shutdown');
       return;
     }
 
@@ -596,7 +596,7 @@ export class Matterbridge extends EventEmitter {
       this.nodeStorage = undefined;
       this.plugins.clear();
       this.devices.clear();
-      await this.cleanup('Exiting...');
+      this.emit('shutdown');
       return;
     }
 
@@ -613,7 +613,7 @@ export class Matterbridge extends EventEmitter {
       await this.matterbridgeContext?.clearAll();
       await this.stopMatterStorage();
       this.log.info('Reset done! Remove the device from the controller.');
-      await this.cleanup('Exiting...');
+      this.emit('shutdown');
       return;
     }
 
@@ -630,7 +630,7 @@ export class Matterbridge extends EventEmitter {
         this.log.warn(`Plugin ${plg}${getParameter('reset')}${wr} not registerd in matterbridge`);
       }
       await this.stopMatterStorage();
-      await this.cleanup('Exiting...');
+      this.emit('shutdown');
       return;
     }
 
