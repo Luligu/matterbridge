@@ -121,9 +121,9 @@
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest"
   },
   "dependencies": {
-    "@matter/main": "^0.11.5",
-    "@matter/nodejs": "^0.11.5",
-    "@project-chip/matter.js": "^0.11.5",
+    "@matter/main": "^0.11.6",
+    "@matter/nodejs": "^0.11.6",
+    "@project-chip/matter.js": "^0.11.6",
     "archiver": "7.0.1",
     "express": "4.21.1",
     "glob": "11.0.0",
