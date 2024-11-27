@@ -236,6 +236,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     return new MatterbridgeDevice(definition, options, debug);
   }
 
+  // Present in new API but not here
+  get maybeNumber() {
+    return this.number;
+  }
+
   /**
    * Adds a device type to the list of device types of the MatterbridgeDevice endpoint.
    * If the device type is not already present in the list, it will be added.
