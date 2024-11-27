@@ -10,15 +10,10 @@ The Home Assistant Community Add-ons and plugins are not verified to work with M
 
 If you want to run Matterbridge in Home Assistant please use the official add-on https://github.com/Luligu/matterbridge-home-assistant-addon that also has Ingress and side panel.
 
-### New Apple firmware v. 18.x
-
-Please read this: https://github.com/Luligu/matterbridge/discussions/135
-
 ### Discord
 
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
-Feel free to join (the link is now permanent)!
 
 ## [1.6.3] - 2024-11-27
 
@@ -29,6 +24,7 @@ Feel free to join (the link is now permanent)!
 ### Fixed
 
 - [matter.js]: Temporary fix the crash of matter.js on close when using command line parameters.
+- [matter.js]: Update to matter.js 0.11.6.
 
 ## [1.6.2] - 2024-11-25
 

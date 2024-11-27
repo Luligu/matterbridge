@@ -503,7 +503,7 @@ export class Matterbridge extends EventEmitter {
       - disable [plugin name]: disable the globally installed plugin with the given name
       - reset [plugin path]:   remove the commissioning for the plugin from the given absolute or relative path (childbridge mode). Shutdown Matterbridge before using it!
       - reset [plugin name]:   remove the commissioning for the globally installed plugin (childbridge mode). Shutdown Matterbridge before using it!${rs}`);
-      this.emit('shutdown');
+      await this.cleanup('Exiting...');
       return;
     }
 
