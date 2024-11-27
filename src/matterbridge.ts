@@ -532,8 +532,6 @@ export class Matterbridge extends EventEmitter {
         }
       });
       await this.cleanup('Exiting...');
-      process.exit(0);
-      this.emit('shutdown');
       return;
     }
 
@@ -545,8 +543,6 @@ export class Matterbridge extends EventEmitter {
         await plugin.nodeContext?.logStorage();
       }
       await this.cleanup('Exiting...');
-      process.exit(0);
-      this.emit('shutdown');
       return;
     }
 
@@ -554,8 +550,6 @@ export class Matterbridge extends EventEmitter {
       this.log.info(`${plg}Matterbridge${nf} network interfaces log`);
       logInterfaces();
       await this.cleanup('Exiting...');
-      process.exit(0);
-      this.emit('shutdown');
       return;
     }
 
@@ -563,32 +557,24 @@ export class Matterbridge extends EventEmitter {
       this.log.debug(`Adding plugin ${getParameter('add')}`);
       await this.plugins.add(getParameter('add') as string);
       await this.cleanup('Exiting...');
-      process.exit(0);
-      this.emit('shutdown');
       return;
     }
     if (getParameter('remove')) {
       this.log.debug(`Removing plugin ${getParameter('remove')}`);
       await this.plugins.remove(getParameter('remove') as string);
       await this.cleanup('Exiting...');
-      process.exit(0);
-      this.emit('shutdown');
       return;
     }
     if (getParameter('enable')) {
       this.log.debug(`Enabling plugin ${getParameter('enable')}`);
       await this.plugins.enable(getParameter('enable') as string);
       await this.cleanup('Exiting...');
-      process.exit(0);
-      this.emit('shutdown');
       return;
     }
     if (getParameter('disable')) {
       this.log.debug(`Disabling plugin ${getParameter('disable')}`);
       await this.plugins.disable(getParameter('disable') as string);
       await this.cleanup('Exiting...');
-      process.exit(0);
-      this.emit('shutdown');
       return;
     }
 
@@ -611,8 +597,6 @@ export class Matterbridge extends EventEmitter {
       this.plugins.clear();
       this.devices.clear();
       await this.cleanup('Exiting...');
-      process.exit(0);
-      this.emit('shutdown');
       return;
     }
 
@@ -630,8 +614,6 @@ export class Matterbridge extends EventEmitter {
       await this.stopMatterStorage();
       this.log.info('Reset done! Remove the device from the controller.');
       await this.cleanup('Exiting...');
-      process.exit(0);
-      this.emit('shutdown');
       return;
     }
 
@@ -649,8 +631,6 @@ export class Matterbridge extends EventEmitter {
       }
       await this.stopMatterStorage();
       await this.cleanup('Exiting...');
-      process.exit(0);
-      this.emit('shutdown');
       return;
     }
 
