@@ -26,6 +26,10 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 - [matter.js]: Temporary fix the crash of matter.js on close when using command line parameters.
 - [matter.js]: Update to matter.js 0.11.6.
 
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.6.2] - 2024-11-25
 
 ### Added
