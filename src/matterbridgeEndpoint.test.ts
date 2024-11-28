@@ -360,7 +360,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(await device.setAttribute(OnOffCluster.id, 'onOff', true, edge.log)).toBe(true);
       let state = device.getAttribute(OnOffCluster.id, 'onOff', edge.log);
 
-      const result = device.subscribeAttribute(
+      const result = await device.subscribeAttribute(
         OnOffCluster.id,
         'onOff',
         (newValue: any, oldValue: any) => {

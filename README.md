@@ -391,6 +391,7 @@ If you have more then one Apple TV or Home Pod, you can herve better results set
 So far is the only controller supporting some Matter 1.2 and 1.3 device type:
 
 - airQualitySensor code 0x002c (Matter 1.2)
+- smokesmokeCoAlarm code 0x0076 (Matter 1.2)
 - waterFreezeDetector code 0x0041 (Matter 1.3 with only BooleanState cluster)
 - waterLeakDetector code 0x0043 (Matter 1.3 with only BooleanState cluster)
 - rainSensor code 0x0044 (Matter 1.3 with only BooleanState cluster)
@@ -399,11 +400,11 @@ So far is the only controller supporting some Matter 1.2 and 1.3 device type:
 Electrical measurements:
 
 - electrical measurements from EveHistoryCluster (used in Matterbridge plugins)
-- electricalSensor code 0x0510 with clusters: ElectricalPowerMeasurement and ElectricalEnergyMeasurement (still in dev but fully working!)
+- electricalSensor code 0x0510 with clusters: ElectricalPowerMeasurement and ElectricalEnergyMeasurement
 
 Other supported cluster:
 
-- ModeSelect
+- modeSelect code 0x27 with ModeSelect cluster
 
 ## Home Assistant issues (Matter Server for HA is still in Beta)
 

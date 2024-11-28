@@ -110,7 +110,7 @@ import {
 } from '@matter/main/clusters';
 import { Specification } from '@matter/main/model';
 import { ClusterId, EndpointNumber, extendPublicHandlerMethods, VendorId, AtLeastOne, MakeMandatory } from '@matter/main';
-import { MeasurementType, getClusterNameById } from '@matter/main/types';
+import { MeasurementType, Semtag, getClusterNameById } from '@matter/main/types';
 
 // @project-chip
 import { Device, DeviceTypeDefinition, Endpoint, EndpointOptions } from '@project-chip/matter.js/device';
@@ -121,7 +121,7 @@ import { AnsiLogger, LogLevel, TimestampFormat, CYAN, YELLOW, db, hk, or, zb, de
 
 // Node.js modules
 import { createHash } from 'crypto';
-import { bridgedNode } from './matterbridgeDeviceTypes.js';
+import { bridgedNode, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
 
 interface MatterbridgeDeviceCommands {
   identify: MakeMandatory<ClusterServerHandlers<typeof Identify.Complete>['identify']>;
@@ -236,6 +236,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     return new MatterbridgeDevice(definition, options, debug);
   }
 
+  // Present in new API but not here
+  get maybeNumber() {
+    return this.number;
+  }
+
   /**
    * Adds a device type to the list of device types of the MatterbridgeDevice endpoint.
    * If the device type is not already present in the list, it will be added.
@@ -289,11 +294,17 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @returns {Endpoint} - The child endpoint that was found or added.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: EndpointOptions = {}, debug = false): Endpoint {
+  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug = false): Endpoint {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
     let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName);
     if (!child) {
       child = new Endpoint(deviceTypes, { uniqueStorageKey: endpointName });
+      if ('tagList' in options) {
+        for (const tag of options.tagList as Semtag[]) {
+          this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
+          this.addTagList(child, tag.mfgCode, tag.namespaceId, tag.tag, tag.label);
+        }
+      }
       this.addChildEndpoint(child);
     }
     deviceTypes.forEach((deviceType) => {
@@ -432,18 +443,18 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
     const clusterServer = endpoint.getClusterServerById(clusterId);
     if (!clusterServer) {
-      log?.error(`getAttribute error: Cluster ${clusterId} not found on endpoint ${endpoint.name}:${endpoint.number}`);
+      this.log.error(`getAttribute error: Cluster ${clusterId} not found on endpoint ${endpoint.name}:${endpoint.number}`);
       return undefined;
     }
     const capitalizedAttributeName = attribute.charAt(0).toUpperCase() + attribute.slice(1);
     if (!clusterServer.isAttributeSupportedByName(attribute) && !clusterServer.isAttributeSupportedByName(capitalizedAttributeName)) {
-      if (log) log.error(`getAttribute error: Attribute ${attribute} not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+      this.log.error(`getAttribute error: Attribute ${attribute} not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
       return undefined;
     }
     // Find the getter method
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!(clusterServer as any)[`get${capitalizedAttributeName}Attribute`]) {
-      log?.error(`getAttribute error: Getter get${capitalizedAttributeName}Attribute not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+      this.log.error(`getAttribute error: Getter get${capitalizedAttributeName}Attribute not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
       return undefined;
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type
@@ -468,18 +479,18 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
     const clusterServer = endpoint.getClusterServerById(clusterId);
     if (!clusterServer) {
-      log?.error(`setAttribute error: Cluster ${clusterId} not found on endpoint ${endpoint.name}:${endpoint.number}`);
+      this.log.error(`setAttribute error: Cluster ${clusterId} not found on endpoint ${endpoint.name}:${endpoint.number}`);
       return false;
     }
     const capitalizedAttributeName = attribute.charAt(0).toUpperCase() + attribute.slice(1);
     if (!clusterServer.isAttributeSupportedByName(attribute) && !clusterServer.isAttributeSupportedByName(capitalizedAttributeName)) {
-      if (log) log.error(`setAttribute error: Attribute ${attribute} not found on Cluster ${clusterId} on endpoint ${endpoint.name}:${endpoint.number}`);
+      this.log.error(`setAttribute error: Attribute ${attribute} not found on Cluster ${clusterId} on endpoint ${endpoint.name}:${endpoint.number}`);
       return false;
     }
     // Find the getter method
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!(clusterServer as any)[`get${capitalizedAttributeName}Attribute`]) {
-      log?.error(`setAttribute error: Getter get${capitalizedAttributeName}Attribute not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+      this.log.error(`setAttribute error: Getter get${capitalizedAttributeName}Attribute not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
       return false;
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type
@@ -487,7 +498,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     // Find the setter method
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!(clusterServer as any)[`set${capitalizedAttributeName}Attribute`]) {
-      log?.error(`setAttribute error: Setter set${capitalizedAttributeName}Attribute not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+      this.log.error(`setAttribute error: Setter set${capitalizedAttributeName}Attribute not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
       return false;
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type
@@ -518,18 +529,18 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
 
     const clusterServer = endpoint.getClusterServerById(clusterId);
     if (!clusterServer) {
-      log?.error(`subscribeAttribute error: Cluster ${clusterId} not found on endpoint ${endpoint.name}:${endpoint.number}`);
+      this.log.error(`subscribeAttribute error: Cluster ${clusterId} not found on endpoint ${endpoint.name}:${endpoint.number}`);
       return false;
     }
     const capitalizedAttributeName = attribute.charAt(0).toUpperCase() + attribute.slice(1);
     if (!clusterServer.isAttributeSupportedByName(attribute) && !clusterServer.isAttributeSupportedByName(capitalizedAttributeName)) {
-      if (log) log.error(`subscribeAttribute error: Attribute ${attribute} not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+      this.log.error(`subscribeAttribute error: Attribute ${attribute} not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
       return false;
     }
     // Find the subscribe method
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!(clusterServer as any)[`subscribe${capitalizedAttributeName}Attribute`]) {
-      log?.error(`subscribeAttribute error: subscribe${capitalizedAttributeName}Attribute not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+      this.log.error(`subscribeAttribute error: subscribe${capitalizedAttributeName}Attribute not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
       return false;
     }
     // Subscribe to the attribute
@@ -538,6 +549,41 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     subscribe(listener);
     log?.info(`${db}Subscribe endpoint ${or}${endpoint.name}:${endpoint.number}${db} attribute ${hk}${clusterServer.name}.${capitalizedAttributeName}${db}`);
     return true;
+  }
+
+  /**
+   * Triggers the specified event of the specified cluster from the given endpoint and cluster.
+   *
+   * @param {ClusterId} clusterId - The ID of the cluster to retrieve the event from.
+   * @param {string} event - The name of the event to trigger.
+   * @param {Record<string, any>} payload - The payload of the event to trigger.
+   * @param {AnsiLogger} [log] - Optional logger for error and info messages.
+   * @param {Endpoint} [endpoint] - Optional the child endpoint to retrieve the event from.
+   */
+  triggerEvent(clusterId: ClusterId, event: string, payload: Record<string, boolean | number | bigint | string | object | undefined | null>, log?: AnsiLogger, endpoint?: Endpoint) {
+    if (!endpoint) endpoint = this as Endpoint;
+    if (!endpoint.number) return;
+
+    const clusterServer = endpoint.getClusterServerById(clusterId);
+    if (!clusterServer) {
+      this.log.error(`triggerEvent error: Cluster ${clusterId} not found on endpoint ${endpoint.name}:${endpoint.number}`);
+      return;
+    }
+    const capitalizedEventName = event.charAt(0).toUpperCase() + event.slice(1);
+    if (!clusterServer.isEventSupportedByName(event) && !clusterServer.isEventSupportedByName(capitalizedEventName)) {
+      this.log.error(`triggerEvent error: Event ${event} not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+      return;
+    }
+    // Find the getter method
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!(clusterServer as any)[`trigger${capitalizedEventName}Event`]) {
+      this.log.error(`triggerEvent error: Trigger trigger${capitalizedEventName}Event not found on Cluster ${clusterServer.name} on endpoint ${endpoint.name}:${endpoint.number}`);
+      return;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type
+    const trigger = (clusterServer as any)[`trigger${capitalizedEventName}Event`] as (payload: Record<string, boolean | number | bigint | string | object | undefined | null>) => {};
+    trigger(payload);
+    log?.info(`${db}Trigger event ${hk}${clusterServer.name}.${capitalizedEventName}${db} on endpoint ${or}${endpoint.name}:${endpoint.number}${db}`);
   }
 
   /**
@@ -569,13 +615,13 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     // tagList: { mfgCode: VendorId | null; namespaceId: number; tag: number; label?: string | null }[] = [];
 
     if (descriptor.attributes.tagList) {
-      this.log.debug(`addTagList: adding ${CYAN}tagList${db} mfCode: ${mfgCode}, namespaceId: ${namespaceId}, tag: ${tag}, label: ${label} on endpoint $${endpoint.name}:${endpoint.number}`);
+      this.log.debug(`addTagList: adding ${CYAN}tagList${db} mfCode: ${mfgCode}, namespaceId: ${namespaceId}, tag: ${tag}, label: ${label} on endpoint ${endpoint.name}:${endpoint.number}`);
       const tagList = descriptor.attributes.tagList.getLocal();
       tagList.push({ mfgCode, namespaceId, tag, label });
       return;
     }
 
-    this.log.debug(`addTagList: creating ${CYAN}tagList${db} mfCode: ${mfgCode}, namespaceId: ${namespaceId}, tag: ${tag}, label: ${label} on endpoint $${endpoint.name}:${endpoint.number}`);
+    this.log.debug(`addTagList: creating ${CYAN}tagList${db} mfCode: ${mfgCode}, namespaceId: ${namespaceId}, tag: ${tag}, label: ${label} on endpoint ${endpoint.name}:${endpoint.number}`);
     endpoint.addClusterServer(
       ClusterServer(
         DescriptorCluster.with(Descriptor.Feature.TagList),
@@ -1125,11 +1171,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * Get a default level control cluster server.
    *
    * @param currentLevel - The current level (default: 254).
-   * @param minLevel - The minimum level (default: 1).
+   * @param minLevel - The minimum level (default: 0).
    * @param maxLevel - The maximum level (default: 254).
    * @param onLevel - The on level (default: null).
    */
-  getDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 1, maxLevel = 254, onLevel: number | null = null) {
+  getDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 0, maxLevel = 254, onLevel: number | null = null) {
     return ClusterServer(
       LevelControlCluster.with(LevelControl.Feature.OnOff),
       {
@@ -1177,11 +1223,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * Creates a default level control cluster server.
    *
    * @param currentLevel - The current level (default: 254).
-   * @param minLevel - The minimum level (default: 1).
+   * @param minLevel - The minimum level (default: 0).
    * @param maxLevel - The maximum level (default: 254).
    * @param onLevel - The on level (default: null).
    */
-  createDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 1, maxLevel = 254, onLevel: number | null = null) {
+  createDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 0, maxLevel = 254, onLevel: number | null = null) {
     this.addClusterServer(this.getDefaultLevelControlClusterServer(currentLevel, minLevel, maxLevel, onLevel));
   }
 

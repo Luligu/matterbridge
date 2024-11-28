@@ -43,7 +43,7 @@ import {
   MatterbridgeThermostatServer,
   MatterbridgeWindowCoveringServer,
 } from './matterbridgeBehaviors.js';
-import { bridgedNode } from './matterbridgeDeviceTypes.js';
+import { bridgedNode, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
 import { deepCopy, isValidNumber, waiter } from './utils/utils.js';
 
 // @matter
@@ -138,7 +138,7 @@ import {
   WindowCovering,
   WindowCoveringCluster,
 } from '@matter/main/clusters';
-import { ClusterType, MeasurementType, getClusterNameById, Semtag } from '@matter/main/types';
+import { ClusterType, MeasurementType, getClusterNameById, Semtag, BitSchema, TypeFromPartialBitSchema, Attributes, Commands, Events, Cluster } from '@matter/main/types';
 import { Specification, DeviceClassification } from '@matter/main/model';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { IdentifyBehavior, IdentifyServer } from '@matter/node/behaviors/identify';
@@ -266,11 +266,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Represents a MatterbridgeEndpoint.
    * @constructor
    * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the endpoint.
-   * @param {EndpointOptions} [options={}] - The options for the device.
+   * @param {MatterbridgeEndpointOptions} [options={}] - The options for the device.
    */
-  constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, debug = false) {
-    const { uniqueStorageKey, endpointId, tagList, colorControlFeatures } = options as { uniqueStorageKey?: string; endpointId?: EndpointNumber; tagList?: Semtag[]; colorControlFeatures?: object };
-
+  constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false) {
     // Get the first DeviceTypeDefinition
     let firstDefinition: DeviceTypeDefinition;
     if (Array.isArray(definition)) firstDefinition = definition[0];
@@ -292,7 +290,7 @@ export class MatterbridgeEndpoint extends Endpoint {
           optional: SupportedBehaviors(...MatterbridgeEndpoint.getBehaviourTypesFromClusterClientIds(firstDefinition.optionalClientClusters)),
         },
       },
-      behaviors: tagList ? SupportedBehaviors(DescriptorServer.with(Descriptor.Feature.TagList)) : {},
+      behaviors: options.tagList ? SupportedBehaviors(DescriptorServer.with(Descriptor.Feature.TagList)) : {},
     };
     const endpointV8 = MutableEndpoint(deviceTypeDefinitionV8);
 
@@ -300,20 +298,24 @@ export class MatterbridgeEndpoint extends Endpoint {
     // [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }]
     // endpoint = endpoint.enable({features: { tagList: true }});
     const optionsV8 = {
-      // id: uniqueStorageKey,
-      id: uniqueStorageKey?.replace(/[ .]/g, ''),
-      // id: uniqueStorageKey?.replace(/[^a-zA-Z0-9_-]/g, ''),
-      number: endpointId,
-      descriptor: tagList ? { tagList } : undefined,
+      id: options.uniqueStorageKey?.replace(/[ .]/g, ''),
+      number: options.endpointId,
+      descriptor: options.tagList ? { tagList: options.tagList } : undefined,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, any> };
     super(endpointV8, optionsV8);
-    this.uniqueStorageKey = uniqueStorageKey;
-    this.tagList = tagList;
+    this.uniqueStorageKey = options.uniqueStorageKey;
+    this.tagList = options.tagList;
+    // console.log('MatterbridgeEndpoint.option', options);
+    // console.log('MatterbridgeEndpoint.endpointV8', endpointV8);
+    // console.log('MatterbridgeEndpoint.optionsV8', optionsV8);
 
     // Update the endpoint
     this.log = new AnsiLogger({ logName: 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
-    this.log.debug(`${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} id: ${CYAN}${this.id}${db}`);
+    this.log.debug(
+      `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} ` +
+        `id: ${CYAN}${options.uniqueStorageKey}${db} number: ${CYAN}${options.endpointId}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
+    );
     this.deviceTypes.set(firstDefinition.code, firstDefinition);
 
     // Add the other device types to the descriptor server
@@ -363,7 +365,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === LevelControl.Cluster.id) return MatterbridgeLevelControlServer;
     if (clusterId === ColorControl.Cluster.id) return MatterbridgeColorControlServer;
     if (clusterId === DoorLock.Cluster.id) return MatterbridgeDoorLockServer;
-    if (clusterId === Thermostat.Cluster.id) return MatterbridgeThermostatServer;
+
+    if (clusterId === Thermostat.Cluster.id && type === 'AutoModeThermostat') return MatterbridgeThermostatServer.with('AutoMode', 'Heating', 'Cooling');
+    if (clusterId === Thermostat.Cluster.id && type === 'HeatingThermostat') return MatterbridgeThermostatServer.with('Heating');
+    if (clusterId === Thermostat.Cluster.id && type === 'CoolingThermostat') return MatterbridgeThermostatServer.with('Cooling');
+
     if (clusterId === WindowCovering.Cluster.id) return MatterbridgeWindowCoveringServer;
     if (clusterId === FanControl.Cluster.id) return MatterbridgeFanControlServer;
     if (clusterId === Switch.Cluster.id && type === 'MomentarySwitch') return SwitchServer.with('MomentarySwitch', 'MomentarySwitchRelease', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress');
@@ -376,9 +382,9 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === BooleanStateConfiguration.Cluster.id) return MatterbridgeBooleanStateConfigurationServer;
     if (clusterId === OccupancySensing.Cluster.id) return OccupancySensingServer;
     if (clusterId === IlluminanceMeasurement.Cluster.id) return IlluminanceMeasurementServer;
-    if (clusterId === SmokeCoAlarm.Cluster.id) return SmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm);
+    if (clusterId === SmokeCoAlarm.Cluster.id) return SmokeCoAlarmServer.with('SmokeAlarm', 'CoAlarm');
 
-    if (clusterId === AirQuality.Cluster.id) return AirQualityServer.with(AirQuality.Feature.Fair, AirQuality.Feature.Moderate, AirQuality.Feature.VeryPoor, AirQuality.Feature.ExtremelyPoor);
+    if (clusterId === AirQuality.Cluster.id) return AirQualityServer.with('Fair', 'Moderate', 'VeryPoor', 'ExtremelyPoor');
     if (clusterId === CarbonMonoxideConcentrationMeasurement.Cluster.id) return CarbonMonoxideConcentrationMeasurementServer.with('NumericMeasurement');
     if (clusterId === CarbonDioxideConcentrationMeasurement.Cluster.id) return CarbonDioxideConcentrationMeasurementServer.with('NumericMeasurement');
     if (clusterId === NitrogenDioxideConcentrationMeasurement.Cluster.id) return NitrogenDioxideConcentrationMeasurementServer.with('NumericMeasurement');
@@ -516,15 +522,22 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} endpointName - The name of the new enpoint to add.
    * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
    * @param {ClusterId[]} [includeServerList=[]] - The list of cluster IDs to include.
-   * @param {EndpointOptions} [options={}] - The options for the device.
+   * @param {MatterbridgeEndpointOptions} [options={}] - The options for the device.
    * @param {boolean} [debug=false] - Whether to enable debug logging.
    * @returns {MatterbridgeEndpoint} - The child endpoint that was found or added.
    */
-  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: EndpointOptions = {}, debug = false) {
+  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug = false) {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
     let child = this.getChildEndpointByName(endpointName);
     if (!child) {
-      child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName }, debug);
+      if ('tagList' in options) {
+        for (const tag of options.tagList as Semtag[]) {
+          this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
+        }
+        child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName, tagList: options.tagList }, debug);
+      } else {
+        child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName }, debug);
+      }
     }
     deviceTypes.forEach((deviceType) => {
       this.log.debug(`- with deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
@@ -574,6 +587,10 @@ export class MatterbridgeEndpoint extends Endpoint {
     });
   }
 
+  hasClusterServer<F extends BitSchema, SF extends TypeFromPartialBitSchema<F>, A extends Attributes, C extends Commands, E extends Events>(cluster: Cluster<F, SF, A, C, E>): boolean {
+    return this.clusterServers.has(cluster.id);
+  }
+
   getClusterServer<const T extends ClusterType>(cluster: T): ClusterServerObj<T> | undefined {
     const clusterServer = this.clusterServers.get(cluster.id);
     if (clusterServer !== undefined) {
@@ -583,6 +600,10 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   getClusterServerById(clusterId: ClusterId): ClusterServerObj | undefined {
     return this.clusterServers.get(clusterId);
+  }
+
+  addTagList(endpoint: Endpoint, mfgCode: VendorId | null, namespaceId: number, tag: number, label?: string | null) {
+    // Do nothing here only for old api compatibility
   }
 
   addClusterServer<const T extends ClusterType>(cluster: ClusterServerObj<T>) {
@@ -597,15 +618,29 @@ export class MatterbridgeEndpoint extends Endpoint {
       }
     }
     this.log.debug(`addClusterServer: ${hk}${'0x' + cluster.id.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(cluster.id)}${db} with options: ${debugStringify(options)}${rs}`);
+    if (this.clusterServers.has(cluster.id)) {
+      this.log.debug(`****cluster ${hk}${'0x' + cluster.id.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(cluster.id)}${db} already added`);
+    }
     let type = undefined;
     if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('multiPressComplete')) type = 'MomentarySwitch';
     if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('switchLatched')) type = 'LatchingSwitch';
+
     if (cluster.id === PowerSourceCluster.id && cluster.isAttributeSupportedByName('wiredCurrentType')) type = 'WiredPowerSource';
     if (cluster.id === PowerSourceCluster.id && cluster.isAttributeSupportedByName('batReplacementDescription')) type = 'BatteryReplaceablePowerSource';
     if (cluster.id === PowerSourceCluster.id && cluster.isAttributeSupportedByName('batChargeState')) type = 'BatteryRechargeablePowerSource';
+
+    if (cluster.id === ThermostatCluster.id && cluster.isAttributeSupportedByName('occupiedCoolingSetpoint')) type = 'CoolingThermostat';
+    if (cluster.id === ThermostatCluster.id && cluster.isAttributeSupportedByName('occupiedHeatingSetpoint')) type = 'HeatingThermostat';
+    if (cluster.id === ThermostatCluster.id && cluster.isAttributeSupportedByName('minSetpointDeadBand')) type = 'AutoModeThermostat';
+
     const behavior = MatterbridgeEndpoint.getBehaviourTypeFromClusterServerId(cluster.id, type);
-    if (cluster.id !== BasicInformationCluster.id) this.behaviors.require(behavior, options);
+    if (cluster.id === PowerTopologyCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
+    if (cluster.id === ElectricalPowerMeasurementCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
+    if (cluster.id === ElectricalEnergyMeasurementCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
+    if (cluster.id === ThermostatCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
     this.clusterServers.set(cluster.id, cluster as unknown as ClusterServerObj);
+    if (cluster.id === BasicInformationCluster.id) return; // Not used in Matterbridge edge for devices. Only on server node.
+    this.behaviors.require(behavior, options);
   }
 
   /**
@@ -656,6 +691,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   async addFixedLabel(label: string, value: string) {
     if (!this.clusterServers.get(FixedLabelCluster.id)) {
+      this.log.debug(`addFixedLabel: add cluster ${hk}FixedLabelCluster${db} with label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
       this.addClusterServer(
         ClusterServer(
           FixedLabelCluster,
@@ -667,6 +703,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       );
       return;
     }
+    this.log.debug(`addFixedLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
+    // if (this.construction.status !== Lifecycle.Status.Active) await this.construction.ready;
     const labelList = (this.getAttribute(FixedLabelCluster.id, 'labelList', this.log) ?? []).filter((entryLabel: { label: string; value: string }) => entryLabel.label !== label);
     labelList.push({ label, value });
     await this.setAttribute(FixedLabelCluster.id, 'labelList', labelList, this.log);
@@ -674,6 +712,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   async addUserLabel(label: string, value: string) {
     if (!this.clusterServers.get(UserLabelCluster.id)) {
+      this.log.debug(`addUserLabel: add cluster ${hk}UserLabelCluster${db} with label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
       this.addClusterServer(
         ClusterServer(
           UserLabelCluster,
@@ -685,6 +724,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       );
       return;
     }
+    this.log.debug(`addUserLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
+    // if (this.construction.status !== Lifecycle.Status.Active) await this.construction.ready;
     const labelList = (this.getAttribute(UserLabelCluster.id, 'labelList', this.log) ?? []).filter((entryLabel: { label: string; value: string }) => entryLabel.label !== label);
     labelList.push({ label, value });
     await this.setAttribute(UserLabelCluster.id, 'labelList', labelList, this.log);
@@ -706,7 +747,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ClusterId} clusterId - The ID of the cluster to retrieve the attribute from.
    * @param {string} attribute - The name of the attribute to retrieve.
    * @param {AnsiLogger} [log] - Optional logger for error and info messages.
-   * @param {Endpoint} [endpoint] - Optional the child endpoint to retrieve the attribute from.
+   * @param {MatterbridgeEndpoint} [endpoint] - Optional the child endpoint to retrieve the attribute from.
    * @returns {any} The value of the attribute, or undefined if the attribute is not found.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -715,7 +756,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
 
     if (endpoint.construction.status !== Lifecycle.Status.Active) {
-      log?.error(`getAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+      this.log.error(`getAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
       return undefined;
     }
 
@@ -723,12 +764,12 @@ export class MatterbridgeEndpoint extends Endpoint {
     const state = endpoint.state as Record<string, Record<string, any>>;
 
     if (!(clusterName in state)) {
-      log?.error(`getAttribute error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+      this.log.error(`getAttribute error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return undefined;
     }
     attribute = this.lowercaseFirstLetter(attribute);
     if (!(attribute in state[clusterName])) {
-      log?.error(`getAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+      this.log.error(`getAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return undefined;
     }
     const value = state[clusterName][attribute];
@@ -745,7 +786,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} attribute - The name of the attribute.
    * @param {any} value - The value to set for the attribute.
    * @param {AnsiLogger} [log] - (Optional) The logger to use for logging errors and information.
-   * @param {Endpoint} [endpoint] - (Optional) The endpoint to set the attribute on. If not provided, the attribute will be set on the current endpoint.
+   * @param {MatterbridgeEndpoint} [endpoint] - (Optional) The endpoint to set the attribute on. If not provided, the attribute will be set on the current endpoint.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async setAttribute(clusterId: ClusterId, attribute: string, value: any, log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): Promise<boolean> {
@@ -753,7 +795,8 @@ export class MatterbridgeEndpoint extends Endpoint {
     const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
 
     if (endpoint.construction.status !== Lifecycle.Status.Active) {
-      log?.error(`setAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+      this.log.error(`setAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+      // await endpoint.construction.ready;
       return false;
     }
 
@@ -761,12 +804,12 @@ export class MatterbridgeEndpoint extends Endpoint {
     const state = endpoint.state as Record<string, Record<string, any>>;
 
     if (!(clusterName in state)) {
-      log?.error(`setAttribute ${hk}${attribute}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+      this.log.error(`setAttribute ${hk}${attribute}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return false;
     }
     attribute = this.lowercaseFirstLetter(attribute);
     if (!(attribute in state[clusterName])) {
-      log?.error(`setAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+      this.log.error(`setAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return false;
     }
     let oldValue = state[clusterName][attribute];
@@ -787,26 +830,30 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ClusterId} clusterId - The ID of the cluster.
    * @param {string} attribute - The name of the attribute to subscribe to.
    * @param {(newValue: any, oldValue: any) => void} listener - A callback function that will be called when the attribute value changes.
-   * @param {AnsiLogger} log - (Optional) An AnsiLogger instance for logging errors and information.
-   * @param {Endpoint} endpoint - (Optional) The endpoint to subscribe the attribute on. If not provided, the current endpoint will be used.
-   * @returns A boolean indicating whether the subscription was successful.
+   * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
+   * @param {MatterbridgeEndpoint} [endpoint] - Optional endpoint to subscribe the attribute on. Defaults to the current endpoint.
+   * @returns {boolean} - A boolean indicating whether the subscription was successful.
    */
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  subscribeAttribute(clusterId: ClusterId, attribute: string, listener: (newValue: any, oldValue: any) => void, log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): boolean {
+  async subscribeAttribute(clusterId: ClusterId, attribute: string, listener: (newValue: any, oldValue: any) => void, log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): Promise<boolean> {
     if (!endpoint) endpoint = this as MatterbridgeEndpoint;
     const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
+
+    if (endpoint.construction.status !== Lifecycle.Status.Active) {
+      // this.log.error(`subscribeAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+      await endpoint.construction.ready;
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const events = endpoint.events as Record<string, Record<string, any>>;
 
     if (!(clusterName in events)) {
-      log?.error(`subscribeAttribute ${hk}${attribute}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+      this.log.error(`subscribeAttribute ${hk}${attribute}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return false;
     }
     attribute = this.lowercaseFirstLetter(attribute) + '$Changed';
     if (!(attribute in events[clusterName])) {
-      log?.error(`subscribeAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+      this.log.error(`subscribeAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return false;
     }
     events[clusterName][attribute].on(listener);
@@ -814,21 +861,31 @@ export class MatterbridgeEndpoint extends Endpoint {
     return true;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async triggerEvent(clusterId: ClusterId, event: string, payload: Record<string, any>, log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): Promise<boolean> {
+  /**
+   * Triggers an event on the specified cluster.
+   *
+   * @param {ClusterId} clusterId - The ID of the cluster.
+   * @param {string} event - The name of the event to trigger.
+   * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} payload - The payload to pass to the event.
+   * @param {AnsiLogger} [log] - Optional logger for logging information.
+   * @param {MatterbridgeEndpoint} [endpoint] - Optional endpoint to trigger the event on. Defaults to the current endpoint.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the event was successfully triggered.
+   */
+  async triggerEvent(clusterId: ClusterId, event: string, payload: Record<string, boolean | number | bigint | string | object | undefined | null>, log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): Promise<boolean> {
     if (!endpoint) endpoint = this as MatterbridgeEndpoint;
 
     const clusterName = this.lowercaseFirstLetter(getClusterNameById(clusterId));
 
     if (endpoint.construction.status !== Lifecycle.Status.Active) {
-      log?.error(`triggerEvent ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
-      return false;
+      // this.log.error(`triggerEvent ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+      await endpoint.construction.ready;
+      // return false;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const events = endpoint.events as Record<string, Record<string, any>>;
     if (!(clusterName in events) || !(event in events[clusterName])) {
-      log?.error(`triggerEvent ${hk}${event}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+      this.log.error(`triggerEvent ${hk}${event}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
       return false;
     }
 
@@ -839,6 +896,13 @@ export class MatterbridgeEndpoint extends Endpoint {
     return true;
   }
 
+  /**
+   * Adds a command handler for the specified command.
+   *
+   * @param {keyof MatterbridgeEndpointCommands} command - The command to add the handler for.
+   * @param {(data: any) => void} handler - The handler function to execute when the command is received.
+   * @returns {void}
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   addCommandHandler(command: keyof MatterbridgeEndpointCommands, handler: (data: any) => void): void {
     this.commandHandler.addHandler(command, handler);
@@ -1344,11 +1408,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Get a default level control cluster server.
    *
    * @param currentLevel - The current level (default: 254).
-   * @param minLevel - The minimum level (default: 1).
+   * @param minLevel - The minimum level (default: 0).
    * @param maxLevel - The maximum level (default: 254).
    * @param onLevel - The on level (default: null).
    */
-  getDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 1, maxLevel = 254, onLevel: number | null = null) {
+  getDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 0, maxLevel = 254, onLevel: number | null = null) {
     return ClusterServer(
       LevelControlCluster.with(LevelControl.Feature.OnOff),
       {
@@ -1396,11 +1460,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default level control cluster server.
    *
    * @param currentLevel - The current level (default: 254).
-   * @param minLevel - The minimum level (default: 1).
+   * @param minLevel - The minimum level (default: 0).
    * @param maxLevel - The maximum level (default: 254).
    * @param onLevel - The on level (default: null).
    */
-  createDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 1, maxLevel = 254, onLevel: number | null = null) {
+  createDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 0, maxLevel = 254, onLevel: number | null = null) {
     this.addClusterServer(this.getDefaultLevelControlClusterServer(currentLevel, minLevel, maxLevel, onLevel));
   }
 

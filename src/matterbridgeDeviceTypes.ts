@@ -22,6 +22,7 @@
  */
 
 // @matter
+import { EndpointNumber } from '@matter/main';
 import {
   AirQuality,
   BooleanState,
@@ -73,9 +74,16 @@ import {
   RvcOperationalState,
   RvcCleanMode,
 } from '@matter/main/clusters';
+import { Semtag } from '@matter/main/types';
 
 // @project-chip
 import { DeviceClasses, DeviceTypeDefinition } from '@project-chip/matter.js/device';
+
+export interface MatterbridgeEndpointOptions {
+  endpointId?: EndpointNumber;
+  uniqueStorageKey?: string;
+  tagList?: Semtag[];
+}
 
 // Matter 1.0 and 1.1 device types
 
