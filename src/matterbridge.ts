@@ -51,8 +51,18 @@ import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // @matter
-import { DeviceTypeId, EndpointNumber, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager } from '@matter/main';
-import { BasicInformationCluster, BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster, FixedLabelCluster, GeneralCommissioning, PowerSourceCluster, SwitchCluster, ThreadNetworkDiagnosticsCluster } from '@matter/main/clusters';
+import { DeviceTypeId, EndpointNumber, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, EndpointServer } from '@matter/main';
+import {
+  BasicInformationCluster,
+  BridgedDeviceBasicInformation,
+  BridgedDeviceBasicInformationCluster,
+  FixedLabelCluster,
+  GeneralCommissioning,
+  PowerSourceCluster,
+  SwitchCluster,
+  ThreadNetworkDiagnosticsCluster,
+  UserLabelCluster,
+} from '@matter/main/clusters';
 import { getClusterNameById, ManualPairingCodeCodec, QrCodeSchema } from '@matter/main/types';
 import { ControllerCommissioningFlowOptions, ExposedFabricInformation } from '@matter/main/protocol';
 import { StorageBackendDisk, StorageBackendJsonFile } from '@matter/nodejs';
@@ -3014,7 +3024,8 @@ export class Matterbridge extends EventEmitter {
       this.log.debug('The frontend sent /api/devices');
       const data: { pluginName: string; type: string; endpoint: EndpointNumber | undefined; name: string; serial: string; uniqueId: string; cluster: string }[] = [];
       this.devices.forEach(async (device) => {
-        // if (this.edge) device = EndpointServer.forEndpoint(device as unknown as EndpointNode) as unknown as MatterbridgeDevice;
+        const pluginName = device.plugin ?? 'Unknown';
+        if (this.edge) device = EndpointServer.forEndpoint(device as unknown as EndpointNode) as unknown as MatterbridgeDevice;
         let name = device.getClusterServer(BasicInformationCluster)?.attributes.nodeLabel?.getLocal();
         if (!name) name = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.nodeLabel?.getLocal() ?? 'Unknown';
         let serial = device.getClusterServer(BasicInformationCluster)?.attributes.serialNumber?.getLocal();
@@ -3023,7 +3034,7 @@ export class Matterbridge extends EventEmitter {
         if (!uniqueId) uniqueId = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.uniqueId?.getLocal() ?? 'Unknown';
         const cluster = this.getClusterTextFromDevice(device);
         data.push({
-          pluginName: device.plugin ?? 'Unknown',
+          pluginName,
           type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
           endpoint: device.number,
           name,
@@ -3047,7 +3058,9 @@ export class Matterbridge extends EventEmitter {
       }
       const data: { endpoint: string; clusterName: string; clusterId: string; attributeName: string; attributeId: string; attributeValue: string }[] = [];
       this.devices.forEach(async (device) => {
-        if (device.plugin === selectedPluginName && device.number === selectedDeviceEndpoint) {
+        const pluginName = device.plugin;
+        if (this.edge) device = EndpointServer.forEndpoint(device as unknown as EndpointNode) as unknown as MatterbridgeDevice;
+        if (pluginName === selectedPluginName && device.number === selectedDeviceEndpoint) {
           const clusterServers = device.getAllClusterServers();
           clusterServers.forEach((clusterServer) => {
             Object.entries(clusterServer.attributes).forEach(([key, value]) => {
@@ -3058,7 +3071,7 @@ export class Matterbridge extends EventEmitter {
                 if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
                 else attributeValue = value.getLocal().toString();
               } catch (error) {
-                attributeValue = 'Unavailable';
+                attributeValue = 'Fabric-Scoped';
                 this.log.debug(`GetLocal value ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
                 // console.log(error);
               }
@@ -3526,8 +3539,15 @@ export class Matterbridge extends EventEmitter {
    * @returns {string} The attributes description of the cluster servers in the device.
    */
   protected getClusterTextFromDevice(device: MatterbridgeDevice): string {
+    const stringifyUserLabel = (endpoint: Endpoint) => {
+      const labelList = endpoint.getClusterServer(UserLabelCluster)?.attributes.labelList.getLocal();
+      if (!labelList) return;
+      const composed = labelList.find((entry) => entry.label === 'composed');
+      if (composed) return 'Composed: ' + composed.value;
+      else return '';
+    };
     const stringifyFixedLabel = (endpoint: Endpoint) => {
-      const labelList = endpoint.getClusterServer(FixedLabelCluster)?.getLabelListAttribute();
+      const labelList = endpoint.getClusterServer(FixedLabelCluster)?.attributes.labelList.getLocal();
       if (!labelList) return;
       const composed = labelList.find((entry) => entry.label === 'composed');
       if (composed) return 'Composed: ' + composed.value;
@@ -3540,35 +3560,34 @@ export class Matterbridge extends EventEmitter {
     clusterServers.forEach((clusterServer) => {
       try {
         // this.log.debug(`**--clusterServer: ${clusterServer.id} (${clusterServer.name})`);
-        if (clusterServer.name === 'OnOff') attributes += `OnOff: ${clusterServer.getOnOffAttribute()} `;
-        if (clusterServer.name === 'Switch') attributes += `Position: ${clusterServer.getCurrentPositionAttribute()} `;
+        if (clusterServer.name === 'OnOff') attributes += `OnOff: ${clusterServer.attributes.onOff.getLocal()} `;
+        if (clusterServer.name === 'Switch') attributes += `Position: ${clusterServer.attributes.currentPosition.getLocal()} `;
         if (clusterServer.name === 'WindowCovering') attributes += `Cover position: ${clusterServer.attributes.currentPositionLiftPercent100ths.getLocal() / 100}% `;
         if (clusterServer.name === 'DoorLock') attributes += `State: ${clusterServer.attributes.lockState.getLocal() === 1 ? 'Locked' : 'Not locked'} `;
         if (clusterServer.name === 'Thermostat') attributes += `Temperature: ${clusterServer.attributes.localTemperature.getLocal() / 100}°C `;
-        if (clusterServer.name === 'LevelControl') attributes += `Level: ${clusterServer.getCurrentLevelAttribute()}% `;
-        if (clusterServer.name === 'ColorControl' && clusterServer.isAttributeSupportedByName('currentX')) attributes += `X: ${Math.round(clusterServer.getCurrentXAttribute())} Y: ${Math.round(clusterServer.getCurrentYAttribute())} `;
-        if (clusterServer.name === 'ColorControl' && clusterServer.isAttributeSupportedByName('currentHue'))
-          attributes += `Hue: ${Math.round(clusterServer.getCurrentHueAttribute())} Saturation: ${Math.round(clusterServer.getCurrentSaturationAttribute())}% `;
-        if (clusterServer.name === 'ColorControl' && clusterServer.isAttributeSupportedByName('colorTemperatureMireds')) attributes += `ColorTemp: ${Math.round(clusterServer.getColorTemperatureMiredsAttribute())} `;
-        if (clusterServer.name === 'BooleanState') attributes += `Contact: ${clusterServer.getStateValueAttribute()} `;
+        if (clusterServer.name === 'LevelControl') attributes += `Level: ${clusterServer.attributes.currentLevel.getLocal()}% `;
+        if (clusterServer.name === 'ColorControl' && clusterServer.attributes.currentX) attributes += `X: ${Math.round(clusterServer.attributes.currentX.getLocal())} Y: ${Math.round(clusterServer.attributes.currentY.getLocal())} `;
+        if (clusterServer.name === 'ColorControl' && clusterServer.attributes.currentHue)
+          attributes += `Hue: ${Math.round(clusterServer.attributes.currentHue.getLocal())} Saturation: ${Math.round(clusterServer.attributes.currentSaturation.getLocal())}% `;
+        if (clusterServer.name === 'ColorControl' && clusterServer.attributes.colorTemperatureMireds) attributes += `ColorTemp: ${Math.round(clusterServer.attributes.colorTemperatureMireds.getLocal())} `;
+        if (clusterServer.name === 'BooleanState') attributes += `Contact: ${clusterServer.attributes.stateValue.getLocal()} `;
+        if (clusterServer.name === 'BooleanStateConfiguration' && clusterServer.attributes.alarmsActive) attributes += `Active alarms: ${stringify(clusterServer.attributes.alarmsActive.getLocal())} `;
+        if (clusterServer.name === 'SmokeCoAlarm' && clusterServer.attributes.smokeState) attributes += `Smoke: ${clusterServer.attributes.smokeState.getLocal()} `;
+        if (clusterServer.name === 'SmokeCoAlarm' && clusterServer.attributes.coState) attributes += `Co: ${clusterServer.attributes.coState.getLocal()} `;
 
-        if (clusterServer.name === 'BooleanStateConfiguration' && clusterServer.isAttributeSupportedByName('alarmsActive')) attributes += `Active alarms: ${stringify(clusterServer.getAlarmsActiveAttribute())} `;
+        if (clusterServer.name === 'FanControl') attributes += `Mode: ${clusterServer.attributes.fanMode.getLocal()} Speed: ${clusterServer.attributes.percentCurrent.getLocal()} `;
+        if (clusterServer.name === 'FanControl' && clusterServer.attributes.speedCurrent) attributes += `MultiSpeed: ${clusterServer.attributes.speedCurrent.getLocal()} `;
 
-        if (clusterServer.name === 'SmokeCoAlarm' && clusterServer.isAttributeSupportedByName('smokeState')) attributes += `Smoke: ${clusterServer.getSmokeStateAttribute()} `;
-        if (clusterServer.name === 'SmokeCoAlarm' && clusterServer.isAttributeSupportedByName('coState')) attributes += `Co: ${clusterServer.getCoStateAttribute()} `;
-
-        if (clusterServer.name === 'FanControl') attributes += `Mode: ${clusterServer.getFanModeAttribute()} Speed: ${clusterServer.getPercentCurrentAttribute()} `;
-        if (clusterServer.name === 'FanControl' && clusterServer.isAttributeSupportedByName('speedCurrent')) attributes += `MultiSpeed: ${clusterServer.getSpeedCurrentAttribute()} `;
-
-        if (clusterServer.name === 'OccupancySensing') attributes += `Occupancy: ${clusterServer.getOccupancyAttribute().occupied} `;
-        if (clusterServer.name === 'IlluminanceMeasurement') attributes += `Illuminance: ${clusterServer.getMeasuredValueAttribute()} `;
-        if (clusterServer.name === 'AirQuality') attributes += `Air quality: ${clusterServer.getAirQualityAttribute()} `;
-        if (clusterServer.name === 'TvocMeasurement') attributes += `Voc: ${clusterServer.getMeasuredValueAttribute()} `;
-        if (clusterServer.name === 'TemperatureMeasurement') attributes += `Temperature: ${clusterServer.getMeasuredValueAttribute() / 100}°C `;
-        if (clusterServer.name === 'RelativeHumidityMeasurement') attributes += `Humidity: ${clusterServer.getMeasuredValueAttribute() / 100}% `;
-        if (clusterServer.name === 'PressureMeasurement') attributes += `Pressure: ${clusterServer.getMeasuredValueAttribute()} `;
-        if (clusterServer.name === 'FlowMeasurement') attributes += `Flow: ${clusterServer.getMeasuredValueAttribute()} `;
+        if (clusterServer.name === 'OccupancySensing') attributes += `Occupancy: ${clusterServer.attributes.occupancy.getLocal().occupied} `;
+        if (clusterServer.name === 'IlluminanceMeasurement') attributes += `Illuminance: ${clusterServer.attributes.measuredValue.getLocal()} `;
+        if (clusterServer.name === 'AirQuality') attributes += `Air quality: ${clusterServer.attributes.airQuality.getLocal()} `;
+        if (clusterServer.name === 'TvocMeasurement') attributes += `Voc: ${clusterServer.attributes.measuredValue.getLocal()} `;
+        if (clusterServer.name === 'TemperatureMeasurement') attributes += `Temperature: ${clusterServer.attributes.measuredValue.getLocal() / 100}°C `;
+        if (clusterServer.name === 'RelativeHumidityMeasurement') attributes += `Humidity: ${clusterServer.attributes.measuredValue.getLocal() / 100}% `;
+        if (clusterServer.name === 'PressureMeasurement') attributes += `Pressure: ${clusterServer.attributes.measuredValue.getLocal()} `;
+        if (clusterServer.name === 'FlowMeasurement') attributes += `Flow: ${clusterServer.attributes.measuredValue.getLocal()} `;
         if (clusterServer.name === 'FixedLabel') attributes += `${stringifyFixedLabel(device)} `;
+        if (clusterServer.name === 'UserLabel') attributes += `${stringifyUserLabel(device)} `;
         // this.log.debug(`*--clusterServer: ${clusterServer.id} (${clusterServer.name})`);
       } catch (error) {
         this.log.error(`getClusterTextFromDevice with ${clusterServer.name} error: ${error}`);

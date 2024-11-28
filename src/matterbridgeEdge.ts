@@ -512,7 +512,7 @@ export class MatterbridgeEdge extends Matterbridge {
           await serverNode.add(aggregatorNode);
           if (!this.test) {
             this.test = true;
-            // await this.testEndpoints();
+            await this.testEndpoints();
           }
         }
       },
@@ -598,8 +598,8 @@ export class MatterbridgeEdge extends Matterbridge {
     logEndpoint(EndpointServer.forEndpoint(outletEndpoint));
     */
 
-    this.log.notice(`Creating switchEnpoint2`);
-    const switchEnpoint2 = new EndpointNode(GenericSwitchDevice.with(BridgedDeviceBasicInformationServer, SwitchServer.with('MomentarySwitch', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress', 'MomentarySwitchRelease')), {
+    this.log.notice(`Creating switchEnpoint1`);
+    const switchEnpoint1 = new EndpointNode(GenericSwitchDevice.with(BridgedDeviceBasicInformationServer, SwitchServer.with('MomentarySwitch', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress', 'MomentarySwitchRelease')), {
       id: 'GenericSwitch',
       bridgedDeviceBasicInformation: {
         vendorId: VendorId(await this.matterbridgeContext.get<number>('vendorId')),
@@ -619,12 +619,13 @@ export class MatterbridgeEdge extends Matterbridge {
         multiPressMax: 2,
       },
     });
-    this.log.notice(`Adding switchEnpoint2 to ${await this.matterbridgeContext.get<string>('storeId')} aggregator`);
-    await aggregatorNode.add(switchEnpoint2);
-    logEndpoint(EndpointServer.forEndpoint(switchEnpoint2));
-    if (switchEnpoint2.behaviors.has(SwitchServer)) this.log.notice(`SwitchServer found`);
-    switchEnpoint2.act((agent) => agent['switch'].events['initialPress'].emit({ newPosition: 1 }, agent.context));
+    this.log.notice(`Adding switchEnpoint1 to ${await this.matterbridgeContext.get<string>('storeId')} aggregator`);
+    await aggregatorNode.add(switchEnpoint1);
+    logEndpoint(EndpointServer.forEndpoint(switchEnpoint1), { logNotSupportedClusterAttributes: true, logNotSupportedClusterEvents: true, logNotSupportedClusterCommands: true });
+    // if (switchEnpoint2.behaviors.has(SwitchServer)) this.log.notice(`SwitchServer found`);
+    // switchEnpoint2.act((agent) => agent['switch'].events['initialPress'].emit({ newPosition: 1 }, agent.context));
 
+    /*
     const device = new MatterbridgeEndpoint(genericSwitch, { uniqueStorageKey: 'GenericSwitch 2' }, true);
     device.createDefaultSwitchClusterServer();
     device.addRequiredClusterServers(device);
@@ -642,7 +643,6 @@ export class MatterbridgeEdge extends Matterbridge {
     await device1.triggerSwitchEvent('Press', this.log);
     await device1.triggerSwitchEvent('Release', this.log);
 
-    /*
     this.log.notice(`Creating TestLight`);
     const matterbridgeDevice = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'Test .Light:2' }, true);
     matterbridgeDevice.behaviors.require(MatterbridgeIdentifyServer, {

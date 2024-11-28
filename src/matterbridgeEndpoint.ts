@@ -591,6 +591,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     });
   }
 
+  async setBridgedDeviceReachability(reachable: boolean) {
+    await this.setAttribute(BridgedDeviceBasicInformationCluster.id, 'reachable', reachable, this.log);
+    await this.triggerEvent(BridgedDeviceBasicInformationCluster.id, 'reachable', { reachableNewValue: reachable }, this.log);
+  }
+
   hasClusterServer<F extends BitSchema, SF extends TypeFromPartialBitSchema<F>, A extends Attributes, C extends Commands, E extends Events>(cluster: Cluster<F, SF, A, C, E>): boolean {
     return this.clusterServers.has(cluster.id);
   }
