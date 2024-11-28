@@ -3086,7 +3086,8 @@ export class Matterbridge extends EventEmitter {
             });
           });
           device.getChildEndpoints().forEach((childEndpoint) => {
-            const name = childEndpoint.uniqueStorageKey;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const name = this.edge ? (childEndpoint as any).endpoint?.id : childEndpoint.uniqueStorageKey;
             const clusterServers = childEndpoint.getAllClusterServers();
             clusterServers.forEach((clusterServer) => {
               Object.entries(clusterServer.attributes).forEach(([key, value]) => {
