@@ -254,6 +254,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   hardwareVersionString: string | undefined = undefined;
 
   name: string | undefined = undefined;
+  deviceType: number;
   uniqueStorageKey: string | undefined = undefined;
   tagList?: Semtag[] = undefined;
 
@@ -307,6 +308,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     super(endpointV8, optionsV8);
     this.uniqueStorageKey = options.uniqueStorageKey;
     this.name = firstDefinition.name;
+    this.deviceType = firstDefinition.code;
     this.tagList = options.tagList;
     // console.log('MatterbridgeEndpoint.option', options);
     // console.log('MatterbridgeEndpoint.endpointV8', endpointV8);
@@ -598,6 +600,10 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterServer !== undefined) {
       return clusterServer as unknown as ClusterServerObj<T>;
     }
+  }
+
+  getAllClusterServers(): ClusterServer[] {
+    return [...this.clusterServers.values()];
   }
 
   getClusterServerById(clusterId: ClusterId): ClusterServerObj | undefined {

@@ -3530,15 +3530,15 @@ export class Matterbridge extends EventEmitter {
       if (!labelList) return;
       const composed = labelList.find((entry) => entry.label === 'composed');
       if (composed) return 'Composed: ' + composed.value;
-      else return ''; // 'FixedLabel: ' + labelList.map((entry) => entry.label + ': ' + entry.value).join(' ');
+      else return '';
     };
 
     let attributes = '';
-    // this.log.debug(`getClusterTextFromDevice: ${device.name}`);
+    // this.log.debug(`***getClusterTextFromDevice: ${device.deviceName} (${device.name})`);
     const clusterServers = device.getAllClusterServers();
     clusterServers.forEach((clusterServer) => {
       try {
-        // this.log.debug(`***--clusterServer: ${clusterServer.id} (${clusterServer.name})`);
+        // this.log.debug(`**--clusterServer: ${clusterServer.id} (${clusterServer.name})`);
         if (clusterServer.name === 'OnOff') attributes += `OnOff: ${clusterServer.getOnOffAttribute()} `;
         if (clusterServer.name === 'Switch') attributes += `Position: ${clusterServer.getCurrentPositionAttribute()} `;
         if (clusterServer.name === 'WindowCovering') attributes += `Cover position: ${clusterServer.attributes.currentPositionLiftPercent100ths.getLocal() / 100}% `;
@@ -3568,10 +3568,12 @@ export class Matterbridge extends EventEmitter {
         if (clusterServer.name === 'PressureMeasurement') attributes += `Pressure: ${clusterServer.getMeasuredValueAttribute()} `;
         if (clusterServer.name === 'FlowMeasurement') attributes += `Flow: ${clusterServer.getMeasuredValueAttribute()} `;
         if (clusterServer.name === 'FixedLabel') attributes += `${stringifyFixedLabel(device)} `;
+        // this.log.debug(`*--clusterServer: ${clusterServer.id} (${clusterServer.name})`);
       } catch (error) {
         this.log.error(`getClusterTextFromDevice with ${clusterServer.name} error: ${error}`);
       }
     });
+    // this.log.debug(`*getClusterTextFromDevice: ${device.deviceName} (${device.name})`);
     return attributes;
   }
 
