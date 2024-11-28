@@ -3014,6 +3014,7 @@ export class Matterbridge extends EventEmitter {
       this.log.debug('The frontend sent /api/devices');
       const data: { pluginName: string; type: string; endpoint: EndpointNumber | undefined; name: string; serial: string; uniqueId: string; cluster: string }[] = [];
       this.devices.forEach(async (device) => {
+        // if (this.edge) device = EndpointServer.forEndpoint(device as unknown as EndpointNode) as unknown as MatterbridgeDevice;
         let name = device.getClusterServer(BasicInformationCluster)?.attributes.nodeLabel?.getLocal();
         if (!name) name = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.nodeLabel?.getLocal() ?? 'Unknown';
         let serial = device.getClusterServer(BasicInformationCluster)?.attributes.serialNumber?.getLocal();
