@@ -462,7 +462,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     deviceTypes.forEach((deviceType) => {
       this.log.debug(`- with deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
       deviceType.requiredServerClusters.forEach((clusterId) => {
-        // if (!includeServerList.includes(clusterId)) includeServerList.push(clusterId);
+        if (!includeServerList.includes(clusterId)) includeServerList.push(clusterId);
       });
     });
     includeServerList.forEach((clusterId) => {
@@ -550,7 +550,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     deviceTypes.forEach((deviceType) => {
       this.log.debug(`- with deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
       deviceType.requiredServerClusters.forEach((clusterId) => {
-        // if (!includeServerList.includes(clusterId)) includeServerList.push(clusterId);
+        if (!includeServerList.includes(clusterId)) includeServerList.push(clusterId);
       });
     });
     includeServerList.forEach((clusterId) => {
