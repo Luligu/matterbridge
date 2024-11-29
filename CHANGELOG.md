@@ -14,6 +14,15 @@ If you want to run Matterbridge in Home Assistant please use the official add-on
 
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
+## [1.6.4] - 2024-11-29
+
+### Changed
+
+- [matter.js]: Update to matter.js 0.11.7.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
 
 ## [1.6.3] - 2024-11-27
 
@@ -25,6 +34,10 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 - [matter.js]: Temporary fix the crash of matter.js on close when using command line parameters.
 - [matter.js]: Update to matter.js 0.11.6.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
 
 ## [1.6.2] - 2024-11-25
 

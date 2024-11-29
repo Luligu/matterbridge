@@ -253,6 +253,8 @@ export class MatterbridgeEndpoint extends Endpoint {
   hardwareVersion: number | undefined = undefined;
   hardwareVersionString: string | undefined = undefined;
 
+  name: string | undefined = undefined;
+  deviceType: number;
   uniqueStorageKey: string | undefined = undefined;
   tagList?: Semtag[] = undefined;
 
@@ -305,6 +307,8 @@ export class MatterbridgeEndpoint extends Endpoint {
     } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, any> };
     super(endpointV8, optionsV8);
     this.uniqueStorageKey = options.uniqueStorageKey;
+    this.name = firstDefinition.name;
+    this.deviceType = firstDefinition.code;
     this.tagList = options.tagList;
     // console.log('MatterbridgeEndpoint.option', options);
     // console.log('MatterbridgeEndpoint.endpointV8', endpointV8);
@@ -361,7 +365,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     // Map ClusterId to Behavior.Type
     if (clusterId === Identify.Cluster.id) return MatterbridgeIdentifyServer;
     if (clusterId === Groups.Cluster.id) return GroupsServer;
-    if (clusterId === OnOff.Cluster.id) return MatterbridgeOnOffServer;
+    if (clusterId === OnOff.Cluster.id) return MatterbridgeOnOffServer.with('Lighting');
     if (clusterId === LevelControl.Cluster.id) return MatterbridgeLevelControlServer;
     if (clusterId === ColorControl.Cluster.id) return MatterbridgeColorControlServer;
     if (clusterId === DoorLock.Cluster.id) return MatterbridgeDoorLockServer;
@@ -462,7 +466,11 @@ export class MatterbridgeEndpoint extends Endpoint {
       });
     });
     includeServerList.forEach((clusterId) => {
-      this.log.debug(`- with cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
+      if (!this.getClusterServerById(clusterId)) {
+        this.log.debug(`- with cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
+      } else {
+        includeServerList.splice(includeServerList.indexOf(clusterId), 1);
+      }
     });
     deviceTypes.forEach((deviceType) => {
       this.addDeviceType(deviceType);
@@ -546,7 +554,14 @@ export class MatterbridgeEndpoint extends Endpoint {
       });
     });
     includeServerList.forEach((clusterId) => {
-      this.log.debug(`- with cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
+      if (!child.getClusterServerById(clusterId)) {
+        this.log.debug(`- with cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
+      } else {
+        includeServerList.splice(includeServerList.indexOf(clusterId), 1);
+      }
+    });
+    deviceTypes.forEach((deviceType) => {
+      child.addDeviceType(deviceType);
     });
     this.addClusterServerFromList(child, includeServerList);
     if (this.lifecycle.isInstalled) {
@@ -587,6 +602,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     });
   }
 
+  async setBridgedDeviceReachability(reachable: boolean) {
+    // await this.setAttribute(BridgedDeviceBasicInformationCluster.id, 'reachable', reachable, this.log);
+    // await this.triggerEvent(BridgedDeviceBasicInformationCluster.id, 'reachableChanged', { reachableNewValue: reachable }, this.log);
+  }
+
   hasClusterServer<F extends BitSchema, SF extends TypeFromPartialBitSchema<F>, A extends Attributes, C extends Commands, E extends Events>(cluster: Cluster<F, SF, A, C, E>): boolean {
     return this.clusterServers.has(cluster.id);
   }
@@ -596,6 +616,10 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterServer !== undefined) {
       return clusterServer as unknown as ClusterServerObj<T>;
     }
+  }
+
+  getAllClusterServers(): ClusterServer[] {
+    return [...this.clusterServers.values()];
   }
 
   getClusterServerById(clusterId: ClusterId): ClusterServerObj | undefined {
@@ -1368,40 +1392,58 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Get a default OnOff cluster server.
    *
-   * @param onOff - The initial state of the OnOff cluster (default: false).
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   * @param {boolean} [globalSceneControl=false] - The global scene control state.
+   * @param {number} [onTime=0] - The on time value.
+   * @param {number} [offWaitTime=0] - The off wait time value.
+   * @param {OnOff.StartUpOnOff | null} [startUpOnOff=null] - The start-up OnOff state. Null means previous state.
+   * @returns {ClusterServer} - The configured OnOff cluster server.
    */
-  getDefaultOnOffClusterServer(onOff = false) {
+  getDefaultOnOffClusterServer(onOff = false, globalSceneControl = false, onTime = 0, offWaitTime = 0, startUpOnOff: OnOff.StartUpOnOff | null = null) {
     return ClusterServer(
-      OnOffCluster,
+      OnOffCluster.with(OnOff.Feature.Lighting),
       {
         onOff,
+        globalSceneControl,
+        onTime,
+        offWaitTime,
+        startUpOnOff,
       },
       {
         on: async (data) => {
-          this.log.debug('Matter command: on onOff:', data.attributes.onOff.getLocal());
-          await this.commandHandler.executeHandler('on', data);
+          // Never called in edge
         },
         off: async (data) => {
-          this.log.debug('Matter command: off onOff:', data.attributes.onOff.getLocal());
-          await this.commandHandler.executeHandler('off', data);
+          // Never called in edge
         },
         toggle: async (data) => {
-          this.log.debug('Matter command: toggle onOff:', data.attributes.onOff.getLocal());
-          await this.commandHandler.executeHandler('toggle', data);
+          // Never called in edge
+        },
+        offWithEffect: async () => {
+          // Never called in edge
+        },
+        onWithRecallGlobalScene: async () => {
+          // Never called in edge
+        },
+        onWithTimedOff: async () => {
+          // Never called in edge
         },
       },
       {},
     );
   }
-
   /**
    * Creates a default OnOff cluster server.
    *
-   * @param onOff - The initial state of the OnOff cluster (default: false).
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   * @param {boolean} [globalSceneControl=false] - The global scene control state.
+   * @param {number} [onTime=0] - The on time value.
+   * @param {number} [offWaitTime=0] - The off wait time value.
+   * @param {OnOff.StartUpOnOff | null} [startUpOnOff=null] - The start-up OnOff state. Null means previous state.
    * @returns {void}
    */
-  createDefaultOnOffClusterServer(onOff = false) {
-    this.addClusterServer(this.getDefaultOnOffClusterServer(onOff));
+  createDefaultOnOffClusterServer(onOff = false, globalSceneControl = false, onTime = 0, offWaitTime = 0, startUpOnOff: OnOff.StartUpOnOff | null = null) {
+    this.addClusterServer(this.getDefaultOnOffClusterServer(onOff, globalSceneControl, onTime, offWaitTime, startUpOnOff));
   }
 
   /**
@@ -1412,7 +1454,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param maxLevel - The maximum level (default: 254).
    * @param onLevel - The on level (default: null).
    */
-  getDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 0, maxLevel = 254, onLevel: number | null = null) {
+  getDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 0, maxLevel = 254, onLevel: number | null = 254) {
     return ClusterServer(
       LevelControlCluster.with(LevelControl.Feature.OnOff),
       {
@@ -1464,7 +1506,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param maxLevel - The maximum level (default: 254).
    * @param onLevel - The on level (default: null).
    */
-  createDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 0, maxLevel = 254, onLevel: number | null = null) {
+  createDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 0, maxLevel = 254, onLevel: number | null = 254) {
     this.addClusterServer(this.getDefaultLevelControlClusterServer(currentLevel, minLevel, maxLevel, onLevel));
   }
 

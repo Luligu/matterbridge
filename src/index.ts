@@ -24,8 +24,16 @@
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEdge } from './matterbridgeEdge.js';
 
+export type Identity<T> = T;
+
+export type AtLeastOne<T> = ArrayMinLength<T, 1>;
+
+type BuildArrayMinLength<T, N extends number, Current extends T[]> = Current['length'] extends N ? [...Current, ...T[]] : BuildArrayMinLength<T, N, [...Current, T]>;
+
+export type ArrayMinLength<T, N extends number> = BuildArrayMinLength<T, N, []>;
+
 // @matter
-export { Identity, AtLeastOne } from '@matter/main';
+// export { Identity, AtLeastOne } from '@matter/main';
 export * from '@matter/main/clusters';
 export * from '@matter/main/types';
 export {
@@ -49,14 +57,6 @@ export {
 // @project-chip
 export * from '@project-chip/matter.js/device';
 export * from '@project-chip/matter.js/cluster';
-/*
-export * from '@project-chip/matter.js/cluster';
-export * from '@project-chip/matter.js/log';
-export * from '@project-chip/matter.js/datatype';
-export * from '@project-chip/matter.js/util';
-export * from '@project-chip/matter.js/schema';
-export * from '@project-chip/matter.js/tlv';
-*/
 
 // Matterbridge
 export * from './matterbridge.js';

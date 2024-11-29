@@ -23,6 +23,10 @@ Matterbridge exports from:
 - Matterbridge and all Matterbridge related classes.
 - All relevant matter-node.js or matter.js clusters, classes and functions.
 
+"matterbridge/matter"
+
+- All relevant matter.js new api only exports (in beta).
+
 "matterbridge/cluster"
 
 - All clusters not present in matter.js or modified.
@@ -33,15 +37,15 @@ Matterbridge exports from:
 
 "matterbridge/logger"
 
-- NodeAnsiLogger class.
+- AnsiLogger class.
 
 "matterbridge/storage"
 
-- NodeStorage classes.
+- NodeStorageManager and NodeStorage classes.
 
 # \***\*\*\*\*\***
 
-A plugin must never install or import from `matter-node.js` or `matter.js` directly (neither as a dependency, devDependency, nor peerDependency), as this leads to a second instance of `matter.js`, causing instability and unpredictable errors such as "The only instance is Endpoint".
+A plugin must never install or import from `@matter` or `@project-chip` directly (neither as a dependency, devDependency, nor peerDependency), as this leads to a second instance of `matter.js`, causing instability and unpredictable errors such as "The only instance is Endpoint".
 
 Additionally, when Matterbridge updates the `matter.js` version, it should be consistent across all plugins.
 
@@ -61,15 +65,16 @@ Matterbridge must be linked to the plugin in development only.
 
 # \***\*\*\*\*\***
 
-In the next releases I will remove the duplicated exports so please update your plugins.
-
 I added some error messages when a plugin has wrong imports or configurations and the plugin will be disabled to prevent instability and crashes.
 
-## Guidelines on the migration to matter.js V8
+## Migration to matter.js V8
 
 I'm working with matter.js team to define the strategy for the migration of Matterbridge to the new API.
 
-More informations will be added soon.
+- First phase: crete MatterbridgeEdge class: completed 90%
+- Second phase: create MatterbridgeEndpoint and MatterbridgeBehaviors classes: completed 90%
+- Third phase: modifiy all plugins to support both normal and edge mode of Matterbridge: completed 80%
+- Fourth phase: remove all old api code from Matterbridge and all plugins...
 
 ## How to create your plugin
 
