@@ -268,7 +268,6 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   addDeviceTypeWithClusterServer(deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = []): MatterbridgeDevice {
     this.log.debug('addDeviceTypeWithClusterServer:');
     deviceTypes.forEach((deviceType) => {
-      this.addDeviceType(deviceType);
       this.log.debug(`- with deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
       deviceType.requiredServerClusters.forEach((clusterId) => {
         if (!includeServerList.includes(clusterId)) includeServerList.push(clusterId);
@@ -277,6 +276,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     includeServerList.forEach((clusterId) => {
       this.log.debug(`- with cluster: ${hk}${clusterId}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
     });
+    const endpointDeviceTypes = this.getDeviceTypes();
+    deviceTypes.forEach((deviceType) => {
+      if (!endpointDeviceTypes.includes(deviceType)) endpointDeviceTypes.push(deviceType);
+    });
+    this.setDeviceTypes(endpointDeviceTypes);
     this.addClusterServerFromList(this, includeServerList);
     return this;
   }

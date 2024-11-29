@@ -365,7 +365,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     // Map ClusterId to Behavior.Type
     if (clusterId === Identify.Cluster.id) return MatterbridgeIdentifyServer;
     if (clusterId === Groups.Cluster.id) return GroupsServer;
-    if (clusterId === OnOff.Cluster.id) return MatterbridgeOnOffServer;
+    if (clusterId === OnOff.Cluster.id) return MatterbridgeOnOffServer.with('Lighting');
     if (clusterId === LevelControl.Cluster.id) return MatterbridgeLevelControlServer;
     if (clusterId === ColorControl.Cluster.id) return MatterbridgeColorControlServer;
     if (clusterId === DoorLock.Cluster.id) return MatterbridgeDoorLockServer;
@@ -462,11 +462,15 @@ export class MatterbridgeEndpoint extends Endpoint {
     deviceTypes.forEach((deviceType) => {
       this.log.debug(`- with deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
       deviceType.requiredServerClusters.forEach((clusterId) => {
-        if (!includeServerList.includes(clusterId)) includeServerList.push(clusterId);
+        // if (!includeServerList.includes(clusterId)) includeServerList.push(clusterId);
       });
     });
     includeServerList.forEach((clusterId) => {
-      this.log.debug(`- with cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
+      if (!this.getClusterServerById(clusterId)) {
+        this.log.debug(`- with cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
+      } else {
+        includeServerList.splice(includeServerList.indexOf(clusterId), 1);
+      }
     });
     deviceTypes.forEach((deviceType) => {
       this.addDeviceType(deviceType);
@@ -546,11 +550,18 @@ export class MatterbridgeEndpoint extends Endpoint {
     deviceTypes.forEach((deviceType) => {
       this.log.debug(`- with deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
       deviceType.requiredServerClusters.forEach((clusterId) => {
-        if (!includeServerList.includes(clusterId)) includeServerList.push(clusterId);
+        // if (!includeServerList.includes(clusterId)) includeServerList.push(clusterId);
       });
     });
     includeServerList.forEach((clusterId) => {
-      this.log.debug(`- with cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
+      if (!child.getClusterServerById(clusterId)) {
+        this.log.debug(`- with cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
+      } else {
+        includeServerList.splice(includeServerList.indexOf(clusterId), 1);
+      }
+    });
+    deviceTypes.forEach((deviceType) => {
+      child.addDeviceType(deviceType);
     });
     this.addClusterServerFromList(child, includeServerList);
     if (this.lifecycle.isInstalled) {
@@ -1381,40 +1392,58 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Get a default OnOff cluster server.
    *
-   * @param onOff - The initial state of the OnOff cluster (default: false).
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   * @param {boolean} [globalSceneControl=false] - The global scene control state.
+   * @param {number} [onTime=0] - The on time value.
+   * @param {number} [offWaitTime=0] - The off wait time value.
+   * @param {OnOff.StartUpOnOff | null} [startUpOnOff=null] - The start-up OnOff state. Null means previous state.
+   * @returns {ClusterServer} - The configured OnOff cluster server.
    */
-  getDefaultOnOffClusterServer(onOff = false) {
+  getDefaultOnOffClusterServer(onOff = false, globalSceneControl = false, onTime = 0, offWaitTime = 0, startUpOnOff: OnOff.StartUpOnOff | null = null) {
     return ClusterServer(
-      OnOffCluster,
+      OnOffCluster.with(OnOff.Feature.Lighting),
       {
         onOff,
+        globalSceneControl,
+        onTime,
+        offWaitTime,
+        startUpOnOff,
       },
       {
         on: async (data) => {
-          this.log.debug('Matter command: on onOff:', data.attributes.onOff.getLocal());
-          await this.commandHandler.executeHandler('on', data);
+          // Never called in edge
         },
         off: async (data) => {
-          this.log.debug('Matter command: off onOff:', data.attributes.onOff.getLocal());
-          await this.commandHandler.executeHandler('off', data);
+          // Never called in edge
         },
         toggle: async (data) => {
-          this.log.debug('Matter command: toggle onOff:', data.attributes.onOff.getLocal());
-          await this.commandHandler.executeHandler('toggle', data);
+          // Never called in edge
+        },
+        offWithEffect: async () => {
+          // Never called in edge
+        },
+        onWithRecallGlobalScene: async () => {
+          // Never called in edge
+        },
+        onWithTimedOff: async () => {
+          // Never called in edge
         },
       },
       {},
     );
   }
-
   /**
    * Creates a default OnOff cluster server.
    *
-   * @param onOff - The initial state of the OnOff cluster (default: false).
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   * @param {boolean} [globalSceneControl=false] - The global scene control state.
+   * @param {number} [onTime=0] - The on time value.
+   * @param {number} [offWaitTime=0] - The off wait time value.
+   * @param {OnOff.StartUpOnOff | null} [startUpOnOff=null] - The start-up OnOff state. Null means previous state.
    * @returns {void}
    */
-  createDefaultOnOffClusterServer(onOff = false) {
-    this.addClusterServer(this.getDefaultOnOffClusterServer(onOff));
+  createDefaultOnOffClusterServer(onOff = false, globalSceneControl = false, onTime = 0, offWaitTime = 0, startUpOnOff: OnOff.StartUpOnOff | null = null) {
+    this.addClusterServer(this.getDefaultOnOffClusterServer(onOff, globalSceneControl, onTime, offWaitTime, startUpOnOff));
   }
 
   /**
@@ -1425,7 +1454,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param maxLevel - The maximum level (default: 254).
    * @param onLevel - The on level (default: null).
    */
-  getDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 0, maxLevel = 254, onLevel: number | null = null) {
+  getDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 0, maxLevel = 254, onLevel: number | null = 254) {
     return ClusterServer(
       LevelControlCluster.with(LevelControl.Feature.OnOff),
       {
@@ -1477,7 +1506,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param maxLevel - The maximum level (default: 254).
    * @param onLevel - The on level (default: null).
    */
-  createDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 0, maxLevel = 254, onLevel: number | null = null) {
+  createDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 0, maxLevel = 254, onLevel: number | null = 254) {
     this.addClusterServer(this.getDefaultLevelControlClusterServer(currentLevel, minLevel, maxLevel, onLevel));
   }
 
