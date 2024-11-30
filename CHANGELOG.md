@@ -19,6 +19,7 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 ### Changed
 
 - [matter.js]: Update to matter.js 0.11.8.
+- [frontend]: Added matterbridge-hass to the plugin list.
 - [package]: Update dependencies.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
