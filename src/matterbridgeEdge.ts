@@ -512,7 +512,7 @@ export class MatterbridgeEdge extends Matterbridge {
           await serverNode.add(aggregatorNode);
           if (!this.test) {
             this.test = true;
-            await this.testEndpoints();
+            // await this.testEndpoints();
           }
         }
       },
