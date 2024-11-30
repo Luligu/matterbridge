@@ -139,7 +139,7 @@ import {
   WindowCoveringCluster,
 } from '@matter/main/clusters';
 import { ClusterType, MeasurementType, getClusterNameById, Semtag, BitSchema, TypeFromPartialBitSchema, Attributes, Commands, Events, Cluster } from '@matter/main/types';
-import { Specification, DeviceClassification } from '@matter/main/model';
+import { Specification, DeviceClassification, tag } from '@matter/main/model';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { IdentifyBehavior, IdentifyServer } from '@matter/node/behaviors/identify';
 import { GroupsServer } from '@matter/node/behaviors/groups';
@@ -271,10 +271,20 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {MatterbridgeEndpointOptions} [options={}] - The options for the device.
    */
   constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false) {
+    let deviceTypeList: { deviceType: number; revision: number }[] = [];
+
     // Get the first DeviceTypeDefinition
     let firstDefinition: DeviceTypeDefinition;
-    if (Array.isArray(definition)) firstDefinition = definition[0];
-    else firstDefinition = definition;
+    if (Array.isArray(definition)) {
+      firstDefinition = definition[0];
+      deviceTypeList = Array.from(definition.values()).map((dt) => ({
+        deviceType: dt.code,
+        revision: dt.revision,
+      }));
+    } else {
+      firstDefinition = definition;
+      deviceTypeList = [{ deviceType: firstDefinition.code, revision: firstDefinition.revision }];
+    }
 
     // Convert the first DeviceTypeDefinition to an EndpointType.Options
     const deviceTypeDefinitionV8: EndpointType.Options = {
@@ -297,37 +307,33 @@ export class MatterbridgeEndpoint extends Endpoint {
     const endpointV8 = MutableEndpoint(deviceTypeDefinitionV8);
 
     // Convert the options to an Endpoint.Options
-    // [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }]
-    // endpoint = endpoint.enable({features: { tagList: true }});
     const optionsV8 = {
       id: options.uniqueStorageKey?.replace(/[ .]/g, ''),
       number: options.endpointId,
-      descriptor: options.tagList ? { tagList: options.tagList } : undefined,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, any> };
+      descriptor: options.tagList ? { tagList: options.tagList, deviceTypeList } : { deviceTypeList },
+    } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, object> };
     super(endpointV8, optionsV8);
+
     this.uniqueStorageKey = options.uniqueStorageKey;
     this.name = firstDefinition.name;
     this.deviceType = firstDefinition.code;
     this.tagList = options.tagList;
+    if (Array.isArray(definition)) {
+      definition.forEach((deviceType) => {
+        this.deviceTypes.set(deviceType.code, deviceType);
+      });
+    } else this.deviceTypes.set(firstDefinition.code, firstDefinition);
+
     // console.log('MatterbridgeEndpoint.option', options);
     // console.log('MatterbridgeEndpoint.endpointV8', endpointV8);
     // console.log('MatterbridgeEndpoint.optionsV8', optionsV8);
 
-    // Update the endpoint
+    // Create the logger
     this.log = new AnsiLogger({ logName: 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
     this.log.debug(
       `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} ` +
         `id: ${CYAN}${options.uniqueStorageKey}${db} number: ${CYAN}${options.endpointId}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
     );
-    this.deviceTypes.set(firstDefinition.code, firstDefinition);
-
-    // Add the other device types to the descriptor server
-    if (Array.isArray(definition)) {
-      definition.forEach((deviceType) => {
-        this.addDeviceType(deviceType);
-      });
-    }
 
     // Add MatterbridgeBehavior with MatterbridgeBehaviorDevice
     this.behaviors.require(MatterbridgeBehavior, { deviceCommand: new MatterbridgeBehaviorDevice(this.log, this.commandHandler, undefined) });
@@ -520,6 +526,46 @@ export class MatterbridgeEndpoint extends Endpoint {
     });
     this.addClusterServerFromList(endpoint, optionalServerList);
     return endpoint;
+  }
+
+  /**
+   * Adds a child endpoint with the specified device types and options.
+   * If the child endpoint is not already present, it will be created and added.
+   * If the child endpoint is already present, the device types will be added to the existing child endpoint.
+   *
+   * @param {string} endpointName - The name of the new endpoint to add.
+   * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
+   * @param {MatterbridgeEndpointOptions} [options={}] - The options for the endpoint.
+   * @param {boolean} [debug=false] - Whether to enable debug logging.
+   * @returns {MatterbridgeEndpoint} - The child endpoint that was found or added.
+   */
+  addChildDeviceType(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false) {
+    this.log.debug(`addChildDeviceType: ${CYAN}${endpointName}${db}`);
+    let child = this.getChildEndpointByName(endpointName);
+    if (!child) {
+      if ('tagList' in options) {
+        for (const tag of options.tagList as Semtag[]) {
+          this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
+        }
+        child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName, tagList: options.tagList }, debug);
+      } else {
+        child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName }, debug);
+      }
+    }
+    deviceTypes.forEach((deviceType) => {
+      this.log.debug(`- with deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
+    });
+    deviceTypes.forEach((deviceType) => {
+      child.addDeviceType(deviceType);
+    });
+    if (this.lifecycle.isInstalled) {
+      this.log.debug(`- with lifecycle installed`);
+      this.add(child);
+    } else {
+      this.log.debug(`- with lifecycle NOT installed`);
+      this.parts.add(child);
+    }
+    return child;
   }
 
   /**

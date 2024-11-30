@@ -38,6 +38,8 @@ import {
   BooleanStateConfigurationBehavior,
   BooleanStateConfigurationServer,
   WindowCoveringBehavior,
+  MovementType,
+  MovementDirection,
 } from '@matter/main/behaviors';
 import { BooleanStateConfiguration, ColorControl, FanControl, Identify, LevelControl, Thermostat, WindowCovering } from '@matter/main/clusters';
 import { TypeFromPartialBitSchema } from '@matter/main/types';
@@ -249,26 +251,29 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
   }
 }
 
-export class MatterbridgeWindowCoveringServer extends WindowCoveringBehavior.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift) {
+export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift) {
   override async upOrOpen() {
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     device.upOrOpen();
-    // super.upOrOpen();
+    super.upOrOpen();
   }
   override async downOrClose() {
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     device.downOrClose();
-    // super.downOrClose();
+    super.downOrClose();
   }
   override stopMotion() {
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     device.stopMotion();
-    // super.stopMotion();
+    super.stopMotion();
   }
   override goToLiftPercentage({ liftPercent100thsValue }: WindowCovering.GoToLiftPercentageRequest) {
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     device.goToLiftPercentage({ liftPercent100thsValue });
-    // super.goToLiftPercentage({ liftPercent100thsValue });
+    super.goToLiftPercentage({ liftPercent100thsValue });
+  }
+  override async handleMovement(type: MovementType, reversed: boolean, direction: MovementDirection, targetPercent100ths?: number) {
+    // Do nothing here, as the device will handle the movement
   }
 }
 

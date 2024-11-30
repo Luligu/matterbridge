@@ -286,6 +286,42 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
+   * Adds a child endpoint with the specified device types and options.
+   * If the child endpoint is not already present, it will be created and added.
+   * If the child endpoint is already present, the device types will be added to the existing child endpoint.
+   *
+   * @param {string} endpointName - The name of the new endpoint to add.
+   * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
+   * @param {MatterbridgeEndpointOptions} [options={}] - The options for the endpoint.
+   * @param {boolean} [debug=false] - Whether to enable debug logging.
+   * @returns {Endpoint} - The child endpoint that was found or added.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  addChildDeviceType(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false): Endpoint {
+    this.log.debug(`addChildDeviceType: ${CYAN}${endpointName}${db}`);
+    let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName);
+    if (!child) {
+      child = new Endpoint(deviceTypes, { uniqueStorageKey: endpointName });
+      if ('tagList' in options) {
+        for (const tag of options.tagList as Semtag[]) {
+          this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
+          this.addTagList(child, tag.mfgCode, tag.namespaceId, tag.tag, tag.label);
+        }
+      }
+      this.addChildEndpoint(child);
+    }
+    deviceTypes.forEach((deviceType) => {
+      this.log.debug(`- with deviceType: ${zb}${deviceType.code}${db}-${zb}${deviceType.name}${db}`);
+    });
+    const childDeviceTypes = child.getDeviceTypes();
+    deviceTypes.forEach((deviceType) => {
+      if (!childDeviceTypes.includes(deviceType)) childDeviceTypes.push(deviceType);
+    });
+    child.setDeviceTypes(childDeviceTypes);
+    return child;
+  }
+
+  /**
    * Adds a child endpoint with one or more device types with the required cluster servers and the specified cluster servers.
    * If the child endpoint is not already present in the childEndpoints, it will be added.
    * If the child endpoint is already present in the childEndpoints, the device types and cluster servers will be added to the existing child endpoint.

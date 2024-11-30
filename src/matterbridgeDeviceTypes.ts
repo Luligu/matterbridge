@@ -220,7 +220,7 @@ export const lightSensor = DeviceTypeDefinition({
   optionalClientClusters: [Groups.Cluster.id],
 });
 
-export const occupanceySensor = DeviceTypeDefinition({
+export const occupancySensor = DeviceTypeDefinition({
   name: 'MA-occupancysensor',
   code: 0x0107,
   deviceClass: DeviceClasses.Simple,
