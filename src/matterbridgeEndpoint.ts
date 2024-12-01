@@ -539,7 +539,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {boolean} [debug=false] - Whether to enable debug logging.
    * @returns {MatterbridgeEndpoint} - The child endpoint that was found or added.
    */
-  addChildDeviceType(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false) {
+  addChildDeviceType(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeEndpoint {
     this.log.debug(`addChildDeviceType: ${CYAN}${endpointName}${db}`);
     let child = this.getChildEndpointByName(endpointName);
     if (!child) {
@@ -580,7 +580,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {boolean} [debug=false] - Whether to enable debug logging.
    * @returns {MatterbridgeEndpoint} - The child endpoint that was found or added.
    */
-  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug = false) {
+  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeEndpoint {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
     let child = this.getChildEndpointByName(endpointName);
     if (!child) {
@@ -1653,6 +1653,162 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     this.addClusterServer(this.getDefaultColorControlClusterServer(currentX, currentY, currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
+  }
+
+  /**
+   * Get a Xy color control cluster server.
+   *
+   * @param currentX - The current X value.
+   * @param currentY - The current Y value.
+   */
+  getXyColorControlClusterServer(currentX = 0, currentY = 0) {
+    return ClusterServer(
+      ColorControlCluster.with(ColorControl.Feature.Xy),
+      {
+        colorMode: ColorControl.ColorMode.CurrentXAndCurrentY,
+        enhancedColorMode: ColorControl.EnhancedColorMode.CurrentXAndCurrentY,
+        colorCapabilities: { xy: true, hueSaturation: false, colorLoop: false, enhancedHue: false, colorTemperature: false },
+        options: {
+          executeIfOff: false,
+        },
+        numberOfPrimaries: null,
+        currentX,
+        currentY,
+      },
+      {
+        moveToColor: async () => {
+          // Never called in edge
+        },
+        moveColor: async () => {
+          // Never called in edge
+        },
+        stepColor: async () => {
+          // Never called in edge
+        },
+        stopMoveStep: async () => {
+          // Never called in edge
+        },
+      },
+      {},
+    );
+  }
+  /**
+   * Creates a Xy color control cluster server.
+   *
+   * @param currentX - The current X value.
+   * @param currentY - The current Y value.
+   */
+  createXyControlClusterServer(currentX = 0, currentY = 0) {
+    this.addClusterServer(this.getXyColorControlClusterServer(currentX, currentY));
+  }
+
+  /**
+   * Get a default hue and saturation control cluster server.
+   *
+   * @param currentHue - The current hue value.
+   * @param currentSaturation - The current saturation value.
+   */
+  getHsColorControlClusterServer(currentHue = 0, currentSaturation = 0) {
+    return ClusterServer(
+      ColorControlCluster.with(ColorControl.Feature.HueSaturation),
+      {
+        colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
+        enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
+        colorCapabilities: { xy: false, hueSaturation: true, colorLoop: false, enhancedHue: false, colorTemperature: false },
+        options: {
+          executeIfOff: false,
+        },
+        numberOfPrimaries: null,
+        currentHue,
+        currentSaturation,
+      },
+      {
+        moveToHue: async ({ request, attributes, endpoint }) => {
+          // Never called in edge
+        },
+        moveHue: async () => {
+          // Never called in edge
+        },
+        stepHue: async () => {
+          // Never called in edge
+        },
+        moveToSaturation: async ({ request, attributes, endpoint }) => {
+          // Never called in edge
+        },
+        moveSaturation: async () => {
+          // Never called in edge
+        },
+        stepSaturation: async () => {
+          // Never called in edge
+        },
+        moveToHueAndSaturation: async ({ request, attributes, endpoint }) => {
+          // Never called in edge
+        },
+        stopMoveStep: async () => {
+          // Never called in edge
+        },
+      },
+      {},
+    );
+  }
+  /**
+   * Creates a hue and saturation color control cluster server.
+   *
+   * @param currentHue - The current hue value.
+   * @param currentSaturation - The current saturation value.
+   */
+  createHsColorControlClusterServer(currentHue = 0, currentSaturation = 0) {
+    this.addClusterServer(this.getHsColorControlClusterServer(currentHue, currentSaturation));
+  }
+
+  /**
+   * Get a color temperature color control cluster server.
+   *
+   * @param colorTemperatureMireds - The color temperature in mireds.
+   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
+   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   */
+  getCtColorControlClusterServer(colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+    return ClusterServer(
+      ColorControlCluster.with(ColorControl.Feature.ColorTemperature),
+      {
+        colorMode: ColorControl.ColorMode.ColorTemperatureMireds,
+        enhancedColorMode: ColorControl.EnhancedColorMode.ColorTemperatureMireds,
+        colorCapabilities: { xy: false, hueSaturation: false, colorLoop: false, enhancedHue: false, colorTemperature: true },
+        options: {
+          executeIfOff: false,
+        },
+        numberOfPrimaries: null,
+        colorTemperatureMireds,
+        colorTempPhysicalMinMireds,
+        colorTempPhysicalMaxMireds,
+      },
+      {
+        stopMoveStep: async () => {
+          // Never called in edge
+        },
+        moveToColorTemperature: async ({ request, attributes, endpoint }) => {
+          // Never called in edge
+        },
+        moveColorTemperature: async () => {
+          // Never called in edge
+        },
+        stepColorTemperature: async () => {
+          // Never called in edge
+        },
+      },
+      {},
+    );
+  }
+  /**
+   * Creates a color temperature color control cluster server.
+   *
+   * @param colorTemperatureMireds - The color temperature in mireds.
+   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
+   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   */
+  createCtColorControlClusterServer(colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+    this.addClusterServer(this.getCtColorControlClusterServer(colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
   }
 
   private isColorControlConfigured = false;

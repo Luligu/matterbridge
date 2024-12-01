@@ -294,14 +294,14 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
    * @param {MatterbridgeEndpointOptions} [options={}] - The options for the endpoint.
    * @param {boolean} [debug=false] - Whether to enable debug logging.
-   * @returns {Endpoint} - The child endpoint that was found or added.
+   * @returns {MatterbridgeDevice} - The child endpoint that was found or added.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  addChildDeviceType(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false): Endpoint {
+  addChildDeviceType(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeDevice {
     this.log.debug(`addChildDeviceType: ${CYAN}${endpointName}${db}`);
-    let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName);
+    let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName) as MatterbridgeDevice;
     if (!child) {
-      child = new Endpoint(deviceTypes, { uniqueStorageKey: endpointName });
+      child = new MatterbridgeDevice(deviceTypes, { uniqueStorageKey: endpointName });
       if ('tagList' in options) {
         for (const tag of options.tagList as Semtag[]) {
           this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
@@ -331,14 +331,14 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {ClusterId[]} [includeServerList=[]] - The list of cluster IDs to include.
    * @param {EndpointOptions} [options={}] - The options for the device.
    * @param {boolean} [debug=false] - Whether to enable debug logging.
-   * @returns {Endpoint} - The child endpoint that was found or added.
+   * @returns {MatterbridgeDevice} - The child endpoint that was found or added.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug = false): Endpoint {
+  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeDevice {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
-    let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName);
+    let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName) as MatterbridgeDevice;
     if (!child) {
-      child = new Endpoint(deviceTypes, { uniqueStorageKey: endpointName });
+      child = new MatterbridgeDevice(deviceTypes, { uniqueStorageKey: endpointName });
       if ('tagList' in options) {
         for (const tag of options.tagList as Semtag[]) {
           this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
@@ -1366,6 +1366,167 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createDefaultColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     this.addClusterServer(this.getDefaultColorControlClusterServer(currentX, currentY, currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
+  }
+
+  /**
+   * Get a Xy color control cluster server.
+   *
+   * @param currentX - The current X value.
+   * @param currentY - The current Y value.
+   */
+  getXyColorControlClusterServer(currentX = 0, currentY = 0) {
+    return ClusterServer(
+      ColorControlCluster.with(ColorControl.Feature.Xy),
+      {
+        colorMode: ColorControl.ColorMode.CurrentXAndCurrentY,
+        enhancedColorMode: ColorControl.EnhancedColorMode.CurrentXAndCurrentY,
+        colorCapabilities: { xy: true, hueSaturation: false, colorLoop: false, enhancedHue: false, colorTemperature: false },
+        options: {
+          executeIfOff: false,
+        },
+        numberOfPrimaries: null,
+        currentX,
+        currentY,
+      },
+      {
+        moveToColor: async (data) => {
+          this.log.debug('Matter command: moveToColor request:', data.request, 'attributes.currentX:', data.attributes.currentX.getLocal(), 'attributes.currentY:', data.attributes.currentY.getLocal());
+          this.commandHandler.executeHandler('moveToColor', data);
+        },
+        moveColor: async () => {
+          this.log.error('Matter command: moveColor not implemented');
+        },
+        stepColor: async () => {
+          this.log.error('Matter command: stepColor not implemented');
+        },
+        stopMoveStep: async () => {
+          this.log.error('Matter command: stopMoveStep not implemented');
+        },
+      },
+      {},
+    );
+  }
+  /**
+   * Creates a Xy color control cluster server.
+   *
+   * @param currentX - The current X value.
+   * @param currentY - The current Y value.
+   */
+  createXyControlClusterServer(currentX = 0, currentY = 0) {
+    this.addClusterServer(this.getXyColorControlClusterServer(currentX, currentY));
+  }
+
+  /**
+   * Get a default hue and saturation control cluster server.
+   *
+   * @param currentHue - The current hue value.
+   * @param currentSaturation - The current saturation value.
+   */
+  getHsColorControlClusterServer(currentHue = 0, currentSaturation = 0) {
+    return ClusterServer(
+      ColorControlCluster.with(ColorControl.Feature.HueSaturation),
+      {
+        colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
+        enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
+        colorCapabilities: { xy: false, hueSaturation: true, colorLoop: false, enhancedHue: false, colorTemperature: false },
+        options: {
+          executeIfOff: false,
+        },
+        numberOfPrimaries: null,
+        currentHue,
+        currentSaturation,
+      },
+      {
+        moveToHue: async ({ request, attributes, endpoint }) => {
+          this.log.debug('Matter command: moveToHue request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal());
+          this.commandHandler.executeHandler('moveToHue', { request, attributes, endpoint });
+        },
+        moveHue: async () => {
+          this.log.error('Matter command: moveHue not implemented');
+        },
+        stepHue: async () => {
+          this.log.error('Matter command: stepHue not implemented');
+        },
+        moveToSaturation: async ({ request, attributes, endpoint }) => {
+          this.log.debug('Matter command: moveToSaturation request:', request, 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
+          this.commandHandler.executeHandler('moveToSaturation', { request, attributes, endpoint });
+        },
+        moveSaturation: async () => {
+          this.log.error('Matter command: moveSaturation not implemented');
+        },
+        stepSaturation: async () => {
+          this.log.error('Matter command: stepSaturation not implemented');
+        },
+        moveToHueAndSaturation: async ({ request, attributes, endpoint }) => {
+          this.log.debug('Matter command: moveToHueAndSaturation request:', request, 'attributes.currentHue:', attributes.currentHue.getLocal(), 'attributes.currentSaturation:', attributes.currentSaturation.getLocal());
+          this.commandHandler.executeHandler('moveToHueAndSaturation', { request, attributes, endpoint });
+        },
+        stopMoveStep: async () => {
+          this.log.error('Matter command: stopMoveStep not implemented');
+        },
+      },
+      {},
+    );
+  }
+  /**
+   * Creates a hue and saturation color control cluster server.
+   *
+   * @param currentHue - The current hue value.
+   * @param currentSaturation - The current saturation value.
+   */
+  createHsColorControlClusterServer(currentHue = 0, currentSaturation = 0) {
+    this.addClusterServer(this.getHsColorControlClusterServer(currentHue, currentSaturation));
+  }
+
+  /**
+   * Get a color temperature color control cluster server.
+   *
+   * @param colorTemperatureMireds - The color temperature in mireds.
+   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
+   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   */
+  getCtColorControlClusterServer(colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+    return ClusterServer(
+      ColorControlCluster.with(ColorControl.Feature.ColorTemperature),
+      {
+        colorMode: ColorControl.ColorMode.ColorTemperatureMireds,
+        enhancedColorMode: ColorControl.EnhancedColorMode.ColorTemperatureMireds,
+        colorCapabilities: { xy: false, hueSaturation: false, colorLoop: false, enhancedHue: false, colorTemperature: true },
+        options: {
+          executeIfOff: false,
+        },
+        numberOfPrimaries: null,
+        colorTemperatureMireds,
+        colorTempPhysicalMinMireds,
+        colorTempPhysicalMaxMireds,
+      },
+      {
+        stopMoveStep: async () => {
+          this.log.error('Matter command: stopMoveStep not implemented');
+        },
+        moveToColorTemperature: async ({ request, attributes, endpoint }) => {
+          this.log.debug('Matter command: moveToColorTemperature request:', request, 'attributes.colorTemperatureMireds:', attributes.colorTemperatureMireds.getLocal());
+          this.commandHandler.executeHandler('moveToColorTemperature', { request, attributes, endpoint });
+        },
+        moveColorTemperature: async () => {
+          this.log.error('Matter command: moveColorTemperature not implemented');
+        },
+        stepColorTemperature: async () => {
+          this.log.error('Matter command: stepColorTemperature not implemented');
+        },
+      },
+      {},
+    );
+  }
+  /**
+   * Creates a color temperature color control cluster server.
+   *
+   * @param colorTemperatureMireds - The color temperature in mireds.
+   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
+   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   */
+  createCtColorControlClusterServer(colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+    this.addClusterServer(this.getCtColorControlClusterServer(colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
   }
 
   /**
