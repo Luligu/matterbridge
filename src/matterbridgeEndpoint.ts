@@ -139,7 +139,7 @@ import {
   WindowCoveringCluster,
 } from '@matter/main/clusters';
 import { ClusterType, MeasurementType, getClusterNameById, Semtag, BitSchema, TypeFromPartialBitSchema, Attributes, Commands, Events, Cluster } from '@matter/main/types';
-import { Specification, DeviceClassification } from '@matter/main/model';
+import { Specification, DeviceClassification, tag } from '@matter/main/model';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { IdentifyBehavior, IdentifyServer } from '@matter/node/behaviors/identify';
 import { GroupsServer } from '@matter/node/behaviors/groups';
@@ -271,10 +271,20 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {MatterbridgeEndpointOptions} [options={}] - The options for the device.
    */
   constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false) {
+    let deviceTypeList: { deviceType: number; revision: number }[] = [];
+
     // Get the first DeviceTypeDefinition
     let firstDefinition: DeviceTypeDefinition;
-    if (Array.isArray(definition)) firstDefinition = definition[0];
-    else firstDefinition = definition;
+    if (Array.isArray(definition)) {
+      firstDefinition = definition[0];
+      deviceTypeList = Array.from(definition.values()).map((dt) => ({
+        deviceType: dt.code,
+        revision: dt.revision,
+      }));
+    } else {
+      firstDefinition = definition;
+      deviceTypeList = [{ deviceType: firstDefinition.code, revision: firstDefinition.revision }];
+    }
 
     // Convert the first DeviceTypeDefinition to an EndpointType.Options
     const deviceTypeDefinitionV8: EndpointType.Options = {
@@ -297,37 +307,33 @@ export class MatterbridgeEndpoint extends Endpoint {
     const endpointV8 = MutableEndpoint(deviceTypeDefinitionV8);
 
     // Convert the options to an Endpoint.Options
-    // [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }]
-    // endpoint = endpoint.enable({features: { tagList: true }});
     const optionsV8 = {
       id: options.uniqueStorageKey?.replace(/[ .]/g, ''),
       number: options.endpointId,
-      descriptor: options.tagList ? { tagList: options.tagList } : undefined,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, any> };
+      descriptor: options.tagList ? { tagList: options.tagList, deviceTypeList } : { deviceTypeList },
+    } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, object> };
     super(endpointV8, optionsV8);
+
     this.uniqueStorageKey = options.uniqueStorageKey;
     this.name = firstDefinition.name;
     this.deviceType = firstDefinition.code;
     this.tagList = options.tagList;
+    if (Array.isArray(definition)) {
+      definition.forEach((deviceType) => {
+        this.deviceTypes.set(deviceType.code, deviceType);
+      });
+    } else this.deviceTypes.set(firstDefinition.code, firstDefinition);
+
     // console.log('MatterbridgeEndpoint.option', options);
     // console.log('MatterbridgeEndpoint.endpointV8', endpointV8);
     // console.log('MatterbridgeEndpoint.optionsV8', optionsV8);
 
-    // Update the endpoint
+    // Create the logger
     this.log = new AnsiLogger({ logName: 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
     this.log.debug(
       `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} ` +
         `id: ${CYAN}${options.uniqueStorageKey}${db} number: ${CYAN}${options.endpointId}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
     );
-    this.deviceTypes.set(firstDefinition.code, firstDefinition);
-
-    // Add the other device types to the descriptor server
-    if (Array.isArray(definition)) {
-      definition.forEach((deviceType) => {
-        this.addDeviceType(deviceType);
-      });
-    }
 
     // Add MatterbridgeBehavior with MatterbridgeBehaviorDevice
     this.behaviors.require(MatterbridgeBehavior, { deviceCommand: new MatterbridgeBehaviorDevice(this.log, this.commandHandler, undefined) });
@@ -523,6 +529,46 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Adds a child endpoint with the specified device types and options.
+   * If the child endpoint is not already present, it will be created and added.
+   * If the child endpoint is already present, the device types will be added to the existing child endpoint.
+   *
+   * @param {string} endpointName - The name of the new endpoint to add.
+   * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
+   * @param {MatterbridgeEndpointOptions} [options={}] - The options for the endpoint.
+   * @param {boolean} [debug=false] - Whether to enable debug logging.
+   * @returns {MatterbridgeEndpoint} - The child endpoint that was found or added.
+   */
+  addChildDeviceType(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeEndpoint {
+    this.log.debug(`addChildDeviceType: ${CYAN}${endpointName}${db}`);
+    let child = this.getChildEndpointByName(endpointName);
+    if (!child) {
+      if ('tagList' in options) {
+        for (const tag of options.tagList as Semtag[]) {
+          this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
+        }
+        child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName, tagList: options.tagList }, debug);
+      } else {
+        child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName }, debug);
+      }
+    }
+    deviceTypes.forEach((deviceType) => {
+      this.log.debug(`- with deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
+    });
+    deviceTypes.forEach((deviceType) => {
+      child.addDeviceType(deviceType);
+    });
+    if (this.lifecycle.isInstalled) {
+      this.log.debug(`- with lifecycle installed`);
+      this.add(child);
+    } else {
+      this.log.debug(`- with lifecycle NOT installed`);
+      this.parts.add(child);
+    }
+    return child;
+  }
+
+  /**
    * Adds a child endpoint with one or more device types with the required cluster servers and the specified cluster servers.
    * If the child endpoint is not already present in the childEndpoints, it will be added.
    * If the child endpoint is already present in the childEndpoints, the device types and cluster servers will be added to the existing child endpoint.
@@ -534,7 +580,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {boolean} [debug=false] - Whether to enable debug logging.
    * @returns {MatterbridgeEndpoint} - The child endpoint that was found or added.
    */
-  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug = false) {
+  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeEndpoint {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
     let child = this.getChildEndpointByName(endpointName);
     if (!child) {
@@ -1607,6 +1653,162 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     this.addClusterServer(this.getDefaultColorControlClusterServer(currentX, currentY, currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
+  }
+
+  /**
+   * Get a Xy color control cluster server.
+   *
+   * @param currentX - The current X value.
+   * @param currentY - The current Y value.
+   */
+  getXyColorControlClusterServer(currentX = 0, currentY = 0) {
+    return ClusterServer(
+      ColorControlCluster.with(ColorControl.Feature.Xy),
+      {
+        colorMode: ColorControl.ColorMode.CurrentXAndCurrentY,
+        enhancedColorMode: ColorControl.EnhancedColorMode.CurrentXAndCurrentY,
+        colorCapabilities: { xy: true, hueSaturation: false, colorLoop: false, enhancedHue: false, colorTemperature: false },
+        options: {
+          executeIfOff: false,
+        },
+        numberOfPrimaries: null,
+        currentX,
+        currentY,
+      },
+      {
+        moveToColor: async () => {
+          // Never called in edge
+        },
+        moveColor: async () => {
+          // Never called in edge
+        },
+        stepColor: async () => {
+          // Never called in edge
+        },
+        stopMoveStep: async () => {
+          // Never called in edge
+        },
+      },
+      {},
+    );
+  }
+  /**
+   * Creates a Xy color control cluster server.
+   *
+   * @param currentX - The current X value.
+   * @param currentY - The current Y value.
+   */
+  createXyControlClusterServer(currentX = 0, currentY = 0) {
+    this.addClusterServer(this.getXyColorControlClusterServer(currentX, currentY));
+  }
+
+  /**
+   * Get a default hue and saturation control cluster server.
+   *
+   * @param currentHue - The current hue value.
+   * @param currentSaturation - The current saturation value.
+   */
+  getHsColorControlClusterServer(currentHue = 0, currentSaturation = 0) {
+    return ClusterServer(
+      ColorControlCluster.with(ColorControl.Feature.HueSaturation),
+      {
+        colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
+        enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
+        colorCapabilities: { xy: false, hueSaturation: true, colorLoop: false, enhancedHue: false, colorTemperature: false },
+        options: {
+          executeIfOff: false,
+        },
+        numberOfPrimaries: null,
+        currentHue,
+        currentSaturation,
+      },
+      {
+        moveToHue: async ({ request, attributes, endpoint }) => {
+          // Never called in edge
+        },
+        moveHue: async () => {
+          // Never called in edge
+        },
+        stepHue: async () => {
+          // Never called in edge
+        },
+        moveToSaturation: async ({ request, attributes, endpoint }) => {
+          // Never called in edge
+        },
+        moveSaturation: async () => {
+          // Never called in edge
+        },
+        stepSaturation: async () => {
+          // Never called in edge
+        },
+        moveToHueAndSaturation: async ({ request, attributes, endpoint }) => {
+          // Never called in edge
+        },
+        stopMoveStep: async () => {
+          // Never called in edge
+        },
+      },
+      {},
+    );
+  }
+  /**
+   * Creates a hue and saturation color control cluster server.
+   *
+   * @param currentHue - The current hue value.
+   * @param currentSaturation - The current saturation value.
+   */
+  createHsColorControlClusterServer(currentHue = 0, currentSaturation = 0) {
+    this.addClusterServer(this.getHsColorControlClusterServer(currentHue, currentSaturation));
+  }
+
+  /**
+   * Get a color temperature color control cluster server.
+   *
+   * @param colorTemperatureMireds - The color temperature in mireds.
+   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
+   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   */
+  getCtColorControlClusterServer(colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+    return ClusterServer(
+      ColorControlCluster.with(ColorControl.Feature.ColorTemperature),
+      {
+        colorMode: ColorControl.ColorMode.ColorTemperatureMireds,
+        enhancedColorMode: ColorControl.EnhancedColorMode.ColorTemperatureMireds,
+        colorCapabilities: { xy: false, hueSaturation: false, colorLoop: false, enhancedHue: false, colorTemperature: true },
+        options: {
+          executeIfOff: false,
+        },
+        numberOfPrimaries: null,
+        colorTemperatureMireds,
+        colorTempPhysicalMinMireds,
+        colorTempPhysicalMaxMireds,
+      },
+      {
+        stopMoveStep: async () => {
+          // Never called in edge
+        },
+        moveToColorTemperature: async ({ request, attributes, endpoint }) => {
+          // Never called in edge
+        },
+        moveColorTemperature: async () => {
+          // Never called in edge
+        },
+        stepColorTemperature: async () => {
+          // Never called in edge
+        },
+      },
+      {},
+    );
+  }
+  /**
+   * Creates a color temperature color control cluster server.
+   *
+   * @param colorTemperatureMireds - The color temperature in mireds.
+   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
+   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   */
+  createCtColorControlClusterServer(colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+    this.addClusterServer(this.getCtColorControlClusterServer(colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
   }
 
   private isColorControlConfigured = false;
