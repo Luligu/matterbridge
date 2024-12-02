@@ -2823,7 +2823,9 @@ export class Matterbridge extends EventEmitter {
     */
 
     // Serve static files from '/static' endpoint
-    this.expressApp.use(express.static(path.join(this.rootDirectory, 'frontend/build')));
+    const staticFiles = express.static(path.join(this.rootDirectory, 'frontend/build'));
+    this.expressApp.use('/', staticFiles);
+    this.expressApp.use('/matterbridge', staticFiles);
 
     if (!hasParameter('ssl')) {
       // Create an HTTP server and attach the express app
@@ -2965,7 +2967,7 @@ export class Matterbridge extends EventEmitter {
     });
 
     // Endpoint to validate login code
-    this.expressApp.post('/api/login', express.json(), async (req, res) => {
+    this.expressApp.post(['/api/login', '/matterbridge/api/login'], express.json(), async (req, res) => {
       const { password } = req.body;
       this.log.debug('The frontend sent /api/login', password);
       if (!this.nodeContext) {
@@ -2990,7 +2992,7 @@ export class Matterbridge extends EventEmitter {
     });
 
     // Endpoint to provide settings
-    this.expressApp.get('/api/settings', express.json(), async (req, res) => {
+    this.expressApp.get(['/api/settings', '/matterbridge/api/settings'], express.json(), async (req, res) => {
       this.log.debug('The frontend sent /api/settings');
       this.matterbridgeInformation.bridgeMode = this.bridgeMode;
       this.matterbridgeInformation.restartMode = this.restartMode;
@@ -3012,7 +3014,7 @@ export class Matterbridge extends EventEmitter {
     });
 
     // Endpoint to provide plugins
-    this.expressApp.get('/api/plugins', async (req, res) => {
+    this.expressApp.get(['/api/plugins', '/matterbridge/api/plugins'], async (req, res) => {
       this.log.debug('The frontend sent /api/plugins');
       const response = await this.getBaseRegisteredPlugins();
       // this.log.debug('Response:', debugStringify(response));
@@ -3020,7 +3022,7 @@ export class Matterbridge extends EventEmitter {
     });
 
     // Endpoint to provide devices
-    this.expressApp.get('/api/devices', (req, res) => {
+    this.expressApp.get(['/api/devices', '/matterbridge/api/devices'], (req, res) => {
       this.log.debug('The frontend sent /api/devices');
       const data: { pluginName: string; type: string; endpoint: EndpointNumber | undefined; name: string; serial: string; uniqueId: string; cluster: string }[] = [];
       this.devices.forEach(async (device) => {
@@ -3048,7 +3050,8 @@ export class Matterbridge extends EventEmitter {
     });
 
     // Endpoint to provide the cluster servers of the devices
-    this.expressApp.get('/api/devices_clusters/:selectedPluginName/:selectedDeviceEndpoint', (req, res) => {
+    this.expressApp.get(['/api/devices_clusters/:selectedPluginName/:selectedDeviceEndpoint', 
+                         '/matterbridge/api/devices_clusters/:selectedPluginName/:selectedDeviceEndpoint'], (req, res) => {
       const selectedPluginName = req.params.selectedPluginName;
       const selectedDeviceEndpoint: number = parseInt(req.params.selectedDeviceEndpoint, 10);
       this.log.debug(`The frontend sent /api/devices_clusters plugin:${selectedPluginName} endpoint:${selectedDeviceEndpoint}`);
@@ -3119,7 +3122,7 @@ export class Matterbridge extends EventEmitter {
     });
 
     // Endpoint to view the log
-    this.expressApp.get('/api/view-log', async (req, res) => {
+    this.expressApp.get(['/api/view-log', '/matterbridge/api/view-log'], async (req, res) => {
       this.log.debug('The frontend sent /api/log');
       try {
         const data = await fs.readFile(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), 'utf8');
@@ -3132,7 +3135,7 @@ export class Matterbridge extends EventEmitter {
     });
 
     // Endpoint to download the matterbridge log
-    this.expressApp.get('/api/download-mblog', async (req, res) => {
+    this.expressApp.get(['/api/download-mblog', '/matterbridge/api/download-mblog'], async (req, res) => {
       this.log.debug('The frontend sent /api/download-mblog');
       try {
         await fs.access(path.join(this.matterbridgeDirectory, this.matterbrideLoggerFile), fs.constants.F_OK);
@@ -3149,7 +3152,7 @@ export class Matterbridge extends EventEmitter {
     });
 
     // Endpoint to download the matter log
-    this.expressApp.get('/api/download-mjlog', async (req, res) => {
+    this.expressApp.get(['/api/download-mjlog', '/matterbridge/api/download-mjlog'], async (req, res) => {
       this.log.debug('The frontend sent /api/download-mjlog');
       try {
         await fs.access(path.join(this.matterbridgeDirectory, this.matterLoggerFile), fs.constants.F_OK);
@@ -3166,7 +3169,7 @@ export class Matterbridge extends EventEmitter {
     });
 
     // Endpoint to download the matter storage file
-    this.expressApp.get('/api/download-mjstorage', (req, res) => {
+    this.expressApp.get(['/api/download-mjstorage', '/matterbridge/api/download-mjstorage'], (req, res) => {
       this.log.debug('The frontend sent /api/download-mjstorage');
       res.download(path.join(this.matterbridgeDirectory, this.matterStorageName), 'matterbridge.json', (error) => {
         if (error) {
@@ -3177,7 +3180,7 @@ export class Matterbridge extends EventEmitter {
     });
 
     // Endpoint to download the matterbridge storage directory
-    this.expressApp.get('/api/download-mbstorage', async (req, res) => {
+    this.expressApp.get(['/api/download-mbstorage', '/matterbridge/api/download-mbstorage'], async (req, res) => {
       this.log.debug('The frontend sent /api/download-mbstorage');
       await createZip(path.join(os.tmpdir(), `matterbridge.${this.nodeStorageName}.zip`), path.join(this.matterbridgeDirectory, this.nodeStorageName));
       res.download(path.join(os.tmpdir(), `matterbridge.${this.nodeStorageName}.zip`), `matterbridge.${this.nodeStorageName}.zip`, (error) => {
@@ -3189,7 +3192,7 @@ export class Matterbridge extends EventEmitter {
     });
 
     // Endpoint to download the matterbridge plugin directory
-    this.expressApp.get('/api/download-pluginstorage', async (req, res) => {
+    this.expressApp.get(['/api/download-pluginstorage', '/matterbridge/api/download-pluginstorage'], async (req, res) => {
       this.log.debug('The frontend sent /api/download-pluginstorage');
       await createZip(path.join(os.tmpdir(), `matterbridge.pluginstorage.zip`), this.matterbridgePluginDirectory);
       res.download(path.join(os.tmpdir(), `matterbridge.pluginstorage.zip`), `matterbridge.pluginstorage.zip`, (error) => {
@@ -3201,7 +3204,7 @@ export class Matterbridge extends EventEmitter {
     });
 
     // Endpoint to download the matterbridge plugin config files
-    this.expressApp.get('/api/download-pluginconfig', async (req, res) => {
+    this.expressApp.get(['/api/download-pluginconfig', '/matterbridge/api/download-pluginconfig'], async (req, res) => {
       this.log.debug('The frontend sent /api/download-pluginconfig');
       await createZip(path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), path.relative(process.cwd(), path.join(this.matterbridgeDirectory, '*.config.json')));
       // await createZip(path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), path.relative(process.cwd(), path.join(this.matterbridgeDirectory, 'certs', '*.*')), path.relative(process.cwd(), path.join(this.matterbridgeDirectory, '*.config.json')));
@@ -3214,7 +3217,7 @@ export class Matterbridge extends EventEmitter {
     });
 
     // Endpoint to download the matterbridge plugin config files
-    this.expressApp.get('/api/download-backup', async (req, res) => {
+    this.expressApp.get(['/api/download-backup', '/matterbridge/api/download-backup'], async (req, res) => {
       this.log.debug('The frontend sent /api/download-backup');
       res.download(path.join(os.tmpdir(), `matterbridge.backup.zip`), `matterbridge.backup.zip`, (error) => {
         if (error) {
@@ -3225,7 +3228,7 @@ export class Matterbridge extends EventEmitter {
     });
 
     // Endpoint to receive commands
-    this.expressApp.post('/api/command/:command/:param', express.json(), async (req, res) => {
+    this.expressApp.post(['/api/command/:command/:param', '/matterbridge/api/command/:command/:param'], express.json(), async (req, res) => {
       const command = req.params.command;
       let param = req.params.param;
       this.log.debug(`The frontend sent /api/command/${command}/${param}`);
