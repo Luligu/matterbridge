@@ -73,6 +73,7 @@ import {
   RvcRunMode,
   RvcOperationalState,
   RvcCleanMode,
+  ScenesManagement,
 } from '@matter/main/clusters';
 import { Semtag } from '@matter/main/types';
 
@@ -357,7 +358,7 @@ export const rainSensor = DeviceTypeDefinition({
   optionalServerClusters: [BooleanStateConfiguration.Cluster.id],
 });
 
-// Remark:  A Smoke CO Alarm device type SHALL support an instance of a Power Source device type on some endpoint.
+// Remark: A Smoke CO Alarm device type SHALL support an instance of a Power Source device type on some endpoint.
 export const smokeCoAlarm = DeviceTypeDefinition({
   name: 'MA-smokeCoAlarm',
   code: 0x0076,
@@ -383,6 +384,16 @@ export const airPurifier = DeviceTypeDefinition({
   revision: 1,
   requiredServerClusters: [Identify.Cluster.id, FanControl.Cluster.id],
   optionalServerClusters: [Groups.Cluster.id, HepaFilterMonitoring.Cluster.id, ActivatedCarbonFilterMonitoring.Cluster.id],
+});
+
+// Remark: may have a temperature sensor and a humidity sensor device.
+export const airConditioner = DeviceTypeDefinition({
+  name: 'MA-airConditioner',
+  code: 0x72,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, Thermostat.Cluster.id],
+  optionalServerClusters: [Groups.Cluster.id, ScenesManagement.Cluster.id, FanControl.Cluster.id, ThermostatUserInterfaceConfiguration.Cluster.id, TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id],
 });
 
 export const electricalSensor = DeviceTypeDefinition({
