@@ -536,12 +536,12 @@ describe('Matterbridge device', () => {
     device.createDefaultCarbonMonoxideConcentrationMeasurementClusterServer();
     device.createDefaultCarbonDioxideConcentrationMeasurementClusterServer();
     device.createDefaultFormaldehydeConcentrationMeasurementClusterServer();
-    device.createDefaulPm1ConcentrationMeasurementClusterServer();
-    device.createDefaulPm25ConcentrationMeasurementClusterServer();
-    device.createDefaulPm10ConcentrationMeasurementClusterServer();
-    device.createDefaulOzoneConcentrationMeasurementClusterServer();
-    device.createDefaulRadonConcentrationMeasurementClusterServer();
-    device.createDefaulNitrogenDioxideConcentrationMeasurementClusterServer();
+    device.createDefaultPm1ConcentrationMeasurementClusterServer();
+    device.createDefaultPm25ConcentrationMeasurementClusterServer();
+    device.createDefaultPm10ConcentrationMeasurementClusterServer();
+    device.createDefaultOzoneConcentrationMeasurementClusterServer();
+    device.createDefaultRadonConcentrationMeasurementClusterServer();
+    device.createDefaultNitrogenDioxideConcentrationMeasurementClusterServer();
     device.createDefaultFanControlClusterServer();
     device.addClusterServer(device.getDefaultDeviceEnergyManagementModeClusterServer());
     device.addClusterServer(device.getDefaultDeviceEnergyManagementClusterServer());

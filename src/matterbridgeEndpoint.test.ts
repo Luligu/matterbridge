@@ -729,12 +729,12 @@ describe('MatterbridgeEndpoint class', () => {
       device.createDefaultCarbonMonoxideConcentrationMeasurementClusterServer();
       device.createDefaultCarbonDioxideConcentrationMeasurementClusterServer();
       device.createDefaultFormaldehydeConcentrationMeasurementClusterServer();
-      device.createDefaulPm1ConcentrationMeasurementClusterServer();
-      device.createDefaulPm25ConcentrationMeasurementClusterServer();
-      device.createDefaulPm10ConcentrationMeasurementClusterServer();
-      device.createDefaulOzoneConcentrationMeasurementClusterServer();
-      device.createDefaulRadonConcentrationMeasurementClusterServer();
-      device.createDefaulNitrogenDioxideConcentrationMeasurementClusterServer();
+      device.createDefaultPm1ConcentrationMeasurementClusterServer();
+      device.createDefaultPm25ConcentrationMeasurementClusterServer();
+      device.createDefaultPm10ConcentrationMeasurementClusterServer();
+      device.createDefaultOzoneConcentrationMeasurementClusterServer();
+      device.createDefaultRadonConcentrationMeasurementClusterServer();
+      device.createDefaultNitrogenDioxideConcentrationMeasurementClusterServer();
 
       await server.add(device);
       await edge.startServerNode(server);
