@@ -14,6 +14,17 @@ If you want to run Matterbridge in Home Assistant please use the official add-on
 
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
+## [1.6.6] - 2024-12-05
+
+### Changed
+
+- [plugin]: Removed check on types since we are moving to production plugins.
+- [package]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.6.5] - 2024-12-02
 
 ### Changed
