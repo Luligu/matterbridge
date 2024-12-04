@@ -105,6 +105,22 @@ export const powerSource = DeviceTypeDefinition({
   optionalServerClusters: [],
 });
 
+/**
+    2.5.3. Conditions
+    Please see the Base Device Type definition for conformance tags.
+    This device type SHALL only be used for Nodes which have a device type of Bridge.
+  
+    2.5.6. Endpoint Composition
+    • A Bridged Node endpoint SHALL support one of the following composition patterns:
+      ◦ Separate Endpoints: All application device types are supported on separate endpoints, and
+        not on the Bridged Node endpoint. The Bridged Node endpoint’s Descriptor cluster PartsList
+        attribute SHALL indicate a list of all endpoints representing the functionality of the bridged
+        device, including the endpoints supporting the application device types, i.e. the full-family
+        pattern defined in the System Model specification.
+      ◦ One Endpoint: Both the Bridged Node and one or more application device types are sup
+        ported on the same endpoint (following application device type rules). Endpoint composi
+        tion SHALL conform to the application device type(s) definition
+ */
 export const bridgedNode = DeviceTypeDefinition({
   name: 'MA-bridgedNode',
   code: 0x0013,

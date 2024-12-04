@@ -1172,26 +1172,48 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Get a default OnOff cluster server.
    *
-   * @param onOff - The initial state of the OnOff cluster (default: false).
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   * @param {boolean} [globalSceneControl=false] - The global scene control state.
+   * @param {number} [onTime=0] - The on time value.
+   * @param {number} [offWaitTime=0] - The off wait time value.
+   * @param {OnOff.StartUpOnOff | null} [startUpOnOff=null] - The start-up OnOff state. Null means previous state.
+   *
+   * @returns {ClusterServer} - The configured OnOff cluster server.
    */
-  getDefaultOnOffClusterServer(onOff = false) {
+  getDefaultOnOffClusterServer(onOff = false, globalSceneControl = false, onTime = 0, offWaitTime = 0, startUpOnOff: OnOff.StartUpOnOff | null = null) {
     return ClusterServer(
-      OnOffCluster,
+      OnOffCluster.with(OnOff.Feature.Lighting),
       {
         onOff,
+        globalSceneControl,
+        onTime,
+        offWaitTime,
+        startUpOnOff,
       },
       {
         on: async (data) => {
-          this.log.debug('Matter command: on onOff:', data.attributes.onOff.getLocal());
+          this.log.debug('Matter command: on');
           await this.commandHandler.executeHandler('on', data);
         },
         off: async (data) => {
-          this.log.debug('Matter command: off onOff:', data.attributes.onOff.getLocal());
+          this.log.debug('Matter command: off');
           await this.commandHandler.executeHandler('off', data);
         },
         toggle: async (data) => {
-          this.log.debug('Matter command: toggle onOff:', data.attributes.onOff.getLocal());
+          this.log.debug('Matter command: toggle');
           await this.commandHandler.executeHandler('toggle', data);
+        },
+        offWithEffect: async (data) => {
+          this.log.debug('Matter command: offWithEffect', data.request);
+          await this.commandHandler.executeHandler('offWithEffect', data);
+        },
+        onWithRecallGlobalScene: async (data) => {
+          this.log.debug('Matter command: onWithRecallGlobalScene', data.request);
+          await this.commandHandler.executeHandler('onWithRecallGlobalScene', data);
+        },
+        onWithTimedOff: async (data) => {
+          this.log.debug('Matter command: onWithTimedOff', data.request);
+          await this.commandHandler.executeHandler('onWithTimedOff', data);
         },
       },
       {},
@@ -1201,10 +1223,14 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   /**
    * Creates a default OnOff cluster server.
    *
-   * @param onOff - The initial state of the OnOff cluster (default: false).
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   * @param {boolean} [globalSceneControl=false] - The global scene control state.
+   * @param {number} [onTime=0] - The on time value.
+   * @param {number} [offWaitTime=0] - The off wait time value.
+   * @param {OnOff.StartUpOnOff | null} [startUpOnOff=null] - The start-up OnOff state. Null means previous state.
    */
-  createDefaultOnOffClusterServer(onOff = false) {
-    this.addClusterServer(this.getDefaultOnOffClusterServer(onOff));
+  createDefaultOnOffClusterServer(onOff = false, globalSceneControl = false, onTime = 0, offWaitTime = 0, startUpOnOff: OnOff.StartUpOnOff | null = null) {
+    this.addClusterServer(this.getDefaultOnOffClusterServer(onOff, globalSceneControl, onTime, offWaitTime, startUpOnOff));
   }
 
   /**

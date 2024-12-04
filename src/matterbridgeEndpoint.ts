@@ -373,7 +373,12 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === Groups.Cluster.id) return GroupsServer;
     if (clusterId === OnOff.Cluster.id) return MatterbridgeOnOffServer.with('Lighting');
     if (clusterId === LevelControl.Cluster.id) return MatterbridgeLevelControlServer;
-    if (clusterId === ColorControl.Cluster.id) return MatterbridgeColorControlServer;
+
+    if (clusterId === ColorControl.Cluster.id && type === 'CompleteColorControl') return MatterbridgeColorControlServer;
+    if (clusterId === ColorControl.Cluster.id && type === 'XyColorControl') return MatterbridgeColorControlServer.with('Xy');
+    if (clusterId === ColorControl.Cluster.id && type === 'HueSaturationColorControl') return MatterbridgeColorControlServer.with('HueSaturation');
+    if (clusterId === ColorControl.Cluster.id && type === 'ColorTemperatureColorControl') return MatterbridgeColorControlServer.with('ColorTemperature');
+
     if (clusterId === DoorLock.Cluster.id) return MatterbridgeDoorLockServer;
 
     if (clusterId === Thermostat.Cluster.id && type === 'AutoModeThermostat') return MatterbridgeThermostatServer.with('AutoMode', 'Heating', 'Cooling');
@@ -692,6 +697,14 @@ export class MatterbridgeEndpoint extends Endpoint {
       this.log.debug(`****cluster ${hk}${'0x' + cluster.id.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(cluster.id)}${db} already added`);
     }
     let type = undefined;
+
+    if (cluster.id === ColorControl.Cluster.id && cluster.isAttributeSupportedByName('currentX') && !cluster.isAttributeSupportedByName('currentHue') && !cluster.isAttributeSupportedByName('colorTemperatureMireds')) type = 'XyColorControl';
+    else if (cluster.id === ColorControl.Cluster.id && cluster.isAttributeSupportedByName('currentHue') && !cluster.isAttributeSupportedByName('currentX') && !cluster.isAttributeSupportedByName('colorTemperatureMireds'))
+      type = 'HueSaturationColorControl';
+    else if (cluster.id === ColorControl.Cluster.id && cluster.isAttributeSupportedByName('colorTemperatureMireds') && !cluster.isAttributeSupportedByName('currentHue') && !cluster.isAttributeSupportedByName('currentX'))
+      type = 'ColorTemperatureColorControl';
+    else type = 'CompleteColorControl';
+
     if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('multiPressComplete')) type = 'MomentarySwitch';
     if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('switchLatched')) type = 'LatchingSwitch';
 
