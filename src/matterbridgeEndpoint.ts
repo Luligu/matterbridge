@@ -3011,7 +3011,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement.
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The medium of measurement.
    */
-  createDefaulPm1ConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultPm1ConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.addClusterServer(this.getDefaultPm1ConcentrationMeasurementClusterServer(measuredValue, measurementUnit, measurementMedium));
   }
 
@@ -3045,7 +3045,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement.
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The medium of measurement.
    */
-  createDefaulPm25ConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultPm25ConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.addClusterServer(this.getDefaultPm25ConcentrationMeasurementClusterServer(measuredValue, measurementUnit, measurementMedium));
   }
 
@@ -3079,7 +3079,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement.
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The medium of measurement.
    */
-  createDefaulPm10ConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultPm10ConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.addClusterServer(this.getDefaultPm10ConcentrationMeasurementClusterServer(measuredValue, measurementUnit, measurementMedium));
   }
 
@@ -3113,7 +3113,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement.
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The medium of measurement.
    */
-  createDefaulOzoneConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultOzoneConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.addClusterServer(this.getDefaultOzoneConcentrationMeasurementClusterServer(measuredValue, measurementUnit, measurementMedium));
   }
 
@@ -3147,7 +3147,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement.
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The medium of measurement.
    */
-  createDefaulRadonConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultRadonConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.addClusterServer(this.getDefaultRadonConcentrationMeasurementClusterServer(measuredValue, measurementUnit, measurementMedium));
   }
 
@@ -3181,7 +3181,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement.
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The medium of measurement.
    */
-  createDefaulNitrogenDioxideConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultNitrogenDioxideConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.addClusterServer(this.getDefaultNitrogenDioxideConcentrationMeasurementClusterServer(measuredValue, measurementUnit, measurementMedium));
   }
 
