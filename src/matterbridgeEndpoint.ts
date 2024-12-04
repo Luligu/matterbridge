@@ -257,6 +257,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   deviceType: number;
   uniqueStorageKey: string | undefined = undefined;
   tagList?: Semtag[] = undefined;
+  subType = '';
 
   // Maps matter deviceTypes and endpoints
   private readonly deviceTypes = new Map<number, DeviceTypeDefinition>();
@@ -367,28 +368,31 @@ export class MatterbridgeEndpoint extends Endpoint {
     return behaviorTypes;
   }
 
-  static getBehaviourTypeFromClusterServerId(clusterId: ClusterId, type?: string) {
+  static getBehaviourTypeFromClusterServerId(clusterId: ClusterId, subType?: string) {
     // Map ClusterId to Behavior.Type
     if (clusterId === Identify.Cluster.id) return MatterbridgeIdentifyServer;
     if (clusterId === Groups.Cluster.id) return GroupsServer;
     if (clusterId === OnOff.Cluster.id) return MatterbridgeOnOffServer.with('Lighting');
     if (clusterId === LevelControl.Cluster.id) return MatterbridgeLevelControlServer;
 
-    if (clusterId === ColorControl.Cluster.id && type === 'CompleteColorControl') return MatterbridgeColorControlServer;
-    if (clusterId === ColorControl.Cluster.id && type === 'XyColorControl') return MatterbridgeColorControlServer.with('Xy');
-    if (clusterId === ColorControl.Cluster.id && type === 'HueSaturationColorControl') return MatterbridgeColorControlServer.with('HueSaturation');
-    if (clusterId === ColorControl.Cluster.id && type === 'ColorTemperatureColorControl') return MatterbridgeColorControlServer.with('ColorTemperature');
+    if (clusterId === ColorControl.Cluster.id && subType === undefined) return MatterbridgeColorControlServer;
+    if (clusterId === ColorControl.Cluster.id && subType === 'CompleteColorControl') return MatterbridgeColorControlServer;
+    if (clusterId === ColorControl.Cluster.id && subType === 'XyColorControl') return MatterbridgeColorControlServer.with('Xy');
+    if (clusterId === ColorControl.Cluster.id && subType === 'HueSaturationColorControl') return MatterbridgeColorControlServer.with('HueSaturation');
+    if (clusterId === ColorControl.Cluster.id && subType === 'ColorTemperatureColorControl') return MatterbridgeColorControlServer.with('ColorTemperature');
 
     if (clusterId === DoorLock.Cluster.id) return MatterbridgeDoorLockServer;
 
-    if (clusterId === Thermostat.Cluster.id && type === 'AutoModeThermostat') return MatterbridgeThermostatServer.with('AutoMode', 'Heating', 'Cooling');
-    if (clusterId === Thermostat.Cluster.id && type === 'HeatingThermostat') return MatterbridgeThermostatServer.with('Heating');
-    if (clusterId === Thermostat.Cluster.id && type === 'CoolingThermostat') return MatterbridgeThermostatServer.with('Cooling');
+    if (clusterId === Thermostat.Cluster.id && subType === undefined) return MatterbridgeThermostatServer.with('AutoMode', 'Heating', 'Cooling');
+    if (clusterId === Thermostat.Cluster.id && subType === 'AutoModeThermostat') return MatterbridgeThermostatServer.with('AutoMode', 'Heating', 'Cooling');
+    if (clusterId === Thermostat.Cluster.id && subType === 'HeatingThermostat') return MatterbridgeThermostatServer.with('Heating');
+    if (clusterId === Thermostat.Cluster.id && subType === 'CoolingThermostat') return MatterbridgeThermostatServer.with('Cooling');
 
     if (clusterId === WindowCovering.Cluster.id) return MatterbridgeWindowCoveringServer;
     if (clusterId === FanControl.Cluster.id) return MatterbridgeFanControlServer;
-    if (clusterId === Switch.Cluster.id && type === 'MomentarySwitch') return SwitchServer.with('MomentarySwitch', 'MomentarySwitchRelease', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress');
-    if (clusterId === Switch.Cluster.id && type === 'LatchingSwitch') return SwitchServer.with('LatchingSwitch');
+    if (clusterId === Switch.Cluster.id && subType === undefined) return SwitchServer.with('MomentarySwitch', 'MomentarySwitchRelease', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress');
+    if (clusterId === Switch.Cluster.id && subType === 'MomentarySwitch') return SwitchServer.with('MomentarySwitch', 'MomentarySwitchRelease', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress');
+    if (clusterId === Switch.Cluster.id && subType === 'LatchingSwitch') return SwitchServer.with('LatchingSwitch');
     if (clusterId === TemperatureMeasurement.Cluster.id) return TemperatureMeasurementServer;
     if (clusterId === RelativeHumidityMeasurement.Cluster.id) return RelativeHumidityMeasurementServer;
     if (clusterId === PressureMeasurement.Cluster.id) return PressureMeasurementServer;
@@ -419,9 +423,10 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === ElectricalPowerMeasurement.Cluster.id) return ElectricalPowerMeasurementServer.with('AlternatingCurrent');
     if (clusterId === ElectricalEnergyMeasurement.Cluster.id) return ElectricalEnergyMeasurementServer.with('ImportedEnergy', 'ExportedEnergy', 'CumulativeEnergy');
 
-    if (clusterId === PowerSource.Cluster.id && type === 'WiredPowerSource') return PowerSourceServer.with(PowerSource.Feature.Wired);
-    if (clusterId === PowerSource.Cluster.id && type === 'BatteryReplaceablePowerSource') return PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Replaceable);
-    if (clusterId === PowerSource.Cluster.id && type === 'BatteryRechargeablePowerSource') return PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable);
+    if (clusterId === PowerSource.Cluster.id && subType === undefined) return PowerSourceServer;
+    if (clusterId === PowerSource.Cluster.id && subType === 'WiredPowerSource') return PowerSourceServer.with(PowerSource.Feature.Wired);
+    if (clusterId === PowerSource.Cluster.id && subType === 'BatteryReplaceablePowerSource') return PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Replaceable);
+    if (clusterId === PowerSource.Cluster.id && subType === 'BatteryRechargeablePowerSource') return PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable);
 
     if (clusterId === BasicInformation.Cluster.id) return BasicInformationServer;
     if (clusterId === BridgedDeviceBasicInformation.Cluster.id) return BridgedDeviceBasicInformationServer;
@@ -696,33 +701,40 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (this.clusterServers.has(cluster.id)) {
       this.log.debug(`****cluster ${hk}${'0x' + cluster.id.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(cluster.id)}${db} already added`);
     }
-    let type = undefined;
 
-    if (cluster.id === ColorControl.Cluster.id && cluster.isAttributeSupportedByName('currentX') && !cluster.isAttributeSupportedByName('currentHue') && !cluster.isAttributeSupportedByName('colorTemperatureMireds')) type = 'XyColorControl';
+    this.subType = '';
+
+    if (cluster.id === ColorControl.Cluster.id && cluster.isAttributeSupportedByName('currentX') && !cluster.isAttributeSupportedByName('currentHue') && !cluster.isAttributeSupportedByName('colorTemperatureMireds')) this.subType = 'XyColorControl';
     else if (cluster.id === ColorControl.Cluster.id && cluster.isAttributeSupportedByName('currentHue') && !cluster.isAttributeSupportedByName('currentX') && !cluster.isAttributeSupportedByName('colorTemperatureMireds'))
-      type = 'HueSaturationColorControl';
+      this.subType = 'HueSaturationColorControl';
     else if (cluster.id === ColorControl.Cluster.id && cluster.isAttributeSupportedByName('colorTemperatureMireds') && !cluster.isAttributeSupportedByName('currentHue') && !cluster.isAttributeSupportedByName('currentX'))
-      type = 'ColorTemperatureColorControl';
-    else type = 'CompleteColorControl';
+      this.subType = 'ColorTemperatureColorControl';
+    else this.subType = 'CompleteColorControl';
 
-    if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('multiPressComplete')) type = 'MomentarySwitch';
-    if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('switchLatched')) type = 'LatchingSwitch';
+    if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('multiPressComplete')) this.subType = 'MomentarySwitch';
+    if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('switchLatched')) this.subType = 'LatchingSwitch';
 
-    if (cluster.id === PowerSourceCluster.id && cluster.isAttributeSupportedByName('wiredCurrentType')) type = 'WiredPowerSource';
-    if (cluster.id === PowerSourceCluster.id && cluster.isAttributeSupportedByName('batReplacementDescription')) type = 'BatteryReplaceablePowerSource';
-    if (cluster.id === PowerSourceCluster.id && cluster.isAttributeSupportedByName('batChargeState')) type = 'BatteryRechargeablePowerSource';
+    if (cluster.id === PowerSourceCluster.id && cluster.isAttributeSupportedByName('wiredCurrentType')) this.subType = 'WiredPowerSource';
+    if (cluster.id === PowerSourceCluster.id && cluster.isAttributeSupportedByName('batReplacementDescription')) this.subType = 'BatteryReplaceablePowerSource';
+    if (cluster.id === PowerSourceCluster.id && cluster.isAttributeSupportedByName('batChargeState')) this.subType = 'BatteryRechargeablePowerSource';
 
-    if (cluster.id === ThermostatCluster.id && cluster.isAttributeSupportedByName('occupiedCoolingSetpoint')) type = 'CoolingThermostat';
-    if (cluster.id === ThermostatCluster.id && cluster.isAttributeSupportedByName('occupiedHeatingSetpoint')) type = 'HeatingThermostat';
-    if (cluster.id === ThermostatCluster.id && cluster.isAttributeSupportedByName('minSetpointDeadBand')) type = 'AutoModeThermostat';
+    if (cluster.id === ThermostatCluster.id && cluster.isAttributeSupportedByName('occupiedCoolingSetpoint')) this.subType = 'CoolingThermostat';
+    if (cluster.id === ThermostatCluster.id && cluster.isAttributeSupportedByName('occupiedHeatingSetpoint')) this.subType = 'HeatingThermostat';
+    if (cluster.id === ThermostatCluster.id && cluster.isAttributeSupportedByName('minSetpointDeadBand')) this.subType = 'AutoModeThermostat';
 
-    const behavior = MatterbridgeEndpoint.getBehaviourTypeFromClusterServerId(cluster.id, type);
+    const behavior = MatterbridgeEndpoint.getBehaviourTypeFromClusterServerId(cluster.id, this.subType);
+
+    /*
     if (cluster.id === PowerTopologyCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
     if (cluster.id === ElectricalPowerMeasurementCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
     if (cluster.id === ElectricalEnergyMeasurementCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
     if (cluster.id === ThermostatCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
+    */
+
     this.clusterServers.set(cluster.id, cluster as unknown as ClusterServerObj);
+
     if (cluster.id === BasicInformationCluster.id) return; // Not used in Matterbridge edge for devices. Only on server node.
+
     this.behaviors.require(behavior, options);
   }
 
