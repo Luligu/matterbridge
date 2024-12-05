@@ -26,8 +26,9 @@ import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 
 // AnsiLogger module
-import { AnsiLogger, LogLevel } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, LogLevel, nf, wr } from 'node-ansi-logger';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { isValidArray, isValidObject } from './utils/utils.js';
 
 // Platform types
 export type PlatformConfigValue = string | number | boolean | bigint | object | undefined | null;
@@ -124,7 +125,8 @@ export class MatterbridgePlatform {
    * Unregisters all devices registered with the Matterbridge platform.
    */
   async unregisterAllDevices() {
-    await this.matterbridge.removeAllBridgedDevices(this.name);
+    if (this.matterbridge.edge) await this.matterbridge.removeAllBridgedEndpoints(this.name);
+    else await this.matterbridge.removeAllBridgedDevices(this.name);
   }
 
   /**
@@ -136,7 +138,7 @@ export class MatterbridgePlatform {
     const compareVersions = (matterbridgeVersion: string, requiredVersion: string): boolean => {
       const stripTag = (v: string) => {
         const parts = v.split('-');
-        return parts.length > 0 ? parts[0] : v;
+        return parts[0];
       };
       const v1Parts = stripTag(matterbridgeVersion).split('.').map(Number);
       const v2Parts = stripTag(requiredVersion).split('.').map(Number);
@@ -153,6 +155,30 @@ export class MatterbridgePlatform {
     };
 
     if (!compareVersions(this.matterbridge.matterbridgeVersion, requiredVersion)) return false;
+    return true;
+  }
+
+  validateDeviceWhiteBlackList(device: string) {
+    if (isValidArray(this.config.whiteList, 1) && !this.config.whiteList.includes(device)) {
+      this.log.info(`Skipping device ${CYAN}${device}${nf} because not in whitelist`);
+      return false;
+    }
+    if (isValidArray(this.config.blackList, 1) && this.config.blackList.includes(device)) {
+      this.log.info(`Skipping device ${CYAN}${device}${nf} because in blacklist`);
+      return false;
+    }
+    return true;
+  }
+
+  validateEntityBlackList(device: string, entity: string) {
+    if (isValidArray(this.config.entityBlackList, 1) && this.config.entityBlackList.find((e) => e === entity)) {
+      this.log.info(`Skipping entity ${CYAN}${entity}${nf} because in entityBlackList`);
+      return false;
+    }
+    if (isValidObject(this.config.deviceEntityBlackList, 1) && device in this.config.deviceEntityBlackList && (this.config.deviceEntityBlackList as Record<string, string[]>)[device].includes(entity)) {
+      this.log.info(`Skipping entity ${CYAN}${entity}${wr} for device ${CYAN}${device}${nf} because in deviceEntityBlackList`);
+      return false;
+    }
     return true;
   }
 }

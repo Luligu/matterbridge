@@ -16,10 +16,22 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 ## [1.6.6] - 2024-12-05
 
+### Added
+
+- [deviceTypes] Add device type airConditioner.
+- [docker] Add matterbridge-hass to docker dev
+
 ### Changed
 
 - [plugin]: Removed check on types since we are moving to production plugins.
+- [package]: Set node version to 18, 20 and 22
 - [package]: Update dependencies.
+- [levelControl]: Set default to OnOff.Feature.Lighting
+- [jest]: Update Jest tests
+
+### Fixed
+
+- [device]: Fix typos in Device and Endpoint
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">

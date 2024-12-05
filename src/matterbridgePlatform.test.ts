@@ -6,11 +6,12 @@ process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'J
 
 import { jest } from '@jest/globals';
 
-import { AnsiLogger, LogLevel } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, pl } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { powerSource } from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 describe('Matterbridge platform', () => {
   let matterbridge: Matterbridge;
@@ -38,11 +39,23 @@ describe('Matterbridge platform', () => {
       return Promise.resolve();
     });
     jest.spyOn(Matterbridge.prototype, 'removeBridgedDevice').mockImplementation((pluginName: string, device: MatterbridgeDevice) => {
-      // console.log(`Mocked unregisterDevice: ${pluginName} ${device.name}`);
+      // console.log(`Mocked removeBridgedDevice: ${pluginName} ${device.name}`);
       return Promise.resolve();
     });
     jest.spyOn(Matterbridge.prototype, 'removeAllBridgedDevices').mockImplementation((pluginName: string) => {
       // console.log(`Mocked removeAllBridgedDevices: ${pluginName}`);
+      return Promise.resolve();
+    });
+    jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint').mockImplementation((pluginName: string, device: MatterbridgeEndpoint) => {
+      // console.log(`Mocked addBridgedEndpoint: ${pluginName} ${device.name}`);
+      return Promise.resolve();
+    });
+    jest.spyOn(Matterbridge.prototype, 'removeBridgedEndpoint').mockImplementation((pluginName: string, device: MatterbridgeEndpoint) => {
+      // console.log(`Mocked removeBridgedEndpoint: ${pluginName} ${device.name}`);
+      return Promise.resolve();
+    });
+    jest.spyOn(Matterbridge.prototype, 'removeAllBridgedEndpoints').mockImplementation((pluginName: string) => {
+      // console.log(`Mocked removeAllBridgedEndpoint: ${pluginName}`);
       return Promise.resolve();
     });
 
@@ -87,11 +100,72 @@ describe('Matterbridge platform', () => {
     expect(platform.verifyMatterbridgeVersion('2.0.0-dev.1')).toBe(false);
   });
 
+  it('should validate version with unused versions', () => {
+    matterbridge.matterbridgeVersion = '1.5.4';
+    expect(platform.verifyMatterbridgeVersion('1.5')).toBe(true);
+    expect(platform.verifyMatterbridgeVersion('1.5.3.5')).toBe(true);
+  });
+
+  it('should validate version with unused versions bis', () => {
+    matterbridge.matterbridgeVersion = '1.5';
+    expect(platform.verifyMatterbridgeVersion('1')).toBe(true);
+    expect(platform.verifyMatterbridgeVersion('2')).toBe(false);
+    expect(platform.verifyMatterbridgeVersion('1.5.0')).toBe(true);
+    expect(platform.verifyMatterbridgeVersion('1.5.3.5')).toBe(false);
+  });
+
   it('should validate version beta', () => {
     matterbridge.matterbridgeVersion = '1.5.4-dev.1';
     expect(platform.verifyMatterbridgeVersion('1.5.3')).toBe(true);
     expect(platform.verifyMatterbridgeVersion('1.5.4')).toBe(true);
     expect(platform.verifyMatterbridgeVersion('2.0.0')).toBe(false);
+  });
+
+  it('should validate with white and black list', () => {
+    platform.config.whiteList = ['whiteDevice'];
+    platform.config.blackList = ['blackDevice'];
+    expect(platform.validateDeviceWhiteBlackList('whiteDevice')).toBe(true);
+    expect(platform.validateDeviceWhiteBlackList('blackDevice')).toBe(false);
+    expect(platform.validateDeviceWhiteBlackList('xDevice')).toBe(false);
+    expect(platform.validateDeviceWhiteBlackList('')).toBe(false);
+
+    platform.config.whiteList = [];
+    platform.config.blackList = ['blackDevice'];
+    expect(platform.validateDeviceWhiteBlackList('whiteDevice')).toBe(true);
+    expect(platform.validateDeviceWhiteBlackList('blackDevice')).toBe(false);
+    expect(platform.validateDeviceWhiteBlackList('xDevice')).toBe(true);
+    expect(platform.validateDeviceWhiteBlackList('')).toBe(true);
+
+    platform.config.whiteList = [];
+    platform.config.blackList = [];
+  });
+
+  it('should validate with entity black list', () => {
+    platform.config.entityBlackList = ['blackEntity'];
+    platform.config.deviceEntityBlackList = {};
+    expect(platform.validateEntityBlackList('any', 'whiteEntity')).toBe(true);
+    expect(platform.validateEntityBlackList('any', 'blackEntity')).toBe(false);
+    expect(platform.validateEntityBlackList('any', '')).toBe(true);
+
+    platform.config.entityBlackList = [];
+    platform.config.deviceEntityBlackList = {};
+  });
+
+  it('should validate with device entity black list and entity black list', () => {
+    platform.config.entityBlackList = ['blackEntity'];
+    platform.config.deviceEntityBlackList = { device1: ['blackEntityDevice1'] };
+    expect(platform.validateEntityBlackList('any', 'whiteEntity')).toBe(true);
+    expect(platform.validateEntityBlackList('any', 'blackEntity')).toBe(false);
+    expect(platform.validateEntityBlackList('any', 'blackEntityDevice1')).toBe(true);
+    expect(platform.validateEntityBlackList('any', '')).toBe(true);
+
+    expect(platform.validateEntityBlackList('device1', 'whiteEntity')).toBe(true);
+    expect(platform.validateEntityBlackList('device1', 'blackEntity')).toBe(false);
+    expect(platform.validateEntityBlackList('device1', 'blackEntityDevice1')).toBe(false);
+    expect(platform.validateEntityBlackList('device1', '')).toBe(true);
+
+    platform.config.entityBlackList = [];
+    platform.config.deviceEntityBlackList = {};
   });
 
   test('onConfigure should log a debug message if not overridden', async () => {
@@ -115,14 +189,33 @@ describe('Matterbridge platform', () => {
     expect(matterbridge.addBridgedDevice).toHaveBeenCalled();
   });
 
+  test('registerDevice calls matterbridge.addBridgedEndpoint with correct parameters', async () => {
+    const testDevice = new MatterbridgeEndpoint(powerSource);
+    await platform.registerDevice(testDevice);
+    expect(matterbridge.addBridgedEndpoint).toHaveBeenCalled();
+  });
+
   test('unregisterDevice calls matterbridge.removeBridgedDevice with correct parameters', async () => {
     const testDevice = new MatterbridgeDevice(powerSource);
     await platform.unregisterDevice(testDevice);
     expect(matterbridge.removeBridgedDevice).toHaveBeenCalled();
   });
 
+  test('unregisterDevice calls matterbridge.removeBridgedEndpoint with correct parameters', async () => {
+    const testDevice = new MatterbridgeEndpoint(powerSource);
+    await platform.unregisterDevice(testDevice);
+    expect(matterbridge.removeBridgedEndpoint).toHaveBeenCalled();
+  });
+
   test('unregisterAllDevices calls matterbridge.removeAllBridgedDevices with correct parameters', async () => {
     await platform.unregisterAllDevices();
     expect(matterbridge.removeAllBridgedDevices).toHaveBeenCalled();
+  });
+
+  test('unregisterAllDevices calls matterbridge.removeAllBridgedEndpoints with correct parameters', async () => {
+    platform.matterbridge.edge = true;
+    await platform.unregisterAllDevices();
+    expect(matterbridge.removeAllBridgedEndpoints).toHaveBeenCalled();
+    platform.matterbridge.edge = false;
   });
 });
