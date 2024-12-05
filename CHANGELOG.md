@@ -18,20 +18,21 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 ### Added
 
-- [deviceTypes] Add device type airConditioner.
-- [docker] Add matterbridge-hass to docker dev
+- [deviceTypes]: Add device type airConditioner.
+- [docker]: Add matterbridge-hass to docker dev.
+- [platform]: Added validateDeviceWhiteBlackList and validateEntityBlackList to be use consistently by all plugins.
 
 ### Changed
 
-- [plugin]: Removed check on types since we are moving to production plugins.
-- [package]: Set node version to 18, 20 and 22
+- [plugin]: Removed check on package types since we are moving to production plugins.
+- [package]: Set node version to 18, 20 and 22.
 - [package]: Update dependencies.
-- [levelControl]: Set default to OnOff.Feature.Lighting
-- [jest]: Update Jest tests
+- [levelControl]: Set default to OnOff.Feature.Lighting.
+- [jest]: Update Jest tests.
 
 ### Fixed
 
-- [device]: Fix typos in Device and Endpoint
+- [device]: Fix typos in Device and Endpoint.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
