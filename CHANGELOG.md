@@ -20,6 +20,8 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 - [frontend]: Add the possibility to install a specific version or the dev of any plugin (i.e. you can install matterbridge-hass@dev or matterbridge-hass@0.0.3).
   It is also possible to use the install plugin to install a specific version of matterbridge (i.e. you can install matterbridge@dev or matterbridge@1.6.5)
+- [frontend]: Add the possibility to set the matter discriminator for commissioning (you can always override passing **-discriminator [DISCRIMINATOR]** on the command line).
+- [frontend]: Add the possibility to set the matter passcode for commissioning (you can always override passing **-passcode [PASSCODE]** on the command line).
 - [frontend]: Add the possibility to set the matter port for commissioning (you can always override passing **-port [PORT]** on the command line).
 - [deviceTypes]: Add device type airConditioner (not supported by the Apple Home).
 - [docker]: Add matterbridge-hass to docker dev.
@@ -27,6 +29,7 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 ### Changed
 
+- [package]: Update matter.js to 0.11.9-alpha.0-20241206-22f23333.
 - [plugin]: Removed check on package types since we are moving to production plugins.
 - [package]: Set required node version to 18, 20 and 22.
 - [package]: Update dependencies.

@@ -131,7 +131,9 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
       this.matterbridgeInformation.mattermdnsinterface = (await this.nodeContext?.get<string>('mattermdnsinterface', '')) || '';
       this.matterbridgeInformation.matteripv4address = (await this.nodeContext?.get<string>('matteripv4address', '')) || '';
       this.matterbridgeInformation.matteripv6address = (await this.nodeContext?.get<string>('matteripv6address', '')) || '';
-      this.matterbridgeInformation.matterPort = (await this.nodeContext?.get<number>('matterport', 5540)) || 5540;
+      this.matterbridgeInformation.matterPort = (await this.nodeContext?.get<number>('matterport', 5540)) ?? 5540;
+      this.matterbridgeInformation.matterDiscriminator = await this.nodeContext?.get<number>('matterdiscriminator');
+      this.matterbridgeInformation.matterPasscode = await this.nodeContext?.get<number>('matterpasscode');
       this.matterbridgeInformation.matterbridgePaired = this.matterbridgePaired;
       this.matterbridgeInformation.matterbridgeConnected = this.matterbridgeConnected;
       this.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridgeQrPairingCode;

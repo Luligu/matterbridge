@@ -130,6 +130,8 @@ export interface MatterbridgeInformation {
   matteripv4address: string | undefined;
   matteripv6address: string | undefined;
   matterPort: number;
+  matterDiscriminator: number | undefined;
+  matterPasscode: number | undefined;
   restartRequired: boolean;
   refreshRequired: boolean;
 }

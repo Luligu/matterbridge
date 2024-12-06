@@ -123,6 +123,8 @@ export class Matterbridge extends EventEmitter {
     matteripv4address: undefined,
     matteripv6address: undefined,
     matterPort: 5540,
+    matterDiscriminator: undefined,
+    matterPasscode: undefined,
     restartRequired: false,
     refreshRequired: false,
   };
@@ -316,10 +318,10 @@ export class Matterbridge extends EventEmitter {
     this.port = getIntParameter('port') ?? (await this.nodeContext.get<number>('matterport', 5540)) ?? 5540;
 
     // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode)
-    this.passcode = getIntParameter('passcode');
+    this.passcode = getIntParameter('passcode') ?? (await this.nodeContext.get<number>('matterpasscode'));
 
     // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode)
-    this.discriminator = getIntParameter('discriminator');
+    this.discriminator = getIntParameter('discriminator') ?? (await this.nodeContext.get<number>('matterdiscriminator'));
 
     // Set matterbridge logger level (context: matterbridgeLogLevel)
     if (hasParameter('logger')) {
@@ -2169,7 +2171,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with uniqueId ${uniqueId} serialNumber ${serialNumber}`);
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with softwareVersion ${softwareVersion} softwareVersionString ${softwareVersionString}`);
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with hardwareVersion ${hardwareVersion} hardwareVersionString ${hardwareVersionString}`);
-    this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with nodeLabel '${productName}' port ${CYAN}${this.port}${db} passcode ${CYAN}${this.passcode}${db} discriminator ${CYAN}${this.discriminator}${db}`);
+    this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with nodeLabel '${productName}' port ${CYAN}${this.port}${db} discriminator ${CYAN}${this.discriminator}${db} passcode ${CYAN}${this.passcode}${db} `);
 
     // Validate ipv4address
     if (this.ipv4address) {
@@ -3002,7 +3004,9 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.mattermdnsinterface = (await this.nodeContext?.get<string>('mattermdnsinterface', '')) || '';
       this.matterbridgeInformation.matteripv4address = (await this.nodeContext?.get<string>('matteripv4address', '')) || '';
       this.matterbridgeInformation.matteripv6address = (await this.nodeContext?.get<string>('matteripv6address', '')) || '';
-      this.matterbridgeInformation.matterPort = (await this.nodeContext?.get<number>('matterport', 5540)) || 5540;
+      this.matterbridgeInformation.matterPort = (await this.nodeContext?.get<number>('matterport', 5540)) ?? 5540;
+      this.matterbridgeInformation.matterDiscriminator = await this.nodeContext?.get<number>('matterdiscriminator');
+      this.matterbridgeInformation.matterPasscode = await this.nodeContext?.get<number>('matterpasscode');
       this.matterbridgeInformation.matterbridgePaired = this.matterbridgePaired;
       this.matterbridgeInformation.matterbridgeConnected = this.matterbridgeConnected;
       this.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridgeQrPairingCode;
@@ -3351,8 +3355,28 @@ export class Matterbridge extends EventEmitter {
       if (command === 'setmatterport') {
         const port = Math.min(Math.max(parseInt(param), 5540), 5560);
         this.matterbridgeInformation.matterPort = port;
-        this.log.debug(`Set matter.js port to ${port}`);
+        this.log.debug(`Set matter commissioning port to ${CYAN}${port}${db}`);
         await this.nodeContext?.set<number>('matterport', port);
+        res.json({ message: 'Command received' });
+        return;
+      }
+
+      // Handle the command setmatterdiscriminator from Settings
+      if (command === 'setmatterdiscriminator') {
+        const discriminator = Math.min(Math.max(parseInt(param), 1000), 4095);
+        this.matterbridgeInformation.matterDiscriminator = discriminator;
+        this.log.debug(`Set matter commissioning discriminator to ${CYAN}${discriminator}${db}`);
+        await this.nodeContext?.set<number>('matterdiscriminator', discriminator);
+        res.json({ message: 'Command received' });
+        return;
+      }
+
+      // Handle the command setmatterpasscode from Settings
+      if (command === 'setmatterpasscode') {
+        const passcode = Math.min(Math.max(parseInt(param), 10000000), 90000000);
+        this.matterbridgeInformation.matterPasscode = passcode;
+        this.log.debug(`Set matter commissioning passcode to ${CYAN}${passcode}${db}`);
+        await this.nodeContext?.set<number>('matterpasscode', passcode);
         res.json({ message: 'Command received' });
         return;
       }

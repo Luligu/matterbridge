@@ -45,7 +45,7 @@ import { copyDirectory, getParameter, hasParameter, waiter } from './utils/utils
 import { DeviceTypeId, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, FabricIndex, Lifecycle, SessionsBehavior, NumberTag, EndpointServer } from '@matter/main';
 import { ServerNode, Endpoint as EndpointNode, Environment, StorageService, StorageContext, StorageManager } from '@matter/main';
 import { BasicInformationCluster, ColorControl, ColorControlCluster, OnOffCluster, LevelControl, Identify, Descriptor, SwitchCluster } from '@matter/main/clusters';
-import { ExposedFabricInformation, FabricAction, MdnsService } from '@matter/main/protocol';
+import { ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
 import { ColorTemperatureLightDevice, GenericSwitchDevice, OnOffLightDevice } from '@matter/main/devices';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { BridgedDeviceBasicInformationServer, ColorControlServer, IdentifyServer, LevelControlServer, OnOffServer, GroupsServer, SwitchServer, DescriptorServer } from '@matter/main/behaviors';
@@ -112,8 +112,22 @@ export class MatterbridgeEdge extends Matterbridge {
 
     // Setup Matter commissioning server
     this.port = 5540;
-    this.passcode = 20242025;
-    this.discriminator = 3840;
+    this.passcode = PaseClient.generateRandomPasscode();
+    this.discriminator = PaseClient.generateRandomDiscriminator();
+    /*
+        static generateRandomPasscode() {
+        let passcode: number;
+        passcode = (Crypto.getRandomUInt32() % 99999998) + 1; // prevents 00000000 and 99999999
+        if (CommissioningOptions.FORBIDDEN_PASSCODES.includes(passcode)) {
+            passcode += 1; // With current forbidden passcode list can never collide
+        }
+        return passcode;
+    }
+
+    static generateRandomDiscriminator() {
+        return Crypto.getRandomUInt16() % 4096;
+    }
+    */
   }
 
   override async startMatterStorage(storageType: string, storageName: string): Promise<void> {
