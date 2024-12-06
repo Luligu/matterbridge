@@ -1723,7 +1723,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param currentX - The current X value.
    * @param currentY - The current Y value.
    */
-  createXyControlClusterServer(currentX = 0, currentY = 0) {
+  createXyColorControlClusterServer(currentX = 0, currentY = 0) {
     this.addClusterServer(this.getXyColorControlClusterServer(currentX, currentY));
   }
 
