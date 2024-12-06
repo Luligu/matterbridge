@@ -129,6 +129,7 @@ export interface MatterbridgeInformation {
   mattermdnsinterface: string | undefined;
   matteripv4address: string | undefined;
   matteripv6address: string | undefined;
+  matterPort: number;
   restartRequired: boolean;
   refreshRequired: boolean;
 }

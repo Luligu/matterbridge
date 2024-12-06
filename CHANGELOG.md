@@ -18,6 +18,9 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 ### Added
 
+- [frontend]: Add the possibility to install a specific version or the dev of any plugin (i.e. you can install matterbridge-hass@dev or matterbridge-hass@0.0.3).
+  It is also possible to use the install plugin to install a specific version of matterbridge (i.e. you can install matterbridge@dev or matterbridge@1.6.5)
+- [frontend]: Add the possibility to set the matter port for commissioning (you can always override passing **-port [PORT]** on the command line).
 - [deviceTypes]: Add device type airConditioner.
 - [docker]: Add matterbridge-hass to docker dev.
 - [platform]: Added validateDeviceWhiteBlackList and validateEntityBlackList to be use consistently by all plugins.

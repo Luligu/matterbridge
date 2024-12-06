@@ -122,6 +122,7 @@ export class Matterbridge extends EventEmitter {
     mattermdnsinterface: undefined,
     matteripv4address: undefined,
     matteripv6address: undefined,
+    matterPort: 5540,
     restartRequired: false,
     refreshRequired: false,
   };
@@ -253,13 +254,6 @@ export class Matterbridge extends EventEmitter {
    * @returns A Promise that resolves when the initialization is complete.
    */
   public async initialize() {
-    // Set the first port to use for the commissioning server (will be incremented in childbridge mode)
-    this.port = getIntParameter('port') ?? 5540;
-    // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode)
-    this.passcode = getIntParameter('passcode');
-    // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode)
-    this.discriminator = getIntParameter('discriminator');
-
     // Set the restart mode
     if (hasParameter('service')) this.restartMode = 'service';
     if (hasParameter('docker')) this.restartMode = 'docker';
@@ -317,6 +311,15 @@ export class Matterbridge extends EventEmitter {
       this.log.fatal('Fatal error creating node storage manager and context for matterbridge');
       throw new Error('Fatal error creating node storage manager and context for matterbridge');
     }
+
+    // Set the first port to use for the commissioning server (will be incremented in childbridge mode)
+    this.port = getIntParameter('port') ?? (await this.nodeContext.get<number>('matterport', 5540)) ?? 5540;
+
+    // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode)
+    this.passcode = getIntParameter('passcode');
+
+    // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode)
+    this.discriminator = getIntParameter('discriminator');
 
     // Set matterbridge logger level (context: matterbridgeLogLevel)
     if (hasParameter('logger')) {
@@ -2166,7 +2169,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with uniqueId ${uniqueId} serialNumber ${serialNumber}`);
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with softwareVersion ${softwareVersion} softwareVersionString ${softwareVersionString}`);
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with hardwareVersion ${hardwareVersion} hardwareVersionString ${hardwareVersionString}`);
-    this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with nodeLabel '${productName}' port ${this.port} passcode ${this.passcode} discriminator ${this.discriminator}`);
+    this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with nodeLabel '${productName}' port ${CYAN}${this.port}${db} passcode ${CYAN}${this.passcode}${db} discriminator ${CYAN}${this.discriminator}${db}`);
 
     // Validate ipv4address
     if (this.ipv4address) {
@@ -2999,6 +3002,7 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.mattermdnsinterface = (await this.nodeContext?.get<string>('mattermdnsinterface', '')) || '';
       this.matterbridgeInformation.matteripv4address = (await this.nodeContext?.get<string>('matteripv4address', '')) || '';
       this.matterbridgeInformation.matteripv6address = (await this.nodeContext?.get<string>('matteripv6address', '')) || '';
+      this.matterbridgeInformation.matterPort = (await this.nodeContext?.get<number>('matterport', 5540)) || 5540;
       this.matterbridgeInformation.matterbridgePaired = this.matterbridgePaired;
       this.matterbridgeInformation.matterbridgeConnected = this.matterbridgeConnected;
       this.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridgeQrPairingCode;
@@ -3345,8 +3349,10 @@ export class Matterbridge extends EventEmitter {
 
       // Handle the command setmatterport from Settings
       if (command === 'setmatterport') {
-        this.log.debug(`Set matter.js port to ${param}`);
-        await this.nodeContext?.set('matterport', param);
+        const port = Math.min(Math.max(parseInt(param), 5540), 5560);
+        this.matterbridgeInformation.matterPort = port;
+        this.log.debug(`Set matter.js port to ${port}`);
+        await this.nodeContext?.set<number>('matterport', port);
         res.json({ message: 'Command received' });
         return;
       }
