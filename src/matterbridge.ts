@@ -3343,6 +3343,14 @@ export class Matterbridge extends EventEmitter {
         return;
       }
 
+      // Handle the command setmatterport from Settings
+      if (command === 'setmatterport') {
+        this.log.debug(`Set matter.js port to ${param}`);
+        await this.nodeContext?.set('matterport', param);
+        res.json({ message: 'Command received' });
+        return;
+      }
+
       // Handle the command setmbloglevel from Settings
       if (command === 'setmblogfile') {
         this.log.debug('Matterbridge file log:', param);
@@ -3455,9 +3463,13 @@ export class Matterbridge extends EventEmitter {
           this.log.error(`Error installing plugin ${plg}${param}${er}`);
         }
         this.wssSendRestartRequired();
+        param = param.split('@')[0];
         // Also add the plugin to matterbridge so no return!
-        // res.json({ message: 'Command received' });
-        // return;
+        if (param === 'matterbridge') {
+          // If we used the command installplugin to install a dev or a specific version of matterbridge we don't want to add it to matterbridge
+          res.json({ message: 'Command received' });
+          return;
+        }
       }
       // Handle the command addplugin from Home
       if (command === 'addplugin' || command === 'installplugin') {
