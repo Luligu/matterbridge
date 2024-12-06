@@ -1807,6 +1807,8 @@ export class MatterbridgeEndpoint extends Endpoint {
         colorTemperatureMireds,
         colorTempPhysicalMinMireds,
         colorTempPhysicalMaxMireds,
+        coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
+        startUpColorTemperatureMireds: null,
       },
       {
         stopMoveStep: async () => {

@@ -25,7 +25,7 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 ### Changed
 
 - [plugin]: Removed check on package types since we are moving to production plugins.
-- [package]: Set node version to 18, 20 and 22.
+- [package]: Set required node version to 18, 20 and 22.
 - [package]: Update dependencies.
 - [levelControl]: Set default to OnOff.Feature.Lighting.
 - [jest]: Update Jest tests.

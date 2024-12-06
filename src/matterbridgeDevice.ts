@@ -1326,6 +1326,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         colorTemperatureMireds,
         colorTempPhysicalMinMireds,
         colorTempPhysicalMaxMireds,
+        coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
+        startUpColorTemperatureMireds: null,
       },
       {
         moveToColor: async (data) => {
@@ -1525,6 +1527,8 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
         colorTemperatureMireds,
         colorTempPhysicalMinMireds,
         colorTempPhysicalMaxMireds,
+        coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
+        startUpColorTemperatureMireds: null,
       },
       {
         stopMoveStep: async () => {
