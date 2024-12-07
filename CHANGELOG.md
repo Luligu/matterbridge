@@ -14,7 +14,7 @@ If you want to run Matterbridge in Home Assistant please use the official add-on
 
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
-## [1.6.6] - 2024-12-05
+## [1.6.6] - 2024-12-06
 
 ### Added
 

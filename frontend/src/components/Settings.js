@@ -223,7 +223,7 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
     sendCommandToMatterbridge('setmatterport', event.target.value);
     showSnackbarMessage('Restart Matterbridge to apply changes', 5);
   };
-  
+
   // Define a function to handle change matterDiscriminator
   const handleChangeMatterDiscriminator = (event) => {
     console.log('handleChangeMatterDiscriminator called with value:', event.target.value);
@@ -287,7 +287,7 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
             }}/>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Matter commissioning port:</FormLabel>
+          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Commissioning port:</FormLabel>
           <TextField value={matterPort} onChange={handleChangeMatterPort} size="small" variant="outlined"
             style={{ height: '30px', flexGrow: 1 }} InputProps={{
               style: {
@@ -297,7 +297,7 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
             }}/>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Matter commissioning discriminator:</FormLabel>
+          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Commissioning discriminator:</FormLabel>
           <TextField value={matterDiscriminator} onChange={handleChangeMatterDiscriminator} size="small" variant="outlined"
             style={{ height: '30px', flexGrow: 1 }} InputProps={{
               style: {
@@ -307,7 +307,7 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
             }}/>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Matter commissioning passcode:</FormLabel>
+          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Commissioning passcode:</FormLabel>
           <TextField value={matterPasscode} onChange={handleChangemMatterPasscode} size="small" variant="outlined"
             style={{ height: '30px', flexGrow: 1 }} InputProps={{
               style: {

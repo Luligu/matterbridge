@@ -111,23 +111,9 @@ export class MatterbridgeEdge extends Matterbridge {
     if (this.mdnsInterface) this.environment.vars.set('mdns.networkInterface', this.mdnsInterface);
 
     // Setup Matter commissioning server
-    this.port = 5540;
-    this.passcode = PaseClient.generateRandomPasscode();
-    this.discriminator = PaseClient.generateRandomDiscriminator();
-    /*
-        static generateRandomPasscode() {
-        let passcode: number;
-        passcode = (Crypto.getRandomUInt32() % 99999998) + 1; // prevents 00000000 and 99999999
-        if (CommissioningOptions.FORBIDDEN_PASSCODES.includes(passcode)) {
-            passcode += 1; // With current forbidden passcode list can never collide
-        }
-        return passcode;
-    }
-
-    static generateRandomDiscriminator() {
-        return Crypto.getRandomUInt16() % 4096;
-    }
-    */
+    // this.port = 5540;
+    // this.passcode = PaseClient.generateRandomPasscode();
+    // this.discriminator = PaseClient.generateRandomDiscriminator();
   }
 
   override async startMatterStorage(storageType: string, storageName: string): Promise<void> {
