@@ -71,9 +71,9 @@ I added some error messages when a plugin has wrong imports or configurations an
 
 I'm working with matter.js team to define the strategy for the migration of Matterbridge to the new API.
 
-- First phase: crete MatterbridgeEdge class: completed 90%
-- Second phase: create MatterbridgeEndpoint and MatterbridgeBehaviors classes: completed 90%
-- Third phase: modifiy all plugins to support both normal and edge mode of Matterbridge: completed 80%
+- First phase: create MatterbridgeEdge class: completed 95%
+- Second phase: create MatterbridgeEndpoint and MatterbridgeBehaviors classes: completed 95%
+- Third phase: modifiy all plugins to support both normal and edge mode of Matterbridge: completed 90%
 - Fourth phase: remove all old api code from Matterbridge and all plugins...
 
 ## How to create your plugin
