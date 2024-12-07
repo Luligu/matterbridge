@@ -158,7 +158,13 @@ export class MatterbridgePlatform {
     return true;
   }
 
-  validateDeviceWhiteBlackList(device: string) {
+  /**
+   * Validates if a device is allowed based on the whitelist and blacklist configurations.
+   *
+   * @param {string} device - The device to validate.
+   * @returns {boolean} - Returns true if the device is allowed, false otherwise.
+   */
+  validateDeviceWhiteBlackList(device: string): boolean {
     if (isValidArray(this.config.whiteList, 1) && !this.config.whiteList.includes(device)) {
       this.log.info(`Skipping device ${CYAN}${device}${nf} because not in whitelist`);
       return false;
@@ -170,7 +176,14 @@ export class MatterbridgePlatform {
     return true;
   }
 
-  validateEntityBlackList(device: string, entity: string) {
+  /**
+   * Validates if an entity is allowed based on the entity blacklist and device-entity blacklist configurations.
+   *
+   * @param {string} device - The device to which the entity belongs.
+   * @param {string} entity - The entity to validate.
+   * @returns {boolean} - Returns true if the entity is allowed, false otherwise.
+   */
+  validateEntityBlackList(device: string, entity: string): boolean {
     if (isValidArray(this.config.entityBlackList, 1) && this.config.entityBlackList.find((e) => e === entity)) {
       this.log.info(`Skipping entity ${CYAN}${entity}${nf} because in entityBlackList`);
       return false;
