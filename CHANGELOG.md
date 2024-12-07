@@ -25,7 +25,7 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 - [frontend]: Add the possibility to set the matter port for commissioning (you can always override passing **-port [PORT]** on the command line).
 - [deviceTypes]: Add device type airConditioner (not supported by the Apple Home).
 - [docker]: Add matterbridge-hass to docker dev.
-- [platform]: Added validateDeviceWhiteBlackList and validateEntityBlackList to be use consistently by all plugins.
+- [platform]: Added validateDeviceWhiteBlackList and validateEntityBlackList to be used consistently by all plugins.
 
 ### Changed
 
