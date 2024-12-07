@@ -30,6 +30,7 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 ### Changed
 
 - [package]: Update matter.js to 0.11.9-alpha.0-20241206-22f23333.
+- [package]: Update matter.js to 0.11.9-alpha.0-20241207-b604cfa44
 - [plugin]: Removed check on package types since we are moving to production plugins.
 - [package]: Set required node version to 18, 20 and 22.
 - [package]: Update dependencies.
