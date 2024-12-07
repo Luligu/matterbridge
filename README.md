@@ -48,6 +48,8 @@ To run Matterbridge, you need either a [Node.js](https://nodejs.org/en/download/
 
 If you don't have Node.js already install, please use this method to install it on a debian device: https://github.com/nodesource/distributions. Nvm is not a good choice.
 
+If you don't have Docker already install, please use this method to install it on a debian device: https://docs.docker.com/desktop/setup/install/linux/debian/. 
+
 ## Installation
 
 Follow these steps to install Matterbridge:
