@@ -3030,7 +3030,7 @@ export class Matterbridge extends EventEmitter {
     // Endpoint to provide devices
     this.expressApp.get('/api/devices', (req, res) => {
       this.log.debug('The frontend sent /api/devices');
-      const data: { pluginName: string; type: string; endpoint: EndpointNumber | undefined; name: string; serial: string; uniqueId: string; cluster: string }[] = [];
+      const data: { pluginName: string; type: string; endpoint: EndpointNumber | undefined; name: string; serial: string; productUrl: string; uniqueId: string; cluster: string }[] = [];
       this.devices.forEach(async (device) => {
         const pluginName = device.plugin ?? 'Unknown';
         if (this.edge) device = EndpointServer.forEndpoint(device as unknown as EndpointNode) as unknown as MatterbridgeDevice;
@@ -3038,6 +3038,8 @@ export class Matterbridge extends EventEmitter {
         if (!name) name = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.nodeLabel?.getLocal() ?? 'Unknown';
         let serial = device.getClusterServer(BasicInformationCluster)?.attributes.serialNumber?.getLocal();
         if (!serial) serial = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.serialNumber?.getLocal() ?? 'Unknown';
+        let productUrl = device.getClusterServer(BasicInformationCluster)?.attributes.productUrl?.getLocal();
+        if (!productUrl) productUrl = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.productUrl?.getLocal() ?? 'Unknown';
         let uniqueId = device.getClusterServer(BasicInformationCluster)?.attributes.uniqueId?.getLocal();
         if (!uniqueId) uniqueId = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.uniqueId?.getLocal() ?? 'Unknown';
         const cluster = this.getClusterTextFromDevice(device);
@@ -3047,6 +3049,7 @@ export class Matterbridge extends EventEmitter {
           endpoint: device.number,
           name,
           serial,
+          productUrl,
           uniqueId,
           cluster: cluster,
         });

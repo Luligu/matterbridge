@@ -149,13 +149,15 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
       client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response }));
       return;
     } else if (data.method === '/api/devices') {
-      const devices: { pluginName: string; type: string; endpoint: EndpointNumber | undefined; name: string; serial: string; uniqueId: string; cluster: string }[] = [];
+      const devices: { pluginName: string; type: string; endpoint: EndpointNumber | undefined; name: string; serial: string; productUrl: string; uniqueId: string; cluster: string }[] = [];
       this.devices.forEach(async (device) => {
         if (data.params.pluginName && data.params.pluginName !== device.plugin) return;
         let name = device.getClusterServer(BasicInformationCluster)?.attributes.nodeLabel?.getLocal();
         if (!name) name = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.nodeLabel?.getLocal() ?? 'Unknown';
         let serial = device.getClusterServer(BasicInformationCluster)?.attributes.serialNumber?.getLocal();
         if (!serial) serial = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.serialNumber?.getLocal() ?? 'Unknown';
+        let productUrl = device.getClusterServer(BasicInformationCluster)?.attributes.productUrl?.getLocal();
+        if (!productUrl) productUrl = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.productUrl?.getLocal() ?? 'Unknown';
         let uniqueId = device.getClusterServer(BasicInformationCluster)?.attributes.uniqueId?.getLocal();
         if (!uniqueId) uniqueId = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.uniqueId?.getLocal() ?? 'Unknown';
         const cluster = this.getClusterTextFromDevice(device);
@@ -165,6 +167,7 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
           endpoint: device.number,
           name,
           serial,
+          productUrl,
           uniqueId,
           cluster: cluster,
         });
