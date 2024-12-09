@@ -31,10 +31,13 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 - [package]: Update matter.js to 0.11.9-alpha.0-20241206-22f23333.
 - [package]: Update matter.js to 0.11.9-alpha.0-20241207-b604cfa44
+- [package]: Update matter.js to 0.11.9-alpha.0-20241209-06a8040e1
 - [plugin]: Removed check on package types since we are moving to production plugins.
 - [package]: Set required node version to 18, 20 and 22.
 - [package]: Update dependencies.
-- [levelControl]: Set default to OnOff.Feature.Lighting.
+- [onOff]: Set default to OnOff.Feature.Lighting.
+- [levelControl]: Set default to LevelControl.Feature.Lighting.
+- [lightSensor]: Refactor lightSensor removing Group optional cluster
 - [jest]: Update Jest tests.
 
 ### Fixed
