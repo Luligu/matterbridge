@@ -1223,6 +1223,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         vendorName: vendorName.slice(0, 32),
         productId: productId,
         productName: productName.slice(0, 32),
+        productUrl: 'https://www.npmjs.com/package/matterbridge',
         productLabel: deviceName.slice(0, 64),
         nodeLabel: deviceName.slice(0, 32),
         serialNumber: serialNumber.slice(0, 32),
@@ -1321,6 +1322,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         vendorId: vendorId !== undefined ? VendorId(vendorId) : undefined, // 4874
         vendorName: vendorName.slice(0, 32),
         productName: productName.slice(0, 32),
+        productUrl: 'https://www.npmjs.com/package/matterbridge',
         productLabel: deviceName.slice(0, 64),
         nodeLabel: deviceName.slice(0, 32),
         serialNumber: serialNumber.slice(0, 32),
