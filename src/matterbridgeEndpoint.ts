@@ -1615,6 +1615,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         colorTempPhysicalMinMireds,
         colorTempPhysicalMaxMireds,
         coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
+        remainingTime: 0,
         startUpColorTemperatureMireds: null,
       },
       {
@@ -1703,6 +1704,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         numberOfPrimaries: null,
         currentX,
         currentY,
+        remainingTime: 0,
       },
       {
         moveToColor: async () => {
@@ -1750,6 +1752,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         numberOfPrimaries: null,
         currentHue,
         currentSaturation,
+        remainingTime: 0,
       },
       {
         moveToHue: async ({ request, attributes, endpoint }) => {
@@ -1812,6 +1815,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         colorTempPhysicalMinMireds,
         colorTempPhysicalMaxMireds,
         coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
+        remainingTime: 0,
         startUpColorTemperatureMireds: null,
       },
       {
