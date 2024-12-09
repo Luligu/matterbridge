@@ -1,4 +1,4 @@
-import { hslColorToRgbColor, rgbColorToHslColor, rgbColorToXYColor, xyColorToRgbColor } from './colorUtils';
+import { hslColorToRgbColor, kelvinToRGB, miredToKelvin, rgbColorToHslColor, rgbColorToXYColor, xyColorToRgbColor } from './colorUtils';
 
 /* prettier-ignore */
 const colors = [
@@ -470,5 +470,50 @@ describe('Utils test', () => {
       const color = colors[11];
       expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
+  });
+
+  describe('colorTemperature', () => {
+    test('Mired to kelvin', async () => {
+      expect(miredToKelvin(500)).toBe(2000);
+      expect(miredToKelvin(400)).toBe(2500);
+      expect(miredToKelvin(300)).toBe(3333);
+      expect(miredToKelvin(250)).toBe(4000);
+      expect(miredToKelvin(200)).toBe(5000);
+      expect(miredToKelvin(147)).toBe(6803);
+    });
+
+    test('Kelvin to mired', async () => {
+      expect(miredToKelvin(2000)).toBe(500);
+      expect(miredToKelvin(2500)).toBe(400);
+      expect(miredToKelvin(2700)).toBe(370);
+      expect(miredToKelvin(3000)).toBe(333);
+      expect(miredToKelvin(3333)).toBe(300);
+      expect(miredToKelvin(4000)).toBe(250);
+      expect(miredToKelvin(5000)).toBe(200);
+      expect(miredToKelvin(6803)).toBe(147);
+    });
+
+    test('Kelvin to RGB', async () => {
+      expect(kelvinToRGB(2000)).toEqual({ r: 255, g: 137, b: 14 });
+      expect(kelvinToRGB(2500)).toEqual({ r: 255, g: 159, b: 70 });
+      expect(kelvinToRGB(2700)).toEqual({ r: 255, g: 167, b: 87 });
+      expect(kelvinToRGB(3000)).toEqual({ r: 255, g: 177, b: 110 });
+      expect(kelvinToRGB(3333)).toEqual({ r: 255, g: 188, b: 131 });
+      expect(kelvinToRGB(4000)).toEqual({ r: 255, g: 206, b: 166 });
+      expect(kelvinToRGB(5000)).toEqual({ r: 255, g: 228, b: 206 });
+      expect(kelvinToRGB(6803)).toEqual({ r: 250, g: 246, b: 255 });
+    });
+
+    // eslint-disable-next-line jest/no-commented-out-tests
+    /*
+    test('Kelvin to RGB with console', async () => {
+      for (let i = 2000; i < 7000; i += 100) {
+        const rgb = kelvinToRGB(i);
+        expect(rgb).toEqual(rgb);
+        // eslint-disable-next-line no-console
+        // console.log(`\x1b[48;2;${rgb.r};${rgb.g};${rgb.b}mKelvin ${i} => color ${rgb.r} ${rgb.g} ${rgb.b}\x1b[0m`);
+      }
+    });
+    */
   });
 });

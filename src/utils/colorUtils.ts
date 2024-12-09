@@ -4,7 +4,7 @@
  * @file colorUtils.ts
  * @author Luca Liguori
  * @date 2023-10-05
- * @version 1.2.6
+ * @version 1.3.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
  *
@@ -213,6 +213,55 @@ export function xyToHsl(x: number, y: number): HSL {
   return rgbColorToHslColor(rgb);
 }
 
+export function miredToKelvin(mired: number): number {
+  return Math.round(1000000 / mired);
+}
+
+export function kelvinToMired(kelvin: number): number {
+  return Math.round(1000000 / kelvin);
+}
+
+export function kelvinToRGB(kelvin: number): RGB {
+  // Clamp the temperature to the range 1000K to 40000K
+  kelvin = Math.max(1000, Math.min(40000, kelvin)) / 100;
+
+  let r: number, g: number, b: number;
+
+  // Calculate red
+  if (kelvin <= 66) {
+    r = 255;
+  } else {
+    r = kelvin - 60;
+    r = 329.698727446 * Math.pow(r, -0.1332047592);
+    r = Math.max(0, Math.min(255, r));
+  }
+
+  // Calculate green
+  if (kelvin <= 66) {
+    g = kelvin;
+    g = 99.4708025861 * Math.log(g) - 161.1195681661;
+    g = Math.max(0, Math.min(255, g));
+  } else {
+    g = kelvin - 60;
+    g = 288.1221695283 * Math.pow(g, -0.0755148492);
+    g = Math.max(0, Math.min(255, g));
+  }
+
+  // Calculate blue
+  if (kelvin >= 66) {
+    b = 255;
+  } else if (kelvin <= 19) {
+    b = 0;
+  } else {
+    b = kelvin - 10;
+    b = 138.5177312231 * Math.log(b) - 305.0447927307;
+    b = Math.max(0, Math.min(255, b));
+  }
+
+  return { r: Math.round(r), g: Math.round(g), b: Math.round(b) };
+}
+
+/*
 export function testColors(): void {
   // this table has been checked with different apps and sites and is correct 100%
   const colors = [
@@ -265,7 +314,7 @@ export function testColors(): void {
     );
   });
 }
-
+*/
 /**
  * Converts CIE color space to RGB color space
  * @param {Number} x
@@ -274,6 +323,7 @@ export function testColors(): void {
  * @return {Array} Array that contains the color values for red, green and blue
  * From: https://github.com/usolved/cie-rgb-converter/blob/master/cie_rgb_converter.js
  */
+/*
 export function cie_to_rgb(x: number, y: number, brightness = 254): RGB {
   // Set to maximum brightness if no custom value was given (Not the slick ECMAScript 6 way for compatibility reasons)
 
@@ -325,7 +375,7 @@ export function cie_to_rgb(x: number, y: number, brightness = 254): RGB {
 
   return { r: red, g: green, b: blue };
 }
-
+*/
 /**
  * Converts RGB color space to CIE color space
  * @param {Number} red
@@ -334,6 +384,7 @@ export function cie_to_rgb(x: number, y: number, brightness = 254): RGB {
  * @return {Array} Array that contains the CIE color values for x and y
  * From: https://github.com/usolved/cie-rgb-converter/blob/master/cie_rgb_converter.js
  */
+/*
 export function rgb_to_cie(red: number, green: number, blue: number): XY {
   // Apply a gamma correction to the RGB values, which makes the color more vivid and more the like the color displayed on the screen of your device
   red = red > 0.04045 ? Math.pow((red + 0.055) / (1.0 + 0.055), 2.4) : red / 12.92;
@@ -359,7 +410,7 @@ export function rgb_to_cie(red: number, green: number, blue: number): XY {
 
   return { x: Number(x), y: Number(y) };
 }
-
+*/
 /*
 testColors();
 console.log('rgb_to_cie(0, 128, 255)', rgb_to_cie(0, 128, 255));
