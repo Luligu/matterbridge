@@ -77,6 +77,11 @@ export class MatterbridgeBehaviorDevice {
     this.commandHandler.executeHandler('identify', { request: { identifyTime }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
 
+  triggerEffect({ effectIdentifier, effectVariant }: Identify.TriggerEffectRequest) {
+    this.log.info(`Triggering effect ${effectIdentifier} variant ${effectVariant}`);
+    this.commandHandler.executeHandler('triggerEffect', { request: { effectIdentifier, effectVariant }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
   on() {
     this.log.info(`Switching device on (endpoint ${this.endpointId}.${this.endpointNumber})`);
     this.commandHandler.executeHandler('on', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
@@ -189,6 +194,12 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     device.identify({ identifyTime });
     super.identify({ identifyTime });
+  }
+
+  override triggerEffect({ effectIdentifier, effectVariant }: Identify.TriggerEffectRequest) {
+    const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
+    device.triggerEffect({ effectIdentifier, effectVariant });
+    super.triggerEffect({ effectIdentifier, effectVariant });
   }
 }
 
