@@ -1543,30 +1543,28 @@ export class MatterbridgeEndpoint extends Endpoint {
       },
       {
         moveToLevel: async (data) => {
-          this.log.debug('Matter command: moveToLevel request:', data.request, 'attributes.currentLevel:', data.attributes.currentLevel.getLocal());
-          await this.commandHandler.executeHandler('moveToLevel', data);
+          // Never called in edge
         },
         move: async () => {
-          this.log.error('Matter command: move not implemented');
+          // Never called in edge
         },
         step: async () => {
-          this.log.error('Matter command: step not implemented');
+          // Never called in edge
         },
         stop: async () => {
-          this.log.error('Matter command: stop not implemented');
+          // Never called in edge
         },
         moveToLevelWithOnOff: async (data) => {
-          this.log.debug('Matter command: moveToLevelWithOnOff request:', data.request, 'attributes.currentLevel:', data.attributes.currentLevel.getLocal());
-          await this.commandHandler.executeHandler('moveToLevelWithOnOff', data);
+          // Never called in edge
         },
         moveWithOnOff: async () => {
-          this.log.error('Matter command: moveWithOnOff not implemented');
+          // Never called in edge
         },
         stepWithOnOff: async () => {
-          this.log.error('Matter command: stepWithOnOff not implemented');
+          // Never called in edge
         },
         stopWithOnOff: async () => {
-          this.log.error('Matter command: stopWithOnOff not implemented');
+          // Never called in edge
         },
       },
     );
@@ -1620,51 +1618,46 @@ export class MatterbridgeEndpoint extends Endpoint {
       },
       {
         moveToColor: async (data) => {
-          this.log.debug('Matter command: moveToColor request:', data.request, 'attributes.currentX:', data.attributes.currentX.getLocal(), 'attributes.currentY:', data.attributes.currentY.getLocal());
-          this.commandHandler.executeHandler('moveToColor', data);
+          // Never called in edge
         },
         moveColor: async () => {
-          this.log.error('Matter command: moveColor not implemented');
+          // Never called in edge
         },
         stepColor: async () => {
-          this.log.error('Matter command: stepColor not implemented');
+          // Never called in edge
         },
         moveToHue: async (data) => {
-          this.log.debug('Matter command: moveToHue request:', data.request, 'attributes.currentHue:', data.attributes.currentHue.getLocal());
-          this.commandHandler.executeHandler('moveToHue', data);
+          // Never called in edge
         },
         moveHue: async () => {
-          this.log.error('Matter command: moveHue not implemented');
+          // Never called in edge
         },
         stepHue: async () => {
-          this.log.error('Matter command: stepHue not implemented');
+          // Never called in edge
         },
         moveToSaturation: async (data) => {
-          this.log.debug('Matter command: moveToSaturation request:', data.request, 'attributes.currentSaturation:', data.attributes.currentSaturation.getLocal());
-          this.commandHandler.executeHandler('moveToSaturation', data);
+          // Never called in edge
         },
         moveSaturation: async () => {
-          this.log.error('Matter command: moveSaturation not implemented');
+          // Never called in edge
         },
         stepSaturation: async () => {
-          this.log.error('Matter command: stepSaturation not implemented');
+          // Never called in edge
         },
         moveToHueAndSaturation: async (data) => {
-          this.log.debug('Matter command: moveToHueAndSaturation request:', data.request, 'attributes.currentHue:', data.attributes.currentHue.getLocal(), 'attributes.currentSaturation:', data.attributes.currentSaturation.getLocal());
-          this.commandHandler.executeHandler('moveToHueAndSaturation', data);
+          // Never called in edge
         },
         stopMoveStep: async () => {
-          this.log.error('Matter command: stopMoveStep not implemented');
+          // Never called in edge
         },
         moveToColorTemperature: async (data) => {
-          this.log.debug('Matter command: moveToColorTemperature request:', data.request, 'attributes.colorTemperatureMireds:', data.attributes.colorTemperatureMireds.getLocal());
-          this.commandHandler.executeHandler('moveToColorTemperature', data);
+          // Never called in edge
         },
         moveColorTemperature: async () => {
-          this.log.error('Matter command: moveColorTemperature not implemented');
+          // Never called in edge
         },
         stepColorTemperature: async () => {
-          this.log.error('Matter command: stepColorTemperature not implemented');
+          // Never called in edge
         },
       },
       {},
@@ -1923,23 +1916,16 @@ export class MatterbridgeEndpoint extends Endpoint {
       },
       {
         upOrOpen: async (data) => {
-          this.log.debug('Matter command: upOrOpen');
-          await this.commandHandler.executeHandler('upOrOpen', data);
+          // Never called in edge
         },
         downOrClose: async (data) => {
-          this.log.debug('Matter command: downOrClose');
-          await this.commandHandler.executeHandler('downOrClose', data);
+          // Never called in edge
         },
         stopMotion: async (data) => {
-          this.log.debug('Matter command: stopMotion');
-          await this.commandHandler.executeHandler('stopMotion', data);
+          // Never called in edge
         },
         goToLiftPercentage: async (data) => {
-          this.log.debug(
-            `Matter command: goToLiftPercentage: ${data.request.liftPercent100thsValue} current: ${data.attributes.currentPositionLiftPercent100ths?.getLocal()} ` +
-              `target: ${data.attributes.targetPositionLiftPercent100ths?.getLocal()} status: ${data.attributes.operationalStatus.getLocal().lift}`,
-          );
-          await this.commandHandler.executeHandler('goToLiftPercentage', data);
+          // Never called in edge
         },
       },
       {},
@@ -2069,12 +2055,10 @@ export class MatterbridgeEndpoint extends Endpoint {
       },
       {
         lockDoor: async (data) => {
-          this.log.debug('Matter command: lockDoor', data.request);
-          await this.commandHandler.executeHandler('lockDoor', data);
+          // Never called in edge
         },
         unlockDoor: async (data) => {
-          this.log.debug('Matter command: unlockDoor', data.request);
-          await this.commandHandler.executeHandler('unlockDoor', data);
+          // Never called in edge
         },
       },
       {
@@ -2257,8 +2241,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       },
       {
         changeToMode: async (data) => {
-          this.log.debug('Matter command: ModeSelectCluster.changeToMode', data.request);
-          await this.commandHandler.executeHandler('changeToMode', data);
+          // Never called in edge
         },
       },
     );
@@ -2489,8 +2472,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       },
       {
         enableDisableAlarm: async (data) => {
-          this.log.debug('Matter command: enableDisableAlarm', data.request);
-          await this.commandHandler.executeHandler('enableDisableAlarm', data);
+          // Never called in edge
         },
       },
       {
@@ -2716,8 +2698,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       },
       {
         setpointRaiseLower: async (data) => {
-          this.log.debug('Matter command: setpointRaiseLower', data.request);
-          await this.commandHandler.executeHandler('setpointRaiseLower', data);
+          // Never called in edge
         },
       },
       {},
@@ -2760,8 +2741,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       },
       {
         setpointRaiseLower: async (data) => {
-          this.log.debug('Matter command: setpointRaiseLower', data.request);
-          await this.commandHandler.executeHandler('setpointRaiseLower', data);
+          // Never called in edge
         },
       },
       {},
@@ -2827,8 +2807,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       },
       {
         setpointRaiseLower: async (data) => {
-          this.log.debug('Matter command: setpointRaiseLower', data.request);
-          await this.commandHandler.executeHandler('setpointRaiseLower', data);
+          // Never called in edge
         },
       },
       {},
@@ -2884,8 +2863,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       },
       {
         selfTestRequest: async (data) => {
-          this.log.debug('Matter command: selfTestRequest');
-          await this.commandHandler.executeHandler('selfTestRequest', data);
+          // Never called in edge
         },
       },
       {
@@ -3240,8 +3218,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       },
       {
         step: async (data) => {
-          this.log.debug('Matter command: step', data.request);
-          await this.commandHandler.executeHandler('step', data);
+          // Never called in edge
         },
       },
       {},
