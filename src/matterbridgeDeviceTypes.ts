@@ -234,7 +234,6 @@ export const lightSensor = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [Identify.Cluster.id, IlluminanceMeasurement.Cluster.id],
-  optionalClientClusters: [Groups.Cluster.id],
 });
 
 export const occupancySensor = DeviceTypeDefinition({
@@ -294,8 +293,7 @@ export const roboticVacuumCleaner = DeviceTypeDefinition({
   optionalServerClusters: [RvcCleanMode.Cluster.id],
 });
 
-// Custom device types without ClientClusters
-
+// Custom device types without client clusters (not working in Alexa)
 export const onOffSwitch = DeviceTypeDefinition({
   name: 'MA-onoffswitch',
   code: 0x0103,
@@ -305,6 +303,7 @@ export const onOffSwitch = DeviceTypeDefinition({
   optionalServerClusters: [LevelControl.Cluster.id, ColorControl.Cluster.id],
 });
 
+// Custom device types without client clusters (not working in Alexa)
 export const dimmableSwitch = DeviceTypeDefinition({
   name: 'MA-dimmableswitch',
   code: 0x0104,
@@ -314,6 +313,7 @@ export const dimmableSwitch = DeviceTypeDefinition({
   optionalServerClusters: [ColorControl.Cluster.id],
 });
 
+// Custom device types without client clusters (not working in Alexa)
 export const colorTemperatureSwitch = DeviceTypeDefinition({
   name: 'MA-colortemperatureswitch',
   code: 0x0105,
