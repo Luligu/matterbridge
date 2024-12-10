@@ -45,13 +45,13 @@ import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW,
 import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
 import { WS_ID_LOG, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, wsMessageHandler } from './matterbridgeWebsocket.js';
 import { logInterfaces, wait, waiter, createZip, copyDirectory, getParameter, getIntParameter, hasParameter } from './utils/utils.js';
-import { BaseRegisteredPlugin, MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
+import { ApiDevices, BaseRegisteredPlugin, MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // @matter
-import { DeviceTypeId, EndpointNumber, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, EndpointServer } from '@matter/main';
+import { DeviceTypeId, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, EndpointServer } from '@matter/main';
 import {
   BasicInformationCluster,
   BridgedDeviceBasicInformation,
@@ -3030,7 +3030,7 @@ export class Matterbridge extends EventEmitter {
     // Endpoint to provide devices
     this.expressApp.get('/api/devices', (req, res) => {
       this.log.debug('The frontend sent /api/devices');
-      const data: { pluginName: string; type: string; endpoint: EndpointNumber | undefined; name: string; serial: string; productUrl: string; configUrl?: string; uniqueId: string; cluster: string }[] = [];
+      const devices: ApiDevices[] = [];
       this.devices.forEach(async (device) => {
         const pluginName = device.plugin ?? 'Unknown';
         if (this.edge) device = EndpointServer.forEndpoint(device as unknown as EndpointNode) as unknown as MatterbridgeDevice;
@@ -3043,7 +3043,7 @@ export class Matterbridge extends EventEmitter {
         let uniqueId = device.getClusterServer(BasicInformationCluster)?.attributes.uniqueId?.getLocal();
         if (!uniqueId) uniqueId = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.uniqueId?.getLocal() ?? 'Unknown';
         const cluster = this.getClusterTextFromDevice(device);
-        data.push({
+        devices.push({
           pluginName,
           type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
           endpoint: device.number,
@@ -3056,7 +3056,7 @@ export class Matterbridge extends EventEmitter {
         });
       });
       // this.log.debug('Response:', debugStringify(data));
-      res.json(data);
+      res.json(devices);
     });
 
     // Endpoint to provide the cluster servers of the devices

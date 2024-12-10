@@ -32,8 +32,9 @@ import { debugStringify } from 'node-ansi-logger';
 import WebSocket from 'ws';
 
 // @matter
-import { EndpointNumber, Logger } from '@matter/main';
+import { Logger } from '@matter/main';
 import { BasicInformationCluster, BridgedDeviceBasicInformationCluster } from '@matter/main/clusters';
+import { ApiDevices } from './matterbridgeTypes.js';
 
 /**
  * Websocket message ID for logging.
@@ -149,7 +150,7 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
       client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response }));
       return;
     } else if (data.method === '/api/devices') {
-      const devices: { pluginName: string; type: string; endpoint: EndpointNumber | undefined; name: string; serial: string; productUrl: string; configUrl?: string; uniqueId: string; cluster: string }[] = [];
+      const devices: ApiDevices[] = [];
       this.devices.forEach(async (device) => {
         if (data.params.pluginName && data.params.pluginName !== device.plugin) return;
         let name = device.getClusterServer(BasicInformationCluster)?.attributes.nodeLabel?.getLocal();
