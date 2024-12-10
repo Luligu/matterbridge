@@ -122,22 +122,46 @@ describe('Matterbridge platform', () => {
   });
 
   it('should validate with white and black list', () => {
-    platform.config.whiteList = ['whiteDevice'];
-    platform.config.blackList = ['blackDevice'];
-    expect(platform.validateDeviceWhiteBlackList('whiteDevice')).toBe(true);
-    expect(platform.validateDeviceWhiteBlackList('blackDevice')).toBe(false);
+    platform.config.whiteList = ['white1', 'white2', 'white3'];
+    platform.config.blackList = ['black1', 'black2', 'black3'];
+    expect(platform.validateDeviceWhiteBlackList('white1')).toBe(true);
+    expect(platform.validateDeviceWhiteBlackList('black2')).toBe(false);
+    expect(platform.validateDeviceWhiteBlackList(['white1', 'black2'])).toBe(false);
     expect(platform.validateDeviceWhiteBlackList('xDevice')).toBe(false);
     expect(platform.validateDeviceWhiteBlackList('')).toBe(false);
+  });
 
+  it('should validate with white list', () => {
+    platform.config.whiteList = ['white1', 'white2', 'white3'];
+    platform.config.blackList = [];
+    expect(platform.validateDeviceWhiteBlackList('white1')).toBe(true);
+    expect(platform.validateDeviceWhiteBlackList('black2')).toBe(false);
+    expect(platform.validateDeviceWhiteBlackList(['white1', 'black2'])).toBe(true);
+    expect(platform.validateDeviceWhiteBlackList('xDevice')).toBe(false);
+    expect(platform.validateDeviceWhiteBlackList('')).toBe(false);
+  });
+
+  it('should validate with black list', () => {
     platform.config.whiteList = [];
-    platform.config.blackList = ['blackDevice'];
+    platform.config.blackList = ['black1', 'black2', 'black3'];
     expect(platform.validateDeviceWhiteBlackList('whiteDevice')).toBe(true);
-    expect(platform.validateDeviceWhiteBlackList('blackDevice')).toBe(false);
+    expect(platform.validateDeviceWhiteBlackList('black1')).toBe(false);
+    expect(platform.validateDeviceWhiteBlackList('black2')).toBe(false);
+    expect(platform.validateDeviceWhiteBlackList('black3')).toBe(false);
+    expect(platform.validateDeviceWhiteBlackList(['x', 'y', 'z'])).toBe(true);
+    expect(platform.validateDeviceWhiteBlackList(['x', 'y', 'z', 'black3'])).toBe(false);
     expect(platform.validateDeviceWhiteBlackList('xDevice')).toBe(true);
     expect(platform.validateDeviceWhiteBlackList('')).toBe(true);
+  });
 
+  it('should validate with no white and black list', () => {
     platform.config.whiteList = [];
     platform.config.blackList = [];
+    expect(platform.validateDeviceWhiteBlackList('whiteDevice')).toBe(true);
+    expect(platform.validateDeviceWhiteBlackList(['whiteDevice', '123456'])).toBe(true);
+    expect(platform.validateDeviceWhiteBlackList('blackDevice')).toBe(true);
+    expect(platform.validateDeviceWhiteBlackList(['blackDevice', '123456'])).toBe(true);
+    expect(platform.validateDeviceWhiteBlackList('')).toBe(true);
   });
 
   it('should validate with entity black list', () => {

@@ -160,23 +160,36 @@ export class MatterbridgePlatform {
 
   /**
    * Validates if a device is allowed based on the whitelist and blacklist configurations.
+   * The blacklist has priority over the whitelist.
    *
-   * @param {string} device - The device to validate.
+   * @param {string | string[]} device - The device name(s) to validate.
    * @param {boolean} [log=true] - Whether to log the validation result.
    * @returns {boolean} - Returns true if the device is allowed, false otherwise.
    */
-  validateDeviceWhiteBlackList(device: string, log = true): boolean {
-    if (isValidArray(this.config.whiteList, 1) && !this.config.whiteList.includes(device)) {
-      if (log) this.log.info(`Skipping device ${CYAN}${device}${nf} because not in whitelist`);
+  validateDeviceWhiteBlackList(device: string | string[], log = true): boolean {
+    if (!Array.isArray(device)) device = [device];
+
+    let blackListBlocked = 0;
+    if (isValidArray(this.config.blackList, 1)) {
+      for (const d of device) if (this.config.blackList.includes(d)) blackListBlocked++;
+    }
+    if (blackListBlocked > 0) {
+      if (log) this.log.info(`Skipping device ${CYAN}${device.join(', ')}${nf} because in blacklist`);
       return false;
     }
-    if (isValidArray(this.config.blackList, 1) && this.config.blackList.includes(device)) {
-      if (log) this.log.info(`Skipping device ${CYAN}${device}${nf} because in blacklist`);
-      return false;
+
+    let whiteListPassed = 0;
+    if (isValidArray(this.config.whiteList, 1)) {
+      for (const d of device) if (this.config.whiteList.includes(d)) whiteListPassed++;
+    } else whiteListPassed++;
+    if (whiteListPassed > 0) {
+      if (log) this.log.info(`Skipping device ${CYAN}${device.join(', ')}${nf} because not in whitelist`);
+      return true;
     }
-    return true;
+    return false;
   }
 
+  // TODO: remove when matterbridge 1.6.6 is published
   /**
    * Validates if an entity is allowed based on the entity blacklist and device-entity blacklist configurations.
    *
