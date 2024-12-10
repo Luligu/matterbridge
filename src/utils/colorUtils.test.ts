@@ -472,6 +472,19 @@ describe('Utils test', () => {
     });
   });
 
+  // eslint-disable-next-line jest/no-commented-out-tests
+  /*
+  describe('HomeAssistant conversion', () => {
+    //test('Mired to kelvin', async () => {
+      // "hs_color": [0, 50.394],
+      // "rgb_color": [255, 126, 126],
+      // "xy_color": [0.528, 0.313],
+      // expect(rgbColorToHslColor({ r: 255, g: 126, b: 126 })).toStrictEqual({ h: 0, s: 50.394, l: 50 });
+      // expect(rgbColorToXYColor({ r: 255, g: 126, b: 126 })).toStrictEqual({ x: 0, y: 50.394 });
+    });
+  });
+  */
+
   describe('colorTemperature', () => {
     test('Mired to kelvin', async () => {
       expect(miredToKelvin(500)).toBe(2000);
