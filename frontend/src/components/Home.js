@@ -420,7 +420,11 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
   };
 
   const handleInstallPluginClick = () => {
-    logMessage('Plugins', `Installing plugin: ${pluginName}`);
+    const plugin = pluginName.split('@')[0];
+    if(plugin === 'matterbridge')
+      logMessage('Matterbridge', `Installing matterbridge package: ${pluginName}`);
+    else
+      logMessage('Plugins', `Installing plugin: ${pluginName}`);
     sendCommandToMatterbridge('installplugin', pluginName);
     setTimeout(() => {
       reloadSettings();
