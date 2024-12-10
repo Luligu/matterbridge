@@ -14,7 +14,7 @@ If you want to run Matterbridge in Home Assistant please use the official add-on
 
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
-## [1.6.6] - 2024-12-06
+## [1.6.6-dev.13] - 2024-12-10
 
 ### Added
 
@@ -26,6 +26,7 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 - [deviceTypes]: Add device type airConditioner (not supported by the Apple Home).
 - [docker]: Add matterbridge-hass to docker dev.
 - [platform]: Added validateDeviceWhiteBlackList and validateEntityBlackList to be used consistently by all plugins.
+- [/api/devices]: Added productUrl and configUrl.
 
 ### Changed
 
@@ -37,7 +38,7 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 - [package]: Update dependencies.
 - [onOff]: Set default to OnOff.Feature.Lighting.
 - [levelControl]: Set default to LevelControl.Feature.Lighting.
-- [lightSensor]: Refactor lightSensor removing Group optional cluster
+- [lightSensor]: Refactor lightSensor removing Group optional cluster server.
 - [jest]: Update Jest tests.
 
 ### Fixed
