@@ -240,6 +240,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   log: AnsiLogger;
   plugin: string | undefined = undefined;
+  configUrl: string | undefined = undefined;
 
   deviceName: string | undefined = undefined;
   serialNumber: string | undefined = undefined;

@@ -3030,7 +3030,7 @@ export class Matterbridge extends EventEmitter {
     // Endpoint to provide devices
     this.expressApp.get('/api/devices', (req, res) => {
       this.log.debug('The frontend sent /api/devices');
-      const data: { pluginName: string; type: string; endpoint: EndpointNumber | undefined; name: string; serial: string; productUrl: string; uniqueId: string; cluster: string }[] = [];
+      const data: { pluginName: string; type: string; endpoint: EndpointNumber | undefined; name: string; serial: string; productUrl: string; configUrl?: string; uniqueId: string; cluster: string }[] = [];
       this.devices.forEach(async (device) => {
         const pluginName = device.plugin ?? 'Unknown';
         if (this.edge) device = EndpointServer.forEndpoint(device as unknown as EndpointNode) as unknown as MatterbridgeDevice;
@@ -3050,6 +3050,7 @@ export class Matterbridge extends EventEmitter {
           name,
           serial,
           productUrl,
+          configUrl: device.configUrl,
           uniqueId,
           cluster: cluster,
         });
