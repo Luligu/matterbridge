@@ -378,8 +378,8 @@ export class MatterbridgeEndpoint extends Endpoint {
 
     if (clusterId === ColorControl.Cluster.id && subType === undefined) return MatterbridgeColorControlServer;
     if (clusterId === ColorControl.Cluster.id && subType === 'CompleteColorControl') return MatterbridgeColorControlServer;
-    if (clusterId === ColorControl.Cluster.id && subType === 'XyColorControl') return MatterbridgeColorControlServer.with('Xy');
-    if (clusterId === ColorControl.Cluster.id && subType === 'HueSaturationColorControl') return MatterbridgeColorControlServer.with('HueSaturation');
+    if (clusterId === ColorControl.Cluster.id && subType === 'XyColorControl') return MatterbridgeColorControlServer.with('Xy', 'ColorTemperature');
+    if (clusterId === ColorControl.Cluster.id && subType === 'HueSaturationColorControl') return MatterbridgeColorControlServer.with('HueSaturation', 'ColorTemperature');
     if (clusterId === ColorControl.Cluster.id && subType === 'ColorTemperatureColorControl') return MatterbridgeColorControlServer.with('ColorTemperature');
 
     if (clusterId === DoorLock.Cluster.id) return MatterbridgeDoorLockServer;
@@ -705,9 +705,8 @@ export class MatterbridgeEndpoint extends Endpoint {
 
     this.subType = '';
 
-    if (cluster.id === ColorControl.Cluster.id && cluster.isAttributeSupportedByName('currentX') && !cluster.isAttributeSupportedByName('currentHue') && !cluster.isAttributeSupportedByName('colorTemperatureMireds')) this.subType = 'XyColorControl';
-    else if (cluster.id === ColorControl.Cluster.id && cluster.isAttributeSupportedByName('currentHue') && !cluster.isAttributeSupportedByName('currentX') && !cluster.isAttributeSupportedByName('colorTemperatureMireds'))
-      this.subType = 'HueSaturationColorControl';
+    if (cluster.id === ColorControl.Cluster.id && cluster.isAttributeSupportedByName('currentX') && !cluster.isAttributeSupportedByName('currentHue')) this.subType = 'XyColorControl';
+    else if (cluster.id === ColorControl.Cluster.id && cluster.isAttributeSupportedByName('currentHue') && !cluster.isAttributeSupportedByName('currentX')) this.subType = 'HueSaturationColorControl';
     else if (cluster.id === ColorControl.Cluster.id && cluster.isAttributeSupportedByName('colorTemperatureMireds') && !cluster.isAttributeSupportedByName('currentHue') && !cluster.isAttributeSupportedByName('currentX'))
       this.subType = 'ColorTemperatureColorControl';
     else this.subType = 'CompleteColorControl';
