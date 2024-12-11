@@ -1420,7 +1420,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         colorMode: ColorControl.ColorMode.CurrentXAndCurrentY,
         enhancedColorMode: ColorControl.EnhancedColorMode.CurrentXAndCurrentY,
-        colorCapabilities: { xy: true, hueSaturation: false, colorLoop: false, enhancedHue: false, colorTemperature: false },
+        colorCapabilities: { xy: true, hueSaturation: false, colorLoop: false, enhancedHue: false, colorTemperature: true },
         options: {
           executeIfOff: false,
         },
@@ -1490,7 +1490,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       {
         colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
         enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
-        colorCapabilities: { xy: false, hueSaturation: true, colorLoop: false, enhancedHue: false, colorTemperature: false },
+        colorCapabilities: { xy: false, hueSaturation: true, colorLoop: false, enhancedHue: false, colorTemperature: true },
         options: {
           executeIfOff: false,
         },
