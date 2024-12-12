@@ -7,6 +7,7 @@ WORKDIR /app
 COPY ./package.json ./
 COPY ./package-lock.json ./
 COPY ./tsconfig.json ./
+COPY ./tsconfig.production.json ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
 RUN npm ci && npm run build && npm link
@@ -26,6 +27,7 @@ RUN npm install -g --omit=dev matterbridge-example-dynamic-platform
 RUN npm install -g --omit=dev matterbridge-zigbee2mqtt
 RUN npm install -g --omit=dev matterbridge-somfy-tahoma
 RUN npm install -g --omit=dev matterbridge-shelly
+RUN npm install -g --omit=dev matterbridge-hass
 RUN npm install -g --omit=dev matterbridge-eve-door
 RUN npm install -g --omit=dev matterbridge-eve-motion
 RUN npm install -g --omit=dev matterbridge-eve-energy
