@@ -18,6 +18,21 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 In this release some device types and the OnOff, LevelControl and ColorControl have been updated to be fully compliant with Matter 1.3 specifications.
 It is possible that some controllers see them as new devices or need time to read the new clusters. It can be useful after the upgrade to power off the controller, wait a few minutes and power it on again.
 
+## [1.6.7-dev.1] - 2024-12-??
+
+### Added
+
+- [readme]: Update README to clarify Node.js installation instructions and emphasize LTS version.
+
+### Changed
+
+- [Docker]: Add matterbridge-hass to Dockerfile for latest and main builds.
+- [package]: Update dependencies.
+
+### Fixed
+
+- [Device]: Fix addChildDeviceType methods to include debug parameter in MatterbridgeDevice instantiation.
+
 ## [1.6.6] - 2024-12-12
 
 ### Added
