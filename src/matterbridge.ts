@@ -45,13 +45,13 @@ import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW,
 import { MatterbridgeDevice, SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
 import { WS_ID_LOG, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, wsMessageHandler } from './matterbridgeWebsocket.js';
 import { logInterfaces, wait, waiter, createZip, copyDirectory, getParameter, getIntParameter, hasParameter } from './utils/utils.js';
-import { BaseRegisteredPlugin, MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
+import { ApiDevices, BaseRegisteredPlugin, MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // @matter
-import { DeviceTypeId, EndpointNumber, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, EndpointServer } from '@matter/main';
+import { DeviceTypeId, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, EndpointServer } from '@matter/main';
 import {
   BasicInformationCluster,
   BridgedDeviceBasicInformation,
@@ -122,6 +122,9 @@ export class Matterbridge extends EventEmitter {
     mattermdnsinterface: undefined,
     matteripv4address: undefined,
     matteripv6address: undefined,
+    matterPort: 5540,
+    matterDiscriminator: undefined,
+    matterPasscode: undefined,
     restartRequired: false,
     refreshRequired: false,
   };
@@ -253,13 +256,6 @@ export class Matterbridge extends EventEmitter {
    * @returns A Promise that resolves when the initialization is complete.
    */
   public async initialize() {
-    // Set the first port to use for the commissioning server (will be incremented in childbridge mode)
-    this.port = getIntParameter('port') ?? 5540;
-    // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode)
-    this.passcode = getIntParameter('passcode');
-    // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode)
-    this.discriminator = getIntParameter('discriminator');
-
     // Set the restart mode
     if (hasParameter('service')) this.restartMode = 'service';
     if (hasParameter('docker')) this.restartMode = 'docker';
@@ -317,6 +313,15 @@ export class Matterbridge extends EventEmitter {
       this.log.fatal('Fatal error creating node storage manager and context for matterbridge');
       throw new Error('Fatal error creating node storage manager and context for matterbridge');
     }
+
+    // Set the first port to use for the commissioning server (will be incremented in childbridge mode)
+    this.port = getIntParameter('port') ?? (await this.nodeContext.get<number>('matterport', 5540)) ?? 5540;
+
+    // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode)
+    this.passcode = getIntParameter('passcode') ?? (await this.nodeContext.get<number>('matterpasscode'));
+
+    // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode)
+    this.discriminator = getIntParameter('discriminator') ?? (await this.nodeContext.get<number>('matterdiscriminator'));
 
     // Set matterbridge logger level (context: matterbridgeLogLevel)
     if (hasParameter('logger')) {
@@ -2166,7 +2171,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with uniqueId ${uniqueId} serialNumber ${serialNumber}`);
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with softwareVersion ${softwareVersion} softwareVersionString ${softwareVersionString}`);
     this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with hardwareVersion ${hardwareVersion} hardwareVersionString ${hardwareVersionString}`);
-    this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with nodeLabel '${productName}' port ${this.port} passcode ${this.passcode} discriminator ${this.discriminator}`);
+    this.log.debug(`Creating matter commissioning server for plugin ${plg}${pluginName}${db} with nodeLabel '${productName}' port ${CYAN}${this.port}${db} discriminator ${CYAN}${this.discriminator}${db} passcode ${CYAN}${this.passcode}${db} `);
 
     // Validate ipv4address
     if (this.ipv4address) {
@@ -2999,6 +3004,9 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.mattermdnsinterface = (await this.nodeContext?.get<string>('mattermdnsinterface', '')) || '';
       this.matterbridgeInformation.matteripv4address = (await this.nodeContext?.get<string>('matteripv4address', '')) || '';
       this.matterbridgeInformation.matteripv6address = (await this.nodeContext?.get<string>('matteripv6address', '')) || '';
+      this.matterbridgeInformation.matterPort = (await this.nodeContext?.get<number>('matterport', 5540)) ?? 5540;
+      this.matterbridgeInformation.matterDiscriminator = await this.nodeContext?.get<number>('matterdiscriminator');
+      this.matterbridgeInformation.matterPasscode = await this.nodeContext?.get<number>('matterpasscode');
       this.matterbridgeInformation.matterbridgePaired = this.matterbridgePaired;
       this.matterbridgeInformation.matterbridgeConnected = this.matterbridgeConnected;
       this.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridgeQrPairingCode;
@@ -3022,7 +3030,7 @@ export class Matterbridge extends EventEmitter {
     // Endpoint to provide devices
     this.expressApp.get('/api/devices', (req, res) => {
       this.log.debug('The frontend sent /api/devices');
-      const data: { pluginName: string; type: string; endpoint: EndpointNumber | undefined; name: string; serial: string; uniqueId: string; cluster: string }[] = [];
+      const devices: ApiDevices[] = [];
       this.devices.forEach(async (device) => {
         const pluginName = device.plugin ?? 'Unknown';
         if (this.edge) device = EndpointServer.forEndpoint(device as unknown as EndpointNode) as unknown as MatterbridgeDevice;
@@ -3030,21 +3038,25 @@ export class Matterbridge extends EventEmitter {
         if (!name) name = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.nodeLabel?.getLocal() ?? 'Unknown';
         let serial = device.getClusterServer(BasicInformationCluster)?.attributes.serialNumber?.getLocal();
         if (!serial) serial = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.serialNumber?.getLocal() ?? 'Unknown';
+        let productUrl = device.getClusterServer(BasicInformationCluster)?.attributes.productUrl?.getLocal();
+        if (!productUrl) productUrl = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.productUrl?.getLocal() ?? 'Unknown';
         let uniqueId = device.getClusterServer(BasicInformationCluster)?.attributes.uniqueId?.getLocal();
         if (!uniqueId) uniqueId = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.uniqueId?.getLocal() ?? 'Unknown';
         const cluster = this.getClusterTextFromDevice(device);
-        data.push({
+        devices.push({
           pluginName,
           type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
           endpoint: device.number,
           name,
           serial,
+          productUrl,
+          configUrl: device.configUrl,
           uniqueId,
           cluster: cluster,
         });
       });
       // this.log.debug('Response:', debugStringify(data));
-      res.json(data);
+      res.json(devices);
     });
 
     // Endpoint to provide the cluster servers of the devices
@@ -3343,6 +3355,36 @@ export class Matterbridge extends EventEmitter {
         return;
       }
 
+      // Handle the command setmatterport from Settings
+      if (command === 'setmatterport') {
+        const port = Math.min(Math.max(parseInt(param), 5540), 5560);
+        this.matterbridgeInformation.matterPort = port;
+        this.log.debug(`Set matter commissioning port to ${CYAN}${port}${db}`);
+        await this.nodeContext?.set<number>('matterport', port);
+        res.json({ message: 'Command received' });
+        return;
+      }
+
+      // Handle the command setmatterdiscriminator from Settings
+      if (command === 'setmatterdiscriminator') {
+        const discriminator = Math.min(Math.max(parseInt(param), 1000), 4095);
+        this.matterbridgeInformation.matterDiscriminator = discriminator;
+        this.log.debug(`Set matter commissioning discriminator to ${CYAN}${discriminator}${db}`);
+        await this.nodeContext?.set<number>('matterdiscriminator', discriminator);
+        res.json({ message: 'Command received' });
+        return;
+      }
+
+      // Handle the command setmatterpasscode from Settings
+      if (command === 'setmatterpasscode') {
+        const passcode = Math.min(Math.max(parseInt(param), 10000000), 90000000);
+        this.matterbridgeInformation.matterPasscode = passcode;
+        this.log.debug(`Set matter commissioning passcode to ${CYAN}${passcode}${db}`);
+        await this.nodeContext?.set<number>('matterpasscode', passcode);
+        res.json({ message: 'Command received' });
+        return;
+      }
+
       // Handle the command setmbloglevel from Settings
       if (command === 'setmblogfile') {
         this.log.debug('Matterbridge file log:', param);
@@ -3455,9 +3497,13 @@ export class Matterbridge extends EventEmitter {
           this.log.error(`Error installing plugin ${plg}${param}${er}`);
         }
         this.wssSendRestartRequired();
+        param = param.split('@')[0];
         // Also add the plugin to matterbridge so no return!
-        // res.json({ message: 'Command received' });
-        // return;
+        if (param === 'matterbridge') {
+          // If we used the command installplugin to install a dev or a specific version of matterbridge we don't want to add it to matterbridge
+          res.json({ message: 'Command received' });
+          return;
+        }
       }
       // Handle the command addplugin from Home
       if (command === 'addplugin' || command === 'installplugin') {

@@ -26,8 +26,9 @@ import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 
 // AnsiLogger module
-import { AnsiLogger, LogLevel } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, LogLevel, nf, wr } from 'node-ansi-logger';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { isValidArray, isValidObject } from './utils/utils.js';
 
 // Platform types
 export type PlatformConfigValue = string | number | boolean | bigint | object | undefined | null;
@@ -124,7 +125,8 @@ export class MatterbridgePlatform {
    * Unregisters all devices registered with the Matterbridge platform.
    */
   async unregisterAllDevices() {
-    await this.matterbridge.removeAllBridgedDevices(this.name);
+    if (this.matterbridge.edge) await this.matterbridge.removeAllBridgedEndpoints(this.name);
+    else await this.matterbridge.removeAllBridgedDevices(this.name);
   }
 
   /**
@@ -136,7 +138,7 @@ export class MatterbridgePlatform {
     const compareVersions = (matterbridgeVersion: string, requiredVersion: string): boolean => {
       const stripTag = (v: string) => {
         const parts = v.split('-');
-        return parts.length > 0 ? parts[0] : v;
+        return parts[0];
       };
       const v1Parts = stripTag(matterbridgeVersion).split('.').map(Number);
       const v2Parts = stripTag(requiredVersion).split('.').map(Number);
@@ -153,6 +155,58 @@ export class MatterbridgePlatform {
     };
 
     if (!compareVersions(this.matterbridge.matterbridgeVersion, requiredVersion)) return false;
+    return true;
+  }
+
+  /**
+   * Validates if a device is allowed based on the whitelist and blacklist configurations.
+   * The blacklist has priority over the whitelist.
+   *
+   * @param {string | string[]} device - The device name(s) to validate.
+   * @param {boolean} [log=true] - Whether to log the validation result.
+   * @returns {boolean} - Returns true if the device is allowed, false otherwise.
+   */
+  validateDeviceWhiteBlackList(device: string | string[], log = true): boolean {
+    if (!Array.isArray(device)) device = [device];
+
+    let blackListBlocked = 0;
+    if (isValidArray(this.config.blackList, 1)) {
+      for (const d of device) if (this.config.blackList.includes(d)) blackListBlocked++;
+    }
+    if (blackListBlocked > 0) {
+      if (log) this.log.info(`Skipping device ${CYAN}${device.join(', ')}${nf} because in blacklist`);
+      return false;
+    }
+
+    let whiteListPassed = 0;
+    if (isValidArray(this.config.whiteList, 1)) {
+      for (const d of device) if (this.config.whiteList.includes(d)) whiteListPassed++;
+    } else whiteListPassed++;
+    if (whiteListPassed > 0) {
+      return true;
+    }
+    if (log) this.log.info(`Skipping device ${CYAN}${device.join(', ')}${nf} because not in whitelist`);
+    return false;
+  }
+
+  // TODO: remove when matterbridge 1.6.6 is published
+  /**
+   * Validates if an entity is allowed based on the entity blacklist and device-entity blacklist configurations.
+   *
+   * @param {string} device - The device to which the entity belongs.
+   * @param {string} entity - The entity to validate.
+   * @param {boolean} [log=true] - Whether to log the validation result.
+   * @returns {boolean} - Returns true if the entity is allowed, false otherwise.
+   */
+  validateEntityBlackList(device: string, entity: string, log = true): boolean {
+    if (isValidArray(this.config.entityBlackList, 1) && this.config.entityBlackList.find((e) => e === entity)) {
+      if (log) this.log.info(`Skipping entity ${CYAN}${entity}${nf} because in entityBlackList`);
+      return false;
+    }
+    if (isValidObject(this.config.deviceEntityBlackList, 1) && device in this.config.deviceEntityBlackList && (this.config.deviceEntityBlackList as Record<string, string[]>)[device].includes(entity)) {
+      if (log) this.log.info(`Skipping entity ${CYAN}${entity}${wr} for device ${CYAN}${device}${nf} because in deviceEntityBlackList`);
+      return false;
+    }
     return true;
   }
 }

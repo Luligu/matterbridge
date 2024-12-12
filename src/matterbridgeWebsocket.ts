@@ -32,8 +32,9 @@ import { debugStringify } from 'node-ansi-logger';
 import WebSocket from 'ws';
 
 // @matter
-import { EndpointNumber, Logger } from '@matter/main';
+import { Logger } from '@matter/main';
 import { BasicInformationCluster, BridgedDeviceBasicInformationCluster } from '@matter/main/clusters';
+import { ApiDevices } from './matterbridgeTypes.js';
 
 /**
  * Websocket message ID for logging.
@@ -131,6 +132,9 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
       this.matterbridgeInformation.mattermdnsinterface = (await this.nodeContext?.get<string>('mattermdnsinterface', '')) || '';
       this.matterbridgeInformation.matteripv4address = (await this.nodeContext?.get<string>('matteripv4address', '')) || '';
       this.matterbridgeInformation.matteripv6address = (await this.nodeContext?.get<string>('matteripv6address', '')) || '';
+      this.matterbridgeInformation.matterPort = (await this.nodeContext?.get<number>('matterport', 5540)) ?? 5540;
+      this.matterbridgeInformation.matterDiscriminator = await this.nodeContext?.get<number>('matterdiscriminator');
+      this.matterbridgeInformation.matterPasscode = await this.nodeContext?.get<number>('matterpasscode');
       this.matterbridgeInformation.matterbridgePaired = this.matterbridgePaired;
       this.matterbridgeInformation.matterbridgeConnected = this.matterbridgeConnected;
       this.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridgeQrPairingCode;
@@ -146,13 +150,15 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
       client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response }));
       return;
     } else if (data.method === '/api/devices') {
-      const devices: { pluginName: string; type: string; endpoint: EndpointNumber | undefined; name: string; serial: string; uniqueId: string; cluster: string }[] = [];
+      const devices: ApiDevices[] = [];
       this.devices.forEach(async (device) => {
         if (data.params.pluginName && data.params.pluginName !== device.plugin) return;
         let name = device.getClusterServer(BasicInformationCluster)?.attributes.nodeLabel?.getLocal();
         if (!name) name = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.nodeLabel?.getLocal() ?? 'Unknown';
         let serial = device.getClusterServer(BasicInformationCluster)?.attributes.serialNumber?.getLocal();
         if (!serial) serial = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.serialNumber?.getLocal() ?? 'Unknown';
+        let productUrl = device.getClusterServer(BasicInformationCluster)?.attributes.productUrl?.getLocal();
+        if (!productUrl) productUrl = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.productUrl?.getLocal() ?? 'Unknown';
         let uniqueId = device.getClusterServer(BasicInformationCluster)?.attributes.uniqueId?.getLocal();
         if (!uniqueId) uniqueId = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.uniqueId?.getLocal() ?? 'Unknown';
         const cluster = this.getClusterTextFromDevice(device);
@@ -162,6 +168,8 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
           endpoint: device.number,
           name,
           serial,
+          productUrl,
+          configUrl: device.configUrl,
           uniqueId,
           cluster: cluster,
         });

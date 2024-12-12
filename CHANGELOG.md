@@ -8,11 +8,53 @@ If you like this project and find it useful, please consider giving it a star on
 
 The Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. I strongly advise against using them. If you do use them and encounter an issue (which is likely because some do not meet the Matterbridge guidelines), please do not open an issue in the Matterbridge repository.
 
-If you want to run Matterbridge in Home Assistant please use the official add-on https://github.com/Luligu/matterbridge-home-assistant-addon that also has Ingress and side panel.
+If you want to run Matterbridge in Home Assistant please use the official add-on https://github.com/Luligu/matterbridge-home-assistant-addon that also has Ingress and side panel. It's available
 
 ### Discord
 
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
+
+### Breaking Changes
+
+In this release some device types and the OnOff, LevelControl and ColorControl have been updated to be fully compliant with Matter 1.3 specifications.
+It is possible that some controllers see them as new devices or need time to read the new clusters. It can be useful after the upgrade to power off the controller, wait a few minutes and power it on again.
+
+## [1.6.6] - 2024-12-12
+
+### Added
+
+- [frontend]: Added the possibility to install a specific version or the dev of any plugin (i.e. you can install matterbridge-hass@dev or matterbridge-hass@0.0.3).
+  It is also possible to use the install plugin to install a specific version of matterbridge (i.e. you can install matterbridge@dev or matterbridge@1.6.5)
+- [frontend]: Added the possibility to set the matter discriminator for commissioning (you can always override passing **-discriminator [DISCRIMINATOR]** on the command line).
+- [frontend]: Added the possibility to set the matter passcode for commissioning (you can always override passing **-passcode [PASSCODE]** on the command line).
+- [frontend]: Added the possibility to set the matter port for commissioning (you can always override passing **-port [PORT]** on the command line).
+- [deviceTypes]: Added the device type airConditioner (not supported by the Apple Home).
+- [docker]: Added matterbridge-hass to docker dev.
+- [platform]: Added validateDeviceWhiteBlackList and validateEntityBlackList to be used consistently by all plugins.
+- [/api/devices]: Added productUrl and configUrl.
+
+### Changed
+
+- [package]: Update matter.js to 0.11.9-alpha.0-20241206-22f23333.
+- [package]: Update matter.js to 0.11.9-alpha.0-20241207-b604cfa44
+- [package]: Update matter.js to 0.11.9-alpha.0-20241209-06a8040e1
+- [package]: Update matter.js to 0.11.9
+- [plugin]: Removed check on package types since we are moving to production plugins.
+- [package]: Set required node version to 18, 20 and 22.
+- [package]: Update dependencies.
+- [onOff]: Set default to OnOff.Feature.Lighting.
+- [levelControl]: Set default to LevelControl.Feature.Lighting.
+- [colorControl]: Set default cluster helpers to have ColorTemperature.
+- [lightSensor]: Refactor lightSensor removing Group optional cluster server.
+- [jest]: Update Jest tests.
+
+### Fixed
+
+- [device]: Fix typos in Device and Endpoint.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
 
 ## [1.6.5] - 2024-12-02
 

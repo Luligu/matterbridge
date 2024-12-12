@@ -30,7 +30,7 @@ import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbr
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 
 // @matter
-import { FabricIndex, NodeId, VendorId, StorageContext, ServerNode } from '@matter/main';
+import { FabricIndex, NodeId, VendorId, StorageContext, ServerNode, EndpointNumber } from '@matter/main';
 import { ExposedFabricInformation } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 
@@ -129,6 +129,9 @@ export interface MatterbridgeInformation {
   mattermdnsinterface: string | undefined;
   matteripv4address: string | undefined;
   matteripv6address: string | undefined;
+  matterPort: number;
+  matterDiscriminator: number | undefined;
+  matterPasscode: number | undefined;
   restartRequired: boolean;
   refreshRequired: boolean;
 }
@@ -165,4 +168,16 @@ export interface SanitizedSessionInformation {
   lastInteractionTimestamp?: string;
   lastActiveTimestamp?: string;
   numberOfActiveSubscriptions: number;
+}
+
+export interface ApiDevices {
+  pluginName: string;
+  type: string;
+  endpoint: EndpointNumber | undefined;
+  name: string;
+  serial: string;
+  productUrl: string;
+  configUrl?: string;
+  uniqueId: string;
+  cluster: string;
 }

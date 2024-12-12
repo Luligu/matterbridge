@@ -73,6 +73,7 @@ import {
   RvcRunMode,
   RvcOperationalState,
   RvcCleanMode,
+  ScenesManagement,
 } from '@matter/main/clusters';
 import { Semtag } from '@matter/main/types';
 
@@ -104,6 +105,22 @@ export const powerSource = DeviceTypeDefinition({
   optionalServerClusters: [],
 });
 
+/**
+    2.5.3. Conditions
+    Please see the Base Device Type definition for conformance tags.
+    This device type SHALL only be used for Nodes which have a device type of Bridge.
+  
+    2.5.6. Endpoint Composition
+    • A Bridged Node endpoint SHALL support one of the following composition patterns:
+      ◦ Separate Endpoints: All application device types are supported on separate endpoints, and
+        not on the Bridged Node endpoint. The Bridged Node endpoint’s Descriptor cluster PartsList
+        attribute SHALL indicate a list of all endpoints representing the functionality of the bridged
+        device, including the endpoints supporting the application device types, i.e. the full-family
+        pattern defined in the System Model specification.
+      ◦ One Endpoint: Both the Bridged Node and one or more application device types are sup
+        ported on the same endpoint (following application device type rules). Endpoint composi
+        tion SHALL conform to the application device type(s) definition
+ */
 export const bridgedNode = DeviceTypeDefinition({
   name: 'MA-bridgedNode',
   code: 0x0013,
@@ -217,7 +234,6 @@ export const lightSensor = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [Identify.Cluster.id, IlluminanceMeasurement.Cluster.id],
-  optionalClientClusters: [Groups.Cluster.id],
 });
 
 export const occupancySensor = DeviceTypeDefinition({
@@ -277,8 +293,7 @@ export const roboticVacuumCleaner = DeviceTypeDefinition({
   optionalServerClusters: [RvcCleanMode.Cluster.id],
 });
 
-// Custom device types without ClientClusters
-
+// Custom device types without client clusters (not working in Alexa)
 export const onOffSwitch = DeviceTypeDefinition({
   name: 'MA-onoffswitch',
   code: 0x0103,
@@ -288,6 +303,7 @@ export const onOffSwitch = DeviceTypeDefinition({
   optionalServerClusters: [LevelControl.Cluster.id, ColorControl.Cluster.id],
 });
 
+// Custom device types without client clusters (not working in Alexa)
 export const dimmableSwitch = DeviceTypeDefinition({
   name: 'MA-dimmableswitch',
   code: 0x0104,
@@ -297,6 +313,7 @@ export const dimmableSwitch = DeviceTypeDefinition({
   optionalServerClusters: [ColorControl.Cluster.id],
 });
 
+// Custom device types without client clusters (not working in Alexa)
 export const colorTemperatureSwitch = DeviceTypeDefinition({
   name: 'MA-colortemperatureswitch',
   code: 0x0105,
@@ -357,7 +374,7 @@ export const rainSensor = DeviceTypeDefinition({
   optionalServerClusters: [BooleanStateConfiguration.Cluster.id],
 });
 
-// Remark:  A Smoke CO Alarm device type SHALL support an instance of a Power Source device type on some endpoint.
+// Remark: A Smoke CO Alarm device type SHALL support an instance of a Power Source device type on some endpoint.
 export const smokeCoAlarm = DeviceTypeDefinition({
   name: 'MA-smokeCoAlarm',
   code: 0x0076,
@@ -383,6 +400,16 @@ export const airPurifier = DeviceTypeDefinition({
   revision: 1,
   requiredServerClusters: [Identify.Cluster.id, FanControl.Cluster.id],
   optionalServerClusters: [Groups.Cluster.id, HepaFilterMonitoring.Cluster.id, ActivatedCarbonFilterMonitoring.Cluster.id],
+});
+
+// Remark: may have a temperature sensor and a humidity sensor device.
+export const airConditioner = DeviceTypeDefinition({
+  name: 'MA-airConditioner',
+  code: 0x72,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, Thermostat.Cluster.id],
+  optionalServerClusters: [Groups.Cluster.id, ScenesManagement.Cluster.id, FanControl.Cluster.id, ThermostatUserInterfaceConfiguration.Cluster.id, TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id],
 });
 
 export const electricalSensor = DeviceTypeDefinition({

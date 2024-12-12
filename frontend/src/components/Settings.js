@@ -162,6 +162,9 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
   const [mdnsInterface, setmdnsInterface] = useState('');  
   const [ipv4Address, setIpv4Address] = useState('');  
   const [ipv6Address, setIpv6Address] = useState('');  
+  const [matterPort, setMatterPort] = useState();  
+  const [matterDiscriminator, setMatterDiscriminator] = useState();  
+  const [matterPasscode, setMatterPasscode] = useState();  
 
   useEffect(() => {
     if (matterbridgeInfo.bridgeMode === undefined) return;
@@ -170,6 +173,9 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
     setmdnsInterface(matterbridgeInfo.mattermdnsinterface);
     setIpv4Address(matterbridgeInfo.matteripv4address);
     setIpv6Address(matterbridgeInfo.matteripv6address);
+    setMatterPort(matterbridgeInfo.matterPort);
+    setMatterDiscriminator(matterbridgeInfo.matterDiscriminator);
+    setMatterPasscode(matterbridgeInfo.matterPasscode);
   }, [matterbridgeInfo]);
 
   // Define a function to handle change debug level
@@ -207,6 +213,30 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
     console.log('handleChangeIpv6Address called with value:', event.target.value);
     setIpv6Address(event.target.value);
     sendCommandToMatterbridge('setipv6address', '*'+event.target.value+'*');
+    showSnackbarMessage('Restart Matterbridge to apply changes', 5);
+  };
+
+  // Define a function to handle change matterPort
+  const handleChangeMatterPort = (event) => {
+    console.log('handleChangeMatterPort called with value:', event.target.value);
+    setMatterPort(event.target.value);
+    sendCommandToMatterbridge('setmatterport', event.target.value);
+    showSnackbarMessage('Restart Matterbridge to apply changes', 5);
+  };
+
+  // Define a function to handle change matterDiscriminator
+  const handleChangeMatterDiscriminator = (event) => {
+    console.log('handleChangeMatterDiscriminator called with value:', event.target.value);
+    setMatterDiscriminator(event.target.value);
+    sendCommandToMatterbridge('setmatterdiscriminator', event.target.value);
+    showSnackbarMessage('Restart Matterbridge to apply changes', 5);
+  };
+
+  // Define a function to handle change matterPasscode
+  const handleChangemMatterPasscode = (event) => {
+    console.log('handleChangemMatterPasscode called with value:', event.target.value);
+    setMatterPasscode(event.target.value);
+    sendCommandToMatterbridge('setmatterpasscode', event.target.value);
     showSnackbarMessage('Restart Matterbridge to apply changes', 5);
   };
 
@@ -249,6 +279,36 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Ipv6 address:</FormLabel>
           <TextField value={ipv6Address} onChange={handleChangeIpv6Address} size="small" variant="outlined"
+            style={{ height: '30px', flexGrow: 1 }} InputProps={{
+              style: {
+                height: '30px',
+                padding: '0',
+              },
+            }}/>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Commissioning port:</FormLabel>
+          <TextField value={matterPort} onChange={handleChangeMatterPort} size="small" variant="outlined"
+            style={{ height: '30px', flexGrow: 1 }} InputProps={{
+              style: {
+                height: '30px',
+                padding: '0',
+              },
+            }}/>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Commissioning discriminator:</FormLabel>
+          <TextField value={matterDiscriminator} onChange={handleChangeMatterDiscriminator} size="small" variant="outlined"
+            style={{ height: '30px', flexGrow: 1 }} InputProps={{
+              style: {
+                height: '30px',
+                padding: '0',
+              },
+            }}/>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Commissioning passcode:</FormLabel>
+          <TextField value={matterPasscode} onChange={handleChangemMatterPasscode} size="small" variant="outlined"
             style={{ height: '30px', flexGrow: 1 }} InputProps={{
               style: {
                 height: '30px',

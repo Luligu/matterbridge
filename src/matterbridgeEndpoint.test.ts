@@ -21,6 +21,8 @@ import {
   IlluminanceMeasurementCluster,
   OccupancySensingCluster,
   OnOffCluster,
+  PowerSource,
+  PowerSourceCluster,
   PowerTopology,
   PressureMeasurement,
   PressureMeasurementCluster,
@@ -643,11 +645,17 @@ describe('MatterbridgeEndpoint class', () => {
 
       device.addDeviceType(powerSource);
       device.createDefaultPowerSourceRechargeableBatteryClusterServer();
+      expect(device.subType).toBe('BatteryRechargeablePowerSource');
 
       await server.add(device);
       await edge.startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
+
+      expect(device.getAttribute(PowerSourceCluster.id, 'batPercentRemaining')).toBe(200);
+      expect(device.getAttribute(PowerSourceCluster.id, 'batChargeLevel')).toBe(PowerSource.BatChargeLevel.Ok);
+      expect(device.getAttribute(PowerSourceCluster.id, 'batVoltage')).toBe(1500);
+
       await edge.stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
@@ -668,11 +676,18 @@ describe('MatterbridgeEndpoint class', () => {
 
       device.addDeviceType(powerSource);
       device.createDefaultPowerSourceReplaceableBatteryClusterServer();
+      expect(device.subType).toBe('BatteryReplaceablePowerSource');
 
       await server.add(device);
       await edge.startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
+
+      expect(device.getAttribute(PowerSourceCluster.id, 'batPercentRemaining')).toBe(200);
+      expect(device.getAttribute(PowerSourceCluster.id, 'batChargeLevel')).toBe(PowerSource.BatChargeLevel.Ok);
+      expect(device.getAttribute(PowerSourceCluster.id, 'batVoltage')).toBe(1500);
+      expect(device.getAttribute(PowerSourceCluster.id, 'batQuantity')).toBe(1);
+
       await edge.stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
@@ -693,12 +708,20 @@ describe('MatterbridgeEndpoint class', () => {
 
       device.addDeviceType(powerSource);
       device.createDefaultPowerSourceWiredClusterServer();
-      // device.createDefaultPowerSourceConfigurationClusterServer();
+      expect(device.subType).toBe('WiredPowerSource');
 
       await server.add(device);
       await edge.startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
+
+      expect(device.getAttribute(PowerSourceCluster.id, 'wiredCurrentType')).toBe(PowerSource.WiredCurrentType.Ac);
+      expect(device.getAttribute(PowerSourceCluster.id, 'description')).toBe('AC Power');
+      expect(device.getAttribute(PowerSourceCluster.id, 'batPercentRemaining')).toBe(undefined);
+      expect(device.getAttribute(PowerSourceCluster.id, 'batChargeLevel')).toBe(undefined);
+      expect(device.getAttribute(PowerSourceCluster.id, 'batVoltage')).toBe(undefined);
+      expect(device.getAttribute(PowerSourceCluster.id, 'batQuantity')).toBe(undefined);
+
       await edge.stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
@@ -729,12 +752,12 @@ describe('MatterbridgeEndpoint class', () => {
       device.createDefaultCarbonMonoxideConcentrationMeasurementClusterServer();
       device.createDefaultCarbonDioxideConcentrationMeasurementClusterServer();
       device.createDefaultFormaldehydeConcentrationMeasurementClusterServer();
-      device.createDefaulPm1ConcentrationMeasurementClusterServer();
-      device.createDefaulPm25ConcentrationMeasurementClusterServer();
-      device.createDefaulPm10ConcentrationMeasurementClusterServer();
-      device.createDefaulOzoneConcentrationMeasurementClusterServer();
-      device.createDefaulRadonConcentrationMeasurementClusterServer();
-      device.createDefaulNitrogenDioxideConcentrationMeasurementClusterServer();
+      device.createDefaultPm1ConcentrationMeasurementClusterServer();
+      device.createDefaultPm25ConcentrationMeasurementClusterServer();
+      device.createDefaultPm10ConcentrationMeasurementClusterServer();
+      device.createDefaultOzoneConcentrationMeasurementClusterServer();
+      device.createDefaultRadonConcentrationMeasurementClusterServer();
+      device.createDefaultNitrogenDioxideConcentrationMeasurementClusterServer();
 
       await server.add(device);
       await edge.startServerNode(server);
@@ -874,6 +897,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
       expect(device.type.deviceRevision).toBe(deviceType.revision);
       device.createDefaultThermostatClusterServer();
+      expect(device.subType).toBe('AutoModeThermostat');
       device.addRequiredClusterServers(device);
       await server.add(device);
 
@@ -897,6 +921,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
       expect(device.type.deviceRevision).toBe(deviceType.revision);
       device.createDefaultHeatingThermostatClusterServer();
+      expect(device.subType).toBe('HeatingThermostat');
       device.addRequiredClusterServers(device);
       await server.add(device);
 
@@ -920,6 +945,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
       expect(device.type.deviceRevision).toBe(deviceType.revision);
       device.createDefaultCoolingThermostatClusterServer();
+      expect(device.subType).toBe('CoolingThermostat');
       device.addRequiredClusterServers(device);
       await server.add(device);
 
