@@ -26,7 +26,7 @@ import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 
 // AnsiLogger module
-import { AnsiLogger, CYAN, LogLevel, nf, wr } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, LogLevel, nf } from 'node-ansi-logger';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { isValidArray, isValidObject } from './utils/utils.js';
 
