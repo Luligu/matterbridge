@@ -378,7 +378,7 @@ Then, from the dots menu in the frontend, download the `matterbridge.log` and `m
 
 # Known general issues
 
-## Session XYZ does not exist
+## Session XYZ does not exist or Cannot find a session for ID XYZ
 
 This message may appear after Matterbridge restarts, indicating that the controller is still using a session from the previous connection that has since been closed.
 After some time, the controller will reconnect.
