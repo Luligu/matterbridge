@@ -183,9 +183,9 @@ export class MatterbridgePlatform {
       for (const d of device) if (this.config.whiteList.includes(d)) whiteListPassed++;
     } else whiteListPassed++;
     if (whiteListPassed > 0) {
-      if (log) this.log.info(`Skipping device ${CYAN}${device.join(', ')}${nf} because not in whitelist`);
       return true;
     }
+    if (log) this.log.info(`Skipping device ${CYAN}${device.join(', ')}${nf} because not in whitelist`);
     return false;
   }
 
