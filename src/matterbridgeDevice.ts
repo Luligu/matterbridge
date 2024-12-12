@@ -298,12 +298,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {boolean} [debug=false] - Whether to enable debug logging.
    * @returns {MatterbridgeDevice} - The child endpoint that was found or added.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   addChildDeviceType(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeDevice {
     this.log.debug(`addChildDeviceType: ${CYAN}${endpointName}${db}`);
     let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName) as MatterbridgeDevice;
     if (!child) {
-      child = new MatterbridgeDevice(deviceTypes, { uniqueStorageKey: endpointName });
+      child = new MatterbridgeDevice(deviceTypes, { uniqueStorageKey: endpointName }, debug);
       if ('tagList' in options) {
         for (const tag of options.tagList as Semtag[]) {
           this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
@@ -335,12 +334,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {boolean} [debug=false] - Whether to enable debug logging.
    * @returns {MatterbridgeDevice} - The child endpoint that was found or added.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeDevice {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
     let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName) as MatterbridgeDevice;
     if (!child) {
-      child = new MatterbridgeDevice(deviceTypes, { uniqueStorageKey: endpointName });
+      child = new MatterbridgeDevice(deviceTypes, { uniqueStorageKey: endpointName }, debug);
       if ('tagList' in options) {
         for (const tag of options.tagList as Semtag[]) {
           this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
