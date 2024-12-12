@@ -4,11 +4,10 @@ All notable changes to this project will be documented in this file.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
-### Home Assistant Community Add-ons
+### Home Assistant
 
-The Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. I strongly advise against using them. If you do use them and encounter an issue (which is likely because some do not meet the Matterbridge guidelines), please do not open an issue in the Matterbridge repository.
-
-If you want to run Matterbridge in Home Assistant please use the official add-on https://github.com/Luligu/matterbridge-home-assistant-addon that also has Ingress and side panel. It's available
+If you want to run Matterbridge in Home Assistant please use the official add-on https://github.com/Luligu/matterbridge-home-assistant-addon that also has Ingress and side panel. 
+It is also available the official Matterbridge Home Assistant plugin https://github.com/Luligu/matterbridge-hass.
 
 ### Discord
 
