@@ -255,11 +255,13 @@ function Header() {
         <div className="header" style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
           <Tooltip title="Matterbridge status">
             {online ? <span className="status-enabled"  style={{ cursor: 'default' }}>Online</span> : <span className="status-disabled" style={{ cursor: 'default' }}>Offline</span>}
-          </Tooltip>        
-          <Tooltip title="Sponsor Matterbridge and its plugins">
-            <span className="status-sponsor" onClick={handleSponsorClick}>Sponsor</span> 
-          </Tooltip>        
-          {matterbridgeInfo.matterbridgeLatestVersion === undefined || matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion ?
+          </Tooltip>
+          {matterbridgeInfo && !matterbridgeInfo.readOnly &&        
+            <Tooltip title="Sponsor Matterbridge and its plugins">
+              <span className="status-sponsor" onClick={handleSponsorClick}>Sponsor</span> 
+            </Tooltip>
+          }        
+          {matterbridgeInfo.matterbridgeLatestVersion === undefined || matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion || matterbridgeInfo.readOnly ?
             <Tooltip title="Matterbridge version"><span className="status-information" onClick={handleChangelogClick}>v.{matterbridgeInfo.matterbridgeVersion}</span></Tooltip> :
             <Tooltip title="New Matterbridge version available, click to install"><span className="status-warning" onClick={handleUpdateClick}>Update v.{matterbridgeInfo.matterbridgeVersion} to v.{matterbridgeInfo.matterbridgeLatestVersion}</span></Tooltip> 
           }  
@@ -290,11 +292,13 @@ function Header() {
               <AnnouncementOutlinedIcon/>
             </IconButton>
           </Tooltip>
-          <Tooltip title="Update matterbridge">
-            <IconButton onClick={handleUpdateClick}>
-              <SystemUpdateAltIcon/>
-            </IconButton>
-          </Tooltip>
+          {matterbridgeInfo && !matterbridgeInfo.readOnly && 
+            <Tooltip title="Update matterbridge">
+              <IconButton onClick={handleUpdateClick}>
+                <SystemUpdateAltIcon/>
+              </IconButton>
+            </Tooltip>
+          }
           <Tooltip title="Restart matterbridge">
             <IconButton onClick={handleRestartClick}>
               <RestartAltIcon/>
@@ -313,10 +317,12 @@ function Header() {
             </IconButton>
           </Tooltip>
           <Menu id="command-menu" anchorEl={menuAnchorEl} keepMounted open={Boolean(menuAnchorEl)} onClose={() => handleMenuClose('')} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
-            <MenuItem onClick={() => handleMenuClose('update')}>
-              <ListItemIcon><SystemUpdateAltIcon /></ListItemIcon>
-              <ListItemText primary="Update" />
-            </MenuItem>
+            {matterbridgeInfo && !matterbridgeInfo.readOnly && 
+              <MenuItem onClick={() => handleMenuClose('update')}>
+                <ListItemIcon><SystemUpdateAltIcon /></ListItemIcon>
+                <ListItemText primary="Update" />
+              </MenuItem>
+            }
             <MenuItem onClick={() => handleMenuClose('restart')}>
               <ListItemIcon><RestartAltIcon /></ListItemIcon>
               <ListItemText primary="Restart" />

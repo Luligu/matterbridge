@@ -114,6 +114,7 @@ export class Matterbridge extends EventEmitter {
     bridgeMode: '',
     restartMode: '',
     edge: hasParameter('edge'),
+    readOnly: hasParameter('readonly'),
     profile: getParameter('profile'),
     loggerLevel: LogLevel.INFO,
     fileLogger: false,
