@@ -150,45 +150,6 @@ export class MatterbridgeEdge extends Matterbridge {
     this.log.info('Matter node storage closed');
   }
 
-  override createMatterServer(storageManager: StorageManager): MatterServer {
-    if (hasParameter('debug')) this.log.warn('createMatterServer() => mock MatterServer.addCommissioningServer()');
-    const matterServer = {
-      addCommissioningServer: (commissioningServer: CommissioningServer, nodeOptions?: NodeOptions) => {
-        if (hasParameter('debug')) this.log.warn('MatterServer.addCommissioningServer() => do nothing');
-      },
-    } as unknown as MatterServer;
-    return matterServer;
-  }
-
-  override async startMatterServer() {
-    if (hasParameter('debug')) this.log.warn('startMatterServer() => do nothing');
-  }
-
-  override async stopMatterServer() {
-    if (hasParameter('debug')) this.log.warn('stopMatterServer() => ...');
-    this.log.info(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
-    if (this.bridgeMode === 'bridge') {
-      const serverNode = this.csToServerNode.get('Matterbridge')?.serverNode;
-      if (serverNode) {
-        await this.stopServerNode(serverNode);
-        this.log.info(`Stopped matter server node Matterbridge`);
-      }
-    }
-    if (this.bridgeMode === 'childbridge') {
-      this.plugins.forEach(async (plugin) => {
-        const serverNode = this.csToServerNode.get(plugin.name)?.serverNode;
-        if (serverNode) {
-          await this.stopServerNode(serverNode);
-          this.log.info(`Stopped matter server node ${plugin.name}`);
-        }
-      });
-    }
-    this.log.info('Stopped matter server nodes');
-
-    await this.environment.get(MdnsService)[Symbol.asyncDispose]();
-    this.log.info('Stopped MdnsService');
-  }
-
   /**
    * Creates a server node storage context.
    *
@@ -337,6 +298,19 @@ export class MatterbridgeEdge extends Matterbridge {
           this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
           this.log.notice(`Manual pairing code: ${manualPairingCode}`);
         }
+        if (this.bridgeMode === 'childbridge') {
+          const plugin = this.plugins.get(storeId);
+          if (plugin) {
+            plugin.qrPairingCode = qrPairingCode;
+            plugin.manualPairingCode = manualPairingCode;
+            plugin.fabricInformations = [];
+            plugin.sessionInformations = [];
+            plugin.paired = false;
+            plugin.connected = false;
+            this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
+            this.log.notice(`Manual pairing code: ${manualPairingCode}`);
+          }
+        }
       } else {
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
         sanitizeFabrics(serverNode.state.commissioning.fabrics);
@@ -442,15 +416,33 @@ export class MatterbridgeEdge extends Matterbridge {
       this.log.error(`Error adding bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) plugin ${plg}${pluginName}${er} not found`);
       return;
     }
-
     // Register and add the device to the matterbridge aggregator node
     if (this.bridgeMode === 'bridge') {
       this.log.info(`Adding ${pluginName}:${device.deviceName} to Matterbridge aggregator node`);
       const aggregatorNode = this.agToAggregatorEndpoint.get('Matterbridge')?.aggregatorNode;
       await aggregatorNode?.add(device);
     } else if (this.bridgeMode === 'childbridge') {
+      if (plugin.type === 'AccessoryPlatform') {
+        if (!plugin.locked && device.deviceName && device.vendorId && device.productId && device.vendorName && device.productName) {
+          plugin.locked = true;
+          plugin.storageContext = await this.createServerNodeContext(plugin.name, device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
+          plugin.commissioningServer = (await this.createServerNode(plugin.storageContext, this.port++, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined)) as unknown as CommissioningServer;
+          this.log.debug(`Adding matterbridge endpoint to server node for plugin ${plg}${plugin.name}${db}`);
+          await (plugin.commissioningServer as unknown as ServerNode).add(device);
+          this.csToServerNode.set(plugin.name, { commissioningServer: plugin.commissioningServer as unknown as CommissioningServer, serverNode: plugin.commissioningServer as unknown as ServerNode });
+        }
+      }
       if (plugin.type === 'DynamicPlatform') {
-        this.log.info(`Adding ${pluginName}:${device.deviceName} to ${pluginName} aggregator node`);
+        if (!plugin.locked) {
+          plugin.locked = true;
+          plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', bridge.code, this.aggregatorVendorId, 'Matterbridge', this.aggregatorProductId, plugin.description);
+          plugin.commissioningServer = (await this.createServerNode(plugin.storageContext, this.port++, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined)) as unknown as CommissioningServer;
+          plugin.aggregator = (await this.createAggregatorNode(plugin.storageContext)) as unknown as Aggregator;
+          this.log.debug(`Adding matter aggregator node to server node for plugin ${plg}${plugin.name}${db}`);
+          await (plugin.commissioningServer as unknown as ServerNode).add(plugin.aggregator as unknown as EndpointNode<AggregatorEndpoint>);
+          this.csToServerNode.set(plugin.name, { commissioningServer: plugin.commissioningServer as unknown as CommissioningServer, serverNode: plugin.commissioningServer as unknown as ServerNode });
+          this.agToAggregatorEndpoint.set(plugin.name, { aggregator: plugin.aggregator, aggregatorNode: plugin.aggregator as unknown as EndpointNode<AggregatorEndpoint> });
+        }
         const aggregatorNode = this.agToAggregatorEndpoint.get(pluginName)?.aggregatorNode;
         await aggregatorNode?.add(device);
       }
@@ -513,6 +505,49 @@ export class MatterbridgeEdge extends Matterbridge {
     for (const device of this.devices.array().filter((device) => device.plugin === pluginName)) {
       await this.removeBridgedEndpoint(pluginName, device as unknown as MatterbridgeEndpoint);
     }
+  }
+
+  /**
+   * override from Matterbridge
+   */
+
+  override createMatterServer(storageManager: StorageManager): MatterServer {
+    if (hasParameter('debug')) this.log.warn('createMatterServer() => mock MatterServer.addCommissioningServer()');
+    const matterServer = {
+      addCommissioningServer: (commissioningServer: CommissioningServer, nodeOptions?: NodeOptions) => {
+        if (hasParameter('debug')) this.log.warn('MatterServer.addCommissioningServer() => do nothing');
+      },
+    } as unknown as MatterServer;
+    return matterServer;
+  }
+
+  override async startMatterServer() {
+    if (hasParameter('debug')) this.log.warn('startMatterServer() => do nothing');
+  }
+
+  override async stopMatterServer() {
+    if (hasParameter('debug')) this.log.warn('stopMatterServer() => ...');
+    this.log.info(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
+    if (this.bridgeMode === 'bridge') {
+      const serverNode = this.csToServerNode.get('Matterbridge')?.serverNode;
+      if (serverNode) {
+        await this.stopServerNode(serverNode);
+        this.log.info(`Stopped matter server node Matterbridge`);
+      }
+    }
+    if (this.bridgeMode === 'childbridge') {
+      for (const plugin of this.plugins.array()) {
+        const serverNode = this.csToServerNode.get(plugin.name)?.serverNode;
+        if (serverNode) {
+          await this.stopServerNode(serverNode);
+          this.log.info(`Stopped matter server node ${plugin.name}`);
+        }
+      }
+    }
+    this.log.info('Stopped matter server nodes');
+
+    await this.environment.get(MdnsService)[Symbol.asyncDispose]();
+    this.log.info('Stopped MdnsService');
   }
 
   override async createCommissioningServerContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string): Promise<StorageContext> {
