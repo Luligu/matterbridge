@@ -271,6 +271,14 @@ export class MatterbridgeEdge extends Matterbridge {
         this.matterbridgeSessionInformations = [];
         this.matterbridgePaired = true;
       }
+      if (this.bridgeMode === 'childbridge') {
+        const plugin = this.plugins.get(storeId);
+        if (plugin) {
+          plugin.fabricInformations = sanitizedFabrics;
+          plugin.sessionInformations = [];
+          plugin.paired = true;
+        }
+      }
     };
 
     /**
@@ -361,6 +369,12 @@ export class MatterbridgeEdge extends Matterbridge {
       this.log.debug(`Sessions: ${debugStringify(sanitizedSessions)}`);
       if (this.bridgeMode === 'bridge') {
         this.matterbridgeSessionInformations = sanitizedSessions;
+      }
+      if (this.bridgeMode === 'childbridge') {
+        const plugin = this.plugins.get(storeId);
+        if (plugin) {
+          plugin.sessionInformations = sanitizedSessions;
+        }
       }
     };
 
