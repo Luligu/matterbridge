@@ -318,10 +318,12 @@ export class Matterbridge extends EventEmitter {
     this.port = getIntParameter('port') ?? (await this.nodeContext.get<number>('matterport', 5540)) ?? 5540;
 
     // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode)
-    this.passcode = getIntParameter('passcode') ?? (await this.nodeContext.get<number>('matterpasscode'));
+    this.passcode = this.passcode ?? getIntParameter('passcode') ?? (await this.nodeContext.get<number>('matterpasscode'));
 
     // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode)
-    this.discriminator = getIntParameter('discriminator') ?? (await this.nodeContext.get<number>('matterdiscriminator'));
+    this.discriminator = this.discriminator ?? getIntParameter('discriminator') ?? (await this.nodeContext.get<number>('matterdiscriminator'));
+
+    this.log.debug(`Initializing commissioning server for Matterbridge... on port ${this.port} with passcode ${this.passcode} and discriminator ${this.discriminator}`);
 
     // Set matterbridge logger level (context: matterbridgeLogLevel)
     if (hasParameter('logger')) {
