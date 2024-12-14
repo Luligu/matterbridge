@@ -397,7 +397,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === RelativeHumidityMeasurement.Cluster.id) return RelativeHumidityMeasurementServer;
     if (clusterId === PressureMeasurement.Cluster.id) return PressureMeasurementServer;
     if (clusterId === FlowMeasurement.Cluster.id) return FlowMeasurementServer;
-    if (clusterId === BooleanState.Cluster.id) return BooleanStateServer;
+    if (clusterId === BooleanState.Cluster.id) return BooleanStateServer.enable({ events: { stateChange: true } });
     if (clusterId === BooleanStateConfiguration.Cluster.id) return MatterbridgeBooleanStateConfigurationServer;
     if (clusterId === OccupancySensing.Cluster.id) return OccupancySensingServer;
     if (clusterId === IlluminanceMeasurement.Cluster.id) return IlluminanceMeasurementServer;
