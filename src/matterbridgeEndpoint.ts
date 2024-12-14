@@ -148,7 +148,6 @@ import { RelativeHumidityMeasurementServer } from '@matter/node/behaviors/relati
 import { PressureMeasurementServer } from '@matter/node/behaviors/pressure-measurement';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { FlowMeasurementServer } from '@matter/node/behaviors/flow-measurement';
-import { TimeSynchronizationServer } from '@matter/node/behaviors/time-synchronization';
 import { IlluminanceMeasurementServer } from '@matter/node/behaviors/illuminance-measurement';
 import { BooleanStateServer } from '@matter/node/behaviors/boolean-state';
 import { OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
@@ -724,13 +723,6 @@ export class MatterbridgeEndpoint extends Endpoint {
 
     const behavior = MatterbridgeEndpoint.getBehaviourTypeFromClusterServerId(cluster.id, this.subType);
 
-    /*
-    if (cluster.id === PowerTopologyCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
-    if (cluster.id === ElectricalPowerMeasurementCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
-    if (cluster.id === ElectricalEnergyMeasurementCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
-    if (cluster.id === ThermostatCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
-    */
-
     this.clusterServers.set(cluster.id, cluster as unknown as ClusterServerObj);
 
     if (cluster.id === BasicInformationCluster.id) return; // Not used in Matterbridge edge for devices. Only on server node.
@@ -799,7 +791,6 @@ export class MatterbridgeEndpoint extends Endpoint {
       return;
     }
     this.log.debug(`addFixedLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
-    // if (this.construction.status !== Lifecycle.Status.Active) await this.construction.ready;
     const labelList = (this.getAttribute(FixedLabelCluster.id, 'labelList', this.log) ?? []).filter((entryLabel: { label: string; value: string }) => entryLabel.label !== label);
     labelList.push({ label, value });
     await this.setAttribute(FixedLabelCluster.id, 'labelList', labelList, this.log);
@@ -820,7 +811,6 @@ export class MatterbridgeEndpoint extends Endpoint {
       return;
     }
     this.log.debug(`addUserLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
-    // if (this.construction.status !== Lifecycle.Status.Active) await this.construction.ready;
     const labelList = (this.getAttribute(UserLabelCluster.id, 'labelList', this.log) ?? []).filter((entryLabel: { label: string; value: string }) => entryLabel.label !== label);
     labelList.push({ label, value });
     await this.setAttribute(UserLabelCluster.id, 'labelList', labelList, this.log);
@@ -891,7 +881,6 @@ export class MatterbridgeEndpoint extends Endpoint {
 
     if (endpoint.construction.status !== Lifecycle.Status.Active) {
       this.log.error(`setAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
-      // await endpoint.construction.ready;
       return false;
     }
 
@@ -910,7 +899,6 @@ export class MatterbridgeEndpoint extends Endpoint {
     let oldValue = state[clusterName][attribute];
     if (typeof oldValue === 'object') oldValue = deepCopy(oldValue);
     await endpoint.setStateOf(endpoint.behaviors.supported[clusterName], { [attribute]: value });
-    // await endpoint.set({ [clusterName]: { [attribute]: value } });
     log?.info(
       `${db}Set endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${this.capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db} ` +
         `from ${YELLOW}${typeof oldValue === 'object' ? debugStringify(oldValue) : oldValue}${db} ` +
@@ -1087,12 +1075,10 @@ export class MatterbridgeEndpoint extends Endpoint {
       },
       {
         identify: async (data) => {
-          this.log.debug('Matter command: Identify');
-          await this.commandHandler.executeHandler('identify', data);
+          // Never called in edge
         },
         triggerEffect: async (data) => {
-          this.log.debug('Matter command: TriggerEffect');
-          await this.commandHandler.executeHandler('triggerEffect', data);
+          // Never called in edge
         },
       },
     );

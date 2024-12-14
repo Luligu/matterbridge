@@ -33,6 +33,10 @@ It is possible that some controllers see them as new devices or need time to rea
 
 - [Device]: Fix addChildDeviceType methods to include debug parameter in MatterbridgeDevice instantiation.
 
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.6.6] - 2024-12-12
 
 ### Added
