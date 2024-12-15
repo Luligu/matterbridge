@@ -226,14 +226,18 @@ It exposes:
 - a light with onOff
 - a light with onOff and levelControl (dimmer)
 - a light with onOff, levelControl and colorControl (with XY, HS and CT) clusters
-- a light with onOff, levelControl and colorControl (with HS only) clusters
-- a light with onOff, levelControl and colorControl (with XY only) clusters
+- a light with onOff, levelControl and colorControl (with HS and CT) clusters
+- a light with onOff, levelControl and colorControl (with XY and CT) clusters
 - a light with onOff, levelControl and colorControl (with CT only) clusters
 - an outlet (plug) with onOff cluster
 - a cover with windowCovering cluster
 - a lock with doorLock cluster
-- a thermo with thermostat cluster and 3 sub endpoints with flowMeasurement cluster, temperatureMeasurement cluster
+- a thermo autoMode (i.e. with Auto Heat and Cool features) with thermostat cluster and 3 sub endpoints with flowMeasurement cluster, temperatureMeasurement cluster
   and relativeHumidityMeasurement cluster (to show how to create a composed device with sub endpoints)
+- a thermo heat only with two external temperature sensors (tagged like Indoor and Outdoor)
+- a thermo cool only
+- an airConditioner device
+- an airPurifier device with temperature and humidity sensor (supported by Apple Home)
 - a fan with FanControl cluster
 - a rainSensor device
 - a waterFreezeDetector device
