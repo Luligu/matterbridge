@@ -189,7 +189,6 @@ export class MatterbridgePlatform {
     return false;
   }
 
-  // TODO: remove when matterbridge 1.6.6 is published
   /**
    * Validates if an entity is allowed based on the entity blacklist and device-entity blacklist configurations.
    *
