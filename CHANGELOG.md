@@ -18,13 +18,15 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 In this release some device types and the OnOff, LevelControl and ColorControl have been updated to be fully compliant with Matter 1.3 specifications.
 It is possible that some controllers see them as new devices or need time to read the new clusters. It can be useful after the upgrade to power off the controller, wait a few minutes and power it on again.
 
-## [1.6.7-dev.3] - 2024-12-15
+## [1.6.7] - 2024-12-15
 
 ### Added
 
 - [readme]: Update README to clarify Node.js installation instructions and emphasize LTS version.
 - [deviceTypes]: Add airPurifier definition.
 - [deviceTypes]: Add pumpDevice definition.
+- [clusters]: Add PumpConfigurationAndControl cluster.
+- [clusters]: Add ValveConfigurationAndControl cluster.
 
 ### Changed
 
