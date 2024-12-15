@@ -202,13 +202,17 @@ export const coverDevice = DeviceTypeDefinition({
   optionalServerClusters: [Groups.Cluster.id /* , Scenes.Cluster.id,*/],
 });
 
+/**
+ *  Remark: it may have a thermostat device.
+ *  Additional device types MAY also be included in device compositions.
+ */
 export const fanDevice = DeviceTypeDefinition({
   name: 'MA-fan',
   code: 0x2b,
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [Identify.Cluster.id, FanControl.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id /* , Scenes.Cluster.id,*/],
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, FanControl.Cluster.id],
+  optionalServerClusters: [],
 });
 
 export const thermostatDevice = DeviceTypeDefinition({
@@ -404,7 +408,7 @@ export const airPurifier = DeviceTypeDefinition({
 
 /**
  *  Remark: it may have a temperature sensor and a humidity sensor device.
- *  Additional device types not listed in this table MAY also be included in device compositions.
+ *  Additional device types MAY also be included in device compositions.
  *  The DF (Dead Front) feature is required for the On/Off cluster in this device type.
  */
 export const airConditioner = DeviceTypeDefinition({
