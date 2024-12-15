@@ -1172,7 +1172,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Get a default OnOff cluster server.
+   * Get a default OnOff cluster server for light devices.
    *
    * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
    * @param {boolean} [globalSceneControl=false] - The global scene control state.
@@ -1223,7 +1223,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Creates a default OnOff cluster server.
+   * Creates a default OnOff cluster server for light devices.
    *
    * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
    * @param {boolean} [globalSceneControl=false] - The global scene control state.
@@ -1233,6 +1233,46 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createDefaultOnOffClusterServer(onOff = false, globalSceneControl = false, onTime = 0, offWaitTime = 0, startUpOnOff: OnOff.StartUpOnOff | null = null) {
     this.addClusterServer(this.getDefaultOnOffClusterServer(onOff, globalSceneControl, onTime, offWaitTime, startUpOnOff));
+  }
+
+  /**
+   * Get an OnOff cluster server without features.
+   *
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   *
+   * @returns {ClusterServer} - The configured OnOff cluster server.
+   */
+  getOnOffClusterServer(onOff = false) {
+    return ClusterServer(
+      OnOffCluster,
+      {
+        onOff,
+      },
+      {
+        on: async (data) => {
+          this.log.debug('Matter command: on');
+          await this.commandHandler.executeHandler('on', data);
+        },
+        off: async (data) => {
+          this.log.debug('Matter command: off');
+          await this.commandHandler.executeHandler('off', data);
+        },
+        toggle: async (data) => {
+          this.log.debug('Matter command: toggle');
+          await this.commandHandler.executeHandler('toggle', data);
+        },
+      },
+      {},
+    );
+  }
+
+  /**
+   * Creates an OnOff cluster server without features.
+   *
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   */
+  createOnOffClusterServer(onOff = false) {
+    this.addClusterServer(this.getOnOffClusterServer(onOff));
   }
 
   /**

@@ -1449,7 +1449,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Get a default OnOff cluster server.
+   * Get a default OnOff cluster server for light devices.
    *
    * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
    * @param {boolean} [globalSceneControl=false] - The global scene control state.
@@ -1492,7 +1492,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     );
   }
   /**
-   * Creates a default OnOff cluster server.
+   * Creates a default OnOff cluster server for light devices.
    *
    * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
    * @param {boolean} [globalSceneControl=false] - The global scene control state.
@@ -1503,6 +1503,43 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultOnOffClusterServer(onOff = false, globalSceneControl = false, onTime = 0, offWaitTime = 0, startUpOnOff: OnOff.StartUpOnOff | null = null) {
     this.addClusterServer(this.getDefaultOnOffClusterServer(onOff, globalSceneControl, onTime, offWaitTime, startUpOnOff));
+  }
+
+  /**
+   * Get an OnOff cluster server without features.
+   *
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   *
+   * @returns {ClusterServer} - The configured OnOff cluster server.
+   */
+  getOnOffClusterServer(onOff = false) {
+    return ClusterServer(
+      OnOffCluster,
+      {
+        onOff,
+      },
+      {
+        on: async (data) => {
+          // Never called in edge
+        },
+        off: async (data) => {
+          // Never called in edge
+        },
+        toggle: async (data) => {
+          // Never called in edge
+        },
+      },
+      {},
+    );
+  }
+
+  /**
+   * Creates an OnOff cluster server without features.
+   *
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   */
+  createOnOffClusterServer(onOff = false) {
+    this.addClusterServer(this.getOnOffClusterServer(onOff));
   }
 
   /**
