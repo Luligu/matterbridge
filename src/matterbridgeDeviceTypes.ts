@@ -203,8 +203,9 @@ export const coverDevice = DeviceTypeDefinition({
 });
 
 /**
- *  Remark: it may have a thermostat device.
+ *  Remark: it may have a thermostat device type.
  *  Additional device types MAY also be included in device compositions.
+ *  The FanControl cluster must have the FanModeSequence attribute.
  */
 export const fanDevice = DeviceTypeDefinition({
   name: 'MA-fan',
@@ -398,7 +399,7 @@ export const waterValve = DeviceTypeDefinition({
 });
 
 /**
- *  Remark: it may have a Thermostat, Temperature Sensor, Humidity Sensor and an Air Quality Sensor.
+ *  Remark: it may have a Thermostat, Temperature Sensor, Humidity Sensor and an Air Quality Sensor device type.
  *  Additional device types MAY also be included in device compositions.
  */
 export const airPurifier = DeviceTypeDefinition({
@@ -413,7 +414,12 @@ export const airPurifier = DeviceTypeDefinition({
 /**
  *  Remark: it may have a temperature sensor and a humidity sensor device.
  *  Additional device types MAY also be included in device compositions.
- *  The DF (Dead Front) feature is required for the On/Off cluster in this device type.
+ *  The DF (Dead Front) feature is required for the On/Off cluster in this device type:
+ *  - Thermostat                      LocalTemperature    null
+ *  - Temperature Measurement         MeasuredValue       null
+ *  - Relative Humidity Measurement   MeasuredValue       null
+ *  - Fan Control                     SpeedSetting        null
+ *  - Fan Control                     PercentSetting      null
  */
 export const airConditioner = DeviceTypeDefinition({
   name: 'MA-airConditioner',
