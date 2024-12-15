@@ -5,7 +5,29 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { MatterbridgeEdge } from './matterbridgeEdge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { bridge, coverDevice, dimmableLight, doorLockDevice, electricalSensor, genericSwitch, occupancySensor, onOffLight, onOffOutlet, onOffSwitch, powerSource, thermostatDevice } from './matterbridgeDeviceTypes.js';
+import {
+  bridge,
+  colorTemperatureLight,
+  contactSensor,
+  coverDevice,
+  dimmableLight,
+  doorLockDevice,
+  electricalSensor,
+  flowSensor,
+  genericSwitch,
+  humiditySensor,
+  lightSensor,
+  occupancySensor,
+  onOffLight,
+  onOffOutlet,
+  onOffSwitch,
+  powerSource,
+  pressureSensor,
+  pumpDevice,
+  temperatureSensor,
+  thermostatDevice,
+  waterValve,
+} from './matterbridgeDeviceTypes.js';
 import { getMacAddress } from './utils/utils.js';
 
 import { DeviceTypeId, VendorId, Environment, ServerNode, Endpoint, EndpointServer, StorageContext } from '@matter/main';
@@ -28,6 +50,7 @@ import {
   PressureMeasurementCluster,
   RelativeHumidityMeasurement,
   RelativeHumidityMeasurementCluster,
+  SwitchCluster,
   TemperatureMeasurementCluster,
   WindowCovering,
   WindowCoveringCluster,
@@ -40,6 +63,7 @@ import { log } from 'console';
 import e from 'express';
 import exp from 'constants';
 import { DescriptorBehavior, GroupsBehavior, IdentifyBehavior, OccupancySensingBehavior, OnOffBehavior } from '@matter/main/behaviors';
+import { temperature } from '@matter/main/model';
 
 describe('MatterbridgeEndpoint class', () => {
   let edge: MatterbridgeEdge;
@@ -230,16 +254,18 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('add contact child to onOffLight', async () => {
-      const deviceType = DeviceTypes.CONTACT_SENSOR;
-      const childEndpoint = device.addChildDeviceTypeWithClusterServer('contactChild-1', [deviceType], [BooleanStateCluster.id]);
+      const deviceType = contactSensor;
+      // const childEndpoint = device.addChildDeviceTypeWithClusterServer('contactChild-1', [deviceType], [BooleanStateCluster.id]);
+      const childEndpoint = device.addChildDeviceType('contactChild-1', [deviceType]);
       expect(childEndpoint).toBeDefined();
-      childEndpoint.addClusterServer(childEndpoint.getDefaultBooleanStateClusterServer(false));
+      childEndpoint.createDefaultIdentifyClusterServer();
+      childEndpoint.createDefaultBooleanStateClusterServer(false);
       expect(device.getChildEndpointByName('contactChild-1')).toBeDefined();
       expect(device.getChildEndpoints().length).toBe(1);
     });
 
     test('add motion child to onOffLight', async () => {
-      const deviceType = DeviceTypes.OCCUPANCY_SENSOR;
+      const deviceType = occupancySensor;
       const childEndpoint = device.addChildDeviceTypeWithClusterServer('occupancyChild-2', [deviceType], [OccupancySensingCluster.id]);
       expect(childEndpoint).toBeDefined();
       childEndpoint.addClusterServer(childEndpoint.getDefaultOccupancySensingClusterServer(false));
@@ -248,7 +274,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('add illuminance child to onOffLight', async () => {
-      const deviceType = DeviceTypes.LIGHT_SENSOR;
+      const deviceType = lightSensor;
       const childEndpoint = device.addChildDeviceTypeWithClusterServer('illuminanceChild-3', [deviceType], [IlluminanceMeasurementCluster.id]);
       expect(childEndpoint).toBeDefined();
       childEndpoint.addClusterServer(childEndpoint.getDefaultIlluminanceMeasurementClusterServer(200));
@@ -257,7 +283,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('add temperature child to onOffLight', async () => {
-      const deviceType = DeviceTypes.TEMPERATURE_SENSOR;
+      const deviceType = temperatureSensor;
       const childEndpoint = device.addChildDeviceTypeWithClusterServer('temperatureChild-4', [deviceType], [TemperatureMeasurementCluster.id]);
       expect(childEndpoint).toBeDefined();
       childEndpoint.addClusterServer(childEndpoint.getDefaultTemperatureMeasurementClusterServer(2500));
@@ -266,7 +292,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('add humidity child to onOffLight', async () => {
-      const deviceType = DeviceTypes.HUMIDITY_SENSOR;
+      const deviceType = humiditySensor;
       const childEndpoint = device.addChildDeviceTypeWithClusterServer('humidityChild-5', [deviceType], [RelativeHumidityMeasurementCluster.id]);
       expect(childEndpoint).toBeDefined();
       childEndpoint.addClusterServer(childEndpoint.getDefaultRelativeHumidityMeasurementClusterServer(8000));
@@ -275,7 +301,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('add pressure child to onOffLight', async () => {
-      const deviceType = DeviceTypes.PRESSURE_SENSOR;
+      const deviceType = pressureSensor;
       const childEndpoint = device.addChildDeviceTypeWithClusterServer('pressureChild-6', [deviceType], [PressureMeasurementCluster.id]);
       expect(childEndpoint).toBeDefined();
       childEndpoint.addClusterServer(childEndpoint.getDefaultPressureMeasurementClusterServer(900));
@@ -284,7 +310,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('add flow child to onOffLight', async () => {
-      const deviceType = DeviceTypes.FLOW_SENSOR;
+      const deviceType = flowSensor;
       const childEndpoint = device.addChildDeviceTypeWithClusterServer('flowChild-7', [deviceType], [FlowMeasurementCluster.id]);
       expect(childEndpoint).toBeDefined();
       childEndpoint.addClusterServer(childEndpoint.getDefaultFlowMeasurementClusterServer(900));
@@ -354,6 +380,10 @@ describe('MatterbridgeEndpoint class', () => {
       expect(deviceTypeList).toBeDefined();
       expect(deviceTypeList).toHaveLength(1);
       const tagList = device.getAttribute(DescriptorCluster.id, 'tagList');
+      device.setAttribute(DescriptorCluster.id, 'tagList', tagList);
+      device.subscribeAttribute(DescriptorCluster.id, 'tagList', (newValue: any, oldValue: any) => {
+        //
+      });
       expect(tagList).toBeDefined();
       expect(tagList).toHaveLength(1);
       expect(deviceTypeList[0].deviceType).toBe(onOffOutlet.code);
@@ -779,6 +809,180 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.type.deviceType).toBe(deviceType.code);
       expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
       expect(device.type.deviceRevision).toBe(deviceType.revision);
+      device.createOnOffClusterServer();
+      device.addRequiredClusterServers(device);
+
+      await server.add(device);
+      await edge.startServerNode(server);
+      expect(server.lifecycle.isOnline).toBe(true);
+      expect(server.lifecycle.isCommissioned).toBe(false);
+      await edge.stopServerNode(server);
+      await server.env.get(MdnsService)[Symbol.asyncDispose]();
+      expect(server.lifecycle.isOnline).toBe(false);
+    });
+
+    test('create a dimmableLight device', async () => {
+      const deviceType = dimmableLight;
+      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await edge.createServerNode(context);
+      const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
+      expect(device).toBeDefined();
+      expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
+      expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
+      expect(device.type.deviceType).toBe(deviceType.code);
+      expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
+      expect(device.type.deviceRevision).toBe(deviceType.revision);
+      device.createDefaultOnOffClusterServer();
+      device.createDefaultLevelControlClusterServer();
+      device.addRequiredClusterServers(device);
+
+      await server.add(device);
+      await edge.startServerNode(server);
+      expect(server.lifecycle.isOnline).toBe(true);
+      expect(server.lifecycle.isCommissioned).toBe(false);
+      await edge.stopServerNode(server);
+      await server.env.get(MdnsService)[Symbol.asyncDispose]();
+      expect(server.lifecycle.isOnline).toBe(false);
+    });
+
+    test('create a colorTemperatureLight device', async () => {
+      const deviceType = colorTemperatureLight;
+      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await edge.createServerNode(context);
+      const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
+      expect(device).toBeDefined();
+      expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
+      expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
+      expect(device.type.deviceType).toBe(deviceType.code);
+      expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
+      expect(device.type.deviceRevision).toBe(deviceType.revision);
+      device.createDefaultOnOffClusterServer();
+      device.createDefaultLevelControlClusterServer();
+      device.createDefaultColorControlClusterServer();
+      device.addRequiredClusterServers(device);
+
+      await server.add(device);
+      await edge.startServerNode(server);
+      expect(server.lifecycle.isOnline).toBe(true);
+      expect(server.lifecycle.isCommissioned).toBe(false);
+      await edge.stopServerNode(server);
+      await server.env.get(MdnsService)[Symbol.asyncDispose]();
+      expect(server.lifecycle.isOnline).toBe(false);
+    });
+
+    test('create a colorTemperatureLight HS device', async () => {
+      const deviceType = colorTemperatureLight;
+      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await edge.createServerNode(context);
+      const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
+      expect(device).toBeDefined();
+      expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
+      expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
+      expect(device.type.deviceType).toBe(deviceType.code);
+      expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
+      expect(device.type.deviceRevision).toBe(deviceType.revision);
+      device.createDefaultOnOffClusterServer();
+      device.createDefaultLevelControlClusterServer();
+      device.createHsColorControlClusterServer();
+      device.addRequiredClusterServers(device);
+
+      await server.add(device);
+      await edge.startServerNode(server);
+      expect(server.lifecycle.isOnline).toBe(true);
+      expect(server.lifecycle.isCommissioned).toBe(false);
+      await edge.stopServerNode(server);
+      await server.env.get(MdnsService)[Symbol.asyncDispose]();
+      expect(server.lifecycle.isOnline).toBe(false);
+    });
+
+    test('create a colorTemperatureLight XY device', async () => {
+      const deviceType = colorTemperatureLight;
+      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await edge.createServerNode(context);
+      const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
+      expect(device).toBeDefined();
+      expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
+      expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
+      expect(device.type.deviceType).toBe(deviceType.code);
+      expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
+      expect(device.type.deviceRevision).toBe(deviceType.revision);
+      device.createDefaultOnOffClusterServer();
+      device.createDefaultLevelControlClusterServer();
+      device.createXyColorControlClusterServer();
+      device.addRequiredClusterServers(device);
+
+      await server.add(device);
+      await edge.startServerNode(server);
+      expect(server.lifecycle.isOnline).toBe(true);
+      expect(server.lifecycle.isCommissioned).toBe(false);
+      await edge.stopServerNode(server);
+      await server.env.get(MdnsService)[Symbol.asyncDispose]();
+      expect(server.lifecycle.isOnline).toBe(false);
+    });
+
+    test('create a colorTemperatureLight CT device', async () => {
+      const deviceType = colorTemperatureLight;
+      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await edge.createServerNode(context);
+      const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
+      expect(device).toBeDefined();
+      expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
+      expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
+      expect(device.type.deviceType).toBe(deviceType.code);
+      expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
+      expect(device.type.deviceRevision).toBe(deviceType.revision);
+      device.createDefaultOnOffClusterServer();
+      device.createDefaultLevelControlClusterServer();
+      device.createCtColorControlClusterServer();
+      device.addRequiredClusterServers(device);
+
+      await server.add(device);
+      await edge.startServerNode(server);
+      expect(server.lifecycle.isOnline).toBe(true);
+      expect(server.lifecycle.isCommissioned).toBe(false);
+      await edge.stopServerNode(server);
+      await server.env.get(MdnsService)[Symbol.asyncDispose]();
+      expect(server.lifecycle.isOnline).toBe(false);
+    });
+
+    test('create a pumpDevice device', async () => {
+      const deviceType = pumpDevice;
+      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await edge.createServerNode(context);
+      const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
+      expect(device).toBeDefined();
+      expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
+      expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
+      expect(device.type.deviceType).toBe(deviceType.code);
+      expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
+      expect(device.type.deviceRevision).toBe(deviceType.revision);
+      device.createDefaultOnOffClusterServer();
+      device.createDefaultIdentifyClusterServer();
+      device.createDefaultPumpConfigurationAndControlClusterServer();
+      device.addRequiredClusterServers(device);
+
+      await server.add(device);
+      await edge.startServerNode(server);
+      expect(server.lifecycle.isOnline).toBe(true);
+      expect(server.lifecycle.isCommissioned).toBe(false);
+      await edge.stopServerNode(server);
+      await server.env.get(MdnsService)[Symbol.asyncDispose]();
+      expect(server.lifecycle.isOnline).toBe(false);
+    });
+
+    test('create a waterValve device', async () => {
+      const deviceType = waterValve;
+      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await edge.createServerNode(context);
+      const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
+      expect(device).toBeDefined();
+      expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
+      expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
+      expect(device.type.deviceType).toBe(deviceType.code);
+      expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
+      expect(device.type.deviceRevision).toBe(deviceType.revision);
+      device.createDefaultIdentifyClusterServer();
+      device.createDefaultValveConfigurationAndControlClusterServer();
       device.addRequiredClusterServers(device);
 
       await server.add(device);
@@ -801,6 +1005,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.type.deviceType).toBe(deviceType.code);
       expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
       expect(device.type.deviceRevision).toBe(deviceType.revision);
+      device.createDeadFrontOnOffClusterServer();
       device.addRequiredClusterServers(device);
 
       await server.add(device);
@@ -975,6 +1180,19 @@ describe('MatterbridgeEndpoint class', () => {
       await edge.startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
+
+      const feature = device.getAttribute(SwitchCluster.id, 'featureMap') as Record<string, boolean>;
+      expect(feature).toBeDefined();
+      expect(feature['latchingSwitch']).toBe(false);
+      expect(feature['momentarySwitch']).toBe(true);
+      expect(feature['momentarySwitchRelease']).toBe(true);
+      expect(feature['momentarySwitchLongPress']).toBe(true);
+      expect(feature['momentarySwitchMultiPress']).toBe(true);
+
+      device.triggerSwitchEvent('Single');
+      device.triggerSwitchEvent('Double');
+      device.triggerSwitchEvent('Long');
+
       await edge.stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
@@ -998,6 +1216,18 @@ describe('MatterbridgeEndpoint class', () => {
       await edge.startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
+
+      const feature = device.getAttribute(SwitchCluster.id, 'featureMap') as Record<string, boolean>;
+      expect(feature).toBeDefined();
+      expect(feature['latchingSwitch']).toBe(true);
+      expect(feature['momentarySwitch']).toBe(false);
+      expect(feature['momentarySwitchRelease']).toBe(false);
+      expect(feature['momentarySwitchLongPress']).toBe(false);
+      expect(feature['momentarySwitchMultiPress']).toBe(false);
+
+      device.triggerSwitchEvent('Press');
+      device.triggerSwitchEvent('Release');
+
       await edge.stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
