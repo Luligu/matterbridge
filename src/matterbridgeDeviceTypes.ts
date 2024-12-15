@@ -97,6 +97,14 @@ export const bridge = DeviceTypeDefinition({
   optionalServerClusters: [Identify.Cluster.id, Actions.Cluster.id],
 });
 
+export const aggregator = DeviceTypeDefinition({
+  name: 'MA-aggregator',
+  code: 0x000e,
+  deviceClass: DeviceClasses.Dynamic,
+  revision: 1,
+  optionalServerClusters: [Identify.Cluster.id, Actions.Cluster.id],
+});
+
 export const powerSource = DeviceTypeDefinition({
   name: 'MA-powerSource',
   code: 0x0011,

@@ -23,6 +23,8 @@ It is possible that some controllers see them as new devices or need time to rea
 ### Added
 
 - [readme]: Update README to clarify Node.js installation instructions and emphasize LTS version.
+- [deviceTypes]: Add airPurifier definition.
+- [deviceTypes]: Add pumpDevice definition.
 
 ### Changed
 
