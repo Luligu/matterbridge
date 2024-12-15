@@ -2094,8 +2094,8 @@ export class Matterbridge extends EventEmitter {
    * @param {StorageContext} context - The storage context.
    * @returns {Aggregator} - The created Matter Aggregator.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected async createMatterAggregator(context: StorageContext, pluginName: string): Promise<Aggregator> {
+    this.log.debug(`Creating matter aggregator for ${plg}${pluginName}${db}`);
     const matterAggregator = new Aggregator();
     return matterAggregator;
   }
