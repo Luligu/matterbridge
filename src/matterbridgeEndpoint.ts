@@ -115,6 +115,8 @@ import {
   PowerTopologyCluster,
   PressureMeasurement,
   PressureMeasurementCluster,
+  PumpConfigurationAndControl,
+  PumpConfigurationAndControlCluster,
   RadonConcentrationMeasurement,
   RadonConcentrationMeasurementCluster,
   RelativeHumidityMeasurement,
@@ -135,6 +137,8 @@ import {
   TotalVolatileOrganicCompoundsConcentrationMeasurementCluster,
   UserLabel,
   UserLabelCluster,
+  ValveConfigurationAndControl,
+  ValveConfigurationAndControlCluster,
   WindowCovering,
   WindowCoveringCluster,
 } from '@matter/main/clusters';
@@ -211,6 +215,9 @@ export interface MatterbridgeEndpointCommands {
 
   lockDoor: MakeMandatory<ClusterServerHandlers<typeof DoorLock.Complete>['lockDoor']>;
   unlockDoor: MakeMandatory<ClusterServerHandlers<typeof DoorLock.Complete>['unlockDoor']>;
+
+  open: MakeMandatory<ClusterServerHandlers<typeof ValveConfigurationAndControl.Complete>['open']>;
+  close: MakeMandatory<ClusterServerHandlers<typeof ValveConfigurationAndControl.Complete>['close']>;
 
   setpointRaiseLower: MakeMandatory<ClusterServerHandlers<typeof Thermostat.Complete>['setpointRaiseLower']>;
 
@@ -3354,6 +3361,83 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
     this.addClusterServer(this.getDefaultFanControlClusterServer(fanMode));
+  }
+
+  /**
+   * Returns the default Pump Configuration And Control cluster server.
+   *
+   * @param {PumpConfigurationAndControl.OperationMode} [pumpMode=PumpConfigurationAndControl.OperationMode.Normal] - The pump mode to set. Defaults to `PumpConfigurationAndControl.OperationMode.Normal`.
+   * @returns {ClusterServer} - The default Pump Configuration And Control cluster server.
+   */
+  getDefaultPumpConfigurationAndControlClusterServer(pumpMode = PumpConfigurationAndControl.OperationMode.Normal) {
+    return ClusterServer(
+      PumpConfigurationAndControlCluster.with(PumpConfigurationAndControl.Feature.ConstantSpeed),
+      {
+        minConstSpeed: null,
+        maxConstSpeed: null,
+        maxPressure: null,
+        maxSpeed: null,
+        maxFlow: null,
+        effectiveOperationMode: pumpMode,
+        effectiveControlMode: PumpConfigurationAndControl.ControlMode.ConstantSpeed,
+        capacity: null,
+        operationMode: pumpMode,
+      },
+      {},
+      {},
+    );
+  }
+  /**
+   * Creates the default Pump Configuration And Control cluster server.
+   *
+   * @param {PumpConfigurationAndControl.OperationMode} [pumpMode=PumpConfigurationAndControl.OperationMode.Normal] - The pump mode to set. Defaults to `PumpConfigurationAndControl.OperationMode.Normal`.
+   * @returns {void}
+   */
+  createDefaultPumpConfigurationAndControlClusterServer(pumpMode = PumpConfigurationAndControl.OperationMode.Normal) {
+    this.addClusterServer(this.getDefaultPumpConfigurationAndControlClusterServer(pumpMode));
+  }
+
+  /**
+   * Returns the default Valve Configuration And Control cluster server rev 2.
+   *
+   * @param {ValveConfigurationAndControl.ValveState} [valveState=ValveConfigurationAndControl.ValveState.Closed] - The valve state to set. Defaults to `ValveConfigurationAndControl.ValveState.Closed`.
+   * @param {number} [valveLevel=0] - The valve level to set. Defaults to 0.
+   * @returns {ClusterServer} - The default Valve Configuration And Control cluster server.
+   */
+  getDefaultValveConfigurationAndControlClusterServer(valveState = ValveConfigurationAndControl.ValveState.Closed, valveLevel = 0) {
+    return ClusterServer(
+      ValveConfigurationAndControlCluster.with(ValveConfigurationAndControl.Feature.Level),
+      {
+        currentState: valveState,
+        targetState: valveState,
+        currentLevel: valveLevel,
+        targetLevel: valveLevel,
+        openDuration: null,
+        defaultOpenDuration: null,
+        remainingDuration: null,
+      },
+      {
+        open: async (data) => {
+          this.log.debug('Matter command: open', data.request);
+          await this.commandHandler.executeHandler('open', data);
+        },
+        close: async (data) => {
+          this.log.debug('Matter command: close');
+          await this.commandHandler.executeHandler('close', data);
+        },
+      },
+      {},
+    );
+  }
+  /**
+   * Create the default Valve Configuration And Control cluster server rev 2.
+   *
+   * @param {ValveConfigurationAndControl.ValveState} [valveState=ValveConfigurationAndControl.ValveState.Closed] - The valve state to set. Defaults to `ValveConfigurationAndControl.ValveState.Closed`.
+   * @param {number} [valveLevel=0] - The valve level to set. Defaults to 0.
+   * @returns {void}
+   */
+  createDefaultValveConfigurationAndControlClusterServer(valveState = ValveConfigurationAndControl.ValveState.Closed, valveLevel = 0) {
+    this.addClusterServer(this.getDefaultValveConfigurationAndControlClusterServer(valveState, valveLevel));
   }
 
   /*
