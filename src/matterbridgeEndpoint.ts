@@ -372,7 +372,12 @@ export class MatterbridgeEndpoint extends Endpoint {
     // Map ClusterId to Behavior.Type
     if (clusterId === Identify.Cluster.id) return MatterbridgeIdentifyServer;
     if (clusterId === Groups.Cluster.id) return GroupsServer;
-    if (clusterId === OnOff.Cluster.id) return MatterbridgeOnOffServer.with('Lighting');
+
+    if (clusterId === OnOff.Cluster.id && subType === undefined) return MatterbridgeOnOffServer.with('Lighting');
+    if (clusterId === OnOff.Cluster.id && subType === '') return MatterbridgeOnOffServer;
+    if (clusterId === OnOff.Cluster.id && subType === 'LightingOnOff') return MatterbridgeOnOffServer.with('Lighting');
+    if (clusterId === OnOff.Cluster.id && subType === 'DeadFrontBehaviorOnOff') return MatterbridgeOnOffServer.with('DeadFrontBehavior');
+
     if (clusterId === LevelControl.Cluster.id) return MatterbridgeLevelControlServer.with('OnOff', 'Lighting');
 
     if (clusterId === ColorControl.Cluster.id && subType === undefined) return MatterbridgeColorControlServer;
@@ -687,10 +692,19 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   addClusterServer<const T extends ClusterType>(cluster: ClusterServerObj<T>) {
+    // console.log('addClusterServer:', cluster.id, cluster.name, cluster.attributes, cluster.events, cluster.commands);
+    let features: Record<string, boolean> = {};
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const options: Record<string, any> = {};
     for (const attribute of Object.values(cluster.attributes)) {
       // console.error('Attribute:', (attribute as any).id, (attribute as any).name, (attribute as any).value);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((attribute as any).name === 'featureMap') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        features = (attribute as any).value;
+        // console.log('Cluster', cluster.name, 'FeatureMap:', features);
+        // options[(attribute as any).name] = (attribute as any).value;
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((attribute as any).id < 0xfff0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -704,11 +718,14 @@ export class MatterbridgeEndpoint extends Endpoint {
 
     this.subType = '';
 
+    if (cluster.id === OnOffCluster.id && features['lighting']) this.subType = 'LightingOnOff';
+    if (cluster.id === OnOffCluster.id && features['deadFrontBehavior']) this.subType = 'DeadFrontBehaviorOnOff';
+
     if (cluster.id === ColorControl.Cluster.id && cluster.isAttributeSupportedByName('currentX') && !cluster.isAttributeSupportedByName('currentHue')) this.subType = 'XyColorControl';
     else if (cluster.id === ColorControl.Cluster.id && cluster.isAttributeSupportedByName('currentHue') && !cluster.isAttributeSupportedByName('currentX')) this.subType = 'HueSaturationColorControl';
     else if (cluster.id === ColorControl.Cluster.id && cluster.isAttributeSupportedByName('colorTemperatureMireds') && !cluster.isAttributeSupportedByName('currentHue') && !cluster.isAttributeSupportedByName('currentX'))
       this.subType = 'ColorTemperatureColorControl';
-    else this.subType = 'CompleteColorControl';
+    else if (cluster.id === ColorControl.Cluster.id) this.subType = 'CompleteColorControl';
 
     if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('multiPressComplete')) this.subType = 'MomentarySwitch';
     if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('switchLatched')) this.subType = 'LatchingSwitch';

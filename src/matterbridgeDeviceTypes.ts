@@ -74,6 +74,7 @@ import {
   RvcOperationalState,
   RvcCleanMode,
   ScenesManagement,
+  PumpConfigurationAndControl,
 } from '@matter/main/clusters';
 import { Semtag } from '@matter/main/types';
 
@@ -223,6 +224,21 @@ export const thermostatDevice = DeviceTypeDefinition({
   revision: 3,
   requiredServerClusters: [Identify.Cluster.id, Thermostat.Cluster.id],
   optionalServerClusters: [Groups.Cluster.id /* , Scenes.Cluster.id,*/, ThermostatUserInterfaceConfiguration.Cluster.id, EnergyPreference.Cluster.id, TimeSynchronization.Cluster.id],
+});
+
+/**
+ *  Remark: LevelControl cluster:
+ *   0 N/A Pump is stopped,
+ *   1–200 Level / 2 (0.5–100.0%) Pump setpoint in percent
+ *   201–255 100.0% Pump setpoint is 100.0%
+ */
+export const pumpDevice = DeviceTypeDefinition({
+  name: 'MA-pump',
+  code: 0x303,
+  deviceClass: DeviceClasses.Simple,
+  revision: 3,
+  requiredServerClusters: [OnOff.Cluster.id, PumpConfigurationAndControl.Cluster.id, Identify.Cluster.id],
+  optionalServerClusters: [LevelControl.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, TemperatureMeasurement.Cluster.id, PressureMeasurement.Cluster.id, FlowMeasurement.Cluster.id],
 });
 
 export const contactSensor = DeviceTypeDefinition({
