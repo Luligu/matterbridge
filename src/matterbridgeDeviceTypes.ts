@@ -397,6 +397,10 @@ export const waterValve = DeviceTypeDefinition({
   optionalServerClusters: [FlowMeasurement.Cluster.id],
 });
 
+/**
+ *  Remark: it may have a Thermostat, Temperature Sensor, Humidity Sensor and an Air Quality Sensor.
+ *  Additional device types MAY also be included in device compositions.
+ */
 export const airPurifier = DeviceTypeDefinition({
   name: 'MA-airPurifier',
   code: 0x2d,
