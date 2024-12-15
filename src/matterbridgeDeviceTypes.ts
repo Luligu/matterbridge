@@ -402,7 +402,11 @@ export const airPurifier = DeviceTypeDefinition({
   optionalServerClusters: [Groups.Cluster.id, HepaFilterMonitoring.Cluster.id, ActivatedCarbonFilterMonitoring.Cluster.id],
 });
 
-// Remark: may have a temperature sensor and a humidity sensor device.
+/**
+ *  Remark: it may have a temperature sensor and a humidity sensor device.
+ *  Additional device types not listed in this table MAY also be included in device compositions.
+ *  The DF (Dead Front) feature is required for the On/Off cluster in this device type.
+ */
 export const airConditioner = DeviceTypeDefinition({
   name: 'MA-airConditioner',
   code: 0x72,

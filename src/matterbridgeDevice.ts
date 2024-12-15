@@ -768,6 +768,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createDefaultIdentifyClusterServer(identifyTime = 0, identifyType = Identify.IdentifyType.None) {
     this.addClusterServer(this.getDefaultIdentifyClusterServer(identifyTime, identifyType));
+    return this;
   }
 
   /**
@@ -1233,6 +1234,46 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createDefaultOnOffClusterServer(onOff = false, globalSceneControl = false, onTime = 0, offWaitTime = 0, startUpOnOff: OnOff.StartUpOnOff | null = null) {
     this.addClusterServer(this.getDefaultOnOffClusterServer(onOff, globalSceneControl, onTime, offWaitTime, startUpOnOff));
+  }
+
+  /**
+   * Get a DeadFront OnOff cluster server.
+   *
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   *
+   * @returns {ClusterServer} - The configured OnOff cluster server.
+   */
+  getDeadFrontOnOffClusterServer(onOff = false) {
+    return ClusterServer(
+      OnOffCluster.with(OnOff.Feature.DeadFrontBehavior),
+      {
+        onOff,
+      },
+      {
+        on: async (data) => {
+          this.log.debug('Matter command: on');
+          await this.commandHandler.executeHandler('on', data);
+        },
+        off: async (data) => {
+          this.log.debug('Matter command: off');
+          await this.commandHandler.executeHandler('off', data);
+        },
+        toggle: async (data) => {
+          this.log.debug('Matter command: toggle');
+          await this.commandHandler.executeHandler('toggle', data);
+        },
+      },
+      {},
+    );
+  }
+
+  /**
+   * Creates a DeadFront OnOff cluster server.
+   *
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   */
+  createDeadFrontOnOffClusterServer(onOff = false) {
+    this.addClusterServer(this.getDeadFrontOnOffClusterServer(onOff));
   }
 
   /**

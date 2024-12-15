@@ -1089,6 +1089,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultIdentifyClusterServer(identifyTime = 0, identifyType = Identify.IdentifyType.None) {
     this.addClusterServer(this.getDefaultIdentifyClusterServer(identifyTime, identifyType));
+    return this;
   }
 
   /**
@@ -1540,6 +1541,43 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createOnOffClusterServer(onOff = false) {
     this.addClusterServer(this.getOnOffClusterServer(onOff));
+  }
+
+  /**
+   * Get a DeadFront OnOff cluster server.
+   *
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   *
+   * @returns {ClusterServer} - The configured OnOff cluster server.
+   */
+  getDeadFrontOnOffClusterServer(onOff = false) {
+    return ClusterServer(
+      OnOffCluster.with(OnOff.Feature.DeadFrontBehavior),
+      {
+        onOff,
+      },
+      {
+        on: async (data) => {
+          // Never called in edge
+        },
+        off: async (data) => {
+          // Never called in edge
+        },
+        toggle: async (data) => {
+          // Never called in edge
+        },
+      },
+      {},
+    );
+  }
+
+  /**
+   * Creates a DeadFront OnOff cluster server.
+   *
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   */
+  createDeadFrontOnOffClusterServer(onOff = false) {
+    this.addClusterServer(this.getDeadFrontOnOffClusterServer(onOff));
   }
 
   /**
