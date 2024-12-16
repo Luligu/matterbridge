@@ -6,3 +6,4 @@ export { AttributeElement, ClusterElement, ClusterModel, CommandElement, EventEl
 export * from '../matterbridgeDeviceTypes.js';
 export * from '../matterbridgeEndpoint.js';
 export * from '../matterbridgeBehaviors.js';
+export * from '../matterbridgeEdge.js';
