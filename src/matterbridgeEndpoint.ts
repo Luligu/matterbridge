@@ -3418,12 +3418,10 @@ export class MatterbridgeEndpoint extends Endpoint {
       },
       {
         open: async (data) => {
-          this.log.debug('Matter command: open', data.request);
-          await this.commandHandler.executeHandler('open', data);
+          // Never called in edge
         },
         close: async (data) => {
-          this.log.debug('Matter command: close');
-          await this.commandHandler.executeHandler('close', data);
+          // Never called in edge
         },
       },
       {},
