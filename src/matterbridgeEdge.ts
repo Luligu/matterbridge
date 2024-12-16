@@ -72,9 +72,6 @@ export class MatterbridgeEdge extends Matterbridge {
   // Mapping of Aggregator to AggregatorEndpoint
   private agToAggregatorEndpoint = new Map<string, { aggregator: Aggregator; aggregatorNode: EndpointNode<AggregatorEndpoint> }>();
 
-  // Mapping of sessions
-  private activeSessions = new Map<string, SanitizedSessionInformation>();
-
   private constructor() {
     super();
   }
@@ -263,7 +260,7 @@ export class MatterbridgeEdge extends Matterbridge {
 
     const sanitizeFabrics = (fabrics: Record<FabricIndex, ExposedFabricInformation>) => {
       // New type of fabric information: Record<FabricIndex, ExposedFabricInformation>
-      const sanitizedFabrics = this.sanitizeFabricInformations(Array.from(Object.values(serverNode.state.commissioning.fabrics)));
+      const sanitizedFabrics = this.sanitizeFabricInformations(Array.from(Object.values(fabrics)));
       this.log.info(`Fabrics: ${debugStringify(sanitizedFabrics)}`);
       if (this.bridgeMode === 'bridge') {
         this.matterbridgeFabricInformations = sanitizedFabrics;
