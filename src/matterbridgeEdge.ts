@@ -38,7 +38,7 @@ import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
-import { dev, plg, SanitizedSessionInformation } from './matterbridgeTypes.js';
+import { dev, plg } from './matterbridgeTypes.js';
 import { copyDirectory, getParameter, hasParameter } from './utils/utils.js';
 
 // @matter
