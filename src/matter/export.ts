@@ -1,5 +1,5 @@
 export * from '@matter/main';
-export * from '@matter/main/endpoints';
+export { AggregatorEndpoint } from '@matter/main/endpoints';
 export * from '@matter/main/devices';
 export * from '@matter/main/behaviors';
 export { ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
