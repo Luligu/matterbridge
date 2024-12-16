@@ -70,6 +70,7 @@ import { StorageBackendDisk, StorageBackendJsonFile } from '@matter/nodejs';
 // @project-chip
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter.js';
 import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter.js/device';
+import { aggregator } from './matterbridgeDeviceTypes.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -1966,9 +1967,8 @@ export class Matterbridge extends EventEmitter {
         return;
       }
     }
-
     this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
-    this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
+    this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', aggregator.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
   }
 
   /**
