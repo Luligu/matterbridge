@@ -59,11 +59,7 @@ import { AggregatorEndpoint, AggregatorEndpointDefinition } from '@matter/main/e
 
 import { DeviceTypes, logEndpoint } from '@project-chip/matter.js/device';
 import { MdnsService } from '@matter/main/protocol';
-import { log } from 'console';
-import e from 'express';
-import exp from 'constants';
 import { DescriptorBehavior, GroupsBehavior, IdentifyBehavior, OccupancySensingBehavior, OnOffBehavior } from '@matter/main/behaviors';
-import { temperature } from '@matter/main/model';
 
 describe('MatterbridgeEndpoint class', () => {
   let edge: MatterbridgeEdge;
