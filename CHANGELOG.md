@@ -21,6 +21,7 @@ It is possible that some controllers see them as new devices or need time to rea
 ## [1.6.8-dev.1] - 2024-12-16
 
 ### Added
+- [package]: Update README-SERVICE.md to include instructions for using SSL on port 443
 
 ### Changed
 
