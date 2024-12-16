@@ -62,7 +62,7 @@ Group=<USER>                                # Replace <USER> with your system us
 WantedBy=multi-user.target
 ```
 
-If you use the frontend with -ssl -frontend 443 and get an error message: Port 443 requires elevated privileges
+If you use the frontend with -ssl -frontend 443 and get an error message: "Port 443 requires elevated privileges",
 add this:
 
 ```

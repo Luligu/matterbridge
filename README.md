@@ -116,6 +116,8 @@ Here's how to specify a different port number:
 matterbridge -frontend [port number]
 ```
 
+To use the frontend with ssl place the certificates in the .matterbridge/certs directory: cert.pem, key.pem and ca.pem (optional).
+
 From the frontend you can do all operations in an easy way.
 
 Home page:
