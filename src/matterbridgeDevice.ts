@@ -304,6 +304,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {MatterbridgeEndpointOptions} [options={}] - The options for the endpoint.
    * @param {boolean} [debug=false] - Whether to enable debug logging.
    * @returns {MatterbridgeDevice} - The child endpoint that was found or added.
+   *
+   * @example
+   * ```typescript
+   * const endpoint = device.addChildDeviceType('Temperature', [temperatureSensor], { tagList: [{ mfgCode: null, namespaceId: LocationTag.Indoor.namespaceId, tag: LocationTag.Indoor.tag, label: null }] }, true);
+   * ```
    */
   addChildDeviceType(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeDevice {
     this.log.debug(`addChildDeviceType: ${CYAN}${endpointName}${db}`);
@@ -340,6 +345,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {EndpointOptions} [options={}] - The options for the device.
    * @param {boolean} [debug=false] - Whether to enable debug logging.
    * @returns {MatterbridgeDevice} - The child endpoint that was found or added.
+   *
+   * @example
+   * ```typescript
+   * const endpoint = device.addChildDeviceTypeWithClusterServer('Temperature', [temperatureSensor], [], { tagList: [{ mfgCode: null, namespaceId: LocationTag.Indoor.namespaceId, tag: LocationTag.Indoor.tag, label: null }] }, true);
+   * ```
    */
   addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeDevice {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
@@ -799,6 +809,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createDefaultGroupsClusterServer() {
     this.addClusterServer(this.getDefaultGroupsClusterServer());
+    return this;
   }
 
   /**
@@ -833,6 +844,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     /*
     this.addClusterServer(this.getDefaultScenesClusterServer());
     */
+    return this;
   }
 
   /**
@@ -951,6 +963,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       return;
     }
     this.addClusterServer(this.getDefaultBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productId, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString));
+    return this;
   }
 
   /**
@@ -1041,6 +1054,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     hardwareVersionString = '1.0.0',
   ) {
     this.addClusterServer(this.getDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString));
+    return this;
   }
 
   /**
@@ -1241,6 +1255,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createDefaultOnOffClusterServer(onOff = false, globalSceneControl = false, onTime = 0, offWaitTime = 0, startUpOnOff: OnOff.StartUpOnOff | null = null) {
     this.addClusterServer(this.getDefaultOnOffClusterServer(onOff, globalSceneControl, onTime, offWaitTime, startUpOnOff));
+    return this;
   }
 
   /**
@@ -1281,6 +1296,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createDeadFrontOnOffClusterServer(onOff = false) {
     this.addClusterServer(this.getDeadFrontOnOffClusterServer(onOff));
+    return this;
   }
 
   /**
@@ -1321,6 +1337,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createOnOffClusterServer(onOff = false) {
     this.addClusterServer(this.getOnOffClusterServer(onOff));
+    return this;
   }
 
   /**
@@ -1389,6 +1406,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 1, maxLevel = 254, onLevel: number | null = null, startUpCurrentLevel: number | null = null) {
     this.addClusterServer(this.getDefaultLevelControlClusterServer(currentLevel, minLevel, maxLevel, onLevel, startUpCurrentLevel));
+    return this;
   }
 
   /**
@@ -1489,6 +1507,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createDefaultColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     this.addClusterServer(this.getDefaultColorControlClusterServer(currentX, currentY, currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
+    return this;
   }
 
   /**
@@ -1559,6 +1578,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createXyColorControlClusterServer(currentX = 0, currentY = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     this.addClusterServer(this.getXyColorControlClusterServer(currentX, currentY, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
+    return this;
   }
 
   /**
@@ -1643,6 +1663,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createHsColorControlClusterServer(currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     this.addClusterServer(this.getHsColorControlClusterServer(currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
+    return this;
   }
 
   /**
@@ -1697,6 +1718,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createCtColorControlClusterServer(colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     this.addClusterServer(this.getCtColorControlClusterServer(colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
+    return this;
   }
 
   /**
@@ -1721,6 +1743,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       endpoint.getClusterServer(ColorControlCluster)?.setColorModeAttribute(colorMode);
       endpoint.getClusterServer(ColorControlCluster)?.setEnhancedColorModeAttribute(colorMode as unknown as ColorControl.EnhancedColorMode);
     }
+    return this;
   }
 
   /**
@@ -1735,6 +1758,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
       endpoint.getClusterServer(ColorControlCluster)?.setColorModeAttribute(colorMode);
       endpoint.getClusterServer(ColorControlCluster)?.setEnhancedColorModeAttribute(colorMode as unknown as ColorControl.EnhancedColorMode);
     }
+    return this;
   }
 
   /**
