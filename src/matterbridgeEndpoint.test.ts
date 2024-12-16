@@ -28,7 +28,6 @@ import {
   thermostatDevice,
   waterValve,
 } from './matterbridgeDeviceTypes.js';
-import { getMacAddress } from './utils/utils.js';
 
 import { DeviceTypeId, VendorId, Environment, ServerNode, Endpoint, EndpointServer, StorageContext } from '@matter/main';
 import { LogFormat as Format, LogLevel as Level } from '@matter/main';
