@@ -35,7 +35,7 @@ Create a systemctl configuration file for Matterbridge
 sudo nano /etc/systemd/system/matterbridge.service
 ```
 
-Add the following to this file, replacing twice (!) USER with your user name (e.g. WorkingDirectory=/home/pi/Matterbridge and User=pi):
+Add the following to this file, replacing 3 times (!) USER with your user name (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi):
 
 You may need to adapt the configuration to your setup:
 
@@ -49,13 +49,14 @@ After=network-online.target
 [Service]
 Type=simple
 ExecStart=matterbridge -service
-WorkingDirectory=/home/<USER>/Matterbridge
+WorkingDirectory=/home/<USER>/Matterbridge  # Replace <USER> with your system username
 StandardOutput=inherit
 StandardError=inherit
 Restart=always
 RestartSec=10s
 TimeoutStopSec=30s
-User=<USER>
+User=<USER>                                 # Replace <USER> with your system username
+Group=<USER>                                # Replace <USER> with your system username
 
 [Install]
 WantedBy=multi-user.target
