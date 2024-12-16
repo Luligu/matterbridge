@@ -74,6 +74,7 @@ import {
   RvcOperationalState,
   RvcCleanMode,
   ScenesManagement,
+  PumpConfigurationAndControl,
 } from '@matter/main/clusters';
 import { Semtag } from '@matter/main/types';
 
@@ -89,6 +90,14 @@ export interface MatterbridgeEndpointOptions {
 // Matter 1.0 and 1.1 device types
 
 export const bridge = DeviceTypeDefinition({
+  name: 'MA-aggregator',
+  code: 0x000e,
+  deviceClass: DeviceClasses.Dynamic,
+  revision: 1,
+  optionalServerClusters: [Identify.Cluster.id, Actions.Cluster.id],
+});
+
+export const aggregator = DeviceTypeDefinition({
   name: 'MA-aggregator',
   code: 0x000e,
   deviceClass: DeviceClasses.Dynamic,
@@ -202,13 +211,18 @@ export const coverDevice = DeviceTypeDefinition({
   optionalServerClusters: [Groups.Cluster.id /* , Scenes.Cluster.id,*/],
 });
 
+/**
+ *  Remark: it may have a thermostat device type.
+ *  Additional device types MAY also be included in device compositions.
+ *  The FanControl cluster must have the FanModeSequence attribute.
+ */
 export const fanDevice = DeviceTypeDefinition({
   name: 'MA-fan',
   code: 0x2b,
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [Identify.Cluster.id, FanControl.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id /* , Scenes.Cluster.id,*/],
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, FanControl.Cluster.id],
+  optionalServerClusters: [],
 });
 
 export const thermostatDevice = DeviceTypeDefinition({
@@ -384,6 +398,21 @@ export const smokeCoAlarm = DeviceTypeDefinition({
   optionalServerClusters: [Groups.Cluster.id, TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id, CarbonMonoxideConcentrationMeasurement.Cluster.id],
 });
 
+/**
+ *  Remark: LevelControl cluster:
+ *   0 N/A Pump is stopped,
+ *   1–200 Level / 2 (0.5–100.0%) Pump setpoint in percent
+ *   201–255 100.0% Pump setpoint is 100.0%
+ */
+export const pumpDevice = DeviceTypeDefinition({
+  name: 'MA-pump',
+  code: 0x303,
+  deviceClass: DeviceClasses.Simple,
+  revision: 3,
+  requiredServerClusters: [OnOff.Cluster.id, PumpConfigurationAndControl.Cluster.id, Identify.Cluster.id],
+  optionalServerClusters: [LevelControl.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, TemperatureMeasurement.Cluster.id, PressureMeasurement.Cluster.id, FlowMeasurement.Cluster.id],
+});
+
 export const waterValve = DeviceTypeDefinition({
   name: 'MA-waterValve',
   code: 0x42,
@@ -393,6 +422,10 @@ export const waterValve = DeviceTypeDefinition({
   optionalServerClusters: [FlowMeasurement.Cluster.id],
 });
 
+/**
+ *  Remark: it may have a Thermostat, Temperature Sensor, Humidity Sensor and an Air Quality Sensor device type.
+ *  Additional device types MAY also be included in device compositions.
+ */
 export const airPurifier = DeviceTypeDefinition({
   name: 'MA-airPurifier',
   code: 0x2d,
@@ -402,7 +435,16 @@ export const airPurifier = DeviceTypeDefinition({
   optionalServerClusters: [Groups.Cluster.id, HepaFilterMonitoring.Cluster.id, ActivatedCarbonFilterMonitoring.Cluster.id],
 });
 
-// Remark: may have a temperature sensor and a humidity sensor device.
+/**
+ *  Remark: it may have a temperature sensor and a humidity sensor device.
+ *  Additional device types MAY also be included in device compositions.
+ *  The DF (Dead Front) feature is required for the On/Off cluster in this device type:
+ *  - Thermostat                      LocalTemperature    null
+ *  - Temperature Measurement         MeasuredValue       null
+ *  - Relative Humidity Measurement   MeasuredValue       null
+ *  - Fan Control                     SpeedSetting        null
+ *  - Fan Control                     PercentSetting      null
+ */
 export const airConditioner = DeviceTypeDefinition({
   name: 'MA-airConditioner',
   code: 0x72,

@@ -87,6 +87,8 @@ import {
   PowerTopologyCluster,
   PressureMeasurement,
   PressureMeasurementCluster,
+  PumpConfigurationAndControl,
+  PumpConfigurationAndControlCluster,
   RadonConcentrationMeasurement,
   RadonConcentrationMeasurementCluster,
   RelativeHumidityMeasurement,
@@ -105,6 +107,8 @@ import {
   TimeSynchronizationCluster,
   TotalVolatileOrganicCompoundsConcentrationMeasurement,
   TotalVolatileOrganicCompoundsConcentrationMeasurementCluster,
+  ValveConfigurationAndControl,
+  ValveConfigurationAndControlCluster,
   WindowCovering,
   WindowCoveringCluster,
 } from '@matter/main/clusters';
@@ -153,6 +157,9 @@ interface MatterbridgeDeviceCommands {
   downOrClose: MakeMandatory<ClusterServerHandlers<typeof WindowCovering.Complete>['downOrClose']>;
   stopMotion: MakeMandatory<ClusterServerHandlers<typeof WindowCovering.Complete>['stopMotion']>;
   goToLiftPercentage: MakeMandatory<ClusterServerHandlers<typeof WindowCovering.Complete>['goToLiftPercentage']>;
+
+  open: MakeMandatory<ClusterServerHandlers<typeof ValveConfigurationAndControl.Complete>['open']>;
+  close: MakeMandatory<ClusterServerHandlers<typeof ValveConfigurationAndControl.Complete>['close']>;
 
   lockDoor: MakeMandatory<ClusterServerHandlers<typeof DoorLock.Complete>['lockDoor']>;
   unlockDoor: MakeMandatory<ClusterServerHandlers<typeof DoorLock.Complete>['unlockDoor']>;
@@ -298,12 +305,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {boolean} [debug=false] - Whether to enable debug logging.
    * @returns {MatterbridgeDevice} - The child endpoint that was found or added.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   addChildDeviceType(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeDevice {
     this.log.debug(`addChildDeviceType: ${CYAN}${endpointName}${db}`);
     let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName) as MatterbridgeDevice;
     if (!child) {
-      child = new MatterbridgeDevice(deviceTypes, { uniqueStorageKey: endpointName });
+      child = new MatterbridgeDevice(deviceTypes, { uniqueStorageKey: endpointName }, debug);
       if ('tagList' in options) {
         for (const tag of options.tagList as Semtag[]) {
           this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
@@ -335,12 +341,11 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    * @param {boolean} [debug=false] - Whether to enable debug logging.
    * @returns {MatterbridgeDevice} - The child endpoint that was found or added.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeDevice {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
     let child = this.getChildEndpoints().find((endpoint) => endpoint.uniqueStorageKey === endpointName) as MatterbridgeDevice;
     if (!child) {
-      child = new MatterbridgeDevice(deviceTypes, { uniqueStorageKey: endpointName });
+      child = new MatterbridgeDevice(deviceTypes, { uniqueStorageKey: endpointName }, debug);
       if ('tagList' in options) {
         for (const tag of options.tagList as Semtag[]) {
           this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
@@ -770,6 +775,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createDefaultIdentifyClusterServer(identifyTime = 0, identifyType = Identify.IdentifyType.None) {
     this.addClusterServer(this.getDefaultIdentifyClusterServer(identifyTime, identifyType));
+    return this;
   }
 
   /**
@@ -1174,7 +1180,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Get a default OnOff cluster server.
+   * Get a default OnOff cluster server for light devices.
    *
    * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
    * @param {boolean} [globalSceneControl=false] - The global scene control state.
@@ -1225,7 +1231,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
   }
 
   /**
-   * Creates a default OnOff cluster server.
+   * Creates a default OnOff cluster server for light devices.
    *
    * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
    * @param {boolean} [globalSceneControl=false] - The global scene control state.
@@ -1235,6 +1241,86 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createDefaultOnOffClusterServer(onOff = false, globalSceneControl = false, onTime = 0, offWaitTime = 0, startUpOnOff: OnOff.StartUpOnOff | null = null) {
     this.addClusterServer(this.getDefaultOnOffClusterServer(onOff, globalSceneControl, onTime, offWaitTime, startUpOnOff));
+  }
+
+  /**
+   * Get a DeadFront OnOff cluster server.
+   *
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   *
+   * @returns {ClusterServer} - The configured OnOff cluster server.
+   */
+  getDeadFrontOnOffClusterServer(onOff = false) {
+    return ClusterServer(
+      OnOffCluster.with(OnOff.Feature.DeadFrontBehavior),
+      {
+        onOff,
+      },
+      {
+        on: async (data) => {
+          this.log.debug('Matter command: on');
+          await this.commandHandler.executeHandler('on', data);
+        },
+        off: async (data) => {
+          this.log.debug('Matter command: off');
+          await this.commandHandler.executeHandler('off', data);
+        },
+        toggle: async (data) => {
+          this.log.debug('Matter command: toggle');
+          await this.commandHandler.executeHandler('toggle', data);
+        },
+      },
+      {},
+    );
+  }
+
+  /**
+   * Creates a DeadFront OnOff cluster server.
+   *
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   */
+  createDeadFrontOnOffClusterServer(onOff = false) {
+    this.addClusterServer(this.getDeadFrontOnOffClusterServer(onOff));
+  }
+
+  /**
+   * Get an OnOff cluster server without features.
+   *
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   *
+   * @returns {ClusterServer} - The configured OnOff cluster server.
+   */
+  getOnOffClusterServer(onOff = false) {
+    return ClusterServer(
+      OnOffCluster,
+      {
+        onOff,
+      },
+      {
+        on: async (data) => {
+          this.log.debug('Matter command: on');
+          await this.commandHandler.executeHandler('on', data);
+        },
+        off: async (data) => {
+          this.log.debug('Matter command: off');
+          await this.commandHandler.executeHandler('off', data);
+        },
+        toggle: async (data) => {
+          this.log.debug('Matter command: toggle');
+          await this.commandHandler.executeHandler('toggle', data);
+        },
+      },
+      {},
+    );
+  }
+
+  /**
+   * Creates an OnOff cluster server without features.
+   *
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   */
+  createOnOffClusterServer(onOff = false) {
+    this.addClusterServer(this.getOnOffClusterServer(onOff));
   }
 
   /**
@@ -3048,6 +3134,76 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
    */
   createDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
     this.addClusterServer(this.getDefaultFanControlClusterServer(fanMode));
+  }
+
+  /**
+   * Returns the default Pump Configuration And Control cluster server.
+   *
+   * @param {PumpConfigurationAndControl.OperationMode} [pumpMode=PumpConfigurationAndControl.OperationMode.Normal] - The pump mode to set. Defaults to `PumpConfigurationAndControl.OperationMode.Normal`.
+   * @returns {ClusterServer} - The default Pump Configuration And Control cluster server.
+   */
+  getDefaultPumpConfigurationAndControlClusterServer(pumpMode = PumpConfigurationAndControl.OperationMode.Normal) {
+    return ClusterServer(
+      PumpConfigurationAndControlCluster.with(PumpConfigurationAndControl.Feature.ConstantSpeed),
+      {
+        minConstSpeed: null,
+        maxConstSpeed: null,
+        maxPressure: null,
+        maxSpeed: null,
+        maxFlow: null,
+        effectiveOperationMode: pumpMode,
+        effectiveControlMode: PumpConfigurationAndControl.ControlMode.ConstantSpeed,
+        capacity: null,
+        operationMode: pumpMode,
+      },
+      {},
+      {},
+    );
+  }
+  /**
+   * Creates the default Pump Configuration And Control cluster server.
+   *
+   * @param {PumpConfigurationAndControl.OperationMode} [pumpMode=PumpConfigurationAndControl.OperationMode.Normal] - The pump mode to set. Defaults to `PumpConfigurationAndControl.OperationMode.Normal`.
+   * @returns {void}
+   */
+  createDefaultPumpConfigurationAndControlClusterServer(pumpMode = PumpConfigurationAndControl.OperationMode.Normal) {
+    this.addClusterServer(this.getDefaultPumpConfigurationAndControlClusterServer(pumpMode));
+  }
+
+  getDefaultValveConfigurationAndControlClusterServer(valveState = ValveConfigurationAndControl.ValveState.Closed, valveLevel = 0) {
+    return ClusterServer(
+      ValveConfigurationAndControlCluster.with(ValveConfigurationAndControl.Feature.Level),
+      {
+        currentState: valveState,
+        targetState: valveState,
+        currentLevel: valveLevel,
+        targetLevel: valveLevel,
+        openDuration: null,
+        defaultOpenDuration: null,
+        remainingDuration: null,
+      },
+      {
+        open: async (data) => {
+          this.log.debug('Matter command: open', data.request);
+          await this.commandHandler.executeHandler('open', data);
+        },
+        close: async (data) => {
+          this.log.debug('Matter command: close');
+          await this.commandHandler.executeHandler('close', data);
+        },
+      },
+      {},
+    );
+  }
+  /**
+   * Create the default Valve Configuration And Control cluster server rev 2.
+   *
+   * @param {ValveConfigurationAndControl.ValveState} [valveState=ValveConfigurationAndControl.ValveState.Closed] - The valve state to set. Defaults to `ValveConfigurationAndControl.ValveState.Closed`.
+   * @param {number} [valveLevel=0] - The valve level to set. Defaults to 0.
+   * @returns {void}
+   */
+  createDefaultValveConfigurationAndControlClusterServer(valveState = ValveConfigurationAndControl.ValveState.Closed, valveLevel = 0) {
+    this.addClusterServer(this.getDefaultValveConfigurationAndControlClusterServer(valveState, valveLevel));
   }
 
   // NOTE Support of Device Energy Management Cluster is provisional.

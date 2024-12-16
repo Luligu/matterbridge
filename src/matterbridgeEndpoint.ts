@@ -115,6 +115,8 @@ import {
   PowerTopologyCluster,
   PressureMeasurement,
   PressureMeasurementCluster,
+  PumpConfigurationAndControl,
+  PumpConfigurationAndControlCluster,
   RadonConcentrationMeasurement,
   RadonConcentrationMeasurementCluster,
   RelativeHumidityMeasurement,
@@ -135,6 +137,8 @@ import {
   TotalVolatileOrganicCompoundsConcentrationMeasurementCluster,
   UserLabel,
   UserLabelCluster,
+  ValveConfigurationAndControl,
+  ValveConfigurationAndControlCluster,
   WindowCovering,
   WindowCoveringCluster,
 } from '@matter/main/clusters';
@@ -148,7 +152,6 @@ import { RelativeHumidityMeasurementServer } from '@matter/node/behaviors/relati
 import { PressureMeasurementServer } from '@matter/node/behaviors/pressure-measurement';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { FlowMeasurementServer } from '@matter/node/behaviors/flow-measurement';
-import { TimeSynchronizationServer } from '@matter/node/behaviors/time-synchronization';
 import { IlluminanceMeasurementServer } from '@matter/node/behaviors/illuminance-measurement';
 import { BooleanStateServer } from '@matter/node/behaviors/boolean-state';
 import { OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
@@ -212,6 +215,9 @@ export interface MatterbridgeEndpointCommands {
 
   lockDoor: MakeMandatory<ClusterServerHandlers<typeof DoorLock.Complete>['lockDoor']>;
   unlockDoor: MakeMandatory<ClusterServerHandlers<typeof DoorLock.Complete>['unlockDoor']>;
+
+  open: MakeMandatory<ClusterServerHandlers<typeof ValveConfigurationAndControl.Complete>['open']>;
+  close: MakeMandatory<ClusterServerHandlers<typeof ValveConfigurationAndControl.Complete>['close']>;
 
   setpointRaiseLower: MakeMandatory<ClusterServerHandlers<typeof Thermostat.Complete>['setpointRaiseLower']>;
 
@@ -373,7 +379,12 @@ export class MatterbridgeEndpoint extends Endpoint {
     // Map ClusterId to Behavior.Type
     if (clusterId === Identify.Cluster.id) return MatterbridgeIdentifyServer;
     if (clusterId === Groups.Cluster.id) return GroupsServer;
-    if (clusterId === OnOff.Cluster.id) return MatterbridgeOnOffServer.with('Lighting');
+
+    if (clusterId === OnOff.Cluster.id && subType === undefined) return MatterbridgeOnOffServer.with('Lighting');
+    if (clusterId === OnOff.Cluster.id && subType === '') return MatterbridgeOnOffServer;
+    if (clusterId === OnOff.Cluster.id && subType === 'LightingOnOff') return MatterbridgeOnOffServer.with('Lighting');
+    if (clusterId === OnOff.Cluster.id && subType === 'DeadFrontBehaviorOnOff') return MatterbridgeOnOffServer.with('DeadFrontBehavior');
+
     if (clusterId === LevelControl.Cluster.id) return MatterbridgeLevelControlServer.with('OnOff', 'Lighting');
 
     if (clusterId === ColorControl.Cluster.id && subType === undefined) return MatterbridgeColorControlServer;
@@ -398,7 +409,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === RelativeHumidityMeasurement.Cluster.id) return RelativeHumidityMeasurementServer;
     if (clusterId === PressureMeasurement.Cluster.id) return PressureMeasurementServer;
     if (clusterId === FlowMeasurement.Cluster.id) return FlowMeasurementServer;
-    if (clusterId === BooleanState.Cluster.id) return BooleanStateServer;
+    if (clusterId === BooleanState.Cluster.id) return BooleanStateServer.enable({ events: { stateChange: true } });
     if (clusterId === BooleanStateConfiguration.Cluster.id) return MatterbridgeBooleanStateConfigurationServer;
     if (clusterId === OccupancySensing.Cluster.id) return OccupancySensingServer;
     if (clusterId === IlluminanceMeasurement.Cluster.id) return IlluminanceMeasurementServer;
@@ -688,10 +699,19 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   addClusterServer<const T extends ClusterType>(cluster: ClusterServerObj<T>) {
+    // console.log('addClusterServer:', cluster.id, cluster.name, cluster.attributes, cluster.events, cluster.commands);
+    let features: Record<string, boolean> = {};
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const options: Record<string, any> = {};
     for (const attribute of Object.values(cluster.attributes)) {
       // console.error('Attribute:', (attribute as any).id, (attribute as any).name, (attribute as any).value);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((attribute as any).name === 'featureMap') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        features = (attribute as any).value;
+        // console.log('Cluster', cluster.name, 'FeatureMap:', features);
+        // options[(attribute as any).name] = (attribute as any).value;
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((attribute as any).id < 0xfff0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -705,11 +725,14 @@ export class MatterbridgeEndpoint extends Endpoint {
 
     this.subType = '';
 
+    if (cluster.id === OnOffCluster.id && features['lighting']) this.subType = 'LightingOnOff';
+    if (cluster.id === OnOffCluster.id && features['deadFrontBehavior']) this.subType = 'DeadFrontBehaviorOnOff';
+
     if (cluster.id === ColorControl.Cluster.id && cluster.isAttributeSupportedByName('currentX') && !cluster.isAttributeSupportedByName('currentHue')) this.subType = 'XyColorControl';
     else if (cluster.id === ColorControl.Cluster.id && cluster.isAttributeSupportedByName('currentHue') && !cluster.isAttributeSupportedByName('currentX')) this.subType = 'HueSaturationColorControl';
     else if (cluster.id === ColorControl.Cluster.id && cluster.isAttributeSupportedByName('colorTemperatureMireds') && !cluster.isAttributeSupportedByName('currentHue') && !cluster.isAttributeSupportedByName('currentX'))
       this.subType = 'ColorTemperatureColorControl';
-    else this.subType = 'CompleteColorControl';
+    else if (cluster.id === ColorControl.Cluster.id) this.subType = 'CompleteColorControl';
 
     if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('multiPressComplete')) this.subType = 'MomentarySwitch';
     if (cluster.id === SwitchCluster.id && cluster.isEventSupportedByName('switchLatched')) this.subType = 'LatchingSwitch';
@@ -723,13 +746,6 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (cluster.id === ThermostatCluster.id && cluster.isAttributeSupportedByName('minSetpointDeadBand')) this.subType = 'AutoModeThermostat';
 
     const behavior = MatterbridgeEndpoint.getBehaviourTypeFromClusterServerId(cluster.id, this.subType);
-
-    /*
-    if (cluster.id === PowerTopologyCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
-    if (cluster.id === ElectricalPowerMeasurementCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
-    if (cluster.id === ElectricalEnergyMeasurementCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
-    if (cluster.id === ThermostatCluster.id && this.clusterServers.has(cluster.id)) return; // TODO remove this workaround
-    */
 
     this.clusterServers.set(cluster.id, cluster as unknown as ClusterServerObj);
 
@@ -799,7 +815,6 @@ export class MatterbridgeEndpoint extends Endpoint {
       return;
     }
     this.log.debug(`addFixedLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
-    // if (this.construction.status !== Lifecycle.Status.Active) await this.construction.ready;
     const labelList = (this.getAttribute(FixedLabelCluster.id, 'labelList', this.log) ?? []).filter((entryLabel: { label: string; value: string }) => entryLabel.label !== label);
     labelList.push({ label, value });
     await this.setAttribute(FixedLabelCluster.id, 'labelList', labelList, this.log);
@@ -820,7 +835,6 @@ export class MatterbridgeEndpoint extends Endpoint {
       return;
     }
     this.log.debug(`addUserLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
-    // if (this.construction.status !== Lifecycle.Status.Active) await this.construction.ready;
     const labelList = (this.getAttribute(UserLabelCluster.id, 'labelList', this.log) ?? []).filter((entryLabel: { label: string; value: string }) => entryLabel.label !== label);
     labelList.push({ label, value });
     await this.setAttribute(UserLabelCluster.id, 'labelList', labelList, this.log);
@@ -891,7 +905,6 @@ export class MatterbridgeEndpoint extends Endpoint {
 
     if (endpoint.construction.status !== Lifecycle.Status.Active) {
       this.log.error(`setAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.id}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
-      // await endpoint.construction.ready;
       return false;
     }
 
@@ -910,7 +923,6 @@ export class MatterbridgeEndpoint extends Endpoint {
     let oldValue = state[clusterName][attribute];
     if (typeof oldValue === 'object') oldValue = deepCopy(oldValue);
     await endpoint.setStateOf(endpoint.behaviors.supported[clusterName], { [attribute]: value });
-    // await endpoint.set({ [clusterName]: { [attribute]: value } });
     log?.info(
       `${db}Set endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${this.capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db} ` +
         `from ${YELLOW}${typeof oldValue === 'object' ? debugStringify(oldValue) : oldValue}${db} ` +
@@ -1087,12 +1099,10 @@ export class MatterbridgeEndpoint extends Endpoint {
       },
       {
         identify: async (data) => {
-          this.log.debug('Matter command: Identify');
-          await this.commandHandler.executeHandler('identify', data);
+          // Never called in edge
         },
         triggerEffect: async (data) => {
-          this.log.debug('Matter command: TriggerEffect');
-          await this.commandHandler.executeHandler('triggerEffect', data);
+          // Never called in edge
         },
       },
     );
@@ -1103,6 +1113,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultIdentifyClusterServer(identifyTime = 0, identifyType = Identify.IdentifyType.None) {
     this.addClusterServer(this.getDefaultIdentifyClusterServer(identifyTime, identifyType));
+    return this;
   }
 
   /**
@@ -1463,7 +1474,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Get a default OnOff cluster server.
+   * Get a default OnOff cluster server for light devices.
    *
    * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
    * @param {boolean} [globalSceneControl=false] - The global scene control state.
@@ -1506,7 +1517,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     );
   }
   /**
-   * Creates a default OnOff cluster server.
+   * Creates a default OnOff cluster server for light devices.
    *
    * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
    * @param {boolean} [globalSceneControl=false] - The global scene control state.
@@ -1517,6 +1528,80 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultOnOffClusterServer(onOff = false, globalSceneControl = false, onTime = 0, offWaitTime = 0, startUpOnOff: OnOff.StartUpOnOff | null = null) {
     this.addClusterServer(this.getDefaultOnOffClusterServer(onOff, globalSceneControl, onTime, offWaitTime, startUpOnOff));
+  }
+
+  /**
+   * Get an OnOff cluster server without features.
+   *
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   *
+   * @returns {ClusterServer} - The configured OnOff cluster server.
+   */
+  getOnOffClusterServer(onOff = false) {
+    return ClusterServer(
+      OnOffCluster,
+      {
+        onOff,
+      },
+      {
+        on: async (data) => {
+          // Never called in edge
+        },
+        off: async (data) => {
+          // Never called in edge
+        },
+        toggle: async (data) => {
+          // Never called in edge
+        },
+      },
+      {},
+    );
+  }
+
+  /**
+   * Creates an OnOff cluster server without features.
+   *
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   */
+  createOnOffClusterServer(onOff = false) {
+    this.addClusterServer(this.getOnOffClusterServer(onOff));
+  }
+
+  /**
+   * Get a DeadFront OnOff cluster server.
+   *
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   *
+   * @returns {ClusterServer} - The configured OnOff cluster server.
+   */
+  getDeadFrontOnOffClusterServer(onOff = false) {
+    return ClusterServer(
+      OnOffCluster.with(OnOff.Feature.DeadFrontBehavior),
+      {
+        onOff,
+      },
+      {
+        on: async (data) => {
+          // Never called in edge
+        },
+        off: async (data) => {
+          // Never called in edge
+        },
+        toggle: async (data) => {
+          // Never called in edge
+        },
+      },
+      {},
+    );
+  }
+
+  /**
+   * Creates a DeadFront OnOff cluster server.
+   *
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   */
+  createDeadFrontOnOffClusterServer(onOff = false) {
+    this.addClusterServer(this.getDeadFrontOnOffClusterServer(onOff));
   }
 
   /**
@@ -3276,6 +3361,81 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
     this.addClusterServer(this.getDefaultFanControlClusterServer(fanMode));
+  }
+
+  /**
+   * Returns the default Pump Configuration And Control cluster server.
+   *
+   * @param {PumpConfigurationAndControl.OperationMode} [pumpMode=PumpConfigurationAndControl.OperationMode.Normal] - The pump mode to set. Defaults to `PumpConfigurationAndControl.OperationMode.Normal`.
+   * @returns {ClusterServer} - The default Pump Configuration And Control cluster server.
+   */
+  getDefaultPumpConfigurationAndControlClusterServer(pumpMode = PumpConfigurationAndControl.OperationMode.Normal) {
+    return ClusterServer(
+      PumpConfigurationAndControlCluster.with(PumpConfigurationAndControl.Feature.ConstantSpeed),
+      {
+        minConstSpeed: null,
+        maxConstSpeed: null,
+        maxPressure: null,
+        maxSpeed: null,
+        maxFlow: null,
+        effectiveOperationMode: pumpMode,
+        effectiveControlMode: PumpConfigurationAndControl.ControlMode.ConstantSpeed,
+        capacity: null,
+        operationMode: pumpMode,
+      },
+      {},
+      {},
+    );
+  }
+  /**
+   * Creates the default Pump Configuration And Control cluster server.
+   *
+   * @param {PumpConfigurationAndControl.OperationMode} [pumpMode=PumpConfigurationAndControl.OperationMode.Normal] - The pump mode to set. Defaults to `PumpConfigurationAndControl.OperationMode.Normal`.
+   * @returns {void}
+   */
+  createDefaultPumpConfigurationAndControlClusterServer(pumpMode = PumpConfigurationAndControl.OperationMode.Normal) {
+    this.addClusterServer(this.getDefaultPumpConfigurationAndControlClusterServer(pumpMode));
+  }
+
+  /**
+   * Returns the default Valve Configuration And Control cluster server rev 2.
+   *
+   * @param {ValveConfigurationAndControl.ValveState} [valveState=ValveConfigurationAndControl.ValveState.Closed] - The valve state to set. Defaults to `ValveConfigurationAndControl.ValveState.Closed`.
+   * @param {number} [valveLevel=0] - The valve level to set. Defaults to 0.
+   * @returns {ClusterServer} - The default Valve Configuration And Control cluster server.
+   */
+  getDefaultValveConfigurationAndControlClusterServer(valveState = ValveConfigurationAndControl.ValveState.Closed, valveLevel = 0) {
+    return ClusterServer(
+      ValveConfigurationAndControlCluster.with(ValveConfigurationAndControl.Feature.Level),
+      {
+        currentState: valveState,
+        targetState: valveState,
+        currentLevel: valveLevel,
+        targetLevel: valveLevel,
+        openDuration: null,
+        defaultOpenDuration: null,
+        remainingDuration: null,
+      },
+      {
+        open: async (data) => {
+          // Never called in edge
+        },
+        close: async (data) => {
+          // Never called in edge
+        },
+      },
+      {},
+    );
+  }
+  /**
+   * Create the default Valve Configuration And Control cluster server rev 2.
+   *
+   * @param {ValveConfigurationAndControl.ValveState} [valveState=ValveConfigurationAndControl.ValveState.Closed] - The valve state to set. Defaults to `ValveConfigurationAndControl.ValveState.Closed`.
+   * @param {number} [valveLevel=0] - The valve level to set. Defaults to 0.
+   * @returns {void}
+   */
+  createDefaultValveConfigurationAndControlClusterServer(valveState = ValveConfigurationAndControl.ValveState.Closed, valveLevel = 0) {
+    this.addClusterServer(this.getDefaultValveConfigurationAndControlClusterServer(valveState, valveLevel));
   }
 
   /*

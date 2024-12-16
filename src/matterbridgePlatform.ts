@@ -4,7 +4,7 @@
  * @file matterbridgePlatform.ts
  * @author Luca Liguori
  * @date 2024-03-21
- * @version 1.0.0
+ * @version 1.1.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -26,7 +26,7 @@ import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 
 // AnsiLogger module
-import { AnsiLogger, CYAN, LogLevel, nf, wr } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, LogLevel, nf } from 'node-ansi-logger';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { isValidArray, isValidObject } from './utils/utils.js';
 
@@ -189,7 +189,6 @@ export class MatterbridgePlatform {
     return false;
   }
 
-  // TODO: remove when matterbridge 1.6.6 is published
   /**
    * Validates if an entity is allowed based on the entity blacklist and device-entity blacklist configurations.
    *
@@ -204,7 +203,7 @@ export class MatterbridgePlatform {
       return false;
     }
     if (isValidObject(this.config.deviceEntityBlackList, 1) && device in this.config.deviceEntityBlackList && (this.config.deviceEntityBlackList as Record<string, string[]>)[device].includes(entity)) {
-      if (log) this.log.info(`Skipping entity ${CYAN}${entity}${wr} for device ${CYAN}${device}${nf} because in deviceEntityBlackList`);
+      if (log) this.log.info(`Skipping entity ${CYAN}${entity}${nf} for device ${CYAN}${device}${nf} because in deviceEntityBlackList`);
       return false;
     }
     return true;

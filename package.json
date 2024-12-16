@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.6.6",
+  "version": "1.6.7",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -110,9 +110,9 @@
     "deepClean": "npx rimraf tsconfig.tsbuildinfo package-lock.json npm-shrinkwrap.json ./dist ./node_modules",
     "deepCleanBuild": "npm run deepClean && npm install && npm run build && npm link",
     "prepublishOnly": "npm pkg delete devDependencies && npm pkg delete scripts && npm install --omit=dev && npm shrinkwrap",
-    "npmPack": "copy package.json package.log && npm run buildProduction && npm pkg delete devDependencies && npm pkg delete scripts && npx rimraf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack && copy package.log package.json && npm run deepCleanBuild && npm run deepCleanBuild",
-    "npmPublishTagDev": "copy package.json package.log && npm run buildProduction && npm pkg delete devDependencies && npm pkg delete scripts && npx rimraf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm publish --tag dev && copy package.log package.json && npm run deepCleanBuild",
-    "npmPublishTagLatest": "copy package.json package.log && npm run buildProduction && npm pkg delete devDependencies && npm pkg delete scripts && npx rimraf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm publish --tag latest && copy package.log package.json && npm run deepCleanBuild",
+    "npmPack": "copy package.json package.log && npm run buildProduction && npm pkg delete devDependencies && npm pkg delete scripts && npm pkg delete types && npx rimraf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack && copy package.log package.json && npm run deepCleanBuild",
+    "npmPublishTagDev": "copy package.json package.log && npm run buildProduction && npm pkg delete devDependencies && npm pkg delete scripts && npm pkg delete types && npx rimraf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm publish --tag dev && copy package.log package.json && npm run deepCleanBuild",
+    "npmPublishTagLatest": "copy package.json package.log && npm run buildProduction && npm pkg delete devDependencies && npm pkg delete scripts && npm pkg delete types && npx rimraf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm publish --tag latest && copy package.log package.json && npm run deepCleanBuild",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u && npm install && npm run cleanBuild && npm link",
     "updateMatter:latest": "npm run deepClean && npm install @matter/main@latest @matter/nodejs@latest @project-chip/matter.js@latest && npm install && npm run build",
@@ -129,7 +129,7 @@
     "@matter/nodejs": "0.11.9",
     "@project-chip/matter.js": "0.11.9",
     "archiver": "7.0.1",
-    "express": "4.21.1",
+    "express": "4.21.2",
     "glob": "11.0.0",
     "https": "1.0.0",
     "node-ansi-logger": "3.0.0",
@@ -142,7 +142,7 @@
     "@types/eslint__js": "8.42.3",
     "@types/express": "5.0.0",
     "@types/jest": "29.5.14",
-    "@types/node": "22.10.1",
+    "@types/node": "22.10.2",
     "@types/ws": "8.5.13",
     "eslint": "9.16.0",
     "eslint-config-prettier": "9.1.0",
@@ -152,6 +152,6 @@
     "prettier": "3.4.2",
     "ts-jest": "29.2.5",
     "typescript": "5.7.2",
-    "typescript-eslint": "8.17.0"
+    "typescript-eslint": "8.18.0"
   }
 }

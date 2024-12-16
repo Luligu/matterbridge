@@ -4,6 +4,7 @@ RUN npm install -g npm@latest && \
     matterbridge-zigbee2mqtt \
     matterbridge-somfy-tahoma \
     matterbridge-shelly \
+    matterbridge-hass \
     matterbridge-example-accessory-platform \
     matterbridge-example-dynamic-platform \
     matterbridge-eve-door \

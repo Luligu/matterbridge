@@ -114,6 +114,7 @@ export class Matterbridge extends EventEmitter {
     bridgeMode: '',
     restartMode: '',
     edge: hasParameter('edge'),
+    readOnly: hasParameter('readonly'),
     profile: getParameter('profile'),
     loggerLevel: LogLevel.INFO,
     fileLogger: false,
@@ -318,10 +319,12 @@ export class Matterbridge extends EventEmitter {
     this.port = getIntParameter('port') ?? (await this.nodeContext.get<number>('matterport', 5540)) ?? 5540;
 
     // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode)
-    this.passcode = getIntParameter('passcode') ?? (await this.nodeContext.get<number>('matterpasscode'));
+    this.passcode = this.passcode ?? getIntParameter('passcode') ?? (await this.nodeContext.get<number>('matterpasscode'));
 
     // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode)
-    this.discriminator = getIntParameter('discriminator') ?? (await this.nodeContext.get<number>('matterdiscriminator'));
+    this.discriminator = this.discriminator ?? getIntParameter('discriminator') ?? (await this.nodeContext.get<number>('matterdiscriminator'));
+
+    this.log.debug(`Initializing commissioning server for Matterbridge... on port ${this.port} with passcode ${this.passcode} and discriminator ${this.discriminator}`);
 
     // Set matterbridge logger level (context: matterbridgeLogLevel)
     if (hasParameter('logger')) {
@@ -1437,7 +1440,7 @@ export class Matterbridge extends EventEmitter {
           this.log.debug(`Creating commissioning server for ${plg}${plugin.name}${db}`);
           plugin.commissioningServer = await this.createCommisioningServer(plugin.storageContext, plugin.name);
           this.log.debug(`Creating aggregator for plugin ${plg}${plugin.name}${db}`);
-          plugin.aggregator = await this.createMatterAggregator(plugin.storageContext, plugin.name); // Generate serialNumber and uniqueId
+          plugin.aggregator = await this.createMatterAggregator(plugin.storageContext, plugin.name);
           this.log.debug(`Adding matter aggregator to commissioning server for plugin ${plg}${plugin.name}${db}`);
           plugin.commissioningServer.addDevice(plugin.aggregator);
           this.log.debug(`Adding commissioning server to matter server for plugin ${plg}${plugin.name}${db}`);
@@ -2091,52 +2094,9 @@ export class Matterbridge extends EventEmitter {
    * @param {StorageContext} context - The storage context.
    * @returns {Aggregator} - The created Matter Aggregator.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected async createMatterAggregator(context: StorageContext, pluginName: string): Promise<Aggregator> {
-    /*
-    const random = randomBytes(8).toString('hex');
-    await context.set('aggregatorSerialNumber', await context.get('aggregatorSerialNumber', random));
-    await context.set('aggregatorUniqueId', await context.get('aggregatorUniqueId', random));
-
-    this.log.debug(`Creating matter aggregator for plugin ${plg}${pluginName}${db} with uniqueId ${await context.get<string>('aggregatorUniqueId')} serialNumber ${await context.get<string>('aggregatorSerialNumber')}`);
-    this.log.debug(`Creating matter aggregator for plugin ${plg}${pluginName}${db} with softwareVersion ${await context.get<number>('softwareVersion', 1)} softwareVersionString ${await context.get<string>('softwareVersionString', '1.0.0')}`);
-    this.log.debug(`Creating matter aggregator for plugin ${plg}${pluginName}${db} with hardwareVersion ${await context.get<number>('hardwareVersion', 1)} hardwareVersionString ${await context.get<string>('hardwareVersionString', '1.0.0')}`);
-    */
+    this.log.debug(`Creating matter aggregator for ${plg}${pluginName}${db}`);
     const matterAggregator = new Aggregator();
-    /*
-    matterAggregator.addClusterServer(
-      ClusterServer(
-        BasicInformationCluster,
-        {
-          dataModelRevision: 1,
-          location: 'FR',
-          vendorId: VendorId(0xfff1),
-          vendorName: 'Matterbridge',
-          productId: 0x8000,
-          productName: 'Matterbridge aggregator',
-          productLabel: 'Matterbridge aggregator',
-          nodeLabel: 'Matterbridge aggregator',
-          serialNumber: await context.get<string>('aggregatorSerialNumber'),
-          uniqueId: await context.get<string>('aggregatorUniqueId'),
-          softwareVersion: await context.get<number>('softwareVersion', 1),
-          softwareVersionString: await context.get<string>('softwareVersionString', '1.0.0'),
-          hardwareVersion: await context.get<number>('hardwareVersion', 1),
-          hardwareVersionString: await context.get<string>('hardwareVersionString', '1.0.0'),
-          reachable: true,
-          capabilityMinima: { caseSessionsPerFabric: 3, subscriptionsPerFabric: 3 },
-          specificationVersion: Specification.SPECIFICATION_VERSION,
-          maxPathsPerInvoke: 1,
-        },
-        {},
-        {
-          startUp: true,
-          shutDown: true,
-          leave: true,
-          reachableChanged: true,
-        },
-      ),
-    );
-    */
     return matterAggregator;
   }
 

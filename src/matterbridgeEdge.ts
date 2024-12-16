@@ -30,7 +30,7 @@ import os from 'os';
 import { randomBytes } from 'crypto';
 
 // NodeStorage and AnsiLogger modules
-import { rs, GREEN, debugStringify, er, zb, nf } from 'node-ansi-logger';
+import { rs, GREEN, debugStringify, er, zb, nf, db } from 'node-ansi-logger';
 import { NodeStorage } from 'node-persist-manager';
 
 // Matterbridge
@@ -104,16 +104,17 @@ export class MatterbridgeEdge extends Matterbridge {
     this.environment.vars.set('runtime.signals', false);
     this.environment.vars.set('runtime.exitcode', false);
 
+    // Setup Matter commissioning server
+    this.port = 5540;
+    this.passcode = PaseClient.generateRandomPasscode();
+    this.discriminator = PaseClient.generateRandomDiscriminator();
+    if (hasParameter('debug')) console.log(`Initializing server node for Matterbridge... on port ${this.port} with passcode ${this.passcode} and discriminator ${this.discriminator}`);
+
     // Initialize the base Matterbridge class
     await super.initialize();
 
     // Setup Matter mdnsInterface
     if (this.mdnsInterface) this.environment.vars.set('mdns.networkInterface', this.mdnsInterface);
-
-    // Setup Matter commissioning server
-    // this.port = 5540;
-    // this.passcode = PaseClient.generateRandomPasscode();
-    // this.discriminator = PaseClient.generateRandomDiscriminator();
   }
 
   override async startMatterStorage(storageType: string, storageName: string): Promise<void> {
@@ -147,44 +148,6 @@ export class MatterbridgeEdge extends Matterbridge {
     this.storageManager = undefined;
     this.matterbridgeContext = undefined;
     this.log.info('Matter node storage closed');
-  }
-
-  override createMatterServer(storageManager: StorageManager): MatterServer {
-    if (hasParameter('debug')) this.log.warn('createMatterServer() => mock matterServer');
-    const matterServer = {
-      addCommissioningServer: (commissioningServer: CommissioningServer, nodeOptions?: NodeOptions) => {
-        if (hasParameter('debug')) this.log.warn('MatterServer.addCommissioningServer() => do nothing');
-      },
-    } as unknown as MatterServer;
-    return matterServer;
-  }
-
-  override async startMatterServer() {
-    if (hasParameter('debug')) this.log.warn('createMatterServer() => do nothing');
-  }
-
-  override async stopMatterServer() {
-    this.log.info(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
-    if (this.bridgeMode === 'bridge') {
-      const serverNode = this.csToServerNode.get('Matterbridge')?.serverNode;
-      if (serverNode) {
-        await this.stopServerNode(serverNode);
-        this.log.info(`Stopped matter server node Matterbridge`);
-      }
-    }
-    if (this.bridgeMode === 'childbridge') {
-      this.plugins.forEach(async (plugin) => {
-        const serverNode = this.csToServerNode.get(plugin.name)?.serverNode;
-        if (serverNode) {
-          await this.stopServerNode(serverNode);
-          this.log.info(`Stopped matter server node ${plugin.name}`);
-        }
-      });
-    }
-    this.log.info('Stopped matter server nodes');
-
-    await this.environment.get(MdnsService)[Symbol.asyncDispose]();
-    this.log.info('Stopped MdnsService');
   }
 
   /**
@@ -241,7 +204,7 @@ export class MatterbridgeEdge extends Matterbridge {
 
   async createServerNode(storageContext: StorageContext, port = 5540, passcode = 20242025, discriminator = 3850) {
     const storeId = await storageContext.get<string>('storeId');
-    this.log.info(`Creating server node for ${storeId}...`);
+    this.log.info(`Creating server node for ${storeId} on port ${port} with passcode ${passcode} and discriminator ${discriminator}...`);
     this.log.debug(`- deviceName: ${await storageContext.get('deviceName')}`);
     this.log.debug(`- deviceType: ${await storageContext.get('deviceType')}(0x${(await storageContext.get('deviceType'))?.toString(16).padStart(4, '0')})`);
     this.log.debug(`- serialNumber: ${await storageContext.get('serialNumber')}`);
@@ -308,6 +271,14 @@ export class MatterbridgeEdge extends Matterbridge {
         this.matterbridgeSessionInformations = [];
         this.matterbridgePaired = true;
       }
+      if (this.bridgeMode === 'childbridge') {
+        const plugin = this.plugins.get(storeId);
+        if (plugin) {
+          plugin.fabricInformations = sanitizedFabrics;
+          plugin.sessionInformations = [];
+          plugin.paired = true;
+        }
+      }
     };
 
     /**
@@ -334,6 +305,19 @@ export class MatterbridgeEdge extends Matterbridge {
           this.matterbridgeConnected = false;
           this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
           this.log.notice(`Manual pairing code: ${manualPairingCode}`);
+        }
+        if (this.bridgeMode === 'childbridge') {
+          const plugin = this.plugins.get(storeId);
+          if (plugin) {
+            plugin.qrPairingCode = qrPairingCode;
+            plugin.manualPairingCode = manualPairingCode;
+            plugin.fabricInformations = [];
+            plugin.sessionInformations = [];
+            plugin.paired = false;
+            plugin.connected = false;
+            this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
+            this.log.notice(`Manual pairing code: ${manualPairingCode}`);
+          }
         }
       } else {
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
@@ -386,6 +370,12 @@ export class MatterbridgeEdge extends Matterbridge {
       if (this.bridgeMode === 'bridge') {
         this.matterbridgeSessionInformations = sanitizedSessions;
       }
+      if (this.bridgeMode === 'childbridge') {
+        const plugin = this.plugins.get(storeId);
+        if (plugin) {
+          plugin.sessionInformations = sanitizedSessions;
+        }
+      }
     };
 
     /**
@@ -437,36 +427,141 @@ export class MatterbridgeEdge extends Matterbridge {
     // Check if the plugin is registered
     const plugin = this.plugins.get(pluginName);
     if (!plugin) {
-      this.log.error(`Error adding bridged device ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) plugin ${plg}${pluginName}${er} not found`);
+      this.log.error(`Error adding bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) plugin ${plg}${pluginName}${er} not found`);
       return;
     }
-
     // Register and add the device to the matterbridge aggregator node
     if (this.bridgeMode === 'bridge') {
       this.log.info(`Adding ${pluginName}:${device.deviceName} to Matterbridge aggregator node`);
       const aggregatorNode = this.agToAggregatorEndpoint.get('Matterbridge')?.aggregatorNode;
       await aggregatorNode?.add(device);
     } else if (this.bridgeMode === 'childbridge') {
+      if (plugin.type === 'AccessoryPlatform') {
+        if (!plugin.locked && device.deviceName && device.vendorId && device.productId && device.vendorName && device.productName) {
+          plugin.locked = true;
+          plugin.storageContext = await this.createServerNodeContext(plugin.name, device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
+          plugin.commissioningServer = (await this.createServerNode(plugin.storageContext, this.port++, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined)) as unknown as CommissioningServer;
+          this.log.debug(`Adding matterbridge endpoint to server node for plugin ${plg}${plugin.name}${db}`);
+          await (plugin.commissioningServer as unknown as ServerNode).add(device);
+          this.csToServerNode.set(plugin.name, { commissioningServer: plugin.commissioningServer as unknown as CommissioningServer, serverNode: plugin.commissioningServer as unknown as ServerNode });
+        }
+      }
       if (plugin.type === 'DynamicPlatform') {
-        this.log.info(`Adding ${pluginName}:${device.deviceName} to ${pluginName} aggregator node`);
+        if (!plugin.locked) {
+          plugin.locked = true;
+          plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', bridge.code, this.aggregatorVendorId, 'Matterbridge', this.aggregatorProductId, plugin.description);
+          plugin.commissioningServer = (await this.createServerNode(plugin.storageContext, this.port++, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined)) as unknown as CommissioningServer;
+          plugin.aggregator = (await this.createAggregatorNode(plugin.storageContext)) as unknown as Aggregator;
+          this.log.debug(`Adding matter aggregator node to server node for plugin ${plg}${plugin.name}${db}`);
+          await (plugin.commissioningServer as unknown as ServerNode).add(plugin.aggregator as unknown as EndpointNode<AggregatorEndpoint>);
+          this.csToServerNode.set(plugin.name, { commissioningServer: plugin.commissioningServer as unknown as CommissioningServer, serverNode: plugin.commissioningServer as unknown as ServerNode });
+          this.agToAggregatorEndpoint.set(plugin.name, { aggregator: plugin.aggregator, aggregatorNode: plugin.aggregator as unknown as EndpointNode<AggregatorEndpoint> });
+        }
         const aggregatorNode = this.agToAggregatorEndpoint.get(pluginName)?.aggregatorNode;
         await aggregatorNode?.add(device);
       }
     }
-    // TODO: Implement plugins and devices
     if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
     if (plugin.addedDevices !== undefined) plugin.addedDevices++;
     // Add the device to the DeviceManager
     this.devices.set(device as unknown as MatterbridgeDevice);
-    this.log.info(`Added and registered bridged device (${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) for plugin ${plg}${pluginName}${nf}`);
+    this.log.info(`Added and registered bridged endpoint (${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) for plugin ${plg}${pluginName}${nf}`);
   }
 
   override async removeBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void> {
-    // TODO: Implement removeBridgedEndpoint
+    this.log.debug(`Removing bridged endpoint ${dev}${device.deviceName}${db} (${zb}${device.name}${db}) for plugin ${plg}${pluginName}${db}`);
+
+    // Check if the plugin is registered
+    const plugin = this.plugins.get(pluginName);
+    if (!plugin) {
+      this.log.error(`Error removing bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.name}${er}) for plugin ${plg}${pluginName}${er}: plugin not found`);
+      return;
+    }
+    // Register and add the device to the matterbridge aggregator node
+    if (this.bridgeMode === 'bridge') {
+      const aggregatoreNode = this.agToAggregatorEndpoint.get('Matterbridge')?.aggregatorNode;
+      if (!aggregatoreNode) {
+        this.log.error(`Error removing bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.name}${er}) for plugin ${plg}${pluginName}${er}: matterAggregator node not found`);
+        return;
+      }
+      await device.delete();
+      this.log.info(`Removed bridged endpoint(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${zb}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
+      if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
+      if (plugin.addedDevices !== undefined) plugin.addedDevices--;
+    } else if (this.bridgeMode === 'childbridge') {
+      if (plugin.type === 'AccessoryPlatform') {
+        // Nothing to do
+      } else if (plugin.type === 'DynamicPlatform') {
+        const aggregatoreNode = this.agToAggregatorEndpoint.get(pluginName)?.aggregatorNode;
+        if (!aggregatoreNode) {
+          this.log.error(`Error removing bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.name}${er}) for plugin ${plg}${pluginName}${er}: aggregator not found`);
+          return;
+        }
+        await device.delete();
+      }
+      this.log.info(`Removed bridged endpoint(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${zb}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
+      if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
+      if (plugin.addedDevices !== undefined) plugin.addedDevices--;
+      // Close the server node
+      if (plugin.registeredDevices === 0 && plugin.addedDevices === 0) {
+        const serverNode = this.csToServerNode.get(pluginName)?.serverNode;
+        if (serverNode) await this.stopServerNode(serverNode);
+        this.csToServerNode.delete(pluginName);
+        this.log.info(`Removed server node for plugin ${plg}${pluginName}${nf}`);
+      }
+    }
+    // Remove the device from the DeviceManager
+    this.devices.remove(device as unknown as MatterbridgeDevice);
   }
 
   override async removeAllBridgedEndpoints(pluginName: string): Promise<void> {
-    // TODO: Implement removeAllBridgedEndpoints
+    this.log.debug(`Removing all bridged endpoints for plugin ${plg}${pluginName}${db}`);
+    for (const device of this.devices.array().filter((device) => device.plugin === pluginName)) {
+      await this.removeBridgedEndpoint(pluginName, device as unknown as MatterbridgeEndpoint);
+    }
+  }
+
+  /**
+   * override from Matterbridge
+   */
+
+  override createMatterServer(storageManager: StorageManager): MatterServer {
+    if (hasParameter('debug')) this.log.warn('createMatterServer() => mock MatterServer.addCommissioningServer()');
+    const matterServer = {
+      addCommissioningServer: (commissioningServer: CommissioningServer, nodeOptions?: NodeOptions) => {
+        if (hasParameter('debug')) this.log.warn('MatterServer.addCommissioningServer() => do nothing');
+      },
+    } as unknown as MatterServer;
+    return matterServer;
+  }
+
+  override async startMatterServer() {
+    if (hasParameter('debug')) this.log.warn('startMatterServer() => do nothing');
+  }
+
+  override async stopMatterServer() {
+    if (hasParameter('debug')) this.log.warn('stopMatterServer() => ...');
+    this.log.info(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
+    if (this.bridgeMode === 'bridge') {
+      const serverNode = this.csToServerNode.get('Matterbridge')?.serverNode;
+      if (serverNode) {
+        await this.stopServerNode(serverNode);
+        this.log.info(`Stopped matter server node Matterbridge`);
+      }
+    }
+    if (this.bridgeMode === 'childbridge') {
+      for (const plugin of this.plugins.array()) {
+        const serverNode = this.csToServerNode.get(plugin.name)?.serverNode;
+        if (serverNode) {
+          await this.stopServerNode(serverNode);
+          this.log.info(`Stopped matter server node ${plugin.name}`);
+        }
+      }
+    }
+    this.log.info('Stopped matter server nodes');
+
+    await this.environment.get(MdnsService)[Symbol.asyncDispose]();
+    this.log.info('Stopped MdnsService');
   }
 
   override async createCommissioningServerContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string): Promise<StorageContext> {
@@ -497,7 +592,7 @@ export class MatterbridgeEdge extends Matterbridge {
   override async createCommisioningServer(context: StorageContext, pluginName: string): Promise<CommissioningServer> {
     if (hasParameter('debug')) this.log.warn(`createCommisioningServer() for ${pluginName} => createServerNode()`);
     const port = this.port;
-    const serverNode = await this.createServerNode(context, this.port++, this.passcode ? this.passcode++ : 20242025, this.discriminator ? this.discriminator++ : 3840);
+    const serverNode = await this.createServerNode(context, this.port++, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
     const commissioningServer = {
       getPort: () => port,
       addDevice: async (device: Device | Aggregator) => {
@@ -527,10 +622,10 @@ export class MatterbridgeEdge extends Matterbridge {
     const aggregator = {
       name: 'MA-aggregator',
       addBridgedDevice: (device: Device) => {
-        if (hasParameter('debug')) this.log.warn('Aggregator.addBridgedDevice() => not inplemented');
+        if (hasParameter('debug')) this.log.error('****Aggregator.addBridgedDevice() => not inplemented');
       },
       removeBridgedDevice: (device: Device) => {
-        if (hasParameter('debug')) this.log.warn('Aggregator.removeBridgedDevice() => not inplemented');
+        if (hasParameter('debug')) this.log.error('****Aggregator.removeBridgedDevice() => not inplemented');
       },
     } as unknown as Aggregator;
     this.agToAggregatorEndpoint.set(pluginName, { aggregator, aggregatorNode });

@@ -44,10 +44,10 @@ A special thank to Apollon77 for his incredible work.
 
 ## Prerequisites
 
-To run Matterbridge, you need either a [Node.js](https://nodejs.org/en/download/package-manager) environment or [Docker](https://docs.docker.com/get-started/get-docker/) installed on your system.
+To run Matterbridge, you need either a [Node.js](https://nodejs.org/en) environment or [Docker](https://docs.docker.com/get-started/get-docker/) installed on your system.
 
 If you don't have Node.js already install, please use this method to install it on a debian device: https://github.com/nodesource/distributions. 
-The supported versions of node are 18, 20 and 22. Please install node 22.
+The supported versions of node are 18, 20 and 22. Please install node 22 LTS.
 Nvm is not a good choice and should not be used for production.
 
 If you don't have Docker already install, please use this method to install it on a debian device: https://docs.docker.com/desktop/setup/install/linux/debian/.
@@ -226,14 +226,18 @@ It exposes:
 - a light with onOff
 - a light with onOff and levelControl (dimmer)
 - a light with onOff, levelControl and colorControl (with XY, HS and CT) clusters
-- a light with onOff, levelControl and colorControl (with HS only) clusters
-- a light with onOff, levelControl and colorControl (with XY only) clusters
+- a light with onOff, levelControl and colorControl (with HS and CT) clusters
+- a light with onOff, levelControl and colorControl (with XY and CT) clusters
 - a light with onOff, levelControl and colorControl (with CT only) clusters
 - an outlet (plug) with onOff cluster
 - a cover with windowCovering cluster
 - a lock with doorLock cluster
-- a thermo with thermostat cluster and 3 sub endpoints with flowMeasurement cluster, temperatureMeasurement cluster
+- a thermo autoMode (i.e. with Auto Heat and Cool features) with thermostat cluster and 3 sub endpoints with flowMeasurement cluster, temperatureMeasurement cluster
   and relativeHumidityMeasurement cluster (to show how to create a composed device with sub endpoints)
+- a thermo heat only with two external temperature sensors (tagged like Indoor and Outdoor)
+- a thermo cool only
+- an airConditioner device
+- an airPurifier device with temperature and humidity sensor (supported by Apple Home)
 - a fan with FanControl cluster
 - a rainSensor device
 - a waterFreezeDetector device
@@ -378,7 +382,7 @@ Then, from the dots menu in the frontend, download the `matterbridge.log` and `m
 
 # Known general issues
 
-## Session XYZ does not exist
+## Session XYZ does not exist or Cannot find a session for ID XYZ
 
 This message may appear after Matterbridge restarts, indicating that the controller is still using a session from the previous connection that has since been closed.
 After some time, the controller will reconnect.
