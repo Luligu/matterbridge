@@ -18,6 +18,21 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 In this release some device types and the OnOff, LevelControl and ColorControl have been updated to be fully compliant with Matter 1.3 specifications.
 It is possible that some controllers see them as new devices or need time to read the new clusters. It can be useful after the upgrade to power off the controller, wait a few minutes and power it on again.
 
+## [1.6.8-dev.1] - 2024-12-16
+
+### Added
+
+### Changed
+
+- [edge]: Fixes to edge mode.
+- [package]: Update dependencies.
+
+### Fixed
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.6.7] - 2024-12-15
 
 ### Added

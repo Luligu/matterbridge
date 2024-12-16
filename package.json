@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.6.7",
+  "version": "1.6.8-dev.1",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -137,14 +137,14 @@
     "ws": "8.18.0"
   },
   "devDependencies": {
-    "@eslint/js": "9.16.0",
+    "@eslint/js": "9.17.0",
     "@types/archiver": "6.0.3",
     "@types/eslint__js": "8.42.3",
     "@types/express": "5.0.0",
     "@types/jest": "29.5.14",
     "@types/node": "22.10.2",
     "@types/ws": "8.5.13",
-    "eslint": "9.16.0",
+    "eslint": "9.17.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-jest": "28.9.0",
     "eslint-plugin-prettier": "5.2.1",
