@@ -1972,7 +1972,17 @@ export class Matterbridge extends EventEmitter {
     await this.matterbridgeContext.set('port', this.port);
     await this.matterbridgeContext.set('passcode', this.passcode);
     await this.matterbridgeContext.set('discriminator', this.discriminator);
+  }
 
+  /**
+   * Conert the old API matter storage to new API format.
+   * @param {StorageContext} context - The context of the plugin.
+   * @param {string} pluginName - The name of the plugin.
+   * @returns {Promise<void>} - A promise that resolves when the storage process is started.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async convertStorage(context: StorageContext, pluginName: string) {
+    if (!this.matterbridgeContext) return;
     const storageService = Environment.default.get(StorageService);
     Environment.default.vars.set('path.root', path.join(this.matterbridgeDirectory, 'matterstorage' + (this.profile ? '.' + this.profile : '')));
     const nodeStorage = await storageService.open('Matterbridge');
