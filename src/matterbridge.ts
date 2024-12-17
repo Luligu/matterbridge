@@ -51,7 +51,7 @@ import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // @matter
-import { DeviceTypeId, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, EndpointServer } from '@matter/main';
+import { DeviceTypeId, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, EndpointServer, StorageService, Environment } from '@matter/main';
 import {
   BasicInformationCluster,
   BridgedDeviceBasicInformation,
@@ -1969,6 +1969,147 @@ export class Matterbridge extends EventEmitter {
     }
     this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
     this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', aggregator.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
+    await this.matterbridgeContext.set('port', this.port);
+    await this.matterbridgeContext.set('passcode', this.passcode);
+    await this.matterbridgeContext.set('discriminator', this.discriminator);
+
+    if (!hasParameter('upgrade')) return;
+    const storageService = Environment.default.get(StorageService);
+    // Environment.default.vars.set('path.root', 'temp');
+    Environment.default.vars.set('path.root', path.join(this.matterbridgeDirectory, 'matterstorage' + (this.profile ? '.' + this.profile : '')));
+    const nodeStorage = await storageService.open('Matterbridge');
+    if ((await nodeStorage.createContext('persist').get<boolean>('upgraded', false)) === true) {
+      this.log.info(`Matter node storage already upgraded to Matterbridge edge for ${plg}Matterbridge${nf}`);
+      return;
+    } else {
+      this.log.info(`Upgrading matter node storage to Matterbridge edge for ${plg}Matterbridge${nf}`);
+    }
+
+    // Read FabricManager from the old storage and get FabricManager.fabrics and FabricManager.nextFabricIndex
+    const fabricManagerContext = this.matterbridgeContext.createContext('FabricManager');
+    const fabrics = (await fabricManagerContext.get('fabrics', [])) as {
+      fabricIndex: number;
+      fabricId: bigint;
+      nodeId: bigint;
+      rootNodeId: bigint;
+      rootVendorId: number;
+      rootPublicKey: Uint8Array;
+      operationalCert: Uint8Array;
+      rootCert: Uint8Array;
+      label: string;
+    }[];
+    const nextFabricIndex = await fabricManagerContext.get('nextFabricIndex', 1);
+    // Read EventHandler from the old storage
+    const eventHandlerContext = this.matterbridgeContext.createContext('EventHandler');
+    // Read SessionManager from the old storage
+    const sessionManagerContext = this.matterbridgeContext.createContext('SessionManager');
+    // Read EndpointStructure from the old storage
+    const endpointStructureContext = this.matterbridgeContext.createContext('EndpointStructure');
+    // Read generalCommissioning from the old storage
+    const generalCommissioningContext = this.matterbridgeContext.createContext('Cluster-0-48');
+    // Read basicInformation from the old storage
+    const basicInformationContext = this.matterbridgeContext.createContext('Cluster-0-40');
+
+    const fabricInfo = {} as Record<string, { fabricIndex: number; fabricId: bigint; nodeId: bigint; rootNodeId: bigint; rootVendorId: number; label: string }>;
+    const fabricInfoArray: { fabricIndex: number; fabricId: bigint; nodeId: bigint; vendorId: number; rootPublicKey: Uint8Array; label: string }[] = [];
+    const nocArray: { noc: Uint8Array; icac: Uint8Array | null; fabricIndex: number }[] = [];
+    const trcArray: string[] = [];
+    const aclArray: { fabricIndex: number; privilege: number; authMode: 2; subjects: string[]; targets: null }[] = [];
+    this.log.debug(`Found ${CYAN}${fabrics.length}${db} fabrics (nextFabricIndex ${CYAN}${nextFabricIndex}${db}) for ${plg}Matterbridge${db}:`);
+    for (const fabric of fabrics) {
+      this.log.debug(
+        `- fabricIndex ${CYAN}${fabric.fabricIndex}${db} fabricId ${CYAN}${fabric.fabricId}${db} nodeId ${CYAN}${fabric.nodeId}${db} rootNodeId ${CYAN}${fabric.rootNodeId}${db} rootVendorId ${CYAN}${fabric.rootVendorId}${db} label ${CYAN}${fabric.label}${db}`,
+      );
+      fabricInfo[fabric.fabricIndex] = {
+        fabricIndex: fabric.fabricIndex,
+        fabricId: fabric.fabricId,
+        nodeId: fabric.nodeId,
+        rootNodeId: fabric.rootNodeId,
+        rootVendorId: fabric.rootVendorId,
+        label: fabric.label,
+      };
+      fabricInfoArray.push({
+        fabricIndex: fabric.fabricIndex,
+        fabricId: fabric.fabricId,
+        nodeId: fabric.nodeId,
+        vendorId: fabric.rootVendorId,
+        rootPublicKey: fabric.rootPublicKey,
+        label: fabric.label,
+      });
+      nocArray.push({ noc: fabric.operationalCert, icac: null, fabricIndex: fabric.fabricIndex });
+      // eslint-disable-next-line no-useless-escape
+      trcArray.push('{\"__object__\":\"Uint8Array\",\"__value__\":\"' + Buffer.from(fabric.rootCert).toString('hex') + '\"}');
+      // eslint-disable-next-line no-useless-escape
+      aclArray.push({ fabricIndex: fabric.fabricIndex, privilege: 5, authMode: 2, subjects: ['{\"__object__\":\"BigInt\",\"__value__\":\"' + fabric.rootNodeId.toString().replace('n', '') + '\"}'], targets: null });
+      // this.log.debug(`- fabricinfo ${fabric.fabricIndex}`, fabricInfo[fabric.fabricIndex]);
+    }
+    await nodeStorage.createContext('fabrics').set('fabrics', fabrics);
+    await nodeStorage.createContext('fabrics').set('nextFabricIndex', nextFabricIndex);
+
+    await nodeStorage.createContext('sessions').set('resumptionRecords', await sessionManagerContext.get('resumptionRecords', []));
+
+    await nodeStorage.createContext('events').set('lastEventNumber', await eventHandlerContext.get('lastEventNumber', 1));
+
+    await nodeStorage.createContext('root').set('__number__', 0);
+    await nodeStorage.createContext('root').set('__nextNumber__', 1);
+
+    await nodeStorage.createContext('root').createContext('commissioning').set('enabled', true);
+    await nodeStorage.createContext('root').createContext('commissioning').set('commissioned', true);
+    await nodeStorage.createContext('root').createContext('commissioning').set('fabrics', fabricInfo);
+
+    await nodeStorage.createContext('root').createContext('operationalCredentials').set('commissionedFabrics', fabricInfoArray.length);
+    await nodeStorage.createContext('root').createContext('operationalCredentials').set('fabrics', fabricInfoArray);
+    // operationalCredentials.nocs ==>> [{noc: fabric.operationalCert, icac: null, fabricIndex: fabric.fabricIndex }]
+    await nodeStorage.createContext('root').createContext('operationalCredentials').set('nocs', nocArray);
+    // operationalCredentials.trustedRootCertificates ==>> ["{\"__object__\":\"Uint8Array\",\"__value__\":\"" + fabric.rootCert + "\"}"]
+    await nodeStorage.createContext('root').createContext('operationalCredentials').set('trustedRootCertificates', trcArray);
+    // ACL updated, updating ACL manager { fabricIndex: 3, privilege: 5, authMode: 2, subjects: [ 18446744060825763897 ], targets: null }
+    // From fabric.rootNodeId
+    // [{"fabricIndex":3,"privilege":5,"authMode":2,"subjects":["{\"__object__\":\"BigInt\",\"__value__\":\"18446744060825763897\"}"],"targets":null}]
+    await nodeStorage.createContext('root').createContext('accessControl').set('acl', aclArray);
+
+    await nodeStorage
+      .createContext('root')
+      .createContext('generalCommissioning')
+      .set('breadcrumb', await generalCommissioningContext.get('breadcrumb', BigInt(0)));
+
+    await nodeStorage
+      .createContext('root')
+      .createContext('basicInformation')
+      .set('location', await basicInformationContext.get('location', 'XX'));
+
+    await nodeStorage.createContext('root').createContext('network').set('ble', false);
+    await nodeStorage.createContext('root').createContext('network').set('operationalPort', 5540);
+
+    await nodeStorage.createContext('root').createContext('productDescription').set('productId', 0x8000);
+    await nodeStorage.createContext('root').createContext('productDescription').set('vendorId', 0xfff1);
+
+    /*
+    "Matterbridge.EndpointStructure": {
+      "unique_d60ca095a002f160-index_0": 1,
+      "unique_d60ca095a002f160-index_0-custom_Switch0": 2,
+      "unique_d60ca095a002f160-index_0-custom_Outlet0": 3,
+      "unique_d60ca095a002f160-index_0-custom_Light0": 4,
+      "nextEndpointId": 5
+     },
+    */
+    for (const key of await endpointStructureContext.keys()) {
+      if (key === 'nextEndpointId') continue;
+      const parts = key.split('-');
+      const number = await endpointStructureContext.get(key);
+      this.log.debug(`- endpointStructure key ${key} value ${number}`);
+      if (parts.length === 2) {
+        this.log.debug(`Upgrading Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.__number__:${number}`);
+        await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').set('__number__', number);
+      } else if (parts.length === 3) {
+        this.log.debug(`Upgrading Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.parts.${parts[2].replace('custom_', '')}.__number__:${number}`);
+        await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').createContext('parts').createContext(parts[2].replace('custom_', '')).set('__number__', number);
+      }
+    }
+    await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').set('__number__', 1);
+
+    await nodeStorage.createContext('persist').set('upgraded', true);
+    await this.matterbridgeContext.set('upgraded', true);
   }
 
   /**
