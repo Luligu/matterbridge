@@ -1973,9 +1973,7 @@ export class Matterbridge extends EventEmitter {
     await this.matterbridgeContext.set('passcode', this.passcode);
     await this.matterbridgeContext.set('discriminator', this.discriminator);
 
-    if (!hasParameter('upgrade')) return;
     const storageService = Environment.default.get(StorageService);
-    // Environment.default.vars.set('path.root', 'temp');
     Environment.default.vars.set('path.root', path.join(this.matterbridgeDirectory, 'matterstorage' + (this.profile ? '.' + this.profile : '')));
     const nodeStorage = await storageService.open('Matterbridge');
     if ((await nodeStorage.createContext('persist').get<boolean>('upgraded', false)) === true) {
@@ -2097,12 +2095,12 @@ export class Matterbridge extends EventEmitter {
       if (key === 'nextEndpointId') continue;
       const parts = key.split('-');
       const number = await endpointStructureContext.get(key);
-      this.log.debug(`- endpointStructure key ${key} value ${number}`);
+      // this.log.debug(`- endpointStructure key ${key} value ${number}`);
       if (parts.length === 2) {
-        this.log.debug(`Upgrading Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.__number__:${number}`);
+        this.log.debug(`Converting Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.__number__:${number}`);
         await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').set('__number__', number);
       } else if (parts.length === 3) {
-        this.log.debug(`Upgrading Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.parts.${parts[2].replace('custom_', '')}.__number__:${number}`);
+        this.log.debug(`Converting Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.parts.${parts[2].replace('custom_', '')}.__number__:${number}`);
         await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').createContext('parts').createContext(parts[2].replace('custom_', '')).set('__number__', number);
       }
     }
