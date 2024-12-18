@@ -1293,7 +1293,7 @@ export class Matterbridge extends EventEmitter {
       }
 
       // Convert the matter storage to the new format
-      if (this.edge === false && this.matterbridgeContext && ['updating...', 'restarting...', 'shutting down...'].includes(message)) {
+      if (hasParameter('convert') && this.edge === false && this.matterbridgeContext && ['updating...', 'restarting...', 'shutting down...'].includes(message)) {
         await this.convertStorage(this.matterbridgeContext, 'Mattebridge');
       }
 
