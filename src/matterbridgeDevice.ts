@@ -223,6 +223,7 @@ export class MatterbridgeDevice extends extendPublicHandlerMethods<typeof Device
     let firstDefinition: DeviceTypeDefinition;
     if (Array.isArray(definition)) firstDefinition = definition[0];
     else firstDefinition = definition;
+    options.uniqueStorageKey?.replace(/[ .]/g, ''); // Remove spaces and dots from the uniqueStorageKey to avoid issues with storage converter
     super(firstDefinition, options);
     this.log = new AnsiLogger({ logName: 'MatterbridgeDevice', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeDevice.logLevel });
     this.log.debug(`new MatterbridgeDevice with deviceType: ${zb}${firstDefinition.code}${db}-${zb}${firstDefinition.name}${db}`);
