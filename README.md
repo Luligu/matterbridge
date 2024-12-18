@@ -46,7 +46,7 @@ A special thank to Apollon77 for his incredible work.
 
 To run Matterbridge, you need either a [Node.js](https://nodejs.org/en) environment or [Docker](https://docs.docker.com/get-started/get-docker/) installed on your system.
 
-If you don't have Node.js already install, please use this method to install it on a debian device: https://github.com/nodesource/distributions. 
+If you don't have Node.js already install, please use this method to install it on a debian device: https://github.com/nodesource/distributions.
 The supported versions of node are 18, 20 and 22. Please install node 22 LTS.
 Nvm is not a good choice and should not be used for production.
 
