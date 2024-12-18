@@ -17,7 +17,7 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 ### Added
 
-- [storage]: Added conversion from old matter storage to the new api format with fabrics, resumptionRecords, network, commissioning, operationalCredentials, acl and parts number. The conversion is automatic the first time you run this release.
+- [storage]: Added conversion from old matter storage to the new api format with fabrics, resumptionRecords, network, commissioning, operationalCredentials, acl and parts number.
 - [package]: Update README.md and README-SERVICE.md to include instructions for using SSL on port 443.
 
 ### Changed
