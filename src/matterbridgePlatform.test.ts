@@ -165,12 +165,40 @@ describe('Matterbridge platform', () => {
   });
 
   it('should validate with entity black list', () => {
+    platform.config.entityWhiteList = [];
     platform.config.entityBlackList = ['blackEntity'];
     platform.config.deviceEntityBlackList = {};
     expect(platform.validateEntityBlackList('any', 'whiteEntity')).toBe(true);
     expect(platform.validateEntityBlackList('any', 'blackEntity')).toBe(false);
     expect(platform.validateEntityBlackList('any', '')).toBe(true);
 
+    platform.config.entityWhiteList = [];
+    platform.config.entityBlackList = [];
+    platform.config.deviceEntityBlackList = {};
+  });
+
+  it('should validate with entity white list', () => {
+    platform.config.entityWhiteList = ['whiteEntity'];
+    platform.config.entityBlackList = [];
+    platform.config.deviceEntityBlackList = {};
+    expect(platform.validateEntityBlackList('any', 'whiteEntity')).toBe(true);
+    expect(platform.validateEntityBlackList('any', 'blackEntity')).toBe(false);
+    expect(platform.validateEntityBlackList('any', '')).toBe(false);
+
+    platform.config.entityWhiteList = [];
+    platform.config.entityBlackList = [];
+    platform.config.deviceEntityBlackList = {};
+  });
+
+  it('should not validate with entity white list if in black list', () => {
+    platform.config.entityWhiteList = ['whiteEntity'];
+    platform.config.entityBlackList = ['whiteEntity'];
+    platform.config.deviceEntityBlackList = {};
+    expect(platform.validateEntity('any', 'whiteEntity')).toBe(false);
+    expect(platform.validateEntity('any', 'blackEntity')).toBe(false);
+    expect(platform.validateEntity('any', '')).toBe(false);
+
+    platform.config.entityWhiteList = [];
     platform.config.entityBlackList = [];
     platform.config.deviceEntityBlackList = {};
   });

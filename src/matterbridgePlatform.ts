@@ -190,6 +190,18 @@ export class MatterbridgePlatform {
   }
 
   /**
+   * Validates if an entity is allowed based on the entity whitelist and blacklist and the device-entity blacklist configurations.
+   *
+   * @param {string} device - The device to which the entity belongs.
+   * @param {string} entity - The entity to validate.
+   * @param {boolean} [log=true] - Whether to log the validation result.
+   * @returns {boolean} - Returns true if the entity is allowed, false otherwise.
+   */
+  validateEntity(device: string, entity: string, log = true): boolean {
+    return this.validateEntityBlackList(device, entity, log);
+  }
+
+  /**
    * Validates if an entity is allowed based on the entity blacklist and device-entity blacklist configurations.
    *
    * @param {string} device - The device to which the entity belongs.
@@ -200,6 +212,10 @@ export class MatterbridgePlatform {
   validateEntityBlackList(device: string, entity: string, log = true): boolean {
     if (isValidArray(this.config.entityBlackList, 1) && this.config.entityBlackList.find((e) => e === entity)) {
       if (log) this.log.info(`Skipping entity ${CYAN}${entity}${nf} because in entityBlackList`);
+      return false;
+    }
+    if (isValidArray(this.config.entityWhiteList, 1) && !this.config.entityWhiteList.find((e) => e === entity)) {
+      if (log) this.log.info(`Skipping entity ${CYAN}${entity}${nf} because not in entityWhiteList`);
       return false;
     }
     if (isValidObject(this.config.deviceEntityBlackList, 1) && device in this.config.deviceEntityBlackList && (this.config.deviceEntityBlackList as Record<string, string[]>)[device].includes(entity)) {
