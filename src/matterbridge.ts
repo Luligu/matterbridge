@@ -1292,6 +1292,11 @@ export class Matterbridge extends EventEmitter {
         this.webSocketServer = undefined;
       }
 
+      // Convert the matter storage to the new format
+      if (this.edge === false && this.matterbridgeContext && ['updating...', 'restarting...', 'shutting down...'].includes(message)) {
+        this.convertStorage(this.matterbridgeContext, 'Mattebridge');
+      }
+
       // Closing matter
       await this.stopMatterServer();
 
@@ -1975,26 +1980,24 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Conert the old API matter storage to new API format.
-   * @param {StorageContext} context - The context of the plugin.
-   * @param {string} pluginName - The name of the plugin.
+   * Convert the old API matter storage to the new API format.
+   * @param {StorageContext} context - The context of Matterbridge or of the plugin.
+   * @param {string} pluginName - The name of the plugin or Matterbridge.
    * @returns {Promise<void>} - A promise that resolves when the storage process is started.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async convertStorage(context: StorageContext, pluginName: string) {
-    if (!this.matterbridgeContext) return;
     const storageService = Environment.default.get(StorageService);
     Environment.default.vars.set('path.root', path.join(this.matterbridgeDirectory, 'matterstorage' + (this.profile ? '.' + this.profile : '')));
     const nodeStorage = await storageService.open('Matterbridge');
-    if ((await nodeStorage.createContext('persist').get<boolean>('upgraded', false)) === true) {
-      this.log.info(`Matter node storage already upgraded to Matterbridge edge for ${plg}Matterbridge${nf}`);
+    if ((await nodeStorage.createContext('persist').get<boolean>('converted', false)) === true) {
+      this.log.info(`Matter node storage already converted to Matterbridge edge for ${plg}${pluginName}${nf}`);
       return;
     } else {
-      this.log.info(`Upgrading matter node storage to Matterbridge edge for ${plg}Matterbridge${nf}`);
+      this.log.notice(`Converting matter node storage to Matterbridge edge for ${plg}${pluginName}${nt}...`);
     }
 
     // Read FabricManager from the old storage and get FabricManager.fabrics and FabricManager.nextFabricIndex
-    const fabricManagerContext = this.matterbridgeContext.createContext('FabricManager');
+    const fabricManagerContext = context.createContext('FabricManager');
     const fabrics = (await fabricManagerContext.get('fabrics', [])) as {
       fabricIndex: number;
       fabricId: bigint;
@@ -2008,25 +2011,25 @@ export class Matterbridge extends EventEmitter {
     }[];
     const nextFabricIndex = await fabricManagerContext.get('nextFabricIndex', 1);
     // Read EventHandler from the old storage
-    const eventHandlerContext = this.matterbridgeContext.createContext('EventHandler');
+    const eventHandlerContext = context.createContext('EventHandler');
     // Read SessionManager from the old storage
-    const sessionManagerContext = this.matterbridgeContext.createContext('SessionManager');
+    const sessionManagerContext = context.createContext('SessionManager');
     // Read EndpointStructure from the old storage
-    const endpointStructureContext = this.matterbridgeContext.createContext('EndpointStructure');
+    const endpointStructureContext = context.createContext('EndpointStructure');
     // Read generalCommissioning from the old storage
-    const generalCommissioningContext = this.matterbridgeContext.createContext('Cluster-0-48');
+    const generalCommissioningContext = context.createContext('Cluster-0-48');
     // Read basicInformation from the old storage
-    const basicInformationContext = this.matterbridgeContext.createContext('Cluster-0-40');
+    const basicInformationContext = context.createContext('Cluster-0-40');
 
     const fabricInfo = {} as Record<string, { fabricIndex: number; fabricId: bigint; nodeId: bigint; rootNodeId: bigint; rootVendorId: number; label: string }>;
     const fabricInfoArray: { fabricIndex: number; fabricId: bigint; nodeId: bigint; vendorId: number; rootPublicKey: Uint8Array; label: string }[] = [];
     const nocArray: { noc: Uint8Array; icac: Uint8Array | null; fabricIndex: number }[] = [];
     const trcArray: string[] = [];
     const aclArray: { fabricIndex: number; privilege: number; authMode: 2; subjects: string[]; targets: null }[] = [];
-    this.log.debug(`Found ${CYAN}${fabrics.length}${db} fabrics (nextFabricIndex ${CYAN}${nextFabricIndex}${db}) for ${plg}Matterbridge${db}:`);
+    this.log.info(`Found ${CYAN}${fabrics.length}${nf} fabrics (nextFabricIndex ${CYAN}${nextFabricIndex}${nf}) for ${plg}${pluginName}${nf}:`);
     for (const fabric of fabrics) {
-      this.log.debug(
-        `- fabricIndex ${CYAN}${fabric.fabricIndex}${db} fabricId ${CYAN}${fabric.fabricId}${db} nodeId ${CYAN}${fabric.nodeId}${db} rootNodeId ${CYAN}${fabric.rootNodeId}${db} rootVendorId ${CYAN}${fabric.rootVendorId}${db} label ${CYAN}${fabric.label}${db}`,
+      this.log.info(
+        `- fabricIndex ${CYAN}${fabric.fabricIndex}${nf} fabricId ${CYAN}${fabric.fabricId}${nf} nodeId ${CYAN}${fabric.nodeId}${nf} rootNodeId ${CYAN}${fabric.rootNodeId}${nf} rootVendorId ${CYAN}${fabric.rootVendorId}${nf} label ${CYAN}${fabric.label}${nf}`,
       );
       fabricInfo[fabric.fabricIndex] = {
         fabricIndex: fabric.fabricIndex,
@@ -2098,6 +2101,16 @@ export class Matterbridge extends EventEmitter {
       "unique_d60ca095a002f160-index_0-custom_Switch0": 2,
       "unique_d60ca095a002f160-index_0-custom_Outlet0": 3,
       "unique_d60ca095a002f160-index_0-custom_Light0": 4,
+      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa": 2,
+      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_PowerSource": 3,
+      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_light:0": 4,
+      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_light:1": 5,
+      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_light:2": 6,
+      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_light:3": 7,
+      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_meter:0": 8,
+      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_meter:1": 9,
+      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_meter:2": 10,
+      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_meter:3": 11,
       "nextEndpointId": 5
      },
     */
@@ -2122,8 +2135,9 @@ export class Matterbridge extends EventEmitter {
     }
     await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').set('__number__', 1);
 
-    await nodeStorage.createContext('persist').set('upgraded', true);
-    await this.matterbridgeContext.set('upgraded', true);
+    await nodeStorage.createContext('persist').set('converted', true);
+    await context.set('converted', true);
+    this.log.notice(`Matter storage converted to Matterbridge edge for ${plg}${pluginName}${nt}`);
   }
 
   /**
