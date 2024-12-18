@@ -1294,7 +1294,7 @@ export class Matterbridge extends EventEmitter {
 
       // Convert the matter storage to the new format
       if (this.edge === false && this.matterbridgeContext && ['updating...', 'restarting...', 'shutting down...'].includes(message)) {
-        this.convertStorage(this.matterbridgeContext, 'Mattebridge');
+        await this.convertStorage(this.matterbridgeContext, 'Mattebridge');
       }
 
       // Closing matter
@@ -2062,7 +2062,7 @@ export class Matterbridge extends EventEmitter {
     await nodeStorage.createContext('events').set('lastEventNumber', await eventHandlerContext.get('lastEventNumber', 1));
 
     await nodeStorage.createContext('root').set('__number__', 0);
-    await nodeStorage.createContext('root').set('__nextNumber__', 1);
+    await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').set('__number__', 1);
 
     await nodeStorage.createContext('root').createContext('commissioning').set('enabled', true);
     await nodeStorage.createContext('root').createContext('commissioning').set('commissioned', true);
@@ -2115,7 +2115,10 @@ export class Matterbridge extends EventEmitter {
      },
     */
     for (const key of await endpointStructureContext.keys()) {
-      if (key === 'nextEndpointId') continue;
+      if (key === 'nextEndpointId') {
+        await nodeStorage.createContext('root').set('__nextNumber__', await endpointStructureContext.get(key));
+        continue;
+      }
       const parts = key.split('-');
       const number = await endpointStructureContext.get(key);
       // this.log.debug(`- endpointStructure key ${key} value ${number}`);
@@ -2133,9 +2136,22 @@ export class Matterbridge extends EventEmitter {
         }
       }
     }
-    await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').set('__number__', 1);
 
     await nodeStorage.createContext('persist').set('converted', true);
+    await nodeStorage.createContext('persist').set('deviceName', await context.get('deviceName'));
+    await nodeStorage.createContext('persist').set('deviceType', await context.get('deviceType'));
+    await nodeStorage.createContext('persist').set('vendorId', await context.get('vendorId'));
+    await nodeStorage.createContext('persist').set('vendorName', await context.get('vendorName'));
+    await nodeStorage.createContext('persist').set('productId', await context.get('productId'));
+    await nodeStorage.createContext('persist').set('productName', await context.get('productName'));
+    await nodeStorage.createContext('persist').set('nodeLabel', await context.get('nodeLabel'));
+    await nodeStorage.createContext('persist').set('productLabel', await context.get('productLabel'));
+    await nodeStorage.createContext('persist').set('serialNumber', await context.get('serialNumber'));
+    await nodeStorage.createContext('persist').set('uniqueId', await context.get('uniqueId'));
+    await nodeStorage.createContext('persist').set('softwareVersion', await context.get('softwareVersion'));
+    await nodeStorage.createContext('persist').set('softwareVersionString', await context.get('softwareVersionString'));
+    await nodeStorage.createContext('persist').set('hardwareVersion', await context.get('hardwareVersion'));
+    await nodeStorage.createContext('persist').set('hardwareVersionString', await context.get('hardwareVersionString'));
     await context.set('converted', true);
     this.log.notice(`Matter storage converted to Matterbridge edge for ${plg}${pluginName}${nt}`);
   }
