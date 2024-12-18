@@ -67,7 +67,7 @@ export class MatterbridgeEdge extends Matterbridge {
   public matterStorageService?: StorageService;
 
   // Mapping of CommissioningServer to ServerNode
-  private csToServerNode = new Map<string, { commissioningServer: CommissioningServer; serverNode: ServerNode }>();
+  private csToServerNode = new Map<string, { commissioningServer: CommissioningServer; serverNode: ServerNode<ServerNode.RootEndpoint> }>();
 
   // Mapping of Aggregator to AggregatorEndpoint
   private agToAggregatorEndpoint = new Map<string, { aggregator: Aggregator; aggregatorNode: EndpointNode<AggregatorEndpoint> }>();
@@ -415,8 +415,8 @@ export class MatterbridgeEdge extends Matterbridge {
 
   async createAggregatorNode(storageContext: StorageContext) {
     this.log.notice(`Creating ${await storageContext.get<string>('storeId')} aggregator `);
-    const aggregator = new EndpointNode(AggregatorEndpoint, { id: `${await storageContext.get<string>('storeId')}` });
-    return aggregator;
+    const aggregatorNode = new EndpointNode(AggregatorEndpoint, { id: `${await storageContext.get<string>('storeId')}` });
+    return aggregatorNode;
   }
 
   override async addBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void> {
