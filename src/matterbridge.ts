@@ -2109,9 +2109,15 @@ export class Matterbridge extends EventEmitter {
       if (parts.length === 2) {
         this.log.debug(`Converting Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.__number__:${number}`);
         await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').set('__number__', number);
-      } else if (parts.length === 3) {
+      } else if (parts.length === 3 && parts[2].startsWith('custom_')) {
         this.log.debug(`Converting Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.parts.${parts[2].replace('custom_', '')}.__number__:${number}`);
         await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').createContext('parts').createContext(parts[2].replace('custom_', '')).set('__number__', number);
+      } else if (parts.length === 3 && parts[2].startsWith('unique_')) {
+        const device = this.devices.get(parts[2].replace('unique_', ''));
+        if (device && device.deviceName && device.maybeNumber) {
+          this.log.debug(`Converting Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.parts.${device.deviceName.replace(/[ .]/g, '')}.__number__:${device.maybeNumber}`);
+          await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').createContext('parts').createContext(device.deviceName.replace(/[ .]/g, '')).set('__number__', device.maybeNumber);
+        }
       }
     }
     await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').set('__number__', 1);
