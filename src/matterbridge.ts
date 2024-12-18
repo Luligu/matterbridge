@@ -2146,8 +2146,8 @@ export class Matterbridge extends EventEmitter {
     await nodeStorage.createContext('persist').set('productName', await context.get('productName'));
     await nodeStorage.createContext('persist').set('nodeLabel', await context.get('nodeLabel'));
     await nodeStorage.createContext('persist').set('productLabel', await context.get('productLabel'));
-    await nodeStorage.createContext('persist').set('serialNumber', await context.get('serialNumber'));
-    await nodeStorage.createContext('persist').set('uniqueId', await context.get('uniqueId'));
+    await nodeStorage.createContext('persist').set('serialNumber', 'SN' + (await context.get('serialNumber')));
+    await nodeStorage.createContext('persist').set('uniqueId', 'UI' + (await context.get('uniqueId')));
     await nodeStorage.createContext('persist').set('softwareVersion', await context.get('softwareVersion'));
     await nodeStorage.createContext('persist').set('softwareVersionString', await context.get('softwareVersionString'));
     await nodeStorage.createContext('persist').set('hardwareVersion', await context.get('hardwareVersion'));
