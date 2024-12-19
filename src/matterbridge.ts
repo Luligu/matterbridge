@@ -51,7 +51,7 @@ import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // @matter
-import { DeviceTypeId, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, EndpointServer, StorageService, Environment } from '@matter/main';
+import { DeviceTypeId, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, EndpointServer, StorageService, Environment, SupportedStorageTypes } from '@matter/main';
 import {
   BasicInformationCluster,
   BridgedDeviceBasicInformation,
@@ -2008,6 +2008,7 @@ export class Matterbridge extends EventEmitter {
       operationalCert: Uint8Array;
       rootCert: Uint8Array;
       label: string;
+      scopedClusterData: Map<number, Map<string, SupportedStorageTypes>>;
     }[];
     const nextFabricIndex = await fabricManagerContext.get('nextFabricIndex', 1);
     // Read EventHandler from the old storage
@@ -2025,7 +2026,7 @@ export class Matterbridge extends EventEmitter {
     const fabricInfoArray: { fabricIndex: number; fabricId: bigint; nodeId: bigint; vendorId: number; rootPublicKey: Uint8Array; label: string }[] = [];
     const nocArray: { noc: Uint8Array; icac: Uint8Array | null; fabricIndex: number }[] = [];
     const trcArray: string[] = [];
-    const aclArray: { fabricIndex: number; privilege: number; authMode: 2; subjects: string[]; targets: null }[] = [];
+    const aclArray: { fabricIndex: number; privilege: number; authMode: number; subjects: bigint[]; targets: null }[] = [];
     this.log.info(`Found ${CYAN}${fabrics.length}${nf} fabrics (nextFabricIndex ${CYAN}${nextFabricIndex}${nf}) for ${plg}${pluginName}${nf}:`);
     for (const fabric of fabrics) {
       this.log.info(
@@ -2050,9 +2051,17 @@ export class Matterbridge extends EventEmitter {
       nocArray.push({ noc: fabric.operationalCert, icac: null, fabricIndex: fabric.fabricIndex });
       // eslint-disable-next-line no-useless-escape
       trcArray.push('{\"__object__\":\"Uint8Array\",\"__value__\":\"' + Buffer.from(fabric.rootCert).toString('hex') + '\"}');
-      // eslint-disable-next-line no-useless-escape
-      aclArray.push({ fabricIndex: fabric.fabricIndex, privilege: 5, authMode: 2, subjects: ['{\"__object__\":\"BigInt\",\"__value__\":\"' + fabric.rootNodeId.toString().replace('n', '') + '\"}'], targets: null });
-      // this.log.debug(`- fabricinfo ${fabric.fabricIndex}`, fabricInfo[fabric.fabricIndex]);
+
+      this.log.info(`- updating ACL for fabricIndex ${fabric.fabricIndex}:`, fabric.scopedClusterData);
+      const acl = fabric.scopedClusterData.get(0x1f)?.get('acl') as { value: { privilege: number; authMode: number; subjects: bigint[]; targets: null; fabricIndex: number }[] } | undefined;
+      if (acl && acl.value.length > 0) {
+        aclArray.push(acl.value[0]);
+        this.log.info(`- ACL updated to ${debugStringify(acl.value)}${nf} for fabricIndex ${CYAN}${fabric.fabricIndex}${nf}`);
+      } else {
+        const defaultAcl = { fabricIndex: fabric.fabricIndex, privilege: 5, authMode: 2, subjects: [fabric.rootNodeId], targets: null };
+        aclArray.push(defaultAcl);
+        this.log.info(`- ACL updated to default ${debugStringify(defaultAcl)}${nf} for fabricIndex ${CYAN}${fabric.fabricIndex}${nf}`);
+      }
     }
     await nodeStorage.createContext('fabrics').set('fabrics', fabrics);
     await nodeStorage.createContext('fabrics').set('nextFabricIndex', nextFabricIndex);
@@ -2074,8 +2083,9 @@ export class Matterbridge extends EventEmitter {
     await nodeStorage.createContext('root').createContext('operationalCredentials').set('nocs', nocArray);
     // operationalCredentials.trustedRootCertificates ==>> ["{\"__object__\":\"Uint8Array\",\"__value__\":\"" + fabric.rootCert + "\"}"]
     await nodeStorage.createContext('root').createContext('operationalCredentials').set('trustedRootCertificates', trcArray);
+
     // ACL updated, updating ACL manager { fabricIndex: 3, privilege: 5, authMode: 2, subjects: [ 18446744060825763897 ], targets: null }
-    // From fabric.rootNodeId
+    // From fabric.rootNodeId if fabric.scopedClusterData.get(0x1f).get('acl') is empty
     // [{"fabricIndex":3,"privilege":5,"authMode":2,"subjects":["{\"__object__\":\"BigInt\",\"__value__\":\"18446744060825763897\"}"],"targets":null}]
     await nodeStorage.createContext('root').createContext('accessControl').set('acl', aclArray);
 
@@ -2121,7 +2131,6 @@ export class Matterbridge extends EventEmitter {
       }
       const parts = key.split('-');
       const number = await endpointStructureContext.get(key);
-      // this.log.debug(`- endpointStructure key ${key} value ${number}`);
       if (parts.length === 2) {
         this.log.debug(`Converting Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.__number__:${number}`);
         await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').set('__number__', number);
@@ -2147,7 +2156,7 @@ export class Matterbridge extends EventEmitter {
     await nodeStorage.createContext('persist').set('nodeLabel', await context.get('nodeLabel'));
     await nodeStorage.createContext('persist').set('productLabel', await context.get('productLabel'));
     await nodeStorage.createContext('persist').set('serialNumber', 'SN' + (await context.get('serialNumber')));
-    await nodeStorage.createContext('persist').set('uniqueId', 'UI' + (await context.get('uniqueId')));
+    await nodeStorage.createContext('persist').set('uniqueId', await context.get('uniqueId'));
     await nodeStorage.createContext('persist').set('softwareVersion', await context.get('softwareVersion'));
     await nodeStorage.createContext('persist').set('softwareVersionString', await context.get('softwareVersionString'));
     await nodeStorage.createContext('persist').set('hardwareVersion', await context.get('hardwareVersion'));

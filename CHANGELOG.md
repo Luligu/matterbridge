@@ -13,7 +13,7 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
-## [1.6.8-dev.6] - 2024-12-18
+## [1.6.8-dev.7] - 2024-12-19
 
 ### Added
 
