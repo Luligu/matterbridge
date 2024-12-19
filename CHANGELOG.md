@@ -13,11 +13,11 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
-## [1.6.8-dev.7] - 2024-12-19
+## [1.6.8-dev.8] - 2024-12-19
 
 ### Added
 
-- [storage]: Added conversion from old matter storage to the new api format with fabrics, resumptionRecords, network, commissioning, operationalCredentials, acl and parts number.
+- [storage]: Added conversion from old matter storage to the new api format with fabrics, resumptionRecords, network, commissioning, operationalCredentials, acl and parts number. The conversion is triggered every time you shutdown or restart matterbridge till the new storage has been used with matterbridge edge. 
 - [package]: Update README.md and README-SERVICE.md to include instructions for using SSL on port 443.
 
 ### Changed
