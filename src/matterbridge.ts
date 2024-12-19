@@ -2012,7 +2012,7 @@ export class Matterbridge extends EventEmitter {
         label: string;
         scopedClusterData: Map<number, Map<string, SupportedStorageTypes>>;
       }[];
-      const nextFabricIndex = await fabricManagerContext.get('nextFabricIndex', 1);
+      const nextFabricIndex = await fabricManagerContext.get('nextFabricIndex', 0);
       // Read EventHandler from the old storage
       const eventHandlerContext = context.createContext('EventHandler');
       // Read SessionManager from the old storage
@@ -2030,6 +2030,10 @@ export class Matterbridge extends EventEmitter {
       const trcArray: string[] = [];
       const aclArray: { fabricIndex: number; privilege: number; authMode: number; subjects: bigint[]; targets: null }[] = [];
       this.log.info(`Found ${CYAN}${fabrics.length}${nf} fabrics (nextFabricIndex ${CYAN}${nextFabricIndex}${nf}) for ${plg}${pluginName}${nf}:`);
+      if (fabrics.length === 0 || nextFabricIndex === 0) {
+        this.log.notice(`If you want to try out matterbridge edge (beta) add -edge to the command line and pair it to your controller(s).`);
+        return;
+      }
       for (const fabric of fabrics) {
         this.log.info(
           `- fabricIndex ${CYAN}${fabric.fabricIndex}${nf} fabricId ${CYAN}${fabric.fabricId}${nf} nodeId ${CYAN}${fabric.nodeId}${nf} rootNodeId ${CYAN}${fabric.rootNodeId}${nf} rootVendorId ${CYAN}${fabric.rootVendorId}${nf} label ${CYAN}${fabric.label}${nf}`,
