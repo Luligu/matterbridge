@@ -204,6 +204,22 @@ export class Matterbridge extends EventEmitter {
     this.matterbridgeMessageHandler = wsMessageHandler.bind(this);
   }
 
+  /**
+   * Retrieves the list of Matterbridge devices.
+   * @returns {MatterbridgeDevice[]} An array of MatterbridgeDevice objects.
+   */
+  getDevices(): MatterbridgeDevice[] {
+    return this.devices.array();
+  }
+
+  /**
+   * Retrieves the list of registered plugins.
+   * @returns {RegisteredPlugin[]} An array of RegisteredPlugin objects.
+   */
+  getPlugins(): RegisteredPlugin[] {
+    return this.plugins.array();
+  }
+
   public matterbridgeMessageHandler: (client: WebSocket, message: WebSocket.RawData) => Promise<void>;
 
   /** ***********************************************************************************************************************************/
