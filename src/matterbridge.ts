@@ -623,6 +623,8 @@ export class Matterbridge extends EventEmitter {
       try {
         // Delete node storage directory with its subdirectories
         await fs.rm(path.join(this.matterbridgeDirectory, this.nodeStorageName), { recursive: true });
+        // Delete matter node storage directory with its subdirectories
+        await fs.rm(path.join(this.matterbridgeDirectory, this.nodeStorageName.replace('storage', 'matterstorage')), { recursive: true });
       } catch (err) {
         this.log.error(`Error removing storage directory: ${err}`);
       }
@@ -2002,10 +2004,11 @@ export class Matterbridge extends EventEmitter {
    * @returns {Promise<void>} - A promise that resolves when the storage process is started.
    */
   async convertStorage(context: StorageContext, pluginName: string) {
+    if (this.edge !== false || pluginName !== 'Matterbridge') return;
     try {
       const storageService = Environment.default.get(StorageService);
       Environment.default.vars.set('path.root', path.join(this.matterbridgeDirectory, 'matterstorage' + (this.profile ? '.' + this.profile : '')));
-      const nodeStorage = await storageService.open('Matterbridge');
+      const nodeStorage = await storageService.open(pluginName);
       // if ((await nodeStorage.createContext('persist').get<boolean>('converted', false)) === true) {
       if ((await nodeStorage.createContext('root').createContext('generalDiagnostics').get<number>('rebootCount', -1)) >= 0) {
         this.log.info(`Matter node storage already converted to Matterbridge edge for ${plg}${pluginName}${nf}`);
