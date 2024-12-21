@@ -24,14 +24,14 @@
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { isValidArray, isValidObject, isValidString } from './utils/utils.js';
 
 // AnsiLogger module
-import { AnsiLogger, CYAN, LogLevel, nf } from 'node-ansi-logger';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { isValidArray, isValidObject } from './utils/utils.js';
+import { AnsiLogger, CYAN, db, LogLevel, nf, wr } from 'node-ansi-logger';
 
 // Storage module
-import { NodeStorageManager } from 'node-persist-manager';
+import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 
 // Matter
 import { EndpointNumber } from '@matter/main';
@@ -59,8 +59,8 @@ export class MatterbridgePlatform {
   public name = ''; // Will be set by the loadPlugin() method using the package.json value.
   public type = ''; // Will be set by the extending classes.
   public version = ''; // Will be set by the loadPlugin() method using the package.json value.
-
-  protected storage: NodeStorageManager;
+  public storage: NodeStorageManager | undefined;
+  public context: NodeStorage | undefined;
 
   /**
    * Creates an instance of the base MatterbridgePlatform.
@@ -74,38 +74,15 @@ export class MatterbridgePlatform {
     this.config = config;
 
     // create the NodeStorageManager for the plugin platform
+    if (!isValidString(this.config.name)) return;
+    this.log.debug(`Creating storage for plugin ${this.config.name} in ${path.join(this.matterbridge.matterbridgeDirectory, this.config.name)}`);
     this.storage = new NodeStorageManager({
-      dir: path.join(this.matterbridge.matterbridgeDirectory, this.name),
+      dir: path.join(this.matterbridge.matterbridgeDirectory, this.config.name),
       writeQueue: false,
       expiredInterval: undefined,
       logging: false,
       forgiveParseErrors: true,
     });
-  }
-
-  protected async checkEndpointNumbers() {
-    const context = await this.storage.createStorage('context');
-    const separator = '|.|';
-    const endpointMap = new Map<string, EndpointNumber>(await context.get<[string, EndpointNumber][]>('endpointMap', []));
-
-    for (const device of this.matterbridge.getDevices().filter((d) => d.plugin === this.name)) {
-      if (!device.uniqueId || !device.maybeNumber) continue;
-      if (endpointMap.get(device.uniqueId) !== device.maybeNumber) {
-        this.log.warn(`Endpoint number for device ${device.uniqueId} changed from ${endpointMap.get(device.uniqueId)} to ${device.maybeNumber}`);
-      }
-      this.log.debug(`Setting endpoint for device ${device.uniqueId} with number ${device.maybeNumber}`);
-      endpointMap.set(device.uniqueId, device.maybeNumber);
-      for (const child of device.getChildEndpoints() as MatterbridgeDevice[] | MatterbridgeEndpoint[]) {
-        const childId = child instanceof MatterbridgeEndpoint ? child.id : child.uniqueStorageKey;
-        if (!childId || !child.maybeNumber) continue;
-        if (endpointMap.get(device.uniqueId + separator + childId) !== child.maybeNumber) {
-          this.log.warn(`Child endpoint number for device ${child.uniqueId}.${childId} changed from ${endpointMap.get(device.uniqueId + separator + childId)} to ${child.maybeNumber}`);
-        }
-        this.log.debug(`Setting child endpoint for device ${device.uniqueId + separator + childId} with number ${child.maybeNumber}`);
-        endpointMap.set(device.uniqueId + separator + childId, child.maybeNumber);
-      }
-    }
-    await context.set('endpointMap', Array.from(endpointMap.entries()));
   }
 
   /**
@@ -126,7 +103,8 @@ export class MatterbridgePlatform {
    * Use this method to perform any configuration of your devices.
    */
   async onConfigure() {
-    this.log.debug("The plugin doesn't override onConfigure.");
+    this.log.debug(`Configuring platform ${this.name}`);
+    await this.checkEndpointNumbers();
   }
 
   /**
@@ -136,7 +114,8 @@ export class MatterbridgePlatform {
    * @param {string} [reason] - The reason for shutting down.
    */
   async onShutdown(reason?: string) {
-    this.log.debug("The plugin doesn't override onShutdown.", reason);
+    this.log.debug(`Shutting down platform ${this.name}`, reason);
+    await this.checkEndpointNumbers();
   }
 
   /**
@@ -268,5 +247,47 @@ export class MatterbridgePlatform {
       return false;
     }
     return true;
+  }
+
+  /**
+   * Checks and updates the endpoint numbers for Matterbridge devices.
+   *
+   * This method retrieves the list of Matterbridge devices and their child endpoints,
+   * compares their current endpoint numbers with the stored ones, and updates the storage
+   * if there are any changes. It logs the changes and updates the endpoint numbers accordingly.
+   *
+   * @returns {Promise<number>} The size of the updated endpoint map, or -1 if storage is not available.
+   */
+  async checkEndpointNumbers() {
+    if (!this.storage) return -1;
+    this.log.debug('Checking endpoint numbers...');
+    const context = await this.storage.createStorage('context');
+    const separator = '|.|';
+    const endpointMap = new Map<string, EndpointNumber>(await context.get<[string, EndpointNumber][]>('endpointMap', []));
+
+    for (const device of this.matterbridge.getDevices().filter((d) => d.plugin === this.name)) {
+      if (device.uniqueId === undefined || device.maybeNumber === undefined) continue;
+      if (endpointMap.has(device.uniqueId) && endpointMap.get(device.uniqueId) !== device.maybeNumber) {
+        this.log.warn(`Endpoint number for device ${CYAN}${device.uniqueId}${wr} changed from ${CYAN}${endpointMap.get(device.uniqueId)}${wr} to ${CYAN}${device.maybeNumber}${wr}`);
+        endpointMap.set(device.uniqueId, device.maybeNumber);
+      }
+      if (!endpointMap.has(device.uniqueId)) {
+        this.log.debug(`Setting endpoint number for device ${CYAN}${device.uniqueId}${db} to ${CYAN}${device.maybeNumber}${db}`);
+        endpointMap.set(device.uniqueId, device.maybeNumber);
+      }
+      for (const child of device.getChildEndpoints() as MatterbridgeDevice[] | MatterbridgeEndpoint[]) {
+        const childId = child instanceof MatterbridgeEndpoint ? child.id : child.uniqueStorageKey;
+        if (!childId || !child.maybeNumber) continue;
+        if (endpointMap.has(device.uniqueId + separator + childId) && endpointMap.get(device.uniqueId + separator + childId) !== child.maybeNumber) {
+          this.log.warn(`Child endpoint number for device ${CYAN}${device.uniqueId}${wr}.${CYAN}${childId}${wr} changed from ${CYAN}${endpointMap.get(device.uniqueId + separator + childId)}${wr} to ${CYAN}${child.maybeNumber}${wr}`);
+        }
+        if (!endpointMap.has(device.uniqueId + separator + childId)) {
+          this.log.debug(`Setting child endpoint number for device ${CYAN}${device.uniqueId}${db}.${CYAN}${childId}${db} to ${CYAN}${child.maybeNumber}${db}`);
+          endpointMap.set(device.uniqueId + separator + childId, child.maybeNumber);
+        }
+      }
+    }
+    await context.set('endpointMap', Array.from(endpointMap.entries()));
+    return endpointMap.size;
   }
 }
