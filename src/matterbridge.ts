@@ -2007,7 +2007,7 @@ export class Matterbridge extends EventEmitter {
       Environment.default.vars.set('path.root', path.join(this.matterbridgeDirectory, 'matterstorage' + (this.profile ? '.' + this.profile : '')));
       const nodeStorage = await storageService.open('Matterbridge');
       // if ((await nodeStorage.createContext('persist').get<boolean>('converted', false)) === true) {
-      if ((await nodeStorage.createContext('root').createContext('generalDiagnostics').get<number>('rebootCount', 0)) > 0) {
+      if ((await nodeStorage.createContext('root').createContext('generalDiagnostics').get<number>('rebootCount', -1)) >= 0) {
         this.log.info(`Matter node storage already converted to Matterbridge edge for ${plg}${pluginName}${nf}`);
         return;
       } else {
@@ -2154,17 +2154,46 @@ export class Matterbridge extends EventEmitter {
         const parts = key.split('-');
         const number = await endpointStructureContext.get(key);
         if (parts.length === 2) {
-          this.log.debug(`Converting Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.__number__:${number}`);
+          this.log.debug(`Converting bridge Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.__number__:${number}`);
           await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').set('__number__', number);
         } else if (parts.length === 3 && parts[2].startsWith('custom_')) {
-          this.log.debug(`Converting Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.parts.${parts[2].replace('custom_', '')}.__number__:${number}`);
-          await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').createContext('parts').createContext(parts[2].replace('custom_', '')).set('__number__', number);
+          this.log.debug(`Converting custom Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.parts.${parts[2].replace('custom_', '').replace(/[ .]/g, '')}.__number__:${number}`);
+          await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').createContext('parts').createContext(parts[2].replace('custom_', '').replace(/[ .]/g, '')).set('__number__', number);
         } else if (parts.length === 3 && parts[2].startsWith('unique_')) {
           const device = this.devices.get(parts[2].replace('unique_', ''));
           if (device && device.deviceName && device.maybeNumber) {
-            this.log.debug(`Converting Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.parts.${device.deviceName.replace(/[ .]/g, '')}.__number__:${device.maybeNumber}`);
+            this.log.debug(`Converting unique Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.parts.${device.deviceName.replace(/[ .]/g, '')}.__number__:${device.maybeNumber}`);
             await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').createContext('parts').createContext(device.deviceName.replace(/[ .]/g, '')).set('__number__', device.maybeNumber);
           }
+        } else if (parts.length === 4 && parts[2].startsWith('unique_') && parts[3].startsWith('custom_')) {
+          const device = this.devices.get(parts[2].replace('unique_', ''));
+          if (device && device.deviceName && device.maybeNumber) {
+            this.log.debug(
+              `Converting unique Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.parts.${device.deviceName.replace(/[ .]/g, '')}.parts.${parts[3].replace('custom_', '').replace(/[ .]/g, '')}.__number__:${device.maybeNumber}`,
+            );
+            await nodeStorage
+              .createContext('root')
+              .createContext('parts')
+              .createContext('Matterbridge')
+              .createContext('parts')
+              .createContext(device.deviceName.replace(/[ .]/g, ''))
+              .createContext('parts')
+              .createContext(parts[3].replace('custom_', '').replace(/[ .]/g, ''))
+              .set('__number__', device.maybeNumber);
+          }
+        } else if (parts.length === 4 && parts[2].startsWith('custom_') && parts[3].startsWith('custom_')) {
+          this.log.debug(
+            `Converting custom Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.parts.${parts[2].replace('custom_', '').replace(/[ .]/g, '')}.parts.${parts[3].replace('custom_', '').replace(/[ .]/g, '')}.__number__:${number}`,
+          );
+          await nodeStorage
+            .createContext('root')
+            .createContext('parts')
+            .createContext('Matterbridge')
+            .createContext('parts')
+            .createContext(parts[2].replace('custom_', '').replace(/[ .]/g, ''))
+            .createContext('parts')
+            .createContext(parts[3].replace('custom_', '').replace(/[ .]/g, ''))
+            .set('__number__', number);
         }
       }
 
