@@ -6,11 +6,12 @@ process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'J
 
 import { jest } from '@jest/globals';
 
-import { AnsiLogger, LogLevel, pl } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, db, LogLevel, pl, wr } from 'node-ansi-logger';
+import { NodeStorageManager } from 'node-persist-manager';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
-import { powerSource } from './matterbridgeDeviceTypes.js';
+import { contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 describe('Matterbridge platform', () => {
@@ -72,6 +73,21 @@ describe('Matterbridge platform', () => {
     (AnsiLogger.prototype.log as jest.Mock).mockRestore();
   }, 60000);
 
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('should be instance of MattebridgePlatform', () => {
+    expect(platform).toBeInstanceOf(MatterbridgePlatform);
+  });
+
+  test('should have created an instance of NodeStorageManager', () => {
+    platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'test', type: 'type', debug: false, unregisterOnShutdown: false });
+    expect(platform.storage).toBeDefined();
+    expect(platform.storage).toBeInstanceOf(NodeStorageManager);
+    expect(platform.log.debug).toHaveBeenCalledWith(expect.stringContaining('Creating storage for plugin test'));
+  });
+
   test('should do a partial mock of AnsiLogger', () => {
     const log = new AnsiLogger({ logName: 'Mocked log' });
     expect(log).toBeDefined();
@@ -79,6 +95,7 @@ describe('Matterbridge platform', () => {
     log.logLevel = LogLevel.DEBUG;
     expect(log.log).toBeDefined();
     expect(log.log).toHaveBeenCalled();
+    expect(log.log).toHaveBeenCalledWith(LogLevel.INFO, 'Hello, world!');
   });
 
   test('onStart should throw an error if not overridden', async () => {
@@ -251,9 +268,129 @@ describe('Matterbridge platform', () => {
     platform.config.deviceEntityBlackList = {};
   });
 
-  test('onConfigure should log a debug message if not overridden', async () => {
+  test('checkEndpointNumbers should be empty', async () => {
+    const context = await platform.storage?.createStorage('context');
+    await context?.set('endpointMap', []);
+    expect(await platform.checkEndpointNumbers()).toBe(0);
+  });
+
+  test('checkEndpointNumbers should not validate without uniqueId', async () => {
+    const context = await platform.storage?.createStorage('context');
+    await context?.set('endpointMap', []);
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
+    testDevice.uniqueId = 'test';
+    (matterbridge as any).devices.set(testDevice);
+    testDevice.uniqueId = undefined;
+    expect(await platform.checkEndpointNumbers()).toBe(0);
+    testDevice.uniqueId = 'test';
+    expect(await platform.checkEndpointNumbers()).toBe(0);
+  });
+
+  test('checkEndpointNumbers should not be empty', async () => {
+    const context = await platform.storage?.createStorage('context');
+    await context?.set('endpointMap', []);
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
+    testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
+    testDevice.addRequiredClusterServers(testDevice);
+    await platform.registerDevice(testDevice);
+    testDevice.number = 100;
+    (matterbridge as any).devices.set(testDevice);
+    expect(await platform.checkEndpointNumbers()).toBe(1);
+    expect(platform.log.warn).not.toHaveBeenCalled();
+    expect(platform.log.debug).toHaveBeenCalledWith(`Setting endpoint number for device ${CYAN}${testDevice.uniqueId}${db} to ${CYAN}${testDevice.maybeNumber}${db}`);
+  });
+
+  test('checkEndpointNumbers should check the testDevice', async () => {
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
+    testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
+    testDevice.addRequiredClusterServers(testDevice);
+    await platform.registerDevice(testDevice);
+    testDevice.number = 100;
+    (matterbridge as any).devices.set(testDevice);
+    expect(await platform.checkEndpointNumbers()).toBe(1);
+    expect(platform.log.warn).not.toHaveBeenCalled();
+    expect(platform.log.debug).not.toHaveBeenCalledWith(`Setting endpoint number for device ${CYAN}${testDevice.uniqueId}${db} to ${CYAN}${testDevice.maybeNumber}${db}`);
+  });
+
+  test('checkEndpointNumbers should not check the testDevice', async () => {
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
+    testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
+    testDevice.addRequiredClusterServers(testDevice);
+    await platform.registerDevice(testDevice);
+    testDevice.number = 101;
+    (matterbridge as any).devices.set(testDevice);
+    expect(await platform.checkEndpointNumbers()).toBe(1);
+    expect(platform.log.warn).toHaveBeenCalledWith(`Endpoint number for device ${CYAN}${testDevice.uniqueId}${wr} changed from ${CYAN}100${wr} to ${CYAN}101${wr}`);
+    expect(platform.log.debug).not.toHaveBeenCalledWith(`Setting endpoint number for device ${CYAN}${testDevice.uniqueId}${db} to ${CYAN}${testDevice.maybeNumber}${db}`);
+  });
+
+  test('checkEndpointNumbers should check the testDevice with child endpoints', async () => {
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
+    testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
+    testDevice.addRequiredClusterServers(testDevice);
+    const child1 = testDevice.addChildDeviceType('child1', [temperatureSensor], undefined, true);
+    child1.addRequiredClusterServers(child1);
+    child1.number = 201;
+    const child2 = testDevice.addChildDeviceType('child2', [humiditySensor], undefined, true);
+    child2.addRequiredClusterServers(child2);
+    child2.number = 202;
+    await platform.registerDevice(testDevice);
+    testDevice.number = 101;
+    (matterbridge as any).devices.set(testDevice);
+    expect(await testDevice.getChildEndpoints()).toHaveLength(2);
+    jest.clearAllMocks();
+    expect(await platform.checkEndpointNumbers()).toBe(3);
+    expect(platform.log.warn).not.toHaveBeenCalledWith(`Endpoint number for device ${CYAN}${testDevice.uniqueId}${wr} changed from ${CYAN}100${wr} to ${CYAN}101${wr}`);
+    expect(platform.log.debug).not.toHaveBeenCalledWith(`Setting endpoint number for device ${CYAN}${testDevice.uniqueId}${db} to ${CYAN}${testDevice.maybeNumber}${db}`);
+    expect(platform.log.debug).toHaveBeenCalledWith(`Setting child endpoint number for device ${CYAN}${testDevice.uniqueId}${db}.${CYAN}child1${db} to ${CYAN}201${db}`);
+    expect(platform.log.debug).toHaveBeenCalledWith(`Setting child endpoint number for device ${CYAN}${testDevice.uniqueId}${db}.${CYAN}child2${db} to ${CYAN}202${db}`);
+  });
+
+  test('checkEndpointNumbers should validate the testDevice with child endpoints', async () => {
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
+    testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
+    testDevice.addRequiredClusterServers(testDevice);
+    const child1 = testDevice.addChildDeviceType('child1', [temperatureSensor], undefined, true);
+    child1.addRequiredClusterServers(child1);
+    child1.number = 201;
+    const child2 = testDevice.addChildDeviceType('child2', [humiditySensor], undefined, true);
+    child2.addRequiredClusterServers(child2);
+    child2.number = 202;
+    await platform.registerDevice(testDevice);
+    testDevice.number = 101;
+    (matterbridge as any).devices.set(testDevice);
+    expect(await testDevice.getChildEndpoints()).toHaveLength(2);
+    jest.clearAllMocks();
+    expect(await platform.checkEndpointNumbers()).toBe(3);
+    expect(platform.log.warn).not.toHaveBeenCalled();
+    expect(platform.log.debug).toHaveBeenCalledTimes(1);
+    expect(platform.log.debug).toHaveBeenCalledWith('Checking endpoint numbers...');
+  });
+
+  test('checkEndpointNumbers should not validate the testDevice with child endpoints', async () => {
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
+    testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
+    testDevice.addRequiredClusterServers(testDevice);
+    const child1 = testDevice.addChildDeviceType('child1', [temperatureSensor], undefined, true);
+    child1.addRequiredClusterServers(child1);
+    child1.number = 203;
+    const child2 = testDevice.addChildDeviceType('child2', [humiditySensor], undefined, true);
+    child2.addRequiredClusterServers(child2);
+    child2.number = 204;
+    await platform.registerDevice(testDevice);
+    testDevice.number = 101;
+    (matterbridge as any).devices.set(testDevice);
+    expect(await testDevice.getChildEndpoints()).toHaveLength(2);
+    jest.clearAllMocks();
+    expect(await platform.checkEndpointNumbers()).toBe(3);
+    expect(platform.log.warn).toHaveBeenCalled();
+    expect(platform.log.debug).toHaveBeenCalledTimes(1);
+    expect(platform.log.debug).toHaveBeenCalledWith('Checking endpoint numbers...');
+  });
+
+  test('onConfigure should log a message', async () => {
     await platform.onConfigure();
-    expect(platform.log.debug).toHaveBeenCalledWith("The plugin doesn't override onConfigure.");
+    expect(platform.log.debug).toHaveBeenCalledWith('Configuring platform ');
   });
 
   test('onChangeLoggerLevel should log a debug message if not overridden', async () => {
@@ -261,9 +398,9 @@ describe('Matterbridge platform', () => {
     expect(platform.log.debug).toHaveBeenCalledWith("The plugin doesn't override onChangeLoggerLevel. Logger level set to: debug");
   });
 
-  test('onShutdown should log a debug message if not overridden', async () => {
+  test('onShutdown should log a message', async () => {
     await platform.onShutdown('test reason');
-    expect(platform.log.debug).toHaveBeenCalledWith("The plugin doesn't override onShutdown.", 'test reason');
+    expect(platform.log.debug).toHaveBeenCalledWith('Shutting down platform ', 'test reason');
   });
 
   test('registerDevice calls matterbridge.addBridgedDevice with correct parameters', async () => {

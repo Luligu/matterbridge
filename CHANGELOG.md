@@ -18,6 +18,7 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 ### Added
 
 - [storage]: Added conversion from old matter storage to the new api format with fabrics, resumptionRecords, network, commissioning, operationalCredentials, acl and parts number. The conversion is triggered every time you shutdown or restart matterbridge till the new storage has been used with matterbridge edge. 
+- [storage]: Added conversion for child endpoint numbers. 
 - [package]: Update README.md and README-SERVICE.md to include instructions for using SSL on port 443.
 - [platform]: Added checkEndpointNumbers() to detect endpoint numbers changes.
 
