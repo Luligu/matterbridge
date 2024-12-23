@@ -4,7 +4,11 @@
 
 Matterbridge Edge is the version of Matterbridge running with the new Matter.js API.
 
-The migration of Matterbridge (after months of work) from the old API to the new API is now complete, including the conversion of the entire old storage format to the new API storage format with fabrics, resumptionRecords, network, commissioning, operationalCredentials, acl and parts numbers.
+After months of work, the migration of Matterbridge from the old API to the new API is now complete. This includes the conversion of the entire old storage format to the new API storage format, encompassing fabrics, resumption records, network, commissioning, operational credentials, ACL, and part numbers.
+
+A special thanks goes to Apollon for answering my countless questions and helping to resolve the many small issues that arose during this process.
+
+I also want to express my gratitude to Tamer, who continues to test everything daily to ensure we reach a level of confidence needed to release the update with the latest tag.
 
 ## Storage conversion
 
@@ -15,6 +19,7 @@ A message is displayed to inform you when the conversion is complete.
 Once you run Matterbridge in Edge mode for the first time, the conversion will no longer be triggered.
 
 The conversion only creates a new storage directory in the new format. It does not modify the old storage in any way, so there is no risk in trying Edge mode before its official release. You can also revert to normal mode by simply removing the -edge parameter. After the conversion is complete, the two storages will be identical. However, once you start using Edge mode, any changes made to one storage will not be reflected in the other. Therefore, it is recommended to let the conversion complete, switch to Edge mode, and continue using it exclusively.
+There is no conversion back to the old storage.
 
 ## When it will be released
 
