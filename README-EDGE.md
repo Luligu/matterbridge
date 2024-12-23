@@ -8,13 +8,13 @@ The migration of Matterbridge from the old API to the new API is now complete, i
 
 ## Storage conversion
 
-Starting from version 1.6.8, the conversion process is automatic and is triggered each time you shut down, restart, or update Matterbridge using the frontend.
+Starting from version 1.6.8 (1.6.8-dev.11 befere it is published with tag latest), the conversion process is automatic and is triggered each time you shut down, restart, or update Matterbridge using the frontend.
 
 A message is displayed to inform you when the conversion is complete.
 
 Once you run Matterbridge in Edge mode for the first time, the conversion will no longer be triggered.
 
-The conversion only creates a new storage (now the storage is a directoy) in the new format. It does not modify the old storage in any way, so there is no risk in trying Edge mode now before its official release. And you can go back to use matterbridge in the normal mode removeing the -edge parameter.
+The conversion only creates a new storage (now the storage is a directoy) in the new format. It does not modify the old storage in any way, so there is no risk in trying Edge mode now before its official release. And you can go back to use matterbridge in the normal mode removing the -edge parameter.
 
 ## When it will be released
 
