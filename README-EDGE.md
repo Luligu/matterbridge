@@ -43,6 +43,13 @@ Modify your /etc/systemd/system/matterbridge.service
 ExecStart=matterbridge -service -edge
 ```
 
+Then run:
+
+```
+sudo systemctl daemon-reload
+sudo systemctl restart matterbridge
+```
+
 ### When you run matterbridge with docker
 
 ```
