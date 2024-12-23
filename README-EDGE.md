@@ -14,7 +14,7 @@ A message is displayed to inform you when the conversion is complete.
 
 Once you run Matterbridge in Edge mode for the first time, the conversion will no longer be triggered.
 
-The conversion only creates a new storage (now the storage is a directoy) in the new format. It does not modify the old storage in any way, so there is no risk in trying Edge mode now before its official release.
+The conversion only creates a new storage (now the storage is a directoy) in the new format. It does not modify the old storage in any way, so there is no risk in trying Edge mode now before its official release. And you can go back to use matterbridge in the normal mode removeing the -edge parameter.
 
 ## When it will be released
 
