@@ -40,12 +40,14 @@ sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
 
+After adding your user to the docker group, you need to log out and log back in for the changes to take effect. This ensures that your current session recognizes the group membership change.
+
 ### Run the Docker container and start it
 
 The container must have full access to the host network (needed for mdns).
 
 ```
-docker run --name matterbridge \
+sudo docker run --name matterbridge \
   -v ${HOME}/Matterbridge:/root/Matterbridge \
   -v ${HOME}/.matterbridge:/root/.matterbridge \
   --network host --restart always -d luligu/matterbridge:latest
@@ -61,12 +63,12 @@ The docker-compose.yml file is available in the docker directory of the package
 services:
   matterbridge:
     container_name: matterbridge
-    image: luligu/matterbridge:latest # Matterbridge image with the latest tag
-    network_mode: host # Ensures the Matter mdns works
-    restart: always # Ensures the container always restarts automatically
+    image: luligu/matterbridge:latest                     # Matterbridge image with the latest tag
+    network_mode: host                                    # Ensures the Matter mdns works
+    restart: always                                       # Ensures the container always restarts automatically
     volumes:
-      - "${HOME}/Matterbridge:/root/Matterbridge" # Mounts the Matterbridge plugin directory
-      - "${HOME}/.matterbridge:/root/.matterbridge" # Mounts the Matterbridge storage directory
+      - "${HOME}/Matterbridge:/root/Matterbridge"         # Mounts the Matterbridge plugin directory
+      - "${HOME}/.matterbridge:/root/.matterbridge"       # Mounts the Matterbridge storage directory
 ```
 
 copy it in the home directory or edit the existing one to add the matterbridge service.

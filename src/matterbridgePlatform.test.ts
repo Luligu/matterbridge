@@ -324,6 +324,18 @@ describe('Matterbridge platform', () => {
     expect(platform.log.debug).not.toHaveBeenCalledWith(`Setting endpoint number for device ${CYAN}${testDevice.uniqueId}${db} to ${CYAN}${testDevice.maybeNumber}${db}`);
   });
 
+  test('checkEndpointNumbers should not check the testDevice without uniqueId', async () => {
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
+    testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
+    testDevice.addRequiredClusterServers(testDevice);
+    await platform.registerDevice(testDevice);
+    testDevice.number = 101;
+    (matterbridge as any).devices.set(testDevice);
+    testDevice.uniqueId = undefined;
+    expect(await platform.checkEndpointNumbers()).toBe(1);
+    expect(platform.log.debug).toHaveBeenCalledWith(`Not checking device ${testDevice.deviceName} without uniqueId or maybeNumber`);
+  });
+
   test('checkEndpointNumbers should check the testDevice with child endpoints', async () => {
     const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
@@ -363,8 +375,9 @@ describe('Matterbridge platform', () => {
     jest.clearAllMocks();
     expect(await platform.checkEndpointNumbers()).toBe(3);
     expect(platform.log.warn).not.toHaveBeenCalled();
-    expect(platform.log.debug).toHaveBeenCalledTimes(1);
+    expect(platform.log.debug).toHaveBeenCalledTimes(2);
     expect(platform.log.debug).toHaveBeenCalledWith('Checking endpoint numbers...');
+    expect(platform.log.debug).toHaveBeenCalledWith('Endpoint numbers check completed.');
   });
 
   test('checkEndpointNumbers should not validate the testDevice with child endpoints', async () => {
@@ -384,8 +397,9 @@ describe('Matterbridge platform', () => {
     jest.clearAllMocks();
     expect(await platform.checkEndpointNumbers()).toBe(3);
     expect(platform.log.warn).toHaveBeenCalled();
-    expect(platform.log.debug).toHaveBeenCalledTimes(1);
+    expect(platform.log.debug).toHaveBeenCalledTimes(2);
     expect(platform.log.debug).toHaveBeenCalledWith('Checking endpoint numbers...');
+    expect(platform.log.debug).toHaveBeenCalledWith('Endpoint numbers check completed.');
   });
 
   test('onConfigure should log a message', async () => {
