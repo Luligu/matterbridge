@@ -615,16 +615,20 @@ export class Matterbridge extends EventEmitter {
 
     if (hasParameter('factoryreset')) {
       try {
-        // Delete matter storage file
+        // Delete old matter storage file
         await fs.unlink(path.join(this.matterbridgeDirectory, this.matterStorageName));
       } catch (err) {
-        this.log.error(`Error deleting storage: ${err}`);
+        this.log.error(`Error deleting matter storage: ${err}`);
+      }
+      try {
+        // Delete matter node storage directory with its subdirectories
+        await fs.rm(path.join(this.matterbridgeDirectory, this.nodeStorageName.replace('storage', 'matterstorage')), { recursive: true });
+      } catch (err) {
+        this.log.error(`Error removing matter storage directory: ${err}`);
       }
       try {
         // Delete node storage directory with its subdirectories
         await fs.rm(path.join(this.matterbridgeDirectory, this.nodeStorageName), { recursive: true });
-        // Delete matter node storage directory with its subdirectories
-        await fs.rm(path.join(this.matterbridgeDirectory, this.nodeStorageName.replace('storage', 'matterstorage')), { recursive: true });
       } catch (err) {
         this.log.error(`Error removing storage directory: ${err}`);
       }
@@ -1269,6 +1273,19 @@ export class Matterbridge extends EventEmitter {
         }
       }
 
+      // Convert the matter storage to the new format
+      if (!hasParameter('nostorageconversion') && this.edge === false && this.matterbridgeContext && ['updating...', 'restarting...', 'shutting down...'].includes(message)) {
+        if (this.bridgeMode === 'bridge') {
+          await this.convertStorage(this.matterbridgeContext, 'Matterbridge');
+        } else if (this.bridgeMode === 'childbridge') {
+          for (const plugin of this.plugins) {
+            if (plugin.storageContext) {
+              await this.convertStorage(plugin.storageContext, plugin.name);
+            }
+          }
+        }
+      }
+
       // Close the http server
       if (this.httpServer) {
         this.httpServer.close();
@@ -1308,11 +1325,6 @@ export class Matterbridge extends EventEmitter {
           }
         });
         this.webSocketServer = undefined;
-      }
-
-      // Convert the matter storage to the new format
-      if (!hasParameter('nostorageconversion') && this.edge === false && this.matterbridgeContext && ['updating...', 'restarting...', 'shutting down...'].includes(message)) {
-        await this.convertStorage(this.matterbridgeContext, 'Mattebridge');
       }
 
       // Closing matter
@@ -2004,12 +2016,11 @@ export class Matterbridge extends EventEmitter {
    * @returns {Promise<void>} - A promise that resolves when the storage process is started.
    */
   async convertStorage(context: StorageContext, pluginName: string) {
-    if (this.edge !== false || pluginName !== 'Matterbridge') return;
+    if (this.edge !== false /* || pluginName !== 'Matterbridge'*/) return;
     try {
       const storageService = Environment.default.get(StorageService);
       Environment.default.vars.set('path.root', path.join(this.matterbridgeDirectory, 'matterstorage' + (this.profile ? '.' + this.profile : '')));
       const nodeStorage = await storageService.open(pluginName);
-      // if ((await nodeStorage.createContext('persist').get<boolean>('converted', false)) === true) {
       if ((await nodeStorage.createContext('root').createContext('generalDiagnostics').get<number>('rebootCount', -1)) >= 0) {
         this.log.info(`Matter node storage already converted to Matterbridge edge for ${plg}${pluginName}${nf}`);
         return;
@@ -2046,7 +2057,7 @@ export class Matterbridge extends EventEmitter {
       const fabricInfo = {} as Record<string, { fabricIndex: number; fabricId: bigint; nodeId: bigint; rootNodeId: bigint; rootVendorId: number; label: string }>;
       const fabricInfoArray: { fabricIndex: number; fabricId: bigint; nodeId: bigint; vendorId: number; rootPublicKey: Uint8Array; label: string }[] = [];
       const nocArray: { noc: Uint8Array; icac: Uint8Array | null; fabricIndex: number }[] = [];
-      const trcArray: string[] = [];
+      const trcArray: Uint8Array[] = [];
       const aclArray: { fabricIndex: number; privilege: number; authMode: number; subjects: bigint[]; targets: null }[] = [];
       this.log.info(`Found ${CYAN}${fabrics.length}${nf} fabrics (nextFabricIndex ${CYAN}${nextFabricIndex}${nf}) for ${plg}${pluginName}${nf}:`);
       if (fabrics.length === 0 || nextFabricIndex === 0) {
@@ -2074,8 +2085,8 @@ export class Matterbridge extends EventEmitter {
           label: fabric.label,
         });
         nocArray.push({ noc: fabric.operationalCert, icac: null, fabricIndex: fabric.fabricIndex });
-        // eslint-disable-next-line no-useless-escape
-        trcArray.push('{\"__object__\":\"Uint8Array\",\"__value__\":\"' + Buffer.from(fabric.rootCert).toString('hex') + '\"}');
+
+        trcArray.push(fabric.rootCert);
 
         this.log.info(`- updating ACL for fabricIndex ${fabric.fabricIndex}:`, fabric.scopedClusterData);
         const acl = fabric.scopedClusterData.get(0x1f)?.get('acl') as { value: { privilege: number; authMode: number; subjects: bigint[]; targets: null; fabricIndex: number }[] } | undefined;
@@ -2096,7 +2107,6 @@ export class Matterbridge extends EventEmitter {
       await nodeStorage.createContext('events').set('lastEventNumber', await eventHandlerContext.get('lastEventNumber', 1));
 
       await nodeStorage.createContext('root').set('__number__', 0);
-      await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').set('__number__', 1);
 
       await nodeStorage.createContext('root').createContext('commissioning').set('enabled', true);
       await nodeStorage.createContext('root').createContext('commissioning').set('commissioned', true);
@@ -2125,30 +2135,41 @@ export class Matterbridge extends EventEmitter {
         .set('location', await basicInformationContext.get('location', 'XX'));
 
       await nodeStorage.createContext('root').createContext('network').set('ble', false);
-      await nodeStorage.createContext('root').createContext('network').set('operationalPort', 5540);
+      await nodeStorage
+        .createContext('root')
+        .createContext('network')
+        .set('operationalPort', await context.get('port', 5540));
 
-      await nodeStorage.createContext('root').createContext('productDescription').set('productId', 0x8000);
-      await nodeStorage.createContext('root').createContext('productDescription').set('vendorId', 0xfff1);
+      await nodeStorage
+        .createContext('root')
+        .createContext('productDescription')
+        .set('productId', await context.get('productId', 0x8000));
+      await nodeStorage
+        .createContext('root')
+        .createContext('productDescription')
+        .set('vendorId', await context.get('vendorId', 0xfff1));
 
       /*
-    "Matterbridge.EndpointStructure": {
-      "unique_d60ca095a002f160-index_0": 1,
-      "unique_d60ca095a002f160-index_0-custom_Switch0": 2,
-      "unique_d60ca095a002f160-index_0-custom_Outlet0": 3,
-      "unique_d60ca095a002f160-index_0-custom_Light0": 4,
-      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa": 2,
-      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_PowerSource": 3,
-      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_light:0": 4,
-      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_light:1": 5,
-      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_light:2": 6,
-      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_light:3": 7,
-      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_meter:0": 8,
-      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_meter:1": 9,
-      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_meter:2": 10,
-      "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_meter:3": 11,
-      "nextEndpointId": 5
-     },
-    */
+      "Matterbridge.EndpointStructure": {
+        "unique_d60ca095a002f160-index_0": 1,
+        "unique_d60ca095a002f160-index_0-custom_Switch0": 2,
+        "unique_d60ca095a002f160-index_0-custom_Outlet0": 3,
+        "unique_d60ca095a002f160-index_0-custom_Light0": 4,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa": 2,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_PowerSource": 3,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_light:0": 4,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_light:1": 5,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_light:2": 6,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_light:3": 7,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_meter:0": 8,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_meter:1": 9,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_meter:2": 10,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_meter:3": 11,
+        "nextEndpointId": 5
+      },
+      */
+      const rootDeviceName = (await context.get('deviceName', '')).replace(/[ .]/g, '');
+      this.log.info(`Converting ${pluginName}.EndpointStructure to root.parts.${rootDeviceName}...`);
       for (const key of await endpointStructureContext.keys()) {
         if (key === 'nextEndpointId') {
           await nodeStorage.createContext('root').set('__nextNumber__', await endpointStructureContext.get(key));
@@ -2157,13 +2178,13 @@ export class Matterbridge extends EventEmitter {
         const parts = key.split('-');
         const number = await endpointStructureContext.get(key);
         if (parts.length === 2) {
-          this.log.debug(`Converting bridge Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.__number__:${CYAN}${number}${db}`);
-          await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').set('__number__', number);
+          this.log.debug(`Converting bridge Matterbridge.EndpointStructure:${key}:${number} to root.parts.${rootDeviceName}.__number__:${CYAN}${number}${db}`);
+          await nodeStorage.createContext('root').createContext('parts').createContext(rootDeviceName).set('__number__', number);
         } else if (parts.length === 3 && parts[2].startsWith('unique_')) {
           const device = this.devices.get(parts[2].replace('unique_', ''));
           if (device && device.deviceName && device.maybeNumber) {
-            this.log.debug(`Converting unique Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.parts.${device.deviceName.replace(/[ .]/g, '')}.__number__:${CYAN}${device.maybeNumber}${db}`);
-            await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').createContext('parts').createContext(device.deviceName.replace(/[ .]/g, '')).set('__number__', device.maybeNumber);
+            this.log.debug(`Converting unique Matterbridge.EndpointStructure:${key}:${number} to root.parts.${rootDeviceName}.parts.${device.deviceName.replace(/[ .]/g, '')}.__number__:${CYAN}${device.maybeNumber}${db}`);
+            await nodeStorage.createContext('root').createContext('parts').createContext(rootDeviceName).createContext('parts').createContext(device.deviceName.replace(/[ .]/g, '')).set('__number__', device.maybeNumber);
           }
         } else if (parts.length === 4 && parts[2].startsWith('unique_') && parts[3].startsWith('custom_')) {
           const device = this.devices.get(parts[2].replace('unique_', ''));
@@ -2171,12 +2192,12 @@ export class Matterbridge extends EventEmitter {
             const childEndpointName = parts[3].replace('custom_', '');
             const childEndpoint = device.getChildEndpointByName(childEndpointName);
             this.log.debug(
-              `Converting unique Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.parts.${device.deviceName.replace(/[ .]/g, '')}.parts.${parts[3].replace('custom_', '').replace(/[ .]/g, '')}.__number__:${CYAN}${childEndpoint?.number}${db}`,
+              `Converting unique Matterbridge.EndpointStructure:${key}:${number} to root.parts.${rootDeviceName}.parts.${device.deviceName.replace(/[ .]/g, '')}.parts.${parts[3].replace('custom_', '').replace(/[ .]/g, '')}.__number__:${CYAN}${childEndpoint?.number}${db}`,
             );
             await nodeStorage
               .createContext('root')
               .createContext('parts')
-              .createContext('Matterbridge')
+              .createContext(rootDeviceName)
               .createContext('parts')
               .createContext(device.deviceName.replace(/[ .]/g, ''))
               .createContext('parts')
@@ -2184,16 +2205,16 @@ export class Matterbridge extends EventEmitter {
               .set('__number__', childEndpoint?.number);
           }
         } else if (parts.length === 3 && parts[2].startsWith('custom_')) {
-          this.log.debug(`Converting custom Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.parts.${parts[2].replace('custom_', '').replace(/[ .]/g, '')}.__number__:${CYAN}${number}${db}`);
-          await nodeStorage.createContext('root').createContext('parts').createContext('Matterbridge').createContext('parts').createContext(parts[2].replace('custom_', '').replace(/[ .]/g, '')).set('__number__', number);
+          this.log.debug(`Converting custom Matterbridge.EndpointStructure:${key}:${number} to root.parts.${rootDeviceName}.parts.${parts[2].replace('custom_', '').replace(/[ .]/g, '')}.__number__:${CYAN}${number}${db}`);
+          await nodeStorage.createContext('root').createContext('parts').createContext(rootDeviceName).createContext('parts').createContext(parts[2].replace('custom_', '').replace(/[ .]/g, '')).set('__number__', number);
         } else if (parts.length === 4 && parts[2].startsWith('custom_') && parts[3].startsWith('custom_')) {
           this.log.debug(
-            `Converting custom Matterbridge.EndpointStructure:${key}:${number} to root.parts.Matterbridge.parts.${parts[2].replace('custom_', '').replace(/[ .]/g, '')}.parts.${parts[3].replace('custom_', '').replace(/[ .]/g, '')}.__number__:${CYAN}${number}${db}`,
+            `Converting custom Matterbridge.EndpointStructure:${key}:${number} to root.parts.${rootDeviceName}.parts.${parts[2].replace('custom_', '').replace(/[ .]/g, '')}.parts.${parts[3].replace('custom_', '').replace(/[ .]/g, '')}.__number__:${CYAN}${number}${db}`,
           );
           await nodeStorage
             .createContext('root')
             .createContext('parts')
-            .createContext('Matterbridge')
+            .createContext(rootDeviceName)
             .createContext('parts')
             .createContext(parts[2].replace('custom_', '').replace(/[ .]/g, ''))
             .createContext('parts')
@@ -2220,6 +2241,7 @@ export class Matterbridge extends EventEmitter {
       await context.set('converted', true);
       this.log.notice(`Matter storage converted to Matterbridge edge for ${plg}${pluginName}${nt}`);
       this.log.notice(`If you want to try out matterbridge edge (beta) add -edge to the command line.`);
+      this.log.notice(`All fabrics have been converted to the new storage format.`);
     } catch (error) {
       this.log.error(`convertStorage error converting matter storage to Matterbridge edge for ${plg}${pluginName}${er}:`, error);
     }
