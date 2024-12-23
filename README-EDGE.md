@@ -2,25 +2,27 @@
 
 # Matterbridge edge
 
-Matterbridge edge is the version of matterbridge running with matter.js new api.
+Matterbridge Edge is the version of Matterbridge running with the new Matter.js API.
 
-The conversion of matterbridge from the old api to new api is now finished with the conversion of the whole old storage to the new api storage format.
+The migration of Matterbridge from the old API to the new API is now complete, including the conversion of the entire old storage format to the new API storage format.
 
 ## Storage conversion
 
-Starting from version 1.6.8, the conversion is automatic and is triggered each time you shutdown, resrtart or update matterbridge using the frontend.
+Starting from version 1.6.8, the conversion process is automatic and is triggered each time you shut down, restart, or update Matterbridge using the frontend.
 
-A message is displayed informing that the conversion has been completed.
+A message is displayed to inform you when the conversion is complete.
 
-The first time you run matterbridge in edge mode, the conversion will not be triggered anymore.
+Once you run Matterbridge in Edge mode for the first time, the conversion will no longer be triggered.
+
+The conversion only creates a new storage file in the new format. It does not modify the old storage in any way, so there is no risk in trying Edge mode now before its official release.
 
 ## When it will be released
 
-Matterbridge in edge mode will be released as 2.0.0 since it is a major update.
+Matterbridge Edge will be officially released as version 2.0.0, as it represents a major update.
 
 ## How to run matterbridge in edge mode 
 
-To start matterbridge in edge mode, before it is offcially released, you have to add the -edge parameter to the command line or docker command.
+To start Matterbridge in Edge mode before its official release, you need to add the -edge parameter to the command line or Docker command.
 
 ### When you run matterbridge from a terminal
 
