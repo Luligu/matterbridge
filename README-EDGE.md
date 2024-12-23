@@ -14,7 +14,7 @@ A message is displayed to inform you when the conversion is complete.
 
 Once you run Matterbridge in Edge mode for the first time, the conversion will no longer be triggered.
 
-The conversion only creates a new storage file in the new format. It does not modify the old storage in any way, so there is no risk in trying Edge mode now before its official release.
+The conversion only creates a new storage (now the storage is a directoy) in the new format. It does not modify the old storage in any way, so there is no risk in trying Edge mode now before its official release.
 
 ## When it will be released
 
@@ -31,6 +31,8 @@ matterbridge -edge
 ```
 
 ### When you run matterbridge with systemctl
+
+Modify your /etc/systemd/system/matterbridge.service
 
 ```
 ExecStart=matterbridge -service -edge
