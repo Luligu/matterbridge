@@ -2016,7 +2016,7 @@ export class Matterbridge extends EventEmitter {
    * @returns {Promise<void>} - A promise that resolves when the storage process is started.
    */
   async convertStorage(context: StorageContext, pluginName: string) {
-    if (this.edge !== false /* || pluginName !== 'Matterbridge'*/) return;
+    if (this.edge !== false) return;
     try {
       const storageService = Environment.default.get(StorageService);
       Environment.default.vars.set('path.root', path.join(this.matterbridgeDirectory, 'matterstorage' + (this.profile ? '.' + this.profile : '')));
