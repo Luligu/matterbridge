@@ -266,7 +266,10 @@ export class MatterbridgePlatform {
     const endpointMap = new Map<string, EndpointNumber>(await context.get<[string, EndpointNumber][]>('endpointMap', []));
 
     for (const device of this.matterbridge.getDevices().filter((d) => d.plugin === this.name)) {
-      if (device.uniqueId === undefined || device.maybeNumber === undefined) continue;
+      if (device.uniqueId === undefined || device.maybeNumber === undefined) {
+        this.log.debug(`Not checking device ${device.deviceName} without uniqueId or maybeNumber`);
+        continue;
+      }
       if (endpointMap.has(device.uniqueId) && endpointMap.get(device.uniqueId) !== device.maybeNumber) {
         this.log.warn(`Endpoint number for device ${CYAN}${device.uniqueId}${wr} changed from ${CYAN}${endpointMap.get(device.uniqueId)}${wr} to ${CYAN}${device.maybeNumber}${wr}`);
         endpointMap.set(device.uniqueId, device.maybeNumber);
@@ -288,6 +291,7 @@ export class MatterbridgePlatform {
       }
     }
     await context.set('endpointMap', Array.from(endpointMap.entries()));
+    this.log.debug('Endpoint numbers check completed.');
     return endpointMap.size;
   }
 }
