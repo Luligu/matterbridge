@@ -4,11 +4,11 @@
 
 Matterbridge Edge is the version of Matterbridge running with the new Matter.js API.
 
-The migration of Matterbridge from the old API to the new API is now complete, including the conversion of the entire old storage format to the new API storage format.
+The migration of Matterbridge (after months of work) from the old API to the new API is now complete, including the conversion of the entire old storage format to the new API storage format with fabrics, resumptionRecords, network, commissioning, operationalCredentials, acl and parts numbers.
 
 ## Storage conversion
 
-Starting from version 1.6.8 (1.6.8-dev.11 befere it is published with tag latest), the conversion process is automatic and is triggered each time you shut down, restart, or update Matterbridge using the frontend.
+Starting from version 1.6.8 (1.6.8-dev.11 before it is published with tag latest), the conversion process is automatic and is triggered each time you shut down, restart, or update Matterbridge using the frontend.
 
 A message is displayed to inform you when the conversion is complete.
 
