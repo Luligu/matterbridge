@@ -283,6 +283,7 @@ export class MatterbridgePlatform {
         if (!childId || !child.maybeNumber) continue;
         if (endpointMap.has(device.uniqueId + separator + childId) && endpointMap.get(device.uniqueId + separator + childId) !== child.maybeNumber) {
           this.log.warn(`Child endpoint number for device ${CYAN}${device.uniqueId}${wr}.${CYAN}${childId}${wr} changed from ${CYAN}${endpointMap.get(device.uniqueId + separator + childId)}${wr} to ${CYAN}${child.maybeNumber}${wr}`);
+          endpointMap.set(device.uniqueId + separator + childId, child.maybeNumber);
         }
         if (!endpointMap.has(device.uniqueId + separator + childId)) {
           this.log.debug(`Setting child endpoint number for device ${CYAN}${device.uniqueId}${db}.${CYAN}${childId}${db} to ${CYAN}${child.maybeNumber}${db}`);
