@@ -26,7 +26,7 @@ function Devices() {
 
   useEffect(() => {
     // Fetch Devices
-    fetch(`/api/devices_clusters/${selectedPluginName}/${selectedDeviceEndpoint}`)
+    fetch(`./api/devices_clusters/${selectedPluginName}/${selectedDeviceEndpoint}`)
       .then(response => response.json())
       .then(data => setClusters(data))
       .catch(error => console.error('Error fetching devices_clusters:', error));

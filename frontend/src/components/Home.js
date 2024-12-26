@@ -3,7 +3,7 @@
 // Home.js
 import React, { useEffect, useState, useRef, useContext } from 'react';
 import { StatusIndicator } from './StatusIndicator';
-import { sendCommandToMatterbridge } from '../App';
+import { sendCommandToMatterbridge, theme } from '../App';
 import WebSocketComponent from './WebSocketComponent';
 import { WebSocketContext } from './WebSocketContext';
 import Connecting from './Connecting';
@@ -22,34 +22,6 @@ import validator from '@rjsf/validator-ajv8';
 
 import { QRCodeSVG} from 'qrcode.react';
 
-const theme = createTheme({
-  components: {
-    MuiTooltip: {
-      defaultProps: {
-        placement: 'top-start', 
-        arrow: true,
-      },
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          color: '#ffffff',
-          backgroundColor: '#4CAF50', 
-        },
-      },
-      defaultProps: {
-        color: 'primary',
-        variant: 'contained',
-        size: 'small',
-      },
-    },
-  },
-  palette: {
-    primary: {
-      main: '#4CAF50',
-    },
-  },
-});
 
 function Home() {
   const [wssHost, setWssHost] = useState(null);
@@ -455,25 +427,8 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
     setAnchorEl(null);
   };
 
-  const theme = createTheme({
-    components: {
-      MuiTooltip: {
-        defaultProps: {
-          placement: 'bottom', 
-          arrow: true,
-        },
-      },
-    },
-    palette: {
-      primary: {
-        main: '#4CAF50',
-      },
-    },
-  });
-
   return (
     <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '10px', gap: '20px' }}>
-      <ThemeProvider theme={theme}>
       <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={open} onClose={handleSnackClose} autoHideDuration={5000}>
         <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart required</Alert>
       </Snackbar>
@@ -495,12 +450,11 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
         <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-room')}>matterbridge-eve-room</MenuItem>
       </Menu>
       <Tooltip title="Install or update a plugin from npm">
-        <Button onClick={handleInstallPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="install" endIcon={<Download />} style={{ color: '#ffffff', height: '30px', minWidth: '90px' }}> Install</Button>
+        <Button onClick={handleInstallPluginClick} endIcon={<Download />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}> Install</Button>
       </Tooltip>        
       <Tooltip title="Add an installed plugin">
-        <Button onClick={handleAddPluginClick} theme={theme} color="primary" variant='contained' size="small" aria-label="add" endIcon={<Add />} style={{ color: '#ffffff', height: '30px', minWidth: '90px' }}> Add</Button>
+        <Button onClick={handleAddPluginClick} endIcon={<Add />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}> Add</Button>
       </Tooltip>        
-      </ThemeProvider>  
     </div>
   );
 }
@@ -516,11 +470,11 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
         </div>
         <div className="MbfWindowBodyColumn">
           {matterbridgeInfo.matterbridgeFabricInformations.map((fabric, index) => (
-            <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
+            <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', color: 'var(--div-text-color)',  backgroundColor: 'var(--div-bg-color)', textAlign: 'left', fontSize: '14px' }}>
                 <p className="status-blue" style={{ margin: '0px 10px 10px 10px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
-                <p style={{ margin: '0px 20px 0px 20px'}}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
-                {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px'}}>Label: {fabric.label}</p>}
-                <p style={{ margin: '0px 20px 0px 20px'}}>Active sessions: {matterbridgeInfo.matterbridgeSessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length}</p>
+                <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)'}}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
+                {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)'}}>Label: {fabric.label}</p>}
+                <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)'}}>Active sessions: {matterbridgeInfo.matterbridgeSessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length}</p>
             </div>  
           ))}
         </div>  
@@ -535,11 +489,11 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
         </div>
         <div className="MbfWindowBodyColumn">
           {plugin.fabricInformations.map((fabric, index) => (
-            <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', backgroundColor: '#9e9e9e', textAlign: 'left', fontSize: '14px' }}>
+            <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)', textAlign: 'left', fontSize: '14px' }}>
                 <p className="status-blue" style={{ margin: '0px 10px 10px 10px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
-                <p style={{ margin: '0px 20px 0px 20px' }}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
-                {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px'}}>Label: {fabric.label}</p>}
-                <p style={{ margin: '0px 20px 0px 20px' }}>Active sessions: {plugin.sessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length}</p>
+                <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
+                {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Label: {fabric.label}</p>}
+                <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Active sessions: {plugin.sessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length}</p>
             </div>  
           ))}
         </div>  
@@ -646,7 +600,6 @@ function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
     <ThemeProvider theme={theme}>
       <div style={{ maxWidth: '800px' }}>
         <Form schema={schema} formData={config} uiSchema={uiSchema} validator={validator} onSubmit={handleSaveChanges} />
-        <div style={{ paddingTop: '10px' }}>Restart Matterbridge to apply the changes</div>
       </div>
     </ThemeProvider>  
   );

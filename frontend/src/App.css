@@ -1,18 +1,107 @@
 /* App.css */
 
+/* Define the style for the body element */
+
+/* Classic Mode */
+[frontend-theme="classic"] {
+  --main-bg-color: #c4c2c2;
+  --main-text-color: black;
+  --main-grey-color: #616161;
+  --main-light-color: #959595;
+  --main-dark-color: #333;
+  --main-blue-color: #1976d2;
+  --main-icon-color: #4d4d4d;
+  --main-log-color: var(--main-text-color);
+  --main-button-color: #ffffff;
+  --main-button-bg-color: #4CAF50;
+  --main-menu-color: #26292d;
+  --main-menu-bg-color: #e2e2e2;
+  --main-menu-hover-color: #959595;
+  --main-label-color: #616161;
+
+  --header-bg-color: #4CAF50;
+  --header-text-color: white;
+
+  --footer-bg-color: #c4c2c2;
+  --footer-text-color: black;
+
+  --ttip-bg-color: #555;
+  --ttip-text-color: #fff;
+
+  --table-border-color: #ddd;
+  --table-text-color: #white;
+  --table-even-bg-color: #bdbdbd;
+  --table-odd-bg-color: #9e9e9e;
+  --table-selected-bg-color: #5f8c9e;
+
+  --div-bg-color: #9e9e9e;
+  --div-text-color: black;
+  --div-shadow-color: #888;
+  --div-border-color: rgb(139, 139, 139);
+  --div-border-radius: 0px;
+  --div-title-bg-color: var(--div-bg-color);
+  --div-title-text-color: black;
+
+  background-color: var(--main-bg-color);
+  color: var(--main-text-color);
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+}
+
+/* Dark Mode */
+[frontend-theme="dark"] {
+  --main-bg-color: #26292d;
+  --main-text-color: #ffffff;
+  --main-grey-color: #616161;
+  --main-light-color: #959595;
+  --main-dark-color: #333;
+  --main-blue-color: #1976d2;
+  --main-icon-color: var(--main-light-color);
+  --main-log-color: var(--main-light-color);
+  --main-button-color: #ffffff;
+  --main-button-bg-color: var(--main-blue-color);
+  --main-menu-color: var(--main-bg-color);
+  --main-menu-bg-color: #e2e2e2;
+  --main-menu-hover-color: #959595;
+  --main-label-color: var(--main-grey-color);
+
+  --header-bg-color: #1b1d21;
+  --header-text-color: var(--main-blue-color);
+
+  --footer-bg-color: #1b1d21;
+  --footer-text-color: var(--main-grey-color);
+
+  --ttip-bg-color: #555;
+  --ttip-text-color: #fff;
+
+  --table-border-color: var(--div-bg-color);
+  --table-text-color: var(--main-light-color);
+  --table-even-bg-color: var(--div-bg-color);
+  --table-odd-bg-color: var(--div-bg-color);
+  --table-selected-bg-color: var(--main-bg-color);
+
+  --div-bg-color: #1b1d21;
+  --div-text-color: var(--main-light-color);
+  --div-shadow-color: #34373d;
+  --div-border-color: #1b1d21;
+  --div-border-radius: 5px;
+  --div-title-bg-color: #1b1d21;
+  --div-title-text-color: var(--main-blue-color);
+
+  background-color: var(--main-bg-color);
+  color: var(--main-text-color);
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+}
+
 /* Tooltip style */
 .tooltip-container {
   position: relative;
   display: inline-block;
 }
 
-/*
-width: 120px;
-*/
 .tooltip-text {
   visibility: hidden;
-  background-color: #555;
-  color: #fff;
+  background-color: var(--ttip-bg-color);
+  color: var(--ttip-text-color);
   text-align: center;
   padding: 5px 5px;
   border-radius: 6px;
@@ -121,16 +210,8 @@ width: 120px;
   gap: 0;
 }
 
-.removeHeaderButton {
-  color: #4CAF50;
-}
-
-.menu-background {
-  background-color: #e2e2e2;
-}
-
 .main-background {
-  background-color: #c4c2c2;
+  background-color: var(--main-bg-color);
 }
 
 /* Header style */
@@ -155,16 +236,12 @@ nav {
   margin: 0 10px;
   font-size: 20px;
   text-decoration: none;
-  color: #333;
+  color: var(--main-icon-color);
   transition: color 0.3s ease;
 }
 
 .nav-link:hover {
-  color: #007BFF;
-}
-
-.nav-link:hodddver {
-  color: #ff0000;
+  color: var(--main-blue-color);
 }
 
 /* Table style */
@@ -176,22 +253,22 @@ table {
 thead {
   position: sticky;
   top: 0;
-  border: 1px solid #ddd;
+  border: 1px solid var(--table-border-color);
   z-index: auto;
 }
 
 thead th {
-  border: 1px solid #ddd;
+  border: 1px solid var(--table-border-color);
   padding: 5px;
   padding-right: 10px;
   padding-left: 10px;
-  color: white;
-  background: #4CAF50;
+  color: var(--header-text-color);
+  background: var(--header-bg-color);
   text-align: left;
 }
 
 tbody td {
-  border: 1px solid #ddd;
+  border: 1px solid var(--table-border-color);
   margin: 0;
   padding: 5px;
   padding-right: 10px;
@@ -201,32 +278,23 @@ tbody td {
 }
 
 .table-content-even {
-  background-color: #bdbdbd;
+  color: var(--table-text-color);
+  background-color: var(--table-even-bg-color);
 }
 
 .table-content-odd {
-  background-color: #9e9e9e;
+  color: var(--table-text-color);
+  background-color: var(--table-odd-bg-color);
 }
 
 .table-content-selected {
-  background-color: #5f8c9e;
+  color: var(--table-text-color);
+  background-color: var(--table-selected-bg-color);
 }
 
 h3 {
   margin: 0;
 }
-
-/* Mbf table content style 
-.MbfWindowDiv table,
-.MbfWindowDiv table thead,
-.MbfWindowDiv table tbody,
-.MbfWindowDiv table tr,
-.MbfWindowDiv table th,
-.MbfWindowDiv table td {
-  border: none;
-  box-shadow: none;
-}
-*/
 
 /* Define the style for the main page element */
 .MbfPageDiv {
@@ -239,14 +307,15 @@ h3 {
   gap: 20px;
 }
 
-/* Define the style for the main div element */
+/* Define the style for the main div element  */
 .MbfWindowDiv {
   display: flex;
   flex-direction: column;
-  box-shadow: 5px 5px 10px #888;
-  border: 1px solid #ddd;
+  box-shadow: 5px 5px 10px var(--div-shadow-color);
+  border: 1px solid var(--table-border-color);
+  border-radius: var(--div-border-radius);
   box-sizing: border-box;
-  background-color: #9e9e9e;
+  background-color: var(--div-bg-color);
 }
 
 /* Define the style for the main div element */
@@ -266,20 +335,22 @@ h3 {
   display: 'flex';
   align-items: center;
   width: 100%;
-  border-bottom: 1px solid #ddd;
-  background-color: #4CAF50;
+  border-bottom: 1px solid var(--table-border-color);
+  color: var(--header-text-color);
+  background-color: var(--header-bg-color);
   margin: 0px;
   padding: 0px;
   box-sizing: border-box;
 }
 
-/* Define the style for the header element */
+/* Define the style for the footer element */
 .MbfWindowFooter {
   display: 'flex';
   align-items: center;
   justify-content: center;
   height: 40px;
-  color: black;
+  color: var(--footer-text-color);
+  background-color: var(--footer-bg-color);
   margin: 0px;
   padding: 10px;
   padding-top: 0px;
@@ -287,7 +358,7 @@ h3 {
 
 /* Define the style for the header text element */
 .MbfWindowHeaderText {
-  color: white;
+  color: var(--header-text-color);
   font-weight: bold;
   margin: 0px;
   padding: 5px;
@@ -295,7 +366,7 @@ h3 {
   padding-left: 10px;
 }
 
-/* Define the style for the body element width: 100%;*/
+/* Define the style for the body element */
 .MbfWindowBodyColumn {
   display: flex;
   flex-direction: column;
@@ -320,7 +391,7 @@ h3 {
   overflow: auto;
 }
 
-/* Table header style */
+/* Main screen style */
 .MbfScreen {
   display: flex;
   flex-direction: column;
@@ -329,13 +400,13 @@ h3 {
   gap: 20px;
   margin: 0;
   padding: 20px;
-  background-color: #c4c2c2;
+  background-color: var(--main-bg-color);
 }
 
 /* Styles for mobile screens */
-@media (max-width: 1600px) {
+@media (max-width: 1400px) {
   .MbfScreen {
-    width: 1600px;
-    height: 800px;
+    width: 1400px;
+    height: 700px;
   }
 }

@@ -1,25 +1,29 @@
 /* eslint-disable no-console */
 import React, { useState, useEffect, useContext } from 'react';
 import { Snackbar, Alert, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, TextField, Select, MenuItem, Checkbox, ThemeProvider, createTheme } from '@mui/material';
-
-import { sendCommandToMatterbridge } from '../App';
+import { sendCommandToMatterbridge, theme } from '../App';
 import Connecting from './Connecting';
 import { OnlineContext } from './OnlineContext';
 
-const theme = createTheme({
+const localTheme = createTheme({
   components: {
     MuiTooltip: {
       defaultProps: {
-        placement: 'bottom', 
+        placement: 'top-start', 
         arrow: true,
       },
     },
-  },
-  palette: {
-    readonly: {
-      main: '#616161', 
+    MuiFormLabel: {
+      styleOverrides: {
+        root: {
+          color: 'var(--main-label-color)',
+          '&.Mui-focused': {
+            color: 'var(--main-label-color)', 
+          },
+        },
+      },
     },
-  },
+  }
 });
 
 function Settings() {
@@ -56,17 +60,14 @@ function Settings() {
   return (
     <div className="MbfPageDiv">
       <ThemeProvider theme={theme}>
-      <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={showSnackbar} onClose={handleSnackbarClose} autoHideDuration={10000}>
-          <Alert onClose={handleSnackbarClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>{snackbarMessage}</Alert>
-      </Snackbar>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%', height: '100%' }}>
-        <h3>Matterbridge settings:</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, auto)', gridTemplateRows: 'repeat(3, auto)', gap: '20px', width: '100%', height: '100%' }}>
+        <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={showSnackbar} onClose={handleSnackbarClose} autoHideDuration={10000}>
+            <Alert onClose={handleSnackbarClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>{snackbarMessage}</Alert>
+        </Snackbar>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', width: '100%' }}>
           <MatterbridgeSettings matterbridgeInfo={matterbridgeInfo} showSnackbarMessage={showSnackbarMessage}/>
           <MatterSettings matterbridgeInfo={matterbridgeInfo} showSnackbarMessage={showSnackbarMessage}/>
           <MatterbridgeInfo matterbridgeInfo={matterbridgeInfo}/>
         </div>  
-      </div>  
       </ThemeProvider>
     </div>
   );
@@ -77,6 +78,7 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
   const [selectedMbLoggerLevel, setSelectedMbLoggerLevel] = useState('Info'); 
   const [logOnFileMb, setLogOnFileMb] = useState(false);
   const [password, setPassword] = useState('');
+  const [frontendTheme, setFrontendTheme] = useState('dark');
 
   useEffect(() => {
     if (matterbridgeInfo.bridgeMode === undefined) return;
@@ -88,6 +90,14 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
     setLogOnFileMb(matterbridgeInfo.fileLogger);
 
   }, [matterbridgeInfo]);
+
+  // Retrieve the saved theme value from localStorage
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('frontendTheme');
+    if (savedTheme) {
+      setFrontendTheme(savedTheme);
+    }
+  }, []);
 
   // Define a function to handle change bridge mode 
   const handleChangeBridgeMode = (event) => {
@@ -118,40 +128,61 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
     sendCommandToMatterbridge('setpassword', '*'+event.target.value+'*');
   };
 
+  // Define a function to handle change theme
+  const handleChangeTheme = (event) => {
+    const newTheme = event.target.value;
+    console.log('handleChangeTheme called with value:', newTheme);
+    setFrontendTheme(newTheme);
+    localStorage.setItem('frontendTheme', newTheme);
+    document.body.setAttribute("frontend-theme", newTheme);
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '500px' }}>
-      <WindowForm >
-        <WindowTitle>Matterbridge settings</WindowTitle>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-mode">Matterbridge mode:</FormLabel>
-          <RadioGroup focused row name="mode-buttons-group" value={selectedBridgeMode} onChange={handleChangeBridgeMode}>
-            <FormControlLabel value="bridge" control={<Radio />} label="Bridge" />
-            <FormControlLabel value="childbridge" control={<Radio />} label="Childbridge" />
-          </RadioGroup>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="mbdebug-info">Matterbridge logger level:</FormLabel>
-          <Select style={{ height: '30px' }} labelId="select-mblevel" id="mbdebug-level" value={selectedMbLoggerLevel} onChange={handleChangeMbLoggerLevel}>
-            <MenuItem value='Debug'>Debug</MenuItem>
-            <MenuItem value='Info'>Info</MenuItem>
-            <MenuItem value='Notice'>Notice</MenuItem>
-            <MenuItem value='Warn'>Warn</MenuItem>
-            <MenuItem value='Error'>Error</MenuItem>
-            <MenuItem value='Fatal'>Fatal</MenuItem>
-          </Select>
-          <FormControlLabel style={{padding: '0px', margin: '0px', color: 'rgba(0, 0, 0, 0.87)'}} control={<Checkbox checked={logOnFileMb} onChange={handleLogOnFileMbChange} name="logOnFileMb" />} label="Log on file:" labelPlacement="start"/>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="mb-password">Frontend password:</FormLabel>
-          <TextField value={password} onChange={handleChangePassword} size="small" id="matterbridgePassword" type="password" autoComplete="current-password" variant="outlined" 
-            style={{ height: '30px', flexGrow: 1 }} InputProps={{
-              style: {
-                height: '30px',
-                padding: '0',
-              },
-            }}/>
-        </div>
-      </WindowForm>
+    <div className="MbfWindowDiv" style={{ flex: '0 0 auto' }}>
+      <div className="MbfWindowHeader">
+        <p className="MbfWindowHeaderText">Matterbridge settings</p>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: '0 0 auto' }}>
+        <FormControl sx={{ gap: '10px', margin: '0px', padding: '10px', width: '430px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-mode">Matterbridge mode:</FormLabel>
+            <RadioGroup row name="mode-buttons-group" value={selectedBridgeMode} onChange={handleChangeBridgeMode}>
+              <FormControlLabel value="bridge" control={<Radio />} label="Bridge" />
+              <FormControlLabel value="childbridge" control={<Radio />} label="Childbridge" />
+            </RadioGroup>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="mbdebug-info">Matterbridge logger level:</FormLabel>
+            <Select style={{ height: '30px' }} labelId="select-mblevel" id="mbdebug-level" value={selectedMbLoggerLevel} onChange={handleChangeMbLoggerLevel}>
+              <MenuItem value='Debug'>Debug</MenuItem>
+              <MenuItem value='Info'>Info</MenuItem>
+              <MenuItem value='Notice'>Notice</MenuItem>
+              <MenuItem value='Warn'>Warn</MenuItem>
+              <MenuItem value='Error'>Error</MenuItem>
+              <MenuItem value='Fatal'>Fatal</MenuItem>
+            </Select>
+            <FormControlLabel style={{padding: '0px', margin: '0px'}} control={<Checkbox checked={logOnFileMb} onChange={handleLogOnFileMbChange} name="logOnFileMb" />} label="Log on file:" labelPlacement="start"/>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="mb-password">Frontend password:</FormLabel>
+            <TextField value={password} onChange={handleChangePassword} size="small" id="matterbridgePassword" type="password" autoComplete="current-password" variant="outlined" 
+              style={{ height: '30px', flexGrow: 1 }} InputProps={{
+                style: {
+                  height: '30px',
+                  padding: '0',
+                },
+              }} 
+            />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="frontend-theme">Frontend theme:</FormLabel>
+            <Select style={{ height: '30px' }} labelId="select-theme" id="frontend-theme-select" value={frontendTheme} onChange={handleChangeTheme}>
+              <MenuItem value='classic'>Classic</MenuItem>
+              <MenuItem value='dark'>Dark</MenuItem>
+            </Select>
+          </div>
+        </FormControl>
+      </div>
     </div>
   );
 }
@@ -241,152 +272,139 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '500px' }}>
-      <WindowForm>
-        <WindowTitle>Matter settings</WindowTitle>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}} id="mjdebug-info">Matter logger level:</FormLabel>
-          <Select style={{ height: '30px' }} labelId="select-mjlevel" id="mjdebug-level" value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
-            <MenuItem value='Debug'>Debug</MenuItem>
-            <MenuItem value='Info'>Info</MenuItem>
-            <MenuItem value='Notice'>Notice</MenuItem>
-            <MenuItem value='Warn'>Warn</MenuItem>
-            <MenuItem value='Error'>Error</MenuItem>
-            <MenuItem value='Fatal'>Fatal</MenuItem>
-          </Select>
-          <FormControlLabel style={{padding: '0px', margin: '0px', color: 'rgba(0, 0, 0, 0.87)'}} control={<Checkbox checked={logOnFileMj} onChange={handleLogOnFileMjChange} name="logOnFileMj" />} label="Log on file:" labelPlacement="start"/>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Mdns interface:</FormLabel>
-          <TextField value={mdnsInterface} onChange={handleChangeMdnsInterface} size="small" variant="outlined" 
-            style={{ height: '30px', flexGrow: 1 }} InputProps={{
-              style: {
-                height: '30px',
-                padding: '0',
-              },
-            }}/>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Ipv4 address:</FormLabel>
-          <TextField value={ipv4Address} onChange={handleChangeIpv4Address} size="small" variant="outlined" 
-            style={{ height: '30px', flexGrow: 1  }} InputProps={{
-              style: {
-                height: '30px',
-                padding: '0',
-              },
-            }}/>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Ipv6 address:</FormLabel>
-          <TextField value={ipv6Address} onChange={handleChangeIpv6Address} size="small" variant="outlined"
-            style={{ height: '30px', flexGrow: 1 }} InputProps={{
-              style: {
-                height: '30px',
-                padding: '0',
-              },
-            }}/>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Commissioning port:</FormLabel>
-          <TextField value={matterPort} onChange={handleChangeMatterPort} size="small" variant="outlined"
-            style={{ height: '30px', flexGrow: 1 }} InputProps={{
-              style: {
-                height: '30px',
-                padding: '0',
-              },
-            }}/>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Commissioning discriminator:</FormLabel>
-          <TextField value={matterDiscriminator} onChange={handleChangeMatterDiscriminator} size="small" variant="outlined"
-            style={{ height: '30px', flexGrow: 1 }} InputProps={{
-              style: {
-                height: '30px',
-                padding: '0',
-              },
-            }}/>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <FormLabel color='readonly' style={{padding: '0px', margin: '0px'}}>Commissioning passcode:</FormLabel>
-          <TextField value={matterPasscode} onChange={handleChangemMatterPasscode} size="small" variant="outlined"
-            style={{ height: '30px', flexGrow: 1 }} InputProps={{
-              style: {
-                height: '30px',
-                padding: '0',
-              },
-            }}/>
-        </div>
-      </WindowForm>
+    <div className="MbfWindowDiv" style={{ flex: '0 0 auto' }}>
+      <div className="MbfWindowHeader">
+        <p className="MbfWindowHeaderText">Matter settings</p>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: '0 0 auto' }}>
+        <FormControl sx={{ gap: '10px', margin: '0px', padding: '10px', width: '390px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="mjdebug-info">Matter logger level:</FormLabel>
+            <Select style={{ height: '30px' }} labelId="select-mjlevel" id="mjdebug-level" value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
+              <MenuItem value='Debug'>Debug</MenuItem>
+              <MenuItem value='Info'>Info</MenuItem>
+              <MenuItem value='Notice'>Notice</MenuItem>
+              <MenuItem value='Warn'>Warn</MenuItem>
+              <MenuItem value='Error'>Error</MenuItem>
+              <MenuItem value='Fatal'>Fatal</MenuItem>
+            </Select>
+            <FormControlLabel style={{padding: '0px', margin: '0px'}} control={<Checkbox checked={logOnFileMj} onChange={handleLogOnFileMjChange} name="logOnFileMj" />} label="Log on file:" labelPlacement="start"/>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <FormLabel style={{padding: '0px', margin: '0px'}}>Mdns interface:</FormLabel>
+            <TextField value={mdnsInterface} onChange={handleChangeMdnsInterface} size="small" variant="outlined" 
+              style={{ height: '30px', flexGrow: 1 }} InputProps={{
+                style: {
+                  height: '30px',
+                  padding: '0',
+                },
+              }}/>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <FormLabel style={{padding: '0px', margin: '0px'}}>Ipv4 address:</FormLabel>
+            <TextField value={ipv4Address} onChange={handleChangeIpv4Address} size="small" variant="outlined" 
+              style={{ height: '30px', flexGrow: 1  }} InputProps={{
+                style: {
+                  height: '30px',
+                  padding: '0',
+                },
+              }}/>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <FormLabel style={{padding: '0px', margin: '0px'}}>Ipv6 address:</FormLabel>
+            <TextField value={ipv6Address} onChange={handleChangeIpv6Address} size="small" variant="outlined"
+              style={{ height: '30px', flexGrow: 1 }} InputProps={{
+                style: {
+                  height: '30px',
+                  padding: '0',
+                },
+              }}/>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <FormLabel style={{padding: '0px', margin: '0px'}}>Commissioning port:</FormLabel>
+            <TextField value={matterPort} onChange={handleChangeMatterPort} size="small" variant="outlined"
+              style={{ height: '30px', flexGrow: 1 }} InputProps={{
+                style: {
+                  height: '30px',
+                  padding: '0',
+                },
+              }}/>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <FormLabel style={{padding: '0px', margin: '0px'}}>Commissioning discriminator:</FormLabel>
+            <TextField value={matterDiscriminator} onChange={handleChangeMatterDiscriminator} size="small" variant="outlined"
+              style={{ height: '30px', flexGrow: 1 }} InputProps={{
+                style: {
+                  height: '30px',
+                  padding: '0',
+                },
+              }}/>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <FormLabel style={{padding: '0px', margin: '0px'}}>Commissioning passcode:</FormLabel>
+            <TextField value={matterPasscode} onChange={handleChangemMatterPasscode} size="small" variant="outlined"
+              style={{ height: '30px', flexGrow: 1 }} InputProps={{
+                style: {
+                  height: '30px',
+                  padding: '0',
+                },
+              }}/>
+          </div>
+        </FormControl>
+      </div>
     </div>
   );
 }
 
+// <FormControl sx={{ gap: '10px', margin: '0px', padding: '10px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
 function MatterbridgeInfo({ matterbridgeInfo }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '500px' }}>
-      <WindowForm>
-        <WindowTitle>Matterbridge info</WindowTitle>
-        <ReadOnlyTextField value={matterbridgeInfo.matterbridgeVersion} label="Current Version" />
-        <ReadOnlyTextField value={matterbridgeInfo.matterbridgeLatestVersion} label="Latest Version" />
-        <ReadOnlyTextField value={matterbridgeInfo.homeDirectory} label="Home Directory" />
-        <ReadOnlyTextField value={matterbridgeInfo.rootDirectory} label="Root Directory" />
-        <ReadOnlyTextField value={matterbridgeInfo.matterbridgeDirectory} label="Matterbridge Storage Directory" />
-        <ReadOnlyTextField value={matterbridgeInfo.matterbridgePluginDirectory} label="Matterbridge Plugin Directory" />
-        <ReadOnlyTextField value={matterbridgeInfo.globalModulesDirectory} label="Global Module Directory" />
-      </WindowForm>
+    <div className="MbfWindowDiv" style={{ flex: '0 0 auto' }}>
+      <div className="MbfWindowHeader">
+        <p className="MbfWindowHeaderText">Matterbridge info</p>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: '0 0 auto' }}>
+        <FormControl sx={{ gap: '10px', margin: '0px', padding: '10px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>          <ReadOnlyTextField value={matterbridgeInfo.matterbridgeVersion} label="Current Version" />
+          <ReadOnlyTextField value={matterbridgeInfo.matterbridgeLatestVersion} label="Latest Version" />
+          <ReadOnlyTextField value={matterbridgeInfo.homeDirectory} label="Home Directory" />
+          <ReadOnlyTextField value={matterbridgeInfo.rootDirectory} label="Root Directory" />
+          <ReadOnlyTextField value={matterbridgeInfo.matterbridgeDirectory} label="Matterbridge Storage Directory" />
+          <ReadOnlyTextField value={matterbridgeInfo.matterbridgePluginDirectory} label="Matterbridge Plugin Directory" />
+          <ReadOnlyTextField value={matterbridgeInfo.globalModulesDirectory} label="Global Module Directory" />
+        </FormControl>
+      </div>
     </div>
   );
 };
 
-// Define the StyledFormControl component
-function WindowForm({ children }) {
-  return (
-    <FormControl
-      style={{
-        gap: '10px',
-        border: '1px solid #9e9e9e',
-        boxShadow: '5px 5px 10px #888',
-        padding: '10px',
-        borderRadius: '5px',
-        maxWidth: '500px',
-      }}
-    >
-      {children}
-    </FormControl>
-  );
-};
-
-// Define the WindowTitle component
-function WindowTitle({ children }) {
-  return (
-    <FormLabel style={{ fontSize: '14px', color: 'black', backgroundColor: '#9e9e9e', borderRadius: '5px', textAlign: 'center', padding: '5px', margin: '0px' }}>
-      {children}
-    </FormLabel>
-  );
-};
-
-// Use the WindowTitle component
+// Define the ReadOnlyTextField component
 function ReadOnlyTextField({ value, label }) {
   return (
     <TextField
       focused
-      color='readonly'
       value={value}
       size="small"
       label={label}
       variant="standard"
-      fullWidth
+      sx={{ width: '400px' }}
       InputProps={{
         readOnly: true,
         sx: {
-          '&:before': { borderBottomColor: '#9e9e9e' },
-          '&:after': { borderBottomColor: '#9e9e9e' }
+          color: 'var(--div-text-color)',
+          '&:before': { borderBottomColor: 'var(--main-label-color)' },
+          '&:after': { borderBottomColor: 'var(--main-label-color)' }
         }
+      }} 
+      InputLabelProps={{
+        sx: {
+          color: 'var(--main-label-color)',
+          '&.Mui-focused': {
+            color: 'var(--main-label-color)',
+          },
+        },
       }}
     />
   );
 };
 
-/*
-*/
 export default Settings;

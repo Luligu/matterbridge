@@ -6,9 +6,11 @@ import TextField from '@mui/material/TextField';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
+import { ThemeProvider } from '@mui/material/styles';
 import { WebSocketContext } from './WebSocketContext';
 import Connecting from './Connecting';
 import { OnlineContext } from './OnlineContext';
+import { theme } from '../App';
 
 function Logs() {
   const [wssHost, setWssHost] = useState(null);
@@ -43,33 +45,36 @@ function Logs() {
   if (!online) {
     return ( <Connecting /> );
   }
+  // , alignItems: 'center', justifyContent: 'space-between',
   return (
     <div className="MbfPageDiv">
-      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '0px', gap: '10px' }}>
-        <h3>Logs:</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <InputLabel id="select-level">Filter by debug level</InputLabel>
-          <Select style={{ height: '30px' }} labelId="select-level" id="debug-level" value={logFilterLevel} onChange={handleChangeLevel}>
-            <MenuItem value='debug'>Debug</MenuItem>
-            <MenuItem value='info'>Info</MenuItem>
-            <MenuItem value='notice'>Notice</MenuItem>
-            <MenuItem value='warn'>Warn</MenuItem>
-            <MenuItem value='error'>Error</MenuItem>
-            <MenuItem value='fatal'>Fatal</MenuItem>
-          </Select>
-          <InputLabel id="search">Filter by text</InputLabel>
-          <TextField style={{ width: '300px'}} size="small" id="logsearch"variant="outlined" value={logFilterSearch} onChange={handleChangeSearch}
-            InputProps={{
-              style: {
-                height: '30px',
-                padding: '0 0px',
-              },
-            }}/>
-        </div>
-      </div>  
-      <div style={{ flex: '1', overflow: 'auto', margin: '0px', padding: '0px' }}>
-        <WebSocketComponent/>
-      </div>  
+      <ThemeProvider theme={theme}>
+        <div style={{ display: 'flex', flexDirection: 'row', margin: '0px', padding: '0px', gap: '10px' }}>
+          {/*<h3 style={{ color: 'var(--div-text-color)' }}>Logs:</h3>*/}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <InputLabel id="select-level" style={{ color: 'var(--div-text-color)' }}>Filter log by level</InputLabel>
+            <Select style={{ height: '30px' }} labelId="select-level" id="debug-level" value={logFilterLevel} onChange={handleChangeLevel}>
+              <MenuItem value='debug'>Debug</MenuItem>
+              <MenuItem value='info'>Info</MenuItem>
+              <MenuItem value='notice'>Notice</MenuItem>
+              <MenuItem value='warn'>Warn</MenuItem>
+              <MenuItem value='error'>Error</MenuItem>
+              <MenuItem value='fatal'>Fatal</MenuItem>
+            </Select>
+            <InputLabel id="search" style={{ color: 'var(--div-text-color)' }}>Filter log by text</InputLabel>
+            <TextField style={{ width: '300px'}} size="small" id="logsearch"variant="outlined" value={logFilterSearch} onChange={handleChangeSearch}
+              InputProps={{
+                style: {
+                  height: '30px',
+                  padding: '0 0px',
+                },
+              }}/>
+          </div>
+        </div>  
+        <div style={{ flex: '1', overflow: 'auto', margin: '0px', padding: '0px' }}>
+          <WebSocketComponent/>
+        </div>  
+      </ThemeProvider>  
     </div>
   );
 }

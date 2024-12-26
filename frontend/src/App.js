@@ -9,9 +9,155 @@ import Devices from './components/Devices';
 import Settings from './components/Settings';
 import Test from './components/Test';
 import Logs from './components/Logs';
-// import useWebSocket from './components/WebSocketUse';
 import { WebSocketProvider } from './components/WebSocketContext';
 import { OnlineProvider } from './components/OnlineContext';
+
+// @mui
+import { createTheme } from '@mui/material';
+
+export const theme = createTheme({
+  components: {
+    MuiTooltip: {
+      defaultProps: {
+        placement: 'top-start', 
+        arrow: true,
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          color: 'var(--main-button-color)',
+          backgroundColor: 'var(--main-button-bg-color)', 
+        },
+        contained: {
+          color: 'var(--main-button-color)', // Ensure contained buttons also use the color
+          backgroundColor: 'var(--main-button-bg-color)', // Background color for contained buttons
+        },
+        outlined: {
+          color: 'var(--main-button-color)', // Ensure contained buttons also use the color
+          backgroundColor: 'var(--main-button-bg-color)', // Background color for contained buttons
+        },
+        text: {
+          color: 'var(--main-button-color)',
+        },
+      },
+      defaultProps: {
+        variant: 'contained',
+        size: 'small',
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          color: 'var(--main-icon-color)',
+          '&:hover .MuiSvgIcon-root': {
+            color: 'var(--main-blue-color)', 
+          },
+        },
+      },
+    },
+    MuiTextField: {
+      defaultProps: {
+        size: 'small', // Default size for all TextFields
+        variant: 'outlined', // Default variant for all TextFields
+        fullWidth: true, // Default to full width
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          backgroundColor: 'var(--div-bg-color)', 
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'var(--main-label-color)',
+          },
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'var(--main-text-color)',
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'var(--main-blue-color)',
+          },
+        },
+        input: {
+          color: 'var(--div-text-color)',
+          padding: '8px', 
+        },
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          color: 'var(--main-label-color)', 
+          '&.Mui-focused': {
+            color: 'var(--main-blue-color)', 
+          },
+        },
+      },
+    },
+    MuiFormLabel: {
+      styleOverrides: {
+        root: {
+          color: 'var(--main-label-color)',
+          '&.Mui-focused': {
+            color: 'var(--main-label-color)', 
+          },
+        },
+      },
+    },
+    MuiFormControl: {
+      styleOverrides: {
+        root: {
+          color: 'var(--main-grey-color)',
+        },
+      },
+    },
+    MuiSelect: {
+      styleOverrides: {
+        root: {
+          backgroundColor: 'var(--div-bg-color)',
+          color: 'var(--div-text-color)',
+          height: '30px', 
+          '&:hover': {
+            // backgroundColor: 'var(--main-menu-hover-color)', // Hover background color
+            borderColor: 'var(--main-text-color)',
+          },
+          '&.Mui-focused': {
+            borderColor: 'var(--main-blue-color)', // Focused border color
+          },
+        },
+      },
+    },
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: 'var(--main-menu-bg-color)', // Match menu background color
+          padding: '0px', // Remove default padding
+          margin: '0px', // Remove any margin
+        },
+        list: {
+          padding: '0px', // Remove padding inside the list
+        },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          color: 'var(--main-menu-color)', // Text color for MenuItem
+          backgroundColor: 'var(--main-menu-bg-color)', // Background color for MenuItem
+          '&:hover': {
+            backgroundColor: 'var(--main-menu-hover-color)', // Hover background color for MenuItem
+          },
+          '&.Mui-selected': {
+            color: 'var(--main-menu-color)', // Text color for selected MenuItem
+            backgroundColor: 'var(--main-menu-bg-color)', // Background color for selected MenuItem
+          },
+          '&.Mui-selected:hover': {
+            backgroundColor: 'var(--main-menu-hover-color)', // Hover color for selected MenuItem
+          },
+        },
+      },
+    },
+  },
+});
 
 export function sendCommandToMatterbridge(command, param, body) {
   const sanitizedParam = param.replace(/\\/g, '*');
@@ -199,6 +345,16 @@ function App() {
   // Settings
   const [wssHost, setWssHost] = useState(null);
   const [ssl, setSsl] = useState(false);
+
+  useEffect(() => {
+    // Set the frontned theme on the body
+    const savedTheme = localStorage.getItem('frontendTheme');
+    if (savedTheme) {
+      document.body.setAttribute("frontend-theme", savedTheme); // Set the saved theme to dark
+    } else {
+      document.body.setAttribute("frontend-theme", "dark"); // Set the default theme to dark
+    }
+  }, []);
 
   const fetchApiLogin = async () => {
     try {

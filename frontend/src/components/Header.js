@@ -15,26 +15,10 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 
-import { sendCommandToMatterbridge } from '../App';
+import { sendCommandToMatterbridge, theme } from '../App';
 import { WebSocketContext } from './WebSocketContext';
 import { OnlineContext } from './OnlineContext';
 import { ConfirmCancelForm } from './ConfirmCancelForm';
-
-const theme = createTheme({
-  components: {
-    MuiTooltip: {
-      defaultProps: {
-        placement: 'bottom', 
-        arrow: true,
-      },
-    },
-  },
-  palette: {
-    primary: {
-      main: '#4CAF50',
-    },
-  },
-});
 
 function Header() {
   const { online, setOnline } = useContext(OnlineContext);
@@ -42,10 +26,6 @@ function Header() {
   const [showBackdrop, setShowBackdrop] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  // const [wssHost, setWssHost] = useState(null);
-  // const [qrCode, setQrCode] = useState('');
-  // const [pairingCode, setPairingCode] = useState('');
-  // const [systemInfo, setSystemInfo] = useState({});
   const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [backupMenuAnchorEl, setBackupMenuAnchorEl] = useState(null);
@@ -189,21 +169,11 @@ function Header() {
       .then(response => response.json())
       .then(data => { 
         // console.log('From header /api/settings (header):', data); 
-        // setOnline(true);
-        // setWssHost(data.wssHost); 
-        // setQrCode(data.qrPairingCode); 
-        // setPairingCode(data.manualPairingCode);
-        // setSystemInfo(data.systemInformation);
         setMatterbridgeInfo(data.matterbridgeInformation);
-        // localStorage.setItem('wssHost', data.wssHost);
-        // localStorage.setItem('qrPairingCode', data.qrPairingCode); 
-        // localStorage.setItem('manualPairingCode', data.manualPairingCode); 
-        // localStorage.setItem('systemInformation', data.systemInformation); 
         localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
       })
       .catch(error => {
         console.error('Error fetching settings:', error);
-        // setOnline(false);
       });
   };
 
@@ -244,7 +214,7 @@ function Header() {
       <ThemeProvider theme={theme}>
         <div className="header" style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center' }}>
           <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '30px' }} />
-          <h2 style={{ fontSize: '22px' }}>Matterbridge</h2>
+          <h2 style={{ fontSize: '22px', color: 'var(--main-icon-color)' }}>Matterbridge</h2>
           <nav>
             <Link to="/" className="nav-link">Home</Link>
             <Link to="/devices" className="nav-link">Devices</Link>
@@ -316,7 +286,7 @@ function Header() {
               <MoreHoriz/>
             </IconButton>
           </Tooltip>
-          <Menu id="command-menu" anchorEl={menuAnchorEl} keepMounted open={Boolean(menuAnchorEl)} onClose={() => handleMenuClose('')} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+          <Menu id="command-menu" anchorEl={menuAnchorEl} keepMounted open={Boolean(menuAnchorEl)} onClose={() => handleMenuClose('')} >
             {matterbridgeInfo && !matterbridgeInfo.readOnly && 
               <MenuItem onClick={() => handleMenuClose('update')}>
                 <ListItemIcon><SystemUpdateAltIcon /></ListItemIcon>
