@@ -13,7 +13,14 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
-## [1.6.8-dev.12] - 2024-12-24
+### Breaking Changes
+
+Matterbridge edge is now released.
+
+The frontend has a dark mode that is the default mode. 
+It is possible to change the mode (Classic or Dark) in Settings, Matterbridge settings.
+
+## [1.6.8-dev.14] - 2024-12-26
 
 ### Added
 
@@ -22,6 +29,7 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 - [storage]: Added conversion for childbridge mode too. 
 - [package]: Update README.md and README-SERVICE.md to include instructions for using SSL on port 443.
 - [platform]: Added checkEndpointNumbers() to detect endpoint numbers changes.
+- [frontend]: Added dark mode to the frontend. Dark mode is now the default mode. It is possible to change the mode in Settings, Matterbridge settings.
 
 ### Changed
 
