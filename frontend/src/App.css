@@ -22,8 +22,8 @@
   --header-bg-color: #4CAF50;
   --header-text-color: white;
 
-  --footer-bg-color: #c4c2c2;
-  --footer-text-color: black;
+  --footer-bg-color: var(--div-bg-color);
+  --footer-text-color: var(--div-text-color);
 
   --ttip-bg-color: #555;
   --ttip-text-color: #fff;
@@ -67,8 +67,8 @@
   --header-bg-color: #1b1d21;
   --header-text-color: var(--main-blue-color);
 
-  --footer-bg-color: #1b1d21;
-  --footer-text-color: var(--main-grey-color);
+  --footer-bg-color: var(--div-bg-color);
+  --footer-text-color: var(--div-text-color);
 
   --ttip-bg-color: #555;
   --ttip-text-color: #fff;
@@ -343,6 +343,16 @@ h3 {
   box-sizing: border-box;
 }
 
+/* Define the style for the header text element */
+.MbfWindowHeaderText {
+  color: var(--header-text-color);
+  font-weight: bold;
+  margin: 0px;
+  padding: 5px;
+  padding-right: 10px;
+  padding-left: 10px;
+}
+
 /* Define the style for the footer element */
 .MbfWindowFooter {
   display: 'flex';
@@ -357,13 +367,13 @@ h3 {
 }
 
 /* Define the style for the header text element */
-.MbfWindowHeaderText {
-  color: var(--header-text-color);
+.MbfWindowFooterText {
+  color: var(--footer-text-color);
+  background-color: var(--footer-bg-color);
   font-weight: bold;
+  text-align: center;
   margin: 0px;
   padding: 5px;
-  padding-right: 10px;
-  padding-left: 10px;
 }
 
 /* Define the style for the body element */

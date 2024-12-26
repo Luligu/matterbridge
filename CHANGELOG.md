@@ -38,6 +38,8 @@ It is possible to change the mode (Classic or Dark) in Settings, Matterbridge se
 
 ### Fixed
 
+- [frontend]: Fixed device/cluster api that was not working in Ingress.
+
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
 </a>

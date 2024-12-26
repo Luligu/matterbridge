@@ -52,7 +52,7 @@ function Logs() {
         <div style={{ display: 'flex', flexDirection: 'row', margin: '0px', padding: '0px', gap: '10px' }}>
           {/*<h3 style={{ color: 'var(--div-text-color)' }}>Logs:</h3>*/}
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <InputLabel id="select-level" style={{ color: 'var(--div-text-color)' }}>Filter log by level</InputLabel>
+            <InputLabel id="select-level" style={{ color: 'var(--div-text-color)' }}>Filter log by level:</InputLabel>
             <Select style={{ height: '30px' }} labelId="select-level" id="debug-level" value={logFilterLevel} onChange={handleChangeLevel}>
               <MenuItem value='debug'>Debug</MenuItem>
               <MenuItem value='info'>Info</MenuItem>
@@ -61,7 +61,7 @@ function Logs() {
               <MenuItem value='error'>Error</MenuItem>
               <MenuItem value='fatal'>Fatal</MenuItem>
             </Select>
-            <InputLabel id="search" style={{ color: 'var(--div-text-color)' }}>Filter log by text</InputLabel>
+            <InputLabel id="search" style={{ color: 'var(--div-text-color)' }}>Filter log by text:</InputLabel>
             <TextField style={{ width: '300px'}} size="small" id="logsearch"variant="outlined" value={logFilterSearch} onChange={handleChangeSearch}
               InputProps={{
                 style: {
