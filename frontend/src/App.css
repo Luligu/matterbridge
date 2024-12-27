@@ -413,10 +413,10 @@ h3 {
   background-color: var(--main-bg-color);
 }
 
-/* Styles for mobile screens */
-@media (max-width: 1400px) {
+/* Styles for mobile screens iPad Pro landscape */
+@media (max-width: 1350px) {
   .MbfScreen {
-    width: 1400px;
-    height: 700px;
+    width: 1350px;
+    height: 1024px;
   }
 }

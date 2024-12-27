@@ -13,8 +13,8 @@ import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
 import { ConfirmCancelForm } from './ConfirmCancelForm';
 
 // @mui
-import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip, IconButton, Button, createTheme, ThemeProvider, Select, MenuItem, Menu } from '@mui/material';
-import { DeleteForever, Download, Add, Unpublished, PublishedWithChanges, Settings, Favorite, Help, Announcement, QrCode2, MoreVert } from '@mui/icons-material';
+import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip, IconButton, Button, createTheme, ThemeProvider, Typography, Select, MenuItem, Menu, Box } from '@mui/material';
+import { DeleteForever, Download, Add, PublishedWithChanges, Settings, Favorite, Help, Announcement, QrCode2, MoreVert, Unpublished } from '@mui/icons-material';
 
 // @rjsf
 import Form from '@rjsf/mui';
@@ -39,8 +39,8 @@ function Home() {
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');
 
-  const { messages, sendMessage, logMessage, setLogFilters } = useContext(WebSocketContext);
-  const { online, setOnline } = useContext(OnlineContext);
+  const { logMessage } = useContext(WebSocketContext);
+  const { online } = useContext(OnlineContext);
 
   const refAddRemove = useRef(null);
   const refRegisteredPlugins = useRef(null);
@@ -189,7 +189,7 @@ function Home() {
     handleOpenConfig();
   };
 
-  const handleSponsorPlugin = (row) => {
+  const handleSponsorPlugin = () => {
     // console.log('handleSponsorPlugin row:', row, 'plugin:', plugins[row].name);
     window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
   };
@@ -382,15 +382,12 @@ function Home() {
 /*
 */
 
-function AddRemovePlugins({ plugins, reloadSettings }) {
+function AddRemovePlugins({ reloadSettings }) {
   const [pluginName, setPluginName] = useState('matterbridge-');
   const [open, setSnack] = useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
-  const { messages, sendMessage, logMessage } = useContext(WebSocketContext);
+  const { logMessage } = useContext(WebSocketContext);
 
-  const handleSnackOpen = () => {
-    setSnack(true);
-  };
 
   const handleSnackClose = (event, reason) => {
     if (reason === 'clickaway') return;
@@ -459,7 +456,7 @@ function AddRemovePlugins({ plugins, reloadSettings }) {
   );
 }
 
-function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridgeInfo, plugin }) {
+function QRDiv({ qrText, pairingText, qrWidth, topText, matterbridgeInfo, plugin }) {
   // console.log('QRDiv:', matterbridgeInfo, plugin);
   if(matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === true && matterbridgeInfo.matterbridgeFabricInformations && matterbridgeInfo.matterbridgeSessionInformations) {
     // console.log(`QRDiv: ${matterbridgeInfo.matterbridgeFabricInformations.length} fabrics, ${matterbridgeInfo.matterbridgeSessionInformations.length} sessions`);
@@ -531,10 +528,17 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, bottomText, matterbridge
 function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
   // console.log('DialogConfigPlugin:', config, schema);
 
+  // Function to get CSS variable value
+  function getCssVariable(variableName, defaultValue) {
+    const value = getComputedStyle(document.body).getPropertyValue(variableName).trim();
+    if(!value) console.error('getCssVariable:', value);
+    return value || defaultValue;
+  }
+
   const theme = createTheme({
     palette: {
       primary: {
-        main: '#4CAF50', 
+        main: getCssVariable('--main-button-bg-color', '#1976d2'), // Default blue
       },
     },
     components: {
@@ -555,19 +559,107 @@ function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
       MuiButton: {
         styleOverrides: {
           root: {
-            color: '#ffffff',
-            backgroundColor: '#4CAF50', 
-          },
+            color: 'var(--main-button-color)',
+            backgroundColor: 'var(--main-button-bg-color)', 
+            },
         },
         defaultProps: {
-          color: 'primary',
           variant: 'contained',
           size: 'small',
+        },
+      },
+      MuiTypography: {
+        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+      },
+      MuiBox: {
+        styleOverrides: {
+          root: {
+            padding: '5px',
+            margin: '0px',
+          },
         },
       },
     },
   });
 
+  function ArrayFieldTemplate(props) {
+    const { canAdd, onAddClick, schema, title } = props;
+    // console.log('ArrayFieldTemplate: title', title, 'description', schema.description);
+    return (
+      <Box sx={{ padding: '10px', margin: '0px', border: '1px solid grey' }}>
+        {title && (
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            {title && (
+              <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>{title}</Typography>
+            )}
+            {canAdd && (
+              <IconButton onClick={onAddClick} size="small" color="primary">
+                <Add />
+              </IconButton>
+            )}
+          </Box>
+        )}
+        {schema.description && (
+          <Box sx={{ marginBottom: '10px' }}>
+            <Typography sx={{ fontSize: '14px', fontWeight: 'normal' }}>{schema.description}</Typography>
+          </Box>
+        )}
+        {props.items.map((element) => (
+          <Box key={element.index} sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+            <Box sx={{ flexGrow: 1 }}>
+              {element.children}
+            </Box>
+            <IconButton onClick={element.onDropIndexClick(element.index)} size="small" color="primary">
+              <DeleteForever />
+            </IconButton>
+          </Box>
+        ))}
+      </Box>
+    );
+  }
+
+  function ObjectFieldTemplate(props) {
+    const { onAddClick, schema, properties, title, description } = props;
+    // Check if this is the entire schema or an individual object
+    const isRoot = !schema.additionalProperties;
+    console.log('ObjectFieldTemplate: title', title, 'description', description, 'schema', schema, 'isRoot', isRoot);
+  
+    return (
+      <Box sx={{ padding: '10px', margin: '0px', border: isRoot ? 'none' : '1px solid grey' }}>
+        {/* Title for root */}
+        {schema.title && (
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>{schema.title}</Typography>
+          </Box>
+        )}
+        {/* Title and Add for object */}
+        {title && !isRoot && (
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>{title}</Typography>
+              <IconButton onClick={onAddClick(schema)} size="small" color="primary">
+                <Add />
+              </IconButton>
+          </Box>
+        )}
+        {/* Description for root */}
+        {schema.description && (
+          <Box sx={{ marginBottom: '20px' }}>
+            <Typography sx={{ fontSize: '14px', fontWeight: 'normal' }}>{schema.description}</Typography>
+          </Box>
+        )}
+        {/* Iterate over each property in the object */}
+        {properties.map(({ name, content, disabled, readonly, hidden }) => (
+          <Box key={name} sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+            <Box sx={{ flexGrow: 1, marginBottom: '10px', padding: '0px' }}>
+              {content}
+            </Box>
+          </Box>
+        ))}
+      </Box>
+    );
+  }
+  
+  
   const uiSchema = {
     "password": {
       "ui:widget": "password",
@@ -582,20 +674,19 @@ function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
     },
     'ui:globalOptions': { orderable: false },
   };
-  
-  const handleSaveChanges = ({ formData }, event) => {
+
+  const handleSaveChanges = ({ formData }) => {
     // console.log('handleSaveChanges:', formData);
     const config = JSON.stringify(formData, null, 2)
     sendCommandToMatterbridge('saveconfig', formData.name, config);
     // Close the dialog
     handleCloseConfig();
-    // window.location.reload();
   };    
 
   return (
     <ThemeProvider theme={theme}>
       <div style={{ maxWidth: '800px' }}>
-        <Form schema={schema} formData={config} uiSchema={uiSchema} validator={validator} onSubmit={handleSaveChanges} />
+        <Form schema={schema} formData={config} uiSchema={uiSchema} validator={validator} templates={{ ArrayFieldTemplate, ObjectFieldTemplate }} onSubmit={handleSaveChanges} />
       </div>
     </ThemeProvider>  
   );

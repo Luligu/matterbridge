@@ -17,6 +17,9 @@ import { createTheme } from '@mui/material';
 
 export const theme = createTheme({
   components: {
+    MuiTypography: {
+      fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+    },
     MuiTooltip: {
       defaultProps: {
         placement: 'top-start', 
