@@ -659,7 +659,15 @@ function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
     );
   }
   
-  
+  function RemoveButton(props) {
+    const { ...otherProps } = props;
+    return (
+      <IconButton size='small' color='primary' {...otherProps}>
+        <DeleteForever />
+      </IconButton>
+    );
+  }
+
   const uiSchema = {
     "password": {
       "ui:widget": "password",
@@ -686,7 +694,7 @@ function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
   return (
     <ThemeProvider theme={theme}>
       <div style={{ maxWidth: '800px' }}>
-        <Form schema={schema} formData={config} uiSchema={uiSchema} validator={validator} templates={{ ArrayFieldTemplate, ObjectFieldTemplate }} onSubmit={handleSaveChanges} />
+        <Form schema={schema} formData={config} uiSchema={uiSchema} validator={validator} templates={{ ArrayFieldTemplate, ObjectFieldTemplate, ButtonTemplates: { RemoveButton } }} onSubmit={handleSaveChanges} />
       </div>
     </ThemeProvider>  
   );
