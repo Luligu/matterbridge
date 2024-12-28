@@ -54,7 +54,7 @@ export const theme = createTheme({
         root: {
           color: 'var(--main-icon-color)',
           '&:hover .MuiSvgIcon-root': {
-            color: 'var(--main-blue-color)', 
+            color: 'var(--primary-color)', 
           },
         },
       },
@@ -77,7 +77,7 @@ export const theme = createTheme({
             borderColor: 'var(--main-text-color)',
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'var(--main-blue-color)',
+            borderColor: 'var(--primary-color)',
           },
         },
         input: {
@@ -91,7 +91,7 @@ export const theme = createTheme({
         root: {
           color: 'var(--main-label-color)', 
           '&.Mui-focused': {
-            color: 'var(--main-blue-color)', 
+            color: 'var(--primary-color)', 
           },
         },
       },
@@ -113,6 +113,15 @@ export const theme = createTheme({
         },
       },
     },
+    MuiRadio: {
+      styleOverrides: {
+        root: {
+          '&.Mui-checked': {
+            color: 'var(--primary-color)',
+          },
+        },
+      },
+    },
     MuiSelect: {
       styleOverrides: {
         root: {
@@ -120,11 +129,10 @@ export const theme = createTheme({
           color: 'var(--div-text-color)',
           height: '30px', 
           '&:hover': {
-            // backgroundColor: 'var(--main-menu-hover-color)', // Hover background color
             borderColor: 'var(--main-text-color)',
           },
           '&.Mui-focused': {
-            borderColor: 'var(--main-blue-color)', // Focused border color
+            borderColor: 'var(--primary-color)', // Focused border color
           },
         },
       },

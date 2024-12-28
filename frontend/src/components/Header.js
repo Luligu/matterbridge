@@ -210,11 +210,11 @@ function Header() {
   };
 
   return (
-    <div className="header" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="header">
       <ThemeProvider theme={theme}>
-        <div className="header" style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center' }}>
+        <div className="sub-header">
           <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '30px' }} />
-          <h2 style={{ fontSize: '22px', color: 'var(--main-icon-color)' }}>Matterbridge</h2>
+          <h2 style={{ fontSize: '22px', color: 'var(--main-icon-color)', margin: '0px' }}>Matterbridge</h2>
           <nav>
             <Link to="/" className="nav-link">Home</Link>
             <Link to="/devices" className="nav-link">Devices</Link>
@@ -222,7 +222,7 @@ function Header() {
             <Link to="/settings" className="nav-link">Settings</Link>
           </nav>
         </div>
-        <div className="header" style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+        <div className="sub-header">
           <Tooltip title="Matterbridge status">
             {online ? <span className="status-enabled"  style={{ cursor: 'default' }}>Online</span> : <span className="status-disabled" style={{ cursor: 'default' }}>Offline</span>}
           </Tooltip>
@@ -251,7 +251,7 @@ function Header() {
             </Tooltip>        
           ) : null}
         </div>
-        <div className="header" style={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: '5px' }}>
+        <div className="sub-header" style={{ gap: '5px' }}>
           <Tooltip title="Matterbridge help">
             <IconButton onClick={handleHelpClick}>
               <HelpOutlineIcon/>
