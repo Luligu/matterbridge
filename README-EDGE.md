@@ -12,11 +12,11 @@ I also want to express my gratitude to Tamer, who continues to test everything d
 
 ## Storage conversion
 
-Starting from version 1.6.8 (1.6.8-dev.11 before it is published with tag latest), the conversion process is automatic and is triggered each time you shut down, restart, or update Matterbridge using the frontend.
+Starting from version 1.7.0 (1.6.8-dev.11 before it is published as 1.7.0 with tag latest), the conversion process is automatic and is triggered each time you shut down, restart, or update Matterbridge using the frontend.
 
-A message is displayed to inform you when the conversion is complete.
+A message is displayed to inform the user when the conversion is complete.
 
-Once you run Matterbridge in Edge mode for the first time, the conversion will no longer be triggered.
+Once the user run Matterbridge in Edge mode for the first time, the conversion will no longer be triggered.
 
 The conversion only creates a new storage directory in the new format. It does not modify the old storage in any way, so there is no risk in trying Edge mode before its official release. You can also revert to normal mode by simply removing the -edge parameter. After the conversion is complete, the two storages will be identical. However, once you start using Edge mode, any changes made to one storage will not be reflected in the other. Therefore, it is recommended to let the conversion complete, switch to Edge mode, and continue using it exclusively.
 There is no conversion back to the old storage.
