@@ -33,7 +33,7 @@ function WebSocketUse(wssHost, ssl) {
 
     const logMessage = useCallback((badge, message) => {
         const badgeSpan = `<span style="background-color: #5c0e91; color: white; padding: 1px 5px; font-size: 12px; border-radius: 3px;">${badge}</span>`;
-        setMessages(prevMessages => [...prevMessages, badgeSpan + ' - <span style="color: var(--main-log-color);">' + message + '</span>']);
+        setMessages(prevMessages => [...prevMessages, badgeSpan + ' <span style="color: var(--main-log-color);">' + message + '</span>']);
     }, []);
 
     const setLogFilters = useCallback((level, search) => {
@@ -105,7 +105,7 @@ function WebSocketUse(wssHost, ssl) {
                         }
                     };                
                     const coloredSubType = `<span style="background-color: ${getsubTypeMessageBgColor(msg.level)}; color: ${getsubTypeMessageColor(msg.level)}; padding: 1px 5px; font-size: 12px; border-radius: 3px;">${msg.level}</span>`;
-                    const newMessage = `${coloredSubType} - ${timeString} <span style="color: #09516d;">[${msg.name}]</span> <span style="color: var(--main-log-color);">${msg.message}</span>`;
+                    const newMessage = `${coloredSubType} ${timeString} <span style="color: #09516d;">[${msg.name}]</span> <span style="color: var(--main-log-color);">${msg.message}</span>`;
                     const newMessages = [...prevMessages, newMessage];
                     // Check if the new array length exceeds the maximum allowed
                     if (newMessages.length > maxMessages) {
