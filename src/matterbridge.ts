@@ -616,23 +616,35 @@ export class Matterbridge extends EventEmitter {
     if (hasParameter('factoryreset')) {
       try {
         // Delete old matter storage file
-        await fs.unlink(path.join(this.matterbridgeDirectory, this.matterStorageName));
+        const file = path.join(this.matterbridgeDirectory, 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.json');
+        this.log.info(`Unlinking old matter storage file: ${file}`);
+        await fs.unlink(file);
       } catch (err) {
-        this.log.error(`Error deleting matter storage: ${err}`);
+        if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
+          this.log.error(`Error unlinking old matter storage file: ${err}`);
+        }
       }
       try {
         // Delete matter node storage directory with its subdirectories
-        await fs.rm(path.join(this.matterbridgeDirectory, this.nodeStorageName.replace('storage', 'matterstorage')), { recursive: true });
+        const dir = path.join(this.matterbridgeDirectory, 'matterstorage' + (getParameter('profile') ? '.' + getParameter('profile') : ''));
+        this.log.info(`Removing matter node storage directory: ${dir}`);
+        await fs.rm(dir, { recursive: true });
       } catch (err) {
-        this.log.error(`Error removing matter storage directory: ${err}`);
+        if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
+          this.log.error(`Error removing matter storage directory: ${err}`);
+        }
       }
       try {
         // Delete node storage directory with its subdirectories
-        await fs.rm(path.join(this.matterbridgeDirectory, this.nodeStorageName), { recursive: true });
+        const dir = path.join(this.matterbridgeDirectory, 'storage' + (getParameter('profile') ? '.' + getParameter('profile') : ''));
+        this.log.info(`Removing storage directory: ${dir}`);
+        await fs.rm(dir, { recursive: true });
       } catch (err) {
-        this.log.error(`Error removing storage directory: ${err}`);
+        if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
+          this.log.error(`Error removing storage directory: ${err}`);
+        }
       }
-      this.log.info('Factory reset done! Remove all paired devices from the controllers.');
+      this.log.info('Factory reset done! Remove all paired fabrics from the controllers.');
       this.nodeContext = undefined;
       this.nodeStorage = undefined;
       this.plugins.clear();
@@ -649,7 +661,8 @@ export class Matterbridge extends EventEmitter {
       throw new Error(`Fatal error creating matter storage: ${error instanceof Error ? error.message : error}`);
     }
 
-    if (hasParameter('reset') && getParameter('reset') === undefined) {
+    // Clear the matterbridge context if the reset parameter is set
+    if (!this.edge && hasParameter('reset') && getParameter('reset') === undefined) {
       this.log.info('Resetting Matterbridge commissioning information...');
       await this.matterbridgeContext?.clearAll();
       await this.stopMatterStorage();
@@ -658,7 +671,8 @@ export class Matterbridge extends EventEmitter {
       return;
     }
 
-    if (getParameter('reset') && getParameter('reset') !== undefined) {
+    // Clear matterbridge plugin context if the reset parameter is set
+    if (!this.edge && hasParameter('reset') && getParameter('reset') !== undefined) {
       this.log.debug(`Reset plugin ${getParameter('reset')}`);
       const plugin = this.plugins.get(getParameter('reset') as string);
       if (plugin) {
@@ -1201,7 +1215,8 @@ export class Matterbridge extends EventEmitter {
   private async unregisterAndShutdownProcess() {
     this.log.info('Unregistering all devices and shutting down...');
     for (const plugin of this.plugins /* .filter((plugin) => plugin.enabled && !plugin.error))*/) {
-      await this.removeAllBridgedDevices(plugin.name);
+      if (this.edge) await this.removeAllBridgedEndpoints(plugin.name);
+      else await this.removeAllBridgedDevices(plugin.name);
     }
     await this.cleanup('unregistered all devices and shutting down...', false);
   }
@@ -1385,20 +1400,34 @@ export class Matterbridge extends EventEmitter {
           this.emit('restart');
         }
       } else {
-        if (message === 'shutting down with reset...') {
-          // Delete matter storage file
-          this.log.info('Resetting Matterbridge commissioning information...');
-          await fs.unlink(path.join(this.matterbridgeDirectory, this.matterStorageName));
-          this.log.info('Reset done! Remove all paired devices from the controllers.');
+        if (message === 'shutting down with reset...' || message === 'shutting down with factory reset...') {
+          try {
+            // Delete old matter storage file
+            const file = path.join(this.matterbridgeDirectory, 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.json');
+            this.log.info(`Unlinking old matter storage file: ${file}`);
+            await fs.unlink(file);
+          } catch (error) {
+            this.log.debug(`Error resetting old matter storage file: ${error}`);
+          }
+          try {
+            // Delete matter node storage directory with its subdirectories
+            const dir = path.join(this.matterbridgeDirectory, 'matterstorage' + (getParameter('profile') ? '.' + getParameter('profile') : ''));
+            this.log.info(`Removing matter node storage directory: ${dir}`);
+            await fs.rm(dir, { recursive: true });
+          } catch (error) {
+            this.log.debug(`Error resetting matter node storage file: ${error}`);
+          }
+          this.log.info('Reset done! Remove all paired fabrics from the controllers.');
         }
         if (message === 'shutting down with factory reset...') {
-          // Delete matter storage file
-          this.log.info('Resetting Matterbridge commissioning information...');
-          await fs.unlink(path.join(this.matterbridgeDirectory, this.matterStorageName));
-          // Delete node storage directory with its subdirectories
-          this.log.info('Resetting Matterbridge storage...');
-          await fs.rm(path.join(this.matterbridgeDirectory, this.nodeStorageName), { recursive: true });
-          this.log.info('Factory reset done! Remove all paired devices from the controllers.');
+          try {
+            // Delete node storage directory with its subdirectories
+            this.log.info('Resetting Matterbridge storage...');
+            await fs.rm(path.join(this.matterbridgeDirectory, this.nodeStorageName), { recursive: true });
+          } catch (error) {
+            this.log.debug(`Error resetting Matterbridge storage: ${error}`);
+          }
+          this.log.info('Factory reset done! Remove all paired fabrics from the controllers.');
         }
         this.log.notice('Cleanup completed. Shutting down...');
         Matterbridge.instance = undefined;

@@ -15,22 +15,26 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 ### Breaking Changes
 
-Matterbridge edge is now released.
+Matterbridge edge is now released. The default mode is still the normal mode to allow the storage conversion. See https://github.com/Luligu/matterbridge/blob/dev/README-EDGE.md to manually switch to edge mode.
 
-The frontend has a dark mode that is the default mode. 
+The frontend has a dark mode that is now the default mode. 
 It is possible to change the mode (Classic or Dark) in Settings, Matterbridge settings.
 
 ## [1.6.8-dev.15] - 2024-12-27
 
 ### Added
 
+- [edge]: Added guide https://github.com/Luligu/matterbridge/blob/dev/README-EDGE.md.
 - [storage]: Added conversion from old matter storage to the new api format with fabrics, resumptionRecords, network, commissioning, operationalCredentials, acl and parts number. The conversion is triggered every time you shutdown or restart matterbridge till the new storage has been used with matterbridge edge. 
 - [storage]: Added conversion for child endpoint numbers. 
-- [storage]: Added conversion for childbridge mode too. 
+- [storage]: Added conversion for childbridge mode. 
 - [package]: Update README.md and README-SERVICE.md to include instructions for using SSL on port 443.
 - [platform]: Added checkEndpointNumbers() to detect endpoint numbers changes.
 - [frontend]: Added dark mode to the frontend. Dark mode is now the default mode. It is possible to change the mode in Settings, Matterbridge settings.
 - [frontend]: Custom rfjsreact-jsonschema-form for the config editor.
+- [unregister]: Added unregister for Matterbridge edge. 
+- [reset]: Added reset for Matterbridge edge. 
+- [factoryreset]: Added factoryreset for Matterbridge edge. 
 
 ### Changed
 
