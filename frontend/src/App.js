@@ -15,7 +15,19 @@ import { OnlineProvider } from './components/OnlineContext';
 // @mui
 import { createTheme } from '@mui/material';
 
+// Function to get CSS variable value
+function getCssVariable(variableName, defaultValue) {
+  const value = getComputedStyle(document.body).getPropertyValue(variableName).trim();
+  if(!value) console.error('getCssVariable:', value);
+  return value || defaultValue;
+}
+
 export const theme = createTheme({
+  palette: {
+    primary: {
+      main: getCssVariable('--primary-color', '#1976d2'), // Default blue
+    },
+  },
   components: {
     MuiTypography: {
       fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
@@ -55,6 +67,15 @@ export const theme = createTheme({
           color: 'var(--main-icon-color)',
           '&:hover .MuiSvgIcon-root': {
             color: 'var(--primary-color)', 
+          },
+        },
+      },
+    },
+    MuiCheckbox: {
+      styleOverrides: {
+        root: {
+          '&.Mui-checked': {
+            color: 'var(--primary-color)',
           },
         },
       },

@@ -8,7 +8,6 @@
   --main-text-color: black;
   --main-grey-color: #616161;
   --main-light-color: #959595;
-  --main-dark-color: #333;
   --main-icon-color: #4d4d4d;
   --main-log-color: var(--main-text-color);
   --main-button-color: #ffffff;
@@ -18,7 +17,8 @@
   --main-menu-hover-color: #959595;
   --main-label-color: #616161;
 
-  --primary-color: #4CAF50;
+  --primary-color: #009a00;
+  /* Green #4CAF50 */
   --secondary-color: #a58827;
 
   --header-bg-color: var(--primary-color);
@@ -55,7 +55,6 @@
   --main-text-color: #ffffff;
   --main-grey-color: #616161;
   --main-light-color: #959595;
-  --main-dark-color: #333;
   --main-icon-color: var(--main-light-color);
   --main-log-color: var(--main-light-color);
   --main-button-color: #ffffff;

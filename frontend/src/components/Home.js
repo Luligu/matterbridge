@@ -11,6 +11,7 @@ import { OnlineContext } from './OnlineContext';
 import { SystemInfoTable } from './SystemInfoTable';
 import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
 import { ConfirmCancelForm } from './ConfirmCancelForm';
+import { configTheme, configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, RemoveButton } from './configEditor';
 
 // @mui
 import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip, IconButton, Button, createTheme, ThemeProvider, Typography, Select, MenuItem, Menu, Box } from '@mui/material';
@@ -20,6 +21,7 @@ import { DeleteForever, Download, Add, PublishedWithChanges, Settings, Favorite,
 import Form from '@rjsf/mui';
 import validator from '@rjsf/validator-ajv8';
 
+// QRCode
 import { QRCodeSVG} from 'qrcode.react';
 
 
@@ -204,10 +206,6 @@ function Home() {
     window.open(`https://github.com/Luligu/${plugins[row].name}/blob/main/CHANGELOG.md`, '_blank');
   };
 
-  /*
-                        {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => { handleActionWithConfirmCancel('Disable the plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'disable', index); } } size="small"><Unpublished /></IconButton></Tooltip> : <></>}
-                        <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => { handleRemovePlugin(index); }} size="small"><DeleteForever /></IconButton></Tooltip>
-  */
   const [showConfirmCancelForm, setShowConfirmCancelForm] = useState(false);
   const [confirmCancelFormTitle, setConfirmCancelFormTitle] = useState('');
   const [confirmCancelFormMessage, setConfirmCancelFormMessage] = useState('');
@@ -221,6 +219,7 @@ function Home() {
     setConfirmCancelFormRow(index);
     setShowConfirmCancelForm(true);
   };
+
   const handleConfirm = () => {
     // console.log(`Action confirmed ${confirmCancelFormCommand} ${confirmCancelFormRow}`);
     setShowConfirmCancelForm(false);
@@ -230,6 +229,7 @@ function Home() {
       handleEnableDisablePlugin(confirmCancelFormRow);
     }
   };
+
   const handleCancel = () => {
     // console.log("Action canceled");
     setShowConfirmCancelForm(false);
@@ -243,7 +243,7 @@ function Home() {
 
     <ThemeProvider theme={theme}>
 
-      <Dialog  open={openConfig} onClose={handleCloseConfig} maxWidth='600px' PaperProps={{style: { border: "2px solid #ddd", backgroundColor: '#c4c2c2', boxShadow: '5px 5px 10px #888'}}}>
+      <Dialog  open={openConfig} onClose={handleCloseConfig} maxWidth='800px' PaperProps={{style: { border: "2px solid #ddd", backgroundColor: '#c4c2c2', boxShadow: '5px 5px 10px #888'}}}>
         <DialogTitle gap={'20px'}>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
             <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
@@ -378,9 +378,6 @@ function Home() {
     </div>
   );
 }
-
-/*
-*/
 
 function AddRemovePlugins({ reloadSettings }) {
   const [pluginName, setPluginName] = useState('matterbridge-');
@@ -525,166 +522,11 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, matterbridgeInfo, plugin
   }
 }
 
-function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
-  // console.log('DialogConfigPlugin:', config, schema);
-
-  // Function to get CSS variable value
-  function getCssVariable(variableName, defaultValue) {
-    const value = getComputedStyle(document.body).getPropertyValue(variableName).trim();
-    if(!value) console.error('getCssVariable:', value);
-    return value || defaultValue;
-  }
-
-  const theme = createTheme({
-    palette: {
-      primary: {
-        main: getCssVariable('--main-button-bg-color', '#1976d2'), // Default blue
-      },
-    },
-    components: {
-      MuiPaper: {
-        styleOverrides: {
-          root: {
-            border: "1px solid #ddd", 
-            backgroundColor: '#c4c2c2', 
-            boxShadow: '5px 5px 10px #888'
-          },
-        },
-      },
-      MuiTextField: {
-        defaultProps: {
-          size: 'small',
-        },
-      },
-      MuiButton: {
-        styleOverrides: {
-          root: {
-            color: 'var(--main-button-color)',
-            backgroundColor: 'var(--main-button-bg-color)', 
-            },
-        },
-        defaultProps: {
-          variant: 'contained',
-          size: 'small',
-        },
-      },
-      MuiTypography: {
-        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
-      },
-      MuiBox: {
-        styleOverrides: {
-          root: {
-            padding: '5px',
-            margin: '0px',
-          },
-        },
-      },
-    },
-  });
-
-  function ArrayFieldTemplate(props) {
-    const { canAdd, onAddClick, schema, title } = props;
-    // console.log('ArrayFieldTemplate: title', title, 'description', schema.description);
-    return (
-      <Box sx={{ padding: '10px', margin: '0px', border: '1px solid grey' }}>
-        {title && (
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            {title && (
-              <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>{title}</Typography>
-            )}
-            {canAdd && (
-              <IconButton onClick={onAddClick} size="small" color="primary">
-                <Add />
-              </IconButton>
-            )}
-          </Box>
-        )}
-        {schema.description && (
-          <Box sx={{ marginBottom: '10px' }}>
-            <Typography sx={{ fontSize: '14px', fontWeight: 'normal' }}>{schema.description}</Typography>
-          </Box>
-        )}
-        {props.items.map((element) => (
-          <Box key={element.index} sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-            <Box sx={{ flexGrow: 1 }}>
-              {element.children}
-            </Box>
-            <IconButton onClick={element.onDropIndexClick(element.index)} size="small" color="primary">
-              <DeleteForever />
-            </IconButton>
-          </Box>
-        ))}
-      </Box>
-    );
-  }
-
-  function ObjectFieldTemplate(props) {
-    const { onAddClick, schema, properties, title, description } = props;
-    // Check if this is the entire schema or an individual object
-    const isRoot = !schema.additionalProperties;
-    console.log('ObjectFieldTemplate: title', title, 'description', description, 'schema', schema, 'isRoot', isRoot);
-  
-    return (
-      <Box sx={{ padding: '10px', margin: '0px', border: isRoot ? 'none' : '1px solid grey' }}>
-        {/* Title for root */}
-        {schema.title && (
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>{schema.title}</Typography>
-          </Box>
-        )}
-        {/* Title and Add for object */}
-        {title && !isRoot && (
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>{title}</Typography>
-              <IconButton onClick={onAddClick(schema)} size="small" color="primary">
-                <Add />
-              </IconButton>
-          </Box>
-        )}
-        {/* Description for root */}
-        {schema.description && (
-          <Box sx={{ marginBottom: '20px' }}>
-            <Typography sx={{ fontSize: '14px', fontWeight: 'normal' }}>{schema.description}</Typography>
-          </Box>
-        )}
-        {/* Iterate over each property in the object */}
-        {properties.map(({ name, content, disabled, readonly, hidden }) => (
-          <Box key={name} sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-            <Box sx={{ flexGrow: 1, marginBottom: '10px', padding: '0px' }}>
-              {content}
-            </Box>
-          </Box>
-        ))}
-      </Box>
-    );
-  }
-  
-  function RemoveButton(props) {
-    const { ...otherProps } = props;
-    return (
-      <IconButton size='small' color='primary' {...otherProps}>
-        <DeleteForever />
-      </IconButton>
-    );
-  }
-
-  const uiSchema = {
-    "password": {
-      "ui:widget": "password",
-    },
-    "ui:submitButtonOptions": {
-      "props": {
-        "variant": "contained",
-        "disabled": false,
-      },
-      "norender": false,
-      "submitText": "Save the changes to the config file",
-    },
-    'ui:globalOptions': { orderable: false },
-  };
+function DialogConfigPlugin( { config, schema, handleCloseConfig } ) {
+  console.log('DialogConfigPlugin:', config, schema);
 
   const handleSaveChanges = ({ formData }) => {
-    // console.log('handleSaveChanges:', formData);
+    console.log('handleSaveChanges:', formData);
     const config = JSON.stringify(formData, null, 2)
     sendCommandToMatterbridge('saveconfig', formData.name, config);
     // Close the dialog
@@ -692,9 +534,9 @@ function DialogConfigPlugin( { config, schema, handleCloseConfig }) {
   };    
 
   return (
-    <ThemeProvider theme={theme}>
-      <div style={{ maxWidth: '800px' }}>
-        <Form schema={schema} formData={config} uiSchema={uiSchema} validator={validator} templates={{ ArrayFieldTemplate, ObjectFieldTemplate, ButtonTemplates: { RemoveButton } }} onSubmit={handleSaveChanges} />
+    <ThemeProvider theme={configTheme}>
+      <div style={{ width: '800px', height: '600px', overflow: 'auto' }}>
+        <Form schema={schema} formData={config} uiSchema={configUiSchema} validator={validator} templates={{ ArrayFieldTemplate, ObjectFieldTemplate, ButtonTemplates: { RemoveButton } }} onSubmit={handleSaveChanges} />
       </div>
     </ThemeProvider>  
   );

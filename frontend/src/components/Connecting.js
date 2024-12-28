@@ -12,8 +12,8 @@ export default function Connecting() {
       flexDirection: 'column'
     }}>
      <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
-        <CircularProgress />
-        <div style={{ marginTop: '20px' }}>Connecting to Matterbridge...</div>
+        <CircularProgress style={{ color: 'var(--primary-color)' }}/>
+        <div style={{ marginTop: '20px', color: 'var(--primary-color)' }}>Connecting to Matterbridge...</div>
       </Box>
     </div>
   );

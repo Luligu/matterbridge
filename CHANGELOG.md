@@ -20,7 +20,7 @@ Matterbridge edge is now released. The default mode is still the normal mode to 
 The frontend has a dark mode that is now the default mode. 
 It is possible to change the mode (Classic or Dark) in Settings, Matterbridge settings.
 
-## [1.6.8-dev.16] - 2024-12-28
+## [1.6.8-dev.17] - 2024-12-29
 
 ### Added
 
