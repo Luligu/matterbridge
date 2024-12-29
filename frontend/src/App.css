@@ -15,10 +15,9 @@
   --main-menu-color: #26292d;
   --main-menu-bg-color: #e2e2e2;
   --main-menu-hover-color: #959595;
-  --main-label-color: #616161;
+  --main-label-color: var(--main-grey-color);
 
   --primary-color: #009a00;
-  /* Green #4CAF50 */
   --secondary-color: #a58827;
 
   --header-bg-color: var(--primary-color);
