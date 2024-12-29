@@ -9,213 +9,12 @@ import Devices from './components/Devices';
 import Settings from './components/Settings';
 import Test from './components/Test';
 import Logs from './components/Logs';
-import { WebSocketProvider } from './components/WebSocketContext';
-import { OnlineProvider } from './components/OnlineContext';
+import { WebSocketProvider } from './components/WebSocketProvider';
+import { OnlineProvider } from './components/OnlineProvider';
+import { createMuiTheme, getCssVariable } from './components/muiTheme';
 
 // @mui
-import { createTheme } from '@mui/material';
-
-// Function to get CSS variable value
-function getCssVariable(variableName, defaultValue) {
-  const value = getComputedStyle(document.body).getPropertyValue(variableName).trim();
-  if(!value) console.error('getCssVariable:', value);
-  return value || defaultValue;
-}
-
-export const theme = createTheme({
-  palette: {
-    primary: {
-      main: getCssVariable('--primary-color', '#1976d2'), // Default blue
-    },
-  },
-  components: {
-    MuiTypography: {
-      fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
-    },
-    MuiTooltip: {
-      defaultProps: {
-        placement: 'top-start', 
-        arrow: true,
-      },
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          color: 'var(--main-button-color)',
-          backgroundColor: 'var(--main-button-bg-color)', 
-        },
-        contained: {
-          color: 'var(--main-button-color)', // Ensure contained buttons also use the color
-          backgroundColor: 'var(--main-button-bg-color)', // Background color for contained buttons
-        },
-        outlined: {
-          color: 'var(--main-button-color)', // Ensure contained buttons also use the color
-          backgroundColor: 'var(--main-button-bg-color)', // Background color for contained buttons
-        },
-        text: {
-          color: 'var(--main-button-color)',
-        },
-      },
-      defaultProps: {
-        variant: 'contained',
-        size: 'small',
-      },
-    },
-    MuiIconButton: {
-      styleOverrides: {
-        root: {
-          color: 'var(--main-icon-color)',
-          '&:hover .MuiSvgIcon-root': {
-            color: 'var(--primary-color)', 
-          },
-        },
-      },
-    },
-    MuiCheckbox: {
-      styleOverrides: {
-        root: {
-          '&.Mui-checked': {
-            color: 'var(--primary-color)',
-          },
-        },
-      },
-    },
-    MuiTextField: {
-      defaultProps: {
-        size: 'small', // Default size for all TextFields
-        variant: 'outlined', // Default variant for all TextFields
-        fullWidth: true, // Default to full width
-      },
-    },
-    MuiOutlinedInput: {
-      styleOverrides: {
-        root: {
-          backgroundColor: 'var(--div-bg-color)', 
-          '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'var(--main-label-color)',
-          },
-          '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'var(--main-text-color)',
-          },
-          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'var(--primary-color)',
-          },
-        },
-        input: {
-          color: 'var(--div-text-color)',
-          padding: '8px', 
-        },
-      },
-    },
-    MuiInputLabel: {
-      styleOverrides: {
-        root: {
-          color: 'var(--main-label-color)', 
-          '&.Mui-focused': {
-            color: 'var(--primary-color)', 
-          },
-        },
-      },
-    },
-    MuiFormLabel: {
-      styleOverrides: {
-        root: {
-          color: 'var(--main-label-color)',
-          '&.Mui-focused': {
-            color: 'var(--main-label-color)', 
-          },
-        },
-      },
-    },
-    MuiFormControl: {
-      styleOverrides: {
-        root: {
-          color: 'var(--main-grey-color)',
-        },
-      },
-    },
-    MuiRadio: {
-      styleOverrides: {
-        root: {
-          '&.Mui-checked': {
-            color: 'var(--primary-color)',
-          },
-        },
-      },
-    },
-    MuiSelect: {
-      styleOverrides: {
-        root: {
-          backgroundColor: 'var(--div-bg-color)',
-          color: 'var(--div-text-color)',
-          height: '30px', 
-          '&:hover': {
-            borderColor: 'var(--main-text-color)',
-          },
-          '&.Mui-focused': {
-            borderColor: 'var(--primary-color)', // Focused border color
-          },
-        },
-      },
-    },
-    MuiMenu: {
-      styleOverrides: {
-        paper: {
-          backgroundColor: 'var(--main-menu-bg-color)', // Match menu background color
-          padding: '0px', // Remove default padding
-          margin: '0px', // Remove any margin
-        },
-        list: {
-          padding: '0px', // Remove padding inside the list
-        },
-      },
-    },
-    MuiMenuItem: {
-      styleOverrides: {
-        root: {
-          color: 'var(--main-menu-color)', // Text color for MenuItem
-          backgroundColor: 'var(--main-menu-bg-color)', // Background color for MenuItem
-          '&:hover': {
-            backgroundColor: 'var(--main-menu-hover-color)', // Hover background color for MenuItem
-          },
-          '&.Mui-selected': {
-            color: 'var(--main-menu-color)', // Text color for selected MenuItem
-            backgroundColor: 'var(--main-menu-bg-color)', // Background color for selected MenuItem
-          },
-          '&.Mui-selected:hover': {
-            backgroundColor: 'var(--main-menu-hover-color)', // Hover color for selected MenuItem
-          },
-        },
-      },
-    },
-  },
-});
-
-export function sendCommandToMatterbridge(command, param, body) {
-  const sanitizedParam = param.replace(/\\/g, '*');
-  // console.log('sendCommandToMatterbridge:', command, param, sanitizedParam);
-  // Send a POST request to the Matterbridge API
-  fetch(`./api/command/${command}/${sanitizedParam}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body,
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  })
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  .then(json => {
-    // console.log('Command sent successfully:', json);
-  })
-  .catch(error => {
-    console.error('Error sending command:', error);
-  });
-}
+import { ThemeProvider } from '@mui/material';
 
 // Create a context for the authentication state
 const AuthContext = createContext();
@@ -239,7 +38,8 @@ function AuthProvider({ children }) {
         if (valid) {
           setLoggedIn(true);
         } else {
-          setErrorMessage('Incorrect password!');
+          if(password!=='')
+            setErrorMessage('Incorrect password!');
         }
       } else {
         console.error('Failed to log in:', response.statusText);
@@ -260,29 +60,8 @@ function AuthProvider({ children }) {
 function LoginForm() {
   const [password, setPassword] = useState('');
   const { loggedIn, logIn, errorMessage  } = useContext(AuthContext);
-  // Settings
-  const [wssHost, setWssHost] = useState(null);
-  const [ssl, setSsl] = useState(false);
-  
-  useEffect(() => {
-    const fetchApiSettings = async () => {
-      try {
-        const response = await fetch('./api/settings');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        // console.log('From app.js /api/settings:', data);
-        setWssHost(data.wssHost);
-        setSsl(data.ssl);
-      } catch (error) {
-        console.error('From app.js error fetching /api/settings:', error);
-      }
-    };
+  const [primaryColor, setPrimaryColor] = useState('#1976d2'); // Default blue
 
-    fetchApiSettings();  
-  }, []);
-  
   const handleSubmit = event => {
     event.preventDefault();
     logIn(password);
@@ -293,7 +72,7 @@ function LoginForm() {
     justifyContent: 'center',
     alignItems: 'center',
     height: '100vh', 
-    backgroundColor: '#c4c2c2',
+    backgroundColor: 'var(--main-bg-color)',
   };
 
   const formStyle = {
@@ -303,10 +82,11 @@ function LoginForm() {
     margin: '0 auto',
     padding: '20px',
     gap: '20px',
-    border: '1px solid #ccc',
-    borderRadius: '10px',
-    boxShadow: '2px 2px 5px rgba(0,0,0,0.3)',
-    backgroundColor: '#5f8c9e',
+    border: '1px solid var(--div-border-color)',
+    borderRadius: 'var(--div-border-radius)',
+    boxShadow: '2px 2px 5px var(--div-shadow-color)',
+    color: 'var(--div-text-color)',
+    backgroundColor: 'var(--div-bg-color)',
   };
 
   const inputStyle = {
@@ -314,32 +94,55 @@ function LoginForm() {
     padding: '3px 3px',
     fontSize: '14px',
     width: '230px',
+    border: '1px solid var(--main-label-color)',
+    color: 'var(--div-text-color)',
+    backgroundColor: 'var(--div-bg-color)',
   };
+  
+  // Set the frontned theme in document.body
+  useEffect(() => {
+    // console.log('Setting frontend theme');
+    const savedTheme = localStorage.getItem('frontendTheme');
+    // console.log('Saved theme:', savedTheme);
+    if (savedTheme) {
+      document.body.setAttribute("frontend-theme", savedTheme); // Set the saved theme
+    } else {
+      document.body.setAttribute("frontend-theme", "dark"); // Set the default theme to dark
+    }
+    const primaryColorFromCSS = getCssVariable('--primary-color', '#1976d2');
+    // console.log('Primary color from CSS:', primaryColorFromCSS);
+    setPrimaryColor(primaryColorFromCSS);
+  }, []);
 
-  // const baseName = window.location.href.includes("/api/hassio_ingress/") ? window.location.pathname : "/";
   const baseName = window.location.href.includes("/matterbridge/") ? "/matterbridge" :
   window.location.href.includes("/api/hassio_ingress/") ? window.location.pathname :
   "/";
-  console.log(`Ingress check: window.location.href=${window.location.href} baseName=${baseName}`);
+  // console.log(`Ingress check: window.location.href=${window.location.href} baseName=${baseName}`);
   // Ingress check: window.location.href=http://homeassistant.local:8123/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/ baseName=/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/
+
+  const theme = createMuiTheme(primaryColor);
+
+  logIn(''); // Auto login if no password is required
 
   if (loggedIn) {
     return (
-      <WebSocketProvider wssHost={wssHost} ssl={ssl}>
+      <WebSocketProvider>
         <OnlineProvider>
-          <Router basename={baseName}>
-            <div className="MbfScreen">
-              <Header />
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/devices" element={<Devices />} />
-                <Route path="/log" element={<Logs />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/test" element={<Test />} />
-                <Route path="*" element={<Navigate to="/" />} /> {/* Fallback to the home page for Ingress*/}
-              </Routes>
-            </div>
-          </Router>
+          <ThemeProvider theme={theme}>
+            <Router basename={baseName}>
+              <div className="MbfScreen">
+                <Header />
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/devices" element={<Devices />} />
+                  <Route path="/log" element={<Logs />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/test" element={<Test />} />
+                  <Route path="*" element={<Navigate to="/" />} /> 
+                </Routes>
+              </div>
+            </Router>
+          </ThemeProvider>
         </OnlineProvider>
       </WebSocketProvider>
     );
@@ -349,7 +152,7 @@ function LoginForm() {
         <form onSubmit={handleSubmit} style={formStyle}>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
             <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
-            <h3>Welcome to Matterbridge</h3>
+            <h3 style={{color: 'var(--div-text-color)' }}>Welcome to Matterbridge</h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
             <input
@@ -359,7 +162,7 @@ function LoginForm() {
               style={inputStyle}
               placeholder="password"
             />
-            <button type="submit">Log in</button>
+            <button type="submit" style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', borderColor: 'var(--div-bg-color)' }}>Log in</button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', margin: 0, height: '30px' }}>
             {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
@@ -371,121 +174,17 @@ function LoginForm() {
 }
 
 function App() {
-  // Login
-  const [noPassword, setNoPassword] = useState(false);
-
-  // Settings
-  const [wssHost, setWssHost] = useState(null);
-  const [ssl, setSsl] = useState(false);
-
-  useEffect(() => {
-    // Set the frontned theme on the body
-    const savedTheme = localStorage.getItem('frontendTheme');
-    if (savedTheme) {
-      document.body.setAttribute("frontend-theme", savedTheme); // Set the saved theme to dark
-    } else {
-      document.body.setAttribute("frontend-theme", "dark"); // Set the default theme to dark
-    }
-  }, []);
-
-  const fetchApiLogin = async () => {
-    try {
-      const response = await fetch('./api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: '' }),
-      });
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const data = await response.json();
-      // console.log('From app.js /api/login:', data);
-      if (data.valid === true) {
-        setNoPassword(true);
-      }
-    } catch (error) {
-      console.error('From app.js error fetching /api/login', error);
-    }
-  };
-
-  useEffect(() => {
-    const fetchLogin = async () => {
-      try {
-        await fetchApiLogin();
-      } catch (error) {
-        console.error('Error fetching API login:', error);
-      }
-    };
-    fetchLogin();
-  }, []);
-
-  const fetchApiSettings = async () => {
-    try {
-      const response = await fetch('./api/settings');
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const data = await response.json();
-      // console.log('From app.js /api/settings:', data);
-      setWssHost(data.wssHost);
-      setSsl(data.ssl);
-    } catch (error) {
-      console.error('From app.js error fetching /api/settings:', error);
-    }
-  };
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        await fetchApiSettings();
-      } catch (error) {
-        console.error('Error fetching API settings:', error);
-      }
-    };
-    fetchSettings();
-  }, []);
-
-  // const baseName = window.location.href.includes("/api/hassio_ingress/") ? window.location.pathname : "/";
-  const baseName = window.location.href.includes("/matterbridge/") ? "/matterbridge" :
-  window.location.href.includes("/api/hassio_ingress/") ? window.location.pathname :
-  "/";
-  console.log(`Ingress check: window.location.href=${window.location.href} baseName=${baseName}`);
-  // Ingress check: window.location.href=http://homeassistant.local:8123/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/ baseName=/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/
-  
-  if (noPassword) {
-    return (
-      <WebSocketProvider wssHost={wssHost} ssl={ssl}>
-        <OnlineProvider>
-          <Router basename={baseName}>
-            <div className="MbfScreen">
-              <Header />
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/devices" element={<Devices />} />
-                  <Route path="/log" element={<Logs />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/test" element={<Test />} />
-                  <Route path="*" element={<Navigate to="/" />} /> {/* Fallback to the home page for Ingress*/}
-                </Routes>
-            </div>
-          </Router>
-        </OnlineProvider>
-      </WebSocketProvider>
-    );
-  }
-  else {
-    return (
-      <AuthProvider>
-        <LoginForm />
-      </AuthProvider>
-    );
-  }
+  return (
+    <AuthProvider>
+      <LoginForm />
+    </AuthProvider>
+  );
 }
 
 export default App;
 
 /*
-How frontend was created
+How the frontend was created
 npx create-react-app matterbridge-frontend
 cd matterbridge-frontend
 npm install react-router-dom 

@@ -3,14 +3,6 @@
 import { IconButton, createTheme, Typography, Box } from '@mui/material';
 import { DeleteForever, Add } from '@mui/icons-material';
 
-// Function to get CSS variable value
-function getCssVariable(variableName, defaultValue) {
-  const value = getComputedStyle(document.body).getPropertyValue(variableName).trim();
-  if(!value) console.error('getCssVariable:', value);
-  return value || defaultValue;
-}
-/*
-*/
 export const configTheme = createTheme({
   palette: {
     primary: {
@@ -26,7 +18,6 @@ export const configTheme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          color: 'var(--main-button-color)',
           backgroundColor: '#009a00', 
           },
       },
@@ -41,8 +32,9 @@ export const configTheme = createTheme({
     MuiCheckbox: {
       styleOverrides: {
         root: {
+          color: 'black', 
           '&.Mui-checked': {
-            color: '#009a00', // Color for the checked state
+            color: '#009a00', 
           },
         },
       },
@@ -64,7 +56,7 @@ export function ArrayFieldTemplate(props) {
   return (
     <Box sx={{ padding: '10px', margin: '0px', border: '1px solid grey' }}>
       {title && (
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px', margin: '0px', marginBottom: '10px' }}>
           {title && (
             <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>{title}</Typography>
           )}
@@ -76,12 +68,12 @@ export function ArrayFieldTemplate(props) {
         </Box>
       )}
       {schema.description && (
-        <Box sx={{ marginBottom: '10px' }}>
+        <Box sx={{ padding: '5px', margin: '0px', marginBottom: '10px' }}>
           <Typography sx={{ fontSize: '14px', fontWeight: 'normal' }}>{schema.description}</Typography>
         </Box>
       )}
       {props.items.map((element) => (
-        <Box key={element.index} sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+        <Box key={element.index} sx={{ display: 'flex', alignItems: 'center', padding: '5px', margin: '0px', marginBottom: '10px' }}>
           <Box sx={{ flexGrow: 1 }}>
             {element.children}
           </Box>
@@ -104,13 +96,13 @@ export function ObjectFieldTemplate(props) {
     <Box sx={{ padding: '10px', margin: '0px', border: isRoot ? 'none' : '1px solid grey' }}>
       {/* Title for root */}
       {schema.title && (
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px', margin: '0px', marginBottom: '10px' }}>
           <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>{schema.title}</Typography>
         </Box>
       )}
       {/* Title and Add for object */}
       {title && !isRoot && (
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px', margin: '0px', marginBottom: '10px' }}>
           <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>{title}</Typography>
             <IconButton onClick={onAddClick(schema)} size="small" color="primary">
               <Add />
@@ -119,14 +111,14 @@ export function ObjectFieldTemplate(props) {
       )}
       {/* Description for root */}
       {schema.description && (
-        <Box sx={{ marginBottom: '20px' }}>
+        <Box sx={{ padding: '5px', margin: '0px', marginBottom: '20px' }}>
           <Typography sx={{ fontSize: '14px', fontWeight: 'normal' }}>{schema.description}</Typography>
         </Box>
       )}
       {/* Iterate over each property in the object */}
       {properties.map(({ name, content, disabled, readonly, hidden }) => (
-        <Box key={name} sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-          <Box sx={{ flexGrow: 1, marginBottom: '10px', padding: '0px' }}>
+        <Box key={name} sx={{ display: 'flex', alignItems: 'center', padding: '5px', margin: '0px', marginBottom: '10px' }}>
+          <Box sx={{ flexGrow: 1, padding: '0px', margin: '0px', marginBottom: '10px' }}>
             {content}
           </Box>
         </Box>

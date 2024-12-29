@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-console */
  
 // Header.js
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { Tooltip, Snackbar, Alert, createTheme, Backdrop, CircularProgress, ThemeProvider, IconButton, Menu, MenuItem, Divider, ListItemIcon, ListItemText } from '@mui/material';
+import { Tooltip, Snackbar, Alert, Backdrop, CircularProgress, IconButton, Menu, MenuItem, Divider, ListItemIcon, ListItemText } from '@mui/material';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
@@ -15,18 +14,17 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 
-import { sendCommandToMatterbridge, theme } from '../App';
-import { WebSocketContext } from './WebSocketContext';
-import { OnlineContext } from './OnlineContext';
+import { sendCommandToMatterbridge } from './sendApiCommand';
+import { WebSocketContext } from './WebSocketProvider';
+import { OnlineContext } from './OnlineProvider';
 import { ConfirmCancelForm } from './ConfirmCancelForm';
 
 function Header() {
-  const { online, setOnline } = useContext(OnlineContext);
-  const { messages, sendMessage, logMessage } = useContext(WebSocketContext);
+  const { online, matterbridgeInfo } = useContext(OnlineContext);
+  const { logMessage } = useContext(WebSocketContext);
   const [showBackdrop, setShowBackdrop] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [backupMenuAnchorEl, setBackupMenuAnchorEl] = useState(null);
   const [downloadMenuAnchorEl, setDownloadMenuAnchorEl] = useState(null);
@@ -53,7 +51,7 @@ function Header() {
     window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
   };
 
-  const handleHelpClick = (row) => {
+  const handleHelpClick = () => {
     window.open(`https://github.com/Luligu/matterbridge/blob/main/README.md`, '_blank');
   };
 
@@ -162,31 +160,6 @@ function Header() {
     setResetMenuAnchorEl(null);
   };
 
-  // Fetch settings from the backend
-  const fetchSettings = () => {
-
-    fetch('./api/settings')
-      .then(response => response.json())
-      .then(data => { 
-        // console.log('From header /api/settings (header):', data); 
-        setMatterbridgeInfo(data.matterbridgeInformation);
-        localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
-      })
-      .catch(error => {
-        console.error('Error fetching settings:', error);
-      });
-  };
-
-  useEffect(() => {
-    // Call fetchSettings immediately and then every 1 minute
-    fetchSettings();
-    const fetchInterval = setInterval(fetchSettings, 60 * 1000);
-  
-    // Clear the interval when the component is unmounted
-    return () => clearInterval(fetchInterval);
-    
-  }, []); // The empty array causes this effect to run only once
-
   const [showConfirmCancelForm, setShowConfirmCancelForm] = useState(false);
   const [confirmCancelFormTitle, setConfirmCancelFormTitle] = useState('');
   const [confirmCancelFormMessage, setConfirmCancelFormMessage] = useState('');
@@ -211,168 +184,166 @@ function Header() {
 
   return (
     <div className="header">
-      <ThemeProvider theme={theme}>
-        <div className="sub-header">
-          <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '30px' }} />
-          <h2 style={{ fontSize: '22px', color: 'var(--main-icon-color)', margin: '0px' }}>Matterbridge</h2>
-          <nav>
-            <Link to="/" className="nav-link">Home</Link>
-            <Link to="/devices" className="nav-link">Devices</Link>
-            <Link to="/log" className="nav-link">Logs</Link>
-            <Link to="/settings" className="nav-link">Settings</Link>
-          </nav>
-        </div>
-        <div className="sub-header">
-          <Tooltip title="Matterbridge status">
-            {online ? <span className="status-enabled"  style={{ cursor: 'default' }}>Online</span> : <span className="status-disabled" style={{ cursor: 'default' }}>Offline</span>}
+      <div className="sub-header">
+        <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '30px' }} />
+        <h2 style={{ fontSize: '22px', color: 'var(--main-icon-color)', margin: '0px' }}>Matterbridge</h2>
+        <nav>
+          <Link to="/" className="nav-link">Home</Link>
+          <Link to="/devices" className="nav-link">Devices</Link>
+          <Link to="/log" className="nav-link">Logs</Link>
+          <Link to="/settings" className="nav-link">Settings</Link>
+        </nav>
+      </div>
+      <div className="sub-header">
+        <Tooltip title="Matterbridge status">
+          {online ? <span className="status-enabled"  style={{ cursor: 'default' }}>Online</span> : <span className="status-disabled" style={{ cursor: 'default' }}>Offline</span>}
+        </Tooltip>
+        {matterbridgeInfo && !matterbridgeInfo.readOnly &&        
+          <Tooltip title="Sponsor Matterbridge and its plugins">
+            <span className="status-sponsor" onClick={handleSponsorClick}>Sponsor</span> 
           </Tooltip>
-          {matterbridgeInfo && !matterbridgeInfo.readOnly &&        
-            <Tooltip title="Sponsor Matterbridge and its plugins">
-              <span className="status-sponsor" onClick={handleSponsorClick}>Sponsor</span> 
-            </Tooltip>
-          }        
-          {matterbridgeInfo.matterbridgeLatestVersion === undefined || matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion || matterbridgeInfo.readOnly ?
-            <Tooltip title="Matterbridge version"><span className="status-information" onClick={handleChangelogClick}>v.{matterbridgeInfo.matterbridgeVersion}</span></Tooltip> :
-            <Tooltip title="New Matterbridge version available, click to install"><span className="status-warning" onClick={handleUpdateClick}>Update v.{matterbridgeInfo.matterbridgeVersion} to v.{matterbridgeInfo.matterbridgeLatestVersion}</span></Tooltip> 
-          }  
-          {matterbridgeInfo.edge === true ? (        
-            <Tooltip title="Edge mode">
-              <span className="status-information" style={{ cursor: 'default' }}>edge</span>
-            </Tooltip>
-          ) : null}
-          {matterbridgeInfo.bridgeMode !== '' ? (        
-            <Tooltip title="Bridge mode">
-              <span className="status-information" style={{ cursor: 'default' }}>{matterbridgeInfo.bridgeMode}</span>
-            </Tooltip>
-          ) : null}
-          {matterbridgeInfo.restartMode !== '' ? (        
-            <Tooltip title="Restart mode">
-              <span className="status-information" style={{ cursor: 'default' }}>{matterbridgeInfo.restartMode}</span>
-            </Tooltip>        
-          ) : null}
-        </div>
-        <div className="sub-header" style={{ gap: '5px' }}>
-          <Tooltip title="Matterbridge help">
-            <IconButton onClick={handleHelpClick}>
-              <HelpOutlineIcon/>
+        }        
+        {matterbridgeInfo.matterbridgeLatestVersion === undefined || matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion || matterbridgeInfo.readOnly ?
+          <Tooltip title="Matterbridge version"><span className="status-information" onClick={handleChangelogClick}>v.{matterbridgeInfo.matterbridgeVersion}</span></Tooltip> :
+          <Tooltip title="New Matterbridge version available, click to install"><span className="status-warning" onClick={handleUpdateClick}>Update v.{matterbridgeInfo.matterbridgeVersion} to v.{matterbridgeInfo.matterbridgeLatestVersion}</span></Tooltip> 
+        }  
+        {matterbridgeInfo.edge === true ? (        
+          <Tooltip title="Edge mode">
+            <span className="status-information" style={{ cursor: 'default' }}>edge</span>
+          </Tooltip>
+        ) : null}
+        {matterbridgeInfo.bridgeMode !== '' ? (        
+          <Tooltip title="Bridge mode">
+            <span className="status-information" style={{ cursor: 'default' }}>{matterbridgeInfo.bridgeMode}</span>
+          </Tooltip>
+        ) : null}
+        {matterbridgeInfo.restartMode !== '' ? (        
+          <Tooltip title="Restart mode">
+            <span className="status-information" style={{ cursor: 'default' }}>{matterbridgeInfo.restartMode}</span>
+          </Tooltip>        
+        ) : null}
+      </div>
+      <div className="sub-header" style={{ gap: '5px' }}>
+        <Tooltip title="Matterbridge help">
+          <IconButton onClick={handleHelpClick}>
+            <HelpOutlineIcon/>
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Matterbridge changelog">
+          <IconButton onClick={handleChangelogClick}>
+            <AnnouncementOutlinedIcon/>
+          </IconButton>
+        </Tooltip>
+        {matterbridgeInfo && !matterbridgeInfo.readOnly && 
+          <Tooltip title="Update matterbridge">
+            <IconButton onClick={handleUpdateClick}>
+              <SystemUpdateAltIcon/>
             </IconButton>
           </Tooltip>
-          <Tooltip title="Matterbridge changelog">
-            <IconButton onClick={handleChangelogClick}>
-              <AnnouncementOutlinedIcon/>
+        }
+        <Tooltip title="Restart matterbridge">
+          <IconButton onClick={handleRestartClick}>
+            <RestartAltIcon/>
+          </IconButton>
+        </Tooltip>
+        {matterbridgeInfo.restartMode === '' ? (        
+          <Tooltip title="Shut down matterbridge">
+            <IconButton onClick={handleShutdownClick}>
+              <PowerSettingsNewIcon/>
             </IconButton>
           </Tooltip>
+        ) : null}        
+        <Tooltip title="Download, backup and more">
+          <IconButton onClick={handleMenuOpen}>
+            <MoreHoriz/>
+          </IconButton>
+        </Tooltip>
+        <Menu id="command-menu" anchorEl={menuAnchorEl} keepMounted open={Boolean(menuAnchorEl)} onClose={() => handleMenuClose('')} >
           {matterbridgeInfo && !matterbridgeInfo.readOnly && 
-            <Tooltip title="Update matterbridge">
-              <IconButton onClick={handleUpdateClick}>
-                <SystemUpdateAltIcon/>
-              </IconButton>
-            </Tooltip>
+            <MenuItem onClick={() => handleMenuClose('update')}>
+              <ListItemIcon><SystemUpdateAltIcon /></ListItemIcon>
+              <ListItemText primary="Update" />
+            </MenuItem>
           }
-          <Tooltip title="Restart matterbridge">
-            <IconButton onClick={handleRestartClick}>
-              <RestartAltIcon/>
-            </IconButton>
-          </Tooltip>
-          {matterbridgeInfo.restartMode === '' ? (        
-            <Tooltip title="Shut down matterbridge">
-              <IconButton onClick={handleShutdownClick}>
-                <PowerSettingsNewIcon/>
-              </IconButton>
-            </Tooltip>
-          ) : null}        
-          <Tooltip title="Download, backup and more">
-            <IconButton onClick={handleMenuOpen}>
-              <MoreHoriz/>
-            </IconButton>
-          </Tooltip>
-          <Menu id="command-menu" anchorEl={menuAnchorEl} keepMounted open={Boolean(menuAnchorEl)} onClose={() => handleMenuClose('')} >
-            {matterbridgeInfo && !matterbridgeInfo.readOnly && 
-              <MenuItem onClick={() => handleMenuClose('update')}>
-                <ListItemIcon><SystemUpdateAltIcon /></ListItemIcon>
-                <ListItemText primary="Update" />
-              </MenuItem>
-            }
-            <MenuItem onClick={() => handleMenuClose('restart')}>
-              <ListItemIcon><RestartAltIcon /></ListItemIcon>
-              <ListItemText primary="Restart" />
+          <MenuItem onClick={() => handleMenuClose('restart')}>
+            <ListItemIcon><RestartAltIcon /></ListItemIcon>
+            <ListItemText primary="Restart" />
+          </MenuItem>
+          {matterbridgeInfo.restartMode === '' ? 
+            <MenuItem onClick={() => handleMenuClose('shutdown')}>
+              <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
+              <ListItemText primary="Shutdown" />
             </MenuItem>
-            {matterbridgeInfo.restartMode === '' ? 
-              <MenuItem onClick={() => handleMenuClose('shutdown')}>
-                <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
-                <ListItemText primary="Shutdown" />
-              </MenuItem>
-            : null }
-            <Divider />
-            <MenuItem onClick={handleDownloadMenuOpen}>
-              <ListItemIcon><DownloadIcon /></ListItemIcon>
-              <ListItemText primary="Download" />
+          : null }
+          <Divider />
+          <MenuItem onClick={handleDownloadMenuOpen}>
+            <ListItemIcon><DownloadIcon /></ListItemIcon>
+            <ListItemText primary="Download" />
+          </MenuItem>
+          <Menu id="sub-menu-download" anchorEl={downloadMenuAnchorEl} keepMounted open={Boolean(downloadMenuAnchorEl)} onClose={handleDownloadMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+            <MenuItem onClick={() => { handleMenuClose('download-mblog'); handleDownloadMenuClose(); }}>
+                <ListItemIcon><DownloadIcon /></ListItemIcon>
+                <ListItemText primary="Matterbridge log" />
             </MenuItem>
-            <Menu id="sub-menu-download" anchorEl={downloadMenuAnchorEl} keepMounted open={Boolean(downloadMenuAnchorEl)} onClose={handleDownloadMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
-              <MenuItem onClick={() => { handleMenuClose('download-mblog'); handleDownloadMenuClose(); }}>
-                  <ListItemIcon><DownloadIcon /></ListItemIcon>
-                  <ListItemText primary="Matterbridge log" />
-              </MenuItem>
-              <MenuItem onClick={() => { handleMenuClose('download-mjlog'); handleDownloadMenuClose(); }}>
-                  <ListItemIcon><DownloadIcon /></ListItemIcon>
-                  <ListItemText primary="Matter log" />
-              </MenuItem>
-              <MenuItem onClick={() => { handleMenuClose('download-mbstorage'); handleDownloadMenuClose(); }}>
-                  <ListItemIcon><DownloadIcon /></ListItemIcon>
-                  <ListItemText primary="Matterbridge storage" />
-              </MenuItem>
-              <MenuItem onClick={() => { handleMenuClose('download-mjstorage'); handleDownloadMenuClose(); }}>
-                  <ListItemIcon><DownloadIcon /></ListItemIcon>
-                  <ListItemText primary="Matter storage" />
-              </MenuItem>
-            </Menu>
-
-            <Divider />
-            <MenuItem onClick={handleBackupMenuOpen}>
-              <ListItemIcon><SaveIcon /></ListItemIcon>
-              <ListItemText primary="Backup" />
+            <MenuItem onClick={() => { handleMenuClose('download-mjlog'); handleDownloadMenuClose(); }}>
+                <ListItemIcon><DownloadIcon /></ListItemIcon>
+                <ListItemText primary="Matter log" />
             </MenuItem>
-            <Menu id="sub-menu-backup" anchorEl={backupMenuAnchorEl} keepMounted open={Boolean(backupMenuAnchorEl)} onClose={handleBackupMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
-              <MenuItem onClick={() => { handleMenuClose('create-backup'); handleBackupMenuClose(); }}>
-                <ListItemIcon><SaveIcon /></ListItemIcon>
-                <ListItemText primary="Create backup" />
-              </MenuItem>
-              <MenuItem onClick={() => { handleMenuClose('download-backup'); handleBackupMenuClose(); }}>
-                <ListItemIcon><SaveIcon /></ListItemIcon>
-                <ListItemText primary="Download backup" />
-              </MenuItem>
-            </Menu>
-
-            <Divider />
-            <MenuItem onClick={handleResetMenuOpen}>
-              <ListItemIcon><ReportProblemIcon /></ListItemIcon>
-              <ListItemText primary="Reset" />
+            <MenuItem onClick={() => { handleMenuClose('download-mbstorage'); handleDownloadMenuClose(); }}>
+                <ListItemIcon><DownloadIcon /></ListItemIcon>
+                <ListItemText primary="Matterbridge storage" />
             </MenuItem>
-            <Menu id="sub-menu-reset" anchorEl={resetMenuAnchorEl} keepMounted open={Boolean(resetMenuAnchorEl)} onClose={handleResetMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
-              <MenuItem onClick={() => { handleResetMenuClose(); handleActionWithConfirmCancel('Reset all devices and shutdown', 'Are you sure you want to unregister all devices? This will temporarily remove all devices from the controller and you may loose the controller configuration.', 'unregister'); }}>
-                <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
-                <ListItemText primary="Reset all devices..." />
-              </MenuItem>
-              <MenuItem onClick={() => { handleResetMenuClose(); handleActionWithConfirmCancel('Reset commissioning and shutdown', 'Are you sure you want to reset the commissioning? You will have to manually remove Matterbridge from the controller.', 'reset'); }}>
-                <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
-                <ListItemText primary="Reset commissioning..." />
-              </MenuItem>
-              <MenuItem onClick={() => { handleResetMenuClose(); handleActionWithConfirmCancel('Factory reset and shutdown', 'Are you sure you want to factory reset Matterbridge? You will have to manually remove Matterbridge from the controller.', 'factoryreset'); }}>
-                <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
-                <ListItemText primary="Factory reset..." />
-              </MenuItem>
-            </Menu>
-
+            <MenuItem onClick={() => { handleMenuClose('download-mjstorage'); handleDownloadMenuClose(); }}>
+                <ListItemIcon><DownloadIcon /></ListItemIcon>
+                <ListItemText primary="Matter storage" />
+            </MenuItem>
           </Menu>
-          <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={showBackdrop} onClick={handleBackdropClose}>
-            <CircularProgress color="inherit" />
-          </Backdrop>
-          <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={showSnackbar} onClose={handleSnackbarClose} autoHideDuration={10000}>
-              <Alert onClose={handleSnackbarClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>{snackbarMessage}</Alert>
-          </Snackbar>
-          <ConfirmCancelForm open={showConfirmCancelForm} title={confirmCancelFormTitle} message={confirmCancelFormMessage} onConfirm={handleConfirm} onCancel={handleCancel} />
-        </div>
-      </ThemeProvider>  
+
+          <Divider />
+          <MenuItem onClick={handleBackupMenuOpen}>
+            <ListItemIcon><SaveIcon /></ListItemIcon>
+            <ListItemText primary="Backup" />
+          </MenuItem>
+          <Menu id="sub-menu-backup" anchorEl={backupMenuAnchorEl} keepMounted open={Boolean(backupMenuAnchorEl)} onClose={handleBackupMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+            <MenuItem onClick={() => { handleMenuClose('create-backup'); handleBackupMenuClose(); }}>
+              <ListItemIcon><SaveIcon /></ListItemIcon>
+              <ListItemText primary="Create backup" />
+            </MenuItem>
+            <MenuItem onClick={() => { handleMenuClose('download-backup'); handleBackupMenuClose(); }}>
+              <ListItemIcon><SaveIcon /></ListItemIcon>
+              <ListItemText primary="Download backup" />
+            </MenuItem>
+          </Menu>
+
+          <Divider />
+          <MenuItem onClick={handleResetMenuOpen}>
+            <ListItemIcon><ReportProblemIcon /></ListItemIcon>
+            <ListItemText primary="Reset" />
+          </MenuItem>
+          <Menu id="sub-menu-reset" anchorEl={resetMenuAnchorEl} keepMounted open={Boolean(resetMenuAnchorEl)} onClose={handleResetMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+            <MenuItem onClick={() => { handleResetMenuClose(); handleActionWithConfirmCancel('Reset all devices and shutdown', 'Are you sure you want to unregister all devices? This will temporarily remove all devices from the controller and you may loose the controller configuration.', 'unregister'); }}>
+              <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
+              <ListItemText primary="Reset all devices..." />
+            </MenuItem>
+            <MenuItem onClick={() => { handleResetMenuClose(); handleActionWithConfirmCancel('Reset commissioning and shutdown', 'Are you sure you want to reset the commissioning? You will have to manually remove Matterbridge from the controller.', 'reset'); }}>
+              <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
+              <ListItemText primary="Reset commissioning..." />
+            </MenuItem>
+            <MenuItem onClick={() => { handleResetMenuClose(); handleActionWithConfirmCancel('Factory reset and shutdown', 'Are you sure you want to factory reset Matterbridge? You will have to manually remove Matterbridge from the controller.', 'factoryreset'); }}>
+              <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
+              <ListItemText primary="Factory reset..." />
+            </MenuItem>
+          </Menu>
+
+        </Menu>
+        <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={showBackdrop} onClick={handleBackdropClose}>
+          <CircularProgress color="inherit" />
+        </Backdrop>
+        <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={showSnackbar} onClose={handleSnackbarClose} autoHideDuration={10000}>
+            <Alert onClose={handleSnackbarClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>{snackbarMessage}</Alert>
+        </Snackbar>
+        <ConfirmCancelForm open={showConfirmCancelForm} title={confirmCancelFormTitle} message={confirmCancelFormMessage} onConfirm={handleConfirm} onCancel={handleCancel} />
+      </div>
     </div>
   );
 }

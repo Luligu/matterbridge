@@ -3,7 +3,7 @@
 // Devices.js
 import React, { useEffect, useState, useContext } from 'react';
 import Connecting from './Connecting';
-import { OnlineContext } from './OnlineContext';
+import { OnlineContext } from './OnlineProvider';
 
 function Devices() {
   const [devices, setDevices] = useState([]);

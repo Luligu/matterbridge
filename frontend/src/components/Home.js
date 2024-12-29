@@ -1,20 +1,19 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-console */
 // Home.js
 import React, { useEffect, useState, useRef, useContext } from 'react';
 import { StatusIndicator } from './StatusIndicator';
-import { sendCommandToMatterbridge, theme } from '../App';
+import { sendCommandToMatterbridge } from './sendApiCommand';
 import WebSocketComponent from './WebSocketComponent';
-import { WebSocketContext } from './WebSocketContext';
+import { WebSocketContext } from './WebSocketProvider';
 import Connecting from './Connecting';
-import { OnlineContext } from './OnlineContext';
+import { OnlineContext } from './OnlineProvider';
 import { SystemInfoTable } from './SystemInfoTable';
 import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
 import { ConfirmCancelForm } from './ConfirmCancelForm';
-import { configTheme, configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, RemoveButton } from './configEditor';
+import { configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, RemoveButton, configTheme } from './configEditor';
 
 // @mui
-import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip, IconButton, Button, createTheme, ThemeProvider, Typography, Select, MenuItem, Menu, Box } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip, IconButton, Button, MenuItem, Menu, ThemeProvider } from '@mui/material';
 import { DeleteForever, Download, Add, PublishedWithChanges, Settings, Favorite, Help, Announcement, QrCode2, MoreVert, Unpublished } from '@mui/icons-material';
 
 // @rjsf
@@ -24,9 +23,7 @@ import validator from '@rjsf/validator-ajv8';
 // QRCode
 import { QRCodeSVG} from 'qrcode.react';
 
-
 function Home() {
-  const [wssHost, setWssHost] = useState(null);
   const [qrCode, setQrCode] = useState('');
   const [pairingCode, setPairingCode] = useState('');
   const [systemInfo, setSystemInfo] = useState({});
@@ -68,7 +65,6 @@ function Home() {
     }, 1000);
   };
 
-
   const columns = React.useMemo( () => [
       { Header: 'Name', accessor: 'name' },
       { Header: 'Description', accessor: 'description' },
@@ -89,7 +85,6 @@ function Home() {
       .then(response => response.json())
       .then(data => { 
         // console.log('From home /api/settings:', data); 
-        setWssHost(data.wssHost); 
         if(data.matterbridgeInformation.bridgeMode==='bridge') {
           setQrCode(data.matterbridgeInformation.matterbridgeQrPairingCode); 
           setPairingCode(data.matterbridgeInformation.matterbridgeManualPairingCode);
@@ -240,9 +235,6 @@ function Home() {
   }
   return (
     <div className="MbfPageDiv" style={{ flexDirection: 'row' }}>
-
-    <ThemeProvider theme={theme}>
-
       <Dialog  open={openConfig} onClose={handleCloseConfig} maxWidth='800px' PaperProps={{style: { border: "2px solid #ddd", backgroundColor: '#c4c2c2', boxShadow: '5px 5px 10px #888'}}}>
         <DialogTitle gap={'20px'}>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
@@ -308,9 +300,9 @@ function Home() {
                         {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.error && plugin.enabled ? <Tooltip title="Shows the QRCode or the fabrics"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleSelectQRCode(index)} size="small"><QrCode2 /></IconButton></Tooltip> : <></>}
                         <Tooltip title="Plugin config"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleConfigPlugin(index)} size="small"><Settings /></IconButton></Tooltip>
                         {matterbridgeInfo && !matterbridgeInfo.readOnly &&                        
-                          <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => { handleActionWithConfirmCancel('Remove plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'remove', index); {/* handleRemovePlugin(index);*/} } } size="small"><DeleteForever /></IconButton></Tooltip>
+                          <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => { handleActionWithConfirmCancel('Remove plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'remove', index); } } size="small"><DeleteForever /></IconButton></Tooltip>
                         }  
-                        {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => { handleActionWithConfirmCancel('Disable plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'disable', index); {/* handleEnableDisablePlugin(index);*/}} } size="small"><Unpublished /></IconButton></Tooltip> : <></>}
+                        {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => { handleActionWithConfirmCancel('Disable plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'disable', index); } } size="small"><Unpublished /></IconButton></Tooltip> : <></>}
                         {!plugin.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisablePlugin(index) } size="small"><PublishedWithChanges /></IconButton></Tooltip> : <></>}
                         <Tooltip title="Plugin help"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleHelpPlugin(index)} size="small"><Help /></IconButton></Tooltip>
                         <Tooltip title="Plugin version history"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleChangelogPlugin(index)} size="small"><Announcement /></IconButton></Tooltip>
@@ -374,7 +366,6 @@ function Home() {
         </div>
 
       </div>
-    </ThemeProvider>  
     </div>
   );
 }
@@ -465,7 +456,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, matterbridgeInfo, plugin
         <div className="MbfWindowBodyColumn">
           {matterbridgeInfo.matterbridgeFabricInformations.map((fabric, index) => (
             <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', color: 'var(--div-text-color)',  backgroundColor: 'var(--div-bg-color)', textAlign: 'left', fontSize: '14px' }}>
-                <p className="status-blue" style={{ margin: '0px 10px 10px 10px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
+                <p className="status-blue" style={{ margin: '0px 10px 10px 10px', fontSize: '14px', padding: 0, color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)' }}>Fabric: {fabric.fabricIndex}</p>
                 <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)'}}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
                 {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)'}}>Label: {fabric.label}</p>}
                 <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)'}}>Active sessions: {matterbridgeInfo.matterbridgeSessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length}</p>

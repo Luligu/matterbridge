@@ -3279,7 +3279,7 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridgeFabricInformations;
       this.matterbridgeInformation.matterbridgeSessionInformations = Array.from(this.matterbridgeSessionInformations.values());
       this.matterbridgeInformation.profile = this.profile;
-      const response = { wssHost, ssl: hasParameter('ssl'), systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
+      const response = { systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
       // this.log.debug('Response:', debugStringify(response));
       res.json(response);
     });

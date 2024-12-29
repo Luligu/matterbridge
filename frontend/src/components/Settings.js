@@ -1,36 +1,14 @@
 /* eslint-disable no-console */
 import React, { useState, useEffect, useContext } from 'react';
-import { Snackbar, Alert, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, TextField, Select, MenuItem, Checkbox, ThemeProvider, createTheme } from '@mui/material';
-import { sendCommandToMatterbridge, theme } from '../App';
+import { Snackbar, Alert, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, TextField, Select, MenuItem, Checkbox } from '@mui/material';
+import { sendCommandToMatterbridge } from './sendApiCommand';
 import Connecting from './Connecting';
-import { OnlineContext } from './OnlineContext';
-
-const localTheme = createTheme({
-  components: {
-    MuiTooltip: {
-      defaultProps: {
-        placement: 'top-start', 
-        arrow: true,
-      },
-    },
-    MuiFormLabel: {
-      styleOverrides: {
-        root: {
-          color: 'var(--main-label-color)',
-          '&.Mui-focused': {
-            color: 'var(--main-label-color)', 
-          },
-        },
-      },
-    },
-  }
-});
+import { OnlineContext } from './OnlineProvider';
 
 function Settings() {
-  const { online } = useContext(OnlineContext);
+  const { online, matterbridgeInfo } = useContext(OnlineContext);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
 
   const handleSnackbarClose = () => {
     setShowSnackbar(false);
@@ -45,30 +23,19 @@ function Settings() {
     }, timeout * 1000);
   };
 
-  useEffect(() => {
-    fetch('./api/settings')
-      .then(response => response.json())
-      .then(data => { 
-        setMatterbridgeInfo(data.matterbridgeInformation); 
-      })
-      .catch(error => console.error('Error fetching settings:', error));
-  }, []);
-
   if (!online) {
     return ( <Connecting /> );
   }
   return (
     <div className="MbfPageDiv">
-      <ThemeProvider theme={theme}>
-        <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={showSnackbar} onClose={handleSnackbarClose} autoHideDuration={10000}>
-            <Alert onClose={handleSnackbarClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>{snackbarMessage}</Alert>
-        </Snackbar>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', width: '100%' }}>
-          <MatterbridgeSettings matterbridgeInfo={matterbridgeInfo} showSnackbarMessage={showSnackbarMessage}/>
-          <MatterSettings matterbridgeInfo={matterbridgeInfo} showSnackbarMessage={showSnackbarMessage}/>
-          <MatterbridgeInfo matterbridgeInfo={matterbridgeInfo}/>
-        </div>  
-      </ThemeProvider>
+      <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={showSnackbar} onClose={handleSnackbarClose} autoHideDuration={10000}>
+          <Alert onClose={handleSnackbarClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>{snackbarMessage}</Alert>
+      </Snackbar>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', width: '100%' }}>
+        <MatterbridgeSettings matterbridgeInfo={matterbridgeInfo} showSnackbarMessage={showSnackbarMessage}/>
+        <MatterSettings matterbridgeInfo={matterbridgeInfo} showSnackbarMessage={showSnackbarMessage}/>
+        <MatterbridgeInfo matterbridgeInfo={matterbridgeInfo}/>
+      </div>  
     </div>
   );
 }

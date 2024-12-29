@@ -220,7 +220,7 @@
 /* Header style */
 .header {
   display: flex;
-  flex-wrap: 'wrap';
+  /*flex-wrap: 'wrap';*/
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
@@ -436,13 +436,13 @@ h3 {
     height: 1024px;
   }
 
-  .header {
+  .xxxheader {
     flex-direction: column;
     align-items: start;
     justify-content: start;
   }
 
-  .sub-header {
+  .xxxsub-header {
     align-items: start;
     justify-content: start;
   }

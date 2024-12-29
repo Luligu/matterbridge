@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useRef, useState, useCallback } from 'react';
 
-// TODO: remove wssHost and ssl from WebSocketUse if no issues arise
-function WebSocketUse(wssHost, ssl) {
+function WebSocketUse() {
     const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
     const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');
     const [messages, setMessages] = useState([]);
+    const wssHost = window.location.href.replace(/^http/, 'ws'); // Replace "http" or "https" with "ws" or "wss"
     const ws = useRef(null);
     const retryCountRef = useRef(1);
     const maxMessages = 1000;
@@ -49,10 +48,7 @@ function WebSocketUse(wssHost, ssl) {
         Direct https: WebSocketUse: window.location.host=localhost:8443 window.location.href=https://localhost:8443/ wssHost=wss://localhost:8443
         Ingress: WebSocketUse window.location.host: homeassistant.local:8123 window.location.href: http://homeassistant.local:8123/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/ Connecting to WebSocket: ws://homeassistant.local:8123/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/
         */
-        // Replace "http" or "https" with "ws" or "wss"
-        wssHost = window.location.href.replace(/^http/, 'ws');  
-        // eslint-disable-next-line no-console
-        console.log(`WebSocketUse: window.location.host=${window.location.host} window.location.protocol=${window.location.protocol} window.location.href=${window.location.href} wssHost=${wssHost}`);
+        // console.log(`WebSocketUse: window.location.host=${window.location.host} window.location.protocol=${window.location.protocol} window.location.href=${window.location.href} wssHost=${wssHost}`);
         logMessage('WebSocket', `Connecting to WebSocket: ${wssHost}`);
         ws.current = new WebSocket(wssHost);
         ws.current.onmessage = (event) => {
@@ -137,7 +133,7 @@ function WebSocketUse(wssHost, ssl) {
             // console.error(`WebSocket error connecting to ${wssHost}`, error);
             logMessage('WebSocket', `WebSocket error connecting to ${wssHost}`);
         };
-    }, [wssHost, ssl]);
+    }, [wssHost]);
 
     const attemptReconnect = useCallback(() => {
         connectWebSocket();
