@@ -20,7 +20,7 @@ Matterbridge edge is now released. The default mode is still the normal mode to 
 The frontend has a dark mode that is now the default mode. 
 It is possible to change the mode (Classic or Dark) in Settings, Matterbridge settings.
 
-## [1.6.8-dev.18] - 2024-12-29
+## [1.6.8-dev.19] - 2024-12-30
 
 ### Added
 
@@ -30,7 +30,7 @@ It is possible to change the mode (Classic or Dark) in Settings, Matterbridge se
 - [storage]: Added conversion for childbridge mode. 
 - [package]: Update README.md and README-SERVICE.md to include instructions for using SSL on port 443.
 - [platform]: Added checkEndpointNumbers() to detect endpoint numbers changes.
-- [frontend]: Added dark mode to the frontend. Dark mode is now the default mode. It is possible to change the mode in Settings, Matterbridge settings.
+- [frontend]: Added dark and light mode to the frontend. Dark mode is now the default mode. It is possible to change the mode in Settings, Matterbridge settings.
 - [frontend]: Custom rfjsreact-jsonschema-form for the config editor.
 - [unregister]: Added unregister for Matterbridge edge. 
 - [reset]: Added reset for Matterbridge edge. 
