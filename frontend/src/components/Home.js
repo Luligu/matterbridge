@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 // Home.js
-import React, { useEffect, useState, useRef, useContext } from 'react';
+import React, { useEffect, useState, useRef, useContext, useMemo } from 'react';
 import { StatusIndicator } from './StatusIndicator';
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import WebSocketComponent from './WebSocketComponent';
@@ -10,7 +10,8 @@ import { OnlineContext } from './OnlineProvider';
 import { SystemInfoTable } from './SystemInfoTable';
 import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
 import { ConfirmCancelForm } from './ConfirmCancelForm';
-import { configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, RemoveButton, configTheme } from './configEditor';
+import { configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, RemoveButton, CheckboxWidget, createConfigTheme, DescriptionFieldTemplate, customBaseInputTemplate } from './configEditor';
+import { getCssVariable } from './muiTheme';
 
 // @mui
 import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip, IconButton, Button, MenuItem, Menu, ThemeProvider } from '@mui/material';
@@ -235,14 +236,23 @@ function Home() {
   }
   return (
     <div className="MbfPageDiv" style={{ flexDirection: 'row' }}>
-      <Dialog  open={openConfig} onClose={handleCloseConfig} maxWidth='800px' PaperProps={{style: { border: "2px solid #ddd", backgroundColor: '#c4c2c2', boxShadow: '5px 5px 10px #888'}}}>
+      <Dialog 
+        open={openConfig} 
+        onClose={handleCloseConfig} 
+        maxWidth='800px' 
+        PaperProps={{style: { 
+          color: 'var(--div-text-color)', 
+          backgroundColor: 'var(--div-bg-color)', 
+          border: "2px solid var(--div-border-color)", 
+          borderRadius: 'var(--div-border-radius)', 
+          boxShadow: '2px 2px 5px var(--div-shadow-color)'}}}>
         <DialogTitle gap={'20px'}>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
             <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
             <h3>Matterbridge plugin configuration</h3>
           </div>
         </DialogTitle>
-        <DialogContent>
+        <DialogContent style={{ padding: '0px', margin: '0px' }}>
           <DialogConfigPlugin config={selectedPluginConfig} schema={selectedPluginSchema} handleCloseConfig={handleCloseConfig}/>
         </DialogContent>
       </Dialog>
@@ -514,20 +524,30 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, matterbridgeInfo, plugin
 }
 
 function DialogConfigPlugin( { config, schema, handleCloseConfig } ) {
-  console.log('DialogConfigPlugin:', config, schema);
+  // console.log('DialogConfigPlugin:', config, schema);
 
   const handleSaveChanges = ({ formData }) => {
-    console.log('handleSaveChanges:', formData);
+    // console.log('handleSaveChanges:', formData);
     const config = JSON.stringify(formData, null, 2)
     sendCommandToMatterbridge('saveconfig', formData.name, config);
     // Close the dialog
     handleCloseConfig();
   };    
 
+  const primaryColor = useMemo(() => getCssVariable('--primary-color', '#009a00'), []);
+  const configTheme = useMemo(() => createConfigTheme(primaryColor), [primaryColor]);
+
   return (
     <ThemeProvider theme={configTheme}>
       <div style={{ width: '800px', height: '600px', overflow: 'auto' }}>
-        <Form schema={schema} formData={config} uiSchema={configUiSchema} validator={validator} templates={{ ArrayFieldTemplate, ObjectFieldTemplate, ButtonTemplates: { RemoveButton } }} onSubmit={handleSaveChanges} />
+        <Form 
+          schema={schema} 
+          formData={config} 
+          uiSchema={configUiSchema} 
+          validator={validator} 
+          widgets={{ CheckboxWidget: CheckboxWidget }} 
+          templates={{ ArrayFieldTemplate, ObjectFieldTemplate, DescriptionFieldTemplate, ButtonTemplates: { RemoveButton } }} 
+          onSubmit={handleSaveChanges} />
       </div>
     </ThemeProvider>  
   );

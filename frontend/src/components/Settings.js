@@ -110,7 +110,7 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
         <p className="MbfWindowHeaderText">Matterbridge settings</p>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: '0 0 auto' }}>
-        <FormControl sx={{ gap: '10px', margin: '0px', padding: '10px', width: '430px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>          
+        <FormControl sx={{ gap: '10px', margin: '0px', padding: '10px', width: '400px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>          
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-mode">Matterbridge mode:</FormLabel>
             <RadioGroup row name="mode-buttons-group" value={selectedBridgeMode} onChange={handleChangeBridgeMode}>
@@ -119,7 +119,7 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
             </RadioGroup>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <FormLabel style={{padding: '0px', margin: '0px'}} id="mbdebug-info">Matterbridge logger level:</FormLabel>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="mbdebug-info">Logger level:</FormLabel>
             <Select style={{ height: '30px' }} labelId="select-mblevel" id="mbdebug-level" value={selectedMbLoggerLevel} onChange={handleChangeMbLoggerLevel}>
               <MenuItem value='Debug'>Debug</MenuItem>
               <MenuItem value='Info'>Info</MenuItem>
@@ -133,18 +133,16 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <FormLabel style={{padding: '0px', margin: '0px'}} id="mb-password">Frontend password:</FormLabel>
             <TextField value={password} onChange={handleChangePassword} size="small" id="matterbridgePassword" type="password" autoComplete="current-password" variant="outlined" 
-              style={{ height: '30px', flexGrow: 1 }} InputProps={{
-                style: {
-                  height: '30px',
-                  padding: '0',
-                },
-              }} 
+              fullWidth
+              sx={{ height: '30px', flexGrow: 0 }} 
+              InputProps={{ sx: { height: '30px', padding: '0' } }}
             />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <FormLabel style={{padding: '0px', margin: '0px'}} id="frontend-theme">Frontend theme:</FormLabel>
             <Select style={{ height: '30px' }} labelId="select-theme" id="frontend-theme-select" value={frontendTheme} onChange={handleChangeTheme}>
               <MenuItem value='classic'>Classic</MenuItem>
+              <MenuItem value='light'>Light</MenuItem>
               <MenuItem value='dark'>Dark</MenuItem>
             </Select>
           </div>
@@ -244,9 +242,9 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
         <p className="MbfWindowHeaderText">Matter settings</p>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: '0 0 auto' }}>
-        <FormControl sx={{ gap: '10px', margin: '0px', padding: '10px', width: '390px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
+        <FormControl sx={{ gap: '10px', margin: '0px', padding: '10px', width: '400px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <FormLabel style={{padding: '0px', margin: '0px'}} id="mjdebug-info">Matter logger level:</FormLabel>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="mjdebug-info">Logger level:</FormLabel>
             <Select style={{ height: '30px' }} labelId="select-mjlevel" id="mjdebug-level" value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
               <MenuItem value='Debug'>Debug</MenuItem>
               <MenuItem value='Info'>Info</MenuItem>
@@ -331,7 +329,7 @@ function MatterbridgeInfo({ matterbridgeInfo }) {
         <p className="MbfWindowHeaderText">Matterbridge info</p>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: '0 0 auto' }}>
-        <FormControl sx={{ gap: '10px', margin: '0px', padding: '10px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>          <ReadOnlyTextField value={matterbridgeInfo.matterbridgeVersion} label="Current Version" />
+        <FormControl sx={{ gap: '10px', margin: '0px', padding: '10px', width: '400px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>          <ReadOnlyTextField value={matterbridgeInfo.matterbridgeVersion} label="Current Version" />
           <ReadOnlyTextField value={matterbridgeInfo.matterbridgeLatestVersion} label="Latest Version" />
           <ReadOnlyTextField value={matterbridgeInfo.homeDirectory} label="Home Directory" />
           <ReadOnlyTextField value={matterbridgeInfo.rootDirectory} label="Root Directory" />
