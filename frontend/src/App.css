@@ -125,7 +125,7 @@
   --table-text-color: var(--main-light-color);
   --table-even-bg-color: var(--div-bg-color);
   --table-odd-bg-color: var(--div-bg-color);
-  --table-selected-bg-color: var(--main-grey-color);
+  --table-selected-bg-color: #969696;
 
   --div-bg-color: #e6e6e6;
   --div-text-color: #121212;
