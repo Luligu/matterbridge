@@ -96,20 +96,20 @@
 
 /* Light Mode */
 [frontend-theme="light"] {
-  --main-bg-color: #e0e0e0;
+  --main-bg-color: #fafafa;
   --main-text-color: #212121;
   --main-grey-color: #616161;
   --main-light-color: #363636;
-  --main-icon-color: var(--main-light-color);
+  --main-icon-color: #7a7a7a;
   --main-log-color: var(--main-light-color);
   --main-button-color: #ffffff;
   --main-button-bg-color: var(--primary-color);
   --main-menu-color: var(--main-text-color);
-  --main-menu-bg-color: #d6d6d6;
-  --main-menu-hover-color: #959595;
+  --main-menu-bg-color: #ffffff;
+  --main-menu-hover-color: #e6f4fe;
   --main-label-color: var(--main-grey-color);
 
-  --primary-color: #1976d2;
+  --primary-color: #2196f3;
   --secondary-color: #a58827;
 
   --header-bg-color: var(--div-bg-color);
@@ -125,11 +125,11 @@
   --table-text-color: var(--main-light-color);
   --table-even-bg-color: var(--div-bg-color);
   --table-odd-bg-color: var(--div-bg-color);
-  --table-selected-bg-color: #969696;
+  --table-selected-bg-color: #e6f4fe;
 
-  --div-bg-color: #e6e6e6;
-  --div-text-color: #121212;
-  --div-shadow-color: #818181;
+  --div-bg-color: #ffffff;
+  --div-text-color: #212121;
+  --div-shadow-color: #bfbfbf;
   --div-border-color: var(--div-bg-color);
   --div-border-radius: 5px;
   --div-title-bg-color: var(--div-bg-color);
