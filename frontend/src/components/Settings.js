@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import React, { useState, useEffect, useContext } from 'react';
-import { Snackbar, Alert, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, TextField, Select, MenuItem, Checkbox } from '@mui/material';
+import { Snackbar, Alert, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, TextField, Select, MenuItem, Checkbox, Box } from '@mui/material';
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import Connecting from './Connecting';
 import { OnlineContext } from './OnlineProvider';
@@ -110,7 +110,7 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
         <p className="MbfWindowHeaderText">Matterbridge settings</p>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: '0 0 auto' }}>
-        <FormControl sx={{ gap: '10px', margin: '0px', padding: '10px', width: '400px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>          
+        <Box sx={{ gap: '10px', margin: '0px', padding: '10px', width: '400px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-mode">Matterbridge mode:</FormLabel>
             <RadioGroup row name="mode-buttons-group" value={selectedBridgeMode} onChange={handleChangeBridgeMode}>
@@ -146,7 +146,7 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
               <MenuItem value='dark'>Dark</MenuItem>
             </Select>
           </div>
-        </FormControl>
+        </Box>
       </div>
     </div>
   );
@@ -242,7 +242,7 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
         <p className="MbfWindowHeaderText">Matter settings</p>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: '0 0 auto' }}>
-        <FormControl sx={{ gap: '10px', margin: '0px', padding: '10px', width: '400px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
+        <Box sx={{ gap: '10px', margin: '0px', padding: '10px', width: '400px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <FormLabel style={{padding: '0px', margin: '0px'}} id="mjdebug-info">Logger level:</FormLabel>
             <Select style={{ height: '30px' }} labelId="select-mjlevel" id="mjdebug-level" value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
@@ -315,7 +315,7 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
                 },
               }}/>
           </div>
-        </FormControl>
+        </Box>
       </div>
     </div>
   );
@@ -329,14 +329,14 @@ function MatterbridgeInfo({ matterbridgeInfo }) {
         <p className="MbfWindowHeaderText">Matterbridge info</p>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: '0 0 auto' }}>
-        <FormControl sx={{ gap: '10px', margin: '0px', padding: '10px', width: '400px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>          <ReadOnlyTextField value={matterbridgeInfo.matterbridgeVersion} label="Current Version" />
+        <Box sx={{ gap: '10px', margin: '0px', padding: '10px', width: '400px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>          <ReadOnlyTextField value={matterbridgeInfo.matterbridgeVersion} label="Current Version" />
           <ReadOnlyTextField value={matterbridgeInfo.matterbridgeLatestVersion} label="Latest Version" />
           <ReadOnlyTextField value={matterbridgeInfo.homeDirectory} label="Home Directory" />
           <ReadOnlyTextField value={matterbridgeInfo.rootDirectory} label="Root Directory" />
           <ReadOnlyTextField value={matterbridgeInfo.matterbridgeDirectory} label="Matterbridge Storage Directory" />
           <ReadOnlyTextField value={matterbridgeInfo.matterbridgePluginDirectory} label="Matterbridge Plugin Directory" />
           <ReadOnlyTextField value={matterbridgeInfo.globalModulesDirectory} label="Global Module Directory" />
-        </FormControl>
+        </Box>
       </div>
     </div>
   );
@@ -355,7 +355,7 @@ function ReadOnlyTextField({ value, label }) {
       InputProps={{
         readOnly: true,
         sx: {
-          color: 'var(--main-label-color)',
+          color: 'var(--div-text-color)',
           '&:before': { borderBottomColor: 'var(--main-label-color)' },
           '&:after': { borderBottomColor: 'var(--main-label-color)' }
         }
