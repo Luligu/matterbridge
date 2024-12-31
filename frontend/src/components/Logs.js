@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import React, { useState, useContext } from 'react';
-import WebSocketComponent from './WebSocketComponent';
+import WebSocketLogs from './WebSocketLogs';
 import TextField from '@mui/material/TextField';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -57,7 +57,7 @@ function Logs() {
         </div>
       </div>  
       <div style={{ flex: '1', overflow: 'auto', margin: '0px', padding: '0px' }}>
-        <WebSocketComponent/>
+        <WebSocketLogs/>
       </div>  
     </div>
   );

@@ -11,7 +11,7 @@ const detectTouchscreen = () => {
     return hasTouchscreen;
   };
 
-function WebSocketComponent() {
+function WebSocketLogs() {
     const { messages } = useContext(WebSocketContext);
     const [isHovering, setIsHovering] = useState(false); // State to track mouse hover
 
@@ -40,4 +40,4 @@ function WebSocketComponent() {
     );
 }
 
-export default WebSocketComponent;
+export default WebSocketLogs;

@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef, useContext, useMemo } from 'react';
 import { StatusIndicator } from './StatusIndicator';
 import { sendCommandToMatterbridge } from './sendApiCommand';
-import WebSocketComponent from './WebSocketComponent';
+import WebSocketLogs from './WebSocketLogs';
 import { WebSocketContext } from './WebSocketProvider';
 import Connecting from './Connecting';
 import { OnlineContext } from './OnlineProvider';
@@ -371,7 +371,7 @@ function Home() {
             <p className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>Logs <span style={{ fontWeight: 'normal', fontSize: '12px',marginTop: '2px' }}>Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}"</span></p>
           </div>
           <div style={{ flex: '1 1 auto', margin: '0px', padding: '10px', overflow: 'auto'}}>
-            <WebSocketComponent/>
+            <WebSocketLogs/>
           </div>
         </div>
 
