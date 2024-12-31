@@ -14,10 +14,8 @@ export function OnlineProvider({ children }) {
     fetch('./api/settings')
       .then(response => response.json())
       .then(data => { 
-        // console.log('From OnlineProvider /api/settings:', data); 
         setOnline(true);
         setMatterbridgeInfo(data.matterbridgeInformation);
-        localStorage.setItem('matterbridgeInformation', data.matterbridgeInformation); 
       })
       .catch(error => {
         console.error('From OnlineProvider error fetching settings:', error);

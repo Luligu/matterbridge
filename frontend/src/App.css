@@ -146,20 +146,16 @@
 /* For modern browsers */
 ::-webkit-scrollbar {
   width: 10px;
-  /* Width of the scrollbar */
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--primary-color);
-  /* Dark gray scrollbar thumb */
   border-radius: 5px;
-  /* Rounded corners */
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--primary-color);
-  border-radius: 1px;
-  /* Lighter gray on hover */
+  border-radius: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -171,7 +167,6 @@ html {
   scrollbar-color: var(--primary-color) var(--div-bg-color);
   /* thumb color, track color */
   scrollbar-width: thin;
-  /* Makes the scrollbar thinner */
 }
 
 /* Tooltip style */

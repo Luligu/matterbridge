@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { useEffect, useRef, useState, useCallback } from 'react';
 
 /**
@@ -73,14 +74,12 @@ function WebSocketUse() {
             try {
                 const msg = JSON.parse(event.data);
                 if(msg.id===WS_ID_REFRESH_NEEDED) {
-                    // console.log(`WebSocketUse message: ${msg.id} - ${msg.time} - ${msg.name}: ${msg.message}`);
-                    logMessage('WebSocket', `WebSocket WS_ID_REFRESH_NEEDED message`);
+                    // logMessage('WebSocket', `WebSocket WS_ID_REFRESH_NEEDED message`);
                     console.log(`WebSocket WS_ID_REFRESH_NEEDED message:`, msg);
                     return;
                 }
                 if(msg.id===WS_ID_RESTART_NEEDED) {
-                    // console.log(`WebSocketUse message: ${msg.id} - ${msg.time} - ${msg.name}: ${msg.message}`);
-                    logMessage('WebSocket', `WebSocket WS_ID_RESTART_NEEDED message`);
+                    // logMessage('WebSocket', `WebSocket WS_ID_RESTART_NEEDED message`);
                     console.log(`WebSocket WS_ID_RESTART_NEEDED message:`, msg);
                     return;
                 }
