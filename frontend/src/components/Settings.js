@@ -362,6 +362,7 @@ function ReadOnlyTextField({ value, label }) {
       }} 
       InputLabelProps={{
         sx: {
+          marginTop: '3px',
           color: 'var(--main-label-color)',
           '&.Mui-focused': {
             color: 'var(--main-label-color)',
