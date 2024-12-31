@@ -119,8 +119,8 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
             </RadioGroup>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <FormLabel style={{padding: '0px', margin: '0px'}} id="mbdebug-info">Logger level:</FormLabel>
-            <Select style={{ height: '30px' }} labelId="select-mblevel" id="mbdebug-level" value={selectedMbLoggerLevel} onChange={handleChangeMbLoggerLevel}>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="mblogger-level-label">Logger level:</FormLabel>
+            <Select style={{ height: '30px' }} labelId="mblogger-level-label" id="mblogger-level" value={selectedMbLoggerLevel} onChange={handleChangeMbLoggerLevel}>
               <MenuItem value='Debug'>Debug</MenuItem>
               <MenuItem value='Info'>Info</MenuItem>
               <MenuItem value='Notice'>Notice</MenuItem>
@@ -131,16 +131,16 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
             <FormControlLabel style={{padding: '0px', margin: '0px'}} control={<Checkbox checked={logOnFileMb} onChange={handleLogOnFileMbChange} name="logOnFileMb" />} label="Log on file:" labelPlacement="start"/>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <FormLabel style={{padding: '0px', margin: '0px'}} id="mb-password">Frontend password:</FormLabel>
-            <TextField value={password} onChange={handleChangePassword} size="small" id="matterbridgePassword" type="password" autoComplete="current-password" variant="outlined" 
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="mb-password-label">Frontend password:</FormLabel>
+            <TextField value={password} onChange={handleChangePassword} size="small" id="mb-password" type="password" autoComplete="current-password" variant="outlined" 
               fullWidth
               sx={{ height: '30px', flexGrow: 0 }} 
               InputProps={{ sx: { height: '30px', padding: '0' } }}
             />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <FormLabel style={{padding: '0px', margin: '0px'}} id="frontend-theme">Frontend theme:</FormLabel>
-            <Select style={{ height: '30px' }} labelId="select-theme" id="frontend-theme-select" value={frontendTheme} onChange={handleChangeTheme}>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="frontend-theme-label">Frontend theme:</FormLabel>
+            <Select style={{ height: '30px' }} labelId="frontend-theme-label" id="frontend-theme" value={frontendTheme} onChange={handleChangeTheme}>
               <MenuItem value='classic'>Classic</MenuItem>
               <MenuItem value='light'>Light</MenuItem>
               <MenuItem value='dark'>Dark</MenuItem>
@@ -355,7 +355,7 @@ function ReadOnlyTextField({ value, label }) {
       InputProps={{
         readOnly: true,
         sx: {
-          color: 'var(--div-text-color)',
+          color: 'var(--main-label-color)',
           '&:before': { borderBottomColor: 'var(--main-label-color)' },
           '&:after': { borderBottomColor: 'var(--main-label-color)' }
         }
