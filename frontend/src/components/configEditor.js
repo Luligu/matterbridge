@@ -1,7 +1,7 @@
 
 // @mui
 import { IconButton, createTheme, Typography, Box, Checkbox } from '@mui/material';
-import { DeleteForever, Add, FullscreenExitRounded } from '@mui/icons-material';
+import { DeleteForever, Add } from '@mui/icons-material';
 import { Templates } from '@rjsf/mui';
 
 const { BaseInputTemplate } = Templates; // To get templates from a theme do this
@@ -18,6 +18,9 @@ export function createConfigTheme(primaryColor) {
       action: {
         disabled: 'var(--main-label-color)',
       },
+      text: {
+        disabled: 'var(--main-label-color)',
+      },
     },
     components: {
       MuiTextField: {
@@ -29,6 +32,7 @@ export function createConfigTheme(primaryColor) {
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
+            color: 'var(--div-text-color)',
             backgroundColor: 'var(--div-bg-color)', 
             '& .MuiOutlinedInput-notchedOutline': {
               borderColor: 'var(--main-label-color)',
@@ -39,25 +43,10 @@ export function createConfigTheme(primaryColor) {
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
               borderColor: 'var(--primary-color)',
             },
-            '&.Mui-disabled .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'var(--main-label-color)',
-            },
           },
           input: {
             color: 'var(--div-text-color)',
-            '&.Mui-disabled': {
-              color: 'var(--main-label-color)',
-            },
             padding: '8px', 
-          },
-        },
-      },
-      MuiInputBase: {
-        styleOverrides: {
-          root: {
-            '&.Mui-disabled': {
-              color: 'var(--main-label-color)', // Set the disabled text color at the base level
-            },
           },
         },
       },
@@ -221,7 +210,7 @@ export function CheckboxWidget(props) {
 };
 
 export function DescriptionFieldTemplate(props) {
-  const { description, id } = props;
+  const { description } = props;
   if(!description) return null;
   return (
     <Box sx={{ padding: '0px', margin: '0px', marginTop: '5px' }}>

@@ -10,7 +10,7 @@ import { OnlineContext } from './OnlineProvider';
 import { SystemInfoTable } from './SystemInfoTable';
 import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
 import { ConfirmCancelForm } from './ConfirmCancelForm';
-import { configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, RemoveButton, CheckboxWidget, createConfigTheme, DescriptionFieldTemplate, customBaseInputTemplate } from './configEditor';
+import { configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, RemoveButton, CheckboxWidget, createConfigTheme, DescriptionFieldTemplate } from './configEditor';
 import { getCssVariable } from './muiTheme';
 
 // @mui

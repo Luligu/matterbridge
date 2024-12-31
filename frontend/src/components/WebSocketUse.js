@@ -1,5 +1,23 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 
+/**
+ * Websocket message ID for logging.
+ * @constant {number}
+ */
+export const WS_ID_LOG = 0;
+
+/**
+ * Websocket message ID indicating a refresh is needed.
+ * @constant {number}
+ */
+export const WS_ID_REFRESH_NEEDED = 1;
+
+/**
+ * Websocket message ID indicating a restart is needed.
+ * @constant {number}
+ */
+export const WS_ID_RESTART_NEEDED = 2;
+
 function WebSocketUse() {
     const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
     const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');
@@ -54,7 +72,7 @@ function WebSocketUse() {
         ws.current.onmessage = (event) => {
             try {
                 const msg = JSON.parse(event.data);
-                if(msg.id===undefined || msg.id!==0 || !msg.level || !msg.time || !msg.name || !msg.message) return;
+                if(msg.id===undefined || msg.id!==WS_ID_LOG || !msg.level || !msg.time || !msg.name || !msg.message) return;
                 // console.log(`WebSocketUse message: ${msg.level} - ${msg.time} - ${msg.name}: ${msg.message}`);
                 // console.log(`WebSocketUse logFilterLevel: "${logFilterLevelRef.current}" logFilterSearch: "${logFilterSearchRef.current}"`);
                 const normalLevels = ['debug', 'info', 'notice', 'warn', 'error', 'fatal'];
@@ -148,7 +166,7 @@ function WebSocketUse() {
         };
     }, [connectWebSocket]);
     
-    return { messages, sendMessage, logMessage, setLogFilters };
+    return { messages, sendMessage, logMessage, setLogFilters, ws };
 }
 
 export default WebSocketUse;

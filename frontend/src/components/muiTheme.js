@@ -17,6 +17,12 @@ export function createMuiTheme(primaryColor) {
       primary: {
         main: primaryColor,
       },
+      action: {
+        disabled: 'var(--main-label-color)',
+      },
+      text: {
+        disabled: 'var(--main-label-color)',
+      },
     },
     components: {
       MuiTypography: {

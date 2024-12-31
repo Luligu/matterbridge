@@ -49,14 +49,14 @@ After=network-online.target
 [Service]
 Type=simple
 ExecStart=matterbridge -service
-WorkingDirectory=/home/<USER>/Matterbridge  # Replace <USER> with your system username
+WorkingDirectory=/home/<USER>/Matterbridge  
 StandardOutput=inherit
 StandardError=inherit
 Restart=always
 RestartSec=10s
 TimeoutStopSec=30s
-User=<USER>                                 # Replace <USER> with your system username
-Group=<USER>                                # Replace <USER> with your system username
+User=<USER>                                 
+Group=<USER>
 
 [Install]
 WantedBy=multi-user.target
