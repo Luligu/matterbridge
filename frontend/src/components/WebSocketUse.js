@@ -25,6 +25,8 @@ function WebSocketUse() {
     const [messages, setMessages] = useState([]);
     const wssHost = window.location.href.replace(/^http/, 'ws'); // Replace "http" or "https" with "ws" or "wss"
     const ws = useRef(null);
+    const REFRESH_NEEDED = useRef(0);
+    const RESTART_NEEDED = useRef(0);
     const retryCountRef = useRef(1);
     const maxMessages = 1000;
     const maxRetries = 10;
@@ -74,11 +76,13 @@ function WebSocketUse() {
             try {
                 const msg = JSON.parse(event.data);
                 if(msg.id===WS_ID_REFRESH_NEEDED) {
+                    REFRESH_NEEDED.current ++;
                     // logMessage('WebSocket', `WebSocket WS_ID_REFRESH_NEEDED message`);
                     console.log(`WebSocket WS_ID_REFRESH_NEEDED message:`, msg);
                     return;
                 }
                 if(msg.id===WS_ID_RESTART_NEEDED) {
+                    RESTART_NEEDED.current ++;
                     // logMessage('WebSocket', `WebSocket WS_ID_RESTART_NEEDED message`);
                     console.log(`WebSocket WS_ID_RESTART_NEEDED message:`, msg);
                     return;
@@ -177,7 +181,7 @@ function WebSocketUse() {
         };
     }, [connectWebSocket]);
     
-    return { messages, sendMessage, logMessage, setLogFilters, ws };
+    return { messages, sendMessage, logMessage, setLogFilters, ws, REFRESH_NEEDED, RESTART_NEEDED };
 }
 
 export default WebSocketUse;

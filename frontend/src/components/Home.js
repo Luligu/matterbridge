@@ -112,7 +112,7 @@ function Home() {
     // Clear the interval when the component is unmounted
     return () => clearInterval(intervalId);
 
-  }, []); // The empty array causes this effect to run only once
+  }, []);
 
   // Function to reload settings on demand
   const reloadSettings = () => {
