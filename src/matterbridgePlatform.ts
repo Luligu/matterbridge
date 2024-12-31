@@ -301,7 +301,7 @@ export class MatterbridgePlatform {
   }
 
   // Temporary method to create a MatterbridgeDevice before switching to the edge
-  async createMutableDevice(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false): Promise<MatterbridgeDevice> {
+  async _createMutableDevice(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false): Promise<MatterbridgeDevice> {
     let device: MatterbridgeDevice;
     if (this.matterbridge.edge === true) {
       device = new MatterbridgeEndpoint(definition, options, debug) as unknown as MatterbridgeDevice;
