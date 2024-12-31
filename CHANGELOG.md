@@ -15,12 +15,12 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 ### Breaking Changes
 
-Matterbridge edge is now released. The default mode is still the normal mode to allow the storage conversion. See https://github.com/Luligu/matterbridge/blob/dev/README-EDGE.md to manually switch to edge mode.
+Matterbridge edge is now released. The default mode is still the normal mode to allow the storage conversion. See https://github.com/Luligu/matterbridge/blob/dev/README-EDGE.md to manually switch to edge mode after the conversion is done.
 
-The frontend has a dark mode that is now the default mode. 
-It is possible to change the mode (Classic or Dark) in Settings, Matterbridge settings.
+The frontend has a new dark and a light mode. The dark mode is now the default mode. 
+It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbridge settings.
 
-## [1.6.8-dev.20] - 2024-12-30
+## [1.6.8-dev.20] - 2024-12-31
 
 ### Added
 
