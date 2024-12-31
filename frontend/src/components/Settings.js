@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import React, { useState, useEffect, useContext } from 'react';
 import { Snackbar, Alert, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, TextField, Select, MenuItem, Checkbox, Box } from '@mui/material';
+
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import Connecting from './Connecting';
 import { OnlineContext } from './OnlineProvider';
@@ -29,7 +30,7 @@ function Settings() {
   return (
     <div className="MbfPageDiv">
       <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={showSnackbar} onClose={handleSnackbarClose} autoHideDuration={10000}>
-          <Alert onClose={handleSnackbarClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>{snackbarMessage}</Alert>
+          <Alert onClose={handleSnackbarClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: 'var(--primary-color)' }}>{snackbarMessage}</Alert>
       </Snackbar>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', width: '100%' }}>
         <MatterbridgeSettings matterbridgeInfo={matterbridgeInfo} showSnackbarMessage={showSnackbarMessage}/>

@@ -33,6 +33,7 @@
   --table-text-color: #white;
   --table-even-bg-color: #bdbdbd;
   --table-odd-bg-color: #9e9e9e;
+  --table-hover-bg-color: #5f8c9e;
   --table-selected-bg-color: #5f8c9e;
 
   --div-bg-color: #9e9e9e;
@@ -79,6 +80,7 @@
   --table-text-color: var(--main-light-color);
   --table-even-bg-color: var(--div-bg-color);
   --table-odd-bg-color: var(--div-bg-color);
+  --table-hover-bg-color: var(--main-bg-color);
   --table-selected-bg-color: var(--main-bg-color);
 
   --div-bg-color: #1b1d21;
@@ -125,6 +127,7 @@
   --table-text-color: var(--main-light-color);
   --table-even-bg-color: var(--div-bg-color);
   --table-odd-bg-color: var(--div-bg-color);
+  --table-hover-bg-color: #e6f4fe;
   --table-selected-bg-color: #e6f4fe;
 
   --div-bg-color: #ffffff;
@@ -138,6 +141,37 @@
   background-color: var(--main-bg-color);
   color: var(--main-text-color);
   font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+}
+
+/* For modern browsers */
+::-webkit-scrollbar {
+  width: 10px;
+  /* Width of the scrollbar */
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  /* Dark gray scrollbar thumb */
+  border-radius: 5px;
+  /* Rounded corners */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color);
+  border-radius: 1px;
+  /* Lighter gray on hover */
+}
+
+::-webkit-scrollbar-track {
+  background: var(--div-bg-color);
+}
+
+/* For Firefox (it uses scrollbar-color and scrollbar-width) */
+html {
+  scrollbar-color: var(--primary-color) var(--div-bg-color);
+  /* thumb color, track color */
+  scrollbar-width: thin;
+  /* Makes the scrollbar thinner */
 }
 
 /* Tooltip style */
@@ -336,6 +370,11 @@ tbody td {
   padding-left: 10px;
   text-align: left;
   font-size: 14px;
+}
+
+tbody tr:hover {
+  color: var(--table-text-color);
+  background-color: var(--table-hover-bg-color);
 }
 
 .table-content-even {

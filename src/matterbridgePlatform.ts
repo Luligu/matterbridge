@@ -34,7 +34,11 @@ import { AnsiLogger, CYAN, db, LogLevel, nf, wr } from 'node-ansi-logger';
 import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 
 // Matter
-import { EndpointNumber } from '@matter/main';
+import { AtLeastOne, EndpointNumber } from '@matter/main';
+
+// @project-chip
+import { DeviceTypeDefinition } from '@project-chip/matter.js/device';
+import { MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
 
 // Node.js module
 import path from 'path';
@@ -294,5 +298,14 @@ export class MatterbridgePlatform {
     await context.set('endpointMap', Array.from(endpointMap.entries()));
     this.log.debug('Endpoint numbers check completed.');
     return endpointMap.size;
+  }
+
+  // Temporary method to create a MatterbridgeDevice before switching to the edge
+  async createMutableDevice(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false): Promise<MatterbridgeDevice> {
+    let device: MatterbridgeDevice;
+    if (this.matterbridge.edge === true) {
+      device = new MatterbridgeEndpoint(definition, options, debug) as unknown as MatterbridgeDevice;
+    } else device = new MatterbridgeDevice(definition, undefined, debug);
+    return device;
   }
 }

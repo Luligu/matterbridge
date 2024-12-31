@@ -72,6 +72,18 @@ function WebSocketUse() {
         ws.current.onmessage = (event) => {
             try {
                 const msg = JSON.parse(event.data);
+                if(msg.id===WS_ID_REFRESH_NEEDED) {
+                    // console.log(`WebSocketUse message: ${msg.id} - ${msg.time} - ${msg.name}: ${msg.message}`);
+                    logMessage('WebSocket', `WebSocket WS_ID_REFRESH_NEEDED message`);
+                    console.log(`WebSocket WS_ID_REFRESH_NEEDED message:`, msg);
+                    return;
+                }
+                if(msg.id===WS_ID_RESTART_NEEDED) {
+                    // console.log(`WebSocketUse message: ${msg.id} - ${msg.time} - ${msg.name}: ${msg.message}`);
+                    logMessage('WebSocket', `WebSocket WS_ID_RESTART_NEEDED message`);
+                    console.log(`WebSocket WS_ID_RESTART_NEEDED message:`, msg);
+                    return;
+                }
                 if(msg.id===undefined || msg.id!==WS_ID_LOG || !msg.level || !msg.time || !msg.name || !msg.message) return;
                 // console.log(`WebSocketUse message: ${msg.level} - ${msg.time} - ${msg.name}: ${msg.message}`);
                 // console.log(`WebSocketUse logFilterLevel: "${logFilterLevelRef.current}" logFilterSearch: "${logFilterSearchRef.current}"`);
