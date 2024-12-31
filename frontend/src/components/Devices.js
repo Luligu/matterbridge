@@ -1,8 +1,10 @@
 /* eslint-disable no-console */
 
-// Devices.js
+// React
 import React, { useEffect, useState, useContext } from 'react';
-import Connecting from './Connecting';
+
+// Frontend
+import { Connecting } from './Connecting';
 import { OnlineContext } from './OnlineProvider';
 
 function Devices() {

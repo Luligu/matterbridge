@@ -1,7 +1,8 @@
-
 // @mui
 import { IconButton, createTheme, Typography, Box, Checkbox } from '@mui/material';
 import { DeleteForever, Add } from '@mui/icons-material';
+
+// @rjsf
 import { Templates } from '@rjsf/mui';
 
 const { BaseInputTemplate } = Templates; // To get templates from a theme do this

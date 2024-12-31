@@ -1,6 +1,8 @@
+// React
 import React from 'react';
 import { useTable, useSortBy } from 'react-table';
 
+// Frontend
 import Header from './Header';
 
 function Table({ columns, data }) {

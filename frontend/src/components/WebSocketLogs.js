@@ -1,6 +1,9 @@
 /* global DocumentTouch */
 
+// React
 import React, { useState, useEffect, useRef, useContext } from 'react';
+
+// Frontend
 import { WebSocketContext } from './WebSocketProvider';
 
 const detectTouchscreen = () => {
@@ -11,7 +14,7 @@ const detectTouchscreen = () => {
     return hasTouchscreen;
   };
 
-function WebSocketLogs() {
+export function WebSocketLogs() {
     const { messages } = useContext(WebSocketContext);
     const [isHovering, setIsHovering] = useState(false); // State to track mouse hover
 
@@ -39,5 +42,3 @@ function WebSocketLogs() {
         </div>
     );
 }
-
-export default WebSocketLogs;

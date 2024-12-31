@@ -1,8 +1,15 @@
 /* eslint-disable no-console */
-// App.js
+
 import './App.css';
+
+// React
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+
+// @mui
+import { ThemeProvider } from '@mui/material';
+
+// Frontend
 import Header from './components/Header';
 import Home from './components/Home';
 import Devices from './components/Devices';
@@ -12,9 +19,6 @@ import Logs from './components/Logs';
 import { WebSocketProvider } from './components/WebSocketProvider';
 import { OnlineProvider } from './components/OnlineProvider';
 import { createMuiTheme, getCssVariable } from './components/muiTheme';
-
-// @mui
-import { ThemeProvider } from '@mui/material';
 
 // Create a context for the authentication state
 const AuthContext = createContext();

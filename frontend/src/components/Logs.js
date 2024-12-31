@@ -1,12 +1,16 @@
-/* eslint-disable no-console */
+// React
 import React, { useState, useContext } from 'react';
-import WebSocketLogs from './WebSocketLogs';
+
+// @mui
 import TextField from '@mui/material/TextField';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
+
+// Frontend
+import { WebSocketLogs } from './WebSocketLogs';
 import { WebSocketContext } from './WebSocketProvider';
-import Connecting from './Connecting';
+import { Connecting } from './Connecting';
 import { OnlineContext } from './OnlineProvider';
 
 function Logs() {

@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-console */
- 
+// React
 import React, { createContext, useState, useEffect } from 'react';
 
 export const OnlineContext = createContext();

@@ -1,17 +1,7 @@
 /* eslint-disable no-console */
-// Home.js
+
+// React
 import React, { useEffect, useState, useRef, useContext, useMemo } from 'react';
-import { StatusIndicator } from './StatusIndicator';
-import { sendCommandToMatterbridge } from './sendApiCommand';
-import WebSocketLogs from './WebSocketLogs';
-import { WebSocketContext } from './WebSocketProvider';
-import Connecting from './Connecting';
-import { OnlineContext } from './OnlineProvider';
-import { SystemInfoTable } from './SystemInfoTable';
-import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
-import { ConfirmCancelForm } from './ConfirmCancelForm';
-import { configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, RemoveButton, CheckboxWidget, createConfigTheme, DescriptionFieldTemplate } from './configEditor';
-import { getCssVariable } from './muiTheme';
 
 // @mui
 import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip, IconButton, Button, MenuItem, Menu, ThemeProvider } from '@mui/material';
@@ -23,6 +13,19 @@ import validator from '@rjsf/validator-ajv8';
 
 // QRCode
 import { QRCodeSVG} from 'qrcode.react';
+
+// Frontend
+import { StatusIndicator } from './StatusIndicator';
+import { sendCommandToMatterbridge } from './sendApiCommand';
+import { WebSocketLogs } from './WebSocketLogs';
+import { WebSocketContext } from './WebSocketProvider';
+import { Connecting } from './Connecting';
+import { OnlineContext } from './OnlineProvider';
+import { SystemInfoTable } from './SystemInfoTable';
+import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
+import { ConfirmCancelForm } from './ConfirmCancelForm';
+import { configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, RemoveButton, CheckboxWidget, createConfigTheme, DescriptionFieldTemplate } from './configEditor';
+import { getCssVariable } from './muiTheme';
 
 function Home() {
   const [qrCode, setQrCode] = useState('');

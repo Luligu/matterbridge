@@ -1,9 +1,14 @@
 /* eslint-disable no-console */
-import React, { useState, useEffect, useContext } from 'react';
-import { Snackbar, Alert, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, TextField, Select, MenuItem, Checkbox, Box } from '@mui/material';
 
+// React
+import React, { useState, useEffect, useContext } from 'react';
+
+// @mui
+import { Snackbar, Alert, Radio, RadioGroup, FormControlLabel, FormLabel, TextField, Select, MenuItem, Checkbox, Box } from '@mui/material';
+
+// Frontend
 import { sendCommandToMatterbridge } from './sendApiCommand';
-import Connecting from './Connecting';
+import { Connecting } from './Connecting';
 import { OnlineContext } from './OnlineProvider';
 
 function Settings() {

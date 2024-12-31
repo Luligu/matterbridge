@@ -1,3 +1,4 @@
+// @mui
 import { Tooltip } from '@mui/material';
 
 export function TruncatedText({ value, maxChars }) {

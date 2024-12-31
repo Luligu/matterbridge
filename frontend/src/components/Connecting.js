@@ -1,6 +1,7 @@
+// @mui
 import { CircularProgress, Box } from '@mui/material';
 
-export default function Connecting() {
+export function Connecting() {
   return (
     <div className="main-background" style={{
       display: 'flex',

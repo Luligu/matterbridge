@@ -1,19 +1,22 @@
 /* eslint-disable no-console */
  
-// Header.js
+// React
 import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
+
+// @mui
 import { Tooltip, Snackbar, Alert, Backdrop, CircularProgress, IconButton, Menu, MenuItem, Divider, ListItemIcon, ListItemText } from '@mui/material';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
-import { MoreHoriz } from '@mui/icons-material';
+import MoreHoriz from '@mui/icons-material/MoreHoriz';
 import SaveIcon from '@mui/icons-material/Save';
 import DownloadIcon from '@mui/icons-material/Download';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 
+// Frontend
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import { WebSocketContext } from './WebSocketProvider';
 import { OnlineContext } from './OnlineProvider';
