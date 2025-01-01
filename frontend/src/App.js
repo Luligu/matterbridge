@@ -165,6 +165,7 @@ function LoginForm() {
               onChange={e => setPassword(e.target.value)}
               style={inputStyle}
               placeholder="password"
+              autocomplete="current-password"
             />
             <button type="submit" style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', borderColor: 'var(--div-bg-color)' }}>Log in</button>
           </div>

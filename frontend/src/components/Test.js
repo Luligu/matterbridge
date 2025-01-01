@@ -1,11 +1,43 @@
 // React
-import React from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useTable, useSortBy } from 'react-table';
 
 // Frontend
-import Header from './Header';
+import { WebSocketContext, se } from './WebSocketProvider';
+import { Connecting } from './Connecting';
 
-function Table({ columns, data }) {
+function DeviceTable({ data }) {
+  const columns = React.useMemo(() => [
+    {
+      Header: 'Plugin name',
+      accessor: 'pluginName',
+    },
+    {
+      Header: 'Device type',
+      accessor: 'type',
+    },
+    {
+      Header: 'Endpoint',
+      accessor: 'endpoint',
+    },
+    {
+      Header: 'Name',
+      accessor: 'name',
+    },
+    {
+      Header: 'Serial number',
+      accessor: 'serial',
+    },
+    {
+      Header: 'Unique ID',
+      accessor: 'uniqueId',
+    },
+    {
+      Header: 'Cluster',
+      accessor: 'cluster',
+    },
+  ], []);
+
   const {
     getTableProps,
     getTableBodyProps,
@@ -28,7 +60,7 @@ function Table({ columns, data }) {
                     ? column.isSortedDesc
                       ? ' 🔽'
                       : ' 🔼'
-                    : ''}
+                    : '🔽🔼'}
                 </span>
               </th>
             ))}
@@ -52,53 +84,81 @@ function Table({ columns, data }) {
 }
 
 function Test() {
-  const data = React.useMemo(
-    () => [
-      {
-        col1: 'Hello 1',
-        col2: 'World 1',
-      },
-      {
-        col1: 'React 2',
-        col2: 'Table 2',
-      },
-      {
-        col1: 'React 3',
-        col2: 'Table 3',
-      },
-      {
-        col1: 'React 4',
-        col2: 'Table 4',
-      },
-      // more data...
-    ],
-    []
-  );
+  const { online, sendMessage, logMessage, setLogFilters, addListener, removeListener } = useContext(WebSocketContext);
+  const [settings, setSettings] = useState({});
+  const [plugins, setPlugins] = useState([]);
+  const [devices, setDevices] = useState([]);
 
-  const columns = React.useMemo(
-    () => [
-      {
-        Header: 'Super Header',
-        columns: [
-          {
-            Header: 'Column 1',
-            accessor: 'col1',
-          },
-          {
-            Header: 'Column 2',
-            accessor: 'col2',
-          },
-          // more columns...
-        ],
-      },
-    ],
-    []
-  );
+  const data = React.useMemo(() => [
+    {
+      pluginName: 'Hello 1',
+      name: 'World 1',
+    },
+    {
+      pluginName: 'React 2',
+      name: 'Table 2',
+    },
+    {
+      pluginName: 'React 3',
+      name: 'Table 3',
+    },
+    {
+      pluginName: 'React 4',
+      name: 'Table 4',
+    },
+  ], []);
 
+  const handleWebSocketMessage = (msg) => {
+    console.log('Test received WebSocket Message:', msg);
+    if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
+      if (msg.method === 'refresh_required') {
+        console.log('Test received refresh_required');
+        sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+        sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+        sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+      }
+      if (msg.method === '/api/settings') {
+        console.log('Test received settings:', msg.response);
+        setSettings(msg.response);
+      }
+      if (msg.method === '/api/plugins') {
+        console.log('Test received plugins:', msg.response);
+        setPlugins(msg.response);
+      }
+      if (msg.method === '/api/devices') {
+        console.log('Test received devices:', msg.response);
+        setDevices(msg.response);
+      }
+    }
+  };
+
+  useEffect(() => {
+    addListener(handleWebSocketMessage);
+    console.log('Test added WebSocket listener');
+    return () => {
+      removeListener(handleWebSocketMessage);
+      console.log('Test removed WebSocket listener');
+    };
+  }, [addListener, removeListener]);
+
+  useEffect(() => {
+    console.log('Test sending api requests');
+    sendMessage({ id: 345678, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+    sendMessage({ id: 345678, method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+    sendMessage({ id: 345678, method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+  }, [online, sendMessage]);
+  
+  if (!online) {
+    return ( <Connecting /> );
+  }
   return (
-    <div style={{ flex: 1, flexBasis: 'auto', flexDirection: 'column', height: 'calc(100vh - 80px - 20px)', width: 'calc(100vw - 40px)', gap: '20px' , margin: '0', padding: '20px' }}>
-      <Header />
-      <Table columns={columns} data={data} />
+    <div className="MbfPageDiv">
+      <div className="MbfWindowBodyColumn" style={{ margin: '0', padding: '0', gap: '0' }}>
+        <div className="MbfWindowHeader">
+          <p className="MbfWindowHeaderText">Registered devices</p>
+        </div>
+        <DeviceTable data={devices} />
+      </div>
     </div>
   );
 }

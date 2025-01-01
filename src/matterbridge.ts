@@ -3003,7 +3003,7 @@ export class Matterbridge extends EventEmitter {
    * @param {string} name - The logger name of the message
    * @param {string} message - The content of the message.
    */
-  private wssSendMessage(level: string, time: string, name: string, message: string) {
+  protected wssSendMessage(level: string, time: string, name: string, message: string) {
     if (!level || !time || !name || !message) return;
     // Remove ANSI escape codes from the message
     // eslint-disable-next-line no-control-regex
@@ -3046,12 +3046,12 @@ export class Matterbridge extends EventEmitter {
    * Sends a need to refresh WebSocket message to all connected clients.
    *
    */
-  private wssSendRefreshRequired() {
+  protected wssSendRefreshRequired() {
     this.matterbridgeInformation.refreshRequired = true;
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ id: WS_ID_REFRESH_NEEDED, src: 'Matterbridge', dst: 'Matterbridge', method: 'refresh_required', params: {} }));
+        client.send(JSON.stringify({ id: WS_ID_REFRESH_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', params: {} }));
       }
     });
   }
@@ -3060,12 +3060,12 @@ export class Matterbridge extends EventEmitter {
    * Sends a need to restart WebSocket message to all connected clients.
    *
    */
-  private wssSendRestartRequired() {
+  protected wssSendRestartRequired() {
     this.matterbridgeInformation.restartRequired = true;
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ id: WS_ID_RESTART_NEEDED, src: 'Matterbridge', dst: 'Matterbridge', method: 'restart_required', params: {} }));
+        client.send(JSON.stringify({ id: WS_ID_RESTART_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', params: {} }));
       }
     });
   }

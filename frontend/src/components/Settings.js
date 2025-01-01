@@ -3,18 +3,29 @@
 // React
 import React, { useState, useEffect, useContext } from 'react';
 
-// @mui
-import { Snackbar, Alert, Radio, RadioGroup, FormControlLabel, FormLabel, TextField, Select, MenuItem, Checkbox, Box } from '@mui/material';
+// @mui/material
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormLabel from '@mui/material/FormLabel';
+import TextField from '@mui/material/TextField';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import Checkbox from '@mui/material/Checkbox';
+import Box from '@mui/material/Box';
 
 // Frontend
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import { Connecting } from './Connecting';
-import { OnlineContext } from './OnlineProvider';
+import { WebSocketContext } from './WebSocketProvider';
 
 function Settings() {
-  const { online, matterbridgeInfo } = useContext(OnlineContext);
+  const { online, addListener, removeListener, sendMessage } = useContext(WebSocketContext);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
 
   const handleSnackbarClose = () => {
     setShowSnackbar(false);
@@ -28,6 +39,33 @@ function Settings() {
       setShowSnackbar(false);
     }, timeout * 1000);
   };
+
+  const handleWebSocketMessage = (msg) => {
+    if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
+      if (msg.method === 'refresh_required') {
+        console.log('Settings received refresh_required');
+        sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+      }
+      if (msg.method === '/api/settings') {
+        console.log('Settings received /api/settings:', msg.response);
+        setMatterbridgeInfo(msg.response.matterbridgeInformation);
+      }
+    }
+  };
+
+  useEffect(() => {
+    addListener(handleWebSocketMessage);
+    console.log('Settings added WebSocket listener');
+    return () => {
+      removeListener(handleWebSocketMessage);
+      console.log('Settings removed WebSocket listener');
+    };
+  }, [addListener, removeListener]);
+
+  useEffect(() => {
+    console.log('Settings received online');
+    sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+  }, [online]);
 
   if (!online) {
     return ( <Connecting /> );

@@ -5,7 +5,7 @@ import React, { useEffect, useState, useContext } from 'react';
 
 // Frontend
 import { Connecting } from './Connecting';
-import { OnlineContext } from './OnlineProvider';
+import { WebSocketContext } from './WebSocketProvider';
 
 function Devices() {
   const [devices, setDevices] = useState([]);
@@ -15,7 +15,7 @@ function Devices() {
   const [selectedPluginName, setSelectedPluginName] = useState('none'); // -1 no selection, 0 or greater for selected row
   const [selectedDeviceEndpoint, setSelectedDeviceEndpoint] = useState('none'); // -1 no selection, 0 or greater for selected row
   const [clusters, setClusters] = useState([]);
-  const { online } = useContext(OnlineContext);
+  const { online } = useContext(WebSocketContext);
 
   useEffect(() => {
     // Fetch Devices
@@ -23,7 +23,6 @@ function Devices() {
       .then(response => response.json())
       .then(data => setDevices(data))
       .catch(error => console.error('Error fetching devices:', error));
-
   }, []);
 
   useEffect(() => {
@@ -32,7 +31,6 @@ function Devices() {
       .then(response => response.json())
       .then(data => setClusters(data))
       .catch(error => console.error('Error fetching devices_clusters:', error));
-
   }, [selectedDeviceEndpoint, selectedPluginName]);
   
   const handleSort = (column) => {

@@ -319,6 +319,7 @@ export class MatterbridgeEdge extends Matterbridge {
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
         sanitizeFabrics(serverNode.state.commissioning.fabrics);
       }
+      this.wssSendRefreshRequired();
     });
 
     /** This event is triggered when the device went offline. it is not longer discoverable or connectable in the network. */
@@ -332,6 +333,7 @@ export class MatterbridgeEdge extends Matterbridge {
         this.matterbridgePaired = false;
         this.matterbridgeConnected = false;
       }
+      this.wssSendRefreshRequired();
     });
 
     /**
@@ -353,6 +355,7 @@ export class MatterbridgeEdge extends Matterbridge {
       }
       this.log.notice(`Commissioned fabric index ${fabricIndex} ${action} on server node for ${storeId}: ${debugStringify(serverNode.state.commissioning.fabrics[fabricIndex])}`);
       sanitizeFabrics(serverNode.state.commissioning.fabrics);
+      this.wssSendRefreshRequired();
     });
 
     const sanitizeSessions = (sessions: SessionsBehavior.Session[]) => {
@@ -372,6 +375,7 @@ export class MatterbridgeEdge extends Matterbridge {
           plugin.sessionInformations = sanitizedSessions;
         }
       }
+      this.wssSendRefreshRequired();
     };
 
     /**

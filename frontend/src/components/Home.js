@@ -3,9 +3,32 @@
 // React
 import React, { useEffect, useState, useRef, useContext, useMemo } from 'react';
 
-// @mui
-import { Dialog, DialogTitle, DialogContent, TextField, Alert, Snackbar, Tooltip, IconButton, Button, MenuItem, Menu, ThemeProvider } from '@mui/material';
-import { DeleteForever, Download, Add, PublishedWithChanges, Settings, Favorite, Help, Announcement, QrCode2, MoreVert, Unpublished } from '@mui/icons-material';
+// @mui/material
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import TextField from '@mui/material/TextField';
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
+import Tooltip from '@mui/material/Tooltip';
+import IconButton from '@mui/material/IconButton';
+import Button from '@mui/material/Button';
+import MenuItem from '@mui/material/MenuItem';
+import Menu from '@mui/material/Menu';
+import { ThemeProvider } from '@mui/material';
+
+// @mui/icons-material
+import DeleteForever from '@mui/icons-material/DeleteForever';
+import Download from '@mui/icons-material/Download';
+import Add from '@mui/icons-material/Add';
+import PublishedWithChanges from '@mui/icons-material/PublishedWithChanges';
+import Settings from '@mui/icons-material/Settings';
+import Favorite from '@mui/icons-material/Favorite';
+import Help from '@mui/icons-material/Help';
+import Announcement from '@mui/icons-material/Announcement';
+import QrCode2 from '@mui/icons-material/QrCode2';
+import MoreVert from '@mui/icons-material/MoreVert';
+import Unpublished from '@mui/icons-material/Unpublished';
 
 // @rjsf
 import Form from '@rjsf/mui';
@@ -20,7 +43,6 @@ import { sendCommandToMatterbridge } from './sendApiCommand';
 import { WebSocketLogs } from './WebSocketLogs';
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
-import { OnlineContext } from './OnlineProvider';
 import { SystemInfoTable } from './SystemInfoTable';
 import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
 import { ConfirmCancelForm } from './ConfirmCancelForm';
@@ -39,11 +61,10 @@ function Home() {
   const [selectedPluginSchema, setSelectedPluginSchema] = useState({}); 
   const [openSnack, setOpenSnack] = useState(false);
   const [openConfig, setOpenConfig] = useState(false);
-  const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
-  const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');
+  const [logFilterLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
+  const [logFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');
 
-  const { logMessage } = useContext(WebSocketContext);
-  const { online } = useContext(OnlineContext);
+  const { logMessage, addListener, removeListener, online, sendMessage } = useContext(WebSocketContext);
 
   const refAddRemove = useRef(null);
   const refRegisteredPlugins = useRef(null);
@@ -82,45 +103,11 @@ function Home() {
     []
   );
 
-  const fetchSettings = () => {
-    // console.log('From home fetchSettings');
-
-    fetch('./api/settings')
-      .then(response => response.json())
-      .then(data => { 
-        // console.log('From home /api/settings:', data); 
-        if(data.matterbridgeInformation.bridgeMode==='bridge') {
-          setQrCode(data.matterbridgeInformation.matterbridgeQrPairingCode); 
-          setPairingCode(data.matterbridgeInformation.matterbridgeManualPairingCode);
-        }
-        setSystemInfo(data.systemInformation);
-        setMatterbridgeInfo(data.matterbridgeInformation);
-      })
-      .catch(error => console.error('Error fetching settings:', error));
-
-    fetch('./api/plugins')
-      .then(response => response.json())
-      .then(data => { 
-        // console.log('From home /api/plugins:', data)
-        setPlugins(data); 
-      })
-      .catch(error => console.error('Error fetching plugins:', error));
-  };  
-
-  useEffect(() => {
-    // Call fetchSettings immediately and then every 1 minute
-    fetchSettings();
-    const intervalId = setInterval(fetchSettings, 1 * 60 * 1000);
-  
-    // Clear the interval when the component is unmounted
-    return () => clearInterval(intervalId);
-
-  }, []);
-
   // Function to reload settings on demand
   const reloadSettings = () => {
-    fetchSettings();
-    // console.log('reloadSettings');
+    console.log('reloadSettings');
+    sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+    sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
   };
 
   const handleSelectQRCode = (row) => {
@@ -234,6 +221,43 @@ function Home() {
     setShowConfirmCancelForm(false);
   };
 
+  const handleWebSocketMessage = (msg) => {
+    // console.log('Home Received WebSocket Message:', msg);
+    if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
+      if (msg.method === 'refresh_required') {
+        console.log('Home received refresh_required');
+        reloadSettings();
+      }
+      if (msg.method === '/api/settings') {
+        console.log('Home received settings:', msg.response);
+        if(msg.response.matterbridgeInformation.bridgeMode==='bridge') {
+          setQrCode(msg.response.matterbridgeInformation.matterbridgeQrPairingCode); 
+          setPairingCode(msg.response.matterbridgeInformation.matterbridgeManualPairingCode);
+        }
+        setSystemInfo(msg.response.systemInformation);
+        setMatterbridgeInfo(msg.response.matterbridgeInformation);
+      }
+      if (msg.method === '/api/plugins') {
+        console.log('Home received plugins:', msg.response);
+        setPlugins(msg.response);
+      }
+    }
+  };
+
+  useEffect(() => {
+    addListener(handleWebSocketMessage);
+    console.log('Home added WebSocket listener');
+    return () => {
+      removeListener(handleWebSocketMessage);
+      console.log('Home removed WebSocket listener');
+    };
+  }, [addListener, removeListener]);
+
+  useEffect(() => {
+    console.log('Home received online');
+    reloadSettings();
+  }, [online]);
+
   if (!online) {
     return ( <Connecting /> );
   }
@@ -328,7 +352,7 @@ function Home() {
                       <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', gap: '5px' }}>
 
                         <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={openSnack} onClose={handleSnackClose} autoHideDuration={10000}>
-                          <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart needed!</Alert>
+                          <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: 'var(--primary-color)' }}>Restart needed!</Alert>
                         </Snackbar>
                         {plugin.error ? 
                           <>
@@ -428,7 +452,7 @@ function AddRemovePlugins({ reloadSettings }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '10px', gap: '20px' }}>
       <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={open} onClose={handleSnackClose} autoHideDuration={5000}>
-        <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: '#4CAF50' }}>Restart required</Alert>
+        <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: 'var(--primary-color)' }}>Restart required</Alert>
       </Snackbar>
       <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth/>
       <IconButton onClick={handleClickVertical}>

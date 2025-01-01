@@ -11,13 +11,11 @@ import Select from '@mui/material/Select';
 import { WebSocketLogs } from './WebSocketLogs';
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
-import { OnlineContext } from './OnlineProvider';
 
 function Logs() {
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');
-  const { setLogFilters } = useContext(WebSocketContext);
-  const { online } = useContext(OnlineContext);
+  const { setLogFilters, online } = useContext(WebSocketContext);
 
   const handleChangeLevel = (event) => {
     setLogFilterLevel(event.target.value);

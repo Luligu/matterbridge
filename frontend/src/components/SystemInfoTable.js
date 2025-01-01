@@ -24,9 +24,9 @@ export function SystemInfoTable({ systemInfo, compact }) {
   }
 
   return (
-    <div className="MbfWindowDiv" style={{ minWidth: '302px' }}>
-      <div className="MbfWindowDivTable">
-        <table>
+    <div className="MbfWindowDiv" style={{ minWidth: '302px', overflow: 'hidden' }}>
+      <div className="MbfWindowDivTable" style={{ overflow: 'hidden' }}>
+        <table >
           <thead>
             <tr>
               <th colSpan="2">System Information</th>

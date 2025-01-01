@@ -1,6 +1,13 @@
-// @mui
-import { IconButton, createTheme, Typography, Box, Checkbox } from '@mui/material';
-import { DeleteForever, Add } from '@mui/icons-material';
+// @mui/material
+import IconButton from '@mui/material/IconButton';
+import createTheme from '@mui/material/styles/createTheme';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Checkbox from '@mui/material/Checkbox';
+
+// @mui/icons-material
+import DeleteForever from '@mui/icons-material/DeleteForever';
+import Add from '@mui/icons-material/Add';
 
 // @rjsf
 import { Templates } from '@rjsf/mui';

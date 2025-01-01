@@ -68,54 +68,54 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
     data = JSON.parse(message.toString());
     if (!isValidNumber(data.id) || !isValidString(data.dst) || !isValidString(data.src) || !isValidString(data.method) || !isValidObject(data.params) || data.dst !== 'Matterbridge') {
       this.log.error(`Invalid message from websocket client: ${debugStringify(data)}`);
-      client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: 'Invalid message' }));
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid message' }));
       return;
     }
     this.log.debug(`Received message from websocket client: ${debugStringify(data)}`);
 
     if (data.method === 'ping') {
-      client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response: 'pong' }));
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: 'pong' }));
       return;
     } else if (data.method === '/api/login') {
       if (!this.nodeContext) {
         this.log.error('Login nodeContext not found');
-        client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: 'Internal error: nodeContext not found' }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Internal error: nodeContext not found' }));
         return;
       }
       const storedPassword = await this.nodeContext.get('password', '');
       if (storedPassword === '' || storedPassword === data.params.password) {
         this.log.debug('Login password valid');
-        client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response: { valid: true } }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: { valid: true } }));
         return;
       } else {
         this.log.debug('Error wrong password');
-        client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: 'Wrong password' }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong password' }));
         return;
       }
     } else if (data.method === '/api/install') {
       if (!isValidString(data.params.packageName, 10)) {
-        client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/install' }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/install' }));
         return;
       }
       this.spawnCommand('npm', ['install', '-g', data.params.packageName, '--omit=dev', '--verbose'])
         .then((response) => {
-          client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
         })
         .catch((error) => {
-          client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error }));
         });
       return;
     } else if (data.method === '/api/uninstall') {
       if (!isValidString(data.params.packageName, 10)) {
-        client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/uninstall' }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/uninstall' }));
         return;
       }
       this.spawnCommand('npm', ['uninstall', '-g', data.params.packageName, '--verbose'])
         .then((response) => {
-          client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
         })
         .catch((error) => {
-          client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error }));
         });
       return;
     } else if (data.method === '/api/restart') {
@@ -143,11 +143,11 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
       this.matterbridgeInformation.matterbridgeSessionInformations = Array.from(this.matterbridgeSessionInformations.values());
       this.matterbridgeInformation.profile = this.profile;
       const response = { systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
-      client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response }));
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
       return;
     } else if (data.method === '/api/plugins') {
       const response = await this.getBaseRegisteredPlugins();
-      client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response }));
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
       return;
     } else if (data.method === '/api/devices') {
       const devices: ApiDevices[] = [];
@@ -174,11 +174,11 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
           cluster: cluster,
         });
       });
-      client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response: devices }));
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: devices }));
       return;
     } else {
       this.log.error(`Invalid method from websocket client: ${debugStringify(data)}`);
-      client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: 'Invalid method' }));
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid method' }));
       return;
     }
   } catch (error) {
