@@ -2,63 +2,113 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useTable, useSortBy } from 'react-table';
 
+// @mui/material
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+
+// @mui/icons-material
+import SettingsIcon from '@mui/icons-material/Settings';
+
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 
-function DevicesTable({ data, setPlugin, setEndpoint }) {
+const devicesColumns = [
+  {
+    Header: 'Plugin name',
+    accessor: 'pluginName',
+  },
+  {
+    Header: 'Device type',
+    accessor: 'type',
+  },
+  {
+    Header: 'Endpoint',
+    accessor: 'endpoint',
+  },
+  {
+    Header: 'Name',
+    accessor: 'name',
+  },
+  {
+    Header: 'Serial number',
+    accessor: 'serial',
+  },
+  {
+    Header: 'Unique ID',
+    accessor: 'uniqueId',
+  },
+  {
+    Header: 'Cluster',
+    accessor: 'cluster',
+  },
+];
+
+const clustersColumns = [
+  {
+    Header: 'Endpoint',
+    accessor: 'endpoint',
+  },
+  {
+    Header: 'Cluster Name',
+    accessor: 'clusterName',
+  },
+  {
+    Header: 'Cluster ID',
+    accessor: 'clusterId',
+  },
+  {
+    Header: 'Attribute Name',
+    accessor: 'attributeName',
+  },
+  {
+    Header: 'Attribute ID',
+    accessor: 'attributeId',
+  },
+  {
+    Header: 'Attribute Value',
+    accessor: 'attributeValue',
+  },
+];
+
+function DevicesTable({ data, columnVisibility, setPlugin, setEndpoint, setDeviceName }) {
   const [selectedDeviceIndex, setSelectedDeviceIndex] = useState(null);
 
-  const columns = React.useMemo(() => [
-    {
-      Header: 'Plugin name',
-      accessor: 'pluginName',
-    },
-    {
-      Header: 'Device type',
-      accessor: 'type',
-    },
-    {
-      Header: 'Endpoint',
-      accessor: 'endpoint',
-    },
-    {
-      Header: 'Name',
-      accessor: 'name',
-    },
-    {
-      Header: 'Serial number',
-      accessor: 'serial',
-    },
-    {
-      Header: 'Unique ID',
-      accessor: 'uniqueId',
-    },
-    {
-      Header: 'Cluster',
-      accessor: 'cluster',
-    },
-  ], []);
-
+  // Filter columns based on visibility
+  const visibleColumns = React.useMemo(
+    () => devicesColumns.filter(column => columnVisibility[column.accessor]),
+    [columnVisibility]
+  );
+  
   const {
     getTableProps,
     getTableBodyProps,
     headerGroups,
     rows,
     prepareRow,
-  } = useTable({ columns, data }, useSortBy);
+  } = useTable({ columns: visibleColumns, data }, useSortBy);
 
   const handleDeviceClick = (index) => {
     if(index === selectedDeviceIndex) {
       setSelectedDeviceIndex(null);
       setPlugin(null);
       setEndpoint(null);
+      setDeviceName(null);
       console.log('Device unclicked:', index, 'selectedDeviceIndex:', selectedDeviceIndex);
       return;
     }
     setSelectedDeviceIndex(index);
     setPlugin(data[index].pluginName);
     setEndpoint(data[index].endpoint);
+    setDeviceName(data[index].name);
     console.log('Device clicked:', index, 'selectedDeviceIndex:', selectedDeviceIndex, 'pluginName:', data[index].pluginName, 'endpoint:', data[index].endpoint);
   };
 
@@ -109,40 +159,13 @@ function DevicesTable({ data, setPlugin, setEndpoint }) {
 }
 
 function ClustersTable({ data }) {
-  const columns = React.useMemo(() => [
-    {
-      Header: 'Endpoint',
-      accessor: 'endpoint',
-    },
-    {
-      Header: 'Cluster Name',
-      accessor: 'clusterName',
-    },
-    {
-      Header: 'Cluster ID',
-      accessor: 'clusterId',
-    },
-    {
-      Header: 'Attribute Name',
-      accessor: 'attributeName',
-    },
-    {
-      Header: 'Attribute ID',
-      accessor: 'attributeId',
-    },
-    {
-      Header: 'Attribute Value',
-      accessor: 'attributeValue',
-    },
-  ], []);
-
   const {
     getTableProps,
     getTableBodyProps,
     headerGroups,
     rows,
     prepareRow,
-  } = useTable({ columns, data }, useSortBy);
+  } = useTable({ columns: clustersColumns, data }, useSortBy);
 
   return (
     <table {...getTableProps()} style={{ margin: '-1px' }}>
@@ -183,7 +206,18 @@ function Devices() {
   const [clusters, setClusters] = useState([]);
   const [plugin, setPlugin] = useState(null);
   const [endpoint, setEndpoint] = useState(null);
+  const [deviceName, setDeviceName] = useState(null);
   const [subEndpointsCount, setSubEndpointsCount] = useState(0);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [columnVisibility, setColumnVisibility] = useState({
+    pluginName: true,
+    type: true,
+    endpoint: true,
+    name: true,
+    serial: true,
+    uniqueId: false,
+    cluster: true,
+  });
 
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
@@ -237,17 +271,76 @@ function Devices() {
     }
   }, [plugin, endpoint, sendMessage]);
 
+  const handleDialogToggle = () => {
+    setDialogOpen(!dialogOpen);
+  };
+
+  const handleColumnVisibilityChange = (accessor) => {
+    setColumnVisibility((prev) => {
+      const newVisibility = {
+        ...prev,
+        [accessor]: !prev[accessor],
+      };
+      localStorage.setItem('columnVisibility', JSON.stringify(newVisibility));
+      return newVisibility;
+    });
+  };
+
+  useEffect(() => {
+    const storedVisibility = localStorage.getItem('columnVisibility');
+    if (storedVisibility) {
+      setColumnVisibility(JSON.parse(storedVisibility));
+    }
+  }, []);
+
   if (!online) {
     return ( <Connecting /> );
   }
   return (
     <div className="MbfPageDiv">
+
+      <Dialog open={dialogOpen} onClose={handleDialogToggle} 
+        PaperProps={{style: { 
+          color: 'var(--div-text-color)', 
+          backgroundColor: 'var(--div-bg-color)', 
+          border: "2px solid var(--div-border-color)", 
+          borderRadius: 'var(--div-border-radius)', 
+          boxShadow: '2px 2px 5px var(--div-shadow-color)'}}}>
+        <DialogTitle>Configure Columns</DialogTitle>
+        <DialogContent>
+          <FormGroup>
+            {devicesColumns.filter(column => column.accessor !== 'pluginName' && column.accessor !== 'name').map((column) => (
+              <FormControlLabel
+                key={column.accessor}
+                control={
+                  <Checkbox
+                    checked={columnVisibility[column.accessor]}
+                    onChange={() => handleColumnVisibilityChange(column.accessor)}
+                  />
+                }
+                label={column.Header}
+              />
+            ))}
+          </FormGroup>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogToggle}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
       <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', maxHeight: `${plugin && endpoint ? '50%' : '100%'}`, width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
         <div className="MbfWindowHeader">
-          <p className="MbfWindowHeaderText">Registered devices</p>
+          <div className="MbfWindowHeaderText" style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
+            <p style={{margin: '0px', padding: '0px'}}>Registered devices</p>
+            <IconButton onClick={handleDialogToggle} aria-label="Configure Columns" style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}}>
+              <Tooltip title="Configure columns">
+                <SettingsIcon style={{ color: 'var(--header-text-color)', fontSize: '19px' }}/>
+              </Tooltip>
+            </IconButton>
+          </div>
         </div>
         <div className="MbfWindowBodyColumn" style={{ margin: '0', padding: '0', gap: '0' }}>
-          <DevicesTable data={devices} setPlugin={setPlugin} setEndpoint={setEndpoint}/>
+          <DevicesTable data={devices} columnVisibility={columnVisibility} setPlugin={setPlugin} setEndpoint={setEndpoint} setDeviceName={setDeviceName}/>
         </div>
         <div className="MbfWindowFooter" style={{height: '', padding: '0', borderTop: '1px solid var(--table-border-color)'}}>
           <p className="MbfWindowFooterText" style={{paddingLeft: '10px', fontWeight: 'normal', textAlign: 'left'}}>Total devices: {devices.length.toString()}</p>
@@ -256,7 +349,7 @@ function Devices() {
       {plugin && endpoint && (
         <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', height: '50%', maxHeight: '50%', width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
           <div className="MbfWindowHeader">
-            <p className="MbfWindowHeaderText">Clusters for endpoint {endpoint}</p>
+            <p className="MbfWindowHeaderText">Clusters for device "{deviceName}" on endpoint {endpoint}</p>
           </div>
           <div className="MbfWindowBodyColumn" style={{ margin: '0', padding: '0', gap: '0' }}>
             <ClustersTable data={clusters}/>
