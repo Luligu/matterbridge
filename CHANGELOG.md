@@ -34,6 +34,7 @@ It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbr
 - [frontend]: Added dark and light mode to the frontend. Dark mode is now the default mode. It is possible to change the mode in Settings, Matterbridge settings.
 - [frontend]: Custom rfjsreact-jsonschema-form for the config editor.
 - [frontend]: Added columns configuration to Devices.
+- [frontend]: Added clear logs button in Logs.
 - [unregister]: Added unregister for Matterbridge edge. 
 - [reset]: Added reset for Matterbridge edge. 
 - [factoryreset]: Added factoryreset for Matterbridge edge. 
