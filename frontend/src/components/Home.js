@@ -221,37 +221,37 @@ function Home() {
     setShowConfirmCancelForm(false);
   };
 
-  const handleWebSocketMessage = (msg) => {
-    // console.log('Home Received WebSocket Message:', msg);
-    if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-      if (msg.method === 'refresh_required') {
-        console.log('Home received refresh_required');
-        reloadSettings();
-      }
-      if (msg.method === '/api/settings') {
-        console.log('Home received settings:', msg.response);
-        if(msg.response.matterbridgeInformation.bridgeMode==='bridge') {
-          setQrCode(msg.response.matterbridgeInformation.matterbridgeQrPairingCode); 
-          setPairingCode(msg.response.matterbridgeInformation.matterbridgeManualPairingCode);
-        }
-        setSystemInfo(msg.response.systemInformation);
-        setMatterbridgeInfo(msg.response.matterbridgeInformation);
-      }
-      if (msg.method === '/api/plugins') {
-        console.log('Home received plugins:', msg.response);
-        setPlugins(msg.response);
-      }
-    }
-  };
-
   useEffect(() => {
+    const handleWebSocketMessage = (msg) => {
+      // console.log('Home Received WebSocket Message:', msg);
+      if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
+        if (msg.method === 'refresh_required') {
+          console.log('Home received refresh_required');
+          reloadSettings();
+        }
+        if (msg.method === '/api/settings') {
+          console.log('Home received settings:', msg.response);
+          if(msg.response.matterbridgeInformation.bridgeMode==='bridge') {
+            setQrCode(msg.response.matterbridgeInformation.matterbridgeQrPairingCode); 
+            setPairingCode(msg.response.matterbridgeInformation.matterbridgeManualPairingCode);
+          }
+          setSystemInfo(msg.response.systemInformation);
+          setMatterbridgeInfo(msg.response.matterbridgeInformation);
+        }
+        if (msg.method === '/api/plugins') {
+          console.log('Home received plugins:', msg.response);
+          setPlugins(msg.response);
+        }
+      }
+    };
+
     addListener(handleWebSocketMessage);
     console.log('Home added WebSocket listener');
     return () => {
       removeListener(handleWebSocketMessage);
       console.log('Home removed WebSocket listener');
     };
-  }, [addListener, removeListener]);
+  }, [addListener, removeListener, sendMessage]);
 
   useEffect(() => {
     console.log('Home received online');
@@ -395,7 +395,12 @@ function Home() {
 
         <div className="MbfWindowDiv" style={{flex: '1 1 auto', width: '100%', overflow: 'hidden'}}>
           <div className="MbfWindowHeader" style={{ flexShrink: 0 }}>
-            <p className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>Logs <span style={{ fontWeight: 'normal', fontSize: '12px',marginTop: '2px' }}>Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}"</span></p>
+            <div className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>
+              Logs 
+              <span style={{ fontWeight: 'normal', fontSize: '12px', marginTop: '2px' }}>
+                Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}"
+              </span>
+            </div>
           </div>
           <div style={{ flex: '1 1 auto', margin: '0px', padding: '10px', overflow: 'auto'}}>
             <WebSocketLogs/>
@@ -406,6 +411,15 @@ function Home() {
     </div>
   );
 }
+
+/*
+                <Tooltip title="Clear the logs">
+                  <IconButton onClick={setMessages([])}>
+                    <DeleteForever/>
+                  </IconButton>
+                </Tooltip>
+
+*/
 
 function AddRemovePlugins({ reloadSettings }) {
   const [pluginName, setPluginName] = useState('matterbridge-');

@@ -3,10 +3,21 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useTable, useSortBy } from 'react-table';
 
 // Frontend
-import { WebSocketContext, se } from './WebSocketProvider';
+import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 
-function DeviceTable({ data }) {
+function DevicesTable({ data, setPlugin, setEndpoint }) {
+  const [selectedDeviceIndex, setSelectedDeviceIndex] = useState(null);
+  const [columnVisibility, setColumnVisibility] = useState({
+    pluginName: true,
+    type: true,
+    endpoint: true,
+    name: true,
+    serial: true,
+    uniqueId: false,
+    cluster: true,
+  });
+
   const columns = React.useMemo(() => [
     {
       Header: 'Plugin name',
@@ -38,21 +49,41 @@ function DeviceTable({ data }) {
     },
   ], []);
 
+  // Filter columns based on visibility
+  const visibleColumns = React.useMemo(
+    () => columns.filter(column => columnVisibility[column.accessor]),
+    [columns, columnVisibility]
+  );
+  
   const {
     getTableProps,
     getTableBodyProps,
     headerGroups,
     rows,
     prepareRow,
-  } = useTable({ columns, data }, useSortBy);
+  } = useTable({ columns: visibleColumns, data }, useSortBy);
+
+  const handleDeviceClick = (index) => {
+    if(index === selectedDeviceIndex) {
+      setSelectedDeviceIndex(null);
+      setPlugin(null);
+      setEndpoint(null);
+      console.log('Device unclicked:', index, 'selectedDeviceIndex:', selectedDeviceIndex);
+      return;
+    }
+    setSelectedDeviceIndex(index);
+    setPlugin(data[index].pluginName);
+    setEndpoint(data[index].endpoint);
+    console.log('Device clicked:', index, 'selectedDeviceIndex:', selectedDeviceIndex, 'pluginName:', data[index].pluginName, 'endpoint:', data[index].endpoint);
+  };
 
   return (
-    <table {...getTableProps()}>
+    <table {...getTableProps()} style={{ margin: '-1px', border: '1px solid var(--table-border-color)' }}>
       <thead>
         {headerGroups.map(headerGroup => (
           <tr {...headerGroup.getHeaderGroupProps()}>
             {headerGroup.headers.map(column => (
-              <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+              <th {...column.getHeaderProps({ ...column.getSortByToggleProps(), title: '' })}>
                 {column.render('Header')}
                 {/* Add a sort direction indicator */}
                 <span>
@@ -71,7 +102,85 @@ function DeviceTable({ data }) {
         {rows.map((row, index) => {
           prepareRow(row);
           return (
-            <tr key={index} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} {...row.getRowProps()}>
+            <tr 
+              key={index} 
+              className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} 
+              {...row.getRowProps()} 
+              onClick={() => handleDeviceClick(index)}
+              style={{
+                backgroundColor: selectedDeviceIndex === index ? 'var(--table-selected-bg-color)' : '',
+                cursor: 'pointer',
+              }}
+            >
+              {row.cells.map(cell => (
+                <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+              ))}
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+function ClustersTable({ data }) {
+  const columns = React.useMemo(() => [
+    {
+      Header: 'Endpoint',
+      accessor: 'endpoint',
+    },
+    {
+      Header: 'Cluster Name',
+      accessor: 'clusterName',
+    },
+    {
+      Header: 'Cluster ID',
+      accessor: 'clusterId',
+    },
+    {
+      Header: 'Attribute Name',
+      accessor: 'attributeName',
+    },
+    {
+      Header: 'Attribute ID',
+      accessor: 'attributeId',
+    },
+    {
+      Header: 'Attribute Value',
+      accessor: 'attributeValue',
+    },
+  ], []);
+
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    rows,
+    prepareRow,
+  } = useTable({ columns, data }, useSortBy);
+
+  return (
+    <table {...getTableProps()} style={{ margin: '-1px' }}>
+      <thead>
+        {headerGroups.map(headerGroup => (
+          <tr {...headerGroup.getHeaderGroupProps()}>
+            {headerGroup.headers.map(column => (
+              <th {...column.getHeaderProps()}>
+                {column.render('Header')}
+              </th>
+            ))}
+          </tr>
+        ))}
+      </thead>
+      <tbody {...getTableBodyProps()}>
+        {rows.map((row, index) => {
+          prepareRow(row);
+          return (
+            <tr 
+              key={index} 
+              className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} 
+              {...row.getRowProps()}
+            >
               {row.cells.map(cell => (
                 <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
               ))}
@@ -84,81 +193,94 @@ function DeviceTable({ data }) {
 }
 
 function Test() {
-  const { online, sendMessage, logMessage, setLogFilters, addListener, removeListener } = useContext(WebSocketContext);
-  const [settings, setSettings] = useState({});
-  const [plugins, setPlugins] = useState([]);
+  const { online, sendMessage, addListener, removeListener } = useContext(WebSocketContext);
   const [devices, setDevices] = useState([]);
-
-  const data = React.useMemo(() => [
-    {
-      pluginName: 'Hello 1',
-      name: 'World 1',
-    },
-    {
-      pluginName: 'React 2',
-      name: 'Table 2',
-    },
-    {
-      pluginName: 'React 3',
-      name: 'Table 3',
-    },
-    {
-      pluginName: 'React 4',
-      name: 'Table 4',
-    },
-  ], []);
-
-  const handleWebSocketMessage = (msg) => {
-    console.log('Test received WebSocket Message:', msg);
-    if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-      if (msg.method === 'refresh_required') {
-        console.log('Test received refresh_required');
-        sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-        sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
-        sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
-      }
-      if (msg.method === '/api/settings') {
-        console.log('Test received settings:', msg.response);
-        setSettings(msg.response);
-      }
-      if (msg.method === '/api/plugins') {
-        console.log('Test received plugins:', msg.response);
-        setPlugins(msg.response);
-      }
-      if (msg.method === '/api/devices') {
-        console.log('Test received devices:', msg.response);
-        setDevices(msg.response);
-      }
-    }
-  };
+  const [clusters, setClusters] = useState([]);
+  const [plugin, setPlugin] = useState(null);
+  const [endpoint, setEndpoint] = useState(null);
+  const [subEndpointsCount, setSubEndpointsCount] = useState(0);
 
   useEffect(() => {
+    const handleWebSocketMessage = (msg) => {
+      // console.log('Test received WebSocket Message:', msg);
+      if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
+        if (msg.method === 'refresh_required') {
+          console.log('Test received refresh_required');
+          sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+        }
+        if (msg.method === '/api/devices') {
+          console.log(`Test received ${msg.response.length} devices:`, msg.response);
+          setDevices(msg.response);
+        }
+        if (msg.method === '/api/clusters') {
+          console.log(`Test received ${msg.response.length} clusters:`, msg.response);
+          setClusters(msg.response);
+  
+          const endpointCounts = {};
+          for (const cluster of msg.response) {
+            console.log('Cluster:', cluster.endpoint);
+            if (endpointCounts[cluster.endpoint]) {
+              endpointCounts[cluster.endpoint]++;
+            } else {
+              endpointCounts[cluster.endpoint] = 1;
+            }
+          }
+          setSubEndpointsCount(Object.keys(endpointCounts).length);
+        }
+      }
+    };
+
     addListener(handleWebSocketMessage);
     console.log('Test added WebSocket listener');
     return () => {
       removeListener(handleWebSocketMessage);
       console.log('Test removed WebSocket listener');
     };
-  }, [addListener, removeListener]);
-
+  }, [addListener, removeListener, sendMessage]);
+  
   useEffect(() => {
     console.log('Test sending api requests');
-    sendMessage({ id: 345678, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-    sendMessage({ id: 345678, method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
-    sendMessage({ id: 345678, method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+    sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+    sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+    sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
   }, [online, sendMessage]);
-  
+
+  useEffect(() => {
+    if (plugin && endpoint) {
+      console.log('Test sending /api/clusters');
+      sendMessage({ method: "/api/clusters", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin, endpoint: endpoint } });
+    }
+  }, [plugin, endpoint, sendMessage]);
+
   if (!online) {
     return ( <Connecting /> );
   }
   return (
     <div className="MbfPageDiv">
-      <div className="MbfWindowBodyColumn" style={{ margin: '0', padding: '0', gap: '0' }}>
+      <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', maxHeight: `${plugin && endpoint ? '50%' : '100%'}`, width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
         <div className="MbfWindowHeader">
           <p className="MbfWindowHeaderText">Registered devices</p>
         </div>
-        <DeviceTable data={devices} />
+        <div className="MbfWindowBodyColumn" style={{ margin: '0', padding: '0', gap: '0' }}>
+          <DevicesTable data={devices} setPlugin={setPlugin} setEndpoint={setEndpoint}/>
+        </div>
+        <div className="MbfWindowFooter" style={{height: '', padding: '0', borderTop: '1px solid var(--table-border-color)'}}>
+          <p className="MbfWindowFooterText" style={{paddingLeft: '10px', fontWeight: 'normal', textAlign: 'left'}}>Total devices: {devices.length.toString()}</p>
+        </div>
       </div>
+      {plugin && endpoint && (
+        <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', height: '50%', maxHeight: '50%', width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
+          <div className="MbfWindowHeader">
+            <p className="MbfWindowHeaderText">Clusters for endpoint {endpoint}</p>
+          </div>
+          <div className="MbfWindowBodyColumn" style={{ margin: '0', padding: '0', gap: '0' }}>
+            <ClustersTable data={clusters}/>
+          </div>
+          <div className="MbfWindowFooter" style={{height: '', padding: '0', borderTop: '1px solid var(--table-border-color)'}}>
+            <p className="MbfWindowFooterText" style={{paddingLeft: '10px', fontWeight: 'normal', textAlign: 'left'}}>Total child endpoints: {subEndpointsCount - 1}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

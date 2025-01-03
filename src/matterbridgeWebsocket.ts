@@ -26,15 +26,16 @@ import { Matterbridge } from './matterbridge.js';
 import { isValidNumber, isValidObject, isValidString } from './utils/utils.js';
 
 // AnsiLogger module
-import { debugStringify } from 'node-ansi-logger';
+import { debugStringify, stringify } from 'node-ansi-logger';
 
 // Package modules
 import WebSocket from 'ws';
 
 // @matter
-import { Logger } from '@matter/main';
+import { EndpointServer, Logger, Endpoint as EndpointNode } from '@matter/main';
 import { BasicInformationCluster, BridgedDeviceBasicInformationCluster } from '@matter/main/clusters';
-import { ApiDevices } from './matterbridgeTypes.js';
+import { ApiClusters, ApiDevices } from './matterbridgeTypes.js';
+import { MatterbridgeDevice } from './matterbridgeDevice.js';
 
 /**
  * Websocket message ID for logging.
@@ -175,6 +176,71 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
         });
       });
       client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: devices }));
+      return;
+    } else if (data.method === '/api/clusters') {
+      if (!isValidString(data.params.plugin, 10)) {
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/clusters' }));
+        return;
+      }
+      if (!isValidNumber(data.params.endpoint, 1)) {
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter endpoint in /api/clusters' }));
+        return;
+      }
+      const clusters: ApiClusters[] = [];
+      this.devices.forEach(async (device) => {
+        if (data.params.plugin !== device.plugin) return;
+        if (data.params.endpoint !== device.number) return;
+        if (this.edge) device = EndpointServer.forEndpoint(device as unknown as EndpointNode) as unknown as MatterbridgeDevice;
+        const clusterServers = device.getAllClusterServers();
+        clusterServers.forEach((clusterServer) => {
+          Object.entries(clusterServer.attributes).forEach(([key, value]) => {
+            if (clusterServer.name === 'EveHistory') return;
+            let attributeValue;
+            try {
+              if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
+              else attributeValue = value.getLocal().toString();
+            } catch (error) {
+              attributeValue = 'Fabric-Scoped';
+              this.log.debug(`GetLocal value ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
+            }
+            clusters.push({
+              endpoint: device.number ? device.number.toString() : '...',
+              clusterName: clusterServer.name,
+              clusterId: '0x' + clusterServer.id.toString(16).padStart(2, '0'),
+              attributeName: key,
+              attributeId: '0x' + value.id.toString(16).padStart(2, '0'),
+              attributeValue,
+            });
+          });
+        });
+        device.getChildEndpoints().forEach((childEndpoint) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const name = this.edge ? (childEndpoint as any).endpoint?.id : childEndpoint.uniqueStorageKey;
+          const clusterServers = childEndpoint.getAllClusterServers();
+          clusterServers.forEach((clusterServer) => {
+            Object.entries(clusterServer.attributes).forEach(([key, value]) => {
+              if (clusterServer.name === 'EveHistory') return;
+              let attributeValue;
+              try {
+                if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
+                else attributeValue = value.getLocal().toString();
+              } catch (error) {
+                attributeValue = 'Unavailable';
+                this.log.debug(`GetLocal error ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
+              }
+              clusters.push({
+                endpoint: (childEndpoint.number ? childEndpoint.number.toString() : '...') + (name ? ' (' + name + ')' : ''),
+                clusterName: clusterServer.name,
+                clusterId: '0x' + clusterServer.id.toString(16).padStart(2, '0'),
+                attributeName: key,
+                attributeId: '0x' + value.id.toString(16).padStart(2, '0'),
+                attributeValue,
+              });
+            });
+          });
+        });
+      });
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: clusters }));
       return;
     } else {
       this.log.error(`Invalid method from websocket client: ${debugStringify(data)}`);

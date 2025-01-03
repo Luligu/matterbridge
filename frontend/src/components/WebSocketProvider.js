@@ -226,7 +226,7 @@ export function WebSocketProvider({ children }) {
   }, [connectWebSocket]);
     
   return (
-    <WebSocketContext.Provider value={{ messages, sendMessage, logMessage, setLogFilters, online, addListener, removeListener }}>
+    <WebSocketContext.Provider value={{ messages, setMessages, sendMessage, logMessage, setLogFilters, online, addListener, removeListener }}>
       {children}
     </WebSocketContext.Provider>
   );

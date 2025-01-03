@@ -9,9 +9,10 @@ import { Matterbridge } from './matterbridge.js';
 import { wait, waiter } from './utils/utils.js';
 import WebSocket from 'ws';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
-import { onOffLight, onOffOutlet, onOffSwitch } from './matterbridgeDeviceTypes.js';
+import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { Identify } from '@matter/main/clusters';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
+import plugin from 'eslint-plugin-jest';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -186,6 +187,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     device.createDefaultGroupsClusterServer();
     device.createDefaultOnOffClusterServer(false);
     device.createDefaultBridgedDeviceBasicInformationClusterServer('Switch 1', 'SerialSwitch1', 1, 'VendorName', 'ProductName');
+    device.addChildDeviceTypeWithClusterServer('Temperature:0', [temperatureSensor]);
     device.plugin = 'matterbridge-mock1';
     await matterbridge.addBridgedDevice('matterbridge-mock1', device);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Adding bridged device/));
@@ -429,6 +431,87 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(data.dst).toBe('Jest test');
     expect(data.response).toBeDefined();
     expect(data.response.length).toBe(1);
+
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+  }, 60000);
+
+  test('Websocket API send /api/clusters without params', async () => {
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const message = JSON.stringify({ id: 1, dst: 'Matterbridge', src: 'Jest test', method: '/api/clusters', params: {} });
+    ws.send(message);
+
+    // Set up a promise to wait for the response
+    const responsePromise = new Promise((resolve) => {
+      ws.onmessage = (event) => {
+        resolve(event.data);
+      };
+    });
+
+    // Wait for the response
+    const response = await responsePromise;
+    expect(response).toBeDefined();
+    const data = JSON.parse(response as string);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(1);
+    expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Jest test');
+    expect(data.method).toBe('/api/clusters');
+    expect(data.response).toBeUndefined();
+
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+  }, 60000);
+
+  test('Websocket API send /api/clusters with wrong params', async () => {
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const message = JSON.stringify({ id: 1, dst: 'Matterbridge', src: 'Jest test', method: '/api/clusters', params: { plugin: 'matterbridge-mock1' } });
+    ws.send(message);
+
+    // Set up a promise to wait for the response
+    const responsePromise = new Promise((resolve) => {
+      ws.onmessage = (event) => {
+        resolve(event.data);
+      };
+    });
+
+    // Wait for the response
+    const response = await responsePromise;
+    expect(response).toBeDefined();
+    const data = JSON.parse(response as string);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(1);
+    expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Jest test');
+    expect(data.method).toBe('/api/clusters');
+    expect(data.response).toBeUndefined();
+
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+  }, 60000);
+
+  test('Websocket API send /api/clusters', async () => {
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const message = JSON.stringify({ id: 1, dst: 'Matterbridge', src: 'Jest test', method: '/api/clusters', params: { plugin: 'matterbridge-mock1', endpoint: 2 } });
+    ws.send(message);
+
+    // Set up a promise to wait for the response
+    const responsePromise = new Promise((resolve) => {
+      ws.onmessage = (event) => {
+        resolve(event.data);
+      };
+    });
+
+    // Wait for the response
+    const response = await responsePromise;
+    expect(response).toBeDefined();
+    const data = JSON.parse(response as string);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(1);
+    expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Jest test');
+    expect(data.method).toBe('/api/clusters');
+    expect(data.response).toBeDefined();
 
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   }, 60000);

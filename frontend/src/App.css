@@ -67,7 +67,7 @@
   --primary-color: #1976d2;
   --secondary-color: #a58827;
 
-  --header-bg-color: #1b1d21;
+  --header-bg-color: var(--div-bg-color);
   --header-text-color: var(--primary-color);
 
   --footer-bg-color: var(--div-bg-color);
@@ -98,7 +98,7 @@
 
 /* Light Mode */
 [frontend-theme="light"] {
-  --main-bg-color: #fafafa;
+  --main-bg-color: #f0f0f0;
   --main-text-color: #212121;
   --main-grey-color: #616161;
   --main-light-color: #363636;
@@ -108,7 +108,7 @@
   --main-button-bg-color: var(--primary-color);
   --main-menu-color: var(--main-text-color);
   --main-menu-bg-color: #ffffff;
-  --main-menu-hover-color: #e6f4fe;
+  --main-menu-hover-color: #85c0d8;
   --main-label-color: var(--main-grey-color);
 
   --primary-color: #2196f3;
@@ -127,8 +127,8 @@
   --table-text-color: var(--main-light-color);
   --table-even-bg-color: var(--div-bg-color);
   --table-odd-bg-color: var(--div-bg-color);
-  --table-hover-bg-color: #e6f4fe;
-  --table-selected-bg-color: #e6f4fe;
+  --table-hover-bg-color: #85c0d8;
+  --table-selected-bg-color: #85c0d8;
 
   --div-bg-color: #ffffff;
   --div-text-color: #212121;

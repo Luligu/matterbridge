@@ -181,3 +181,12 @@ export interface ApiDevices {
   uniqueId: string;
   cluster: string;
 }
+
+export interface ApiClusters {
+  endpoint: string;
+  clusterName: string;
+  clusterId: string;
+  attributeName: string;
+  attributeId: string;
+  attributeValue: string;
+}

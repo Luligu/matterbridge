@@ -1,146 +1,271 @@
-/* eslint-disable no-console */
-
 // React
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import { useTable, useSortBy } from 'react-table';
 
 // Frontend
-import { Connecting } from './Connecting';
 import { WebSocketContext } from './WebSocketProvider';
+import { Connecting } from './Connecting';
+
+function DevicesTable({ data, setPlugin, setEndpoint }) {
+  const [selectedDeviceIndex, setSelectedDeviceIndex] = useState(null);
+
+  const columns = React.useMemo(() => [
+    {
+      Header: 'Plugin name',
+      accessor: 'pluginName',
+    },
+    {
+      Header: 'Device type',
+      accessor: 'type',
+    },
+    {
+      Header: 'Endpoint',
+      accessor: 'endpoint',
+    },
+    {
+      Header: 'Name',
+      accessor: 'name',
+    },
+    {
+      Header: 'Serial number',
+      accessor: 'serial',
+    },
+    {
+      Header: 'Unique ID',
+      accessor: 'uniqueId',
+    },
+    {
+      Header: 'Cluster',
+      accessor: 'cluster',
+    },
+  ], []);
+
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    rows,
+    prepareRow,
+  } = useTable({ columns, data }, useSortBy);
+
+  const handleDeviceClick = (index) => {
+    if(index === selectedDeviceIndex) {
+      setSelectedDeviceIndex(null);
+      setPlugin(null);
+      setEndpoint(null);
+      console.log('Device unclicked:', index, 'selectedDeviceIndex:', selectedDeviceIndex);
+      return;
+    }
+    setSelectedDeviceIndex(index);
+    setPlugin(data[index].pluginName);
+    setEndpoint(data[index].endpoint);
+    console.log('Device clicked:', index, 'selectedDeviceIndex:', selectedDeviceIndex, 'pluginName:', data[index].pluginName, 'endpoint:', data[index].endpoint);
+  };
+
+  return (
+    <table {...getTableProps()} style={{ margin: '-1px', border: '1px solid var(--table-border-color)' }}>
+      <thead>
+        {headerGroups.map(headerGroup => (
+          <tr {...headerGroup.getHeaderGroupProps()}>
+            {headerGroup.headers.map(column => (
+              <th {...column.getHeaderProps({ ...column.getSortByToggleProps(), title: '' })}>
+                {column.render('Header')}
+                {/* Add a sort direction indicator */}
+                <span>
+                  {column.isSorted
+                    ? column.isSortedDesc
+                      ? ' 🔽'
+                      : ' 🔼'
+                    : '🔽🔼'}
+                </span>
+              </th>
+            ))}
+          </tr>
+        ))}
+      </thead>
+      <tbody {...getTableBodyProps()}>
+        {rows.map((row, index) => {
+          prepareRow(row);
+          return (
+            <tr 
+              key={index} 
+              className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} 
+              {...row.getRowProps()} 
+              onClick={() => handleDeviceClick(index)}
+              style={{
+                backgroundColor: selectedDeviceIndex === index ? 'var(--table-selected-bg-color)' : '',
+                cursor: 'pointer',
+              }}
+            >
+              {row.cells.map(cell => (
+                <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+              ))}
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+function ClustersTable({ data }) {
+  const columns = React.useMemo(() => [
+    {
+      Header: 'Endpoint',
+      accessor: 'endpoint',
+    },
+    {
+      Header: 'Cluster Name',
+      accessor: 'clusterName',
+    },
+    {
+      Header: 'Cluster ID',
+      accessor: 'clusterId',
+    },
+    {
+      Header: 'Attribute Name',
+      accessor: 'attributeName',
+    },
+    {
+      Header: 'Attribute ID',
+      accessor: 'attributeId',
+    },
+    {
+      Header: 'Attribute Value',
+      accessor: 'attributeValue',
+    },
+  ], []);
+
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    rows,
+    prepareRow,
+  } = useTable({ columns, data }, useSortBy);
+
+  return (
+    <table {...getTableProps()} style={{ margin: '-1px' }}>
+      <thead>
+        {headerGroups.map(headerGroup => (
+          <tr {...headerGroup.getHeaderGroupProps()}>
+            {headerGroup.headers.map(column => (
+              <th {...column.getHeaderProps()}>
+                {column.render('Header')}
+              </th>
+            ))}
+          </tr>
+        ))}
+      </thead>
+      <tbody {...getTableBodyProps()}>
+        {rows.map((row, index) => {
+          prepareRow(row);
+          return (
+            <tr 
+              key={index} 
+              className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} 
+              {...row.getRowProps()}
+            >
+              {row.cells.map(cell => (
+                <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+              ))}
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
 
 function Devices() {
+  const { online, sendMessage, addListener, removeListener } = useContext(WebSocketContext);
   const [devices, setDevices] = useState([]);
-  const [sortColumn, setSortColumn] = useState(undefined);
-  const [sortDirection, setSortDirection] = useState(undefined); // true for ascending, false for descending
-  const [selectedRow, setSelectedRow] = useState(-1); // -1 no selection, 0 or greater for selected row
-  const [selectedPluginName, setSelectedPluginName] = useState('none'); // -1 no selection, 0 or greater for selected row
-  const [selectedDeviceEndpoint, setSelectedDeviceEndpoint] = useState('none'); // -1 no selection, 0 or greater for selected row
   const [clusters, setClusters] = useState([]);
-  const { online } = useContext(WebSocketContext);
+  const [plugin, setPlugin] = useState(null);
+  const [endpoint, setEndpoint] = useState(null);
+  const [subEndpointsCount, setSubEndpointsCount] = useState(0);
 
   useEffect(() => {
-    // Fetch Devices
-    fetch('./api/devices')
-      .then(response => response.json())
-      .then(data => setDevices(data))
-      .catch(error => console.error('Error fetching devices:', error));
-  }, []);
-
-  useEffect(() => {
-    // Fetch Devices
-    fetch(`./api/devices_clusters/${selectedPluginName}/${selectedDeviceEndpoint}`)
-      .then(response => response.json())
-      .then(data => setClusters(data))
-      .catch(error => console.error('Error fetching devices_clusters:', error));
-  }, [selectedDeviceEndpoint, selectedPluginName]);
+    const handleWebSocketMessage = (msg) => {
+      // console.log('Test received WebSocket Message:', msg);
+      if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
+        if (msg.method === 'refresh_required') {
+          console.log('Test received refresh_required');
+          sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+        }
+        if (msg.method === '/api/devices') {
+          console.log(`Test received ${msg.response.length} devices:`, msg.response);
+          setDevices(msg.response);
+        }
+        if (msg.method === '/api/clusters') {
+          console.log(`Test received ${msg.response.length} clusters:`, msg.response);
+          setClusters(msg.response);
   
-  const handleSort = (column) => {
-    if (sortColumn === column) {
-      if(sortDirection===undefined) setSortDirection(true);
-      if(sortDirection===true) setSortDirection(false);
-      if(sortDirection===false) setSortColumn(undefined);
-      if(sortDirection===false) setSortDirection(undefined);
-      // setSortDirection(!sortDirection);
-    } else {
-      setSortColumn(column);
-      setSortDirection(true);
-    }
-  };
+          const endpointCounts = {};
+          for (const cluster of msg.response) {
+            console.log('Cluster:', cluster.endpoint);
+            if (endpointCounts[cluster.endpoint]) {
+              endpointCounts[cluster.endpoint]++;
+            } else {
+              endpointCounts[cluster.endpoint] = 1;
+            }
+          }
+          setSubEndpointsCount(Object.keys(endpointCounts).length);
+        }
+      }
+    };
 
-  const handleSelect = (row) => {
-    if (selectedRow === row) {
-      setSelectedRow(-1);
-      setSelectedPluginName('none');
-      setSelectedDeviceEndpoint('none');
-    } else {
-      setSelectedRow(row);
-      setSelectedPluginName(sortedDevices[row].pluginName);
-      setSelectedDeviceEndpoint(sortedDevices[row].endpoint);
-    }
-    console.log('Selected row:', row);
-    console.log('Selected plugin:', sortedDevices[row].pluginName);
-    console.log('Selected endpoint:', sortedDevices[row].endpoint);
-  };
+    addListener(handleWebSocketMessage);
+    console.log('Test added WebSocket listener');
+    return () => {
+      removeListener(handleWebSocketMessage);
+      console.log('Test removed WebSocket listener');
+    };
+  }, [addListener, removeListener, sendMessage]);
+  
+  useEffect(() => {
+    console.log('Test sending api requests');
+    sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+    sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+    sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+  }, [online, sendMessage]);
 
-  const sortedDevices = [...devices].sort((a, b) => {
-    if (a[sortColumn] < b[sortColumn]) {
-      return sortDirection ? -1 : 1;
+  useEffect(() => {
+    if (plugin && endpoint) {
+      console.log('Test sending /api/clusters');
+      sendMessage({ method: "/api/clusters", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin, endpoint: endpoint } });
     }
-    if (a[sortColumn] > b[sortColumn]) {
-      return sortDirection ? 1 : -1;
-    }
-    return 0;
-  })
+  }, [plugin, endpoint, sendMessage]);
 
   if (!online) {
     return ( <Connecting /> );
   }
   return (
     <div className="MbfPageDiv">
-      <div className="MbfWindowDiv" style={{ flex: '1 1 auto', maxHeight: '50%', width: '100%', overflow: 'hidden' }}>
-        <div className="MbfWindowDivTable">
-          <table>
-            <thead>
-              <tr>
-                <th colSpan="7">Registered devices</th>
-              </tr>
-              <tr>
-                <th onClick={() => handleSort('pluginName')}>Plugin name {sortColumn === 'pluginName' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
-                <th onClick={() => handleSort('type')}>Device type {sortColumn === 'type' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
-                <th onClick={() => handleSort('endpoint')}>Endpoint {sortColumn === 'endpoint' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
-                <th onClick={() => handleSort('name')}>Name {sortColumn === 'name' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
-                <th onClick={() => handleSort('serial')}>Serial number {sortColumn === 'serial' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
-                <th onClick={() => handleSort('uniqueId')}>Unique ID {sortColumn === 'uniqueId' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
-                <th onClick={() => handleSort('cluster')}>Cluster {sortColumn === 'cluster' ? (sortDirection ? ' 🔼' : ' 🔽') : ' 🔼🔽'}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedDevices.map((device, index) => (
-                <tr key={index} onClick={() => handleSelect(index)} className={selectedRow === index ? 'table-content-selected' : index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
-                  <td>{device.pluginName}</td>
-                  <td>{device.type}</td>
-                  <td>{device.endpoint}</td>
-                  <td>{device.name}</td>
-                  <td>{device.serial}</td>
-                  <td>{device.uniqueId}</td>
-                  <td>{device.cluster}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', maxHeight: `${plugin && endpoint ? '50%' : '100%'}`, width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
+        <div className="MbfWindowHeader">
+          <p className="MbfWindowHeaderText">Registered devices</p>
+        </div>
+        <div className="MbfWindowBodyColumn" style={{ margin: '0', padding: '0', gap: '0' }}>
+          <DevicesTable data={devices} setPlugin={setPlugin} setEndpoint={setEndpoint}/>
+        </div>
+        <div className="MbfWindowFooter" style={{height: '', padding: '0', borderTop: '1px solid var(--table-border-color)'}}>
+          <p className="MbfWindowFooterText" style={{paddingLeft: '10px', fontWeight: 'normal', textAlign: 'left'}}>Total devices: {devices.length.toString()}</p>
         </div>
       </div>
-      <div className="MbfWindowDiv" style={{ flex: '1 1 auto', maxHeight: '50%', width: '100%', overflow: 'hidden' }}>
-        <div className="MbfWindowDivTable">
-          <table>
-            <thead>
-              <tr>
-                <th colSpan="3">{selectedRow>=0?'Cluster servers of '+sortedDevices[selectedRow].name:'(select a device)'}</th>
-                <th colSpan="3">Attributes</th>
-              </tr>
-              <tr>
-                <th>Endpoint</th>
-                <th>Name</th>
-                <th>Id</th>
-                <th>Name</th>
-                <th>Id</th>
-                <th>Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {clusters.map((cluster, index) => (
-                <tr key={index} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
-                  <td>{cluster.endpoint}</td>
-                  <td>{cluster.clusterName}</td>
-                  <td>{cluster.clusterId}</td>
-                  <td>{cluster.attributeName}</td>
-                  <td>{cluster.attributeId}</td>
-                  <td>{cluster.attributeValue}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {plugin && endpoint && (
+        <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', height: '50%', maxHeight: '50%', width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
+          <div className="MbfWindowHeader">
+            <p className="MbfWindowHeaderText">Clusters for endpoint {endpoint}</p>
+          </div>
+          <div className="MbfWindowBodyColumn" style={{ margin: '0', padding: '0', gap: '0' }}>
+            <ClustersTable data={clusters}/>
+          </div>
+          <div className="MbfWindowFooter" style={{height: '', padding: '0', borderTop: '1px solid var(--table-border-color)'}}>
+            <p className="MbfWindowFooterText" style={{paddingLeft: '10px', fontWeight: 'normal', textAlign: 'left'}}>Total child endpoints: {subEndpointsCount - 1}</p>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

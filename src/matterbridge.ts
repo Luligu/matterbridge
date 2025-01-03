@@ -2090,7 +2090,7 @@ export class Matterbridge extends EventEmitter {
       const aclArray: { fabricIndex: number; privilege: number; authMode: number; subjects: bigint[]; targets: null }[] = [];
       this.log.info(`Found ${CYAN}${fabrics.length}${nf} fabrics (nextFabricIndex ${CYAN}${nextFabricIndex}${nf}) for ${plg}${pluginName}${nf}:`);
       if (fabrics.length === 0 || nextFabricIndex === 0) {
-        this.log.notice(`If you want to try out matterbridge edge (beta) add -edge to the command line and pair it to your controller(s).`);
+        this.log.notice(`If you want to try out matterbridge edge add -edge to the command line and pair it to your controller(s).`);
         return;
       }
       for (const fabric of fabrics) {
@@ -2269,7 +2269,7 @@ export class Matterbridge extends EventEmitter {
       await nodeStorage.createContext('persist').set('hardwareVersionString', await context.get('hardwareVersionString'));
       await context.set('converted', true);
       this.log.notice(`Matter storage converted to Matterbridge edge for ${plg}${pluginName}${nt}`);
-      this.log.notice(`If you want to try out matterbridge edge (beta) add -edge to the command line.`);
+      this.log.notice(`If you want to try out matterbridge edge add -edge to the command line.`);
       this.log.notice(`All fabrics have been converted to the new storage format.`);
     } catch (error) {
       this.log.error(`convertStorage error converting matter storage to Matterbridge edge for ${plg}${pluginName}${er}:`, error);

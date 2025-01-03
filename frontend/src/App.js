@@ -17,7 +17,6 @@ import Settings from './components/Settings';
 import Test from './components/Test';
 import Logs from './components/Logs';
 import { WebSocketProvider } from './components/WebSocketProvider';
-import { OnlineProvider } from './components/OnlineProvider';
 import { createMuiTheme, getCssVariable } from './components/muiTheme';
 
 // Create a context for the authentication state
@@ -131,23 +130,21 @@ function LoginForm() {
   if (loggedIn) {
     return (
       <WebSocketProvider>
-        <OnlineProvider>
-          <ThemeProvider theme={theme}>
-            <Router basename={baseName}>
-              <div className="MbfScreen">
-                <Header />
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/devices" element={<Devices />} />
-                  <Route path="/log" element={<Logs />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/test" element={<Test />} />
-                  <Route path="*" element={<Navigate to="/" />} /> 
-                </Routes>
-              </div>
-            </Router>
-          </ThemeProvider>
-        </OnlineProvider>
+        <ThemeProvider theme={theme}>
+          <Router basename={baseName}>
+            <div className="MbfScreen">
+              <Header />
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/devices" element={<Devices />} />
+                <Route path="/log" element={<Logs />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/test" element={<Test />} />
+                <Route path="*" element={<Navigate to="/" />} /> 
+              </Routes>
+            </div>
+          </Router>
+        </ThemeProvider>
       </WebSocketProvider>
     );
   } else {

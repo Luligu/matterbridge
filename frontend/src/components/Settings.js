@@ -40,32 +40,32 @@ function Settings() {
     }, timeout * 1000);
   };
 
-  const handleWebSocketMessage = (msg) => {
-    if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-      if (msg.method === 'refresh_required') {
-        console.log('Settings received refresh_required');
-        sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-      }
-      if (msg.method === '/api/settings') {
-        console.log('Settings received /api/settings:', msg.response);
-        setMatterbridgeInfo(msg.response.matterbridgeInformation);
-      }
-    }
-  };
-
   useEffect(() => {
+    const handleWebSocketMessage = (msg) => {
+      if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
+        if (msg.method === 'refresh_required') {
+          console.log('Settings received refresh_required');
+          sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+        }
+        if (msg.method === '/api/settings') {
+          console.log('Settings received /api/settings:', msg.response);
+          setMatterbridgeInfo(msg.response.matterbridgeInformation);
+        }
+      }
+    };
+
     addListener(handleWebSocketMessage);
     console.log('Settings added WebSocket listener');
     return () => {
       removeListener(handleWebSocketMessage);
       console.log('Settings removed WebSocket listener');
     };
-  }, [addListener, removeListener]);
+  }, [addListener, removeListener, sendMessage]);
 
   useEffect(() => {
     console.log('Settings received online');
     sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-  }, [online]);
+  }, [online, sendMessage]);
 
   if (!online) {
     return ( <Connecting /> );

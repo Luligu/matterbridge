@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
  
 // React
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 // @mui
@@ -19,12 +19,11 @@ import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 // Frontend
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import { WebSocketContext } from './WebSocketProvider';
-import { OnlineContext } from './OnlineProvider';
 import { ConfirmCancelForm } from './ConfirmCancelForm';
 
 function Header() {
-  const { online, matterbridgeInfo } = useContext(OnlineContext);
-  const { logMessage } = useContext(WebSocketContext);
+  const { online, sendMessage, logMessage, addListener, removeListener } = useContext(WebSocketContext);
+  const [settings, setSettings] = useState({});
   const [showBackdrop, setShowBackdrop] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -71,7 +70,7 @@ function Header() {
   const handleRestartClick = () => {
     logMessage('Matterbridge', `Restarting matterbridge...`);
     // setOnline(false);
-    if(matterbridgeInfo.restartMode==='') {
+    if(settings.matterbridgeInformation.restartMode==='') {
       sendCommandToMatterbridge('restart','now');
     }
     else {
@@ -185,6 +184,37 @@ function Header() {
     setMenuAnchorEl(null);
   };
 
+  useEffect(() => {
+    const handleWebSocketMessage = (msg) => {
+      // console.log('Header received WebSocket Message:', msg);
+      if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
+        if (msg.method === 'refresh_required') {
+          console.log('Header received refresh_required');
+          sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+        }
+        if (msg.method === '/api/settings') {
+          console.log('Header received settings:', msg.response);
+          setSettings(msg.response);
+        }
+      }
+    };
+
+    addListener(handleWebSocketMessage);
+    console.log('Header added WebSocket listener');
+    return () => {
+      removeListener(handleWebSocketMessage);
+      console.log('Header removed WebSocket listener');
+    };
+  }, [addListener, removeListener, sendMessage]);
+
+  useEffect(() => {
+    console.log('Header sending /api/settings requests');
+    sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+  }, [online, sendMessage]);
+      
+  if (!online || settings.matterbridgeInformation === undefined) {
+    return null;
+  }
   return (
     <div className="header">
       <div className="sub-header">
@@ -201,28 +231,28 @@ function Header() {
         <Tooltip title="Matterbridge status">
           {online ? <span className="status-enabled"  style={{ cursor: 'default' }}>Online</span> : <span className="status-disabled" style={{ cursor: 'default' }}>Offline</span>}
         </Tooltip>
-        {matterbridgeInfo && !matterbridgeInfo.readOnly &&        
+        {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&        
           <Tooltip title="Sponsor Matterbridge and its plugins">
             <span className="status-sponsor" onClick={handleSponsorClick}>Sponsor</span> 
           </Tooltip>
         }        
-        {matterbridgeInfo.matterbridgeLatestVersion === undefined || matterbridgeInfo.matterbridgeVersion === matterbridgeInfo.matterbridgeLatestVersion || matterbridgeInfo.readOnly ?
-          <Tooltip title="Matterbridge version"><span className="status-information" onClick={handleChangelogClick}>v.{matterbridgeInfo.matterbridgeVersion}</span></Tooltip> :
-          <Tooltip title="New Matterbridge version available, click to install"><span className="status-warning" onClick={handleUpdateClick}>Update v.{matterbridgeInfo.matterbridgeVersion} to v.{matterbridgeInfo.matterbridgeLatestVersion}</span></Tooltip> 
+        {settings.matterbridgeInformation.matterbridgeLatestVersion === undefined || settings.matterbridgeInformation.matterbridgeVersion === settings.matterbridgeInformation.matterbridgeLatestVersion || settings.matterbridgeInformation.readOnly ?
+          <Tooltip title="Matterbridge version"><span className="status-information" onClick={handleChangelogClick}>v.{settings.matterbridgeInformation.matterbridgeVersion}</span></Tooltip> :
+          <Tooltip title="New Matterbridge version available, click to install"><span className="status-warning" onClick={handleUpdateClick}>Update v.{settings.matterbridgeInformation.matterbridgeVersion} to v.{settings.matterbridgeInformation.matterbridgeLatestVersion}</span></Tooltip> 
         }  
-        {matterbridgeInfo.edge === true ? (        
+        {settings.matterbridgeInformation.edge === true ? (        
           <Tooltip title="Edge mode">
             <span className="status-information" style={{ cursor: 'default' }}>edge</span>
           </Tooltip>
         ) : null}
-        {matterbridgeInfo.bridgeMode !== '' ? (        
+        {settings.matterbridgeInformation.bridgeMode !== '' ? (        
           <Tooltip title="Bridge mode">
-            <span className="status-information" style={{ cursor: 'default' }}>{matterbridgeInfo.bridgeMode}</span>
+            <span className="status-information" style={{ cursor: 'default' }}>{settings.matterbridgeInformation.bridgeMode}</span>
           </Tooltip>
         ) : null}
-        {matterbridgeInfo.restartMode !== '' ? (        
+        {settings.matterbridgeInformation.restartMode !== '' ? (        
           <Tooltip title="Restart mode">
-            <span className="status-information" style={{ cursor: 'default' }}>{matterbridgeInfo.restartMode}</span>
+            <span className="status-information" style={{ cursor: 'default' }}>{settings.matterbridgeInformation.restartMode}</span>
           </Tooltip>        
         ) : null}
       </div>
@@ -237,7 +267,7 @@ function Header() {
             <AnnouncementOutlinedIcon/>
           </IconButton>
         </Tooltip>
-        {matterbridgeInfo && !matterbridgeInfo.readOnly && 
+        {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && 
           <Tooltip title="Update matterbridge">
             <IconButton onClick={handleUpdateClick}>
               <SystemUpdateAltIcon/>
@@ -249,7 +279,7 @@ function Header() {
             <RestartAltIcon/>
           </IconButton>
         </Tooltip>
-        {matterbridgeInfo.restartMode === '' ? (        
+        {settings.matterbridgeInformation.restartMode === '' ? (        
           <Tooltip title="Shut down matterbridge">
             <IconButton onClick={handleShutdownClick}>
               <PowerSettingsNewIcon/>
@@ -262,7 +292,7 @@ function Header() {
           </IconButton>
         </Tooltip>
         <Menu id="command-menu" anchorEl={menuAnchorEl} keepMounted open={Boolean(menuAnchorEl)} onClose={() => handleMenuClose('')} >
-          {matterbridgeInfo && !matterbridgeInfo.readOnly && 
+          {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && 
             <MenuItem onClick={() => handleMenuClose('update')}>
               <ListItemIcon><SystemUpdateAltIcon /></ListItemIcon>
               <ListItemText primary="Update" />
@@ -272,7 +302,7 @@ function Header() {
             <ListItemIcon><RestartAltIcon /></ListItemIcon>
             <ListItemText primary="Restart" />
           </MenuItem>
-          {matterbridgeInfo.restartMode === '' ? 
+          {settings.matterbridgeInformation.restartMode === '' ? 
             <MenuItem onClick={() => handleMenuClose('shutdown')}>
               <ListItemIcon><PowerSettingsNewIcon /></ListItemIcon>
               <ListItemText primary="Shutdown" />
