@@ -30,13 +30,13 @@
   --ttip-text-color: #fff;
 
   --table-border-color: #ddd;
-  --table-text-color: #white;
+  --table-text-color: black;
   --table-even-bg-color: #bdbdbd;
-  --table-odd-bg-color: #9e9e9e;
+  --table-odd-bg-color: var(--div-bg-color);
   --table-hover-bg-color: #5f8c9e;
   --table-selected-bg-color: #5f8c9e;
 
-  --div-bg-color: #9e9e9e;
+  --div-bg-color: #adadad;
   --div-text-color: black;
   --div-shadow-color: #888;
   --div-border-color: rgb(139, 139, 139);
