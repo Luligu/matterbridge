@@ -447,17 +447,9 @@ export class MatterbridgeEdge extends Matterbridge {
         }
       }
       if (plugin.type === 'DynamicPlatform') {
-        if (!plugin.locked) {
-          plugin.locked = true;
-          plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', bridge.code, this.aggregatorVendorId, 'Matterbridge', this.aggregatorProductId, plugin.description);
-          plugin.commissioningServer = (await this.createServerNode(plugin.storageContext, this.port++, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined)) as unknown as CommissioningServer;
-          plugin.aggregator = (await this.createAggregatorNode(plugin.storageContext)) as unknown as Aggregator;
-          this.log.debug(`Adding matter aggregator node to server node for plugin ${plg}${plugin.name}${db}`);
-          await (plugin.commissioningServer as unknown as ServerNode).add(plugin.aggregator as unknown as EndpointNode<AggregatorEndpoint>);
-          this.csToServerNode.set(plugin.name, { commissioningServer: plugin.commissioningServer as unknown as CommissioningServer, serverNode: plugin.commissioningServer as unknown as ServerNode });
-          this.agToAggregatorEndpoint.set(plugin.name, { aggregator: plugin.aggregator, aggregatorNode: plugin.aggregator as unknown as EndpointNode<AggregatorEndpoint> });
-        }
+        plugin.locked = true;
         const aggregatorNode = this.agToAggregatorEndpoint.get(pluginName)?.aggregatorNode;
+        if (hasParameter('debug') && !aggregatorNode) this.log.warn('***aggregator node not found for plugin', plugin.name);
         await aggregatorNode?.add(device);
       }
     }
@@ -522,10 +514,29 @@ export class MatterbridgeEdge extends Matterbridge {
   }
 
   /**
-   * override from Matterbridge
+   * temporary override from Matterbridge: will be moved in Matterbridge in 2.0.0
    */
 
-  override createMatterServer(storageManager: StorageManager): MatterServer {
+  override async createMatterServer(storageManager: StorageManager): Promise<MatterServer> {
+    // Create the server node and aggregator node for the Matterbridge plugin
+    if (this.bridgeMode === 'childbridge') {
+      for (const plugin of this.plugins) {
+        if (!plugin.enabled) continue;
+        if (plugin.type === 'DynamicPlatform') {
+          if (hasParameter('debug')) this.log.warn(`createMatterServer() => creating server node and aggregator node for plugin ${plugin.name} type ${plugin.type}`);
+          plugin.locked = true;
+          plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', bridge.code, this.aggregatorVendorId, 'Matterbridge', this.aggregatorProductId, plugin.description);
+          plugin.commissioningServer = (await this.createServerNode(plugin.storageContext, this.port++, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined)) as unknown as CommissioningServer;
+          plugin.aggregator = (await this.createAggregatorNode(plugin.storageContext)) as unknown as Aggregator;
+          this.log.debug(`Adding matter aggregator node to server node for plugin ${plg}${plugin.name}${db}`);
+          await (plugin.commissioningServer as unknown as ServerNode).add(plugin.aggregator as unknown as EndpointNode<AggregatorEndpoint>);
+          this.csToServerNode.set(plugin.name, { commissioningServer: plugin.commissioningServer as unknown as CommissioningServer, serverNode: plugin.commissioningServer as unknown as ServerNode });
+          this.agToAggregatorEndpoint.set(plugin.name, { aggregator: plugin.aggregator, aggregatorNode: plugin.aggregator as unknown as EndpointNode<AggregatorEndpoint> });
+          if (hasParameter('debug')) this.log.warn(`createMatterServer() => created server node and aggregator node for plugin ${plugin.name} type ${plugin.type}`);
+        }
+      }
+    }
+
     if (hasParameter('debug')) this.log.warn('createMatterServer() => mock MatterServer.addCommissioningServer()');
     const matterServer = {
       addCommissioningServer: (commissioningServer: CommissioningServer, nodeOptions?: NodeOptions) => {

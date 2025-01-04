@@ -1613,7 +1613,7 @@ export class Matterbridge extends EventEmitter {
 
     if (!this.storageManager) throw new Error('No storage manager initialized');
     if (!this.matterbridgeContext) throw new Error('No storage context initialized');
-    this.matterServer = this.createMatterServer(this.storageManager);
+    this.matterServer = await this.createMatterServer(this.storageManager);
     this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
     this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
     this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
@@ -1695,7 +1695,7 @@ export class Matterbridge extends EventEmitter {
     // Plugins are configured by a timer when matter server is started and plugin.configured is set to true
 
     if (!this.storageManager) throw new Error('No storage manager initialized');
-    this.matterServer = this.createMatterServer(this.storageManager);
+    this.matterServer = await this.createMatterServer(this.storageManager);
 
     await this.startPlugins();
 
@@ -1704,7 +1704,7 @@ export class Matterbridge extends EventEmitter {
     this.startMatterInterval = setInterval(async () => {
       let allStarted = true;
       for (const plugin of this.plugins) {
-        // new code to not start the bridge if one plugin is in error cause the controllers will delete the devices loosing all the configuration
+        // Prevents to start the bridge if one plugin is in error cause the controllers will delete the devices loosing all the configuration
         if (!plugin.enabled) continue;
         if (plugin.error) {
           clearInterval(this.startMatterInterval);
@@ -1801,7 +1801,7 @@ export class Matterbridge extends EventEmitter {
     }
 
     this.log.debug('Starting matterbridge in mode', this.bridgeMode);
-    this.matterServer = this.createMatterServer(this.storageManager);
+    this.matterServer = await this.createMatterServer(this.storageManager);
     this.log.info('Creating matter commissioning controller');
     this.commissioningController = new CommissioningController({
       autoConnect: false,
@@ -2342,7 +2342,7 @@ export class Matterbridge extends EventEmitter {
    * @param storageManager The storage manager to be used by the Matter server.
    *
    */
-  protected createMatterServer(storageManager: StorageManager): MatterServer {
+  protected async createMatterServer(storageManager: StorageManager): Promise<MatterServer> {
     this.log.debug('Creating matter server');
 
     // Validate mdnsInterface
@@ -3964,7 +3964,7 @@ export class Matterbridge extends EventEmitter {
     await this.matterbridgeContext.set('softwareVersionString', this.matterbridgeVersion);
     await this.matterbridgeContext.set('hardwareVersion', 1);
     await this.matterbridgeContext.set('hardwareVersionString', extensionVersion); // Update with the extension version
-    this.matterServer = this.createMatterServer(this.storageManager);
+    this.matterServer = await this.createMatterServer(this.storageManager);
     this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
     this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
     this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
