@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+// Frontend
 import { TruncatedText } from './TruncatedText';
 
 // This function takes systemInfo as a parameter and returns a table element with the systemInfo
@@ -24,9 +24,9 @@ export function SystemInfoTable({ systemInfo, compact }) {
   }
 
   return (
-    <div className="MbfWindowDiv" style={{ minWidth: '302px' }}>
-      <div className="MbfWindowDivTable">
-        <table>
+    <div className="MbfWindowDiv" style={{ minWidth: '302px', overflow: 'hidden' }}>
+      <div className="MbfWindowDivTable" style={{ overflow: 'hidden' }}>
+        <table >
           <thead>
             <tr>
               <th colSpan="2">System Information</th>

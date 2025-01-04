@@ -26,15 +26,16 @@ import { Matterbridge } from './matterbridge.js';
 import { isValidNumber, isValidObject, isValidString } from './utils/utils.js';
 
 // AnsiLogger module
-import { debugStringify } from 'node-ansi-logger';
+import { debugStringify, stringify } from 'node-ansi-logger';
 
 // Package modules
 import WebSocket from 'ws';
 
 // @matter
-import { Logger } from '@matter/main';
+import { EndpointServer, Logger, Endpoint as EndpointNode } from '@matter/main';
 import { BasicInformationCluster, BridgedDeviceBasicInformationCluster } from '@matter/main/clusters';
-import { ApiDevices } from './matterbridgeTypes.js';
+import { ApiClusters, ApiDevices } from './matterbridgeTypes.js';
+import { MatterbridgeDevice } from './matterbridgeDevice.js';
 
 /**
  * Websocket message ID for logging.
@@ -68,54 +69,54 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
     data = JSON.parse(message.toString());
     if (!isValidNumber(data.id) || !isValidString(data.dst) || !isValidString(data.src) || !isValidString(data.method) || !isValidObject(data.params) || data.dst !== 'Matterbridge') {
       this.log.error(`Invalid message from websocket client: ${debugStringify(data)}`);
-      client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: 'Invalid message' }));
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid message' }));
       return;
     }
     this.log.debug(`Received message from websocket client: ${debugStringify(data)}`);
 
     if (data.method === 'ping') {
-      client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response: 'pong' }));
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: 'pong' }));
       return;
     } else if (data.method === '/api/login') {
       if (!this.nodeContext) {
         this.log.error('Login nodeContext not found');
-        client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: 'Internal error: nodeContext not found' }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Internal error: nodeContext not found' }));
         return;
       }
       const storedPassword = await this.nodeContext.get('password', '');
       if (storedPassword === '' || storedPassword === data.params.password) {
         this.log.debug('Login password valid');
-        client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response: { valid: true } }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: { valid: true } }));
         return;
       } else {
         this.log.debug('Error wrong password');
-        client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: 'Wrong password' }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong password' }));
         return;
       }
     } else if (data.method === '/api/install') {
       if (!isValidString(data.params.packageName, 10)) {
-        client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/install' }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/install' }));
         return;
       }
       this.spawnCommand('npm', ['install', '-g', data.params.packageName, '--omit=dev', '--verbose'])
         .then((response) => {
-          client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
         })
         .catch((error) => {
-          client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error }));
         });
       return;
     } else if (data.method === '/api/uninstall') {
       if (!isValidString(data.params.packageName, 10)) {
-        client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/uninstall' }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/uninstall' }));
         return;
       }
       this.spawnCommand('npm', ['uninstall', '-g', data.params.packageName, '--verbose'])
         .then((response) => {
-          client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
         })
         .catch((error) => {
-          client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error }));
         });
       return;
     } else if (data.method === '/api/restart') {
@@ -143,11 +144,11 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
       this.matterbridgeInformation.matterbridgeSessionInformations = Array.from(this.matterbridgeSessionInformations.values());
       this.matterbridgeInformation.profile = this.profile;
       const response = { systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
-      client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response }));
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
       return;
     } else if (data.method === '/api/plugins') {
       const response = await this.getBaseRegisteredPlugins();
-      client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response }));
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
       return;
     } else if (data.method === '/api/devices') {
       const devices: ApiDevices[] = [];
@@ -174,11 +175,76 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
           cluster: cluster,
         });
       });
-      client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, response: devices }));
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: devices }));
+      return;
+    } else if (data.method === '/api/clusters') {
+      if (!isValidString(data.params.plugin, 10)) {
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/clusters' }));
+        return;
+      }
+      if (!isValidNumber(data.params.endpoint, 1)) {
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter endpoint in /api/clusters' }));
+        return;
+      }
+      const clusters: ApiClusters[] = [];
+      this.devices.forEach(async (device) => {
+        if (data.params.plugin !== device.plugin) return;
+        if (data.params.endpoint !== device.number) return;
+        if (this.edge) device = EndpointServer.forEndpoint(device as unknown as EndpointNode) as unknown as MatterbridgeDevice;
+        const clusterServers = device.getAllClusterServers();
+        clusterServers.forEach((clusterServer) => {
+          Object.entries(clusterServer.attributes).forEach(([key, value]) => {
+            if (clusterServer.name === 'EveHistory') return;
+            let attributeValue;
+            try {
+              if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
+              else attributeValue = value.getLocal().toString();
+            } catch (error) {
+              attributeValue = 'Fabric-Scoped';
+              this.log.debug(`GetLocal value ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
+            }
+            clusters.push({
+              endpoint: device.number ? device.number.toString() : '...',
+              clusterName: clusterServer.name,
+              clusterId: '0x' + clusterServer.id.toString(16).padStart(2, '0'),
+              attributeName: key,
+              attributeId: '0x' + value.id.toString(16).padStart(2, '0'),
+              attributeValue,
+            });
+          });
+        });
+        device.getChildEndpoints().forEach((childEndpoint) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const name = this.edge ? (childEndpoint as any).endpoint?.id : childEndpoint.uniqueStorageKey;
+          const clusterServers = childEndpoint.getAllClusterServers();
+          clusterServers.forEach((clusterServer) => {
+            Object.entries(clusterServer.attributes).forEach(([key, value]) => {
+              if (clusterServer.name === 'EveHistory') return;
+              let attributeValue;
+              try {
+                if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
+                else attributeValue = value.getLocal().toString();
+              } catch (error) {
+                attributeValue = 'Unavailable';
+                this.log.debug(`GetLocal error ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
+              }
+              clusters.push({
+                endpoint: (childEndpoint.number ? childEndpoint.number.toString() : '...') + (name ? ' (' + name + ')' : ''),
+                clusterName: clusterServer.name,
+                clusterId: '0x' + clusterServer.id.toString(16).padStart(2, '0'),
+                attributeName: key,
+                attributeId: '0x' + value.id.toString(16).padStart(2, '0'),
+                attributeValue,
+              });
+            });
+          });
+        });
+      });
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: clusters }));
       return;
     } else {
       this.log.error(`Invalid method from websocket client: ${debugStringify(data)}`);
-      client.send(JSON.stringify({ id: data.id, src: 'Matterbridge', dst: data.src, error: 'Invalid method' }));
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid method' }));
       return;
     }
   } catch (error) {

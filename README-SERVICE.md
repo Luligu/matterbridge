@@ -35,7 +35,7 @@ Create a systemctl configuration file for Matterbridge
 sudo nano /etc/systemd/system/matterbridge.service
 ```
 
-Add the following to this file, replacing twice (!) USER with your user name (e.g. WorkingDirectory=/home/pi/Matterbridge and User=pi):
+Add the following to this file, replacing 3 times (!) USER with your user name (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi):
 
 You may need to adapt the configuration to your setup:
 
@@ -49,16 +49,25 @@ After=network-online.target
 [Service]
 Type=simple
 ExecStart=matterbridge -service
-WorkingDirectory=/home/<USER>/Matterbridge
+WorkingDirectory=/home/<USER>/Matterbridge  
 StandardOutput=inherit
 StandardError=inherit
 Restart=always
 RestartSec=10s
 TimeoutStopSec=30s
-User=<USER>
+User=<USER>                                 
+Group=<USER>
 
 [Install]
 WantedBy=multi-user.target
+```
+
+If you use the frontend with -ssl -frontend 443 and get an error message: "Port 443 requires elevated privileges",
+add this:
+
+```
+[Service]
+AmbientCapabilities=CAP_NET_BIND_SERVICE
 ```
 
 If you modify it after, then run:

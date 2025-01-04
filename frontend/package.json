@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "1.4.1",
+  "version": "2.3.0",
   "private": true,
   "homepage": "./",
   "scripts": {
@@ -17,7 +17,7 @@
     "install:react": "npm install react@latest react-dom@latest react-router-dom@latest react-scripts@latest react-table@latest",
     "install:emotion": "npm install @emotion/react@latest @emotion/styled@latest",
     "install:muimaterial": "npm install @mui/material@5.16.7 @mui/icons-material@5.16.7",
-    "install:roboto": "@fontsource/roboto@latest",
+    "install:roboto": "npm install @fontsource/roboto@latest",
     "install:qrcode": "npm install qrcode.react@latest",
     "install:rjsf": "npm install @rjsf/core@latest @rjsf/utils@latest @rjsf/validator-ajv8@latest @rjsf/mui@latest"
   },

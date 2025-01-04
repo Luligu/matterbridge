@@ -498,7 +498,7 @@ describe('Matterbridge', () => {
     });
     process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-factoryreset'];
     await (matterbridge as any).parseCommandLine();
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired devices from the controllers.');
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
     expect((matterbridge as any).plugins).toHaveLength(0);
     await shutdownPromise;
     matterbridge.removeAllListeners('shutdown');

@@ -46,7 +46,7 @@ A special thank to Apollon77 for his incredible work.
 
 To run Matterbridge, you need either a [Node.js](https://nodejs.org/en) environment or [Docker](https://docs.docker.com/get-started/get-docker/) installed on your system.
 
-If you don't have Node.js already install, please use this method to install it on a debian device: https://github.com/nodesource/distributions. 
+If you don't have Node.js already install, please use this method to install it on a debian device: https://github.com/nodesource/distributions.
 The supported versions of node are 18, 20 and 22. Please install node 22 LTS.
 Nvm is not a good choice and should not be used for production.
 
@@ -116,6 +116,8 @@ Here's how to specify a different port number:
 matterbridge -frontend [port number]
 ```
 
+To use the frontend with ssl place the certificates in the .matterbridge/certs directory: cert.pem, key.pem and ca.pem (optional).
+
 From the frontend you can do all operations in an easy way.
 
 Home page:
@@ -177,15 +179,18 @@ Features:
 - Shelly wifi battery-powered devices with sleep_mode are supported.
 - Shelly BLU devices are supported through local devices configured as ble gateway.
 - Discovered shellies are stored in local storage for quick loading on startup.
-- The components exposed are Light (with brightness and RGB color), Switch, Relay, Roller, Cover, PowerMeter, Temperature, Humidity and Input.
-- All components expose the electrical measurements with the EveHistory cluster (displayed on HA), waiting for the controllers to upgrade to the Matter 1.3 specs.
+- The components exposed are Light (with brightness and RGB color), Switch, Relay, Roller, Cover, PowerMeter, Temperature, Humidity, Illuminance, Thermostat, Button and Input.
+- PowerMeters expose the electrical measurements with the electricalSensor device type (suppoerted by Home Assistant and partially by SmartThings), waiting for the controllers to upgrade to the Matter 1.3 specs.
 - Shellies are controlled locally, eliminating the need for cloud or MQTT (which can both be disabled).
-- Shelly Gen 1 devices are controlled using the CoIoT protocol (see the note below).
+- Shelly Gen 1 devices are controlled using the CoIoT protocol.
 - Shelly Gen 2 and Gen 3 devices are controlled using WebSocket.
 - The Matter device takes the name configured in the Shelly device's web page.
+- Each device can be blacklisted or whitelisted using its name, id or mac address.
+- Device components can be blacklisted globally or on a per-device basis.
 - If the device has a firmware update available, a message is displayed.
 - If the device's CoIoT protocol is not correctly configured, a message is displayed.
 - If the device cover/roller component is not calibrated, a message is displayed.
+- If a device changes its ip address on the network, a message is displayed and the new address is stored.
 - A 10-minute timer checks if the device has reported within that time frame, and fetch un update.
 
 ### Zigbee2MQTT

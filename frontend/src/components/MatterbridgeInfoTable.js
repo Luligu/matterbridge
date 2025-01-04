@@ -1,3 +1,4 @@
+// Frontend
 import { TruncatedText } from './TruncatedText';
 
 // This function takes systemInfo as a parameter and returns a table element with the systemInfo

@@ -6,7 +6,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Home Assistant
 
-If you want to run Matterbridge in Home Assistant please use the official add-on https://github.com/Luligu/matterbridge-home-assistant-addon that also has Ingress and side panel. 
+If you want to run Matterbridge in Home Assistant please use the official add-on https://github.com/Luligu/matterbridge-home-assistant-addon that also has Ingress and side panel.
 It is also available the official Matterbridge Home Assistant plugin https://github.com/Luligu/matterbridge-hass.
 
 ### Discord
@@ -15,10 +15,50 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 ### Breaking Changes
 
-In this release some device types and the OnOff, LevelControl and ColorControl have been updated to be fully compliant with Matter 1.3 specifications.
-It is possible that some controllers see them as new devices or need time to read the new clusters. It can be useful after the upgrade to power off the controller, wait a few minutes and power it on again.
+Matterbridge edge is now released. The default mode is still the normal mode to allow the storage conversion. See https://github.com/Luligu/matterbridge/blob/dev/README-EDGE.md to manually switch to edge mode after the conversion is done.
+
+The frontend has a new dark and light mode. The dark mode is now the default mode. 
+It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbridge settings.
+
+## [1.7.0] - 2025-01-03
+
+### Added
+
+- [edge]: Added guide https://github.com/Luligu/matterbridge/blob/dev/README-EDGE.md.
+- [storage]: Added conversion from old matter storage to the new api format with fabrics, resumptionRecords, network, commissioning, operationalCredentials, acl and parts number. The conversion is triggered every time you shutdown or restart matterbridge till the new storage has been used with matterbridge edge. 
+- [storage]: Added conversion for child endpoint numbers. 
+- [storage]: Added conversion for childbridge mode. 
+- [package]: Update README.md and README-SERVICE.md to include instructions for using SSL on port 443.
+- [platform]: Added checkEndpointNumbers() to detect endpoint numbers changes.
+- [frontend]: Frontend v.2.3.0
+- [frontend]: Added dark and light mode to the frontend. Dark mode is now the default mode. It is possible to change the mode in Settings, Matterbridge settings.
+- [frontend]: Custom rfjsreact-jsonschema-form for the config editor.
+- [frontend]: Added columns configuration to Devices.
+- [frontend]: Added clear logs button in Logs.
+- [unregister]: Added unregister for Matterbridge edge. 
+- [reset]: Added reset for Matterbridge edge. 
+- [factoryreset]: Added factoryreset for Matterbridge edge. 
+- [websocket]: Added /api/clusters and removed all fetch calls from frontend. 
+
+### Changed
+
+- [edge]: Fixes to edge mode.
+- [package]: Update dependencies.
+
+### Fixed
+
+- [frontend]: Fixed device/cluster api that was not working in Ingress.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
 
 ## [1.6.7] - 2024-12-15
+
+### Breaking Changes
+
+In this release some device types and the OnOff, LevelControl and ColorControl have been updated to be fully compliant with Matter 1.3 specifications.
+It is possible that some controllers see them as new devices or need time to read the new clusters. It can be useful after the upgrade to power off the controller, wait a few minutes and power it on again.
 
 ### Added
 

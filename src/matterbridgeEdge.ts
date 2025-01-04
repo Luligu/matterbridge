@@ -37,23 +37,22 @@ import { NodeStorage } from 'node-persist-manager';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { bridge, bridgedNode, electricalSensor, genericSwitch, onOffLight, onOffOutlet, powerSource } from './matterbridgeDeviceTypes.js';
-import { dev, plg, SanitizedSessionInformation } from './matterbridgeTypes.js';
-import { copyDirectory, getParameter, hasParameter, waiter } from './utils/utils.js';
+import { bridge } from './matterbridgeDeviceTypes.js';
+import { dev, plg } from './matterbridgeTypes.js';
+import { copyDirectory, getParameter, hasParameter } from './utils/utils.js';
 
 // @matter
-import { DeviceTypeId, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, FabricIndex, Lifecycle, SessionsBehavior, NumberTag, EndpointServer } from '@matter/main';
+import { DeviceTypeId, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, FabricIndex, SessionsBehavior, EndpointServer } from '@matter/main';
 import { ServerNode, Endpoint as EndpointNode, Environment, StorageService, StorageContext, StorageManager } from '@matter/main';
-import { BasicInformationCluster, ColorControl, ColorControlCluster, OnOffCluster, LevelControl, Identify, Descriptor, SwitchCluster } from '@matter/main/clusters';
+import { BasicInformationCluster } from '@matter/main/clusters';
 import { ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
-import { ColorTemperatureLightDevice, GenericSwitchDevice, OnOffLightDevice } from '@matter/main/devices';
+import { GenericSwitchDevice } from '@matter/main/devices';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
-import { BridgedDeviceBasicInformationServer, ColorControlServer, IdentifyServer, LevelControlServer, OnOffServer, GroupsServer, SwitchServer, DescriptorServer } from '@matter/main/behaviors';
+import { BridgedDeviceBasicInformationServer, SwitchServer } from '@matter/main/behaviors';
 
 // @project-chip
 import { CommissioningServer, MatterServer, NodeOptions } from '@project-chip/matter.js';
-import { Aggregator, Device, DeviceTypes, logEndpoint } from '@project-chip/matter.js/device';
-import { MatterbridgeColorControlServer, MatterbridgeIdentifyServer, MatterbridgeLevelControlServer, MatterbridgeOnOffServer } from './matterbridgeBehaviors.js';
+import { Aggregator, Device, logEndpoint } from '@project-chip/matter.js/device';
 
 /**
  * Represents the MatterbridgeEdge application.
@@ -68,13 +67,10 @@ export class MatterbridgeEdge extends Matterbridge {
   public matterStorageService?: StorageService;
 
   // Mapping of CommissioningServer to ServerNode
-  private csToServerNode = new Map<string, { commissioningServer: CommissioningServer; serverNode: ServerNode }>();
+  private csToServerNode = new Map<string, { commissioningServer: CommissioningServer; serverNode: ServerNode<ServerNode.RootEndpoint> }>();
 
   // Mapping of Aggregator to AggregatorEndpoint
   private agToAggregatorEndpoint = new Map<string, { aggregator: Aggregator; aggregatorNode: EndpointNode<AggregatorEndpoint> }>();
-
-  // Mapping of sessions
-  private activeSessions = new Map<string, SanitizedSessionInformation>();
 
   private constructor() {
     super();
@@ -264,7 +260,7 @@ export class MatterbridgeEdge extends Matterbridge {
 
     const sanitizeFabrics = (fabrics: Record<FabricIndex, ExposedFabricInformation>) => {
       // New type of fabric information: Record<FabricIndex, ExposedFabricInformation>
-      const sanitizedFabrics = this.sanitizeFabricInformations(Array.from(Object.values(serverNode.state.commissioning.fabrics)));
+      const sanitizedFabrics = this.sanitizeFabricInformations(Array.from(Object.values(fabrics)));
       this.log.info(`Fabrics: ${debugStringify(sanitizedFabrics)}`);
       if (this.bridgeMode === 'bridge') {
         this.matterbridgeFabricInformations = sanitizedFabrics;
@@ -323,6 +319,7 @@ export class MatterbridgeEdge extends Matterbridge {
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
         sanitizeFabrics(serverNode.state.commissioning.fabrics);
       }
+      this.wssSendRefreshRequired();
     });
 
     /** This event is triggered when the device went offline. it is not longer discoverable or connectable in the network. */
@@ -336,6 +333,7 @@ export class MatterbridgeEdge extends Matterbridge {
         this.matterbridgePaired = false;
         this.matterbridgeConnected = false;
       }
+      this.wssSendRefreshRequired();
     });
 
     /**
@@ -357,6 +355,7 @@ export class MatterbridgeEdge extends Matterbridge {
       }
       this.log.notice(`Commissioned fabric index ${fabricIndex} ${action} on server node for ${storeId}: ${debugStringify(serverNode.state.commissioning.fabrics[fabricIndex])}`);
       sanitizeFabrics(serverNode.state.commissioning.fabrics);
+      this.wssSendRefreshRequired();
     });
 
     const sanitizeSessions = (sessions: SessionsBehavior.Session[]) => {
@@ -376,6 +375,7 @@ export class MatterbridgeEdge extends Matterbridge {
           plugin.sessionInformations = sanitizedSessions;
         }
       }
+      this.wssSendRefreshRequired();
     };
 
     /**
@@ -419,8 +419,8 @@ export class MatterbridgeEdge extends Matterbridge {
 
   async createAggregatorNode(storageContext: StorageContext) {
     this.log.notice(`Creating ${await storageContext.get<string>('storeId')} aggregator `);
-    const aggregator = new EndpointNode(AggregatorEndpoint, { id: `${await storageContext.get<string>('storeId')}` });
-    return aggregator;
+    const aggregatorNode = new EndpointNode(AggregatorEndpoint, { id: `${await storageContext.get<string>('storeId')}` });
+    return aggregatorNode;
   }
 
   override async addBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void> {
@@ -447,17 +447,9 @@ export class MatterbridgeEdge extends Matterbridge {
         }
       }
       if (plugin.type === 'DynamicPlatform') {
-        if (!plugin.locked) {
-          plugin.locked = true;
-          plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', bridge.code, this.aggregatorVendorId, 'Matterbridge', this.aggregatorProductId, plugin.description);
-          plugin.commissioningServer = (await this.createServerNode(plugin.storageContext, this.port++, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined)) as unknown as CommissioningServer;
-          plugin.aggregator = (await this.createAggregatorNode(plugin.storageContext)) as unknown as Aggregator;
-          this.log.debug(`Adding matter aggregator node to server node for plugin ${plg}${plugin.name}${db}`);
-          await (plugin.commissioningServer as unknown as ServerNode).add(plugin.aggregator as unknown as EndpointNode<AggregatorEndpoint>);
-          this.csToServerNode.set(plugin.name, { commissioningServer: plugin.commissioningServer as unknown as CommissioningServer, serverNode: plugin.commissioningServer as unknown as ServerNode });
-          this.agToAggregatorEndpoint.set(plugin.name, { aggregator: plugin.aggregator, aggregatorNode: plugin.aggregator as unknown as EndpointNode<AggregatorEndpoint> });
-        }
+        plugin.locked = true;
         const aggregatorNode = this.agToAggregatorEndpoint.get(pluginName)?.aggregatorNode;
+        if (hasParameter('debug') && !aggregatorNode) this.log.warn('***aggregator node not found for plugin', plugin.name);
         await aggregatorNode?.add(device);
       }
     }
@@ -522,10 +514,29 @@ export class MatterbridgeEdge extends Matterbridge {
   }
 
   /**
-   * override from Matterbridge
+   * temporary override from Matterbridge: will be moved in Matterbridge in 2.0.0
    */
 
-  override createMatterServer(storageManager: StorageManager): MatterServer {
+  override async createMatterServer(storageManager: StorageManager): Promise<MatterServer> {
+    // Create the server node and aggregator node for the Matterbridge plugin
+    if (this.bridgeMode === 'childbridge') {
+      for (const plugin of this.plugins) {
+        if (!plugin.enabled) continue;
+        if (plugin.type === 'DynamicPlatform') {
+          if (hasParameter('debug')) this.log.warn(`createMatterServer() => creating server node and aggregator node for plugin ${plugin.name} type ${plugin.type}`);
+          plugin.locked = true;
+          plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', bridge.code, this.aggregatorVendorId, 'Matterbridge', this.aggregatorProductId, plugin.description);
+          plugin.commissioningServer = (await this.createServerNode(plugin.storageContext, this.port++, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined)) as unknown as CommissioningServer;
+          plugin.aggregator = (await this.createAggregatorNode(plugin.storageContext)) as unknown as Aggregator;
+          this.log.debug(`Adding matter aggregator node to server node for plugin ${plg}${plugin.name}${db}`);
+          await (plugin.commissioningServer as unknown as ServerNode).add(plugin.aggregator as unknown as EndpointNode<AggregatorEndpoint>);
+          this.csToServerNode.set(plugin.name, { commissioningServer: plugin.commissioningServer as unknown as CommissioningServer, serverNode: plugin.commissioningServer as unknown as ServerNode });
+          this.agToAggregatorEndpoint.set(plugin.name, { aggregator: plugin.aggregator, aggregatorNode: plugin.aggregator as unknown as EndpointNode<AggregatorEndpoint> });
+          if (hasParameter('debug')) this.log.warn(`createMatterServer() => created server node and aggregator node for plugin ${plugin.name} type ${plugin.type}`);
+        }
+      }
+    }
+
     if (hasParameter('debug')) this.log.warn('createMatterServer() => mock MatterServer.addCommissioningServer()');
     const matterServer = {
       addCommissioningServer: (commissioningServer: CommissioningServer, nodeOptions?: NodeOptions) => {

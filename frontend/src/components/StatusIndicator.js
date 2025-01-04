@@ -1,10 +1,3 @@
-/*
-      <span className="tooltip-text">
-          {status ? enabledText : disabledText ?? enabledText}
-        </span>
-         title={status ? enabledText : disabledText ?? enabledText}
-*/
-
 export function StatusIndicator({ status, enabledText = 'Enabled', disabledText = undefined, tooltipText = undefined, onClick }) {
   if (status === undefined) {
     return (

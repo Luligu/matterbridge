@@ -21,9 +21,6 @@ jobs:
       - name: Clean cache
         run: npm cache clean --force
   
-      - name: Install latest npm
-        run: npm install -g npm@latest
-    
       - name: Verify Node.js version
         run: node -v
     

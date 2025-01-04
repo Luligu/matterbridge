@@ -1,4 +1,8 @@
-import { Dialog, DialogTitle, DialogContent, Button } from '@mui/material';
+// @mui/material
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import Button from '@mui/material/Button';
 
 // Create a component for confirming or canceling an action
 export function ConfirmCancelForm({ open, title, message, onConfirm, onCancel }) {
@@ -35,5 +39,3 @@ export function ConfirmCancelForm({ open, title, message, onConfirm, onCancel })
     </Dialog>
   )
 }  
-/*
-*/

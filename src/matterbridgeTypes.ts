@@ -30,14 +30,13 @@ import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbr
 import { MatterbridgeDevice } from './matterbridgeDevice.js';
 
 // @matter
-import { FabricIndex, NodeId, VendorId, StorageContext, ServerNode, EndpointNumber } from '@matter/main';
+import { FabricIndex, NodeId, VendorId, StorageContext, ServerNode, EndpointNumber, Endpoint as EndpointNode } from '@matter/main';
 import { ExposedFabricInformation } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 
 // @project-chip
 import { CommissioningServer } from '@project-chip/matter.js';
 import { Aggregator } from '@project-chip/matter.js/device';
-import { Endpoint } from '@project-chip/matter.js/endpoint';
 
 // Default colors
 export const plg = '\u001B[38;5;33m';
@@ -53,9 +52,9 @@ export interface RegisteredPlugin extends BaseRegisteredPlugin {
   device?: MatterbridgeDevice;
   platform?: MatterbridgePlatform;
   reachabilityTimeout?: NodeJS.Timeout;
-  // Matter API V8
+  // Matter new API
   serverNode?: ServerNode<ServerNode.RootEndpoint>;
-  aggregatorNode?: Endpoint<AggregatorEndpoint>;
+  aggregatorNode?: EndpointNode<AggregatorEndpoint>;
 }
 
 // Simplified interface for saving the plugins in node storage
@@ -181,4 +180,13 @@ export interface ApiDevices {
   configUrl?: string;
   uniqueId: string;
   cluster: string;
+}
+
+export interface ApiClusters {
+  endpoint: string;
+  clusterName: string;
+  clusterId: string;
+  attributeName: string;
+  attributeId: string;
+  attributeValue: string;
 }

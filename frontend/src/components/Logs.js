@@ -1,21 +1,26 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-console */
-import React, { useEffect, useState, useContext } from 'react';
-import WebSocketComponent from './WebSocketComponent';
+// React
+import React, { useState, useContext } from 'react';
+
+// @mui/material
 import TextField from '@mui/material/TextField';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
-import { WebSocketContext } from './WebSocketContext';
-import Connecting from './Connecting';
-import { OnlineContext } from './OnlineContext';
+import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
+
+// @mui/icons-material
+import DeleteForever from '@mui/icons-material/DeleteForever';
+
+// Frontend
+import { WebSocketLogs } from './WebSocketLogs';
+import { WebSocketContext } from './WebSocketProvider';
+import { Connecting } from './Connecting';
 
 function Logs() {
-  const [wssHost, setWssHost] = useState(null);
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');
-  const { messages, sendMessage, logMessage, setLogFilters } = useContext(WebSocketContext);
-  const { online } = useContext(OnlineContext);
+  const { setMessages, setLogFilters, online } = useContext(WebSocketContext);
 
   const handleChangeLevel = (event) => {
     setLogFilterLevel(event.target.value);
@@ -31,25 +36,20 @@ function Logs() {
     console.log('handleChangeSearch called with value:', event.target.value);
   };
 
-  useEffect(() => {
-    // Fetch settinggs from the backend
-    fetch('./api/settings')
-      .then(response => response.json())
-      .then(data => { console.log('/api/settings:', data); setWssHost(data.wssHost); localStorage.setItem('wssHost', data.wssHost); })
-      .catch(error => console.error('Error fetching settings:', error));
-
-  }, []); 
+  const handleClearLogsClick = () => {
+    console.log('handleClearLogsClick called');
+    setMessages([]);
+  };
 
   if (!online) {
     return ( <Connecting /> );
   }
   return (
     <div className="MbfPageDiv">
-      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '0px', gap: '10px' }}>
-        <h3>Logs:</h3>
+      <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', margin: '0px', padding: '0px', gap: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <InputLabel id="select-level">Filter by debug level</InputLabel>
-          <Select style={{ height: '30px' }} labelId="select-level" id="debug-level" value={logFilterLevel} onChange={handleChangeLevel}>
+          <InputLabel id="select-level" style={{ color: 'var(--div-text-color)' }}>Filter log by level:</InputLabel>
+          <Select style={{ height: '30px', backgroundColor: 'var(--main-bg-color)' }} labelId="select-level" id="debug-level" value={logFilterLevel} onChange={handleChangeLevel}>
             <MenuItem value='debug'>Debug</MenuItem>
             <MenuItem value='info'>Info</MenuItem>
             <MenuItem value='notice'>Notice</MenuItem>
@@ -57,18 +57,24 @@ function Logs() {
             <MenuItem value='error'>Error</MenuItem>
             <MenuItem value='fatal'>Fatal</MenuItem>
           </Select>
-          <InputLabel id="search">Filter by text</InputLabel>
-          <TextField style={{ width: '300px'}} size="small" id="logsearch"variant="outlined" value={logFilterSearch} onChange={handleChangeSearch}
+          <InputLabel id="search" style={{ color: 'var(--div-text-color)' }}>Filter log by text:</InputLabel>
+          <TextField style={{ width: '300px' }} size="small" id="logsearch" variant="outlined" value={logFilterSearch} onChange={handleChangeSearch}
             InputProps={{
               style: {
                 height: '30px',
                 padding: '0 0px',
+                backgroundColor: 'var(--main-bg-color)',
               },
             }}/>
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <Tooltip title="Clear the logs">
+            <Button onClick={handleClearLogsClick} endIcon={<DeleteForever />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>Clear</Button>
+          </Tooltip>        
+        </div>
       </div>  
       <div style={{ flex: '1', overflow: 'auto', margin: '0px', padding: '0px' }}>
-        <WebSocketComponent/>
+        <WebSocketLogs/>
       </div>  
     </div>
   );

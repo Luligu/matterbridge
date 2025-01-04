@@ -51,7 +51,7 @@ import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // @matter
-import { DeviceTypeId, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, EndpointServer } from '@matter/main';
+import { DeviceTypeId, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, EndpointServer, StorageService, Environment, SupportedStorageTypes } from '@matter/main';
 import {
   BasicInformationCluster,
   BridgedDeviceBasicInformation,
@@ -70,6 +70,7 @@ import { StorageBackendDisk, StorageBackendJsonFile } from '@matter/nodejs';
 // @project-chip
 import { CommissioningController, CommissioningServer, MatterServer, NodeCommissioningOptions } from '@project-chip/matter.js';
 import { Aggregator, DeviceTypes, Endpoint, NodeStateInformation } from '@project-chip/matter.js/device';
+import { aggregator } from './matterbridgeDeviceTypes.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -201,6 +202,22 @@ export class Matterbridge extends EventEmitter {
     super();
     // Bind the handler to the instance
     this.matterbridgeMessageHandler = wsMessageHandler.bind(this);
+  }
+
+  /**
+   * Retrieves the list of Matterbridge devices.
+   * @returns {MatterbridgeDevice[]} An array of MatterbridgeDevice objects.
+   */
+  getDevices(): MatterbridgeDevice[] {
+    return this.devices.array();
+  }
+
+  /**
+   * Retrieves the list of registered plugins.
+   * @returns {RegisteredPlugin[]} An array of RegisteredPlugin objects.
+   */
+  getPlugins(): RegisteredPlugin[] {
+    return this.plugins.array();
   }
 
   public matterbridgeMessageHandler: (client: WebSocket, message: WebSocket.RawData) => Promise<void>;
@@ -598,18 +615,36 @@ export class Matterbridge extends EventEmitter {
 
     if (hasParameter('factoryreset')) {
       try {
-        // Delete matter storage file
-        await fs.unlink(path.join(this.matterbridgeDirectory, this.matterStorageName));
+        // Delete old matter storage file
+        const file = path.join(this.matterbridgeDirectory, 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.json');
+        this.log.info(`Unlinking old matter storage file: ${file}`);
+        await fs.unlink(file);
       } catch (err) {
-        this.log.error(`Error deleting storage: ${err}`);
+        if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
+          this.log.error(`Error unlinking old matter storage file: ${err}`);
+        }
+      }
+      try {
+        // Delete matter node storage directory with its subdirectories
+        const dir = path.join(this.matterbridgeDirectory, 'matterstorage' + (getParameter('profile') ? '.' + getParameter('profile') : ''));
+        this.log.info(`Removing matter node storage directory: ${dir}`);
+        await fs.rm(dir, { recursive: true });
+      } catch (err) {
+        if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
+          this.log.error(`Error removing matter storage directory: ${err}`);
+        }
       }
       try {
         // Delete node storage directory with its subdirectories
-        await fs.rm(path.join(this.matterbridgeDirectory, this.nodeStorageName), { recursive: true });
+        const dir = path.join(this.matterbridgeDirectory, 'storage' + (getParameter('profile') ? '.' + getParameter('profile') : ''));
+        this.log.info(`Removing storage directory: ${dir}`);
+        await fs.rm(dir, { recursive: true });
       } catch (err) {
-        this.log.error(`Error removing storage directory: ${err}`);
+        if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
+          this.log.error(`Error removing storage directory: ${err}`);
+        }
       }
-      this.log.info('Factory reset done! Remove all paired devices from the controllers.');
+      this.log.info('Factory reset done! Remove all paired fabrics from the controllers.');
       this.nodeContext = undefined;
       this.nodeStorage = undefined;
       this.plugins.clear();
@@ -626,7 +661,8 @@ export class Matterbridge extends EventEmitter {
       throw new Error(`Fatal error creating matter storage: ${error instanceof Error ? error.message : error}`);
     }
 
-    if (hasParameter('reset') && getParameter('reset') === undefined) {
+    // Clear the matterbridge context if the reset parameter is set
+    if (!this.edge && hasParameter('reset') && getParameter('reset') === undefined) {
       this.log.info('Resetting Matterbridge commissioning information...');
       await this.matterbridgeContext?.clearAll();
       await this.stopMatterStorage();
@@ -635,7 +671,8 @@ export class Matterbridge extends EventEmitter {
       return;
     }
 
-    if (getParameter('reset') && getParameter('reset') !== undefined) {
+    // Clear matterbridge plugin context if the reset parameter is set
+    if (!this.edge && hasParameter('reset') && getParameter('reset') !== undefined) {
       this.log.debug(`Reset plugin ${getParameter('reset')}`);
       const plugin = this.plugins.get(getParameter('reset') as string);
       if (plugin) {
@@ -1178,7 +1215,8 @@ export class Matterbridge extends EventEmitter {
   private async unregisterAndShutdownProcess() {
     this.log.info('Unregistering all devices and shutting down...');
     for (const plugin of this.plugins /* .filter((plugin) => plugin.enabled && !plugin.error))*/) {
-      await this.removeAllBridgedDevices(plugin.name);
+      if (this.edge) await this.removeAllBridgedEndpoints(plugin.name);
+      else await this.removeAllBridgedDevices(plugin.name);
     }
     await this.cleanup('unregistered all devices and shutting down...', false);
   }
@@ -1247,6 +1285,19 @@ export class Matterbridge extends EventEmitter {
           clearTimeout(plugin.reachabilityTimeout);
           plugin.reachabilityTimeout = undefined;
           this.log.debug(`Plugin ${plg}${plugin.name}${db} reachability timeout cleared`);
+        }
+      }
+
+      // Convert the matter storage to the new format
+      if (!hasParameter('nostorageconversion') && this.edge === false && this.matterbridgeContext && ['updating...', 'restarting...', 'shutting down...'].includes(message)) {
+        if (this.bridgeMode === 'bridge') {
+          await this.convertStorage(this.matterbridgeContext, 'Matterbridge');
+        } else if (this.bridgeMode === 'childbridge') {
+          for (const plugin of this.plugins) {
+            if (plugin.storageContext) {
+              await this.convertStorage(plugin.storageContext, plugin.name);
+            }
+          }
         }
       }
 
@@ -1349,20 +1400,34 @@ export class Matterbridge extends EventEmitter {
           this.emit('restart');
         }
       } else {
-        if (message === 'shutting down with reset...') {
-          // Delete matter storage file
-          this.log.info('Resetting Matterbridge commissioning information...');
-          await fs.unlink(path.join(this.matterbridgeDirectory, this.matterStorageName));
-          this.log.info('Reset done! Remove all paired devices from the controllers.');
+        if (message === 'shutting down with reset...' || message === 'shutting down with factory reset...') {
+          try {
+            // Delete old matter storage file
+            const file = path.join(this.matterbridgeDirectory, 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.json');
+            this.log.info(`Unlinking old matter storage file: ${file}`);
+            await fs.unlink(file);
+          } catch (error) {
+            this.log.debug(`Error resetting old matter storage file: ${error}`);
+          }
+          try {
+            // Delete matter node storage directory with its subdirectories
+            const dir = path.join(this.matterbridgeDirectory, 'matterstorage' + (getParameter('profile') ? '.' + getParameter('profile') : ''));
+            this.log.info(`Removing matter node storage directory: ${dir}`);
+            await fs.rm(dir, { recursive: true });
+          } catch (error) {
+            this.log.debug(`Error resetting matter node storage file: ${error}`);
+          }
+          this.log.info('Reset done! Remove all paired fabrics from the controllers.');
         }
         if (message === 'shutting down with factory reset...') {
-          // Delete matter storage file
-          this.log.info('Resetting Matterbridge commissioning information...');
-          await fs.unlink(path.join(this.matterbridgeDirectory, this.matterStorageName));
-          // Delete node storage directory with its subdirectories
-          this.log.info('Resetting Matterbridge storage...');
-          await fs.rm(path.join(this.matterbridgeDirectory, this.nodeStorageName), { recursive: true });
-          this.log.info('Factory reset done! Remove all paired devices from the controllers.');
+          try {
+            // Delete node storage directory with its subdirectories
+            this.log.info('Resetting Matterbridge storage...');
+            await fs.rm(path.join(this.matterbridgeDirectory, this.nodeStorageName), { recursive: true });
+          } catch (error) {
+            this.log.debug(`Error resetting Matterbridge storage: ${error}`);
+          }
+          this.log.info('Factory reset done! Remove all paired fabrics from the controllers.');
         }
         this.log.notice('Cleanup completed. Shutting down...');
         Matterbridge.instance = undefined;
@@ -1548,7 +1613,7 @@ export class Matterbridge extends EventEmitter {
 
     if (!this.storageManager) throw new Error('No storage manager initialized');
     if (!this.matterbridgeContext) throw new Error('No storage context initialized');
-    this.matterServer = this.createMatterServer(this.storageManager);
+    this.matterServer = await this.createMatterServer(this.storageManager);
     this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
     this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
     this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);
@@ -1630,7 +1695,7 @@ export class Matterbridge extends EventEmitter {
     // Plugins are configured by a timer when matter server is started and plugin.configured is set to true
 
     if (!this.storageManager) throw new Error('No storage manager initialized');
-    this.matterServer = this.createMatterServer(this.storageManager);
+    this.matterServer = await this.createMatterServer(this.storageManager);
 
     await this.startPlugins();
 
@@ -1639,7 +1704,7 @@ export class Matterbridge extends EventEmitter {
     this.startMatterInterval = setInterval(async () => {
       let allStarted = true;
       for (const plugin of this.plugins) {
-        // new code to not start the bridge if one plugin is in error cause the controllers will delete the devices loosing all the configuration
+        // Prevents to start the bridge if one plugin is in error cause the controllers will delete the devices loosing all the configuration
         if (!plugin.enabled) continue;
         if (plugin.error) {
           clearInterval(this.startMatterInterval);
@@ -1736,7 +1801,7 @@ export class Matterbridge extends EventEmitter {
     }
 
     this.log.debug('Starting matterbridge in mode', this.bridgeMode);
-    this.matterServer = this.createMatterServer(this.storageManager);
+    this.matterServer = await this.createMatterServer(this.storageManager);
     this.log.info('Creating matter commissioning controller');
     this.commissioningController = new CommissioningController({
       autoConnect: false,
@@ -1966,9 +2031,249 @@ export class Matterbridge extends EventEmitter {
         return;
       }
     }
-
     this.log.debug(`Creating commissioning server context for ${plg}Matterbridge${db}`);
-    this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', DeviceTypes.AGGREGATOR.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
+    this.matterbridgeContext = await this.createCommissioningServerContext('Matterbridge', 'Matterbridge', aggregator.code, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge aggregator');
+    await this.matterbridgeContext.set('port', this.port);
+    await this.matterbridgeContext.set('passcode', this.passcode);
+    await this.matterbridgeContext.set('discriminator', this.discriminator);
+  }
+
+  /**
+   * Convert the old API matter storage to the new API format.
+   * @param {StorageContext} context - The context of Matterbridge or of the plugin.
+   * @param {string} pluginName - The name of the plugin or Matterbridge.
+   * @returns {Promise<void>} - A promise that resolves when the storage process is started.
+   */
+  async convertStorage(context: StorageContext, pluginName: string) {
+    if (this.edge !== false) return;
+    try {
+      const storageService = Environment.default.get(StorageService);
+      Environment.default.vars.set('path.root', path.join(this.matterbridgeDirectory, 'matterstorage' + (this.profile ? '.' + this.profile : '')));
+      const nodeStorage = await storageService.open(pluginName);
+      if ((await nodeStorage.createContext('root').createContext('generalDiagnostics').get<number>('rebootCount', -1)) >= 0) {
+        this.log.info(`Matter node storage already converted to Matterbridge edge for ${plg}${pluginName}${nf}`);
+        return;
+      } else {
+        this.log.notice(`Converting matter node storage to Matterbridge edge for ${plg}${pluginName}${nt}...`);
+      }
+
+      // Read FabricManager from the old storage and get FabricManager.fabrics and FabricManager.nextFabricIndex
+      const fabricManagerContext = context.createContext('FabricManager');
+      const fabrics = (await fabricManagerContext.get('fabrics', [])) as {
+        fabricIndex: number;
+        fabricId: bigint;
+        nodeId: bigint;
+        rootNodeId: bigint;
+        rootVendorId: number;
+        rootPublicKey: Uint8Array;
+        operationalCert: Uint8Array;
+        rootCert: Uint8Array;
+        label: string;
+        scopedClusterData: Map<number, Map<string, SupportedStorageTypes>>;
+      }[];
+      const nextFabricIndex = await fabricManagerContext.get('nextFabricIndex', 0);
+      // Read EventHandler from the old storage
+      const eventHandlerContext = context.createContext('EventHandler');
+      // Read SessionManager from the old storage
+      const sessionManagerContext = context.createContext('SessionManager');
+      // Read EndpointStructure from the old storage
+      const endpointStructureContext = context.createContext('EndpointStructure');
+      // Read generalCommissioning from the old storage
+      const generalCommissioningContext = context.createContext('Cluster-0-48');
+      // Read basicInformation from the old storage
+      const basicInformationContext = context.createContext('Cluster-0-40');
+
+      const fabricInfo = {} as Record<string, { fabricIndex: number; fabricId: bigint; nodeId: bigint; rootNodeId: bigint; rootVendorId: number; label: string }>;
+      const fabricInfoArray: { fabricIndex: number; fabricId: bigint; nodeId: bigint; vendorId: number; rootPublicKey: Uint8Array; label: string }[] = [];
+      const nocArray: { noc: Uint8Array; icac: Uint8Array | null; fabricIndex: number }[] = [];
+      const trcArray: Uint8Array[] = [];
+      const aclArray: { fabricIndex: number; privilege: number; authMode: number; subjects: bigint[]; targets: null }[] = [];
+      this.log.info(`Found ${CYAN}${fabrics.length}${nf} fabrics (nextFabricIndex ${CYAN}${nextFabricIndex}${nf}) for ${plg}${pluginName}${nf}:`);
+      if (fabrics.length === 0 || nextFabricIndex === 0) {
+        this.log.notice(`If you want to try out matterbridge edge add -edge to the command line and pair it to your controller(s).`);
+        return;
+      }
+      for (const fabric of fabrics) {
+        this.log.info(
+          `- fabricIndex ${CYAN}${fabric.fabricIndex}${nf} fabricId ${CYAN}${fabric.fabricId}${nf} nodeId ${CYAN}${fabric.nodeId}${nf} rootNodeId ${CYAN}${fabric.rootNodeId}${nf} rootVendorId ${CYAN}${fabric.rootVendorId}${nf} label ${CYAN}${fabric.label}${nf}`,
+        );
+        fabricInfo[fabric.fabricIndex] = {
+          fabricIndex: fabric.fabricIndex,
+          fabricId: fabric.fabricId,
+          nodeId: fabric.nodeId,
+          rootNodeId: fabric.rootNodeId,
+          rootVendorId: fabric.rootVendorId,
+          label: fabric.label,
+        };
+        fabricInfoArray.push({
+          fabricIndex: fabric.fabricIndex,
+          fabricId: fabric.fabricId,
+          nodeId: fabric.nodeId,
+          vendorId: fabric.rootVendorId,
+          rootPublicKey: fabric.rootPublicKey,
+          label: fabric.label,
+        });
+        nocArray.push({ noc: fabric.operationalCert, icac: null, fabricIndex: fabric.fabricIndex });
+
+        trcArray.push(fabric.rootCert);
+
+        this.log.info(`- updating ACL for fabricIndex ${fabric.fabricIndex}:`, fabric.scopedClusterData);
+        const acl = fabric.scopedClusterData.get(0x1f)?.get('acl') as { value: { privilege: number; authMode: number; subjects: bigint[]; targets: null; fabricIndex: number }[] } | undefined;
+        if (acl && acl.value.length > 0) {
+          aclArray.push(acl.value[0]);
+          this.log.info(`- ACL updated to ${debugStringify(acl.value)}${nf} for fabricIndex ${CYAN}${fabric.fabricIndex}${nf}`);
+        } else {
+          const defaultAcl = { fabricIndex: fabric.fabricIndex, privilege: 5, authMode: 2, subjects: [fabric.rootNodeId], targets: null };
+          aclArray.push(defaultAcl);
+          this.log.info(`- ACL updated to default ${debugStringify(defaultAcl)}${nf} for fabricIndex ${CYAN}${fabric.fabricIndex}${nf}`);
+        }
+      }
+      await nodeStorage.createContext('fabrics').set('fabrics', fabrics);
+      await nodeStorage.createContext('fabrics').set('nextFabricIndex', nextFabricIndex);
+
+      await nodeStorage.createContext('sessions').set('resumptionRecords', await sessionManagerContext.get('resumptionRecords', []));
+
+      await nodeStorage.createContext('events').set('lastEventNumber', await eventHandlerContext.get('lastEventNumber', 1));
+
+      await nodeStorage.createContext('root').set('__number__', 0);
+
+      await nodeStorage.createContext('root').createContext('commissioning').set('enabled', true);
+      await nodeStorage.createContext('root').createContext('commissioning').set('commissioned', true);
+      await nodeStorage.createContext('root').createContext('commissioning').set('fabrics', fabricInfo);
+
+      await nodeStorage.createContext('root').createContext('operationalCredentials').set('commissionedFabrics', fabricInfoArray.length);
+      await nodeStorage.createContext('root').createContext('operationalCredentials').set('fabrics', fabricInfoArray);
+      // operationalCredentials.nocs ==>> [{noc: fabric.operationalCert, icac: null, fabricIndex: fabric.fabricIndex }]
+      await nodeStorage.createContext('root').createContext('operationalCredentials').set('nocs', nocArray);
+      // operationalCredentials.trustedRootCertificates ==>> ["{\"__object__\":\"Uint8Array\",\"__value__\":\"" + fabric.rootCert + "\"}"]
+      await nodeStorage.createContext('root').createContext('operationalCredentials').set('trustedRootCertificates', trcArray);
+
+      // ACL updated, updating ACL manager { fabricIndex: 3, privilege: 5, authMode: 2, subjects: [ 18446744060825763897 ], targets: null }
+      // From fabric.rootNodeId if fabric.scopedClusterData.get(0x1f).get('acl') is empty
+      // [{"fabricIndex":3,"privilege":5,"authMode":2,"subjects":["{\"__object__\":\"BigInt\",\"__value__\":\"18446744060825763897\"}"],"targets":null}]
+      await nodeStorage.createContext('root').createContext('accessControl').set('acl', aclArray);
+
+      await nodeStorage
+        .createContext('root')
+        .createContext('generalCommissioning')
+        .set('breadcrumb', await generalCommissioningContext.get('breadcrumb', BigInt(0)));
+
+      await nodeStorage
+        .createContext('root')
+        .createContext('basicInformation')
+        .set('location', await basicInformationContext.get('location', 'XX'));
+
+      await nodeStorage.createContext('root').createContext('network').set('ble', false);
+      await nodeStorage
+        .createContext('root')
+        .createContext('network')
+        .set('operationalPort', await context.get('port', 5540));
+
+      await nodeStorage
+        .createContext('root')
+        .createContext('productDescription')
+        .set('productId', await context.get('productId', 0x8000));
+      await nodeStorage
+        .createContext('root')
+        .createContext('productDescription')
+        .set('vendorId', await context.get('vendorId', 0xfff1));
+
+      /*
+      "Matterbridge.EndpointStructure": {
+        "unique_d60ca095a002f160-index_0": 1,
+        "unique_d60ca095a002f160-index_0-custom_Switch0": 2,
+        "unique_d60ca095a002f160-index_0-custom_Outlet0": 3,
+        "unique_d60ca095a002f160-index_0-custom_Light0": 4,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa": 2,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_PowerSource": 3,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_light:0": 4,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_light:1": 5,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_light:2": 6,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_light:3": 7,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_meter:0": 8,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_meter:1": 9,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_meter:2": 10,
+        "unique_d60ca095a002f160-index_0-unique_7ddb4752b982ee108d5928e934f0fcfa-custom_meter:3": 11,
+        "nextEndpointId": 5
+      },
+      */
+      const rootDeviceName = (await context.get('deviceName', '')).replace(/[ .]/g, '');
+      this.log.info(`Converting ${pluginName}.EndpointStructure to root.parts.${rootDeviceName}...`);
+      for (const key of await endpointStructureContext.keys()) {
+        if (key === 'nextEndpointId') {
+          await nodeStorage.createContext('root').set('__nextNumber__', await endpointStructureContext.get(key));
+          continue;
+        }
+        const parts = key.split('-');
+        const number = await endpointStructureContext.get(key);
+        if (parts.length === 2) {
+          this.log.debug(`Converting bridge Matterbridge.EndpointStructure:${key}:${number} to root.parts.${rootDeviceName}.__number__:${CYAN}${number}${db}`);
+          await nodeStorage.createContext('root').createContext('parts').createContext(rootDeviceName).set('__number__', number);
+        } else if (parts.length === 3 && parts[2].startsWith('unique_')) {
+          const device = this.devices.get(parts[2].replace('unique_', ''));
+          if (device && device.deviceName && device.maybeNumber) {
+            this.log.debug(`Converting unique Matterbridge.EndpointStructure:${key}:${number} to root.parts.${rootDeviceName}.parts.${device.deviceName.replace(/[ .]/g, '')}.__number__:${CYAN}${device.maybeNumber}${db}`);
+            await nodeStorage.createContext('root').createContext('parts').createContext(rootDeviceName).createContext('parts').createContext(device.deviceName.replace(/[ .]/g, '')).set('__number__', device.maybeNumber);
+          }
+        } else if (parts.length === 4 && parts[2].startsWith('unique_') && parts[3].startsWith('custom_')) {
+          const device = this.devices.get(parts[2].replace('unique_', ''));
+          if (device && device.deviceName && device.maybeNumber) {
+            const childEndpointName = parts[3].replace('custom_', '');
+            const childEndpoint = device.getChildEndpointByName(childEndpointName);
+            this.log.debug(
+              `Converting unique Matterbridge.EndpointStructure:${key}:${number} to root.parts.${rootDeviceName}.parts.${device.deviceName.replace(/[ .]/g, '')}.parts.${parts[3].replace('custom_', '').replace(/[ .]/g, '')}.__number__:${CYAN}${childEndpoint?.number}${db}`,
+            );
+            await nodeStorage
+              .createContext('root')
+              .createContext('parts')
+              .createContext(rootDeviceName)
+              .createContext('parts')
+              .createContext(device.deviceName.replace(/[ .]/g, ''))
+              .createContext('parts')
+              .createContext(parts[3].replace('custom_', '').replace(/[ .]/g, ''))
+              .set('__number__', childEndpoint?.number);
+          }
+        } else if (parts.length === 3 && parts[2].startsWith('custom_')) {
+          this.log.debug(`Converting custom Matterbridge.EndpointStructure:${key}:${number} to root.parts.${rootDeviceName}.parts.${parts[2].replace('custom_', '').replace(/[ .]/g, '')}.__number__:${CYAN}${number}${db}`);
+          await nodeStorage.createContext('root').createContext('parts').createContext(rootDeviceName).createContext('parts').createContext(parts[2].replace('custom_', '').replace(/[ .]/g, '')).set('__number__', number);
+        } else if (parts.length === 4 && parts[2].startsWith('custom_') && parts[3].startsWith('custom_')) {
+          this.log.debug(
+            `Converting custom Matterbridge.EndpointStructure:${key}:${number} to root.parts.${rootDeviceName}.parts.${parts[2].replace('custom_', '').replace(/[ .]/g, '')}.parts.${parts[3].replace('custom_', '').replace(/[ .]/g, '')}.__number__:${CYAN}${number}${db}`,
+          );
+          await nodeStorage
+            .createContext('root')
+            .createContext('parts')
+            .createContext(rootDeviceName)
+            .createContext('parts')
+            .createContext(parts[2].replace('custom_', '').replace(/[ .]/g, ''))
+            .createContext('parts')
+            .createContext(parts[3].replace('custom_', '').replace(/[ .]/g, ''))
+            .set('__number__', number);
+        }
+      }
+
+      await nodeStorage.createContext('persist').set('converted', true);
+      await nodeStorage.createContext('persist').set('deviceName', await context.get('deviceName'));
+      await nodeStorage.createContext('persist').set('deviceType', await context.get('deviceType'));
+      await nodeStorage.createContext('persist').set('vendorId', await context.get('vendorId'));
+      await nodeStorage.createContext('persist').set('vendorName', await context.get('vendorName'));
+      await nodeStorage.createContext('persist').set('productId', await context.get('productId'));
+      await nodeStorage.createContext('persist').set('productName', await context.get('productName'));
+      await nodeStorage.createContext('persist').set('nodeLabel', await context.get('nodeLabel'));
+      await nodeStorage.createContext('persist').set('productLabel', await context.get('productLabel'));
+      await nodeStorage.createContext('persist').set('serialNumber', 'SN' + (await context.get('serialNumber')));
+      await nodeStorage.createContext('persist').set('uniqueId', await context.get('uniqueId'));
+      await nodeStorage.createContext('persist').set('softwareVersion', await context.get('softwareVersion'));
+      await nodeStorage.createContext('persist').set('softwareVersionString', await context.get('softwareVersionString'));
+      await nodeStorage.createContext('persist').set('hardwareVersion', await context.get('hardwareVersion'));
+      await nodeStorage.createContext('persist').set('hardwareVersionString', await context.get('hardwareVersionString'));
+      await context.set('converted', true);
+      this.log.notice(`Matter storage converted to Matterbridge edge for ${plg}${pluginName}${nt}`);
+      this.log.notice(`If you want to try out matterbridge edge add -edge to the command line.`);
+      this.log.notice(`All fabrics have been converted to the new storage format.`);
+    } catch (error) {
+      this.log.error(`convertStorage error converting matter storage to Matterbridge edge for ${plg}${pluginName}${er}:`, error);
+    }
   }
 
   /**
@@ -2037,7 +2342,7 @@ export class Matterbridge extends EventEmitter {
    * @param storageManager The storage manager to be used by the Matter server.
    *
    */
-  protected createMatterServer(storageManager: StorageManager): MatterServer {
+  protected async createMatterServer(storageManager: StorageManager): Promise<MatterServer> {
     this.log.debug('Creating matter server');
 
     // Validate mdnsInterface
@@ -2698,7 +3003,7 @@ export class Matterbridge extends EventEmitter {
    * @param {string} name - The logger name of the message
    * @param {string} message - The content of the message.
    */
-  private wssSendMessage(level: string, time: string, name: string, message: string) {
+  protected wssSendMessage(level: string, time: string, name: string, message: string) {
     if (!level || !time || !name || !message) return;
     // Remove ANSI escape codes from the message
     // eslint-disable-next-line no-control-regex
@@ -2741,12 +3046,12 @@ export class Matterbridge extends EventEmitter {
    * Sends a need to refresh WebSocket message to all connected clients.
    *
    */
-  private wssSendRefreshRequired() {
+  protected wssSendRefreshRequired() {
     this.matterbridgeInformation.refreshRequired = true;
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ id: WS_ID_REFRESH_NEEDED, src: 'Matterbridge', dst: 'Matterbridge', method: 'refresh_required', params: {} }));
+        client.send(JSON.stringify({ id: WS_ID_REFRESH_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', params: {} }));
       }
     });
   }
@@ -2755,12 +3060,12 @@ export class Matterbridge extends EventEmitter {
    * Sends a need to restart WebSocket message to all connected clients.
    *
    */
-  private wssSendRestartRequired() {
+  protected wssSendRestartRequired() {
     this.matterbridgeInformation.restartRequired = true;
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ id: WS_ID_RESTART_NEEDED, src: 'Matterbridge', dst: 'Matterbridge', method: 'restart_required', params: {} }));
+        client.send(JSON.stringify({ id: WS_ID_RESTART_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', params: {} }));
       }
     });
   }
@@ -2974,7 +3279,7 @@ export class Matterbridge extends EventEmitter {
       this.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridgeFabricInformations;
       this.matterbridgeInformation.matterbridgeSessionInformations = Array.from(this.matterbridgeSessionInformations.values());
       this.matterbridgeInformation.profile = this.profile;
-      const response = { wssHost, ssl: hasParameter('ssl'), systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
+      const response = { systemInformation: this.systemInformation, matterbridgeInformation: this.matterbridgeInformation };
       // this.log.debug('Response:', debugStringify(response));
       res.json(response);
     });
@@ -3659,7 +3964,7 @@ export class Matterbridge extends EventEmitter {
     await this.matterbridgeContext.set('softwareVersionString', this.matterbridgeVersion);
     await this.matterbridgeContext.set('hardwareVersion', 1);
     await this.matterbridgeContext.set('hardwareVersionString', extensionVersion); // Update with the extension version
-    this.matterServer = this.createMatterServer(this.storageManager);
+    this.matterServer = await this.createMatterServer(this.storageManager);
     this.log.debug(`Creating commissioning server for ${plg}Matterbridge${db}`);
     this.commissioningServer = await this.createCommisioningServer(this.matterbridgeContext, 'Matterbridge');
     this.log.debug(`Creating matter aggregator for ${plg}Matterbridge${db}`);

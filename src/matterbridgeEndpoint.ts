@@ -560,6 +560,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {MatterbridgeEndpointOptions} [options={}] - The options for the endpoint.
    * @param {boolean} [debug=false] - Whether to enable debug logging.
    * @returns {MatterbridgeEndpoint} - The child endpoint that was found or added.
+   *
+   * @example
+   * ```typescript
+   * const endpoint = device.addChildDeviceType('Temperature', [temperatureSensor], { tagList: [{ mfgCode: null, namespaceId: LocationTag.Indoor.namespaceId, tag: LocationTag.Indoor.tag, label: null }] }, true);
+   * ```
    */
   addChildDeviceType(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeEndpoint {
     this.log.debug(`addChildDeviceType: ${CYAN}${endpointName}${db}`);
@@ -601,6 +606,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {MatterbridgeEndpointOptions} [options={}] - The options for the device.
    * @param {boolean} [debug=false] - Whether to enable debug logging.
    * @returns {MatterbridgeEndpoint} - The child endpoint that was found or added.
+   *
+   * @example
+   * ```typescript
+   * const endpoint = device.addChildDeviceTypeWithClusterServer('Temperature', [temperatureSensor], [], { tagList: [{ mfgCode: null, namespaceId: LocationTag.Indoor.namespaceId, tag: LocationTag.Indoor.tag, label: null }] }, true);
+   * ```
    */
   addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeEndpoint {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
@@ -1137,6 +1147,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultGroupsClusterServer() {
     this.addClusterServer(this.getDefaultGroupsClusterServer());
+    return this;
   }
 
   /**
@@ -1171,6 +1182,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     /*
     this.addClusterServer(this.getDefaultScenesClusterServer());
     */
+    return this;
   }
 
   /**
@@ -1289,6 +1301,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       return;
     }
     this.addClusterServer(this.getDefaultBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productId, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString));
+    return this;
   }
 
   /**
@@ -1379,6 +1392,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     hardwareVersionString = '1.0.0',
   ) {
     this.addClusterServer(this.getDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString));
+    return this;
   }
 
   /**
@@ -1528,6 +1542,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultOnOffClusterServer(onOff = false, globalSceneControl = false, onTime = 0, offWaitTime = 0, startUpOnOff: OnOff.StartUpOnOff | null = null) {
     this.addClusterServer(this.getDefaultOnOffClusterServer(onOff, globalSceneControl, onTime, offWaitTime, startUpOnOff));
+    return this;
   }
 
   /**
@@ -1565,6 +1580,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createOnOffClusterServer(onOff = false) {
     this.addClusterServer(this.getOnOffClusterServer(onOff));
+    return this;
   }
 
   /**
@@ -1602,6 +1618,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDeadFrontOnOffClusterServer(onOff = false) {
     this.addClusterServer(this.getDeadFrontOnOffClusterServer(onOff));
+    return this;
   }
 
   /**
@@ -1668,6 +1685,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 1, maxLevel = 254, onLevel: number | null = null, startUpCurrentLevel: number | null = null) {
     this.addClusterServer(this.getDefaultLevelControlClusterServer(currentLevel, minLevel, maxLevel, onLevel, startUpCurrentLevel));
+    return this;
   }
 
   /**
@@ -1763,6 +1781,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     this.addClusterServer(this.getDefaultColorControlClusterServer(currentX, currentY, currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
+    return this;
   }
 
   /**
@@ -1831,6 +1850,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createXyColorControlClusterServer(currentX = 0, currentY = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     this.addClusterServer(this.getXyColorControlClusterServer(currentX, currentY, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
+    return this;
   }
 
   /**
@@ -1911,6 +1931,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createHsColorControlClusterServer(currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     this.addClusterServer(this.getHsColorControlClusterServer(currentHue, currentSaturation, colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
+    return this;
   }
 
   /**
@@ -1964,6 +1985,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createCtColorControlClusterServer(colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     this.addClusterServer(this.getCtColorControlClusterServer(colorTemperatureMireds, colorTempPhysicalMinMireds, colorTempPhysicalMaxMireds));
+    return this;
   }
 
   private isColorControlConfigured = false;
@@ -2002,6 +2024,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       await endpoint.setAttribute(ColorControlCluster.id, 'enhancedColorMode', colorMode, this.log, endpoint);
     }
     this.isColorControlConfigured = true;
+    return this;
   }
 
   /**
@@ -2016,6 +2039,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       await endpoint.setAttribute(ColorControlCluster.id, 'colorMode', colorMode, this.log, endpoint);
       await endpoint.setAttribute(ColorControlCluster.id, 'enhancedColorMode', colorMode, this.log, endpoint);
     }
+    return this;
   }
 
   /**
