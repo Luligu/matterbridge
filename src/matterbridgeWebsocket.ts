@@ -187,9 +187,18 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
         return;
       }
       const clusters: ApiClusters[] = [];
+      let deviceName = '';
+      let serialNumber = '';
+      let deviceTypes: number[] = [];
       this.devices.forEach(async (device) => {
         if (data.params.plugin !== device.plugin) return;
         if (data.params.endpoint !== device.number) return;
+        deviceName = device.deviceName ?? 'Unknown';
+        serialNumber = device.serialNumber ?? 'Unknown';
+        deviceTypes = [];
+        device.getDeviceTypes().forEach((deviceType) => {
+          deviceTypes.push(deviceType.code);
+        });
         if (this.edge) device = EndpointServer.forEndpoint(device as unknown as EndpointNode) as unknown as MatterbridgeDevice;
         const clusterServers = device.getAllClusterServers();
         clusterServers.forEach((clusterServer) => {
@@ -225,7 +234,7 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
                 if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
                 else attributeValue = value.getLocal().toString();
               } catch (error) {
-                attributeValue = 'Unavailable';
+                attributeValue = 'Fabric-Scoped';
                 this.log.debug(`GetLocal error ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
               }
               clusters.push({
@@ -240,7 +249,19 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
           });
         });
       });
-      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: clusters }));
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, deviceName, serialNumber, endpoint: data.params.endpoint, deviceTypes, response: clusters }));
+      return;
+    } else if (data.method === '/api/select') {
+      if (!isValidString(data.params.plugin, 10)) {
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select' }));
+        return;
+      }
+      const plugin = this.plugins.get(data.params.plugin);
+      if (!plugin) {
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select' }));
+        return;
+      }
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: plugin.platform?.selectDevice.values() }));
       return;
     } else {
       this.log.error(`Invalid method from websocket client: ${debugStringify(data)}`);
