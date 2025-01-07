@@ -16,6 +16,8 @@ export function WebSocketProvider({ children }) {
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');
   const [messages, setMessages] = useState([]);
   const [online, setOnline] = useState(false);
+  const [refresh, setRefresh] = useState(false);
+  const [restart, setRestart] = useState(false);
 
   // Refs
   const listenersRef = useRef([]);
@@ -34,7 +36,7 @@ export function WebSocketProvider({ children }) {
   const maxMessages = 1000;
   const maxRetries = 100;
   const pingIntervalSeconds = 10;
-  const offlineTimeoutSeconds = 2;
+  const offlineTimeoutSeconds = 5;
 
   // console.log(`WebSocketUse: wssHost: ${wssHost} ssl: ${ssl} logFilterLevel: ${logFilterLevel} logFilterSearch: ${logFilterSearch} messages: ${messages.length} available`);
   
@@ -52,11 +54,13 @@ export function WebSocketProvider({ children }) {
           if(message.id===undefined) message.id = uniqueIdRef.current;
           const msg = JSON.stringify(message);
           wsRef.current.send(msg);
-          // console.log(`WebSocket message sent:`, message);
+          console.log(`WebSocket sent message:`, message);
         } catch (error) {
           // eslint-disable-next-line no-console  
           console.error(`WebSocket error sending message: ${error}`);
         }
+      } else {
+        console.error(`WebSocket message not sent, WebSocket not connected:`, message);
       }
   }, []);
 
@@ -74,13 +78,13 @@ export function WebSocketProvider({ children }) {
   const addListener = useCallback((listener) => {
     // console.log(`WebSocket addListener:`, listener);
     listenersRef.current = [...listenersRef.current, listener];
-    // console.log(`WebSocket total listeners:`, listenersRef.current.length);
+    console.log(`WebSocket addListener total listeners:`, listenersRef.current.length);
   }, []);
 
   const removeListener = useCallback((listener) => {
     // console.log(`WebSocket removeListener:`, listener);
     listenersRef.current = listenersRef.current.filter(l => l !== listener);
-    // console.log(`WebSocket total listeners:`, listenersRef.current.length);
+    console.log(`WebSocket removeListener total listeners:`, listenersRef.current.length);
   }, []);
 
   const connectWebSocket = useCallback(() => {
@@ -95,16 +99,19 @@ export function WebSocketProvider({ children }) {
       wsRef.current = new WebSocket(wssHost);
 
       wsRef.current.onmessage = (event) => {
+        if(!online) setOnline(true);
         try {
           const msg = JSON.parse(event.data);
           if(msg.id===undefined) {
             return; // Ignore messages without an ID
           } else if(msg.id===WS_ID_REFRESH_NEEDED) {
             console.log(`WebSocket WS_ID_REFRESH_NEEDED message:`, msg, 'listeners:', listenersRef.current.length);
+            setRefresh(true);
             listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
             return;
           } else if(msg.id===WS_ID_RESTART_NEEDED) {
             console.log(`WebSocket WS_ID_RESTART_NEEDED message:`, msg, 'listeners:', listenersRef.current.length);
+            setRestart(true);
             listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
             return;
           } else if(msg.id===uniqueIdRef.current && msg.src === 'Matterbridge' && msg.dst === 'Frontend' && msg.response === 'pong') {
@@ -226,7 +233,7 @@ export function WebSocketProvider({ children }) {
   }, [connectWebSocket]);
     
   return (
-    <WebSocketContext.Provider value={{ messages, setMessages, sendMessage, logMessage, setLogFilters, online, addListener, removeListener }}>
+    <WebSocketContext.Provider value={{ messages, setMessages, sendMessage, logMessage, setLogFilters, online, refresh, restart, addListener, removeListener }}>
       {children}
     </WebSocketContext.Provider>
   );

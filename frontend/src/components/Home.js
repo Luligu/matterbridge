@@ -49,6 +49,9 @@ import { ConfirmCancelForm } from './ConfirmCancelForm';
 import { configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, RemoveButton, CheckboxWidget, createConfigTheme, DescriptionFieldTemplate } from './configEditor';
 import { getCssVariable } from './muiTheme';
 
+export let pluginName = '';
+export let selectDevices = [];
+
 function Home() {
   const [qrCode, setQrCode] = useState('');
   const [pairingCode, setPairingCode] = useState('');
@@ -68,6 +71,9 @@ function Home() {
 
   const refAddRemove = useRef(null);
   const refRegisteredPlugins = useRef(null);
+
+  const primaryColor = useMemo(() => getCssVariable('--primary-color', '#009a00'), []);
+  const theme = useMemo(() => createConfigTheme(primaryColor), []);
 
   const handleSnackOpen = () => {
     setOpenSnack(true);
@@ -172,6 +178,8 @@ function Home() {
 
   const handleConfigPlugin = (row) => {
     // console.log('handleConfigPlugin row:', row, 'plugin:', plugins[row].name);
+    pluginName = plugins[row].name;
+    sendMessage({ method: "/api/select", src: "Frontend", dst: "Matterbridge", params: { plugin: pluginName } });
     setSelectedPluginConfig(plugins[row].configJson);
     setSelectedPluginSchema(plugins[row].schemaJson);
     handleOpenConfig();
@@ -242,6 +250,15 @@ function Home() {
           console.log('Home received plugins:', msg.response);
           setPlugins(msg.response);
         }
+        if (msg.method === '/api/select') {
+          if(msg.response) {
+            console.log('Home received /api/select:', msg.response);
+            selectDevices = msg.response;
+          }
+          if(msg.error) {
+            console.error('Home received /api/select error:', msg.error);
+          }
+        }
       }
     };
 
@@ -254,8 +271,10 @@ function Home() {
   }, [addListener, removeListener, sendMessage]);
 
   useEffect(() => {
-    console.log('Home received online');
-    reloadSettings();
+    if(online) {
+      console.log('Home received online');
+      reloadSettings();
+    }
   }, [online]);
 
   if (!online) {
@@ -263,26 +282,22 @@ function Home() {
   }
   return (
     <div className="MbfPageDiv" style={{ flexDirection: 'row' }}>
-      <Dialog 
-        open={openConfig} 
-        onClose={handleCloseConfig} 
-        maxWidth='800px' 
-        PaperProps={{style: { 
-          color: 'var(--div-text-color)', 
-          backgroundColor: 'var(--div-bg-color)', 
-          border: "2px solid var(--div-border-color)", 
-          borderRadius: 'var(--div-border-radius)', 
-          boxShadow: '2px 2px 5px var(--div-shadow-color)'}}}>
-        <DialogTitle gap={'20px'}>
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-            <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
-            <h3>Matterbridge plugin configuration</h3>
-          </div>
-        </DialogTitle>
-        <DialogContent style={{ padding: '0px', margin: '0px' }}>
-          <DialogConfigPlugin config={selectedPluginConfig} schema={selectedPluginSchema} handleCloseConfig={handleCloseConfig}/>
-        </DialogContent>
-      </Dialog>
+      <ThemeProvider theme={theme}>
+        <Dialog 
+          open={openConfig} 
+          onClose={handleCloseConfig} 
+          maxWidth='800px'>
+          <DialogTitle gap={'20px'}>
+            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
+              <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
+              <h3>Matterbridge plugin configuration</h3>
+            </div>
+          </DialogTitle>
+          <DialogContent style={{ padding: '0px', margin: '0px' }}>
+            <DialogConfigPlugin config={selectedPluginConfig} schema={selectedPluginSchema} handleCloseConfig={handleCloseConfig}/>
+          </DialogContent>
+        </Dialog>
+      </ThemeProvider>
 
       <ConfirmCancelForm open={showConfirmCancelForm} title={confirmCancelFormTitle} message={confirmCancelFormMessage} onConfirm={handleConfirm} onCancel={handleCancel} />
 
@@ -334,17 +349,17 @@ function Home() {
                     <td>{plugin.registeredDevices}</td>
                     <td>  
                       <>
-                        {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.error && plugin.enabled ? <Tooltip title="Shows the QRCode or the fabrics"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleSelectQRCode(index)} size="small"><QrCode2 /></IconButton></Tooltip> : <></>}
-                        <Tooltip title="Plugin config"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleConfigPlugin(index)} size="small"><Settings /></IconButton></Tooltip>
+                        {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.error && plugin.enabled ? <Tooltip title="Shows the QRCode or the fabrics"><IconButton style={{margin: '0', padding: '0'}} onClick={() => handleSelectQRCode(index)} size="small"><QrCode2 /></IconButton></Tooltip> : <></>}
+                        <Tooltip title="Plugin config"><IconButton style={{margin: '0', padding: '0'}} onClick={() => handleConfigPlugin(index)} size="small"><Settings /></IconButton></Tooltip>
                         {matterbridgeInfo && !matterbridgeInfo.readOnly &&                        
-                          <Tooltip title="Remove the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => { handleActionWithConfirmCancel('Remove plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'remove', index); } } size="small"><DeleteForever /></IconButton></Tooltip>
+                          <Tooltip title="Remove the plugin"><IconButton style={{margin: '0', padding: '0'}} onClick={() => { handleActionWithConfirmCancel('Remove plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'remove', index); } } size="small"><DeleteForever /></IconButton></Tooltip>
                         }  
-                        {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => { handleActionWithConfirmCancel('Disable plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'disable', index); } } size="small"><Unpublished /></IconButton></Tooltip> : <></>}
-                        {!plugin.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleEnableDisablePlugin(index) } size="small"><PublishedWithChanges /></IconButton></Tooltip> : <></>}
-                        <Tooltip title="Plugin help"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleHelpPlugin(index)} size="small"><Help /></IconButton></Tooltip>
-                        <Tooltip title="Plugin version history"><IconButton style={{padding: 0}} className="PluginsIconButton" onClick={() => handleChangelogPlugin(index)} size="small"><Announcement /></IconButton></Tooltip>
+                        {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{margin: '0', padding: '0'}} onClick={() => { handleActionWithConfirmCancel('Disable plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'disable', index); } } size="small"><Unpublished /></IconButton></Tooltip> : <></>}
+                        {!plugin.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{margin: '0', padding: '0'}} onClick={() => handleEnableDisablePlugin(index) } size="small"><PublishedWithChanges /></IconButton></Tooltip> : <></>}
+                        <Tooltip title="Plugin help"><IconButton style={{margin: '0', padding: '0'}} onClick={() => handleHelpPlugin(index)} size="small"><Help /></IconButton></Tooltip>
+                        <Tooltip title="Plugin version history"><IconButton style={{margin: '0', padding: '0'}} onClick={() => handleChangelogPlugin(index)} size="small"><Announcement /></IconButton></Tooltip>
                         {matterbridgeInfo && !matterbridgeInfo.readOnly &&                        
-                          <Tooltip title="Sponsor the plugin"><IconButton style={{padding: 0, color: '#b6409c'}} className="PluginsIconButton" onClick={() => handleSponsorPlugin(index)} size="small"><Favorite /></IconButton></Tooltip>
+                          <Tooltip title="Sponsor the plugin"><IconButton style={{margin: '0', padding: '0', color: '#b6409c'}} onClick={() => handleSponsorPlugin(index)} size="small"><Favorite /></IconButton></Tooltip>
                         }
                       </>
                     </td>
