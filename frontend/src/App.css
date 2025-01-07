@@ -327,13 +327,14 @@ nav {
 table {
   border-collapse: collapse;
   width: 100%;
+  table-layout: auto;
 }
 
 thead {
   position: sticky;
   top: 0;
   border: 1px solid var(--table-border-color);
-  z-index: auto;
+  z-index: 10;
 }
 
 thead th {
