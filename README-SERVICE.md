@@ -49,13 +49,13 @@ After=network-online.target
 [Service]
 Type=simple
 ExecStart=matterbridge -service
-WorkingDirectory=/home/<USER>/Matterbridge  
+WorkingDirectory=/home/<USER>/Matterbridge
 StandardOutput=inherit
 StandardError=inherit
 Restart=always
 RestartSec=10s
 TimeoutStopSec=30s
-User=<USER>                                 
+User=<USER>
 Group=<USER>
 
 [Install]
