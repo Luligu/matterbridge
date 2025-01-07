@@ -210,11 +210,14 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
               });
             }
             let attributeValue;
+            let attributeLocalValue;
             try {
               if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
               else attributeValue = value.getLocal().toString();
+              attributeLocalValue = value.getLocal();
             } catch (error) {
               attributeValue = 'Fabric-Scoped';
+              attributeLocalValue = 'Fabric-Scoped';
               this.log.debug(`GetLocal value ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
             }
             clusters.push({
@@ -226,6 +229,7 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
               attributeName: key,
               attributeId: '0x' + value.id.toString(16).padStart(2, '0'),
               attributeValue,
+              attributeLocalValue,
             });
           });
         });
@@ -243,11 +247,14 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
                 });
               }
               let attributeValue;
+              let attributeLocalValue;
               try {
                 if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
                 else attributeValue = value.getLocal().toString();
+                attributeLocalValue = value.getLocal();
               } catch (error) {
                 attributeValue = 'Fabric-Scoped';
+                attributeLocalValue = 'Fabric-Scoped';
                 this.log.debug(`GetLocal error ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
               }
               clusters.push({
@@ -259,6 +266,7 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
                 attributeName: key,
                 attributeId: '0x' + value.id.toString(16).padStart(2, '0'),
                 attributeValue,
+                attributeLocalValue,
               });
             });
           });
