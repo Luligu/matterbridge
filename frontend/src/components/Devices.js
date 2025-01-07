@@ -51,6 +51,20 @@ const devicesColumns = [
     accessor: 'configUrl',
   },
   {
+    Header: 'Config',
+    accessor: 'configButton',
+    noSort: true,
+    Cell: ({ row }) => (
+      <IconButton
+        onClick={() => window.open(row.original.configUrl, '_blank')}
+        aria-label="Open Config"
+        disabled={!row.original.configUrl}
+      >
+        <SettingsIcon />
+      </IconButton>
+    ),
+  },
+  {
     Header: 'Cluster',
     accessor: 'cluster',
   },
@@ -93,7 +107,7 @@ const clustersColumns = [
       <Tooltip title={value} componentsProps={{
           tooltip: { sx: { fontSize: '14px', fontWeight: 'normal', color: '#ffffff', backgroundColor: 'var(--primary-color)'  } },
         }}>
-        <div style={{ maxWidth: '600px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ maxWidth: '500px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {value}
         </div>
       </Tooltip>
@@ -143,13 +157,15 @@ function DevicesTable({ data, columnVisibility, setPlugin, setEndpoint, setDevic
               <th {...column.getHeaderProps({ ...column.getSortByToggleProps(), title: '' })}>
                 {column.render('Header')}
                 {/* Add a sort direction indicator */}
-                <span>
-                  {column.isSorted
-                    ? column.isSortedDesc
-                      ? ' 🔽'
-                      : ' 🔼'
-                    : '🔽🔼'}
-                </span>
+                {!column.noSort && (
+                  <span>
+                    {column.isSorted
+                      ? column.isSortedDesc
+                        ? ' 🔽'
+                        : ' 🔼'
+                      : '🔽🔼'}
+                  </span>
+                )}
               </th>
             ))}
           </tr>
