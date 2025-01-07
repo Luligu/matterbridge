@@ -59,6 +59,7 @@ const devicesColumns = [
         onClick={() => window.open(row.original.configUrl, '_blank')}
         aria-label="Open Config"
         disabled={!row.original.configUrl}
+        sx={{ margin: 0, padding: 0 }}
       >
         <SettingsIcon />
       </IconButton>
@@ -254,6 +255,8 @@ function Devices() {
     name: true,
     serial: true,
     uniqueId: false,
+    configUrl: false,
+    configButton: true,
     cluster: true,
   });
 

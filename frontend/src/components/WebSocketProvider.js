@@ -105,6 +105,9 @@ export function WebSocketProvider({ children }) {
         if(!online) setOnline(true);
         try {
           const msg = JSON.parse(event.data);
+          if(msg.error) {
+            console.error(`WebSocket error message:`, msg);
+          }
           if(msg.id===undefined) {
             return; // Ignore messages without an ID
           } else if(msg.id===WS_ID_REFRESH_NEEDED) {

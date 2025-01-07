@@ -33,7 +33,7 @@ It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbr
 ### Changed
 
 - [websocket]: Added params to /api/clusters.
-- [frontend]: Frontend v.2.3.2
+- [frontend]: Frontend v.2.3.3
 
 ### Fixed
 

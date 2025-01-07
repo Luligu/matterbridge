@@ -7,10 +7,10 @@ export function Connecting() {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      height: '100vh',
       fontSize: '20px',
       flexDirection: 'column',
       color: 'var(--main-text-color)',
+      height: '100vh',
       backgroundColor: 'var(--main-bg-color)',
     }}>
       <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>

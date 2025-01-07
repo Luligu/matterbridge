@@ -1,5 +1,5 @@
 // React
-import { useState, useMemo, useContext } from 'react';
+import { useState, useMemo } from 'react';
 
 // @mui/material
 import IconButton from '@mui/material/IconButton';
@@ -31,7 +31,6 @@ import { Templates } from '@rjsf/mui';
 
 // Frontend custom components
 import { getCssVariable } from './muiTheme';
-import { WebSocketContext } from './WebSocketProvider';
 import { selectDevices } from './Home';
 
 const { BaseInputTemplate } = Templates; // To get templates from a theme do this
@@ -194,14 +193,12 @@ export function createConfigTheme(primaryColor) {
 
 export function ArrayFieldTemplate(props) {
   // console.log('ArrayFieldTemplate: title', title, 'description', schema.description);
-  const { online, sendMessage, addListener, removeListener } = useContext(WebSocketContext);
-
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const primaryColor = useMemo(() => getCssVariable('--primary-color', '#009a00'), []);
   const theme = useMemo(() => createConfigTheme(primaryColor), []);
 
-  const { canAdd, onAddClick, schema, title, formData } = props;
+  const { canAdd, onAddClick, schema, title } = props;
 
   const handleDialogToggle = () => {
     setDialogOpen(!dialogOpen);
