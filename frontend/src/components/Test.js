@@ -9,14 +9,8 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
 
 // @mui/icons-material
-import SettingsIcon from '@mui/icons-material/Settings';
 import Battery4BarIcon from '@mui/icons-material/Battery4Bar';
 import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices';
 import WifiIcon from '@mui/icons-material/Wifi';
@@ -29,17 +23,16 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import FilterDramaIcon from '@mui/icons-material/FilterDrama'; // Cloud for weather
 import ThermostatIcon from '@mui/icons-material/Thermostat'; // Temperature
 import WaterDropIcon from '@mui/icons-material/WaterDrop'; // Humidity
-import ThermostatAutoIcon from '@mui/icons-material/ThermostatAuto'; // ThermostatAuto for heating
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import OutletIcon from '@mui/icons-material/Outlet';
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import BlindsIcon from '@mui/icons-material/Blinds';
+import PowerIcon from '@mui/icons-material/Power';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
-
-const debug = true;
+import { debug } from '../App';
 
 function Test() {
   // WebSocket context
@@ -58,29 +51,29 @@ function Test() {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'refresh_required') {
-          console.log('Test received refresh_required and sending api requests');
+          if(debug) console.log('Test received refresh_required and sending api requests');
           sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
           sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
           sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === '/api/settings' && msg.response) {
-          console.log('Test received settings:', msg.response);
+          if(debug) console.log('Test received settings:', msg.response);
           setSettings(msg.response);
         }
         if (msg.method === '/api/plugins' && msg.response) {
-          console.log('Test received plugins:', msg.response);
+          if(debug) console.log('Test received plugins:', msg.response);
           setPlugins(msg.response);
         }
         if (msg.method === '/api/devices' && msg.response) {
-          console.log(`Test received ${msg.response.length} devices:`, msg.response);
+          if(debug) console.log(`Test received ${msg.response.length} devices:`, msg.response);
           setDevices(msg.response);
           for(let device of msg.response) {
-            console.log('Test sending /api/clusters');
+            if(debug) console.log('Test sending /api/clusters');
             sendMessage({ method: "/api/clusters", src: "Frontend", dst: "Matterbridge", params: { plugin: device.pluginName, endpoint: device.endpoint } });
           }
         }
         if (msg.method === '/api/clusters' && msg.response) {
-          console.log(`Test received for device "${msg.deviceName}" serial "${msg.serialNumber}" deviceType ${msg.deviceTypes.join(' ')} clusters (${msg.response.length}):`, msg.response);
+          if(debug) console.log(`Test received for device "${msg.deviceName}" serial "${msg.serialNumber}" deviceType ${msg.deviceTypes.join(' ')} clusters (${msg.response.length}):`, msg.response);
           if(msg.response.length === 0) return;
           const serial = msg.serialNumber;
           endpoints[serial] = [];
@@ -90,40 +83,40 @@ function Test() {
             if(!endpoints[serial].find((e) => e.endpoint === cluster.endpoint)) {
               endpoints[serial].push({ endpoint: cluster.endpoint, id: cluster.id, deviceTypes: cluster.deviceTypes });
             }
-            if(['FixedLabel', 'Descriptor', 'Identify', 'Groups', 'PowerTopology', 'ElectricalPowerMeasurement', 'ElectricalEnergyMeasurement'].includes(cluster.clusterName)) continue;
+            if(['FixedLabel', 'Descriptor', 'Identify', 'Groups', 'PowerTopology', 'ElectricalPowerMeasurement'].includes(cluster.clusterName)) continue;
             clusters[serial].push(cluster);
           }
           setEndpoints({ ...endpoints });
           setdDeviceTypes({ ...deviceTypes });
           setClusters({ ...clusters });
-          console.log(`Test endpoints for "${serial}":`, endpoints[serial]);
-          console.log(`Test deviceTypes for "${serial}":`, deviceTypes[serial]);
-          console.log(`Test clusters for "${serial}":`, clusters[serial]);
+          if(debug) console.log(`Test endpoints for "${serial}":`, endpoints[serial]);
+          if(debug) console.log(`Test deviceTypes for "${serial}":`, deviceTypes[serial]);
+          if(debug) console.log(`Test clusters for "${serial}":`, clusters[serial]);
         }
       }
     };
 
     addListener(handleWebSocketMessage);
-    console.log('Test useEffect webSocket mounted');
+    if(debug) console.log('Test useEffect webSocket mounted');
 
     return () => {
       removeListener(handleWebSocketMessage);
-      console.log('Test useEffect webSocket unmounted');
+      if(debug) console.log('Test useEffect webSocket unmounted');
     };
   }, []);
   
   useEffect(() => {
-    console.log('Test useEffect online mounting');
+    if(debug) console.log('Test useEffect online mounting');
     if(online) {
-      console.log('Test useEffect online sending api requests');
+      if(debug) console.log('Test useEffect online sending api requests');
       sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
       sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
       sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
     }
-    console.log('Test useEffect online mounted');
+    if(debug) console.log('Test useEffect online mounted');
 
     return () => {
-      console.log('Test useEffect online unmounted');
+      if(debug) console.log('Test useEffect online unmounted');
     };
   }, [online, sendMessage]);
   
@@ -286,6 +279,12 @@ function Device({ device, endpoint, id, deviceType, clusters }) {
         <Box sx={valueBoxSx}>
           <LightModeIcon sx={iconSx} />
           <RenderValueUnit cluster={cluster} value={Math.round(Math.pow(10, cluster.attributeValue / 10000))} unit='lx' />
+        </Box>
+      ))}
+      {deviceType===0x0510 && clusters.filter(cluster => cluster.clusterName === 'ElectricalEnergyMeasurement' && cluster.attributeName === 'cumulativeEnergyImported').map(cluster => (
+        <Box sx={valueBoxSx}>
+          <PowerIcon sx={iconSx} />
+          <RenderValueUnit cluster={cluster} value={Math.round(cluster.attributeLocalValue?.energy / 1000000)} unit='kwh' />
         </Box>
       ))}
       <Box sx={{ display: 'flex', gap: '2px', justifyContent: 'center', width: '100%', height: '18px' }}>

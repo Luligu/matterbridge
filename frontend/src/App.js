@@ -19,6 +19,8 @@ import Logs from './components/Logs';
 import { WebSocketProvider } from './components/WebSocketProvider';
 import { createMuiTheme, getCssVariable } from './components/muiTheme';
 
+export const debug = false;
+
 // Create a context for the authentication state
 const AuthContext = createContext();
 
