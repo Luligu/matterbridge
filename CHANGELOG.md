@@ -17,17 +17,37 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 Matterbridge edge is now released. The default mode is still the normal mode to allow the storage conversion. See https://github.com/Luligu/matterbridge/blob/dev/README-EDGE.md to manually switch to edge mode after the conversion is done.
 
-The frontend has a new dark and light mode. The dark mode is now the default mode. 
+The frontend has a new dark and light mode. The dark mode is now the default mode.
 It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbridge settings.
 
-## [1.7.0] - 2025-01-03
+## [1.7.1] - 2025-01-07
+
+### Added
+
+- [platform]: Added selectDevice to get the device names from a list in the config editor.
+- [websocket]: Added api /api/select.
+
+### Changed
+
+- [websocket]: Added params to /api/clusters.
+- [frontend]: Frontend v.2.3.2
+
+### Fixed
+
+- [frontend]: Fixed WebSocketProvider online.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
+## [1.7.0] - 2025-01-04
 
 ### Added
 
 - [edge]: Added guide https://github.com/Luligu/matterbridge/blob/dev/README-EDGE.md.
-- [storage]: Added conversion from old matter storage to the new api format with fabrics, resumptionRecords, network, commissioning, operationalCredentials, acl and parts number. The conversion is triggered every time you shutdown or restart matterbridge till the new storage has been used with matterbridge edge. 
-- [storage]: Added conversion for child endpoint numbers. 
-- [storage]: Added conversion for childbridge mode. 
+- [storage]: Added conversion from old matter storage to the new api format with fabrics, resumptionRecords, network, commissioning, operationalCredentials, acl and parts number. The conversion is triggered every time you shutdown or restart matterbridge till the new storage has been used with matterbridge edge.
+- [storage]: Added conversion for child endpoint numbers.
+- [storage]: Added conversion for childbridge mode.
 - [package]: Update README.md and README-SERVICE.md to include instructions for using SSL on port 443.
 - [platform]: Added checkEndpointNumbers() to detect endpoint numbers changes.
 - [frontend]: Frontend v.2.3.0
@@ -35,10 +55,10 @@ It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbr
 - [frontend]: Custom rfjsreact-jsonschema-form for the config editor.
 - [frontend]: Added columns configuration to Devices.
 - [frontend]: Added clear logs button in Logs.
-- [unregister]: Added unregister for Matterbridge edge. 
-- [reset]: Added reset for Matterbridge edge. 
-- [factoryreset]: Added factoryreset for Matterbridge edge. 
-- [websocket]: Added /api/clusters and removed all fetch calls from frontend. 
+- [unregister]: Added unregister for Matterbridge edge.
+- [reset]: Added reset for Matterbridge edge.
+- [factoryreset]: Added factoryreset for Matterbridge edge.
+- [websocket]: Added /api/clusters and removed all fetch calls from frontend.
 
 ### Changed
 
