@@ -186,24 +186,29 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter endpoint in /api/clusters' }));
         return;
       }
+
       const clusters: ApiClusters[] = [];
       let deviceName = '';
       let serialNumber = '';
       let deviceTypes: number[] = [];
+
       this.devices.forEach(async (device) => {
         if (data.params.plugin !== device.plugin) return;
         if (data.params.endpoint !== device.number) return;
         deviceName = device.deviceName ?? 'Unknown';
         serialNumber = device.serialNumber ?? 'Unknown';
         deviceTypes = [];
-        device.getDeviceTypes().forEach((deviceType) => {
-          deviceTypes.push(deviceType.code);
-        });
+
         if (this.edge) device = EndpointServer.forEndpoint(device as unknown as EndpointNode) as unknown as MatterbridgeDevice;
         const clusterServers = device.getAllClusterServers();
         clusterServers.forEach((clusterServer) => {
           Object.entries(clusterServer.attributes).forEach(([key, value]) => {
             if (clusterServer.name === 'EveHistory') return;
+            if (clusterServer.name === 'Descriptor' && key === 'deviceTypeList') {
+              (value.getLocal() as { deviceType: number; revision: number }[]).forEach((deviceType) => {
+                deviceTypes.push(deviceType.deviceType);
+              });
+            }
             let attributeValue;
             try {
               if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
@@ -214,6 +219,8 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
             }
             clusters.push({
               endpoint: device.number ? device.number.toString() : '...',
+              id: 'main',
+              deviceTypes,
               clusterName: clusterServer.name,
               clusterId: '0x' + clusterServer.id.toString(16).padStart(2, '0'),
               attributeName: key,
@@ -223,12 +230,18 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
           });
         });
         device.getChildEndpoints().forEach((childEndpoint) => {
+          deviceTypes = [];
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const name = this.edge ? (childEndpoint as any).endpoint?.id : childEndpoint.uniqueStorageKey;
           const clusterServers = childEndpoint.getAllClusterServers();
           clusterServers.forEach((clusterServer) => {
             Object.entries(clusterServer.attributes).forEach(([key, value]) => {
               if (clusterServer.name === 'EveHistory') return;
+              if (clusterServer.name === 'Descriptor' && key === 'deviceTypeList') {
+                (value.getLocal() as { deviceType: number; revision: number }[]).forEach((deviceType) => {
+                  deviceTypes.push(deviceType.deviceType);
+                });
+              }
               let attributeValue;
               try {
                 if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
@@ -238,7 +251,9 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
                 this.log.debug(`GetLocal error ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
               }
               clusters.push({
-                endpoint: (childEndpoint.number ? childEndpoint.number.toString() : '...') + (name ? ' (' + name + ')' : ''),
+                endpoint: childEndpoint.number ? childEndpoint.number.toString() : '...',
+                id: name,
+                deviceTypes,
                 clusterName: clusterServer.name,
                 clusterId: '0x' + clusterServer.id.toString(16).padStart(2, '0'),
                 attributeName: key,
@@ -261,7 +276,8 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select' }));
         return;
       }
-      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: plugin.platform?.selectDevice.values() }));
+      const selectDeviceValues = plugin.platform?.selectDevice ? Array.from(plugin.platform.selectDevice.values()).sort((keyA, keyB) => keyA.name.localeCompare(keyB.name)) : [];
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: selectDeviceValues }));
       return;
     } else {
       this.log.error(`Invalid method from websocket client: ${debugStringify(data)}`);

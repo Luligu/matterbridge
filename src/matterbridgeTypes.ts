@@ -184,6 +184,8 @@ export interface ApiDevices {
 
 export interface ApiClusters {
   endpoint: string;
+  id: string;
+  deviceTypes: number[];
   clusterName: string;
   clusterId: string;
   attributeName: string;
