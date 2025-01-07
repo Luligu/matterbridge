@@ -26,6 +26,8 @@ It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbr
 
 - [platform]: Added selectDevice to get the device names from a list in the config editor.
 - [websocket]: Added api /api/select.
+- [frontend]: Added configUrl to Devices page.
+- [frontend]: Added id and deviceTypes to Devices page.
 
 ### Changed
 
