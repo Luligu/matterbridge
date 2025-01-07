@@ -191,4 +191,5 @@ export interface ApiClusters {
   attributeName: string;
   attributeId: string;
   attributeValue: string;
+  attributeLocalValue: unknown;
 }
