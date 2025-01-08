@@ -29,7 +29,7 @@ It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbr
 
 ### Changed
 
-- [frontend]: Frontend v.2.3.4
+- [frontend]: Frontend v.2.3.5
 - [package]: Update dependencies.
 
 ### Fixed
