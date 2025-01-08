@@ -20,6 +20,26 @@ Matterbridge edge is now released. The default mode is still the normal mode to 
 The frontend has a new dark and light mode. The dark mode is now the default mode.
 It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbridge settings.
 
+## [1.7.2] - 2025-01-09
+
+### Added
+
+- [platform]: Added selectEntity to get the entity names from a list in the config editor.
+- [websocket]: Added api /api/select/entities.
+
+### Changed
+
+- [frontend]: Frontend v.2.3.4
+- [package]: Update dependencies.
+
+### Fixed
+
+- [edge]: Fixed ValveConfigurationAndControlServer behavior.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.7.1] - 2025-01-07
 
 ### Added
