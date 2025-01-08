@@ -1,10 +1,8 @@
-# <img src="https://github.com/Luligu/matterbridge/blob/main/frontend/public/matterbridge%2064x64.png" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge
-
-# Matterbridge edge
+# <img src="https://github.com/Luligu/matterbridge/blob/main/frontend/public/matterbridge%2064x64.png" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge edge
 
 Matterbridge Edge is the version of Matterbridge running with the new Matter.js API.
 
-After months of work, the migration of Matterbridge from the old API to the new API is now complete. This includes the conversion of the entire old storage format to the new API storage format, encompassing fabrics, resumption records, network, commissioning, operational credentials, ACL, and part numbers.
+After months of work, the migration of Matterbridge from the old API to the new API is now complete. This includes the conversion of the entire old storage format to the new API storage format, encompassing fabrics, resumption records, network, commissioning, operational credentials, ACL, and part numbers. The conversion doesn't convert the persisted attributes, so at restart for a while it is possible to see wrong states on the controllers.
 
 A special thanks goes to Apollon for answering my countless questions and helping to resolve the many small issues that arose during this process.
 
@@ -25,7 +23,7 @@ There is no conversion back to the old storage.
 
 Matterbridge Edge will be officially released as version 2.0.0, as it represents a major update.
 
-## How to run matterbridge in edge mode 
+## How to run matterbridge in edge mode
 
 To start Matterbridge in Edge mode before its official release, you need to add the -edge parameter to the command line or Docker command.
 

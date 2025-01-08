@@ -201,6 +201,7 @@ function Header() {
 
     addListener(handleWebSocketMessage);
     console.log('Header added WebSocket listener');
+
     return () => {
       removeListener(handleWebSocketMessage);
       console.log('Header removed WebSocket listener');
@@ -208,8 +209,10 @@ function Header() {
   }, [addListener, removeListener, sendMessage]);
 
   useEffect(() => {
-    console.log('Header sending /api/settings requests');
-    sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+    if(online) {
+      console.log('Header sending /api/settings requests');
+      sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+    }
   }, [online, sendMessage]);
       
   if (!online || settings.matterbridgeInformation === undefined) {

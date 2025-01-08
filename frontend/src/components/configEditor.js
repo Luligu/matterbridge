@@ -1,16 +1,37 @@
+// React
+import { useState, useMemo } from 'react';
+
 // @mui/material
 import IconButton from '@mui/material/IconButton';
 import createTheme from '@mui/material/styles/createTheme';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import List from '@mui/material/List';
+import ListItemButton from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import ThemeProvider from '@mui/material/styles/ThemeProvider';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import Tooltip from '@mui/material/Tooltip';
 
 // @mui/icons-material
 import DeleteForever from '@mui/icons-material/DeleteForever';
 import Add from '@mui/icons-material/Add';
+import ListIcon from '@mui/icons-material/List';
+import WifiIcon from '@mui/icons-material/Wifi';
+import BluetoothIcon from '@mui/icons-material/Bluetooth';
 
 // @rjsf
 import { Templates } from '@rjsf/mui';
+
+// Frontend custom components
+import { getCssVariable } from './muiTheme';
+import { selectDevices } from './Home';
 
 const { BaseInputTemplate } = Templates; // To get templates from a theme do this
 
@@ -31,6 +52,31 @@ export function createConfigTheme(primaryColor) {
       },
     },
     components: {
+      MuiDialog: {
+        styleOverrides: {
+          paper: {
+            color: 'var(--div-text-color)',
+            backgroundColor: 'var(--div-bg-color)',
+            border: '2px solid var(--div-border-color)',
+            borderRadius: 'var(--div-border-radius)',
+            boxShadow: '2px 2px 5px var(--div-shadow-color)',
+          },
+        },
+      },
+      MuiTooltip: {
+        defaultProps: {
+          placement: 'top-start', 
+          arrow: true,
+        },
+        styleOverrides: {
+          tooltip: {
+            color: '#ffffff',       
+            backgroundColor: 'var(--primary-color)', 
+            fontSize: '14px',
+            fontWeight: 'normal',
+          },
+        },
+      },
       MuiTextField: {
         defaultProps: {
           size: 'small',
@@ -76,7 +122,7 @@ export function createConfigTheme(primaryColor) {
           root: {
             color: 'var(--main-button-color)',
             backgroundColor: 'var(--main-button-bg-color)', 
-            },
+          },
         },
         defaultProps: {
           variant: 'contained',
@@ -96,6 +142,43 @@ export function createConfigTheme(primaryColor) {
           },
         },
       },
+      MuiListItemIcon: {
+        styleOverrides: {
+          root: {
+            color: 'var(--div-text-color)', 
+          },
+        },
+      },
+      MuiListItemButton: {
+        styleOverrides: {
+          root: {
+            margin: '0px',
+            padding: '0px',
+          },
+        },
+      },
+      MuiListItemText: {
+        styleOverrides: {
+          root: {
+            cursor: 'pointer',
+            margin: '0px',
+            padding: '5px',
+            '&:hover': {
+              backgroundColor: 'var(--main-grey-color)',
+            },
+          },
+          primary: {
+            color: 'var(--div-text-color)',
+            fontSize: '16px',
+            fontWeight: 'bold',
+          },
+          secondary: {
+            color: 'var(--div-text-color)',
+            fontSize: '14px',
+            fontWeight: 'normal',
+          },
+        },
+      },
       MuiBox: {
         styleOverrides: {
           root: {
@@ -109,8 +192,29 @@ export function createConfigTheme(primaryColor) {
 }
 
 export function ArrayFieldTemplate(props) {
-  const { canAdd, onAddClick, schema, title } = props;
   // console.log('ArrayFieldTemplate: title', title, 'description', schema.description);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const primaryColor = useMemo(() => getCssVariable('--primary-color', '#009a00'), []);
+  const theme = useMemo(() => createConfigTheme(primaryColor), []);
+
+  const { canAdd, onAddClick, schema, title } = props;
+
+  const handleDialogToggle = () => {
+    setDialogOpen(!dialogOpen);
+  };
+
+  const handleSelectValue = (value) => {
+    // console.log('ArrayFieldTemplate: handleSelectValue', value);
+    setDialogOpen(false);
+    // Trigger onAddClick to add the selected new item
+    if(schema.selectFrom === 'serial')
+      schema.items.default = value.serial;
+    else if(schema.selectFrom === 'name')
+      schema.items.default = value.name;
+    onAddClick();
+  };
+
   return (
     <Box sx={{ padding: '10px', margin: '0px', border: '1px solid grey' }}>
       {title && (
@@ -119,9 +223,20 @@ export function ArrayFieldTemplate(props) {
             <Typography sx={titleSx}>{title}</Typography>
           )}
           {canAdd && (
-            <IconButton onClick={onAddClick} size="small" color="primary">
-              <Add />
-            </IconButton>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0px', margin: '0px', marginBottom: '0px' }}>
+              {schema.selectFrom && 
+                <Tooltip title="Add a device from the list">
+                  <IconButton onClick={handleDialogToggle} size="small" color="primary">
+                    <ListIcon />
+                  </IconButton>
+                </Tooltip>
+              }
+              <Tooltip title="Add a device">
+                <IconButton onClick={onAddClick} size="small" color="primary">
+                  <Add />
+                </IconButton>
+              </Tooltip>
+            </Box>
           )}
         </Box>
       )}
@@ -135,11 +250,39 @@ export function ArrayFieldTemplate(props) {
           <Box sx={{ flexGrow: 1 }}>
             {element.children}
           </Box>
-          <IconButton onClick={element.onDropIndexClick(element.index)} size="small" color="primary">
-            <DeleteForever />
-          </IconButton>
+          <Tooltip title="Remove the device">
+            <IconButton onClick={element.onDropIndexClick(element.index)} size="small" color="primary">
+              <DeleteForever />
+            </IconButton>
+          </Tooltip>
         </Box>
       ))}
+
+      <ThemeProvider theme={theme}>
+        <Dialog open={dialogOpen} onClose={handleDialogToggle} PaperProps={{
+            sx: {
+              maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
+              overflow: 'auto',  // Allow scrolling for overflowing content
+            },
+          }}>
+          <DialogTitle>Select a device</DialogTitle>
+          <DialogContent>
+            <List dense>
+              {selectDevices.map((value, index) => (
+                <ListItemButton onClick={() => handleSelectValue(value)} key={index}>
+                  {value.icon==='wifi' && <ListItemIcon><WifiIcon /></ListItemIcon>}
+                  {value.icon==='ble' && <ListItemIcon><BluetoothIcon /></ListItemIcon>}
+                  <ListItemText primary={value.serial} secondary={value.name}/>
+                </ListItemButton>
+              ))}
+            </List>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDialogToggle}>Close</Button>
+          </DialogActions>
+        </Dialog>
+      </ThemeProvider>
+
     </Box>
   );
 }
@@ -163,9 +306,11 @@ export function ObjectFieldTemplate(props) {
       {title && !isRoot && (
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0px', margin: '0px', marginBottom: '0px' }}>
           <Typography sx={titleSx}>{title}</Typography>
-          <IconButton onClick={onAddClick(schema)} size="small" color="primary">
-            <Add />
-          </IconButton>
+          <Tooltip title="Add an item">
+            <IconButton onClick={onAddClick(schema)} size="small" color="primary">
+              <Add />
+            </IconButton>
+          </Tooltip>
         </Box>
       )}
       {/* Description for both */}
@@ -230,9 +375,11 @@ export function DescriptionFieldTemplate(props) {
 export function RemoveButton(props) {
   const { ...otherProps } = props;
   return (
-    <IconButton size='small' color='primary' {...otherProps}>
-      <DeleteForever />
-    </IconButton>
+    <Tooltip title="Remove the item">
+      <IconButton size='small' color='primary' {...otherProps}>
+        <DeleteForever />
+      </IconButton>
+    </Tooltip>
   );
 }
 

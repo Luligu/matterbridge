@@ -186,6 +186,24 @@ export function createMuiTheme(primaryColor) {
           },
         },
       },
+      MuiListItemButton: {
+        styleOverrides: {
+          root: {
+            cursor: 'pointer',
+            '& .MuiListItemText-primary': {
+              color: '#1976d2', // Primary text color
+              backgroundColor: '#e3f2fd', // Primary text background
+            },
+            '& .MuiListItemText-secondary': {
+              color: '#616161', // Secondary text color
+              backgroundColor: '#f5f5f5', // Secondary text background
+            },
+            '&:hover': {
+              backgroundColor: '#bbdefb', // Hover background color
+            },          
+          },
+        },
+      },
     },
   });
   return theme;

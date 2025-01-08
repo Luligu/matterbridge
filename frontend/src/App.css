@@ -170,7 +170,7 @@ html {
   scrollbar-width: thin;
 }
 
-/* Tooltip style */
+/* Tooltip styles */
 .tooltip-container {
   position: relative;
   display: inline-block;
@@ -204,7 +204,7 @@ html {
   opacity: 1;
 }
 
-/* StatusIndicator style */
+/* StatusIndicator styles */
 .status-enabled {
   background-color: green;
   color: white;
@@ -280,19 +280,7 @@ html {
   box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* Home page style */
-
-.PluginsIconButton {
-  color: #000000;
-  padding: 0;
-  gap: 0;
-}
-
-.main-background {
-  background-color: var(--main-bg-color);
-}
-
-/* Header style */
+/* Header styles */
 .header {
   display: flex;
   /*flex-wrap: 'wrap';*/
@@ -335,17 +323,18 @@ nav {
   color: var(--primary-color);
 }
 
-/* Table style */
+/* Table styles */
 table {
   border-collapse: collapse;
   width: 100%;
+  table-layout: auto;
 }
 
 thead {
   position: sticky;
   top: 0;
   border: 1px solid var(--table-border-color);
-  z-index: auto;
+  z-index: 10;
 }
 
 thead th {
@@ -474,7 +463,7 @@ h3 {
   padding-top: 0px;
 }
 
-/* Define the style for the header text element */
+/* Define the style for the footer text element */
 .MbfWindowFooterText {
   color: var(--footer-text-color);
   background-color: var(--footer-bg-color);
@@ -502,9 +491,8 @@ h3 {
   flex-direction: row;
   flex: 1 1 auto;
   height: 100%;
-  padding: 0px 10px 0px 10px;
   margin: 0px;
-  padding: 0px;
+  padding: 0px 10px 0px 10px;
   gap: 0px;
   overflow: auto;
 }

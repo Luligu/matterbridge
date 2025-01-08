@@ -63,8 +63,10 @@ function Settings() {
   }, [addListener, removeListener, sendMessage]);
 
   useEffect(() => {
-    console.log('Settings received online');
-    sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+    if(online) {
+      console.log('Settings received online');
+      sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+    }
   }, [online, sendMessage]);
 
   if (!online) {

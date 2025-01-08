@@ -47,6 +47,25 @@ const devicesColumns = [
     accessor: 'uniqueId',
   },
   {
+    Header: 'Config Url',
+    accessor: 'configUrl',
+  },
+  {
+    Header: 'Config',
+    accessor: 'configButton',
+    noSort: true,
+    Cell: ({ row }) => (
+      <IconButton
+        onClick={() => window.open(row.original.configUrl, '_blank')}
+        aria-label="Open Config"
+        disabled={!row.original.configUrl}
+        sx={{ margin: 0, padding: 0 }}
+      >
+        <SettingsIcon />
+      </IconButton>
+    ),
+  },
+  {
     Header: 'Cluster',
     accessor: 'cluster',
   },
@@ -56,6 +75,15 @@ const clustersColumns = [
   {
     Header: 'Endpoint',
     accessor: 'endpoint',
+  },
+  {
+    Header: 'Id',
+    accessor: 'id',
+  },
+  {
+    Header: 'Device Types',
+    accessor: 'deviceTypes',
+    Cell: ({ value }) => Array.isArray(value) ? value.map(num => `0x${num.toString(16).padStart(4, '0')}`).join(', ') : value, // Handle array of numbers
   },
   {
     Header: 'Cluster Name',
@@ -76,6 +104,15 @@ const clustersColumns = [
   {
     Header: 'Attribute Value',
     accessor: 'attributeValue',
+    Cell: ({ value }) => (
+      <Tooltip title={value} componentsProps={{
+          tooltip: { sx: { fontSize: '14px', fontWeight: 'normal', color: '#ffffff', backgroundColor: 'var(--primary-color)'  } },
+        }}>
+        <div style={{ maxWidth: '500px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {value}
+        </div>
+      </Tooltip>
+    ),
   },
 ];
 
@@ -121,13 +158,15 @@ function DevicesTable({ data, columnVisibility, setPlugin, setEndpoint, setDevic
               <th {...column.getHeaderProps({ ...column.getSortByToggleProps(), title: '' })}>
                 {column.render('Header')}
                 {/* Add a sort direction indicator */}
-                <span>
-                  {column.isSorted
-                    ? column.isSortedDesc
-                      ? ' 🔽'
-                      : ' 🔼'
-                    : '🔽🔼'}
-                </span>
+                {!column.noSort && (
+                  <span>
+                    {column.isSorted
+                      ? column.isSortedDesc
+                        ? ' 🔽'
+                        : ' 🔼'
+                      : '🔽🔼'}
+                  </span>
+                )}
               </th>
             ))}
           </tr>
@@ -216,6 +255,8 @@ function Devices() {
     name: true,
     serial: true,
     uniqueId: false,
+    configUrl: false,
+    configButton: true,
     cluster: true,
   });
 
@@ -224,15 +265,15 @@ function Devices() {
       // console.log('Test received WebSocket Message:', msg);
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'refresh_required') {
-          console.log('Test received refresh_required');
+          console.log('Devices received refresh_required');
           sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === '/api/devices') {
-          console.log(`Test received ${msg.response.length} devices:`, msg.response);
+          console.log(`Devices received ${msg.response.length} devices:`, msg.response);
           setDevices(msg.response);
         }
         if (msg.method === '/api/clusters') {
-          console.log(`Test received ${msg.response.length} clusters:`, msg.response);
+          console.log(`Devices received ${msg.response.length} clusters:`, msg.response);
           setClusters(msg.response);
   
           const endpointCounts = {};
@@ -250,23 +291,25 @@ function Devices() {
     };
 
     addListener(handleWebSocketMessage);
-    console.log('Test added WebSocket listener');
+    console.log('Devices added WebSocket listener');
     return () => {
       removeListener(handleWebSocketMessage);
-      console.log('Test removed WebSocket listener');
+      console.log('Devices removed WebSocket listener');
     };
   }, [addListener, removeListener, sendMessage]);
   
   useEffect(() => {
-    console.log('Test sending api requests');
-    sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-    sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
-    sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+    if (online) {
+      console.log('Devices sending api requests');
+      sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+    }
   }, [online, sendMessage]);
 
   useEffect(() => {
     if (plugin && endpoint) {
-      console.log('Test sending /api/clusters');
+      console.log('Devices sending /api/clusters');
       sendMessage({ method: "/api/clusters", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin, endpoint: endpoint } });
     }
   }, [plugin, endpoint, sendMessage]);

@@ -186,61 +186,106 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter endpoint in /api/clusters' }));
         return;
       }
+
       const clusters: ApiClusters[] = [];
+      let deviceName = '';
+      let serialNumber = '';
+      let deviceTypes: number[] = [];
+
       this.devices.forEach(async (device) => {
         if (data.params.plugin !== device.plugin) return;
         if (data.params.endpoint !== device.number) return;
+        deviceName = device.deviceName ?? 'Unknown';
+        serialNumber = device.serialNumber ?? 'Unknown';
+        deviceTypes = [];
+
         if (this.edge) device = EndpointServer.forEndpoint(device as unknown as EndpointNode) as unknown as MatterbridgeDevice;
         const clusterServers = device.getAllClusterServers();
         clusterServers.forEach((clusterServer) => {
           Object.entries(clusterServer.attributes).forEach(([key, value]) => {
             if (clusterServer.name === 'EveHistory') return;
+            if (clusterServer.name === 'Descriptor' && key === 'deviceTypeList') {
+              (value.getLocal() as { deviceType: number; revision: number }[]).forEach((deviceType) => {
+                deviceTypes.push(deviceType.deviceType);
+              });
+            }
             let attributeValue;
+            let attributeLocalValue;
             try {
               if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
               else attributeValue = value.getLocal().toString();
+              attributeLocalValue = value.getLocal();
             } catch (error) {
               attributeValue = 'Fabric-Scoped';
+              attributeLocalValue = 'Fabric-Scoped';
               this.log.debug(`GetLocal value ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
             }
             clusters.push({
               endpoint: device.number ? device.number.toString() : '...',
+              id: 'main',
+              deviceTypes,
               clusterName: clusterServer.name,
               clusterId: '0x' + clusterServer.id.toString(16).padStart(2, '0'),
               attributeName: key,
               attributeId: '0x' + value.id.toString(16).padStart(2, '0'),
               attributeValue,
+              attributeLocalValue,
             });
           });
         });
         device.getChildEndpoints().forEach((childEndpoint) => {
+          deviceTypes = [];
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const name = this.edge ? (childEndpoint as any).endpoint?.id : childEndpoint.uniqueStorageKey;
           const clusterServers = childEndpoint.getAllClusterServers();
           clusterServers.forEach((clusterServer) => {
             Object.entries(clusterServer.attributes).forEach(([key, value]) => {
               if (clusterServer.name === 'EveHistory') return;
+              if (clusterServer.name === 'Descriptor' && key === 'deviceTypeList') {
+                (value.getLocal() as { deviceType: number; revision: number }[]).forEach((deviceType) => {
+                  deviceTypes.push(deviceType.deviceType);
+                });
+              }
               let attributeValue;
+              let attributeLocalValue;
               try {
                 if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
                 else attributeValue = value.getLocal().toString();
+                attributeLocalValue = value.getLocal();
               } catch (error) {
-                attributeValue = 'Unavailable';
+                attributeValue = 'Fabric-Scoped';
+                attributeLocalValue = 'Fabric-Scoped';
                 this.log.debug(`GetLocal error ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
               }
               clusters.push({
-                endpoint: (childEndpoint.number ? childEndpoint.number.toString() : '...') + (name ? ' (' + name + ')' : ''),
+                endpoint: childEndpoint.number ? childEndpoint.number.toString() : '...',
+                id: name,
+                deviceTypes,
                 clusterName: clusterServer.name,
                 clusterId: '0x' + clusterServer.id.toString(16).padStart(2, '0'),
                 attributeName: key,
                 attributeId: '0x' + value.id.toString(16).padStart(2, '0'),
                 attributeValue,
+                attributeLocalValue,
               });
             });
           });
         });
       });
-      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: clusters }));
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, deviceName, serialNumber, endpoint: data.params.endpoint, deviceTypes, response: clusters }));
+      return;
+    } else if (data.method === '/api/select') {
+      if (!isValidString(data.params.plugin, 10)) {
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select' }));
+        return;
+      }
+      const plugin = this.plugins.get(data.params.plugin);
+      if (!plugin) {
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select' }));
+        return;
+      }
+      const selectDeviceValues = plugin.platform?.selectDevice ? Array.from(plugin.platform.selectDevice.values()).sort((keyA, keyB) => keyA.name.localeCompare(keyB.name)) : [];
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: selectDeviceValues }));
       return;
     } else {
       this.log.error(`Invalid method from websocket client: ${debugStringify(data)}`);

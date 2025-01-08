@@ -65,6 +65,7 @@ export class MatterbridgePlatform {
   public version = ''; // Will be set by the loadPlugin() method using the package.json value.
   public storage: NodeStorageManager | undefined;
   public context: NodeStorage | undefined;
+  public selectDevice = new Map<string, { serial: string; name: string; icon?: string }>();
 
   /**
    * Creates an instance of the base MatterbridgePlatform.

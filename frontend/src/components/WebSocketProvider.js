@@ -1,6 +1,9 @@
 // React
 import React, { useEffect, useRef, useState, useCallback, useMemo, createContext } from 'react';
 
+// Local modules
+import { debug } from '../App';
+
 /**
  * Websocket message IDs taken from matterbridgeWebsocket.ts
  */
@@ -16,6 +19,8 @@ export function WebSocketProvider({ children }) {
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');
   const [messages, setMessages] = useState([]);
   const [online, setOnline] = useState(false);
+  const [refresh, setRefresh] = useState(false);
+  const [restart, setRestart] = useState(false);
 
   // Refs
   const listenersRef = useRef([]);
@@ -34,7 +39,7 @@ export function WebSocketProvider({ children }) {
   const maxMessages = 1000;
   const maxRetries = 100;
   const pingIntervalSeconds = 10;
-  const offlineTimeoutSeconds = 2;
+  const offlineTimeoutSeconds = 5;
 
   // console.log(`WebSocketUse: wssHost: ${wssHost} ssl: ${ssl} logFilterLevel: ${logFilterLevel} logFilterSearch: ${logFilterSearch} messages: ${messages.length} available`);
   
@@ -52,11 +57,13 @@ export function WebSocketProvider({ children }) {
           if(message.id===undefined) message.id = uniqueIdRef.current;
           const msg = JSON.stringify(message);
           wsRef.current.send(msg);
-          // console.log(`WebSocket message sent:`, message);
+          if(debug) console.log(`WebSocket sent message:`, message);
         } catch (error) {
           // eslint-disable-next-line no-console  
           console.error(`WebSocket error sending message: ${error}`);
         }
+      } else {
+        console.error(`WebSocket message not sent, WebSocket not connected:`, message);
       }
   }, []);
 
@@ -74,13 +81,13 @@ export function WebSocketProvider({ children }) {
   const addListener = useCallback((listener) => {
     // console.log(`WebSocket addListener:`, listener);
     listenersRef.current = [...listenersRef.current, listener];
-    // console.log(`WebSocket total listeners:`, listenersRef.current.length);
+    if(debug) console.log(`WebSocket addListener total listeners:`, listenersRef.current.length);
   }, []);
 
   const removeListener = useCallback((listener) => {
     // console.log(`WebSocket removeListener:`, listener);
     listenersRef.current = listenersRef.current.filter(l => l !== listener);
-    // console.log(`WebSocket total listeners:`, listenersRef.current.length);
+    if(debug) console.log(`WebSocket removeListener total listeners:`, listenersRef.current.length);
   }, []);
 
   const connectWebSocket = useCallback(() => {
@@ -95,16 +102,22 @@ export function WebSocketProvider({ children }) {
       wsRef.current = new WebSocket(wssHost);
 
       wsRef.current.onmessage = (event) => {
+        if(!online) setOnline(true);
         try {
           const msg = JSON.parse(event.data);
+          if(msg.error) {
+            console.error(`WebSocket error message:`, msg);
+          }
           if(msg.id===undefined) {
             return; // Ignore messages without an ID
           } else if(msg.id===WS_ID_REFRESH_NEEDED) {
-            console.log(`WebSocket WS_ID_REFRESH_NEEDED message:`, msg, 'listeners:', listenersRef.current.length);
+            if(debug) console.log(`WebSocket WS_ID_REFRESH_NEEDED message:`, msg, 'listeners:', listenersRef.current.length);
+            setRefresh(true);
             listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
             return;
           } else if(msg.id===WS_ID_RESTART_NEEDED) {
-            console.log(`WebSocket WS_ID_RESTART_NEEDED message:`, msg, 'listeners:', listenersRef.current.length);
+            if(debug) console.log(`WebSocket WS_ID_RESTART_NEEDED message:`, msg, 'listeners:', listenersRef.current.length);
+            setRestart(true);
             listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
             return;
           } else if(msg.id===uniqueIdRef.current && msg.src === 'Matterbridge' && msg.dst === 'Frontend' && msg.response === 'pong') {
@@ -134,7 +147,6 @@ export function WebSocketProvider({ children }) {
 
           setMessages(prevMessages => {
               // Create new array with new message
-              // const timeString = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}.${now.getMilliseconds().toString().padStart(3,'0')}`;
               const timeString = `<span style="color: #505050;">[${msg.time}]</span>`;
               const getsubTypeMessageBgColor = (level) => {
                   switch (level.toLowerCase()) {
@@ -188,6 +200,7 @@ export function WebSocketProvider({ children }) {
             sendMessage({ id: uniqueIdRef.current, method: "ping", src: "Frontend", dst: "Matterbridge", params: {} });
             clearTimeout(offlineTimeoutRef.current);
             offlineTimeoutRef.current = setTimeout(() => {
+              console.error(`WebSocketUse: No pong response received from WebSocket: ${wssHost}`);
               logMessage('WebSocket', `No pong response received from WebSocket: ${wssHost}`);
               setOnline(false);
             }, 1000 * offlineTimeoutSeconds);
@@ -195,6 +208,7 @@ export function WebSocketProvider({ children }) {
       };
 
       wsRef.current.onclose = () => { 
+          console.error(`WebSocketUse: Disconnected from WebSocket: ${wssHost}`);
           logMessage('WebSocket', `Disconnected from WebSocket: ${wssHost}`);
           setOnline(false);
           clearTimeout(offlineTimeoutRef.current);
@@ -207,12 +221,13 @@ export function WebSocketProvider({ children }) {
       };
 
       wsRef.current.onerror = (error) => {
+          console.error(`WebSocketUse: WebSocket error connecting to ${wssHost}:`, error);
           logMessage('WebSocket', `WebSocket error connecting to ${wssHost}`);
       };
   }, [wssHost]);
 
   const attemptReconnect = useCallback(() => {
-      console.log(`WebSocket attemptReconnect ${retryCountRef.current}/${maxRetries} to:`, wssHost);
+      if(debug) console.log(`WebSocket attemptReconnect ${retryCountRef.current}/${maxRetries} to:`, wssHost);
       connectWebSocket();
   }, [connectWebSocket]);
 
@@ -226,7 +241,7 @@ export function WebSocketProvider({ children }) {
   }, [connectWebSocket]);
     
   return (
-    <WebSocketContext.Provider value={{ messages, setMessages, sendMessage, logMessage, setLogFilters, online, addListener, removeListener }}>
+    <WebSocketContext.Provider value={{ messages, setMessages, sendMessage, logMessage, setLogFilters, online, refresh, restart, addListener, removeListener }}>
       {children}
     </WebSocketContext.Provider>
   );
