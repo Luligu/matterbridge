@@ -23,8 +23,9 @@ import Tooltip from '@mui/material/Tooltip';
 import DeleteForever from '@mui/icons-material/DeleteForever';
 import Add from '@mui/icons-material/Add';
 import ListIcon from '@mui/icons-material/List';
-import WifiIcon from '@mui/icons-material/Wifi';
-import BluetoothIcon from '@mui/icons-material/Bluetooth';
+import WifiIcon from '@mui/icons-material/Wifi'; // For selectDevice icon=wifi
+import BluetoothIcon from '@mui/icons-material/Bluetooth'; // For selectDevice icon=ble
+import HubIcon from '@mui/icons-material/Hub';  // For selectDevice icon=hub
 
 // @rjsf
 import { Templates } from '@rjsf/mui';
@@ -272,6 +273,7 @@ export function ArrayFieldTemplate(props) {
                 <ListItemButton onClick={() => handleSelectValue(value)} key={index}>
                   {value.icon==='wifi' && <ListItemIcon><WifiIcon /></ListItemIcon>}
                   {value.icon==='ble' && <ListItemIcon><BluetoothIcon /></ListItemIcon>}
+                  {value.icon==='hub' && <ListItemIcon><HubIcon /></ListItemIcon>}
                   <ListItemText primary={value.serial} secondary={value.name}/>
                 </ListItemButton>
               ))}
