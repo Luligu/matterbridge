@@ -287,6 +287,19 @@ export async function wsMessageHandler(this: Matterbridge, client: WebSocket, me
       const selectDeviceValues = plugin.platform?.selectDevice ? Array.from(plugin.platform.selectDevice.values()).sort((keyA, keyB) => keyA.name.localeCompare(keyB.name)) : [];
       client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: selectDeviceValues }));
       return;
+    } else if (data.method === '/api/select/entities') {
+      if (!isValidString(data.params.plugin, 10)) {
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select/entities' }));
+        return;
+      }
+      const plugin = this.plugins.get(data.params.plugin);
+      if (!plugin) {
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select/entities' }));
+        return;
+      }
+      const selectEntityValues = plugin.platform?.selectDevice ? Array.from(plugin.platform.selectEntity.values()).sort((keyA, keyB) => keyA.name.localeCompare(keyB.name)) : [];
+      client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: selectEntityValues }));
+      return;
     } else {
       this.log.error(`Invalid method from websocket client: ${debugStringify(data)}`);
       client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid method' }));
