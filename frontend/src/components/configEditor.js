@@ -32,9 +32,9 @@ import { Templates } from '@rjsf/mui';
 
 // Frontend custom components
 import { getCssVariable } from './muiTheme';
-import { selectDevices } from './Home';
+import { selectDevices, selectEntities } from './Home';
 
-const { BaseInputTemplate } = Templates; // To get templates from a theme do this
+const { BaseInputTemplate } = Templates; 
 
 const titleSx = { fontSize: '16px', fontWeight: 'bold', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' };
 const descriptionSx = { fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' };
@@ -195,6 +195,7 @@ export function createConfigTheme(primaryColor) {
 export function ArrayFieldTemplate(props) {
   // console.log('ArrayFieldTemplate: title', title, 'description', schema.description);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogEntityOpen, setDialogEntityOpen] = useState(false);
 
   const primaryColor = useMemo(() => getCssVariable('--primary-color', '#009a00'), []);
   const theme = useMemo(() => createConfigTheme(primaryColor), []);
@@ -203,6 +204,10 @@ export function ArrayFieldTemplate(props) {
 
   const handleDialogToggle = () => {
     setDialogOpen(!dialogOpen);
+  };
+
+  const handleDialogEntityToggle = () => {
+    setDialogEntityOpen(!dialogEntityOpen);
   };
 
   const handleSelectValue = (value) => {
@@ -216,6 +221,17 @@ export function ArrayFieldTemplate(props) {
     onAddClick();
   };
 
+  const handleSelectEntityValue = (value) => {
+    // console.log('ArrayFieldTemplate: handleSelectEntityValue', value);
+    setDialogEntityOpen(false);
+    // Trigger onAddClick to add the selected new item
+    if(schema.selectEntityFrom === 'name')
+      schema.items.default = value.name;
+    else if(schema.selectEntityFrom === 'description')
+      schema.items.default = value.description;
+    onAddClick();
+  }
+
   return (
     <Box sx={{ padding: '10px', margin: '0px', border: '1px solid grey' }}>
       {title && (
@@ -228,6 +244,13 @@ export function ArrayFieldTemplate(props) {
               {schema.selectFrom && 
                 <Tooltip title="Add a device from the list">
                   <IconButton onClick={handleDialogToggle} size="small" color="primary">
+                    <ListIcon />
+                  </IconButton>
+                </Tooltip>
+              }
+              {schema.selectEntityFrom && 
+                <Tooltip title="Add an entity from the list">
+                  <IconButton onClick={handleDialogEntityToggle} size="small" color="primary">
                     <ListIcon />
                   </IconButton>
                 </Tooltip>
@@ -260,6 +283,7 @@ export function ArrayFieldTemplate(props) {
       ))}
 
       <ThemeProvider theme={theme}>
+        {/* Dialog for selecting a device */}
         <Dialog open={dialogOpen} onClose={handleDialogToggle} PaperProps={{
             sx: {
               maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
@@ -281,6 +305,31 @@ export function ArrayFieldTemplate(props) {
           </DialogContent>
           <DialogActions>
             <Button onClick={handleDialogToggle}>Close</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Dialog for selecting an entity */}
+        <Dialog open={dialogEntityOpen} onClose={handleDialogEntityToggle} PaperProps={{
+            sx: {
+              maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
+              overflow: 'auto',  // Allow scrolling for overflowing content
+            },
+          }}>
+          <DialogTitle>Select an entity</DialogTitle>
+          <DialogContent>
+            <List dense>
+              {selectEntities.map((value, index) => (
+                <ListItemButton onClick={() => handleSelectEntityValue(value)} key={index}>
+                  {value.icon==='wifi' && <ListItemIcon><WifiIcon /></ListItemIcon>}
+                  {value.icon==='ble' && <ListItemIcon><BluetoothIcon /></ListItemIcon>}
+                  {value.icon==='hub' && <ListItemIcon><HubIcon /></ListItemIcon>}
+                  <ListItemText primary={value.name} secondary={value.description}/>
+                </ListItemButton>
+              ))}
+            </List>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDialogEntityToggle}>Close</Button>
           </DialogActions>
         </Dialog>
       </ThemeProvider>

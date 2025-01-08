@@ -48,9 +48,11 @@ import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
 import { ConfirmCancelForm } from './ConfirmCancelForm';
 import { configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, RemoveButton, CheckboxWidget, createConfigTheme, DescriptionFieldTemplate } from './configEditor';
 import { getCssVariable } from './muiTheme';
+import { debug } from '../App';
 
 export let pluginName = '';
 export let selectDevices = [];
+export let selectEntities = [];
 
 function Home() {
   const [qrCode, setQrCode] = useState('');
@@ -111,7 +113,7 @@ function Home() {
 
   // Function to reload settings on demand
   const reloadSettings = () => {
-    console.log('reloadSettings');
+    if(debug) console.log('reloadSettings');
     sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
     sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
   };
@@ -180,6 +182,7 @@ function Home() {
     // console.log('handleConfigPlugin row:', row, 'plugin:', plugins[row].name);
     pluginName = plugins[row].name;
     sendMessage({ method: "/api/select", src: "Frontend", dst: "Matterbridge", params: { plugin: pluginName } });
+    sendMessage({ method: "/api/select/entities", src: "Frontend", dst: "Matterbridge", params: { plugin: pluginName } });
     setSelectedPluginConfig(plugins[row].configJson);
     setSelectedPluginSchema(plugins[row].schemaJson);
     handleOpenConfig();
@@ -234,11 +237,11 @@ function Home() {
       // console.log('Home Received WebSocket Message:', msg);
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'refresh_required') {
-          console.log('Home received refresh_required');
+          if(debug) console.log('Home received refresh_required');
           reloadSettings();
         }
         if (msg.method === '/api/settings') {
-          console.log('Home received settings:', msg.response);
+          if(debug) console.log('Home received settings:', msg.response);
           if(msg.response.matterbridgeInformation.bridgeMode==='bridge') {
             setQrCode(msg.response.matterbridgeInformation.matterbridgeQrPairingCode); 
             setPairingCode(msg.response.matterbridgeInformation.matterbridgeManualPairingCode);
@@ -247,32 +250,42 @@ function Home() {
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
         }
         if (msg.method === '/api/plugins') {
-          console.log('Home received plugins:', msg.response);
+          if(debug) console.log('Home received plugins:', msg.response);
           setPlugins(msg.response);
         }
         if (msg.method === '/api/select') {
           if(msg.response) {
-            console.log('Home received /api/select:', msg.response);
+            if(debug) console.log('Home received /api/select:', msg.response);
             selectDevices = msg.response;
           }
           if(msg.error) {
             console.error('Home received /api/select error:', msg.error);
           }
         }
+        if (msg.method === '/api/select/entities') {
+          if(msg.response) {
+            if(debug) console.log('Home received /api/select/entities:', msg.response);
+            selectEntities = msg.response;
+          }
+          if(msg.error) {
+            console.error('Home received /api/select/entities error:', msg.error);
+          }
+        }
       }
     };
 
     addListener(handleWebSocketMessage);
-    console.log('Home added WebSocket listener');
+    if(debug) console.log('Home added WebSocket listener');
+
     return () => {
       removeListener(handleWebSocketMessage);
-      console.log('Home removed WebSocket listener');
+      if(debug) console.log('Home removed WebSocket listener');
     };
   }, [addListener, removeListener, sendMessage]);
 
   useEffect(() => {
     if(online) {
-      console.log('Home received online');
+      if(debug) console.log('Home received online');
       reloadSettings();
     }
   }, [online]);
