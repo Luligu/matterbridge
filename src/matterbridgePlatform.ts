@@ -66,6 +66,7 @@ export class MatterbridgePlatform {
   public storage: NodeStorageManager | undefined;
   public context: NodeStorage | undefined;
   public selectDevice = new Map<string, { serial: string; name: string; icon?: string }>();
+  public selectEntity = new Map<string, { name: string; description: string; icon?: string }>();
 
   /**
    * Creates an instance of the base MatterbridgePlatform.
