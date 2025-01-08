@@ -177,6 +177,7 @@ import {
   SwitchServer,
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
   UserLabelServer,
+  ValveConfigurationAndControlServer,
 } from '@matter/main/behaviors';
 
 // @project-chip
@@ -414,6 +415,8 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === OccupancySensing.Cluster.id) return OccupancySensingServer;
     if (clusterId === IlluminanceMeasurement.Cluster.id) return IlluminanceMeasurementServer;
     if (clusterId === SmokeCoAlarm.Cluster.id) return SmokeCoAlarmServer.with('SmokeAlarm', 'CoAlarm');
+
+    if (clusterId === ValveConfigurationAndControl.Cluster.id) return ValveConfigurationAndControlServer.with('Level');
 
     if (clusterId === AirQuality.Cluster.id) return AirQualityServer.with('Fair', 'Moderate', 'VeryPoor', 'ExtremelyPoor');
     if (clusterId === CarbonMonoxideConcentrationMeasurement.Cluster.id) return CarbonMonoxideConcentrationMeasurementServer.with('NumericMeasurement');
