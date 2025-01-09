@@ -19,6 +19,7 @@ import ListItemText from '@mui/material/ListItemText';
 import ThemeProvider from '@mui/material/styles/ThemeProvider';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Tooltip from '@mui/material/Tooltip';
+import TextField from '@mui/material/TextField';
 
 // @mui/icons-material
 import DeleteForever from '@mui/icons-material/DeleteForever';
@@ -105,7 +106,7 @@ export function createConfigTheme(primaryColor) {
           },
           input: {
             color: 'var(--div-text-color)',
-            padding: '8px', 
+            padding: '4px 8px', 
           },
         },
       },
@@ -216,10 +217,15 @@ export function ArrayFieldTemplate(props) {
   // console.log('ArrayFieldTemplate: title', title, 'description', schema.description, 'items', props.items);
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [filter, setFilter] = useState('');
   const [dialogEntityOpen, setDialogEntityOpen] = useState(false);
 
   const primaryColor = useMemo(() => getCssVariable('--primary-color', '#009a00'), []);
   const theme = useMemo(() => createConfigTheme(primaryColor), []);
+
+  const handleFilterChange = (event) => {
+    setFilter(event.target.value);
+  };
 
   const handleDialogToggle = () => {
     setDialogOpen(!dialogOpen);
@@ -317,8 +323,18 @@ export function ArrayFieldTemplate(props) {
           }}>
           <DialogTitle>Select a device</DialogTitle>
           <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+              <Typography variant="subtitle1" sx={{ whiteSpace: 'nowrap' }}>Filter by:</Typography>
+              <TextField
+                fullWidth
+                variant="outlined"
+                value={filter}
+                onChange={handleFilterChange}
+                placeholder="Enter serial or name"
+              />
+            </Box>
             <List dense>
-              {selectDevices.map((value, index) => (
+              {selectDevices.filter((v) => v.serial.includes(filter) || v.name.includes(filter)).map((value, index) => (
                 <ListItemButton onClick={() => handleSelectValue(value)} key={index}>
                   {value.icon==='wifi' && <ListItemIcon><WifiIcon /></ListItemIcon>}
                   {value.icon==='ble' && <ListItemIcon><BluetoothIcon /></ListItemIcon>}
@@ -342,8 +358,18 @@ export function ArrayFieldTemplate(props) {
           }}>
           <DialogTitle>Select an entity</DialogTitle>
           <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+              <Typography variant="subtitle1" sx={{ whiteSpace: 'nowrap' }}>Filter by:</Typography>
+              <TextField
+                fullWidth
+                variant="outlined"
+                value={filter}
+                onChange={handleFilterChange}
+                placeholder="Enter name or description"
+              />
+            </Box>
             <List dense>
-              {selectEntities.map((value, index) => (
+              {selectEntities.filter((v) => v.name.includes(filter) || v.description.includes(filter)).map((value, index) => (
                 <ListItemButton onClick={() => handleSelectEntityValue(value)} key={index}>
                   {value.icon==='wifi' && <ListItemIcon><WifiIcon /></ListItemIcon>}
                   {value.icon==='ble' && <ListItemIcon><BluetoothIcon /></ListItemIcon>}
