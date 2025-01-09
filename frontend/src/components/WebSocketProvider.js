@@ -42,8 +42,6 @@ export function WebSocketProvider({ children }) {
   const pingIntervalSeconds = 10;
   const offlineTimeoutSeconds = 5;
 
-  // console.log(`WebSocketUse: wssHost: ${wssHost} ssl: ${ssl} logFilterLevel: ${logFilterLevel} logFilterSearch: ${logFilterSearch} messages: ${messages.length} available`);
-  
   useEffect(() => {
       logFilterLevelRef.current = logFilterLevel;
   }, [logFilterLevel]);
@@ -80,13 +78,13 @@ export function WebSocketProvider({ children }) {
   }, [logMessage]);
 
   const addListener = useCallback((listener) => {
-    // console.log(`WebSocket addListener:`, listener);
+    if(debug) console.log(`WebSocket addListener:`, listener);
     listenersRef.current = [...listenersRef.current, listener];
     if(debug) console.log(`WebSocket addListener total listeners:`, listenersRef.current.length);
   }, []);
 
   const removeListener = useCallback((listener) => {
-    // console.log(`WebSocket removeListener:`, listener);
+    if(debug) console.log(`WebSocket removeListener:`, listener);
     listenersRef.current = listenersRef.current.filter(l => l !== listener);
     if(debug) console.log(`WebSocket removeListener total listeners:`, listenersRef.current.length);
   }, []);
