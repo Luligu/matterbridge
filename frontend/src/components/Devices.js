@@ -135,6 +135,7 @@ function DevicesTable({ data, columnVisibility, setPlugin, setEndpoint, setDevic
   } = useTable({ columns: visibleColumns, data }, useSortBy);
 
   const handleDeviceClick = (index) => {
+    const row = rows[index];
     if(index === selectedDeviceIndex) {
       setSelectedDeviceIndex(null);
       setPlugin(null);
@@ -144,9 +145,9 @@ function DevicesTable({ data, columnVisibility, setPlugin, setEndpoint, setDevic
       return;
     }
     setSelectedDeviceIndex(index);
-    setPlugin(data[index].pluginName);
-    setEndpoint(data[index].endpoint);
-    setDeviceName(data[index].name);
+    setPlugin(row.original.pluginName);
+    setEndpoint(row.original.endpoint);
+    setDeviceName(row.original.name);
     if(debug) console.log('Device clicked:', index, 'selectedDeviceIndex:', selectedDeviceIndex, 'pluginName:', data[index].pluginName, 'endpoint:', data[index].endpoint);
   };
 
