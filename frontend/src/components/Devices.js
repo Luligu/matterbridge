@@ -13,14 +13,20 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
 
 // @mui/icons-material
 import SettingsIcon from '@mui/icons-material/Settings';
+import TableViewIcon from '@mui/icons-material/TableView';
+import ViewModuleIcon from '@mui/icons-material/ViewModule';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import { debug } from '../App';
+import { use } from 'react';
 
 const devicesColumns = [
   {
@@ -297,7 +303,7 @@ function Devices() {
   
           const endpointCounts = {};
           for (const cluster of msg.response) {
-            console.log('Cluster:', cluster.endpoint);
+            if(debug) console.log('Cluster:', cluster.endpoint);
             if (endpointCounts[cluster.endpoint]) {
               endpointCounts[cluster.endpoint]++;
             } else {
@@ -378,11 +384,57 @@ function Devices() {
     }
   }, []);
 
+  // Filter devices
+  const [filter, setFilter] = useState('');
+  const [filteredDevices, setFilteredDevices] = useState(devices);
+
+  const handleFilterChange = (event) => {
+    setFilter(event.target.value.toLowerCase());
+  };
+
+  useEffect(() => {
+    if(filter === '') {
+      setFilteredDevices(devices);
+      return;
+    }
+    const filteredDevices = devices.filter((device) => device.name.toLowerCase().includes(filter) || device.serial.toLowerCase().includes(filter) );
+    setFilteredDevices(filteredDevices);
+  }, [devices, filter]);
+
+  const [viewMode, setViewMode] = useState('table'); // State to manage view mode
+
   if (!online) {
     return ( <Connecting /> );
   }
   return (
     <div className="MbfPageDiv">
+
+
+      <div className="MbfWindowBodyRow" style={{ justifyContent: 'space-between', padding: 0, gap: '20px', width: '100%', height: '45px', minHeight: '45px', maxHeight: '45px' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
+          <Typography sx={{ fontSize: '16px', fontWeight: 'medium', color: 'var(--div-text-color)', marginLeft: '5px', whiteSpace: 'nowrap' }}>Filter by:</Typography>
+          <TextField
+            variant="outlined"
+            value={filter}
+            onChange={handleFilterChange}
+            placeholder="Enter the device name or serial number"
+            sx={{ width: '300px' }}
+          />
+        </Box>
+        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
+          <Typography sx={{ fontSize: '16px', fontWeight: 'medium', color: 'var(--div-text-color)', marginLeft: '5px', whiteSpace: 'nowrap' }}>View mode:</Typography>
+          <IconButton onClick={() => setViewMode('table')} aria-label="Table View" disabled={viewMode === 'table'}>
+              <Tooltip title="Table View">
+                <TableViewIcon style={{ color: viewMode === 'table' ? 'var(--div-text-color)' : 'var(--primary-color)' }} />
+              </Tooltip>
+            </IconButton>
+            <IconButton onClick={() => setViewMode('icon')} aria-label="Icon View" disabled={viewMode === 'icon'}>
+              <Tooltip title="Icon View">
+                <ViewModuleIcon style={{ color: viewMode === 'icon' ? 'var(--div-text-color)' : 'var(--primary-color)' }} />
+              </Tooltip>
+            </IconButton>         
+        </Box>
+      </div>
 
       {/* Devices Configure Columns Dialog */}
       <Dialog open={dialogDevicesOpen} onClose={handleDialogDevicesToggle}>
@@ -422,10 +474,10 @@ function Devices() {
           </div>
         </div>
         <div className="MbfWindowBodyColumn" style={{ margin: '0', padding: '0', gap: '0' }}>
-          <DevicesTable data={devices} columnVisibility={devicesColumnVisibility} setPlugin={setPlugin} setEndpoint={setEndpoint} setDeviceName={setDeviceName}/>
+          <DevicesTable data={filteredDevices} columnVisibility={devicesColumnVisibility} setPlugin={setPlugin} setEndpoint={setEndpoint} setDeviceName={setDeviceName}/>
         </div>
         <div className="MbfWindowFooter" style={{height: '', padding: '0', borderTop: '1px solid var(--table-border-color)'}}>
-          <p className="MbfWindowFooterText" style={{paddingLeft: '10px', fontWeight: 'normal', textAlign: 'left'}}>Total devices: {devices.length.toString()}</p>
+          <p className="MbfWindowFooterText" style={{paddingLeft: '10px', fontWeight: 'normal', textAlign: 'left'}}>Total devices: {filteredDevices.length.toString()}</p>
         </div>
       </div>
 

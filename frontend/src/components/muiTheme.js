@@ -111,7 +111,7 @@ export function createMuiTheme(primaryColor) {
           },
           input: {
             color: 'var(--div-text-color)',
-            padding: '8px', 
+            padding: '4px 8px', 
           },
         },
       },
