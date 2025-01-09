@@ -13,6 +13,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import ThemeProvider from '@mui/material/styles/ThemeProvider';
@@ -26,6 +27,9 @@ import ListIcon from '@mui/icons-material/List';
 import WifiIcon from '@mui/icons-material/Wifi'; // For selectDevice icon=wifi
 import BluetoothIcon from '@mui/icons-material/Bluetooth'; // For selectDevice icon=ble
 import HubIcon from '@mui/icons-material/Hub';  // For selectDevice icon=hub
+import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
+import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';  // For ErrorListTemplate
 
 // @rjsf
 import { Templates } from '@rjsf/mui';
@@ -143,6 +147,21 @@ export function createConfigTheme(primaryColor) {
           },
         },
       },
+      MuiIconButton: {
+        styleOverrides: {
+          root: {
+            padding: '0px',
+            margin: '0px',
+            '&.Mui-disabled': {
+              color: 'var(--main-label-color)',
+            },
+          },
+        },
+        defaultProps: {
+          size: 'small',
+          color: 'primary',
+        },
+      },
       MuiListItemIcon: {
         styleOverrides: {
           root: {
@@ -193,14 +212,14 @@ export function createConfigTheme(primaryColor) {
 }
 
 export function ArrayFieldTemplate(props) {
-  // console.log('ArrayFieldTemplate: title', title, 'description', schema.description);
+  const { canAdd, onAddClick, schema, title } = props;
+  // console.log('ArrayFieldTemplate: title', title, 'description', schema.description, 'items', props.items);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogEntityOpen, setDialogEntityOpen] = useState(false);
 
   const primaryColor = useMemo(() => getCssVariable('--primary-color', '#009a00'), []);
   const theme = useMemo(() => createConfigTheme(primaryColor), []);
-
-  const { canAdd, onAddClick, schema, title } = props;
 
   const handleDialogToggle = () => {
     setDialogOpen(!dialogOpen);
@@ -243,14 +262,14 @@ export function ArrayFieldTemplate(props) {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0px', margin: '0px', marginBottom: '0px' }}>
               {schema.selectFrom && 
                 <Tooltip title="Add a device from the list">
-                  <IconButton onClick={handleDialogToggle} size="small" color="primary">
+                  <IconButton onClick={handleDialogToggle}>
                     <ListIcon />
                   </IconButton>
                 </Tooltip>
               }
               {schema.selectEntityFrom && 
                 <Tooltip title="Add an entity from the list">
-                  <IconButton onClick={handleDialogEntityToggle} size="small" color="primary">
+                  <IconButton onClick={handleDialogEntityToggle}>
                     <ListIcon />
                   </IconButton>
                 </Tooltip>
@@ -274,8 +293,14 @@ export function ArrayFieldTemplate(props) {
           <Box sx={{ flexGrow: 1 }}>
             {element.children}
           </Box>
+          <IconButton disabled={!element.hasMoveUp} onClick={element.onReorderClick(element.index, element.index-1)}>
+            <KeyboardDoubleArrowUpIcon />
+          </IconButton>
+          <IconButton disabled={!element.hasMoveDown} onClick={element.onReorderClick(element.index, element.index+1)}>
+            <KeyboardDoubleArrowDownIcon />
+          </IconButton>
           <Tooltip title="Remove the device">
-            <IconButton onClick={element.onDropIndexClick(element.index)} size="small" color="primary">
+            <IconButton onClick={element.onDropIndexClick(element.index)}>
               <DeleteForever />
             </IconButton>
           </Tooltip>
@@ -423,6 +448,39 @@ export function DescriptionFieldTemplate(props) {
   );
 }
 
+export function ErrorListTemplate({ errors }) {
+  return (
+    <Box sx={{ padding: '10px', margin: '10px', border: '1px solid grey' }}>
+      <Typography variant="h6" color="error" gutterBottom>
+        Please fix the following errors:
+      </Typography>
+      <List>
+        {errors.map((error, index) => (
+          <ListItem key={index}>
+            <ListItemIcon>
+              <ErrorOutlineIcon color="error" />
+            </ListItemIcon>
+            <ListItemText primary={error.stack} />
+          </ListItem>
+        ))}
+      </List>
+    </Box>
+  );
+};
+
+export function FieldErrorTemplate({ errors }) {
+  if(!errors) return null;
+  return (
+    <Box sx={{ padding: '0px', margin: '0px', marginTop: '5px' }}>
+      {errors.map((error, index) => (
+        <Typography key={index} color="error" variant="body2" sx={{ marginLeft: 1 }}>
+          {error}
+        </Typography>
+      ))}
+    </Box>
+  );
+};
+
 export function RemoveButton(props) {
   const { ...otherProps } = props;
   return (
@@ -458,5 +516,5 @@ export const configUiSchema = {
     "norender": false,
     "submitText": "Save the changes to the config file",
   },
-  'ui:globalOptions': { orderable: false },
+  'ui:globalOptions': { orderable: true },
 };

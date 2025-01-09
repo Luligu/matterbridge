@@ -26,10 +26,12 @@ It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbr
 
 - [platform]: Added selectEntity to get the entity names from a list in the config editor.
 - [websocket]: Added api /api/select/entities.
+- [frontend]: Added the possibility to move up and down the items in the config editor lists.
+- [frontend]: Added custom error messages for ErrorListTemplate and FieldErrorTemplate in react-jsonschema-form.
 
 ### Changed
 
-- [frontend]: Frontend v.2.3.5
+- [frontend]: Frontend v.2.3.6
 - [package]: Update dependencies.
 
 ### Fixed

@@ -384,13 +384,7 @@ function Devices() {
     <div className="MbfPageDiv">
 
       {/* Devices Configure Columns Dialog */}
-      <Dialog open={dialogDevicesOpen} onClose={handleDialogDevicesToggle} 
-        PaperProps={{style: { 
-          color: 'var(--div-text-color)', 
-          backgroundColor: 'var(--div-bg-color)', 
-          border: "2px solid var(--div-border-color)", 
-          borderRadius: 'var(--div-border-radius)', 
-          boxShadow: '2px 2px 5px var(--div-shadow-color)'}}}>
+      <Dialog open={dialogDevicesOpen} onClose={handleDialogDevicesToggle}>
         <DialogTitle>Configure Devices Columns</DialogTitle>
         <DialogContent>
           <FormGroup>
@@ -435,13 +429,7 @@ function Devices() {
       </div>
 
       {/* Clusters Configure Columns Dialog */}
-      <Dialog open={dialogClustersOpen} onClose={handleDialogClustersToggle} 
-        PaperProps={{style: { 
-          color: 'var(--div-text-color)', 
-          backgroundColor: 'var(--div-bg-color)', 
-          border: "2px solid var(--div-border-color)", 
-          borderRadius: 'var(--div-border-radius)', 
-          boxShadow: '2px 2px 5px var(--div-shadow-color)'}}}>
+      <Dialog open={dialogClustersOpen} onClose={handleDialogClustersToggle}>
         <DialogTitle>Configure Clusters Columns</DialogTitle>
         <DialogContent>
           <FormGroup>

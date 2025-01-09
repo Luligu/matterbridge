@@ -46,7 +46,7 @@ import { Connecting } from './Connecting';
 import { SystemInfoTable } from './SystemInfoTable';
 import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
 import { ConfirmCancelForm } from './ConfirmCancelForm';
-import { configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, RemoveButton, CheckboxWidget, createConfigTheme, DescriptionFieldTemplate } from './configEditor';
+import { configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, ErrorListTemplate, FieldErrorTemplate, RemoveButton, CheckboxWidget, createConfigTheme, DescriptionFieldTemplate } from './configEditor';
 import { getCssVariable } from './muiTheme';
 import { debug } from '../App';
 
@@ -615,7 +615,7 @@ function DialogConfigPlugin( { config, schema, handleCloseConfig } ) {
           uiSchema={configUiSchema} 
           validator={validator} 
           widgets={{ CheckboxWidget: CheckboxWidget }} 
-          templates={{ ArrayFieldTemplate, ObjectFieldTemplate, DescriptionFieldTemplate, ButtonTemplates: { RemoveButton } }} 
+          templates={{ ArrayFieldTemplate, ObjectFieldTemplate, DescriptionFieldTemplate, FieldErrorTemplate, ErrorListTemplate, ButtonTemplates: { RemoveButton } }} 
           onSubmit={handleSaveChanges} />
       </div>
     </ThemeProvider>  
