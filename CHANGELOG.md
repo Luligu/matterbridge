@@ -26,17 +26,18 @@ It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbr
 
 - [platform]: Added selectEntity to get the entity names from a list in the config editor.
 - [websocket]: Added api /api/select/entities.
-- [frontend]: Added the possibility to move up and down the items in the config editor lists.
-- [frontend]: Added custom error messages for ErrorListTemplate and FieldErrorTemplate in react-jsonschema-form.
+- [frontend]: Added the possibility to reorder the items in the config editor lists.
+- [frontend]: Added custom error messages for ErrorListTemplate and FieldErrorTemplate in react-jsonschema-form for validation in the config editor.
 
 ### Changed
 
-- [frontend]: Frontend v.2.3.6
+- [frontend]: Frontend v.2.3.8
 - [package]: Update dependencies.
 
 ### Fixed
 
 - [edge]: Fixed ValveConfigurationAndControlServer behavior.
+- [frontend]: Fixed restart that was not working correctly in Ingress.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">

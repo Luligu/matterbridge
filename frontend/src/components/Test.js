@@ -41,6 +41,8 @@ import WaterIcon from '@mui/icons-material/Water'; // Water leak detector
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment'; // SmokeCoAlarm
 import OpacityIcon from '@mui/icons-material/Opacity'; // WaterValve
 import MasksIcon from '@mui/icons-material/Masks'; // AirQualitySensor
+import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked'; // Momentary or latching switch
+import ChecklistIcon from '@mui/icons-material/Checklist'; // ModeSelect
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
@@ -272,6 +274,14 @@ function Device({ device, endpoint, id, deviceType, clusters }) {
       ))}
       {deviceType===0x002b && clusters.filter(cluster => cluster.clusterName === 'FanControl' && cluster.attributeName === 'percentCurrent').map(cluster => (
         <Render icon={<AirIcon/>} cluster={cluster} value={cluster.attributeValue} unit='%'/>
+      ))}
+      {/*GenericSwitch*/}
+      {deviceType===0x000f && clusters.filter(cluster => cluster.clusterName === 'Switch' && cluster.attributeName === 'currentPosition').map(cluster => (
+        <Render icon={<RadioButtonCheckedIcon/>} cluster={cluster} value={cluster.attributeValue} unit='pos'/>
+      ))}
+      {/*ModeSelect*/}
+      {deviceType===0x0027 && clusters.filter(cluster => cluster.clusterName === 'ModeSelect' && cluster.attributeName === 'currentMode').map(cluster => (
+        <Render icon={<ChecklistIcon/>} cluster={cluster} value={cluster.attributeValue} unit='mode'/>
       ))}
       {/*Pump*/}
       {deviceType===0x0303 && clusters.filter(cluster => cluster.clusterName === 'OnOff' && cluster.attributeName === 'onOff').map(cluster => (

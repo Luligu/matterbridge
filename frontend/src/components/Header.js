@@ -20,6 +20,7 @@ import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import { WebSocketContext } from './WebSocketProvider';
 import { ConfirmCancelForm } from './ConfirmCancelForm';
+import { debug } from '../App';
 
 function Header() {
   const { online, sendMessage, logMessage, addListener, removeListener } = useContext(WebSocketContext);
@@ -189,28 +190,28 @@ function Header() {
       // console.log('Header received WebSocket Message:', msg);
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'refresh_required') {
-          console.log('Header received refresh_required');
+          if(debug) console.log('Header received refresh_required');
           sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === '/api/settings') {
-          console.log('Header received settings:', msg.response);
+          if(debug) console.log('Header received settings:', msg.response);
           setSettings(msg.response);
         }
       }
     };
 
     addListener(handleWebSocketMessage);
-    console.log('Header added WebSocket listener');
+    if(debug) console.log('Header added WebSocket listener');
 
     return () => {
       removeListener(handleWebSocketMessage);
-      console.log('Header removed WebSocket listener');
+      if(debug) console.log('Header removed WebSocket listener');
     };
   }, [addListener, removeListener, sendMessage]);
 
   useEffect(() => {
     if(online) {
-      console.log('Header sending /api/settings requests');
+      if(debug) console.log('Header sending /api/settings requests');
       sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   }, [online, sendMessage]);

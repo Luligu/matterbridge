@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "1.7.2-dev.2",
+  "version": "1.7.2-dev.4",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -112,6 +112,7 @@
     "prepublishOnly": "npm pkg delete devDependencies && npm pkg delete scripts && npm install --omit=dev && npm shrinkwrap",
     "npmPack": "copy package.json package.log && npm run buildProduction && npm pkg delete devDependencies && npm pkg delete scripts && npm pkg delete types && npx rimraf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack && copy package.log package.json && npm run deepCleanBuild",
     "npmPublishTagDev": "copy package.json package.log && npm run buildProduction && npm pkg delete devDependencies && npm pkg delete scripts && npm pkg delete types && npx rimraf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm publish --tag dev && copy package.log package.json && npm run deepCleanBuild",
+    "npmPublishTagEdge": "copy package.json package.log && npm run buildProduction && npm pkg delete devDependencies && npm pkg delete scripts && npm pkg delete types && npx rimraf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm publish --tag edge && copy package.log package.json && npm run deepCleanBuild",
     "npmPublishTagLatest": "copy package.json package.log && npm run buildProduction && npm pkg delete devDependencies && npm pkg delete scripts && npm pkg delete types && npx rimraf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm publish --tag latest && copy package.log package.json && npm run deepCleanBuild",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u && npm install && npm run cleanBuild && npm link",

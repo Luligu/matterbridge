@@ -125,7 +125,7 @@ export function WebSocketProvider({ children }) {
             listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
             return;
           } else if(msg.id!==WS_ID_LOG) {
-            console.log(`WebSocket message:`, msg, 'listeners:', listenersRef.current.length);
+            if(debug) console.log(`WebSocket message:`, msg, 'listeners:', listenersRef.current.length);
             listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
             return;
           }
@@ -213,7 +213,7 @@ export function WebSocketProvider({ children }) {
           clearTimeout(offlineTimeoutRef.current);
           clearInterval(pingIntervalRef.current);
           logMessage('WebSocket', `Reconnecting (attempt ${retryCountRef.current} of ${maxRetries}) to WebSocket${isIngress?' (Ingress)':''}: ${wssHost}`);
-          if( retryCountRef.current < maxRetries ) setTimeout(attemptReconnect, 1000 * retryCountRef.current);
+          if( retryCountRef.current < maxRetries ) setTimeout(attemptReconnect, (isIngress ? 20000 : 1000) * retryCountRef.current);
           else logMessage('WebSocket', `Reconnect attempts exceeded limit of ${maxRetries} retries, refresh the page to reconnect to: ${wssHost}`);
           retryCountRef.current = retryCountRef.current + 1;
       };
