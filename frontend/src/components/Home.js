@@ -572,7 +572,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, matterbridgeInfo, plugin
         </div>
         <QRCodeSVG value={qrText} size={qrWidth} level='M' fgColor={'var(--div-text-color)'} bgColor={'var(--div-bg-color)'} style={{ margin: '20px' }}/>
         <div className="MbfWindowFooter" style={{padding: 0, marginTop: '-5px', height: '30px'}}>
-            <p className="MbfWindowFooterText"  style={{ fontSize: '14px' }}>Manual pairing code: {pairingText}</p>
+            <p className="MbfWindowFooterText"  style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Manual pairing code: {pairingText}</p>
         </div>
       </div>
     );
@@ -585,7 +585,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, matterbridgeInfo, plugin
         </div>
         <QRCodeSVG value={qrText} size={qrWidth} level='M' fgColor={'var(--div-text-color)'} bgColor={'var(--div-bg-color)'} style={{ margin: '20px' }}/>
         <div className="MbfWindowFooter" style={{padding: 0, marginTop: '-5px', height: '30px'}}>
-            <p className="MbfWindowFooterText"  style={{ fontSize: '14px' }}>Manual pairing code: {pairingText}</p>
+            <p className="MbfWindowFooterText"  style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Manual pairing code: {pairingText}</p>
         </div>
       </div>
     );

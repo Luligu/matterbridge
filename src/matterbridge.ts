@@ -3259,6 +3259,19 @@ export class Matterbridge extends EventEmitter {
       }
     });
 
+    // Endpoint to provide health check
+    this.expressApp.get('/health', (req, res) => {
+      this.log.debug('Express received /health');
+
+      const healthStatus = {
+        status: 'ok', // Indicate service is healthy
+        uptime: process.uptime(), // Server uptime in seconds
+        timestamp: new Date().toISOString(), // Current timestamp
+      };
+
+      res.status(200).json(healthStatus);
+    });
+
     // Endpoint to provide settings
     this.expressApp.get('/api/settings', express.json(), async (req, res) => {
       this.log.debug('The frontend sent /api/settings');

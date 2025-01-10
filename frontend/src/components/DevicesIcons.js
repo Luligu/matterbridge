@@ -46,7 +46,6 @@ import ChecklistIcon from '@mui/icons-material/Checklist'; // ModeSelect
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
-import { Connecting } from './Connecting';
 import { debug } from '../App';
 
 const valueBoxSx = { display: 'flex', gap: '2px', justifyContent: 'space-evenly', width: '100%', height: '40px' };
@@ -76,16 +75,11 @@ function Render({ icon, iconColor, cluster, value, unit }) {
     <Box key={`${cluster.clusterId}-${cluster.attributeId}-box`} sx={valueBoxSx}>
       {icon && React.cloneElement(icon, { key: `${cluster.clusterId}-${cluster.attributeId}-icon`, sx: {...iconSx, color: iconColor ?? 'var(--primary-color)'} })}
       <Box key={`${cluster.clusterId}-${cluster.attributeId}-valueunitbox`} sx={{...valueBoxSx, gap: '4px', alignContent: 'center', alignItems: 'end', justifyContent: 'center'}}>
-        {value!==null && value!==undefined && value!=='NaN' && 
-          <Typography key={`${cluster.clusterId}-${cluster.attributeId}-value`} sx={valueSx}>
-            {value}
-          </Typography>
-        }
-        {(value===null || value===undefined || value==='NaN') && 
-          <Typography key={`${cluster.clusterId}-${cluster.attributeId}-value`} sx={valueSx}>
-            {'---'}
-          </Typography>
-        }
+        <Typography key={`${cluster.clusterId}-${cluster.attributeId}-value`} sx={valueSx}>
+          {(value===null || value===undefined || (typeof(value)==='number' && isNaN(value)) ||  value==='NaN') ?
+            '---' : value
+          }
+        </Typography> 
         {unit && 
           <Typography key={`${cluster.clusterId}-${cluster.attributeId}-unit`} sx={unitSx}>
             {unit}

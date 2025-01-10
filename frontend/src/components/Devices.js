@@ -285,6 +285,14 @@ function Devices() {
     attributeValue: true,
   });
 
+  // Filter devices
+  const [filter, setFilter] = useState('');
+  const [filteredDevices, setFilteredDevices] = useState(devices);
+
+  // View mode
+  const [viewMode, setViewMode] = useState('table'); // State to manage view mode
+
+
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
       // console.log('Test received WebSocket Message:', msg);
@@ -384,12 +392,13 @@ function Devices() {
     }
   }, []);
 
-  // Filter devices
-  const [filter, setFilter] = useState('');
-  const [filteredDevices, setFilteredDevices] = useState(devices);
-
   const handleFilterChange = (event) => {
     setFilter(event.target.value.toLowerCase());
+  };
+  
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode);
+    localStorage.setItem('viewMode', mode);
   };
 
   useEffect(() => {
@@ -401,7 +410,12 @@ function Devices() {
     setFilteredDevices(filteredDevices);
   }, [devices, filter]);
 
-  const [viewMode, setViewMode] = useState('table'); // State to manage view mode
+  useEffect(() => {
+    const savedViewMode = localStorage.getItem('viewMode');
+    if (savedViewMode) {
+      setViewMode(savedViewMode);
+    }
+  }, []);
 
   if (!online) {
     return ( <Connecting /> );
@@ -428,12 +442,12 @@ function Devices() {
         </Box>
         <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
           <Typography sx={{ fontSize: '16px', fontWeight: 'normal', color: 'var(--div-text-color)', marginLeft: '5px', whiteSpace: 'nowrap' }}>View mode:</Typography>
-          <IconButton onClick={() => setViewMode('table')} aria-label="Table View" disabled={viewMode === 'table'}>
+          <IconButton onClick={() => handleViewModeChange('table')} aria-label="Table View" disabled={viewMode === 'table'}>
               <Tooltip title="Table View">
                 <TableViewIcon style={{ color: viewMode === 'table' ? 'var(--main-icon-color)' : 'var(--primary-color)' }} />
               </Tooltip>
             </IconButton>
-            <IconButton onClick={() => setViewMode('icon')} aria-label="Icon View" disabled={viewMode === 'icon'}>
+            <IconButton onClick={() => handleViewModeChange('icon')} aria-label="Icon View" disabled={viewMode === 'icon'}>
               <Tooltip title="Icon View (beta)">
                 <ViewModuleIcon style={{ color: viewMode === 'icon' ? 'var(--main-icon-color)' : 'var(--primary-color)' }} />
               </Tooltip>
