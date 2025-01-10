@@ -26,6 +26,7 @@ import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import { debug } from '../App';
+import { DevicesIcons } from './DevicesIcons';
 
 const devicesColumns = [
   {
@@ -408,28 +409,33 @@ function Devices() {
   return (
     <div className="MbfPageDiv">
 
-
+      {/* Devices Filter and View Mode Dialog */}
       <div className="MbfWindowBodyRow" style={{ justifyContent: 'space-between', padding: 0, gap: '20px', width: '100%', height: '45px', minHeight: '45px', maxHeight: '45px' }}>
         <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
-          <Typography sx={{ fontSize: '16px', fontWeight: 'medium', color: 'var(--div-text-color)', marginLeft: '5px', whiteSpace: 'nowrap' }}>Filter by:</Typography>
+          <Typography sx={{ fontSize: '16px', fontWeight: 'normal', color: 'var(--div-text-color)', marginLeft: '5px', whiteSpace: 'nowrap' }}>Filter by:</Typography>
           <TextField
             variant="outlined"
             value={filter}
             onChange={handleFilterChange}
             placeholder="Enter the device name or serial number"
             sx={{ width: '300px' }}
+            InputProps={{
+              style: {
+                backgroundColor: 'var(--main-bg-color)',
+              },
+            }}
           />
         </Box>
         <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
-          <Typography sx={{ fontSize: '16px', fontWeight: 'medium', color: 'var(--div-text-color)', marginLeft: '5px', whiteSpace: 'nowrap' }}>View mode:</Typography>
+          <Typography sx={{ fontSize: '16px', fontWeight: 'normal', color: 'var(--div-text-color)', marginLeft: '5px', whiteSpace: 'nowrap' }}>View mode:</Typography>
           <IconButton onClick={() => setViewMode('table')} aria-label="Table View" disabled={viewMode === 'table'}>
               <Tooltip title="Table View">
-                <TableViewIcon style={{ color: viewMode === 'table' ? 'var(--div-text-color)' : 'var(--primary-color)' }} />
+                <TableViewIcon style={{ color: viewMode === 'table' ? 'var(--main-icon-color)' : 'var(--primary-color)' }} />
               </Tooltip>
             </IconButton>
             <IconButton onClick={() => setViewMode('icon')} aria-label="Icon View" disabled={viewMode === 'icon'}>
-              <Tooltip title="Icon View">
-                <ViewModuleIcon style={{ color: viewMode === 'icon' ? 'var(--div-text-color)' : 'var(--primary-color)' }} />
+              <Tooltip title="Icon View (beta)">
+                <ViewModuleIcon style={{ color: viewMode === 'icon' ? 'var(--main-icon-color)' : 'var(--primary-color)' }} />
               </Tooltip>
             </IconButton>         
         </Box>
@@ -461,24 +467,26 @@ function Devices() {
       </Dialog>
 
       {/* Devices Table */}
-      <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', maxHeight: `${plugin && endpoint ? '50%' : '100%'}`, width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
-        <div className="MbfWindowHeader">
-          <div className="MbfWindowHeaderText" style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
-            <p style={{margin: '0px', padding: '0px'}}>Registered devices</p>
-            <IconButton onClick={handleDialogDevicesToggle} aria-label="Configure Columns" style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}}>
-              <Tooltip title="Configure columns">
-                <SettingsIcon style={{ color: 'var(--header-text-color)', fontSize: '19px' }}/>
-              </Tooltip>
-            </IconButton>
+      {viewMode === 'table' && 
+        <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', maxHeight: `${plugin && endpoint ? '50%' : '100%'}`, width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
+          <div className="MbfWindowHeader">
+            <div className="MbfWindowHeaderText" style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
+              <p style={{margin: '0px', padding: '0px'}}>Registered devices</p>
+              <IconButton onClick={handleDialogDevicesToggle} aria-label="Configure Columns" style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}}>
+                <Tooltip title="Configure columns">
+                  <SettingsIcon style={{ color: 'var(--header-text-color)', fontSize: '19px' }}/>
+                </Tooltip>
+              </IconButton>
+            </div>
+          </div>
+          <div className="MbfWindowBodyColumn" style={{ margin: '0', padding: '0', gap: '0' }}>
+            <DevicesTable data={filteredDevices} columnVisibility={devicesColumnVisibility} setPlugin={setPlugin} setEndpoint={setEndpoint} setDeviceName={setDeviceName}/>
+          </div>
+          <div className="MbfWindowFooter" style={{height: '', padding: '0', borderTop: '1px solid var(--table-border-color)'}}>
+            <p className="MbfWindowFooterText" style={{paddingLeft: '10px', fontWeight: 'normal', textAlign: 'left'}}>Total devices: {filteredDevices.length.toString()}</p>
           </div>
         </div>
-        <div className="MbfWindowBodyColumn" style={{ margin: '0', padding: '0', gap: '0' }}>
-          <DevicesTable data={filteredDevices} columnVisibility={devicesColumnVisibility} setPlugin={setPlugin} setEndpoint={setEndpoint} setDeviceName={setDeviceName}/>
-        </div>
-        <div className="MbfWindowFooter" style={{height: '', padding: '0', borderTop: '1px solid var(--table-border-color)'}}>
-          <p className="MbfWindowFooterText" style={{paddingLeft: '10px', fontWeight: 'normal', textAlign: 'left'}}>Total devices: {filteredDevices.length.toString()}</p>
-        </div>
-      </div>
+      }
 
       {/* Clusters Configure Columns Dialog */}
       <Dialog open={dialogClustersOpen} onClose={handleDialogClustersToggle}>
@@ -506,7 +514,7 @@ function Devices() {
       </Dialog>
 
       {/* Clusters Table */}
-      {plugin && endpoint && (
+      {viewMode === 'table' && plugin && endpoint && (
         <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', height: '50%', maxHeight: '50%', width: '100%', flex: '1 1 auto', overflow: 'hidden' }}>
           <div className="MbfWindowHeader">
             <div className="MbfWindowHeaderText" style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
@@ -525,6 +533,11 @@ function Devices() {
             <p className="MbfWindowFooterText" style={{paddingLeft: '10px', fontWeight: 'normal', textAlign: 'left'}}>Total child endpoints: {subEndpointsCount - 1}</p>
           </div>
         </div>
+      )}
+
+      {/* Clusters Table */}
+      {viewMode === 'icon' && (
+        <DevicesIcons filter={filter} devices={filteredDevices} />
       )}
 
     </div>

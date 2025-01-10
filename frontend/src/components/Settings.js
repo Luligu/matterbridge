@@ -20,6 +20,7 @@ import Box from '@mui/material/Box';
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import { Connecting } from './Connecting';
 import { WebSocketContext } from './WebSocketProvider';
+import { debug } from '../App';
 
 function Settings() {
   const { online, addListener, removeListener, sendMessage } = useContext(WebSocketContext);
@@ -44,27 +45,27 @@ function Settings() {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'refresh_required') {
-          console.log('Settings received refresh_required');
+          if(debug) console.log('Settings received refresh_required');
           sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === '/api/settings') {
-          console.log('Settings received /api/settings:', msg.response);
+          if(debug) console.log('Settings received /api/settings:', msg.response);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
         }
       }
     };
 
     addListener(handleWebSocketMessage);
-    console.log('Settings added WebSocket listener');
+    if(debug) console.log('Settings added WebSocket listener');
     return () => {
       removeListener(handleWebSocketMessage);
-      console.log('Settings removed WebSocket listener');
+      if(debug) console.log('Settings removed WebSocket listener');
     };
   }, [addListener, removeListener, sendMessage]);
 
   useEffect(() => {
     if(online) {
-      console.log('Settings received online');
+      if(debug) console.log('Settings received online');
       sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   }, [online, sendMessage]);
