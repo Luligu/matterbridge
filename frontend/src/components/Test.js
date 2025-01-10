@@ -74,12 +74,12 @@ const Render = ({ icon, iconColor, cluster, value, unit }) => {
     <Box key={`${cluster.clusterId}-${cluster.attributeId}-box`} sx={valueBoxSx}>
       {icon && React.cloneElement(icon, { key: `${cluster.clusterId}-${cluster.attributeId}-icon`, sx: {...iconSx, color: iconColor ?? 'var(--primary-color)'} })}
       <Box key={`${cluster.clusterId}-${cluster.attributeId}-valueunitbox`} sx={{...valueBoxSx, gap: '4px', alignContent: 'center', alignItems: 'end', justifyContent: 'center'}}>
-        {value!==null && value!==undefined && value!==NaN && value!=='NaN' && 
+        {value!==null && value!==undefined && !isNaN(value) && value!=='NaN' && 
           <Typography key={`${cluster.clusterId}-${cluster.attributeId}-value`} sx={valueSx}>
             {value}
           </Typography>
         }
-        {(value===null || value===undefined || value===NaN || value==='NaN') && 
+        {(value===null || value===undefined || isNaN(value) || value==='NaN') && 
           <Typography key={`${cluster.clusterId}-${cluster.attributeId}-value`} sx={valueSx}>
             {'---'}
           </Typography>

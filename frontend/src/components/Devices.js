@@ -26,7 +26,6 @@ import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import { debug } from '../App';
-import { use } from 'react';
 
 const devicesColumns = [
   {

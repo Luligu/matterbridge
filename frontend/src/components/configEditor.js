@@ -31,6 +31,8 @@ import HubIcon from '@mui/icons-material/Hub';  // For selectDevice icon=hub
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';  // For ErrorListTemplate
+import ViewInArIcon from '@mui/icons-material/ViewInAr'; // For entities icon=component
+import DeviceHubIcon from '@mui/icons-material/DeviceHub'; // For entities icon=matter
 
 // @rjsf
 import { Templates } from '@rjsf/mui';
@@ -42,7 +44,7 @@ import { selectDevices, selectEntities } from './Home';
 const { BaseInputTemplate } = Templates; 
 
 const titleSx = { fontSize: '16px', fontWeight: 'bold', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' };
-const descriptionSx = { fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' };
+const descriptionSx = { fontSize: '12px', fontWeight: 'normal', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' };
 
 export function createConfigTheme(primaryColor) {
   return createTheme({
@@ -216,9 +218,9 @@ export function ArrayFieldTemplate(props) {
   const { canAdd, onAddClick, schema, title } = props;
   // console.log('ArrayFieldTemplate: title', title, 'description', schema.description, 'items', props.items);
 
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [filter, setFilter] = useState('');
+  const [dialogDeviceOpen, setDialogDeviceOpen] = useState(false);
   const [dialogEntityOpen, setDialogEntityOpen] = useState(false);
+  const [filter, setFilter] = useState('');
 
   const primaryColor = useMemo(() => getCssVariable('--primary-color', '#009a00'), []);
   const theme = useMemo(() => createConfigTheme(primaryColor), []);
@@ -227,17 +229,17 @@ export function ArrayFieldTemplate(props) {
     setFilter(event.target.value);
   };
 
-  const handleDialogToggle = () => {
-    setDialogOpen(!dialogOpen);
+  const handleDialogDeviceToggle = () => {
+    setDialogDeviceOpen(!dialogDeviceOpen);
   };
 
   const handleDialogEntityToggle = () => {
     setDialogEntityOpen(!dialogEntityOpen);
   };
 
-  const handleSelectValue = (value) => {
+  const handleSelectDeviceValue = (value) => {
     // console.log('ArrayFieldTemplate: handleSelectValue', value);
-    setDialogOpen(false);
+    setDialogDeviceOpen(false);
     // Trigger onAddClick to add the selected new item
     if(schema.selectFrom === 'serial')
       schema.items.default = value.serial;
@@ -268,7 +270,7 @@ export function ArrayFieldTemplate(props) {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0px', margin: '0px', marginBottom: '0px' }}>
               {schema.selectFrom && 
                 <Tooltip title="Add a device from the list">
-                  <IconButton onClick={handleDialogToggle}>
+                  <IconButton onClick={handleDialogDeviceToggle}>
                     <ListIcon />
                   </IconButton>
                 </Tooltip>
@@ -280,7 +282,7 @@ export function ArrayFieldTemplate(props) {
                   </IconButton>
                 </Tooltip>
               }
-              <Tooltip title="Add a device">
+              <Tooltip title="Add a new item">
                 <IconButton onClick={onAddClick} size="small" color="primary">
                   <Add />
                 </IconButton>
@@ -315,7 +317,7 @@ export function ArrayFieldTemplate(props) {
 
       <ThemeProvider theme={theme}>
         {/* Dialog for selecting a device */}
-        <Dialog open={dialogOpen} onClose={handleDialogToggle} PaperProps={{
+        <Dialog open={dialogDeviceOpen} onClose={handleDialogDeviceToggle} PaperProps={{
             sx: {
               maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
               overflow: 'auto',  // Allow scrolling for overflowing content
@@ -335,7 +337,7 @@ export function ArrayFieldTemplate(props) {
             </Box>
             <List dense>
               {selectDevices.filter((v) => v.serial.includes(filter) || v.name.includes(filter)).map((value, index) => (
-                <ListItemButton onClick={() => handleSelectValue(value)} key={index}>
+                <ListItemButton onClick={() => handleSelectDeviceValue(value)} key={index}>
                   {value.icon==='wifi' && <ListItemIcon><WifiIcon /></ListItemIcon>}
                   {value.icon==='ble' && <ListItemIcon><BluetoothIcon /></ListItemIcon>}
                   {value.icon==='hub' && <ListItemIcon><HubIcon /></ListItemIcon>}
@@ -345,7 +347,7 @@ export function ArrayFieldTemplate(props) {
             </List>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleDialogToggle}>Close</Button>
+            <Button onClick={handleDialogDeviceToggle}>Close</Button>
           </DialogActions>
         </Dialog>
 
@@ -374,6 +376,8 @@ export function ArrayFieldTemplate(props) {
                   {value.icon==='wifi' && <ListItemIcon><WifiIcon /></ListItemIcon>}
                   {value.icon==='ble' && <ListItemIcon><BluetoothIcon /></ListItemIcon>}
                   {value.icon==='hub' && <ListItemIcon><HubIcon /></ListItemIcon>}
+                  {value.icon==='component' && <ListItemIcon><ViewInArIcon /></ListItemIcon>}
+                  {value.icon==='matter' && <ListItemIcon><DeviceHubIcon /></ListItemIcon>}
                   <ListItemText primary={value.name} secondary={value.description}/>
                 </ListItemButton>
               ))}
@@ -408,7 +412,7 @@ export function ObjectFieldTemplate(props) {
       {title && !isRoot && (
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0px', margin: '0px', marginBottom: '0px' }}>
           <Typography sx={titleSx}>{title}</Typography>
-          <Tooltip title="Add an item">
+          <Tooltip title="Add a new item">
             <IconButton onClick={onAddClick(schema)} size="small" color="primary">
               <Add />
             </IconButton>
