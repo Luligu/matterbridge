@@ -554,7 +554,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, matterbridgeInfo, plugin
         <div className="MbfWindowBodyColumn">
           {plugin.fabricInformations.map((fabric, index) => (
             <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)', textAlign: 'left', fontSize: '14px' }}>
-                <p className="status-blue" style={{ margin: '0px 10px 10px 10px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
+                <p className="status-blue" style={{ margin: '0px 10px 10px 10px', fontSize: '14px', padding: 0, color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)' }}>Fabric: {fabric.fabricIndex}</p>
                 <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
                 {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Label: {fabric.label}</p>}
                 <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Active sessions: {plugin.sessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length}</p>

@@ -50,6 +50,9 @@ export function createMuiTheme(primaryColor) {
           root: {
             color: 'var(--main-button-color)',
             backgroundColor: 'var(--main-button-bg-color)', 
+            '&:hover': {
+              backgroundColor: 'var(--main-button-bg-color)',
+            },
           },
           contained: {
             color: 'var(--main-button-color)',
