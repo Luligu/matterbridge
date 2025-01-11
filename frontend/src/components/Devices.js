@@ -25,8 +25,8 @@ import ViewModuleIcon from '@mui/icons-material/ViewModule';
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
-import { debug } from '../App';
 import { DevicesIcons } from './DevicesIcons';
+import { debug } from '../App';
 
 const devicesColumns = [
   {
@@ -290,12 +290,12 @@ function Devices() {
   const [filteredDevices, setFilteredDevices] = useState(devices);
 
   // View mode
-  const [viewMode, setViewMode] = useState('table'); // State to manage view mode
+  const [viewMode, setViewMode] = useState('table');
 
-
+  // WebSocket message handler effect
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
-      // console.log('Test received WebSocket Message:', msg);
+      if(debug) console.log('Devices received WebSocket Message:', msg);
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'refresh_required') {
           if(debug) console.log('Devices received refresh_required');
@@ -332,6 +332,7 @@ function Devices() {
     };
   }, [addListener, removeListener, sendMessage]);
   
+  // Send API requests when online
   useEffect(() => {
     if (online) {
       if(debug) console.log('Devices sending api requests');
@@ -341,6 +342,7 @@ function Devices() {
     }
   }, [online, sendMessage]);
 
+  // Send /api/clusters request when plugin and endpoint are set
   useEffect(() => {
     if (plugin && endpoint) {
       if(debug) console.log('Devices sending /api/clusters');
@@ -394,11 +396,12 @@ function Devices() {
 
   const handleFilterChange = (event) => {
     setFilter(event.target.value.toLowerCase());
+    localStorage.setItem('devicesFilter', event.target.value.toLowerCase());
   };
   
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
-    localStorage.setItem('viewMode', mode);
+    localStorage.setItem('devicesViewMode', mode);
   };
 
   useEffect(() => {
@@ -411,7 +414,14 @@ function Devices() {
   }, [devices, filter]);
 
   useEffect(() => {
-    const savedViewMode = localStorage.getItem('viewMode');
+    const savedFilter = localStorage.getItem('devicesFilter');
+    if (savedFilter) {
+      setFilter(savedFilter);
+    }
+  }, []);
+
+  useEffect(() => {
+    const savedViewMode = localStorage.getItem('devicesViewMode');
     if (savedViewMode) {
       setViewMode(savedViewMode);
     }
