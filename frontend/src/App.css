@@ -18,7 +18,7 @@
   --main-label-color: var(--main-grey-color);
 
   --primary-color: #009a00;
-  --secondary-color: #a58827;
+  --secondary-color: #316dc7;
 
   --header-bg-color: var(--primary-color);
   --header-text-color: white;
@@ -174,6 +174,7 @@ html {
 .tooltip-container {
   position: relative;
   display: inline-block;
+  z-index: 10;
 }
 
 .tooltip-text {
@@ -345,6 +346,7 @@ thead th {
   color: var(--header-text-color);
   background: var(--header-bg-color);
   text-align: left;
+  z-index: 10;
 }
 
 tbody td {
@@ -455,7 +457,6 @@ h3 {
   display: 'flex';
   align-items: center;
   justify-content: center;
-  height: 40px;
   color: var(--footer-text-color);
   background-color: var(--footer-bg-color);
   margin: 0px;

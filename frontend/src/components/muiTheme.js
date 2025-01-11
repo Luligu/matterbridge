@@ -28,6 +28,17 @@ export function createMuiTheme(primaryColor) {
       MuiTypography: {
         fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
       },
+      MuiDialog: {
+        styleOverrides: {
+          paper: {
+            color: 'var(--div-text-color)',
+            backgroundColor: 'var(--div-bg-color)',
+            border: '2px solid var(--div-border-color)',
+            borderRadius: 'var(--div-border-radius)',
+            boxShadow: '2px 2px 5px var(--div-shadow-color)',
+          },
+        },
+      },
       MuiTooltip: {
         defaultProps: {
           placement: 'top-start', 
@@ -39,6 +50,9 @@ export function createMuiTheme(primaryColor) {
           root: {
             color: 'var(--main-button-color)',
             backgroundColor: 'var(--main-button-bg-color)', 
+            '&:hover': {
+              backgroundColor: 'var(--main-button-bg-color)',
+            },
           },
           contained: {
             color: 'var(--main-button-color)',
@@ -100,7 +114,7 @@ export function createMuiTheme(primaryColor) {
           },
           input: {
             color: 'var(--div-text-color)',
-            padding: '8px', 
+            padding: '4px 8px', 
           },
         },
       },

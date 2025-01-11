@@ -20,6 +20,33 @@ Matterbridge edge is now released. The default mode is still the normal mode to 
 The frontend has a new dark and light mode. The dark mode is now the default mode.
 It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbridge settings.
 
+## [1.7.2] - 2025-01-11
+
+### Added
+
+- [platform]: Added selectEntity to get the entity names from a list in the config editor.
+- [websocket]: Added api /api/select/entities.
+- [frontend]: Added the possibility to reorder the items in the config editor lists.
+- [frontend]: Added custom error messages for ErrorListTemplate and FieldErrorTemplate in react-jsonschema-form for validation in the config editor.
+- [frontend]: Added filter by device name and serial number to Devices page.
+- [frontend]: Added Icon view to the Devices page (beta).
+- [frontend]: Added the possibility to select the entities/components from a list in the config editor.
+- [matterbridge]: Added /health endpoint for watchdog.
+
+### Changed
+
+- [frontend]: Frontend v.2.3.10
+- [package]: Update dependencies.
+
+### Fixed
+
+- [edge]: Fixed ValveConfigurationAndControlServer behavior.
+- [frontend]: Fixed restart that was not working correctly in Ingress.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.7.1] - 2025-01-07
 
 ### Added

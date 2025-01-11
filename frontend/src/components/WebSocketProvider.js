@@ -34,6 +34,7 @@ export function WebSocketProvider({ children }) {
 
   // Memos
   const wssHost = useMemo(() => window.location.href.replace(/^http/, 'ws'), []); // Replace "http" or "https" with "ws" or "wss"
+  const isIngress = useMemo(() => window.location.href.includes('api/hassio_ingress'), []);
 
   // Constants
   const maxMessages = 1000;
@@ -41,8 +42,6 @@ export function WebSocketProvider({ children }) {
   const pingIntervalSeconds = 10;
   const offlineTimeoutSeconds = 5;
 
-  // console.log(`WebSocketUse: wssHost: ${wssHost} ssl: ${ssl} logFilterLevel: ${logFilterLevel} logFilterSearch: ${logFilterSearch} messages: ${messages.length} available`);
-  
   useEffect(() => {
       logFilterLevelRef.current = logFilterLevel;
   }, [logFilterLevel]);
@@ -79,13 +78,13 @@ export function WebSocketProvider({ children }) {
   }, [logMessage]);
 
   const addListener = useCallback((listener) => {
-    // console.log(`WebSocket addListener:`, listener);
+    if(debug) console.log(`WebSocket addListener:`, listener);
     listenersRef.current = [...listenersRef.current, listener];
     if(debug) console.log(`WebSocket addListener total listeners:`, listenersRef.current.length);
   }, []);
 
   const removeListener = useCallback((listener) => {
-    // console.log(`WebSocket removeListener:`, listener);
+    if(debug) console.log(`WebSocket removeListener:`, listener);
     listenersRef.current = listenersRef.current.filter(l => l !== listener);
     if(debug) console.log(`WebSocket removeListener total listeners:`, listenersRef.current.length);
   }, []);
@@ -126,7 +125,7 @@ export function WebSocketProvider({ children }) {
             listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
             return;
           } else if(msg.id!==WS_ID_LOG) {
-            console.log(`WebSocket message:`, msg, 'listeners:', listenersRef.current.length);
+            if(debug) console.log(`WebSocket message:`, msg, 'listeners:', listenersRef.current.length);
             listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
             return;
           }
@@ -213,9 +212,8 @@ export function WebSocketProvider({ children }) {
           setOnline(false);
           clearTimeout(offlineTimeoutRef.current);
           clearInterval(pingIntervalRef.current);
-          logMessage('WebSocket', `Reconnecting (attempt ${retryCountRef.current} of ${maxRetries}) to WebSocket: ${wssHost}`);
-          if( retryCountRef.current === 1 ) attemptReconnect();
-          else if( retryCountRef.current < maxRetries ) setTimeout(attemptReconnect, 1000 * retryCountRef.current);
+          logMessage('WebSocket', `Reconnecting (attempt ${retryCountRef.current} of ${maxRetries}) to WebSocket${isIngress?' (Ingress)':''}: ${wssHost}`);
+          if( retryCountRef.current < maxRetries ) setTimeout(attemptReconnect, (isIngress ? 20000 : 1000) * retryCountRef.current);
           else logMessage('WebSocket', `Reconnect attempts exceeded limit of ${maxRetries} retries, refresh the page to reconnect to: ${wssHost}`);
           retryCountRef.current = retryCountRef.current + 1;
       };
@@ -226,6 +224,12 @@ export function WebSocketProvider({ children }) {
       };
   }, [wssHost]);
 
+  /*
+          if( retryCountRef.current === 1 ) attemptReconnect();
+          else if( retryCountRef.current < maxRetries ) setTimeout(attemptReconnect, 1000 * retryCountRef.current);
+          else logMessage('WebSocket', `Reconnect attempts exceeded limit of ${maxRetries} retries, refresh the page to reconnect to: ${wssHost}`);
+
+  */
   const attemptReconnect = useCallback(() => {
       if(debug) console.log(`WebSocket attemptReconnect ${retryCountRef.current}/${maxRetries} to:`, wssHost);
       connectWebSocket();

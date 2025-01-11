@@ -46,11 +46,13 @@ import { Connecting } from './Connecting';
 import { SystemInfoTable } from './SystemInfoTable';
 import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
 import { ConfirmCancelForm } from './ConfirmCancelForm';
-import { configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, RemoveButton, CheckboxWidget, createConfigTheme, DescriptionFieldTemplate } from './configEditor';
+import { configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, ErrorListTemplate, FieldErrorTemplate, RemoveButton, CheckboxWidget, createConfigTheme, DescriptionFieldTemplate } from './configEditor';
 import { getCssVariable } from './muiTheme';
+import { debug } from '../App';
 
 export let pluginName = '';
 export let selectDevices = [];
+export let selectEntities = [];
 
 function Home() {
   const [qrCode, setQrCode] = useState('');
@@ -111,7 +113,7 @@ function Home() {
 
   // Function to reload settings on demand
   const reloadSettings = () => {
-    console.log('reloadSettings');
+    if(debug) console.log('reloadSettings');
     sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
     sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
   };
@@ -180,6 +182,7 @@ function Home() {
     // console.log('handleConfigPlugin row:', row, 'plugin:', plugins[row].name);
     pluginName = plugins[row].name;
     sendMessage({ method: "/api/select", src: "Frontend", dst: "Matterbridge", params: { plugin: pluginName } });
+    sendMessage({ method: "/api/select/entities", src: "Frontend", dst: "Matterbridge", params: { plugin: pluginName } });
     setSelectedPluginConfig(plugins[row].configJson);
     setSelectedPluginSchema(plugins[row].schemaJson);
     handleOpenConfig();
@@ -234,11 +237,11 @@ function Home() {
       // console.log('Home Received WebSocket Message:', msg);
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'refresh_required') {
-          console.log('Home received refresh_required');
+          if(debug) console.log('Home received refresh_required');
           reloadSettings();
         }
         if (msg.method === '/api/settings') {
-          console.log('Home received settings:', msg.response);
+          if(debug) console.log('Home received settings:', msg.response);
           if(msg.response.matterbridgeInformation.bridgeMode==='bridge') {
             setQrCode(msg.response.matterbridgeInformation.matterbridgeQrPairingCode); 
             setPairingCode(msg.response.matterbridgeInformation.matterbridgeManualPairingCode);
@@ -247,32 +250,42 @@ function Home() {
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
         }
         if (msg.method === '/api/plugins') {
-          console.log('Home received plugins:', msg.response);
+          if(debug) console.log('Home received plugins:', msg.response);
           setPlugins(msg.response);
         }
         if (msg.method === '/api/select') {
           if(msg.response) {
-            console.log('Home received /api/select:', msg.response);
+            if(debug) console.log('Home received /api/select:', msg.response);
             selectDevices = msg.response;
           }
           if(msg.error) {
             console.error('Home received /api/select error:', msg.error);
           }
         }
+        if (msg.method === '/api/select/entities') {
+          if(msg.response) {
+            if(debug) console.log('Home received /api/select/entities:', msg.response);
+            selectEntities = msg.response;
+          }
+          if(msg.error) {
+            console.error('Home received /api/select/entities error:', msg.error);
+          }
+        }
       }
     };
 
     addListener(handleWebSocketMessage);
-    console.log('Home added WebSocket listener');
+    if(debug) console.log('Home added WebSocket listener');
+
     return () => {
       removeListener(handleWebSocketMessage);
-      console.log('Home removed WebSocket listener');
+      if(debug) console.log('Home removed WebSocket listener');
     };
   }, [addListener, removeListener, sendMessage]);
 
   useEffect(() => {
     if(online) {
-      console.log('Home received online');
+      if(debug) console.log('Home received online');
       reloadSettings();
     }
   }, [online]);
@@ -487,7 +500,7 @@ function AddRemovePlugins({ reloadSettings }) {
       <IconButton onClick={handleClickVertical}>
         <MoreVert />
       </IconButton>
-      <Menu id="simple-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => handleCloseMenu('')} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+      <Menu id="simple-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => handleCloseMenu('')}>
         <MenuItem onClick={() => handleCloseMenu('matterbridge-zigbee2mqtt')}>matterbridge-zigbee2mqtt</MenuItem>
         <MenuItem onClick={() => handleCloseMenu('matterbridge-somfy-tahoma')}>matterbridge-somfy-tahoma</MenuItem>
         <MenuItem onClick={() => handleCloseMenu('matterbridge-shelly')}>matterbridge-shelly</MenuItem>
@@ -541,7 +554,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, matterbridgeInfo, plugin
         <div className="MbfWindowBodyColumn">
           {plugin.fabricInformations.map((fabric, index) => (
             <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)', textAlign: 'left', fontSize: '14px' }}>
-                <p className="status-blue" style={{ margin: '0px 10px 10px 10px', fontSize: '14px', padding: 0 }}>Fabric: {fabric.fabricIndex}</p>
+                <p className="status-blue" style={{ margin: '0px 10px 10px 10px', fontSize: '14px', padding: 0, color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)' }}>Fabric: {fabric.fabricIndex}</p>
                 <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
                 {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Label: {fabric.label}</p>}
                 <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Active sessions: {plugin.sessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length}</p>
@@ -559,7 +572,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, matterbridgeInfo, plugin
         </div>
         <QRCodeSVG value={qrText} size={qrWidth} level='M' fgColor={'var(--div-text-color)'} bgColor={'var(--div-bg-color)'} style={{ margin: '20px' }}/>
         <div className="MbfWindowFooter" style={{padding: 0, marginTop: '-5px', height: '30px'}}>
-            <p className="MbfWindowFooterText"  style={{ fontSize: '14px' }}>Manual pairing code: {pairingText}</p>
+            <p className="MbfWindowFooterText"  style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Manual pairing code: {pairingText}</p>
         </div>
       </div>
     );
@@ -572,7 +585,7 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, matterbridgeInfo, plugin
         </div>
         <QRCodeSVG value={qrText} size={qrWidth} level='M' fgColor={'var(--div-text-color)'} bgColor={'var(--div-bg-color)'} style={{ margin: '20px' }}/>
         <div className="MbfWindowFooter" style={{padding: 0, marginTop: '-5px', height: '30px'}}>
-            <p className="MbfWindowFooterText"  style={{ fontSize: '14px' }}>Manual pairing code: {pairingText}</p>
+            <p className="MbfWindowFooterText"  style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Manual pairing code: {pairingText}</p>
         </div>
       </div>
     );
@@ -602,7 +615,7 @@ function DialogConfigPlugin( { config, schema, handleCloseConfig } ) {
           uiSchema={configUiSchema} 
           validator={validator} 
           widgets={{ CheckboxWidget: CheckboxWidget }} 
-          templates={{ ArrayFieldTemplate, ObjectFieldTemplate, DescriptionFieldTemplate, ButtonTemplates: { RemoveButton } }} 
+          templates={{ ArrayFieldTemplate, ObjectFieldTemplate, DescriptionFieldTemplate, FieldErrorTemplate, ErrorListTemplate, ButtonTemplates: { RemoveButton } }} 
           onSubmit={handleSaveChanges} />
       </div>
     </ThemeProvider>  

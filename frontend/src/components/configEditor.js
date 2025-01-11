@@ -13,30 +13,39 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import ThemeProvider from '@mui/material/styles/ThemeProvider';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Tooltip from '@mui/material/Tooltip';
+import TextField from '@mui/material/TextField';
 
 // @mui/icons-material
 import DeleteForever from '@mui/icons-material/DeleteForever';
 import Add from '@mui/icons-material/Add';
 import ListIcon from '@mui/icons-material/List';
-import WifiIcon from '@mui/icons-material/Wifi';
-import BluetoothIcon from '@mui/icons-material/Bluetooth';
+import WifiIcon from '@mui/icons-material/Wifi'; // For selectDevice icon=wifi
+import BluetoothIcon from '@mui/icons-material/Bluetooth'; // For selectDevice icon=ble
+import HubIcon from '@mui/icons-material/Hub';  // For selectDevice icon=hub
+import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
+import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';  // For ErrorListTemplate
+import ViewInArIcon from '@mui/icons-material/ViewInAr'; // For entities icon=component
+import DeviceHubIcon from '@mui/icons-material/DeviceHub'; // For entities icon=matter
 
 // @rjsf
 import { Templates } from '@rjsf/mui';
 
 // Frontend custom components
 import { getCssVariable } from './muiTheme';
-import { selectDevices } from './Home';
+import { selectDevices, selectEntities } from './Home';
+import { debug } from '../App';
 
-const { BaseInputTemplate } = Templates; // To get templates from a theme do this
+const { BaseInputTemplate } = Templates; 
 
 const titleSx = { fontSize: '16px', fontWeight: 'bold', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' };
-const descriptionSx = { fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' };
+const descriptionSx = { fontSize: '12px', fontWeight: 'normal', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' };
 
 export function createConfigTheme(primaryColor) {
   return createTheme({
@@ -100,7 +109,7 @@ export function createConfigTheme(primaryColor) {
           },
           input: {
             color: 'var(--div-text-color)',
-            padding: '8px', 
+            padding: '4px 8px', 
           },
         },
       },
@@ -140,6 +149,21 @@ export function createConfigTheme(primaryColor) {
               color: 'var(--primary-color)', 
             },
           },
+        },
+      },
+      MuiIconButton: {
+        styleOverrides: {
+          root: {
+            padding: '0px',
+            margin: '0px',
+            '&.Mui-disabled': {
+              color: 'var(--main-label-color)',
+            },
+          },
+        },
+        defaultProps: {
+          size: 'small',
+          color: 'primary',
         },
       },
       MuiListItemIcon: {
@@ -192,21 +216,36 @@ export function createConfigTheme(primaryColor) {
 }
 
 export function ArrayFieldTemplate(props) {
-  // console.log('ArrayFieldTemplate: title', title, 'description', schema.description);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const { canAdd, onAddClick, schema, title } = props;
+  if(debug) console.log('ArrayFieldTemplate: title', title, 'description', schema.description, 'items', props.items);
+
+  const [dialogDeviceOpen, setDialogDeviceOpen] = useState(false);
+  const [dialogEntityOpen, setDialogEntityOpen] = useState(false);
+  const [dialogDeviceEntityOpen, setDialogDeviceEntityOpen] = useState(false);
+  const [filter, setFilter] = useState('');
 
   const primaryColor = useMemo(() => getCssVariable('--primary-color', '#009a00'), []);
   const theme = useMemo(() => createConfigTheme(primaryColor), []);
 
-  const { canAdd, onAddClick, schema, title } = props;
-
-  const handleDialogToggle = () => {
-    setDialogOpen(!dialogOpen);
+  const handleFilterChange = (event) => {
+    setFilter(event.target.value);
   };
 
-  const handleSelectValue = (value) => {
+  const handleDialogDeviceToggle = () => {
+    setDialogDeviceOpen(!dialogDeviceOpen);
+  };
+
+  const handleDialogEntityToggle = () => {
+    setDialogEntityOpen(!dialogEntityOpen);
+  };
+
+  const handleDialogDeviceEntityToggle = () => {
+    setDialogDeviceEntityOpen(!dialogDeviceEntityOpen);
+  };
+
+  const handleSelectDeviceValue = (value) => {
     // console.log('ArrayFieldTemplate: handleSelectValue', value);
-    setDialogOpen(false);
+    setDialogDeviceOpen(false);
     // Trigger onAddClick to add the selected new item
     if(schema.selectFrom === 'serial')
       schema.items.default = value.serial;
@@ -214,6 +253,28 @@ export function ArrayFieldTemplate(props) {
       schema.items.default = value.name;
     onAddClick();
   };
+
+  const handleSelectEntityValue = (value) => {
+    // console.log('ArrayFieldTemplate: handleSelectEntityValue', value);
+    setDialogEntityOpen(false);
+    // Trigger onAddClick to add the selected new item
+    if(schema.selectEntityFrom === 'name')
+      schema.items.default = value.name;
+    else if(schema.selectEntityFrom === 'description')
+      schema.items.default = value.description;
+    onAddClick();
+  }
+
+  const handleSelectDeviceEntityValue = (value) => {
+    // console.log('ArrayFieldTemplate: handleSelectEntityValue', value);
+    setDialogDeviceEntityOpen(false);
+    // Trigger onAddClick to add the selected new item
+    if(schema.selectDeviceEntityFrom === 'name')
+      schema.items.default = value.name;
+    else if(schema.selectDeviceEntityFrom === 'description')
+      schema.items.default = value.description;
+    onAddClick();
+  }
 
   return (
     <Box sx={{ padding: '10px', margin: '0px', border: '1px solid grey' }}>
@@ -226,12 +287,26 @@ export function ArrayFieldTemplate(props) {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0px', margin: '0px', marginBottom: '0px' }}>
               {schema.selectFrom && 
                 <Tooltip title="Add a device from the list">
-                  <IconButton onClick={handleDialogToggle} size="small" color="primary">
+                  <IconButton onClick={handleDialogDeviceToggle}>
                     <ListIcon />
                   </IconButton>
                 </Tooltip>
               }
-              <Tooltip title="Add a device">
+              {schema.selectEntityFrom && 
+                <Tooltip title="Add an entity from the list">
+                  <IconButton onClick={handleDialogEntityToggle}>
+                    <ListIcon />
+                  </IconButton>
+                </Tooltip>
+              }
+              {schema.selectDeviceEntityFrom && 
+                <Tooltip title="Add a device entity from the list">
+                  <IconButton onClick={handleDialogDeviceEntityToggle}>
+                    <ListIcon />
+                  </IconButton>
+                </Tooltip>
+              }
+              <Tooltip title="Add a new item">
                 <IconButton onClick={onAddClick} size="small" color="primary">
                   <Add />
                 </IconButton>
@@ -250,8 +325,14 @@ export function ArrayFieldTemplate(props) {
           <Box sx={{ flexGrow: 1 }}>
             {element.children}
           </Box>
+          <IconButton disabled={!element.hasMoveUp} onClick={element.onReorderClick(element.index, element.index-1)}>
+            <KeyboardDoubleArrowUpIcon />
+          </IconButton>
+          <IconButton disabled={!element.hasMoveDown} onClick={element.onReorderClick(element.index, element.index+1)}>
+            <KeyboardDoubleArrowDownIcon />
+          </IconButton>
           <Tooltip title="Remove the device">
-            <IconButton onClick={element.onDropIndexClick(element.index)} size="small" color="primary">
+            <IconButton onClick={element.onDropIndexClick(element.index)}>
               <DeleteForever />
             </IconButton>
           </Tooltip>
@@ -259,7 +340,8 @@ export function ArrayFieldTemplate(props) {
       ))}
 
       <ThemeProvider theme={theme}>
-        <Dialog open={dialogOpen} onClose={handleDialogToggle} PaperProps={{
+        {/* Dialog for selecting a device */}
+        <Dialog open={dialogDeviceOpen} onClose={handleDialogDeviceToggle} PaperProps={{
             sx: {
               maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
               overflow: 'auto',  // Allow scrolling for overflowing content
@@ -267,18 +349,96 @@ export function ArrayFieldTemplate(props) {
           }}>
           <DialogTitle>Select a device</DialogTitle>
           <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+              <Typography variant="subtitle1" sx={{ whiteSpace: 'nowrap' }}>Filter by:</Typography>
+              <TextField
+                fullWidth
+                variant="outlined"
+                value={filter}
+                onChange={handleFilterChange}
+                placeholder="Enter serial or name"
+              />
+            </Box>
             <List dense>
-              {selectDevices.map((value, index) => (
-                <ListItemButton onClick={() => handleSelectValue(value)} key={index}>
+              {selectDevices.filter((v) => v.serial.includes(filter) || v.name.includes(filter)).map((value, index) => (
+                <ListItemButton onClick={() => handleSelectDeviceValue(value)} key={index}>
                   {value.icon==='wifi' && <ListItemIcon><WifiIcon /></ListItemIcon>}
                   {value.icon==='ble' && <ListItemIcon><BluetoothIcon /></ListItemIcon>}
+                  {value.icon==='hub' && <ListItemIcon><HubIcon /></ListItemIcon>}
                   <ListItemText primary={value.serial} secondary={value.name}/>
                 </ListItemButton>
               ))}
             </List>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleDialogToggle}>Close</Button>
+            <Button onClick={handleDialogDeviceToggle}>Close</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Dialog for selecting an entity */}
+        <Dialog open={dialogEntityOpen} onClose={handleDialogEntityToggle} PaperProps={{
+            sx: {
+              maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
+              overflow: 'auto',  // Allow scrolling for overflowing content
+            },
+          }}>
+          <DialogTitle>Select an entity</DialogTitle>
+          <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+              <Typography variant="subtitle1" sx={{ whiteSpace: 'nowrap' }}>Filter by:</Typography>
+              <TextField
+                fullWidth
+                variant="outlined"
+                value={filter}
+                onChange={handleFilterChange}
+                placeholder="Enter name or description"
+              />
+            </Box>
+            <List dense>
+              {selectEntities.filter((v) => v.name.includes(filter) || v.description.includes(filter)).map((value, index) => (
+                <ListItemButton onClick={() => handleSelectEntityValue(value)} key={index}>
+                  {value.icon==='wifi' && <ListItemIcon><WifiIcon /></ListItemIcon>}
+                  {value.icon==='ble' && <ListItemIcon><BluetoothIcon /></ListItemIcon>}
+                  {value.icon==='hub' && <ListItemIcon><HubIcon /></ListItemIcon>}
+                  {value.icon==='component' && <ListItemIcon><ViewInArIcon /></ListItemIcon>}
+                  {value.icon==='matter' && <ListItemIcon><DeviceHubIcon /></ListItemIcon>}
+                  <ListItemText primary={value.name} secondary={value.description}/>
+                </ListItemButton>
+              ))}
+            </List>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDialogEntityToggle}>Close</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Dialog for selecting a device entity */}
+        <Dialog open={dialogDeviceEntityOpen} onClose={handleDialogDeviceEntityToggle} PaperProps={{
+            sx: {
+              maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
+              overflow: 'auto',  // Allow scrolling for overflowing content
+            },
+          }}>
+          <DialogTitle>Select an entity for {title}</DialogTitle>
+          <DialogContent>
+            <List dense>
+              {selectDevices.filter((d) => d.serial === title).map((value, index) => {
+                console.log('ArrayFieldTemplate: handleSelectDeviceEntityValue value:', value, value.entities);
+                return value.entities.map((entity, index) => (
+                  <ListItemButton onClick={() => handleSelectDeviceEntityValue(entity)} key={index}>
+                    {entity.icon==='wifi' && <ListItemIcon><WifiIcon /></ListItemIcon>}
+                    {entity.icon==='ble' && <ListItemIcon><BluetoothIcon /></ListItemIcon>}
+                    {entity.icon==='hub' && <ListItemIcon><HubIcon /></ListItemIcon>}
+                    {entity.icon==='component' && <ListItemIcon><ViewInArIcon /></ListItemIcon>}
+                    {entity.icon==='matter' && <ListItemIcon><DeviceHubIcon /></ListItemIcon>}
+                    <ListItemText primary={entity.name} secondary={entity.description}/>
+                  </ListItemButton>
+                ));
+              })}
+            </List>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDialogDeviceEntityToggle}>Close</Button>
           </DialogActions>
         </Dialog>
       </ThemeProvider>
@@ -288,11 +448,71 @@ export function ArrayFieldTemplate(props) {
 }
 
 export function ObjectFieldTemplate(props) {
-  const { onAddClick, schema, properties, title, description } = props;
+  const { onAddClick, schema, properties, title, description, formData, registry } = props;
+
+  const [dialogDeviceOpen, setDialogDeviceOpen] = useState(false);
+  const [filter, setFilter] = useState('');
+  const [newkey, setNewkey] = useState('');
+
+  const primaryColor = useMemo(() => getCssVariable('--primary-color', '#009a00'), []);
+  const theme = useMemo(() => createConfigTheme(primaryColor), []);
+
+  const handleFilterChange = (event) => {
+    setFilter(event.target.value);
+  };
+
+  const handleDialogDeviceToggle = () => {
+    setDialogDeviceOpen(!dialogDeviceOpen);
+  };
+
+  const handleSelectDeviceValue = (value) => {
+    // console.log('ObjectFieldTemplate: handleSelectValue value:', value);
+    // console.log('ObjectFieldTemplate: handleSelectValue schema before:', schema);
+    setDialogDeviceOpen(false);
+    let newkey = '';
+    if(schema.selectFrom === 'serial')
+      newkey = value.serial;
+    else if(schema.selectFrom === 'name')
+      newkey = value.name;
+    setNewkey(newkey);
+    // console.log('ObjectFieldTemplate: handleSelectValue newkey:', newkey);
+    // schema.properties[newkey] = { description: 'New device', type: 'array', uniqueItems: true, items: { type: 'string' }, selectEntityFrom: "name" };
+    // Trigger onAddClick returned function to add the selected new item
+    const addProperty = onAddClick(schema);
+    addProperty();
+    // console.log('ObjectFieldTemplate: handleSelectValue schema after:', schema);
+    // console.log('ObjectFieldTemplate: handleSelectValue schema after:', properties);
+  };
+
+  const handleAddItem = (event) => {
+    // console.log('ObjectFieldTemplate: handleAddItem schema before:', schema, formData, registry);
+    // console.log('ObjectFieldTemplate: handleSelectValue properties before:', properties);
+    // Trigger onAddClick returned function to add the selected new item
+    const addProperty = onAddClick(schema);
+    addProperty();
+    // console.log('ObjectFieldTemplate: handleAddItem schema after:', schema, formData, registry);
+    // console.log('ObjectFieldTemplate: handleSelectValue properties after:', properties);
+  };
+
   // Check if this is the entire schema or an individual object
   const isRoot = !schema.additionalProperties;
-  console.log('ObjectFieldTemplate: title', title, 'description', description, 'schema', schema, 'isRoot', isRoot);
+  if(debug) console.log('ObjectFieldTemplate: title', title, 'description', description, 'schema', schema, 'isRoot', isRoot);
+  if(debug) console.log('ObjectFieldTemplate: props', props);
+
+  if(!isRoot) console.log('ObjectFieldTemplate: properties', properties);
+  /*
   console.log('ObjectFieldTemplate: properties', properties);
+  properties.forEach((p) => {
+    console.log('ObjectFieldTemplate: ', p.name);
+    if(p.name==='newKey' && newkey!=='') {
+      console.log('ObjectFieldTemplate: changed', p.name, 'to', newkey);
+      p.name = newkey;
+      p.content.key = newkey;
+      p.content.props.name = newkey;
+      setNewkey('');
+    }
+  });
+  */
 
   return (
     <Box sx={{ padding: '10px', margin: '0px', border: isRoot ? 'none' : '1px solid grey' }}>
@@ -306,11 +526,20 @@ export function ObjectFieldTemplate(props) {
       {title && !isRoot && (
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0px', margin: '0px', marginBottom: '0px' }}>
           <Typography sx={titleSx}>{title}</Typography>
-          <Tooltip title="Add an item">
-            <IconButton onClick={onAddClick(schema)} size="small" color="primary">
-              <Add />
-            </IconButton>
-          </Tooltip>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0px', margin: '0px', marginBottom: '0px' }}>
+            {schema.selectFrom && 
+              <Tooltip title="Add a device from the list">
+                <IconButton disabled onClick={handleDialogDeviceToggle}>
+                  <ListIcon />
+                </IconButton>
+              </Tooltip>
+            }
+            <Tooltip title="Add a new item">
+              <IconButton onClick={handleAddItem} size="small" color="primary">
+                <Add />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
       )}
       {/* Description for both */}
@@ -339,6 +568,44 @@ export function ObjectFieldTemplate(props) {
           </Box>
         </Box>
       ))}
+
+      <ThemeProvider theme={theme}>
+        {/* Dialog for selecting a device */}
+        <Dialog open={dialogDeviceOpen} onClose={handleDialogDeviceToggle} PaperProps={{
+            sx: {
+              maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
+              overflow: 'auto',  // Allow scrolling for overflowing content
+            },
+          }}>
+          <DialogTitle>Select a device</DialogTitle>
+          <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+              <Typography variant="subtitle1" sx={{ whiteSpace: 'nowrap' }}>Filter by:</Typography>
+              <TextField
+                fullWidth
+                variant="outlined"
+                value={filter}
+                onChange={handleFilterChange}
+                placeholder="Enter serial or name"
+              />
+            </Box>
+            <List dense>
+              {selectDevices.filter((v) => v.serial.includes(filter) || v.name.includes(filter)).map((value, index) => (
+                <ListItemButton onClick={() => handleSelectDeviceValue(value)} key={index}>
+                  {value.icon==='wifi' && <ListItemIcon><WifiIcon /></ListItemIcon>}
+                  {value.icon==='ble' && <ListItemIcon><BluetoothIcon /></ListItemIcon>}
+                  {value.icon==='hub' && <ListItemIcon><HubIcon /></ListItemIcon>}
+                  <ListItemText primary={value.serial} secondary={value.name}/>
+                </ListItemButton>
+              ))}
+            </List>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDialogDeviceToggle}>Close</Button>
+          </DialogActions>
+        </Dialog>
+      </ThemeProvider>
+
     </Box>
   );
 }
@@ -371,6 +638,39 @@ export function DescriptionFieldTemplate(props) {
     </Box>
   );
 }
+
+export function ErrorListTemplate({ errors }) {
+  return (
+    <Box sx={{ padding: '10px', margin: '10px', border: '1px solid grey' }}>
+      <Typography variant="h6" color="error" gutterBottom>
+        Please fix the following errors:
+      </Typography>
+      <List>
+        {errors.map((error, index) => (
+          <ListItem key={index}>
+            <ListItemIcon>
+              <ErrorOutlineIcon color="error" />
+            </ListItemIcon>
+            <ListItemText primary={error.stack} />
+          </ListItem>
+        ))}
+      </List>
+    </Box>
+  );
+};
+
+export function FieldErrorTemplate({ errors }) {
+  if(!errors) return null;
+  return (
+    <Box sx={{ padding: '0px', margin: '0px', marginTop: '5px' }}>
+      {errors.map((error, index) => (
+        <Typography key={index} color="error" variant="body2" sx={{ marginLeft: 1 }}>
+          {error}
+        </Typography>
+      ))}
+    </Box>
+  );
+};
 
 export function RemoveButton(props) {
   const { ...otherProps } = props;
@@ -407,5 +707,5 @@ export const configUiSchema = {
     "norender": false,
     "submitText": "Save the changes to the config file",
   },
-  'ui:globalOptions': { orderable: false },
+  'ui:globalOptions': { orderable: true },
 };

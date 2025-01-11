@@ -65,7 +65,8 @@ export class MatterbridgePlatform {
   public version = ''; // Will be set by the loadPlugin() method using the package.json value.
   public storage: NodeStorageManager | undefined;
   public context: NodeStorage | undefined;
-  public selectDevice = new Map<string, { serial: string; name: string; icon?: string }>();
+  public selectDevice = new Map<string, { serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }>();
+  public selectEntity = new Map<string, { name: string; description: string; icon?: string }>();
 
   /**
    * Creates an instance of the base MatterbridgePlatform.
@@ -195,6 +196,20 @@ export class MatterbridgePlatform {
    * @param {boolean} [log=true] - Whether to log the validation result.
    * @returns {boolean} - Returns true if the device is allowed, false otherwise.
    */
+  validateDevice(device: string | string[], log = true): boolean {
+    return this.validateDeviceWhiteBlackList(device, log);
+  }
+
+  /**
+   * Validates if a device is allowed based on the whitelist and blacklist configurations.
+   * The blacklist has priority over the whitelist.
+   *
+   * @param {string | string[]} device - The device name(s) to validate.
+   * @param {boolean} [log=true] - Whether to log the validation result.
+   * @returns {boolean} - Returns true if the device is allowed, false otherwise.
+   *
+   * @deprecated This method is deprecated and will be removed in future versions. Use validateDevice instead.
+   */
   validateDeviceWhiteBlackList(device: string | string[], log = true): boolean {
     if (!Array.isArray(device)) device = [device];
 
@@ -237,6 +252,8 @@ export class MatterbridgePlatform {
    * @param {string} entity - The entity to validate.
    * @param {boolean} [log=true] - Whether to log the validation result.
    * @returns {boolean} - Returns true if the entity is allowed, false otherwise.
+   *
+   * @deprecated This method is deprecated and will be removed in future versions. Use validateEntity instead.
    */
   validateEntityBlackList(device: string, entity: string, log = true): boolean {
     if (isValidArray(this.config.entityBlackList, 1) && this.config.entityBlackList.find((e) => e === entity)) {
