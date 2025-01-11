@@ -422,9 +422,10 @@ export function ArrayFieldTemplate(props) {
           <DialogTitle>Select an entity for {title}</DialogTitle>
           <DialogContent>
             <List dense>
-              {selectDevices.filter((d) => d.serial === title).map((value, index) => {
-                console.log('ArrayFieldTemplate: handleSelectDeviceEntityValue value:', value, value.entities);
-                return value.entities.map((entity, index) => (
+              {selectDevices.filter((d) => d.serial === title || d.name === title).map((value, index) => {
+                // console.log('ArrayFieldTemplate: handleSelectDeviceEntityValue value:', value, value.entities);
+                // console.log('ArrayFieldTemplate: handleSelectDeviceEntityValue schema:', schema);
+                return value.entities?.map((entity, index) => (
                   <ListItemButton onClick={() => handleSelectDeviceEntityValue(entity)} key={index}>
                     {entity.icon==='wifi' && <ListItemIcon><WifiIcon /></ListItemIcon>}
                     {entity.icon==='ble' && <ListItemIcon><BluetoothIcon /></ListItemIcon>}
@@ -466,8 +467,6 @@ export function ObjectFieldTemplate(props) {
   };
 
   const handleSelectDeviceValue = (value) => {
-    // console.log('ObjectFieldTemplate: handleSelectValue value:', value);
-    // console.log('ObjectFieldTemplate: handleSelectValue schema before:', schema);
     setDialogDeviceOpen(false);
     let newkey = '';
     if(schema.selectFrom === 'serial')
@@ -475,23 +474,17 @@ export function ObjectFieldTemplate(props) {
     else if(schema.selectFrom === 'name')
       newkey = value.name;
     setNewkey(newkey);
-    // console.log('ObjectFieldTemplate: handleSelectValue newkey:', newkey);
-    // schema.properties[newkey] = { description: 'New device', type: 'array', uniqueItems: true, items: { type: 'string' }, selectEntityFrom: "name" };
+    console.log('ObjectFieldTemplate: handleSelectValue newkey:', newkey);
+
     // Trigger onAddClick returned function to add the selected new item
     const addProperty = onAddClick(schema);
     addProperty();
-    // console.log('ObjectFieldTemplate: handleSelectValue schema after:', schema);
-    // console.log('ObjectFieldTemplate: handleSelectValue schema after:', properties);
   };
 
   const handleAddItem = (event) => {
-    // console.log('ObjectFieldTemplate: handleAddItem schema before:', schema, formData, registry);
-    // console.log('ObjectFieldTemplate: handleSelectValue properties before:', properties);
     // Trigger onAddClick returned function to add the selected new item
     const addProperty = onAddClick(schema);
     addProperty();
-    // console.log('ObjectFieldTemplate: handleAddItem schema after:', schema, formData, registry);
-    // console.log('ObjectFieldTemplate: handleSelectValue properties after:', properties);
   };
 
   // Check if this is the entire schema or an individual object
@@ -499,20 +492,16 @@ export function ObjectFieldTemplate(props) {
   if(debug) console.log('ObjectFieldTemplate: title', title, 'description', description, 'schema', schema, 'isRoot', isRoot);
   if(debug) console.log('ObjectFieldTemplate: props', props);
 
-  if(!isRoot) console.log('ObjectFieldTemplate: properties', properties);
-  /*
-  console.log('ObjectFieldTemplate: properties', properties);
-  properties.forEach((p) => {
-    console.log('ObjectFieldTemplate: ', p.name);
-    if(p.name==='newKey' && newkey!=='') {
-      console.log('ObjectFieldTemplate: changed', p.name, 'to', newkey);
-      p.name = newkey;
-      p.content.key = newkey;
-      p.content.props.name = newkey;
-      setNewkey('');
-    }
-  });
-  */
+  if(!isRoot && newkey !== '') {
+    console.log('ObjectFieldTemplate: newkey', newkey, 'properties', properties);
+    properties.forEach((p) => {
+      if(p.name==='newKey' && p.content.key==='newKey' && p.content.props.name==='newKey' && p.content.props.onKeyChange && newkey!=='') {
+        const newName = newkey;
+        setNewkey(''); // No enter again...
+        p.content.props.onKeyChange(newName);
+      }
+    });
+  }
 
   return (
     <Box sx={{ padding: '10px', margin: '0px', border: isRoot ? 'none' : '1px solid grey' }}>
@@ -529,7 +518,7 @@ export function ObjectFieldTemplate(props) {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0px', margin: '0px', marginBottom: '0px' }}>
             {schema.selectFrom && 
               <Tooltip title="Add a device from the list">
-                <IconButton disabled onClick={handleDialogDeviceToggle}>
+                <IconButton onClick={handleDialogDeviceToggle}>
                   <ListIcon />
                 </IconButton>
               </Tooltip>

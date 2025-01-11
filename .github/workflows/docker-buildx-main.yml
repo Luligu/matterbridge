@@ -1,4 +1,4 @@
-name: Build main and Push Docker image to Docker Hub with buildx
+name: Build Docker Image latest with buildx
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
 
     - uses: actions/setup-node@v4
       with:
-        node-version: '20.x'
+        node-version: '22.x'
 
     - name: Log in to Docker Hub
       uses: docker/login-action@v3
