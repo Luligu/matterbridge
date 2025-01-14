@@ -25,6 +25,7 @@ function Test() {
   useEffect(() => {
     if(debug) console.log('Test useEffect WebSocketMessage mounting');
     const handleWebSocketMessage = (msg) => {
+      /* Test page WebSocketMessage listener */
       if(debug) console.log('Test received WebSocketMessage:', msg.response);
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'refresh_required') {
@@ -60,6 +61,7 @@ function Test() {
     if(debug) console.log('Test useEffect WebSocketMessage mounted');
 
     return () => {
+      if(debug) console.log('Test useEffect WebSocketMessage unmounting');
       removeListener(handleWebSocketMessage);
       if(debug) console.log('Test useEffect WebSocketMessage unmounted');
     };
