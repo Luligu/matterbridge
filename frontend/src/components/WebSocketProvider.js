@@ -39,7 +39,7 @@ export function WebSocketProvider({ children }) {
   // Constants
   const maxMessages = 1000;
   const maxRetries = 100;
-  const pingIntervalSeconds = 10;
+  const pingIntervalSeconds = 30;
   const offlineTimeoutSeconds = 5;
 
   useEffect(() => {
@@ -95,8 +95,8 @@ export function WebSocketProvider({ children }) {
       Direct http: WebSocketUse: window.location.host=localhost:8283 window.location.href=http://localhost:8283/ wssHost=ws://localhost:8283
       Direct https: WebSocketUse: window.location.host=localhost:8443 window.location.href=https://localhost:8443/ wssHost=wss://localhost:8443
       Ingress: WebSocketUse window.location.host: homeassistant.local:8123 window.location.href: http://homeassistant.local:8123/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/ Connecting to WebSocket: ws://homeassistant.local:8123/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/
+      console.log(`WebSocketUse: window.location.host=${window.location.host} window.location.protocol=${window.location.protocol} window.location.href=${window.location.href} wssHost=${wssHost}`);
       */
-      // console.log(`WebSocketUse: window.location.host=${window.location.host} window.location.protocol=${window.location.protocol} window.location.href=${window.location.href} wssHost=${wssHost}`);
       logMessage('WebSocket', `Connecting to WebSocket: ${wssHost}`);
       wsRef.current = new WebSocket(wssHost);
 
@@ -120,7 +120,7 @@ export function WebSocketProvider({ children }) {
             listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
             return;
           } else if(msg.id===uniqueIdRef.current && msg.src === 'Matterbridge' && msg.dst === 'Frontend' && msg.response === 'pong') {
-            // console.log(`WebSocket Pong message:`, msg, 'listeners:', listenersRef.current.length);
+            if(debug) console.log(`WebSocket pong response message:`, msg, 'listeners:', listenersRef.current.length);
             clearTimeout(offlineTimeoutRef.current);
             listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
             return;
@@ -224,12 +224,6 @@ export function WebSocketProvider({ children }) {
       };
   }, [wssHost]);
 
-  /*
-          if( retryCountRef.current === 1 ) attemptReconnect();
-          else if( retryCountRef.current < maxRetries ) setTimeout(attemptReconnect, 1000 * retryCountRef.current);
-          else logMessage('WebSocket', `Reconnect attempts exceeded limit of ${maxRetries} retries, refresh the page to reconnect to: ${wssHost}`);
-
-  */
   const attemptReconnect = useCallback(() => {
       if(debug) console.log(`WebSocket attemptReconnect ${retryCountRef.current}/${maxRetries} to:`, wssHost);
       connectWebSocket();
@@ -244,8 +238,21 @@ export function WebSocketProvider({ children }) {
       };
   }, [connectWebSocket]);
     
+  const contextValue = useMemo(() => ({
+    messages,
+    setMessages,
+    sendMessage,
+    logMessage,
+    setLogFilters,
+    online,
+    refresh,
+    restart,
+    addListener,
+    removeListener
+  }), [messages, sendMessage, logMessage, setLogFilters, online, refresh, restart, addListener, removeListener]);
+
   return (
-    <WebSocketContext.Provider value={{ messages, setMessages, sendMessage, logMessage, setLogFilters, online, refresh, restart, addListener, removeListener }}>
+    <WebSocketContext.Provider value={contextValue}>
       {children}
     </WebSocketContext.Provider>
   );

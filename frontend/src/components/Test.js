@@ -20,9 +20,12 @@ function Test() {
   const [settings, setSettings] = useState({});
   const [plugins, setPlugins] = useState([]);
   const [devices, setDevices] = useState([]);
+  const [clusters, setClusters] = useState([]);
 
   useEffect(() => {
+    if(debug) console.log('Test useEffect WebSocketMessage mounting');
     const handleWebSocketMessage = (msg) => {
+      if(debug) console.log('Test received WebSocketMessage:', msg.response);
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'refresh_required') {
           if(debug) console.log('Test received refresh_required and sending api requests');
@@ -42,19 +45,23 @@ function Test() {
           if(debug) console.log(`Test received ${msg.response.length} devices:`, msg.response);
           setDevices(msg.response);
           for(let device of msg.response) {
-            if(debug) console.log('Test sending /api/clusters');
+            if(debug) console.log('Test sending /api/clusters for device:', device.name);
             sendMessage({ method: "/api/clusters", src: "Frontend", dst: "Matterbridge", params: { plugin: device.pluginName, endpoint: device.endpoint } });
           }
+        }
+        if (msg.method === '/api/clusters') {
+          if(debug) console.log(`Test received ${msg.response.length} clusters:`, msg.response);
+          setClusters(msg.response);
         }
       }
     };
 
     addListener(handleWebSocketMessage);
-    if(debug) console.log('Test useEffect webSocket mounted');
+    if(debug) console.log('Test useEffect WebSocketMessage mounted');
 
     return () => {
       removeListener(handleWebSocketMessage);
-      if(debug) console.log('Test useEffect webSocket unmounted');
+      if(debug) console.log('Test useEffect WebSocketMessage unmounted');
     };
   }, [addListener, removeListener, sendMessage]);
   
@@ -73,14 +80,14 @@ function Test() {
     };
   }, [online, sendMessage]);
   
+  if(debug) console.log('Test rendering...');
   if (!online) {
     return ( <Connecting /> );
   }
   return (
-    <div className="MbfPageDiv">
-
-      <p>Test</p>
-
+    <div className="MbfPageDiv" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
+      <p>Welcome to the Test page of Matterbridge frontend</p>
     </div>
   );
 }

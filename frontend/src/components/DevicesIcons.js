@@ -69,7 +69,7 @@ const switchDeviceTypes = [0x0103, 0x0104, 0x0105];
 const onOffDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010a, 0x010b, 0x0103, 0x0104, 0x0105];
 
 function Render({ icon, iconColor, cluster, value, unit }) {
-  console.log(`Render cluster "${cluster.clusterName}.${cluster.attributeName}" value(${typeof(value)}-${isNaN(value)}) "${value}" unit "${unit}"`);
+  if(debug) console.log(`Render cluster "${cluster.clusterName}.${cluster.attributeName}" value(${typeof(value)}-${isNaN(value)}) "${value}" unit "${unit}"`);
 
   return (
     <Box key={`${cluster.clusterId}-${cluster.attributeId}-box`} sx={valueBoxSx}>
@@ -91,10 +91,10 @@ function Render({ icon, iconColor, cluster, value, unit }) {
 };
 
 function Device({ device, endpoint, id, deviceType, clusters }) {
-  const airQualityLookup = ['Unknown', 'Good', 'Fair', 'Moderate', 'Poor', 'VeryPoor', 'ExtremelyPoor'];
+  const airQualityLookup = ['Unknown', 'Good', 'Fair', 'Moderate', 'Poor', 'VeryPoor', 'Ext.Poor'];
   let details = '';
 
-  console.log(`Device "${device.name}" endpoint "${endpoint}" id "${id}" deviceType "0x${deviceType.toString(16).padStart(4, '0')}" clusters (${clusters?.length}):`, clusters);
+  if(debug) console.log(`Device "${device.name}" endpoint "${endpoint}" id "${id}" deviceType "0x${deviceType.toString(16).padStart(4, '0')}" clusters (${clusters?.length}):`, clusters);
 
   // LevelControl
   onOffDeviceTypes.includes(deviceType) && clusters.filter(cluster => cluster.clusterName === 'LevelControl' && cluster.attributeName === 'currentLevel').map(cluster => details = `Level ${cluster.attributeValue}`);
@@ -242,6 +242,10 @@ export function DevicesIcons({filter}) {
   const [clusters, setClusters] = useState({}); // { serial: [ { endpoint, id, clusterName, clusterId, attributeName, attributeId, attributeValue } ] }
   const [filteredDevices, setFilteredDevices] = useState(devices);
 
+  const handleDialogToggle = () => {
+    setDialogOpen(!dialogOpen);
+  };
+
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
@@ -298,7 +302,7 @@ export function DevicesIcons({filter}) {
       removeListener(handleWebSocketMessage);
       if(debug) console.log('DevicesIcons useEffect webSocket unmounted');
     };
-  }, []);
+  }, [addListener, removeListener, sendMessage]);
   
   useEffect(() => {
     if(debug) console.log('DevicesIcons useEffect online mounting');
@@ -315,10 +319,6 @@ export function DevicesIcons({filter}) {
     };
   }, [online, sendMessage]);
   
-  const handleDialogToggle = () => {
-    setDialogOpen(!dialogOpen);
-  };
-
   useEffect(() => {
     if(filter === '') {
       setFilteredDevices(devices);
@@ -328,8 +328,8 @@ export function DevicesIcons({filter}) {
     setFilteredDevices(filteredDevices);
   }, [devices, filter]);
   
+  if(debug) console.log('DevicesIcons rendering...');
   return (
-
     <>
       <Dialog open={dialogOpen} onClose={handleDialogToggle}
         PaperProps={{
