@@ -23,8 +23,8 @@
 
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
 import { isValidArray, isValidObject, isValidString } from './utils/utils.js';
 
 // AnsiLogger module
@@ -38,7 +38,6 @@ import { AtLeastOne, EndpointNumber } from '@matter/main';
 
 // @project-chip
 import { DeviceTypeDefinition } from '@project-chip/matter.js/device';
-import { MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
 
 // Node.js module
 import path from 'path';
@@ -134,29 +133,26 @@ export class MatterbridgePlatform {
 
   /**
    * Registers a device with the Matterbridge platform.
-   * @param {MatterbridgeDevice} device - The device to register.
+   * @param {MatterbridgeEndpoint} device - The device to register.
    */
-  async registerDevice(device: MatterbridgeDevice | MatterbridgeEndpoint) {
+  async registerDevice(device: MatterbridgeEndpoint) {
     device.plugin = this.name;
-    if (device instanceof MatterbridgeDevice) await this.matterbridge.addBridgedDevice(this.name, device);
-    if (device instanceof MatterbridgeEndpoint) await this.matterbridge.addBridgedEndpoint(this.name, device);
+    await this.matterbridge.addBridgedEndpoint(this.name, device);
   }
 
   /**
    * Unregisters a device registered with the Matterbridge platform.
-   * @param {MatterbridgeDevice} device - The device to unregister.
+   * @param {MatterbridgeEndpoint} device - The device to unregister.
    */
-  async unregisterDevice(device: MatterbridgeDevice | MatterbridgeEndpoint) {
-    if (device instanceof MatterbridgeDevice) await this.matterbridge.removeBridgedDevice(this.name, device);
-    if (device instanceof MatterbridgeEndpoint) await this.matterbridge.removeBridgedEndpoint(this.name, device);
+  async unregisterDevice(device: MatterbridgeEndpoint) {
+    await this.matterbridge.removeBridgedEndpoint(this.name, device);
   }
 
   /**
    * Unregisters all devices registered with the Matterbridge platform.
    */
   async unregisterAllDevices() {
-    if (this.matterbridge.edge) await this.matterbridge.removeAllBridgedEndpoints(this.name);
-    else await this.matterbridge.removeAllBridgedDevices(this.name);
+    await this.matterbridge.removeAllBridgedEndpoints(this.name);
   }
 
   /**
@@ -300,8 +296,8 @@ export class MatterbridgePlatform {
         this.log.debug(`Setting endpoint number for device ${CYAN}${device.uniqueId}${db} to ${CYAN}${device.maybeNumber}${db}`);
         endpointMap.set(device.uniqueId, device.maybeNumber);
       }
-      for (const child of device.getChildEndpoints() as MatterbridgeDevice[] | MatterbridgeEndpoint[]) {
-        const childId = child instanceof MatterbridgeEndpoint ? child.id : child.uniqueStorageKey;
+      for (const child of device.getChildEndpoints() as MatterbridgeEndpoint[]) {
+        const childId = child.id;
         if (!childId || !child.maybeNumber) continue;
         if (endpointMap.has(device.uniqueId + separator + childId) && endpointMap.get(device.uniqueId + separator + childId) !== child.maybeNumber) {
           this.log.warn(`Child endpoint number for device ${CYAN}${device.uniqueId}${wr}.${CYAN}${childId}${wr} changed from ${CYAN}${endpointMap.get(device.uniqueId + separator + childId)}${wr} to ${CYAN}${child.maybeNumber}${wr}`);
@@ -319,11 +315,7 @@ export class MatterbridgePlatform {
   }
 
   // Temporary method to create a MatterbridgeDevice before switching to the edge
-  async _createMutableDevice(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false): Promise<MatterbridgeDevice> {
-    let device: MatterbridgeDevice;
-    if (this.matterbridge.edge === true) {
-      device = new MatterbridgeEndpoint(definition, options, debug) as unknown as MatterbridgeDevice;
-    } else device = new MatterbridgeDevice(definition, undefined, debug);
-    return device;
+  async _createMutableDevice(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false): Promise<MatterbridgeEndpoint> {
+    return new MatterbridgeEndpoint(definition, options, debug);
   }
 }

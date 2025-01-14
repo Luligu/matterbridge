@@ -748,13 +748,8 @@ export class PluginManager {
       plugin.connected = undefined;
       plugin.platform = undefined;
       if (removeAllDevices) {
-        if (this.matterbridge.edge) {
-          this.log.info(`Removing all endpoints for plugin ${plg}${plugin.name}${nf}: ${reason}...`);
-          await this.matterbridge.removeAllBridgedEndpoints(plugin.name);
-        } else {
-          this.log.info(`Removing all devices for plugin ${plg}${plugin.name}${nf}: ${reason}...`);
-          await this.matterbridge.removeAllBridgedDevices(plugin.name);
-        }
+        this.log.info(`Removing all endpoints for plugin ${plg}${plugin.name}${nf}: ${reason}...`);
+        await this.matterbridge.removeAllBridgedEndpoints(plugin.name);
       }
       plugin.registeredDevices = undefined;
       plugin.addedDevices = undefined;

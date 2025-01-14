@@ -8,11 +8,9 @@ import { AnsiLogger, db, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-
 import { Matterbridge } from './matterbridge.js';
 import { wait, waiter } from './utils/utils.js';
 import WebSocket from 'ws';
-import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { Identify } from '@matter/main/clusters';
-import { RegisteredPlugin } from './matterbridgeTypes.js';
-import plugin from 'eslint-plugin-jest';
+import { RegisteredPlugin, MatterbridgeDevice } from './matterbridgeTypes.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -189,7 +187,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     device.createDefaultBridgedDeviceBasicInformationClusterServer('Switch 1', 'SerialSwitch1', 1, 'VendorName', 'ProductName');
     device.addChildDeviceTypeWithClusterServer('Temperature:0', [temperatureSensor]);
     device.plugin = 'matterbridge-mock1';
-    await matterbridge.addBridgedDevice('matterbridge-mock1', device);
+    await matterbridge.addBridgedEndpoint('matterbridge-mock1', device);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Adding bridged device/));
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Added and registered bridged device/));
   }, 60000);
@@ -202,7 +200,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     device.createDefaultOnOffClusterServer(false);
     device.createDefaultBridgedDeviceBasicInformationClusterServer('Light 1', 'SerialLight1', 1, 'VendorName', 'ProductName');
     device.plugin = 'matterbridge-mock2';
-    await matterbridge.addBridgedDevice('matterbridge-mock2', device);
+    await matterbridge.addBridgedEndpoint('matterbridge-mock2', device);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Adding bridged device/));
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Added and registered bridged device/));
   }, 60000);
@@ -215,7 +213,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     device.createDefaultOnOffClusterServer(false);
     device.createDefaultBridgedDeviceBasicInformationClusterServer('Outlet 1', 'SerialOutlet1', 1, 'VendorName', 'ProductName');
     device.plugin = 'matterbridge-mock3';
-    await matterbridge.addBridgedDevice('matterbridge-mock3', device);
+    await matterbridge.addBridgedEndpoint('matterbridge-mock3', device);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Adding bridged device/));
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Added and registered bridged device/));
   }, 60000);

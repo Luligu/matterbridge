@@ -41,6 +41,7 @@ import {
   MatterbridgeLevelControlServer,
   MatterbridgeOnOffServer,
   MatterbridgeThermostatServer,
+  MatterbridgeValveConfigurationAndControlServer,
   MatterbridgeWindowCoveringServer,
 } from './matterbridgeBehaviors.js';
 import { bridgedNode, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
@@ -180,10 +181,11 @@ import {
   ValveConfigurationAndControlServer,
 } from '@matter/main/behaviors';
 
+// import { ClusterServer, ClusterClient } from '@matter/main/protocol';
+
 // @project-chip
-import { DeviceTypeDefinition, EndpointOptions } from '@project-chip/matter.js/device';
-import { ClusterClientObj, ClusterServer, ClusterServerHandlers, ClusterServerObj, GroupsClusterHandler } from '@project-chip/matter.js/cluster';
-import { SerializedMatterbridgeDevice } from './matterbridgeDevice.js';
+import { DeviceTypeDefinition } from '@project-chip/matter.js/device';
+import { ClusterServer, ClusterServerHandlers, ClusterServerObj, GroupsClusterHandler, ClusterClientObj } from '@project-chip/matter.js/cluster';
 
 export interface MatterbridgeEndpointCommands {
   identify: MakeMandatory<ClusterServerHandlers<typeof Identify.Complete>['identify']>;
@@ -241,6 +243,21 @@ export interface MatterbridgeEndpointCommands {
   resumeRequest: MakeMandatory<ClusterServerHandlers<typeof DeviceEnergyManagement.Complete>['resumeRequest']>;
 }
 
+export interface SerializedMatterbridgeEndpoint {
+  pluginName: string;
+  deviceName: string;
+  serialNumber: string;
+  uniqueId: string;
+  productId?: number;
+  productName?: string;
+  vendorId?: number;
+  vendorName?: string;
+  deviceTypes: AtLeastOne<DeviceTypeDefinition>;
+  endpoint: EndpointNumber | undefined;
+  endpointName: string;
+  clusterServersId: ClusterId[];
+}
+
 export class MatterbridgeEndpoint extends Endpoint {
   public static bridgeMode = '';
   public static logLevel = LogLevel.INFO;
@@ -278,6 +295,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @constructor
    * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the endpoint.
    * @param {MatterbridgeEndpointOptions} [options={}] - The options for the device.
+   * @param {boolean} [debug=false] - Debug flag.
    */
   constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false) {
     let deviceTypeList: { deviceType: number; revision: number }[] = [];
@@ -349,12 +367,14 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Loads an instance of the MatterbridgeDevice class.
+   * Loads an instance of the MatterbridgeEndpoint class.
    *
    * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the device.
-   * @returns MatterbridgeDevice instance.
+   * @param {MatterbridgeEndpointOptions} [options={}] - The options for the device.
+   * @param {boolean} [debug=false] - Debug flag.
+   * @returns {Promise<MatterbridgeEndpoint>} MatterbridgeEndpoint instance.
    */
-  static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: EndpointOptions = {}, debug = false) {
+  static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false) {
     return new MatterbridgeEndpoint(definition, options, debug);
   }
 
@@ -416,7 +436,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === IlluminanceMeasurement.Cluster.id) return IlluminanceMeasurementServer;
     if (clusterId === SmokeCoAlarm.Cluster.id) return SmokeCoAlarmServer.with('SmokeAlarm', 'CoAlarm');
 
-    if (clusterId === ValveConfigurationAndControl.Cluster.id) return ValveConfigurationAndControlServer.with('Level');
+    if (clusterId === ValveConfigurationAndControl.Cluster.id) return MatterbridgeValveConfigurationAndControlServer.with('Level');
 
     if (clusterId === AirQuality.Cluster.id) return AirQualityServer.with('Fair', 'Moderate', 'VeryPoor', 'ExtremelyPoor');
     if (clusterId === CarbonMonoxideConcentrationMeasurement.Cluster.id) return CarbonMonoxideConcentrationMeasurementServer.with('NumericMeasurement');
@@ -458,6 +478,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * If the device type is not already present in the list, it will be added.
    *
    * @param {DeviceTypeDefinition} deviceType - The device type to add.
+   *
+   * @deprecated This method is deprecated and will be removed in future versions. Use the constructor options instead.
    */
   addDeviceType(deviceType: DeviceTypeDefinition) {
     if (!this.deviceTypes.has(deviceType.code)) {
@@ -487,6 +509,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
    * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
+   *
+   * @deprecated This method is deprecated and will be removed in future versions. Use the constructor options instead.
    */
   addDeviceTypeWithClusterServer(deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[]) {
     this.log.debug('addDeviceTypeWithClusterServer:');
@@ -559,7 +583,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * If the child endpoint is already present, the device types will be added to the existing child endpoint.
    *
    * @param {string} endpointName - The name of the new endpoint to add.
-   * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
+   * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The device types to add.
    * @param {MatterbridgeEndpointOptions} [options={}] - The options for the endpoint.
    * @param {boolean} [debug=false] - Whether to enable debug logging.
    * @returns {MatterbridgeEndpoint} - The child endpoint that was found or added.
@@ -569,7 +593,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * const endpoint = device.addChildDeviceType('Temperature', [temperatureSensor], { tagList: [{ mfgCode: null, namespaceId: LocationTag.Indoor.namespaceId, tag: LocationTag.Indoor.tag, label: null }] }, true);
    * ```
    */
-  addChildDeviceType(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeEndpoint {
+  addChildDeviceType(endpointName: string, definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeEndpoint {
     this.log.debug(`addChildDeviceType: ${CYAN}${endpointName}${db}`);
     let child = this.getChildEndpointByName(endpointName);
     if (!child) {
@@ -577,17 +601,18 @@ export class MatterbridgeEndpoint extends Endpoint {
         for (const tag of options.tagList as Semtag[]) {
           this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
         }
-        child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName, tagList: options.tagList }, debug);
+        child = new MatterbridgeEndpoint(definition, { uniqueStorageKey: endpointName, tagList: options.tagList }, debug);
       } else {
-        child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName }, debug);
+        child = new MatterbridgeEndpoint(definition, { uniqueStorageKey: endpointName }, debug);
       }
     }
-    deviceTypes.forEach((deviceType) => {
-      this.log.debug(`- with deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
-    });
-    deviceTypes.forEach((deviceType) => {
-      child.addDeviceType(deviceType);
-    });
+    if (Array.isArray(definition)) {
+      definition.forEach((deviceType) => {
+        this.log.debug(`- with deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
+      });
+    } else {
+      this.log.debug(`- with deviceType: ${zb}${'0x' + definition.code.toString(16).padStart(4, '0')}${db}-${zb}${definition.name}${db}`);
+    }
     if (this.lifecycle.isInstalled) {
       this.log.debug(`- with lifecycle installed`);
       this.add(child);
@@ -604,7 +629,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * If the child endpoint is already present in the childEndpoints, the device types and cluster servers will be added to the existing child endpoint.
    *
    * @param {string} endpointName - The name of the new enpoint to add.
-   * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to add.
+   * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The device types to add.
    * @param {ClusterId[]} [includeServerList=[]] - The list of cluster IDs to include.
    * @param {MatterbridgeEndpointOptions} [options={}] - The options for the device.
    * @param {boolean} [debug=false] - Whether to enable debug logging.
@@ -615,7 +640,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * const endpoint = device.addChildDeviceTypeWithClusterServer('Temperature', [temperatureSensor], [], { tagList: [{ mfgCode: null, namespaceId: LocationTag.Indoor.namespaceId, tag: LocationTag.Indoor.tag, label: null }] }, true);
    * ```
    */
-  addChildDeviceTypeWithClusterServer(endpointName: string, deviceTypes: AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeEndpoint {
+  addChildDeviceTypeWithClusterServer(endpointName: string, definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, includeServerList: ClusterId[] = [], options: MatterbridgeEndpointOptions = {}, debug = false): MatterbridgeEndpoint {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
     let child = this.getChildEndpointByName(endpointName);
     if (!child) {
@@ -623,26 +648,30 @@ export class MatterbridgeEndpoint extends Endpoint {
         for (const tag of options.tagList as Semtag[]) {
           this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
         }
-        child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName, tagList: options.tagList }, debug);
+        child = new MatterbridgeEndpoint(definition, { uniqueStorageKey: endpointName, tagList: options.tagList }, debug);
       } else {
-        child = new MatterbridgeEndpoint(deviceTypes[0], { uniqueStorageKey: endpointName }, debug);
+        child = new MatterbridgeEndpoint(definition, { uniqueStorageKey: endpointName }, debug);
       }
     }
-    deviceTypes.forEach((deviceType) => {
-      this.log.debug(`- with deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
-      deviceType.requiredServerClusters.forEach((clusterId) => {
+    if (Array.isArray(definition)) {
+      definition.forEach((deviceType) => {
+        this.log.debug(`- with deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
+        deviceType.requiredServerClusters.forEach((clusterId) => {
+          if (!includeServerList.includes(clusterId)) includeServerList.push(clusterId);
+        });
+      });
+    } else {
+      this.log.debug(`- with deviceType: ${zb}${'0x' + definition.code.toString(16).padStart(4, '0')}${db}-${zb}${definition.name}${db}`);
+      definition.requiredServerClusters.forEach((clusterId) => {
         if (!includeServerList.includes(clusterId)) includeServerList.push(clusterId);
       });
-    });
+    }
     includeServerList.forEach((clusterId) => {
       if (!child.getClusterServerById(clusterId)) {
         this.log.debug(`- with cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
       } else {
         includeServerList.splice(includeServerList.indexOf(clusterId), 1);
       }
-    });
-    deviceTypes.forEach((deviceType) => {
-      child.addDeviceType(deviceType);
     });
     this.addClusterServerFromList(child, includeServerList);
     if (this.lifecycle.isInstalled) {
@@ -669,14 +698,21 @@ export class MatterbridgeEndpoint extends Endpoint {
     return this.parts.find((part) => part.number === endpointNumber) as MatterbridgeEndpoint | undefined;
   }
 
-  getChildEndpoints(): Endpoint[] {
-    return Array.from(this.parts);
+  getChildEndpoints(): MatterbridgeEndpoint[] {
+    return Array.from(this.parts) as MatterbridgeEndpoint[];
   }
 
   getDeviceTypes(): DeviceTypeDefinition[] {
     return Array.from(this.deviceTypes.values());
   }
 
+  /**
+   * Sets the device types.
+   *
+   * @param {AtLeastOne<DeviceTypeDefinition>} deviceTypes - The device types to set.
+   *
+   * @deprecated This method is deprecated and will be removed in future versions.
+   */
   setDeviceTypes(deviceTypes: AtLeastOne<DeviceTypeDefinition>): void {
     deviceTypes.forEach((deviceType) => {
       this.addDeviceType(deviceType);
@@ -707,6 +743,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     return this.clusterServers.get(clusterId);
   }
 
+  /**
+   * Add a tagList.
+   *
+   * @deprecated This method is deprecated and will be removed in future versions. Use the constructor options instead.
+   */
   addTagList(endpoint: Endpoint, mfgCode: VendorId | null, namespaceId: number, tag: number, label?: string | null) {
     // Do nothing here only for old api compatibility
   }
@@ -1034,7 +1075,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param pluginName - The name of the plugin.
    * @returns The serialized Matterbridge device object.
    */
-  serialize(): SerializedMatterbridgeDevice | undefined {
+  serialize(): SerializedMatterbridgeEndpoint | undefined {
     return undefined;
     /*
     if (!this.serialNumber || !this.deviceName || !this.uniqueId) return;
@@ -1065,7 +1106,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @returns The deserialized MatterbridgeDevice.
    */
-  static deserialize(serializedDevice: SerializedMatterbridgeDevice): MatterbridgeEndpoint | undefined {
+  static deserialize(serializedDevice: SerializedMatterbridgeEndpoint): MatterbridgeEndpoint | undefined {
     return undefined;
     /*
     const device = new MatterbridgeDevice(serializedDevice.deviceTypes);

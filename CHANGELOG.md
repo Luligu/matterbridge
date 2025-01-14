@@ -20,6 +20,21 @@ Matterbridge edge is now released. The default mode is still the normal mode to 
 The frontend has a new dark and light mode. The dark mode is now the default mode.
 It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbridge settings.
 
+## [2.0.0] - 2025-01-19
+
+### Added
+
+- [behavior]: Added MatterbridgeValveConfigurationAndControlServer behavior.
+
+### Changed
+
+- [factoryreset]: Now it deletes also the backup file and directory.
+- [frontend]: Frontend v.2.3.12
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [1.7.3] - 2025-01-11
 
 ### Added

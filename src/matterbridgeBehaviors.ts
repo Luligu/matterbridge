@@ -40,8 +40,9 @@ import {
   WindowCoveringBehavior,
   MovementType,
   MovementDirection,
+  ValveConfigurationAndControlServer,
 } from '@matter/main/behaviors';
-import { BooleanStateConfiguration, ColorControl, FanControl, Identify, LevelControl, Thermostat, WindowCovering } from '@matter/main/clusters';
+import { BooleanStateConfiguration, ColorControl, FanControl, Identify, LevelControl, Thermostat, ValveConfigurationAndControl, WindowCovering } from '@matter/main/clusters';
 import { TypeFromPartialBitSchema } from '@matter/main/types';
 import { OnOffServer } from '@matter/node/behaviors/on-off';
 
@@ -163,6 +164,15 @@ export class MatterbridgeBehaviorDevice {
   setpointRaiseLower({ mode, amount }: Thermostat.SetpointRaiseLowerRequest) {
     this.log.info(`Setting setpoint to ${amount} in mode ${mode} (endpoint ${this.endpointId}.${this.endpointNumber})`);
     this.commandHandler.executeHandler('setpointRaiseLower', { request: { mode, amount }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  open({ openDuration, targetLevel }: ValveConfigurationAndControl.OpenRequest) {
+    this.log.info(`Opening valve (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.commandHandler.executeHandler('open', { request: { openDuration, targetLevel }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+  close() {
+    this.log.info(`Closing valve (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.commandHandler.executeHandler('close', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
 
   enableDisableAlarm({ alarmsToEnableDisable }: BooleanStateConfiguration.EnableDisableAlarmRequest) {
@@ -348,6 +358,19 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
     }
 
     super.setpointRaiseLower({ mode, amount });
+  }
+}
+
+export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigurationAndControlServer.with(ValveConfigurationAndControl.Feature.Level) {
+  override async open({ openDuration, targetLevel }: ValveConfigurationAndControl.OpenRequest) {
+    const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
+    device.open({ openDuration, targetLevel });
+    super.open({ openDuration, targetLevel });
+  }
+  override async close() {
+    const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
+    device.close();
+    super.close();
   }
 }
 
