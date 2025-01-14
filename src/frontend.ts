@@ -23,7 +23,6 @@
 
 // @matter
 import { EndpointServer, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat } from '@matter/main';
-import { BasicInformationCluster, BridgedDeviceBasicInformationCluster, FixedLabelCluster, UserLabelCluster } from '@matter/main/clusters';
 
 // Node modules
 import { Server as HttpServer, createServer, IncomingMessage } from 'http';
@@ -314,26 +313,18 @@ export class Frontend {
       this.log.debug('The frontend sent /api/devices');
       const devices: ApiDevices[] = [];
       this.matterbridge.devices.forEach(async (device) => {
-        const pluginName = device.plugin ?? 'Unknown';
-        const endpointServer = EndpointServer.forEndpoint(device);
-        let name = endpointServer.getClusterServer(BasicInformationCluster)?.attributes.nodeLabel?.getLocal();
-        if (!name) name = endpointServer.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.nodeLabel?.getLocal() ?? 'Unknown';
-        let serial = endpointServer.getClusterServer(BasicInformationCluster)?.attributes.serialNumber?.getLocal();
-        if (!serial) serial = endpointServer.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.serialNumber?.getLocal() ?? 'Unknown';
-        let productUrl = endpointServer.getClusterServer(BasicInformationCluster)?.attributes.productUrl?.getLocal();
-        if (!productUrl) productUrl = endpointServer.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.productUrl?.getLocal() ?? 'Unknown';
-        let uniqueId = endpointServer.getClusterServer(BasicInformationCluster)?.attributes.uniqueId?.getLocal();
-        if (!uniqueId) uniqueId = endpointServer.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.uniqueId?.getLocal() ?? 'Unknown';
+        // Check if the device has the required properties
+        if (!device.plugin || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId) return;
         const cluster = this.getClusterTextFromDevice(device);
         devices.push({
-          pluginName,
+          pluginName: device.plugin,
           type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
           endpoint: device.number,
-          name,
-          serial,
-          productUrl,
+          name: device.deviceName,
+          serial: device.serialNumber,
+          productUrl: device.productUrl,
           configUrl: device.configUrl,
-          uniqueId,
+          uniqueId: device.uniqueId,
           cluster: cluster,
         });
       });
@@ -359,7 +350,6 @@ export class Frontend {
           clusterServers.forEach((clusterServer) => {
             Object.entries(clusterServer.attributes).forEach(([key, value]) => {
               if (clusterServer.name === 'EveHistory') return;
-              // this.log.debug(`***--clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute:${key}(${value.id}) ${value.isFixed} ${value.isWritable} ${value.isWritable}`);
               let attributeValue;
               try {
                 if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
@@ -384,15 +374,13 @@ export class Frontend {
             clusterServers.forEach((clusterServer) => {
               Object.entries(clusterServer.attributes).forEach(([key, value]) => {
                 if (clusterServer.name === 'EveHistory') return;
-                // this.log.debug(`***--clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute:${key}(${value.id}) ${value.isFixed} ${value.isWritable} ${value.isWritable}`);
                 let attributeValue;
                 try {
                   if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
                   else attributeValue = value.getLocal().toString();
                 } catch (error) {
-                  attributeValue = 'Unavailable';
+                  attributeValue = 'Fabric-Scoped';
                   this.log.debug(`GetLocal error ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
-                  // console.log(error);
                 }
                 data.push({
                   endpoint: (childEndpoint.number ? childEndpoint.number.toString() : '...') + (name ? ' (' + name + ')' : ''),
@@ -918,15 +906,31 @@ export class Frontend {
    * @returns {string} The attributes description of the cluster servers in the device.
    */
   protected getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
-    const stringifyUserLabel = (endpoint: MatterbridgeEndpoint) => {
-      const labelList = endpoint.getClusterServer(UserLabelCluster)?.attributes.labelList.getLocal();
+    const getAttribute = (device: MatterbridgeEndpoint, cluster: string, attribute: string) => {
+      let value = undefined;
+      Object.entries(device.state)
+        .filter(([clusterName]) => clusterName.toLowerCase() === cluster.toLowerCase())
+        .forEach(([, clusterAttributes]) => {
+          Object.entries(clusterAttributes)
+            .filter(([attributeName]) => attributeName.toLowerCase() === attribute.toLowerCase())
+            .forEach(([, attributeValue]) => {
+              value = attributeValue;
+            });
+        });
+      if (value === undefined) this.log.error(`Cluster ${cluster} or attribute ${attribute} not found in device ${device.deviceName}`);
+      return value as unknown;
+    };
+
+    const getUserLabel = (device: MatterbridgeEndpoint) => {
+      const labelList = getAttribute(device, 'userLabel', 'labelList') as { label: string; value: string }[];
       if (!labelList) return;
       const composed = labelList.find((entry) => entry.label === 'composed');
       if (composed) return 'Composed: ' + composed.value;
       else return '';
     };
-    const stringifyFixedLabel = (endpoint: MatterbridgeEndpoint) => {
-      const labelList = endpoint.getClusterServer(FixedLabelCluster)?.attributes.labelList.getLocal();
+
+    const getFixedLabel = (device: MatterbridgeEndpoint) => {
+      const labelList = getAttribute(device, 'fixedLabel', 'labelList') as { label: string; value: string }[];
       if (!labelList) return;
       const composed = labelList.find((entry) => entry.label === 'composed');
       if (composed) return 'Composed: ' + composed.value;
@@ -934,46 +938,54 @@ export class Frontend {
     };
 
     let attributes = '';
-    // this.log.debug(`***getClusterTextFromDevice: ${device.deviceName} (${device.name})`);
-    const clusterServers = device.getAllClusterServers();
-    clusterServers.forEach((clusterServer) => {
-      try {
-        // this.log.debug(`**--clusterServer: ${clusterServer.id} (${clusterServer.name})`);
-        if (clusterServer.name === 'OnOff') attributes += `OnOff: ${clusterServer.attributes.onOff.getLocal()} `;
-        if (clusterServer.name === 'Switch') attributes += `Position: ${clusterServer.attributes.currentPosition.getLocal()} `;
-        if (clusterServer.name === 'WindowCovering') attributes += `Cover position: ${clusterServer.attributes.currentPositionLiftPercent100ths.getLocal() / 100}% `;
-        if (clusterServer.name === 'DoorLock') attributes += `State: ${clusterServer.attributes.lockState.getLocal() === 1 ? 'Locked' : 'Not locked'} `;
-        if (clusterServer.name === 'Thermostat') attributes += `Temperature: ${clusterServer.attributes.localTemperature.getLocal() / 100}°C `;
-        if (clusterServer.name === 'LevelControl') attributes += `Level: ${clusterServer.attributes.currentLevel.getLocal()}% `;
-        if (clusterServer.name === 'ColorControl' && clusterServer.attributes.currentX) attributes += `X: ${Math.round(clusterServer.attributes.currentX.getLocal())} Y: ${Math.round(clusterServer.attributes.currentY.getLocal())} `;
-        if (clusterServer.name === 'ColorControl' && clusterServer.attributes.currentHue)
-          attributes += `Hue: ${Math.round(clusterServer.attributes.currentHue.getLocal())} Saturation: ${Math.round(clusterServer.attributes.currentSaturation.getLocal())}% `;
-        if (clusterServer.name === 'ColorControl' && clusterServer.attributes.colorTemperatureMireds) attributes += `ColorTemp: ${Math.round(clusterServer.attributes.colorTemperatureMireds.getLocal())} `;
-        if (clusterServer.name === 'BooleanState') attributes += `Contact: ${clusterServer.attributes.stateValue.getLocal()} `;
-        if (clusterServer.name === 'BooleanStateConfiguration' && clusterServer.attributes.alarmsActive) attributes += `Active alarms: ${stringify(clusterServer.attributes.alarmsActive.getLocal())} `;
-        if (clusterServer.name === 'SmokeCoAlarm' && clusterServer.attributes.smokeState) attributes += `Smoke: ${clusterServer.attributes.smokeState.getLocal()} `;
-        if (clusterServer.name === 'SmokeCoAlarm' && clusterServer.attributes.coState) attributes += `Co: ${clusterServer.attributes.coState.getLocal()} `;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Object.entries(device.state as unknown as Record<string, Record<string, any>>).forEach(([clusterName, clusterAttributes]) => {
+      Object.entries(clusterAttributes).forEach(([attributeName, attributeValue]) => {
+        // console.log(`Cluster: ${clusterName} Attribute: ${attributeName} Value: ${attributeValue}`);
+        if (clusterName === 'onOff' && attributeName === 'onOff') attributes += `OnOff: ${attributeValue} `;
+        if (clusterName === 'switch' && attributeName === 'currentPosition') attributes += `Position: ${attributeValue} `;
+        if (clusterName === 'windowCovering' && attributeName === 'currentPositionLiftPercent100ths') attributes += `Cover position: ${attributeValue / 100}% `;
+        if (clusterName === 'doorLock' && attributeName === 'lockState') attributes += `State: ${attributeValue === 1 ? 'Locked' : 'Not locked'} `;
+        if (clusterName === 'thermostat' && attributeName === 'localTemperature') attributes += `Temperature: ${attributeValue / 100}°C `;
+        if (clusterName === 'thermostat' && attributeName === 'occupiedHeatingSetpoint') attributes += `Heat to: ${attributeValue / 100}°C `;
+        if (clusterName === 'thermostat' && attributeName === 'occupiedCoolingSetpoint') attributes += `Cool to: ${attributeValue / 100}°C `;
 
-        if (clusterServer.name === 'FanControl') attributes += `Mode: ${clusterServer.attributes.fanMode.getLocal()} Speed: ${clusterServer.attributes.percentCurrent.getLocal()} `;
-        if (clusterServer.name === 'FanControl' && clusterServer.attributes.speedCurrent) attributes += `MultiSpeed: ${clusterServer.attributes.speedCurrent.getLocal()} `;
+        if (clusterName === 'pumpConfigurationAndControl' && attributeName === 'operationMode') attributes += `Mode: ${attributeValue} `;
 
-        if (clusterServer.name === 'OccupancySensing') attributes += `Occupancy: ${clusterServer.attributes.occupancy.getLocal().occupied} `;
-        if (clusterServer.name === 'IlluminanceMeasurement') attributes += `Illuminance: ${clusterServer.attributes.measuredValue.getLocal()} `;
-        if (clusterServer.name === 'AirQuality') attributes += `Air quality: ${clusterServer.attributes.airQuality.getLocal()} `;
-        if (clusterServer.name === 'TvocMeasurement') attributes += `Voc: ${clusterServer.attributes.measuredValue.getLocal()} `;
-        if (clusterServer.name === 'TemperatureMeasurement') attributes += `Temperature: ${clusterServer.attributes.measuredValue.getLocal() / 100}°C `;
-        if (clusterServer.name === 'RelativeHumidityMeasurement') attributes += `Humidity: ${clusterServer.attributes.measuredValue.getLocal() / 100}% `;
-        if (clusterServer.name === 'PressureMeasurement') attributes += `Pressure: ${clusterServer.attributes.measuredValue.getLocal()} `;
-        if (clusterServer.name === 'FlowMeasurement') attributes += `Flow: ${clusterServer.attributes.measuredValue.getLocal()} `;
-        if (clusterServer.name === 'FixedLabel') attributes += `${stringifyFixedLabel(device)} `;
-        if (clusterServer.name === 'UserLabel') attributes += `${stringifyUserLabel(device)} `;
-        // this.log.debug(`*--clusterServer: ${clusterServer.id} (${clusterServer.name})`);
-      } catch (error) {
-        this.log.error(`getClusterTextFromDevice with ${clusterServer.name} error: ${error}`);
-      }
+        if (clusterName === 'valveConfigurationAndControl' && attributeName === 'currentState') attributes += `State: ${attributeValue} `;
+
+        if (clusterName === 'levelControl' && attributeName === 'currentLevel') attributes += `Level: ${attributeValue}% `;
+
+        if (clusterName === 'colorControl' && attributeName === 'colorMode') attributes += `Mode: ${['HS', 'XY', 'CT'][attributeValue]} `;
+        if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 0 && attributeName === 'currentHue') attributes += `Hue: ${Math.round(attributeValue)} `;
+        if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 0 && attributeName === 'currentSaturation') attributes += `Saturation: ${Math.round(attributeValue)} `;
+        if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 1 && attributeName === 'currentX') attributes += `X: ${Math.round(attributeValue)} `;
+        if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 1 && attributeName === 'currentY') attributes += `Y: ${Math.round(attributeValue)} `;
+        if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 2 && attributeName === 'colorTemperatureMireds') attributes += `ColorTemp: ${Math.round(attributeValue)} `;
+
+        if (clusterName === 'booleanState' && attributeName === 'stateValue') attributes += `Contact: ${attributeValue} `;
+        if (clusterName === 'booleanStateConfiguration' && attributeName === 'alarmsActive') attributes += `Active alarms: ${stringify(attributeValue)} `;
+
+        if (clusterName === 'smokeCoAlarm' && attributeName === 'smokeState') attributes += `Smoke: ${attributeValue} `;
+        if (clusterName === 'smokeCoAlarm' && attributeName === 'coState') attributes += `Co: ${attributeValue} `;
+
+        if (clusterName === 'fanControl' && attributeName === 'fanMode') attributes += `Mode: ${attributeValue} `;
+        if (clusterName === 'fanControl' && attributeName === 'percentCurrent') attributes += `Percent: ${attributeValue} `;
+        if (clusterName === 'fanControl' && attributeName === 'speedCurrent') attributes += `Speed: ${attributeValue} `;
+
+        if (clusterName === 'occupancySensing' && attributeName === 'occupancy') attributes += `Occupancy: ${attributeValue.occupied} `;
+        if (clusterName === 'illuminanceMeasurement' && attributeName === 'measuredValue') attributes += `Illuminance: ${attributeValue} `;
+        if (clusterName === 'airQuality' && attributeName === 'airQuality') attributes += `Air quality: ${attributeValue} `;
+        if (clusterName === 'tvocMeasurement' && attributeName === 'measuredValue') attributes += `Voc: ${attributeValue} `;
+        if (clusterName === 'temperatureMeasurement' && attributeName === 'measuredValue') attributes += `Temperature: ${attributeValue / 100}°C `;
+        if (clusterName === 'relativeHumidityMeasurement' && attributeName === 'measuredValue') attributes += `Humidity: ${attributeValue / 100}% `;
+        if (clusterName === 'pressureMeasurement' && attributeName === 'measuredValue') attributes += `Pressure: ${attributeValue} `;
+        if (clusterName === 'flowMeasurement' && attributeName === 'measuredValue') attributes += `Flow: ${attributeValue} `;
+        if (clusterName === 'fixedLabel' && attributeName === 'labelList') attributes += `${getFixedLabel(device)} `;
+        if (clusterName === 'userLabel' && attributeName === 'labelList') attributes += `${getUserLabel(device)} `;
+      });
     });
-    // this.log.debug(`*getClusterTextFromDevice: ${device.deviceName} (${device.name})`);
-    return attributes;
+    return attributes.trimStart().trimEnd();
   }
 
   /**
@@ -1112,25 +1124,20 @@ export class Frontend {
       } else if (data.method === '/api/devices') {
         const devices: ApiDevices[] = [];
         this.matterbridge.devices.forEach(async (device) => {
+          // Filter by pluginName if provided
           if (data.params.pluginName && data.params.pluginName !== device.plugin) return;
-          let name = device.getClusterServer(BasicInformationCluster)?.attributes.nodeLabel?.getLocal();
-          if (!name) name = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.nodeLabel?.getLocal() ?? 'Unknown';
-          let serial = device.getClusterServer(BasicInformationCluster)?.attributes.serialNumber?.getLocal();
-          if (!serial) serial = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.serialNumber?.getLocal() ?? 'Unknown';
-          let productUrl = device.getClusterServer(BasicInformationCluster)?.attributes.productUrl?.getLocal();
-          if (!productUrl) productUrl = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.productUrl?.getLocal() ?? 'Unknown';
-          let uniqueId = device.getClusterServer(BasicInformationCluster)?.attributes.uniqueId?.getLocal();
-          if (!uniqueId) uniqueId = device.getClusterServer(BridgedDeviceBasicInformationCluster)?.attributes.uniqueId?.getLocal() ?? 'Unknown';
+          // Check if the device has the required properties
+          if (!device.plugin || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId) return;
           const cluster = this.getClusterTextFromDevice(device);
           devices.push({
-            pluginName: device.plugin ?? 'Unknown',
+            pluginName: device.plugin,
             type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
             endpoint: device.number,
-            name,
-            serial,
-            productUrl,
+            name: device.deviceName,
+            serial: device.serialNumber,
+            productUrl: device.productUrl,
             configUrl: device.configUrl,
-            uniqueId,
+            uniqueId: device.uniqueId,
             cluster: cluster,
           });
         });
