@@ -29,6 +29,7 @@ It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbr
 
 ### Changed
 
+- [legacy]: Removed MatterbridgeDevice and MatterbridgeEdge classes.
 - [factoryreset]: Now it deletes also the backup files and backup directories.
 - [mattebridge]: Restyled the Matterbridge class and created the Frontend class that manages the frontend express and websocket api calls.
 - [frontend]: Frontend v.2.3.12.

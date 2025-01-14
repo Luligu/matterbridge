@@ -94,7 +94,7 @@ function Device({ device, endpoint, id, deviceType, clusters }) {
   const airQualityLookup = ['Unknown', 'Good', 'Fair', 'Moderate', 'Poor', 'VeryPoor', 'Ext.Poor'];
   let details = '';
 
-  if(debug) console.log(`Device "${device.name}" endpoint "${endpoint}" id "${id}" deviceType "0x${deviceType.toString(16).padStart(4, '0')}" clusters (${clusters?.length}):`, clusters);
+  console.log(`Device "${device.name}" endpoint "${endpoint}" id "${id}" deviceType "0x${deviceType.toString(16).padStart(4, '0')}" clusters (${clusters?.length}):`, clusters);
 
   // LevelControl
   onOffDeviceTypes.includes(deviceType) && clusters.filter(cluster => cluster.clusterName === 'LevelControl' && cluster.attributeName === 'currentLevel').map(cluster => details = `Level ${cluster.attributeValue}`);
@@ -108,6 +108,12 @@ function Device({ device, endpoint, id, deviceType, clusters }) {
 
   // SmokeCoAlarm
   deviceType===0x0076 && clusters.filter(cluster => cluster.clusterName === 'SmokeCoAlarm' && cluster.attributeName === 'coState').map(cluster => details = `${cluster.attributeLocalValue===0?'No CO detected':'CO alarm!'}`);
+
+  // ElectricalPowerMeasurement
+  deviceType===0x0510 && clusters.filter(cluster => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'voltage').map(cluster => details = `${cluster.attributeLocalValue/1000} V, `);
+  deviceType===0x0510 && clusters.filter(cluster => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'activeCurrent').map(cluster => details = details +`${cluster.attributeLocalValue/1000} A, `);
+  deviceType===0x0510 && clusters.filter(cluster => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'activePower').map(cluster => details = details +`${cluster.attributeLocalValue/1000} W`);
+
 
 /*
 */
@@ -282,7 +288,7 @@ export function DevicesIcons({filter}) {
             if(!endpoints[serial].find((e) => e.endpoint === cluster.endpoint)) {
               endpoints[serial].push({ endpoint: cluster.endpoint, id: cluster.id, deviceTypes: cluster.deviceTypes });
             }
-            if(['FixedLabel', 'Descriptor', 'Identify', 'Groups', 'PowerTopology', 'ElectricalPowerMeasurement'].includes(cluster.clusterName)) continue;
+            if(['FixedLabel', 'Descriptor', 'Identify', 'Groups', 'PowerTopology'].includes(cluster.clusterName)) continue;
             clusters[serial].push(cluster);
           }
           setEndpoints({ ...endpoints });
