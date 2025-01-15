@@ -39,8 +39,8 @@ export function WebSocketProvider({ children }) {
   // Constants
   const maxMessages = 1000;
   const maxRetries = 100;
-  const pingIntervalSeconds = 30;
-  const offlineTimeoutSeconds = 5;
+  const pingIntervalSeconds = 60;
+  const offlineTimeoutSeconds = 10;
 
   useEffect(() => {
       logFilterLevelRef.current = logFilterLevel;
