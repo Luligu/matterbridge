@@ -12,6 +12,8 @@ import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matte
 import { Identify } from '@matter/main/clusters';
 import { RegisteredPlugin, MatterbridgeDevice } from './matterbridgeTypes.js';
 import { MdnsService } from '@matter/main/protocol';
+import http, { createServer } from 'http';
+import { AddressInfo } from 'net';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -20,6 +22,9 @@ const typ = '\u001B[38;5;207m';
 
 describe('Matterbridge frontend express test', () => {
   let matterbridge: Matterbridge;
+  let server: ReturnType<typeof createServer>;
+  let baseUrl: string;
+
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 
@@ -34,6 +39,15 @@ describe('Matterbridge frontend express test', () => {
     });
     // Load the Matterbridge instance
     matterbridge = await Matterbridge.loadInstance(true);
+    // Create an HTTP server for testing
+    server = createServer((matterbridge as any).frontend.expressApp);
+    await new Promise<void>((resolve) => {
+      server.listen(() => {
+        const { port } = server.address() as AddressInfo;
+        baseUrl = `http://localhost:${port}`;
+        resolve();
+      });
+    });
   });
 
   beforeEach(() => {
@@ -47,6 +61,42 @@ describe('Matterbridge frontend express test', () => {
     // Restore the spies
     loggerLogSpy.mockRestore();
     consoleLogSpy.mockRestore();
+  });
+
+  const makeRequest = (path: string, method: string, body?: any) => {
+    return new Promise<{ status: number; body: any }>((resolve, reject) => {
+      const data = body ? JSON.stringify(body) : null;
+      const req = http.request(
+        `${baseUrl}${path}`,
+        {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': data ? Buffer.byteLength(data) : 0,
+          },
+        },
+        (res) => {
+          let responseBody = '';
+          res.on('data', (chunk) => (responseBody += chunk));
+          res.on('end', () => {
+            resolve({
+              status: res.statusCode || 500,
+              body: JSON.parse(responseBody),
+            });
+          });
+        },
+      );
+      req.on('error', reject);
+      if (data) req.write(data);
+      req.end();
+    });
+  };
+
+  test('Frontend is running on http', async () => {
+    expect((matterbridge as any).frontend.httpServer).toBeDefined();
+    expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
+    expect((matterbridge as any).frontend.expressApp).toBeDefined();
+    expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
   });
 
   test('Reset Jest plugins', async () => {

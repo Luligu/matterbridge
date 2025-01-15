@@ -130,7 +130,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
     await matterbridge.destroyInstance();
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-    // await matterbridge.environment.get(MdnsService)[Symbol.asyncDispose]();
+    await matterbridge.environment.get(MdnsService)[Symbol.asyncDispose]();
     await wait(1000, 'Wait for matter to unload', false);
   }, 60000);
 });

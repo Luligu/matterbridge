@@ -9,6 +9,7 @@ import { jest } from '@jest/globals';
 import { AnsiLogger, db, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { wait, waiter } from './utils/utils.js';
+import { MdnsService } from '@matter/main/protocol';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -127,8 +128,8 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
 
   test('Matterbridge.destroyInstance() -childbridge mode', async () => {
     await matterbridge.destroyInstance();
-    // console.error(`Matterbridge.destroyInstance() -bridge mode completed`);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    await matterbridge.environment.get(MdnsService)[Symbol.asyncDispose]();
     await wait(1000, 'Wait for matter to unload', false);
   }, 60000);
 });
