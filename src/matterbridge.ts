@@ -160,12 +160,12 @@ export class Matterbridge extends EventEmitter {
   mattercontrollerContext: StorageContext | undefined;
 
   // Matter parameters
-  protected mdnsInterface: string | undefined; // matter server mdnsInterface: e.g. 'eth0' or 'wlan0' or 'WiFi'
-  protected ipv4address: string | undefined; // matter commissioning server listeningAddressIpv4
-  protected ipv6address: string | undefined; // matter commissioning server listeningAddressIpv6
-  protected port: number | undefined; // first commissioning server port
-  protected passcode: number | undefined; // first commissioning server passcode
-  protected discriminator: number | undefined; // first commissioning server discriminator
+  mdnsInterface: string | undefined; // matter server node mdnsInterface: e.g. 'eth0' or 'wlan0' or 'WiFi'
+  ipv4address: string | undefined; // matter server node listeningAddressIpv4
+  ipv6address: string | undefined; // matter server node listeningAddressIpv6
+  port: number | undefined; // first server node port
+  passcode: number | undefined; // first server node passcode
+  discriminator: number | undefined; // first server node discriminator
 
   serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
   aggregatorNode: EndpointNode<AggregatorEndpoint> | undefined;
@@ -2148,7 +2148,7 @@ export class Matterbridge extends EventEmitter {
     }
     // Register and add the device to the matterbridge aggregator node
     if (this.bridgeMode === 'bridge') {
-      this.log.debug(`Adding ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} to Matterbridge aggregator node`);
+      this.log.debug(`Adding bridged endpoint ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} to Matterbridge aggregator node`);
       if (!this.aggregatorNode) this.log.error('Aggregator node not found for Matterbridge');
       await this.aggregatorNode?.add(device);
     } else if (this.bridgeMode === 'childbridge') {
@@ -2157,7 +2157,7 @@ export class Matterbridge extends EventEmitter {
       }
       if (plugin.type === 'DynamicPlatform') {
         plugin.locked = true;
-        this.log.debug(`Adding ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} to ${plg}${plugin.name}${db} aggregator node`);
+        this.log.debug(`Adding bridged endpoint ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} to ${plg}${plugin.name}${db} aggregator node`);
         if (!plugin.aggregatorNode) this.log.error(`Aggregator node not found for plugin ${plg}${plugin.name}${db}`);
         await plugin.aggregatorNode?.add(device);
       }
