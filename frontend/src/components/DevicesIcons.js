@@ -96,6 +96,9 @@ function Device({ device, endpoint, id, deviceType, clusters }) {
 
   console.log(`Device "${device.name}" endpoint "${endpoint}" id "${id}" deviceType "0x${deviceType.toString(16).padStart(4, '0')}" clusters (${clusters?.length}):`, clusters);
 
+  // PowerSource
+  deviceType===0x0011 && clusters.filter(cluster => cluster.clusterName === 'PowerSource' && cluster.attributeName === 'batVoltage').map(cluster => details = `${cluster.attributeLocalValue} mV`);
+  
   // LevelControl
   onOffDeviceTypes.includes(deviceType) && clusters.filter(cluster => cluster.clusterName === 'LevelControl' && cluster.attributeName === 'currentLevel').map(cluster => details = `Level ${cluster.attributeValue}`);
 

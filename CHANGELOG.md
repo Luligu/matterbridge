@@ -15,7 +15,7 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 ### Breaking Changes
 
-Starting from v. 2.0.0 Matterbridge is running only in mode edge (no parameter needed). 
+Starting from v. 2.0.0 Matterbridge is running only in mode edge (no parameter needed).
 The legacy old api have been completely removed.
 
 The frontend has a new dark and light mode. The dark mode is now the default mode.
@@ -33,6 +33,9 @@ It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbr
 - [factoryreset]: Now it deletes also the backup files and backup directories.
 - [mattebridge]: Restyled the Matterbridge class and created the Frontend class that manages the frontend express and websocket api calls.
 - [frontend]: Frontend v.2.3.12.
+- [iconView]: Improved render for energySensor adding voltage, current and power.
+- [iconView]: Improved render for PowerSource adding battery voltage.
+- [package]: Update dependencies.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
