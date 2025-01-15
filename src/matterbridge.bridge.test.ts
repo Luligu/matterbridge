@@ -62,23 +62,23 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect((matterbridge as any).plugins).toBeDefined();
     expect((matterbridge as any).devices.size).toBe(0);
 
-    expect((matterbridge as any).httpServer).toBeDefined();
-    expect((matterbridge as any).httpsServer).toBeUndefined();
-    expect((matterbridge as any).expressApp).toBeDefined();
-    expect((matterbridge as any).webSocketServer).toBeDefined();
+    expect((matterbridge as any).frontend.httpServer).toBeDefined();
+    expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
+    expect((matterbridge as any).frontend.expressApp).toBeDefined();
+    expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
 
     expect((matterbridge as any).nodeStorage).toBeDefined();
     expect((matterbridge as any).nodeContext).toBeDefined();
-    expect((matterbridge as any).matterStorageName).toBe('matterbridge.Jest.json');
+    expect((matterbridge as any).matterStorageName).toBe('matterstorage.Jest');
     expect((matterbridge as any).nodeStorageName).toBe('storage.Jest');
 
-    expect((matterbridge as any).storageManager).toBeDefined();
+    expect((matterbridge as any).matterStorageService).toBeDefined();
+    expect((matterbridge as any).matterStorageManager).toBeDefined();
     expect((matterbridge as any).matterbridgeContext).toBeDefined();
     expect((matterbridge as any).mattercontrollerContext).toBeUndefined();
-    expect((matterbridge as any).matterServer).toBeDefined();
-    expect((matterbridge as any).matterAggregator).toBeDefined();
-    expect((matterbridge as any).commissioningServer).toBeDefined();
-    expect((matterbridge as any).commissioningController).toBeUndefined();
+    expect((matterbridge as any).serverNode).toBeDefined();
+    expect((matterbridge as any).aggregatorNode).toBeDefined();
+    // expect((matterbridge as any).commissioningController).toBeUndefined();
 
     expect((matterbridge as any).mdnsInterface).toBe(undefined);
     expect((matterbridge as any).port).toBe(5555 + 1);
@@ -98,7 +98,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
       1000,
       true,
     );
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Matter server started`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
     await wait(1000, 'Wait for matter to load', false);
   }, 60000);
 

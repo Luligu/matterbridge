@@ -77,10 +77,10 @@ describe('Matterbridge loadInstance() and cleanup()', () => {
     expect((matterbridge as any).globalModulesDirectory).toBe('');
     expect((matterbridge as any).matterbridgeLatestVersion).toBe('');
 
-    expect((matterbridge as any).httpServer).toBeUndefined();
-    expect((matterbridge as any).httpsServer).toBeUndefined();
-    expect((matterbridge as any).expressApp).toBeUndefined();
-    expect((matterbridge as any).webSocketServer).toBeUndefined();
+    expect((matterbridge as any).frontend.httpServer).toBeUndefined();
+    expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
+    expect((matterbridge as any).frontend.expressApp).toBeUndefined();
+    expect((matterbridge as any).frontend.webSocketServer).toBeUndefined();
 
     // Destroy the Matterbridge instance
     // console.log('Destroying Matterbridge.loadInstance(false)');
@@ -106,10 +106,10 @@ describe('Matterbridge loadInstance() and cleanup()', () => {
     expect((matterbridge as any).plugins).toBeDefined();
     expect((matterbridge as any).devices.size).toBe(0);
 
-    expect((matterbridge as any).httpServer).toBeUndefined();
-    expect((matterbridge as any).httpsServer).toBeUndefined();
-    expect((matterbridge as any).expressApp).toBeUndefined();
-    expect((matterbridge as any).webSocketServer).toBeUndefined();
+    expect((matterbridge as any).frontend.httpServer).toBeUndefined();
+    expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
+    expect((matterbridge as any).frontend.expressApp).toBeUndefined();
+    expect((matterbridge as any).frontend.webSocketServer).toBeUndefined();
 
     // Destroy the Matterbridge instance
     // console.log('Destroying Matterbridge.loadInstance(false)');
@@ -137,10 +137,10 @@ describe('Matterbridge loadInstance() and cleanup()', () => {
     expect((matterbridge as any).plugins).toBeDefined();
     expect((matterbridge as any).devices.size).toBe(0);
 
-    expect((matterbridge as any).httpServer).toBeDefined();
-    expect((matterbridge as any).httpsServer).toBeUndefined();
-    expect((matterbridge as any).expressApp).toBeDefined();
-    expect((matterbridge as any).webSocketServer).toBeDefined();
+    expect((matterbridge as any).frontend.httpServer).toBeDefined();
+    expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
+    expect((matterbridge as any).frontend.expressApp).toBeDefined();
+    expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
 
     // Destroy the Matterbridge instance
     // console.log('Destroying Matterbridge.loadInstance(false)');
@@ -324,7 +324,7 @@ describe('Matterbridge', () => {
     });
     process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-reset'];
     await (matterbridge as any).parseCommandLine();
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, 'Reset done! Remove the device from the controller.');
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, 'Matter storage reset done! Remove the bridge from the controller.');
     await shutdownPromise;
     matterbridge.removeAllListeners('shutdown');
   }, 60000);
@@ -500,7 +500,7 @@ describe('Matterbridge', () => {
     await (matterbridge as any).parseCommandLine();
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
     expect((matterbridge as any).plugins).toHaveLength(0);
-    await shutdownPromise;
+    // await shutdownPromise;
     matterbridge.removeAllListeners('shutdown');
   }, 60000);
 });

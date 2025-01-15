@@ -99,7 +99,7 @@
     "test:deviceManager": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage deviceManager.test.ts",
     "test:utils": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage utils.test.ts",
     "test:colorUtils": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage colorUtils.test.ts",
-    "test:websocket": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose  --coverage matterbridgeWebsocket.test.ts",
+    "test:frontend": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose  --coverage frontend.test.ts",
     "lint": "eslint --max-warnings=0 .",
     "lint:fix": "eslint --fix --max-warnings=0 .",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",

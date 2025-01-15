@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'fatal', '-bridge', '-profile', 'Jest', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
+process.argv = ['node', 'frontend.test.js', '-logger', 'debug', '-matterlogger', 'fatal', '-bridge', '-profile', 'Jest', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, db, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
@@ -17,7 +17,7 @@ const plg = '\u001B[38;5;33m';
 const dev = '\u001B[38;5;79m';
 const typ = '\u001B[38;5;207m';
 
-describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
+describe('Matterbridge frontend test', () => {
   let matterbridge: Matterbridge;
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let loggerLogSpy: jest.SpiedFunction<(level: LogLevel, message: string, ...parameters: any[]) => void>;
@@ -54,15 +54,15 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     // prettier-ignore
     await waiter('Initialize done', () => { return (matterbridge as any).initialized === true; });
     // prettier-ignore
-    await waiter('Frontend Initialize done', () => { return (matterbridge as any).httpServer; });
+    await waiter('Frontend Initialize done', () => { return (matterbridge as any).frontend.httpServer!==undefined; });
     // prettier-ignore
-    await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).webSocketServer; });
+    await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).frontend.webSocketServer!==undefined; });
     // prettier-ignore
-    await waiter('Matter server started', () => { return (matterbridge as any).reachabilityTimeout; });
+    await waiter('Matter server node started', () => { return (matterbridge as any).reachabilityTimeout; });
 
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `The WebSocketServer is listening on ${UNDERLINE}ws://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Matter server started`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
 
     ws = new WebSocket(`ws://localhost:8283`);
     expect(ws).toBeDefined();
@@ -88,15 +88,15 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     // prettier-ignore
     await waiter('Initialize done', () => { return (matterbridge as any).initialized === true; });
     // prettier-ignore
-    await waiter('Frontend Initialize done', () => { return (matterbridge as any).httpServer; });
+    await waiter('Frontend Initialize done', () => { return (matterbridge as any).frontend.httpServer!==undefined; });
     // prettier-ignore
-    await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).webSocketServer; });
+    await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).frontend.webSocketServer!==undefined; });
     // prettier-ignore
-    await waiter('Matter server started', () => { return (matterbridge as any).reachabilityTimeout; });
+    await waiter('Matter server node started', () => { return (matterbridge as any).reachabilityTimeout; });
 
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `The WebSocketServer is listening on ${UNDERLINE}ws://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Matter server started`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
 
     ws = new WebSocket(`ws://localhost:8283`);
     expect(ws).toBeDefined();
@@ -125,15 +125,15 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     // prettier-ignore
     await waiter('Initialize done', () => { return (matterbridge as any).initialized === true; });
     // prettier-ignore
-    await waiter('Frontend Initialize done', () => { return (matterbridge as any).httpServer; });
+    await waiter('Frontend Initialize done', () => { return (matterbridge as any).frontend.httpServer!==undefined; });
     // prettier-ignore
-    await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).webSocketServer; });
+    await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).frontend.webSocketServer!==undefined; });
     // prettier-ignore
-    await waiter('Matter server started', () => { return (matterbridge as any).reachabilityTimeout; });
+    await waiter('Matter server node started', () => { return (matterbridge as any).reachabilityTimeout; });
 
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `The WebSocketServer is listening on ${UNDERLINE}ws://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Matter server started`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
   }, 60000);
 
   test('Add mock plugin 1', async () => {
@@ -188,8 +188,8 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     device.addChildDeviceTypeWithClusterServer('Temperature:0', [temperatureSensor]);
     device.plugin = 'matterbridge-mock1';
     await matterbridge.addBridgedEndpoint('matterbridge-mock1', device);
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Adding bridged device/));
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Added and registered bridged device/));
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Adding bridged endpoint/));
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Added and registered bridged endpoint/));
   }, 60000);
 
   test('create an light device: Light 1 for plugin matterbridge-mock2', async () => {
@@ -201,8 +201,8 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     device.createDefaultBridgedDeviceBasicInformationClusterServer('Light 1', 'SerialLight1', 1, 'VendorName', 'ProductName');
     device.plugin = 'matterbridge-mock2';
     await matterbridge.addBridgedEndpoint('matterbridge-mock2', device);
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Adding bridged device/));
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Added and registered bridged device/));
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Adding bridged endpoint/));
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Added and registered bridged endpoint/));
   }, 60000);
 
   test('create an outlet device: Outlet 1 for plugin matterbridge-mock3', async () => {
@@ -214,8 +214,8 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     device.createDefaultBridgedDeviceBasicInformationClusterServer('Outlet 1', 'SerialOutlet1', 1, 'VendorName', 'ProductName');
     device.plugin = 'matterbridge-mock3';
     await matterbridge.addBridgedEndpoint('matterbridge-mock3', device);
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Adding bridged device/));
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Added and registered bridged device/));
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Adding bridged endpoint/));
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Added and registered bridged endpoint/));
   }, 60000);
 
   test('Websocket API connect', async () => {
@@ -233,7 +233,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     const message = 'This is not a JSON message';
     ws.send(message);
     await wait(1000, 'Wait for send', true);
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^Error parsing message from websocket client/), expect.stringMatching(/^Unexpected token/));
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^Error parsing message/), expect.stringMatching(/^Unexpected token/));
   }, 60000);
 
   test('Websocket API send wrong message', async () => {

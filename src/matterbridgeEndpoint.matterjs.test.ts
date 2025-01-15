@@ -3,7 +3,7 @@
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
-import { MatterbridgeEdge } from './matterbridgeEdge.js';
+import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { bridge, coverDevice, dimmableLight, doorLockDevice, electricalSensor, genericSwitch, lightSensor, occupancySensor, onOffLight, onOffOutlet, onOffSwitch, powerSource } from './matterbridgeDeviceTypes.js';
 import { getMacAddress } from './utils/utils.js';
@@ -46,7 +46,7 @@ import { OccupancySensorDevice, OnOffPlugInUnitDevice } from '@matter/main/devic
 import { MatterbridgeBehavior, MatterbridgeIdentifyServer } from './matterbridgeBehaviors.js';
 
 describe('MatterbridgeEndpoint class', () => {
-  let edge: MatterbridgeEdge;
+  let matterbridge: Matterbridge;
   let context: StorageContext;
   let server: ServerNode<ServerNode.RootEndpoint>;
   let aggregator: Endpoint<AggregatorEndpoint>;
@@ -76,22 +76,26 @@ describe('MatterbridgeEndpoint class', () => {
       // console.error(args);
     });
     // Spy on and mock console.log
+    consoleInfoSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
+      // console.warn(args);
+    });
+    // Spy on and mock console.log
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
       // console.error(args);
     });
 
     // Create a MatterbridgeEdge instance
-    edge = await MatterbridgeEdge.loadInstance(false);
-    edge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+    matterbridge = await Matterbridge.loadInstance(false);
+    matterbridge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
     // Setup matter environment
-    edge.environment.vars.set('log.level', Level.DEBUG);
-    edge.environment.vars.set('log.format', Format.ANSI);
-    edge.environment.vars.set('path.root', 'matterstorage');
-    edge.environment.vars.set('runtime.signals', false);
-    edge.environment.vars.set('runtime.exitcode', false);
+    matterbridge.environment.vars.set('log.level', Level.DEBUG);
+    matterbridge.environment.vars.set('log.format', Format.ANSI);
+    matterbridge.environment.vars.set('path.root', 'matterstorage');
+    matterbridge.environment.vars.set('runtime.signals', false);
+    matterbridge.environment.vars.set('runtime.exitcode', false);
     // Setup Matter mdnsInterface
-    if ((edge as any).mdnsInterface) edge.environment.vars.set('mdns.networkInterface', (edge as any).mdnsInterface);
-    await edge.startMatterStorage('test', 'Matterbridge');
+    if (matterbridge.mdnsInterface) matterbridge.environment.vars.set('mdns.networkInterface', matterbridge.mdnsInterface);
+    await (matterbridge as any).startMatterStorage();
   });
 
   afterEach(async () => {
@@ -107,7 +111,7 @@ describe('MatterbridgeEndpoint class', () => {
     consoleInfoSpy?.mockRestore();
     consoleErrorSpy?.mockRestore();
 
-    await edge.environment.get(MdnsService)[Symbol.asyncDispose]();
+    await matterbridge.environment.get(MdnsService)[Symbol.asyncDispose]();
   });
 
   describe('MatterbridgeBehavior', () => {
@@ -121,17 +125,16 @@ describe('MatterbridgeEndpoint class', () => {
       consoleInfoSpy.mockRestore();
       consoleErrorSpy.mockRestore();
       */
-      context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
       expect(context).toBeDefined();
     });
 
     test('create the server node', async () => {
-      server = await edge.createServerNode(context);
+      server = await (matterbridge as any).createServerNode(context);
       expect(server).toBeDefined();
     });
 
     test('create a onOffLight device', async () => {
-      server = await edge.createServerNode(context);
       device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }] });
       expect(device).toBeDefined();
       expect(device.id).toBe('OnOffLight');
@@ -284,7 +287,7 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('start server node', async () => {
       expect(server).toBeDefined();
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
     });
@@ -303,7 +306,7 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('close server node', async () => {
       expect(server).toBeDefined();
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
     });
   });

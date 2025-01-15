@@ -65,7 +65,7 @@ import { DescriptorBehavior, GroupsBehavior, IdentifyBehavior, OccupancySensingB
 import { DeviceTypes, logEndpoint } from '@project-chip/matter.js/device';
 
 describe('MatterbridgeEndpoint class', () => {
-  let edge: Matterbridge;
+  let matterbridge: Matterbridge;
   let context: StorageContext;
   let server: ServerNode<ServerNode.RootEndpoint>;
   let aggregator: Endpoint<AggregatorEndpoint>;
@@ -100,17 +100,17 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     // Create a MatterbridgeEdge instance
-    edge = await Matterbridge.loadInstance(false);
-    edge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+    matterbridge = await Matterbridge.loadInstance(false);
+    matterbridge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
     // Setup matter environment
-    edge.environment.vars.set('log.level', Level.DEBUG);
-    edge.environment.vars.set('log.format', Format.ANSI);
-    edge.environment.vars.set('path.root', 'matterstorage');
-    edge.environment.vars.set('runtime.signals', false);
-    edge.environment.vars.set('runtime.exitcode', false);
+    matterbridge.environment.vars.set('log.level', Level.DEBUG);
+    matterbridge.environment.vars.set('log.format', Format.ANSI);
+    matterbridge.environment.vars.set('path.root', 'matterstorage');
+    matterbridge.environment.vars.set('runtime.signals', false);
+    matterbridge.environment.vars.set('runtime.exitcode', false);
     // Setup Matter mdnsInterface
-    if ((edge as any).mdnsInterface) edge.environment.vars.set('mdns.networkInterface', (edge as any).mdnsInterface);
-    await (edge as any).startMatterStorage('test', 'Matterbridge');
+    if ((matterbridge as any).mdnsInterface) matterbridge.environment.vars.set('mdns.networkInterface', (matterbridge as any).mdnsInterface);
+    await (matterbridge as any).startMatterStorage('test', 'Matterbridge');
   });
 
   afterEach(async () => {
@@ -126,7 +126,7 @@ describe('MatterbridgeEndpoint class', () => {
     consoleInfoSpy?.mockRestore();
     consoleErrorSpy?.mockRestore();
 
-    await edge.environment.get(MdnsService)[Symbol.asyncDispose]();
+    await matterbridge.environment.get(MdnsService)[Symbol.asyncDispose]();
   });
 
   describe('MatterbridgeBehavior', () => {
@@ -140,17 +140,17 @@ describe('MatterbridgeEndpoint class', () => {
       consoleInfoSpy?.mockRestore();
       consoleErrorSpy?.mockRestore();
       */
-      context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
       expect(context).toBeDefined();
     });
 
     test('create the server node', async () => {
-      server = await edge.createServerNode(context);
+      server = await (matterbridge as any).createServerNode(context);
       expect(server).toBeDefined();
     });
 
     test('create a onOffLight device', async () => {
-      server = await edge.createServerNode(context);
+      server = await (matterbridge as any).createServerNode(context);
       device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight' });
       expect(device).toBeDefined();
       expect(device.id).toBe('OnOffLight');
@@ -197,7 +197,7 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('start server node', async () => {
       expect(server).toBeDefined();
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
     });
@@ -214,7 +214,7 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('close server node', async () => {
       expect(server).toBeDefined();
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
     });
   });
@@ -230,12 +230,12 @@ describe('MatterbridgeEndpoint class', () => {
       consoleInfoSpy.mockRestore();
       consoleErrorSpy.mockRestore();
       */
-      context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
       expect(context).toBeDefined();
     });
 
     test('create the server node', async () => {
-      server = await edge.createServerNode(context);
+      server = await (matterbridge as any).createServerNode(context);
       expect(server).toBeDefined();
     });
 
@@ -368,7 +368,7 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('start server node', async () => {
       expect(server).toBeDefined();
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
     });
@@ -383,7 +383,7 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('close server node', async () => {
       expect(server).toBeDefined();
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
     });
   });
@@ -391,13 +391,13 @@ describe('MatterbridgeEndpoint class', () => {
   describe('Constructor with multiple device types', () => {
     test('create a context for server node', async () => {
       const deviceType = onOffOutlet;
-      context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
       expect(context).toBeDefined();
     });
 
     test('create a onOffOutlet device', async () => {
       const deviceType = onOffOutlet;
-      server = await edge.createServerNode(context);
+      server = await (matterbridge as any).createServerNode(context);
       device = new MatterbridgeEndpoint([onOffOutlet, dimmableOutlet], { uniqueStorageKey: 'OnOffOutLet' });
       expect(device).toBeDefined();
       expect(device.id).toBe('OnOffOutLet');
@@ -417,7 +417,7 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('add onOffOutlet device to serverNode and start', async () => {
       await server.add(device);
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
     });
@@ -444,7 +444,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('close serverNode', async () => {
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
@@ -453,13 +453,13 @@ describe('MatterbridgeEndpoint class', () => {
   describe('Constructor with tagList', () => {
     test('create a context for server node', async () => {
       const deviceType = onOffLight;
-      context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
       expect(context).toBeDefined();
     });
 
     test('create a onOffOutlet device', async () => {
       const deviceType = onOffOutlet;
-      server = await edge.createServerNode(context);
+      server = await (matterbridge as any).createServerNode(context);
       device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffOutLet', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Outlet1' }] });
       expect(device).toBeDefined();
       expect(device.id).toBe('OnOffOutLet');
@@ -476,7 +476,7 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('add onOffOutlet device to serverNode and start', async () => {
       await server.add(device);
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
     });
@@ -497,7 +497,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('close serverNode', async () => {
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
@@ -506,13 +506,13 @@ describe('MatterbridgeEndpoint class', () => {
   describe('Constructor with tagList and 2 deviceTypes', () => {
     test('create a context for server node', async () => {
       const deviceType = onOffLight;
-      context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
       expect(context).toBeDefined();
     });
 
     test('create a onOffOutlet device', async () => {
       const deviceType = onOffOutlet;
-      server = await edge.createServerNode(context);
+      server = await (matterbridge as any).createServerNode(context);
       device = new MatterbridgeEndpoint([deviceType, occupancySensor], { uniqueStorageKey: 'OnOffOutLet', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Outlet1' }] });
       expect(device).toBeDefined();
       expect(device.id).toBe('OnOffOutLet');
@@ -529,7 +529,7 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('add onOffOutlet device to serverNode and start', async () => {
       await server.add(device);
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
     });
@@ -577,7 +577,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('close serverNode', async () => {
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
@@ -586,13 +586,13 @@ describe('MatterbridgeEndpoint class', () => {
   describe('Getter, setter and subscribe', () => {
     test('create a context for server node', async () => {
       const deviceType = onOffLight;
-      context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
       expect(context).toBeDefined();
     });
 
     test('create a onOffLight device', async () => {
       const deviceType = onOffLight;
-      server = await edge.createServerNode(context);
+      server = await (matterbridge as any).createServerNode(context);
       device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight' });
       expect(device).toBeDefined();
       expect(device.id).toBe('OnOffLight');
@@ -609,48 +609,48 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('add onOffLight device to serverNode and start', async () => {
       await server.add(device);
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
     });
 
     test('getAttribute OnOff.onOff', async () => {
       const state = (device.state as any)['onOff']['onOff'];
-      expect(device.getAttribute(OnOffCluster.id, 'onOff', edge.log)).toBe(state);
+      expect(device.getAttribute(OnOffCluster.id, 'onOff', matterbridge.log)).toBe(state);
     });
 
     test('setAttribute OnOff.onOff', async () => {
-      expect(await device.setAttribute(OnOffCluster.id, 'onOff', true, edge.log)).toBe(true);
-      expect(device.getAttribute(OnOffCluster.id, 'onOff', edge.log)).toBe(true);
+      expect(await device.setAttribute(OnOffCluster.id, 'onOff', true, matterbridge.log)).toBe(true);
+      expect(device.getAttribute(OnOffCluster.id, 'onOff', matterbridge.log)).toBe(true);
 
-      expect(await device.setAttribute(OnOffCluster.id, 'onOff', false, edge.log)).toBe(true);
-      expect(device.getAttribute(OnOffCluster.id, 'onOff', edge.log)).toBe(false);
+      expect(await device.setAttribute(OnOffCluster.id, 'onOff', false, matterbridge.log)).toBe(true);
+      expect(device.getAttribute(OnOffCluster.id, 'onOff', matterbridge.log)).toBe(false);
     });
 
     test('subscribeAttribute OnOff.onOff', async () => {
-      expect(await device.setAttribute(OnOffCluster.id, 'onOff', true, edge.log)).toBe(true);
-      let state = device.getAttribute(OnOffCluster.id, 'onOff', edge.log);
+      expect(await device.setAttribute(OnOffCluster.id, 'onOff', true, matterbridge.log)).toBe(true);
+      let state = device.getAttribute(OnOffCluster.id, 'onOff', matterbridge.log);
 
       const result = await device.subscribeAttribute(
         OnOffCluster.id,
         'onOff',
         (newValue: any, oldValue: any) => {
           state = newValue;
-          edge.log.warn('onOff', newValue, oldValue);
+          matterbridge.log.warn('onOff', newValue, oldValue);
         },
-        edge.log,
+        matterbridge.log,
       );
       expect(result).toBe(true);
 
-      expect(await device.setAttribute(OnOffCluster.id, 'onOff', false, edge.log)).toBe(true);
+      expect(await device.setAttribute(OnOffCluster.id, 'onOff', false, matterbridge.log)).toBe(true);
       expect(state).toBe(false);
 
-      expect(await device.setAttribute(OnOffCluster.id, 'onOff', true, edge.log)).toBe(true);
+      expect(await device.setAttribute(OnOffCluster.id, 'onOff', true, matterbridge.log)).toBe(true);
       expect(state).toBe(true);
     });
 
     test('close serverNode', async () => {
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
@@ -659,17 +659,17 @@ describe('MatterbridgeEndpoint class', () => {
   describe('Server node with aggregator', () => {
     test('create a context for server node', async () => {
       const deviceType = bridge;
-      context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
       expect(context).toBeDefined();
     });
 
     test('create a server node', async () => {
-      server = await edge.createServerNode(context);
+      server = await (matterbridge as any).createServerNode(context);
       expect(server).toBeDefined();
     });
 
     test('create an aggregator', async () => {
-      aggregator = await edge.createAggregatorNode(context);
+      aggregator = await (matterbridge as any).createAggregatorNode(context);
       expect(aggregator).toBeDefined();
       expect(aggregator.id).toBe('Jest');
       expect(aggregator.type.name).toBe(AggregatorEndpointDefinition.name);
@@ -711,14 +711,14 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('start server node', async () => {
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       // logEndpoint(EndpointServer.forEndpoint(server));
     });
 
     test('stop server node', async () => {
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
       // logEndpoint(EndpointServer.forEndpoint(server));
@@ -728,14 +728,14 @@ describe('MatterbridgeEndpoint class', () => {
   describe('Server node with devices', () => {
     test('create a context for server node', async () => {
       const deviceType = bridge;
-      context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
       expect(context).toBeDefined();
     });
 
     test('create a onOffSwitch device with ModeSelect, UserLabel and FixedLabel', async () => {
       const deviceType = onOffSwitch;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count }, true);
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -758,18 +758,18 @@ describe('MatterbridgeEndpoint class', () => {
       );
 
       await server.add(device);
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a onOffSwitch device with RechargeableBattery', async () => {
       const deviceType = onOffSwitch;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count }, true);
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -784,7 +784,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.subType).toBe('BatteryRechargeablePowerSource');
 
       await server.add(device);
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
 
@@ -792,15 +792,15 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.getAttribute(PowerSourceCluster.id, 'batChargeLevel')).toBe(PowerSource.BatChargeLevel.Ok);
       expect(device.getAttribute(PowerSourceCluster.id, 'batVoltage')).toBe(1500);
 
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a onOffSwitch device with ReplaceableBattery', async () => {
       const deviceType = onOffSwitch;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count }, true);
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -815,7 +815,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.subType).toBe('BatteryReplaceablePowerSource');
 
       await server.add(device);
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
 
@@ -824,15 +824,15 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.getAttribute(PowerSourceCluster.id, 'batVoltage')).toBe(1500);
       expect(device.getAttribute(PowerSourceCluster.id, 'batQuantity')).toBe(1);
 
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a onOffSwitch device with Wired power', async () => {
       const deviceType = onOffSwitch;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count }, true);
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -847,7 +847,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.subType).toBe('WiredPowerSource');
 
       await server.add(device);
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
 
@@ -858,15 +858,15 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.getAttribute(PowerSourceCluster.id, 'batVoltage')).toBe(undefined);
       expect(device.getAttribute(PowerSourceCluster.id, 'batQuantity')).toBe(undefined);
 
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a onOffSwitch device with all clusters', async () => {
       const deviceType = onOffSwitch;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count }, true);
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -896,18 +896,18 @@ describe('MatterbridgeEndpoint class', () => {
       device.createDefaultNitrogenDioxideConcentrationMeasurementClusterServer();
 
       await server.add(device);
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a onOffLight device', async () => {
       const deviceType = onOffLight;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -919,18 +919,18 @@ describe('MatterbridgeEndpoint class', () => {
       device.addRequiredClusterServers(device);
 
       await server.add(device);
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a dimmableLight device', async () => {
       const deviceType = dimmableLight;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -943,18 +943,18 @@ describe('MatterbridgeEndpoint class', () => {
       device.addRequiredClusterServers(device);
 
       await server.add(device);
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a colorTemperatureLight device', async () => {
       const deviceType = colorTemperatureLight;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -968,18 +968,18 @@ describe('MatterbridgeEndpoint class', () => {
       device.addRequiredClusterServers(device);
 
       await server.add(device);
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a colorTemperatureLight HS device', async () => {
       const deviceType = colorTemperatureLight;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -993,18 +993,18 @@ describe('MatterbridgeEndpoint class', () => {
       device.addRequiredClusterServers(device);
 
       await server.add(device);
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a colorTemperatureLight XY device', async () => {
       const deviceType = colorTemperatureLight;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -1018,18 +1018,18 @@ describe('MatterbridgeEndpoint class', () => {
       device.addRequiredClusterServers(device);
 
       await server.add(device);
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a colorTemperatureLight CT device', async () => {
       const deviceType = colorTemperatureLight;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -1043,18 +1043,18 @@ describe('MatterbridgeEndpoint class', () => {
       device.addRequiredClusterServers(device);
 
       await server.add(device);
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a pumpDevice device', async () => {
       const deviceType = pumpDevice;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -1068,18 +1068,18 @@ describe('MatterbridgeEndpoint class', () => {
       device.addRequiredClusterServers(device);
 
       await server.add(device);
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a waterValve device', async () => {
       const deviceType = waterValve;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -1092,18 +1092,18 @@ describe('MatterbridgeEndpoint class', () => {
       device.addRequiredClusterServers(device);
 
       await server.add(device);
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a onOffOutlet device', async () => {
       const deviceType = onOffOutlet;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -1115,18 +1115,18 @@ describe('MatterbridgeEndpoint class', () => {
       device.addRequiredClusterServers(device);
 
       await server.add(device);
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a onOffSwitch device', async () => {
       const deviceType = onOffSwitch;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -1137,18 +1137,18 @@ describe('MatterbridgeEndpoint class', () => {
       device.addRequiredClusterServers(device);
       await server.add(device);
 
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a cover device', async () => {
       const deviceType = coverDevice;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -1165,18 +1165,18 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Stopped);
       await device.setWindowCoveringTargetAndCurrentPosition(0);
 
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a lock device', async () => {
       const deviceType = doorLockDevice;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -1188,18 +1188,18 @@ describe('MatterbridgeEndpoint class', () => {
       device.addRequiredClusterServers(device);
       await server.add(device);
 
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a thermostat auto device', async () => {
       const deviceType = thermostatDevice;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -1212,18 +1212,18 @@ describe('MatterbridgeEndpoint class', () => {
       device.addRequiredClusterServers(device);
       await server.add(device);
 
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a thermostat heating device', async () => {
       const deviceType = thermostatDevice;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -1236,18 +1236,18 @@ describe('MatterbridgeEndpoint class', () => {
       device.addRequiredClusterServers(device);
       await server.add(device);
 
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a thermostat cooling device', async () => {
       const deviceType = thermostatDevice;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -1260,18 +1260,18 @@ describe('MatterbridgeEndpoint class', () => {
       device.addRequiredClusterServers(device);
       await server.add(device);
 
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a generic switch momentary device', async () => {
       const deviceType = genericSwitch;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -1283,7 +1283,7 @@ describe('MatterbridgeEndpoint class', () => {
       device.addRequiredClusterServers(device);
       await server.add(device);
 
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
 
@@ -1299,15 +1299,15 @@ describe('MatterbridgeEndpoint class', () => {
       device.triggerSwitchEvent('Double');
       device.triggerSwitchEvent('Long');
 
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a generic switch latching device', async () => {
       const deviceType = genericSwitch;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -1319,7 +1319,7 @@ describe('MatterbridgeEndpoint class', () => {
       device.addRequiredClusterServers(device);
       await server.add(device);
 
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
 
@@ -1334,7 +1334,7 @@ describe('MatterbridgeEndpoint class', () => {
       device.triggerSwitchEvent('Press');
       device.triggerSwitchEvent('Release');
 
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
@@ -1348,8 +1348,8 @@ describe('MatterbridgeEndpoint class', () => {
       consoleErrorSpy.mockRestore();
       */
       const deviceType = onOffOutlet;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -1361,19 +1361,19 @@ describe('MatterbridgeEndpoint class', () => {
       device.addDeviceTypeWithClusterServer([electricalSensor], [PowerTopology.Cluster.id, ElectricalPowerMeasurement.Cluster.id, ElectricalEnergyMeasurement.Cluster.id]);
       await server.add(device);
 
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       // logEndpoint(EndpointServer.forEndpoint(device));
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
     test('create a temperature humidity pressure sensor', async () => {
       const deviceType = DeviceTypes.TEMPERATURE_SENSOR;
-      const context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
-      const server = await edge.createServerNode(context);
+      const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
       expect(device).toBeDefined();
       expect(device.id).toBe(deviceType.name.replace('MA-', '') + '-' + count);
@@ -1387,11 +1387,11 @@ describe('MatterbridgeEndpoint class', () => {
       device.addDeviceTypeWithClusterServer([DeviceTypes.PRESSURE_SENSOR], [PressureMeasurement.Cluster.id]);
       await server.add(device);
 
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       // logEndpoint(EndpointServer.forEndpoint(device));
-      await edge.stopServerNode(server);
+      await (matterbridge as any).stopServerNode(server);
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
