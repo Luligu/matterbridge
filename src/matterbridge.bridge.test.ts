@@ -20,8 +20,12 @@ const typ = '\u001B[38;5;207m';
 
 describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   let matterbridge: Matterbridge;
-  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let loggerLogSpy: jest.SpiedFunction<(level: LogLevel, message: string, ...parameters: any[]) => void>;
+  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleDebugSpy: jest.SpiedFunction<typeof console.debug>;
+  let consoleInfoSpy: jest.SpiedFunction<typeof console.info>;
+  let consoleWarnSpy: jest.SpiedFunction<typeof console.info>;
+  let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
 
   beforeAll(async () => {
     // Spy on and mock the AnsiLogger.log method
@@ -32,16 +36,40 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
       // console.error(args);
     });
+    // Spy on and mock console.log
+    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {
+      // console.error(args);
+    });
+    // Spy on and mock console.log
+    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {
+      // console.error(args);
+    });
+    // Spy on and mock console.log
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
+      // console.warn(args);
+    });
+    // Spy on and mock console.log
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
+      // console.error(args);
+    });
   });
 
   beforeEach(() => {
-    loggerLogSpy.mockClear();
-    consoleLogSpy.mockClear();
+    loggerLogSpy?.mockClear();
+    consoleLogSpy?.mockClear();
+    consoleDebugSpy?.mockClear();
+    consoleInfoSpy?.mockClear();
+    consoleWarnSpy?.mockClear();
+    consoleErrorSpy?.mockClear();
   });
 
   afterAll(async () => {
-    loggerLogSpy.mockRestore();
-    consoleLogSpy.mockRestore();
+    loggerLogSpy?.mockRestore();
+    consoleLogSpy?.mockRestore();
+    consoleDebugSpy?.mockRestore();
+    consoleInfoSpy?.mockRestore();
+    consoleWarnSpy?.mockRestore();
+    consoleErrorSpy?.mockRestore();
   }, 60000);
 
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {

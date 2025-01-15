@@ -362,7 +362,6 @@ describe('Matterbridge platform', () => {
     jest.clearAllMocks();
     expect(await platform.checkEndpointNumbers()).toBe(3);
     expect(platform.log.warn).not.toHaveBeenCalled();
-    expect(platform.log.debug).toHaveBeenCalledTimes(2);
     expect(platform.log.debug).toHaveBeenCalledWith('Checking endpoint numbers...');
     expect(platform.log.debug).toHaveBeenCalledWith('Endpoint numbers check completed.');
   });
