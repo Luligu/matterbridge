@@ -66,6 +66,7 @@ export class MatterbridgePlatform {
   public context: NodeStorage | undefined;
   public selectDevice = new Map<string, { serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }>();
   public selectEntity = new Map<string, { name: string; description: string; icon?: string }>();
+  public registeredEndpoints = new Map<string, MatterbridgeEndpoint>();
 
   /**
    * Creates an instance of the base MatterbridgePlatform.
@@ -138,6 +139,7 @@ export class MatterbridgePlatform {
   async registerDevice(device: MatterbridgeEndpoint) {
     device.plugin = this.name;
     await this.matterbridge.addBridgedEndpoint(this.name, device);
+    if (device.uniqueId) this.registeredEndpoints.set(device.uniqueId, device);
   }
 
   /**
@@ -146,6 +148,7 @@ export class MatterbridgePlatform {
    */
   async unregisterDevice(device: MatterbridgeEndpoint) {
     await this.matterbridge.removeBridgedEndpoint(this.name, device);
+    if (device.uniqueId) this.registeredEndpoints.delete(device.uniqueId);
   }
 
   /**
@@ -153,6 +156,7 @@ export class MatterbridgePlatform {
    */
   async unregisterAllDevices() {
     await this.matterbridge.removeAllBridgedEndpoints(this.name);
+    this.registeredEndpoints.clear();
   }
 
   /**
