@@ -56,6 +56,7 @@ describe('MatterbridgeEndpoint class', () => {
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let consoleDebugSpy: jest.SpiedFunction<typeof console.debug>;
   let consoleInfoSpy: jest.SpiedFunction<typeof console.info>;
+  let consoleWarnSpy: jest.SpiedFunction<typeof console.warn>;
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
 
   beforeAll(async () => {
@@ -76,7 +77,7 @@ describe('MatterbridgeEndpoint class', () => {
       // console.error(args);
     });
     // Spy on and mock console.log
-    consoleInfoSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
       // console.warn(args);
     });
     // Spy on and mock console.log
@@ -104,14 +105,16 @@ describe('MatterbridgeEndpoint class', () => {
   });
 
   afterAll(async () => {
+    await matterbridge.destroyInstance();
+    await matterbridge.environment.get(MdnsService)[Symbol.asyncDispose]();
+
     // Restore the mocked AnsiLogger.log method
     if ((AnsiLogger.prototype.log as jest.Mock).mockRestore) (AnsiLogger.prototype.log as jest.Mock).mockRestore();
     consoleLogSpy?.mockRestore();
     consoleDebugSpy?.mockRestore();
     consoleInfoSpy?.mockRestore();
+    consoleWarnSpy?.mockRestore();
     consoleErrorSpy?.mockRestore();
-
-    await matterbridge.environment.get(MdnsService)[Symbol.asyncDispose]();
   });
 
   describe('MatterbridgeBehavior', () => {
@@ -307,7 +310,6 @@ describe('MatterbridgeEndpoint class', () => {
     test('close server node', async () => {
       expect(server).toBeDefined();
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
     });
   });
 });

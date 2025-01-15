@@ -11,6 +11,7 @@ import WebSocket from 'ws';
 import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { Identify } from '@matter/main/clusters';
 import { RegisteredPlugin, MatterbridgeDevice } from './matterbridgeTypes.js';
+import { MdnsService } from '@matter/main/protocol';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -42,6 +43,7 @@ describe('Matterbridge frontend test', () => {
   afterAll(async () => {
     loggerLogSpy.mockRestore();
     consoleLogSpy.mockRestore();
+    ws.close();
   }, 60000);
 
   test('Matterbridge.loadInstance(true) -bridge mode and send /api/restart', async () => {
@@ -135,6 +137,11 @@ describe('Matterbridge frontend test', () => {
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `The WebSocketServer is listening on ${UNDERLINE}ws://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
   }, 60000);
+
+  test('Reset Jest plugins', async () => {
+    matterbridge.plugins.clear();
+    expect(await matterbridge.plugins.saveToStorage()).toBe(0);
+  });
 
   test('Add mock plugin 1', async () => {
     await (matterbridge as any).plugins.add('./src/mock/plugin1');
@@ -963,6 +970,7 @@ describe('Matterbridge frontend test', () => {
     expect((matterbridge as any).plugins.size).toBe(0);
     await matterbridge.destroyInstance();
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    // await matterbridge.environment.get(MdnsService)[Symbol.asyncDispose]();
     await wait(1000, 'Wait for matter to unload', false);
   }, 60000);
 });

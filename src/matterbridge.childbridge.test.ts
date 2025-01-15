@@ -2,11 +2,9 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-matterlogger', 'debug', '-childbridge', '-profile', 'Jest', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
+process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-childbridge', '-profile', 'Jest', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
 
 import { jest } from '@jest/globals';
-
-// jest.mock('@project-chip/matter-node.js/util');
 
 import { AnsiLogger, db, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
@@ -44,9 +42,6 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   }, 60000);
 
   test('Matterbridge.loadInstance(true) -childbridge mode', async () => {
-    // loggerLogSpy.mockRestore();
-    // consoleLogSpy.mockRestore();
-
     matterbridge = await Matterbridge.loadInstance(true);
 
     expect(matterbridge).toBeDefined();
@@ -78,14 +73,13 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect((matterbridge as any).mattercontrollerContext).toBeUndefined();
     expect((matterbridge as any).serverNode).toBeUndefined();
     expect((matterbridge as any).aggregatorNode).toBeUndefined();
-    // expect((matterbridge as any).commissioningController).toBeUndefined();
 
     expect((matterbridge as any).mdnsInterface).toBe(undefined);
     expect((matterbridge as any).port).toBe(5555);
     expect((matterbridge as any).passcode).toBe(123456);
     expect((matterbridge as any).discriminator).toBe(3860);
 
-    await wait(5000);
+    await wait(5000, 'Wait for matter to load', true);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
 
     await waiter(

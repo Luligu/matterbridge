@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-matterlogger', 'fatal', '-bridge', '-profile', 'Jest', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
+process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-profile', 'Jest', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
 
 import { jest } from '@jest/globals';
 
@@ -11,6 +11,7 @@ import { jest } from '@jest/globals';
 import { AnsiLogger, db, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { wait, waiter } from './utils/utils.js';
+import { MdnsService } from '@matter/main/protocol';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -44,9 +45,6 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   }, 60000);
 
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {
-    // loggerLogSpy.mockRestore();
-    // consoleLogSpy.mockRestore();
-
     matterbridge = await Matterbridge.loadInstance(true);
 
     expect(matterbridge).toBeDefined();
@@ -78,14 +76,13 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect((matterbridge as any).mattercontrollerContext).toBeUndefined();
     expect((matterbridge as any).serverNode).toBeDefined();
     expect((matterbridge as any).aggregatorNode).toBeDefined();
-    // expect((matterbridge as any).commissioningController).toBeUndefined();
 
     expect((matterbridge as any).mdnsInterface).toBe(undefined);
     expect((matterbridge as any).port).toBe(5555 + 1);
     expect((matterbridge as any).passcode).toBe(123456 + 1);
     expect((matterbridge as any).discriminator).toBe(3860 + 1);
 
-    await wait(5000);
+    await wait(5000, 'Wait for matter to load', true);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
 
     await waiter(
@@ -99,13 +96,13 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
       true,
     );
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
-    await wait(1000, 'Wait for matter to load', false);
+    await wait(1000, 'Wait for matter to load', true);
   }, 60000);
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
     await matterbridge.destroyInstance();
-    // console.error(`Matterbridge.destroyInstance() -bridge mode completed`);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    // await matterbridge.environment.get(MdnsService)[Symbol.asyncDispose]();
     await wait(1000, 'Wait for matter to unload', false);
   }, 60000);
 });
