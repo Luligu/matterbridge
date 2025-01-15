@@ -40,7 +40,7 @@ export function WebSocketProvider({ children }) {
   const maxMessages = 1000;
   const maxRetries = 100;
   const pingIntervalSeconds = 60;
-  const offlineTimeoutSeconds = 10;
+  const offlineTimeoutSeconds = 50;
 
   useEffect(() => {
       logFilterLevelRef.current = logFilterLevel;
