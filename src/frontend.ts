@@ -446,12 +446,13 @@ export class Frontend {
     });
 
     // Endpoint to download the matter storage file
-    this.expressApp.get('/api/download-mjstorage', (req, res) => {
+    this.expressApp.get('/api/download-mjstorage', async (req, res) => {
       this.log.debug('The frontend sent /api/download-mjstorage');
-      res.download(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterStorageName), 'matterbridge.json', (error) => {
+      await createZip(path.join(os.tmpdir(), `matterbridge.${this.matterbridge.matterStorageName}.zip`), path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterStorageName));
+      res.download(path.join(os.tmpdir(), `matterbridge.${this.matterbridge.matterStorageName}.zip`), `matterbridge.${this.matterbridge.matterStorageName}.zip`, (error) => {
         if (error) {
-          this.log.error(`Error downloading log file ${this.matterbridge.matterStorageName}: ${error instanceof Error ? error.message : error}`);
-          res.status(500).send('Error downloading the matter storage file');
+          this.log.error(`Error downloading the matter storage matterbridge.${this.matterbridge.matterStorageName}.zip: ${error instanceof Error ? error.message : error}`);
+          res.status(500).send('Error downloading the matter storage zip file');
         }
       });
     });

@@ -12,7 +12,7 @@ import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matte
 import { Identify } from '@matter/main/clusters';
 import { RegisteredPlugin, MatterbridgeDevice } from './matterbridgeTypes.js';
 import { MdnsService } from '@matter/main/protocol';
-import http, { createServer } from 'http';
+import http from 'http';
 import { AddressInfo } from 'net';
 
 // Default colors
@@ -22,7 +22,6 @@ const typ = '\u001B[38;5;207m';
 
 describe('Matterbridge frontend express test', () => {
   let matterbridge: Matterbridge;
-  let server: ReturnType<typeof createServer>;
   let baseUrl: string;
 
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -39,15 +38,6 @@ describe('Matterbridge frontend express test', () => {
     });
     // Load the Matterbridge instance
     matterbridge = await Matterbridge.loadInstance(true);
-    // Create an HTTP server for testing
-    server = createServer((matterbridge as any).frontend.expressApp);
-    await new Promise<void>((resolve) => {
-      server.listen(() => {
-        const { port } = server.address() as AddressInfo;
-        baseUrl = `http://localhost:${port}`;
-        resolve();
-      });
-    });
   });
 
   beforeEach(() => {
@@ -67,7 +57,7 @@ describe('Matterbridge frontend express test', () => {
     return new Promise<{ status: number; body: any }>((resolve, reject) => {
       const data = body ? JSON.stringify(body) : null;
       const req = http.request(
-        `${baseUrl}${path}`,
+        `${'http://localhost:8283'}${path}`,
         {
           method,
           headers: {
@@ -92,6 +82,11 @@ describe('Matterbridge frontend express test', () => {
     });
   };
 
+  test('Reset Jest plugins', async () => {
+    matterbridge.plugins.clear();
+    expect(await matterbridge.plugins.saveToStorage()).toBe(0);
+  });
+
   test('Frontend is running on http', async () => {
     expect((matterbridge as any).frontend.httpServer).toBeDefined();
     expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
@@ -99,9 +94,95 @@ describe('Matterbridge frontend express test', () => {
     expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
   });
 
-  test('Reset Jest plugins', async () => {
-    matterbridge.plugins.clear();
-    expect(await matterbridge.plugins.saveToStorage()).toBe(0);
+  test('POST /api/login with valid password', async () => {
+    // Set the password in the nodeContext
+    await matterbridge.nodeContext?.set('password', 'testpassword');
+
+    const response = await makeRequest('/api/login', 'POST', { password: 'testpassword' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.valid).toBe(true);
+  });
+
+  test('POST /api/login with invalid password', async () => {
+    // Set the password in the nodeContext
+    await matterbridge.nodeContext?.set('password', 'testpassword');
+
+    const response = await makeRequest('/api/login', 'POST', { password: 'wrongpassword' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.valid).toBe(false);
+  });
+
+  test('POST /api/login with no nodeContext', async () => {
+    // Temporarily remove the nodeContext
+    const originalNodeContext = matterbridge.nodeContext;
+    matterbridge.nodeContext = undefined;
+
+    const response = await makeRequest('/api/login', 'POST', { password: 'testpassword' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.valid).toBe(false);
+
+    // Restore the nodeContext
+    matterbridge.nodeContext = originalNodeContext;
+  });
+
+  test('GET /health', async () => {
+    const response = await makeRequest('/health', 'GET');
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe('ok');
+    expect(typeof response.body.uptime).toBe('number');
+    expect(new Date(response.body.timestamp).toString()).not.toBe('Invalid Date');
+  });
+
+  test('GET /api/settings', async () => {
+    const response = await makeRequest('/api/settings', 'GET');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('systemInformation');
+    expect(response.body.systemInformation).toHaveProperty('interfaceName');
+    expect(response.body.systemInformation).toHaveProperty('macAddress');
+    expect(response.body.systemInformation).toHaveProperty('ipv4Address');
+    expect(response.body.systemInformation).toHaveProperty('ipv6Address');
+    expect(response.body.systemInformation).toHaveProperty('nodeVersion');
+    expect(response.body.systemInformation).toHaveProperty('hostname');
+    expect(response.body.systemInformation).toHaveProperty('user');
+    expect(response.body.systemInformation).toHaveProperty('osType');
+    expect(response.body.systemInformation).toHaveProperty('osRelease');
+    expect(response.body.systemInformation).toHaveProperty('osPlatform');
+    expect(response.body.systemInformation).toHaveProperty('osArch');
+    expect(response.body.systemInformation).toHaveProperty('totalMemory');
+    expect(response.body.systemInformation).toHaveProperty('freeMemory');
+    expect(response.body.systemInformation).toHaveProperty('systemUptime');
+
+    expect(response.body).toHaveProperty('matterbridgeInformation');
+    expect(response.body.matterbridgeInformation).toHaveProperty('bridgeMode');
+    expect(response.body.matterbridgeInformation).toHaveProperty('restartMode');
+    expect(response.body.matterbridgeInformation).toHaveProperty('loggerLevel');
+    expect(response.body.matterbridgeInformation).toHaveProperty('matterLoggerLevel');
+    expect(response.body.matterbridgeInformation).toHaveProperty('mattermdnsinterface');
+    expect(response.body.matterbridgeInformation).toHaveProperty('matteripv4address');
+    expect(response.body.matterbridgeInformation).toHaveProperty('matteripv6address');
+    expect(response.body.matterbridgeInformation).toHaveProperty('matterPort');
+    expect(response.body.matterbridgeInformation).toHaveProperty('profile');
+  });
+
+  test('GET /api/plugins', async () => {
+    const response = await makeRequest('/api/plugins', 'GET');
+
+    expect(response.status).toBe(200);
+    expect(typeof response.body).toBe('object');
+    expect(Array.isArray(response.body)).toBe(true);
+  });
+
+  test('GET /api/devices', async () => {
+    const response = await makeRequest('/api/devices', 'GET');
+
+    expect(response.status).toBe(200);
+    expect(typeof response.body).toBe('object');
+    expect(Array.isArray(response.body)).toBe(true);
   });
 });
 
