@@ -542,7 +542,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   addRequiredClusterServers(endpoint: MatterbridgeEndpoint): MatterbridgeEndpoint {
     const requiredServerList: ClusterId[] = [];
-    this.log.debug(`addRequiredClusterServer for ${CYAN}${endpoint.id}${db}`);
+    this.log.debug(`addRequiredClusterServer for ${CYAN}${endpoint.maybeId}${db}`);
     endpoint.getDeviceTypes().forEach((deviceType) => {
       this.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
       deviceType.requiredServerClusters.forEach((clusterId) => {
