@@ -18,10 +18,47 @@ const plg = '\u001B[38;5;33m';
 const dev = '\u001B[38;5;79m';
 const typ = '\u001B[38;5;207m';
 
-describe('Matterbridge frontend test', () => {
+describe('Matterbridge frontend express test', () => {
   let matterbridge: Matterbridge;
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-  let loggerLogSpy: jest.SpiedFunction<(level: LogLevel, message: string, ...parameters: any[]) => void>;
+  let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
+
+  beforeAll(async () => {
+    // Spy on and mock the AnsiLogger.log method
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
+      // console.error(`Mocked log: ${level} - ${message}`, ...parameters);
+    });
+    // Spy on and mock console.log
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
+      // console.error(args);
+    });
+    // Load the Matterbridge instance
+    matterbridge = await Matterbridge.loadInstance(true);
+  });
+
+  beforeEach(() => {
+    loggerLogSpy.mockClear();
+    consoleLogSpy.mockClear();
+  });
+
+  afterAll(async () => {
+    // Destroy the Matterbridge instance
+    await matterbridge.destroyInstance();
+    // Restore the spies
+    loggerLogSpy.mockRestore();
+    consoleLogSpy.mockRestore();
+  });
+
+  test('Reset Jest plugins', async () => {
+    matterbridge.plugins.clear();
+    expect(await matterbridge.plugins.saveToStorage()).toBe(0);
+  });
+});
+
+describe('Matterbridge frontend websocket test', () => {
+  let matterbridge: Matterbridge;
+  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
+  let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
   let ws: WebSocket;
 
   beforeAll(async () => {
