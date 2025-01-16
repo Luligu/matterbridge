@@ -727,7 +727,6 @@ export class Matterbridge extends EventEmitter {
       plugin.loaded = false;
       plugin.started = false;
       plugin.configured = false;
-      plugin.connected = undefined;
       plugin.registeredDevices = undefined;
       plugin.addedDevices = undefined;
       plugin.qrPairingCode = undefined;
@@ -2021,7 +2020,6 @@ export class Matterbridge extends EventEmitter {
             plugin.fabricInformations = [];
             plugin.sessionInformations = [];
             plugin.paired = false;
-            plugin.connected = false;
             this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
             this.log.notice(`Manual pairing code: ${manualPairingCode}`);
           }
@@ -2051,7 +2049,6 @@ export class Matterbridge extends EventEmitter {
           plugin.fabricInformations = [];
           plugin.sessionInformations = [];
           plugin.paired = false;
-          plugin.connected = false;
         }
       }
       this.frontend.wssSendRefreshRequired();

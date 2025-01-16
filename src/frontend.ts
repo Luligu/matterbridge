@@ -814,7 +814,6 @@ export class Frontend {
             plugin.loaded = undefined;
             plugin.started = undefined;
             plugin.configured = undefined;
-            plugin.connected = undefined;
             plugin.platform = undefined;
             plugin.registeredDevices = undefined;
             plugin.addedDevices = undefined;
@@ -1010,7 +1009,6 @@ export class Frontend {
         started: plugin.started,
         configured: plugin.configured,
         paired: plugin.paired,
-        connected: plugin.connected,
         fabricInformations: plugin.fabricInformations,
         sessionInformations: plugin.sessionInformations,
         registeredDevices: plugin.registeredDevices,

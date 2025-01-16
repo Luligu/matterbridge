@@ -394,11 +394,11 @@ function Home() {
                               <>
                                 <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled' /></> :
                               <>
-                                {plugin.loaded && plugin.started && plugin.configured && plugin.paired && plugin.connected ?
+                                {plugin.loaded && plugin.started && plugin.configured && plugin.paired ?
                                   <>
                                     <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running' /></> :
                                   <>
-                                    {plugin.loaded && plugin.started && plugin.configured && plugin.connected === undefined ?
+                                    {plugin.loaded && plugin.started && plugin.configured ?
                                       <>
                                         <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running' /></> :
                                       <>
@@ -407,7 +407,6 @@ function Home() {
                                         <StatusIndicator status={plugin.started} enabledText='Started' tooltipText='Whether the plugin started' />
                                         <StatusIndicator status={plugin.configured} enabledText='Configured' tooltipText='Whether the plugin has been configured' />
                                         {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' ? <StatusIndicator status={plugin.paired} enabledText='Paired' tooltipText='Whether the plugin has been paired' /> : <></>}
-                                        {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' ? <StatusIndicator status={plugin.connected} enabledText='Connected' tooltipText='Whether the controller connected' /> : <></>}
                                       </>
                                     }
                                   </>

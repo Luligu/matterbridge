@@ -69,7 +69,6 @@ export interface BaseRegisteredPlugin {
   started?: boolean;
   configured?: boolean;
   paired?: boolean;
-  connected?: boolean;
   fabricInformations?: SanitizedExposedFabricInformation[];
   sessionInformations?: SanitizedSessionInformation[];
   registeredDevices?: number;

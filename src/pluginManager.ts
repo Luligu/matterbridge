@@ -745,7 +745,6 @@ export class PluginManager {
       plugin.loaded = undefined;
       plugin.started = undefined;
       plugin.configured = undefined;
-      plugin.connected = undefined;
       plugin.platform = undefined;
       if (removeAllDevices) {
         this.log.info(`Removing all endpoints for plugin ${plg}${plugin.name}${nf}: ${reason}...`);
