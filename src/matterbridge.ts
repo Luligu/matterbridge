@@ -469,11 +469,11 @@ export class Matterbridge extends EventEmitter {
     await this.logNodeAndSystemInfo();
     this.log.notice(
       `Matterbridge version ${this.matterbridgeVersion} ` +
-        `${hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge') ? 'mode bridge ' : ''}` +
-        `${hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge') ? 'mode childbridge ' : ''}` +
-        `${hasParameter('controller') ? 'mode controller ' : ''}` +
-        `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}` +
-        `running on ${this.systemInformation.osType} (v.${this.systemInformation.osRelease}) platform ${this.systemInformation.osPlatform} arch ${this.systemInformation.osArch}`,
+      `${hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge') ? 'mode bridge ' : ''}` +
+      `${hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge') ? 'mode childbridge ' : ''}` +
+      `${hasParameter('controller') ? 'mode controller ' : ''}` +
+      `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}` +
+      `running on ${this.systemInformation.osType} (v.${this.systemInformation.osRelease}) platform ${this.systemInformation.osPlatform} arch ${this.systemInformation.osArch}`,
     );
 
     // Check node version and throw error
@@ -1978,14 +1978,14 @@ export class Matterbridge extends EventEmitter {
       this.log.info(`Fabrics: ${debugStringify(sanitizedFabrics)}`);
       if (this.bridgeMode === 'bridge') {
         this.matterbridgeFabricInformations = sanitizedFabrics;
-        this.matterbridgeSessionInformations = [];
+        // this.matterbridgeSessionInformations = []; Removed cause Invoke Matterbridge.operationalCredentials.updateFabricLabel is sent after the session is created
         this.matterbridgePaired = true;
       }
       if (this.bridgeMode === 'childbridge') {
         const plugin = this.plugins.get(storeId);
         if (plugin) {
           plugin.fabricInformations = sanitizedFabrics;
-          plugin.sessionInformations = [];
+          // plugin.sessionInformations = []; Removed cause Invoke Matterbridge.operationalCredentials.updateFabricLabel is sent after the session is created
           plugin.paired = true;
         }
       }
@@ -2046,6 +2046,17 @@ export class Matterbridge extends EventEmitter {
         this.matterbridgeSessionInformations = [];
         this.matterbridgePaired = false;
         this.matterbridgeConnected = false;
+      }
+      if (this.bridgeMode === 'childbridge') {
+        const plugin = this.plugins.get(storeId);
+        if (plugin) {
+          plugin.qrPairingCode = undefined;
+          plugin.manualPairingCode = undefined;
+          plugin.fabricInformations = [];
+          plugin.sessionInformations = [];
+          plugin.paired = false;
+          plugin.connected = false;
+        }
       }
       this.frontend.wssSendRefreshRequired();
     });
@@ -2259,14 +2270,14 @@ export class Matterbridge extends EventEmitter {
           peerNodeId: session.peerNodeId.toString(),
           fabric: session.fabric
             ? {
-                fabricIndex: session.fabric.fabricIndex,
-                fabricId: session.fabric.fabricId.toString(),
-                nodeId: session.fabric.nodeId.toString(),
-                rootNodeId: session.fabric.rootNodeId.toString(),
-                rootVendorId: session.fabric.rootVendorId,
-                rootVendorName: this.getVendorIdName(session.fabric.rootVendorId),
-                label: session.fabric.label,
-              }
+              fabricIndex: session.fabric.fabricIndex,
+              fabricId: session.fabric.fabricId.toString(),
+              nodeId: session.fabric.nodeId.toString(),
+              rootNodeId: session.fabric.rootNodeId.toString(),
+              rootVendorId: session.fabric.rootVendorId,
+              rootVendorName: this.getVendorIdName(session.fabric.rootVendorId),
+              label: session.fabric.label,
+            }
             : undefined,
           isPeerActive: session.isPeerActive,
           secure: session.secure,
