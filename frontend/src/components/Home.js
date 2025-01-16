@@ -69,7 +69,7 @@ function Home() {
   const [logFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
   const [logFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
 
-  const { logMessage, addListener, removeListener, online, sendMessage } = useContext(WebSocketContext);
+  const { setMessages, logMessage, addListener, removeListener, online, sendMessage } = useContext(WebSocketContext);
 
   const refAddRemove = useRef(null);
   const refRegisteredPlugins = useRef(null);
@@ -446,12 +446,31 @@ function Home() {
 }
 
 /*
+        <div className="MbfWindowDiv" style={{ flex: '1 1 auto', width: '100%', overflow: 'hidden' }}>
+          <div className="MbfWindowHeader" style={{ flexShrink: 0 }}>
+            <div className="MbfWindowHeaderText" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+
+              <div>
+                Logs
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'row', gap: '2px' }}>
+                <p style={{ margin: '0px', padding: '0px' }}>
+                  Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}"
+                </p>
                 <Tooltip title="Clear the logs">
-                  <IconButton onClick={setMessages([])}>
-                    <DeleteForever/>
+                  <IconButton onClick={setMessages([])} style={{ margin: '0px', padding: '0px', width: '19px', height: '19px' }}>
+                    <DeleteForever style={{ color: 'var(--header-text-color)', fontSize: '19px' }} />
                   </IconButton>
                 </Tooltip>
+              </div>
 
+            </div>
+          </div>
+          <div style={{ flex: '1 1 auto', margin: '0px', padding: '10px', overflow: 'auto' }}>
+            <WebSocketLogs />
+          </div>
+        </div>
 */
 
 function AddRemovePlugins({ reloadSettings }) {

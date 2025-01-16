@@ -259,7 +259,7 @@ export function WebSocketProvider({ children }) {
     restart,
     addListener,
     removeListener
-  }), [messages, sendMessage, logMessage, setLogFilters, online, refresh, restart, addListener, removeListener]);
+  }), [messages, setMessages, sendMessage, logMessage, setLogFilters, online, refresh, restart, addListener, removeListener]);
 
   return (
     <WebSocketContext.Provider value={contextValue}>
