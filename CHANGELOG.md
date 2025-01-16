@@ -21,7 +21,7 @@ The legacy old api have been completely removed.
 The frontend has a new dark and light mode. The dark mode is now the default mode.
 It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbridge settings.
 
-## [2.0.0-edge.3] - 2025-01-15
+## [2.0.0-edge.3] - 2025-01-16
 
 ### Added
 
@@ -36,9 +36,14 @@ It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbr
 - [iconView]: Improved render for energySensor adding voltage, current and power.
 - [iconView]: Improved render for PowerSource adding battery voltage.
 - [jest]: Refactor all tests for edge.
-- [frontend]: WebSocketProvider changed timeout to 10 sec.
+- [frontend]: WebSocketProvider added a startTimeout of 300 sec. to start ping.
+- [frontend]: WebSocketProvider changed pingIntervalSeconds to 60 sec. and offlineTimeoutSeconds to 50 sec.
+- [frontend]: Search on select is no more case sensitive.
 - [package]: Update dependencies.
 
+### Fixed
+
+- [sessions]: Fixed the case when Active session was not reporting correctly.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
