@@ -40,7 +40,7 @@ export const dev = '\u001B[38;5;79m';
 export const typ = '\u001B[38;5;207m';
 
 // Define an alias for MatterbridgeEndpoint by extending it
-export class MatterbridgeDevice extends MatterbridgeEndpoint {}
+export class MatterbridgeDevice extends MatterbridgeEndpoint { }
 
 // Define an interface for storing the plugins
 export interface RegisteredPlugin extends BaseRegisteredPlugin {
@@ -112,7 +112,6 @@ export interface MatterbridgeInformation {
   matterbridgeFabricInformations: SanitizedExposedFabricInformation[];
   matterbridgeSessionInformations: SanitizedSessionInformation[];
   matterbridgePaired: boolean;
-  matterbridgeConnected: boolean;
   bridgeMode: string;
   restartMode: string;
   readOnly: boolean;

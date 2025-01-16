@@ -87,7 +87,6 @@ export class Matterbridge extends EventEmitter {
     matterbridgeFabricInformations: [],
     matterbridgeSessionInformations: [],
     matterbridgePaired: false,
-    matterbridgeConnected: false,
     bridgeMode: '',
     restartMode: '',
     readOnly: hasParameter('readonly'),
@@ -118,7 +117,6 @@ export class Matterbridge extends EventEmitter {
   public matterbridgeFabricInformations: SanitizedExposedFabricInformation[] = [];
   public matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
   public matterbridgePaired = false;
-  public matterbridgeConnected = false;
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public restartMode: 'service' | 'docker' | '' = '';
   public profile = getParameter('profile');
@@ -2012,7 +2010,6 @@ export class Matterbridge extends EventEmitter {
           this.matterbridgeFabricInformations = [];
           this.matterbridgeSessionInformations = [];
           this.matterbridgePaired = false;
-          this.matterbridgeConnected = false;
           this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
           this.log.notice(`Manual pairing code: ${manualPairingCode}`);
         }
@@ -2045,7 +2042,6 @@ export class Matterbridge extends EventEmitter {
         this.matterbridgeFabricInformations = [];
         this.matterbridgeSessionInformations = [];
         this.matterbridgePaired = false;
-        this.matterbridgeConnected = false;
       }
       if (this.bridgeMode === 'childbridge') {
         const plugin = this.plugins.get(storeId);

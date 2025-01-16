@@ -289,7 +289,6 @@ export class Frontend {
       this.matterbridge.matterbridgeInformation.matterDiscriminator = await this.matterbridge.nodeContext?.get<number>('matterdiscriminator');
       this.matterbridge.matterbridgeInformation.matterPasscode = await this.matterbridge.nodeContext?.get<number>('matterpasscode');
       this.matterbridge.matterbridgeInformation.matterbridgePaired = this.matterbridge.matterbridgePaired;
-      this.matterbridge.matterbridgeInformation.matterbridgeConnected = this.matterbridge.matterbridgeConnected;
       this.matterbridge.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridge.matterbridgeQrPairingCode;
       this.matterbridge.matterbridgeInformation.matterbridgeManualPairingCode = this.matterbridge.matterbridgeManualPairingCode;
       this.matterbridge.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridge.matterbridgeFabricInformations;
@@ -1109,7 +1108,6 @@ export class Frontend {
         this.matterbridge.matterbridgeInformation.matterDiscriminator = await this.matterbridge.nodeContext?.get<number>('matterdiscriminator');
         this.matterbridge.matterbridgeInformation.matterPasscode = await this.matterbridge.nodeContext?.get<number>('matterpasscode');
         this.matterbridge.matterbridgeInformation.matterbridgePaired = this.matterbridge.matterbridgePaired;
-        this.matterbridge.matterbridgeInformation.matterbridgeConnected = this.matterbridge.matterbridgeConnected;
         this.matterbridge.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridge.matterbridgeQrPairingCode;
         this.matterbridge.matterbridgeInformation.matterbridgeManualPairingCode = this.matterbridge.matterbridgeManualPairingCode;
         this.matterbridge.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridge.matterbridgeFabricInformations;
