@@ -26,7 +26,7 @@ import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
 
 // AnsiLogger module
-import { AnsiLogger } from 'node-ansi-logger';
+import { AnsiLogger } from './logger/export.js';
 
 /**
  * Represents a Matterbridge accessory platform.

@@ -34,7 +34,7 @@ import path from 'path';
 import { promises as fs } from 'fs';
 
 // AnsiLogger module
-import { AnsiLogger, CYAN, db, debugStringify, er, LogLevel, nf, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, db, debugStringify, er, LogLevel, nf, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from './logger/export.js';
 
 // Matterbridge
 import { createZip, hasParameter, isValidNumber, isValidObject, isValidString } from './utils/utils.js';

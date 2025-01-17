@@ -26,31 +26,35 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // @matter
-import { Behavior, Lifecycle, NamedHandler } from '@matter/main';
-import {
-  ColorControlServer,
-  DoorLockServer,
-  IdentifyServer,
-  LevelControlServer,
-  WindowCoveringServer,
-  ThermostatServer,
-  FanControlServer,
-  BooleanStateConfigurationBehavior,
-  BooleanStateConfigurationServer,
-  WindowCoveringBehavior,
-  MovementType,
-  MovementDirection,
-  ValveConfigurationAndControlServer,
-} from '@matter/main/behaviors';
-import { BooleanStateConfiguration, ColorControl, FanControl, Identify, LevelControl, Thermostat, ValveConfigurationAndControl, WindowCovering } from '@matter/main/clusters';
-import { TypeFromPartialBitSchema } from '@matter/main/types';
-import { OnOffServer } from '@matter/node/behaviors/on-off';
+import { Behavior, NamedHandler } from '@matter/main';
+
+// @matter behaviors
+import { IdentifyServer } from '@matter/main/behaviors/identify';
+import { OnOffServer } from '@matter/main/behaviors/on-off';
+import { LevelControlServer } from '@matter/main/behaviors/level-control';
+import { ColorControlServer } from '@matter/main/behaviors/color-control';
+import { MovementDirection, MovementType, WindowCoveringServer } from '@matter/main/behaviors/window-covering';
+import { DoorLockServer } from '@matter/main/behaviors/door-lock';
+import { FanControlServer } from '@matter/main/behaviors/fan-control';
+import { ThermostatServer } from '@matter/main/behaviors/thermostat';
+import { ValveConfigurationAndControlServer } from '@matter/main/behaviors/valve-configuration-and-control';
+import { BooleanStateConfigurationServer } from '@matter/main/behaviors/boolean-state-configuration';
+
+// @matter clusters
+import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
+import { ColorControl } from '@matter/main/clusters/color-control';
+import { FanControl } from '@matter/main/clusters/fan-control';
+import { Identify } from '@matter/main/clusters/identify';
+import { LevelControl } from '@matter/main/clusters/level-control';
+import { Thermostat } from '@matter/main/clusters/thermostat';
+import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-configuration-and-control';
+import { WindowCovering } from '@matter/main/clusters/window-covering';
 
 // AnsiLogger module
-import { AnsiLogger } from 'node-ansi-logger';
+import { AnsiLogger } from './logger/export.js';
 
-// MatterbridgeEndpoint class
-import { MatterbridgeEndpoint, MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
+// MatterbridgeEndpoint
+import { MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
 
 export class MatterbridgeBehaviorDevice {
   log: AnsiLogger;

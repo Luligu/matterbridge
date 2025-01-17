@@ -22,8 +22,8 @@
  */
 
 // NodeStorage and AnsiLogger modules
-import { NodeStorage } from 'node-persist-manager';
-import { LogLevel } from 'node-ansi-logger';
+import { NodeStorage } from './storage/export.js';
+import { LogLevel } from './logger/export.js';
 
 // Matterbridge
 import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
@@ -32,7 +32,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 // @matter
 import { FabricIndex, NodeId, VendorId, StorageContext, ServerNode, EndpointNumber, Endpoint as EndpointNode } from '@matter/main';
 import { ExposedFabricInformation } from '@matter/main/protocol';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 
 // Default colors
 export const plg = '\u001B[38;5;33m';
@@ -40,7 +40,7 @@ export const dev = '\u001B[38;5;79m';
 export const typ = '\u001B[38;5;207m';
 
 // Define an alias for MatterbridgeEndpoint by extending it
-export class MatterbridgeDevice extends MatterbridgeEndpoint { }
+export class MatterbridgeDevice extends MatterbridgeEndpoint {}
 
 // Define an interface for storing the plugins
 export interface RegisteredPlugin extends BaseRegisteredPlugin {

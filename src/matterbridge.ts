@@ -31,8 +31,8 @@ import path from 'path';
 import { randomBytes } from 'crypto';
 
 // NodeStorage and AnsiLogger modules
-import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
-import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN, nt } from 'node-ansi-logger';
+import { NodeStorageManager, NodeStorage } from './storage/export.js';
+import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN, nt } from './logger/export.js';
 
 // Matterbridge
 import { logInterfaces, wait, waiter, copyDirectory, getParameter, getIntParameter, hasParameter } from './utils/utils.js';
@@ -41,12 +41,12 @@ import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint, SerializedMatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
+import { Frontend } from './frontend.js';
 
 // @matter
 import { DeviceTypeId, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, StorageService, Environment, ServerNode, FabricIndex, SessionsBehavior } from '@matter/main';
 import { ExposedFabricInformation, FabricAction, PaseClient } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
-import { Frontend } from './frontend.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -467,11 +467,11 @@ export class Matterbridge extends EventEmitter {
     await this.logNodeAndSystemInfo();
     this.log.notice(
       `Matterbridge version ${this.matterbridgeVersion} ` +
-      `${hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge') ? 'mode bridge ' : ''}` +
-      `${hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge') ? 'mode childbridge ' : ''}` +
-      `${hasParameter('controller') ? 'mode controller ' : ''}` +
-      `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}` +
-      `running on ${this.systemInformation.osType} (v.${this.systemInformation.osRelease}) platform ${this.systemInformation.osPlatform} arch ${this.systemInformation.osArch}`,
+        `${hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge') ? 'mode bridge ' : ''}` +
+        `${hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge') ? 'mode childbridge ' : ''}` +
+        `${hasParameter('controller') ? 'mode controller ' : ''}` +
+        `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}` +
+        `running on ${this.systemInformation.osType} (v.${this.systemInformation.osRelease}) platform ${this.systemInformation.osPlatform} arch ${this.systemInformation.osArch}`,
     );
 
     // Check node version and throw error
@@ -1969,20 +1969,20 @@ export class Matterbridge extends EventEmitter {
       },
     });
 
-    const sanitizeFabrics = (fabrics: Record<FabricIndex, ExposedFabricInformation>) => {
+    const sanitizeFabrics = (fabrics: Record<FabricIndex, ExposedFabricInformation>, resetSessions = false) => {
       // New type of fabric information: Record<FabricIndex, ExposedFabricInformation>
       const sanitizedFabrics = this.sanitizeFabricInformations(Array.from(Object.values(fabrics)));
       this.log.info(`Fabrics: ${debugStringify(sanitizedFabrics)}`);
       if (this.bridgeMode === 'bridge') {
         this.matterbridgeFabricInformations = sanitizedFabrics;
-        // this.matterbridgeSessionInformations = []; Removed cause Invoke Matterbridge.operationalCredentials.updateFabricLabel is sent after the session is created
+        if (resetSessions) this.matterbridgeSessionInformations = []; // Changed cause Invoke Matterbridge.operationalCredentials.updateFabricLabel is sent after the session is created
         this.matterbridgePaired = true;
       }
       if (this.bridgeMode === 'childbridge') {
         const plugin = this.plugins.get(storeId);
         if (plugin) {
           plugin.fabricInformations = sanitizedFabrics;
-          // plugin.sessionInformations = []; Removed cause Invoke Matterbridge.operationalCredentials.updateFabricLabel is sent after the session is created
+          if (resetSessions) plugin.sessionInformations = []; // Changed cause Invoke Matterbridge.operationalCredentials.updateFabricLabel is sent after the session is created
           plugin.paired = true;
         }
       }
@@ -2026,7 +2026,7 @@ export class Matterbridge extends EventEmitter {
         }
       } else {
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
-        sanitizeFabrics(serverNode.state.commissioning.fabrics);
+        sanitizeFabrics(serverNode.state.commissioning.fabrics, true);
       }
       this.frontend.wssSendRefreshRequired();
     });
@@ -2263,14 +2263,14 @@ export class Matterbridge extends EventEmitter {
           peerNodeId: session.peerNodeId.toString(),
           fabric: session.fabric
             ? {
-              fabricIndex: session.fabric.fabricIndex,
-              fabricId: session.fabric.fabricId.toString(),
-              nodeId: session.fabric.nodeId.toString(),
-              rootNodeId: session.fabric.rootNodeId.toString(),
-              rootVendorId: session.fabric.rootVendorId,
-              rootVendorName: this.getVendorIdName(session.fabric.rootVendorId),
-              label: session.fabric.label,
-            }
+                fabricIndex: session.fabric.fabricIndex,
+                fabricId: session.fabric.fabricId.toString(),
+                nodeId: session.fabric.nodeId.toString(),
+                rootNodeId: session.fabric.rootNodeId.toString(),
+                rootVendorId: session.fabric.rootVendorId,
+                rootVendorName: this.getVendorIdName(session.fabric.rootVendorId),
+                label: session.fabric.label,
+              }
             : undefined,
           isPeerActive: session.isPeerActive,
           secure: session.secure,

@@ -23,19 +23,10 @@
 
 import { Matterbridge } from './matterbridge.js';
 
-export type Identity<T> = T;
-
-export type AtLeastOne<T> = ArrayMinLength<T, 1>;
-
-type BuildArrayMinLength<T, N extends number, Current extends T[]> = Current['length'] extends N ? [...Current, ...T[]] : BuildArrayMinLength<T, N, [...Current, T]>;
-
-export type ArrayMinLength<T, N extends number> = BuildArrayMinLength<T, N, []>;
-
 // @matter
-// export { Identity, AtLeastOne } from '@matter/main';
-export * from '@matter/main/clusters';
-export * from '@matter/main/types';
 export {
+  Identity,
+  AtLeastOne,
   SemanticNamespace,
   ClosureTag,
   CompassDirectionTag,
@@ -51,11 +42,12 @@ export {
   RefrigeratorTag,
   RoomAirConditionerTag,
   SwitchesTag,
-} from '@matter/node';
+} from '@matter/main';
+export * from '@matter/main/clusters';
+export * from '@matter/main/types';
 
 // @project-chip
-export * from '@project-chip/matter.js/device';
-export * from '@project-chip/matter.js/cluster';
+export { ClusterServer, ClusterServerObj, ClusterClient, ClusterClientObj } from '@project-chip/matter.js/cluster';
 
 // Matterbridge
 export * from './matterbridge.js';

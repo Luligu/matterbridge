@@ -527,7 +527,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     }
 
     const schema = await plugins.loadSchema(plugin);
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema.`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema.`));
     expect(schema).not.toBeUndefined();
     expect(schema).not.toBeNull();
     expect(schema.title).toBe(plugin.description);

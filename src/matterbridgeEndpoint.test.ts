@@ -30,11 +30,10 @@ import {
 } from './matterbridgeDeviceTypes.js';
 import { Matterbridge } from './matterbridge.js';
 
-import { DeviceTypeId, VendorId, Environment, ServerNode, Endpoint, EndpointServer, StorageContext } from '@matter/main';
+import { DeviceTypeId, VendorId, ServerNode, Endpoint, EndpointServer, StorageContext } from '@matter/main';
 import { LogFormat as Format, LogLevel as Level } from '@matter/main';
 import {
   BasicInformationCluster,
-  BooleanStateCluster,
   BridgedDeviceBasicInformationCluster,
   Descriptor,
   DescriptorCluster,
@@ -56,13 +55,10 @@ import {
   SwitchCluster,
   TemperatureMeasurementCluster,
   WindowCovering,
-  WindowCoveringCluster,
 } from '@matter/main/clusters';
 import { AggregatorEndpoint, AggregatorEndpointDefinition } from '@matter/main/endpoints';
-import { MdnsService } from '@matter/main/protocol';
+import { MdnsService, logEndpoint } from '@matter/main/protocol';
 import { DescriptorBehavior, GroupsBehavior, IdentifyBehavior, OccupancySensingBehavior, OnOffBehavior } from '@matter/main/behaviors';
-
-import { DeviceTypes, logEndpoint } from '@project-chip/matter.js/device';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
@@ -108,7 +104,7 @@ describe('MatterbridgeEndpoint class', () => {
     matterbridge = await Matterbridge.loadInstance(false);
     matterbridge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
     // Setup matter environment
-    matterbridge.environment.vars.set('log.level', Level.DEBUG);
+    matterbridge.environment.vars.set('log.level', Level.ERROR);
     matterbridge.environment.vars.set('log.format', Format.ANSI);
     matterbridge.environment.vars.set('path.root', 'matterstorage');
     matterbridge.environment.vars.set('runtime.signals', false);
@@ -1378,7 +1374,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('create a temperature humidity pressure sensor', async () => {
-      const deviceType = DeviceTypes.TEMPERATURE_SENSOR;
+      const deviceType = temperatureSensor;
       const context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
       const server = await (matterbridge as any).createServerNode(context);
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: deviceType.name.replace('MA-', '') + '-' + count });
@@ -1389,9 +1385,9 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
       expect(device.type.deviceRevision).toBe(deviceType.revision);
       device.addRequiredClusterServers(device);
-      device.addDeviceType(DeviceTypes.HUMIDITY_SENSOR);
+      device.addDeviceType(humiditySensor);
       device.addClusterServerFromList(device, [RelativeHumidityMeasurement.Cluster.id]);
-      device.addDeviceTypeWithClusterServer([DeviceTypes.PRESSURE_SENSOR], [PressureMeasurement.Cluster.id]);
+      device.addDeviceTypeWithClusterServer([pressureSensor], [PressureMeasurement.Cluster.id]);
       await server.add(device);
 
       await (matterbridge as any).startServerNode(server);

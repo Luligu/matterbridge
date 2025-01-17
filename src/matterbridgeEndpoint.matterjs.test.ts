@@ -5,45 +5,16 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { bridge, coverDevice, dimmableLight, doorLockDevice, electricalSensor, genericSwitch, lightSensor, occupancySensor, onOffLight, onOffOutlet, onOffSwitch, powerSource } from './matterbridgeDeviceTypes.js';
-import { getMacAddress } from './utils/utils.js';
+import { lightSensor, occupancySensor, onOffLight, onOffOutlet } from './matterbridgeDeviceTypes.js';
 
-import { DeviceTypeId, VendorId, Environment, ServerNode, Endpoint, EndpointServer, StorageContext } from '@matter/main';
+// @matter
+import { DeviceTypeId, VendorId, ServerNode, Endpoint, EndpointServer, StorageContext } from '@matter/main';
 import { LogFormat as Format, LogLevel as Level } from '@matter/main';
-import {
-  BasicInformationCluster,
-  BooleanStateCluster,
-  BridgedDeviceBasicInformationCluster,
-  Descriptor,
-  DescriptorCluster,
-  ElectricalEnergyMeasurement,
-  ElectricalPowerMeasurement,
-  FlowMeasurementCluster,
-  GroupsCluster,
-  Identify,
-  IdentifyCluster,
-  IlluminanceMeasurementCluster,
-  OccupancySensing,
-  OccupancySensingCluster,
-  OnOffCluster,
-  PowerTopology,
-  PressureMeasurement,
-  PressureMeasurementCluster,
-  RelativeHumidityMeasurement,
-  RelativeHumidityMeasurementCluster,
-  ScenesManagementCluster,
-  TemperatureMeasurementCluster,
-  WindowCovering,
-  WindowCoveringCluster,
-} from '@matter/main/clusters';
-import { AggregatorEndpoint, AggregatorEndpointDefinition } from '@matter/main/endpoints';
-
-import { DeviceTypeDefinition, DeviceTypes, logEndpoint } from '@project-chip/matter.js/device';
-import { MdnsService } from '@matter/main/protocol';
-import { log } from 'console';
+import { BasicInformationCluster, BridgedDeviceBasicInformationCluster, Descriptor, DescriptorCluster, GroupsCluster, Identify, IdentifyCluster, OccupancySensing, OnOffCluster, ScenesManagementCluster } from '@matter/main/clusters';
+import { AggregatorEndpoint } from '@matter/main/endpoints';
+import { MdnsService, logEndpoint } from '@matter/main/protocol';
 import { DescriptorServer, IlluminanceMeasurementServer, OccupancySensingServer } from '@matter/main/behaviors';
-import { OccupancySensorDevice, OnOffPlugInUnitDevice } from '@matter/main/devices';
-import { MatterbridgeBehavior, MatterbridgeIdentifyServer } from './matterbridgeBehaviors.js';
+import { OnOffPlugInUnitDevice } from '@matter/main/devices';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;

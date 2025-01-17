@@ -412,8 +412,7 @@ describe('Matterbridge platform', () => {
   });
 
   test('unregisterDevice calls matterbridge.removeBridgedEndpoint with correct parameters', async () => {
-    // const testDevice = new MatterbridgeEndpoint(powerSource);
-    const testDevice = await platform._createMutableDevice(powerSource);
+    const testDevice = new MatterbridgeEndpoint(powerSource);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
     await platform.unregisterDevice(testDevice);
     expect(platform.registeredEndpoints.size).toBe(0);

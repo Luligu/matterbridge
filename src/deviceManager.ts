@@ -22,8 +22,8 @@
  */
 
 // NodeStorage and AnsiLogger modules
-import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
-import { NodeStorage } from 'node-persist-manager';
+import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from './logger/export.js';
+import { NodeStorage } from './storage/export.js';
 
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';

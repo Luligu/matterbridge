@@ -27,9 +27,9 @@
 import { createHash } from 'crypto';
 
 // AnsiLogger module
-import { AnsiLogger, BLUE, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, er, hk, or, rs, zb } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, er, hk, or, rs, zb } from './logger/export.js';
 
-// Matterbridge
+// Matterbridge behaviors
 import {
   MatterbridgeBehavior,
   MatterbridgeBehaviorDevice,
@@ -44,109 +44,65 @@ import {
   MatterbridgeValveConfigurationAndControlServer,
   MatterbridgeWindowCoveringServer,
 } from './matterbridgeBehaviors.js';
-import { bridgedNode, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
-import { deepCopy, isValidNumber, waiter } from './utils/utils.js';
+import { bridgedNode, DeviceTypeDefinition, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
+import { deepCopy, isValidNumber } from './utils/utils.js';
 
 // @matter
-import { Endpoint, MutableEndpoint, EndpointType, Behavior, SupportedBehaviors, NamedHandler, Lifecycle } from '@matter/main';
-import { ClusterId, EndpointNumber, VendorId, AtLeastOne, MakeMandatory } from '@matter/main';
-import {
-  AirQuality,
-  AirQualityCluster,
-  BasicInformation,
-  BasicInformationCluster,
-  BooleanState,
-  BooleanStateCluster,
-  BooleanStateConfiguration,
-  BooleanStateConfigurationCluster,
-  BridgedDeviceBasicInformation,
-  BridgedDeviceBasicInformationCluster,
-  CarbonDioxideConcentrationMeasurement,
-  CarbonDioxideConcentrationMeasurementCluster,
-  CarbonMonoxideConcentrationMeasurement,
-  CarbonMonoxideConcentrationMeasurementCluster,
-  ColorControl,
-  ColorControlCluster,
-  ConcentrationMeasurement,
-  Descriptor,
-  DescriptorCluster,
-  DeviceEnergyManagement,
-  DoorLock,
-  DoorLockCluster,
-  ElectricalEnergyMeasurement,
-  ElectricalEnergyMeasurementCluster,
-  ElectricalPowerMeasurement,
-  ElectricalPowerMeasurementCluster,
-  FanControl,
-  FanControlCluster,
-  FixedLabel,
-  FixedLabelCluster,
-  FlowMeasurement,
-  FlowMeasurementCluster,
-  FormaldehydeConcentrationMeasurement,
-  FormaldehydeConcentrationMeasurementCluster,
-  Groups,
-  GroupsCluster,
-  Identify,
-  IdentifyCluster,
-  IlluminanceMeasurement,
-  IlluminanceMeasurementCluster,
-  LevelControl,
-  LevelControlCluster,
-  ModeSelect,
-  ModeSelectCluster,
-  NitrogenDioxideConcentrationMeasurement,
-  NitrogenDioxideConcentrationMeasurementCluster,
-  OccupancySensing,
-  OccupancySensingCluster,
-  OnOff,
-  OnOffCluster,
-  OzoneConcentrationMeasurement,
-  OzoneConcentrationMeasurementCluster,
-  Pm10ConcentrationMeasurement,
-  Pm10ConcentrationMeasurementCluster,
-  Pm1ConcentrationMeasurement,
-  Pm1ConcentrationMeasurementCluster,
-  Pm25ConcentrationMeasurement,
-  Pm25ConcentrationMeasurementCluster,
-  PowerSource,
-  PowerSourceCluster,
-  PowerSourceConfigurationCluster,
-  PowerTopology,
-  PowerTopologyCluster,
-  PressureMeasurement,
-  PressureMeasurementCluster,
-  PumpConfigurationAndControl,
-  PumpConfigurationAndControlCluster,
-  RadonConcentrationMeasurement,
-  RadonConcentrationMeasurementCluster,
-  RelativeHumidityMeasurement,
-  RelativeHumidityMeasurementCluster,
-  SmokeCoAlarm,
-  SmokeCoAlarmCluster,
-  Switch,
-  SwitchCluster,
-  TemperatureMeasurement,
-  TemperatureMeasurementCluster,
-  Thermostat,
-  ThermostatCluster,
-  ThreadNetworkDiagnostics,
-  ThreadNetworkDiagnosticsCluster,
-  TimeSynchronization,
-  TimeSynchronizationCluster,
-  TotalVolatileOrganicCompoundsConcentrationMeasurement,
-  TotalVolatileOrganicCompoundsConcentrationMeasurementCluster,
-  UserLabel,
-  UserLabelCluster,
-  ValveConfigurationAndControl,
-  ValveConfigurationAndControlCluster,
-  WindowCovering,
-  WindowCoveringCluster,
-} from '@matter/main/clusters';
+import { Endpoint, MutableEndpoint, EndpointType, Behavior, SupportedBehaviors, NamedHandler, Lifecycle, ClusterId, EndpointNumber, VendorId, AtLeastOne, MakeMandatory } from '@matter/main';
 import { ClusterType, MeasurementType, getClusterNameById, Semtag, BitSchema, TypeFromPartialBitSchema, Attributes, Commands, Events, Cluster } from '@matter/main/types';
-import { Specification, DeviceClassification, tag } from '@matter/main/model';
+import { Specification, DeviceClassification } from '@matter/main/model';
+
+// @matter clusters
+import { BasicInformation, BasicInformationCluster } from '@matter/main/clusters/basic-information';
+import { BooleanState, BooleanStateCluster } from '@matter/main/clusters/boolean-state';
+import { BooleanStateConfiguration, BooleanStateConfigurationCluster } from '@matter/main/clusters/boolean-state-configuration';
+import { BridgedDeviceBasicInformation, BridgedDeviceBasicInformationCluster } from '@matter/main/clusters/bridged-device-basic-information';
+import { CarbonDioxideConcentrationMeasurement, CarbonDioxideConcentrationMeasurementCluster } from '@matter/main/clusters/carbon-dioxide-concentration-measurement';
+import { CarbonMonoxideConcentrationMeasurement, CarbonMonoxideConcentrationMeasurementCluster } from '@matter/main/clusters/carbon-monoxide-concentration-measurement';
+import { ColorControl, ColorControlCluster } from '@matter/main/clusters/color-control';
+import { ConcentrationMeasurement } from '@matter/main/clusters/concentration-measurement';
+import { Descriptor } from '@matter/main/clusters/descriptor';
+import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
+import { DoorLock, DoorLockCluster } from '@matter/main/clusters/door-lock';
+import { ElectricalEnergyMeasurement, ElectricalEnergyMeasurementCluster } from '@matter/main/clusters/electrical-energy-measurement';
+import { ElectricalPowerMeasurement, ElectricalPowerMeasurementCluster } from '@matter/main/clusters/electrical-power-measurement';
+import { FanControl, FanControlCluster } from '@matter/main/clusters/fan-control';
+import { FixedLabel, FixedLabelCluster } from '@matter/main/clusters/fixed-label';
+import { FlowMeasurement, FlowMeasurementCluster } from '@matter/main/clusters/flow-measurement';
+import { FormaldehydeConcentrationMeasurement, FormaldehydeConcentrationMeasurementCluster } from '@matter/main/clusters/formaldehyde-concentration-measurement';
+import { Groups, GroupsCluster } from '@matter/main/clusters/groups';
+import { Identify, IdentifyCluster } from '@matter/main/clusters/identify';
+import { IlluminanceMeasurement, IlluminanceMeasurementCluster } from '@matter/main/clusters/illuminance-measurement';
+import { LevelControl, LevelControlCluster } from '@matter/main/clusters/level-control';
+import { ModeSelect, ModeSelectCluster } from '@matter/main/clusters/mode-select';
+import { NitrogenDioxideConcentrationMeasurement, NitrogenDioxideConcentrationMeasurementCluster } from '@matter/main/clusters/nitrogen-dioxide-concentration-measurement';
+import { OccupancySensing, OccupancySensingCluster } from '@matter/main/clusters/occupancy-sensing';
+import { OnOff, OnOffCluster } from '@matter/main/clusters/on-off';
+import { OzoneConcentrationMeasurement, OzoneConcentrationMeasurementCluster } from '@matter/main/clusters/ozone-concentration-measurement';
+import { Pm10ConcentrationMeasurement, Pm10ConcentrationMeasurementCluster } from '@matter/main/clusters/pm10-concentration-measurement';
+import { Pm1ConcentrationMeasurement, Pm1ConcentrationMeasurementCluster } from '@matter/main/clusters/pm1-concentration-measurement';
+import { Pm25ConcentrationMeasurement, Pm25ConcentrationMeasurementCluster } from '@matter/main/clusters/pm25-concentration-measurement';
+import { PowerSource, PowerSourceCluster } from '@matter/main/clusters/power-source';
+import { PowerTopology, PowerTopologyCluster } from '@matter/main/clusters/power-topology';
+import { PressureMeasurement, PressureMeasurementCluster } from '@matter/main/clusters/pressure-measurement';
+import { PumpConfigurationAndControl, PumpConfigurationAndControlCluster } from '@matter/main/clusters/pump-configuration-and-control';
+import { RadonConcentrationMeasurement, RadonConcentrationMeasurementCluster } from '@matter/main/clusters/radon-concentration-measurement';
+import { RelativeHumidityMeasurement, RelativeHumidityMeasurementCluster } from '@matter/main/clusters/relative-humidity-measurement';
+import { SmokeCoAlarm, SmokeCoAlarmCluster } from '@matter/main/clusters/smoke-co-alarm';
+import { Switch, SwitchCluster } from '@matter/main/clusters/switch';
+import { TemperatureMeasurement, TemperatureMeasurementCluster } from '@matter/main/clusters/temperature-measurement';
+import { Thermostat, ThermostatCluster } from '@matter/main/clusters/thermostat';
+import { ThreadNetworkDiagnostics } from '@matter/main/clusters/thread-network-diagnostics';
+import { TimeSynchronization } from '@matter/main/clusters/time-synchronization';
+import { TotalVolatileOrganicCompoundsConcentrationMeasurement, TotalVolatileOrganicCompoundsConcentrationMeasurementCluster } from '@matter/main/clusters/total-volatile-organic-compounds-concentration-measurement';
+import { UserLabel, UserLabelCluster } from '@matter/main/clusters/user-label';
+import { ValveConfigurationAndControl, ValveConfigurationAndControlCluster } from '@matter/main/clusters/valve-configuration-and-control';
+import { WindowCovering, WindowCoveringCluster } from '@matter/main/clusters/window-covering';
+import { AirQuality, AirQualityCluster } from '@matter/main/clusters/air-quality';
+
+// @matter behaviors
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
-import { IdentifyBehavior, IdentifyServer } from '@matter/node/behaviors/identify';
+import { IdentifyBehavior } from '@matter/node/behaviors/identify';
 import { GroupsServer } from '@matter/node/behaviors/groups';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
 import { RelativeHumidityMeasurementServer } from '@matter/node/behaviors/relative-humidity-measurement';
@@ -156,35 +112,29 @@ import { FlowMeasurementServer } from '@matter/node/behaviors/flow-measurement';
 import { IlluminanceMeasurementServer } from '@matter/node/behaviors/illuminance-measurement';
 import { BooleanStateServer } from '@matter/node/behaviors/boolean-state';
 import { OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
-import {
-  AirQualityServer,
-  BasicInformationServer,
-  CarbonDioxideConcentrationMeasurementServer,
-  CarbonMonoxideConcentrationMeasurementServer,
-  ElectricalEnergyMeasurementServer,
-  ElectricalPowerMeasurementServer,
-  FixedLabelServer,
-  FormaldehydeConcentrationMeasurementServer,
-  ModeSelectServer,
-  NitrogenDioxideConcentrationMeasurementServer,
-  OzoneConcentrationMeasurementServer,
-  Pm10ConcentrationMeasurementServer,
-  Pm1ConcentrationMeasurementServer,
-  Pm25ConcentrationMeasurementServer,
-  PowerSourceServer,
-  PowerTopologyServer,
-  RadonConcentrationMeasurementServer,
-  SmokeCoAlarmServer,
-  SwitchServer,
-  TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
-  UserLabelServer,
-  ValveConfigurationAndControlServer,
-} from '@matter/main/behaviors';
-
-// import { ClusterServer, ClusterClient } from '@matter/main/protocol';
+import { AirQualityServer } from '@matter/main/behaviors/air-quality';
+import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
+import { CarbonDioxideConcentrationMeasurementServer } from '@matter/main/behaviors/carbon-dioxide-concentration-measurement';
+import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/main/behaviors/carbon-monoxide-concentration-measurement';
+import { ElectricalEnergyMeasurementServer } from '@matter/main/behaviors/electrical-energy-measurement';
+import { ElectricalPowerMeasurementServer } from '@matter/main/behaviors/electrical-power-measurement';
+import { FixedLabelServer } from '@matter/main/behaviors/fixed-label';
+import { FormaldehydeConcentrationMeasurementServer } from '@matter/main/behaviors/formaldehyde-concentration-measurement';
+import { ModeSelectServer } from '@matter/main/behaviors/mode-select';
+import { NitrogenDioxideConcentrationMeasurementServer } from '@matter/main/behaviors/nitrogen-dioxide-concentration-measurement';
+import { OzoneConcentrationMeasurementServer } from '@matter/main/behaviors/ozone-concentration-measurement';
+import { Pm10ConcentrationMeasurementServer } from '@matter/main/behaviors/pm10-concentration-measurement';
+import { Pm1ConcentrationMeasurementServer } from '@matter/main/behaviors/pm1-concentration-measurement';
+import { Pm25ConcentrationMeasurementServer } from '@matter/main/behaviors/pm25-concentration-measurement';
+import { PowerSourceServer } from '@matter/main/behaviors/power-source';
+import { PowerTopologyServer } from '@matter/main/behaviors/power-topology';
+import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/radon-concentration-measurement';
+import { SmokeCoAlarmServer } from '@matter/main/behaviors/smoke-co-alarm';
+import { SwitchServer } from '@matter/main/behaviors/switch';
+import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
+import { UserLabelServer } from '@matter/main/behaviors/user-label';
 
 // @project-chip
-import { DeviceTypeDefinition } from '@project-chip/matter.js/device';
 import { ClusterServer, ClusterServerHandlers, ClusterServerObj, GroupsClusterHandler, ClusterClientObj } from '@project-chip/matter.js/cluster';
 
 export interface MatterbridgeEndpointCommands {
@@ -695,14 +645,30 @@ export class MatterbridgeEndpoint extends Endpoint {
     return this.parts.find((part) => part.id === endpointName) as MatterbridgeEndpoint | undefined;
   }
 
+  /**
+   * Retrieves a child endpoint by its EndpointNumber.
+   *
+   * @param {EndpointNumber} endpointNumber - The EndpointNumber of the endpoint to retrieve.
+   * @returns {MatterbridgeEndpoint | undefined} The child endpoint with the specified EndpointNumber, or undefined if not found.
+   */
   getChildEndpoint(endpointNumber: EndpointNumber): MatterbridgeEndpoint | undefined {
     return this.parts.find((part) => part.number === endpointNumber) as MatterbridgeEndpoint | undefined;
   }
 
+  /**
+   * Get all the child endpoints of this endpoint.
+   *
+   * @returns {MatterbridgeEndpoint[]} The child endpoints.
+   */
   getChildEndpoints(): MatterbridgeEndpoint[] {
     return Array.from(this.parts) as MatterbridgeEndpoint[];
   }
 
+  /**
+   * Get all the device types of this endpoint.
+   *
+   * @returns {DeviceTypeDefinition[]} The device types of this endpoint.
+   */
   getDeviceTypes(): DeviceTypeDefinition[] {
     return Array.from(this.deviceTypes.values());
   }
@@ -714,21 +680,36 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @deprecated This method is deprecated and will be removed in future versions.
    */
-  setDeviceTypes(deviceTypes: AtLeastOne<DeviceTypeDefinition>): void {
+  private setDeviceTypes(deviceTypes: AtLeastOne<DeviceTypeDefinition>): void {
     deviceTypes.forEach((deviceType) => {
       this.addDeviceType(deviceType);
     });
   }
 
-  async setBridgedDeviceReachability(reachable: boolean) {
+  /**
+   * Sets the device reachable attribute and trigger the event.
+   *
+   * @param {boolean} reachable - The device types to set.
+   *
+   * @deprecated This method is deprecated and will be removed in future versions.
+   */
+  private async setBridgedDeviceReachability(reachable: boolean) {
     // await this.setAttribute(BridgedDeviceBasicInformationCluster.id, 'reachable', reachable, this.log);
     // await this.triggerEvent(BridgedDeviceBasicInformationCluster.id, 'reachableChanged', { reachableNewValue: reachable }, this.log);
   }
 
+  /**
+   * @deprecated This method is deprecated and will be removed in future versions.
+   */
   hasClusterServer<F extends BitSchema, SF extends TypeFromPartialBitSchema<F>, A extends Attributes, C extends Commands, E extends Events>(cluster: Cluster<F, SF, A, C, E>): boolean {
+    // const clusterName = this.lowercaseFirstLetter(getClusterNameById(cluster.id));
+    // return this.behaviors.supported[clusterName] !== undefined;
     return this.clusterServers.has(cluster.id);
   }
 
+  /**
+   * @deprecated This method is deprecated and will be removed in future versions.
+   */
   getClusterServer<const T extends ClusterType>(cluster: T): ClusterServerObj<T> | undefined {
     const clusterServer = this.clusterServers.get(cluster.id);
     if (clusterServer !== undefined) {
@@ -736,10 +717,16 @@ export class MatterbridgeEndpoint extends Endpoint {
     }
   }
 
+  /**
+   * @deprecated This method is deprecated and will be removed in future versions.
+   */
   getAllClusterServers(): ClusterServer[] {
     return [...this.clusterServers.values()];
   }
 
+  /**
+   * @deprecated This method is deprecated and will be removed in future versions.
+   */
   getClusterServerById(clusterId: ClusterId): ClusterServerObj | undefined {
     return this.clusterServers.get(clusterId);
   }
@@ -749,7 +736,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @deprecated This method is deprecated and will be removed in future versions. Use the constructor options instead.
    */
-  addTagList(endpoint: Endpoint, mfgCode: VendorId | null, namespaceId: number, tag: number, label?: string | null) {
+  private addTagList(endpoint: Endpoint, mfgCode: VendorId | null, namespaceId: number, tag: number, label?: string | null) {
     // Do nothing here only for old api compatibility
   }
 
@@ -812,7 +799,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Adds cluster servers to the specified endpoint based on the provided server list.
    *
-   * @param {Endpoint} endpoint - The endpoint to add cluster servers to.
+   * @param {MatterbridgeEndpoint} endpoint - The endpoint to add cluster servers to.
    * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
    * @returns void
    */
@@ -1184,7 +1171,6 @@ export class MatterbridgeEndpoint extends Endpoint {
       },
       GroupsClusterHandler(),
     );
-    // return createDefaultGroupsClusterServer();
   }
 
   /**
@@ -2800,22 +2786,6 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerSource.WiredCurrentType = PowerSource.WiredCurrentType.Ac) {
     this.addClusterServer(this.getDefaultPowerSourceWiredClusterServer(wiredCurrentType));
-  }
-
-  /**
-   * @deprecated This function is deprecated by Matter 1.3 spec and will be removed in a future version.
-   */
-  createDefaultPowerSourceConfigurationClusterServer(endpointNumber?: number) {
-    this.addClusterServer(
-      ClusterServer(
-        PowerSourceConfigurationCluster,
-        {
-          sources: endpointNumber ? [EndpointNumber(endpointNumber)] : [],
-        },
-        {},
-        {},
-      ),
-    );
   }
 
   /**
