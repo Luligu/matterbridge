@@ -135,7 +135,7 @@ import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@ma
 import { UserLabelServer } from '@matter/main/behaviors/user-label';
 
 // @project-chip
-import { ClusterServer, ClusterServerHandlers, ClusterServerObj, GroupsClusterHandler, ClusterClientObj } from '@project-chip/matter.js/cluster';
+import { ClusterServer, ClusterServerObj, ClusterClientObj, ClusterServerHandlers, GroupsClusterHandler } from '@project-chip/matter.js/cluster';
 
 export interface MatterbridgeEndpointCommands {
   identify: MakeMandatory<ClusterServerHandlers<typeof Identify.Complete>['identify']>;
@@ -720,15 +720,15 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * @deprecated This method is deprecated and will be removed in future versions.
    */
-  getAllClusterServers(): ClusterServer[] {
-    return [...this.clusterServers.values()];
+  getClusterServerById(clusterId: ClusterId): ClusterServerObj | undefined {
+    return this.clusterServers.get(clusterId);
   }
 
   /**
    * @deprecated This method is deprecated and will be removed in future versions.
    */
-  getClusterServerById(clusterId: ClusterId): ClusterServerObj | undefined {
-    return this.clusterServers.get(clusterId);
+  getAllClusterServers(): ClusterServer[] {
+    return [...this.clusterServers.values()];
   }
 
   /**
@@ -2035,7 +2035,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ColorControl.ColorMode} colorMode - An optional parameter specifying the color mode of the device.
    * @param {Endpoint} endpoint - An optional parameter specifying the endpoint to configure. If not provided, the device endpoint will be used.
    */
-  async configureColorControlCluster(hueSaturation: boolean, xy: boolean, colorTemperature: boolean, colorMode?: ColorControl.ColorMode, endpoint?: MatterbridgeEndpoint) {
+  private async configureColorControlCluster(hueSaturation: boolean, xy: boolean, colorTemperature: boolean, colorMode?: ColorControl.ColorMode, endpoint?: MatterbridgeEndpoint) {
     if (!endpoint) endpoint = this as MatterbridgeEndpoint;
     if (this.isColorControlConfigured) return;
 
@@ -2130,7 +2130,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   async setWindowCoveringTargetAsCurrentAndStopped(endpoint?: MatterbridgeEndpoint) {
     if (!endpoint) endpoint = this as MatterbridgeEndpoint;
-    const position = endpoint.getAttribute(WindowCoveringCluster.id, 'currentPositionLiftPercent100ths', this.log, endpoint); // windowCoveringCluster.getCurrentPositionLiftPercent100thsAttribute();
+    const position = endpoint.getAttribute(WindowCoveringCluster.id, 'currentPositionLiftPercent100ths', this.log, endpoint);
     if (position !== null) {
       await endpoint.setAttribute(WindowCoveringCluster.id, 'targetPositionLiftPercent100ths', position, this.log, endpoint);
       await endpoint.setAttribute(

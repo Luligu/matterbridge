@@ -11,6 +11,7 @@ import { DeviceClassification } from '@matter/main/model';
 import { Descriptor } from '@matter/main/clusters/descriptor';
 import { Identify } from '@matter/main/clusters/identify';
 import { OnOff } from '@matter/main/clusters/on-off';
+import { LevelControl } from '@matter/main/clusters/level-control';
 
 // @matter behaviors
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
@@ -18,6 +19,7 @@ import { IdentifyServer } from '@matter/node/behaviors/identify';
 import { GroupsServer } from '@matter/node/behaviors/groups';
 import { ScenesManagementServer } from '@matter/node/behaviors/scenes-management';
 import { OnOffServer } from '@matter/main/behaviors/on-off';
+import { LevelControlServer } from '@matter/main/behaviors/level-control';
 
 class MatterbridgeEndpoint extends Endpoint {
   constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false) {
@@ -141,6 +143,32 @@ class MatterbridgeEndpoint extends Endpoint {
   createDeadFrontOnOffClusterServer(onOff = false) {
     this.behaviors.require(OnOffServer.with(OnOff.Feature.DeadFrontBehavior), {
       onOff,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default level control cluster server for light devices.
+   *
+   * @param {number} [currentLevel=254] - The current level (default: 254).
+   * @param {number} [minLevel=1] - The minimum level (default: 1).
+   * @param {number} [maxLevel=254] - The maximum level (default: 254).
+   * @param {number | null} [onLevel=null] - The on level (default: null).
+   * @param {number | null} [startUpCurrentLevel=null] - The startUp on level (default: null).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 1, maxLevel = 254, onLevel: number | null = null, startUpCurrentLevel: number | null = null) {
+    this.behaviors.require(LevelControlServer.with(LevelControl.Feature.OnOff, LevelControl.Feature.Lighting), {
+      currentLevel,
+      minLevel,
+      maxLevel,
+      onLevel,
+      remainingTime: 0,
+      startUpCurrentLevel,
+      options: {
+        executeIfOff: false,
+        coupleColorTempToLevel: false,
+      },
     });
     return this;
   }

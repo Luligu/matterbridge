@@ -717,7 +717,7 @@ export class Matterbridge extends EventEmitter {
         continue;
       }
       // Check if the plugin has a new version
-      this.getPluginLatestVersion(plugin); // No await do it asyncronously
+      // this.getPluginLatestVersion(plugin); // No await do it asyncronously
       if (!plugin.enabled) {
         this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
         continue;
@@ -883,7 +883,9 @@ export class Matterbridge extends EventEmitter {
       } catch (error) {
         this.log.error(`Error getting global node_modules directory: ${error}`);
       }
-    } else {
+    } else this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
+    /* removed cause is too expensive for the shelly board and not really needed. Why should it change the globalModulesDirectory?
+    else {
       this.getGlobalNodeModules()
         .then(async (globalModulesDirectory) => {
           this.globalModulesDirectory = globalModulesDirectory;
@@ -894,7 +896,7 @@ export class Matterbridge extends EventEmitter {
         .catch((error) => {
           this.log.error(`Error getting global node_modules directory: ${error}`);
         });
-    }
+    }*/
 
     // Create the data directory .matterbridge in the home directory
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
@@ -942,14 +944,14 @@ export class Matterbridge extends EventEmitter {
 
     // Matterbridge version
     const packageJson = JSON.parse(await fs.readFile(path.join(this.rootDirectory, 'package.json'), 'utf-8'));
-    this.matterbridgeVersion = packageJson.version;
-    this.matterbridgeInformation.matterbridgeVersion = this.matterbridgeVersion;
+    this.matterbridgeVersion = this.matterbridgeLatestVersion = packageJson.version;
+    this.matterbridgeInformation.matterbridgeVersion = this.matterbridgeInformation.matterbridgeLatestVersion = this.matterbridgeVersion;
     this.log.debug(`Matterbridge Version: ${this.matterbridgeVersion}`);
 
     // Matterbridge latest version
-    if (this.nodeContext) this.matterbridgeLatestVersion = await this.nodeContext.get<string>('matterbridgeLatestVersion', '');
+    if (this.nodeContext) this.matterbridgeLatestVersion = await this.nodeContext.get<string>('matterbridgeLatestVersion', this.matterbridgeVersion);
     this.log.debug(`Matterbridge Latest Version: ${this.matterbridgeLatestVersion}`);
-    this.getMatterbridgeLatestVersion();
+    // this.getMatterbridgeLatestVersion();
 
     // Current working directory
     const currentDir = process.cwd();
@@ -984,6 +986,11 @@ export class Matterbridge extends EventEmitter {
    * @returns A promise that resolves to the path of the global Node.js modules directory.
    */
   private async getGlobalNodeModules(): Promise<string> {
+    /*
+    const { Module } = await import('module'); // Dynamic import to access the `Module` class
+    const globalPaths = 'globalPaths' in Module && Array.isArray(Module.globalPaths) && typeof Module.globalPaths[0] === 'string' ? (Module.globalPaths as string[])[0] : '';
+    this.log.debug('Module.globalPaths:', globalPaths);
+    */
     return new Promise((resolve, reject) => {
       this.execRunningCount++;
       exec('npm root -g', (error: ExecException | null, stdout: string) => {
