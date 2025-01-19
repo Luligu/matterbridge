@@ -13,7 +13,20 @@ import { LogFormat as Format, LogLevel as Level } from '@matter/main';
 import { BasicInformationCluster, BridgedDeviceBasicInformationCluster, Descriptor, DescriptorCluster, GroupsCluster, Identify, IdentifyCluster, OccupancySensing, OnOffCluster, ScenesManagementCluster } from '@matter/main/clusters';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { MdnsService, logEndpoint } from '@matter/main/protocol';
-import { DescriptorServer, IlluminanceMeasurementServer, OccupancySensingServer } from '@matter/main/behaviors';
+import {
+  DescriptorBehavior,
+  DescriptorServer,
+  GroupsBehavior,
+  GroupsServer,
+  IdentifyBehavior,
+  IdentifyServer,
+  IlluminanceMeasurementServer,
+  OccupancySensingServer,
+  OnOffBehavior,
+  OnOffServer,
+  ScenesManagementBehavior,
+  ScenesManagementServer,
+} from '@matter/main/behaviors';
 import { OnOffPlugInUnitDevice } from '@matter/main/devices';
 
 describe('MatterbridgeEndpoint class', () => {
@@ -146,6 +159,27 @@ describe('MatterbridgeEndpoint class', () => {
     test('add required clusters to onOffLight', async () => {
       expect(device).toBeDefined();
       device.addRequiredClusterServers(device);
+      expect(device.behaviors.supported.descriptor).toBeDefined();
+
+      expect(device.behaviors.has(DescriptorBehavior)).toBeTruthy();
+      expect(device.behaviors.has(DescriptorServer)).toBeTruthy();
+      expect(EndpointServer.forEndpoint(device).hasClusterServer(DescriptorCluster)).toBe(false); // Why???
+
+      expect(device.behaviors.has(IdentifyBehavior)).toBeTruthy();
+      expect(device.behaviors.has(IdentifyServer)).toBeTruthy();
+      expect(EndpointServer.forEndpoint(device).hasClusterServer(IdentifyCluster)).toBe(true);
+
+      expect(device.behaviors.has(GroupsBehavior)).toBeTruthy();
+      expect(device.behaviors.has(GroupsServer)).toBeTruthy();
+      expect(EndpointServer.forEndpoint(device).hasClusterServer(GroupsCluster)).toBe(true);
+
+      expect(device.behaviors.has(ScenesManagementBehavior)).toBeFalsy();
+      expect(device.behaviors.has(ScenesManagementServer)).toBeFalsy();
+      expect(EndpointServer.forEndpoint(device).hasClusterServer(ScenesManagementCluster)).toBe(false);
+
+      expect(device.behaviors.has(OnOffBehavior)).toBeTruthy();
+      expect(device.behaviors.has(OnOffServer)).toBeTruthy();
+      expect(EndpointServer.forEndpoint(device).hasClusterServer(OnOffCluster)).toBe(true);
     });
 
     test('add onOffLight device to serverNode', async () => {
@@ -153,7 +187,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('add deviceType to onOffPlugin without tagList', async () => {
-      const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer, OccupancySensingServer), {
+      const child = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer, OccupancySensingServer), {
         id: 'OnOffPlugin1',
         identify: {
           identifyTime: 0,
@@ -174,19 +208,19 @@ describe('MatterbridgeEndpoint class', () => {
           ],
         },
       });
-      expect(endpoint).toBeDefined();
-      endpoint.behaviors.require(DescriptorServer, {
+      expect(child).toBeDefined();
+      child.behaviors.require(DescriptorServer, {
         deviceTypeList: [
           { deviceType: 0x10a, revision: 3 },
           { deviceType: occupancySensor.code, revision: occupancySensor.revision },
         ],
       });
-      expect(await server.add(endpoint)).toBeDefined();
-      logEndpoint(EndpointServer.forEndpoint(endpoint));
+      expect(await server.add(child)).toBeDefined();
+      logEndpoint(EndpointServer.forEndpoint(child));
     });
 
     test('add deviceType to onOffPlugin with tagList', async () => {
-      const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer), {
+      const child = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer), {
         id: 'OnOffPlugin2',
         identify: {
           identifyTime: 0,
@@ -208,9 +242,9 @@ describe('MatterbridgeEndpoint class', () => {
           ],
         },
       });
-      expect(endpoint).toBeDefined();
+      expect(child).toBeDefined();
       expect(() =>
-        endpoint.behaviors.require(DescriptorServer.with(Descriptor.Feature.TagList), {
+        child.behaviors.require(DescriptorServer.with(Descriptor.Feature.TagList), {
           tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }],
           deviceTypeList: [
             { deviceType: 0x10a, revision: 3 },
@@ -218,12 +252,12 @@ describe('MatterbridgeEndpoint class', () => {
           ],
         }),
       ).toThrow();
-      await expect(server.add(endpoint)).resolves.toBeDefined();
-      logEndpoint(EndpointServer.forEndpoint(endpoint));
+      await expect(server.add(child)).resolves.toBeDefined();
+      logEndpoint(EndpointServer.forEndpoint(child));
     });
 
     test('add deviceType to onOffPlugin in the costructor', async () => {
-      const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer, IlluminanceMeasurementServer), {
+      const child = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer, IlluminanceMeasurementServer), {
         id: 'OnOffPlugin3',
         identify: {
           identifyTime: 0,
@@ -246,10 +280,10 @@ describe('MatterbridgeEndpoint class', () => {
           ],
         },
       });
-      expect(endpoint).toBeDefined();
-      await expect(server.add(endpoint)).resolves.toBeDefined();
-      logEndpoint(EndpointServer.forEndpoint(endpoint));
-      const deviceTypeList = endpoint.state.descriptor.deviceTypeList;
+      expect(child).toBeDefined();
+      await expect(server.add(child)).resolves.toBeDefined();
+      logEndpoint(EndpointServer.forEndpoint(child));
+      const deviceTypeList = child.state.descriptor.deviceTypeList;
       expect(deviceTypeList).toHaveLength(3);
       expect(deviceTypeList[0].deviceType).toBe(onOffOutlet.code);
       expect(deviceTypeList[0].revision).toBe(onOffOutlet.revision);

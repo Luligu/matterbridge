@@ -872,7 +872,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Root Directory: ${this.rootDirectory}`);
 
     // Global node_modules directory
-    if (this.nodeContext) this.globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
+    if (this.nodeContext) this.globalModulesDirectory = this.matterbridgeInformation.globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
     // First run of Matterbridge so the node storage is empty
     if (this.globalModulesDirectory === '') {
       try {

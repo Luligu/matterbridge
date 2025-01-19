@@ -29,8 +29,9 @@ import * as dns from 'dns';
 import { promises as fs } from 'fs';
 
 // Package modules
-import archiver, { ArchiverError, EntryData } from 'archiver';
-import { glob } from 'glob';
+// import archiver, { ArchiverError, EntryData } from 'archiver';
+// import { glob } from 'glob';
+import type { ArchiverError, EntryData } from 'archiver';
 
 // AnsiLogger module
 import { AnsiLogger, idn, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
@@ -469,6 +470,9 @@ export async function wait(timeout = 1000, name?: string, debug = false): Promis
  * This function uses the `glob` library to match files based on the source pattern (internally converted in posix).
  */
 export async function createZip(outputPath: string, ...sourcePaths: string[]): Promise<number> {
+  const { default: archiver } = await import('archiver');
+  const { glob } = await import('glob');
+
   log.logLevel = LogLevel.INFO;
   log.logName = 'Archive';
   log.debug(`creating archive ${outputPath} from ${sourcePaths.join(', ')} ...`);

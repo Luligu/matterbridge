@@ -275,6 +275,61 @@ export class Frontend {
       res.status(200).json(healthStatus);
     });
 
+    // Endpoint to provide memory usage details
+    this.expressApp.get('/memory', async (req, res) => {
+      this.log.debug('Express received /memory');
+
+      // Function to format bytes to KB or MB
+      const formatMemoryUsage = (bytes: number): string => {
+        const kb = bytes / 1024;
+        const mb = kb / 1024;
+        return mb >= 1 ? `${mb.toFixed(2)} MB` : `${kb.toFixed(2)} KB`;
+      };
+
+      // Memory usage from process
+      const memoryUsageRaw = process.memoryUsage();
+      const memoryUsage = {
+        rss: formatMemoryUsage(memoryUsageRaw.rss),
+        heapTotal: formatMemoryUsage(memoryUsageRaw.heapTotal),
+        heapUsed: formatMemoryUsage(memoryUsageRaw.heapUsed),
+        external: formatMemoryUsage(memoryUsageRaw.external),
+        arrayBuffers: formatMemoryUsage(memoryUsageRaw.arrayBuffers),
+      };
+
+      // V8 heap statistics
+      const { default: v8 } = await import('node:v8');
+      const heapStatsRaw = v8.getHeapStatistics();
+      const heapSpacesRaw = v8.getHeapSpaceStatistics();
+
+      // Format heapStats
+      const heapStats = Object.fromEntries(Object.entries(heapStatsRaw).map(([key, value]) => [key, formatMemoryUsage(value as number)]));
+
+      // Format heapSpaces
+      const heapSpaces = heapSpacesRaw.map((space) => ({
+        ...space,
+        space_size: formatMemoryUsage(space.space_size),
+        space_used_size: formatMemoryUsage(space.space_used_size),
+        space_available_size: formatMemoryUsage(space.space_available_size),
+        physical_space_size: formatMemoryUsage(space.physical_space_size),
+      }));
+
+      // Define a type for the module with a _cache property
+      interface ModuleWithCache {
+        _cache: Record<string, unknown>;
+      }
+      const { default: module } = await import('module');
+      const loadedModules = (module as unknown as ModuleWithCache)._cache ? Object.keys((module as unknown as ModuleWithCache)._cache).sort() : [];
+
+      const memoryReport = {
+        memoryUsage,
+        heapStats,
+        heapSpaces,
+        loadedModules,
+      };
+
+      res.status(200).json(memoryReport);
+    });
+
     // Endpoint to provide settings
     this.expressApp.get('/api/settings', express.json(), async (req, res) => {
       this.log.debug('The frontend sent /api/settings');
@@ -1275,7 +1330,7 @@ export class Frontend {
   }
 
   /**
-   * Sends a WebSocket message to all connected clients.
+   * Sends a WebSocket message to all connected clients. The function is called by AnsiLogger.setGlobalCallback.
    *
    * @param {string} level - The logger level of the message: debug info notice warn error fatal...
    * @param {string} time - The time string of the message

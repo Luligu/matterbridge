@@ -21,11 +21,12 @@ The legacy old api have been completely removed.
 The frontend has a new dark and light mode. The dark mode is now the default mode.
 It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbridge settings.
 
-## [2.0.0-edge.5] - 2025-01-18
+## [2.0.0-edge.6] - 2025-01-19
 
 ### Added
 
 - [behavior]: Added MatterbridgeValveConfigurationAndControlServer behavior with open close command.
+- [matterbridge]: Added /memory endpoint for debugging memory use.
 
 ### Changed
 
