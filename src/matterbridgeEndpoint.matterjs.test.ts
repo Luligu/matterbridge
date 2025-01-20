@@ -163,27 +163,27 @@ describe('MatterbridgeEndpoint class', () => {
 
       expect(device.behaviors.has(DescriptorBehavior)).toBeTruthy();
       expect(device.behaviors.has(DescriptorServer)).toBeTruthy();
-      expect(EndpointServer.forEndpoint(device).hasClusterServer(DescriptorCluster)).toBe(false); // Why???
 
       expect(device.behaviors.has(IdentifyBehavior)).toBeTruthy();
       expect(device.behaviors.has(IdentifyServer)).toBeTruthy();
-      expect(EndpointServer.forEndpoint(device).hasClusterServer(IdentifyCluster)).toBe(true);
 
       expect(device.behaviors.has(GroupsBehavior)).toBeTruthy();
       expect(device.behaviors.has(GroupsServer)).toBeTruthy();
-      expect(EndpointServer.forEndpoint(device).hasClusterServer(GroupsCluster)).toBe(true);
 
       expect(device.behaviors.has(ScenesManagementBehavior)).toBeFalsy();
       expect(device.behaviors.has(ScenesManagementServer)).toBeFalsy();
-      expect(EndpointServer.forEndpoint(device).hasClusterServer(ScenesManagementCluster)).toBe(false);
 
       expect(device.behaviors.has(OnOffBehavior)).toBeTruthy();
       expect(device.behaviors.has(OnOffServer)).toBeTruthy();
-      expect(EndpointServer.forEndpoint(device).hasClusterServer(OnOffCluster)).toBe(true);
     });
 
     test('add onOffLight device to serverNode', async () => {
       expect(await server.add(device)).toBeDefined();
+      expect(EndpointServer.forEndpoint(device).hasClusterServer(DescriptorCluster)).toBe(true);
+      expect(EndpointServer.forEndpoint(device).hasClusterServer(IdentifyCluster)).toBe(true);
+      expect(EndpointServer.forEndpoint(device).hasClusterServer(GroupsCluster)).toBe(true);
+      expect(EndpointServer.forEndpoint(device).hasClusterServer(ScenesManagementCluster)).toBe(false);
+      expect(EndpointServer.forEndpoint(device).hasClusterServer(OnOffCluster)).toBe(true);
     });
 
     test('add deviceType to onOffPlugin without tagList', async () => {
