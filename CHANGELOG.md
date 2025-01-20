@@ -16,12 +16,12 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 ### Breaking Changes
 
 Starting from v. 2.0.0 Matterbridge is running only in mode edge (no parameter needed).
-The legacy old api have been completely removed.
+The legacy old api have been removed.
 
 The frontend has a new dark and light mode. The dark mode is now the default mode.
 It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbridge settings.
 
-## [2.0.0-edge.6] - 2025-01-19
+## [2.0.0] - 2025-01-20
 
 ### Added
 
