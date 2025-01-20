@@ -22,39 +22,35 @@
  */
 
 // NodeStorage and AnsiLogger modules
-import { NodeStorage } from 'node-persist-manager';
-import { LogLevel } from 'node-ansi-logger';
+import { NodeStorage } from './storage/export.js';
+import { LogLevel } from './logger/export.js';
 
 // Matterbridge
 import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
-import { MatterbridgeDevice } from './matterbridgeDevice.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // @matter
 import { FabricIndex, NodeId, VendorId, StorageContext, ServerNode, EndpointNumber, Endpoint as EndpointNode } from '@matter/main';
 import { ExposedFabricInformation } from '@matter/main/protocol';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
-
-// @project-chip
-import { CommissioningServer } from '@project-chip/matter.js';
-import { Aggregator } from '@project-chip/matter.js/device';
+import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 
 // Default colors
 export const plg = '\u001B[38;5;33m';
 export const dev = '\u001B[38;5;79m';
 export const typ = '\u001B[38;5;207m';
 
+// Define an alias for MatterbridgeEndpoint by extending it
+export class MatterbridgeDevice extends MatterbridgeEndpoint {}
+
 // Define an interface for storing the plugins
 export interface RegisteredPlugin extends BaseRegisteredPlugin {
   nodeContext?: NodeStorage;
   storageContext?: StorageContext;
-  commissioningServer?: CommissioningServer;
-  aggregator?: Aggregator;
-  device?: MatterbridgeDevice;
-  platform?: MatterbridgePlatform;
-  reachabilityTimeout?: NodeJS.Timeout;
-  // Matter new API
   serverNode?: ServerNode<ServerNode.RootEndpoint>;
   aggregatorNode?: EndpointNode<AggregatorEndpoint>;
+  device?: MatterbridgeEndpoint;
+  platform?: MatterbridgePlatform;
+  reachabilityTimeout?: NodeJS.Timeout;
 }
 
 // Simplified interface for saving the plugins in node storage
@@ -73,7 +69,6 @@ export interface BaseRegisteredPlugin {
   started?: boolean;
   configured?: boolean;
   paired?: boolean;
-  connected?: boolean;
   fabricInformations?: SanitizedExposedFabricInformation[];
   sessionInformations?: SanitizedSessionInformation[];
   registeredDevices?: number;
@@ -116,10 +111,8 @@ export interface MatterbridgeInformation {
   matterbridgeFabricInformations: SanitizedExposedFabricInformation[];
   matterbridgeSessionInformations: SanitizedSessionInformation[];
   matterbridgePaired: boolean;
-  matterbridgeConnected: boolean;
   bridgeMode: string;
   restartMode: string;
-  edge: boolean;
   readOnly: boolean;
   profile?: string;
   loggerLevel: LogLevel;

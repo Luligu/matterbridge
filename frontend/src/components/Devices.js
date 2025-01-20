@@ -255,6 +255,7 @@ function ClustersTable({ data, columnVisibility }) {
 
 function Devices() {
   const { online, sendMessage, addListener, removeListener } = useContext(WebSocketContext);
+
   const [devices, setDevices] = useState([]);
   const [clusters, setClusters] = useState([]);
   const [plugin, setPlugin] = useState(null);
@@ -427,6 +428,7 @@ function Devices() {
     }
   }, []);
 
+  if(debug) console.log('Devices rendering...');
   if (!online) {
     return ( <Connecting /> );
   }

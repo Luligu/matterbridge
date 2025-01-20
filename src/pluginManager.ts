@@ -21,11 +21,9 @@
  * limitations under the License. *
  */
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 // NodeStorage and AnsiLogger modules
-import { AnsiLogger, BLUE, db, er, LogLevel, nf, nt, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
-import { NodeStorage } from 'node-persist-manager';
+import { AnsiLogger, BLUE, db, er, LogLevel, nf, nt, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from './logger/export.js';
+import { NodeStorage } from './storage/export.js';
 
 // Node.js modules
 import path from 'path';
@@ -497,6 +495,7 @@ export class PluginManager {
   async install(name: string): Promise<string | undefined> {
     await this.uninstall(name);
     this.log.info(`Installing plugin ${plg}${name}${nf}`);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     return new Promise((resolve, reject) => {
       exec(`npm install -g ${name} --omit=dev --force`, (error: ExecException | null, stdout: string, stderr: string) => {
         if (error) {
@@ -507,6 +506,7 @@ export class PluginManager {
           this.log.info(`Installed plugin ${plg}${name}${nf}`);
           this.log.debug(`Installed plugin ${plg}${name}${db}: ${stdout}`);
           // Get the installed version
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           exec(`npm list -g ${name} --depth=0`, (listError, listStdout, listStderr) => {
             if (listError) {
               this.log.error(`List error: ${listError}`);
@@ -539,6 +539,7 @@ export class PluginManager {
    */
   async uninstall(name: string): Promise<string | undefined> {
     this.log.info(`Uninstalling plugin ${plg}${name}${nf}`);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     return new Promise((resolve, reject) => {
       exec(`npm uninstall -g ${name} --force`, (error: ExecException | null, stdout: string, stderr: string) => {
         if (error) {
@@ -745,16 +746,10 @@ export class PluginManager {
       plugin.loaded = undefined;
       plugin.started = undefined;
       plugin.configured = undefined;
-      plugin.connected = undefined;
       plugin.platform = undefined;
       if (removeAllDevices) {
-        if (this.matterbridge.edge) {
-          this.log.info(`Removing all endpoints for plugin ${plg}${plugin.name}${nf}: ${reason}...`);
-          await this.matterbridge.removeAllBridgedEndpoints(plugin.name);
-        } else {
-          this.log.info(`Removing all devices for plugin ${plg}${plugin.name}${nf}: ${reason}...`);
-          await this.matterbridge.removeAllBridgedDevices(plugin.name);
-        }
+        this.log.info(`Removing all endpoints for plugin ${plg}${plugin.name}${nf}: ${reason}...`);
+        await this.matterbridge.removeAllBridgedEndpoints(plugin.name);
       }
       plugin.registeredDevices = undefined;
       plugin.addedDevices = undefined;
@@ -888,7 +883,7 @@ export class PluginManager {
    * @returns {Promise<PlatformSchema>} A promise that resolves to the loaded schema object, or the default schema if the schema file is not found.
    */
   async loadSchema(plugin: RegisteredPlugin): Promise<PlatformSchema> {
-    let schemaFile = plugin.path.replace('package.json', `${plugin.name}.schema.json`);
+    const schemaFile = plugin.path.replace('package.json', `${plugin.name}.schema.json`);
     try {
       await fs.access(schemaFile);
       const data = await fs.readFile(schemaFile, 'utf8');
@@ -898,16 +893,9 @@ export class PluginManager {
       this.log.debug(`Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.`);
       // this.log.debug(`Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.\nSchema:${rs}\n`, schema);
       // Delete the schema file from old position
-      schemaFile = path.join(this.matterbridge.matterbridgeDirectory, `${plugin.name}.schema.json`);
-      try {
-        await fs.unlink(schemaFile);
-        this.log.debug(`Schema file ${schemaFile} deleted.`);
-      } catch (err) {
-        this.log.debug(`Schema file ${schemaFile} to delete not found.`);
-      }
       return schema;
-    } catch (err) {
-      this.log.debug(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema.`);
+    } catch (error) {
+      this.log.debug(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema. Error: ${error instanceof Error ? error.message : error}`);
       return this.getDefaultSchema(plugin);
     }
   }

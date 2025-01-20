@@ -22,16 +22,16 @@
  */
 
 // NodeStorage and AnsiLogger modules
-import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
-import { NodeStorage } from 'node-persist-manager';
+import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from './logger/export.js';
+import { NodeStorage } from './storage/export.js';
 
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeDevice } from './matterbridgeDevice.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { dev } from './matterbridgeTypes.js';
 
 export class DeviceManager {
-  private readonly _devices = new Map<string, MatterbridgeDevice>();
+  private readonly _devices = new Map<string, MatterbridgeEndpoint>();
   private readonly matterbridge: Matterbridge;
   private readonly nodeContext: NodeStorage;
   private readonly log: AnsiLogger;
@@ -55,18 +55,18 @@ export class DeviceManager {
     return this._devices.has(uniqueId);
   }
 
-  get(uniqueId: string): MatterbridgeDevice | undefined {
+  get(uniqueId: string): MatterbridgeEndpoint | undefined {
     return this._devices.get(uniqueId);
   }
 
-  set(device: MatterbridgeDevice): MatterbridgeDevice {
+  set(device: MatterbridgeEndpoint): MatterbridgeEndpoint {
     if (!device.uniqueId) throw new Error(`The device ${dev}${device.deviceName}${er} has not been initialized: uniqueId is required`);
     if (this._devices.has(device.uniqueId)) this.log.error(`The device ${dev}${device.deviceName}${er} with uniqueId ${BLUE}${device.uniqueId}${er} serialNumber ${BLUE}${device.serialNumber}${er} is already in the device manager`);
     this._devices.set(device.uniqueId, device);
     return device;
   }
 
-  remove(device: MatterbridgeDevice): boolean {
+  remove(device: MatterbridgeEndpoint): boolean {
     if (!device.uniqueId) throw new Error(`The device ${dev}${device.deviceName}${er} has not been initialized: uniqueId is required`);
     if (!this._devices.has(device.uniqueId)) this.log.error(`The device ${dev}${device.deviceName}${er} with uniqueId ${BLUE}${device.uniqueId}${er} serialNumber ${BLUE}${device.serialNumber}${er} is not registered in the device manager`);
     return this._devices.delete(device.uniqueId);
@@ -76,7 +76,7 @@ export class DeviceManager {
     this._devices.clear();
   }
 
-  array(): MatterbridgeDevice[] {
+  array(): MatterbridgeEndpoint[] {
     return Array.from(this._devices.values());
   }
 
@@ -84,7 +84,7 @@ export class DeviceManager {
     return this._devices.values();
   }
 
-  async forEach(callback: (device: MatterbridgeDevice) => Promise<void>): Promise<void> {
+  async forEach(callback: (device: MatterbridgeEndpoint) => Promise<void>): Promise<void> {
     const tasks = Array.from(this._devices.values()).map(async (device) => {
       try {
         await callback(device);

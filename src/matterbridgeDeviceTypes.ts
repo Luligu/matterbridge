@@ -22,69 +22,172 @@
  */
 
 // @matter
-import { EndpointNumber } from '@matter/main';
-import {
-  AirQuality,
-  BooleanState,
-  BooleanStateConfiguration,
-  BridgedDeviceBasicInformation,
-  CarbonDioxideConcentrationMeasurement,
-  CarbonMonoxideConcentrationMeasurement,
-  ColorControl,
-  DeviceEnergyManagement,
-  DeviceEnergyManagementMode,
-  DoorLock,
-  ElectricalEnergyMeasurement,
-  ElectricalPowerMeasurement,
-  EnergyPreference,
-  FanControl,
-  FlowMeasurement,
-  FormaldehydeConcentrationMeasurement,
-  Groups,
-  Identify,
-  IlluminanceMeasurement,
-  LevelControl,
-  ModeSelect,
-  NitrogenDioxideConcentrationMeasurement,
-  OccupancySensing,
-  OnOff,
-  OzoneConcentrationMeasurement,
-  Pm10ConcentrationMeasurement,
-  Pm1ConcentrationMeasurement,
-  Pm25ConcentrationMeasurement,
-  PowerSource,
-  PowerTopology,
-  PressureMeasurement,
-  RadonConcentrationMeasurement,
-  RelativeHumidityMeasurement,
-  SmokeCoAlarm,
-  SwitchCluster,
-  TemperatureMeasurement,
-  Thermostat,
-  ThermostatUserInterfaceConfiguration,
-  TimeSynchronization,
-  TotalVolatileOrganicCompoundsConcentrationMeasurement,
-  WindowCovering,
-  ValveConfigurationAndControl,
-  HepaFilterMonitoring,
-  ActivatedCarbonFilterMonitoring,
-  Actions,
-  FixedLabel,
-  RvcRunMode,
-  RvcOperationalState,
-  RvcCleanMode,
-  ScenesManagement,
-  PumpConfigurationAndControl,
-} from '@matter/main/clusters';
+import { ClusterId, DeviceTypeId, EndpointNumber } from '@matter/main';
 import { Semtag } from '@matter/main/types';
 
-// @project-chip
-import { DeviceClasses, DeviceTypeDefinition } from '@project-chip/matter.js/device';
+// @matter clusters
+import { BooleanState } from '@matter/main/clusters/boolean-state';
+import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
+import { BridgedDeviceBasicInformation } from '@matter/main/clusters/bridged-device-basic-information';
+import { CarbonDioxideConcentrationMeasurement } from '@matter/main/clusters/carbon-dioxide-concentration-measurement';
+import { CarbonMonoxideConcentrationMeasurement } from '@matter/main/clusters/carbon-monoxide-concentration-measurement';
+import { ColorControl } from '@matter/main/clusters/color-control';
+import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
+import { DoorLock } from '@matter/main/clusters/door-lock';
+import { ElectricalEnergyMeasurement } from '@matter/main/clusters/electrical-energy-measurement';
+import { ElectricalPowerMeasurement } from '@matter/main/clusters/electrical-power-measurement';
+import { FanControl } from '@matter/main/clusters/fan-control';
+import { FixedLabel } from '@matter/main/clusters/fixed-label';
+import { FlowMeasurement } from '@matter/main/clusters/flow-measurement';
+import { FormaldehydeConcentrationMeasurement } from '@matter/main/clusters/formaldehyde-concentration-measurement';
+import { Groups } from '@matter/main/clusters/groups';
+import { Identify } from '@matter/main/clusters/identify';
+import { IlluminanceMeasurement } from '@matter/main/clusters/illuminance-measurement';
+import { LevelControl } from '@matter/main/clusters/level-control';
+import { ModeSelect } from '@matter/main/clusters/mode-select';
+import { NitrogenDioxideConcentrationMeasurement } from '@matter/main/clusters/nitrogen-dioxide-concentration-measurement';
+import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
+import { OnOff } from '@matter/main/clusters/on-off';
+import { OzoneConcentrationMeasurement } from '@matter/main/clusters/ozone-concentration-measurement';
+import { Pm10ConcentrationMeasurement } from '@matter/main/clusters/pm10-concentration-measurement';
+import { Pm1ConcentrationMeasurement } from '@matter/main/clusters/pm1-concentration-measurement';
+import { Pm25ConcentrationMeasurement } from '@matter/main/clusters/pm25-concentration-measurement';
+import { PowerSource } from '@matter/main/clusters/power-source';
+import { PowerTopology } from '@matter/main/clusters/power-topology';
+import { PressureMeasurement } from '@matter/main/clusters/pressure-measurement';
+import { PumpConfigurationAndControl } from '@matter/main/clusters/pump-configuration-and-control';
+import { RadonConcentrationMeasurement } from '@matter/main/clusters/radon-concentration-measurement';
+import { RelativeHumidityMeasurement } from '@matter/main/clusters/relative-humidity-measurement';
+import { SmokeCoAlarm } from '@matter/main/clusters/smoke-co-alarm';
+import { SwitchCluster } from '@matter/main/clusters/switch';
+import { TemperatureMeasurement } from '@matter/main/clusters/temperature-measurement';
+import { Thermostat } from '@matter/main/clusters/thermostat';
+import { TimeSynchronization } from '@matter/main/clusters/time-synchronization';
+import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/main/clusters/total-volatile-organic-compounds-concentration-measurement';
+import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-configuration-and-control';
+import { WindowCovering } from '@matter/main/clusters/window-covering';
+import { AirQuality } from '@matter/main/clusters/air-quality';
+import { Actions } from '@matter/main/clusters/actions';
+import { ThermostatUserInterfaceConfiguration } from '@matter/main/clusters/thermostat-user-interface-configuration';
+import { EnergyPreference } from '@matter/main/clusters/energy-preference';
+import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
+import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
+import { RvcCleanMode } from '@matter/main/clusters/rvc-clean-mode';
+import { ScenesManagement } from '@matter/main/clusters/scenes-management';
+import { HepaFilterMonitoring } from '@matter/main/clusters/hepa-filter-monitoring';
+import { ActivatedCarbonFilterMonitoring } from '@matter/main/clusters/activated-carbon-filter-monitoring';
+import { DeviceEnergyManagementMode } from '@matter/main/clusters/device-energy-management-mode';
 
-export interface MatterbridgeEndpointOptions {
+export enum DeviceClasses {
+  /** Node device type. */
+  Node = 'Node',
+
+  /**
+   * Utility device type.
+   * A Utility device type supports configuration and settings.
+   */
+  Utility = 'Utility',
+
+  /**
+   * Application device type.
+   * Application devices types are typically the most datatype endpoints on a node and in the network.
+   */
+  App = 'App',
+
+  /**
+   * Simple device type.
+   * A Simple device type supports local control that is persistent, independent, and unsupervised.
+   */
+  Simple = 'Simple',
+
+  /**
+   * Dynamic device type.
+   * A Dynamic device type supports intelligent and supervisory services, such as commissioning,
+   * monitoring, trend analysis, scheduling and central management. A dynamic device type is an
+   * application device type.
+   */
+  Dynamic = 'Dynamic',
+
+  /** There exists a client application cluster on the endpoint. */
+  Client = 'Client',
+
+  /** There exists a server application cluster on the endpoint. */
+  Server = 'Server',
+
+  /** The device type is composed of 2 or more device types. */
+  Composed = 'Composed',
+
+  /** Composed device type that is composed of 2 or more endpoints with the same device type. */
+  Multiple = 'Multiple',
+
+  /** The endpoint is an Initiator for Zigbee EZ-Mode Finding & Binding. */
+  'EZInitiator' = 'EZ-Initiator',
+
+  /** The endpoint is a Target for Zigbee EZ-Mode Finding & Binding. */
+  'EZTarget' = 'EZ-Target',
+
+  /**
+   * The endpoint represents a Bridged Device, for which information about the state of
+   * its power source is available to the Bridge
+   */
+  BridgedPowerSourceInfo = 'BridgedPowerSourceInfo',
+}
+
+export interface DeviceTypeDefinition {
+  name: string;
+  code: DeviceTypeId;
+  deviceClass: DeviceClasses;
+  superSet?: string;
+  revision: number;
+  requiredServerClusters: ClusterId[];
+  optionalServerClusters: ClusterId[];
+  requiredClientClusters: ClusterId[];
+  optionalClientClusters: ClusterId[];
+  unknown: boolean;
+}
+
+export const DeviceTypeDefinition = ({
+  name,
+  code,
+  deviceClass,
+  superSet,
+  revision,
+  requiredServerClusters = [],
+  optionalServerClusters = [],
+  requiredClientClusters = [],
+  optionalClientClusters = [],
+  unknown = false,
+}: {
+  name: string;
+  code: number;
+  deviceClass: DeviceClasses;
+  superSet?: string;
+  revision: number;
+  requiredServerClusters?: ClusterId[];
+  optionalServerClusters?: ClusterId[];
+  requiredClientClusters?: ClusterId[];
+  optionalClientClusters?: ClusterId[];
+  unknown?: boolean;
+}): DeviceTypeDefinition => ({
+  name,
+  code: DeviceTypeId(code),
+  deviceClass,
+  superSet,
+  revision,
+  requiredServerClusters,
+  optionalServerClusters,
+  requiredClientClusters,
+  optionalClientClusters,
+  unknown,
+});
+
+export interface MatterbridgeEndpointOptions extends EndpointOptions {
+  tagList?: Semtag[];
+}
+
+export interface EndpointOptions {
   endpointId?: EndpointNumber;
   uniqueStorageKey?: string;
-  tagList?: Semtag[];
 }
 
 // Matter 1.0 and 1.1 device types

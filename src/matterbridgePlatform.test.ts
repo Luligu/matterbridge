@@ -10,7 +10,6 @@ import { AnsiLogger, CYAN, db, LogLevel, pl, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
-import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
@@ -34,18 +33,6 @@ describe('Matterbridge platform', () => {
     });
     jest.spyOn(AnsiLogger.prototype, 'error').mockImplementation((message: string, ...parameters: any[]) => {
       // console.log(`Mocked error: ${message}`, ...parameters);
-    });
-    jest.spyOn(Matterbridge.prototype, 'addBridgedDevice').mockImplementation((pluginName: string, device: MatterbridgeDevice) => {
-      // console.log(`Mocked addBridgedDevice: ${pluginName} ${device.name}`);
-      return Promise.resolve();
-    });
-    jest.spyOn(Matterbridge.prototype, 'removeBridgedDevice').mockImplementation((pluginName: string, device: MatterbridgeDevice) => {
-      // console.log(`Mocked removeBridgedDevice: ${pluginName} ${device.name}`);
-      return Promise.resolve();
-    });
-    jest.spyOn(Matterbridge.prototype, 'removeAllBridgedDevices').mockImplementation((pluginName: string) => {
-      // console.log(`Mocked removeAllBridgedDevices: ${pluginName}`);
-      return Promise.resolve();
     });
     jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint').mockImplementation((pluginName: string, device: MatterbridgeEndpoint) => {
       // console.log(`Mocked addBridgedEndpoint: ${pluginName} ${device.name}`);
@@ -141,11 +128,11 @@ describe('Matterbridge platform', () => {
   it('should validate with white and black list', () => {
     platform.config.whiteList = ['white1', 'white2', 'white3'];
     platform.config.blackList = ['black1', 'black2', 'black3'];
-    expect(platform.validateDeviceWhiteBlackList('white1')).toBe(true);
-    expect(platform.validateDeviceWhiteBlackList('black2')).toBe(false);
-    expect(platform.validateDeviceWhiteBlackList(['white1', 'black2'])).toBe(false);
-    expect(platform.validateDeviceWhiteBlackList('xDevice')).toBe(false);
-    expect(platform.validateDeviceWhiteBlackList('')).toBe(false);
+    expect(platform.validateDevice('white1')).toBe(true);
+    expect(platform.validateDevice('black2')).toBe(false);
+    expect(platform.validateDevice(['white1', 'black2'])).toBe(false);
+    expect(platform.validateDevice('xDevice')).toBe(false);
+    expect(platform.validateDevice('')).toBe(false);
   });
 
   it('should validate with white list', () => {
@@ -375,7 +362,6 @@ describe('Matterbridge platform', () => {
     jest.clearAllMocks();
     expect(await platform.checkEndpointNumbers()).toBe(3);
     expect(platform.log.warn).not.toHaveBeenCalled();
-    expect(platform.log.debug).toHaveBeenCalledTimes(2);
     expect(platform.log.debug).toHaveBeenCalledWith('Checking endpoint numbers...');
     expect(platform.log.debug).toHaveBeenCalledWith('Endpoint numbers check completed.');
   });
@@ -417,39 +403,25 @@ describe('Matterbridge platform', () => {
     expect(platform.log.debug).toHaveBeenCalledWith('Shutting down platform ', 'test reason');
   });
 
-  test('registerDevice calls matterbridge.addBridgedDevice with correct parameters', async () => {
-    const testDevice = new MatterbridgeDevice(powerSource);
-    await platform.registerDevice(testDevice);
-    expect(matterbridge.addBridgedDevice).toHaveBeenCalled();
-  });
-
   test('registerDevice calls matterbridge.addBridgedEndpoint with correct parameters', async () => {
     const testDevice = new MatterbridgeEndpoint(powerSource);
+    testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
     await platform.registerDevice(testDevice);
+    expect(platform.registeredEndpoints.size).toBe(1);
     expect(matterbridge.addBridgedEndpoint).toHaveBeenCalled();
-  });
-
-  test('unregisterDevice calls matterbridge.removeBridgedDevice with correct parameters', async () => {
-    const testDevice = new MatterbridgeDevice(powerSource);
-    await platform.unregisterDevice(testDevice);
-    expect(matterbridge.removeBridgedDevice).toHaveBeenCalled();
   });
 
   test('unregisterDevice calls matterbridge.removeBridgedEndpoint with correct parameters', async () => {
     const testDevice = new MatterbridgeEndpoint(powerSource);
+    testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
     await platform.unregisterDevice(testDevice);
+    expect(platform.registeredEndpoints.size).toBe(0);
     expect(matterbridge.removeBridgedEndpoint).toHaveBeenCalled();
   });
 
-  test('unregisterAllDevices calls matterbridge.removeAllBridgedDevices with correct parameters', async () => {
-    await platform.unregisterAllDevices();
-    expect(matterbridge.removeAllBridgedDevices).toHaveBeenCalled();
-  });
-
   test('unregisterAllDevices calls matterbridge.removeAllBridgedEndpoints with correct parameters', async () => {
-    platform.matterbridge.edge = true;
     await platform.unregisterAllDevices();
+    expect(platform.registeredEndpoints.size).toBe(0);
     expect(matterbridge.removeAllBridgedEndpoints).toHaveBeenCalled();
-    platform.matterbridge.edge = false;
   });
 });

@@ -3,50 +3,34 @@
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
-import { MatterbridgeEdge } from './matterbridgeEdge.js';
+import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { bridge, coverDevice, dimmableLight, doorLockDevice, electricalSensor, genericSwitch, lightSensor, occupancySensor, onOffLight, onOffOutlet, onOffSwitch, powerSource } from './matterbridgeDeviceTypes.js';
-import { getMacAddress } from './utils/utils.js';
+import { lightSensor, occupancySensor, onOffLight, onOffOutlet } from './matterbridgeDeviceTypes.js';
 
-import { DeviceTypeId, VendorId, Environment, ServerNode, Endpoint, EndpointServer, StorageContext } from '@matter/main';
+// @matter
+import { DeviceTypeId, VendorId, ServerNode, Endpoint, EndpointServer, StorageContext } from '@matter/main';
 import { LogFormat as Format, LogLevel as Level } from '@matter/main';
+import { BasicInformationCluster, BridgedDeviceBasicInformationCluster, Descriptor, DescriptorCluster, GroupsCluster, Identify, IdentifyCluster, OccupancySensing, OnOffCluster, ScenesManagementCluster } from '@matter/main/clusters';
+import { AggregatorEndpoint } from '@matter/main/endpoints';
+import { MdnsService, logEndpoint } from '@matter/main/protocol';
 import {
-  BasicInformationCluster,
-  BooleanStateCluster,
-  BridgedDeviceBasicInformationCluster,
-  Descriptor,
-  DescriptorCluster,
-  ElectricalEnergyMeasurement,
-  ElectricalPowerMeasurement,
-  FlowMeasurementCluster,
-  GroupsCluster,
-  Identify,
-  IdentifyCluster,
-  IlluminanceMeasurementCluster,
-  OccupancySensing,
-  OccupancySensingCluster,
-  OnOffCluster,
-  PowerTopology,
-  PressureMeasurement,
-  PressureMeasurementCluster,
-  RelativeHumidityMeasurement,
-  RelativeHumidityMeasurementCluster,
-  ScenesManagementCluster,
-  TemperatureMeasurementCluster,
-  WindowCovering,
-  WindowCoveringCluster,
-} from '@matter/main/clusters';
-import { AggregatorEndpoint, AggregatorEndpointDefinition } from '@matter/main/endpoints';
-
-import { DeviceTypeDefinition, DeviceTypes, logEndpoint } from '@project-chip/matter.js/device';
-import { MdnsService } from '@matter/main/protocol';
-import { log } from 'console';
-import { DescriptorServer, IlluminanceMeasurementServer, OccupancySensingServer } from '@matter/main/behaviors';
-import { OccupancySensorDevice, OnOffPlugInUnitDevice } from '@matter/main/devices';
-import { MatterbridgeBehavior, MatterbridgeIdentifyServer } from './matterbridgeBehaviors.js';
+  DescriptorBehavior,
+  DescriptorServer,
+  GroupsBehavior,
+  GroupsServer,
+  IdentifyBehavior,
+  IdentifyServer,
+  IlluminanceMeasurementServer,
+  OccupancySensingServer,
+  OnOffBehavior,
+  OnOffServer,
+  ScenesManagementBehavior,
+  ScenesManagementServer,
+} from '@matter/main/behaviors';
+import { OnOffPlugInUnitDevice } from '@matter/main/devices';
 
 describe('MatterbridgeEndpoint class', () => {
-  let edge: MatterbridgeEdge;
+  let matterbridge: Matterbridge;
   let context: StorageContext;
   let server: ServerNode<ServerNode.RootEndpoint>;
   let aggregator: Endpoint<AggregatorEndpoint>;
@@ -56,6 +40,7 @@ describe('MatterbridgeEndpoint class', () => {
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let consoleDebugSpy: jest.SpiedFunction<typeof console.debug>;
   let consoleInfoSpy: jest.SpiedFunction<typeof console.info>;
+  let consoleWarnSpy: jest.SpiedFunction<typeof console.warn>;
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
 
   beforeAll(async () => {
@@ -76,22 +61,26 @@ describe('MatterbridgeEndpoint class', () => {
       // console.error(args);
     });
     // Spy on and mock console.log
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
+      // console.warn(args);
+    });
+    // Spy on and mock console.log
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
       // console.error(args);
     });
 
     // Create a MatterbridgeEdge instance
-    edge = await MatterbridgeEdge.loadInstance(false);
-    edge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+    matterbridge = await Matterbridge.loadInstance(false);
+    matterbridge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
     // Setup matter environment
-    edge.environment.vars.set('log.level', Level.DEBUG);
-    edge.environment.vars.set('log.format', Format.ANSI);
-    edge.environment.vars.set('path.root', 'matterstorage');
-    edge.environment.vars.set('runtime.signals', false);
-    edge.environment.vars.set('runtime.exitcode', false);
+    matterbridge.environment.vars.set('log.level', Level.ERROR);
+    matterbridge.environment.vars.set('log.format', Format.ANSI);
+    matterbridge.environment.vars.set('path.root', 'matterstorage');
+    matterbridge.environment.vars.set('runtime.signals', false);
+    matterbridge.environment.vars.set('runtime.exitcode', false);
     // Setup Matter mdnsInterface
-    if ((edge as any).mdnsInterface) edge.environment.vars.set('mdns.networkInterface', (edge as any).mdnsInterface);
-    await edge.startMatterStorage('test', 'Matterbridge');
+    if (matterbridge.mdnsInterface) matterbridge.environment.vars.set('mdns.networkInterface', matterbridge.mdnsInterface);
+    await (matterbridge as any).startMatterStorage();
   });
 
   afterEach(async () => {
@@ -100,14 +89,16 @@ describe('MatterbridgeEndpoint class', () => {
   });
 
   afterAll(async () => {
+    await matterbridge.destroyInstance();
+    await matterbridge.environment.get(MdnsService)[Symbol.asyncDispose]();
+
     // Restore the mocked AnsiLogger.log method
     if ((AnsiLogger.prototype.log as jest.Mock).mockRestore) (AnsiLogger.prototype.log as jest.Mock).mockRestore();
     consoleLogSpy?.mockRestore();
     consoleDebugSpy?.mockRestore();
     consoleInfoSpy?.mockRestore();
+    consoleWarnSpy?.mockRestore();
     consoleErrorSpy?.mockRestore();
-
-    await edge.environment.get(MdnsService)[Symbol.asyncDispose]();
   });
 
   describe('MatterbridgeBehavior', () => {
@@ -121,17 +112,16 @@ describe('MatterbridgeEndpoint class', () => {
       consoleInfoSpy.mockRestore();
       consoleErrorSpy.mockRestore();
       */
-      context = await edge.createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
       expect(context).toBeDefined();
     });
 
     test('create the server node', async () => {
-      server = await edge.createServerNode(context);
+      server = await (matterbridge as any).createServerNode(context);
       expect(server).toBeDefined();
     });
 
     test('create a onOffLight device', async () => {
-      server = await edge.createServerNode(context);
       device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }] });
       expect(device).toBeDefined();
       expect(device.id).toBe('OnOffLight');
@@ -169,14 +159,35 @@ describe('MatterbridgeEndpoint class', () => {
     test('add required clusters to onOffLight', async () => {
       expect(device).toBeDefined();
       device.addRequiredClusterServers(device);
+      expect(device.behaviors.supported.descriptor).toBeDefined();
+
+      expect(device.behaviors.has(DescriptorBehavior)).toBeTruthy();
+      expect(device.behaviors.has(DescriptorServer)).toBeTruthy();
+
+      expect(device.behaviors.has(IdentifyBehavior)).toBeTruthy();
+      expect(device.behaviors.has(IdentifyServer)).toBeTruthy();
+
+      expect(device.behaviors.has(GroupsBehavior)).toBeTruthy();
+      expect(device.behaviors.has(GroupsServer)).toBeTruthy();
+
+      expect(device.behaviors.has(ScenesManagementBehavior)).toBeFalsy();
+      expect(device.behaviors.has(ScenesManagementServer)).toBeFalsy();
+
+      expect(device.behaviors.has(OnOffBehavior)).toBeTruthy();
+      expect(device.behaviors.has(OnOffServer)).toBeTruthy();
     });
 
     test('add onOffLight device to serverNode', async () => {
       expect(await server.add(device)).toBeDefined();
+      expect(EndpointServer.forEndpoint(device).hasClusterServer(DescriptorCluster)).toBe(true);
+      expect(EndpointServer.forEndpoint(device).hasClusterServer(IdentifyCluster)).toBe(true);
+      expect(EndpointServer.forEndpoint(device).hasClusterServer(GroupsCluster)).toBe(true);
+      expect(EndpointServer.forEndpoint(device).hasClusterServer(ScenesManagementCluster)).toBe(false);
+      expect(EndpointServer.forEndpoint(device).hasClusterServer(OnOffCluster)).toBe(true);
     });
 
     test('add deviceType to onOffPlugin without tagList', async () => {
-      const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer, OccupancySensingServer), {
+      const child = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer, OccupancySensingServer), {
         id: 'OnOffPlugin1',
         identify: {
           identifyTime: 0,
@@ -197,19 +208,19 @@ describe('MatterbridgeEndpoint class', () => {
           ],
         },
       });
-      expect(endpoint).toBeDefined();
-      endpoint.behaviors.require(DescriptorServer, {
+      expect(child).toBeDefined();
+      child.behaviors.require(DescriptorServer, {
         deviceTypeList: [
           { deviceType: 0x10a, revision: 3 },
           { deviceType: occupancySensor.code, revision: occupancySensor.revision },
         ],
       });
-      expect(await server.add(endpoint)).toBeDefined();
-      logEndpoint(EndpointServer.forEndpoint(endpoint));
+      expect(await server.add(child)).toBeDefined();
+      logEndpoint(EndpointServer.forEndpoint(child));
     });
 
     test('add deviceType to onOffPlugin with tagList', async () => {
-      const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer), {
+      const child = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer), {
         id: 'OnOffPlugin2',
         identify: {
           identifyTime: 0,
@@ -231,9 +242,9 @@ describe('MatterbridgeEndpoint class', () => {
           ],
         },
       });
-      expect(endpoint).toBeDefined();
+      expect(child).toBeDefined();
       expect(() =>
-        endpoint.behaviors.require(DescriptorServer.with(Descriptor.Feature.TagList), {
+        child.behaviors.require(DescriptorServer.with(Descriptor.Feature.TagList), {
           tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }],
           deviceTypeList: [
             { deviceType: 0x10a, revision: 3 },
@@ -241,12 +252,12 @@ describe('MatterbridgeEndpoint class', () => {
           ],
         }),
       ).toThrow();
-      await expect(server.add(endpoint)).resolves.toBeDefined();
-      logEndpoint(EndpointServer.forEndpoint(endpoint));
+      await expect(server.add(child)).resolves.toBeDefined();
+      logEndpoint(EndpointServer.forEndpoint(child));
     });
 
     test('add deviceType to onOffPlugin in the costructor', async () => {
-      const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer, IlluminanceMeasurementServer), {
+      const child = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer, IlluminanceMeasurementServer), {
         id: 'OnOffPlugin3',
         identify: {
           identifyTime: 0,
@@ -269,10 +280,10 @@ describe('MatterbridgeEndpoint class', () => {
           ],
         },
       });
-      expect(endpoint).toBeDefined();
-      await expect(server.add(endpoint)).resolves.toBeDefined();
-      logEndpoint(EndpointServer.forEndpoint(endpoint));
-      const deviceTypeList = endpoint.state.descriptor.deviceTypeList;
+      expect(child).toBeDefined();
+      await expect(server.add(child)).resolves.toBeDefined();
+      logEndpoint(EndpointServer.forEndpoint(child));
+      const deviceTypeList = child.state.descriptor.deviceTypeList;
       expect(deviceTypeList).toHaveLength(3);
       expect(deviceTypeList[0].deviceType).toBe(onOffOutlet.code);
       expect(deviceTypeList[0].revision).toBe(onOffOutlet.revision);
@@ -284,7 +295,7 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('start server node', async () => {
       expect(server).toBeDefined();
-      await edge.startServerNode(server);
+      await (matterbridge as any).startServerNode(server);
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
     });
@@ -303,8 +314,7 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('close server node', async () => {
       expect(server).toBeDefined();
-      await edge.stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
+      await (matterbridge as any).stopServerNode(server);
     });
   });
 });

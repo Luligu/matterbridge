@@ -23,22 +23,17 @@
 
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeDevice } from './matterbridgeDevice.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { isValidArray, isValidObject, isValidString } from './utils/utils.js';
 
 // AnsiLogger module
-import { AnsiLogger, CYAN, db, LogLevel, nf, wr } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, db, LogLevel, nf, wr } from './logger/export.js';
 
 // Storage module
-import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
+import { NodeStorage, NodeStorageManager } from './storage/export.js';
 
 // Matter
-import { AtLeastOne, EndpointNumber } from '@matter/main';
-
-// @project-chip
-import { DeviceTypeDefinition } from '@project-chip/matter.js/device';
-import { MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
+import { EndpointNumber } from '@matter/main';
 
 // Node.js module
 import path from 'path';
@@ -67,6 +62,7 @@ export class MatterbridgePlatform {
   public context: NodeStorage | undefined;
   public selectDevice = new Map<string, { serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }>();
   public selectEntity = new Map<string, { name: string; description: string; icon?: string }>();
+  public registeredEndpoints = new Map<string, MatterbridgeEndpoint>();
 
   /**
    * Creates an instance of the base MatterbridgePlatform.
@@ -134,29 +130,29 @@ export class MatterbridgePlatform {
 
   /**
    * Registers a device with the Matterbridge platform.
-   * @param {MatterbridgeDevice} device - The device to register.
+   * @param {MatterbridgeEndpoint} device - The device to register.
    */
-  async registerDevice(device: MatterbridgeDevice | MatterbridgeEndpoint) {
+  async registerDevice(device: MatterbridgeEndpoint) {
     device.plugin = this.name;
-    if (device instanceof MatterbridgeDevice) await this.matterbridge.addBridgedDevice(this.name, device);
-    if (device instanceof MatterbridgeEndpoint) await this.matterbridge.addBridgedEndpoint(this.name, device);
+    await this.matterbridge.addBridgedEndpoint(this.name, device);
+    if (device.uniqueId) this.registeredEndpoints.set(device.uniqueId, device);
   }
 
   /**
    * Unregisters a device registered with the Matterbridge platform.
-   * @param {MatterbridgeDevice} device - The device to unregister.
+   * @param {MatterbridgeEndpoint} device - The device to unregister.
    */
-  async unregisterDevice(device: MatterbridgeDevice | MatterbridgeEndpoint) {
-    if (device instanceof MatterbridgeDevice) await this.matterbridge.removeBridgedDevice(this.name, device);
-    if (device instanceof MatterbridgeEndpoint) await this.matterbridge.removeBridgedEndpoint(this.name, device);
+  async unregisterDevice(device: MatterbridgeEndpoint) {
+    await this.matterbridge.removeBridgedEndpoint(this.name, device);
+    if (device.uniqueId) this.registeredEndpoints.delete(device.uniqueId);
   }
 
   /**
    * Unregisters all devices registered with the Matterbridge platform.
    */
   async unregisterAllDevices() {
-    if (this.matterbridge.edge) await this.matterbridge.removeAllBridgedEndpoints(this.name);
-    else await this.matterbridge.removeAllBridgedDevices(this.name);
+    await this.matterbridge.removeAllBridgedEndpoints(this.name);
+    this.registeredEndpoints.clear();
   }
 
   /**
@@ -300,8 +296,8 @@ export class MatterbridgePlatform {
         this.log.debug(`Setting endpoint number for device ${CYAN}${device.uniqueId}${db} to ${CYAN}${device.maybeNumber}${db}`);
         endpointMap.set(device.uniqueId, device.maybeNumber);
       }
-      for (const child of device.getChildEndpoints() as MatterbridgeDevice[] | MatterbridgeEndpoint[]) {
-        const childId = child instanceof MatterbridgeEndpoint ? child.id : child.uniqueStorageKey;
+      for (const child of device.getChildEndpoints() as MatterbridgeEndpoint[]) {
+        const childId = child.id;
         if (!childId || !child.maybeNumber) continue;
         if (endpointMap.has(device.uniqueId + separator + childId) && endpointMap.get(device.uniqueId + separator + childId) !== child.maybeNumber) {
           this.log.warn(`Child endpoint number for device ${CYAN}${device.uniqueId}${wr}.${CYAN}${childId}${wr} changed from ${CYAN}${endpointMap.get(device.uniqueId + separator + childId)}${wr} to ${CYAN}${child.maybeNumber}${wr}`);
@@ -316,14 +312,5 @@ export class MatterbridgePlatform {
     await context.set('endpointMap', Array.from(endpointMap.entries()));
     this.log.debug('Endpoint numbers check completed.');
     return endpointMap.size;
-  }
-
-  // Temporary method to create a MatterbridgeDevice before switching to the edge
-  async _createMutableDevice(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false): Promise<MatterbridgeDevice> {
-    let device: MatterbridgeDevice;
-    if (this.matterbridge.edge === true) {
-      device = new MatterbridgeEndpoint(definition, options, debug) as unknown as MatterbridgeDevice;
-    } else device = new MatterbridgeDevice(definition, undefined, debug);
-    return device;
   }
 }

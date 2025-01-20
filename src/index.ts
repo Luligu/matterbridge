@@ -22,21 +22,11 @@
  */
 
 import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeEdge } from './matterbridgeEdge.js';
-
-export type Identity<T> = T;
-
-export type AtLeastOne<T> = ArrayMinLength<T, 1>;
-
-type BuildArrayMinLength<T, N extends number, Current extends T[]> = Current['length'] extends N ? [...Current, ...T[]] : BuildArrayMinLength<T, N, [...Current, T]>;
-
-export type ArrayMinLength<T, N extends number> = BuildArrayMinLength<T, N, []>;
 
 // @matter
-// export { Identity, AtLeastOne } from '@matter/main';
-export * from '@matter/main/clusters';
-export * from '@matter/main/types';
 export {
+  Identity,
+  AtLeastOne,
   SemanticNamespace,
   ClosureTag,
   CompassDirectionTag,
@@ -52,16 +42,16 @@ export {
   RefrigeratorTag,
   RoomAirConditionerTag,
   SwitchesTag,
-} from '@matter/node';
+} from '@matter/main';
+export * from '@matter/main/clusters';
+export * from '@matter/main/types';
 
 // @project-chip
-export * from '@project-chip/matter.js/device';
-export * from '@project-chip/matter.js/cluster';
+export { ClusterServer, ClusterServerObj, ClusterClient, ClusterClientObj } from '@project-chip/matter.js/cluster';
 
 // Matterbridge
 export * from './matterbridge.js';
 export * from './matterbridgeTypes.js';
-export * from './matterbridgeDevice.js';
 export * from './matterbridgeEndpoint.js';
 export * from './matterbridgeDeviceTypes.js';
 export * from './matterbridgePlatform.js';
@@ -75,8 +65,7 @@ const rs = '\u001B[40;0m';
 async function main() {
   // eslint-disable-next-line no-console
   if (process.argv.includes('-debug')) console.log(cli + 'MAIN: Matterbridge.loadInstance() called' + rs);
-  if (process.argv.includes('-edge')) await MatterbridgeEdge.loadInstance();
-  else await Matterbridge.loadInstance();
+  await Matterbridge.loadInstance();
   // eslint-disable-next-line no-console
   if (process.argv.includes('-debug')) console.log(cli + 'MAIN: Matterbridge.loadInstance() exited' + rs);
 }
