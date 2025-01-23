@@ -90,7 +90,6 @@ describe('MatterbridgeEndpoint class', () => {
   afterAll(async () => {
     // Close the Matterbridge instance
     await matterbridge.destroyInstance();
-    await matterbridge.environment.get(MdnsService)[Symbol.asyncDispose]();
 
     // Restore all mocks
     jest.restoreAllMocks();

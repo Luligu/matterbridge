@@ -218,7 +218,6 @@ describe('MatterbridgeEndpoint class', () => {
     test('close server node', async () => {
       expect(server).toBeDefined();
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
     });
   });
 
@@ -387,7 +386,6 @@ describe('MatterbridgeEndpoint class', () => {
     test('close server node', async () => {
       expect(server).toBeDefined();
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
     });
   });
 
@@ -448,7 +446,6 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('close serverNode', async () => {
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
   });
@@ -501,7 +498,6 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('close serverNode', async () => {
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
   });
@@ -581,7 +577,6 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('close serverNode', async () => {
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
   });
@@ -654,7 +649,6 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('close serverNode', async () => {
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
   });
@@ -722,7 +716,6 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('stop server node', async () => {
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
       // logEndpoint(EndpointServer.forEndpoint(server));
     });
@@ -765,7 +758,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -796,7 +788,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.getAttribute(PowerSourceCluster.id, 'batVoltage')).toBe(1500);
 
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -828,7 +819,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.getAttribute(PowerSourceCluster.id, 'batQuantity')).toBe(1);
 
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -862,7 +852,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.getAttribute(PowerSourceCluster.id, 'batQuantity')).toBe(undefined);
 
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -903,7 +892,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -926,7 +914,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -950,7 +937,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -975,7 +961,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -1000,7 +985,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -1025,7 +1009,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -1050,7 +1033,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -1075,7 +1057,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -1099,7 +1080,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -1122,7 +1102,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -1144,7 +1123,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -1172,7 +1150,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -1195,7 +1172,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -1219,7 +1195,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -1243,7 +1218,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -1267,7 +1241,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isOnline).toBe(true);
       expect(server.lifecycle.isCommissioned).toBe(false);
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -1303,7 +1276,6 @@ describe('MatterbridgeEndpoint class', () => {
       device.triggerSwitchEvent('Long');
 
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -1338,7 +1310,6 @@ describe('MatterbridgeEndpoint class', () => {
       device.triggerSwitchEvent('Release');
 
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -1369,7 +1340,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isCommissioned).toBe(false);
       // logEndpoint(EndpointServer.forEndpoint(device));
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
 
@@ -1395,7 +1365,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server.lifecycle.isCommissioned).toBe(false);
       // logEndpoint(EndpointServer.forEndpoint(device));
       await (matterbridge as any).stopServerNode(server);
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
       expect(server.lifecycle.isOnline).toBe(false);
     });
   });
