@@ -28,6 +28,17 @@
 // @matter
 import { Behavior, NamedHandler } from '@matter/main';
 
+// @matter clusters
+import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
+import { ColorControl } from '@matter/main/clusters/color-control';
+import { FanControl } from '@matter/main/clusters/fan-control';
+import { Identify } from '@matter/main/clusters/identify';
+import { LevelControl } from '@matter/main/clusters/level-control';
+import { Thermostat } from '@matter/main/clusters/thermostat';
+import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-configuration-and-control';
+import { WindowCovering } from '@matter/main/clusters/window-covering';
+import { ModeSelect } from '@matter/main/clusters/mode-select';
+
 // @matter behaviors
 import { IdentifyServer } from '@matter/main/behaviors/identify';
 import { OnOffServer } from '@matter/main/behaviors/on-off';
@@ -39,16 +50,7 @@ import { FanControlServer } from '@matter/main/behaviors/fan-control';
 import { ThermostatServer } from '@matter/main/behaviors/thermostat';
 import { ValveConfigurationAndControlServer } from '@matter/main/behaviors/valve-configuration-and-control';
 import { BooleanStateConfigurationServer } from '@matter/main/behaviors/boolean-state-configuration';
-
-// @matter clusters
-import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
-import { ColorControl } from '@matter/main/clusters/color-control';
-import { FanControl } from '@matter/main/clusters/fan-control';
-import { Identify } from '@matter/main/clusters/identify';
-import { LevelControl } from '@matter/main/clusters/level-control';
-import { Thermostat } from '@matter/main/clusters/thermostat';
-import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-configuration-and-control';
-import { WindowCovering } from '@matter/main/clusters/window-covering';
+import { ModeSelectServer } from '@matter/main/behaviors/mode-select';
 
 // AnsiLogger module
 import { AnsiLogger } from './logger/export.js';
@@ -81,7 +83,6 @@ export class MatterbridgeBehaviorDevice {
     this.log.info(`Identifying device for ${identifyTime} seconds`);
     this.commandHandler.executeHandler('identify', { request: { identifyTime }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
-
   triggerEffect({ effectIdentifier, effectVariant }: Identify.TriggerEffectRequest) {
     this.log.info(`Triggering effect ${effectIdentifier} variant ${effectVariant}`);
     this.commandHandler.executeHandler('triggerEffect', { request: { effectIdentifier, effectVariant }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
@@ -177,6 +178,11 @@ export class MatterbridgeBehaviorDevice {
   close() {
     this.log.info(`Closing valve (endpoint ${this.endpointId}.${this.endpointNumber})`);
     this.commandHandler.executeHandler('close', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  changeToMode({ newMode }: ModeSelect.ChangeToModeRequest) {
+    this.log.info(`Changing mode to ${newMode}`);
+    this.commandHandler.executeHandler('changeToMode', { request: { newMode }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
 
   enableDisableAlarm({ alarmsToEnableDisable }: BooleanStateConfiguration.EnableDisableAlarmRequest) {
@@ -312,6 +318,14 @@ export class MatterbridgeDoorLockServer extends DoorLockServer {
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     device.unlockDoor();
     super.unlockDoor();
+  }
+}
+
+export class MatterbridgeModeSelectServer extends ModeSelectServer {
+  override async changeToMode({ newMode }: ModeSelect.ChangeToModeRequest) {
+    const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
+    device.changeToMode({ newMode });
+    super.changeToMode({ newMode });
   }
 }
 
