@@ -34,10 +34,12 @@ import { ColorControl } from '@matter/main/clusters/color-control';
 import { FanControl } from '@matter/main/clusters/fan-control';
 import { Identify } from '@matter/main/clusters/identify';
 import { LevelControl } from '@matter/main/clusters/level-control';
+import { WindowCovering } from '@matter/main/clusters/window-covering';
 import { Thermostat } from '@matter/main/clusters/thermostat';
 import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-configuration-and-control';
-import { WindowCovering } from '@matter/main/clusters/window-covering';
 import { ModeSelect } from '@matter/main/clusters/mode-select';
+import { SmokeCoAlarm } from '@matter/main/clusters/smoke-co-alarm';
+import { BooleanStateConfigurationServer } from '@matter/main/behaviors/boolean-state-configuration';
 
 // @matter behaviors
 import { IdentifyServer } from '@matter/main/behaviors/identify';
@@ -49,8 +51,8 @@ import { DoorLockServer } from '@matter/main/behaviors/door-lock';
 import { FanControlServer } from '@matter/main/behaviors/fan-control';
 import { ThermostatServer } from '@matter/main/behaviors/thermostat';
 import { ValveConfigurationAndControlServer } from '@matter/main/behaviors/valve-configuration-and-control';
-import { BooleanStateConfigurationServer } from '@matter/main/behaviors/boolean-state-configuration';
 import { ModeSelectServer } from '@matter/main/behaviors/mode-select';
+import { SmokeCoAlarmServer } from '@matter/main/behaviors/smoke-co-alarm';
 
 // AnsiLogger module
 import { AnsiLogger } from './logger/export.js';
@@ -183,6 +185,11 @@ export class MatterbridgeBehaviorDevice {
   changeToMode({ newMode }: ModeSelect.ChangeToModeRequest) {
     this.log.info(`Changing mode to ${newMode}`);
     this.commandHandler.executeHandler('changeToMode', { request: { newMode }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  selfTestRequest() {
+    this.log.info(`Testing SmokeCOAlarm (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.commandHandler.executeHandler('selfTestRequest', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
 
   enableDisableAlarm({ alarmsToEnableDisable }: BooleanStateConfiguration.EnableDisableAlarmRequest) {
@@ -389,6 +396,14 @@ export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigu
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     device.close();
     super.close();
+  }
+}
+
+export class MatterbridgeSmokeCOAlarmServer extends SmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm) {
+  override async selfTestRequest() {
+    const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
+    device.selfTestRequest();
+    super.selfTestRequest();
   }
 }
 
