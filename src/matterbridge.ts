@@ -1313,6 +1313,7 @@ export class Matterbridge extends EventEmitter {
       if (this.bridgeMode === 'bridge') {
         if (this.serverNode) {
           await this.stopServerNode(this.serverNode);
+          this.serverNode = undefined;
           this.log.info(`Stopped matter server node for Matterbridge`);
         }
       }
@@ -1320,6 +1321,7 @@ export class Matterbridge extends EventEmitter {
         for (const plugin of this.plugins.array()) {
           if (plugin.serverNode) {
             await this.stopServerNode(plugin.serverNode);
+            plugin.serverNode = undefined;
             this.log.info(`Stopped matter server node for ${plugin.name}`);
           }
         }
@@ -1487,7 +1489,7 @@ export class Matterbridge extends EventEmitter {
         for (const plugin of this.plugins) {
           if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
           try {
-            await this.plugins.configure(plugin); // TODO No await do it in parallel
+            await this.plugins.configure(plugin);
           } catch (error) {
             plugin.error = true;
             this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
@@ -2005,7 +2007,7 @@ export class Matterbridge extends EventEmitter {
     serverNode.lifecycle.decommissioned.on(() => this.log.notice(`Server node for ${storeId} was fully decommissioned successfully!`));
 
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */
-    serverNode.lifecycle.online.on(() => {
+    serverNode.lifecycle.online.on(async () => {
       this.log.notice(`Server node for ${storeId} is online`);
       if (!serverNode.lifecycle.isCommissioned) {
         this.log.notice(`Server node for ${storeId} is not commissioned. Pair to commission ...`);
@@ -2018,6 +2020,12 @@ export class Matterbridge extends EventEmitter {
           this.matterbridgePaired = false;
           this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
           this.log.notice(`Manual pairing code: ${manualPairingCode}`);
+          if (this.matterStorageService) {
+            const storageManager = await this.matterStorageService.open(storeId);
+            const storageContext = storageManager.createContext('persist');
+            await storageContext.set('qrPairingCode', qrPairingCode);
+            await storageContext.set('manualPairingCode', manualPairingCode);
+          }
         }
         if (this.bridgeMode === 'childbridge') {
           const plugin = this.plugins.get(storeId);
@@ -2029,6 +2037,12 @@ export class Matterbridge extends EventEmitter {
             plugin.paired = false;
             this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
             this.log.notice(`Manual pairing code: ${manualPairingCode}`);
+            if (this.matterStorageService) {
+              const storageManager = await this.matterStorageService.open(storeId);
+              const storageContext = storageManager.createContext('persist');
+              await storageContext.set('qrPairingCode', qrPairingCode);
+              await storageContext.set('manualPairingCode', manualPairingCode);
+            }
           }
         }
       } else {
