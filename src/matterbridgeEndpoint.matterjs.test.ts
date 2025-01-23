@@ -35,40 +35,35 @@ describe('MatterbridgeEndpoint class', () => {
   let server: ServerNode<ServerNode.RootEndpoint>;
   let aggregator: Endpoint<AggregatorEndpoint>;
   let device: MatterbridgeEndpoint;
-  let count = 1;
 
-  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-  let consoleDebugSpy: jest.SpiedFunction<typeof console.debug>;
-  let consoleInfoSpy: jest.SpiedFunction<typeof console.info>;
-  let consoleWarnSpy: jest.SpiedFunction<typeof console.warn>;
-  let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
+  /*
+  // Spy on and mock AnsiLogger.log
+  const loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
+    //
+  });
+  // Spy on and mock console.log
+  const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
+    //
+  });
+  // Spy on and mock console.log
+  const consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {
+    //
+  });
+  // Spy on and mock console.log
+  const consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {
+    //
+  });
+  // Spy on and mock console.log
+  const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
+    //
+  });
+  // Spy on and mock console.log
+  const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
+    //
+  });
+  */
 
   beforeAll(async () => {
-    // Mock the AnsiLogger.log method
-    jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
-      // console.log(`Mocked log: ${level} - ${message}`, ...parameters);
-    });
-    // Spy on and mock console.log
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
-      // console.error(args);
-    });
-    // Spy on and mock console.log
-    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {
-      // console.error(args);
-    });
-    // Spy on and mock console.log
-    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {
-      // console.error(args);
-    });
-    // Spy on and mock console.log
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
-      // console.warn(args);
-    });
-    // Spy on and mock console.log
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
-      // console.error(args);
-    });
-
     // Create a MatterbridgeEdge instance
     matterbridge = await Matterbridge.loadInstance(false);
     matterbridge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
@@ -83,35 +78,28 @@ describe('MatterbridgeEndpoint class', () => {
     await (matterbridge as any).startMatterStorage();
   });
 
+  beforeEach(async () => {
+    // Clear all mocks
+    jest.clearAllMocks();
+  });
+
   afterEach(async () => {
-    // Keep the id unique
-    count++;
+    //
   });
 
   afterAll(async () => {
+    // Close the Matterbridge instance
     await matterbridge.destroyInstance();
     await matterbridge.environment.get(MdnsService)[Symbol.asyncDispose]();
 
-    // Restore the mocked AnsiLogger.log method
-    if ((AnsiLogger.prototype.log as jest.Mock).mockRestore) (AnsiLogger.prototype.log as jest.Mock).mockRestore();
-    consoleLogSpy?.mockRestore();
-    consoleDebugSpy?.mockRestore();
-    consoleInfoSpy?.mockRestore();
-    consoleWarnSpy?.mockRestore();
-    consoleErrorSpy?.mockRestore();
+    // Restore all mocks
+    jest.restoreAllMocks();
   });
 
   describe('MatterbridgeBehavior', () => {
     const deviceType = onOffLight;
 
     test('create a context for server node', async () => {
-      /*
-      (AnsiLogger.prototype.log as jest.Mock).mockRestore();
-      consoleLogSpy.mockRestore();
-      consoleDebugSpy.mockRestore();
-      consoleInfoSpy.mockRestore();
-      consoleErrorSpy.mockRestore();
-      */
       context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
       expect(context).toBeDefined();
     });
@@ -158,23 +146,44 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('add required clusters to onOffLight', async () => {
       expect(device).toBeDefined();
+      device.createDefaultOnOffClusterServer(true, false, 10, 14);
       device.addRequiredClusterServers(device);
       expect(device.behaviors.supported.descriptor).toBeDefined();
-
       expect(device.behaviors.has(DescriptorBehavior)).toBeTruthy();
       expect(device.behaviors.has(DescriptorServer)).toBeTruthy();
+      expect(device._hasClusterServer(DescriptorCluster)).toBeTruthy();
+      expect(device._hasClusterServer(DescriptorCluster.id)).toBeTruthy();
+      expect(device._hasClusterServer(DescriptorCluster.name)).toBeTruthy();
+      // consoleWarnSpy?.mockRestore();
+      // console.warn(device.behaviors.optionsFor(DescriptorBehavior));
 
+      expect(device.behaviors.supported['identify']).toBeDefined();
       expect(device.behaviors.has(IdentifyBehavior)).toBeTruthy();
       expect(device.behaviors.has(IdentifyServer)).toBeTruthy();
+      expect(device._hasClusterServer(IdentifyCluster)).toBeTruthy();
+      expect(device._hasClusterServer(IdentifyCluster.id)).toBeTruthy();
+      expect(device._hasClusterServer(IdentifyCluster.name)).toBeTruthy();
 
+      expect(device.behaviors.supported['groups']).toBeDefined();
       expect(device.behaviors.has(GroupsBehavior)).toBeTruthy();
       expect(device.behaviors.has(GroupsServer)).toBeTruthy();
+      expect(device._hasClusterServer(GroupsCluster)).toBeTruthy();
+      expect(device._hasClusterServer(GroupsCluster.id)).toBeTruthy();
+      expect(device._hasClusterServer(GroupsCluster.name)).toBeTruthy();
 
+      expect(device.behaviors.supported['scenesManagement']).not.toBeDefined();
       expect(device.behaviors.has(ScenesManagementBehavior)).toBeFalsy();
       expect(device.behaviors.has(ScenesManagementServer)).toBeFalsy();
+      expect(device._hasClusterServer(ScenesManagementCluster)).toBeFalsy();
+      expect(device._hasClusterServer(ScenesManagementCluster.id)).toBeFalsy();
+      expect(device._hasClusterServer(ScenesManagementCluster.name)).toBeFalsy();
 
+      expect(device.behaviors.supported['onOff']).toBeDefined();
       expect(device.behaviors.has(OnOffBehavior)).toBeTruthy();
       expect(device.behaviors.has(OnOffServer)).toBeTruthy();
+      expect(device._hasClusterServer(OnOffCluster)).toBeTruthy();
+      expect(device._hasClusterServer(OnOffCluster.id)).toBeTruthy();
+      expect(device._hasClusterServer(OnOffCluster.name)).toBeTruthy();
     });
 
     test('add onOffLight device to serverNode', async () => {

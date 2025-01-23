@@ -45,7 +45,7 @@ import { Frontend } from './frontend.js';
 
 // @matter
 import { DeviceTypeId, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, StorageService, Environment, ServerNode, FabricIndex, SessionsBehavior } from '@matter/main';
-import { ExposedFabricInformation, FabricAction, PaseClient } from '@matter/main/protocol';
+import { ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 
 // Default colors
@@ -2156,6 +2156,7 @@ export class Matterbridge extends EventEmitter {
     if (!matterServerNode) return;
     this.log.notice(`Closing ${matterServerNode.id} server node`);
     await matterServerNode.close();
+    await matterServerNode.env.get(MdnsService)[Symbol.asyncDispose]();
   }
 
   private async createAggregatorNode(storageContext: StorageContext) {

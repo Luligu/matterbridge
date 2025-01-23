@@ -39,10 +39,12 @@ import {
   MatterbridgeFanControlServer,
   MatterbridgeIdentifyServer,
   MatterbridgeLevelControlServer,
+  MatterbridgeModeSelectServer,
   MatterbridgeOnOffServer,
   MatterbridgeThermostatServer,
   MatterbridgeValveConfigurationAndControlServer,
   MatterbridgeWindowCoveringServer,
+  MatterbridgeSmokeCoAlarmServer,
 } from './matterbridgeBehaviors.js';
 import { bridgedNode, DeviceTypeDefinition, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
 import { deepCopy, isValidNumber } from './utils/utils.js';
@@ -385,7 +387,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === BooleanStateConfiguration.Cluster.id) return MatterbridgeBooleanStateConfigurationServer;
     if (clusterId === OccupancySensing.Cluster.id) return OccupancySensingServer;
     if (clusterId === IlluminanceMeasurement.Cluster.id) return IlluminanceMeasurementServer;
-    if (clusterId === SmokeCoAlarm.Cluster.id) return SmokeCoAlarmServer.with('SmokeAlarm', 'CoAlarm');
+    if (clusterId === SmokeCoAlarm.Cluster.id) return MatterbridgeSmokeCoAlarmServer.with('SmokeAlarm', 'CoAlarm');
 
     if (clusterId === ValveConfigurationAndControl.Cluster.id) return MatterbridgeValveConfigurationAndControlServer.with('Level');
 
@@ -401,7 +403,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (clusterId === RadonConcentrationMeasurement.Cluster.id) return RadonConcentrationMeasurementServer.with('NumericMeasurement');
     if (clusterId === TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id) return TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with('NumericMeasurement');
 
-    if (clusterId === ModeSelect.Cluster.id) return ModeSelectServer;
+    if (clusterId === ModeSelect.Cluster.id) return MatterbridgeModeSelectServer;
     if (clusterId === UserLabel.Cluster.id) return UserLabelServer;
     if (clusterId === FixedLabel.Cluster.id) return FixedLabelServer;
 
@@ -490,9 +492,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the required cluster servers to.
    * @returns {MatterbridgeEndpoint} The updated endpoint with the required cluster servers added.
    */
-  addRequiredClusterServers(endpoint: MatterbridgeEndpoint): MatterbridgeEndpoint {
+  addRequiredClusterServers(endpoint?: MatterbridgeEndpoint): MatterbridgeEndpoint {
+    if (!endpoint) endpoint = this as MatterbridgeEndpoint;
     const requiredServerList: ClusterId[] = [];
-    this.log.debug(`addRequiredClusterServer for ${CYAN}${endpoint.maybeId}${db}`);
+    this.log.debug(`addRequiredClusterServers for ${CYAN}${endpoint.maybeId}${db}`);
     endpoint.getDeviceTypes().forEach((deviceType) => {
       this.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
       deviceType.requiredServerClusters.forEach((clusterId) => {
@@ -512,9 +515,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the required cluster servers to.
    * @returns {MatterbridgeEndpoint} The updated endpoint with the required cluster servers added.
    */
-  addOptionalClusterServers(endpoint: MatterbridgeEndpoint): MatterbridgeEndpoint {
+  addOptionalClusterServers(endpoint?: MatterbridgeEndpoint): MatterbridgeEndpoint {
+    if (!endpoint) endpoint = this as MatterbridgeEndpoint;
     const optionalServerList: ClusterId[] = [];
-    this.log.debug(`addRequiredClusterServer for ${CYAN}${endpoint.id}${db}`);
+    this.log.debug(`addOptionalClusterServers for ${CYAN}${endpoint.id}${db}`);
     endpoint.getDeviceTypes().forEach((deviceType) => {
       this.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
       deviceType.optionalServerClusters.forEach((clusterId) => {
@@ -707,6 +711,16 @@ export class MatterbridgeEndpoint extends Endpoint {
     return this.clusterServers.has(cluster.id);
   }
 
+  _hasClusterServer(cluster: ClusterType | ClusterId | string): boolean {
+    if (typeof cluster === 'string') {
+      return this.behaviors.supported[this.lowercaseFirstLetter(cluster)] !== undefined;
+    } else if (typeof cluster === 'number') {
+      const clusterName = this.lowercaseFirstLetter(getClusterNameById(cluster));
+      return this.behaviors.supported[clusterName] !== undefined;
+    }
+    return this.behaviors.supported[this.lowercaseFirstLetter(cluster.name)] !== undefined;
+  }
+
   /**
    * @deprecated This method is deprecated and will be removed in future versions.
    */
@@ -732,14 +746,15 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Add a tagList.
-   *
    * @deprecated This method is deprecated and will be removed in future versions. Use the constructor options instead.
    */
   private addTagList(endpoint: Endpoint, mfgCode: VendorId | null, namespaceId: number, tag: number, label?: string | null) {
     // Do nothing here only for old api compatibility
   }
 
+  /**
+   * @deprecated This method is deprecated and will be removed in future versions. Use the constructor options instead.
+   */
   addClusterServer<const T extends ClusterType>(cluster: ClusterServerObj<T>) {
     // console.log('addClusterServer:', cluster.id, cluster.name, cluster.attributes, cluster.events, cluster.commands);
     let features: Record<string, boolean> = {};

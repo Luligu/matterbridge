@@ -1,27 +1,391 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
+// Node.js modules
+import { createHash } from 'crypto';
+
+// AnsiLogger module
+import { AnsiLogger, BLUE, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, er, hk, or, rs, zb } from './logger/export.js';
+
 // Matterbridge
-import { DeviceTypeDefinition, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
+import { bridgedNode, DeviceTypeDefinition, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
+import { deepCopy, isValidNumber } from './utils/utils.js';
+import {
+  MatterbridgeBehavior,
+  MatterbridgeBehaviorDevice,
+  MatterbridgeIdentifyServer,
+  MatterbridgeOnOffServer,
+  MatterbridgeLevelControlServer,
+  MatterbridgeColorControlServer,
+  MatterbridgeWindowCoveringServer,
+  MatterbridgeThermostatServer,
+  MatterbridgeFanControlServer,
+  MatterbridgeDoorLockServer,
+  MatterbridgeModeSelectServer,
+  MatterbridgeValveConfigurationAndControlServer,
+  MatterbridgeSmokeCoAlarmServer,
+  MatterbridgeBooleanStateConfigurationServer,
+} from './matterbridgeBehaviors.js';
 
 // @matter
-import { AtLeastOne, Endpoint, EndpointNumber, EndpointType, MutableEndpoint, SupportedBehaviors } from '@matter/main';
+import { AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointServer, EndpointType, HandlerFunction, Lifecycle, MakeMandatory, MutableEndpoint, NamedHandler, SupportedBehaviors, VendorId } from '@matter/main';
 import { DeviceClassification } from '@matter/main/model';
+import { ClusterType, getClusterNameById, Semtag } from '@matter/main/types';
 
 // @matter clusters
 import { Descriptor } from '@matter/main/clusters/descriptor';
+
+import { PowerSource } from '@matter/main/clusters/power-source';
+import { UserLabel } from '@matter/main/clusters/user-label';
+import { FixedLabel } from '@matter/main/clusters/fixed-label';
+
+import { BasicInformation } from '@matter/main/clusters/basic-information';
+import { BridgedDeviceBasicInformation } from '@matter/main/clusters/bridged-device-basic-information';
 import { Identify } from '@matter/main/clusters/identify';
+import { Groups } from '@matter/main/clusters/groups';
+import { ScenesManagement } from '@matter/main/clusters/scenes-management';
 import { OnOff } from '@matter/main/clusters/on-off';
 import { LevelControl } from '@matter/main/clusters/level-control';
+import { ColorControl } from '@matter/main/clusters/color-control';
+import { WindowCovering } from '@matter/main/clusters/window-covering';
+import { Thermostat } from '@matter/main/clusters/thermostat';
+import { FanControl } from '@matter/main/clusters/fan-control';
+import { DoorLock } from '@matter/main/clusters/door-lock';
+import { ModeSelect } from '@matter/main/clusters/mode-select';
+import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-configuration-and-control';
+import { SmokeCoAlarm } from '@matter/main/clusters/smoke-co-alarm';
+import { Switch } from '@matter/main/clusters/switch';
+import { BooleanState } from '@matter/main/clusters/boolean-state';
+import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
+
+import { TemperatureMeasurement } from '@matter/main/clusters/temperature-measurement';
+import { RelativeHumidityMeasurement } from '@matter/main/clusters/relative-humidity-measurement';
+import { PressureMeasurement } from '@matter/main/clusters/pressure-measurement';
+import { FlowMeasurement } from '@matter/main/clusters/flow-measurement';
+import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
+import { IlluminanceMeasurement } from '@matter/main/clusters/illuminance-measurement';
+
+import { ThreadNetworkDiagnostics } from '@matter/main/clusters/thread-network-diagnostics';
+import { TimeSynchronization } from '@matter/main/clusters/time-synchronization';
+import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
+
+import { PowerTopology } from '@matter/main/clusters/power-topology';
+import { ElectricalPowerMeasurement } from '@matter/main/clusters/electrical-power-measurement';
+import { ElectricalEnergyMeasurement } from '@matter/main/clusters/electrical-energy-measurement';
+
+import { AirQuality } from '@matter/main/clusters/air-quality';
+import { CarbonMonoxideConcentrationMeasurement } from '@matter/main/clusters/carbon-monoxide-concentration-measurement';
+import { CarbonDioxideConcentrationMeasurement } from '@matter/main/clusters/carbon-dioxide-concentration-measurement';
+import { NitrogenDioxideConcentrationMeasurement } from '@matter/main/clusters/nitrogen-dioxide-concentration-measurement';
+import { OzoneConcentrationMeasurement } from '@matter/main/clusters/ozone-concentration-measurement';
+import { FormaldehydeConcentrationMeasurement } from '@matter/main/clusters/formaldehyde-concentration-measurement';
+import { Pm1ConcentrationMeasurement } from '@matter/main/clusters/pm1-concentration-measurement';
+import { Pm25ConcentrationMeasurement } from '@matter/main/clusters/pm25-concentration-measurement';
+import { Pm10ConcentrationMeasurement } from '@matter/main/clusters/pm10-concentration-measurement';
+import { RadonConcentrationMeasurement } from '@matter/main/clusters/radon-concentration-measurement';
+import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/main/clusters/total-volatile-organic-compounds-concentration-measurement';
 
 // @matter behaviors
-import { DescriptorServer } from '@matter/node/behaviors/descriptor';
-import { IdentifyServer } from '@matter/node/behaviors/identify';
-import { GroupsServer } from '@matter/node/behaviors/groups';
-import { ScenesManagementServer } from '@matter/node/behaviors/scenes-management';
-import { OnOffServer } from '@matter/main/behaviors/on-off';
-import { LevelControlServer } from '@matter/main/behaviors/level-control';
+import { DescriptorServer } from '@matter/main/behaviors/descriptor';
 
-class MatterbridgeEndpoint extends Endpoint {
+import { PowerSourceServer } from '@matter/main/behaviors/power-source';
+import { UserLabelServer } from '@matter/main/behaviors/user-label';
+import { FixedLabelServer } from '@matter/main/behaviors/fixed-label';
+
+import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
+import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
+import { GroupsServer } from '@matter/main/behaviors/groups';
+import { ScenesManagementServer } from '@matter/main/behaviors/scenes-management';
+import { SwitchServer } from '@matter/main/behaviors/switch';
+import { BooleanStateServer } from '@matter/main/behaviors/boolean-state';
+
+import { TemperatureMeasurementServer } from '@matter/main/behaviors/temperature-measurement';
+import { RelativeHumidityMeasurementServer } from '@matter/main/behaviors/relative-humidity-measurement';
+import { PressureMeasurementServer } from '@matter/main/behaviors/pressure-measurement';
+import { FlowMeasurementServer } from '@matter/main/behaviors/flow-measurement';
+import { OccupancySensingServer } from '@matter/main/behaviors/occupancy-sensing';
+import { IlluminanceMeasurementServer } from '@matter/main/behaviors/illuminance-measurement';
+
+import { PowerTopologyServer } from '@matter/main/behaviors/power-topology';
+import { ElectricalPowerMeasurementServer } from '@matter/main/behaviors/electrical-power-measurement';
+import { ElectricalEnergyMeasurementServer } from '@matter/main/behaviors/electrical-energy-measurement';
+
+import { AirQualityServer } from '@matter/main/behaviors/air-quality';
+import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/main/behaviors/carbon-monoxide-concentration-measurement';
+import { CarbonDioxideConcentrationMeasurementServer } from '@matter/main/behaviors/carbon-dioxide-concentration-measurement';
+import { NitrogenDioxideConcentrationMeasurementServer } from '@matter/main/behaviors/nitrogen-dioxide-concentration-measurement';
+import { OzoneConcentrationMeasurementServer } from '@matter/main/behaviors/ozone-concentration-measurement';
+import { FormaldehydeConcentrationMeasurementServer } from '@matter/main/behaviors/formaldehyde-concentration-measurement';
+import { Pm1ConcentrationMeasurementServer } from '@matter/main/behaviors/pm1-concentration-measurement';
+import { Pm25ConcentrationMeasurementServer } from '@matter/main/behaviors/pm25-concentration-measurement';
+import { Pm10ConcentrationMeasurementServer } from '@matter/main/behaviors/pm10-concentration-measurement';
+import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/radon-concentration-measurement';
+import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
+
+function capitalizeFirstLetter(name: string): string {
+  if (!name) return name;
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+function lowercaseFirstLetter(name: string): string {
+  if (!name) return name;
+  return name.charAt(0).toLowerCase() + name.slice(1);
+}
+
+function createUniqueId(param1: string, param2: string, param3: string, param4: string) {
+  const hash = createHash('md5');
+  hash.update(param1 + param2 + param3 + param4);
+  return hash.digest('hex');
+}
+
+function getBehaviourTypesFromClusterServerIds(clusterServerList: ClusterId[]) {
+  // Map Server ClusterId to Behavior.Type
+  const behaviorTypes: Behavior.Type[] = [];
+  clusterServerList.forEach((clusterId) => {
+    behaviorTypes.push(getBehaviourTypeFromClusterServerId(clusterId));
+  });
+  return behaviorTypes;
+}
+
+function getBehaviourTypesFromClusterClientIds(clusterClientList: ClusterId[]) {
+  // Map Client ClusterId to Behavior.Type
+  const behaviorTypes: Behavior.Type[] = [];
+  clusterClientList.forEach((clusterId) => {
+    // behaviorTypes.push(getBehaviourTypeFromClusterClientId(clusterId));
+  });
+  return behaviorTypes;
+}
+
+function getBehaviourTypeFromClusterServerId(clusterId: ClusterId) {
+  // Map ClusterId to Server Behavior.Type
+  if (clusterId === PowerSource.Cluster.id) return PowerSourceServer.with(PowerSource.Feature.Wired);
+  if (clusterId === UserLabel.Cluster.id) return UserLabelServer;
+  if (clusterId === FixedLabel.Cluster.id) return FixedLabelServer;
+
+  if (clusterId === BasicInformation.Cluster.id) return BasicInformationServer;
+  if (clusterId === BridgedDeviceBasicInformation.Cluster.id) return BridgedDeviceBasicInformationServer;
+  if (clusterId === Identify.Cluster.id) return MatterbridgeIdentifyServer;
+  if (clusterId === Groups.Cluster.id) return GroupsServer;
+  if (clusterId === OnOff.Cluster.id) return MatterbridgeOnOffServer.with('Lighting');
+  if (clusterId === LevelControl.Cluster.id) return MatterbridgeLevelControlServer.with('OnOff', 'Lighting');
+  if (clusterId === ColorControl.Cluster.id) return MatterbridgeColorControlServer;
+  if (clusterId === WindowCovering.Cluster.id) return MatterbridgeWindowCoveringServer.with('Lift', 'PositionAwareLift');
+  if (clusterId === Thermostat.Cluster.id) return MatterbridgeThermostatServer.with('AutoMode', 'Heating', 'Cooling');
+  if (clusterId === FanControl.Cluster.id) return MatterbridgeFanControlServer;
+  if (clusterId === DoorLock.Cluster.id) return MatterbridgeDoorLockServer;
+  if (clusterId === ModeSelect.Cluster.id) return MatterbridgeModeSelectServer;
+  if (clusterId === ValveConfigurationAndControl.Cluster.id) return MatterbridgeValveConfigurationAndControlServer.with('Level');
+  if (clusterId === SmokeCoAlarm.Cluster.id) return MatterbridgeSmokeCoAlarmServer.with('SmokeAlarm', 'CoAlarm');
+  if (clusterId === Switch.Cluster.id) return SwitchServer.with('MomentarySwitch', 'MomentarySwitchRelease', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress');
+  if (clusterId === BooleanState.Cluster.id) return BooleanStateServer.enable({ events: { stateChange: true } });
+  if (clusterId === BooleanStateConfiguration.Cluster.id) return MatterbridgeBooleanStateConfigurationServer;
+
+  if (clusterId === TemperatureMeasurement.Cluster.id) return TemperatureMeasurementServer;
+  if (clusterId === RelativeHumidityMeasurement.Cluster.id) return RelativeHumidityMeasurementServer;
+  if (clusterId === PressureMeasurement.Cluster.id) return PressureMeasurementServer;
+  if (clusterId === FlowMeasurement.Cluster.id) return FlowMeasurementServer;
+  if (clusterId === OccupancySensing.Cluster.id) return OccupancySensingServer;
+  if (clusterId === IlluminanceMeasurement.Cluster.id) return IlluminanceMeasurementServer;
+
+  if (clusterId === AirQuality.Cluster.id) return AirQualityServer.with('Fair', 'Moderate', 'VeryPoor', 'ExtremelyPoor');
+  if (clusterId === CarbonMonoxideConcentrationMeasurement.Cluster.id) return CarbonMonoxideConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === CarbonDioxideConcentrationMeasurement.Cluster.id) return CarbonDioxideConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === NitrogenDioxideConcentrationMeasurement.Cluster.id) return NitrogenDioxideConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === OzoneConcentrationMeasurement.Cluster.id) return OzoneConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === FormaldehydeConcentrationMeasurement.Cluster.id) return FormaldehydeConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === Pm1ConcentrationMeasurement.Cluster.id) return Pm1ConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === Pm25ConcentrationMeasurement.Cluster.id) return Pm25ConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === Pm10ConcentrationMeasurement.Cluster.id) return Pm10ConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === RadonConcentrationMeasurement.Cluster.id) return RadonConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id) return TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with('NumericMeasurement');
+
+  if (clusterId === PowerTopology.Cluster.id) return PowerTopologyServer.with('TreeTopology');
+  if (clusterId === ElectricalPowerMeasurement.Cluster.id) return ElectricalPowerMeasurementServer.with('AlternatingCurrent');
+  if (clusterId === ElectricalEnergyMeasurement.Cluster.id) return ElectricalEnergyMeasurementServer.with('ImportedEnergy', 'ExportedEnergy', 'CumulativeEnergy');
+
+  return MatterbridgeIdentifyServer;
+}
+
+function getBehaviourTypeFromClusterClientId(clusterId: ClusterId) {
+  // Map ClusterId to Client Behavior.Type
+  // return IdentifyClient;
+}
+
+/**
+ * Adds cluster servers to the specified endpoint based on the provided server list.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the cluster servers to.
+ * @param {ClusterId[]} includeServerList - The list of cluster IDs to include.
+ * @returns void
+ */
+function addClusterServerFromList(endpoint: MatterbridgeEndpoint, includeServerList: ClusterId[]): void {
+  if (includeServerList.includes(PowerSource.Cluster.id)) endpoint.createDefaultPowerSourceWiredClusterServer();
+  if (includeServerList.includes(Identify.Cluster.id)) endpoint.createDefaultIdentifyClusterServer();
+  if (includeServerList.includes(Groups.Cluster.id)) endpoint.createDefaultGroupsClusterServer();
+  if (includeServerList.includes(OnOff.Cluster.id)) endpoint.createDefaultOnOffClusterServer();
+  if (includeServerList.includes(LevelControl.Cluster.id)) endpoint.createDefaultLevelControlClusterServer();
+  if (includeServerList.includes(ColorControl.Cluster.id)) endpoint.createDefaultColorControlClusterServer();
+  if (includeServerList.includes(WindowCovering.Cluster.id)) endpoint.createDefaultWindowCoveringClusterServer();
+  if (includeServerList.includes(Thermostat.Cluster.id)) endpoint.createDefaultThermostatClusterServer();
+  if (includeServerList.includes(FanControl.Cluster.id)) endpoint.createDefaultFanControlClusterServer();
+  if (includeServerList.includes(DoorLock.Cluster.id)) endpoint.createDefaultDoorLockClusterServer();
+  if (includeServerList.includes(ValveConfigurationAndControl.Cluster.id)) endpoint.createDefaultValveConfigurationAndControlClusterServer();
+  if (includeServerList.includes(SmokeCoAlarm.Cluster.id)) endpoint.createDefaultSmokeCOAlarmClusterServer();
+  if (includeServerList.includes(Switch.Cluster.id)) endpoint.createDefaultSwitchClusterServer();
+  if (includeServerList.includes(BooleanState.Cluster.id)) endpoint.createDefaultBooleanStateClusterServer();
+  if (includeServerList.includes(BooleanStateConfiguration.Cluster.id)) endpoint.createDefaultBooleanStateConfigurationClusterServer();
+
+  /*
+  if (includeServerList.includes(TemperatureMeasurement.Cluster.id)) endpoint.createDefaultTemperatureMeasurementClusterServer();
+  if (includeServerList.includes(RelativeHumidityMeasurement.Cluster.id)) endpoint.createDefaultRelativeHumidityMeasurementClusterServer();
+  if (includeServerList.includes(PressureMeasurement.Cluster.id)) endpoint.createDefaultPressureMeasurementClusterServer();
+  if (includeServerList.includes(FlowMeasurement.Cluster.id)) endpoint.createDefaultFlowMeasurementClusterServer();
+  if (includeServerList.includes(OccupancySensing.Cluster.id)) endpoint.createDefaultOccupancySensingClusterServer();
+  if (includeServerList.includes(IlluminanceMeasurement.Cluster.id)) endpoint.createDefaultIlluminanceMeasurementClusterServer();
+
+  if (includeServerList.includes(AirQuality.Cluster.id)) endpoint.createDefaultAirQualityClusterServer();
+  if (includeServerList.includes(CarbonMonoxideConcentrationMeasurement.Cluster.id)) endpoint.createDefaultCarbonMonoxideConcentrationMeasurementClusterServer();
+  if (includeServerList.includes(CarbonDioxideConcentrationMeasurement.Cluster.id)) endpoint.createDefaultCarbonDioxideConcentrationMeasurementClusterServer();
+  if (includeServerList.includes(NitrogenDioxideConcentrationMeasurement.Cluster.id)) endpoint.createDefaultNitrogenDioxideConcentrationMeasurementClusterServer();
+  if (includeServerList.includes(OzoneConcentrationMeasurement.Cluster.id)) endpoint.createDefaultOzoneConcentrationMeasurementClusterServer();
+  if (includeServerList.includes(FormaldehydeConcentrationMeasurement.Cluster.id)) endpoint.createDefaultFormaldehydeConcentrationMeasurementClusterServer();
+  if (includeServerList.includes(Pm1ConcentrationMeasurement.Cluster.id)) endpoint.createDefaultPm1ConcentrationMeasurementClusterServer();
+  if (includeServerList.includes(Pm25ConcentrationMeasurement.Cluster.id)) endpoint.createDefaultPm25ConcentrationMeasurementClusterServer();
+  if (includeServerList.includes(Pm10ConcentrationMeasurement.Cluster.id)) endpoint.createDefaultPm10ConcentrationMeasurementClusterServer();
+  if (includeServerList.includes(RadonConcentrationMeasurement.Cluster.id)) endpoint.createDefaultRadonConcentrationMeasurementClusterServer();
+  if (includeServerList.includes(TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id)) endpoint.createDefaultTvocMeasurementClusterServer();
+
+  if (includeServerList.includes(PowerTopology.Cluster.id)) endpoint.createDefaultPowerTopologyClusterServer();
+  if (includeServerList.includes(ElectricalPowerMeasurement.Cluster.id)) endpoint.createDefaultElectricalPowerMeasurementClusterServer();
+  if (includeServerList.includes(ElectricalEnergyMeasurement.Cluster.id)) endpoint.createDefaultElectricalEnergyMeasurementClusterServer();
+  */
+  // if (includeServerList.includes(DeviceEnergyManagement.Cluster.id)) endpoint.createDefaultDeviceEnergyManagementClusterServer();
+  // if (includeServerList.includes(DeviceEnergyManagementMode.Cluster.id)) endpoint.createDefaultDeviceEnergyManagementModeClusterServer();
+}
+
+export interface MatterbridgeEndpointCommands {
+  // Identify
+  identify: HandlerFunction;
+  triggerEffect: HandlerFunction;
+
+  // On/Off
+  on: HandlerFunction;
+  off: HandlerFunction;
+  toggle: HandlerFunction;
+  offWithEffect: HandlerFunction;
+
+  // Level Control
+  moveToLevel: HandlerFunction;
+  moveToLevelWithOnOff: HandlerFunction;
+
+  // Color Control
+  moveToColor: HandlerFunction;
+  moveColor: HandlerFunction;
+  stepColor: HandlerFunction;
+  moveToHue: HandlerFunction;
+  moveHue: HandlerFunction;
+  stepHue: HandlerFunction;
+  moveToSaturation: HandlerFunction;
+  moveSaturation: HandlerFunction;
+  stepSaturation: HandlerFunction;
+  moveToHueAndSaturation: HandlerFunction;
+  moveToColorTemperature: HandlerFunction;
+
+  // Window Covering
+  upOrOpen: HandlerFunction;
+  downOrClose: HandlerFunction;
+  stopMotion: HandlerFunction;
+  goToLiftPercentage: HandlerFunction;
+
+  // Door Lock
+  lockDoor: HandlerFunction;
+  unlockDoor: HandlerFunction;
+
+  // Thermostat
+  setpointRaiseLower: HandlerFunction;
+
+  // Fan Control
+  step: HandlerFunction;
+
+  // Mode Select
+  changeToMode: HandlerFunction;
+
+  // Valve Configuration and Control
+  open: HandlerFunction;
+  close: HandlerFunction;
+
+  // Boolean State Configuration
+  suppressAlarm: HandlerFunction;
+  enableDisableAlarm: HandlerFunction;
+
+  // Smoke and CO Alarm
+  selfTestRequest: HandlerFunction;
+
+  // Thread Network Diagnostics
+  resetCounts: HandlerFunction;
+
+  // Time Synchronization
+  setUtcTime: HandlerFunction;
+  setTimeZone: HandlerFunction;
+  setDstOffset: HandlerFunction;
+
+  // Device Energy Management
+  pauseRequest: HandlerFunction;
+  resumeRequest: HandlerFunction;
+}
+
+export interface SerializedMatterbridgeEndpoint {
+  pluginName: string;
+  deviceName: string;
+  serialNumber: string;
+  uniqueId: string;
+  productId?: number;
+  productName?: string;
+  vendorId?: number;
+  vendorName?: string;
+  deviceTypes: DeviceTypeDefinition[];
+  endpoint: EndpointNumber | undefined;
+  endpointName: string;
+  clusterServersId: ClusterId[];
+}
+
+export class MatterbridgeEndpoint extends Endpoint {
+  public static bridgeMode = '';
+  public static logLevel = LogLevel.INFO;
+
+  log: AnsiLogger;
+  plugin: string | undefined = undefined;
+  configUrl: string | undefined = undefined;
+
+  deviceName: string | undefined = undefined;
+  serialNumber: string | undefined = undefined;
+  uniqueId: string | undefined = undefined;
+  vendorId: number | undefined = undefined;
+  vendorName: string | undefined = undefined;
+  productId: number | undefined = undefined;
+  productName: string | undefined = undefined;
+  softwareVersion: number | undefined = undefined;
+  softwareVersionString: string | undefined = undefined;
+  hardwareVersion: number | undefined = undefined;
+  hardwareVersionString: string | undefined = undefined;
+  productUrl = 'https://www.npmjs.com/package/matterbridge';
+
+  name: string | undefined = undefined;
+  deviceType: number;
+  uniqueStorageKey: string | undefined = undefined;
+  tagList?: Semtag[] = undefined;
+  subType = '';
+
+  // Maps matter deviceTypes and endpoints
+  private readonly deviceTypes = new Map<number, DeviceTypeDefinition>();
+  readonly commandHandler = new NamedHandler<MatterbridgeEndpointCommands>();
+
+  /**
+   * Represents a MatterbridgeEndpoint.
+   * @constructor
+   * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the endpoint.
+   * @param {MatterbridgeEndpointOptions} [options={}] - The options for the device.
+   * @param {boolean} [debug=false] - Debug flag.
+   */
   constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false) {
     let deviceTypeList: { deviceType: number; revision: number }[] = [];
 
@@ -46,12 +410,12 @@ class MatterbridgeEndpoint extends Endpoint {
       deviceClass: firstDefinition.deviceClass.toLowerCase() as unknown as DeviceClassification,
       requirements: {
         server: {
-          mandatory: {},
-          optional: {},
+          mandatory: SupportedBehaviors(...getBehaviourTypesFromClusterServerIds(firstDefinition.requiredServerClusters)),
+          optional: SupportedBehaviors(...getBehaviourTypesFromClusterServerIds(firstDefinition.optionalServerClusters)),
         },
         client: {
-          mandatory: {},
-          optional: {},
+          mandatory: SupportedBehaviors(...getBehaviourTypesFromClusterClientIds(firstDefinition.requiredClientClusters)),
+          optional: SupportedBehaviors(...getBehaviourTypesFromClusterClientIds(firstDefinition.optionalClientClusters)),
         },
       },
       behaviors: options.tagList ? SupportedBehaviors(DescriptorServer.with(Descriptor.Feature.TagList)) : {},
@@ -65,6 +429,551 @@ class MatterbridgeEndpoint extends Endpoint {
       descriptor: options.tagList ? { tagList: options.tagList, deviceTypeList } : { deviceTypeList },
     } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, object> };
     super(endpointV8, optionsV8);
+
+    this.uniqueStorageKey = options.uniqueStorageKey;
+    this.name = firstDefinition.name;
+    this.deviceType = firstDefinition.code;
+    this.tagList = options.tagList;
+    if (Array.isArray(definition)) {
+      definition.forEach((deviceType) => {
+        this.deviceTypes.set(deviceType.code, deviceType);
+      });
+    } else this.deviceTypes.set(firstDefinition.code, firstDefinition);
+
+    // console.log('MatterbridgeEndpoint.option', options);
+    // console.log('MatterbridgeEndpoint.endpointV8', endpointV8);
+    // console.log('MatterbridgeEndpoint.optionsV8', optionsV8);
+
+    // Create the logger
+    this.log = new AnsiLogger({ logName: 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
+    this.log.debug(
+      `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} ` +
+        `id: ${CYAN}${options.uniqueStorageKey}${db} number: ${CYAN}${options.endpointId}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
+    );
+
+    // Add MatterbridgeBehavior with MatterbridgeBehaviorDevice
+    this.behaviors.require(MatterbridgeBehavior, { deviceCommand: new MatterbridgeBehaviorDevice(this.log, this.commandHandler, undefined) });
+  }
+
+  /**
+   * Loads an instance of the MatterbridgeEndpoint class.
+   *
+   * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the device.
+   * @param {MatterbridgeEndpointOptions} [options={}] - The options for the device.
+   * @param {boolean} [debug=false] - Debug flag.
+   * @returns {Promise<MatterbridgeEndpoint>} MatterbridgeEndpoint instance.
+   */
+  static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false) {
+    return new MatterbridgeEndpoint(definition, options, debug);
+  }
+
+  /**
+   * Checks if the provided cluster server is supported.
+   *
+   * @param {ClusterType | ClusterId | string} cluster - The cluster to check.
+   * @returns {boolean} True if the cluster server is supported, false otherwise.
+   */
+  hasClusterServer(cluster: ClusterType | ClusterId | string): boolean {
+    if (typeof cluster === 'string') {
+      return this.behaviors.supported[lowercaseFirstLetter(cluster)] !== undefined;
+    } else if (typeof cluster === 'number') {
+      return this.behaviors.supported[lowercaseFirstLetter(getClusterNameById(cluster))] !== undefined;
+    } else {
+      return this.behaviors.supported[lowercaseFirstLetter(cluster.name)] !== undefined;
+    }
+  }
+
+  /**
+   * Checks if the provided attribute server is supported for a given cluster.
+   *
+   * @param {ClusterType | ClusterId | string} cluster - The cluster to check.
+   * @param {string} attribute - The attribute to check.
+   * @returns {boolean} True if the attribute server is supported, false otherwise.
+   */
+  hasAttributeServer(cluster: ClusterType | ClusterId | string, attribute: string): boolean {
+    let behavior: Behavior.Type | undefined;
+    if (typeof cluster === 'string') {
+      behavior = this.behaviors.supported[lowercaseFirstLetter(cluster)];
+    } else if (typeof cluster === 'number') {
+      behavior = this.behaviors.supported[lowercaseFirstLetter(getClusterNameById(cluster))];
+    } else {
+      behavior = this.behaviors.supported[lowercaseFirstLetter(cluster.name)];
+    }
+    if (!behavior) return false;
+    const options = this.behaviors.optionsFor(behavior) as Record<string, boolean | number | bigint | string | object | null>;
+    return lowercaseFirstLetter(attribute) in options;
+  }
+
+  /**
+   * Retrieves the options for the provided cluster server.
+   *
+   * @param {ClusterType | ClusterId | string} cluster - The cluster to get options for.
+   * @returns {Record<string, boolean | number | bigint | string | object | null> | undefined} The options for the provided cluster server, or undefined if the cluster is not supported.
+   */
+  getClusterServerOptions(cluster: ClusterType | ClusterId | string) {
+    let behavior: Behavior.Type | undefined;
+    if (typeof cluster === 'string') {
+      behavior = this.behaviors.supported[lowercaseFirstLetter(cluster)];
+    } else if (typeof cluster === 'number') {
+      const clusterName = lowercaseFirstLetter(getClusterNameById(cluster));
+      behavior = this.behaviors.supported[clusterName];
+    } else {
+      behavior = this.behaviors.supported[lowercaseFirstLetter(cluster.name)];
+    }
+    if (!behavior) return undefined;
+    return this.behaviors.optionsFor(behavior) as Record<string, boolean | number | bigint | string | object | null>;
+  }
+
+  /**
+   * Retrieves the value of the provided attribute from the given cluster.
+   *
+   * @param {ClusterId} clusterId - The ID of the cluster to retrieve the attribute from.
+   * @param {string} attribute - The name of the attribute to retrieve.
+   * @param {AnsiLogger} [log] - Optional logger for error and info messages.
+   * @returns {any} The value of the attribute, or undefined if the attribute is not found.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getAttribute(clusterId: ClusterId, attribute: string, log?: AnsiLogger): any {
+    const clusterName = lowercaseFirstLetter(getClusterNameById(clusterId));
+
+    if (this.construction.status !== Lifecycle.Status.Active) {
+      this.log.error(`getAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${this.maybeId}${er}:${or}${this.maybeNumber}${er} is in the ${BLUE}${this.construction.status}${er} state`);
+      return undefined;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const state = this.state as Record<string, Record<string, any>>;
+
+    if (!(clusterName in state)) {
+      this.log.error(`getAttribute error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${this.id}${er}:${or}${this.number}${er}`);
+      return undefined;
+    }
+    attribute = lowercaseFirstLetter(attribute);
+    if (!(attribute in state[clusterName])) {
+      this.log.error(`getAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${this.id}${er}:${or}${this.number}${er}`);
+      return undefined;
+    }
+    const value = state[clusterName][attribute];
+    log?.info(`${db}Get endpoint ${or}${this.id}${db}:${or}${this.number}${db} attribute ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db} value ${YELLOW}${typeof value === 'object' ? debugStringify(value) : value}${db}`);
+    return value;
+  }
+
+  /**
+   * Sets the value of an attribute on a cluster server.
+   *
+   * @param {ClusterId} clusterId - The ID of the cluster.
+   * @param {string} attribute - The name of the attribute.
+   * @param {any} value - The value to set for the attribute.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging errors and information.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async setAttribute(clusterId: ClusterId, attribute: string, value: any, log?: AnsiLogger): Promise<boolean> {
+    const clusterName = lowercaseFirstLetter(getClusterNameById(clusterId));
+
+    if (this.construction.status !== Lifecycle.Status.Active) {
+      this.log.error(`setAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${this.maybeId}${er}:${or}${this.maybeNumber}${er} is in the ${BLUE}${this.construction.status}${er} state`);
+      return false;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const state = this.state as Record<string, Record<string, any>>;
+
+    if (!(clusterName in state)) {
+      this.log.error(`setAttribute ${hk}${attribute}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${this.id}${er}:${or}${this.number}${er}`);
+      return false;
+    }
+    attribute = lowercaseFirstLetter(attribute);
+    if (!(attribute in state[clusterName])) {
+      this.log.error(`setAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${this.id}${er}:${or}${this.number}${er}`);
+      return false;
+    }
+    let oldValue = state[clusterName][attribute];
+    if (typeof oldValue === 'object') oldValue = deepCopy(oldValue);
+    await this.setStateOf(this.behaviors.supported[clusterName], { [attribute]: value });
+    log?.info(
+      `${db}Set endpoint ${or}${this.id}${db}:${or}${this.number}${db} attribute ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db} ` +
+        `from ${YELLOW}${typeof oldValue === 'object' ? debugStringify(oldValue) : oldValue}${db} ` +
+        `to ${YELLOW}${typeof value === 'object' ? debugStringify(value) : value}${db}`,
+    );
+    return true;
+  }
+
+  /**
+   * Subscribes to the provided attribute on a cluster.
+   *
+   * @param {ClusterId} clusterId - The ID of the cluster.
+   * @param {string} attribute - The name of the attribute to subscribe to.
+   * @param {(newValue: any, oldValue: any) => void} listener - A callback function that will be called when the attribute value changes.
+   * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
+   * @returns {boolean} - A boolean indicating whether the subscription was successful.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async subscribeAttribute(clusterId: ClusterId, attribute: string, listener: (newValue: any, oldValue: any) => void, log?: AnsiLogger): Promise<boolean> {
+    const clusterName = lowercaseFirstLetter(getClusterNameById(clusterId));
+
+    if (this.construction.status !== Lifecycle.Status.Active) {
+      // this.log.error(`subscribeAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+      await this.construction.ready;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const events = this.events as Record<string, Record<string, any>>;
+
+    if (!(clusterName in events)) {
+      this.log.error(`subscribeAttribute ${hk}${attribute}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${this.maybeId}${er}:${or}${this.maybeNumber}${er}`);
+      return false;
+    }
+    attribute = lowercaseFirstLetter(attribute) + '$Changed';
+    if (!(attribute in events[clusterName])) {
+      this.log.error(`subscribeAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${this.maybeId}${er}:${or}${this.maybeNumber}${er}`);
+      return false;
+    }
+    events[clusterName][attribute].on(listener);
+    log?.info(`${db}Subscribe endpoint ${or}${this.id}${db}:${or}${this.number}${db} attribute ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db}`);
+    return true;
+  }
+
+  /**
+   * Triggers an event on the specified cluster.
+   *
+   * @param {ClusterId} clusterId - The ID of the cluster.
+   * @param {string} event - The name of the event to trigger.
+   * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} payload - The payload to pass to the event.
+   * @param {AnsiLogger} [log] - Optional logger for logging information.
+   * @param {MatterbridgeEndpoint} [endpoint] - Optional endpoint to trigger the event on. Defaults to the current endpoint.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the event was successfully triggered.
+   */
+  async triggerEvent(clusterId: ClusterId, event: string, payload: Record<string, boolean | number | bigint | string | object | undefined | null>, log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): Promise<boolean> {
+    if (!endpoint) endpoint = this as MatterbridgeEndpoint;
+
+    const clusterName = lowercaseFirstLetter(getClusterNameById(clusterId));
+
+    if (endpoint.construction.status !== Lifecycle.Status.Active) {
+      this.log.error(`triggerEvent ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+      return false;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const events = endpoint.events as Record<string, Record<string, any>>;
+    if (!(clusterName in events) || !(event in events[clusterName])) {
+      this.log.error(`triggerEvent ${hk}${event}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+      return false;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    await endpoint.act((agent) => agent[clusterName].events[event].emit(payload, agent.context));
+    log?.info(`${db}Trigger event ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${event}${db} with ${debugStringify(payload)}${db} on endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} `);
+    return true;
+  }
+
+  /**
+   * Adds a fixed label to the FixedLabel cluster.
+   *
+   * @param {string} label - The label to add.
+   * @param {string} value - The value of the label.
+   * @returns {Promise<this>} The current MatterbridgeEndpoint instance for chaining.
+   */
+  async addFixedLabel(label: string, value: string) {
+    if (!this.hasClusterServer(FixedLabel.Cluster.id)) {
+      this.log.debug(`addFixedLabel: add cluster ${hk}FixedLabel${db}:${hk}fixedLabel${db} with label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
+      this.behaviors.require(FixedLabelServer, {
+        labelList: [{ label, value }],
+      });
+      return this;
+    }
+    this.log.debug(`addFixedLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
+    const labelList = (this.getAttribute(FixedLabel.Cluster.id, 'labelList', this.log) ?? []).filter((entryLabel: { label: string; value: string }) => entryLabel.label !== label);
+    labelList.push({ label, value });
+    await this.setAttribute(FixedLabel.Cluster.id, 'labelList', labelList, this.log);
+    return this;
+  }
+
+  /**
+   * Adds a user label to the UserLabel cluster.
+   *
+   * @param {string} label - The label to add.
+   * @param {string} value - The value of the label.
+   * @returns {Promise<this>} The current MatterbridgeEndpoint instance for chaining.
+   */
+  async addUserLabel(label: string, value: string) {
+    if (!this.hasClusterServer(UserLabel.Cluster.id)) {
+      this.log.debug(`addUserLabel: add cluster ${hk}UserLabel${db}:${hk}userLabel${db} with label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
+      this.behaviors.require(UserLabelServer, {
+        labelList: [{ label, value }],
+      });
+      return this;
+    }
+    this.log.debug(`addUserLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
+    const labelList = (this.getAttribute(UserLabel.Cluster.id, 'labelList', this.log) ?? []).filter((entryLabel: { label: string; value: string }) => entryLabel.label !== label);
+    labelList.push({ label, value });
+    await this.setAttribute(UserLabel.Cluster.id, 'labelList', labelList, this.log);
+    return this;
+  }
+
+  /**
+   * Adds a command handler for the specified command.
+   *
+   * @param {keyof MatterbridgeEndpointCommands} command - The command to add the handler for.
+   * @param {HandlerFunction} handler - The handler function to execute when the command is received.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  addCommandHandler(command: keyof MatterbridgeEndpointCommands, handler: HandlerFunction) {
+    this.commandHandler.addHandler(command, handler);
+    return this;
+  }
+
+  /**
+   * Serializes the Matterbridge device into a serialized object.
+   *
+   * @param pluginName - The name of the plugin.
+   * @returns The serialized Matterbridge device object.
+   */
+  serialize(): SerializedMatterbridgeEndpoint | undefined {
+    if (!this.serialNumber || !this.deviceName || !this.uniqueId) return;
+    const serialized: SerializedMatterbridgeEndpoint = {
+      pluginName: this.plugin ?? '',
+      deviceName: this.deviceName,
+      serialNumber: this.serialNumber,
+      uniqueId: this.uniqueId,
+      productId: this.productId,
+      productName: this.productName,
+      vendorId: this.vendorId,
+      vendorName: this.vendorName,
+      deviceTypes: Array.from(this.deviceTypes.values()),
+      endpoint: this.maybeNumber,
+      endpointName: this.maybeId ?? this.deviceName,
+      clusterServersId: [],
+    };
+    const server = EndpointServer.forEndpoint(this);
+    server.getAllClusterServers().forEach((clusterServer) => {
+      serialized.clusterServersId.push(clusterServer.id);
+    });
+    return serialized;
+  }
+
+  /**
+   * Deserializes the device into a serialized object.
+   *
+   * @returns The deserialized MatterbridgeDevice.
+   */
+  static deserialize(serializedDevice: SerializedMatterbridgeEndpoint): MatterbridgeEndpoint | undefined {
+    const device = new MatterbridgeEndpoint(serializedDevice.deviceTypes as AtLeastOne<DeviceTypeDefinition>, { uniqueStorageKey: serializedDevice.endpointName, endpointId: serializedDevice.endpoint }, false);
+    device.plugin = serializedDevice.pluginName;
+    device.deviceName = serializedDevice.deviceName;
+    device.serialNumber = serializedDevice.serialNumber;
+    device.uniqueId = serializedDevice.uniqueId;
+    device.productId = serializedDevice.productId;
+    device.productName = serializedDevice.productName;
+    device.vendorId = serializedDevice.vendorId;
+    device.vendorName = serializedDevice.vendorName;
+    serializedDevice.deviceTypes.forEach((deviceType) => {
+      device.deviceTypes.set(deviceType.code, deviceType);
+    });
+    for (const clusterId of serializedDevice.clusterServersId) {
+      if (clusterId === BasicInformation.Cluster.id)
+        device.createDefaultBasicInformationClusterServer(
+          serializedDevice.deviceName,
+          serializedDevice.serialNumber,
+          serializedDevice.vendorId ?? 0xfff1,
+          serializedDevice.vendorName ?? 'Matterbridge',
+          serializedDevice.productId ?? 0x8000,
+          serializedDevice.productName ?? 'Matterbridge device',
+        );
+      else if (clusterId === BridgedDeviceBasicInformation.Cluster.id)
+        device.createDefaultBridgedDeviceBasicInformationClusterServer(
+          serializedDevice.deviceName,
+          serializedDevice.serialNumber,
+          serializedDevice.vendorId ?? 0xfff1,
+          serializedDevice.vendorName ?? 'Matterbridge',
+          serializedDevice.productName ?? 'Matterbridge device',
+        );
+      // else device.addClusterServerFromList(device, [clusterId]);
+    }
+    return device;
+  }
+
+  /**
+   * Creates a default power source wired cluster server.
+   *
+   * @param wiredCurrentType - The type of wired current (default: PowerSource.WiredCurrentType.Ac)
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerSource.WiredCurrentType = PowerSource.WiredCurrentType.Ac) {
+    this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Wired), {
+      wiredCurrentType,
+      description: wiredCurrentType === PowerSource.WiredCurrentType.Ac ? 'AC Power' : 'DC Power',
+      status: PowerSource.PowerSourceStatus.Active,
+      order: 0,
+      endpointList: [],
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default power source replaceable battery cluster server.
+   *
+   * @param batPercentRemaining - The remaining battery percentage (default: 100).
+   * @param batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
+   * @param batVoltage - The battery voltage (default: 1500).
+   * @param batReplacementDescription - The battery replacement description (default: 'Battery type').
+   * @param batQuantity - The battery quantity (default: 1).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultPowerSourceReplaceableBatteryClusterServer(batPercentRemaining = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage = 1500, batReplacementDescription = 'Battery type', batQuantity = 1) {
+    this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Replaceable), {
+      status: PowerSource.PowerSourceStatus.Active,
+      order: 0,
+      description: 'Primary battery',
+      batVoltage,
+      batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
+      batChargeLevel,
+      batReplacementNeeded: false,
+      batReplaceability: PowerSource.BatReplaceability.UserReplaceable,
+      activeBatFaults: undefined,
+      batReplacementDescription,
+      batQuantity,
+      endpointList: [],
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default power source rechargeable battery cluster server.
+   *
+   * @param batPercentRemaining - The remaining battery percentage (default: 100).
+   * @param batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
+   * @param batVoltage - The battery voltage (default: 1500).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage = 1500) {
+    this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable), {
+      status: PowerSource.PowerSourceStatus.Active,
+      order: 0,
+      description: 'Primary battery',
+      batVoltage,
+      batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
+      batTimeRemaining: 1,
+      batChargeLevel,
+      batReplacementNeeded: false,
+      batReplaceability: PowerSource.BatReplaceability.Unspecified,
+      activeBatFaults: undefined,
+      batChargeState: PowerSource.BatChargeState.IsNotCharging,
+      batFunctionalWhileCharging: true,
+      endpointList: [],
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default Basic Information Cluster Server for the server node.
+   *
+   * @param deviceName - The name of the device.
+   * @param serialNumber - The serial number of the device.
+   * @param vendorId - The vendor ID of the device.
+   * @param vendorName - The vendor name of the device.
+   * @param productId - The product ID of the device.
+   * @param productName - The product name of the device.
+   * @param softwareVersion - The software version of the device. Default is 1.
+   * @param softwareVersionString - The software version string of the device. Default is 'v.1.0.0'.
+   * @param hardwareVersion - The hardware version of the device. Default is 1.
+   * @param hardwareVersionString - The hardware version string of the device. Default is 'v.1.0.0'.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultBasicInformationClusterServer(
+    deviceName: string,
+    serialNumber: string,
+    vendorId: number,
+    vendorName: string,
+    productId: number,
+    productName: string,
+    softwareVersion = 1,
+    softwareVersionString = '1.0.0',
+    hardwareVersion = 1,
+    hardwareVersionString = '1.0.0',
+  ) {
+    this.log.logName = deviceName;
+    this.deviceName = deviceName;
+    this.serialNumber = serialNumber;
+    this.uniqueId = createUniqueId(deviceName, serialNumber, vendorName, productName);
+    this.productId = productId;
+    this.productName = productName;
+    this.vendorId = vendorId;
+    this.vendorName = vendorName;
+    this.softwareVersion = softwareVersion;
+    this.softwareVersionString = softwareVersionString;
+    this.hardwareVersion = hardwareVersion;
+    this.hardwareVersionString = hardwareVersionString;
+    if (MatterbridgeEndpoint.bridgeMode === 'bridge') {
+      const options = this.getClusterServerOptions(Descriptor.Cluster.id);
+      if (options) {
+        const deviceTypeList = options.deviceTypeList as { deviceType: number; revision: number }[];
+        deviceTypeList.push({ deviceType: bridgedNode.code, revision: bridgedNode.revision });
+      }
+      this.createDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber, vendorId, vendorName, productName, softwareVersion, softwareVersionString, hardwareVersion, hardwareVersionString);
+    }
+    return this;
+  }
+
+  /**
+   * Creates a default BridgedDeviceBasicInformationClusterServer for the aggregator endpoints.
+   *
+   * @param deviceName - The name of the device.
+   * @param serialNumber - The serial number of the device.
+   * @param vendorId - The vendor ID of the device.
+   * @param vendorName - The name of the vendor.
+   * @param productName - The name of the product.
+   * @param softwareVersion - The software version of the device. Default is 1.
+   * @param softwareVersionString - The software version string of the device. Default is 'v.1.0.0'.
+   * @param hardwareVersion - The hardware version of the device. Default is 1.
+   * @param hardwareVersionString - The hardware version string of the device. Default is 'v.1.0.0'.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultBridgedDeviceBasicInformationClusterServer(
+    deviceName: string,
+    serialNumber: string,
+    vendorId: number,
+    vendorName: string,
+    productName: string,
+    softwareVersion = 1,
+    softwareVersionString = '1.0.0',
+    hardwareVersion = 1,
+    hardwareVersionString = '1.0.0',
+  ) {
+    this.log.logName = deviceName;
+    this.deviceName = deviceName;
+    this.serialNumber = serialNumber;
+    this.uniqueId = createUniqueId(deviceName, serialNumber, vendorName, productName);
+    this.productId = undefined;
+    this.productName = productName;
+    this.vendorId = vendorId;
+    this.vendorName = vendorName;
+    this.softwareVersion = softwareVersion;
+    this.softwareVersionString = softwareVersionString;
+    this.hardwareVersion = hardwareVersion;
+    this.hardwareVersionString = hardwareVersionString;
+    this.behaviors.require(
+      BridgedDeviceBasicInformationServer.enable({
+        events: { leave: true, reachableChanged: true },
+      }),
+      {
+        vendorId: vendorId !== undefined ? VendorId(vendorId) : undefined, // 4874
+        vendorName: vendorName.slice(0, 32),
+        productName: productName.slice(0, 32),
+        productUrl: this.productUrl,
+        productLabel: deviceName.slice(0, 64),
+        nodeLabel: deviceName.slice(0, 32),
+        serialNumber: serialNumber.slice(0, 32),
+        uniqueId: this.uniqueId,
+        softwareVersion,
+        softwareVersionString: softwareVersionString.slice(0, 64),
+        hardwareVersion,
+        hardwareVersionString: hardwareVersionString.slice(0, 64),
+        reachable: true,
+      },
+    );
+    return this;
   }
 
   /**
@@ -75,7 +984,7 @@ class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultIdentifyClusterServer(identifyTime = 0, identifyType = Identify.IdentifyType.None) {
-    this.behaviors.require(IdentifyServer, {
+    this.behaviors.require(MatterbridgeIdentifyServer, {
       identifyTime,
       identifyType,
     });
@@ -111,7 +1020,7 @@ class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultOnOffClusterServer(onOff = false, globalSceneControl = false, onTime = 0, offWaitTime = 0, startUpOnOff: OnOff.StartUpOnOff | null = null) {
-    this.behaviors.require(OnOffServer.with(OnOff.Feature.Lighting), {
+    this.behaviors.require(MatterbridgeOnOffServer.with(OnOff.Feature.Lighting), {
       onOff,
       globalSceneControl,
       onTime,
@@ -128,7 +1037,7 @@ class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createOnOffClusterServer(onOff = false) {
-    this.behaviors.require(OnOffServer, {
+    this.behaviors.require(MatterbridgeOnOffServer, {
       onOff,
     });
     return this;
@@ -141,7 +1050,7 @@ class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDeadFrontOnOffClusterServer(onOff = false) {
-    this.behaviors.require(OnOffServer.with(OnOff.Feature.DeadFrontBehavior), {
+    this.behaviors.require(MatterbridgeOnOffServer.with(OnOff.Feature.DeadFrontBehavior), {
       onOff,
     });
     return this;
@@ -158,7 +1067,7 @@ class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 1, maxLevel = 254, onLevel: number | null = null, startUpCurrentLevel: number | null = null) {
-    this.behaviors.require(LevelControlServer.with(LevelControl.Feature.OnOff, LevelControl.Feature.Lighting), {
+    this.behaviors.require(MatterbridgeLevelControlServer.with(LevelControl.Feature.OnOff, LevelControl.Feature.Lighting), {
       currentLevel,
       minLevel,
       maxLevel,
@@ -170,6 +1079,609 @@ class MatterbridgeEndpoint extends Endpoint {
         coupleColorTempToLevel: false,
       },
     });
+    return this;
+  }
+
+  /**
+   * Creates a default color control cluster server with Xy, HueSaturation and ColorTemperature.
+   *
+   * @param currentX - The current X value.
+   * @param currentY - The current Y value.
+   * @param currentHue - The current hue value.
+   * @param currentSaturation - The current saturation value.
+   * @param colorTemperatureMireds - The color temperature in mireds.
+   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
+   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+    this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.Xy, ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature), {
+      colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
+      enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
+      colorCapabilities: { xy: true, hueSaturation: true, colorLoop: false, enhancedHue: false, colorTemperature: true },
+      options: {
+        executeIfOff: false,
+      },
+      numberOfPrimaries: null,
+      currentX,
+      currentY,
+      currentHue,
+      currentSaturation,
+      colorTemperatureMireds,
+      colorTempPhysicalMinMireds,
+      colorTempPhysicalMaxMireds,
+      coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
+      remainingTime: 0,
+      startUpColorTemperatureMireds: null,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a Xy color control cluster server with Xy and ColorTemperature.
+   *
+   * @param currentX - The current X value.
+   * @param currentY - The current Y value.
+   * @param colorTemperatureMireds - The color temperature in mireds.
+   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
+   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createXyColorControlClusterServer(currentX = 0, currentY = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+    this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.Xy, ColorControl.Feature.ColorTemperature), {
+      colorMode: ColorControl.ColorMode.CurrentXAndCurrentY,
+      enhancedColorMode: ColorControl.EnhancedColorMode.CurrentXAndCurrentY,
+      colorCapabilities: { xy: true, hueSaturation: false, colorLoop: false, enhancedHue: false, colorTemperature: true },
+      options: {
+        executeIfOff: false,
+      },
+      numberOfPrimaries: null,
+      currentX,
+      currentY,
+      colorTemperatureMireds,
+      colorTempPhysicalMinMireds,
+      colorTempPhysicalMaxMireds,
+      coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
+      startUpColorTemperatureMireds: null,
+      remainingTime: 0,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default hue and saturation control cluster server with HueSaturation and ColorTemperature.
+   *
+   * @param currentHue - The current hue value.
+   * @param currentSaturation - The current saturation value.
+   * @param colorTemperatureMireds - The color temperature in mireds.
+   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
+   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createHsColorControlClusterServer(currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+    this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature), {
+      colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
+      enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
+      colorCapabilities: { xy: false, hueSaturation: true, colorLoop: false, enhancedHue: false, colorTemperature: true },
+      options: {
+        executeIfOff: false,
+      },
+      numberOfPrimaries: null,
+      currentHue,
+      currentSaturation,
+      colorTemperatureMireds,
+      colorTempPhysicalMinMireds,
+      colorTempPhysicalMaxMireds,
+      coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
+      startUpColorTemperatureMireds: null,
+      remainingTime: 0,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a color temperature color control cluster server.
+   *
+   * @param colorTemperatureMireds - The color temperature in mireds.
+   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
+   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createCtColorControlClusterServer(colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+    this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.ColorTemperature), {
+      colorMode: ColorControl.ColorMode.ColorTemperatureMireds,
+      enhancedColorMode: ColorControl.EnhancedColorMode.ColorTemperatureMireds,
+      colorCapabilities: { xy: false, hueSaturation: false, colorLoop: false, enhancedHue: false, colorTemperature: true },
+      options: {
+        executeIfOff: false,
+      },
+      numberOfPrimaries: null,
+      colorTemperatureMireds,
+      colorTempPhysicalMinMireds,
+      colorTempPhysicalMaxMireds,
+      coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
+      remainingTime: 0,
+      startUpColorTemperatureMireds: null,
+    });
+    return this;
+  }
+
+  /**
+   * Configures the color control mode for the device.
+   *
+   * @param {ColorControl.ColorMode} colorMode - The color mode to set.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  async configureColorControlMode(colorMode: ColorControl.ColorMode) {
+    if (isValidNumber(colorMode, ColorControl.ColorMode.CurrentHueAndCurrentSaturation, ColorControl.ColorMode.ColorTemperatureMireds)) {
+      await this.setAttribute(ColorControl.Cluster.id, 'colorMode', colorMode, this.log);
+      await this.setAttribute(ColorControl.Cluster.id, 'enhancedColorMode', colorMode, this.log);
+    }
+    return this;
+  }
+
+  /**
+   * Creates a default window covering cluster server (Lift and PositionAwareLift).
+   *
+   * @param positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultWindowCoveringClusterServer(positionPercent100ths?: number) {
+    this.behaviors.require(MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift), {
+      type: WindowCovering.WindowCoveringType.Rollershade,
+      configStatus: {
+        operational: true,
+        onlineReserved: true,
+        liftMovementReversed: false,
+        liftPositionAware: true,
+        tiltPositionAware: false,
+        liftEncoderControlled: false,
+        tiltEncoderControlled: false,
+      },
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
+      endProductType: WindowCovering.EndProductType.RollerShade,
+      mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false },
+      targetPositionLiftPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+      currentPositionLiftPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+    });
+    return this;
+  }
+
+  /**
+   * Sets the window covering target position as the current position and stops the movement.
+   *
+   */
+  async setWindowCoveringTargetAsCurrentAndStopped() {
+    const position = this.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.log);
+    if (position !== null) {
+      await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', position, this.log);
+      await this.setAttribute(
+        WindowCovering.Cluster.id,
+        'operationalStatus',
+        {
+          global: WindowCovering.MovementStatus.Stopped,
+          lift: WindowCovering.MovementStatus.Stopped,
+          tilt: WindowCovering.MovementStatus.Stopped,
+        },
+        this.log,
+      );
+    }
+    this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
+  }
+
+  /**
+   * Sets the current and target status of a window covering.
+   * @param {number} current - The current position of the window covering.
+   * @param {number} target - The target position of the window covering.
+   * @param {WindowCovering.MovementStatus} status - The movement status of the window covering.
+   */
+  async setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus) {
+    await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', current, this.log);
+    await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', target, this.log);
+    await this.setAttribute(
+      WindowCovering.Cluster.id,
+      'operationalStatus',
+      {
+        global: status,
+        lift: status,
+        tilt: status,
+      },
+      this.log,
+    );
+    this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
+  }
+
+  /**
+   * Sets the status of the window covering.
+   * @param {WindowCovering.MovementStatus} status - The movement status to set.
+   */
+  async setWindowCoveringStatus(status: WindowCovering.MovementStatus) {
+    await this.setAttribute(
+      WindowCovering.Cluster.id,
+      'operationalStatus',
+      {
+        global: status,
+        lift: status,
+        tilt: status,
+      },
+      this.log,
+    );
+    this.log.debug(`Set WindowCovering operationalStatus: ${status}`);
+  }
+
+  /**
+   * Retrieves the status of the window covering.
+   *
+   * @returns The global operational status of the window covering or undefined.
+   */
+  getWindowCoveringStatus(): WindowCovering.MovementStatus | undefined {
+    const status = this.getAttribute(WindowCovering.Cluster.id, 'operationalStatus', this.log);
+    this.log.debug(`Get WindowCovering operationalStatus: ${status.global}`);
+    return status.global;
+  }
+
+  /**
+   * Sets the target and current position of the window covering.
+   *
+   * @param position - The position to set, specified as a number.
+   */
+  async setWindowCoveringTargetAndCurrentPosition(position: number) {
+    await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', position, this.log);
+    await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', position, this.log);
+    this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
+  }
+
+  /**
+   * Creates a default thermostat cluster server with Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode.
+   *
+   * @param {number} [localTemperature=23] - The local temperature value in degrees Celsius. Defaults to 23°.
+   * @param {number} [occupiedHeatingSetpoint=21] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
+   * @param {number} [occupiedCoolingSetpoint=25] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
+   * @param {number} [minSetpointDeadBand=1] - The minimum setpoint dead band value. Defaults to 1°.
+   * @param {number} [minHeatSetpointLimit=0] - The minimum heat setpoint limit value. Defaults to 0°.
+   * @param {number} [maxHeatSetpointLimit=50] - The maximum heat setpoint limit value. Defaults to 50°.
+   * @param {number} [minCoolSetpointLimit=0] - The minimum cool setpoint limit value. Defaults to 0°.
+   * @param {number} [maxCoolSetpointLimit=50] - The maximum cool setpoint limit value. Defaults to 50°.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultThermostatClusterServer(
+    localTemperature = 23,
+    occupiedHeatingSetpoint = 21,
+    occupiedCoolingSetpoint = 25,
+    minSetpointDeadBand = 1,
+    minHeatSetpointLimit = 0,
+    maxHeatSetpointLimit = 50,
+    minCoolSetpointLimit = 0,
+    maxCoolSetpointLimit = 50,
+  ) {
+    this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode), {
+      localTemperature: localTemperature * 100,
+      systemMode: Thermostat.SystemMode.Auto,
+      controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
+      // Thermostat.Feature.Heating
+      occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
+      minHeatSetpointLimit: minHeatSetpointLimit * 100,
+      maxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+      absMinHeatSetpointLimit: minHeatSetpointLimit * 100,
+      absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+      // Thermostat.Feature.Cooling
+      occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
+      minCoolSetpointLimit: minCoolSetpointLimit * 100,
+      maxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+      absMinCoolSetpointLimit: minCoolSetpointLimit * 100,
+      absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+      // Thermostat.Feature.AutoMode
+      minSetpointDeadBand: minSetpointDeadBand * 100,
+      thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default heating thermostat cluster server with Thermostat.Feature.Heating.
+   * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
+   * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
+   * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
+   * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit value. Defaults to 50°.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultHeatingThermostatClusterServer(localTemperature = 23, occupiedHeatingSetpoint = 21, minHeatSetpointLimit = 0, maxHeatSetpointLimit = 50) {
+    this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating), {
+      localTemperature: localTemperature * 100,
+      systemMode: Thermostat.SystemMode.Heat,
+      controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.HeatingOnly,
+      // Thermostat.Feature.Heating
+      occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
+      minHeatSetpointLimit: minHeatSetpointLimit * 100,
+      maxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+      absMinHeatSetpointLimit: minHeatSetpointLimit * 100,
+      absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default cooling thermostat cluster server with Thermostat.Feature.Cooling.
+   * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
+   * @param {number} [occupiedCoolingSetpoint] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
+   * @param {number} [minCoolSetpointLimit] - The minimum cool setpoint limit value. Defaults to 0°.
+   * @param {number} [maxCoolSetpointLimit] - The maximum cool setpoint limit value. Defaults to 50°.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultCoolingThermostatClusterServer(localTemperature = 23, occupiedCoolingSetpoint = 25, minCoolSetpointLimit = 0, maxCoolSetpointLimit = 50) {
+    this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Cooling), {
+      localTemperature: localTemperature * 100,
+      systemMode: Thermostat.SystemMode.Cool,
+      controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingOnly,
+      // Thermostat.Feature.Cooling
+      occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
+      minCoolSetpointLimit: minCoolSetpointLimit * 100,
+      maxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+      absMinCoolSetpointLimit: minCoolSetpointLimit * 100,
+      absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default fan control cluster server.
+   *
+   * @param fanMode The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
+    this.behaviors.require(MatterbridgeFanControlServer.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step), {
+      fanMode,
+      fanModeSequence: FanControl.FanModeSequence.OffLowMedHighAuto,
+      percentSetting: 0,
+      percentCurrent: 0,
+      speedMax: 100,
+      speedSetting: 0,
+      speedCurrent: 0,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default door lock cluster server.
+   *
+   * @param {DoorLock.LockState} [lockState=DoorLock.LockState.Locked] - The initial state of the lock (default: Locked).
+   * @param {DoorLock.LockType} [lockType=DoorLock.LockType.DeadBolt] - The type of the lock (default: DeadBolt).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultDoorLockClusterServer(lockState = DoorLock.LockState.Locked, lockType = DoorLock.LockType.DeadBolt) {
+    this.behaviors.require(MatterbridgeDoorLockServer.enable({ events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true } }), {
+      operatingMode: DoorLock.OperatingMode.Normal,
+      lockState,
+      lockType,
+      actuatorEnabled: false,
+      supportedOperatingModes: { normal: true, vacation: false, privacy: false, noRemoteLockUnlock: false, passage: false },
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default Mode Select cluster server.
+   *
+   * @param {string} description - The description of the mode select cluster.
+   * @param {ModeSelect.ModeOption[]} supportedModes - The list of supported modes.
+   * @param {number} [currentMode=0] - The current mode (default: 0).
+   * @param {number} [startUpMode=0] - The startup mode (default: 0).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * endpoint.createDefaultModeSelectClusterServer('Night mode', [{ label: 'Led ON', mode: 0, semanticTags: [] }, { label: 'Led OFF', mode: 1, semanticTags: [] }], 0, 0);
+   */
+  createDefaultModeSelectClusterServer(description: string, supportedModes: ModeSelect.ModeOption[], currentMode = 0, startUpMode = 0) {
+    this.behaviors.require(MatterbridgeModeSelectServer, {
+      description: description,
+      standardNamespace: null,
+      supportedModes: supportedModes,
+      currentMode: currentMode,
+      startUpMode: startUpMode,
+    });
+    return this;
+  }
+
+  /**
+   * Creates the default Valve Configuration And Control cluster server.
+   *
+   * @param {ValveConfigurationAndControl.ValveState} [valveState=ValveConfigurationAndControl.ValveState.Closed] - The valve state to set. Defaults to `ValveConfigurationAndControl.ValveState.Closed`.
+   * @param {number} [valveLevel=0] - The valve level to set. Defaults to 0.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultValveConfigurationAndControlClusterServer(valveState = ValveConfigurationAndControl.ValveState.Closed, valveLevel = 0) {
+    this.behaviors.require(MatterbridgeValveConfigurationAndControlServer.with(ValveConfigurationAndControl.Feature.Level), {
+      currentState: valveState,
+      targetState: valveState,
+      currentLevel: valveLevel,
+      targetLevel: valveLevel,
+      openDuration: null,
+      defaultOpenDuration: null,
+      remainingDuration: null,
+    });
+    return this;
+  }
+
+  /**
+   * Creates the default SmokeCOAlarm Cluster Server.
+   *
+   * @param {SmokeCoAlarm.AlarmState} smokeState - The state of the smoke alarm. Defaults to SmokeCoAlarm.AlarmState.Normal.
+   * @param {SmokeCoAlarm.AlarmState} coState - The state of the CO alarm. Defaults to SmokeCoAlarm.AlarmState.Normal.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultSmokeCOAlarmClusterServer(smokeState = SmokeCoAlarm.AlarmState.Normal, coState = SmokeCoAlarm.AlarmState.Normal) {
+    this.behaviors.require(
+      MatterbridgeSmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm).enable({
+        events: { smokeAlarm: true, interconnectSmokeAlarm: true, coAlarm: true, interconnectCoAlarm: true, lowBattery: true, hardwareFault: true, endOfService: true, selfTestComplete: true, alarmMuted: true, muteEnded: true, allClear: true },
+      }),
+      {
+        smokeState,
+        coState,
+        expressedState: SmokeCoAlarm.ExpressedState.Normal,
+        batteryAlert: SmokeCoAlarm.AlarmState.Normal,
+        deviceMuted: SmokeCoAlarm.MuteState.NotMuted,
+        testInProgress: false,
+        hardwareFaultAlert: false,
+        endOfServiceAlert: SmokeCoAlarm.EndOfService.Normal,
+        interconnectSmokeAlarm: SmokeCoAlarm.AlarmState.Normal,
+        interconnectCoAlarm: SmokeCoAlarm.AlarmState.Normal,
+      },
+    );
+    return this;
+  }
+
+  /**
+   * Creates a default momentary switch cluster server.
+   *
+   * @remarks
+   * This method adds a cluster server with default momentary switch features and configurations suitable for (AppleHome) Single Double Long automations.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultSwitchClusterServer() {
+    this.behaviors.require(
+      SwitchServer.with(Switch.Feature.MomentarySwitch, Switch.Feature.MomentarySwitchRelease, Switch.Feature.MomentarySwitchLongPress, Switch.Feature.MomentarySwitchMultiPress).enable({
+        events: { initialPress: true, longPress: true, shortRelease: true, longRelease: true, multiPressOngoing: true, multiPressComplete: true },
+      }),
+      {
+        numberOfPositions: 2,
+        currentPosition: 0,
+        multiPressMax: 2,
+      },
+    );
+    return this;
+  }
+
+  /**
+   * Creates a default latching switch cluster server.
+   *
+   * @remarks
+   * This method adds a cluster server with default latching switch features and configuration suitable for a latching switch with 2 positions.
+   */
+  createDefaultLatchingSwitchClusterServer() {
+    this.behaviors.require(
+      SwitchServer.with(Switch.Feature.LatchingSwitch).enable({
+        events: { switchLatched: true },
+      }),
+      {
+        numberOfPositions: 2,
+        currentPosition: 0,
+      },
+    );
+    return this;
+  }
+
+  /**
+   * Triggers a switch event on the specified endpoint.
+   *
+   * @param {string} event - The type of event to trigger. Possible values are 'Single', 'Double', 'Long' for momentarySwitch and 'Press', 'Release' for latchingSwitch.
+   * @param {Endpoint} endpoint - The endpoint on which to trigger the event (default the device endpoint).
+   * @returns {boolean} - A boolean indicating whether the event was successfully triggered.
+   */
+  async triggerSwitchEvent(event: 'Single' | 'Double' | 'Long' | 'Press' | 'Release', log?: AnsiLogger): Promise<boolean> {
+    if (this.maybeNumber === undefined) {
+      log?.error(`triggerSwitchEvent ${event} error: Endpoint number not assigned on endpoint ${this.maybeId}:${this.maybeNumber}`);
+      return false;
+    }
+    if (['Single', 'Double', 'Long'].includes(event)) {
+      if (!this.hasClusterServer(Switch.Cluster.id) || (this.getAttribute(Switch.Cluster.id, 'featureMap') as Record<string, boolean>).momentarySwitch === false) {
+        log?.error(`triggerSwitchEvent ${event} error: Switch cluster with MomentarySwitch not found on endpoint ${this.maybeId}:${this.maybeNumber}`);
+        return false;
+      }
+      if (event === 'Single') {
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
+        this.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, log);
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
+        this.triggerEvent(Switch.Cluster.id, 'shortRelease', { previousPosition: 1 }, log);
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
+        this.triggerEvent(Switch.Cluster.id, 'multiPressComplete', { previousPosition: 1, totalNumberOfPressesCounted: 1 }, log);
+        log?.info(`${db}Trigger endpoint ${or}${this.id}:${this.number}${db} event ${hk}Switch.SinglePress${db}`);
+      }
+      if (event === 'Double') {
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
+        this.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, log);
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
+        this.triggerEvent(Switch.Cluster.id, 'shortRelease', { previousPosition: 1 }, log);
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
+        this.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, log);
+        this.triggerEvent(Switch.Cluster.id, 'multiPressOngoing', { newPosition: 1, currentNumberOfPressesCounted: 2 }, log);
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
+        this.triggerEvent(Switch.Cluster.id, 'shortRelease', { previousPosition: 1 }, log);
+        this.triggerEvent(Switch.Cluster.id, 'multiPressComplete', { previousPosition: 1, totalNumberOfPressesCounted: 2 }, log);
+        log?.info(`${db}Trigger endpoint ${or}${this.id}:${this.number}${db} event ${hk}Switch.DoublePress${db}`);
+      }
+      if (event === 'Long') {
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
+        this.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, log);
+        this.triggerEvent(Switch.Cluster.id, 'longPress', { newPosition: 1 }, log);
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
+        this.triggerEvent(Switch.Cluster.id, 'longRelease', { previousPosition: 1 }, log);
+        log?.info(`${db}Trigger endpoint ${or}${this.id}:${this.number}${db} event ${hk}Switch.LongPress${db}`);
+      }
+    }
+    if (['Press', 'Release'].includes(event)) {
+      if (!this.hasClusterServer(Switch.Cluster.id) || (this.getAttribute(Switch.Cluster.id, 'featureMap') as Record<string, boolean>).latchingSwitch === false) {
+        log?.error(`triggerSwitchEvent ${event} error: Switch cluster with LatchingSwitch not found on endpoint ${this.maybeId}:${this.maybeNumber}`);
+        return false;
+      }
+      if (event === 'Press') {
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
+        this.triggerEvent(Switch.Cluster.id, 'switchLatched', { newPosition: 1 }, log);
+        log?.info(`${db}Trigger endpoint ${or}${this.id}:${this.number}${db} event ${hk}Switch.Press${db}`);
+      }
+      if (event === 'Release') {
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
+        this.triggerEvent(Switch.Cluster.id, 'switchLatched', { newPosition: 0 }, log);
+        log?.info(`${db}Trigger endpoint ${or}${this.id}:${this.number}${db} event ${hk}Switch.Release${db}`);
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Creates a default boolean state cluster server.
+   *
+   * @param {boolean} contact - The state of the cluster. Defaults to true (true = contact).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultBooleanStateClusterServer(contact?: boolean) {
+    this.behaviors.require(
+      BooleanStateServer.enable({
+        events: { stateChange: true },
+      }),
+      {
+        stateValue: contact ?? true, // true=contact false=no_contact
+      },
+    );
+    return this;
+  }
+
+  /**
+   * Creates a default boolean state configuration cluster server to be used with the waterFreezeDetector, waterLeakDetector, and rainSensor device types.
+   *
+   * @remarks Supports the enableDisableAlarm command.
+   *
+   * @param {boolean} [sensorFault=false] - Optional boolean value indicating the sensor fault state. Defaults to `false` if not provided.
+   * @param {number} [currentSensitivityLevel=0] - The current sensitivity level. Defaults to `0` if not provided.
+   * @param {number} [supportedSensitivityLevels=2] - The number of supported sensitivity levels. Defaults to `2` if not provided (min 2, max 10).
+   * @param {number} [defaultSensitivityLevel=0] - The default sensitivity level. Defaults to `0` if not provided.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultBooleanStateConfigurationClusterServer(sensorFault = false, currentSensitivityLevel = 0, supportedSensitivityLevels = 2, defaultSensitivityLevel = 0) {
+    this.behaviors.require(
+      MatterbridgeBooleanStateConfigurationServer.with(BooleanStateConfiguration.Feature.Visual, BooleanStateConfiguration.Feature.Audible, BooleanStateConfiguration.Feature.SensitivityLevel).enable({
+        events: { alarmsStateChanged: true, sensorFault: true },
+      }),
+      {
+        currentSensitivityLevel,
+        supportedSensitivityLevels,
+        defaultSensitivityLevel,
+        alarmsActive: { visual: false, audible: false },
+        alarmsEnabled: { visual: true, audible: true },
+        alarmsSupported: { visual: true, audible: true },
+        sensorFault: { generalFault: sensorFault },
+      },
+    );
     return this;
   }
 }
