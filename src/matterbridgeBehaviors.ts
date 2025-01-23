@@ -399,7 +399,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigu
   }
 }
 
-export class MatterbridgeSmokeCOAlarmServer extends SmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm) {
+export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm) {
   override async selfTestRequest() {
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     device.selfTestRequest();
