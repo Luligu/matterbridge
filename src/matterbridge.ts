@@ -114,9 +114,9 @@ export class Matterbridge extends EventEmitter {
   public matterbridgeLatestVersion = '';
   public matterbridgeQrPairingCode: string | undefined = undefined;
   public matterbridgeManualPairingCode: string | undefined = undefined;
-  public matterbridgeFabricInformations: SanitizedExposedFabricInformation[] = [];
-  public matterbridgeSessionInformations: SanitizedSessionInformation[] = [];
-  public matterbridgePaired = false;
+  public matterbridgeFabricInformations: SanitizedExposedFabricInformation[] | undefined = undefined;
+  public matterbridgeSessionInformations: SanitizedSessionInformation[] | undefined = undefined;
+  public matterbridgePaired: boolean | undefined = undefined;
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public restartMode: 'service' | 'docker' | '' = '';
   public profile = getParameter('profile');
@@ -1823,7 +1823,7 @@ export class Matterbridge extends EventEmitter {
    * Starts the matter storage process based on the specified storage type and name.
    * @returns {Promise<void>} - A promise that resolves when the storage process is started.
    */
-  protected async startMatterStorage(): Promise<void> {
+  private async startMatterStorage(): Promise<void> {
     // Setup Matter storage
     this.log.info(`Starting matter node storage...`);
 
@@ -1847,7 +1847,7 @@ export class Matterbridge extends EventEmitter {
    * @param storageName - The name of the storage file to be backed up.
    * @param backupName - The name of the backup file to be created.
    */
-  protected async backupMatterStorage(storageName: string, backupName: string): Promise<void> {
+  private async backupMatterStorage(storageName: string, backupName: string): Promise<void> {
     this.log.info('Creating matter node storage backup...');
     await copyDirectory(storageName, backupName);
     this.log.info('Created matter node storage backup');
@@ -1857,7 +1857,7 @@ export class Matterbridge extends EventEmitter {
    * Stops the matter storage.
    * @returns {Promise<void>} A promise that resolves when the storage is stopped.
    */
-  protected async stopMatterStorage(): Promise<void> {
+  private async stopMatterStorage(): Promise<void> {
     this.log.info('Closing matter node storage...');
     this.matterStorageManager?.close();
     this.matterStorageService = undefined;
@@ -1984,14 +1984,14 @@ export class Matterbridge extends EventEmitter {
       this.log.info(`Fabrics: ${debugStringify(sanitizedFabrics)}`);
       if (this.bridgeMode === 'bridge') {
         this.matterbridgeFabricInformations = sanitizedFabrics;
-        if (resetSessions) this.matterbridgeSessionInformations = []; // Changed cause Invoke Matterbridge.operationalCredentials.updateFabricLabel is sent after the session is created
+        if (resetSessions) this.matterbridgeSessionInformations = undefined; // Changed cause Invoke Matterbridge.operationalCredentials.updateFabricLabel is sent after the session is created
         this.matterbridgePaired = true;
       }
       if (this.bridgeMode === 'childbridge') {
         const plugin = this.plugins.get(storeId);
         if (plugin) {
           plugin.fabricInformations = sanitizedFabrics;
-          if (resetSessions) plugin.sessionInformations = []; // Changed cause Invoke Matterbridge.operationalCredentials.updateFabricLabel is sent after the session is created
+          if (resetSessions) plugin.sessionInformations = undefined; // Changed cause Invoke Matterbridge.operationalCredentials.updateFabricLabel is sent after the session is created
           plugin.paired = true;
         }
       }
@@ -2015,8 +2015,8 @@ export class Matterbridge extends EventEmitter {
         if (this.bridgeMode === 'bridge') {
           this.matterbridgeQrPairingCode = qrPairingCode;
           this.matterbridgeManualPairingCode = manualPairingCode;
-          this.matterbridgeFabricInformations = [];
-          this.matterbridgeSessionInformations = [];
+          this.matterbridgeFabricInformations = undefined;
+          this.matterbridgeSessionInformations = undefined;
           this.matterbridgePaired = false;
           this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
           this.log.notice(`Manual pairing code: ${manualPairingCode}`);
@@ -2032,8 +2032,8 @@ export class Matterbridge extends EventEmitter {
           if (plugin) {
             plugin.qrPairingCode = qrPairingCode;
             plugin.manualPairingCode = manualPairingCode;
-            plugin.fabricInformations = [];
-            plugin.sessionInformations = [];
+            plugin.fabricInformations = undefined;
+            plugin.sessionInformations = undefined;
             plugin.paired = false;
             this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
             this.log.notice(`Manual pairing code: ${manualPairingCode}`);
@@ -2058,18 +2058,18 @@ export class Matterbridge extends EventEmitter {
       if (this.bridgeMode === 'bridge') {
         this.matterbridgeQrPairingCode = undefined;
         this.matterbridgeManualPairingCode = undefined;
-        this.matterbridgeFabricInformations = [];
-        this.matterbridgeSessionInformations = [];
-        this.matterbridgePaired = false;
+        this.matterbridgeFabricInformations = undefined;
+        this.matterbridgeSessionInformations = undefined;
+        this.matterbridgePaired = undefined;
       }
       if (this.bridgeMode === 'childbridge') {
         const plugin = this.plugins.get(storeId);
         if (plugin) {
           plugin.qrPairingCode = undefined;
           plugin.manualPairingCode = undefined;
-          plugin.fabricInformations = [];
-          plugin.sessionInformations = [];
-          plugin.paired = false;
+          plugin.fabricInformations = undefined;
+          plugin.sessionInformations = undefined;
+          plugin.paired = undefined;
         }
       }
       this.frontend.wssSendRefreshRequired();
