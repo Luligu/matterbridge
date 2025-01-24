@@ -333,25 +333,7 @@ export class Frontend {
     // Endpoint to provide settings
     this.expressApp.get('/api/settings', express.json(), async (req, res) => {
       this.log.debug('The frontend sent /api/settings');
-      this.matterbridge.matterbridgeInformation.bridgeMode = this.matterbridge.bridgeMode;
-      this.matterbridge.matterbridgeInformation.restartMode = this.matterbridge.restartMode;
-      this.matterbridge.matterbridgeInformation.loggerLevel = this.log.logLevel;
-      this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
-      this.matterbridge.matterbridgeInformation.mattermdnsinterface = (await this.matterbridge.nodeContext?.get<string>('mattermdnsinterface', '')) || '';
-      this.matterbridge.matterbridgeInformation.matteripv4address = (await this.matterbridge.nodeContext?.get<string>('matteripv4address', '')) || '';
-      this.matterbridge.matterbridgeInformation.matteripv6address = (await this.matterbridge.nodeContext?.get<string>('matteripv6address', '')) || '';
-      this.matterbridge.matterbridgeInformation.matterPort = (await this.matterbridge.nodeContext?.get<number>('matterport', 5540)) ?? 5540;
-      this.matterbridge.matterbridgeInformation.matterDiscriminator = await this.matterbridge.nodeContext?.get<number>('matterdiscriminator');
-      this.matterbridge.matterbridgeInformation.matterPasscode = await this.matterbridge.nodeContext?.get<number>('matterpasscode');
-      this.matterbridge.matterbridgeInformation.matterbridgePaired = this.matterbridge.matterbridgePaired;
-      this.matterbridge.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridge.matterbridgeQrPairingCode;
-      this.matterbridge.matterbridgeInformation.matterbridgeManualPairingCode = this.matterbridge.matterbridgeManualPairingCode;
-      this.matterbridge.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridge.matterbridgeFabricInformations;
-      this.matterbridge.matterbridgeInformation.matterbridgeSessionInformations = Array.from(this.matterbridge.matterbridgeSessionInformations.values());
-      this.matterbridge.matterbridgeInformation.profile = this.matterbridge.profile;
-      const response = { systemInformation: this.matterbridge.systemInformation, matterbridgeInformation: this.matterbridge.matterbridgeInformation };
-      // this.log.debug('Response:', debugStringify(response));
-      res.json(response);
+      res.json(await this.getApiSettings());
     });
 
     // Endpoint to provide plugins
@@ -955,6 +937,30 @@ export class Frontend {
   }
 
   /**
+   * Retrieves the api settings.
+   * @returns {Promise<object>} A promise that resolve in the api settings object.
+   */
+  private async getApiSettings() {
+    this.matterbridge.matterbridgeInformation.bridgeMode = this.matterbridge.bridgeMode;
+    this.matterbridge.matterbridgeInformation.restartMode = this.matterbridge.restartMode;
+    this.matterbridge.matterbridgeInformation.loggerLevel = this.log.logLevel;
+    this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
+    this.matterbridge.matterbridgeInformation.mattermdnsinterface = (await this.matterbridge.nodeContext?.get<string>('mattermdnsinterface', '')) || '';
+    this.matterbridge.matterbridgeInformation.matteripv4address = (await this.matterbridge.nodeContext?.get<string>('matteripv4address', '')) || '';
+    this.matterbridge.matterbridgeInformation.matteripv6address = (await this.matterbridge.nodeContext?.get<string>('matteripv6address', '')) || '';
+    this.matterbridge.matterbridgeInformation.matterPort = (await this.matterbridge.nodeContext?.get<number>('matterport', 5540)) ?? 5540;
+    this.matterbridge.matterbridgeInformation.matterDiscriminator = await this.matterbridge.nodeContext?.get<number>('matterdiscriminator');
+    this.matterbridge.matterbridgeInformation.matterPasscode = await this.matterbridge.nodeContext?.get<number>('matterpasscode');
+    this.matterbridge.matterbridgeInformation.matterbridgePaired = this.matterbridge.matterbridgePaired;
+    this.matterbridge.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridge.matterbridgeQrPairingCode;
+    this.matterbridge.matterbridgeInformation.matterbridgeManualPairingCode = this.matterbridge.matterbridgeManualPairingCode;
+    this.matterbridge.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridge.matterbridgeFabricInformations;
+    this.matterbridge.matterbridgeInformation.matterbridgeSessionInformations = this.matterbridge.matterbridgeSessionInformations;
+    this.matterbridge.matterbridgeInformation.profile = this.matterbridge.profile;
+    return { systemInformation: this.matterbridge.systemInformation, matterbridgeInformation: this.matterbridge.matterbridgeInformation };
+  }
+
+  /**
    * Retrieves the cluster text description from a given device.
    * @param {MatterbridgeDevice} device - The MatterbridgeDevice object.
    * @returns {string} The attributes description of the cluster servers in the device.
@@ -1151,24 +1157,7 @@ export class Frontend {
         await this.matterbridge.shutdownProcess();
         return;
       } else if (data.method === '/api/settings') {
-        this.matterbridge.matterbridgeInformation.bridgeMode = this.matterbridge.bridgeMode;
-        this.matterbridge.matterbridgeInformation.restartMode = this.matterbridge.restartMode;
-        this.matterbridge.matterbridgeInformation.loggerLevel = this.log.logLevel;
-        this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
-        this.matterbridge.matterbridgeInformation.mattermdnsinterface = (await this.matterbridge.nodeContext?.get<string>('mattermdnsinterface', '')) || '';
-        this.matterbridge.matterbridgeInformation.matteripv4address = (await this.matterbridge.nodeContext?.get<string>('matteripv4address', '')) || '';
-        this.matterbridge.matterbridgeInformation.matteripv6address = (await this.matterbridge.nodeContext?.get<string>('matteripv6address', '')) || '';
-        this.matterbridge.matterbridgeInformation.matterPort = (await this.matterbridge.nodeContext?.get<number>('matterport', 5540)) ?? 5540;
-        this.matterbridge.matterbridgeInformation.matterDiscriminator = await this.matterbridge.nodeContext?.get<number>('matterdiscriminator');
-        this.matterbridge.matterbridgeInformation.matterPasscode = await this.matterbridge.nodeContext?.get<number>('matterpasscode');
-        this.matterbridge.matterbridgeInformation.matterbridgePaired = this.matterbridge.matterbridgePaired;
-        this.matterbridge.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridge.matterbridgeQrPairingCode;
-        this.matterbridge.matterbridgeInformation.matterbridgeManualPairingCode = this.matterbridge.matterbridgeManualPairingCode;
-        this.matterbridge.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridge.matterbridgeFabricInformations;
-        this.matterbridge.matterbridgeInformation.matterbridgeSessionInformations = Array.from(this.matterbridge.matterbridgeSessionInformations.values());
-        this.matterbridge.matterbridgeInformation.profile = this.matterbridge.profile;
-        const response = { systemInformation: this.matterbridge.systemInformation, matterbridgeInformation: this.matterbridge.matterbridgeInformation };
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: await this.getApiSettings() }));
         return;
       } else if (data.method === '/api/plugins') {
         const response = await this.getBaseRegisteredPlugins();
