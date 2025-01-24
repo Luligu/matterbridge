@@ -108,9 +108,9 @@ export interface MatterbridgeInformation {
   matterbridgeLatestVersion: string;
   matterbridgeQrPairingCode: string | undefined;
   matterbridgeManualPairingCode: string | undefined;
-  matterbridgeFabricInformations: SanitizedExposedFabricInformation[];
-  matterbridgeSessionInformations: SanitizedSessionInformation[];
-  matterbridgePaired: boolean;
+  matterbridgeFabricInformations: SanitizedExposedFabricInformation[] | undefined;
+  matterbridgeSessionInformations: SanitizedSessionInformation[] | undefined;
+  matterbridgePaired: boolean | undefined;
   bridgeMode: string;
   restartMode: string;
   readOnly: boolean;
