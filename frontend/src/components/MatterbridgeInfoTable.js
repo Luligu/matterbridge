@@ -5,7 +5,7 @@ import { TruncatedText } from './TruncatedText';
 export function MatterbridgeInfoTable({ matterbridgeInfo }) {
   const excludeKeys = ['matterbridgeVersion', 'matterbridgeLatestVersion', 'matterFileLogger', 'fileLogger', 'matterLoggerLevel', 'loggerLevel',
     'bridgeMode', 'restartMode', 'matterbridgeFabricInformations', 'matterbridgeSessionInformations', 'restartRequired', 'refreshRequired',
-    'mattermdnsinterface', 'matteripv4address', 'matteripv6address', 'matterbridgeConnected'];
+    'mattermdnsinterface', 'matteripv4address', 'matteripv6address', 'matterbridgeConnected', 'readOnly', 'matterPort', 'matterDiscriminator', 'matterPasscode'];
   if (matterbridgeInfo.bridgeMode === 'childbridge') excludeKeys.push('matterbridgePaired');
   return (
     <div className="MbfWindowDiv" style={{ minWidth: '302px' }}>
@@ -23,7 +23,7 @@ export function MatterbridgeInfoTable({ matterbridgeInfo }) {
                 <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ borderTop: '1px solid #ddd' }}>
                   <td>{key.replace('matterbridgePaired', 'paired').replace('homeDirectory', 'home').replace('rootDirectory', 'root').replace('matterbridgeDirectory', 'storage').replace('matterbridgePluginDirectory', 'plugins').replace('globalModulesDirectory', 'modules')}</td>
                   <td>
-                    <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={30} />
+                    <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={28} />
                   </td>
                 </tr>
               ))}

@@ -37,7 +37,7 @@ export function SystemInfoTable({ systemInfo, compact }) {
               <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ borderTop: '1px solid #ddd' }}>
                 <td>{key}</td>
                 <td>
-                  <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={26} />
+                  <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={25} />
                 </td>
               </tr>
             ))}

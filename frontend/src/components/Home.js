@@ -316,7 +316,7 @@ function Home() {
 
       {/*Left column*/}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>
-        <QRDiv qrText={qrCode} pairingText={pairingCode} qrWidth={256} topText="QR pairing code" bottomText={selectedPluginName === 'none' ? 'Matterbridge' : selectedPluginName} matterbridgeInfo={matterbridgeInfo} plugin={selectedRow === -1 ? undefined : plugins[selectedRow]} />
+        <QRDiv matterbridgeInfo={matterbridgeInfo} plugin={selectedRow === -1 ? undefined : plugins[selectedRow]} />
         {systemInfo && <SystemInfoTable systemInfo={systemInfo} compact={true} />}
         {qrCode === '' && matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo} />}
       </div>
@@ -546,10 +546,10 @@ function AddRemovePlugins({ reloadSettings }) {
   );
 }
 
-function QRDiv({ qrText, pairingText, qrWidth, topText, matterbridgeInfo, plugin }) {
-  // console.log('QRDiv:', matterbridgeInfo, plugin);
-  if (matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === true && matterbridgeInfo.matterbridgeFabricInformations && matterbridgeInfo.matterbridgeSessionInformations) {
-    // console.log(`QRDiv: ${matterbridgeInfo.matterbridgeFabricInformations.length} fabrics, ${matterbridgeInfo.matterbridgeSessionInformations.length} sessions`);
+function QRDiv({ matterbridgeInfo, plugin }) {
+  console.log('QRDiv:', matterbridgeInfo, plugin);
+  if (matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === true && matterbridgeInfo.matterbridgeFabricInformations) {
+    console.log(`QRDiv: paired ${matterbridgeInfo.matterbridgePaired}, got ${matterbridgeInfo.matterbridgeFabricInformations?.length} fabrics, got ${matterbridgeInfo.matterbridgeSessionInformations?.length} sessions`);
     return (
       <div className="MbfWindowDiv" style={{ alignItems: 'center', minWidth: '302px', overflow: 'hidden' }} >
         <div className="MbfWindowHeader">
@@ -561,14 +561,14 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, matterbridgeInfo, plugin
               <p className="status-blue" style={{ margin: '0px 10px 10px 10px', fontSize: '14px', padding: 0, color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)' }}>Fabric: {fabric.fabricIndex}</p>
               <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
               {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Label: {fabric.label}</p>}
-              <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Active sessions: {matterbridgeInfo.matterbridgeSessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length}</p>
+              <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Active sessions: {matterbridgeInfo.matterbridgeSessionInformations ? matterbridgeInfo.matterbridgeSessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length : '0'}</p>
             </div>
           ))}
         </div>
       </div>
     );
-  } else if (matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired === true && plugin.fabricInformations && plugin.sessionInformations) {
-    // console.log(`QRDiv: ${plugin.fabricInformations.length} fabrics, ${plugin.sessionInformations.length} sessions`);
+  } else if (matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired === true && plugin.fabricInformations) {
+    console.log(`QRDiv: paired ${plugin.paired}, got ${plugin.fabricInformations?.length} fabrics, got ${plugin.sessionInformations?.length} sessions`);
     return (
       <div className="MbfWindowDiv" style={{ alignItems: 'center', minWidth: '302px', overflow: 'hidden' }} >
         <div className="MbfWindowHeader">
@@ -580,35 +580,35 @@ function QRDiv({ qrText, pairingText, qrWidth, topText, matterbridgeInfo, plugin
               <p className="status-blue" style={{ margin: '0px 10px 10px 10px', fontSize: '14px', padding: 0, color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)' }}>Fabric: {fabric.fabricIndex}</p>
               <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
               {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Label: {fabric.label}</p>}
-              <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Active sessions: {plugin.sessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length}</p>
+              <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Active sessions: {plugin.sessionInformations ? plugin.sessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length : '0'}</p>
             </div>
           ))}
         </div>
       </div>
     );
-  } else if (matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired !== true) {
+  } else if (matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === false && matterbridgeInfo.matterbridgeQrPairingCode && matterbridgeInfo.matterbridgeManualPairingCode) {
     // console.log(`QRDiv: qrText ${qrText} pairingText ${pairingText}`);
     return (
       <div className="MbfWindowDiv" style={{ alignItems: 'center', minWidth: '302px' }}>
         <div className="MbfWindowHeader">
-          <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>{topText}</p>
+          <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>QR pairing code</p>
         </div>
-        <QRCodeSVG value={qrText} size={qrWidth} level='M' fgColor={'var(--div-text-color)'} bgColor={'var(--div-bg-color)'} style={{ margin: '20px' }} />
+        <QRCodeSVG value={matterbridgeInfo.matterbridgeQrPairingCode} size={256} level='M' fgColor={'var(--div-text-color)'} bgColor={'var(--div-bg-color)'} style={{ margin: '20px' }} />
         <div className="MbfWindowFooter" style={{ padding: 0, marginTop: '-5px', height: '30px' }}>
-          <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Manual pairing code: {pairingText}</p>
+          <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Manual pairing code: {matterbridgeInfo.matterbridgeManualPairingCode}</p>
         </div>
       </div>
     );
-  } else if (matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired !== true) {
+  } else if (matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired === false && plugin.qrPairingCode && plugin.manualPairingCode) {
     // console.log(`QRDiv: qrText ${qrText} pairingText ${pairingText}`);
     return (
       <div className="MbfWindowDiv" style={{ alignItems: 'center', minWidth: '302px' }}>
         <div className="MbfWindowHeader">
-          <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>{topText}</p>
+          <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>QR pairing code</p>
         </div>
-        <QRCodeSVG value={qrText} size={qrWidth} level='M' fgColor={'var(--div-text-color)'} bgColor={'var(--div-bg-color)'} style={{ margin: '20px' }} />
+        <QRCodeSVG value={plugin.qrPairingCode} size={256} level='M' fgColor={'var(--div-text-color)'} bgColor={'var(--div-bg-color)'} style={{ margin: '20px' }} />
         <div className="MbfWindowFooter" style={{ padding: 0, marginTop: '-5px', height: '30px' }}>
-          <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Manual pairing code: {pairingText}</p>
+          <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Manual pairing code: {plugin.manualPairingCode}</p>
         </div>
       </div>
     );
