@@ -995,7 +995,8 @@ export class Frontend {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.entries(device.state as unknown as Record<string, Record<string, any>>).forEach(([clusterName, clusterAttributes]) => {
       Object.entries(clusterAttributes).forEach(([attributeName, attributeValue]) => {
-        // console.log(`Cluster: ${clusterName} Attribute: ${attributeName} Value: ${attributeValue}`);
+        if (typeof attributeValue === 'undefined') return;
+        // console.log(`Cluster: ${clusterName} Attribute: ${attributeName} Value(${typeof attributeValue}): ${attributeValue}`);
         if (clusterName === 'onOff' && attributeName === 'onOff') attributes += `OnOff: ${attributeValue} `;
         if (clusterName === 'switch' && attributeName === 'currentPosition') attributes += `Position: ${attributeValue} `;
         if (clusterName === 'windowCovering' && attributeName === 'currentPositionLiftPercent100ths') attributes += `Cover position: ${attributeValue / 100}% `;
