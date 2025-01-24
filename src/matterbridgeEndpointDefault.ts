@@ -515,8 +515,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (typeof cluster === 'string') {
       behavior = this.behaviors.supported[lowercaseFirstLetter(cluster)];
     } else if (typeof cluster === 'number') {
-      const clusterName = lowercaseFirstLetter(getClusterNameById(cluster));
-      behavior = this.behaviors.supported[clusterName];
+      behavior = this.behaviors.supported[lowercaseFirstLetter(getClusterNameById(cluster))];
     } else {
       behavior = this.behaviors.supported[lowercaseFirstLetter(cluster.name)];
     }
@@ -746,10 +745,12 @@ export class MatterbridgeEndpoint extends Endpoint {
       endpointName: this.maybeId ?? this.deviceName,
       clusterServersId: [],
     };
+    /*
     const server = EndpointServer.forEndpoint(this);
     server.getAllClusterServers().forEach((clusterServer) => {
       serialized.clusterServersId.push(clusterServer.id);
     });
+    */
     return serialized;
   }
 

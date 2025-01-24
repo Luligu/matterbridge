@@ -36,7 +36,6 @@ describe('MatterbridgeEndpoint class', () => {
   let aggregator: Endpoint<AggregatorEndpoint>;
   let device: MatterbridgeEndpoint;
 
-  /*
   // Spy on and mock AnsiLogger.log
   const loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
     //
@@ -61,7 +60,6 @@ describe('MatterbridgeEndpoint class', () => {
   const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
     //
   });
-  */
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance

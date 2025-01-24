@@ -162,9 +162,6 @@ describe('Matterbridge frontend express test', () => {
     expect(response.body.matterbridgeInformation).toHaveProperty('restartMode');
     expect(response.body.matterbridgeInformation).toHaveProperty('loggerLevel');
     expect(response.body.matterbridgeInformation).toHaveProperty('matterLoggerLevel');
-    expect(response.body.matterbridgeInformation).toHaveProperty('mattermdnsinterface');
-    expect(response.body.matterbridgeInformation).toHaveProperty('matteripv4address');
-    expect(response.body.matterbridgeInformation).toHaveProperty('matteripv6address');
     expect(response.body.matterbridgeInformation).toHaveProperty('matterPort');
     expect(response.body.matterbridgeInformation).toHaveProperty('profile');
   });

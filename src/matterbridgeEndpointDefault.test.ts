@@ -27,7 +27,7 @@ import {
 } from './matterbridgeDeviceTypes.js';
 
 // @matter
-import { DeviceTypeId, VendorId, ServerNode, Endpoint, EndpointServer, StorageContext, Lifecycle } from '@matter/main';
+import { DeviceTypeId, VendorId, ServerNode, Endpoint, EndpointServer, StorageContext, Lifecycle, EndpointNumber } from '@matter/main';
 import { LogFormat as Format, LogLevel as Level } from '@matter/main';
 import {
   BasicInformation,
@@ -128,7 +128,7 @@ describe('MatterbridgeEndpoint class', () => {
       checkOnline();
     });
   }
-  /*
+
   // Spy on and mock AnsiLogger.log
   const loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
     //
@@ -153,11 +153,10 @@ describe('MatterbridgeEndpoint class', () => {
   const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
     //
   });
-  */
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
-    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'WiFi', '-profile', 'Jest', '-bridge', '-logger', 'debug', '-matterlogger', 'debug'];
+    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-profile', 'Jest', '-bridge', '-logger', 'debug', '-matterlogger', 'debug'];
     matterbridge = await Matterbridge.loadInstance(true);
     await waitForOnline();
   });
@@ -211,7 +210,7 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('serialize and deserialize', async () => {
       MatterbridgeEndpoint.bridgeMode = 'bridge';
-      const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight' });
+      const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight', endpointId: EndpointNumber(100) });
       expect(device).toBeDefined();
       device.createDefaultIdentifyClusterServer().createDefaultBridgedDeviceBasicInformationClusterServer('OnOffLight', '1234', 0xfff1, 'Matterbridge', 'Light').createDefaultGroupsClusterServer().createDefaultOnOffClusterServer();
       const serializedDevice = device.serialize();

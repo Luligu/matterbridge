@@ -26,10 +26,12 @@ It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbr
 ### Added
 
 - [matterbridge]: Add MatterbridgeModeSelectServer.
+- [frontend]: Add api/advertise to turn on matter advertising in bridge mode.
 
 ### Changed
 
 - [package]: Update dependencies.
+- [package]: Update matter.js to 0.11.9
 
 ### Fixed
 

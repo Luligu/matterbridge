@@ -93,6 +93,7 @@
     "test:bridgemode": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose matterbridge.bridge.test.ts",
     "test:childbridgemode": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose matterbridge.childbridge.test.ts",
     "test:endpoint": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage matterbridgeEndpoint.test.ts",
+    "test:enpointDefault": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage matterbridgeEndpointDefault.test.ts",
     "test:matterjsenpoint": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage matterbridgeEndpoint.matterjs.test.ts",
     "test:platform": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose  --coverage matterbridgePlatform.test.ts matterbridgeAccessoryPlatform.test.ts matterbridgeDynamicPlatform.test.ts",
     "test:pluginManager": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage pluginManager.test.ts",
@@ -125,8 +126,8 @@
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest && npm run test"
   },
   "dependencies": {
-    "@matter/main": "0.11.9",
-    "@project-chip/matter.js": "0.11.9",
+    "@matter/main": "0.12.0",
+    "@project-chip/matter.js": "0.12.0",
     "archiver": "7.0.1",
     "express": "4.21.2",
     "glob": "11.0.1",
@@ -141,16 +142,16 @@
     "@types/eslint__js": "8.42.3",
     "@types/express": "5.0.0",
     "@types/jest": "29.5.14",
-    "@types/node": "22.10.6",
-    "@types/ws": "8.5.13",
+    "@types/node": "22.10.10",
+    "@types/ws": "8.5.14",
     "eslint": "9.18.0",
     "eslint-config-prettier": "10.0.1",
-    "eslint-plugin-jest": "28.10.0",
-    "eslint-plugin-prettier": "5.2.1",
+    "eslint-plugin-jest": "28.11.0",
+    "eslint-plugin-prettier": "5.2.3",
     "jest": "29.7.0",
     "prettier": "3.4.2",
     "ts-jest": "29.2.5",
     "typescript": "5.7.3",
-    "typescript-eslint": "8.20.0"
+    "typescript-eslint": "8.21.0"
   }
 }

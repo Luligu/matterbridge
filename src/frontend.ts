@@ -330,6 +330,12 @@ export class Frontend {
       res.status(200).json(memoryReport);
     });
 
+    // Endpoint to start advertising the server node
+    this.expressApp.get('/api/advertise', express.json(), async (req, res) => {
+      const pairingCodes = await this.matterbridge.advertiseServerNode(this.matterbridge.serverNode);
+      res.json(pairingCodes);
+    });
+
     // Endpoint to provide settings
     this.expressApp.get('/api/settings', express.json(), async (req, res) => {
       this.log.debug('The frontend sent /api/settings');
@@ -339,7 +345,7 @@ export class Frontend {
     // Endpoint to provide plugins
     this.expressApp.get('/api/plugins', async (req, res) => {
       this.log.debug('The frontend sent /api/plugins');
-      const response = await this.getBaseRegisteredPlugins();
+      const response = this.getBaseRegisteredPlugins();
       // this.log.debug('Response:', debugStringify(response));
       res.json(response);
     });
@@ -945,9 +951,9 @@ export class Frontend {
     this.matterbridge.matterbridgeInformation.restartMode = this.matterbridge.restartMode;
     this.matterbridge.matterbridgeInformation.loggerLevel = this.log.logLevel;
     this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
-    this.matterbridge.matterbridgeInformation.mattermdnsinterface = (await this.matterbridge.nodeContext?.get<string>('mattermdnsinterface', '')) || '';
-    this.matterbridge.matterbridgeInformation.matteripv4address = (await this.matterbridge.nodeContext?.get<string>('matteripv4address', '')) || '';
-    this.matterbridge.matterbridgeInformation.matteripv6address = (await this.matterbridge.nodeContext?.get<string>('matteripv6address', '')) || '';
+    this.matterbridge.matterbridgeInformation.mattermdnsinterface = this.matterbridge.mdnsInterface;
+    this.matterbridge.matterbridgeInformation.matteripv4address = this.matterbridge.ipv4address;
+    this.matterbridge.matterbridgeInformation.matteripv6address = this.matterbridge.ipv6address;
     this.matterbridge.matterbridgeInformation.matterPort = (await this.matterbridge.nodeContext?.get<number>('matterport', 5540)) ?? 5540;
     this.matterbridge.matterbridgeInformation.matterDiscriminator = await this.matterbridge.nodeContext?.get<number>('matterdiscriminator');
     this.matterbridge.matterbridgeInformation.matterPasscode = await this.matterbridge.nodeContext?.get<number>('matterpasscode');
@@ -965,7 +971,7 @@ export class Frontend {
    * @param {MatterbridgeDevice} device - The MatterbridgeDevice object.
    * @returns {string} The attributes description of the cluster servers in the device.
    */
-  protected getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
+  private getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
     const getAttribute = (device: MatterbridgeEndpoint, cluster: string, attribute: string) => {
       let value = undefined;
       Object.entries(device.state)
@@ -1051,9 +1057,9 @@ export class Frontend {
 
   /**
    * Retrieves the base registered plugins sanitized for res.json().
-   * @returns {BaseRegisteredPlugin[]} A promise that resolves to an array of BaseRegisteredPlugin objects.
+   * @returns {BaseRegisteredPlugin[]} An array of BaseRegisteredPlugin.
    */
-  async getBaseRegisteredPlugins(): Promise<BaseRegisteredPlugin[]> {
+  private getBaseRegisteredPlugins(): BaseRegisteredPlugin[] {
     const baseRegisteredPlugins: BaseRegisteredPlugin[] = [];
     for (const plugin of this.matterbridge.plugins) {
       baseRegisteredPlugins.push({
@@ -1156,11 +1162,15 @@ export class Frontend {
       } else if (data.method === '/api/shutdown') {
         await this.matterbridge.shutdownProcess();
         return;
+      } else if (data.method === '/api/advertise') {
+        const pairingCodes = await this.matterbridge.advertiseServerNode(this.matterbridge.serverNode);
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: pairingCodes }));
+        return;
       } else if (data.method === '/api/settings') {
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: await this.getApiSettings() }));
         return;
       } else if (data.method === '/api/plugins') {
-        const response = await this.getBaseRegisteredPlugins();
+        const response = this.getBaseRegisteredPlugins();
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
         return;
       } else if (data.method === '/api/devices') {
