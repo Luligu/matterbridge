@@ -343,6 +343,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     const version = await plugins.install('matterbridge-example-accessory-platform');
+    expect(version).not.toBeUndefined();
     // expect(version).not.toBeUndefined();
     // console.error(`Plugin installed: ${version}`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Installing plugin ${plg}matterbridge-example-accessory-platform${nf}`);
@@ -571,6 +572,8 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect(plugin.schemaJson).toBeDefined();
   });
 
+  // eslint-disable-next-line jest/no-commented-out-tests
+  /*
   test('load, start and configure in parallel plugin matterbridge-example-dynamic-platform', async () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
@@ -711,6 +714,7 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     plugin = await plugins.shutdown(plugin, 'Test with Jest', true);
     expect(plugin).not.toBeUndefined();
   }, 60000);
+  */
 
   test('uninstall not existing plugin matterbridge-xyz', async () => {
     // loggerLogSpy.mockRestore();

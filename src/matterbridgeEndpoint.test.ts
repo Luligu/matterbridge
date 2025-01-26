@@ -152,7 +152,6 @@ describe('MatterbridgeEndpoint class', () => {
     });
   }
 
-  /*
   // Spy on and mock AnsiLogger.log
   const loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
     //
@@ -177,8 +176,8 @@ describe('MatterbridgeEndpoint class', () => {
   const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
     //
   });
-  */
 
+  /*
   // Spy on AnsiLogger.log
   const loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
   // Spy on console.log
@@ -191,6 +190,7 @@ describe('MatterbridgeEndpoint class', () => {
   const consoleWarnSpy = jest.spyOn(console, 'warn');
   // Spy on console.error
   const consoleErrorSpy = jest.spyOn(console, 'error');
+  */
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
@@ -438,6 +438,19 @@ describe('MatterbridgeEndpoint class', () => {
         remainingTime: 0,
         startUpColorTemperatureMireds: null,
       });
+    });
+
+    test('addClusterServers', async () => {
+      const device = new MatterbridgeEndpoint(onOffLight);
+      expect(device).toBeDefined();
+      expect(device.maybeId).toBe(undefined);
+      expect(device.maybeNumber).toBe(undefined);
+      device.addClusterServers([Identify.Cluster.id, Groups.Cluster.id, OnOff.Cluster.id]);
+      expect(device.hasClusterServer(DescriptorServer)).toBe(true);
+      expect(device.hasClusterServer(IdentifyServer)).toBe(true);
+      expect(device.hasClusterServer(GroupsServer)).toBe(true);
+      expect(device.hasClusterServer(ScenesManagement.Cluster)).toBe(false);
+      expect(device.hasClusterServer(OnOffServer)).toBe(true);
     });
 
     test('addFixedLabel', async () => {

@@ -144,7 +144,7 @@ describe('MatterbridgeEndpoint class', () => {
     test('add required clusters to onOffLight', async () => {
       expect(device).toBeDefined();
       device.createDefaultOnOffClusterServer(true, false, 10, 14);
-      device.addRequiredClusterServers(device);
+      device.addRequiredClusterServers();
       expect(device.behaviors.supported.descriptor).toBeDefined();
       expect(device.behaviors.has(DescriptorBehavior)).toBeTruthy();
       expect(device.behaviors.has(DescriptorServer)).toBeTruthy();
