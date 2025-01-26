@@ -148,39 +148,39 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.behaviors.supported.descriptor).toBeDefined();
       expect(device.behaviors.has(DescriptorBehavior)).toBeTruthy();
       expect(device.behaviors.has(DescriptorServer)).toBeTruthy();
-      expect(device._hasClusterServer(DescriptorCluster)).toBeTruthy();
-      expect(device._hasClusterServer(DescriptorCluster.id)).toBeTruthy();
-      expect(device._hasClusterServer(DescriptorCluster.name)).toBeTruthy();
+      expect(device.hasClusterServer(DescriptorCluster)).toBeTruthy();
+      expect(device.hasClusterServer(DescriptorCluster.id)).toBeTruthy();
+      expect(device.hasClusterServer(DescriptorCluster.name)).toBeTruthy();
       // consoleWarnSpy?.mockRestore();
       // console.warn(device.behaviors.optionsFor(DescriptorBehavior));
 
       expect(device.behaviors.supported['identify']).toBeDefined();
       expect(device.behaviors.has(IdentifyBehavior)).toBeTruthy();
       expect(device.behaviors.has(IdentifyServer)).toBeTruthy();
-      expect(device._hasClusterServer(IdentifyCluster)).toBeTruthy();
-      expect(device._hasClusterServer(IdentifyCluster.id)).toBeTruthy();
-      expect(device._hasClusterServer(IdentifyCluster.name)).toBeTruthy();
+      expect(device.hasClusterServer(IdentifyCluster)).toBeTruthy();
+      expect(device.hasClusterServer(IdentifyCluster.id)).toBeTruthy();
+      expect(device.hasClusterServer(IdentifyCluster.name)).toBeTruthy();
 
       expect(device.behaviors.supported['groups']).toBeDefined();
       expect(device.behaviors.has(GroupsBehavior)).toBeTruthy();
       expect(device.behaviors.has(GroupsServer)).toBeTruthy();
-      expect(device._hasClusterServer(GroupsCluster)).toBeTruthy();
-      expect(device._hasClusterServer(GroupsCluster.id)).toBeTruthy();
-      expect(device._hasClusterServer(GroupsCluster.name)).toBeTruthy();
+      expect(device.hasClusterServer(GroupsCluster)).toBeTruthy();
+      expect(device.hasClusterServer(GroupsCluster.id)).toBeTruthy();
+      expect(device.hasClusterServer(GroupsCluster.name)).toBeTruthy();
 
       expect(device.behaviors.supported['scenesManagement']).not.toBeDefined();
       expect(device.behaviors.has(ScenesManagementBehavior)).toBeFalsy();
       expect(device.behaviors.has(ScenesManagementServer)).toBeFalsy();
-      expect(device._hasClusterServer(ScenesManagementCluster)).toBeFalsy();
-      expect(device._hasClusterServer(ScenesManagementCluster.id)).toBeFalsy();
-      expect(device._hasClusterServer(ScenesManagementCluster.name)).toBeFalsy();
+      expect(device.hasClusterServer(ScenesManagementCluster)).toBeFalsy();
+      expect(device.hasClusterServer(ScenesManagementCluster.id)).toBeFalsy();
+      expect(device.hasClusterServer(ScenesManagementCluster.name)).toBeFalsy();
 
       expect(device.behaviors.supported['onOff']).toBeDefined();
       expect(device.behaviors.has(OnOffBehavior)).toBeTruthy();
       expect(device.behaviors.has(OnOffServer)).toBeTruthy();
-      expect(device._hasClusterServer(OnOffCluster)).toBeTruthy();
-      expect(device._hasClusterServer(OnOffCluster.id)).toBeTruthy();
-      expect(device._hasClusterServer(OnOffCluster.name)).toBeTruthy();
+      expect(device.hasClusterServer(OnOffCluster)).toBeTruthy();
+      expect(device.hasClusterServer(OnOffCluster.id)).toBeTruthy();
+      expect(device.hasClusterServer(OnOffCluster.name)).toBeTruthy();
     });
 
     test('add onOffLight device to serverNode', async () => {

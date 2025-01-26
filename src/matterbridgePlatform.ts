@@ -57,7 +57,7 @@ export class MatterbridgePlatform {
   public config: PlatformConfig = {};
   public name = ''; // Will be set by the loadPlugin() method using the package.json value.
   public type = ''; // Will be set by the extending classes.
-  public version = ''; // Will be set by the loadPlugin() method using the package.json value.
+  public version = '1.0.0'; // Will be set by the loadPlugin() method using the package.json value.
   public storage: NodeStorageManager | undefined;
   public context: NodeStorage | undefined;
   public selectDevice = new Map<string, { serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }>();

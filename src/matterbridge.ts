@@ -1348,7 +1348,7 @@ export class Matterbridge extends EventEmitter {
         this.log.info('Saving registered devices...');
         const serializedRegisteredDevices: SerializedMatterbridgeEndpoint[] = [];
         this.devices.forEach(async (device) => {
-          const serializedMatterbridgeDevice = device.serialize();
+          const serializedMatterbridgeDevice = MatterbridgeEndpoint.serialize(device);
           // this.log.info(`- ${serializedMatterbridgeDevice.deviceName}${rs}\n`, serializedMatterbridgeDevice);
           if (serializedMatterbridgeDevice) serializedRegisteredDevices.push(serializedMatterbridgeDevice);
         });

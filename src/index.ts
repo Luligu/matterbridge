@@ -46,13 +46,11 @@ export {
 export * from '@matter/main/clusters';
 export * from '@matter/main/types';
 
-// @project-chip
-export { ClusterServer, ClusterServerObj, ClusterClient, ClusterClientObj } from '@project-chip/matter.js/cluster';
-
 // Matterbridge
 export * from './matterbridge.js';
 export * from './matterbridgeTypes.js';
 export * from './matterbridgeEndpoint.js';
+export * from './matterbridgeBehaviors.js';
 export * from './matterbridgeDeviceTypes.js';
 export * from './matterbridgePlatform.js';
 export * from './matterbridgeAccessoryPlatform.js';

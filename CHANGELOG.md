@@ -21,17 +21,19 @@ The legacy old api have been removed.
 The frontend has a new dark and light mode. The dark mode is now the default mode.
 It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbridge settings.
 
-## [2.0.0.dev.1] - 2025-01-23
+## [2.1.0.dev.1] - 2025-01-26
 
 ### Added
 
 - [matterbridge]: Add MatterbridgeModeSelectServer.
 - [frontend]: Add api/advertise to turn on matter advertising in bridge mode.
+- [frontend]: Frontend v.2.4.0.
 
 ### Changed
 
 - [package]: Update dependencies.
-- [package]: Update matter.js to 0.11.9
+- [package]: Update matter.js to 0.12.0.
+- [package]: Removed legacy imports.
 
 ### Fixed
 

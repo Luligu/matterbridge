@@ -4,7 +4,7 @@
  * @file frontend.ts
  * @author Luca Liguori
  * @date 2025-01-13
- * @version 1.0.0
+ * @version 1.0.1
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
