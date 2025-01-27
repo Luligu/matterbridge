@@ -236,7 +236,7 @@ function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | Cl
 function addRequiredClusterServers(endpoint: MatterbridgeEndpoint) {
   const requiredServerList: ClusterId[] = [];
   endpoint.log.debug(`addRequiredClusterServers for ${CYAN}${endpoint.maybeId}${db}`);
-  endpoint.deviceTypes.values().forEach((deviceType) => {
+  Array.from(endpoint.deviceTypes.values()).forEach((deviceType) => {
     endpoint.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
     deviceType.requiredServerClusters.forEach((clusterId) => {
       if (!requiredServerList.includes(clusterId) && !endpoint.hasClusterServer(clusterId)) {
@@ -251,7 +251,7 @@ function addRequiredClusterServers(endpoint: MatterbridgeEndpoint) {
 function addOptionalClusterServers(endpoint: MatterbridgeEndpoint) {
   const optionalServerList: ClusterId[] = [];
   endpoint.log.debug(`addOptionalClusterServers for ${CYAN}${endpoint.maybeId}${db}`);
-  endpoint.deviceTypes.values().forEach((deviceType) => {
+  Array.from(endpoint.deviceTypes.values()).forEach((deviceType) => {
     endpoint.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
     deviceType.optionalServerClusters.forEach((clusterId) => {
       if (!optionalServerList.includes(clusterId) && !endpoint.hasClusterServer(clusterId)) {
