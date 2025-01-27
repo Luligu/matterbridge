@@ -21,7 +21,7 @@ The legacy old api have been removed.
 The frontend has a new dark and light mode. The dark mode is now the default mode.
 It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbridge settings.
 
-## [2.1.0.dev.2] - 2025-01-26
+## [2.1.0.dev.3] - 2025-01-27
 
 ### Added
 
