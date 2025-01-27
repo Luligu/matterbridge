@@ -818,6 +818,24 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Retrieves all cluster servers.
+   *
+   * @returns {Behavior.Type[]} An array of all cluster servers.
+   */
+  getAllClusterServers() {
+    return Object.values(this.behaviors.supported);
+  }
+
+  /**
+   * Retrieves the names of all cluster servers.
+   *
+   * @returns {string[]} An array of all cluster server names.
+   */
+  getAllClusterServerNames() {
+    return Object.keys(this.behaviors.supported);
+  }
+
+  /**
    * Adds a child endpoint with the specified device types and options.
    * If the child endpoint is not already present, it will be created and added.
    * If the child endpoint is already present, the device types will be added to the existing child endpoint.
@@ -1361,6 +1379,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
    * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * From zigbee to matter = Math.max(Math.min(Math.round(x * 65536), 65279), 0)
    */
   createXyColorControlClusterServer(currentX = 0, currentY = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.Xy, ColorControl.Feature.ColorTemperature), {
@@ -2117,6 +2138,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {number} measuredValue - The measured value of illuminance.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * Lux to matter = Math.round(Math.max(Math.min(10000 * Math.log10(lux), 0xfffe), 0))
+   * Matter to Lux = Math.round(Math.max(Math.pow(10, value / 10000), 0)
    */
   createDefaultIlluminanceMeasurementClusterServer(measuredValue = 0) {
     this.behaviors.require(IlluminanceMeasurementServer, this.getDefaultIlluminanceMeasurementClusterServer(measuredValue));
