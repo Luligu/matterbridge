@@ -27,7 +27,7 @@
 import { createHash } from 'crypto';
 
 // AnsiLogger module
-import { AnsiLogger, BLUE, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, er, hk, or, rs, zb } from './logger/export.js';
+import { AnsiLogger, BLUE, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, er, hk, or, zb } from './logger/export.js';
 
 // Matterbridge
 import { bridgedNode, DeviceTypeDefinition, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
@@ -50,7 +50,7 @@ import {
 } from './matterbridgeBehaviors.js';
 
 // @matter
-import { AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointServer, EndpointType, HandlerFunction, Lifecycle, MakeMandatory, MutableEndpoint, NamedHandler, SupportedBehaviors, VendorId } from '@matter/main';
+import { AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointType, HandlerFunction, Lifecycle, MutableEndpoint, NamedHandler, SupportedBehaviors, VendorId } from '@matter/main';
 import { DeviceClassification } from '@matter/main/model';
 import { ClusterType, getClusterNameById, MeasurementType, Semtag } from '@matter/main/types';
 
@@ -63,7 +63,6 @@ import { BasicInformation } from '@matter/main/clusters/basic-information';
 import { BridgedDeviceBasicInformation } from '@matter/main/clusters/bridged-device-basic-information';
 import { Identify } from '@matter/main/clusters/identify';
 import { Groups } from '@matter/main/clusters/groups';
-import { ScenesManagement } from '@matter/main/clusters/scenes-management';
 import { OnOff } from '@matter/main/clusters/on-off';
 import { LevelControl } from '@matter/main/clusters/level-control';
 import { ColorControl } from '@matter/main/clusters/color-control';
@@ -560,7 +559,8 @@ export class MatterbridgeEndpoint extends Endpoint {
     const behavior = getBehavior(this, cluster);
     if (!behavior || !this.behaviors.supported[behavior.id]) return false;
     const options = this.behaviors.optionsFor(behavior) as Record<string, boolean | number | bigint | string | object | null>;
-    return lowercaseFirstLetter(attribute) in options;
+    const defaults = this.behaviors.defaultsFor(behavior) as Record<string, boolean | number | bigint | string | object | null>;
+    return lowercaseFirstLetter(attribute) in options || lowercaseFirstLetter(attribute) in defaults;
   }
 
   /**
@@ -833,6 +833,20 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   getAllClusterServerNames() {
     return Object.keys(this.behaviors.supported);
+  }
+
+  /**
+   * Iterates over each attribute of each cluster server of the device state and calls the provided callback function.
+   *
+   * @param {Function} callback - The callback function to call with the cluster name, attribute name, and attribute value.
+   */
+  forEachAttribute(callback: (clusterName: string, attributeName: string, attributeValue: boolean | number | bigint | string | object | null) => void): void {
+    for (const [clusterName, clusterAttributes] of Object.entries(this.state as unknown as Record<string, Record<string, boolean | number | bigint | string | object | undefined | null>>)) {
+      for (const [attributeName, attributeValue] of Object.entries(clusterAttributes)) {
+        if (typeof attributeValue === 'undefined') continue;
+        callback(clusterName, attributeName, attributeValue);
+      }
+    }
   }
 
   /**

@@ -1004,54 +1004,53 @@ export class Frontend {
     };
 
     let attributes = '';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Object.entries(device.state as unknown as Record<string, Record<string, any>>).forEach(([clusterName, clusterAttributes]) => {
-      Object.entries(clusterAttributes).forEach(([attributeName, attributeValue]) => {
-        if (typeof attributeValue === 'undefined') return;
-        // console.log(`Cluster: ${clusterName} Attribute: ${attributeName} Value(${typeof attributeValue}): ${attributeValue}`);
-        if (clusterName === 'onOff' && attributeName === 'onOff') attributes += `OnOff: ${attributeValue} `;
-        if (clusterName === 'switch' && attributeName === 'currentPosition') attributes += `Position: ${attributeValue} `;
-        if (clusterName === 'windowCovering' && attributeName === 'currentPositionLiftPercent100ths') attributes += `Cover position: ${attributeValue / 100}% `;
-        if (clusterName === 'doorLock' && attributeName === 'lockState') attributes += `State: ${attributeValue === 1 ? 'Locked' : 'Not locked'} `;
-        if (clusterName === 'thermostat' && attributeName === 'localTemperature') attributes += `Temperature: ${attributeValue / 100}°C `;
-        if (clusterName === 'thermostat' && attributeName === 'occupiedHeatingSetpoint') attributes += `Heat to: ${attributeValue / 100}°C `;
-        if (clusterName === 'thermostat' && attributeName === 'occupiedCoolingSetpoint') attributes += `Cool to: ${attributeValue / 100}°C `;
 
-        if (clusterName === 'pumpConfigurationAndControl' && attributeName === 'operationMode') attributes += `Mode: ${attributeValue} `;
+    device.forEachAttribute((clusterName, attributeName, attributeValue) => {
+      if (typeof attributeValue === 'undefined') return;
+      // console.log(`Cluster: ${clusterName} Attribute: ${attributeName} Value(${typeof attributeValue}): ${attributeValue}`);
+      if (clusterName === 'onOff' && attributeName === 'onOff') attributes += `OnOff: ${attributeValue} `;
+      if (clusterName === 'switch' && attributeName === 'currentPosition') attributes += `Position: ${attributeValue} `;
+      if (clusterName === 'windowCovering' && attributeName === 'currentPositionLiftPercent100ths' && isValidNumber(attributeValue, 0, 10000)) attributes += `Cover position: ${attributeValue / 100}% `;
+      if (clusterName === 'doorLock' && attributeName === 'lockState') attributes += `State: ${attributeValue === 1 ? 'Locked' : 'Not locked'} `;
+      if (clusterName === 'thermostat' && attributeName === 'localTemperature' && isValidNumber(attributeValue)) attributes += `Temperature: ${attributeValue / 100}°C `;
+      if (clusterName === 'thermostat' && attributeName === 'occupiedHeatingSetpoint' && isValidNumber(attributeValue)) attributes += `Heat to: ${attributeValue / 100}°C `;
+      if (clusterName === 'thermostat' && attributeName === 'occupiedCoolingSetpoint' && isValidNumber(attributeValue)) attributes += `Cool to: ${attributeValue / 100}°C `;
 
-        if (clusterName === 'valveConfigurationAndControl' && attributeName === 'currentState') attributes += `State: ${attributeValue} `;
+      if (clusterName === 'pumpConfigurationAndControl' && attributeName === 'operationMode') attributes += `Mode: ${attributeValue} `;
 
-        if (clusterName === 'levelControl' && attributeName === 'currentLevel') attributes += `Level: ${attributeValue}% `;
+      if (clusterName === 'valveConfigurationAndControl' && attributeName === 'currentState') attributes += `State: ${attributeValue} `;
 
-        if (clusterName === 'colorControl' && attributeName === 'colorMode') attributes += `Mode: ${['HS', 'XY', 'CT'][attributeValue]} `;
-        if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 0 && attributeName === 'currentHue') attributes += `Hue: ${Math.round(attributeValue)} `;
-        if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 0 && attributeName === 'currentSaturation') attributes += `Saturation: ${Math.round(attributeValue)} `;
-        if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 1 && attributeName === 'currentX') attributes += `X: ${Math.round(attributeValue)} `;
-        if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 1 && attributeName === 'currentY') attributes += `Y: ${Math.round(attributeValue)} `;
-        if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 2 && attributeName === 'colorTemperatureMireds') attributes += `ColorTemp: ${Math.round(attributeValue)} `;
+      if (clusterName === 'levelControl' && attributeName === 'currentLevel') attributes += `Level: ${attributeValue} `;
 
-        if (clusterName === 'booleanState' && attributeName === 'stateValue') attributes += `Contact: ${attributeValue} `;
-        if (clusterName === 'booleanStateConfiguration' && attributeName === 'alarmsActive') attributes += `Active alarms: ${stringify(attributeValue)} `;
+      if (clusterName === 'colorControl' && attributeName === 'colorMode' && isValidNumber(attributeValue, 0, 2)) attributes += `Mode: ${['HS', 'XY', 'CT'][attributeValue]} `;
+      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 0 && attributeName === 'currentHue' && isValidNumber(attributeValue)) attributes += `Hue: ${Math.round(attributeValue)} `;
+      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 0 && attributeName === 'currentSaturation' && isValidNumber(attributeValue)) attributes += `Saturation: ${Math.round(attributeValue)} `;
+      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 1 && attributeName === 'currentX' && isValidNumber(attributeValue)) attributes += `X: ${Math.round(attributeValue / 655.36) / 100} `;
+      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 1 && attributeName === 'currentY' && isValidNumber(attributeValue)) attributes += `Y: ${Math.round(attributeValue / 655.36) / 100} `;
+      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 2 && attributeName === 'colorTemperatureMireds' && isValidNumber(attributeValue)) attributes += `ColorTemp: ${Math.round(attributeValue)} `;
 
-        if (clusterName === 'smokeCoAlarm' && attributeName === 'smokeState') attributes += `Smoke: ${attributeValue} `;
-        if (clusterName === 'smokeCoAlarm' && attributeName === 'coState') attributes += `Co: ${attributeValue} `;
+      if (clusterName === 'booleanState' && attributeName === 'stateValue') attributes += `Contact: ${attributeValue} `;
+      if (clusterName === 'booleanStateConfiguration' && attributeName === 'alarmsActive' && isValidObject(attributeValue)) attributes += `Active alarms: ${stringify(attributeValue)} `;
 
-        if (clusterName === 'fanControl' && attributeName === 'fanMode') attributes += `Mode: ${attributeValue} `;
-        if (clusterName === 'fanControl' && attributeName === 'percentCurrent') attributes += `Percent: ${attributeValue} `;
-        if (clusterName === 'fanControl' && attributeName === 'speedCurrent') attributes += `Speed: ${attributeValue} `;
+      if (clusterName === 'smokeCoAlarm' && attributeName === 'smokeState') attributes += `Smoke: ${attributeValue} `;
+      if (clusterName === 'smokeCoAlarm' && attributeName === 'coState') attributes += `Co: ${attributeValue} `;
 
-        if (clusterName === 'occupancySensing' && attributeName === 'occupancy') attributes += `Occupancy: ${attributeValue.occupied} `;
-        if (clusterName === 'illuminanceMeasurement' && attributeName === 'measuredValue') attributes += `Illuminance: ${attributeValue} `;
-        if (clusterName === 'airQuality' && attributeName === 'airQuality') attributes += `Air quality: ${attributeValue} `;
-        if (clusterName === 'tvocMeasurement' && attributeName === 'measuredValue') attributes += `Voc: ${attributeValue} `;
-        if (clusterName === 'temperatureMeasurement' && attributeName === 'measuredValue') attributes += `Temperature: ${attributeValue / 100}°C `;
-        if (clusterName === 'relativeHumidityMeasurement' && attributeName === 'measuredValue') attributes += `Humidity: ${attributeValue / 100}% `;
-        if (clusterName === 'pressureMeasurement' && attributeName === 'measuredValue') attributes += `Pressure: ${attributeValue} `;
-        if (clusterName === 'flowMeasurement' && attributeName === 'measuredValue') attributes += `Flow: ${attributeValue} `;
-        if (clusterName === 'fixedLabel' && attributeName === 'labelList') attributes += `${getFixedLabel(device)} `;
-        if (clusterName === 'userLabel' && attributeName === 'labelList') attributes += `${getUserLabel(device)} `;
-      });
+      if (clusterName === 'fanControl' && attributeName === 'fanMode') attributes += `Mode: ${attributeValue} `;
+      if (clusterName === 'fanControl' && attributeName === 'percentCurrent') attributes += `Percent: ${attributeValue} `;
+      if (clusterName === 'fanControl' && attributeName === 'speedCurrent') attributes += `Speed: ${attributeValue} `;
+
+      if (clusterName === 'occupancySensing' && attributeName === 'occupancy' && isValidObject(attributeValue, 1)) attributes += `Occupancy: ${(attributeValue as { occupied: boolean }).occupied} `;
+      if (clusterName === 'illuminanceMeasurement' && attributeName === 'measuredValue') attributes += `Illuminance: ${attributeValue} `;
+      if (clusterName === 'airQuality' && attributeName === 'airQuality') attributes += `Air quality: ${attributeValue} `;
+      if (clusterName === 'tvocMeasurement' && attributeName === 'measuredValue') attributes += `Voc: ${attributeValue} `;
+      if (clusterName === 'temperatureMeasurement' && attributeName === 'measuredValue' && isValidNumber(attributeValue)) attributes += `Temperature: ${attributeValue / 100}°C `;
+      if (clusterName === 'relativeHumidityMeasurement' && attributeName === 'measuredValue' && isValidNumber(attributeValue)) attributes += `Humidity: ${attributeValue / 100}% `;
+      if (clusterName === 'pressureMeasurement' && attributeName === 'measuredValue') attributes += `Pressure: ${attributeValue} `;
+      if (clusterName === 'flowMeasurement' && attributeName === 'measuredValue') attributes += `Flow: ${attributeValue} `;
+      if (clusterName === 'fixedLabel' && attributeName === 'labelList') attributes += `${getFixedLabel(device)} `;
+      if (clusterName === 'userLabel' && attributeName === 'labelList') attributes += `${getUserLabel(device)} `;
     });
+    // console.log(`${device.deviceName}.forEachAttribute: ${attributes}`);
     return attributes.trimStart().trimEnd();
   }
 
@@ -1221,7 +1220,11 @@ export class Frontend {
           const clusterServers = endpointServer.getAllClusterServers();
           clusterServers.forEach((clusterServer) => {
             Object.entries(clusterServer.attributes).forEach(([key, value]) => {
-              if (clusterServer.name === 'EveHistory') return;
+              if (clusterServer.name === 'EveHistory') {
+                if (['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(key)) {
+                  return;
+                }
+              }
               if (clusterServer.name === 'Descriptor' && key === 'deviceTypeList') {
                 (value.getLocal() as { deviceType: number; revision: number }[]).forEach((deviceType) => {
                   deviceTypes.push(deviceType.deviceType);

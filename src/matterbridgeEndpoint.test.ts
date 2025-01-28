@@ -564,6 +564,20 @@ describe('MatterbridgeEndpoint class', () => {
       // expect(device.hasClusterServer(TimeSynchronizationServer)).toBe(true);
     });
 
+    test('forEachAttribute', async () => {
+      const device = new MatterbridgeEndpoint(thermostatDevice, { uniqueStorageKey: 'Thermostat' });
+      expect(device).toBeDefined();
+      device.addRequiredClusterServers();
+      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
+      expect(device.lifecycle.isReady).toBeTruthy();
+      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      let count = 0;
+      device.forEachAttribute((clusterName, attributeName, attributeValue) => {
+        count++;
+      });
+      expect(count).toBe(41);
+    });
+
     test('create a OnOffOutletWithSensors device', async () => {
       device = new MatterbridgeEndpoint(onOffOutlet, { uniqueStorageKey: 'OnOffOutlet With Sensors' });
       expect(device).toBeDefined();
