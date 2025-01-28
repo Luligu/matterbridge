@@ -378,7 +378,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.hasAttributeServer(ColorControlBehavior, 'colorMode')).toBe(true);
       const options = device.getClusterServerOptions(ColorControlBehavior);
       expect(options).toBeDefined();
-      console.log('getClusterServerOptions(ColorControlBehavior)', options);
+      // console.log('getClusterServerOptions(ColorControlBehavior)', options);
       expect(options).toEqual({
         colorMode: 0,
         enhancedColorMode: 0,
@@ -419,7 +419,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.hasAttributeServer(ColorControlBehavior, 'colorMode')).toBe(true);
       const options = device.getClusterServerOptions(ColorControlBehavior);
       expect(options).toBeDefined();
-      console.log('getClusterServerOptions(ColorControlBehavior) CT', options);
+      // console.log('getClusterServerOptions(ColorControlBehavior) CT', options);
       expect(options).toEqual({
         colorMode: 2,
         enhancedColorMode: 2,
@@ -564,7 +564,7 @@ describe('MatterbridgeEndpoint class', () => {
       // expect(device.hasClusterServer(TimeSynchronizationServer)).toBe(true);
     });
 
-    test('create a onOffLight device', async () => {
+    test('create a OnOffOutletWithSensors device', async () => {
       device = new MatterbridgeEndpoint(onOffOutlet, { uniqueStorageKey: 'OnOffOutlet With Sensors' });
       expect(device).toBeDefined();
       device.addRequiredClusterServers();
