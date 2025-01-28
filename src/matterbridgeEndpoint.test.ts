@@ -37,6 +37,7 @@ import {
 
 // @matter
 import { Lifecycle, EndpointNumber } from '@matter/main';
+import { logEndpoint } from '@matter/protocol';
 import {
   AirQuality,
   BasicInformation,
@@ -152,6 +153,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
   }
 
+  /*
   // Spy on and mock AnsiLogger.log
   const loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
     //
@@ -176,8 +178,8 @@ describe('MatterbridgeEndpoint class', () => {
   const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
     //
   });
+  */
 
-  /*
   // Spy on AnsiLogger.log
   const loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
   // Spy on console.log
@@ -190,7 +192,6 @@ describe('MatterbridgeEndpoint class', () => {
   const consoleWarnSpy = jest.spyOn(console, 'warn');
   // Spy on console.error
   const consoleErrorSpy = jest.spyOn(console, 'error');
-  */
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
@@ -451,6 +452,8 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.hasClusterServer(GroupsServer)).toBe(true);
       expect(device.hasClusterServer(ScenesManagement.Cluster)).toBe(false);
       expect(device.hasClusterServer(OnOffServer)).toBe(true);
+      expect(device.getAllClusterServers()).toHaveLength(5);
+      expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'onOff']);
     });
 
     test('addFixedLabel', async () => {
