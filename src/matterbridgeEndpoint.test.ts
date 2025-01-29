@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
-import { AnsiLogger, db, er, hk, LogLevel } from 'node-ansi-logger';
+import { AnsiLogger, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -78,6 +78,7 @@ import {
   CarbonDioxideConcentrationMeasurementServer,
   CarbonMonoxideConcentrationMeasurementServer,
   ColorControlBehavior,
+  ColorControlServer,
   DescriptorBehavior,
   DescriptorServer,
   EnergyPreferenceServer,
@@ -96,13 +97,15 @@ import {
   Pm1ConcentrationMeasurementServer,
   Pm25ConcentrationMeasurementServer,
   RadonConcentrationMeasurementServer,
+  TemperatureMeasurementServer,
   ThermostatBehavior,
   ThermostatServer,
   ThermostatUserInterfaceConfigurationServer,
   TimeSynchronizationServer,
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/main/behaviors';
-import { getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
+import { getAttributeId, getClusterId, updateAttribute } from './matterbridgeEndpointHelpers.js';
+import { mock } from 'node:test';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
@@ -198,6 +201,12 @@ describe('MatterbridgeEndpoint class', () => {
     // Create a MatterbridgeEdge instance
     process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-profile', 'Jest', '-bridge', '-logger', 'debug', '-matterlogger', 'debug'];
     matterbridge = await Matterbridge.loadInstance(true);
+    await matterbridge.matterStorageManager?.createContext('events')?.clearAll();
+    await matterbridge.matterStorageManager?.createContext('fabrics')?.clearAll();
+    await matterbridge.matterStorageManager?.createContext('root')?.clearAll();
+    await matterbridge.matterStorageManager?.createContext('sessions')?.clearAll();
+    await matterbridge.matterbridgeContext?.clearAll();
+
     await waitForOnline();
   });
 
@@ -466,47 +475,53 @@ describe('MatterbridgeEndpoint class', () => {
     test('addFixedLabel', async () => {
       const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'FixedLabel', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
       expect(device).toBeDefined();
+      device.addRequiredClusterServers();
       await device.addFixedLabel('Composed', 'Light');
       expect(device.hasAttributeServer(FixedLabel.Cluster, 'labelList')).toBe(true);
       expect(device.hasAttributeServer(UserLabel.Cluster, 'labelList')).toBe(false);
-      let options = device.getClusterServerOptions(FixedLabel.Cluster);
+      const options = device.getClusterServerOptions(FixedLabel.Cluster);
       expect(options).toBeDefined();
       expect(options).toEqual({ 'labelList': [{ 'label': 'Composed', 'value': 'Light' }] });
 
+      expect(device.getAttribute(FixedLabel.Cluster, 'labelList', device.log)).toBeUndefined();
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`getAttribute ${hk}fixedLabel.labelList${er} error: Endpoint`));
+
+      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
+      expect(device.lifecycle.isReady).toBeTruthy();
+      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+
       await device.addFixedLabel('Composed2', 'Light');
-      options = device.getClusterServerOptions(FixedLabel.Cluster);
-      expect(options).toBeDefined();
-      /*
-      expect(options).toEqual({
-        'labelList': [
-          { 'label': 'Composed', 'value': 'Light' },
-          { 'label': 'Composed2', 'value': 'Light' },
-        ],
-      });
-      */
+      const labelList = device.getAttribute(FixedLabel.Cluster, 'labelList', device.log);
+      expect(labelList).toEqual([
+        { 'label': 'Composed', 'value': 'Light' },
+        { 'label': 'Composed2', 'value': 'Light' },
+      ]);
     });
 
     test('addUserLabel', async () => {
       const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'UserLabel', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
       expect(device).toBeDefined();
+      device.addRequiredClusterServers();
       await device.addUserLabel('Composed', 'Light');
       expect(device.hasAttributeServer(FixedLabel.Cluster, 'labelList')).toBe(false);
       expect(device.hasAttributeServer(UserLabel.Cluster, 'labelList')).toBe(true);
-      let options = device.getClusterServerOptions(UserLabel.Cluster);
+      const options = device.getClusterServerOptions(UserLabel.Cluster);
       expect(options).toBeDefined();
       expect(options).toEqual({ 'labelList': [{ 'label': 'Composed', 'value': 'Light' }] });
 
+      expect(device.getAttribute(UserLabel.Cluster, 'labelList', device.log)).toBeUndefined();
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`getAttribute ${hk}userLabel.labelList${er} error: Endpoint`));
+
+      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
+      expect(device.lifecycle.isReady).toBeTruthy();
+      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+
       await device.addUserLabel('Composed2', 'Light');
-      options = device.getClusterServerOptions(UserLabel.Cluster);
-      expect(options).toBeDefined();
-      /*
-      expect(options).toEqual({
-        'labelList': [
-          { 'label': 'Composed', 'value': 'Light' },
-          { 'label': 'Composed2', 'value': 'Light' },
-        ],
-      });
-      */
+      const labelList = device.getAttribute(UserLabel.Cluster, 'labelList', device.log);
+      expect(labelList).toEqual([
+        { 'label': 'Composed', 'value': 'Light' },
+        { 'label': 'Composed2', 'value': 'Light' },
+      ]);
     });
 
     test('addCommandHandler', async () => {
@@ -571,18 +586,49 @@ describe('MatterbridgeEndpoint class', () => {
       // expect(device.hasClusterServer(TimeSynchronizationServer)).toBe(true);
     });
 
-    test('forEachAttribute', async () => {
-      const device = new MatterbridgeEndpoint(thermostatDevice, { uniqueStorageKey: 'Thermostat' });
+    test('forEachAttribute Thermostat', async () => {
+      const device = new MatterbridgeEndpoint(thermostatDevice, { uniqueStorageKey: 'EachThermostat' });
       expect(device).toBeDefined();
       device.addRequiredClusterServers();
       expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
       expect(device.lifecycle.isReady).toBeTruthy();
       expect(device.construction.status).toBe(Lifecycle.Status.Active);
       let count = 0;
-      device.forEachAttribute((clusterName, attributeName, attributeValue) => {
+      device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
         count++;
       });
-      expect(count).toBe(41);
+      expect(count).toBe(74);
+    });
+
+    test('forEachAttribute AirQuality', async () => {
+      const device = new MatterbridgeEndpoint(airQualitySensor, { uniqueStorageKey: 'EachAirQuality' });
+      expect(device).toBeDefined();
+      device.addRequiredClusterServers();
+      device.addOptionalClusterServers();
+      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
+      expect(device.lifecycle.isReady).toBeTruthy();
+      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      let count = 0;
+      device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+        count++;
+      });
+      expect(count).toBe(216);
+
+      loggerLogSpy.mockClear();
+      expect(await device.setAttribute(TemperatureMeasurementServer, 'measuredValue', 2500, device.log)).toBeTruthy();
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}TemperatureMeasurement${db}.${hk}measuredValue${db}`));
+
+      loggerLogSpy.mockClear();
+      expect(await device.setAttribute(TemperatureMeasurement.Cluster, 'measuredValue', 2600, device.log)).toBeTruthy();
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}TemperatureMeasurement${db}.${hk}measuredValue${db}`));
+
+      loggerLogSpy.mockClear();
+      expect(await device.setAttribute(TemperatureMeasurement.Cluster.id, 'measuredValue', 2700, device.log)).toBeTruthy();
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}TemperatureMeasurement${db}.${hk}measuredValue${db}`));
+
+      loggerLogSpy.mockClear();
+      expect(await device.setAttribute('TemperatureMeasurement', 'measuredValue', 2800, device.log)).toBeTruthy();
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}TemperatureMeasurement${db}.${hk}measuredValue${db}`));
     });
 
     test('create a OnOffOutletWithSensors device', async () => {
@@ -853,11 +899,48 @@ describe('MatterbridgeEndpoint class', () => {
       const options = device.getClusterServerOptions(ColorControl.Cluster);
       if (options) options.currentX = 500;
 
+      await updateAttribute(device, 'ColorControl', 'colorTemperatureMireds', 310);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`updateAttribute ${hk}colorControl.colorTemperatureMireds${er} error: Endpoint`));
+
       expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
       expect(device.lifecycle.isReady).toBeTruthy();
       expect(device.construction.status).toBe(Lifecycle.Status.Active);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('\x1B[39mMatterbridge.Matterbridge.DefaultLight \x1B[0mready'));
+
+      loggerLogSpy.mockClear();
       await device.configureColorControlMode(ColorControl.ColorMode.ColorTemperatureMireds);
+      await device.setAttribute(ColorControl.Cluster.id, 'colorTemperatureMireds', 360, device.log);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}ColorControl${db}.${hk}colorTemperatureMireds${db}`));
+      expect(device.getAttribute(ColorControl.Cluster.id, 'colorTemperatureMireds')).toBe(360);
+
+      loggerLogSpy.mockClear();
+      await updateAttribute(device, ColorControlServer, 'colorTemperatureMireds', 350, device.log);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Update endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}ColorControl${db}.${hk}colorTemperatureMireds${db}`));
+      expect(device.getAttribute(ColorControl.Cluster.id, 'colorTemperatureMireds')).toBe(350);
+
+      loggerLogSpy.mockClear();
+      await updateAttribute(device, ColorControlServer, 'colorTemperatureMireds', 350, device.log);
+      expect(loggerLogSpy).not.toHaveBeenCalled();
+      expect(device.getAttribute(ColorControl.Cluster.id, 'colorTemperatureMireds')).toBe(350);
+
+      await updateAttribute(device, ColorControl.Cluster, 'colorTemperatureMireds', 340);
+      expect(device.getAttribute(ColorControl.Cluster.id, 'colorTemperatureMireds')).toBe(340);
+      await updateAttribute(device, ColorControl.Cluster.id, 'colorTemperatureMireds', 330);
+      expect(device.getAttribute(ColorControl.Cluster.id, 'colorTemperatureMireds')).toBe(330);
+      await updateAttribute(device, 'ColorControl', 'colorTemperatureMireds', 320);
+      expect(device.getAttribute(ColorControl.Cluster.id, 'colorTemperatureMireds')).toBe(320);
+      await updateAttribute(device, 'colorControl', 'colorTemperatureMireds', 310);
+      expect(device.getAttribute(ColorControl.Cluster.id, 'colorTemperatureMireds')).toBe(310);
+      await updateAttribute(device, 'color', 'colorTemperatureMireds', 310);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`updateAttribute ${hk}colorTemperatureMireds${er} error: cluster not found`));
+      await updateAttribute(device, 'colorControl', 'colorTemperature', 310);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`updateAttribute error: Attribute ${hk}colorTemperature${er} not found on cluster`));
+
+      const colorCapabilities = device.getAttribute(ColorControl.Cluster.id, 'colorCapabilities') as { hueSaturation: boolean; enhancedHue: boolean; colorLoop: boolean; xy: boolean; colorTemperature: boolean };
+      expect(await device.updateAttribute('colorControl', 'colorCapabilities', colorCapabilities)).toBe(false);
+      colorCapabilities.colorTemperature = false;
+      expect(await device.updateAttribute('colorControl', 'colorCapabilities', colorCapabilities)).toBe(true);
+
       await device.configureColorControlMode(ColorControl.ColorMode.CurrentHueAndCurrentSaturation);
       await device.configureColorControlMode(ColorControl.ColorMode.CurrentXAndCurrentY);
 
@@ -1201,6 +1284,9 @@ describe('MatterbridgeEndpoint class', () => {
       await device.triggerEvent(BooleanState.Cluster.id, 'stateChange', { stateValue: true });
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`triggerEvent ${hk}booleanState.stateChange${er} error`));
 
+      await device.setAttribute(BooleanState.Cluster.id, 'stateValue', true);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`setAttribute ${hk}booleanState.stateValue${er} error: Endpoint`));
+
       expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
       expect(device.lifecycle.isReady).toBeTruthy();
       expect(device.construction.status).toBe(Lifecycle.Status.Active);
@@ -1218,7 +1304,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`setAttribute error: Attribute ${hk}state${er} not found`));
 
       device.getAttribute(BooleanStateConfiguration.Cluster.id, 'state', device.log);
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`getAttribute error: Cluster`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`getAttribute ${hk}state${er} error: cluster not found on endpoint`));
 
       device.getAttribute(BooleanState.Cluster.id, 'state', device.log);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`getAttribute error: Attribute ${hk}state${er} not found`));

@@ -12,7 +12,7 @@ import { DeviceTypeId, VendorId, ServerNode, Endpoint, EndpointServer, StorageCo
 import { LogFormat as Format, LogLevel as Level } from '@matter/main';
 import { BasicInformationCluster, BridgedDeviceBasicInformationCluster, Descriptor, DescriptorCluster, GroupsCluster, Identify, IdentifyCluster, OccupancySensing, OnOffCluster, ScenesManagementCluster } from '@matter/main/clusters';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
-import { MdnsService, logEndpoint } from '@matter/main/protocol';
+import { logEndpoint } from '@matter/main/protocol';
 import {
   DescriptorBehavior,
   DescriptorServer,
@@ -29,7 +29,6 @@ import {
 } from '@matter/main/behaviors';
 import { OnOffPlugInUnitDevice } from '@matter/main/devices';
 import { getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
-import exp from 'constants';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;

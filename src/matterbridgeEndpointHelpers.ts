@@ -3,7 +3,7 @@
 import { createHash } from 'crypto';
 
 // AnsiLogger module
-import { CYAN, db, hk, zb } from './logger/export.js';
+import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, or, YELLOW, zb } from './logger/export.js';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -23,7 +23,7 @@ import {
 } from './matterbridgeBehaviors.js';
 
 // @matter
-import { Behavior, ClusterId, Endpoint } from '@matter/main';
+import { Behavior, ClusterId, Endpoint, Lifecycle } from '@matter/main';
 import { ClusterType, getClusterNameById } from '@matter/main/types';
 
 // @matter clusters
@@ -99,6 +99,7 @@ import { Pm25ConcentrationMeasurementServer } from '@matter/main/behaviors/pm25-
 import { Pm10ConcentrationMeasurementServer } from '@matter/main/behaviors/pm10-concentration-measurement';
 import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/radon-concentration-measurement';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
+import { deepCopy, deepEqual, isValidArray } from './utils/utils.js';
 
 export function capitalizeFirstLetter(name: string): string {
   if (!name) return name;
@@ -278,14 +279,54 @@ export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: Cl
   // if (serverList.includes(DeviceEnergyManagementMode.Cluster.id)) endpoint.createDefaultDeviceEnergyManagementModeClusterServer();
 }
 
-/*
-return optionsFor(TemperatureMeasurementServer, {
-  measuredValue,
-  minMeasuredValue: null,
-  maxMeasuredValue: null,
-  tolerance: 0,
-});
-*/
+/**
+ * Adds a fixed label to the FixedLabel cluster. The FixedLabel cluster is created if it does not exist.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the cluster servers to.
+ * @param {string} label - The label to add.
+ * @param {string} value - The value of the label.
+ */
+export async function addFixedLabel(endpoint: MatterbridgeEndpoint, label: string, value: string) {
+  if (!endpoint.hasClusterServer(FixedLabel.Cluster.id)) {
+    endpoint.log.debug(`addFixedLabel: add cluster ${hk}FixedLabel${db}:${hk}fixedLabel${db} with label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
+    endpoint.behaviors.require(FixedLabelServer, {
+      labelList: [{ label, value }],
+    });
+    return;
+  }
+  endpoint.log.debug(`addFixedLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
+  let labelList = endpoint.getAttribute(FixedLabel.Cluster.id, 'labelList', endpoint.log) as { label: string; value: string }[];
+  if (isValidArray(labelList)) {
+    labelList = labelList.filter((entry) => entry.label !== label);
+    labelList.push({ label, value });
+    await endpoint.setAttribute(FixedLabel.Cluster.id, 'labelList', labelList, endpoint.log);
+  }
+}
+
+/**
+ * Adds a user label to the UserLabel cluster. The UserLabel cluster is created if it does not exist.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the cluster servers to.
+ * @param {string} label - The label to add.
+ * @param {string} value - The value of the label.
+ */
+export async function addUserLabel(endpoint: MatterbridgeEndpoint, label: string, value: string) {
+  if (!endpoint.hasClusterServer(UserLabel.Cluster.id)) {
+    endpoint.log.debug(`addUserLabel: add cluster ${hk}UserLabel${db}:${hk}userLabel${db} with label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
+    endpoint.behaviors.require(UserLabelServer, {
+      labelList: [{ label, value }],
+    });
+    return;
+  }
+  endpoint.log.debug(`addUserLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
+  let labelList = endpoint.getAttribute(UserLabel.Cluster.id, 'labelList', endpoint.log) as { label: string; value: string }[];
+  if (isValidArray(labelList)) {
+    labelList = labelList.filter((entry) => entry.label !== label);
+    labelList.push({ label, value });
+    await endpoint.setAttribute(UserLabel.Cluster.id, 'labelList', labelList, endpoint.log);
+  }
+}
+
 export function optionsFor<T extends Behavior.Type>(type: T, options: Behavior.Options<T>) {
   return options;
 }
@@ -295,5 +336,234 @@ export function getClusterId(endpoint: Endpoint, cluster: string) {
 }
 
 export function getAttributeId(endpoint: Endpoint, cluster: string, attribute: string) {
-  return endpoint.behaviors.supported[lowercaseFirstLetter(cluster)]?.schema?.children?.find((child) => child.name === capitalizeFirstLetter(attribute))?.id;
+  if (attribute === 'attributeList') return 0xfffb;
+  else if (attribute === 'featureMap') return 0xfffc;
+  else if (attribute === 'eventList') return 0xfffa;
+  else if (attribute === 'generatedCommandList') return 0xfff8;
+  else if (attribute === 'acceptedCommandList') return 0xfff9;
+  else if (attribute === 'clusterRevision') return 0xfffd;
+  else {
+    if (endpoint.behaviors.supported[lowercaseFirstLetter(cluster)]?.schema?.type === 'ConcentrationMeasurement') {
+      if (attribute === 'measuredValue') return 0x0;
+      else if (attribute === 'minMeasuredValue') return 0x1;
+      else if (attribute === 'maxMeasuredValue') return 0x2;
+      else if (attribute === 'peakMeasuredValue') return 0x3;
+      else if (attribute === 'peakMeasuredValueWindow') return 0x4;
+      else if (attribute === 'averageMeasuredValue') return 0x5;
+      else if (attribute === 'averageMeasuredValueWindow') return 0x6;
+      else if (attribute === 'uncertainty') return 0x7;
+      else if (attribute === 'measurementUnit') return 0x8;
+      else if (attribute === 'measurementMedium') return 0x9;
+      else if (attribute === 'levelValue') return 0xa;
+    }
+    return endpoint.behaviors.supported[lowercaseFirstLetter(cluster)]?.schema?.children?.find((child) => child.name === capitalizeFirstLetter(attribute))?.id;
+  }
+}
+
+/**
+ * Retrieves the value of the provided attribute from the given cluster.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to retrieve the attribute from.
+ * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to retrieve the attribute from.
+ * @param {string} attribute - The name of the attribute to retrieve.
+ * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the retrieve. Errors are logged to the endpoint logger.
+ * @returns {boolean | number | bigint | string | object | null | undefined} The value of the attribute, or undefined if the attribute is not found.
+ */
+
+export function getAttribute(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, log?: AnsiLogger): boolean | number | bigint | string | object | null | undefined {
+  const clusterName = getBehavior(endpoint, cluster)?.id;
+  if (!clusterName) {
+    endpoint.log.error(`getAttribute ${hk}${attribute}${er} error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+    return undefined;
+  }
+
+  if (endpoint.construction.status !== Lifecycle.Status.Active) {
+    endpoint.log.error(`getAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+    return undefined;
+  }
+
+  const state = endpoint.state as Record<string, Record<string, boolean | number | bigint | string | object | null>>;
+  attribute = lowercaseFirstLetter(attribute);
+  if (!(attribute in state[clusterName])) {
+    endpoint.log.error(
+      `getAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + getClusterId(endpoint, clusterName)?.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`,
+    );
+    return undefined;
+  }
+
+  let value = state[clusterName][attribute];
+  if (typeof value === 'object') value = deepCopy(value);
+  log?.info(
+    `${db}Get endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db} value ${YELLOW}${value !== null && typeof value === 'object' ? debugStringify(value) : value}${db}`,
+  );
+  return value;
+}
+
+/**
+ * Sets the value of an attribute on a cluster server.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to set the attribute on.
+ * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to set the attribute on.
+ * @param {string} attribute - The name of the attribute.
+ * @param {boolean | number | bigint | string | object | null} value - The value to set for the attribute.
+ * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the set. Errors are logged to the endpoint logger.
+ * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
+ */
+export async function setAttribute(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, value: boolean | number | bigint | string | object | null, log?: AnsiLogger): Promise<boolean> {
+  const clusterName = getBehavior(endpoint, cluster)?.id;
+  if (!clusterName) {
+    endpoint.log.error(`setAttribute ${hk}${attribute}${er} error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+    return false;
+  }
+
+  if (endpoint.construction.status !== Lifecycle.Status.Active) {
+    endpoint.log.error(`setAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+    return false;
+  }
+
+  const state = endpoint.state as Record<string, Record<string, boolean | number | bigint | string | object | null>>;
+  attribute = lowercaseFirstLetter(attribute);
+  if (!(attribute in state[clusterName])) {
+    endpoint.log.error(
+      `setAttribute error: Attribute ${hk}${attribute}${er} not found on cluster ${'0x' + getClusterId(endpoint, clusterName)?.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`,
+    );
+    return false;
+  }
+  let oldValue = state[clusterName][attribute];
+  if (typeof oldValue === 'object') oldValue = deepCopy(oldValue);
+  await endpoint.setStateOf(endpoint.behaviors.supported[clusterName], { [attribute]: value });
+  log?.info(
+    `${db}Set endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db} ` +
+      `from ${YELLOW}${oldValue !== null && typeof oldValue === 'object' ? debugStringify(oldValue) : oldValue}${db} ` +
+      `to ${YELLOW}${value !== null && typeof value === 'object' ? debugStringify(value) : value}${db}`,
+  );
+  return true;
+}
+
+/**
+ * Sets the value of an attribute on a cluster server.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to update the attribute on.
+ * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to update the attribute on.
+ * @param {string} attribute - The name of the attribute.
+ * @param {boolean | number | bigint | string | object | null} value - The value to set for the attribute.
+ * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the update. Errors are logged to the endpoint logger.
+ * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
+ */
+export async function updateAttribute(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, value: boolean | number | bigint | string | object | null, log?: AnsiLogger): Promise<boolean> {
+  const clusterName = getBehavior(endpoint, cluster)?.id;
+  if (!clusterName) {
+    endpoint.log.error(`updateAttribute ${hk}${attribute}${er} error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+    return false;
+  }
+
+  if (endpoint.construction.status !== Lifecycle.Status.Active) {
+    endpoint.log.error(`updateAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+    return false;
+  }
+
+  const state = endpoint.state as Record<string, Record<string, boolean | number | bigint | string | object | null>>;
+  attribute = lowercaseFirstLetter(attribute);
+  if (!(attribute in state[clusterName])) {
+    endpoint.log.error(
+      `updateAttribute error: Attribute ${hk}${attribute}${er} not found on cluster ${'0x' + getClusterId(endpoint, clusterName)?.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`,
+    );
+    return false;
+  }
+  let oldValue = state[clusterName][attribute];
+  if (typeof oldValue === 'object') {
+    if (deepEqual(oldValue, value)) return false;
+    oldValue = deepCopy(oldValue);
+  } else if (oldValue === value) return false;
+  await endpoint.setStateOf(endpoint.behaviors.supported[clusterName], { [attribute]: value });
+  log?.info(
+    `${db}Update endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db} ` +
+      `from ${YELLOW}${oldValue !== null && typeof oldValue === 'object' ? debugStringify(oldValue) : oldValue}${db} ` +
+      `to ${YELLOW}${value !== null && typeof value === 'object' ? debugStringify(value) : value}${db}`,
+  );
+  return true;
+}
+
+/**
+ * Get the default TemperatureMeasurement cluster server options.
+ *
+ * @param {number} measuredValue - The measured value of the temperature x 100.
+ */
+export function getDefaultTemperatureMeasurementClusterServer(measuredValue = 0) {
+  return optionsFor(TemperatureMeasurementServer, {
+    measuredValue,
+    minMeasuredValue: null,
+    maxMeasuredValue: null,
+    tolerance: 0,
+  });
+}
+
+/**
+ * Get the default RelativeHumidityMeasurement cluster server options.
+ *
+ * @param {number} measuredValue - The measured value of the relative humidity x 100.
+ */
+export function getDefaultRelativeHumidityMeasurementClusterServer(measuredValue = 0) {
+  return optionsFor(RelativeHumidityMeasurementServer, {
+    measuredValue,
+    minMeasuredValue: null,
+    maxMeasuredValue: null,
+    tolerance: 0,
+  });
+}
+
+/**
+ * Get the default PressureMeasurement cluster server options.
+ *
+ * @param {number} measuredValue - The measured value for the pressure.
+ */
+export function getDefaultPressureMeasurementClusterServer(measuredValue = 1000) {
+  return optionsFor(PressureMeasurementServer, {
+    measuredValue,
+    minMeasuredValue: null,
+    maxMeasuredValue: null,
+    tolerance: 0,
+  });
+}
+
+/**
+ * Get the default IlluminanceMeasurement cluster server options.
+ *
+ * @param {number} measuredValue - The measured value of illuminance.
+ */
+export function getDefaultIlluminanceMeasurementClusterServer(measuredValue = 0) {
+  return optionsFor(IlluminanceMeasurementServer, {
+    measuredValue,
+    minMeasuredValue: null,
+    maxMeasuredValue: null,
+    tolerance: 0,
+  });
+}
+
+/**
+ * Get the default FlowMeasurement cluster server options.
+ *
+ * @param {number} measuredValue - The measured value of the flow in 10 x m3/h.
+ */
+export function getDefaultFlowMeasurementClusterServer(measuredValue = 0) {
+  return optionsFor(FlowMeasurementServer, {
+    measuredValue,
+    minMeasuredValue: null,
+    maxMeasuredValue: null,
+    tolerance: 0,
+  });
+}
+
+/**
+ * Get the default OccupancySensing cluster server options.
+ *
+ * @param {boolean} occupied - A boolean indicating whether the occupancy is occupied or not. Default is false.
+ */
+export function getDefaultOccupancySensingClusterServer(occupied = false) {
+  return optionsFor(OccupancySensingServer, {
+    occupancy: { occupied },
+    occupancySensorType: OccupancySensing.OccupancySensorType.Pir,
+    occupancySensorTypeBitmap: { pir: true, ultrasonic: false, physicalContact: false },
+    pirOccupiedToUnoccupiedDelay: 30,
+  });
 }
