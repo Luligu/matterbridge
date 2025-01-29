@@ -23,9 +23,6 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-// Node.js modules
-import { createHash } from 'crypto';
-
 // AnsiLogger module
 import { AnsiLogger, BLUE, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, er, hk, or, zb } from './logger/export.js';
 
@@ -48,6 +45,18 @@ import {
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeBooleanStateConfigurationServer,
 } from './matterbridgeBehaviors.js';
+import {
+  addClusterServers,
+  addOptionalClusterServers,
+  addRequiredClusterServers,
+  capitalizeFirstLetter,
+  createUniqueId,
+  getBehavior,
+  getBehaviourTypesFromClusterClientIds,
+  getBehaviourTypesFromClusterServerIds,
+  lowercaseFirstLetter,
+  optionsFor,
+} from './matterbridgeEndpointHelpers.js';
 
 // @matter
 import { AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointType, HandlerFunction, Lifecycle, MutableEndpoint, NamedHandler, SupportedBehaviors, VendorId } from '@matter/main';
@@ -131,196 +140,6 @@ import { Pm25ConcentrationMeasurementServer } from '@matter/main/behaviors/pm25-
 import { Pm10ConcentrationMeasurementServer } from '@matter/main/behaviors/pm10-concentration-measurement';
 import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/radon-concentration-measurement';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
-
-function capitalizeFirstLetter(name: string): string {
-  if (!name) return name;
-  return name.charAt(0).toUpperCase() + name.slice(1);
-}
-
-function lowercaseFirstLetter(name: string): string {
-  if (!name) return name;
-  return name.charAt(0).toLowerCase() + name.slice(1);
-}
-
-function createUniqueId(param1: string, param2: string, param3: string, param4: string) {
-  const hash = createHash('md5');
-  hash.update(param1 + param2 + param3 + param4);
-  return hash.digest('hex');
-}
-
-function getBehaviourTypesFromClusterServerIds(clusterServerList: ClusterId[]) {
-  // Map Server ClusterId to Behavior.Type
-  const behaviorTypes: Behavior.Type[] = [];
-  clusterServerList.forEach((clusterId) => {
-    behaviorTypes.push(getBehaviourTypeFromClusterServerId(clusterId));
-  });
-  return behaviorTypes;
-}
-
-function getBehaviourTypesFromClusterClientIds(clusterClientList: ClusterId[]) {
-  // Map Client ClusterId to Behavior.Type
-  const behaviorTypes: Behavior.Type[] = [];
-  clusterClientList.forEach((clusterId) => {
-    // behaviorTypes.push(getBehaviourTypeFromClusterClientId(clusterId));
-  });
-  return behaviorTypes;
-}
-
-function getBehaviourTypeFromClusterServerId(clusterId: ClusterId) {
-  // Map ClusterId to Server Behavior.Type
-  if (clusterId === PowerSource.Cluster.id) return PowerSourceServer.with(PowerSource.Feature.Wired);
-  if (clusterId === UserLabel.Cluster.id) return UserLabelServer;
-  if (clusterId === FixedLabel.Cluster.id) return FixedLabelServer;
-  if (clusterId === BasicInformation.Cluster.id) return BasicInformationServer;
-  if (clusterId === BridgedDeviceBasicInformation.Cluster.id) return BridgedDeviceBasicInformationServer;
-  if (clusterId === Identify.Cluster.id) return MatterbridgeIdentifyServer;
-  if (clusterId === Groups.Cluster.id) return GroupsServer;
-  if (clusterId === OnOff.Cluster.id) return MatterbridgeOnOffServer.with('Lighting');
-  if (clusterId === LevelControl.Cluster.id) return MatterbridgeLevelControlServer.with('OnOff', 'Lighting');
-  if (clusterId === ColorControl.Cluster.id) return MatterbridgeColorControlServer;
-  if (clusterId === WindowCovering.Cluster.id) return MatterbridgeWindowCoveringServer.with('Lift', 'PositionAwareLift');
-  if (clusterId === Thermostat.Cluster.id) return MatterbridgeThermostatServer.with('AutoMode', 'Heating', 'Cooling');
-  if (clusterId === FanControl.Cluster.id) return MatterbridgeFanControlServer;
-  if (clusterId === DoorLock.Cluster.id) return MatterbridgeDoorLockServer;
-  if (clusterId === ModeSelect.Cluster.id) return MatterbridgeModeSelectServer;
-  if (clusterId === ValveConfigurationAndControl.Cluster.id) return MatterbridgeValveConfigurationAndControlServer.with('Level');
-  if (clusterId === PumpConfigurationAndControl.Cluster.id) return PumpConfigurationAndControlServer.with('ConstantSpeed');
-  if (clusterId === SmokeCoAlarm.Cluster.id) return MatterbridgeSmokeCoAlarmServer.with('SmokeAlarm', 'CoAlarm');
-  if (clusterId === Switch.Cluster.id) return SwitchServer.with('MomentarySwitch', 'MomentarySwitchRelease', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress');
-  if (clusterId === BooleanState.Cluster.id) return BooleanStateServer.enable({ events: { stateChange: true } });
-  if (clusterId === BooleanStateConfiguration.Cluster.id) return MatterbridgeBooleanStateConfigurationServer;
-  if (clusterId === PowerTopology.Cluster.id) return PowerTopologyServer.with('TreeTopology');
-  if (clusterId === ElectricalPowerMeasurement.Cluster.id) return ElectricalPowerMeasurementServer.with('AlternatingCurrent');
-  if (clusterId === ElectricalEnergyMeasurement.Cluster.id) return ElectricalEnergyMeasurementServer.with('ImportedEnergy', 'ExportedEnergy', 'CumulativeEnergy');
-  if (clusterId === TemperatureMeasurement.Cluster.id) return TemperatureMeasurementServer;
-  if (clusterId === RelativeHumidityMeasurement.Cluster.id) return RelativeHumidityMeasurementServer;
-  if (clusterId === PressureMeasurement.Cluster.id) return PressureMeasurementServer;
-  if (clusterId === FlowMeasurement.Cluster.id) return FlowMeasurementServer;
-  if (clusterId === IlluminanceMeasurement.Cluster.id) return IlluminanceMeasurementServer;
-  if (clusterId === OccupancySensing.Cluster.id) return OccupancySensingServer;
-  if (clusterId === AirQuality.Cluster.id) return AirQualityServer.with('Fair', 'Moderate', 'VeryPoor', 'ExtremelyPoor');
-  if (clusterId === CarbonMonoxideConcentrationMeasurement.Cluster.id) return CarbonMonoxideConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === CarbonDioxideConcentrationMeasurement.Cluster.id) return CarbonDioxideConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === NitrogenDioxideConcentrationMeasurement.Cluster.id) return NitrogenDioxideConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === OzoneConcentrationMeasurement.Cluster.id) return OzoneConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === FormaldehydeConcentrationMeasurement.Cluster.id) return FormaldehydeConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === Pm1ConcentrationMeasurement.Cluster.id) return Pm1ConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === Pm25ConcentrationMeasurement.Cluster.id) return Pm25ConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === Pm10ConcentrationMeasurement.Cluster.id) return Pm10ConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === RadonConcentrationMeasurement.Cluster.id) return RadonConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id) return TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with('NumericMeasurement');
-
-  return MatterbridgeIdentifyServer;
-}
-
-function getBehaviourTypeFromClusterClientId(clusterId: ClusterId) {
-  // Map ClusterId to Client Behavior.Type
-  // return IdentifyClient;
-}
-
-function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string) {
-  let behavior: Behavior.Type | undefined;
-  if (typeof cluster === 'string') {
-    behavior = endpoint.behaviors.supported[lowercaseFirstLetter(cluster)];
-  } else if (typeof cluster === 'number') {
-    behavior = endpoint.behaviors.supported[lowercaseFirstLetter(getClusterNameById(cluster))];
-  } else if (typeof cluster === 'object') {
-    behavior = endpoint.behaviors.supported[lowercaseFirstLetter(cluster.name)];
-  } else if (typeof cluster === 'function') {
-    behavior = cluster;
-  }
-  return behavior;
-}
-
-function addRequiredClusterServers(endpoint: MatterbridgeEndpoint) {
-  const requiredServerList: ClusterId[] = [];
-  endpoint.log.debug(`addRequiredClusterServers for ${CYAN}${endpoint.maybeId}${db}`);
-  Array.from(endpoint.deviceTypes.values()).forEach((deviceType) => {
-    endpoint.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
-    deviceType.requiredServerClusters.forEach((clusterId) => {
-      if (!requiredServerList.includes(clusterId) && !endpoint.hasClusterServer(clusterId)) {
-        requiredServerList.push(clusterId);
-        endpoint.log.debug(`- cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
-      }
-    });
-  });
-  addClusterServers(endpoint, requiredServerList);
-}
-
-function addOptionalClusterServers(endpoint: MatterbridgeEndpoint) {
-  const optionalServerList: ClusterId[] = [];
-  endpoint.log.debug(`addOptionalClusterServers for ${CYAN}${endpoint.maybeId}${db}`);
-  Array.from(endpoint.deviceTypes.values()).forEach((deviceType) => {
-    endpoint.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
-    deviceType.optionalServerClusters.forEach((clusterId) => {
-      if (!optionalServerList.includes(clusterId) && !endpoint.hasClusterServer(clusterId)) {
-        optionalServerList.push(clusterId);
-        endpoint.log.debug(`- cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
-      }
-    });
-  });
-  addClusterServers(endpoint, optionalServerList);
-}
-
-/**
- * Adds cluster servers to the specified endpoint based on the provided server list.
- *
- * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the cluster servers to.
- * @param {ClusterId[]} serverList - The list of cluster IDs to add.
- * @returns void
- */
-function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: ClusterId[]): void {
-  if (serverList.includes(PowerSource.Cluster.id)) endpoint.createDefaultPowerSourceWiredClusterServer();
-  if (serverList.includes(Identify.Cluster.id)) endpoint.createDefaultIdentifyClusterServer();
-  if (serverList.includes(Groups.Cluster.id)) endpoint.createDefaultGroupsClusterServer();
-  if (serverList.includes(OnOff.Cluster.id)) endpoint.createDefaultOnOffClusterServer();
-  if (serverList.includes(LevelControl.Cluster.id)) endpoint.createDefaultLevelControlClusterServer();
-  if (serverList.includes(ColorControl.Cluster.id)) endpoint.createDefaultColorControlClusterServer();
-  if (serverList.includes(WindowCovering.Cluster.id)) endpoint.createDefaultWindowCoveringClusterServer();
-  if (serverList.includes(Thermostat.Cluster.id)) endpoint.createDefaultThermostatClusterServer();
-  if (serverList.includes(FanControl.Cluster.id)) endpoint.createDefaultFanControlClusterServer();
-  if (serverList.includes(DoorLock.Cluster.id)) endpoint.createDefaultDoorLockClusterServer();
-  if (serverList.includes(ValveConfigurationAndControl.Cluster.id)) endpoint.createDefaultValveConfigurationAndControlClusterServer();
-  if (serverList.includes(PumpConfigurationAndControl.Cluster.id)) endpoint.createDefaultPumpConfigurationAndControlClusterServer();
-  if (serverList.includes(SmokeCoAlarm.Cluster.id)) endpoint.createDefaultSmokeCOAlarmClusterServer();
-  if (serverList.includes(Switch.Cluster.id)) endpoint.createDefaultSwitchClusterServer();
-  if (serverList.includes(BooleanState.Cluster.id)) endpoint.createDefaultBooleanStateClusterServer();
-  if (serverList.includes(BooleanStateConfiguration.Cluster.id)) endpoint.createDefaultBooleanStateConfigurationClusterServer();
-  if (serverList.includes(PowerTopology.Cluster.id)) endpoint.createDefaultPowerTopologyClusterServer();
-  if (serverList.includes(ElectricalPowerMeasurement.Cluster.id)) endpoint.createDefaultElectricalPowerMeasurementClusterServer();
-  if (serverList.includes(ElectricalEnergyMeasurement.Cluster.id)) endpoint.createDefaultElectricalEnergyMeasurementClusterServer();
-  if (serverList.includes(TemperatureMeasurement.Cluster.id)) endpoint.createDefaultTemperatureMeasurementClusterServer();
-  if (serverList.includes(RelativeHumidityMeasurement.Cluster.id)) endpoint.createDefaultRelativeHumidityMeasurementClusterServer();
-  if (serverList.includes(PressureMeasurement.Cluster.id)) endpoint.createDefaultPressureMeasurementClusterServer();
-  if (serverList.includes(FlowMeasurement.Cluster.id)) endpoint.createDefaultFlowMeasurementClusterServer();
-  if (serverList.includes(IlluminanceMeasurement.Cluster.id)) endpoint.createDefaultIlluminanceMeasurementClusterServer();
-  if (serverList.includes(OccupancySensing.Cluster.id)) endpoint.createDefaultOccupancySensingClusterServer();
-  if (serverList.includes(AirQuality.Cluster.id)) endpoint.createDefaultAirQualityClusterServer();
-  if (serverList.includes(CarbonMonoxideConcentrationMeasurement.Cluster.id)) endpoint.createDefaultCarbonMonoxideConcentrationMeasurementClusterServer();
-  if (serverList.includes(CarbonDioxideConcentrationMeasurement.Cluster.id)) endpoint.createDefaultCarbonDioxideConcentrationMeasurementClusterServer();
-  if (serverList.includes(NitrogenDioxideConcentrationMeasurement.Cluster.id)) endpoint.createDefaultNitrogenDioxideConcentrationMeasurementClusterServer();
-  if (serverList.includes(OzoneConcentrationMeasurement.Cluster.id)) endpoint.createDefaultOzoneConcentrationMeasurementClusterServer();
-  if (serverList.includes(FormaldehydeConcentrationMeasurement.Cluster.id)) endpoint.createDefaultFormaldehydeConcentrationMeasurementClusterServer();
-  if (serverList.includes(Pm1ConcentrationMeasurement.Cluster.id)) endpoint.createDefaultPm1ConcentrationMeasurementClusterServer();
-  if (serverList.includes(Pm25ConcentrationMeasurement.Cluster.id)) endpoint.createDefaultPm25ConcentrationMeasurementClusterServer();
-  if (serverList.includes(Pm10ConcentrationMeasurement.Cluster.id)) endpoint.createDefaultPm10ConcentrationMeasurementClusterServer();
-  if (serverList.includes(RadonConcentrationMeasurement.Cluster.id)) endpoint.createDefaultRadonConcentrationMeasurementClusterServer();
-  if (serverList.includes(TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id)) endpoint.createDefaultTvocMeasurementClusterServer();
-  // if (serverList.includes(DeviceEnergyManagement.Cluster.id)) endpoint.createDefaultDeviceEnergyManagementClusterServer();
-  // if (serverList.includes(DeviceEnergyManagementMode.Cluster.id)) endpoint.createDefaultDeviceEnergyManagementModeClusterServer();
-}
-
-/*
-return optionsFor(TemperatureMeasurementServer, {
-  measuredValue,
-  minMeasuredValue: null,
-  maxMeasuredValue: null,
-  tolerance: 0,
-});
-*/
-export function optionsFor<T extends Behavior.Type>(type: T, options: Behavior.Options<T>) {
-  return options;
-}
 
 export interface MatterbridgeEndpointCommands {
   // Identify
@@ -429,14 +248,17 @@ export class MatterbridgeEndpoint extends Endpoint {
   hardwareVersionString: string | undefined = undefined;
   productUrl = 'https://www.npmjs.com/package/matterbridge';
 
+  // The first device type of the endpoint
   name: string | undefined = undefined;
   deviceType: number;
+
   uniqueStorageKey: string | undefined = undefined;
   tagList?: Semtag[] = undefined;
-  subType = '';
 
-  // Maps matter deviceTypes and endpoints
+  // Maps matter deviceTypes
   readonly deviceTypes = new Map<number, DeviceTypeDefinition>();
+
+  // Command handler
   readonly commandHandler = new NamedHandler<MatterbridgeEndpointCommands>();
 
   /**
@@ -693,30 +515,27 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} event - The name of the event to trigger.
    * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} payload - The payload to pass to the event.
    * @param {AnsiLogger} [log] - Optional logger for logging information.
-   * @param {MatterbridgeEndpoint} [endpoint] - Optional endpoint to trigger the event on. Defaults to the current endpoint.
    * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the event was successfully triggered.
    */
-  async triggerEvent(clusterId: ClusterId, event: string, payload: Record<string, boolean | number | bigint | string | object | undefined | null>, log?: AnsiLogger, endpoint?: MatterbridgeEndpoint): Promise<boolean> {
-    if (!endpoint) endpoint = this as MatterbridgeEndpoint;
-
+  async triggerEvent(clusterId: ClusterId, event: string, payload: Record<string, boolean | number | bigint | string | object | undefined | null>, log?: AnsiLogger): Promise<boolean> {
     const clusterName = lowercaseFirstLetter(getClusterNameById(clusterId));
 
-    if (endpoint.construction.status !== Lifecycle.Status.Active) {
-      this.log.error(`triggerEvent ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+    if (this.construction.status !== Lifecycle.Status.Active) {
+      this.log.error(`triggerEvent ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${this.maybeId}${er}:${or}${this.maybeNumber}${er} is in the ${BLUE}${this.construction.status}${er} state`);
       return false;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const events = endpoint.events as Record<string, Record<string, any>>;
+    const events = this.events as Record<string, Record<string, any>>;
     if (!(clusterName in events) || !(event in events[clusterName])) {
-      this.log.error(`triggerEvent ${hk}${event}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+      this.log.error(`triggerEvent ${hk}${event}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${this.id}${er}:${or}${this.number}${er}`);
       return false;
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    await endpoint.act((agent) => agent[clusterName].events[event].emit(payload, agent.context));
-    log?.info(`${db}Trigger event ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${event}${db} with ${debugStringify(payload)}${db} on endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} `);
+    await this.act((agent) => agent[clusterName].events[event].emit(payload, agent.context));
+    log?.info(`${db}Trigger event ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${event}${db} with ${debugStringify(payload)}${db} on endpoint ${or}${this.id}${db}:${or}${this.number}${db} `);
     return true;
   }
 

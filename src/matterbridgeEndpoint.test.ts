@@ -102,6 +102,7 @@ import {
   TimeSynchronizationServer,
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/main/behaviors';
+import { getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
@@ -153,7 +154,6 @@ describe('MatterbridgeEndpoint class', () => {
     });
   }
 
-  /*
   // Spy on and mock AnsiLogger.log
   const loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
     //
@@ -178,8 +178,8 @@ describe('MatterbridgeEndpoint class', () => {
   const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
     //
   });
-  */
 
+  /*
   // Spy on AnsiLogger.log
   const loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
   // Spy on console.log
@@ -192,6 +192,7 @@ describe('MatterbridgeEndpoint class', () => {
   const consoleWarnSpy = jest.spyOn(console, 'warn');
   // Spy on console.error
   const consoleErrorSpy = jest.spyOn(console, 'error');
+  */
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
@@ -290,6 +291,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.hasClusterServer(Descriptor.Cluster.id)).toBe(true);
       expect(device.hasClusterServer('Descriptor')).toBe(true);
       expect(device.hasClusterServer('descriptor')).toBe(true);
+      expect(getClusterId(device, 'Descriptor')).toBe(0x1d);
 
       expect(device.hasClusterServer(IdentifyBehavior)).toBe(true);
       expect(device.hasClusterServer(IdentifyServer)).toBe(true);
@@ -297,6 +299,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.hasClusterServer(Identify.Cluster.id)).toBe(true);
       expect(device.hasClusterServer('Identify')).toBe(true);
       expect(device.hasClusterServer('identify')).toBe(true);
+      expect(getClusterId(device, 'identify')).toBe(0x03);
 
       expect(device.hasClusterServer(GroupsBehavior)).toBe(true);
       expect(device.hasClusterServer(GroupsServer)).toBe(true);
@@ -304,6 +307,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.hasClusterServer(Groups.Cluster.id)).toBe(true);
       expect(device.hasClusterServer('Groups')).toBe(true);
       expect(device.hasClusterServer('groups')).toBe(true);
+      expect(getClusterId(device, 'identify')).toBe(0x03);
 
       expect(device.hasClusterServer(IdentifyBehavior)).toBe(true);
       expect(device.hasClusterServer(IdentifyServer)).toBe(true);
@@ -321,6 +325,9 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.hasClusterServer(OnOff.Cluster.id)).toBe(true);
       expect(device.hasClusterServer('OnOff')).toBe(true);
       expect(device.hasClusterServer('onOff')).toBe(true);
+      expect(getClusterId(device, 'onOff')).toBe(0x06);
+      expect(getAttributeId(device, 'onOff', 'onOff')).toBe(0x00);
+      expect(getAttributeId(device, 'onOff', 'startUpOnOff')).toBe(0x4003);
 
       expect(device.hasClusterServer(ThermostatBehavior)).toBe(false);
       expect(device.hasClusterServer(ThermostatServer)).toBe(false);

@@ -28,6 +28,8 @@ import {
   ScenesManagementServer,
 } from '@matter/main/behaviors';
 import { OnOffPlugInUnitDevice } from '@matter/main/devices';
+import { getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
+import exp from 'constants';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
@@ -60,6 +62,21 @@ describe('MatterbridgeEndpoint class', () => {
   const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
     //
   });
+
+  /*
+  // Spy on AnsiLogger.log
+  const loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
+  // Spy on console.log
+  const consoleLogSpy = jest.spyOn(console, 'log');
+  // Spy on console.debug
+  const consoleDebugSpy = jest.spyOn(console, 'debug');
+  // Spy on console.info
+  const consoleInfoSpy = jest.spyOn(console, 'info');
+  // Spy on console.warn
+  const consoleWarnSpy = jest.spyOn(console, 'warn');
+  // Spy on console.error
+  const consoleErrorSpy = jest.spyOn(console, 'error');
+  */
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
@@ -190,6 +207,16 @@ describe('MatterbridgeEndpoint class', () => {
       expect(EndpointServer.forEndpoint(device).hasClusterServer(GroupsCluster)).toBe(true);
       expect(EndpointServer.forEndpoint(device).hasClusterServer(ScenesManagementCluster)).toBe(false);
       expect(EndpointServer.forEndpoint(device).hasClusterServer(OnOffCluster)).toBe(true);
+    });
+
+    test('getClusterId and getAttributeId of onOffLight device behaviors', async () => {
+      expect(device).toBeDefined();
+      expect(getClusterId(device, 'onOff')).toBe(6);
+      expect(getClusterId(device, 'OnOff')).toBe(6);
+      expect(getAttributeId(device, 'onOff', 'OnOff')).toBe(0);
+      expect(getAttributeId(device, 'OnOff', 'OnOff')).toBe(0);
+      expect(getAttributeId(device, 'onOff', 'onOff')).toBe(0);
+      expect(getAttributeId(device, 'OnOff', 'onOff')).toBe(0);
     });
 
     test('add deviceType to onOffPlugin without tagList', async () => {
