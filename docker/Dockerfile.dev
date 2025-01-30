@@ -4,7 +4,6 @@ WORKDIR /app
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git && \
     apt-get clean && \
-    npm install -g npm@latest && \
     node -v && \
     npm -v
 
@@ -15,7 +14,7 @@ WORKDIR /app
 COPY ./package.json ./package-lock.json ./tsconfig.json ./.npmignore ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
-RUN npm ci && npm run build && npm pkg delete devDependencies && npm pkg delete scripts && npm install --omit=dev && npm link && npm shrinkwrap && npm pack 
+RUN npm ci && npm run buildProduction && npm pkg delete devDependencies && npm pkg delete scripts && npm pkg delete types && npm install --omit=dev && npm link && npm shrinkwrap && npm pack 
 
 WORKDIR /matterbridge-zigbee2mqtt
 RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-zigbee2mqtt.git .

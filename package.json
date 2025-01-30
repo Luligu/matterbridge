@@ -97,7 +97,6 @@
   "scripts": {
     "build": "tsc",
     "buildProduction": "tsc --project tsconfig.production.json",
-    "cleanBuildProduction": "npm run clean && tsc --project tsconfig.production.json",
     "watch": "tsc --watch",
     "start": "node ./dist/cli.js",
     "start:inspect": "node --inspect ./dist/cli.js",
@@ -127,6 +126,7 @@
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "clean": "npx rimraf tsconfig.tsbuildinfo ./dist",
     "cleanBuild": "npm run clean && npm run build",
+    "cleanBuildProduction": "npm run clean && tsc --project tsconfig.production.json",
     "deepClean": "npx rimraf tsconfig.tsbuildinfo package-lock.json npm-shrinkwrap.json ./dist ./node_modules",
     "deepCleanBuild": "npm run deepClean && npm install && npm run build && npm link",
     "oldprepublishOnly": "npm pkg delete devDependencies && npm pkg delete scripts && npm install --omit=dev && npm shrinkwrap",
