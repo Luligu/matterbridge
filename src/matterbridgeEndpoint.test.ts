@@ -1377,6 +1377,7 @@ describe('MatterbridgeEndpoint class', () => {
       await device.triggerSwitchEvent('Release', device.log);
       expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Endpoint number not assigned on endpoint'));
     });
+    */
 
     test('createDefaultBooleanStateClusterServer', async () => {
       const device = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'ContactSensor' });
@@ -1673,6 +1674,5 @@ describe('MatterbridgeEndpoint class', () => {
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('\x1B[39mMatterbridge.Matterbridge.AirQualitySensor \x1B[0mready'));
       expect(device.getAttribute(AirQuality.Cluster.id, 'airQuality')).toBe(AirQuality.AirQualityEnum.Unknown);
     });
-    */
   });
 });
