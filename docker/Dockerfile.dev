@@ -35,15 +35,15 @@ RUN npm ci && npm link matterbridge && npm run build && npm pkg delete devDepend
 
 WORKDIR /matterbridge-test
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-test.git .
-RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies && npm pkg delete scripts && npm pkg delete types && npm install --omit=dev && npm shrinkwrap && npm pack
+RUN npm ci && npm link matterbridge && npm run build && npm pkg delete devDependencies && npm pkg delete scripts && npm pkg delete types && npm install --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-example-accessory-platform
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-example-accessory-platform.git .
-RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies && npm pkg delete scripts && npm pkg delete types && npm install --omit=dev && npm shrinkwrap && npm pack
+RUN npm ci && npm link matterbridge && npm run build && npm pkg delete devDependencies && npm pkg delete scripts && npm pkg delete types && npm install --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-example-dynamic-platform
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-example-dynamic-platform.git .
-RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies && npm pkg delete scripts && npm pkg delete types && npm install --omit=dev && npm shrinkwrap && npm pack
+RUN npm ci && npm link matterbridge && npm run build && npm pkg delete devDependencies && npm pkg delete scripts && npm pkg delete types && npm install --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-eve-door
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-eve-door.git .
