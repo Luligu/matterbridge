@@ -1340,6 +1340,8 @@ export class Matterbridge extends EventEmitter {
 
       // Serialize registeredDevices
       if (this.nodeStorage && this.nodeContext) {
+        /*
+        TODO: Implement serialization of registered devices in edge mode
         this.log.info('Saving registered devices...');
         const serializedRegisteredDevices: SerializedMatterbridgeEndpoint[] = [];
         this.devices.forEach(async (device) => {
@@ -1349,6 +1351,7 @@ export class Matterbridge extends EventEmitter {
         });
         await this.nodeContext.set<SerializedMatterbridgeEndpoint[]>('devices', serializedRegisteredDevices);
         this.log.info(`Saved registered devices (${serializedRegisteredDevices?.length})`);
+        */
 
         // Clear nodeContext and nodeStorage (they just need 1000ms to write the data to disk)
         this.log.debug(`Closing node storage context for ${plg}Matterbridge${db}...`);
