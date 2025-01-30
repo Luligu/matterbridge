@@ -411,8 +411,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.construction.status).toBe(Lifecycle.Status.Active);
     });
 
-    // eslint-disable-next-line jest/no-commented-out-tests
-    /*
     test('getClusterServerOptions', async () => {
       const device = new MatterbridgeEndpoint(colorTemperatureLight, { uniqueStorageKey: 'ColorLight1', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'ColorLight' }] });
       expect(device).toBeDefined();
@@ -501,6 +499,8 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.construction.status).toBe(Lifecycle.Status.Active);
     });
 
+    // eslint-disable-next-line jest/no-commented-out-tests
+    /*
     test('addClusterServers', async () => {
       const device = new MatterbridgeEndpoint(onOffLight);
       expect(device).toBeDefined();
