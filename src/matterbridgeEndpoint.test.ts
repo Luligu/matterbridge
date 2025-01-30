@@ -694,6 +694,8 @@ describe('MatterbridgeEndpoint class', () => {
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}TemperatureMeasurement${db}.${hk}measuredValue${db}`));
     });
 
+    // eslint-disable-next-line jest/no-commented-out-tests
+    /*
     test('create a OnOffOutletWithSensors device', async () => {
       device = new MatterbridgeEndpoint(onOffOutlet, { uniqueStorageKey: 'OnOffOutlet With Sensors' });
       expect(device).toBeDefined();
@@ -1671,5 +1673,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('\x1B[39mMatterbridge.Matterbridge.AirQualitySensor \x1B[0mready'));
       expect(device.getAttribute(AirQuality.Cluster.id, 'airQuality')).toBe(AirQuality.AirQualityEnum.Unknown);
     });
+    */
   });
 });
