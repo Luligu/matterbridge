@@ -239,8 +239,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.hasAttributeServer('Descriptor', 'DeviceTypeList')).toBe(true);
       expect(device.hasAttributeServer('descriptor', 'tagList')).toBe(false);
       expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 3 }] });
-
-      await device.delete();
     });
 
     test('constructor with tagList', async () => {
@@ -255,15 +253,13 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.hasAttributeServer('Descriptor', 'deviceTypeList')).toBe(true);
       expect(device.hasAttributeServer('descriptor', 'TagList')).toBe(true);
       expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ tagList: [{ mfgCode: null, namespaceId: 7, tag: 1, label: 'Light2' }], deviceTypeList: [{ deviceType: 256, revision: 3 }] });
-
-      await device.delete();
     });
 
     test('loadInstance', async () => {
       const deviceType = onOffLight;
-      const device = await MatterbridgeEndpoint.loadInstance(deviceType, { uniqueStorageKey: 'OnOffLight1' });
+      const device = await MatterbridgeEndpoint.loadInstance(deviceType, { uniqueStorageKey: 'OnOffLight3' });
       expect(device).toBeDefined();
-      expect(device.id).toBe('OnOffLight1');
+      expect(device.id).toBe('OnOffLight3');
       expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
       expect(device.type.deviceType).toBe(deviceType.code);
       expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
@@ -273,13 +269,11 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 3 }] });
 
       expect(device.getDeviceTypes()).toEqual([deviceType]);
-
-      await device.delete();
     });
 
     test('serialize and deserialize', async () => {
       MatterbridgeEndpoint.bridgeMode = 'bridge';
-      const device = new MatterbridgeEndpoint([onOffLight, bridgedNode, powerSource], { uniqueStorageKey: 'OnOffLight', endpointId: EndpointNumber(100) });
+      const device = new MatterbridgeEndpoint([onOffLight, bridgedNode, powerSource], { uniqueStorageKey: 'OnOffLight4', endpointId: EndpointNumber(100) });
       expect(device).toBeDefined();
       device
         .createDefaultIdentifyClusterServer()
@@ -293,14 +287,11 @@ describe('MatterbridgeEndpoint class', () => {
         deserializedDevice = MatterbridgeEndpoint.deserialize(serializedDevice);
       }
       expect(deserializedDevice).toBeDefined();
-      if (deserializedDevice) await deserializedDevice.delete();
-
-      await device.delete();
     });
 
     test('hasClusterServer', async () => {
       const deviceType = onOffLight;
-      const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+      const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight5', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
       expect(device).toBeDefined();
       device.createDefaultIdentifyClusterServer();
       device.createDefaultGroupsClusterServer();
@@ -359,7 +350,7 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('hasAttributeServer', async () => {
       const deviceType = onOffLight;
-      const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+      const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight6', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
       expect(device).toBeDefined();
       device.createDefaultIdentifyClusterServer();
       device.createDefaultGroupsClusterServer();
@@ -391,7 +382,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('getClusterServerOptions', async () => {
-      const device = new MatterbridgeEndpoint(colorTemperatureLight, { uniqueStorageKey: 'ColorLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'ColorLight' }] });
+      const device = new MatterbridgeEndpoint(colorTemperatureLight, { uniqueStorageKey: 'ColorLight1', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'ColorLight' }] });
       expect(device).toBeDefined();
       device.createDefaultIdentifyClusterServer();
       device.createDefaultGroupsClusterServer();
@@ -432,7 +423,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('getClusterServerOptions CT', async () => {
-      const device = new MatterbridgeEndpoint(colorTemperatureLight, { uniqueStorageKey: 'ColorLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'ColorLight' }] });
+      const device = new MatterbridgeEndpoint(colorTemperatureLight, { uniqueStorageKey: 'ColorLight2', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'ColorLight' }] });
       expect(device).toBeDefined();
       device.createDefaultIdentifyClusterServer();
       device.createDefaultGroupsClusterServer();
@@ -536,7 +527,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('addCommandHandler', async () => {
-      const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight' });
+      const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight7' });
       expect(device).toBeDefined();
       device.createDefaultOnOffClusterServer();
       expect(device.hasAttributeServer(OnOffBehavior, 'onOff')).toBe(true);
@@ -569,7 +560,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('addRequiredClusterServers', async () => {
-      const device = new MatterbridgeEndpoint(thermostatDevice, { uniqueStorageKey: 'Thermostat' });
+      const device = new MatterbridgeEndpoint(thermostatDevice, { uniqueStorageKey: 'Thermostat1' });
       expect(device).toBeDefined();
       device.addRequiredClusterServers();
       expect(device.hasClusterServer(DescriptorServer)).toBe(true);
@@ -583,7 +574,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('addOptionalClusterServers', async () => {
-      const device = new MatterbridgeEndpoint(thermostatDevice, { uniqueStorageKey: 'Thermostat' });
+      const device = new MatterbridgeEndpoint(thermostatDevice, { uniqueStorageKey: 'Thermostat2' });
       expect(device).toBeDefined();
       device.addRequiredClusterServers();
       device.addOptionalClusterServers();
