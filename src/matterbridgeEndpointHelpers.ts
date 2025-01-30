@@ -367,10 +367,10 @@ export function getAttributeId(endpoint: Endpoint, cluster: string, attribute: s
  * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to retrieve the attribute from.
  * @param {string} attribute - The name of the attribute to retrieve.
  * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the retrieve. Errors are logged to the endpoint logger.
- * @returns {boolean | number | bigint | string | object | null | undefined} The value of the attribute, or undefined if the attribute is not found.
+ * @returns {any} The value of the attribute, or undefined if the attribute is not found.
  */
-
-export function getAttribute(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, log?: AnsiLogger): boolean | number | bigint | string | object | null | undefined {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getAttribute(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, log?: AnsiLogger): any {
   const clusterName = getBehavior(endpoint, cluster)?.id;
   if (!clusterName) {
     endpoint.log.error(`getAttribute ${hk}${attribute}${er} error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);

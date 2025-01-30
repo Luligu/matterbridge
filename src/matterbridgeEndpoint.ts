@@ -21,14 +21,12 @@
  * limitations under the License. *
  */
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 // AnsiLogger module
-import { AnsiLogger, BLUE, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, er, hk, nf, or, rs, zb } from './logger/export.js';
+import { AnsiLogger, BLUE, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, er, hk, or, zb } from './logger/export.js';
 
 // Matterbridge
 import { bridgedNode, DeviceTypeDefinition, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
-import { deepCopy, isValidNumber, isValidObject } from './utils/utils.js';
+import { isValidNumber, isValidObject } from './utils/utils.js';
 import {
   MatterbridgeBehavior,
   MatterbridgeBehaviorDevice,
@@ -78,12 +76,8 @@ import { ClusterType, getClusterNameById, MeasurementType, Semtag } from '@matte
 // @matter clusters
 import { Descriptor } from '@matter/main/clusters/descriptor';
 import { PowerSource } from '@matter/main/clusters/power-source';
-import { UserLabel } from '@matter/main/clusters/user-label';
-import { FixedLabel } from '@matter/main/clusters/fixed-label';
-import { BasicInformation } from '@matter/main/clusters/basic-information';
 import { BridgedDeviceBasicInformation } from '@matter/main/clusters/bridged-device-basic-information';
 import { Identify } from '@matter/main/clusters/identify';
-import { Groups } from '@matter/main/clusters/groups';
 import { OnOff } from '@matter/main/clusters/on-off';
 import { LevelControl } from '@matter/main/clusters/level-control';
 import { ColorControl } from '@matter/main/clusters/color-control';
@@ -96,36 +90,16 @@ import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-config
 import { PumpConfigurationAndControl } from '@matter/main/clusters/pump-configuration-and-control';
 import { SmokeCoAlarm } from '@matter/main/clusters/smoke-co-alarm';
 import { Switch } from '@matter/main/clusters/switch';
-import { BooleanState } from '@matter/main/clusters/boolean-state';
 import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
 import { PowerTopology } from '@matter/main/clusters/power-topology';
 import { ElectricalPowerMeasurement } from '@matter/main/clusters/electrical-power-measurement';
 import { ElectricalEnergyMeasurement } from '@matter/main/clusters/electrical-energy-measurement';
-import { TemperatureMeasurement } from '@matter/main/clusters/temperature-measurement';
-import { RelativeHumidityMeasurement } from '@matter/main/clusters/relative-humidity-measurement';
-import { PressureMeasurement } from '@matter/main/clusters/pressure-measurement';
-import { FlowMeasurement } from '@matter/main/clusters/flow-measurement';
-import { IlluminanceMeasurement } from '@matter/main/clusters/illuminance-measurement';
-import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
 import { AirQuality } from '@matter/main/clusters/air-quality';
-import { CarbonMonoxideConcentrationMeasurement } from '@matter/main/clusters/carbon-monoxide-concentration-measurement';
-import { CarbonDioxideConcentrationMeasurement } from '@matter/main/clusters/carbon-dioxide-concentration-measurement';
-import { NitrogenDioxideConcentrationMeasurement } from '@matter/main/clusters/nitrogen-dioxide-concentration-measurement';
-import { OzoneConcentrationMeasurement } from '@matter/main/clusters/ozone-concentration-measurement';
-import { FormaldehydeConcentrationMeasurement } from '@matter/main/clusters/formaldehyde-concentration-measurement';
-import { Pm1ConcentrationMeasurement } from '@matter/main/clusters/pm1-concentration-measurement';
-import { Pm25ConcentrationMeasurement } from '@matter/main/clusters/pm25-concentration-measurement';
-import { Pm10ConcentrationMeasurement } from '@matter/main/clusters/pm10-concentration-measurement';
-import { RadonConcentrationMeasurement } from '@matter/main/clusters/radon-concentration-measurement';
-import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/main/clusters/total-volatile-organic-compounds-concentration-measurement';
 import { ConcentrationMeasurement } from '@matter/main/clusters/concentration-measurement';
 
 // @matter behaviors
 import { DescriptorServer } from '@matter/main/behaviors/descriptor';
 import { PowerSourceServer } from '@matter/main/behaviors/power-source';
-import { UserLabelServer } from '@matter/main/behaviors/user-label';
-import { FixedLabelServer } from '@matter/main/behaviors/fixed-label';
-import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
 import { GroupsServer } from '@matter/main/behaviors/groups';
 import { ScenesManagementServer } from '@matter/main/behaviors/scenes-management';
@@ -415,9 +389,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to retrieve the attribute from.
    * @param {string} attribute - The name of the attribute to retrieve.
    * @param {AnsiLogger} [log] - Optional logger for error and info messages.
-   * @returns {boolean | number | bigint | string | object | null | undefined} The value of the attribute, or undefined if the attribute is not found.
+   * @returns {any} The value of the attribute, or undefined if the attribute is not found.
    */
-  getAttribute(cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, log?: AnsiLogger): boolean | number | bigint | string | object | null | undefined {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getAttribute(cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, log?: AnsiLogger): any {
     return getAttribute(this, cluster, attribute, log);
   }
 
@@ -1882,7 +1857,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @remarks
    * Lux to matter = Math.round(Math.max(Math.min(10000 * Math.log10(lux), 0xfffe), 0))
-   * Matter to Lux = Math.round(Math.max(Math.pow(10, value / 10000), 0)
+   * Matter to Lux = Math.round(Math.max(Math.pow(10, value / 10000), 0))
    */
   createDefaultIlluminanceMeasurementClusterServer(measuredValue = 0) {
     this.behaviors.require(IlluminanceMeasurementServer, getDefaultIlluminanceMeasurementClusterServer(measuredValue));

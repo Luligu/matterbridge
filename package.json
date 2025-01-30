@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "2.1.0-dev.5",
+  "version": "2.1.0-dev.6",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -56,6 +56,26 @@
     "./matter": {
       "import": "./dist/matter/export.js",
       "types": "./dist/matter/export.d.ts"
+    },
+    "./matter/devices": {
+      "import": "./dist/matter/devices.js",
+      "types": "./dist/matter/devices.d.ts"
+    },
+    "./matter/clusters": {
+      "import": "./dist/matter/clusters.js",
+      "types": "./dist/matter/clusters.d.ts"
+    },
+    "./matter/behaviors": {
+      "import": "./dist/matter/behaviors.js",
+      "types": "./dist/matter/behaviors.d.ts"
+    },
+    "./matter/endpoints": {
+      "import": "./dist/matter/endpoints.js",
+      "types": "./dist/matter/endpoints.d.ts"
+    },
+    "./matter/types": {
+      "import": "./dist/matter/types.js",
+      "types": "./dist/matter/types.d.ts"
     },
     "./cluster": {
       "import": "./dist/cluster/export.js",
