@@ -14,6 +14,7 @@ import { LogFormat as Format, LogLevel as Level } from '@matter/main';
 import { BasicInformationCluster, BridgedDeviceBasicInformationCluster, Descriptor, DescriptorCluster, GroupsCluster, Identify, IdentifyCluster, OccupancySensing, OnOffCluster, ScenesManagementCluster } from '@matter/main/clusters';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { logEndpoint } from '@matter/main/protocol';
+import { OnOffPlugInUnitDevice } from '@matter/node/devices';
 import {
   DescriptorBehavior,
   DescriptorServer,
@@ -28,7 +29,6 @@ import {
   ScenesManagementBehavior,
   ScenesManagementServer,
 } from '@matter/main/behaviors';
-import { OnOffPlugInUnitDevice } from '@matter/main/devices';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
