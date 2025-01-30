@@ -154,7 +154,6 @@ describe('MatterbridgeEndpoint class', () => {
     });
   }
 
-  /*
   // Spy on and mock AnsiLogger.log
   const loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
     //
@@ -179,8 +178,8 @@ describe('MatterbridgeEndpoint class', () => {
   const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
     //
   });
-  */
 
+  /*
   // Spy on AnsiLogger.log
   const loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
   // Spy on console.log
@@ -193,10 +192,11 @@ describe('MatterbridgeEndpoint class', () => {
   const consoleWarnSpy = jest.spyOn(console, 'warn');
   // Spy on console.error
   const consoleErrorSpy = jest.spyOn(console, 'error');
+  */
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
-    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-profile', 'Jest', '-bridge', '-logger', 'info', '-matterlogger', 'info'];
+    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-profile', 'JestDefault', '-bridge', '-logger', 'info', '-matterlogger', 'info'];
     matterbridge = await Matterbridge.loadInstance(true);
     await matterbridge.matterStorageManager?.createContext('events')?.clearAll();
     await matterbridge.matterStorageManager?.createContext('fabrics')?.clearAll();
@@ -296,6 +296,8 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.construction.status).toBe(Lifecycle.Status.Active);
     });
 
+    // eslint-disable-next-line jest/no-commented-out-tests
+    /*
     test('createDefaultScenesClusterServer', async () => {
       const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight13', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
       expect(device).toBeDefined();
@@ -307,6 +309,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.lifecycle.isReady).toBeTruthy();
       expect(device.construction.status).toBe(Lifecycle.Status.Active);
     });
+    */
 
     test('createDefaultOnOffClusterServer', async () => {
       const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight14', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });

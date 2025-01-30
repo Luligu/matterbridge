@@ -113,6 +113,7 @@
     "test:bridgemode": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose matterbridge.bridge.test.ts",
     "test:childbridgemode": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose matterbridge.childbridge.test.ts",
     "test:endpoint": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage matterbridgeEndpoint.test.ts",
+    "test:endpoint-default": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage matterbridgeEndpoint-default.test.ts",
     "test:matterjsenpoint": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage matterbridgeEndpoint.matterjs.test.ts",
     "test:platform": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose  --coverage matterbridgePlatform.test.ts matterbridgeAccessoryPlatform.test.ts matterbridgeDynamicPlatform.test.ts",
     "test:pluginManager": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage pluginManager.test.ts",
