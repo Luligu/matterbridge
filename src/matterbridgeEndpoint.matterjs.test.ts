@@ -4,8 +4,9 @@ import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { lightSensor, occupancySensor, onOffLight, onOffOutlet } from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
 
 // @matter
 import { DeviceTypeId, VendorId, ServerNode, Endpoint, EndpointServer, StorageContext } from '@matter/main';
@@ -28,7 +29,6 @@ import {
   ScenesManagementServer,
 } from '@matter/main/behaviors';
 import { OnOffPlugInUnitDevice } from '@matter/main/devices';
-import { getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;

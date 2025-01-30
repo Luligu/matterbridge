@@ -105,7 +105,6 @@ import {
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/main/behaviors';
 import { getAttributeId, getClusterId, updateAttribute } from './matterbridgeEndpointHelpers.js';
-import { mock } from 'node:test';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
