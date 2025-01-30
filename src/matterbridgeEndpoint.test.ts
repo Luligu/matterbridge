@@ -643,7 +643,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.hasClusterServer(ThermostatServer)).toBe(true);
       // expect(device.hasClusterServer(ThermostatUserInterfaceConfigurationServer)).toBe(true);
       // expect(device.hasClusterServer(EnergyPreferenceServer)).toBe(true);
-      // expect(device.hasClusterServer(TimeSynchronizationServer)).toBe(true);
+      // expect(device.hasClusterServer(TimeSynchronizationServer)).toBe(true); /
 
       device.addRequiredClusterServers();
       expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
