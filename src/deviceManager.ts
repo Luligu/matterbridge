@@ -4,7 +4,7 @@
  * @file devices.ts
  * @author Luca Liguori
  * @date 2024-07-26
- * @version 1.0.8
+ * @version 1.0.9
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -103,35 +103,4 @@ export class DeviceManager {
   set logLevel(logLevel: LogLevel) {
     this.log.logLevel = logLevel;
   }
-
-  /*
-  async loadFromStorage(): Promise<MatterbridgeDevice[]> {
-    // Load the array from storage and convert it to a map
-    const devicesArray = await this.nodeContext.get<MatterbridgeDevice[]>('devices', []);
-    for (const device of devicesArray) this._devices.set(device.uniqueId, device);
-    return devicesArray;
-  }
-
-  async saveToStorage(): Promise<number> {
-    // Convert the map to an array
-    const devices: MatterbridgeDevice[] = [];
-    const deviceArrayFromMap = Array.from(this._devices.values());
-    for (const device of deviceArrayFromMap) {
-      devices.push({
-        name: plugin.name,
-        path: plugin.path,
-        type: plugin.type,
-        version: plugin.version,
-        description: plugin.description,
-        author: plugin.author,
-        enabled: plugin.enabled,
-        qrPairingCode: plugin.qrPairingCode,
-        manualPairingCode: plugin.manualPairingCode,
-      });
-    }
-    await this.nodeContext.set<MatterbridgeDevice[]>('devices', devices);
-    this.log.debug(`Saved ${BLUE}${devices.length}${db} devices to storage`);
-    return devices.length;
-  }
-  */
 }
