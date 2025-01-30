@@ -11,7 +11,7 @@ RUN apt-get update && \
 
 FROM base AS builder
 WORKDIR /app
-COPY ./package.json ./package-lock.json ./tsconfig.json ./.npmignore ./
+COPY ./package.json ./package-lock.json ./tsconfig.json ./tsconfig.production.json ./.npmignore ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
 RUN npm ci && npm run buildProduction && npm pkg delete devDependencies && npm pkg delete scripts && npm pkg delete types && npm install --omit=dev && npm link && npm shrinkwrap && npm pack 
