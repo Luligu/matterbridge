@@ -37,7 +37,6 @@ import {
 
 // @matter
 import { Lifecycle, EndpointNumber } from '@matter/main';
-import { logEndpoint } from '@matter/protocol';
 import {
   AirQuality,
   BasicInformation,
@@ -240,6 +239,8 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.hasAttributeServer('Descriptor', 'DeviceTypeList')).toBe(true);
       expect(device.hasAttributeServer('descriptor', 'tagList')).toBe(false);
       expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 3 }] });
+
+      await device.delete();
     });
 
     test('constructor with tagList', async () => {
@@ -254,6 +255,8 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.hasAttributeServer('Descriptor', 'deviceTypeList')).toBe(true);
       expect(device.hasAttributeServer('descriptor', 'TagList')).toBe(true);
       expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ tagList: [{ mfgCode: null, namespaceId: 7, tag: 1, label: 'Light2' }], deviceTypeList: [{ deviceType: 256, revision: 3 }] });
+
+      await device.delete();
     });
 
     test('loadInstance', async () => {
@@ -270,6 +273,8 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 3 }] });
 
       expect(device.getDeviceTypes()).toEqual([deviceType]);
+
+      await device.delete();
     });
 
     test('serialize and deserialize', async () => {
@@ -283,7 +288,14 @@ describe('MatterbridgeEndpoint class', () => {
         .createDefaultOnOffClusterServer()
         .createDefaultPowerSourceWiredClusterServer();
       const serializedDevice = MatterbridgeEndpoint.serialize(device);
-      if (serializedDevice) MatterbridgeEndpoint.deserialize(serializedDevice);
+      let deserializedDevice: MatterbridgeEndpoint | undefined;
+      if (serializedDevice) {
+        deserializedDevice = MatterbridgeEndpoint.deserialize(serializedDevice);
+      }
+      expect(deserializedDevice).toBeDefined();
+      if (deserializedDevice) await deserializedDevice.delete();
+
+      await device.delete();
     });
 
     test('hasClusterServer', async () => {
