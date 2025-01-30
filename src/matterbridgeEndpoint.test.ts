@@ -1112,7 +1112,7 @@ describe('MatterbridgeEndpoint class', () => {
       const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'CTLight' });
       expect(device).toBeDefined();
       device.createCtColorControlClusterServer();
-      device.addRequiredClusterServers();
+      device.addRequiredClusterServers(); //
       expect(device.hasAttributeServer(ColorControl.Cluster, 'colorMode')).toBe(true);
       expect(device.hasAttributeServer(ColorControl.Cluster, 'currentX')).toBe(false);
       expect(device.hasAttributeServer(ColorControl.Cluster, 'currentY')).toBe(false);
