@@ -333,7 +333,12 @@ export class Frontend {
     // Endpoint to start advertising the server node
     this.expressApp.get('/api/advertise', express.json(), async (req, res) => {
       const pairingCodes = await this.matterbridge.advertiseServerNode(this.matterbridge.serverNode);
-      res.json(pairingCodes);
+      if (pairingCodes) {
+        const { manualPairingCode, qrPairingCode } = pairingCodes;
+        res.json({ manualPairingCode, qrPairingCode: 'https://project-chip.github.io/connectedhomeip/qrcode.html?data=' + qrPairingCode });
+      } else {
+        res.status(500).json({ error: 'Failed to generate pairing codes' });
+      }
     });
 
     // Endpoint to provide settings
