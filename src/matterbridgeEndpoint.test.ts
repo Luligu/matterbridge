@@ -694,8 +694,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}TemperatureMeasurement${db}.${hk}measuredValue${db}`));
     });
 
-    // eslint-disable-next-line jest/no-commented-out-tests
-    /*
     test('create a OnOffOutletWithSensors device', async () => {
       device = new MatterbridgeEndpoint(onOffOutlet, { uniqueStorageKey: 'OnOffOutlet With Sensors' });
       expect(device).toBeDefined();
@@ -860,6 +858,8 @@ describe('MatterbridgeEndpoint class', () => {
       ]);
     });
 
+    // eslint-disable-next-line jest/no-commented-out-tests
+    /*
     test('createDefaultIdentifyClusterServer', async () => {
       const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight8', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
       expect(device).toBeDefined();
@@ -1654,18 +1654,19 @@ describe('MatterbridgeEndpoint class', () => {
     test('createDefaultAirQualityClusterServer', async () => {
       const device = new MatterbridgeEndpoint(airQualitySensor, { uniqueStorageKey: 'AirQualitySensor' });
       expect(device).toBeDefined();
-      device.createDefaultIdentifyClusterServer();
-      device.createDefaultAirQualityClusterServer();
-      device.createDefaultTvocMeasurementClusterServer();
-      device.createDefaultCarbonMonoxideConcentrationMeasurementClusterServer();
-      device.createDefaultCarbonDioxideConcentrationMeasurementClusterServer();
-      device.createDefaultFormaldehydeConcentrationMeasurementClusterServer();
-      device.createDefaultPm1ConcentrationMeasurementClusterServer();
-      device.createDefaultPm25ConcentrationMeasurementClusterServer();
-      device.createDefaultPm10ConcentrationMeasurementClusterServer();
-      device.createDefaultOzoneConcentrationMeasurementClusterServer();
-      device.createDefaultRadonConcentrationMeasurementClusterServer();
-      device.createDefaultNitrogenDioxideConcentrationMeasurementClusterServer();
+      device
+        .createDefaultIdentifyClusterServer()
+        .createDefaultAirQualityClusterServer()
+        .createDefaultTvocMeasurementClusterServer()
+        .createDefaultCarbonMonoxideConcentrationMeasurementClusterServer()
+        .createDefaultCarbonDioxideConcentrationMeasurementClusterServer()
+        .createDefaultFormaldehydeConcentrationMeasurementClusterServer()
+        .createDefaultPm1ConcentrationMeasurementClusterServer()
+        .createDefaultPm25ConcentrationMeasurementClusterServer()
+        .createDefaultPm10ConcentrationMeasurementClusterServer()
+        .createDefaultOzoneConcentrationMeasurementClusterServer()
+        .createDefaultRadonConcentrationMeasurementClusterServer()
+        .createDefaultNitrogenDioxideConcentrationMeasurementClusterServer();
       expect(device.hasClusterServer(AirQualityServer)).toBe(true);
       expect(device.hasClusterServer(TotalVolatileOrganicCompoundsConcentrationMeasurementServer)).toBe(true);
       expect(device.hasClusterServer(CarbonMonoxideConcentrationMeasurementServer)).toBe(true);
