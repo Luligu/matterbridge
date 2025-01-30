@@ -1,4 +1,3 @@
-/* eslint-disable jest/no-commented-out-tests */
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -521,7 +520,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.construction.status).toBe(Lifecycle.Status.Active);
     });
 
-    /*
     test('addFixedLabel', async () => {
       const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'FixedLabel', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
       expect(device).toBeDefined();
@@ -573,7 +571,7 @@ describe('MatterbridgeEndpoint class', () => {
         { 'label': 'Composed2', 'value': 'Light' },
       ]);
     });
-    */
+
     test('addCommandHandler', async () => {
       const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight7' });
       expect(device).toBeDefined();
