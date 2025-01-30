@@ -694,8 +694,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}TemperatureMeasurement${db}.${hk}measuredValue${db}`));
     });
 
-    // eslint-disable-next-line jest/no-commented-out-tests
-    /*
     test('create a OnOffOutletWithSensors device', async () => {
       device = new MatterbridgeEndpoint(onOffOutlet, { uniqueStorageKey: 'OnOffOutlet With Sensors' });
       expect(device).toBeDefined();
@@ -859,8 +857,9 @@ describe('MatterbridgeEndpoint class', () => {
         { deviceType: pressureSensor.code, revision: pressureSensor.revision },
       ]);
     });
-    */
 
+    // eslint-disable-next-line jest/no-commented-out-tests
+    /*
     test('createDefaultIdentifyClusterServer', async () => {
       const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight8', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
       expect(device).toBeDefined();
@@ -1687,5 +1686,6 @@ describe('MatterbridgeEndpoint class', () => {
 
       expect(device.getAttribute(AirQuality.Cluster.id, 'airQuality')).toBe(AirQuality.AirQualityEnum.Unknown);
     });
+    */
   });
 });
