@@ -986,11 +986,6 @@ export class Matterbridge extends EventEmitter {
    * @returns A promise that resolves to the path of the global Node.js modules directory.
    */
   private async getGlobalNodeModules(): Promise<string> {
-    /*
-    const { Module } = await import('module'); // Dynamic import to access the `Module` class
-    const globalPaths = 'globalPaths' in Module && Array.isArray(Module.globalPaths) && typeof Module.globalPaths[0] === 'string' ? (Module.globalPaths as string[])[0] : '';
-    this.log.debug('Module.globalPaths:', globalPaths);
-    */
     return new Promise((resolve, reject) => {
       this.execRunningCount++;
       exec('npm root -g', (error: ExecException | null, stdout: string) => {

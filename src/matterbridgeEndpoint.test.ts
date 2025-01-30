@@ -219,8 +219,9 @@ describe('MatterbridgeEndpoint class', () => {
 
   afterAll(async () => {
     // Close the Matterbridge instance
-    await matterbridge.destroyInstance();
-    await waitForOffline();
+    // await matterbridge.destroyInstance();
+    // await waitForOffline();
+    await (matterbridge as any).cleanup('destroying instance...', false);
 
     // Restore all mocks
     jest.restoreAllMocks();
