@@ -21,11 +21,12 @@ For this reason there is no compatibility for old versions of the plugins.
 You need to update all plugins you use and Matterbridge in the same moment. 
 I suggest to first update all plugins without restarting and then to update Matterbridge so when it restarts, all versions will be the latest.
 
-## [2.1.0.dev.9] - 2025-01-31
+## [2.1.0.dev.10] - 2025-01-31
 
 ### Added
 
 - [matterbridge]: Add MatterbridgeModeSelectServer.
+- [matterbridge]: Add MatterbridgeSwitchServer.
 - [frontend]: Add api/advertise to turn on matter advertising in bridge mode.
 - [frontend]: Frontend v.2.4.0.
 
