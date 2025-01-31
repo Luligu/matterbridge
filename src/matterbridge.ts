@@ -35,7 +35,7 @@ import { NodeStorageManager, NodeStorage } from './storage/export.js';
 import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN, nt } from './logger/export.js';
 
 // Matterbridge
-import { logInterfaces, wait, waiter, copyDirectory, getParameter, getIntParameter, hasParameter } from './utils/utils.js';
+import { logInterfaces, copyDirectory, getParameter, getIntParameter, hasParameter } from './utils/utils.js';
 import { MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
@@ -221,6 +221,7 @@ export class Matterbridge extends EventEmitter {
    */
   async destroyInstance() {
     await this.cleanup('destroying instance...', false);
+    /*
     await waiter(
       'destroying instance...',
       () => {
@@ -232,6 +233,7 @@ export class Matterbridge extends EventEmitter {
       false,
     );
     await wait(1000, 'Wait for the global node_modules and matterbridge version', false);
+    */
   }
 
   /**
@@ -1818,7 +1820,7 @@ export class Matterbridge extends EventEmitter {
   /** ***********************************************************************************************************************************/
 
   /**
-   * Starts the matter storage process based on the specified storage type and name.
+   * Starts the matter storage process with name Matterbridge.
    * @returns {Promise<void>} - A promise that resolves when the storage process is started.
    */
   private async startMatterStorage(): Promise<void> {
@@ -1842,8 +1844,9 @@ export class Matterbridge extends EventEmitter {
   /**
    * Makes a backup copy of the specified matter storage directory.
    *
-   * @param storageName - The name of the storage file to be backed up.
-   * @param backupName - The name of the backup file to be created.
+   * @param storageName - The name of the storage directory to be backed up.
+   * @param backupName - The name of the backup directory to be created.
+   * @returns {Promise<void>} A promise that resolves when the has been done.
    */
   private async backupMatterStorage(storageName: string, backupName: string): Promise<void> {
     this.log.info('Creating matter node storage backup...');
@@ -1867,20 +1870,15 @@ export class Matterbridge extends EventEmitter {
   /**
    * Creates a server node storage context.
    *
-   * @param pluginName - The name of the plugin.
-   * @param deviceName - The name of the device.
-   * @param deviceType - The deviceType of the device.
-   * @param vendorId - The vendor ID.
-   * @param vendorName - The vendor name.
-   * @param productId - The product ID.
-   * @param productName - The product name.
-   * @param serialNumber - The serial number of the device (optional).
-   * @param uniqueId - The unique ID of the device (optional).
-   * @param softwareVersion - The software version of the device (optional).
-   * @param softwareVersionString - The software version string of the device (optional).
-   * @param hardwareVersion - The hardware version of the device (optional).
-   * @param hardwareVersionString - The hardware version string of the device (optional).
-   * @returns The storage context for the commissioning server.
+   * @param {string} pluginName - The name of the plugin.
+   * @param {string} deviceName - The name of the device.
+   * @param {DeviceTypeId} deviceType - The device type of the device.
+   * @param {number} vendorId - The vendor ID.
+   * @param {string} vendorName - The vendor name.
+   * @param {number} productId - The product ID.
+   * @param {string} productName - The product name.
+   * @param {string} [serialNumber] - The serial number of the device (optional).
+   * @returns {Promise<StorageContext>} The storage context for the commissioning server.
    */
   private async createServerNodeContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string, serialNumber?: string): Promise<StorageContext> {
     if (!this.matterStorageService) throw new Error('No storage service initialized');
@@ -1916,7 +1914,16 @@ export class Matterbridge extends EventEmitter {
     return storageContext;
   }
 
-  private async createServerNode(storageContext: StorageContext, port = 5540, passcode = 20242025, discriminator = 3850) {
+  /**
+   * Creates a server node.
+   *
+   * @param {StorageContext} storageContext - The storage context for the server node.
+   * @param {number} [port=5540] - The port number for the server node. Defaults to 5540.
+   * @param {number} [passcode=20242025] - The passcode for the server node. Defaults to 20242025.
+   * @param {number} [discriminator=3850] - The discriminator for the server node. Defaults to 3850.
+   * @returns {Promise<ServerNode<ServerNode.RootEndpoint>>} A promise that resolves to the created server node.
+   */
+  private async createServerNode(storageContext: StorageContext, port = 5540, passcode = 20242025, discriminator = 3850): Promise<ServerNode<ServerNode.RootEndpoint>> {
     const storeId = await storageContext.get<string>('storeId');
     this.log.notice(`Creating server node for ${storeId} on port ${port} with passcode ${passcode} and discriminator ${discriminator}...`);
     this.log.debug(`- deviceName: ${await storageContext.get('deviceName')}`);
@@ -2144,20 +2151,38 @@ export class Matterbridge extends EventEmitter {
     return serverNode;
   }
 
-  private async startServerNode(matterServerNode?: ServerNode) {
+  /**
+   * Starts the specified server node.
+   *
+   * @param {ServerNode} [matterServerNode] - The server node to start.
+   * @returns {Promise<void>} A promise that resolves when the server node has started.
+   */
+  private async startServerNode(matterServerNode?: ServerNode): Promise<void> {
     if (!matterServerNode) return;
     this.log.notice(`Starting ${matterServerNode.id} server node`);
     await matterServerNode.start();
   }
 
-  private async stopServerNode(matterServerNode: ServerNode) {
+  /**
+   * Stops the specified server node.
+   *
+   * @param {ServerNode} matterServerNode - The server node to stop.
+   * @returns {Promise<void>} A promise that resolves when the server node has stopped.
+   */
+  private async stopServerNode(matterServerNode: ServerNode): Promise<void> {
     if (!matterServerNode) return;
     this.log.notice(`Closing ${matterServerNode.id} server node`);
     await matterServerNode.close();
     await matterServerNode.env.get(MdnsService)[Symbol.asyncDispose]();
   }
 
-  async advertiseServerNode(matterServerNode?: ServerNode) {
+  /**
+   * Advertises the specified server node if it is commissioned.
+   *
+   * @param {ServerNode} [matterServerNode] - The server node to advertise.
+   * @returns {Promise<{ qrPairingCode: string, manualPairingCode: string } | undefined>} A promise that resolves to the pairing codes if the server node is advertised, or undefined if not.
+   */
+  async advertiseServerNode(matterServerNode?: ServerNode): Promise<{ qrPairingCode: string; manualPairingCode: string } | undefined> {
     if (matterServerNode && matterServerNode.lifecycle.isCommissioned) {
       await matterServerNode.env.get(DeviceCommissioner)?.allowBasicCommissioning();
       const { qrPairingCode, manualPairingCode } = matterServerNode.state.commissioning.pairingCodes;
@@ -2167,12 +2192,25 @@ export class Matterbridge extends EventEmitter {
     return undefined;
   }
 
-  private async createAggregatorNode(storageContext: StorageContext) {
+  /**
+   * Creates an aggregator node with the specified storage context.
+   *
+   * @param {StorageContext} storageContext - The storage context for the aggregator node.
+   * @returns {Promise<EndpointNode<AggregatorEndpoint>>} A promise that resolves to the created aggregator node.
+   */
+  private async createAggregatorNode(storageContext: StorageContext): Promise<EndpointNode<AggregatorEndpoint>> {
     this.log.notice(`Creating ${await storageContext.get<string>('storeId')} aggregator `);
     const aggregatorNode = new EndpointNode(AggregatorEndpoint, { id: `${await storageContext.get<string>('storeId')}` });
     return aggregatorNode;
   }
 
+  /**
+   * Adds a MatterbridgeEndpoint to the specified plugin.
+   *
+   * @param {string} pluginName - The name of the plugin.
+   * @param {MatterbridgeEndpoint} device - The device to add as a bridged endpoint.
+   * @returns {Promise<void>} A promise that resolves when the bridged endpoint has been added.
+   */
   async addBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void> {
     // Check if the plugin is registered
     const plugin = this.plugins.get(pluginName);
@@ -2203,6 +2241,13 @@ export class Matterbridge extends EventEmitter {
     this.log.info(`Added and registered bridged endpoint (${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) for plugin ${plg}${pluginName}${nf}`);
   }
 
+  /**
+   * Removes a MatterbridgeEndpoint from the specified plugin.
+   *
+   * @param {string} pluginName - The name of the plugin.
+   * @param {MatterbridgeEndpoint} device - The device to remove as a bridged endpoint.
+   * @returns {Promise<void>} A promise that resolves when the bridged endpoint has been removed.
+   */
   async removeBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void> {
     this.log.debug(`Removing bridged endpoint ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} (${zb}${device.name}${db}) for plugin ${plg}${pluginName}${db}`);
 
@@ -2250,6 +2295,12 @@ export class Matterbridge extends EventEmitter {
     this.devices.remove(device);
   }
 
+  /**
+   * Removes all bridged endpoints from the specified plugin.
+   *
+   * @param {string} pluginName - The name of the plugin.
+   * @returns {Promise<void>} A promise that resolves when all bridged endpoints have been removed.
+   */
   async removeAllBridgedEndpoints(pluginName: string): Promise<void> {
     this.log.debug(`Removing all bridged endpoints for plugin ${plg}${pluginName}${db}`);
     for (const device of this.devices.array().filter((device) => device.plugin === pluginName)) {
@@ -2258,12 +2309,12 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Sanitizes the fabric information by converting bigint properties to string cause res.json doesn't know bigint.
+   * Sanitizes the fabric information by converting bigint properties to strings because `res.json` doesn't support bigint.
    *
-   * @param fabricInfo - The array of exposed fabric information objects.
-   * @returns An array of sanitized exposed fabric information objects.
+   * @param {ExposedFabricInformation[]} fabricInfo - The array of exposed fabric information objects.
+   * @returns {SanitizedExposedFabricInformation[]} An array of sanitized exposed fabric information objects.
    */
-  private sanitizeFabricInformations(fabricInfo: ExposedFabricInformation[]) {
+  private sanitizeFabricInformations(fabricInfo: ExposedFabricInformation[]): SanitizedExposedFabricInformation[] {
     return fabricInfo.map((info) => {
       return {
         fabricIndex: info.fabricIndex,
@@ -2278,10 +2329,10 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Sanitizes the session information by converting bigint properties to string.
+   * Sanitizes the session information by converting bigint properties to strings because `res.json` doesn't support bigint.
    *
-   * @param sessionInfo - The array of session information objects.
-   * @returns An array of sanitized session information objects.
+   * @param {SessionInformation[]} sessionInfo - The array of session information objects.
+   * @returns {SanitizedSessionInformation[]} An array of sanitized session information objects.
    */
   private sanitizeSessionInformation(sessionInfo: SessionInformation[]) {
     return sessionInfo
