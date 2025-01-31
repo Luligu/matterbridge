@@ -320,6 +320,24 @@ export class Frontend {
       const { default: module } = await import('module');
       const loadedModules = (module as unknown as ModuleWithCache)._cache ? Object.keys((module as unknown as ModuleWithCache)._cache).sort() : [];
 
+      /*
+      if (req.query.heapdump === 'true') {
+        const { default: heapdump } = await import('heapdump');
+        const filename = `heapdump-${Date.now()}.heapsnapshot`;
+
+        heapdump.writeSnapshot(filename, (err, dumpFilename) => {
+          if (err) {
+            this.log.error(`Heap dump error: ${err.message}`);
+            return res.status(500).json({ error: 'Heap dump failed', details: err.message });
+          }
+
+          this.log.info(`Heap dump written to ${dumpFilename}`);
+          return res.status(200).json({ ...memoryReport, heapdump: dumpFilename });
+        });
+        return; // Exit early since heapdump response is handled inside callback
+      }
+      */
+
       const memoryReport = {
         memoryUsage,
         heapStats,
