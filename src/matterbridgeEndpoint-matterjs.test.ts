@@ -28,7 +28,7 @@ import {
   OnOffServer,
   ScenesManagementBehavior,
   ScenesManagementServer,
-} from '@matter/main/behaviors';
+} from '@matter/node/behaviors';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;

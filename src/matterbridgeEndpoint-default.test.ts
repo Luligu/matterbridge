@@ -154,6 +154,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
   }
 
+  /*
   // Spy on and mock AnsiLogger.log
   const loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
     //
@@ -178,8 +179,8 @@ describe('MatterbridgeEndpoint class', () => {
   const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
     //
   });
+  */
 
-  /*
   // Spy on AnsiLogger.log
   const loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
   // Spy on console.log
@@ -192,7 +193,6 @@ describe('MatterbridgeEndpoint class', () => {
   const consoleWarnSpy = jest.spyOn(console, 'warn');
   // Spy on console.error
   const consoleErrorSpy = jest.spyOn(console, 'error');
-  */
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
@@ -238,6 +238,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
       expect(device.lifecycle.isReady).toBeTruthy();
       expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('\x1B[39mMatterbridge.Matterbridge.OnOffLight8 \x1B[0mready'));
     });
 
     test('createDefaultBasicInformationClusterServer in bridge mode', async () => {
@@ -253,6 +254,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
       expect(device.lifecycle.isReady).toBeTruthy();
       expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('\x1B[39mMatterbridge.Matterbridge.OnOffLight9 \x1B[0mready'));
     });
 
     test('createDefaultBasicInformationClusterServer in childbridge mode', async () => {
@@ -269,6 +271,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
       expect(device.lifecycle.isReady).toBeTruthy();
       expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('\x1B[39mMatterbridge.Matterbridge.OnOffLight10 \x1B[0mready'));
     });
 
     test('createDefaultBridgedDeviceBasicInformationClusterServer', async () => {
@@ -282,6 +285,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
       expect(device.lifecycle.isReady).toBeTruthy();
       expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('\x1B[39mMatterbridge.Matterbridge.OnOffLight11 \x1B[0mready'));
     });
 
     test('createDefaultGroupsClusterServer', async () => {
@@ -294,6 +298,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
       expect(device.lifecycle.isReady).toBeTruthy();
       expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('\x1B[39mMatterbridge.Matterbridge.OnOffLight12 \x1B[0mready'));
     });
 
     // eslint-disable-next-line jest/no-commented-out-tests
@@ -322,6 +327,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
       expect(device.lifecycle.isReady).toBeTruthy();
       expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('\x1B[39mMatterbridge.Matterbridge.OnOffLight14 \x1B[0mready'));
     });
 
     test('createOnOffClusterServer', async () => {
@@ -335,6 +341,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
       expect(device.lifecycle.isReady).toBeTruthy();
       expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('\x1B[39mMatterbridge.Matterbridge.OnOffLight15 \x1B[0mready'));
     });
 
     test('createDeadFrontOnOffClusterServer', async () => {
@@ -348,6 +355,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
       expect(device.lifecycle.isReady).toBeTruthy();
       expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('\x1B[39mMatterbridge.Matterbridge.OnOffLight16 \x1B[0mready'));
     });
 
     test('createDefaultLevelControlClusterServer', async () => {
@@ -361,6 +369,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
       expect(device.lifecycle.isReady).toBeTruthy();
       expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('\x1B[39mMatterbridge.Matterbridge.OnOffLight17 \x1B[0mready'));
     });
 
     test('createDefaultColorControlClusterServer', async () => {
