@@ -307,7 +307,7 @@ describe('Matterbridge platform', () => {
     testDevice.number = 101;
     (matterbridge as any).devices.set(testDevice);
     expect(await platform.checkEndpointNumbers()).toBe(1);
-    expect(platform.log.warn).toHaveBeenCalledWith(`Endpoint number for device ${CYAN}${testDevice.uniqueId}${wr} changed from ${CYAN}100${wr} to ${CYAN}101${wr}`);
+    expect(platform.log.warn).toHaveBeenCalledWith(`Endpoint number for device ${CYAN}${testDevice.deviceName}${wr} changed from ${CYAN}100${wr} to ${CYAN}101${wr}`);
     expect(platform.log.debug).not.toHaveBeenCalledWith(`Setting endpoint number for device ${CYAN}${testDevice.uniqueId}${db} to ${CYAN}${testDevice.maybeNumber}${db}`);
   });
 
