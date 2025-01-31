@@ -42,6 +42,7 @@ import {
   MatterbridgeValveConfigurationAndControlServer,
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeBooleanStateConfigurationServer,
+  MatterbridgeSwitchServer,
 } from './matterbridgeBehaviors.js';
 import {
   addClusterServers,
@@ -1588,7 +1589,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultSwitchClusterServer() {
     this.behaviors.require(
-      SwitchServer.with(Switch.Feature.MomentarySwitch, Switch.Feature.MomentarySwitchRelease, Switch.Feature.MomentarySwitchLongPress, Switch.Feature.MomentarySwitchMultiPress).enable({
+      MatterbridgeSwitchServer.with(Switch.Feature.MomentarySwitch, Switch.Feature.MomentarySwitchRelease, Switch.Feature.MomentarySwitchLongPress, Switch.Feature.MomentarySwitchMultiPress).enable({
         events: { initialPress: true, longPress: true, shortRelease: true, longRelease: true, multiPressOngoing: true, multiPressComplete: true },
       }),
       {

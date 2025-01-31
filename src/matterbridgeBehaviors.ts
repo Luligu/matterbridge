@@ -53,6 +53,7 @@ import { ThermostatServer } from '@matter/main/behaviors/thermostat';
 import { ValveConfigurationAndControlServer } from '@matter/main/behaviors/valve-configuration-and-control';
 import { ModeSelectServer } from '@matter/main/behaviors/mode-select';
 import { SmokeCoAlarmServer } from '@matter/main/behaviors/smoke-co-alarm';
+import { SwitchServer } from '@matter/main/behaviors/switch';
 
 // AnsiLogger module
 import { AnsiLogger } from './logger/export.js';
@@ -412,5 +413,11 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     device.enableDisableAlarm({ alarmsToEnableDisable });
     super.enableDisableAlarm({ alarmsToEnableDisable });
+  }
+}
+
+export class MatterbridgeSwitchServer extends SwitchServer {
+  override initialize() {
+    // Do nothing here, as the device will handle the switch logic
   }
 }
