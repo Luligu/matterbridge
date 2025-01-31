@@ -21,7 +21,7 @@ For this reason there is no compatibility for old versions of the plugins.
 You need to update all plugins you use and Matterbridge in the same moment. 
 I suggest to first update all plugins without restarting and then to update Matterbridge so when it restarts, all versions will be the latest.
 
-## [2.1.0.dev.7] - 2025-01-30
+## [2.1.0.dev.8] - 2025-01-31
 
 ### Added
 
