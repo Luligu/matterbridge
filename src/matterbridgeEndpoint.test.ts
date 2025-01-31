@@ -198,7 +198,7 @@ describe('MatterbridgeEndpoint class', () => {
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
-    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-profile', 'Jest', '-bridge', '-logger', 'info', '-matterlogger', 'info'];
+    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-profile', 'JestMain', '-bridge', '-logger', 'info', '-matterlogger', 'info'];
     matterbridge = await Matterbridge.loadInstance(true);
     await matterbridge.matterStorageManager?.createContext('events')?.clearAll();
     await matterbridge.matterStorageManager?.createContext('fabrics')?.clearAll();
