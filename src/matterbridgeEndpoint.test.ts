@@ -104,6 +104,7 @@ import {
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/main/behaviors';
 import { getAttributeId, getClusterId, updateAttribute } from './matterbridgeEndpointHelpers.js';
+import exp from 'constants';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
@@ -227,7 +228,23 @@ describe('MatterbridgeEndpoint class', () => {
     jest.restoreAllMocks();
   }, 30000);
 
-  describe('MatterbridgeDefault', () => {
+  describe('MatterbridgeEndpoint', () => {
+    async function add(device: MatterbridgeEndpoint): Promise<void> {
+      expect(device).toBeDefined();
+      device.addRequiredClusterServers();
+      expect(matterbridge.serverNode).toBeDefined();
+      expect(matterbridge.serverNode?.lifecycle.isReady).toBeTruthy();
+      expect(matterbridge.serverNode?.construction.status).toBe(Lifecycle.Status.Active);
+      expect(matterbridge.aggregatorNode).toBeDefined();
+      expect(matterbridge.aggregatorNode?.lifecycle.isReady).toBeTruthy();
+      expect(matterbridge.aggregatorNode?.construction.status).toBe(Lifecycle.Status.Active);
+      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
+      expect(device.lifecycle.isReady).toBeTruthy();
+      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      if (device.uniqueStorageKey === undefined) return;
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`\x1B[39mMatterbridge.Matterbridge.${device.uniqueStorageKey.replaceAll(' ', '')} \x1B[0mready`));
+    }
+
     test('constructor', async () => {
       const deviceType = onOffLight;
       const device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight1' });
@@ -241,10 +258,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.hasAttributeServer('descriptor', 'tagList')).toBe(false);
       expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 3 }] });
 
-      device.addRequiredClusterServers();
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      await add(device);
     });
 
     test('constructor with tagList', async () => {
@@ -260,10 +274,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.hasAttributeServer('descriptor', 'TagList')).toBe(true);
       expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ tagList: [{ mfgCode: null, namespaceId: 7, tag: 1, label: 'Light2' }], deviceTypeList: [{ deviceType: 256, revision: 3 }] });
 
-      device.addRequiredClusterServers();
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      await add(device);
     });
 
     test('loadInstance', async () => {
@@ -281,10 +292,7 @@ describe('MatterbridgeEndpoint class', () => {
 
       expect(device.getDeviceTypes()).toEqual([deviceType]);
 
-      device.addRequiredClusterServers();
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      await add(device);
     });
 
     test('serialize and deserialize', async () => {
@@ -304,10 +312,7 @@ describe('MatterbridgeEndpoint class', () => {
       }
       // expect(deserializedDevice).toBeDefined();
 
-      device.addRequiredClusterServers();
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      await add(device);
     });
 
     test('hasClusterServer', async () => {
@@ -368,10 +373,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.hasClusterServer('Thermostat')).toBe(false);
       expect(device.hasClusterServer('thermostat')).toBe(false);
 
-      device.addRequiredClusterServers();
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      await add(device);
     });
 
     test('hasAttributeServer', async () => {
@@ -406,10 +408,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.hasAttributeServer('onOff', 'onOff')).toBe(true);
       expect(device.hasAttributeServer('onOff', 'none')).toBe(false);
 
-      device.addRequiredClusterServers();
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      await add(device);
     });
 
     test('getClusterServerOptions', async () => {
@@ -452,10 +451,7 @@ describe('MatterbridgeEndpoint class', () => {
         startUpColorTemperatureMireds: null,
       });
 
-      device.addRequiredClusterServers();
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      await add(device);
     });
 
     test('getClusterServerOptions CT', async () => {
@@ -494,10 +490,7 @@ describe('MatterbridgeEndpoint class', () => {
         startUpColorTemperatureMireds: null,
       });
 
-      device.addRequiredClusterServers();
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      await add(device);
     });
 
     test('addClusterServers', async () => {
@@ -514,10 +507,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.getAllClusterServers()).toHaveLength(5);
       expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'onOff']);
 
-      device.addRequiredClusterServers();
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      await add(device);
     });
 
     test('addFixedLabel', async () => {
@@ -534,9 +524,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.getAttribute(FixedLabel.Cluster, 'labelList', device.log)).toBeUndefined();
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`getAttribute ${hk}fixedLabel.labelList${er} error: Endpoint`));
 
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      await add(device);
 
       await device.addFixedLabel('Composed2', 'Light');
       const labelList = device.getAttribute(FixedLabel.Cluster, 'labelList', device.log);
@@ -560,9 +548,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.getAttribute(UserLabel.Cluster, 'labelList', device.log)).toBeUndefined();
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`getAttribute ${hk}userLabel.labelList${er} error: Endpoint`));
 
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      await add(device);
 
       await device.addUserLabel('Composed2', 'Light');
       const labelList = device.getAttribute(UserLabel.Cluster, 'labelList', device.log);
@@ -604,10 +590,7 @@ describe('MatterbridgeEndpoint class', () => {
       await device.executeCommandHandler('toggle');
       expect(called).toBe(true);
 
-      device.addRequiredClusterServers();
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      await add(device);
     });
 
     test('addRequiredClusterServers', async () => {
@@ -623,10 +606,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.hasClusterServer(EnergyPreferenceServer)).toBe(false);
       expect(device.hasClusterServer(TimeSynchronizationServer)).toBe(false);
 
-      device.addRequiredClusterServers();
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      await add(device);
     });
 
     test('addOptionalClusterServers', async () => {
@@ -643,19 +623,15 @@ describe('MatterbridgeEndpoint class', () => {
       // expect(device.hasClusterServer(EnergyPreferenceServer)).toBe(true);
       // expect(device.hasClusterServer(TimeSynchronizationServer)).toBe(true); /
 
-      device.addRequiredClusterServers();
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      await add(device);
     });
 
     test('forEachAttribute Thermostat', async () => {
       const device = new MatterbridgeEndpoint(thermostatDevice, { uniqueStorageKey: 'EachThermostat' });
       expect(device).toBeDefined();
-      device.addRequiredClusterServers();
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+
+      await add(device);
+
       let count = 0;
       device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
         count++;
@@ -668,9 +644,9 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device).toBeDefined();
       device.addRequiredClusterServers();
       device.addOptionalClusterServers();
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+
+      await add(device);
+
       let count = 0;
       device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
         count++;
@@ -777,10 +753,8 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('add OnOffOutletWithSensors device to serverNode', async () => {
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('\x1B[39mMatterbridge.Matterbridge.OnOffOutletWithSensors \x1B[0mready'));
+      expect(device).toBeDefined();
+      await add(device);
     });
 
     test('getChildEndpoint of OnOffOutletWithSensors by number', async () => {

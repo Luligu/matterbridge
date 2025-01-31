@@ -109,7 +109,7 @@ describe('MatterbridgeEndpoint class', () => {
     jest.restoreAllMocks();
   });
 
-  describe('MatterbridgeBehavior', () => {
+  describe('MatterbridgeEndpointMatter', () => {
     const deviceType = onOffLight;
 
     test('create a context for server node', async () => {
