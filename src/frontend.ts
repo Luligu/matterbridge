@@ -37,7 +37,7 @@ import { promises as fs } from 'fs';
 import { AnsiLogger, CYAN, db, debugStringify, er, LogLevel, nf, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from './logger/export.js';
 
 // Matterbridge
-import { createZip, hasParameter, isValidNumber, isValidObject, isValidString } from './utils/utils.js';
+import { createZip, getIntParameter, hasParameter, isValidNumber, isValidObject, isValidString } from './utils/utils.js';
 import { ApiClusters, ApiDevices, BaseRegisteredPlugin, plg, RegisteredPlugin } from './matterbridgeTypes.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -76,9 +76,17 @@ export class Frontend {
   private httpsServer: https.Server | undefined;
   private webSocketServer: WebSocketServer | undefined;
 
+  private memoryData: NodeJS.MemoryUsage[] = [];
+  private memoryInterval?: NodeJS.Timeout;
+  private memoryTimeout?: NodeJS.Timeout;
+
   constructor(matterbridge: Matterbridge) {
     this.matterbridge = matterbridge;
     this.log = new AnsiLogger({ logName: 'Frontend', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
+  }
+
+  set logLevel(logLevel: LogLevel) {
+    this.log.logLevel = logLevel;
   }
 
   async start(port = 8283) {
@@ -237,6 +245,11 @@ export class Frontend {
       this.log.error(`WebSocketServer error: ${error}`);
     });
 
+    // Start the memory dump interval
+    if (hasParameter('memorydump')) {
+      this.startMemoryDump();
+    }
+
     // Endpoint to validate login code
     this.expressApp.post('/api/login', express.json(), async (req, res) => {
       const { password } = req.body;
@@ -279,21 +292,14 @@ export class Frontend {
     this.expressApp.get('/memory', async (req, res) => {
       this.log.debug('Express received /memory');
 
-      // Function to format bytes to KB or MB
-      const formatMemoryUsage = (bytes: number): string => {
-        const kb = bytes / 1024;
-        const mb = kb / 1024;
-        return mb >= 1 ? `${mb.toFixed(2)} MB` : `${kb.toFixed(2)} KB`;
-      };
-
       // Memory usage from process
       const memoryUsageRaw = process.memoryUsage();
       const memoryUsage = {
-        rss: formatMemoryUsage(memoryUsageRaw.rss),
-        heapTotal: formatMemoryUsage(memoryUsageRaw.heapTotal),
-        heapUsed: formatMemoryUsage(memoryUsageRaw.heapUsed),
-        external: formatMemoryUsage(memoryUsageRaw.external),
-        arrayBuffers: formatMemoryUsage(memoryUsageRaw.arrayBuffers),
+        rss: this.formatMemoryUsage(memoryUsageRaw.rss),
+        heapTotal: this.formatMemoryUsage(memoryUsageRaw.heapTotal),
+        heapUsed: this.formatMemoryUsage(memoryUsageRaw.heapUsed),
+        external: this.formatMemoryUsage(memoryUsageRaw.external),
+        arrayBuffers: this.formatMemoryUsage(memoryUsageRaw.arrayBuffers),
       };
 
       // V8 heap statistics
@@ -302,15 +308,15 @@ export class Frontend {
       const heapSpacesRaw = v8.getHeapSpaceStatistics();
 
       // Format heapStats
-      const heapStats = Object.fromEntries(Object.entries(heapStatsRaw).map(([key, value]) => [key, formatMemoryUsage(value as number)]));
+      const heapStats = Object.fromEntries(Object.entries(heapStatsRaw).map(([key, value]) => [key, this.formatMemoryUsage(value as number)]));
 
       // Format heapSpaces
       const heapSpaces = heapSpacesRaw.map((space) => ({
         ...space,
-        space_size: formatMemoryUsage(space.space_size),
-        space_used_size: formatMemoryUsage(space.space_used_size),
-        space_available_size: formatMemoryUsage(space.space_available_size),
-        physical_space_size: formatMemoryUsage(space.physical_space_size),
+        space_size: this.formatMemoryUsage(space.space_size),
+        space_used_size: this.formatMemoryUsage(space.space_used_size),
+        space_available_size: this.formatMemoryUsage(space.space_available_size),
+        physical_space_size: this.formatMemoryUsage(space.physical_space_size),
       }));
 
       // Define a type for the module with a _cache property
@@ -627,7 +633,9 @@ export class Frontend {
           this.log.logLevel = LogLevel.FATAL;
         }
         await this.matterbridge.nodeContext?.set('matterbridgeLogLevel', this.log.logLevel);
+        this.matterbridge.log.logLevel = this.log.logLevel;
         MatterbridgeEndpoint.logLevel = this.log.logLevel;
+        this.matterbridge.devices.logLevel = this.log.logLevel;
         this.matterbridge.plugins.logLevel = this.log.logLevel;
         for (const plugin of this.matterbridge.plugins) {
           if (!plugin.platform || !plugin.platform.config) continue;
@@ -963,6 +971,60 @@ export class Frontend {
       });
       this.webSocketServer = undefined;
     }
+
+    // Stop the memory dump interval
+    if (hasParameter('memorydump')) {
+      this.stopMemoryDump();
+    }
+  }
+
+  // Function to format bytes to KB or MB
+  private formatMemoryUsage = (bytes: number): string => {
+    const kb = bytes / 1024;
+    const mb = kb / 1024;
+    return mb >= 1 ? `${mb.toFixed(2)} MB` : `${kb.toFixed(2)} KB`;
+  };
+
+  private startMemoryDump() {
+    clearInterval(this.memoryInterval);
+    clearTimeout(this.memoryTimeout);
+
+    const interval = () => {
+      const memoryUsageRaw = process.memoryUsage();
+      this.memoryData.push(memoryUsageRaw);
+      const memoryUsage = {
+        rss: this.formatMemoryUsage(memoryUsageRaw.rss),
+        heapTotal: this.formatMemoryUsage(memoryUsageRaw.heapTotal),
+        heapUsed: this.formatMemoryUsage(memoryUsageRaw.heapUsed),
+        external: this.formatMemoryUsage(memoryUsageRaw.external),
+        arrayBuffers: this.formatMemoryUsage(memoryUsageRaw.arrayBuffers),
+      };
+      this.log.debug(`***Memory usage rss ${CYAN}${memoryUsage.rss}${db} heapTotal ${CYAN}${memoryUsage.heapTotal}${db} heapUsed ${CYAN}${memoryUsage.heapUsed}${db} external ${memoryUsage.external} arrayBuffers ${memoryUsage.arrayBuffers}`);
+    };
+    interval();
+    this.memoryInterval = setInterval(interval, getIntParameter('memorydump') ?? 1000);
+    this.memoryInterval.unref();
+    this.memoryTimeout = setTimeout(() => {
+      this.stopMemoryDump();
+    }, 360000);
+    this.memoryTimeout.unref();
+  }
+
+  private stopMemoryDump() {
+    clearInterval(this.memoryInterval);
+    this.memoryInterval = undefined;
+    clearTimeout(this.memoryTimeout);
+    this.memoryTimeout = undefined;
+    for (const memory of this.memoryData) {
+      const memoryUsage = {
+        rss: this.formatMemoryUsage(memory.rss),
+        heapTotal: this.formatMemoryUsage(memory.heapTotal),
+        heapUsed: this.formatMemoryUsage(memory.heapUsed),
+        external: this.formatMemoryUsage(memory.external),
+        arrayBuffers: this.formatMemoryUsage(memory.arrayBuffers),
+      };
+      this.log.debug(`***Memory usage rss ${CYAN}${memoryUsage.rss}${db} heapTotal ${CYAN}${memoryUsage.heapTotal}${db} heapUsed ${CYAN}${memoryUsage.heapUsed}${db} external ${memoryUsage.external} arrayBuffers ${memoryUsage.arrayBuffers}`);
+    }
   }
 
   /**
@@ -972,7 +1034,7 @@ export class Frontend {
   private async getApiSettings() {
     this.matterbridge.matterbridgeInformation.bridgeMode = this.matterbridge.bridgeMode;
     this.matterbridge.matterbridgeInformation.restartMode = this.matterbridge.restartMode;
-    this.matterbridge.matterbridgeInformation.loggerLevel = this.log.logLevel;
+    this.matterbridge.matterbridgeInformation.loggerLevel = this.matterbridge.log.logLevel;
     this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
     this.matterbridge.matterbridgeInformation.mattermdnsinterface = this.matterbridge.mdnsInterface;
     this.matterbridge.matterbridgeInformation.matteripv4address = this.matterbridge.ipv4address;

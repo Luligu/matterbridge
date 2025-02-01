@@ -434,9 +434,11 @@ export class Matterbridge extends EventEmitter {
     // Initialize PluginManager
     this.plugins = new PluginManager(this);
     await this.plugins.loadFromStorage();
+    this.plugins.logLevel = this.log.logLevel;
 
     // Initialize DeviceManager
     this.devices = new DeviceManager(this, this.nodeContext);
+    this.devices.logLevel = this.log.logLevel;
 
     // Get the plugins from node storage and create the plugins node storage contexts
     for (const plugin of this.plugins) {
@@ -646,6 +648,7 @@ export class Matterbridge extends EventEmitter {
 
     // Initialize frontend
     if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.frontend.start(getIntParameter('frontend'));
+    this.frontend.logLevel = this.log.logLevel;
 
     // Check each 60 minutes the latest versions
     this.checkUpdateInterval = setInterval(

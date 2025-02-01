@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "2.1.0-dev.10",
+  "version": "2.1.0-dev.11",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -136,9 +136,9 @@
     "npmPublishTagLatest": "copy package.json package.log && npm run prepublishOnly && npm publish --tag latest && copy package.log package.json && npm run deepCleanBuild",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u && npm run deepCleanBuild",
-    "updateMatter:latest": "npm run deepClean && npm install @matter/main@latest && npm install && npm run build",
-    "updateMatter:dev": "npm run deepClean && npm install @matter/main@dev && npm install && npm run build",
-    "updateMatter:loc": "npm run deepClean && npm install ../matter.js/packages/matter.js && npm install && npm run build",
+    "updateMatter:latest": "npm install @matter/main@latest && npm install && npm run deepClean",
+    "updateMatter:dev": "npm install @matter/main@dev && npm install && npm run deepClean",
+    "updateMatter:loc": "npm install ../matter.js/packages/matter.js && npm install && npm run deepClean",
     "install:dependencies": "npm install @matter/main @matter/nodejs @project-chip/matter.js archiver express glob https node-ansi-logger node-persist-manager ws",
     "install:typescript": "npm install --save-dev @types/express @types/node @types/ws typescript && npm run build",
     "install:eslint": "npm install --save-dev eslint @eslint/js @types/eslint__js typescript-eslint && npm run lint",
@@ -146,7 +146,7 @@
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest && npm run test"
   },
   "dependencies": {
-    "@matter/main": "0.12.1",
+    "@matter/main": "^0.12.2-alpha.0-20250201-eb5d40a2f",
     "archiver": "7.0.1",
     "express": "4.21.2",
     "glob": "11.0.1",
