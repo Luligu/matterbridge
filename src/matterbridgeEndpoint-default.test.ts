@@ -963,6 +963,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.getAttribute(AirQuality.Cluster.id, 'airQuality')).toBe(AirQuality.AirQualityEnum.Unknown);
     });
 
+    // eslint-disable-next-line jest/expect-expect
     test('pause before cleanup', async () => {
       console.log('Pausing for 30 seconds...');
       await new Promise((resolve) => setTimeout(resolve, 30000)); // Pause for 30 seconds
