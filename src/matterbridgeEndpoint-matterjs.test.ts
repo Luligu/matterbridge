@@ -82,7 +82,7 @@ describe('MatterbridgeEndpoint class', () => {
     matterbridge = await Matterbridge.loadInstance(false);
     matterbridge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
     // Setup matter environment
-    matterbridge.environment.vars.set('log.level', Level.ERROR);
+    matterbridge.environment.vars.set('log.level', Level.INFO);
     matterbridge.environment.vars.set('log.format', Format.ANSI);
     matterbridge.environment.vars.set('path.root', 'matterstorage');
     matterbridge.environment.vars.set('runtime.signals', false);
