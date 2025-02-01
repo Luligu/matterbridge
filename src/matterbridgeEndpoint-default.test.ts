@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
 import { AnsiLogger, db, er, hk, LogLevel, or } from 'node-ansi-logger';
@@ -8,8 +8,6 @@ import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
   airQualitySensor,
-  bridgedNode,
-  colorTemperatureLight,
   contactSensor,
   coverDevice,
   doorLockDevice,
@@ -22,7 +20,6 @@ import {
   modeSelect,
   occupancySensor,
   onOffLight,
-  onOffOutlet,
   powerSource,
   pressureSensor,
   pumpDevice,
@@ -36,7 +33,7 @@ import {
 } from './matterbridgeDeviceTypes.js';
 
 // @matter
-import { Lifecycle, EndpointNumber } from '@matter/main';
+import { Lifecycle } from '@matter/main';
 import {
   AirQuality,
   BasicInformation,
@@ -44,12 +41,10 @@ import {
   BooleanStateConfiguration,
   BridgedDeviceBasicInformation,
   ColorControl,
-  Descriptor,
   DoorLock,
   ElectricalEnergyMeasurement,
   ElectricalPowerMeasurement,
   FanControl,
-  FixedLabel,
   FlowMeasurement,
   Groups,
   Identify,
@@ -63,12 +58,10 @@ import {
   PumpConfigurationAndControl,
   PressureMeasurement,
   RelativeHumidityMeasurement,
-  ScenesManagement,
   SmokeCoAlarm,
   Switch,
   TemperatureMeasurement,
   Thermostat,
-  UserLabel,
   ValveConfigurationAndControl,
   WindowCovering,
 } from '@matter/main/clusters';
@@ -79,31 +72,17 @@ import {
   ColorControlBehavior,
   ColorControlServer,
   DescriptorBehavior,
-  DescriptorServer,
-  EnergyPreferenceServer,
   FormaldehydeConcentrationMeasurementServer,
-  GroupsBehavior,
-  GroupsServer,
-  IdentifyBehavior,
-  IdentifyServer,
-  LevelControlBehavior,
   NitrogenDioxideConcentrationMeasurementServer,
   OccupancySensingServer,
-  OnOffBehavior,
-  OnOffServer,
   OzoneConcentrationMeasurementServer,
   Pm10ConcentrationMeasurementServer,
   Pm1ConcentrationMeasurementServer,
   Pm25ConcentrationMeasurementServer,
   RadonConcentrationMeasurementServer,
-  TemperatureMeasurementServer,
-  ThermostatBehavior,
-  ThermostatServer,
-  ThermostatUserInterfaceConfigurationServer,
-  TimeSynchronizationServer,
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
-} from '@matter/main/behaviors';
-import { getAttributeId, getClusterId, updateAttribute } from './matterbridgeEndpointHelpers.js';
+} from '@matter/node/behaviors';
+import { updateAttribute } from './matterbridgeEndpointHelpers.js';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
@@ -123,29 +102,6 @@ describe('MatterbridgeEndpoint class', () => {
           resolve();
         } else if (Date.now() - start >= timeout) {
           reject(new Error('Timeout waiting for matterbridge.serverNode.lifecycle.isOnline to become true'));
-        } else {
-          setTimeout(checkOnline, 100); // Check every 100ms
-        }
-      };
-
-      checkOnline();
-    });
-  }
-
-  /**
-   * Waits for the Matterbridge cleanup to finish.
-   * @param {number} timeout - The maximum time to wait in milliseconds.
-   * @returns {Promise<void>} A promise that resolves when cleanup finishes or rejects if the timeout is reached.
-   */
-  async function waitForOffline(timeout = 10000): Promise<void> {
-    const start = Date.now();
-
-    return new Promise((resolve, reject) => {
-      const checkOnline = () => {
-        if ((matterbridge as any).initialized === false) {
-          resolve();
-        } else if (Date.now() - start >= timeout) {
-          reject(new Error('Timeout waiting for matterbridge.serverNode.lifecycle.isOnline to become false'));
         } else {
           setTimeout(checkOnline, 100); // Check every 100ms
         }
@@ -197,7 +153,7 @@ describe('MatterbridgeEndpoint class', () => {
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
-    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-profile', 'JestDefault', '-bridge', '-logger', 'info', '-matterlogger', 'debug'];
+    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-profile', 'JestDefault', '-bridge', '-logger', 'info', '-matterlogger', 'info'];
     matterbridge = await Matterbridge.loadInstance(true);
     await matterbridge.matterStorageManager?.createContext('events')?.clearAll();
     await matterbridge.matterStorageManager?.createContext('fabrics')?.clearAll();
@@ -220,8 +176,6 @@ describe('MatterbridgeEndpoint class', () => {
   afterAll(async () => {
     // Close the Matterbridge instance
     await matterbridge.destroyInstance();
-    // await waitForOffline();
-    // await (matterbridge as any).cleanup('destroying instance...', false);
 
     // Restore all mocks
     jest.restoreAllMocks();
@@ -966,7 +920,7 @@ describe('MatterbridgeEndpoint class', () => {
     // eslint-disable-next-line jest/expect-expect
     test('pause before cleanup', async () => {
       console.log('Pausing for 30 seconds...');
-      await new Promise((resolve) => setTimeout(resolve, 30000)); // Pause for 30 seconds
+      await new Promise((resolve) => setTimeout(resolve, 5000)); // Pause for 30 seconds
       console.log('Resuming after pause');
     }, 60000);
   });

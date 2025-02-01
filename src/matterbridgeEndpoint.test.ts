@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
 import { AnsiLogger, db, er, hk, LogLevel, or } from 'node-ansi-logger';
@@ -133,29 +133,6 @@ describe('MatterbridgeEndpoint class', () => {
     });
   }
 
-  /**
-   * Waits for the Matterbridge cleanup to finish.
-   * @param {number} timeout - The maximum time to wait in milliseconds.
-   * @returns {Promise<void>} A promise that resolves when cleanup finishes or rejects if the timeout is reached.
-   */
-  async function waitForOffline(timeout = 10000): Promise<void> {
-    const start = Date.now();
-
-    return new Promise((resolve, reject) => {
-      const checkOnline = () => {
-        if ((matterbridge as any).initialized === false) {
-          resolve();
-        } else if (Date.now() - start >= timeout) {
-          reject(new Error('Timeout waiting for matterbridge.serverNode.lifecycle.isOnline to become false'));
-        } else {
-          setTimeout(checkOnline, 100); // Check every 100ms
-        }
-      };
-
-      checkOnline();
-    });
-  }
-
   /*
   // Spy on and mock AnsiLogger.log
   const loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
@@ -198,7 +175,7 @@ describe('MatterbridgeEndpoint class', () => {
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
-    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-profile', 'JestMain', '-bridge', '-logger', 'info', '-matterlogger', 'debug'];
+    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-profile', 'JestMain', '-bridge', '-logger', 'info', '-matterlogger', 'info'];
     matterbridge = await Matterbridge.loadInstance(true);
     await matterbridge.matterStorageManager?.createContext('events')?.clearAll();
     await matterbridge.matterStorageManager?.createContext('fabrics')?.clearAll();
@@ -221,8 +198,6 @@ describe('MatterbridgeEndpoint class', () => {
   afterAll(async () => {
     // Close the Matterbridge instance
     await matterbridge.destroyInstance();
-    // await waitForOffline();
-    // await (matterbridge as any).cleanup('destroying instance...', false);
 
     // Restore all mocks
     jest.restoreAllMocks();
@@ -835,7 +810,7 @@ describe('MatterbridgeEndpoint class', () => {
     // eslint-disable-next-line jest/expect-expect
     test('pause before cleanup', async () => {
       console.log('Pausing for 30 seconds...');
-      await new Promise((resolve) => setTimeout(resolve, 30000)); // Pause for 30 seconds
+      await new Promise((resolve) => setTimeout(resolve, 5000)); // Pause for 30 seconds
       console.log('Resuming after pause');
     }, 60000);
   });
