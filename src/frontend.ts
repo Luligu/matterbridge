@@ -1023,7 +1023,10 @@ export class Frontend {
         external: this.formatMemoryUsage(memory.external),
         arrayBuffers: this.formatMemoryUsage(memory.arrayBuffers),
       };
-      this.log.debug(`***Memory usage rss ${CYAN}${memoryUsage.rss}${db} heapTotal ${CYAN}${memoryUsage.heapTotal}${db} heapUsed ${CYAN}${memoryUsage.heapUsed}${db} external ${memoryUsage.external} arrayBuffers ${memoryUsage.arrayBuffers}`);
+      // eslint-disable-next-line no-console
+      console.log(
+        `${YELLOW}Memory usage${db} rss ${CYAN}${memoryUsage.rss}${db} heapTotal ${CYAN}${memoryUsage.heapTotal}${db} heapUsed ${CYAN}${memoryUsage.heapUsed}${db} external ${memoryUsage.external} arrayBuffers ${memoryUsage.arrayBuffers}${rs}`,
+      );
     }
   }
 
