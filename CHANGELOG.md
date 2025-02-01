@@ -21,7 +21,7 @@ For this reason there is no compatibility for old versions of the plugins.
 You need to update all plugins you use and Matterbridge in the same moment. 
 I suggest to first update all plugins without restarting and then to update Matterbridge so when it restarts, all versions will be the latest.
 
-## [2.1.0.dev.11] - 2025-02-01
+## [2.1.0.dev.12] - 2025-02-01
 
 ### Added
 
@@ -38,6 +38,7 @@ I suggest to first update all plugins without restarting and then to update Matt
 - [package]: Update dependencies.
 - [package]: Update matter.js to 0.12.0.
 - [package]: Update matter.js to 0.12.1.
+- [package]: Update matter.js to 0.12.2.
 
 ### Fixed
 
