@@ -53,7 +53,7 @@ describe('PluginManager', () => {
 
   test('logLevel changes correctly', () => {
     plugins.logLevel = LogLevel.DEBUG;
-    expect(plugins.logLevel).toBe(LogLevel.DEBUG);
+    expect((plugins as any).log.logLevel).toBe(LogLevel.DEBUG);
   });
 
   test('clear and load from storage', async () => {
@@ -127,11 +127,6 @@ describe('PluginManager', () => {
   });
 
   test('resolve plugin', async () => {
-    // loggerLogSpy.mockRestore();
-    // consoleLogSpy.mockRestore();
-
-    // expect(await plugins.resolve('./package.json')).toBeNull(); // Should return the package.json file of the matterbridge with wrong imports
-    // expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.ERROR, `Please open an issue on the plugin repository to remove them.`);
     expect(await plugins.resolve('xyz')).toBeNull();
     expect(await plugins.resolve('./src/mock/plugin1')).not.toBeNull();
     expect(await plugins.resolve('./src/mock/plugin2')).not.toBeNull();
@@ -572,8 +567,6 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     expect(plugin.schemaJson).toBeDefined();
   });
 
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /*
   test('load, start and configure in parallel plugin matterbridge-example-dynamic-platform', async () => {
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
@@ -714,7 +707,6 @@ describe('PluginsManager load/start/configure/shutdown', () => {
     plugin = await plugins.shutdown(plugin, 'Test with Jest', true);
     expect(plugin).not.toBeUndefined();
   }, 60000);
-  */
 
   test('uninstall not existing plugin matterbridge-xyz', async () => {
     // loggerLogSpy.mockRestore();

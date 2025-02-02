@@ -85,6 +85,8 @@ export class PluginManager {
   }
 
   async forEach(callback: (plugin: RegisteredPlugin) => Promise<void>): Promise<void> {
+    if (this.size === 0) return;
+
     const tasks = Array.from(this._plugins.values()).map(async (plugin) => {
       try {
         await callback(plugin);
@@ -94,10 +96,6 @@ export class PluginManager {
       }
     });
     await Promise.all(tasks);
-  }
-
-  get logLevel(): LogLevel {
-    return this.log.logLevel;
   }
 
   set logLevel(logLevel: LogLevel) {
@@ -186,14 +184,8 @@ export class PluginManager {
         this.log.error(`Plugin at ${packageJsonPath} has no main entrypoint in package.json`);
         return null;
       }
-      /*
-      if (!packageJson.types) {
-        this.log.error(`Plugin at ${packageJsonPath} has no types in package.json`);
-        return null;
-      }
-      */
 
-      // Check for @project-chip packages in dependencies and devDependencies
+      // Check for @project-chip and @matter packages in dependencies and devDependencies
       const checkForProjectChipPackages = (dependencies: Record<string, string>) => {
         return Object.keys(dependencies).filter((pkg) => pkg.startsWith('@project-chip') || pkg.startsWith('@matter'));
       };
@@ -262,7 +254,6 @@ export class PluginManager {
       if (!packageJson.author) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no author in package.json`);
       if (!packageJson.type || packageJson.type !== 'module') this.log.error(`Plugin ${plg}${plugin.name}${er} is not a module`);
       if (!packageJson.main) this.log.error(`Plugin ${plg}${plugin.name}${er} has no main entrypoint in package.json`);
-      // if (!packageJson.types) this.log.error(`Plugin ${plg}${plugin.name}${er} has no types in package.json`);
       plugin.name = packageJson.name || 'Unknown name';
       plugin.version = packageJson.version || '1.0.0';
       plugin.description = packageJson.description || 'Unknown description';
@@ -270,7 +261,7 @@ export class PluginManager {
       if (!plugin.path) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no path`);
       if (!plugin.type) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no type`);
 
-      // Check for @project-chip packages in dependencies and devDependencies
+      // Check for @project-chip and @matter packages in dependencies and devDependencies
       const checkForProjectChipPackages = (dependencies: Record<string, string>) => {
         return Object.keys(dependencies).filter((pkg) => pkg.startsWith('@project-chip') || pkg.startsWith('@matter'));
       };
@@ -876,8 +867,7 @@ export class PluginManager {
    *
    * This method attempts to load the schema file for the specified plugin. If the schema file is found,
    * it reads and parses the file, updates the schema's title and description, and logs the process.
-   * It also attempts to delete any old schema file from the matterbridge directory. If the schema file
-   * is not found, it logs the event and loads a default schema for the plugin.
+   * If the schema file is not found, it logs the event and loads a default schema for the plugin.
    *
    * @param {RegisteredPlugin} plugin - The plugin whose schema is to be loaded.
    * @returns {Promise<PlatformSchema>} A promise that resolves to the loaded schema object, or the default schema if the schema file is not found.
@@ -892,7 +882,6 @@ export class PluginManager {
       schema.description = plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author;
       this.log.debug(`Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.`);
       // this.log.debug(`Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.\nSchema:${rs}\n`, schema);
-      // Delete the schema file from old position
       return schema;
     } catch (error) {
       this.log.debug(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema. Error: ${error instanceof Error ? error.message : error}`);
