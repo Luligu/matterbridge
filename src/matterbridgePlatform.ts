@@ -185,15 +185,10 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * Validates if a device is allowed based on the whitelist and blacklist configurations.
-   * The blacklist has priority over the whitelist.
-   *
-   * @param {string | string[]} device - The device name(s) to validate.
-   * @param {boolean} [log=true] - Whether to log the validation result.
-   * @returns {boolean} - Returns true if the device is allowed, false otherwise.
+   * @deprecated This method is deprecated and will be removed in future versions. Use validateDevice instead.
    */
-  validateDevice(device: string | string[], log = true): boolean {
-    return this.validateDeviceWhiteBlackList(device, log);
+  validateDeviceWhiteBlackList(device: string | string[], log = true): boolean {
+    return this.validateDevice(device, log);
   }
 
   /**
@@ -204,9 +199,8 @@ export class MatterbridgePlatform {
    * @param {boolean} [log=true] - Whether to log the validation result.
    * @returns {boolean} - Returns true if the device is allowed, false otherwise.
    *
-   * @deprecated This method is deprecated and will be removed in future versions. Use validateDevice instead.
    */
-  validateDeviceWhiteBlackList(device: string | string[], log = true): boolean {
+  validateDevice(device: string | string[], log = true): boolean {
     if (!Array.isArray(device)) device = [device];
 
     let blackListBlocked = 0;
@@ -230,15 +224,10 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * Validates if an entity is allowed based on the entity whitelist and blacklist and the device-entity blacklist configurations.
-   *
-   * @param {string} device - The device to which the entity belongs.
-   * @param {string} entity - The entity to validate.
-   * @param {boolean} [log=true] - Whether to log the validation result.
-   * @returns {boolean} - Returns true if the entity is allowed, false otherwise.
+   * @deprecated This method is deprecated and will be removed in future versions. Use validateEntity instead.
    */
-  validateEntity(device: string, entity: string, log = true): boolean {
-    return this.validateEntityBlackList(device, entity, log);
+  validateEntityBlackList(device: string, entity: string, log = true): boolean {
+    return this.validateEntity(device, entity, log);
   }
 
   /**
@@ -249,9 +238,8 @@ export class MatterbridgePlatform {
    * @param {boolean} [log=true] - Whether to log the validation result.
    * @returns {boolean} - Returns true if the entity is allowed, false otherwise.
    *
-   * @deprecated This method is deprecated and will be removed in future versions. Use validateEntity instead.
    */
-  validateEntityBlackList(device: string, entity: string, log = true): boolean {
+  validateEntity(device: string, entity: string, log = true): boolean {
     if (isValidArray(this.config.entityBlackList, 1) && this.config.entityBlackList.find((e) => e === entity)) {
       if (log) this.log.info(`Skipping entity ${CYAN}${entity}${nf} because in entityBlackList`);
       return false;
