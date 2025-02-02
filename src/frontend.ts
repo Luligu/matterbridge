@@ -76,7 +76,8 @@ export class Frontend {
   private httpsServer: https.Server | undefined;
   private webSocketServer: WebSocketServer | undefined;
 
-  private memoryData: NodeJS.MemoryUsage[] = [];
+  private prevCpus: os.CpuInfo[] = os.cpus();
+  private memoryData: (NodeJS.MemoryUsage & { cpu: string })[] = [];
   private memoryInterval?: NodeJS.Timeout;
   private memoryTimeout?: NodeJS.Timeout;
 
@@ -247,7 +248,7 @@ export class Frontend {
 
     // Start the memory dump interval
     if (hasParameter('memorydump')) {
-      this.startMemoryDump();
+      this.startCpuMemoryDump();
     }
 
     // Endpoint to validate login code
@@ -974,7 +975,7 @@ export class Frontend {
 
     // Stop the memory dump interval
     if (hasParameter('memorydump')) {
-      this.stopMemoryDump();
+      this.stopCpuMemoryDump();
     }
   }
 
@@ -985,13 +986,34 @@ export class Frontend {
     return mb >= 1 ? `${mb.toFixed(2)} MB` : `${kb.toFixed(2)} KB`;
   };
 
-  private startMemoryDump() {
+  private startCpuMemoryDump() {
     clearInterval(this.memoryInterval);
     clearTimeout(this.memoryTimeout);
 
     const interval = () => {
+      const currCpus = os.cpus();
+      if (currCpus.length !== this.prevCpus.length) {
+        this.prevCpus = currCpus; // Reset the previous cpus if the number of cpu has changed
+      }
+      let totalIdle = 0,
+        totalTick = 0;
+
+      // Get the cpu usage
+      this.prevCpus.forEach((prevCpu, i) => {
+        const currCpu = currCpus[i];
+
+        const idleDiff = currCpu.times.idle - prevCpu.times.idle;
+        const totalDiff = (Object.keys(currCpu.times) as (keyof typeof currCpu.times)[]).reduce((acc, key) => acc + (currCpu.times[key] - prevCpu.times[key]), 0);
+
+        totalIdle += idleDiff;
+        totalTick += totalDiff;
+      });
+      const cpuUsage = (100 - (totalIdle / totalTick) * 100).toFixed(2);
+      this.prevCpus = currCpus;
+
+      // Get the memory usage
       const memoryUsageRaw = process.memoryUsage();
-      this.memoryData.push(memoryUsageRaw);
+      this.memoryData.push({ ...memoryUsageRaw, cpu: cpuUsage });
       const memoryUsage = {
         rss: this.formatMemoryUsage(memoryUsageRaw.rss),
         heapTotal: this.formatMemoryUsage(memoryUsageRaw.heapTotal),
@@ -999,18 +1021,21 @@ export class Frontend {
         external: this.formatMemoryUsage(memoryUsageRaw.external),
         arrayBuffers: this.formatMemoryUsage(memoryUsageRaw.arrayBuffers),
       };
-      this.log.debug(`***Memory usage rss ${CYAN}${memoryUsage.rss}${db} heapTotal ${CYAN}${memoryUsage.heapTotal}${db} heapUsed ${CYAN}${memoryUsage.heapUsed}${db} external ${memoryUsage.external} arrayBuffers ${memoryUsage.arrayBuffers}`);
+
+      this.log.debug(
+        `***Cpu usage ${CYAN}${cpuUsage.padStart(6, ' ')} %${db} - Memory usage rss ${CYAN}${memoryUsage.rss}${db} heapTotal ${CYAN}${memoryUsage.heapTotal}${db} heapUsed ${CYAN}${memoryUsage.heapUsed}${db} external ${memoryUsage.external} arrayBuffers ${memoryUsage.arrayBuffers}`,
+      );
     };
     interval();
     this.memoryInterval = setInterval(interval, getIntParameter('memorydump') ?? 1000);
     this.memoryInterval.unref();
     this.memoryTimeout = setTimeout(() => {
-      this.stopMemoryDump();
+      this.stopCpuMemoryDump();
     }, 360000);
     this.memoryTimeout.unref();
   }
 
-  private stopMemoryDump() {
+  private stopCpuMemoryDump() {
     clearInterval(this.memoryInterval);
     this.memoryInterval = undefined;
     clearTimeout(this.memoryTimeout);
@@ -1025,16 +1050,23 @@ export class Frontend {
       };
       // eslint-disable-next-line no-console
       console.log(
-        `${YELLOW}Memory usage${db} rss ${CYAN}${memoryUsage.rss}${db} heapTotal ${CYAN}${memoryUsage.heapTotal}${db} heapUsed ${CYAN}${memoryUsage.heapUsed}${db} external ${memoryUsage.external} arrayBuffers ${memoryUsage.arrayBuffers}${rs}`,
+        `${YELLOW}Cpu usage${db} ${CYAN}${memory.cpu.padStart(6, ' ')} %${db} - ${YELLOW}Memory usage${db} rss ${CYAN}${memoryUsage.rss}${db} heapTotal ${CYAN}${memoryUsage.heapTotal}${db} heapUsed ${CYAN}${memoryUsage.heapUsed}${db} external ${memoryUsage.external} arrayBuffers ${memoryUsage.arrayBuffers}${rs}`,
       );
     }
+    this.memoryData = [];
+    this.prevCpus = [];
   }
 
   /**
-   * Retrieves the api settings.
+   * Retrieves the api settings data.
    * @returns {Promise<object>} A promise that resolve in the api settings object.
    */
   private async getApiSettings() {
+    // Update the system information
+    this.matterbridge.systemInformation.rss = this.formatMemoryUsage(process.memoryUsage().rss);
+    this.matterbridge.systemInformation.heap = this.formatMemoryUsage(process.memoryUsage().heapUsed) + ' / ' + this.formatMemoryUsage(process.memoryUsage().heapTotal);
+
+    // Update the matterbridge information
     this.matterbridge.matterbridgeInformation.bridgeMode = this.matterbridge.bridgeMode;
     this.matterbridge.matterbridgeInformation.restartMode = this.matterbridge.restartMode;
     this.matterbridge.matterbridgeInformation.loggerLevel = this.matterbridge.log.logLevel;
