@@ -48,7 +48,7 @@ export type PlatformSchemaValue = string | number | boolean | bigint | object | 
 export type PlatformSchema = Record<string, PlatformSchemaValue>;
 
 /**
- * Represents the base Matterbridge platform.
+ * Represents the base Matterbridge platform. It is extended by the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
  *
  */
 export class MatterbridgePlatform {
@@ -65,12 +65,12 @@ export class MatterbridgePlatform {
   public registeredEndpoints = new Map<string, MatterbridgeEndpoint>();
 
   /**
-   * Creates an instance of the base MatterbridgePlatform.
+   * Creates an instance of the base MatterbridgePlatform. It is extended by the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
    * @param {Matterbridge} matterbridge - The Matterbridge instance.
    * @param {AnsiLogger} log - The logger instance.
    * @param {PlatformConfig} config - The platform configuration.
    */
-  constructor(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig) {
+  protected constructor(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig) {
     this.matterbridge = matterbridge;
     this.log = log;
     this.config = config;
@@ -100,7 +100,7 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * This method can be overridden in the extended class.
+   * This method can be overridden in the extended class. Call super.onConfigure() to run checkEndpointNumbers().
    * It is called after the platform has been commissioned.
    * Use this method to perform any configuration of your devices.
    */
@@ -110,7 +110,7 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * This method can be overridden in the extended class.
+   * This method can be overridden in the extended class. Call super.onShutdown() to run checkEndpointNumbers().
    * It is called when the platform is shutting down.
    * Use this method to clean up any resources.
    * @param {string} [reason] - The reason for shutting down.
