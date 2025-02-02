@@ -105,7 +105,7 @@
     "start:controller": "node ./dist/cli.js -controller",
     "start:edge": "node ./dist/cli.js -edge -debug -logger debug -matterlogger debug",
     "start:help": "node ./dist/cli.js -help",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit",
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose --coverage",
     "test:verbose": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --watch",
