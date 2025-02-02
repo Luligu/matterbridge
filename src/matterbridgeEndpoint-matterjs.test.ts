@@ -13,7 +13,7 @@ import { DeviceTypeId, VendorId, ServerNode, Endpoint, EndpointServer, StorageCo
 import { LogFormat as Format, LogLevel as Level } from '@matter/main';
 import { BasicInformationCluster, BridgedDeviceBasicInformationCluster, Descriptor, DescriptorCluster, GroupsCluster, Identify, IdentifyCluster, OccupancySensing, OnOffCluster, ScenesManagementCluster } from '@matter/main/clusters';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
-import { logEndpoint } from '@matter/main/protocol';
+import { logEndpoint, MdnsService } from '@matter/main/protocol';
 import { OnOffPlugInUnitDevice } from '@matter/node/devices';
 import {
   DescriptorBehavior,
@@ -346,7 +346,8 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('close server node', async () => {
       expect(server).toBeDefined();
-      await (matterbridge as any).stopServerNode(server);
+      await server.close();
+      await server.env.get(MdnsService)[Symbol.asyncDispose]();
     });
   });
 });
