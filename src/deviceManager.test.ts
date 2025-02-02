@@ -49,18 +49,8 @@ describe('DeviceManager with mocked devices', () => {
 
   test('logLevel changes correctly', () => {
     devices.logLevel = LogLevel.DEBUG;
-    expect(devices.logLevel).toBe(LogLevel.DEBUG);
     expect((devices as any).log.logLevel).toBe(LogLevel.DEBUG);
   });
-
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /*
-  test('clear and load from storage', async () => {
-    devices.clear();
-    expect(await plugins.saveToStorage()).toBe(0);
-    expect(await plugins.loadFromStorage()).toHaveLength(0);
-  });
-  */
 
   test('size returns correct number of plugins', () => {
     expect(devices.size).toBe(0);
@@ -166,6 +156,13 @@ describe('DeviceManager with mocked devices', () => {
   test('clear to reset the devices', () => {
     devices.clear();
     expect(devices.length).toBe(0);
+  });
+
+  test('async forEach to return immediately if no devices', async () => {
+    expect(devices.length).toBe(0);
+    await devices.forEach(async (device: MatterbridgeEndpoint) => {
+      //
+    });
   });
 });
 

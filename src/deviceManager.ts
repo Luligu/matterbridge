@@ -149,12 +149,13 @@ export class DeviceManager {
    * @returns {Promise<void>} A promise that resolves when all callbacks have been called.
    */
   async forEach(callback: (device: MatterbridgeEndpoint) => Promise<void>): Promise<void> {
+    if (this.size === 0) return;
+
     const tasks = Array.from(this._devices.values()).map(async (device) => {
       try {
         await callback(device);
       } catch (error) {
         this.log.error(`Error processing forEach device ${dev}${device.deviceName}${er} serialNumber ${BLUE}${device.serialNumber}${er} uniqueId: ${BLUE}${device.uniqueId}${er}:`, error);
-        // throw error;
       }
     });
     await Promise.all(tasks);
