@@ -45,7 +45,7 @@ import { Frontend } from './frontend.js';
 
 // @matter
 import { DeviceTypeId, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, StorageService, Environment, ServerNode, FabricIndex, SessionsBehavior } from '@matter/main';
-import { DeviceCommissioner, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
+import { DeviceCommissioner, ExposedFabricInformation, FabricAction, PaseClient } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 
 // Default colors
@@ -1309,12 +1309,11 @@ export class Matterbridge extends EventEmitter {
       this.frontend.stop();
 
       // Stopping matter server nodes
-      this.log.info(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
+      this.log.notice(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
       if (this.bridgeMode === 'bridge') {
         if (this.serverNode) {
           await this.stopServerNode(this.serverNode);
           this.serverNode = undefined;
-          this.log.info(`Stopped matter server node for Matterbridge`);
         }
       }
       if (this.bridgeMode === 'childbridge') {
@@ -1322,15 +1321,10 @@ export class Matterbridge extends EventEmitter {
           if (plugin.serverNode) {
             await this.stopServerNode(plugin.serverNode);
             plugin.serverNode = undefined;
-            this.log.info(`Stopped matter server node for ${plugin.name}`);
           }
         }
       }
-      this.log.info('Stopped matter server nodes');
-
-      // Stop matter MdnsService
-      // await this.environment.get(MdnsService)[Symbol.asyncDispose]();
-      // this.log.info('Stopped MdnsService');
+      this.log.notice('Stopped matter server nodes');
 
       // Stop matter storage
       await this.stopMatterStorage();
@@ -2176,7 +2170,9 @@ export class Matterbridge extends EventEmitter {
     if (!matterServerNode) return;
     this.log.notice(`Closing ${matterServerNode.id} server node`);
     await matterServerNode.close();
-    await matterServerNode.env.get(MdnsService)[Symbol.asyncDispose]();
+    this.log.info(`Closed ${matterServerNode.id} server node`);
+    // await matterServerNode.env.get(MdnsService)[Symbol.asyncDispose]();
+    // this.log.info(`Closed ${matterServerNode.id} MdnsService`);
   }
 
   /**
