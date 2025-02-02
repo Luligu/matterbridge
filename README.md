@@ -414,7 +414,7 @@ So far is the only controller supporting some Matter 1.2 and 1.3 device type:
 
 Electrical measurements:
 
-- electrical measurements from EveHistoryCluster (used in Matterbridge plugins)
+- electrical measurements from EveHistoryCluster (used in old Matterbridge plugins)
 - electricalSensor code 0x0510 with clusters: ElectricalPowerMeasurement and ElectricalEnergyMeasurement
 
 Other supported cluster:

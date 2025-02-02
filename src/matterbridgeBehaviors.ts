@@ -28,6 +28,19 @@
 // @matter
 import { Behavior, NamedHandler } from '@matter/main';
 
+// @matter clusters
+import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
+import { ColorControl } from '@matter/main/clusters/color-control';
+import { FanControl } from '@matter/main/clusters/fan-control';
+import { Identify } from '@matter/main/clusters/identify';
+import { LevelControl } from '@matter/main/clusters/level-control';
+import { WindowCovering } from '@matter/main/clusters/window-covering';
+import { Thermostat } from '@matter/main/clusters/thermostat';
+import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-configuration-and-control';
+import { ModeSelect } from '@matter/main/clusters/mode-select';
+import { SmokeCoAlarm } from '@matter/main/clusters/smoke-co-alarm';
+import { BooleanStateConfigurationServer } from '@matter/main/behaviors/boolean-state-configuration';
+
 // @matter behaviors
 import { IdentifyServer } from '@matter/main/behaviors/identify';
 import { OnOffServer } from '@matter/main/behaviors/on-off';
@@ -38,17 +51,9 @@ import { DoorLockServer } from '@matter/main/behaviors/door-lock';
 import { FanControlServer } from '@matter/main/behaviors/fan-control';
 import { ThermostatServer } from '@matter/main/behaviors/thermostat';
 import { ValveConfigurationAndControlServer } from '@matter/main/behaviors/valve-configuration-and-control';
-import { BooleanStateConfigurationServer } from '@matter/main/behaviors/boolean-state-configuration';
-
-// @matter clusters
-import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
-import { ColorControl } from '@matter/main/clusters/color-control';
-import { FanControl } from '@matter/main/clusters/fan-control';
-import { Identify } from '@matter/main/clusters/identify';
-import { LevelControl } from '@matter/main/clusters/level-control';
-import { Thermostat } from '@matter/main/clusters/thermostat';
-import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-configuration-and-control';
-import { WindowCovering } from '@matter/main/clusters/window-covering';
+import { ModeSelectServer } from '@matter/main/behaviors/mode-select';
+import { SmokeCoAlarmServer } from '@matter/main/behaviors/smoke-co-alarm';
+import { SwitchServer } from '@matter/main/behaviors/switch';
 
 // AnsiLogger module
 import { AnsiLogger } from './logger/export.js';
@@ -81,7 +86,6 @@ export class MatterbridgeBehaviorDevice {
     this.log.info(`Identifying device for ${identifyTime} seconds`);
     this.commandHandler.executeHandler('identify', { request: { identifyTime }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
-
   triggerEffect({ effectIdentifier, effectVariant }: Identify.TriggerEffectRequest) {
     this.log.info(`Triggering effect ${effectIdentifier} variant ${effectVariant}`);
     this.commandHandler.executeHandler('triggerEffect', { request: { effectIdentifier, effectVariant }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
@@ -177,6 +181,16 @@ export class MatterbridgeBehaviorDevice {
   close() {
     this.log.info(`Closing valve (endpoint ${this.endpointId}.${this.endpointNumber})`);
     this.commandHandler.executeHandler('close', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  changeToMode({ newMode }: ModeSelect.ChangeToModeRequest) {
+    this.log.info(`Changing mode to ${newMode}`);
+    this.commandHandler.executeHandler('changeToMode', { request: { newMode }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  selfTestRequest() {
+    this.log.info(`Testing SmokeCOAlarm (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.commandHandler.executeHandler('selfTestRequest', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
 
   enableDisableAlarm({ alarmsToEnableDisable }: BooleanStateConfiguration.EnableDisableAlarmRequest) {
@@ -315,6 +329,14 @@ export class MatterbridgeDoorLockServer extends DoorLockServer {
   }
 }
 
+export class MatterbridgeModeSelectServer extends ModeSelectServer {
+  override async changeToMode({ newMode }: ModeSelect.ChangeToModeRequest) {
+    const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
+    device.changeToMode({ newMode });
+    super.changeToMode({ newMode });
+  }
+}
+
 export class MatterbridgeFanControlServer extends FanControlServer.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step) {
   override async step({ direction, wrap, lowestOff }: FanControl.StepRequest) {
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
@@ -378,10 +400,24 @@ export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigu
   }
 }
 
+export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm) {
+  override async selfTestRequest() {
+    const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
+    device.selfTestRequest();
+    super.selfTestRequest();
+  }
+}
+
 export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateConfigurationServer.with(BooleanStateConfiguration.Feature.Visual, BooleanStateConfiguration.Feature.Audible, BooleanStateConfiguration.Feature.SensitivityLevel) {
   override async enableDisableAlarm({ alarmsToEnableDisable }: BooleanStateConfiguration.EnableDisableAlarmRequest) {
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     device.enableDisableAlarm({ alarmsToEnableDisable });
     super.enableDisableAlarm({ alarmsToEnableDisable });
+  }
+}
+
+export class MatterbridgeSwitchServer extends SwitchServer {
+  override initialize() {
+    // Do nothing here, as the device will handle the switch logic
   }
 }

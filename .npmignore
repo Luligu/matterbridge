@@ -206,3 +206,7 @@ matterstorage.backup
 
 TODO.md
 CODEOWNERS
+
+eveHistory.test.ts
+eveHistoryBehavior.ts
+eveHistoryCluster.ts

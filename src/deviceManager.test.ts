@@ -211,12 +211,12 @@ describe('DeviceManager with real devices', () => {
     MatterbridgeEndpoint.bridgeMode = 'bridge';
     const device1 = await MatterbridgeEndpoint.loadInstance(contactSensor);
     device1.createDefaultBridgedDeviceBasicInformationClusterServer('Contact sensor', 'Serial', 1, 'VendorName', 'ProductName');
-    device1.addRequiredClusterServers(device1);
+    device1.addRequiredClusterServers();
     device1.plugin = 'matterbridge-mock1';
 
     const device2 = await MatterbridgeEndpoint.loadInstance(occupancySensor);
     device2.createDefaultBridgedDeviceBasicInformationClusterServer('Ocuppancy sensor', 'Serial', 1, 'VendorName', 'ProductName');
-    device2.addRequiredClusterServers(device2);
+    device2.addRequiredClusterServers();
     device2.plugin = 'matterbridge-mock2';
 
     await matterbridge.addBridgedEndpoint('matterbridge-mock1', device1);

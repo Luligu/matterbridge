@@ -10,10 +10,11 @@ import { wait, waiter } from './utils/utils.js';
 import WebSocket from 'ws';
 import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { Identify } from '@matter/main/clusters';
-import { RegisteredPlugin, MatterbridgeDevice } from './matterbridgeTypes.js';
+import { RegisteredPlugin } from './matterbridgeTypes.js';
 import { MdnsService } from '@matter/main/protocol';
 import http from 'http';
 import { AddressInfo } from 'net';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -162,9 +163,6 @@ describe('Matterbridge frontend express test', () => {
     expect(response.body.matterbridgeInformation).toHaveProperty('restartMode');
     expect(response.body.matterbridgeInformation).toHaveProperty('loggerLevel');
     expect(response.body.matterbridgeInformation).toHaveProperty('matterLoggerLevel');
-    expect(response.body.matterbridgeInformation).toHaveProperty('mattermdnsinterface');
-    expect(response.body.matterbridgeInformation).toHaveProperty('matteripv4address');
-    expect(response.body.matterbridgeInformation).toHaveProperty('matteripv6address');
     expect(response.body.matterbridgeInformation).toHaveProperty('matterPort');
     expect(response.body.matterbridgeInformation).toHaveProperty('profile');
   });
@@ -354,7 +352,7 @@ describe('Matterbridge frontend websocket test', () => {
   }, 60000);
 
   test('create an switch device: Switch 1 for plugin matterbridge-mock1', async () => {
-    const device = new MatterbridgeDevice(onOffSwitch);
+    const device = new MatterbridgeEndpoint(onOffSwitch);
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer(0, Identify.IdentifyType.None);
     device.createDefaultGroupsClusterServer();
@@ -368,7 +366,7 @@ describe('Matterbridge frontend websocket test', () => {
   }, 60000);
 
   test('create an light device: Light 1 for plugin matterbridge-mock2', async () => {
-    const device = new MatterbridgeDevice(onOffLight);
+    const device = new MatterbridgeEndpoint(onOffLight);
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer(0, Identify.IdentifyType.None);
     device.createDefaultGroupsClusterServer();
@@ -381,7 +379,7 @@ describe('Matterbridge frontend websocket test', () => {
   }, 60000);
 
   test('create an outlet device: Outlet 1 for plugin matterbridge-mock3', async () => {
-    const device = new MatterbridgeDevice(onOffOutlet);
+    const device = new MatterbridgeEndpoint(onOffOutlet);
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer(0, Identify.IdentifyType.None);
     device.createDefaultGroupsClusterServer();

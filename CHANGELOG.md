@@ -15,11 +15,43 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 ### Breaking Changes
 
-Starting from v. 2.0.0 Matterbridge is running only in mode edge (no parameter needed).
-The legacy old api have been removed.
+Starting from v. 2.0.0 Matterbridge is running only in mode edge (no parameter needed and no badge in the frontend).
 
-The frontend has a new dark and light mode. The dark mode is now the default mode.
-It is possible to change the mode (Classic, Dark or Light) in Settings, Matterbridge settings.
+With this release v. 2.1.0, the legacy old api of matter.js have been completely removed from Matterbridge and from all plugins.
+
+For this reason there is no compatibility for old versions of the plugins.
+
+You need to update all plugins you use and Matterbridge in the same moment. 
+
+I suggest to first update all plugins without restarting and then to update Matterbridge so when it restarts, all versions will be the latest.
+
+Compatibility list:
+matterbridge-shelly v. 1.1.5
+matterbridge-zigbee2mqtt v. 2.4.4
+matterbridge-somfy-tahoma v. 1.2.3
+matterbridge-hass v. 0.0.8
+
+## [2.1.0] - 2025-02-02
+
+### Added
+
+- [matterbridge]: Add MatterbridgeModeSelectServer.
+- [matterbridge]: Add MatterbridgeSwitchServer.
+- [frontend]: Add api/advertise to turn on matter advertising in bridge mode.
+- [frontend]: Frontend v.2.4.0.
+- [matterbridge]: Added deep memory scan details.
+
+### Changed
+
+- [package]: Removed legacy imports.
+- [package]: Update dependencies.
+- [package]: Update matter.js to 0.12.0.
+- [package]: Update matter.js to 0.12.1.
+- [package]: Update matter.js to 0.12.2.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
 
 ## [2.0.0] - 2025-01-20
 

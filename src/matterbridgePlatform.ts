@@ -57,7 +57,7 @@ export class MatterbridgePlatform {
   public config: PlatformConfig = {};
   public name = ''; // Will be set by the loadPlugin() method using the package.json value.
   public type = ''; // Will be set by the extending classes.
-  public version = ''; // Will be set by the loadPlugin() method using the package.json value.
+  public version = '1.0.0'; // Will be set by the loadPlugin() method using the package.json value.
   public storage: NodeStorageManager | undefined;
   public context: NodeStorage | undefined;
   public selectDevice = new Map<string, { serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }>();
@@ -289,7 +289,7 @@ export class MatterbridgePlatform {
         continue;
       }
       if (endpointMap.has(device.uniqueId) && endpointMap.get(device.uniqueId) !== device.maybeNumber) {
-        this.log.warn(`Endpoint number for device ${CYAN}${device.uniqueId}${wr} changed from ${CYAN}${endpointMap.get(device.uniqueId)}${wr} to ${CYAN}${device.maybeNumber}${wr}`);
+        this.log.warn(`Endpoint number for device ${CYAN}${device.deviceName}${wr} changed from ${CYAN}${endpointMap.get(device.uniqueId)}${wr} to ${CYAN}${device.maybeNumber}${wr}`);
         endpointMap.set(device.uniqueId, device.maybeNumber);
       }
       if (!endpointMap.has(device.uniqueId)) {
@@ -300,7 +300,7 @@ export class MatterbridgePlatform {
         const childId = child.id;
         if (!childId || !child.maybeNumber) continue;
         if (endpointMap.has(device.uniqueId + separator + childId) && endpointMap.get(device.uniqueId + separator + childId) !== child.maybeNumber) {
-          this.log.warn(`Child endpoint number for device ${CYAN}${device.uniqueId}${wr}.${CYAN}${childId}${wr} changed from ${CYAN}${endpointMap.get(device.uniqueId + separator + childId)}${wr} to ${CYAN}${child.maybeNumber}${wr}`);
+          this.log.warn(`Child endpoint number for device ${CYAN}${device.deviceName}${wr}.${CYAN}${childId}${wr} changed from ${CYAN}${endpointMap.get(device.uniqueId + separator + childId)}${wr} to ${CYAN}${child.maybeNumber}${wr}`);
           endpointMap.set(device.uniqueId + separator + childId, child.maybeNumber);
         }
         if (!endpointMap.has(device.uniqueId + separator + childId)) {

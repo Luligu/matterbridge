@@ -4,7 +4,7 @@
  * @file frontend.ts
  * @author Luca Liguori
  * @date 2025-01-13
- * @version 1.0.0
+ * @version 1.0.1
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -37,7 +37,7 @@ import { promises as fs } from 'fs';
 import { AnsiLogger, CYAN, db, debugStringify, er, LogLevel, nf, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from './logger/export.js';
 
 // Matterbridge
-import { createZip, hasParameter, isValidNumber, isValidObject, isValidString } from './utils/utils.js';
+import { createZip, getIntParameter, hasParameter, isValidNumber, isValidObject, isValidString } from './utils/utils.js';
 import { ApiClusters, ApiDevices, BaseRegisteredPlugin, plg, RegisteredPlugin } from './matterbridgeTypes.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -76,9 +76,17 @@ export class Frontend {
   private httpsServer: https.Server | undefined;
   private webSocketServer: WebSocketServer | undefined;
 
+  private memoryData: NodeJS.MemoryUsage[] = [];
+  private memoryInterval?: NodeJS.Timeout;
+  private memoryTimeout?: NodeJS.Timeout;
+
   constructor(matterbridge: Matterbridge) {
     this.matterbridge = matterbridge;
     this.log = new AnsiLogger({ logName: 'Frontend', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
+  }
+
+  set logLevel(logLevel: LogLevel) {
+    this.log.logLevel = logLevel;
   }
 
   async start(port = 8283) {
@@ -237,6 +245,11 @@ export class Frontend {
       this.log.error(`WebSocketServer error: ${error}`);
     });
 
+    // Start the memory dump interval
+    if (hasParameter('memorydump')) {
+      this.startMemoryDump();
+    }
+
     // Endpoint to validate login code
     this.expressApp.post('/api/login', express.json(), async (req, res) => {
       const { password } = req.body;
@@ -279,21 +292,14 @@ export class Frontend {
     this.expressApp.get('/memory', async (req, res) => {
       this.log.debug('Express received /memory');
 
-      // Function to format bytes to KB or MB
-      const formatMemoryUsage = (bytes: number): string => {
-        const kb = bytes / 1024;
-        const mb = kb / 1024;
-        return mb >= 1 ? `${mb.toFixed(2)} MB` : `${kb.toFixed(2)} KB`;
-      };
-
       // Memory usage from process
       const memoryUsageRaw = process.memoryUsage();
       const memoryUsage = {
-        rss: formatMemoryUsage(memoryUsageRaw.rss),
-        heapTotal: formatMemoryUsage(memoryUsageRaw.heapTotal),
-        heapUsed: formatMemoryUsage(memoryUsageRaw.heapUsed),
-        external: formatMemoryUsage(memoryUsageRaw.external),
-        arrayBuffers: formatMemoryUsage(memoryUsageRaw.arrayBuffers),
+        rss: this.formatMemoryUsage(memoryUsageRaw.rss),
+        heapTotal: this.formatMemoryUsage(memoryUsageRaw.heapTotal),
+        heapUsed: this.formatMemoryUsage(memoryUsageRaw.heapUsed),
+        external: this.formatMemoryUsage(memoryUsageRaw.external),
+        arrayBuffers: this.formatMemoryUsage(memoryUsageRaw.arrayBuffers),
       };
 
       // V8 heap statistics
@@ -302,15 +308,15 @@ export class Frontend {
       const heapSpacesRaw = v8.getHeapSpaceStatistics();
 
       // Format heapStats
-      const heapStats = Object.fromEntries(Object.entries(heapStatsRaw).map(([key, value]) => [key, formatMemoryUsage(value as number)]));
+      const heapStats = Object.fromEntries(Object.entries(heapStatsRaw).map(([key, value]) => [key, this.formatMemoryUsage(value as number)]));
 
       // Format heapSpaces
       const heapSpaces = heapSpacesRaw.map((space) => ({
         ...space,
-        space_size: formatMemoryUsage(space.space_size),
-        space_used_size: formatMemoryUsage(space.space_used_size),
-        space_available_size: formatMemoryUsage(space.space_available_size),
-        physical_space_size: formatMemoryUsage(space.physical_space_size),
+        space_size: this.formatMemoryUsage(space.space_size),
+        space_used_size: this.formatMemoryUsage(space.space_used_size),
+        space_available_size: this.formatMemoryUsage(space.space_available_size),
+        physical_space_size: this.formatMemoryUsage(space.physical_space_size),
       }));
 
       // Define a type for the module with a _cache property
@@ -319,6 +325,24 @@ export class Frontend {
       }
       const { default: module } = await import('module');
       const loadedModules = (module as unknown as ModuleWithCache)._cache ? Object.keys((module as unknown as ModuleWithCache)._cache).sort() : [];
+
+      /*
+      if (req.query.heapdump === 'true') {
+        const { default: heapdump } = await import('heapdump');
+        const filename = `heapdump-${Date.now()}.heapsnapshot`;
+
+        heapdump.writeSnapshot(filename, (err, dumpFilename) => {
+          if (err) {
+            this.log.error(`Heap dump error: ${err.message}`);
+            return res.status(500).json({ error: 'Heap dump failed', details: err.message });
+          }
+
+          this.log.info(`Heap dump written to ${dumpFilename}`);
+          return res.status(200).json({ ...memoryReport, heapdump: dumpFilename });
+        });
+        return; // Exit early since heapdump response is handled inside callback
+      }
+      */
 
       const memoryReport = {
         memoryUsage,
@@ -330,34 +354,27 @@ export class Frontend {
       res.status(200).json(memoryReport);
     });
 
+    // Endpoint to start advertising the server node
+    this.expressApp.get('/api/advertise', express.json(), async (req, res) => {
+      const pairingCodes = await this.matterbridge.advertiseServerNode(this.matterbridge.serverNode);
+      if (pairingCodes) {
+        const { manualPairingCode, qrPairingCode } = pairingCodes;
+        res.json({ manualPairingCode, qrPairingCode: 'https://project-chip.github.io/connectedhomeip/qrcode.html?data=' + qrPairingCode });
+      } else {
+        res.status(500).json({ error: 'Failed to generate pairing codes' });
+      }
+    });
+
     // Endpoint to provide settings
     this.expressApp.get('/api/settings', express.json(), async (req, res) => {
       this.log.debug('The frontend sent /api/settings');
-      this.matterbridge.matterbridgeInformation.bridgeMode = this.matterbridge.bridgeMode;
-      this.matterbridge.matterbridgeInformation.restartMode = this.matterbridge.restartMode;
-      this.matterbridge.matterbridgeInformation.loggerLevel = this.log.logLevel;
-      this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
-      this.matterbridge.matterbridgeInformation.mattermdnsinterface = (await this.matterbridge.nodeContext?.get<string>('mattermdnsinterface', '')) || '';
-      this.matterbridge.matterbridgeInformation.matteripv4address = (await this.matterbridge.nodeContext?.get<string>('matteripv4address', '')) || '';
-      this.matterbridge.matterbridgeInformation.matteripv6address = (await this.matterbridge.nodeContext?.get<string>('matteripv6address', '')) || '';
-      this.matterbridge.matterbridgeInformation.matterPort = (await this.matterbridge.nodeContext?.get<number>('matterport', 5540)) ?? 5540;
-      this.matterbridge.matterbridgeInformation.matterDiscriminator = await this.matterbridge.nodeContext?.get<number>('matterdiscriminator');
-      this.matterbridge.matterbridgeInformation.matterPasscode = await this.matterbridge.nodeContext?.get<number>('matterpasscode');
-      this.matterbridge.matterbridgeInformation.matterbridgePaired = this.matterbridge.matterbridgePaired;
-      this.matterbridge.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridge.matterbridgeQrPairingCode;
-      this.matterbridge.matterbridgeInformation.matterbridgeManualPairingCode = this.matterbridge.matterbridgeManualPairingCode;
-      this.matterbridge.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridge.matterbridgeFabricInformations;
-      this.matterbridge.matterbridgeInformation.matterbridgeSessionInformations = Array.from(this.matterbridge.matterbridgeSessionInformations.values());
-      this.matterbridge.matterbridgeInformation.profile = this.matterbridge.profile;
-      const response = { systemInformation: this.matterbridge.systemInformation, matterbridgeInformation: this.matterbridge.matterbridgeInformation };
-      // this.log.debug('Response:', debugStringify(response));
-      res.json(response);
+      res.json(await this.getApiSettings());
     });
 
     // Endpoint to provide plugins
     this.expressApp.get('/api/plugins', async (req, res) => {
       this.log.debug('The frontend sent /api/plugins');
-      const response = await this.getBaseRegisteredPlugins();
+      const response = this.getBaseRegisteredPlugins();
       // this.log.debug('Response:', debugStringify(response));
       res.json(response);
     });
@@ -616,7 +633,9 @@ export class Frontend {
           this.log.logLevel = LogLevel.FATAL;
         }
         await this.matterbridge.nodeContext?.set('matterbridgeLogLevel', this.log.logLevel);
+        this.matterbridge.log.logLevel = this.log.logLevel;
         MatterbridgeEndpoint.logLevel = this.log.logLevel;
+        this.matterbridge.devices.logLevel = this.log.logLevel;
         this.matterbridge.plugins.logLevel = this.log.logLevel;
         for (const plugin of this.matterbridge.plugins) {
           if (!plugin.platform || !plugin.platform.config) continue;
@@ -952,6 +971,87 @@ export class Frontend {
       });
       this.webSocketServer = undefined;
     }
+
+    // Stop the memory dump interval
+    if (hasParameter('memorydump')) {
+      this.stopMemoryDump();
+    }
+  }
+
+  // Function to format bytes to KB or MB
+  private formatMemoryUsage = (bytes: number): string => {
+    const kb = bytes / 1024;
+    const mb = kb / 1024;
+    return mb >= 1 ? `${mb.toFixed(2)} MB` : `${kb.toFixed(2)} KB`;
+  };
+
+  private startMemoryDump() {
+    clearInterval(this.memoryInterval);
+    clearTimeout(this.memoryTimeout);
+
+    const interval = () => {
+      const memoryUsageRaw = process.memoryUsage();
+      this.memoryData.push(memoryUsageRaw);
+      const memoryUsage = {
+        rss: this.formatMemoryUsage(memoryUsageRaw.rss),
+        heapTotal: this.formatMemoryUsage(memoryUsageRaw.heapTotal),
+        heapUsed: this.formatMemoryUsage(memoryUsageRaw.heapUsed),
+        external: this.formatMemoryUsage(memoryUsageRaw.external),
+        arrayBuffers: this.formatMemoryUsage(memoryUsageRaw.arrayBuffers),
+      };
+      this.log.debug(`***Memory usage rss ${CYAN}${memoryUsage.rss}${db} heapTotal ${CYAN}${memoryUsage.heapTotal}${db} heapUsed ${CYAN}${memoryUsage.heapUsed}${db} external ${memoryUsage.external} arrayBuffers ${memoryUsage.arrayBuffers}`);
+    };
+    interval();
+    this.memoryInterval = setInterval(interval, getIntParameter('memorydump') ?? 1000);
+    this.memoryInterval.unref();
+    this.memoryTimeout = setTimeout(() => {
+      this.stopMemoryDump();
+    }, 360000);
+    this.memoryTimeout.unref();
+  }
+
+  private stopMemoryDump() {
+    clearInterval(this.memoryInterval);
+    this.memoryInterval = undefined;
+    clearTimeout(this.memoryTimeout);
+    this.memoryTimeout = undefined;
+    for (const memory of this.memoryData) {
+      const memoryUsage = {
+        rss: this.formatMemoryUsage(memory.rss),
+        heapTotal: this.formatMemoryUsage(memory.heapTotal),
+        heapUsed: this.formatMemoryUsage(memory.heapUsed),
+        external: this.formatMemoryUsage(memory.external),
+        arrayBuffers: this.formatMemoryUsage(memory.arrayBuffers),
+      };
+      // eslint-disable-next-line no-console
+      console.log(
+        `${YELLOW}Memory usage${db} rss ${CYAN}${memoryUsage.rss}${db} heapTotal ${CYAN}${memoryUsage.heapTotal}${db} heapUsed ${CYAN}${memoryUsage.heapUsed}${db} external ${memoryUsage.external} arrayBuffers ${memoryUsage.arrayBuffers}${rs}`,
+      );
+    }
+  }
+
+  /**
+   * Retrieves the api settings.
+   * @returns {Promise<object>} A promise that resolve in the api settings object.
+   */
+  private async getApiSettings() {
+    this.matterbridge.matterbridgeInformation.bridgeMode = this.matterbridge.bridgeMode;
+    this.matterbridge.matterbridgeInformation.restartMode = this.matterbridge.restartMode;
+    this.matterbridge.matterbridgeInformation.loggerLevel = this.matterbridge.log.logLevel;
+    this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
+    this.matterbridge.matterbridgeInformation.mattermdnsinterface = this.matterbridge.mdnsInterface;
+    this.matterbridge.matterbridgeInformation.matteripv4address = this.matterbridge.ipv4address;
+    this.matterbridge.matterbridgeInformation.matteripv6address = this.matterbridge.ipv6address;
+    this.matterbridge.matterbridgeInformation.matterPort = (await this.matterbridge.nodeContext?.get<number>('matterport', 5540)) ?? 5540;
+    this.matterbridge.matterbridgeInformation.matterDiscriminator = await this.matterbridge.nodeContext?.get<number>('matterdiscriminator');
+    this.matterbridge.matterbridgeInformation.matterPasscode = await this.matterbridge.nodeContext?.get<number>('matterpasscode');
+    this.matterbridge.matterbridgeInformation.matterbridgePaired = this.matterbridge.matterbridgePaired;
+    this.matterbridge.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridge.matterbridgeQrPairingCode;
+    this.matterbridge.matterbridgeInformation.matterbridgeManualPairingCode = this.matterbridge.matterbridgeManualPairingCode;
+    this.matterbridge.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridge.matterbridgeFabricInformations;
+    this.matterbridge.matterbridgeInformation.matterbridgeSessionInformations = this.matterbridge.matterbridgeSessionInformations;
+    this.matterbridge.matterbridgeInformation.profile = this.matterbridge.profile;
+    return { systemInformation: this.matterbridge.systemInformation, matterbridgeInformation: this.matterbridge.matterbridgeInformation };
   }
 
   /**
@@ -959,7 +1059,7 @@ export class Frontend {
    * @param {MatterbridgeDevice} device - The MatterbridgeDevice object.
    * @returns {string} The attributes description of the cluster servers in the device.
    */
-  protected getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
+  private getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
     const getAttribute = (device: MatterbridgeEndpoint, cluster: string, attribute: string) => {
       let value = undefined;
       Object.entries(device.state)
@@ -992,61 +1092,65 @@ export class Frontend {
     };
 
     let attributes = '';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Object.entries(device.state as unknown as Record<string, Record<string, any>>).forEach(([clusterName, clusterAttributes]) => {
-      Object.entries(clusterAttributes).forEach(([attributeName, attributeValue]) => {
-        // console.log(`Cluster: ${clusterName} Attribute: ${attributeName} Value: ${attributeValue}`);
-        if (clusterName === 'onOff' && attributeName === 'onOff') attributes += `OnOff: ${attributeValue} `;
-        if (clusterName === 'switch' && attributeName === 'currentPosition') attributes += `Position: ${attributeValue} `;
-        if (clusterName === 'windowCovering' && attributeName === 'currentPositionLiftPercent100ths') attributes += `Cover position: ${attributeValue / 100}% `;
-        if (clusterName === 'doorLock' && attributeName === 'lockState') attributes += `State: ${attributeValue === 1 ? 'Locked' : 'Not locked'} `;
-        if (clusterName === 'thermostat' && attributeName === 'localTemperature') attributes += `Temperature: ${attributeValue / 100}°C `;
-        if (clusterName === 'thermostat' && attributeName === 'occupiedHeatingSetpoint') attributes += `Heat to: ${attributeValue / 100}°C `;
-        if (clusterName === 'thermostat' && attributeName === 'occupiedCoolingSetpoint') attributes += `Cool to: ${attributeValue / 100}°C `;
 
-        if (clusterName === 'pumpConfigurationAndControl' && attributeName === 'operationMode') attributes += `Mode: ${attributeValue} `;
+    device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      // console.log(`${device.deviceName} => Cluster: ${clusterName}-${clusterId} Attribute: ${attributeName}-${attributeId} Value(${typeof attributeValue}): ${attributeValue}`);
+      if (typeof attributeValue === 'undefined') return;
+      if (clusterName === 'onOff' && attributeName === 'onOff') attributes += `OnOff: ${attributeValue} `;
+      if (clusterName === 'switch' && attributeName === 'currentPosition') attributes += `Position: ${attributeValue} `;
+      if (clusterName === 'windowCovering' && attributeName === 'currentPositionLiftPercent100ths' && isValidNumber(attributeValue, 0, 10000)) attributes += `Cover position: ${attributeValue / 100}% `;
+      if (clusterName === 'doorLock' && attributeName === 'lockState') attributes += `State: ${attributeValue === 1 ? 'Locked' : 'Not locked'} `;
+      if (clusterName === 'thermostat' && attributeName === 'localTemperature' && isValidNumber(attributeValue)) attributes += `Temperature: ${attributeValue / 100}°C `;
+      if (clusterName === 'thermostat' && attributeName === 'occupiedHeatingSetpoint' && isValidNumber(attributeValue)) attributes += `Heat to: ${attributeValue / 100}°C `;
+      if (clusterName === 'thermostat' && attributeName === 'occupiedCoolingSetpoint' && isValidNumber(attributeValue)) attributes += `Cool to: ${attributeValue / 100}°C `;
 
-        if (clusterName === 'valveConfigurationAndControl' && attributeName === 'currentState') attributes += `State: ${attributeValue} `;
+      if (clusterName === 'pumpConfigurationAndControl' && attributeName === 'operationMode') attributes += `Mode: ${attributeValue} `;
 
-        if (clusterName === 'levelControl' && attributeName === 'currentLevel') attributes += `Level: ${attributeValue}% `;
+      if (clusterName === 'valveConfigurationAndControl' && attributeName === 'currentState') attributes += `State: ${attributeValue} `;
 
-        if (clusterName === 'colorControl' && attributeName === 'colorMode') attributes += `Mode: ${['HS', 'XY', 'CT'][attributeValue]} `;
-        if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 0 && attributeName === 'currentHue') attributes += `Hue: ${Math.round(attributeValue)} `;
-        if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 0 && attributeName === 'currentSaturation') attributes += `Saturation: ${Math.round(attributeValue)} `;
-        if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 1 && attributeName === 'currentX') attributes += `X: ${Math.round(attributeValue)} `;
-        if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 1 && attributeName === 'currentY') attributes += `Y: ${Math.round(attributeValue)} `;
-        if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 2 && attributeName === 'colorTemperatureMireds') attributes += `ColorTemp: ${Math.round(attributeValue)} `;
+      if (clusterName === 'levelControl' && attributeName === 'currentLevel') attributes += `Level: ${attributeValue} `;
 
-        if (clusterName === 'booleanState' && attributeName === 'stateValue') attributes += `Contact: ${attributeValue} `;
-        if (clusterName === 'booleanStateConfiguration' && attributeName === 'alarmsActive') attributes += `Active alarms: ${stringify(attributeValue)} `;
+      if (clusterName === 'colorControl' && attributeName === 'colorMode' && isValidNumber(attributeValue, 0, 2)) attributes += `Mode: ${['HS', 'XY', 'CT'][attributeValue]} `;
+      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 0 && attributeName === 'currentHue' && isValidNumber(attributeValue)) attributes += `Hue: ${Math.round(attributeValue)} `;
+      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 0 && attributeName === 'currentSaturation' && isValidNumber(attributeValue)) attributes += `Saturation: ${Math.round(attributeValue)} `;
+      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 1 && attributeName === 'currentX' && isValidNumber(attributeValue)) attributes += `X: ${Math.round(attributeValue / 655.36) / 100} `;
+      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 1 && attributeName === 'currentY' && isValidNumber(attributeValue)) attributes += `Y: ${Math.round(attributeValue / 655.36) / 100} `;
+      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 2 && attributeName === 'colorTemperatureMireds' && isValidNumber(attributeValue)) attributes += `ColorTemp: ${Math.round(attributeValue)} `;
 
-        if (clusterName === 'smokeCoAlarm' && attributeName === 'smokeState') attributes += `Smoke: ${attributeValue} `;
-        if (clusterName === 'smokeCoAlarm' && attributeName === 'coState') attributes += `Co: ${attributeValue} `;
+      if (clusterName === 'booleanState' && attributeName === 'stateValue') attributes += `Contact: ${attributeValue} `;
+      if (clusterName === 'booleanStateConfiguration' && attributeName === 'alarmsActive' && isValidObject(attributeValue)) attributes += `Active alarms: ${stringify(attributeValue)} `;
 
-        if (clusterName === 'fanControl' && attributeName === 'fanMode') attributes += `Mode: ${attributeValue} `;
-        if (clusterName === 'fanControl' && attributeName === 'percentCurrent') attributes += `Percent: ${attributeValue} `;
-        if (clusterName === 'fanControl' && attributeName === 'speedCurrent') attributes += `Speed: ${attributeValue} `;
+      if (clusterName === 'smokeCoAlarm' && attributeName === 'smokeState') attributes += `Smoke: ${attributeValue} `;
+      if (clusterName === 'smokeCoAlarm' && attributeName === 'coState') attributes += `Co: ${attributeValue} `;
 
-        if (clusterName === 'occupancySensing' && attributeName === 'occupancy') attributes += `Occupancy: ${attributeValue.occupied} `;
-        if (clusterName === 'illuminanceMeasurement' && attributeName === 'measuredValue') attributes += `Illuminance: ${attributeValue} `;
-        if (clusterName === 'airQuality' && attributeName === 'airQuality') attributes += `Air quality: ${attributeValue} `;
-        if (clusterName === 'tvocMeasurement' && attributeName === 'measuredValue') attributes += `Voc: ${attributeValue} `;
-        if (clusterName === 'temperatureMeasurement' && attributeName === 'measuredValue') attributes += `Temperature: ${attributeValue / 100}°C `;
-        if (clusterName === 'relativeHumidityMeasurement' && attributeName === 'measuredValue') attributes += `Humidity: ${attributeValue / 100}% `;
-        if (clusterName === 'pressureMeasurement' && attributeName === 'measuredValue') attributes += `Pressure: ${attributeValue} `;
-        if (clusterName === 'flowMeasurement' && attributeName === 'measuredValue') attributes += `Flow: ${attributeValue} `;
-        if (clusterName === 'fixedLabel' && attributeName === 'labelList') attributes += `${getFixedLabel(device)} `;
-        if (clusterName === 'userLabel' && attributeName === 'labelList') attributes += `${getUserLabel(device)} `;
-      });
+      if (clusterName === 'fanControl' && attributeName === 'fanMode') attributes += `Mode: ${attributeValue} `;
+      if (clusterName === 'fanControl' && attributeName === 'percentCurrent') attributes += `Percent: ${attributeValue} `;
+      if (clusterName === 'fanControl' && attributeName === 'speedCurrent') attributes += `Speed: ${attributeValue} `;
+
+      if (clusterName === 'occupancySensing' && attributeName === 'occupancy' && isValidObject(attributeValue, 1)) attributes += `Occupancy: ${(attributeValue as { occupied: boolean }).occupied} `;
+      if (clusterName === 'illuminanceMeasurement' && attributeName === 'measuredValue' && isValidNumber(attributeValue)) attributes += `Illuminance: ${Math.round(Math.max(Math.pow(10, attributeValue / 10000), 0))} `;
+      if (clusterName === 'airQuality' && attributeName === 'airQuality') attributes += `Air quality: ${attributeValue} `;
+      if (clusterName === 'totalVolatileOrganicCompoundsConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `Voc: ${attributeValue} `;
+      if (clusterName === 'pm1ConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `Pm1: ${attributeValue} `;
+      if (clusterName === 'pm25ConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `Pm2.5: ${attributeValue} `;
+      if (clusterName === 'pm10ConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `Pm10: ${attributeValue} `;
+      if (clusterName === 'formaldehydeConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `CH₂O: ${attributeValue} `;
+      if (clusterName === 'temperatureMeasurement' && attributeName === 'measuredValue' && isValidNumber(attributeValue)) attributes += `Temperature: ${attributeValue / 100}°C `;
+      if (clusterName === 'relativeHumidityMeasurement' && attributeName === 'measuredValue' && isValidNumber(attributeValue)) attributes += `Humidity: ${attributeValue / 100}% `;
+      if (clusterName === 'pressureMeasurement' && attributeName === 'measuredValue') attributes += `Pressure: ${attributeValue} `;
+      if (clusterName === 'flowMeasurement' && attributeName === 'measuredValue') attributes += `Flow: ${attributeValue} `;
+      if (clusterName === 'fixedLabel' && attributeName === 'labelList') attributes += `${getFixedLabel(device)} `;
+      if (clusterName === 'userLabel' && attributeName === 'labelList') attributes += `${getUserLabel(device)} `;
     });
+    // console.log(`${device.deviceName}.forEachAttribute: ${attributes}`);
     return attributes.trimStart().trimEnd();
   }
 
   /**
    * Retrieves the base registered plugins sanitized for res.json().
-   * @returns {BaseRegisteredPlugin[]} A promise that resolves to an array of BaseRegisteredPlugin objects.
+   * @returns {BaseRegisteredPlugin[]} An array of BaseRegisteredPlugin.
    */
-  async getBaseRegisteredPlugins(): Promise<BaseRegisteredPlugin[]> {
+  private getBaseRegisteredPlugins(): BaseRegisteredPlugin[] {
     const baseRegisteredPlugins: BaseRegisteredPlugin[] = [];
     for (const plugin of this.matterbridge.plugins) {
       baseRegisteredPlugins.push({
@@ -1149,28 +1253,15 @@ export class Frontend {
       } else if (data.method === '/api/shutdown') {
         await this.matterbridge.shutdownProcess();
         return;
+      } else if (data.method === '/api/advertise') {
+        const pairingCodes = await this.matterbridge.advertiseServerNode(this.matterbridge.serverNode);
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: pairingCodes }));
+        return;
       } else if (data.method === '/api/settings') {
-        this.matterbridge.matterbridgeInformation.bridgeMode = this.matterbridge.bridgeMode;
-        this.matterbridge.matterbridgeInformation.restartMode = this.matterbridge.restartMode;
-        this.matterbridge.matterbridgeInformation.loggerLevel = this.log.logLevel;
-        this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
-        this.matterbridge.matterbridgeInformation.mattermdnsinterface = (await this.matterbridge.nodeContext?.get<string>('mattermdnsinterface', '')) || '';
-        this.matterbridge.matterbridgeInformation.matteripv4address = (await this.matterbridge.nodeContext?.get<string>('matteripv4address', '')) || '';
-        this.matterbridge.matterbridgeInformation.matteripv6address = (await this.matterbridge.nodeContext?.get<string>('matteripv6address', '')) || '';
-        this.matterbridge.matterbridgeInformation.matterPort = (await this.matterbridge.nodeContext?.get<number>('matterport', 5540)) ?? 5540;
-        this.matterbridge.matterbridgeInformation.matterDiscriminator = await this.matterbridge.nodeContext?.get<number>('matterdiscriminator');
-        this.matterbridge.matterbridgeInformation.matterPasscode = await this.matterbridge.nodeContext?.get<number>('matterpasscode');
-        this.matterbridge.matterbridgeInformation.matterbridgePaired = this.matterbridge.matterbridgePaired;
-        this.matterbridge.matterbridgeInformation.matterbridgeQrPairingCode = this.matterbridge.matterbridgeQrPairingCode;
-        this.matterbridge.matterbridgeInformation.matterbridgeManualPairingCode = this.matterbridge.matterbridgeManualPairingCode;
-        this.matterbridge.matterbridgeInformation.matterbridgeFabricInformations = this.matterbridge.matterbridgeFabricInformations;
-        this.matterbridge.matterbridgeInformation.matterbridgeSessionInformations = Array.from(this.matterbridge.matterbridgeSessionInformations.values());
-        this.matterbridge.matterbridgeInformation.profile = this.matterbridge.profile;
-        const response = { systemInformation: this.matterbridge.systemInformation, matterbridgeInformation: this.matterbridge.matterbridgeInformation };
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: await this.getApiSettings() }));
         return;
       } else if (data.method === '/api/plugins') {
-        const response = await this.getBaseRegisteredPlugins();
+        const response = this.getBaseRegisteredPlugins();
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
         return;
       } else if (data.method === '/api/devices') {
@@ -1221,7 +1312,11 @@ export class Frontend {
           const clusterServers = endpointServer.getAllClusterServers();
           clusterServers.forEach((clusterServer) => {
             Object.entries(clusterServer.attributes).forEach(([key, value]) => {
-              if (clusterServer.name === 'EveHistory') return;
+              if (clusterServer.name === 'EveHistory') {
+                if (['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(key)) {
+                  return;
+                }
+              }
               if (clusterServer.name === 'Descriptor' && key === 'deviceTypeList') {
                 (value.getLocal() as { deviceType: number; revision: number }[]).forEach((deviceType) => {
                   deviceTypes.push(deviceType.deviceType);
