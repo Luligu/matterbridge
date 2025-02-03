@@ -8,6 +8,7 @@ import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
+import { MdnsService } from '@matter/main/protocol';
 
 describe('Matterbridge dynamic platform', () => {
   beforeAll(async () => {
@@ -39,8 +40,10 @@ describe('Matterbridge dynamic platform', () => {
     const platform = new MatterbridgeDynamicPlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'test', type: 'type', debug: false, unregisterOnShutdown: false });
     expect(platform.type).toBe('DynamicPlatform');
 
-    // Destroy the Matterbridge instance
+    // Close the Matterbridge instance
+    const server = matterbridge.serverNode;
     await matterbridge.destroyInstance();
+    await server?.env.get(MdnsService)[Symbol.asyncDispose]();
     expect((Matterbridge as any).instance).toBeUndefined();
   }, 60000);
 });

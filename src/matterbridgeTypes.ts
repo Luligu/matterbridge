@@ -92,6 +92,8 @@ export interface SystemInformation {
   totalMemory: string;
   freeMemory: string;
   systemUptime: string;
+  rss: string;
+  heap: string;
 }
 
 // Define an interface for storing the matterbridge information

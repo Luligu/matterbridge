@@ -18,3 +18,4 @@ export {
   SwitchesTag,
 } from '@matter/main';
 export { AttributeElement, ClusterElement, ClusterModel, CommandElement, EventElement, FieldElement } from '@matter/main/model';
+export { logEndpoint, MdnsService } from '@matter/main/protocol';

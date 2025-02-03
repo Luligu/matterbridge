@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-console */
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
@@ -84,6 +83,7 @@ import {
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/node/behaviors';
 import { updateAttribute } from './matterbridgeEndpointHelpers.js';
+import { MdnsService } from '@matter/main/protocol';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
@@ -176,7 +176,9 @@ describe('MatterbridgeEndpoint class', () => {
 
   afterAll(async () => {
     // Close the Matterbridge instance
+    const server = matterbridge.serverNode;
     await matterbridge.destroyInstance();
+    await server?.env.get(MdnsService)[Symbol.asyncDispose]();
 
     // Restore all mocks
     jest.restoreAllMocks();
@@ -920,9 +922,7 @@ describe('MatterbridgeEndpoint class', () => {
 
     // eslint-disable-next-line jest/expect-expect
     test('pause before cleanup', async () => {
-      console.log('Pausing for 5 seconds...');
       await new Promise((resolve) => setTimeout(resolve, 5000)); // Pause for 5 seconds
-      console.log('Resuming after pause');
     }, 60000);
   });
 });

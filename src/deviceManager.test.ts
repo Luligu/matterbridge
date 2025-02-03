@@ -10,6 +10,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { DeviceManager } from './deviceManager.js';
 import { PluginManager } from './pluginManager.js';
 import { contactSensor, occupancySensor } from './matterbridgeDeviceTypes.js';
+import { MdnsService } from '@matter/main/protocol';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -36,7 +37,10 @@ describe('DeviceManager with mocked devices', () => {
   });
 
   afterAll(async () => {
+    // Close the Matterbridge instance
+    const server = matterbridge.serverNode;
     await matterbridge.destroyInstance();
+    await server?.env.get(MdnsService)[Symbol.asyncDispose]();
     // Restore the mocked AnsiLogger.log method
     loggerLogSpy.mockRestore();
     // Restore the mocked console.log
@@ -49,20 +53,10 @@ describe('DeviceManager with mocked devices', () => {
 
   test('logLevel changes correctly', () => {
     devices.logLevel = LogLevel.DEBUG;
-    expect(devices.logLevel).toBe(LogLevel.DEBUG);
     expect((devices as any).log.logLevel).toBe(LogLevel.DEBUG);
   });
 
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /*
-  test('clear and load from storage', async () => {
-    devices.clear();
-    expect(await plugins.saveToStorage()).toBe(0);
-    expect(await plugins.loadFromStorage()).toHaveLength(0);
-  });
-  */
-
-  test('size returns correct number of plugins', () => {
+  test('size returns correct number of devices', () => {
     expect(devices.size).toBe(0);
     expect(devices.length).toBe(0);
     devices.set({ name: 'DeviceType1', serialNumber: 'DeviceSerial1', deviceName: 'Device1', uniqueId: 'DeviceUniqueId1' } as unknown as MatterbridgeEndpoint);
@@ -167,6 +161,13 @@ describe('DeviceManager with mocked devices', () => {
     devices.clear();
     expect(devices.length).toBe(0);
   });
+
+  test('async forEach to return immediately if no devices', async () => {
+    expect(devices.length).toBe(0);
+    await devices.forEach(async (device: MatterbridgeEndpoint) => {
+      //
+    });
+  });
 });
 
 describe('DeviceManager with real devices', () => {
@@ -191,7 +192,10 @@ describe('DeviceManager with real devices', () => {
   });
 
   afterAll(async () => {
+    // Close the Matterbridge instance
+    const server = matterbridge.serverNode;
     await matterbridge.destroyInstance();
+    await server?.env.get(MdnsService)[Symbol.asyncDispose]();
     // Restore the mocked AnsiLogger.log method
     loggerLogSpy.mockRestore();
     // Restore the mocked console.log

@@ -87,8 +87,6 @@ describe('MatterbridgeEndpoint class', () => {
     matterbridge.environment.vars.set('path.root', 'matterstorage');
     matterbridge.environment.vars.set('runtime.signals', false);
     matterbridge.environment.vars.set('runtime.exitcode', false);
-    // Setup Matter mdnsInterface
-    if (matterbridge.mdnsInterface) matterbridge.environment.vars.set('mdns.networkInterface', matterbridge.mdnsInterface);
     await (matterbridge as any).startMatterStorage();
   });
 
