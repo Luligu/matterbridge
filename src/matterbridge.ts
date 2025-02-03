@@ -223,19 +223,6 @@ export class Matterbridge extends EventEmitter {
    */
   async destroyInstance() {
     await this.cleanup('destroying instance...', false);
-    /*
-    await waiter(
-      'destroying instance...',
-      () => {
-        return this.initialized === false && this.execRunningCount <= 0 ? true : false;
-      },
-      false,
-      60000,
-      100,
-      false,
-    );
-    await wait(1000, 'Wait for the global node_modules and matterbridge version', false);
-    */
   }
 
   /**
@@ -257,14 +244,14 @@ export class Matterbridge extends EventEmitter {
     this.homeDirectory = getParameter('homedir') ?? os.homedir();
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
 
-    // Setup matter environment
+    // Setup the matter environment
     this.environment.vars.set('log.level', MatterLogLevel.INFO);
     this.environment.vars.set('log.format', MatterLogFormat.ANSI);
     this.environment.vars.set('path.root', path.join(this.matterbridgeDirectory, this.matterStorageName));
     this.environment.vars.set('runtime.signals', false);
     this.environment.vars.set('runtime.exitcode', false);
 
-    // Create matterbridge logger
+    // Create the matterbridge logger
     this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 
     // Register process handlers

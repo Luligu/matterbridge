@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-console */
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
@@ -920,9 +919,7 @@ describe('MatterbridgeEndpoint class', () => {
 
     // eslint-disable-next-line jest/expect-expect
     test('pause before cleanup', async () => {
-      console.log('Pausing for 5 seconds...');
       await new Promise((resolve) => setTimeout(resolve, 5000)); // Pause for 5 seconds
-      console.log('Resuming after pause');
     }, 60000);
   });
 });

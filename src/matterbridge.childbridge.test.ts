@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'error', '-childbridge', '-profile', 'Jest', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
+process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-childbridge', '-profile', 'Jest', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
 
 import { jest } from '@jest/globals';
 
@@ -10,6 +10,9 @@ import { AnsiLogger, db, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-
 import { Matterbridge } from './matterbridge.js';
 import { wait, waiter } from './utils/utils.js';
 import { MdnsService } from '@matter/main/protocol';
+import { Environment, StorageService } from '@matter/main';
+import path from 'path';
+import os from 'os';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -18,59 +21,82 @@ const typ = '\u001B[38;5;207m';
 
 describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   let matterbridge: Matterbridge;
-  let loggerLogSpy: jest.SpiedFunction<(level: LogLevel, message: string, ...parameters: any[]) => void>;
-  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-  let consoleDebugSpy: jest.SpiedFunction<typeof console.debug>;
-  let consoleInfoSpy: jest.SpiedFunction<typeof console.info>;
-  let consoleWarnSpy: jest.SpiedFunction<typeof console.info>;
-  let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
 
-  beforeAll(async () => {
-    // Spy on and mock the AnsiLogger.log method
+  let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
+  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
+  const debug = false;
+
+  if (!debug) {
+    // Spy on and mock AnsiLogger.log
     loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
-      // console.error(`Mocked log: ${level} - ${message}`, ...parameters);
+      //
     });
     // Spy on and mock console.log
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
-      // console.error(args);
+      //
     });
-    // Spy on and mock console.log
+    // Spy on and mock console.debug
     consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {
-      // console.error(args);
+      //
     });
-    // Spy on and mock console.log
+    // Spy on and mock console.info
     consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {
-      // console.error(args);
+      //
     });
-    // Spy on and mock console.log
+    // Spy on and mock console.warn
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
-      // console.warn(args);
+      //
     });
-    // Spy on and mock console.log
+    // Spy on and mock console.error
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
-      // console.error(args);
+      //
     });
+  } else {
+    // Spy on AnsiLogger.log
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
+    // Spy on console.log
+    consoleLogSpy = jest.spyOn(console, 'log');
+    // Spy on console.debug
+    consoleDebugSpy = jest.spyOn(console, 'debug');
+    // Spy on console.info
+    consoleInfoSpy = jest.spyOn(console, 'info');
+    // Spy on console.warn
+    consoleWarnSpy = jest.spyOn(console, 'warn');
+    // Spy on console.error
+    consoleErrorSpy = jest.spyOn(console, 'error');
+  }
+
+  beforeAll(async () => {
+    //
   });
 
   beforeEach(() => {
-    loggerLogSpy?.mockClear();
-    consoleLogSpy?.mockClear();
-    consoleDebugSpy?.mockClear();
-    consoleInfoSpy?.mockClear();
-    consoleWarnSpy?.mockClear();
-    consoleErrorSpy?.mockClear();
+    // Clear all mocks
+    jest.clearAllMocks();
   });
 
   afterAll(async () => {
-    loggerLogSpy?.mockRestore();
-    consoleLogSpy?.mockRestore();
-    consoleDebugSpy?.mockRestore();
-    consoleInfoSpy?.mockRestore();
-    consoleWarnSpy?.mockRestore();
-    consoleErrorSpy?.mockRestore();
-  }, 60000);
+    // Restore all mocks
+    jest.restoreAllMocks();
+  });
 
   test('Matterbridge.loadInstance(true) -childbridge mode', async () => {
+    const environment = Environment.default;
+    environment.vars.set('path.root', path.join(os.homedir(), '.matterbridge', 'matterstorage.Jest'));
+    const matterStorageService = environment.get(StorageService);
+    expect(matterStorageService).toBeDefined();
+    const matterStorageManager = await matterStorageService.open('Matterbridge');
+    expect(matterStorageManager).toBeDefined();
+    await matterStorageManager?.createContext('persist').clearAll();
+    await matterStorageManager?.createContext('events')?.clearAll();
+    await matterStorageManager?.createContext('fabrics')?.clearAll();
+    await matterStorageManager?.createContext('root')?.clearAll();
+    await matterStorageManager?.createContext('sessions')?.clearAll();
+
     matterbridge = await Matterbridge.loadInstance(true);
 
     expect(matterbridge).toBeDefined();
@@ -81,9 +107,9 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect((matterbridge as any).log).toBeDefined();
     expect((matterbridge as any).homeDirectory).not.toBe('');
     expect((matterbridge as any).matterbridgeDirectory).not.toBe('');
-    expect((matterbridge as any).nodeStorage).toBeDefined();
-    expect((matterbridge as any).nodeContext).toBeDefined();
     expect((matterbridge as any).plugins).toBeDefined();
+    expect((matterbridge as any).plugins.size).toBe(0);
+    expect((matterbridge as any).devices).toBeDefined();
     expect((matterbridge as any).devices.size).toBe(0);
 
     expect((matterbridge as any).frontend.httpServer).toBeDefined();
@@ -93,8 +119,13 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
 
     expect((matterbridge as any).nodeStorage).toBeDefined();
     expect((matterbridge as any).nodeContext).toBeDefined();
-    expect((matterbridge as any).matterStorageName).toBe('matterstorage.Jest');
     expect((matterbridge as any).nodeStorageName).toBe('storage.Jest');
+
+    expect((matterbridge as any).matterStorageService).toBeDefined();
+    expect((matterbridge as any).matterStorageManager).toBeDefined();
+    expect((matterbridge as any).matterbridgeContext).toBeDefined();
+    expect((matterbridge as any).mattercontrollerContext).toBeUndefined();
+    expect((matterbridge as any).matterStorageName).toBe('matterstorage.Jest');
 
     expect((matterbridge as any).matterStorageService).toBeDefined();
     expect((matterbridge as any).matterStorageManager).toBeDefined();
@@ -108,9 +139,6 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect((matterbridge as any).passcode).toBe(123456);
     expect((matterbridge as any).discriminator).toBe(3860);
 
-    await wait(5000, 'Wait for matter to load', true);
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
-
     await waiter(
       'Matter server started',
       () => {
@@ -122,13 +150,13 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       true,
     );
     // expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval in childbridge mode`);
-    await wait(1000, 'Wait for matter to load', false);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in childbridge mode...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval in childbridge mode`);
   }, 60000);
 
   test('Matterbridge.destroyInstance() -childbridge mode', async () => {
     await matterbridge.destroyInstance();
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-    await wait(1000, 'Wait for matter to unload', false);
   }, 60000);
 });
