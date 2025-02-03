@@ -37,6 +37,12 @@ matterbridge-hass v. 0.0.8
 
 - [frotnend]: Add rss and heap to SystemInformation.
 - [memorydump]: Add cpu to memoryDump.
+- [memorydump]: Add memoryinterval to memoryDump.
+- [memorydump]: Add memorytimeout to memoryDump.
+
+### Fixed
+
+- [frontend]: Fixed update matterbridge.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
