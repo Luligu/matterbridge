@@ -798,14 +798,6 @@ export class Frontend {
       }
       // Handle the command update from Header
       if (command === 'update') {
-        this.log.info('Updating matterbridge...');
-        try {
-          await this.matterbridge.spawnCommand('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose']);
-          this.log.info('Matterbridge has been updated. Full restart required.');
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (error) {
-          this.log.error('Error updating matterbridge');
-        }
         await this.matterbridge.updateProcess();
         this.wssSendRestartRequired();
         res.json({ message: 'Command received' });
