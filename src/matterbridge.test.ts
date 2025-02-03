@@ -278,7 +278,7 @@ describe('Matterbridge', () => {
       });
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-help'];
       await (matterbridge as any).parseCommandLine();
-      expect((matterbridge as any).log.log).toHaveBeenCalled();
+      expect(loggerLogSpy).toHaveBeenCalled();
       await shutdownPromise;
       matterbridge.removeAllListeners('shutdown');
     }, 60000);
@@ -289,8 +289,8 @@ describe('Matterbridge', () => {
       });
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-list'];
       await (matterbridge as any).parseCommandLine();
-      expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `│ Registered plugins (0)`);
-      expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `│ Registered devices (0)`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `│ Registered plugins (0)`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `│ Registered devices (0)`);
       await shutdownPromise;
       matterbridge.removeAllListeners('shutdown');
     }, 60000);
@@ -301,7 +301,7 @@ describe('Matterbridge', () => {
       });
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-logstorage'];
       await (matterbridge as any).parseCommandLine();
-      expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `${plg}Matterbridge${nf} storage log`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `${plg}Matterbridge${nf} storage log`);
       await shutdownPromise;
       matterbridge.removeAllListeners('shutdown');
     }, 60000);
@@ -312,7 +312,7 @@ describe('Matterbridge', () => {
       });
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-loginterfaces'];
       await (matterbridge as any).parseCommandLine();
-      expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `${plg}Matterbridge${nf} network interfaces log`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `${plg}Matterbridge${nf} network interfaces log`);
       await shutdownPromise;
       matterbridge.removeAllListeners('shutdown');
     }, 60000);
@@ -323,7 +323,7 @@ describe('Matterbridge', () => {
       });
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-reset'];
       await (matterbridge as any).parseCommandLine();
-      expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, 'Matter storage reset done! Remove the bridge from the controller.');
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Matter storage reset done! Remove the bridge from the controller.');
       await shutdownPromise;
       matterbridge.removeAllListeners('shutdown');
     }, 60000);

@@ -103,6 +103,10 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(matterbridge.profile).toBe('Jest');
     expect(matterbridge.bridgeMode).toBe('childbridge');
 
+    // Clear all plugins
+    matterbridge.plugins.clear();
+    await matterbridge.plugins.saveToStorage();
+
     expect((matterbridge as any).initialized).toBeTruthy();
     expect((matterbridge as any).log).toBeDefined();
     expect((matterbridge as any).homeDirectory).not.toBe('');

@@ -518,7 +518,6 @@ describe('Matterbridge frontend', () => {
       expect(response).toBeDefined();
       const data = JSON.parse(response as string);
       expect(data).toBeDefined();
-      console.log(data);
       expect(data.id).toBe(1);
       expect(data.src).toBe('Matterbridge');
       expect(data.dst).toBe('Jest test');
@@ -546,7 +545,6 @@ describe('Matterbridge frontend', () => {
       expect(response).toBeDefined();
       const data = JSON.parse(response as string);
       expect(data).toBeDefined();
-      console.log(data);
       expect(data.id).toBe(1);
       expect(data.src).toBe('Matterbridge');
       expect(data.dst).toBe('Jest test');
@@ -575,7 +573,6 @@ describe('Matterbridge frontend', () => {
       expect(response).toBeDefined();
       const data = JSON.parse(response as string);
       expect(data).toBeDefined();
-      console.log(data);
       expect(data.id).toBe(1);
       expect(data.src).toBe('Matterbridge');
       expect(data.dst).toBe('Jest test');
@@ -603,7 +600,6 @@ describe('Matterbridge frontend', () => {
       expect(response).toBeDefined();
       const data = JSON.parse(response as string);
       expect(data).toBeDefined();
-      console.log(data);
       expect(data.id).toBe(1);
       expect(data.src).toBe('Matterbridge');
       expect(data.dst).toBe('Jest test');

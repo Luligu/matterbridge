@@ -86,6 +86,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   }, 30000);
 
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {
+    // Reset matterstorage Jest
     const environment = Environment.default;
     environment.vars.set('path.root', path.join(os.homedir(), '.matterbridge', 'matterstorage.Jest'));
     const matterStorageService = environment.get(StorageService);
@@ -102,6 +103,10 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(matterbridge).toBeDefined();
     expect(matterbridge.profile).toBe('Jest');
     expect(matterbridge.bridgeMode).toBe('bridge');
+
+    // Clear all plugins
+    matterbridge.plugins.clear();
+    await matterbridge.plugins.saveToStorage();
 
     expect((matterbridge as any).initialized).toBeTruthy();
     expect((matterbridge as any).log).toBeDefined();
