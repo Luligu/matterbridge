@@ -691,7 +691,6 @@ export class PluginManager {
       await plugin.platform.onConfigure();
       this.log.notice(`Configured plugin ${plg}${plugin.name}${nt} type ${typ}${plugin.type}${nt}`);
       plugin.configured = true;
-      // await this.saveConfigFromPlugin(plugin);
       return plugin;
     } catch (err) {
       plugin.error = true;
