@@ -1295,7 +1295,7 @@ export class Matterbridge extends EventEmitter {
       }
 
       // Stop the frontend
-      this.frontend.stop();
+      await this.frontend.stop();
 
       // Stopping matter server nodes
       this.log.notice(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
