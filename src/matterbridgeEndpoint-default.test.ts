@@ -83,6 +83,7 @@ import {
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/node/behaviors';
 import { updateAttribute } from './matterbridgeEndpointHelpers.js';
+import { MdnsService } from '@matter/main/protocol';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
@@ -175,7 +176,9 @@ describe('MatterbridgeEndpoint class', () => {
 
   afterAll(async () => {
     // Close the Matterbridge instance
+    const server = matterbridge.serverNode;
     await matterbridge.destroyInstance();
+    await server?.env.get(MdnsService)[Symbol.asyncDispose]();
 
     // Restore all mocks
     jest.restoreAllMocks();

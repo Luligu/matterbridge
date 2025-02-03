@@ -223,6 +223,9 @@ export class Matterbridge extends EventEmitter {
    */
   async destroyInstance() {
     await this.cleanup('destroying instance...', false);
+    await new Promise((resolve) => {
+      setTimeout(resolve, 1000);
+    });
   }
 
   /**
