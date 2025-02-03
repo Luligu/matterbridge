@@ -1019,11 +1019,14 @@ export class Frontend {
       );
     };
     interval();
-    this.memoryInterval = setInterval(interval, getIntParameter('memorydump') ?? 1000);
+    this.memoryInterval = setInterval(interval, getIntParameter('memoryinterval') ?? 1000);
     this.memoryInterval.unref();
-    this.memoryTimeout = setTimeout(() => {
-      this.stopCpuMemoryDump();
-    }, 360000);
+    this.memoryTimeout = setTimeout(
+      () => {
+        this.stopCpuMemoryDump();
+      },
+      getIntParameter('memorytimeout') ?? 600000,
+    );
     this.memoryTimeout.unref();
   }
 
