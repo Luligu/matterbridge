@@ -83,6 +83,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   afterAll(async () => {
     // Restore all mocks
     jest.restoreAllMocks();
+    // console.log('Matterbridge test -bridge mode');
   }, 30000);
 
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {
