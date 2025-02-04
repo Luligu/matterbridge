@@ -15,7 +15,7 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 ### Breaking Changes
 
-Starting from v. 2.0.0 Matterbridge is running only in mode edge (no parameter needed and no badge in the frontend).
+Starting from v. 2.0.0, Matterbridge is running only in mode edge (no parameter needed and no badge in the frontend).
 
 Starting from v. 2.1.0, the legacy old api of matter.js have been completely removed from Matterbridge and from all plugins.
 
@@ -30,6 +30,20 @@ matterbridge-shelly v. 1.1.5
 matterbridge-zigbee2mqtt v. 2.4.4
 matterbridge-somfy-tahoma v. 1.2.3
 matterbridge-hass v. 0.0.8
+
+## [2.1.3] - 2025-02-04
+
+### Added
+
+- [matter.js]: Added temporary solution to serverNode.close() not returning.
+
+### Changed
+
+- [package]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
 
 ## [2.1.2] - 2025-02-03
 
