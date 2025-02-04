@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "2.1.3-dev.1",
+  "version": "2.1.3",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -110,8 +110,8 @@
     "test:verbose": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --watch",
     "test:matterbridge": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose --coverage matterbridge.test.ts",
-    "test:bridgemode": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose matterbridge.bridge.test.ts",
-    "test:childbridgemode": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose matterbridge.childbridge.test.ts",
+    "test:bridgemode": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose --coverage matterbridge.bridge.test.ts",
+    "test:childbridgemode": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose --coverage matterbridge.childbridge.test.ts",
     "test:endpoint": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose --coverage matterbridgeEndpoint.test.ts",
     "test:endpoint-default": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose --coverage matterbridgeEndpoint-default.test.ts",
     "test:endpoint-matterjs": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose --coverage matterbridgeEndpoint-matterjs.test.ts",

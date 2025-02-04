@@ -35,7 +35,7 @@ matterbridge-hass v. 0.0.8
 
 ### Added
 
-- [matter.js]: Added temporary solution to serverNode.close() not returning.
+- [matter.js]: Added temporary solution to prevent serverNode.close() not returning.
 
 ### Changed
 
