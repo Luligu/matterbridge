@@ -2161,10 +2161,35 @@ export class Matterbridge extends EventEmitter {
   private async stopServerNode(matterServerNode: ServerNode): Promise<void> {
     if (!matterServerNode) return;
     this.log.notice(`Closing ${matterServerNode.id} server node`);
+    /*
     await matterServerNode.close();
     this.log.info(`Closed ${matterServerNode.id} server node`);
     // await matterServerNode.env.get(MdnsService)[Symbol.asyncDispose]();
     // this.log.info(`Closed ${matterServerNode.id} MdnsService`);
+    */
+
+    // Helper function to add a timeout to a promise
+    const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
+      return new Promise<T>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('Operation timed out')), ms);
+        promise
+          .then((result) => {
+            clearTimeout(timer); // Prevent memory leak
+            resolve(result);
+          })
+          .catch((error) => {
+            clearTimeout(timer); // Ensure timeout does not fire if promise rejects first
+            reject(error);
+          });
+      });
+    };
+
+    try {
+      await withTimeout(matterServerNode.close(), 5000); // 5 seconds timeout
+      this.log.info(`Closed ${matterServerNode.id} server node`);
+    } catch (error) {
+      this.log.error(`Failed to close ${matterServerNode.id} server node: ${error instanceof Error ? error.message : error}`);
+    }
   }
 
   /**
