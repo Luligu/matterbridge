@@ -15,11 +15,11 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 ### Breaking Changes
 
-Starting from v. 2.0.0 Matterbridge is running only in mode edge (no parameter needed and no badge in the frontend).
+Starting from v. 2.0.0, Matterbridge is running only in mode edge (no parameter needed and no badge in the frontend).
 
-With this release v. 2.1.0, the legacy old api of matter.js have been completely removed from Matterbridge and from all plugins.
+Starting from v. 2.1.0, the legacy old api of matter.js have been completely removed from Matterbridge and from all plugins.
 
-For this reason there is no compatibility for old versions of the plugins.
+For this reason there is no compatibility with the old versions of the plugins.
 
 You need to update all plugins you use and Matterbridge in the same moment. 
 
@@ -31,14 +31,28 @@ matterbridge-zigbee2mqtt v. 2.4.4
 matterbridge-somfy-tahoma v. 1.2.3
 matterbridge-hass v. 0.0.8
 
+## [2.1.3] - 2025-02-04
+
+### Added
+
+- [matter.js]: Added temporary solution to prevent serverNode.close() not returning.
+
+### Changed
+
+- [package]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [2.1.2] - 2025-02-03
 
 ### Added
 
-- [frotnend]: Add rss and heap to SystemInformation.
-- [memorydump]: Add cpu to memoryDump.
-- [memorydump]: Add memoryinterval to memoryDump.
-- [memorydump]: Add memorytimeout to memoryDump.
+- [frontend]: Added rss and heap to SystemInformation.
+- [memorydump]: Added cpu to memoryDump.
+- [memorydump]: Added memoryinterval to memoryDump.
+- [memorydump]: Added memorytimeout to memoryDump.
 
 ### Fixed
 
@@ -62,9 +76,9 @@ matterbridge-hass v. 0.0.8
 
 ### Added
 
-- [matterbridge]: Add MatterbridgeModeSelectServer.
-- [matterbridge]: Add MatterbridgeSwitchServer.
-- [frontend]: Add api/advertise to turn on matter advertising in bridge mode.
+- [matterbridge]: Added MatterbridgeModeSelectServer.
+- [matterbridge]: Added MatterbridgeSwitchServer.
+- [frontend]: Added api/advertise to turn on matter advertising in bridge mode.
 - [frontend]: Frontend v.2.4.0.
 - [matterbridge]: Added deep memory scan details.
 
