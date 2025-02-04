@@ -223,6 +223,8 @@ export class Matterbridge extends EventEmitter {
    */
   async destroyInstance() {
     await this.cleanup('destroying instance...', false);
+    // await matterServerNode.env.get(MdnsService)[Symbol.asyncDispose]();
+    // this.log.info(`Closed ${matterServerNode.id} MdnsService`);
     await new Promise((resolve) => {
       setTimeout(resolve, 1000);
     });
@@ -1297,9 +1299,6 @@ export class Matterbridge extends EventEmitter {
         }
       }
 
-      // Stop the frontend
-      await this.frontend.stop();
-
       // Stopping matter server nodes
       this.log.notice(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
       if (this.bridgeMode === 'bridge') {
@@ -1320,6 +1319,9 @@ export class Matterbridge extends EventEmitter {
 
       // Stop matter storage
       await this.stopMatterStorage();
+
+      // Stop the frontend
+      await this.frontend.stop();
 
       // Remove the matterfilelogger
       try {
@@ -2164,8 +2166,6 @@ export class Matterbridge extends EventEmitter {
     /*
     await matterServerNode.close();
     this.log.info(`Closed ${matterServerNode.id} server node`);
-    // await matterServerNode.env.get(MdnsService)[Symbol.asyncDispose]();
-    // this.log.info(`Closed ${matterServerNode.id} MdnsService`);
     */
 
     // Helper function to add a timeout to a promise
