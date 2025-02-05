@@ -61,7 +61,8 @@ import {
   ThermostatUserInterfaceConfigurationServer,
   TimeSynchronizationServer,
 } from '@matter/node/behaviors';
-import { getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
+import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
+import { MdnsService } from '@matter/main/protocol';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
@@ -176,6 +177,89 @@ describe('MatterbridgeEndpoint class', () => {
       if (device.uniqueStorageKey === undefined) return;
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`\x1B[39mMatterbridge.Matterbridge.${device.uniqueStorageKey.replaceAll(' ', '')} \x1B[0mready`));
     }
+
+    test('conversion of not latin characters', async () => {
+      // Should return false for Latin-based text (including accents)
+      expect(checkNotLatinCharacters('Hello World')).toBe(false);
+      expect(checkNotLatinCharacters('café au lait')).toBe(false);
+      expect(checkNotLatinCharacters('München-2024')).toBe(false);
+      expect(checkNotLatinCharacters('Tōkyō_2024')).toBe(false);
+      expect(checkNotLatinCharacters("L'éclair du matin")).toBe(false);
+      expect(checkNotLatinCharacters('São Paulo')).toBe(false);
+      expect(checkNotLatinCharacters('Résumé and naïve')).toBe(false);
+
+      // Should return false for numbers, dashes, and underscores
+      expect(checkNotLatinCharacters('123456')).toBe(false);
+      expect(checkNotLatinCharacters('Hello_123')).toBe(false);
+      expect(checkNotLatinCharacters('test-underscore_')).toBe(false);
+      expect(checkNotLatinCharacters('text-with-dash')).toBe(false);
+
+      // Special characters should return false
+      expect(checkNotLatinCharacters('.,><!?@#$%^&*(){}[]|')).toBe(false);
+      expect(checkNotLatinCharacters('€¥£₹')).toBe(false); // Currency symbols
+      expect(checkNotLatinCharacters('©®™✓✔︎')).toBe(false); // Copyright, trademarks
+      expect(checkNotLatinCharacters('♥︎♡♦︎♠︎♣︎♜♞♟')).toBe(false); // Playing card & chess symbols
+      expect(checkNotLatinCharacters('→↓↑←↔↕')).toBe(false); // Arrows
+      expect(checkNotLatinCharacters('“”‘’')).toBe(false); // Quotes
+
+      // Should return true for non-Latin scripts
+      expect(checkNotLatinCharacters('Москва')).toBe(true); // Cyrillic (Russian)
+      expect(checkNotLatinCharacters('조명 - 세탁실')).toBe(true); // Korean (Hangul)
+      expect(checkNotLatinCharacters('東京')).toBe(true); // Chinese (Kanji)
+      expect(checkNotLatinCharacters('こんにちは')).toBe(true); // Japanese (Hiragana)
+      expect(checkNotLatinCharacters('مرحبا')).toBe(true); // Arabic
+      expect(checkNotLatinCharacters('שלום')).toBe(true); // Hebrew
+      expect(checkNotLatinCharacters('हिन्दी')).toBe(true); // Hindi (Devanagari)
+      expect(checkNotLatinCharacters('ไทย')).toBe(true); // Thai script
+      expect(checkNotLatinCharacters('ትግርኛ')).toBe(true); // Amharic (Ethiopian)
+
+      // Should return true for mixed Latin and non-Latin
+      expect(checkNotLatinCharacters('Hello 世界')).toBe(true); // English + Chinese
+      expect(checkNotLatinCharacters('Bonjour, Москва')).toBe(true); // French + Russian
+      expect(checkNotLatinCharacters('Test123 조명')).toBe(true); // English + Korean
+    });
+
+    test('encoding of non-Latin and Latin names into unique IDs', async () => {
+      // Sample names
+      const latinNames = ['Hello World', 'café au lait', 'München-2024', 'Tōkyō_2024', "L'éclair du matin", 'São Paulo', 'Résumé and naïve', '123456', 'Hello_123', 'test-underscore_', 'text-with-dash'];
+
+      const specialChars = ['.,><!?@#$%^&*(){}[]|', '€¥£₹', '©®™✓✔︎', '♥︎♡♦︎♠︎♣︎♜♞♟', '→↓↑←↔↕', '“”‘’'];
+
+      const nonLatinNames = [
+        'Москва', // Cyrillic (Russian)
+        '조명 - 세탁실', // Korean (Hangul)
+        '東京', // Chinese (Kanji)
+        'こんにちは', // Japanese (Hiragana)
+        'مرحبا', // Arabic
+        'שלום', // Hebrew
+        'हिन्दी', // Hindi (Devanagari)
+        'ไทย', // Thai script
+        'ትግርኛ', // Amharic (Ethiopian)
+        'Hello 世界', // English + Chinese
+        'Bonjour, Москва', // French + Russian
+        'Test123 조명', // English + Korean
+      ];
+
+      // Each name should produce a **consistent** hash
+      const uniqueIds = new Map<string, string>();
+
+      [...latinNames, ...specialChars, ...nonLatinNames].forEach((name) => {
+        const hash = generateUniqueId(name);
+        expect(hash).toHaveLength(32); // MD5 produces 32-char hex strings
+        expect(uniqueIds.has(name)).toBe(false); // Ensure no duplicates
+        uniqueIds.set(name, hash);
+      });
+
+      // The same input should generate the same hash
+      uniqueIds.forEach((hash, name) => {
+        expect(generateUniqueId(name)).toBe(hash);
+      });
+
+      // Different names should generate different hashes
+      const hashes = [...uniqueIds.values()];
+      const uniqueHashes = new Set(hashes);
+      expect(uniqueHashes.size).toBe(hashes.length); // Ensure no hash collisions
+    });
 
     test('constructor', async () => {
       const deviceType = onOffLight;

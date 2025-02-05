@@ -36,7 +36,12 @@ matterbridge-hass v. 0.0.8
 ### Added
 
 - [frontend]: Added memorycheck before cleanup.
+- [platform]: Added a check for not latin characters.
+- [platform]: Added a check for already registered device names.
 
+### Changed
+
+- [package]: Update matter.js to 0.12.3.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
