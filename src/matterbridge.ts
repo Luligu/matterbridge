@@ -45,7 +45,7 @@ import { Frontend } from './frontend.js';
 
 // @matter
 import { DeviceTypeId, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, StorageService, Environment, ServerNode, FabricIndex, SessionsBehavior } from '@matter/main';
-import { DeviceCommissioner, ExposedFabricInformation, FabricAction, PaseClient } from '@matter/main/protocol';
+import { DeviceCommissioner, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 
 // Default colors
@@ -222,9 +222,24 @@ export class Matterbridge extends EventEmitter {
    *
    */
   async destroyInstance() {
+    // Save server nodes to close
+    const servers: ServerNode<ServerNode.RootEndpoint>[] = [];
+    if (this.bridgeMode === 'bridge') {
+      if (this.serverNode) servers.push(this.serverNode);
+    }
+    if (this.bridgeMode === 'childbridge') {
+      for (const plugin of this.plugins.array()) {
+        if (plugin.serverNode) servers.push(plugin.serverNode);
+      }
+    }
+    // Cleanup
     await this.cleanup('destroying instance...', false);
-    // await matterServerNode.env.get(MdnsService)[Symbol.asyncDispose]();
-    // this.log.info(`Closed ${matterServerNode.id} MdnsService`);
+    // Close servers mdns service
+    for (const server of servers) {
+      await server.env.get(MdnsService)[Symbol.asyncDispose]();
+      this.log.info(`Closed ${server.id} MdnsService`);
+    }
+    // Wait for the cleanup to finish
     await new Promise((resolve) => {
       setTimeout(resolve, 1000);
     });
