@@ -745,13 +745,13 @@ export class Matterbridge extends EventEmitter {
     process.removeAllListeners('unhandledRejection');
 
     this.exceptionHandler = async (error: Error) => {
-      this.log.fatal('Unhandled Exception detected at:', error.stack || error, rs);
+      this.log.error('Unhandled Exception detected at:', error.stack || error, rs);
       // await this.cleanup('Unhandled Exception detected, cleaning up...');
     };
     process.on('uncaughtException', this.exceptionHandler);
 
     this.rejectionHandler = async (reason, promise) => {
-      this.log.fatal('Unhandled Rejection detected at:', promise, 'reason:', reason instanceof Error ? reason.stack : reason, rs);
+      this.log.error('Unhandled Rejection detected at:', promise, 'reason:', reason instanceof Error ? reason.stack : reason, rs);
       // await this.cleanup('Unhandled Rejection detected, cleaning up...');
     };
     process.on('unhandledRejection', this.rejectionHandler);
