@@ -27,7 +27,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { isValidArray, isValidObject, isValidString } from './utils/utils.js';
 
 // AnsiLogger module
-import { AnsiLogger, CYAN, db, LogLevel, nf, wr } from './logger/export.js';
+import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from './logger/export.js';
 
 // Storage module
 import { NodeStorage, NodeStorageManager } from './storage/export.js';
@@ -62,7 +62,9 @@ export class MatterbridgePlatform {
   public context: NodeStorage | undefined;
   public selectDevice = new Map<string, { serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }>();
   public selectEntity = new Map<string, { name: string; description: string; icon?: string }>();
-  public registeredEndpoints = new Map<string, MatterbridgeEndpoint>();
+
+  public registeredEndpoints = new Map<string, MatterbridgeEndpoint>(); // uniqueId, MatterbridgeEndpoint
+  public registeredEndpointsByName = new Map<string, MatterbridgeEndpoint>(); // deviceName, MatterbridgeEndpoint
 
   /**
    * Creates an instance of the base MatterbridgePlatform. It is extended by the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
@@ -134,8 +136,13 @@ export class MatterbridgePlatform {
    */
   async registerDevice(device: MatterbridgeEndpoint) {
     device.plugin = this.name;
+    if (device.deviceName && this.registeredEndpointsByName.has(device.deviceName)) {
+      this.log.error(`Device with name ${CYAN}${device.deviceName}${er} is already registered. The device will not be added. Please change the device name.`);
+      return;
+    }
     await this.matterbridge.addBridgedEndpoint(this.name, device);
     if (device.uniqueId) this.registeredEndpoints.set(device.uniqueId, device);
+    if (device.deviceName) this.registeredEndpointsByName.set(device.deviceName, device);
   }
 
   /**
@@ -145,6 +152,7 @@ export class MatterbridgePlatform {
   async unregisterDevice(device: MatterbridgeEndpoint) {
     await this.matterbridge.removeBridgedEndpoint(this.name, device);
     if (device.uniqueId) this.registeredEndpoints.delete(device.uniqueId);
+    if (device.deviceName) this.registeredEndpointsByName.delete(device.deviceName);
   }
 
   /**
@@ -153,6 +161,7 @@ export class MatterbridgePlatform {
   async unregisterAllDevices() {
     await this.matterbridge.removeAllBridgedEndpoints(this.name);
     this.registeredEndpoints.clear();
+    this.registeredEndpointsByName.clear();
   }
 
   /**

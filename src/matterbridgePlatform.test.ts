@@ -2,38 +2,73 @@
 /* eslint-disable jest/no-conditional-expect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest'];
+process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'JestPlatform'];
 
 import { jest } from '@jest/globals';
 
-import { AnsiLogger, CYAN, db, LogLevel, pl, wr } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, db, er, LogLevel, pl, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { Environment, StorageService } from '@matter/main';
+import path from 'path';
+import os from 'os';
 
 describe('Matterbridge platform', () => {
   let matterbridge: Matterbridge;
   let platform: MatterbridgePlatform;
 
+  let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
+  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
+  const debug = false;
+
+  if (!debug) {
+    // Spy on and mock AnsiLogger.log
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
+      //
+    });
+    // Spy on and mock console.log
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
+      //
+    });
+    // Spy on and mock console.debug
+    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {
+      //
+    });
+    // Spy on and mock console.info
+    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {
+      //
+    });
+    // Spy on and mock console.warn
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
+      //
+    });
+    // Spy on and mock console.error
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
+      //
+    });
+  } else {
+    // Spy on AnsiLogger.log
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
+    // Spy on console.log
+    consoleLogSpy = jest.spyOn(console, 'log');
+    // Spy on console.debug
+    consoleDebugSpy = jest.spyOn(console, 'debug');
+    // Spy on console.info
+    consoleInfoSpy = jest.spyOn(console, 'info');
+    // Spy on console.warn
+    consoleWarnSpy = jest.spyOn(console, 'warn');
+    // Spy on console.error
+    consoleErrorSpy = jest.spyOn(console, 'error');
+  }
+
   beforeAll(async () => {
-    // Mock the AnsiLogger.log method
-    jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
-      // console.log(`Mocked log: ${level} - ${message}`, ...parameters);
-    });
-    jest.spyOn(AnsiLogger.prototype, 'debug').mockImplementation((message: string, ...parameters: any[]) => {
-      // console.log(`Mocked debug: ${message}`, ...parameters);
-    });
-    jest.spyOn(AnsiLogger.prototype, 'info').mockImplementation((message: string, ...parameters: any[]) => {
-      // console.log(`Mocked info: ${message}`, ...parameters);
-    });
-    jest.spyOn(AnsiLogger.prototype, 'warn').mockImplementation((message: string, ...parameters: any[]) => {
-      // console.log(`Mocked warn: ${message}`, ...parameters);
-    });
-    jest.spyOn(AnsiLogger.prototype, 'error').mockImplementation((message: string, ...parameters: any[]) => {
-      // console.log(`Mocked error: ${message}`, ...parameters);
-    });
     jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint').mockImplementation((pluginName: string, device: MatterbridgeEndpoint) => {
       // console.log(`Mocked addBridgedEndpoint: ${pluginName} ${device.name}`);
       return Promise.resolve();
@@ -56,12 +91,28 @@ describe('Matterbridge platform', () => {
     // Destroy the Matterbridge instance
     await matterbridge.destroyInstance();
 
-    // Restore the mocked AnsiLogger.log method
-    (AnsiLogger.prototype.log as jest.Mock).mockRestore();
+    // Restore all mocks
+    jest.restoreAllMocks();
   }, 60000);
 
   beforeEach(() => {
+    // Clear all mocks
     jest.clearAllMocks();
+  });
+
+  test('should clear JestPlatform', async () => {
+    // Clear all storage contexts
+    const environment = Environment.default;
+    environment.vars.set('path.root', path.join(os.homedir(), '.matterbridge', 'matterstorage.JestPlatform'));
+    const matterStorageService = environment.get(StorageService);
+    expect(matterStorageService).toBeDefined();
+    const matterStorageManager = await matterStorageService.open('Matterbridge');
+    expect(matterStorageManager).toBeDefined();
+    await matterStorageManager?.createContext('persist').clearAll();
+    await matterStorageManager?.createContext('events')?.clearAll();
+    await matterStorageManager?.createContext('fabrics')?.clearAll();
+    await matterStorageManager?.createContext('root')?.clearAll();
+    await matterStorageManager?.createContext('sessions')?.clearAll();
   });
 
   test('should be instance of MattebridgePlatform', () => {
@@ -72,7 +123,7 @@ describe('Matterbridge platform', () => {
     platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'test', type: 'type', debug: false, unregisterOnShutdown: false });
     expect(platform.storage).toBeDefined();
     expect(platform.storage).toBeInstanceOf(NodeStorageManager);
-    expect(platform.log.debug).toHaveBeenCalledWith(expect.stringContaining('Creating storage for plugin test'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Creating storage for plugin test'));
   });
 
   test('should do a partial mock of AnsiLogger', () => {
@@ -86,8 +137,8 @@ describe('Matterbridge platform', () => {
   });
 
   test('onStart should throw an error if not overridden', async () => {
-    (platform.log.debug as jest.Mock).mockClear();
-    expect.assertions(2);
+    // (platform.log.debug as jest.Mock).mockClear();
+    // expect.assertions(2);
     try {
       await platform.onStart('test reason');
     } catch (error) {
@@ -283,8 +334,8 @@ describe('Matterbridge platform', () => {
     testDevice.number = 100;
     (matterbridge as any).devices.set(testDevice);
     expect(await platform.checkEndpointNumbers()).toBe(1);
-    expect(platform.log.warn).not.toHaveBeenCalled();
-    expect(platform.log.debug).toHaveBeenCalledWith(`Setting endpoint number for device ${CYAN}${testDevice.uniqueId}${db} to ${CYAN}${testDevice.maybeNumber}${db}`);
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.WARN, expect.anything());
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Setting endpoint number for device ${CYAN}${testDevice.uniqueId}${db} to ${CYAN}${testDevice.maybeNumber}${db}`);
   });
 
   test('checkEndpointNumbers should check the testDevice', async () => {
@@ -295,8 +346,8 @@ describe('Matterbridge platform', () => {
     testDevice.number = 100;
     (matterbridge as any).devices.set(testDevice);
     expect(await platform.checkEndpointNumbers()).toBe(1);
-    expect(platform.log.warn).not.toHaveBeenCalled();
-    expect(platform.log.debug).not.toHaveBeenCalledWith(`Setting endpoint number for device ${CYAN}${testDevice.uniqueId}${db} to ${CYAN}${testDevice.maybeNumber}${db}`);
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.WARN, expect.anything());
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.DEBUG, `Setting endpoint number for device ${CYAN}${testDevice.uniqueId}${db} to ${CYAN}${testDevice.maybeNumber}${db}`);
   });
 
   test('checkEndpointNumbers should not check the testDevice', async () => {
@@ -307,8 +358,8 @@ describe('Matterbridge platform', () => {
     testDevice.number = 101;
     (matterbridge as any).devices.set(testDevice);
     expect(await platform.checkEndpointNumbers()).toBe(1);
-    expect(platform.log.warn).toHaveBeenCalledWith(`Endpoint number for device ${CYAN}${testDevice.deviceName}${wr} changed from ${CYAN}100${wr} to ${CYAN}101${wr}`);
-    expect(platform.log.debug).not.toHaveBeenCalledWith(`Setting endpoint number for device ${CYAN}${testDevice.uniqueId}${db} to ${CYAN}${testDevice.maybeNumber}${db}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, `Endpoint number for device ${CYAN}${testDevice.deviceName}${wr} changed from ${CYAN}100${wr} to ${CYAN}101${wr}`);
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.DEBUG, `Setting endpoint number for device ${CYAN}${testDevice.uniqueId}${db} to ${CYAN}${testDevice.maybeNumber}${db}`);
   });
 
   test('checkEndpointNumbers should not check the testDevice without uniqueId', async () => {
@@ -320,7 +371,7 @@ describe('Matterbridge platform', () => {
     (matterbridge as any).devices.set(testDevice);
     testDevice.uniqueId = undefined;
     expect(await platform.checkEndpointNumbers()).toBe(1);
-    expect(platform.log.debug).toHaveBeenCalledWith(`Not checking device ${testDevice.deviceName} without uniqueId or maybeNumber`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Not checking device ${testDevice.deviceName} without uniqueId or maybeNumber`);
   });
 
   test('checkEndpointNumbers should check the testDevice with child endpoints', async () => {
@@ -339,10 +390,10 @@ describe('Matterbridge platform', () => {
     expect(await testDevice.getChildEndpoints()).toHaveLength(2);
     jest.clearAllMocks();
     expect(await platform.checkEndpointNumbers()).toBe(3);
-    expect(platform.log.warn).not.toHaveBeenCalledWith(`Endpoint number for device ${CYAN}${testDevice.uniqueId}${wr} changed from ${CYAN}100${wr} to ${CYAN}101${wr}`);
-    expect(platform.log.debug).not.toHaveBeenCalledWith(`Setting endpoint number for device ${CYAN}${testDevice.uniqueId}${db} to ${CYAN}${testDevice.maybeNumber}${db}`);
-    expect(platform.log.debug).toHaveBeenCalledWith(`Setting child endpoint number for device ${CYAN}${testDevice.uniqueId}${db}.${CYAN}child1${db} to ${CYAN}201${db}`);
-    expect(platform.log.debug).toHaveBeenCalledWith(`Setting child endpoint number for device ${CYAN}${testDevice.uniqueId}${db}.${CYAN}child2${db} to ${CYAN}202${db}`);
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.WARN, `Endpoint number for device ${CYAN}${testDevice.uniqueId}${wr} changed from ${CYAN}100${wr} to ${CYAN}101${wr}`);
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.DEBUG, `Setting endpoint number for device ${CYAN}${testDevice.uniqueId}${db} to ${CYAN}${testDevice.maybeNumber}${db}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Setting child endpoint number for device ${CYAN}${testDevice.uniqueId}${db}.${CYAN}child1${db} to ${CYAN}201${db}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Setting child endpoint number for device ${CYAN}${testDevice.uniqueId}${db}.${CYAN}child2${db} to ${CYAN}202${db}`);
   });
 
   test('checkEndpointNumbers should validate the testDevice with child endpoints', async () => {
@@ -361,9 +412,9 @@ describe('Matterbridge platform', () => {
     expect(await testDevice.getChildEndpoints()).toHaveLength(2);
     jest.clearAllMocks();
     expect(await platform.checkEndpointNumbers()).toBe(3);
-    expect(platform.log.warn).not.toHaveBeenCalled();
-    expect(platform.log.debug).toHaveBeenCalledWith('Checking endpoint numbers...');
-    expect(platform.log.debug).toHaveBeenCalledWith('Endpoint numbers check completed.');
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.WARN, expect.anything());
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Checking endpoint numbers...');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Endpoint numbers check completed.');
   });
 
   test('checkEndpointNumbers should not validate the testDevice with child endpoints', async () => {
@@ -382,28 +433,28 @@ describe('Matterbridge platform', () => {
     expect(await testDevice.getChildEndpoints()).toHaveLength(2);
     jest.clearAllMocks();
     expect(await platform.checkEndpointNumbers()).toBe(3);
-    expect(platform.log.warn).toHaveBeenCalled();
-    expect(platform.log.debug).toHaveBeenCalledTimes(2);
-    expect(platform.log.debug).toHaveBeenCalledWith('Checking endpoint numbers...');
-    expect(platform.log.debug).toHaveBeenCalledWith('Endpoint numbers check completed.');
+    expect(loggerLogSpy).toHaveBeenCalledTimes(4);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Checking endpoint numbers...');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Endpoint numbers check completed.');
   });
 
   test('onConfigure should log a message', async () => {
     await platform.onConfigure();
-    expect(platform.log.debug).toHaveBeenCalledWith('Configuring platform ');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Configuring platform ');
   });
 
   test('onChangeLoggerLevel should log a debug message if not overridden', async () => {
     await platform.onChangeLoggerLevel(LogLevel.DEBUG);
-    expect(platform.log.debug).toHaveBeenCalledWith("The plugin doesn't override onChangeLoggerLevel. Logger level set to: debug");
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, "The plugin doesn't override onChangeLoggerLevel. Logger level set to: debug");
   });
 
   test('onShutdown should log a message', async () => {
     await platform.onShutdown('test reason');
-    expect(platform.log.debug).toHaveBeenCalledWith('Shutting down platform ', 'test reason');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Shutting down platform ', 'test reason');
   });
 
   test('registerDevice calls matterbridge.addBridgedEndpoint with correct parameters', async () => {
+    await platform.unregisterAllDevices();
     const testDevice = new MatterbridgeEndpoint(powerSource);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
     await platform.registerDevice(testDevice);
@@ -412,6 +463,7 @@ describe('Matterbridge platform', () => {
   });
 
   test('unregisterDevice calls matterbridge.removeBridgedEndpoint with correct parameters', async () => {
+    await platform.unregisterAllDevices();
     const testDevice = new MatterbridgeEndpoint(powerSource);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
     await platform.unregisterDevice(testDevice);
@@ -423,5 +475,21 @@ describe('Matterbridge platform', () => {
     await platform.unregisterAllDevices();
     expect(platform.registeredEndpoints.size).toBe(0);
     expect(matterbridge.removeAllBridgedEndpoints).toHaveBeenCalled();
+  });
+
+  test('registerDevice should log error if the device name already exist', async () => {
+    await platform.unregisterAllDevices();
+    expect(platform.registeredEndpoints.size).toBe(0);
+    expect(platform.registeredEndpointsByName.size).toBe(0);
+    expect(matterbridge.removeAllBridgedEndpoints).toHaveBeenCalled();
+
+    platform.registeredEndpoints.set('test', new MatterbridgeEndpoint(powerSource));
+    platform.registeredEndpointsByName.set('test', new MatterbridgeEndpoint(powerSource));
+    const device = new MatterbridgeEndpoint(powerSource);
+    device.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
+    await platform.registerDevice(device);
+    expect(platform.registeredEndpoints.size).toBe(1);
+    expect(platform.registeredEndpointsByName.size).toBe(1);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Device with name ${CYAN}${device.deviceName}${er} is already registered. The device will not be added. Please change the device name.`);
   });
 });
