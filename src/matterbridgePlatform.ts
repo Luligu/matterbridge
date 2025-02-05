@@ -24,6 +24,7 @@
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 import { isValidArray, isValidObject, isValidString } from './utils/utils.js';
 
 // AnsiLogger module
@@ -138,6 +139,10 @@ export class MatterbridgePlatform {
     device.plugin = this.name;
     if (device.deviceName && this.registeredEndpointsByName.has(device.deviceName)) {
       this.log.error(`Device with name ${CYAN}${device.deviceName}${er} is already registered. The device will not be added. Please change the device name.`);
+      return;
+    }
+    if (device.deviceName && checkNotLatinCharacters(device.deviceName)) {
+      this.log.debug(`Device with name ${CYAN}${device.deviceName}${er} has not latin characters. Please keep the name as short as possible.`);
       return;
     }
     await this.matterbridge.addBridgedEndpoint(this.name, device);
