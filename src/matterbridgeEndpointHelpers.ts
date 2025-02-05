@@ -111,6 +111,24 @@ export function lowercaseFirstLetter(name: string): string {
   return name.charAt(0).toLowerCase() + name.slice(1);
 }
 
+export function checkNotLatinCharacters(deviceName: string): boolean {
+  const nonLatinRegexList = [
+    /[\u0400-\u04FF\u0500-\u052F]/, // Cyrillic
+    /[\u2E80-\u9FFF]/, // CJK (Chinese, Japanese, Korean)
+    /[\uAC00-\uD7AF]/, // Korean Hangul
+    /[\u0600-\u06FF\u0750-\u077F]/, // Arabic, Persian
+    /[\u0590-\u05FF]/, // Hebrew
+    /[\u0900-\u097F]/, // Devanagari (Hindi, Sanskrit)
+    /[\u0E00-\u0E7F]/, // Thai
+    /[\u1200-\u137F]/, // Ethiopic (Amharic, Tigrinya)
+  ];
+  return nonLatinRegexList.some((regex) => regex.test(deviceName));
+}
+
+export function generateUniqueId(deviceName: string): string {
+  return createHash('md5').update(deviceName).digest('hex'); // MD5 hash of the device name
+}
+
 export function createUniqueId(param1: string, param2: string, param3: string, param4: string) {
   const hash = createHash('md5');
   hash.update(param1 + param2 + param3 + param4);
