@@ -21,7 +21,7 @@ Starting from v. 2.1.0, the legacy old api of matter.js have been completely rem
 
 For this reason there is no compatibility with the old versions of the plugins.
 
-You need to update all plugins you use and Matterbridge in the same moment. 
+You need to update all plugins you use and Matterbridge in the same moment.
 
 I suggest to first update all plugins without restarting and then to update Matterbridge so when it restarts, all versions will be the latest.
 
@@ -30,6 +30,17 @@ matterbridge-shelly v. 1.1.5
 matterbridge-zigbee2mqtt v. 2.4.4
 matterbridge-somfy-tahoma v. 1.2.3
 matterbridge-hass v. 0.0.8
+
+## [2.1.4] - 2025-02-05
+
+### Added
+
+- [frontend]: Added memorycheck before cleanup.
+
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
 
 ## [2.1.3] - 2025-02-04
 
