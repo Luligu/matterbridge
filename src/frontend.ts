@@ -924,6 +924,20 @@ export class Frontend {
   }
 
   async stop() {
+    // Start the memory check. This will not allow the process to exit but will log the memory usage for 5 minutes.
+    if (hasParameter('memorycheck')) {
+      await new Promise<void>((resolve) => {
+        this.log.debug(`***Memory check started for ${getIntParameter('memorycheck') ?? 5 * 60 * 1000} ms`);
+        setTimeout(
+          () => {
+            this.log.debug(`***Memory check stopped after ${getIntParameter('memorycheck') ?? 5 * 60 * 1000} ms`);
+            resolve();
+          },
+          getIntParameter('memorycheck') ?? 5 * 60 * 1000,
+        );
+      });
+    }
+
     // Close the http server
     if (this.httpServer) {
       this.httpServer.close();
@@ -1015,7 +1029,7 @@ export class Frontend {
       };
 
       this.log.debug(
-        `***Cpu usage ${CYAN}${cpuUsage.padStart(6, ' ')} %${db} - Memory usage rss ${CYAN}${memoryUsage.rss}${db} heapTotal ${CYAN}${memoryUsage.heapTotal}${db} heapUsed ${CYAN}${memoryUsage.heapUsed}${db} external ${memoryUsage.external} arrayBuffers ${memoryUsage.arrayBuffers}`,
+        `***Cpu usage: ${CYAN}${cpuUsage.padStart(6, ' ')} %${db} - Memory usage: rss ${CYAN}${memoryUsage.rss}${db} heapTotal ${CYAN}${memoryUsage.heapTotal}${db} heapUsed ${CYAN}${memoryUsage.heapUsed}${db} external ${memoryUsage.external} arrayBuffers ${memoryUsage.arrayBuffers}`,
       );
     };
     interval();
@@ -1045,7 +1059,7 @@ export class Frontend {
       };
       // eslint-disable-next-line no-console
       console.log(
-        `${YELLOW}Cpu usage${db} ${CYAN}${memory.cpu.padStart(6, ' ')} %${db} - ${YELLOW}Memory usage${db} rss ${CYAN}${memoryUsage.rss}${db} heapTotal ${CYAN}${memoryUsage.heapTotal}${db} heapUsed ${CYAN}${memoryUsage.heapUsed}${db} external ${memoryUsage.external} arrayBuffers ${memoryUsage.arrayBuffers}${rs}`,
+        `${YELLOW}Cpu usage:${db} ${CYAN}${memory.cpu.padStart(6, ' ')} %${db} - ${YELLOW}Memory usage:${db} rss ${CYAN}${memoryUsage.rss}${db} heapTotal ${CYAN}${memoryUsage.heapTotal}${db} heapUsed ${CYAN}${memoryUsage.heapUsed}${db} external ${memoryUsage.external} arrayBuffers ${memoryUsage.arrayBuffers}${rs}`,
       );
     }
     this.memoryData = [];
