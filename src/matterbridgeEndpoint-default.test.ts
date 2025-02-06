@@ -83,7 +83,6 @@ import {
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/node/behaviors';
 import { updateAttribute } from './matterbridgeEndpointHelpers.js';
-import { MdnsService } from '@matter/main/protocol';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
@@ -918,9 +917,11 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.getAttribute(AirQuality.Cluster.id, 'airQuality')).toBe(AirQuality.AirQualityEnum.Unknown);
     });
 
-    // eslint-disable-next-line jest/expect-expect
+    // eslint-disable-next-line jest/no-commented-out-tests
+    /*
     test('pause before cleanup', async () => {
       await new Promise((resolve) => setTimeout(resolve, 5000)); // Pause for 5 seconds
     }, 60000);
+    */
   });
 });

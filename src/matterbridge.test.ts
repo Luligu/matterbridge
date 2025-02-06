@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest'];
+process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug'];
 
 import { jest } from '@jest/globals';
 
 // jest.mock('@project-chip/matter-node.js/util');
 
-import { AnsiLogger, db, LogLevel, nf } from 'node-ansi-logger';
+import { AnsiLogger, db, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
 import { hasParameter } from './utils/utils.js';
 import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin, SessionInformation } from './matterbridgeTypes.js';
@@ -81,7 +81,9 @@ describe('Matterbridge', () => {
     let matterbridge: Matterbridge;
 
     test('Matterbridge.loadInstance(false)', async () => {
+      expect((Matterbridge as any).instance).toBeUndefined();
       matterbridge = await Matterbridge.loadInstance(false);
+      matterbridge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
       expect(matterbridge).toBeDefined();
       expect(matterbridge.profile).toBe('Jest');
       expect(matterbridge.nodeStorageName).toBe('storage.Jest');
@@ -89,7 +91,7 @@ describe('Matterbridge', () => {
       expect(matterbridge.matterbrideLoggerFile).toBe('matterbridge.Jest.log');
       expect(matterbridge.matterLoggerFile).toBe('matter.Jest.log');
       expect((matterbridge as any).initialized).toBeFalsy();
-      expect((matterbridge as any).log).toBeUndefined();
+      expect((matterbridge as any).log).toBeDefined();
       expect((matterbridge as any).homeDirectory).toBe('');
       expect((matterbridge as any).matterbridgeDirectory).toBe('');
       expect((matterbridge as any).globalModulesDirectory).toBe('');
@@ -111,6 +113,7 @@ describe('Matterbridge', () => {
     });
 
     test('Matterbridge.loadInstance(true)', async () => {
+      expect((Matterbridge as any).instance).toBeDefined();
       matterbridge = await Matterbridge.loadInstance(true);
       expect((matterbridge as any).initialized).toBeFalsy();
       if (!(matterbridge as any).initialized) await matterbridge.initialize();
@@ -148,6 +151,7 @@ describe('Matterbridge', () => {
     test('Matterbridge.loadInstance(true) with frontend', async () => {
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '8081', '-profile', 'Jest'];
 
+      expect((Matterbridge as any).instance).toBeUndefined();
       matterbridge = await Matterbridge.loadInstance(true);
       expect((matterbridge as any).initialized).toBeTruthy();
       if (!(matterbridge as any).initialized) await matterbridge.initialize();
@@ -179,6 +183,7 @@ describe('Matterbridge', () => {
     let matterbridge: Matterbridge;
 
     beforeAll(async () => {
+      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug'];
       matterbridge = await Matterbridge.loadInstance(true);
       if (!(matterbridge as any).initialized) await matterbridge.initialize();
     });
@@ -191,6 +196,8 @@ describe('Matterbridge', () => {
     test('Matterbridge profile', async () => {
       expect(matterbridge).toBeDefined();
       expect(matterbridge.profile).toBe('Jest');
+      expect((matterbridge as any).initialized).toBe(true);
+      expect((matterbridge as any).hasCleanupStarted).toBe(false);
     });
 
     test('should do a partial mock of AnsiLogger', () => {
@@ -273,17 +280,23 @@ describe('Matterbridge', () => {
     });
 
     test('matterbridge -help', async () => {
+      expect((matterbridge as any).initialized).toBe(true);
+      expect((matterbridge as any).hasCleanupStarted).toBe(false);
+
       const shutdownPromise = new Promise((resolve) => {
         matterbridge.on('shutdown', resolve);
       });
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-help'];
       await (matterbridge as any).parseCommandLine();
-      expect(loggerLogSpy).toHaveBeenCalled();
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Usage: matterbridge [options]'));
       await shutdownPromise;
       matterbridge.removeAllListeners('shutdown');
     }, 60000);
 
     test('matterbridge -list', async () => {
+      expect((matterbridge as any).initialized).toBe(true);
+      expect((matterbridge as any).hasCleanupStarted).toBe(false);
+
       const shutdownPromise = new Promise((resolve) => {
         matterbridge.on('shutdown', resolve);
       });
@@ -296,6 +309,9 @@ describe('Matterbridge', () => {
     }, 60000);
 
     test('matterbridge -logstorage', async () => {
+      expect((matterbridge as any).initialized).toBe(true);
+      expect((matterbridge as any).hasCleanupStarted).toBe(false);
+
       const shutdownPromise = new Promise((resolve) => {
         matterbridge.on('shutdown', resolve);
       });
@@ -307,6 +323,9 @@ describe('Matterbridge', () => {
     }, 60000);
 
     test('matterbridge -loginterfaces', async () => {
+      expect((matterbridge as any).initialized).toBe(true);
+      expect((matterbridge as any).hasCleanupStarted).toBe(false);
+
       const shutdownPromise = new Promise((resolve) => {
         matterbridge.on('shutdown', resolve);
       });
@@ -318,6 +337,9 @@ describe('Matterbridge', () => {
     }, 60000);
 
     test('matterbridge -reset', async () => {
+      expect((matterbridge as any).initialized).toBe(true);
+      expect((matterbridge as any).hasCleanupStarted).toBe(false);
+
       const shutdownPromise = new Promise((resolve) => {
         matterbridge.on('shutdown', resolve);
       });
@@ -329,6 +351,9 @@ describe('Matterbridge', () => {
     }, 60000);
 
     test('matterbridge -reset xxx', async () => {
+      expect((matterbridge as any).initialized).toBe(false);
+      expect((matterbridge as any).hasCleanupStarted).toBe(false);
+
       const shutdownPromise = new Promise((resolve) => {
         matterbridge.on('shutdown', resolve);
       });
@@ -342,6 +367,9 @@ describe('Matterbridge', () => {
     }, 60000);
 
     test('matterbridge -add mockPlugin1', async () => {
+      expect((matterbridge as any).initialized).toBe(false);
+      expect((matterbridge as any).hasCleanupStarted).toBe(false);
+
       const shutdownPromise = new Promise((resolve) => {
         matterbridge.on('shutdown', resolve);
       });
@@ -366,6 +394,9 @@ describe('Matterbridge', () => {
     }, 60000);
 
     test('matterbridge -disable mockPlugin1', async () => {
+      expect((matterbridge as any).initialized).toBe(false);
+      expect((matterbridge as any).hasCleanupStarted).toBe(false);
+
       const shutdownPromise = new Promise((resolve) => {
         matterbridge.on('shutdown', resolve);
       });
@@ -386,6 +417,9 @@ describe('Matterbridge', () => {
     }, 60000);
 
     test('matterbridge -enable mockPlugin1', async () => {
+      expect((matterbridge as any).initialized).toBe(false);
+      expect((matterbridge as any).hasCleanupStarted).toBe(false);
+
       const shutdownPromise = new Promise((resolve) => {
         matterbridge.on('shutdown', resolve);
       });
@@ -406,6 +440,9 @@ describe('Matterbridge', () => {
     }, 60000);
 
     test('matterbridge -remove mockPlugin1', async () => {
+      expect((matterbridge as any).initialized).toBe(false);
+      expect((matterbridge as any).hasCleanupStarted).toBe(false);
+
       const shutdownPromise = new Promise((resolve) => {
         matterbridge.on('shutdown', resolve);
       });
@@ -421,6 +458,9 @@ describe('Matterbridge', () => {
     }, 60000);
 
     test('matterbridge -add mockPlugin1/2/3', async () => {
+      expect((matterbridge as any).initialized).toBe(false);
+      expect((matterbridge as any).hasCleanupStarted).toBe(false);
+
       const shutdownPromise = new Promise((resolve) => {
         matterbridge.on('shutdown', resolve);
       });
@@ -468,6 +508,9 @@ describe('Matterbridge', () => {
     }, 60000);
 
     test('matterbridge start mockPlugin1/2/3', async () => {
+      expect((matterbridge as any).initialized).toBe(false);
+      expect((matterbridge as any).hasCleanupStarted).toBe(false);
+
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0'];
       const plugins = (await (matterbridge as any).plugins.array()) as RegisteredPlugin[];
       expect(plugins).toHaveLength(3);
@@ -492,15 +535,14 @@ describe('Matterbridge', () => {
     }, 10000);
 
     test('matterbridge -factoryreset', async () => {
-      const shutdownPromise = new Promise((resolve) => {
-        matterbridge.on('shutdown', resolve);
-      });
+      expect((matterbridge as any).initialized).toBe(false);
+      expect((matterbridge as any).hasCleanupStarted).toBe(false);
+
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-factoryreset'];
       await (matterbridge as any).parseCommandLine();
-      expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
       expect((matterbridge as any).plugins).toHaveLength(0);
-      // await shutdownPromise;
       matterbridge.removeAllListeners('shutdown');
-    }, 60000);
+    }, 10000);
   });
 });

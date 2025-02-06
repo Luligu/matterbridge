@@ -1166,9 +1166,7 @@ describe('Matterbridge frontend', () => {
       expect((matterbridge as any).plugins.size).toBe(0);
 
       // Close the Matterbridge instance
-      const server = matterbridge.serverNode;
       await matterbridge.destroyInstance();
-      await server?.env.get(MdnsService)[Symbol.asyncDispose]();
 
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `WebSocket server closed successfully`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);

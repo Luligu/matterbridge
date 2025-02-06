@@ -1402,6 +1402,8 @@ export class Matterbridge extends EventEmitter {
       }
       this.hasCleanupStarted = false;
       this.initialized = false;
+    } else {
+      this.log.debug('Cleanup already started...');
     }
   }
 

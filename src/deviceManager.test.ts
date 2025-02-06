@@ -10,7 +10,6 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { DeviceManager } from './deviceManager.js';
 import { PluginManager } from './pluginManager.js';
 import { contactSensor, occupancySensor } from './matterbridgeDeviceTypes.js';
-import { MdnsService } from '@matter/main/protocol';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -38,9 +37,7 @@ describe('DeviceManager with mocked devices', () => {
 
   afterAll(async () => {
     // Close the Matterbridge instance
-    const server = matterbridge.serverNode;
     await matterbridge.destroyInstance();
-    await server?.env.get(MdnsService)[Symbol.asyncDispose]();
     // Restore the mocked AnsiLogger.log method
     loggerLogSpy.mockRestore();
     // Restore the mocked console.log
@@ -195,7 +192,6 @@ describe('DeviceManager with real devices', () => {
     // Close the Matterbridge instance
     const server = matterbridge.serverNode;
     await matterbridge.destroyInstance();
-    await server?.env.get(MdnsService)[Symbol.asyncDispose]();
     // Restore the mocked AnsiLogger.log method
     loggerLogSpy.mockRestore();
     // Restore the mocked console.log

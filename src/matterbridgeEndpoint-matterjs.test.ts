@@ -345,7 +345,7 @@ describe('MatterbridgeEndpoint class', () => {
     test('close server node', async () => {
       expect(server).toBeDefined();
       await server.close();
-      await server.env.get(MdnsService)[Symbol.asyncDispose]();
+      await server.env.get(MdnsService)[Symbol.asyncDispose](); // loadInstance(false) does not start the mDNS service
     });
   });
 });
