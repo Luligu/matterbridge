@@ -67,6 +67,8 @@ import {
   getAttributeId,
   setAttribute,
   getAttribute,
+  checkNotLatinCharacters,
+  generateUniqueId,
 } from './matterbridgeEndpointHelpers.js';
 
 // @matter
@@ -290,6 +292,11 @@ export class MatterbridgeEndpoint extends Endpoint {
       behaviors: options.tagList ? SupportedBehaviors(DescriptorServer.with(Descriptor.Feature.TagList)) : {},
     };
     const endpointV8 = MutableEndpoint(deviceTypeDefinitionV8);
+
+    // Check if the uniqueStorageKey is valid
+    if (options.uniqueStorageKey && checkNotLatinCharacters(options.uniqueStorageKey)) {
+      options.uniqueStorageKey = generateUniqueId(options.uniqueStorageKey);
+    }
 
     // Convert the options to an Endpoint.Options
     const optionsV8 = {
