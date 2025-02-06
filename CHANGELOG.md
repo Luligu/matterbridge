@@ -31,7 +31,7 @@ matterbridge-zigbee2mqtt v. 2.4.4
 matterbridge-somfy-tahoma v. 1.2.3
 matterbridge-hass v. 0.0.8
 
-## [2.1.4] - 2025-02-05
+## [2.1.4] - 2025-02-06
 
 ### Added
 
