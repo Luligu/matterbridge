@@ -59,11 +59,16 @@ export class MatterbridgePlatform {
   public name = ''; // Will be set by the loadPlugin() method using the package.json value.
   public type = ''; // Will be set by the extending classes.
   public version = '1.0.0'; // Will be set by the loadPlugin() method using the package.json value.
+
+  // Platform storage
   public storage: NodeStorageManager | undefined;
   public context: NodeStorage | undefined;
+
+  // Device and entity selection
   public selectDevice = new Map<string, { serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }>();
   public selectEntity = new Map<string, { name: string; description: string; icon?: string }>();
 
+  // Registered devices
   public registeredEndpoints = new Map<string, MatterbridgeEndpoint>(); // uniqueId, MatterbridgeEndpoint
   public registeredEndpointsByName = new Map<string, MatterbridgeEndpoint>(); // deviceName, MatterbridgeEndpoint
 
@@ -113,7 +118,7 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * This method can be overridden in the extended class. Call super.onShutdown() to run checkEndpointNumbers().
+   * This method can be overridden in the extended class. Call super.onShutdown() to run checkEndpointNumbers() and cleanup memory.
    * It is called when the platform is shutting down.
    * Use this method to clean up any resources.
    * @param {string} [reason] - The reason for shutting down.
@@ -121,6 +126,14 @@ export class MatterbridgePlatform {
   async onShutdown(reason?: string) {
     this.log.debug(`Shutting down platform ${this.name}`, reason);
     await this.checkEndpointNumbers();
+    this.selectDevice.clear();
+    this.selectEntity.clear();
+    this.registeredEndpoints.clear();
+    this.registeredEndpointsByName.clear();
+    await this.context?.close();
+    this.context = undefined;
+    await this.storage?.close();
+    this.storage = undefined;
   }
 
   /**
@@ -129,6 +142,15 @@ export class MatterbridgePlatform {
    */
   async onChangeLoggerLevel(logLevel: LogLevel) {
     this.log.debug(`The plugin doesn't override onChangeLoggerLevel. Logger level set to: ${logLevel}`);
+  }
+
+  /**
+   * Check if a device with this name is already registered in the platform.
+   * @param {string} deviceName - The device name to check.
+   * @returns {boolean} True if the device is already registered, false otherwise.
+   */
+  hasDeviceName(deviceName: string): boolean {
+    return this.registeredEndpointsByName.has(deviceName);
   }
 
   /**
