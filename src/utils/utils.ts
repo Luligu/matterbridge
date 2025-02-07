@@ -589,7 +589,7 @@ export async function copyDirectory(srcDir: string, destDir: string): Promise<bo
  */
 export async function resolveHostname(hostname: string, family: 0 | 4 | 6 = 4): Promise<string | null> {
   try {
-    const addresses = await dns.promises.lookup(hostname.toLowerCase() + '.local', { family });
+    const addresses = await dns.promises.lookup(hostname.toLowerCase() /* + '.local'*/, { family });
     return addresses.address;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {

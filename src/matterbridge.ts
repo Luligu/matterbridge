@@ -35,7 +35,7 @@ import { NodeStorageManager, NodeStorage } from './storage/export.js';
 import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN, nt } from './logger/export.js';
 
 // Matterbridge
-import { logInterfaces, copyDirectory, getParameter, getIntParameter, hasParameter } from './utils/utils.js';
+import { logInterfaces, copyDirectory, getParameter, getIntParameter, hasParameter, getNpmPackageVersion } from './utils/utils.js';
 import { MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
@@ -659,6 +659,12 @@ export class Matterbridge extends EventEmitter {
     if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.frontend.start(getIntParameter('frontend'));
     this.frontend.logLevel = this.log.logLevel;
 
+    // Check now the latest versions of matterbridge and plugins
+    this.getMatterbridgeLatestVersion();
+    for (const plugin of this.plugins) {
+      this.getPluginLatestVersion(plugin);
+    }
+
     // Check each 60 minutes the latest versions
     this.checkUpdateInterval = setInterval(
       () => {
@@ -1014,49 +1020,47 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Retrieves the latest version of Matterbridge and performs necessary actions based on the version comparison.
+   * Retrieves the latest version of Matterbridge and updates the matterbridgeLatestVersion property.
+   * If there is an error retrieving the latest version, logs an error message.
+   *
    * @private
-   * @returns {Promise<void>} A promise that resolves when the latest version is retrieved and actions are performed.
+   * @returns {Promise<void>} A promise that resolves when the latest version is retrieved.
    */
   private async getMatterbridgeLatestVersion(): Promise<void> {
-    this.getLatestVersion('matterbridge')
-      .then(async (matterbridgeLatestVersion) => {
-        this.matterbridgeLatestVersion = matterbridgeLatestVersion;
-        this.matterbridgeInformation.matterbridgeLatestVersion = this.matterbridgeLatestVersion;
-        this.log.debug(`Matterbridge Latest Version: ${this.matterbridgeLatestVersion}`);
+    getNpmPackageVersion('matterbridge')
+      .then(async (version) => {
+        this.matterbridgeLatestVersion = version;
+        this.matterbridgeInformation.matterbridgeLatestVersion = version;
         await this.nodeContext?.set<string>('matterbridgeLatestVersion', this.matterbridgeLatestVersion);
         if (this.matterbridgeVersion !== this.matterbridgeLatestVersion) {
           this.log.notice(`Matterbridge is out of date. Current version: ${this.matterbridgeVersion}. Latest version: ${this.matterbridgeLatestVersion}.`);
         } else {
           this.log.debug(`Matterbridge is up to date. Current version: ${this.matterbridgeVersion}. Latest version: ${this.matterbridgeLatestVersion}.`);
         }
+        this.frontend.wssSendRefreshRequired();
       })
-      .catch((error: Error) => {
+      .catch((error) => {
         this.log.error(`Error getting Matterbridge latest version: ${error.message}`);
-        // error.stack && this.log.debug(error.stack);
       });
   }
 
   /**
    * Retrieves the latest version of a plugin and updates the plugin's latestVersion property.
-   * If the plugin's version is different from the latest version, logs a warning message.
-   * If the plugin's version is the same as the latest version, logs an info message.
    * If there is an error retrieving the latest version, logs an error message.
    *
    * @private
    * @param {RegisteredPlugin} plugin - The plugin for which to retrieve the latest version.
-   * @returns {Promise<void>} A promise that resolves when the latest version is retrieved and actions are performed.
+   * @returns {Promise<void>} A promise that resolves when the latest version is retrieved.
    */
   private async getPluginLatestVersion(plugin: RegisteredPlugin): Promise<void> {
-    this.getLatestVersion(plugin.name)
-      .then(async (latestVersion) => {
-        plugin.latestVersion = latestVersion;
-        if (plugin.version !== latestVersion) this.log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest version: ${latestVersion}.`);
-        else this.log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest version: ${latestVersion}.`);
+    getNpmPackageVersion(plugin.name)
+      .then((version) => {
+        plugin.latestVersion = version;
+        if (plugin.version !== plugin.latestVersion) this.log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
+        else this.log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
       })
-      .catch((error: Error) => {
+      .catch((error) => {
         this.log.error(`Error getting ${plg}${plugin.name}${er} latest version: ${error.message}`);
-        // error.stack && this.log.debug(error.stack);
       });
   }
 

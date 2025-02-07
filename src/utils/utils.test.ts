@@ -17,6 +17,11 @@ import {
   isValidUndefined,
   createZip,
   getNpmPackageVersion,
+  copyDirectory,
+  hasParameter,
+  getParameter,
+  getIntParameter,
+  resolveHostname,
 } from './utils';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -355,6 +360,82 @@ describe('Utils test', () => {
     expect(isValidUndefined(undefined)).toBe(true);
     expect(isValidUndefined({ x: 1, y: 4 })).toBe(false);
     expect(isValidUndefined([1, 4, 'string'])).toBe(false);
+  });
+
+  it('hasParameter should retrive the parameter', () => {
+    expect(hasParameter('logger')).toBe(false);
+
+    const argv = process.argv;
+    process.argv = ['node', 'index.js', '--experimental-vm-modules', '--debug', '--inspect'];
+    expect(hasParameter('experimental-vm-modules')).toBe(true);
+    expect(hasParameter('debug')).toBe(true);
+    process.argv = ['node', 'index.js', '-experimental-vm-modules', '-debug', '--inspect'];
+    expect(hasParameter('experimental-vm-modules')).toBe(true);
+    expect(hasParameter('debug')).toBe(true);
+    process.argv = argv;
+  });
+
+  it('getParameter should retrive the parameter', () => {
+    const argv = process.argv;
+    process.argv = ['node', 'index.js', '--experimental-vm-modules', '--debug', '--logger', 'debug'];
+    expect(getParameter('assert')).toBe(undefined);
+    expect(getParameter('logger')).toBe('debug');
+    process.argv = ['node', 'index.js', '-experimental-vm-modules', '-debug', '-logger', 'debug'];
+    expect(getParameter('node')).toBe(undefined);
+    expect(getParameter('logger')).toBe('debug');
+    process.argv = argv;
+  });
+
+  it('getIntParameter should retrive the parameter', () => {
+    const argv = process.argv;
+    process.argv = ['node', 'index.js', '--experimental-vm-modules', '--debug', '--logger', '1'];
+    expect(getIntParameter('debug')).toBe(undefined);
+    expect(getIntParameter('logger')).toBe(1);
+    process.argv = ['node', 'index.js', '-experimental-vm-modules', '-debug', '-logger', '5'];
+    expect(getIntParameter('debug')).toBe(undefined);
+    expect(getIntParameter('logger')).toBe(5);
+    process.argv = argv;
+  });
+
+  it('should not resolve localhost 0', async () => {
+    const result = await resolveHostname('localhost', 0);
+    console.log('Resolved localhost:', result);
+    expect(result).toBeDefined();
+    expect(result).not.toBeNull();
+    expect(typeof result).toBe('string');
+    expect(result).toBe('::1');
+  });
+
+  it('should not resolve localhost 4', async () => {
+    const result = await resolveHostname('localhost', 4);
+    console.log('Resolved localhost:', result);
+    expect(result).toBeDefined();
+    expect(result).not.toBeNull();
+    expect(typeof result).toBe('string');
+    expect(result).toBe('127.0.0.1');
+  });
+
+  it('should not resolve localhost 6', async () => {
+    const result = await resolveHostname('localhost', 6);
+    console.log('Resolved localhost:', result);
+    expect(result).toBeDefined();
+    expect(result).not.toBeNull();
+    expect(typeof result).toBe('string');
+    expect(result).toBe('::1');
+  });
+
+  it('should resolve www.npmjs.com 0', async () => {
+    const result = await resolveHostname('www.npmjs.com', 0);
+    console.log('Resolved www.npmjs.com:', result);
+    expect(result).toBeDefined();
+    expect(result).not.toBeNull();
+    expect(typeof result).toBe('string');
+  });
+
+  it('should copy a directory', async () => {
+    await fs.mkdir('test', { recursive: true });
+    const result = await copyDirectory(path.join('.', 'docker'), path.join('.', 'test'));
+    expect(result).toBeTruthy();
   });
 
   it('should zip a file', async () => {
