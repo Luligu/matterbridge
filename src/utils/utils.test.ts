@@ -16,6 +16,7 @@ import {
   isValidNull,
   isValidUndefined,
   createZip,
+  getNpmPackageVersion,
 } from './utils';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -409,5 +410,37 @@ describe('Utils test', () => {
   it('should zip with an array', async () => {
     const size = await createZip(path.join('test', 'array.zip'), 'package.json', '*.js', path.join('src', 'utils'));
     expect(size).toBeGreaterThan(0);
+  }, 60000);
+
+  it('should get the latest version', async () => {
+    const version = await getNpmPackageVersion('matterbridge');
+    expect(version).toBeDefined();
+    expect(typeof version).toBe('string');
+    // console.log('Latest version:', version);
+  }, 60000);
+
+  it('should get the latest dev version', async () => {
+    const devVersion = await getNpmPackageVersion('matterbridge', 'dev', 1000);
+    expect(devVersion).toBeDefined();
+    expect(typeof devVersion).toBe('string');
+    // console.log('Latest version tag dev:', devVersion);
+  }, 60000);
+
+  it('should get version for tag latest and dev', async () => {
+    const version = await getNpmPackageVersion('matterbridge', 'latest', 1000);
+    expect(version).toBeDefined();
+    expect(typeof version).toBe('string');
+    // console.log('Latest version:', version);
+
+    const devVersion = await getNpmPackageVersion('matterbridge', 'dev', 1000);
+    expect(devVersion).toBeDefined();
+    expect(typeof devVersion).toBe('string');
+    // console.log('Latest version tag dev:', devVersion);
+
+    expect(devVersion).not.toBe(version);
+  }, 60000);
+
+  it('should not get the latest version of a non existing package', async () => {
+    await expect(getNpmPackageVersion('matterbridge1234567')).rejects.toThrow('Failed to fetch data. Status code: 404');
   }, 60000);
 });

@@ -23,14 +23,11 @@
 
 // Node.js modules
 import os from 'os';
-import { createWriteStream, statSync } from 'fs';
 import path from 'path';
-import * as dns from 'dns';
+import { createWriteStream, statSync } from 'fs';
 import { promises as fs } from 'fs';
+import * as dns from 'dns';
 
-// Package modules
-// import archiver, { ArchiverError, EntryData } from 'archiver';
-// import { glob } from 'glob';
 import type { ArchiverError, EntryData } from 'archiver';
 
 // AnsiLogger module
@@ -639,4 +636,62 @@ export function getIntParameter(name: string): number | undefined {
   const intValue = parseInt(value, 10);
   if (!isValidNumber(intValue)) return undefined;
   return intValue;
+}
+
+/**
+ * Retrieves the version of an npm package from the npm registry.
+ *
+ * @param {string} packageName - The name of the npm package.
+ * @param {string} [tag='latest'] - The tag of the package version to retrieve (default is 'latest').
+ * @param {number} [timeout=5000] - The timeout duration in milliseconds (default is 5000ms).
+ * @returns {Promise<string>} A promise that resolves to the version string of the package.
+ * @throws {Error} If the request fails or the tag is not found.
+ */
+export async function getNpmPackageVersion(packageName: string, tag = 'latest', timeout = 5000): Promise<string> {
+  const https = await import('https');
+  return new Promise((resolve, reject) => {
+    const url = `https://registry.npmjs.org/${packageName}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      reject(new Error(`Request timed out after ${timeout / 1000} seconds`));
+    }, timeout);
+
+    const req = https.get(url, { signal: controller.signal }, (res) => {
+      let data = '';
+
+      if (res.statusCode !== 200) {
+        clearTimeout(timeoutId);
+        res.resume(); // Discard response data to close the socket properly
+        req.destroy(); // Forcefully close the request
+        reject(new Error(`Failed to fetch data. Status code: ${res.statusCode}`));
+        return;
+      }
+
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        clearTimeout(timeoutId);
+        try {
+          const jsonData = JSON.parse(data);
+          // console.log(`Package ${packageName} tag ${tag}`, jsonData);
+          const version = jsonData['dist-tags']?.[tag];
+          if (version) {
+            resolve(version);
+          } else {
+            reject(new Error(`Tag "${tag}" not found for package "${packageName}"`));
+          }
+        } catch (error) {
+          reject(new Error(`Failed to parse response JSON: ${error instanceof Error ? error.message : error}`));
+        }
+      });
+    });
+
+    req.on('error', (error) => {
+      clearTimeout(timeoutId);
+      reject(new Error(`Request failed: ${error instanceof Error ? error.message : error}`));
+    });
+  });
 }
