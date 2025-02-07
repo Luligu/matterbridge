@@ -25,13 +25,15 @@ You need to update all plugins you use and Matterbridge in the same moment.
 
 I suggest to first update all plugins without restarting and then to update Matterbridge so when it restarts, all versions will be the latest.
 
+If you use docker, all plugins are already installed in the image so you just need to pull the new image.
+
 Compatibility list:
 matterbridge-shelly v. 1.1.5
 matterbridge-zigbee2mqtt v. 2.4.4
 matterbridge-somfy-tahoma v. 1.2.3
 matterbridge-hass v. 0.0.8
 
-## [2.1.4] - 2025-02-06
+## [2.1.4] - 2025-02-07
 
 ### Added
 
@@ -42,6 +44,7 @@ matterbridge-hass v. 0.0.8
 ### Changed
 
 - [package]: Update matter.js to 0.12.3.
+- [matter.js]: Since matter.js storage cannot properly encode non latin names, they are encoded before passing them to matter.js.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
