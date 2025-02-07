@@ -503,6 +503,50 @@ export async function updateAttribute(endpoint: MatterbridgeEndpoint, cluster: B
 }
 
 /**
+ * Subscribes to the provided attribute on a cluster.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to subscribe the attribute to.
+ * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to subscribe the attribute to.
+ * @param {string} attribute - The name of the attribute to subscribe to.
+ * @param {(newValue: any, oldValue: any) => void} listener - A callback function that will be called when the attribute value changes.
+ * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
+ * @returns {boolean} - A boolean indicating whether the subscription was successful.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function subscribeAttribute(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, listener: (newValue: any, oldValue: any) => void, log?: AnsiLogger): Promise<boolean> {
+  const clusterName = getBehavior(endpoint, cluster)?.id;
+  if (!clusterName) {
+    endpoint.log.error(`subscribeAttribute ${hk}${attribute}${er} error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+    return false;
+  }
+
+  if (endpoint.construction.status !== Lifecycle.Status.Active) {
+    // this.log.error(`subscribeAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+    await endpoint.construction.ready;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const events = endpoint.events as Record<string, Record<string, any>>;
+  if (!(clusterName in events)) {
+    endpoint.log.error(
+      `subscribeAttribute ${hk}${attribute}${er} error: Cluster ${'0x' + getClusterId(endpoint, clusterName)?.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`,
+    );
+    return false;
+  }
+
+  attribute = lowercaseFirstLetter(attribute) + '$Changed';
+  if (!(attribute in events[clusterName])) {
+    endpoint.log.error(
+      `subscribeAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + getClusterId(endpoint, clusterName)?.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`,
+    );
+    return false;
+  }
+  events[clusterName][attribute].on(listener);
+  log?.info(`${db}Subscribed endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db}`);
+  return true;
+}
+
+/**
  * Get the default TemperatureMeasurement cluster server options.
  *
  * @param {number} measuredValue - The measured value of the temperature x 100.
