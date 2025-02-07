@@ -500,10 +500,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Adds cluster servers from the provided server list.
    *
    * @param {ClusterId[]} serverList - The list of cluster IDs to add.
-   * @returns {Promise<this>} The current MatterbridgeEndpoint instance for chaining.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  addClusterServers(serverList: ClusterId[]): void {
+  addClusterServers(serverList: ClusterId[]) {
     addClusterServers(this, serverList);
+    return this;
   }
 
   /**
