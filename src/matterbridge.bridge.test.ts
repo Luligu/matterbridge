@@ -10,7 +10,6 @@ import { jest } from '@jest/globals';
 import { AnsiLogger, db, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { wait, waiter } from './utils/utils.js';
-import { MdnsService } from '@matter/main/protocol';
 import { Environment, StorageService } from '@matter/main';
 import path from 'path';
 import os from 'os';
@@ -83,7 +82,6 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   afterAll(async () => {
     // Restore all mocks
     jest.restoreAllMocks();
-    // console.log('Matterbridge test -bridge mode');
   }, 30000);
 
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {
@@ -160,9 +158,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
     // Close the Matterbridge instance
-    const server = matterbridge.serverNode;
     await matterbridge.destroyInstance();
-    await server?.env.get(MdnsService)[Symbol.asyncDispose]();
 
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
   }, 60000);

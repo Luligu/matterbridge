@@ -9,7 +9,6 @@ import { jest } from '@jest/globals';
 import { AnsiLogger, db, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { wait, waiter } from './utils/utils.js';
-import { MdnsService } from '@matter/main/protocol';
 import { Environment, StorageService } from '@matter/main';
 import path from 'path';
 import os from 'os';
@@ -82,7 +81,6 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   afterAll(async () => {
     // Restore all mocks
     jest.restoreAllMocks();
-    // console.log('Matterbridge test -childbridge mode');
   });
 
   test('Matterbridge.loadInstance(true) -childbridge mode', async () => {

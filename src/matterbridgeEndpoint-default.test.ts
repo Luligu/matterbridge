@@ -83,7 +83,6 @@ import {
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/node/behaviors';
 import { updateAttribute } from './matterbridgeEndpointHelpers.js';
-import { MdnsService } from '@matter/main/protocol';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
@@ -176,9 +175,7 @@ describe('MatterbridgeEndpoint class', () => {
 
   afterAll(async () => {
     // Close the Matterbridge instance
-    const server = matterbridge.serverNode;
     await matterbridge.destroyInstance();
-    await server?.env.get(MdnsService)[Symbol.asyncDispose]();
 
     // Restore all mocks
     jest.restoreAllMocks();
@@ -922,7 +919,7 @@ describe('MatterbridgeEndpoint class', () => {
 
     // eslint-disable-next-line jest/expect-expect
     test('pause before cleanup', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 5000)); // Pause for 5 seconds
+      await new Promise((resolve) => setTimeout(resolve, 5000)); // Pause for 5 seconds to allow matter.js promises to settle
     }, 60000);
   });
 });

@@ -61,7 +61,7 @@ import {
   ThermostatUserInterfaceConfigurationServer,
   TimeSynchronizationServer,
 } from '@matter/node/behaviors';
-import { getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
+import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
@@ -176,6 +176,117 @@ describe('MatterbridgeEndpoint class', () => {
       if (device.uniqueStorageKey === undefined) return;
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`\x1B[39mMatterbridge.Matterbridge.${device.uniqueStorageKey.replaceAll(' ', '')} \x1B[0mready`));
     }
+
+    test('conversion of not latin characters', async () => {
+      // Should return false for Latin-based text (including accents)
+      expect(checkNotLatinCharacters('Hello World')).toBe(false);
+      expect(checkNotLatinCharacters('café au lait')).toBe(false);
+      expect(checkNotLatinCharacters('München-2024')).toBe(false);
+      expect(checkNotLatinCharacters('Tōkyō_2024')).toBe(false);
+      expect(checkNotLatinCharacters("L'éclair du matin")).toBe(false);
+      expect(checkNotLatinCharacters('São Paulo')).toBe(false);
+      expect(checkNotLatinCharacters('Résumé and naïve')).toBe(false);
+
+      // Should return false for numbers, dashes, and underscores
+      expect(checkNotLatinCharacters('123456')).toBe(false);
+      expect(checkNotLatinCharacters('Hello_123')).toBe(false);
+      expect(checkNotLatinCharacters('test-underscore_')).toBe(false);
+      expect(checkNotLatinCharacters('text-with-dash')).toBe(false);
+
+      // Special characters should return false
+      expect(checkNotLatinCharacters('.,><!?@#$%^&*(){}[]|')).toBe(false);
+      expect(checkNotLatinCharacters('€¥£₹')).toBe(false); // Currency symbols
+      expect(checkNotLatinCharacters('©®™✓✔︎')).toBe(false); // Copyright, trademarks
+      expect(checkNotLatinCharacters('♥︎♡♦︎♠︎♣︎♜♞♟')).toBe(false); // Playing card & chess symbols
+      expect(checkNotLatinCharacters('→↓↑←↔↕')).toBe(false); // Arrows
+      expect(checkNotLatinCharacters('“”‘’')).toBe(false); // Quotes
+
+      // Should return true for non-Latin scripts
+      expect(checkNotLatinCharacters('Москва')).toBe(true); // Cyrillic (Russian)
+      expect(checkNotLatinCharacters('조명 - 세탁실')).toBe(true); // Korean (Hangul)
+      expect(checkNotLatinCharacters('東京')).toBe(true); // Chinese (Kanji)
+      expect(checkNotLatinCharacters('こんにちは')).toBe(true); // Japanese (Hiragana)
+      expect(checkNotLatinCharacters('مرحبا')).toBe(true); // Arabic
+      expect(checkNotLatinCharacters('שלום')).toBe(true); // Hebrew
+      expect(checkNotLatinCharacters('हिन्दी')).toBe(true); // Hindi (Devanagari)
+      expect(checkNotLatinCharacters('ไทย')).toBe(true); // Thai script
+      expect(checkNotLatinCharacters('ትግርኛ')).toBe(true); // Amharic (Ethiopian)
+
+      // Should return true for mixed Latin and non-Latin
+      expect(checkNotLatinCharacters('Hello 世界')).toBe(true); // English + Chinese
+      expect(checkNotLatinCharacters('Bonjour, Москва')).toBe(true); // French + Russian
+      expect(checkNotLatinCharacters('Test123 조명')).toBe(true); // English + Korean
+    });
+
+    test('encoding of non-Latin and Latin names into unique IDs', async () => {
+      // Sample names
+      const latinNames = ['Hello World', 'café au lait', 'München-2024', 'Tōkyō_2024', "L'éclair du matin", 'São Paulo', 'Résumé and naïve', '123456', 'Hello_123', 'test-underscore_', 'text-with-dash'];
+
+      const specialChars = ['.,><!?@#$%^&*(){}[]|', '€¥£₹', '©®™✓✔︎', '♥︎♡♦︎♠︎♣︎♜♞♟', '→↓↑←↔↕', '“”‘’'];
+
+      const nonLatinNames = [
+        'Москва', // Cyrillic (Russian)
+        '조명 - 세탁실', // Korean (Hangul)
+        '東京', // Chinese (Kanji)
+        'こんにちは', // Japanese (Hiragana)
+        'مرحبا', // Arabic
+        'שלום', // Hebrew
+        'हिन्दी', // Hindi (Devanagari)
+        'ไทย', // Thai script
+        'ትግርኛ', // Amharic (Ethiopian)
+        'Hello 世界', // English + Chinese
+        'Bonjour, Москва', // French + Russian
+        'Test123 조명', // English + Korean
+      ];
+
+      // Each name should produce a **consistent** hash
+      const uniqueIds = new Map<string, string>();
+
+      [...latinNames, ...specialChars, ...nonLatinNames].forEach((name) => {
+        const hash = generateUniqueId(name);
+        expect(hash).toHaveLength(32); // MD5 produces 32-char hex strings
+        expect(uniqueIds.has(name)).toBe(false); // Ensure no duplicates
+        uniqueIds.set(name, hash);
+      });
+
+      // The same input should generate the same hash
+      uniqueIds.forEach((hash, name) => {
+        expect(generateUniqueId(name)).toBe(hash);
+      });
+
+      // Different names should generate different hashes
+      const hashes = [...uniqueIds.values()];
+      const uniqueHashes = new Set(hashes);
+      expect(uniqueHashes.size).toBe(hashes.length); // Ensure no hash collisions
+    });
+
+    test('constructor with non latin', async () => {
+      const nonLatinNames = [
+        '버튼 - 작은방 (버튼-작은방)',
+        '거실 공기 관리 - 샤오미 공기 청정기 속도 조절 (거실공기관리-샤오미공기청정기속도조절)',
+        '난방 - 온도관리 방법 설정 (난방-온도관리방법설정)',
+        '단후이 로봇청소기 예약/일정 (단후이로봇청소기예약/일정)',
+        '단후이 로봇청소기 시계/지역시간 설정(mqtt) (단후이로봇청소기시계/지역시간설정(mqtt))',
+        '애드온을 다시 시작(DuckDNS) (애드온을다시시작(DuckDNS))',
+        '외출 중 기기 제어 - 외출 3시간 이상시 끄기 (외출중기기제어-외출3시간이상시끄기)',
+        '메인 등(L1) 조명 자동 컨트롤 (메인등(L1)조명자동컨트롤)',
+        '작은방 공기 관리 - 샤오미 공기 청정기 속도 조절 (작은방공기관리-샤오미공기청정기속도조절)',
+        '알림 - haos 메모이 시용이 90% 이상으로 시스템을 재시작합니다 (알림-haos메모이시용이90%이상으로시스템을재시작합니다)',
+        '알림 - 가스 검침기의 카운트를 다시 설정해 주세요 (알림-가스검침기의카운트를다시설정해주세요)',
+        '알림 - 배달원이 고객님의 음식을 픽업했습니다 (알림-배달원이고객님의음식을픽업했습니다)',
+        '알림 - 조리기기 관리가 수동으로 변경되었습니다 (알림-조리기기관리가수동으로변경되었습니다)',
+        '알림 - 주문이 거의 도착했습니다 (알림-주문이거의도착했습니다)',
+        '알림 - 현재 외부에는 비가 오고 있습니다 (알림-현재외부에는비가오고있습니다)',
+        '알림 - NAS의 보안 위험이 감지 되었습니디.  보안 어드바이저를 확인해 주세요 (알림-NAS의보안위험이감지되었습니디보안어드바이저를확인해주세요)',
+      ];
+      let n = 1000;
+      for (const name of nonLatinNames) {
+        const device = new MatterbridgeEndpoint(onOffOutlet, { uniqueStorageKey: name, endpointId: EndpointNumber(n++) });
+        expect(device).toBeDefined();
+        expect(device.id).toBe(generateUniqueId(name));
+        await add(device);
+      }
+    });
 
     test('constructor', async () => {
       const deviceType = onOffLight;

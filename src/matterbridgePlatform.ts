@@ -24,10 +24,11 @@
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 import { isValidArray, isValidObject, isValidString } from './utils/utils.js';
 
 // AnsiLogger module
-import { AnsiLogger, CYAN, db, LogLevel, nf, wr } from './logger/export.js';
+import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from './logger/export.js';
 
 // Storage module
 import { NodeStorage, NodeStorageManager } from './storage/export.js';
@@ -58,11 +59,18 @@ export class MatterbridgePlatform {
   public name = ''; // Will be set by the loadPlugin() method using the package.json value.
   public type = ''; // Will be set by the extending classes.
   public version = '1.0.0'; // Will be set by the loadPlugin() method using the package.json value.
+
+  // Platform storage
   public storage: NodeStorageManager | undefined;
   public context: NodeStorage | undefined;
+
+  // Device and entity selection
   public selectDevice = new Map<string, { serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }>();
   public selectEntity = new Map<string, { name: string; description: string; icon?: string }>();
-  public registeredEndpoints = new Map<string, MatterbridgeEndpoint>();
+
+  // Registered devices
+  public registeredEndpoints = new Map<string, MatterbridgeEndpoint>(); // uniqueId, MatterbridgeEndpoint
+  public registeredEndpointsByName = new Map<string, MatterbridgeEndpoint>(); // deviceName, MatterbridgeEndpoint
 
   /**
    * Creates an instance of the base MatterbridgePlatform. It is extended by the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
@@ -110,7 +118,7 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * This method can be overridden in the extended class. Call super.onShutdown() to run checkEndpointNumbers().
+   * This method can be overridden in the extended class. Call super.onShutdown() to run checkEndpointNumbers() and cleanup memory.
    * It is called when the platform is shutting down.
    * Use this method to clean up any resources.
    * @param {string} [reason] - The reason for shutting down.
@@ -118,6 +126,14 @@ export class MatterbridgePlatform {
   async onShutdown(reason?: string) {
     this.log.debug(`Shutting down platform ${this.name}`, reason);
     await this.checkEndpointNumbers();
+    this.selectDevice.clear();
+    this.selectEntity.clear();
+    this.registeredEndpoints.clear();
+    this.registeredEndpointsByName.clear();
+    await this.context?.close();
+    this.context = undefined;
+    await this.storage?.close();
+    this.storage = undefined;
   }
 
   /**
@@ -129,13 +145,30 @@ export class MatterbridgePlatform {
   }
 
   /**
+   * Check if a device with this name is already registered in the platform.
+   * @param {string} deviceName - The device name to check.
+   * @returns {boolean} True if the device is already registered, false otherwise.
+   */
+  hasDeviceName(deviceName: string): boolean {
+    return this.registeredEndpointsByName.has(deviceName);
+  }
+
+  /**
    * Registers a device with the Matterbridge platform.
    * @param {MatterbridgeEndpoint} device - The device to register.
    */
   async registerDevice(device: MatterbridgeEndpoint) {
     device.plugin = this.name;
+    if (device.deviceName && this.registeredEndpointsByName.has(device.deviceName)) {
+      this.log.error(`Device with name ${CYAN}${device.deviceName}${er} is already registered. The device will not be added. Please change the device name.`);
+      return;
+    }
+    if (device.deviceName && checkNotLatinCharacters(device.deviceName)) {
+      this.log.debug(`Device with name ${CYAN}${device.deviceName}${db} has non latin characters.`);
+    }
     await this.matterbridge.addBridgedEndpoint(this.name, device);
     if (device.uniqueId) this.registeredEndpoints.set(device.uniqueId, device);
+    if (device.deviceName) this.registeredEndpointsByName.set(device.deviceName, device);
   }
 
   /**
@@ -145,6 +178,7 @@ export class MatterbridgePlatform {
   async unregisterDevice(device: MatterbridgeEndpoint) {
     await this.matterbridge.removeBridgedEndpoint(this.name, device);
     if (device.uniqueId) this.registeredEndpoints.delete(device.uniqueId);
+    if (device.deviceName) this.registeredEndpointsByName.delete(device.deviceName);
   }
 
   /**
@@ -153,6 +187,7 @@ export class MatterbridgePlatform {
   async unregisterAllDevices() {
     await this.matterbridge.removeAllBridgedEndpoints(this.name);
     this.registeredEndpoints.clear();
+    this.registeredEndpointsByName.clear();
   }
 
   /**
