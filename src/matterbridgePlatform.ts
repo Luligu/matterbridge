@@ -164,8 +164,7 @@ export class MatterbridgePlatform {
       return;
     }
     if (device.deviceName && checkNotLatinCharacters(device.deviceName)) {
-      this.log.debug(`Device with name ${CYAN}${device.deviceName}${er} has not latin characters. Please keep the name as short as possible.`);
-      return;
+      this.log.debug(`Device with name ${CYAN}${device.deviceName}${db} has non latin characters.`);
     }
     await this.matterbridge.addBridgedEndpoint(this.name, device);
     if (device.uniqueId) this.registeredEndpoints.set(device.uniqueId, device);
