@@ -321,7 +321,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     // console.log('MatterbridgeEndpoint.optionsV8', optionsV8);
 
     // Create the logger
-    this.log = new AnsiLogger({ logName: 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
+    this.log = new AnsiLogger({ logName: options.uniqueStorageKey ?? 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
     this.log.debug(
       `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} ` +
         `id: ${CYAN}${options.uniqueStorageKey}${db} number: ${CYAN}${options.endpointId}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
