@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   deepEqual,
   deepCopy,
@@ -24,9 +26,59 @@ import {
   resolveHostname,
 } from './utils';
 import { promises as fs } from 'fs';
+import { AnsiLogger } from 'node-ansi-logger';
 import path from 'path';
+import { jest } from '@jest/globals';
 
 describe('Utils test', () => {
+  let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
+  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
+  const debug = false;
+
+  if (!debug) {
+    // Spy on and mock AnsiLogger.log
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
+      //
+    });
+    // Spy on and mock console.log
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
+      //
+    });
+    // Spy on and mock console.debug
+    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {
+      //
+    });
+    // Spy on and mock console.info
+    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {
+      //
+    });
+    // Spy on and mock console.warn
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
+      //
+    });
+    // Spy on and mock console.error
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
+      //
+    });
+  } else {
+    // Spy on AnsiLogger.log
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
+    // Spy on console.log
+    consoleLogSpy = jest.spyOn(console, 'log');
+    // Spy on console.debug
+    consoleDebugSpy = jest.spyOn(console, 'debug');
+    // Spy on console.info
+    consoleInfoSpy = jest.spyOn(console, 'info');
+    // Spy on console.warn
+    consoleWarnSpy = jest.spyOn(console, 'warn');
+    // Spy on console.error
+    consoleErrorSpy = jest.spyOn(console, 'error');
+  }
+
   const obj1 = {
     a: 1,
     b: '2',
@@ -53,6 +105,16 @@ describe('Utils test', () => {
     roller2PM = JSON.parse(data);
     data = await fs.readFile(path.join('src', 'mock', 'shellyplus2pm-5443b23d81f8.switch.json'), 'utf8');
     switch2PM = JSON.parse(data);
+  });
+
+  beforeEach(async () => {
+    // Clear all mocks
+    jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    // Restore all mocks
+    jest.restoreAllMocks();
   });
 
   test('Deep equal', () => {
@@ -83,7 +145,6 @@ describe('Utils test', () => {
   });
 
   test('Deep copy switch2PM changed', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const copy: any = deepCopy(switch2PM);
     copy.status.ws.connected = true;
     expect(deepEqual(switch2PM, copy)).toBeFalsy();
@@ -399,7 +460,7 @@ describe('Utils test', () => {
 
   it('should not resolve localhost 0', async () => {
     const result = await resolveHostname('localhost', 0);
-    console.log('Resolved localhost:', result);
+    // console.log('Resolved localhost:', result);
     expect(result).toBeDefined();
     expect(result).not.toBeNull();
     expect(typeof result).toBe('string');
@@ -408,7 +469,7 @@ describe('Utils test', () => {
 
   it('should not resolve localhost 4', async () => {
     const result = await resolveHostname('localhost', 4);
-    console.log('Resolved localhost:', result);
+    // console.log('Resolved localhost:', result);
     expect(result).toBeDefined();
     expect(result).not.toBeNull();
     expect(typeof result).toBe('string');
@@ -417,7 +478,7 @@ describe('Utils test', () => {
 
   it('should not resolve localhost 6', async () => {
     const result = await resolveHostname('localhost', 6);
-    console.log('Resolved localhost:', result);
+    // console.log('Resolved localhost:', result);
     expect(result).toBeDefined();
     expect(result).not.toBeNull();
     expect(typeof result).toBe('string');
@@ -426,7 +487,7 @@ describe('Utils test', () => {
 
   it('should resolve www.npmjs.com 0', async () => {
     const result = await resolveHostname('www.npmjs.com', 0);
-    console.log('Resolved www.npmjs.com:', result);
+    // console.log('Resolved www.npmjs.com:', result);
     expect(result).toBeDefined();
     expect(result).not.toBeNull();
     expect(typeof result).toBe('string');
