@@ -3,7 +3,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
-import { AnsiLogger, db, er, hk, LogLevel, or } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -20,6 +20,7 @@ import {
   onOffOutlet,
   powerSource,
   pressureSensor,
+  rainSensor,
   temperatureSensor,
   thermostatDevice,
 } from './matterbridgeDeviceTypes.js';
@@ -28,6 +29,7 @@ import {
 import { Lifecycle, EndpointNumber } from '@matter/main';
 import {
   BooleanState,
+  BooleanStateCluster,
   Descriptor,
   FixedLabel,
   FlowMeasurement,
@@ -44,6 +46,8 @@ import {
   UserLabel,
 } from '@matter/main/clusters';
 import {
+  BooleanStateBehavior,
+  BooleanStateServer,
   ColorControlBehavior,
   DescriptorBehavior,
   DescriptorServer,
@@ -62,6 +66,7 @@ import {
   TimeSynchronizationServer,
 } from '@matter/node/behaviors';
 import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
+import { log } from 'console';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
@@ -346,14 +351,15 @@ describe('MatterbridgeEndpoint class', () => {
         .createDefaultIdentifyClusterServer()
         .createDefaultBridgedDeviceBasicInformationClusterServer('OnOffLight', '1234', 0xfff1, 'Matterbridge', 'Light')
         .createDefaultGroupsClusterServer()
+        .createDefaultScenesClusterServer()
         .createDefaultOnOffClusterServer()
         .createDefaultPowerSourceWiredClusterServer();
       const serializedDevice = MatterbridgeEndpoint.serialize(device);
       let deserializedDevice: MatterbridgeEndpoint | undefined;
       if (serializedDevice) {
-        // deserializedDevice = MatterbridgeEndpoint.deserialize(serializedDevice);
+        deserializedDevice = MatterbridgeEndpoint.deserialize(serializedDevice);
       }
-      // expect(deserializedDevice).toBeDefined();
+      expect(deserializedDevice).toBeDefined();
 
       await add(device);
     });
@@ -599,6 +605,76 @@ describe('MatterbridgeEndpoint class', () => {
         { 'label': 'Composed', 'value': 'Light' },
         { 'label': 'Composed2', 'value': 'Light' },
       ]);
+    });
+
+    test('subscribeAttribute without await', async () => {
+      const device = new MatterbridgeEndpoint(rainSensor, { uniqueStorageKey: 'RainSensorI' });
+      expect(device).toBeDefined();
+      device.createDefaultIdentifyClusterServer();
+      device.createDefaultBooleanStateClusterServer(true);
+      expect(device.hasAttributeServer(IdentifyBehavior, 'identifyTime')).toBe(true);
+      expect(device.hasAttributeServer(BooleanStateCluster, 'stateValue')).toBe(true);
+
+      let state = false;
+      const listener = async (value: any) => {
+        state = value;
+      };
+      device.subscribeAttribute('booleanState', 'stateValue', listener, device.log);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`is in the ${BLUE}inactive${db} state`));
+
+      await add(device);
+
+      await device.setAttribute(BooleanStateCluster, 'stateValue', false, device.log);
+      expect(state).toBe(false);
+      expect(device.getAttribute(BooleanStateServer, 'stateValue', device.log)).toBe(false);
+      await device.setAttribute(BooleanStateCluster, 'stateValue', true, device.log);
+      expect(state).toBe(true);
+      expect(device.getAttribute(BooleanStateBehavior, 'stateValue', device.log)).toBe(true);
+      expect(device.getAttribute(BooleanStateServer, 'stateValue', device.log)).toBe(true);
+      expect(device.getAttribute(BooleanState.Cluster, 'stateValue', device.log)).toBe(true);
+      expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue', device.log)).toBe(true);
+      expect(device.getAttribute('BooleanState', 'stateValue', device.log)).toBe(true);
+    });
+
+    test('subscribeAttribute await', async () => {
+      const device = new MatterbridgeEndpoint(rainSensor, { uniqueStorageKey: 'RainSensorII' });
+      expect(device).toBeDefined();
+      device.createDefaultIdentifyClusterServer();
+      device.createDefaultBooleanStateClusterServer(true);
+      expect(device.hasAttributeServer(IdentifyBehavior, 'identifyTime')).toBe(true);
+      expect(device.hasAttributeServer(BooleanStateCluster, 'stateValue')).toBe(true);
+      expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'booleanState']);
+      await add(device);
+
+      let state = false;
+      const listener = async (value: any) => {
+        state = value;
+      };
+
+      expect(await device.subscribeAttribute('booleanStateXX', 'stateValue', listener, device.log)).toBe(false);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`subscribeAttribute ${hk}stateValue${er} error: cluster not found on endpoint`));
+
+      expect(await device.subscribeAttribute('booleanState', 'stateValueXX', listener, device.log)).toBe(false);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`subscribeAttribute error: Attribute ${hk}stateValueXX${er} not found on Cluster`));
+
+      expect(await device.subscribeAttribute('booleanState', 'stateValue', listener, device.log)).toBe(true);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Subscribed endpoint `));
+
+      await device.setAttribute(BooleanStateCluster, 'stateValue', false, device.log);
+      expect(state).toBe(false);
+      expect(device.getAttribute(BooleanStateBehavior, 'stateValue', device.log)).toBe(false);
+      expect(device.getAttribute(BooleanStateServer, 'stateValue', device.log)).toBe(false);
+      expect(device.getAttribute(BooleanState.Cluster, 'stateValue', device.log)).toBe(false);
+      expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue', device.log)).toBe(false);
+      expect(device.getAttribute('BooleanState', 'stateValue', device.log)).toBe(false);
+
+      await device.setAttribute(BooleanState.Cluster, 'stateValue', true, device.log);
+      expect(state).toBe(true);
+      expect(device.getAttribute(BooleanStateBehavior, 'stateValue', device.log)).toBe(true);
+      expect(device.getAttribute(BooleanStateServer, 'stateValue', device.log)).toBe(true);
+      expect(device.getAttribute(BooleanState.Cluster, 'stateValue', device.log)).toBe(true);
+      expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue', device.log)).toBe(true);
+      expect(device.getAttribute('BooleanState', 'stateValue', device.log)).toBe(true);
     });
 
     test('addCommandHandler', async () => {

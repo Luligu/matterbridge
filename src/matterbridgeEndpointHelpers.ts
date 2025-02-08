@@ -521,23 +521,16 @@ export async function subscribeAttribute(endpoint: MatterbridgeEndpoint, cluster
   }
 
   if (endpoint.construction.status !== Lifecycle.Status.Active) {
-    // this.log.error(`subscribeAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+    endpoint.log.debug(`subscribeAttribute ${hk}${clusterName}.${attribute}${db}: Endpoint ${or}${endpoint.maybeId}${db}:${or}${endpoint.maybeNumber}${db} is in the ${BLUE}${endpoint.construction.status}${db} state`);
     await endpoint.construction.ready;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const events = endpoint.events as Record<string, Record<string, any>>;
-  if (!(clusterName in events)) {
-    endpoint.log.error(
-      `subscribeAttribute ${hk}${attribute}${er} error: Cluster ${'0x' + getClusterId(endpoint, clusterName)?.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`,
-    );
-    return false;
-  }
-
   attribute = lowercaseFirstLetter(attribute) + '$Changed';
-  if (!(attribute in events[clusterName])) {
+  if (!(clusterName in events) || !(attribute in events[clusterName])) {
     endpoint.log.error(
-      `subscribeAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + getClusterId(endpoint, clusterName)?.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`,
+      `subscribeAttribute error: Attribute ${hk}${attribute.replace('$Changed', '')}${er} not found on Cluster ${'0x' + getClusterId(endpoint, clusterName)?.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`,
     );
     return false;
   }

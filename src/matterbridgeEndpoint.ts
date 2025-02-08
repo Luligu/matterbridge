@@ -438,7 +438,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} attribute - The name of the attribute to subscribe to.
    * @param {(newValue: any, oldValue: any) => void} listener - A callback function that will be called when the attribute value changes.
    * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
-   * @returns {boolean} - A boolean indicating whether the subscription was successful.
+   * @returns {Promise<boolean>} - A boolean indicating whether the subscription was successful.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async subscribeAttribute(cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, listener: (newValue: any, oldValue: any) => void, log?: AnsiLogger): Promise<boolean> {
@@ -598,7 +598,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Adds a child endpoint with the specified device types and options.
    * If the child endpoint is not already present, it will be created and added.
-   * If the child endpoint is already present, the device types will be added to the existing child endpoint.
+   * If the child endpoint is already present, the existing child endpoint will be returned.
    *
    * @param {string} endpointName - The name of the new endpoint to add.
    * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The device types to add.
