@@ -2211,7 +2211,7 @@ export class Matterbridge extends EventEmitter {
     };
 
     try {
-      await withTimeout(matterServerNode.close(), 5000); // 5 seconds timeout
+      await withTimeout(matterServerNode.close(), 30000); // 30 seconds timeout
       this.log.info(`Closed ${matterServerNode.id} server node`);
     } catch (error) {
       this.log.error(`Failed to close ${matterServerNode.id} server node: ${error instanceof Error ? error.message : error}`);
