@@ -54,6 +54,10 @@ export function WebSocketProvider({ children }) {
     logFilterSearchRef.current = logFilterSearch;
   }, [logFilterSearch]);
 
+  const getUniqueId = useCallback(() => {
+    return Math.floor(Math.random() * (999999 - 10 + 1)) + 10;
+  }, []);
+
   const sendMessage = useCallback((message) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       try {
@@ -268,6 +272,7 @@ export function WebSocketProvider({ children }) {
     setMessages,
     setLogFilters,
     online,
+    getUniqueId,
     addListener,
     removeListener,
     sendMessage,

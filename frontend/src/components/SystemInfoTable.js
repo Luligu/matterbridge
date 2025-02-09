@@ -12,6 +12,12 @@ export function SystemInfoTable({ systemInfo, compact }) {
     systemInfo.freeMemory = `${freeMemory} / ${totalMemory}`;
     delete systemInfo.totalMemory;
   }
+  if (compact && systemInfo.heapTotal) {
+    const heapTotal = systemInfo.heapTotal;
+    const heapUsed = systemInfo.heapUsed;
+    systemInfo.heapUsed = `${heapUsed} / ${heapTotal}`;
+    delete systemInfo.heapTotal;
+  }
   if (compact && systemInfo.osRelease) {
     const osType = systemInfo.osType;
     const osRelease	= systemInfo.osRelease;

@@ -12,10 +12,11 @@ import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 // import { debug } from '../App';
 const debug = true;
+let uniqueId = 0;
 
 function Test() {
   // WebSocket context
-  const { online, sendMessage, addListener, removeListener } = useContext(WebSocketContext);
+  const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
 
   // Local states
   const [settings, setSettings] = useState({});
@@ -25,6 +26,9 @@ function Test() {
   const [cpu, setCpu] = useState({});
   const [memory, setMemory] = useState({});
   
+  if(uniqueId === 0) uniqueId = getUniqueId();
+  console.log('Test uniqueId:', uniqueId);
+
   useEffect(() => {
     if(debug) console.log('Test useEffect WebSocketMessage mounting');
     const handleWebSocketMessage = (msg) => {
@@ -59,12 +63,12 @@ function Test() {
           if(debug) console.log(`Test received ${msg.response.length} devices:`, msg.response);
           setDevices(msg.response);
           for(let device of msg.response) {
-            if(debug) console.log('Test sending /api/clusters for device:', device.name);
+            if(debug) console.log('Test sending /api/clusters for device:', device.pluginName, device.name, device.endpoint);
             sendMessage({ method: "/api/clusters", src: "Frontend", dst: "Matterbridge", params: { plugin: device.pluginName, endpoint: device.endpoint } });
           }
         }
         if (msg.method === '/api/clusters') {
-          if(debug) console.log(`Test received ${msg.response.length} clusters:`, msg.response);
+          if(debug) console.log(`Test received ${msg.response.length} clusters for device ${msg.deviceName} endpoint ${msg.endpoint}:`, msg);
           setClusters(msg.response);
         }
       } else {
@@ -104,9 +108,9 @@ function Test() {
   return (
     <div className="MbfPageDiv" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
       <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
-      <p>Welcome to the Test page of Matterbridge frontend</p>
+      <p>Welcome to the Test page of the Matterbridge frontend</p>
       <p>- - -</p>
-      <p>Cpu usage: {cpu.cpuUsage} Uptime: {memory.systemUptime} Memory: freeMemory {memory.freeMemory} totalMemory {memory.totalMemory} rss {memory.rss} heap {memory.heap}</p>
+      <p>cpuUsed: {cpu.cpuUsed} systemUptime: {memory.systemUptime} freeMemory {memory.freeMemory} totalMemory {memory.totalMemory} rss {memory.rss} heapUsed {memory.heapUsed} heapTotal {memory.heapTotal}</p>
     </div>
   );
 }
