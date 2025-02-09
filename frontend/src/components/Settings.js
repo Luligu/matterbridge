@@ -70,6 +70,7 @@ function Settings() {
     }
   }, [online, sendMessage]);
 
+  if(debug) console.log('Settings rendering...');
   if (!online) {
     return ( <Connecting /> );
   }

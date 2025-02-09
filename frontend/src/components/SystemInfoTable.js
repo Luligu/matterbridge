@@ -1,8 +1,10 @@
 // Frontend
 import { TruncatedText } from './TruncatedText';
+import { debug } from '../App';
 
 // This function takes systemInfo as a parameter and returns a table element with the systemInfo
 export function SystemInfoTable({ systemInfo, compact }) {
+  if(debug) console.log('SystemInfoTable:', systemInfo, compact);
   const excludeKeys = ['totalMemory', 'osRelease', 'osArch'];
   if (compact && systemInfo.totalMemory) {
     const totalMemory = systemInfo.totalMemory;

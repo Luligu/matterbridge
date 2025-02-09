@@ -7,35 +7,25 @@ import React, { useEffect, useState, useRef, useContext, useMemo } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
-import TextField from '@mui/material/TextField';
 import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
-import Button from '@mui/material/Button';
-import MenuItem from '@mui/material/MenuItem';
-import Menu from '@mui/material/Menu';
 import { ThemeProvider } from '@mui/material';
 
 // @mui/icons-material
 import DeleteForever from '@mui/icons-material/DeleteForever';
-import Download from '@mui/icons-material/Download';
-import Add from '@mui/icons-material/Add';
 import PublishedWithChanges from '@mui/icons-material/PublishedWithChanges';
 import Settings from '@mui/icons-material/Settings';
 import Favorite from '@mui/icons-material/Favorite';
 import Help from '@mui/icons-material/Help';
 import Announcement from '@mui/icons-material/Announcement';
 import QrCode2 from '@mui/icons-material/QrCode2';
-import MoreVert from '@mui/icons-material/MoreVert';
 import Unpublished from '@mui/icons-material/Unpublished';
 
 // @rjsf
 import Form from '@rjsf/mui';
 import validator from '@rjsf/validator-ajv8';
-
-// QRCode
-import { QRCodeSVG } from 'qrcode.react';
 
 // Frontend
 import { StatusIndicator } from './StatusIndicator';
@@ -45,10 +35,13 @@ import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import { SystemInfoTable } from './SystemInfoTable';
 import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
+import { QRDiv } from './QRDiv';
+import { InstallAddPlugins } from './InstallAddPlugins';
 import { ConfirmCancelForm } from './ConfirmCancelForm';
 import { configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, ErrorListTemplate, FieldErrorTemplate, RemoveButton, CheckboxWidget, createConfigTheme, DescriptionFieldTemplate } from './configEditor';
 import { getCssVariable } from './muiTheme';
 import { debug } from '../App';
+// const debug = true;
 
 export let pluginName = '';
 export let selectDevices = [];
@@ -69,13 +62,13 @@ function Home() {
   const [logFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
   const [logFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
 
-  const { setMessages, logMessage, addListener, removeListener, online, sendMessage } = useContext(WebSocketContext);
+  const { logMessage, addListener, removeListener, online, sendMessage } = useContext(WebSocketContext);
 
   const refAddRemove = useRef(null);
   const refRegisteredPlugins = useRef(null);
 
   const primaryColor = useMemo(() => getCssVariable('--primary-color', '#009a00'), []);
-  const theme = useMemo(() => createConfigTheme(primaryColor), []);
+  const theme = useMemo(() => createConfigTheme(primaryColor), [primaryColor]);
 
   const handleSnackOpen = () => {
     setOpenSnack(true);
@@ -290,6 +283,7 @@ function Home() {
     }
   }, [online]);
 
+  if(debug) console.log('Home rendering...');
   if (!online) {
     return (<Connecting />);
   }
@@ -330,7 +324,7 @@ function Home() {
             <div className="MbfWindowHeader">
               <p className="MbfWindowHeaderText">Install add plugin</p>
             </div>
-            <AddRemovePlugins ref={refAddRemove} plugins={plugins} reloadSettings={reloadSettings} />
+            <InstallAddPlugins ref={refAddRemove} plugins={plugins} reloadSettings={reloadSettings} />
           </div>
         }
 
@@ -471,149 +465,6 @@ function Home() {
           </div>
         </div>
 */
-
-function AddRemovePlugins({ reloadSettings }) {
-  const [pluginName, setPluginName] = useState('matterbridge-');
-  const [open, setSnack] = useState(false);
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const { logMessage } = useContext(WebSocketContext);
-
-
-  const handleSnackClose = (event, reason) => {
-    if (reason === 'clickaway') return;
-    setSnack(false);
-  };
-
-  const handleInstallPluginClick = () => {
-    const plugin = pluginName.split('@')[0];
-    if (plugin === 'matterbridge')
-      logMessage('Matterbridge', `Installing matterbridge package: ${pluginName}`);
-    else
-      logMessage('Plugins', `Installing plugin: ${pluginName}`);
-    sendCommandToMatterbridge('installplugin', pluginName);
-    setTimeout(() => {
-      reloadSettings();
-    }, 5000);
-  };
-
-  const handleAddPluginClick = () => {
-    logMessage('Plugins', `Adding plugin: ${pluginName}`);
-    sendCommandToMatterbridge('addplugin', pluginName);
-    setTimeout(() => {
-      reloadSettings();
-    }, 1000);
-  };
-
-  const handleClickVertical = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleCloseMenu = (value) => {
-    // console.log('handleCloseMenu:', value);
-    if (value !== '') setPluginName(value);
-    setAnchorEl(null);
-  };
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '10px', gap: '20px' }}>
-      <Snackbar anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} open={open} onClose={handleSnackClose} autoHideDuration={5000}>
-        <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: 'var(--primary-color)' }}>Restart required</Alert>
-      </Snackbar>
-      <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth />
-      <IconButton onClick={handleClickVertical}>
-        <MoreVert />
-      </IconButton>
-      <Menu id="simple-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => handleCloseMenu('')}>
-        <MenuItem onClick={() => handleCloseMenu('matterbridge-zigbee2mqtt')}>matterbridge-zigbee2mqtt</MenuItem>
-        <MenuItem onClick={() => handleCloseMenu('matterbridge-somfy-tahoma')}>matterbridge-somfy-tahoma</MenuItem>
-        <MenuItem onClick={() => handleCloseMenu('matterbridge-shelly')}>matterbridge-shelly</MenuItem>
-        <MenuItem onClick={() => handleCloseMenu('matterbridge-hass')}>matterbridge-hass</MenuItem>
-        <MenuItem onClick={() => handleCloseMenu('matterbridge-example-accessory-platform')}>matterbridge-example-accessory-platform</MenuItem>
-        <MenuItem onClick={() => handleCloseMenu('matterbridge-example-dynamic-platform')}>matterbridge-example-dynamic-platform</MenuItem>
-        <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-door')}>matterbridge-eve-door</MenuItem>
-        <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-motion')}>matterbridge-eve-motion</MenuItem>
-        <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-energy')}>matterbridge-eve-energy</MenuItem>
-        <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-weather')}>matterbridge-eve-weather</MenuItem>
-        <MenuItem onClick={() => handleCloseMenu('matterbridge-eve-room')}>matterbridge-eve-room</MenuItem>
-      </Menu>
-      <Tooltip title="Install or update a plugin from npm">
-        <Button onClick={handleInstallPluginClick} endIcon={<Download />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}> Install</Button>
-      </Tooltip>
-      <Tooltip title="Add an installed plugin">
-        <Button onClick={handleAddPluginClick} endIcon={<Add />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}> Add</Button>
-      </Tooltip>
-    </div>
-  );
-}
-
-function QRDiv({ matterbridgeInfo, plugin }) {
-  console.log('QRDiv:', matterbridgeInfo, plugin);
-  if (matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === true && matterbridgeInfo.matterbridgeFabricInformations) {
-    console.log(`QRDiv: paired ${matterbridgeInfo.matterbridgePaired}, got ${matterbridgeInfo.matterbridgeFabricInformations?.length} fabrics, got ${matterbridgeInfo.matterbridgeSessionInformations?.length} sessions`);
-    return (
-      <div className="MbfWindowDiv" style={{ alignItems: 'center', minWidth: '302px', overflow: 'hidden' }} >
-        <div className="MbfWindowHeader">
-          <p className="MbfWindowHeaderText" style={{ textAlign: 'left', overflow: 'hidden' }}>Paired fabrics</p>
-        </div>
-        <div className="MbfWindowBodyColumn">
-          {matterbridgeInfo.matterbridgeFabricInformations.map((fabric, index) => (
-            <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)', textAlign: 'left', fontSize: '14px' }}>
-              <p className="status-blue" style={{ margin: '0px 10px 10px 10px', fontSize: '14px', padding: 0, color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)' }}>Fabric: {fabric.fabricIndex}</p>
-              <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
-              {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Label: {fabric.label}</p>}
-              <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Active sessions: {matterbridgeInfo.matterbridgeSessionInformations ? matterbridgeInfo.matterbridgeSessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length : '0'}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  } else if (matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired === true && plugin.fabricInformations) {
-    console.log(`QRDiv: paired ${plugin.paired}, got ${plugin.fabricInformations?.length} fabrics, got ${plugin.sessionInformations?.length} sessions`);
-    return (
-      <div className="MbfWindowDiv" style={{ alignItems: 'center', minWidth: '302px', overflow: 'hidden' }} >
-        <div className="MbfWindowHeader">
-          <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>Paired fabrics</p>
-        </div>
-        <div className="MbfWindowBodyColumn">
-          {plugin.fabricInformations.map((fabric, index) => (
-            <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)', textAlign: 'left', fontSize: '14px' }}>
-              <p className="status-blue" style={{ margin: '0px 10px 10px 10px', fontSize: '14px', padding: 0, color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)' }}>Fabric: {fabric.fabricIndex}</p>
-              <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
-              {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Label: {fabric.label}</p>}
-              <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Active sessions: {plugin.sessionInformations ? plugin.sessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length : '0'}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  } else if (matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === false && matterbridgeInfo.matterbridgeQrPairingCode && matterbridgeInfo.matterbridgeManualPairingCode) {
-    // console.log(`QRDiv: qrText ${qrText} pairingText ${pairingText}`);
-    return (
-      <div className="MbfWindowDiv" style={{ alignItems: 'center', minWidth: '302px' }}>
-        <div className="MbfWindowHeader">
-          <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>QR pairing code</p>
-        </div>
-        <QRCodeSVG value={matterbridgeInfo.matterbridgeQrPairingCode} size={256} level='M' fgColor={'var(--div-text-color)'} bgColor={'var(--div-bg-color)'} style={{ margin: '20px' }} />
-        <div className="MbfWindowFooter" style={{ padding: 0, marginTop: '-5px', height: '30px' }}>
-          <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Manual pairing code: {matterbridgeInfo.matterbridgeManualPairingCode}</p>
-        </div>
-      </div>
-    );
-  } else if (matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired === false && plugin.qrPairingCode && plugin.manualPairingCode) {
-    // console.log(`QRDiv: qrText ${qrText} pairingText ${pairingText}`);
-    return (
-      <div className="MbfWindowDiv" style={{ alignItems: 'center', minWidth: '302px' }}>
-        <div className="MbfWindowHeader">
-          <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>QR pairing code</p>
-        </div>
-        <QRCodeSVG value={plugin.qrPairingCode} size={256} level='M' fgColor={'var(--div-text-color)'} bgColor={'var(--div-bg-color)'} style={{ margin: '20px' }} />
-        <div className="MbfWindowFooter" style={{ padding: 0, marginTop: '-5px', height: '30px' }}>
-          <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Manual pairing code: {plugin.manualPairingCode}</p>
-        </div>
-      </div>
-    );
-  }
-}
 
 function DialogConfigPlugin({ config, schema, handleCloseConfig }) {
   // console.log('DialogConfigPlugin:', config, schema);

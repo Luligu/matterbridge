@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 
 // Frontend
-import { WebSocketContext } from './WebSocketProvider';
+import { WebSocketMessagesContext } from './WebSocketProvider';
 
 const detectTouchscreen = () => {
     let hasTouchscreen = false;
@@ -15,7 +15,7 @@ const detectTouchscreen = () => {
   };
 
 export function WebSocketLogs() {
-    const { messages } = useContext(WebSocketContext);
+    const { messages } = useContext(WebSocketMessagesContext);
     const [isHovering, setIsHovering] = useState(false); // State to track mouse hover
 
     const endOfMessagesRef = useRef(null); // Create a ref for scrolling

@@ -1,8 +1,10 @@
 // Frontend
 import { TruncatedText } from './TruncatedText';
+import { debug } from '../App';
 
 // This function takes systemInfo as a parameter and returns a table element with the systemInfo
 export function MatterbridgeInfoTable({ matterbridgeInfo }) {
+  if(debug) console.log('MatterbridgeInfoTable:', matterbridgeInfo);
   const excludeKeys = ['matterbridgeVersion', 'matterbridgeLatestVersion', 'matterFileLogger', 'fileLogger', 'matterLoggerLevel', 'loggerLevel',
     'bridgeMode', 'restartMode', 'matterbridgeFabricInformations', 'matterbridgeSessionInformations', 'restartRequired', 'refreshRequired',
     'mattermdnsinterface', 'matteripv4address', 'matteripv6address', 'matterbridgeConnected', 'readOnly', 'matterPort', 'matterDiscriminator', 'matterPasscode'];

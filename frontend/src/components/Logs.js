@@ -16,6 +16,7 @@ import DeleteForever from '@mui/icons-material/DeleteForever';
 import { WebSocketLogs } from './WebSocketLogs';
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
+import { debug } from '../App';
 
 function Logs() {
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
@@ -41,6 +42,7 @@ function Logs() {
     setMessages([]);
   };
 
+  if(debug) console.log('Logs rendering...');
   if (!online) {
     return ( <Connecting /> );
   }

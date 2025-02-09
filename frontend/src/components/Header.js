@@ -187,7 +187,7 @@ function Header() {
 
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
-      {/*Header listener*/ }
+      /*Header listener*/
       if (debug) console.log('Header received WebSocket Message:', msg);
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'refresh_required') {
@@ -217,6 +217,7 @@ function Header() {
     }
   }, [online, sendMessage]);
 
+  if(debug) console.log('Header rendering...');
   if (!online || settings.matterbridgeInformation === undefined) {
     return null;
   }

@@ -10,8 +10,11 @@ import { debug } from '../App';
 export const WS_ID_LOG = 0;
 export const WS_ID_REFRESH_NEEDED = 1;
 export const WS_ID_RESTART_NEEDED = 2;
+export const WS_ID_CPU_UPDATE = 3;
+export const WS_ID_MEMORY_UPDATE = 4;
 
-export const WebSocketContext = createContext();
+export const WebSocketMessagesContext = createContext(); // messages
+export const WebSocketContext = createContext(); // , setMessages, sendMessage, logMessage, setLogFilters, online, addListener, removeListener
 
 export function WebSocketProvider({ children }) {
   // States
@@ -19,14 +22,12 @@ export function WebSocketProvider({ children }) {
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
   const [messages, setMessages] = useState([]);
   const [online, setOnline] = useState(false);
-  const [refresh, setRefresh] = useState(false);
-  const [restart, setRestart] = useState(false);
 
   // Refs
   const listenersRef = useRef([]);
   const wsRef = useRef(null);
   const retryCountRef = useRef(1);
-  const uniqueIdRef = useRef(Math.floor(Math.random() * (999999 - 3 + 1)) + 3);
+  const uniqueIdRef = useRef(Math.floor(Math.random() * (999999 - 10 + 1)) + 10);
   const pingIntervalRef = useRef(null);
   const offlineTimeoutRef = useRef(null);
   const startTimeoutRef = useRef(null);
@@ -114,12 +115,20 @@ export function WebSocketProvider({ children }) {
           return; // Ignore messages without an ID
         } else if (msg.id === WS_ID_REFRESH_NEEDED) {
           if (debug) console.log(`WebSocket WS_ID_REFRESH_NEEDED message:`, msg, 'listeners:', listenersRef.current.length);
-          setRefresh(true);
+          // setRefresh(true);
           listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
           return;
         } else if (msg.id === WS_ID_RESTART_NEEDED) {
           if (debug) console.log(`WebSocket WS_ID_RESTART_NEEDED message:`, msg, 'listeners:', listenersRef.current.length);
-          setRestart(true);
+          // setRestart(true);
+          listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
+          return;
+        } else if (msg.id === WS_ID_CPU_UPDATE) {
+          if (debug) console.log(`WebSocket WS_ID_CPU_UPDATE message:`, msg, 'listeners:', listenersRef.current.length);
+          listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
+          return;
+        } else if (msg.id === WS_ID_MEMORY_UPDATE) {
+          if (debug) console.log(`WebSocket WS_ID_MEMORY_UPDATE message:`, msg, 'listeners:', listenersRef.current.length);
           listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
           return;
         } else if (msg.id === uniqueIdRef.current && msg.src === 'Matterbridge' && msg.dst === 'Frontend' && msg.response === 'pong') {
@@ -195,6 +204,7 @@ export function WebSocketProvider({ children }) {
     };
 
     wsRef.current.onopen = () => {
+      if (debug) console.log(`WebSocket: Connected to WebSocket: ${wssHost}`);
       logMessage('WebSocket', `Connected to WebSocket: ${wssHost}`);
       setOnline(true);
       retryCountRef.current = 1;
@@ -216,7 +226,7 @@ export function WebSocketProvider({ children }) {
     };
 
     wsRef.current.onclose = () => {
-      console.error(`WebSocketUse: Disconnected from WebSocket: ${wssHost}`);
+      console.error(`WebSocket: Disconnected from WebSocket: ${wssHost}`);
       logMessage('WebSocket', `Disconnected from WebSocket: ${wssHost}`);
       setOnline(false);
       clearTimeout(startTimeoutRef.current);
@@ -229,7 +239,7 @@ export function WebSocketProvider({ children }) {
     };
 
     wsRef.current.onerror = (error) => {
-      console.error(`WebSocketUse: WebSocket error connecting to ${wssHost}:`, error);
+      console.error(`WebSocket: WebSocket error connecting to ${wssHost}:`, error);
       logMessage('WebSocket', `WebSocket error connecting to ${wssHost}`);
     };
   }, [wssHost]);
@@ -248,22 +258,27 @@ export function WebSocketProvider({ children }) {
     };
   }, [connectWebSocket]);
 
-  const contextValue = useMemo(() => ({
+  const contextMessagesValue = useMemo(() => ({
     messages,
     setMessages,
-    sendMessage,
-    logMessage,
+    setLogFilters,
+  }), [messages]);
+
+  const contextValue = useMemo(() => ({
+    setMessages,
     setLogFilters,
     online,
-    refresh,
-    restart,
     addListener,
-    removeListener
-  }), [messages, setMessages, sendMessage, logMessage, setLogFilters, online, refresh, restart, addListener, removeListener]);
+    removeListener,
+    sendMessage,
+    logMessage,
+  }), [ setMessages, setLogFilters, online, addListener, removeListener, sendMessage, logMessage]);
 
   return (
-    <WebSocketContext.Provider value={contextValue}>
-      {children}
-    </WebSocketContext.Provider>
+    <WebSocketMessagesContext.Provider value={contextMessagesValue}>
+      <WebSocketContext.Provider value={contextValue}>
+        {children}
+      </WebSocketContext.Provider>
+    </WebSocketMessagesContext.Provider>
   );
 }
