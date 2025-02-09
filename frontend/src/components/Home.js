@@ -7,8 +7,6 @@ import React, { useEffect, useState, useRef, useContext, useMemo } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
-import Alert from '@mui/material/Alert';
-import Snackbar from '@mui/material/Snackbar';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import { ThemeProvider } from '@mui/material';
@@ -32,6 +30,7 @@ import { StatusIndicator } from './StatusIndicator';
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import { WebSocketLogs } from './WebSocketLogs';
 import { WebSocketContext } from './WebSocketProvider';
+import { UiContext } from './UiProvider';
 import { Connecting } from './Connecting';
 import { SystemInfoTable } from './SystemInfoTable';
 import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
@@ -57,11 +56,11 @@ function Home() {
   const [selectedPluginName, setSelectedPluginName] = useState('none'); // -1 no selection, 0 or greater for selected row
   const [selectedPluginConfig, setSelectedPluginConfig] = useState({});
   const [selectedPluginSchema, setSelectedPluginSchema] = useState({});
-  const [openSnack, setOpenSnack] = useState(false);
   const [openConfig, setOpenConfig] = useState(false);
   const [logFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
   const [logFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
 
+  const { showSnackbarMessage, showConfirmCancelDialog } = useContext(UiContext);
   const { logMessage, addListener, removeListener, online, sendMessage } = useContext(WebSocketContext);
 
   const refAddRemove = useRef(null);
@@ -70,22 +69,13 @@ function Home() {
   const primaryColor = useMemo(() => getCssVariable('--primary-color', '#009a00'), []);
   const theme = useMemo(() => createConfigTheme(primaryColor), [primaryColor]);
 
-  const handleSnackOpen = () => {
-    setOpenSnack(true);
-  };
-
-  const handleSnackClose = (event, reason) => {
-    if (reason === 'clickaway') return;
-    setOpenSnack(false);
-  };
-
   const handleOpenConfig = () => {
     setOpenConfig(true);
   };
 
   const handleCloseConfig = () => {
     setOpenConfig(false);
-    handleSnackOpen();
+    showSnackbarMessage('Restart required', 30);
     setTimeout(() => {
       reloadSettings();
     }, 1000);
@@ -124,11 +114,11 @@ function Home() {
       setQrCode(plugins[row].qrPairingCode);
       setPairingCode(plugins[row].manualPairingCode);
     }
-    // console.log('Selected row:', row, 'plugin:', plugins[row].name, 'qrcode:', plugins[row].qrPairingCode);
+    if (debug) console.log('Selected row:', row, 'plugin:', plugins[row].name, 'qrcode:', plugins[row].qrPairingCode);
   };
 
   const handleEnableDisablePlugin = (row) => {
-    // console.log('Selected row:', row, 'plugin:', plugins[row].name, 'enabled:', plugins[row].enabled);
+    if (debug)  console.log('Selected row:', row, 'plugin:', plugins[row].name, 'enabled:', plugins[row].enabled);
     if (plugins[row].enabled === true) {
       plugins[row].enabled = false;
       logMessage('Plugins', `Disabling plugin: ${plugins[row].name}`);
@@ -152,18 +142,14 @@ function Home() {
   };
 
   const handleUpdatePlugin = (row) => {
-    // console.log('handleUpdate row:', row, 'plugin:', plugins[row].name);
+    if (debug) console.log('handleUpdate row:', row, 'plugin:', plugins[row].name);
     logMessage('Plugins', `Updating plugin: ${plugins[row].name}`);
     sendCommandToMatterbridge('installplugin', plugins[row].name);
-    handleSnackOpen({ vertical: 'bottom', horizontal: 'right' });
-    setTimeout(() => {
-      handleSnackClose();
-      reloadSettings();
-    }, 5000);
+    showSnackbarMessage('Restart required', 30);
   };
 
   const handleRemovePlugin = (row) => {
-    // console.log('handleRemovePluginClick row:', row, 'plugin:', plugins[row].name);
+    if (debug) console.log('handleRemovePluginClick row:', row, 'plugin:', plugins[row].name);
     logMessage('Plugins', `Removing plugin: ${plugins[row].name}`);
     sendCommandToMatterbridge('removeplugin', plugins[row].name);
     setTimeout(() => {
@@ -172,7 +158,7 @@ function Home() {
   };
 
   const handleConfigPlugin = (row) => {
-    // console.log('handleConfigPlugin row:', row, 'plugin:', plugins[row].name);
+    if (debug) console.log('handleConfigPlugin row:', row, 'plugin:', plugins[row].name);
     pluginName = plugins[row].name;
     sendMessage({ method: "/api/select", src: "Frontend", dst: "Matterbridge", params: { plugin: pluginName } });
     sendMessage({ method: "/api/select/entities", src: "Frontend", dst: "Matterbridge", params: { plugin: pluginName } });
@@ -181,53 +167,45 @@ function Home() {
     handleOpenConfig();
   };
 
-  const handleSponsorPlugin = () => {
-    // console.log('handleSponsorPlugin row:', row, 'plugin:', plugins[row].name);
+  const handleSponsorPlugin = (row) => {
+    if (debug) console.log('handleSponsorPlugin row:', row, 'plugin:', plugins[row].name);
     window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
   };
 
   const handleHelpPlugin = (row) => {
-    // console.log('handleHelpPlugin row:', row, 'plugin:', plugins[row].name);
+    if (debug) console.log('handleHelpPlugin row:', row, 'plugin:', plugins[row].name);
     window.open(`https://github.com/Luligu/${plugins[row].name}/blob/main/README.md`, '_blank');
   };
 
   const handleChangelogPlugin = (row) => {
-    // console.log('handleChangelogPlugin row:', row, 'plugin:', plugins[row].name);
+    if (debug) console.log('handleChangelogPlugin row:', row, 'plugin:', plugins[row].name);
     window.open(`https://github.com/Luligu/${plugins[row].name}/blob/main/CHANGELOG.md`, '_blank');
   };
 
-  const [showConfirmCancelForm, setShowConfirmCancelForm] = useState(false);
-  const [confirmCancelFormTitle, setConfirmCancelFormTitle] = useState('');
-  const [confirmCancelFormMessage, setConfirmCancelFormMessage] = useState('');
-  const [confirmCancelFormCommand, setConfirmCancelFormCommand] = useState('');
-  const [confirmCancelFormRow, setConfirmCancelFormRow] = useState(-1);
+  const confirmCancelFormRow = useRef(-1);
 
   const handleActionWithConfirmCancel = (title, message, command, index) => {
-    setConfirmCancelFormTitle(title);
-    setConfirmCancelFormMessage(message);
-    setConfirmCancelFormCommand(command);
-    setConfirmCancelFormRow(index);
-    setShowConfirmCancelForm(true);
+    if (debug) console.log(`handleActionWithConfirmCancel ${command} ${index}`);
+    confirmCancelFormRow.current = index;
+    showConfirmCancelDialog(title, message, command, handleConfirm, handleCancel);
   };
 
-  const handleConfirm = () => {
-    // console.log(`Action confirmed ${confirmCancelFormCommand} ${confirmCancelFormRow}`);
-    setShowConfirmCancelForm(false);
-    if (confirmCancelFormCommand === 'remove' && confirmCancelFormRow !== -1) {
-      handleRemovePlugin(confirmCancelFormRow);
-    } else if (confirmCancelFormCommand === 'disable' && confirmCancelFormRow !== -1) {
-      handleEnableDisablePlugin(confirmCancelFormRow);
+  const handleConfirm = (command) => {
+    if (debug) console.log(`handleConfirm action confirmed ${command} ${confirmCancelFormRow.current}`);
+    if (command === 'remove' && confirmCancelFormRow.current !== -1) {
+      handleRemovePlugin(confirmCancelFormRow.current);
+    } else if (command === 'disable' && confirmCancelFormRow.current !== -1) {
+      handleEnableDisablePlugin(confirmCancelFormRow.current);
     }
   };
 
-  const handleCancel = () => {
-    // console.log("Action canceled");
-    setShowConfirmCancelForm(false);
+  const handleCancel = (command) => {
+    if (debug) console.log(`handleCancel action canceled ${command} ${confirmCancelFormRow.current}`);
   };
 
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
-      // console.log('Home Received WebSocket Message:', msg);
+      if (debug) console.log('Home Received WebSocket Message:', msg);
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'refresh_required') {
           if (debug) console.log('Home received refresh_required');
@@ -306,8 +284,6 @@ function Home() {
         </Dialog>
       </ThemeProvider>
 
-      <ConfirmCancelForm open={showConfirmCancelForm} title={confirmCancelFormTitle} message={confirmCancelFormMessage} onConfirm={handleConfirm} onCancel={handleCancel} />
-
       {/*Left column*/}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>
         <QRDiv matterbridgeInfo={matterbridgeInfo} plugin={selectedRow === -1 ? undefined : plugins[selectedRow]} />
@@ -377,9 +353,6 @@ function Home() {
                     <td>
                       <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', gap: '5px' }}>
 
-                        <Snackbar anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} open={openSnack} onClose={handleSnackClose} autoHideDuration={10000}>
-                          <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: 'var(--primary-color)' }}>Restart needed!</Alert>
-                        </Snackbar>
                         {plugin.error ?
                           <>
                             <StatusIndicator status={false} enabledText='Error' disabledText='Error' tooltipText='The plugin is in error state. Check the log!' /></> :

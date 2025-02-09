@@ -1,7 +1,5 @@
-/* eslint-disable no-unused-vars */
-
 // React
-import React, { useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
 // @mui/material
 
@@ -9,6 +7,7 @@ import React, { useContext, useEffect, useState, useCallback, useMemo } from 're
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
+import { UiContext } from './UiProvider';
 import { Connecting } from './Connecting';
 // import { debug } from '../App';
 const debug = true;
@@ -17,14 +16,16 @@ let uniqueId = 0;
 function Test() {
   // WebSocket context
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
+  // Ui context
+  const { showSnackbarMessage, closeSnackbar } = useContext(UiContext);
 
   // Local states
   const [settings, setSettings] = useState({});
   const [plugins, setPlugins] = useState([]);
   const [devices, setDevices] = useState([]);
   const [clusters, setClusters] = useState([]);
-  const [cpu, setCpu] = useState({});
-  const [memory, setMemory] = useState({});
+  const [cpu, setCpu] = useState(null);
+  const [memory, setMemory] = useState(null);
   
   if(uniqueId === 0) uniqueId = getUniqueId();
   console.log('Test uniqueId:', uniqueId);
@@ -36,31 +37,38 @@ function Test() {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'restart_required') {
           if(debug) console.log('Test received restart_required');
+          showSnackbarMessage('Restart required');
         }
         if (msg.method === 'refresh_required') {
           if(debug) console.log('Test received refresh_required');
+          showSnackbarMessage('Refresh required', 5);
           sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
           sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
           sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === 'memory_update') {
           if(debug) console.log('Test received memory_update', msg);
+          showSnackbarMessage('Test received memory_update');
           setMemory(msg.params);
         }
         if (msg.method === 'cpu_update') {
           if(debug) console.log('Test received cpu_update', msg);
+          showSnackbarMessage('Test received cpu_update', 5);
           setCpu(msg.params);
         }
         if (msg.method === '/api/settings' && msg.response) {
-          if(debug) console.log('Test received settings:', msg.response);
+          if(debug) console.log('Test received /api/settings:', msg.response);
+          showSnackbarMessage('Test received /api/settings', 5);
           setSettings(msg.response);
         }
         if (msg.method === '/api/plugins' && msg.response) {
           if(debug) console.log(`Test received ${msg.response.length} plugins:`, msg.response);
+          showSnackbarMessage('Test received /api/plugins', 5);
           setPlugins(msg.response);
         }
         if (msg.method === '/api/devices' && msg.response) {
           if(debug) console.log(`Test received ${msg.response.length} devices:`, msg.response);
+          showSnackbarMessage('Test received /api/devices', 5);
           setDevices(msg.response);
           for(let device of msg.response) {
             if(debug) console.log('Test sending /api/clusters for device:', device.pluginName, device.name, device.endpoint);
@@ -109,8 +117,17 @@ function Test() {
     <div className="MbfPageDiv" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
       <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
       <p>Welcome to the Test page of the Matterbridge frontend</p>
-      <p>- - -</p>
-      <p>cpuUsed: {cpu.cpuUsed} systemUptime: {memory.systemUptime} freeMemory {memory.freeMemory} totalMemory {memory.totalMemory} rss {memory.rss} heapUsed {memory.heapUsed} heapTotal {memory.heapTotal}</p>
+      {cpu && memory &&
+        <div>
+          <p>cpuUsed: {cpu.cpuUsed}</p>
+          <p>systemUptime: {memory.systemUptime}</p>
+          <p>freeMemory {memory.freeMemory}</p>
+          <p>totalMemory {memory.totalMemory}</p>
+          <p>rss {memory.rss}</p>
+          <p>heapUsed {memory.heapUsed}</p>
+          <p>heapTotal {memory.heapTotal}</p>
+        </div>
+      }
     </div>
   );
 }

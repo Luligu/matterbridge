@@ -1,7 +1,8 @@
 // React
-import React, { useEffect, useRef, useState, useCallback, useMemo, createContext } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo, createContext, useContext } from 'react';
 
 // Local modules
+import { UiContext } from './UiProvider';
 import { debug } from '../App';
 
 /**
@@ -12,6 +13,7 @@ export const WS_ID_REFRESH_NEEDED = 1;
 export const WS_ID_RESTART_NEEDED = 2;
 export const WS_ID_CPU_UPDATE = 3;
 export const WS_ID_MEMORY_UPDATE = 4;
+export const WS_ID_SNACKBAR = 5;
 
 export const WebSocketMessagesContext = createContext(); // messages
 export const WebSocketContext = createContext(); // , setMessages, sendMessage, logMessage, setLogFilters, online, addListener, removeListener
@@ -22,6 +24,9 @@ export function WebSocketProvider({ children }) {
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
   const [messages, setMessages] = useState([]);
   const [online, setOnline] = useState(false);
+
+  // Contexts
+  const { showSnackbarMessage } = useContext(UiContext);
 
   // Refs
   const listenersRef = useRef([]);
@@ -134,6 +139,10 @@ export function WebSocketProvider({ children }) {
         } else if (msg.id === WS_ID_MEMORY_UPDATE) {
           if (debug) console.log(`WebSocket WS_ID_MEMORY_UPDATE message:`, msg, 'listeners:', listenersRef.current.length);
           listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
+          return;
+        } else if (msg.id === WS_ID_SNACKBAR) {
+          if (debug) console.log(`WebSocket WS_ID_SNACKBAR message:`, msg, 'listeners:', listenersRef.current.length);
+          showSnackbarMessage(msg.params.message, msg.params.timeout);
           return;
         } else if (msg.id === uniqueIdRef.current && msg.src === 'Matterbridge' && msg.dst === 'Frontend' && msg.response === 'pong') {
           if (debug) console.log(`WebSocket pong response message:`, msg, 'listeners:', listenersRef.current.length);
