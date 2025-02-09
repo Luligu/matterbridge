@@ -73,6 +73,12 @@ export const WS_ID_CPU_UPDATE = 3;
 export const WS_ID_MEMORY_UPDATE = 4;
 
 /**
+ * Websocket message ID indicating a memory update.
+ * @constant {number}
+ */
+export const WS_ID_SNACKBAR = 5;
+
+/**
  * Initializes the frontend of Matterbridge.
  *
  * @param port The port number to run the frontend server on. Default is 8283.
@@ -939,10 +945,12 @@ export class Frontend {
   async stop() {
     // Start the memory check. This will not allow the process to exit but will log the memory usage for 5 minutes.
     if (hasParameter('memorycheck')) {
+      this.wssSendSnackbarMessage('Memory check started', getIntParameter('memorycheck') ?? 5 * 60 * 1000);
       await new Promise<void>((resolve) => {
         this.log.debug(`***Memory check started for ${getIntParameter('memorycheck') ?? 5 * 60 * 1000} ms`);
         setTimeout(
           () => {
+            this.wssSendSnackbarMessage('Memory check stopped', 10);
             this.log.debug(`***Memory check stopped after ${getIntParameter('memorycheck') ?? 5 * 60 * 1000} ms`);
             resolve();
           },
@@ -1641,6 +1649,20 @@ export class Frontend {
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({ id: WS_ID_MEMORY_UPDATE, src: 'Matterbridge', dst: 'Frontend', method: 'memory_update', params: { freeMemory, totalMemory, systemUptime, rss, heapUsed, heapTotal } }));
+      }
+    });
+  }
+
+  /**
+   * Sends a cpu update message to all connected clients.
+   *
+   */
+  wssSendSnackbarMessage(message: string, timeout: number) {
+    this.log.debug('Sending a snackbar message to all connected clients');
+    // Send the message to all connected clients
+    this.webSocketServer?.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ id: WS_ID_SNACKBAR, src: 'Matterbridge', dst: 'Frontend', method: 'memory_update', params: { message, timeout } }));
       }
     });
   }
