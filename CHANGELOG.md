@@ -33,13 +33,18 @@ matterbridge-zigbee2mqtt v. 2.4.4
 matterbridge-somfy-tahoma v. 1.2.3
 matterbridge-hass v. 0.0.8
 
-## [2.1.5] - 2025-02-08
+## [2.1.5] - 2025-02-09
 
 ### Added
+
+- [frontend]: Frontend v.2.4.1.
+- [frontend]: Optimized rendering of all pages.
+- [frontend]: Added cpuUsed, rss and heapUsed to SystemInformation.
 
 ### Changed
 
 - [matterbridge]: Calls getNpmPackageVersion() instead of npm to get latest version.
+- [matterbridge]: Memory optimization on MatterbridgeEndpoint.
 
 ### Fixed
 
