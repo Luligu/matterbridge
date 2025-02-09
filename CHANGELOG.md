@@ -40,6 +40,8 @@ matterbridge-hass v. 0.0.8
 - [frontend]: Frontend v.2.4.1.
 - [frontend]: Optimized rendering of all pages.
 - [frontend]: Added cpuUsed, rss and heapUsed to SystemInformation.
+- [frontend]: Added UiProvider.
+- [frontend]: Added wssSendCpuUpdate, wssSendMemoryUpdate and wssSendSnackbarMessage.
 
 ### Changed
 
@@ -47,6 +49,8 @@ matterbridge-hass v. 0.0.8
 - [matterbridge]: Memory optimization on MatterbridgeEndpoint.
 
 ### Fixed
+
+- [matterbridge]: Refactor shutdown sequences for reset and factory reset.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
