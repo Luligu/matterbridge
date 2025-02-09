@@ -72,8 +72,10 @@ export class Matterbridge extends EventEmitter {
     totalMemory: '',
     freeMemory: '',
     systemUptime: '',
+    cpuUsed: '',
     rss: '',
-    heap: '',
+    heapTotal: '',
+    heapUsed: '',
   };
 
   public matterbridgeInformation: MatterbridgeInformation = {
