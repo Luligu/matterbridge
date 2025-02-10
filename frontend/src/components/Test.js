@@ -10,7 +10,6 @@ import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
 import { Connecting } from './Connecting';
 import { SystemInfoTable } from './SystemInfoTable';
-import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
 // import { debug } from '../App';
 const debug = true;
 
@@ -18,7 +17,7 @@ function Test() {
   // WebSocket context
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
   // Ui context
-  const { showSnackbarMessage, closeSnackbar } = useContext(UiContext);
+  const { showSnackbarMessage } = useContext(UiContext);
 
   // Local states
   const [settings, setSettings] = useState(null);

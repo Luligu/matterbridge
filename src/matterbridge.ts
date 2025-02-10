@@ -1201,6 +1201,9 @@ export class Matterbridge extends EventEmitter {
     for (const plugin of this.plugins) {
       await this.removeAllBridgedEndpoints(plugin.name);
     }
+    this.log.debug('Waiting for the MessageExchange to finish...');
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second for MessageExchange to finish
+    this.log.debug('Cleaning up and shutting down...');
     await this.cleanup('unregistered all devices and shutting down...', false);
   }
 
@@ -1270,6 +1273,8 @@ export class Matterbridge extends EventEmitter {
 
       // Stopping matter server nodes
       this.log.notice(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
+      this.log.debug('Waiting for the MessageExchange to finish...');
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second for MessageExchange to finish
       if (this.bridgeMode === 'bridge') {
         if (this.serverNode) {
           await this.stopServerNode(this.serverNode);
@@ -1398,7 +1403,7 @@ export class Matterbridge extends EventEmitter {
         if (message === 'updating...') {
           this.log.info('Cleanup completed. Updating...');
           Matterbridge.instance = undefined;
-          this.emit('update'); // Restart the process but the update has been done before
+          this.emit('update'); // Restart the process but the update has been done before. TODO move all updates to the cli
         } else if (message === 'restarting...') {
           this.log.info('Cleanup completed. Restarting...');
           Matterbridge.instance = undefined;
@@ -2189,10 +2194,6 @@ export class Matterbridge extends EventEmitter {
   private async stopServerNode(matterServerNode: ServerNode): Promise<void> {
     if (!matterServerNode) return;
     this.log.notice(`Closing ${matterServerNode.id} server node`);
-    /*
-    await matterServerNode.close();
-    this.log.info(`Closed ${matterServerNode.id} server node`);
-    */
 
     // Helper function to add a timeout to a promise
     const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
@@ -2211,7 +2212,7 @@ export class Matterbridge extends EventEmitter {
     };
 
     try {
-      await withTimeout(matterServerNode.close(), 30000); // 30 seconds timeout
+      await withTimeout(matterServerNode.close(), 30000); // 30 seconds timeout to allow slow devices to close gracefully
       this.log.info(`Closed ${matterServerNode.id} server node`);
     } catch (error) {
       this.log.error(`Failed to close ${matterServerNode.id} server node: ${error instanceof Error ? error.message : error}`);
