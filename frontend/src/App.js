@@ -8,6 +8,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 
 // @mui
 import { ThemeProvider } from '@mui/material';
+import { SnackbarProvider } from 'notistack';
 
 // Frontend
 import Header from './components/Header';
@@ -133,23 +134,25 @@ function LoginForm() {
   if (loggedIn) {
     return (
       <ThemeProvider theme={theme}>
-        <UiProvider>
-          <WebSocketProvider>
-            <Router basename={baseName}>
-              <div className="MbfScreen">
-                <Header />
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/devices" element={<Devices />} />
-                  <Route path="/log" element={<Logs />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/test" element={<Test />} />
-                  <Route path="*" element={<Navigate to="/" />} /> 
-                </Routes>
-              </div>
-            </Router>
-          </WebSocketProvider>
-        </UiProvider>
+        <SnackbarProvider maxSnack={5} preventDuplicate anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+          <UiProvider>
+            <WebSocketProvider>
+              <Router basename={baseName}>
+                <div className="MbfScreen">
+                  <Header />
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/devices" element={<Devices />} />
+                    <Route path="/log" element={<Logs />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/test" element={<Test />} />
+                    <Route path="*" element={<Navigate to="/" />} /> 
+                  </Routes>
+                </div>
+              </Router>
+            </WebSocketProvider>
+          </UiProvider>
+        </SnackbarProvider>
       </ThemeProvider>
     );
   } else {

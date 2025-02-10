@@ -26,7 +26,7 @@ export function WebSocketProvider({ children }) {
   const [online, setOnline] = useState(false);
 
   // Contexts
-  const { showSnackbarMessage } = useContext(UiContext);
+  const { showSnackbarMessage, closeSnackbar } = useContext(UiContext);
 
   // Refs
   const listenersRef = useRef([]);
@@ -220,6 +220,7 @@ export function WebSocketProvider({ children }) {
       if (debug) console.log(`WebSocket: Connected to WebSocket: ${wssHost}`);
       logMessage('WebSocket', `Connected to WebSocket: ${wssHost}`);
       setOnline(true);
+      closeSnackbar();
       retryCountRef.current = 1;
 
       startTimeoutRef.current = setTimeout(() => {

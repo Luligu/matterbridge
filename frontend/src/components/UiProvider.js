@@ -2,7 +2,9 @@
 import React, { useState, useCallback, useMemo, createContext, useRef } from 'react';
 
 // @mui
-import { Snackbar, Alert } from '@mui/material';
+import { Alert, Box, IconButton } from '@mui/material';
+import { useSnackbar } from 'notistack';
+import CloseIcon from '@mui/icons-material/Close';
 
 // Local modules
 import { ConfirmCancelForm } from './ConfirmCancelForm';
@@ -14,39 +16,42 @@ export const UiContext = createContext();
 
 export function UiProvider({ children }) {
   // Snackbar
-  const [showSnackbar, setShowSnackbar] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const timeoutRef = useRef(null);
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
-  const handleSnackbarClose = () => {
-    if(debug) console.log(`UiProvider handleSnackbarClose`);
-    setShowSnackbar(false);
-  };
-
-  const showSnackbarMessage = useCallback((message, timeout) => {
+  const showSnackbarMessage = useCallback((message, timeout, variant) => {
+    // default | error | success | warning | info
     if(debug) console.log(`UiProvider showSnackbarMessage: message ${message} timeout ${timeout}`);
-    setSnackbarMessage(message);
-    if (showSnackbar) setShowSnackbar(false);
-    setShowSnackbar(true);
+    enqueueSnackbar(message, { 
+      variant: 'default', 
+      autoHideDuration: timeout === null || timeout === undefined || timeout > 0 ? (timeout ?? 5) * 1000 : null, 
+      persist: timeout === 0,
+      dense: true,
+      content: (key) => (
+        <Box key={key} sx={{ width: '300px', marginRight: '30px' }}> 
+          <Alert
+            key={key}
+            severity="info"
+            variant="filled"
+            sx={{
+              backgroundColor: 'var(--primary-color)',
+              color: '#fff',
+              fontWeight: 'normal',
+              width: '100%',
+              cursor: 'pointer', 
 
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    if(timeout > 0) {
-      timeoutRef.current = setTimeout(() => {
-        setShowSnackbar(false);
-      }, timeout * 1000);
-    }
-  }, []);
-
-  const closeSnackbar = useCallback(() => {
-    if(debug) console.log(`UiProvider closeSnackbar`);
-    setShowSnackbar(false);
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
+            }}
+            onClick={() => closeSnackbar(key)}
+            action={
+              <IconButton size="small" onClick={() => closeSnackbar(key)} sx={{ color: '#fff' }}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            }
+          >
+            {message}
+          </Alert>
+        </Box>
+      ),
+    });
   }, []);
 
   // ConfirmCancelForm
@@ -93,9 +98,6 @@ export function UiProvider({ children }) {
 
   return (
     <UiContext.Provider value={contextValue}>
-      <Snackbar anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} open={showSnackbar} onClose={handleSnackbarClose} autoHideDuration={60000}>
-        <Alert onClose={handleSnackbarClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: 'var(--primary-color)' }}>{snackbarMessage}</Alert>
-      </Snackbar>
       <ConfirmCancelForm open={showConfirmCancelForm} title={confirmCancelFormTitle} message={confirmCancelFormMessage} onConfirm={handleConfirm} onCancel={handleCancel} />
       {children}
     </UiContext.Provider>

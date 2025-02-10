@@ -1,5 +1,5 @@
 // React
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 
 // @mui/material
 
@@ -11,7 +11,6 @@ import { UiContext } from './UiProvider';
 import { Connecting } from './Connecting';
 // import { debug } from '../App';
 const debug = true;
-let uniqueId = 0;
 
 function Test() {
   // WebSocket context
@@ -26,8 +25,9 @@ function Test() {
   const [clusters, setClusters] = useState([]);
   const [cpu, setCpu] = useState(null);
   const [memory, setMemory] = useState(null);
-  
-  if(uniqueId === 0) uniqueId = getUniqueId();
+  const uniqueId = useRef(null);
+
+  if(!uniqueId.current) uniqueId.current = getUniqueId();
   console.log('Test uniqueId:', uniqueId);
 
   useEffect(() => {
@@ -37,38 +37,38 @@ function Test() {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'restart_required') {
           if(debug) console.log('Test received restart_required');
-          showSnackbarMessage('Restart required');
+          showSnackbarMessage('Restart required', 60);
         }
         if (msg.method === 'refresh_required') {
           if(debug) console.log('Test received refresh_required');
-          showSnackbarMessage('Refresh required', 5);
+          showSnackbarMessage('Refresh required', 0);
           sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
           sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
           sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === 'memory_update') {
           if(debug) console.log('Test received memory_update', msg);
-          showSnackbarMessage('Test received memory_update');
+          showSnackbarMessage('Test received memory_update', 30);
           setMemory(msg.params);
         }
         if (msg.method === 'cpu_update') {
           if(debug) console.log('Test received cpu_update', msg);
-          showSnackbarMessage('Test received cpu_update', 5);
+          showSnackbarMessage('Test received cpu_update', 10);
           setCpu(msg.params);
         }
         if (msg.method === '/api/settings' && msg.response) {
           if(debug) console.log('Test received /api/settings:', msg.response);
-          showSnackbarMessage('Test received /api/settings', 5);
+          showSnackbarMessage('Test received /api/settings');
           setSettings(msg.response);
         }
         if (msg.method === '/api/plugins' && msg.response) {
           if(debug) console.log(`Test received ${msg.response.length} plugins:`, msg.response);
-          showSnackbarMessage('Test received /api/plugins', 5);
+          showSnackbarMessage('Test received /api/plugins');
           setPlugins(msg.response);
         }
         if (msg.method === '/api/devices' && msg.response) {
           if(debug) console.log(`Test received ${msg.response.length} devices:`, msg.response);
-          showSnackbarMessage('Test received /api/devices', 5);
+          showSnackbarMessage('Test received /api/devices');
           setDevices(msg.response);
           for(let device of msg.response) {
             if(debug) console.log('Test sending /api/clusters for device:', device.pluginName, device.name, device.endpoint);
