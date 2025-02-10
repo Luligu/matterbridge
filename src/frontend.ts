@@ -632,6 +632,7 @@ export class Frontend {
         this.log.notice(`Prepairing the backup...`);
         await createZip(path.join(os.tmpdir(), `matterbridge.backup.zip`), path.join(this.matterbridge.matterbridgeDirectory), path.join(this.matterbridge.matterbridgePluginDirectory));
         this.log.notice(`Backup ready to be downloaded.`);
+        this.wssSendSnackbarMessage('Backup ready to be downloaded', 10);
         res.json({ message: 'Command received' });
         return;
       }
@@ -1657,7 +1658,7 @@ export class Frontend {
    * Sends a cpu update message to all connected clients.
    *
    */
-  wssSendSnackbarMessage(message: string, timeout: number) {
+  wssSendSnackbarMessage(message: string, timeout = 5) {
     this.log.debug('Sending a snackbar message to all connected clients');
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {

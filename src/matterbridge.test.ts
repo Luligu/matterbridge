@@ -67,6 +67,7 @@ describe('Matterbridge', () => {
     // Spy on console.error
     consoleErrorSpy = jest.spyOn(console, 'error');
   }
+
   beforeEach(async () => {
     // Clear all mocks
     jest.clearAllMocks();
@@ -539,9 +540,19 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).hasCleanupStarted).toBe(false);
 
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-factoryreset'];
+      (matterbridge as any).initialized = true;
       await (matterbridge as any).parseCommandLine();
+      /*
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Unlinking old matter storage file'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Unlinking old matter storage backup file'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Removing matter node storage directory'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Removing matter node storage backup directory'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Removing storage directory'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Removing storage backup directory'));
+      */
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
       expect((matterbridge as any).plugins).toHaveLength(0);
+      expect((matterbridge as any).devices).toHaveLength(0);
       matterbridge.removeAllListeners('shutdown');
     }, 10000);
   });
