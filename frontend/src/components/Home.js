@@ -49,8 +49,8 @@ export let selectEntities = [];
 function Home() {
   const [qrCode, setQrCode] = useState('');
   const [pairingCode, setPairingCode] = useState('');
-  const [systemInfo, setSystemInfo] = useState({});
-  const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
+  const [systemInfo, setSystemInfo] = useState(null);
+  const [matterbridgeInfo, setMatterbridgeInfo] = useState(null);
   const [plugins, setPlugins] = useState([]);
   const [selectedRow, setSelectedRow] = useState(-1); // -1 no selection, 0 or greater for selected row
   const [selectedPluginName, setSelectedPluginName] = useState('none'); // -1 no selection, 0 or greater for selected row
@@ -286,7 +286,7 @@ function Home() {
 
       {/*Left column*/}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>
-        <QRDiv matterbridgeInfo={matterbridgeInfo} plugin={selectedRow === -1 ? undefined : plugins[selectedRow]} />
+        {matterbridgeInfo && <QRDiv matterbridgeInfo={matterbridgeInfo} plugin={selectedRow === -1 ? undefined : plugins[selectedRow]} />}
         {systemInfo && <SystemInfoTable systemInfo={systemInfo} compact={true} />}
         {qrCode === '' && matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo} />}
       </div>

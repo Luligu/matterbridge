@@ -4,8 +4,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 
 // @mui/material
-import Snackbar from '@mui/material/Snackbar';
-import Alert from '@mui/material/Alert';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -20,26 +18,14 @@ import Box from '@mui/material/Box';
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import { Connecting } from './Connecting';
 import { WebSocketContext } from './WebSocketProvider';
+import { UiContext } from './UiProvider';
 import { debug } from '../App';
 
 function Settings() {
+  // WebSocket context
   const { online, addListener, removeListener, sendMessage } = useContext(WebSocketContext);
-  const [showSnackbar, setShowSnackbar] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
+
   const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
-
-  const handleSnackbarClose = () => {
-    setShowSnackbar(false);
-  };
-
-  const showSnackbarMessage = (message, timeout) => {
-    setSnackbarMessage(message);
-    if(showSnackbar) setShowSnackbar(false);
-    setShowSnackbar(true);
-    setTimeout(() => {
-      setShowSnackbar(false);
-    }, timeout * 1000);
-  };
 
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
@@ -76,24 +62,24 @@ function Settings() {
   }
   return (
     <div className="MbfPageDiv">
-      <Snackbar anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} open={showSnackbar} onClose={handleSnackbarClose} autoHideDuration={10000}>
-          <Alert onClose={handleSnackbarClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: 'var(--primary-color)' }}>{snackbarMessage}</Alert>
-      </Snackbar>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', width: '100%' }}>
-        <MatterbridgeSettings matterbridgeInfo={matterbridgeInfo} showSnackbarMessage={showSnackbarMessage}/>
-        <MatterSettings matterbridgeInfo={matterbridgeInfo} showSnackbarMessage={showSnackbarMessage}/>
+        <MatterbridgeSettings matterbridgeInfo={matterbridgeInfo}/>
+        <MatterSettings matterbridgeInfo={matterbridgeInfo}/>
         <MatterbridgeInfo matterbridgeInfo={matterbridgeInfo}/>
       </div>  
     </div>
   );
 }
 
-function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
+function MatterbridgeSettings({ matterbridgeInfo }) {
   const [selectedBridgeMode, setSelectedBridgeMode] = useState('bridge'); 
   const [selectedMbLoggerLevel, setSelectedMbLoggerLevel] = useState('Info'); 
   const [logOnFileMb, setLogOnFileMb] = useState(false);
   const [password, setPassword] = useState('');
   const [frontendTheme, setFrontendTheme] = useState('dark');
+
+  // Ui context
+  const { showSnackbarMessage } = useContext(UiContext);
 
   useEffect(() => {
     if (matterbridgeInfo.bridgeMode === undefined) return;
@@ -200,7 +186,7 @@ function MatterbridgeSettings({ matterbridgeInfo, showSnackbarMessage }) {
   );
 }
 
-function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
+function MatterSettings({ matterbridgeInfo }) {
   const [selectedMjLoggerLevel, setSelectedMjLoggerLevel] = useState('Info'); 
   const [logOnFileMj, setLogOnFileMj] = useState(false);  
   const [mdnsInterface, setmdnsInterface] = useState('');  
@@ -209,6 +195,9 @@ function MatterSettings({ matterbridgeInfo, showSnackbarMessage }) {
   const [matterPort, setMatterPort] = useState();  
   const [matterDiscriminator, setMatterDiscriminator] = useState();  
   const [matterPasscode, setMatterPasscode] = useState();  
+
+  // Ui context
+  const { showSnackbarMessage } = useContext(UiContext);
 
   useEffect(() => {
     if (matterbridgeInfo.bridgeMode === undefined) return;

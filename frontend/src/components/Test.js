@@ -9,6 +9,8 @@ import React, { useContext, useEffect, useState, useRef } from 'react';
 import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
 import { Connecting } from './Connecting';
+import { SystemInfoTable } from './SystemInfoTable';
+import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
 // import { debug } from '../App';
 const debug = true;
 
@@ -19,7 +21,7 @@ function Test() {
   const { showSnackbarMessage, closeSnackbar } = useContext(UiContext);
 
   // Local states
-  const [settings, setSettings] = useState({});
+  const [settings, setSettings] = useState(null);
   const [plugins, setPlugins] = useState([]);
   const [devices, setDevices] = useState([]);
   const [clusters, setClusters] = useState([]);
@@ -27,8 +29,10 @@ function Test() {
   const [memory, setMemory] = useState(null);
   const uniqueId = useRef(null);
 
-  if(!uniqueId.current) uniqueId.current = getUniqueId();
-  console.log('Test uniqueId:', uniqueId);
+  if(!uniqueId.current) {
+    uniqueId.current = getUniqueId();
+    console.log('Test uniqueId:', uniqueId);
+  }
 
   useEffect(() => {
     if(debug) console.log('Test useEffect WebSocketMessage mounting');
@@ -114,20 +118,28 @@ function Test() {
     return ( <Connecting /> );
   }
   return (
-    <div className="MbfPageDiv" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
-      <p>Welcome to the Test page of the Matterbridge frontend</p>
-      {cpu && memory &&
-        <div>
-          <p>cpuUsed: {cpu.cpuUsed}</p>
-          <p>systemUptime: {memory.systemUptime}</p>
-          <p>freeMemory {memory.freeMemory}</p>
-          <p>totalMemory {memory.totalMemory}</p>
-          <p>rss {memory.rss}</p>
-          <p>heapUsed {memory.heapUsed}</p>
-          <p>heapTotal {memory.heapTotal}</p>
-        </div>
-      }
+    <div className="MbfPageDiv" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+
+      <div style={{ display: 'flex', gap: '20px', width: '100%' }}>
+        {settings && settings.systemInformation && <SystemInfoTable systemInfo={settings.systemInformation}/>}
+      </div>  
+
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%' }}>
+        <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
+        <p>Welcome to the Test page of the Matterbridge frontend</p>
+        {cpu && memory &&
+          <div>
+            <p>cpuUsed: {cpu.cpuUsed}</p>
+            <p>systemUptime: {memory.systemUptime}</p>
+            <p>freeMemory {memory.freeMemory}</p>
+            <p>totalMemory {memory.totalMemory}</p>
+            <p>rss {memory.rss}</p>
+            <p>heapUsed {memory.heapUsed}</p>
+            <p>heapTotal {memory.heapTotal}</p>
+          </div>
+        }
+      </div>  
+
     </div>
   );
 }

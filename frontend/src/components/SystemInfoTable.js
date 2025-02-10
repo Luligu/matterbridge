@@ -1,11 +1,12 @@
 // Frontend
 import { TruncatedText } from './TruncatedText';
-import { debug } from '../App';
+// import { debug } from '../App';
+const debug = true;
 
 // This function takes systemInfo as a parameter and returns a table element with the systemInfo
 export function SystemInfoTable({ systemInfo, compact }) {
   if(debug) console.log('SystemInfoTable:', systemInfo, compact);
-  const excludeKeys = ['totalMemory', 'osRelease', 'osArch'];
+
   if (compact && systemInfo.totalMemory) {
     const totalMemory = systemInfo.totalMemory;
     const freeMemory = systemInfo.freeMemory;
@@ -41,7 +42,7 @@ export function SystemInfoTable({ systemInfo, compact }) {
             </tr>
           </thead>
           <tbody>
-            {Object.entries(systemInfo).filter(([key, _]) => !excludeKeys.includes(key)).map(([key, value], index) => (
+            {Object.entries(systemInfo).map(([key, value], index) => (
               <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ borderTop: '1px solid #ddd' }}>
                 <td>{key}</td>
                 <td>
