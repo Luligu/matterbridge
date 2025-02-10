@@ -217,14 +217,20 @@ export class Frontend {
 
     if (this.initializeError) return;
 
-    // Createe a WebSocket server and attach it to the http or https server
+    // Create a WebSocket server and attach it to the http or https server
     const wssPort = this.port;
     const wssHost = hasParameter('ssl') ? `wss://${this.matterbridge.systemInformation.ipv4Address}:${wssPort}` : `ws://${this.matterbridge.systemInformation.ipv4Address}:${wssPort}`;
     this.webSocketServer = new WebSocketServer(hasParameter('ssl') ? { server: this.httpsServer } : { server: this.httpServer });
 
     this.webSocketServer.on('connection', (ws: WebSocket, request: IncomingMessage) => {
       const clientIp = request.socket.remoteAddress;
-      AnsiLogger.setGlobalCallback(this.wssSendMessage.bind(this), LogLevel.DEBUG);
+
+      // Set the global logger callback for the WebSocketServer
+      let callbackLogLevel = LogLevel.NOTICE;
+      if (this.matterbridge.matterbridgeInformation.loggerLevel === LogLevel.INFO || this.matterbridge.matterbridgeInformation.matterLoggerLevel === MatterLogLevel.INFO) callbackLogLevel = LogLevel.INFO;
+      if (this.matterbridge.matterbridgeInformation.loggerLevel === LogLevel.DEBUG || this.matterbridge.matterbridgeInformation.matterLoggerLevel === MatterLogLevel.DEBUG) callbackLogLevel = LogLevel.DEBUG;
+      AnsiLogger.setGlobalCallback(this.wssSendMessage.bind(this), callbackLogLevel);
+      this.log.debug(`WebSocketServer logger global callback set to ${callbackLogLevel}`);
       this.log.info(`WebSocketServer client "${clientIp}" connected to Matterbridge`);
 
       ws.on('message', (message) => {

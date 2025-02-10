@@ -360,6 +360,7 @@ export class Matterbridge extends EventEmitter {
       this.log.logLevel = await this.nodeContext.get<LogLevel>('matterbridgeLogLevel', LogLevel.INFO);
     }
     MatterbridgeEndpoint.logLevel = this.log.logLevel;
+    this.matterbridgeInformation.loggerLevel = this.log.logLevel;
 
     // Create the file logger for matterbridge (context: matterbridgeFileLog)
     if (hasParameter('filelogger') || (await this.nodeContext.get<boolean>('matterbridgeFileLog', false))) {
@@ -395,6 +396,7 @@ export class Matterbridge extends EventEmitter {
     }
     Logger.format = MatterLogFormat.ANSI;
     Logger.setLogger('default', this.createMatterLogger());
+    this.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
 
     // Create the file logger for matter.js (context: matterFileLog)
     if (hasParameter('matterfilelogger') || (await this.nodeContext.get<boolean>('matterFileLog', false))) {
