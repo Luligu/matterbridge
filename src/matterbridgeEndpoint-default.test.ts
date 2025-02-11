@@ -706,7 +706,7 @@ describe('MatterbridgeEndpoint class', () => {
         },
         device.log,
       );
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`subscribeAttribute error: Attribute ${hk}state$Changed${er} not found`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`subscribeAttribute error: Attribute ${hk}state${er} not found`));
 
       await device.triggerEvent(BooleanState.Cluster.id, 'stateChange', { stateValue: true }, device.log);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Trigger event`));

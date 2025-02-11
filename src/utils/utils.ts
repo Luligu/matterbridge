@@ -24,9 +24,6 @@
 // Node.js modules
 import os from 'os';
 import path from 'path';
-import { createWriteStream, statSync } from 'fs';
-import { promises as fs } from 'fs';
-import * as dns from 'dns';
 
 import type { ArchiverError, EntryData } from 'archiver';
 
@@ -469,6 +466,7 @@ export async function wait(timeout = 1000, name?: string, debug = false): Promis
 export async function createZip(outputPath: string, ...sourcePaths: string[]): Promise<number> {
   const { default: archiver } = await import('archiver');
   const { glob } = await import('glob');
+  const { createWriteStream, statSync } = await import('fs');
 
   log.logLevel = LogLevel.INFO;
   log.logName = 'Archive';
@@ -550,6 +548,8 @@ export async function createZip(outputPath: string, ...sourcePaths: string[]): P
  * @throws {Error} - Throws an error if the copy operation fails.
  */
 export async function copyDirectory(srcDir: string, destDir: string): Promise<boolean> {
+  const fs = await import('fs').then((mod) => mod.promises);
+
   log.debug(`copyDirectory: copying directory from ${srcDir} to ${destDir}`);
   try {
     // Create destination directory if it doesn't exist
@@ -588,8 +588,9 @@ export async function copyDirectory(srcDir: string, destDir: string): Promise<bo
  * This function uses DNS lookup to resolve the hostname, which can take some time to complete.
  */
 export async function resolveHostname(hostname: string, family: 0 | 4 | 6 = 4): Promise<string | null> {
+  const dns = await import('dns');
   try {
-    const addresses = await dns.promises.lookup(hostname.toLowerCase() + '.local', { family });
+    const addresses = await dns.promises.lookup(hostname.toLowerCase() /* + '.local'*/, { family });
     return addresses.address;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {

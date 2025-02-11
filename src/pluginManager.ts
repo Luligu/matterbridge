@@ -609,7 +609,7 @@ export class PluginManager {
 
         await this.saveToStorage(); // Save the plugin to storage
 
-        this.log.notice(`Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${platform.type}${db} (entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
+        this.log.notice(`Loaded plugin ${plg}${plugin.name}${nt} type ${typ}${platform.type}${nt} (entrypoint ${UNDERLINE}${pluginEntry}${UNDERLINEOFF})`);
 
         if (start) await this.start(plugin, message, false);
 

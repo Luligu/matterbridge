@@ -71,6 +71,11 @@ RUN npm run cleanBuildProduction && npm pkg delete devDependencies scripts types
 FROM node:22-bookworm-slim AS release
 WORKDIR /app
 
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+    
 COPY --from=builder /app/*.tgz .
 RUN npm install -g npm@latest && npm install -g --omit=dev *.tgz && rm *.tgz
 

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   deepEqual,
   deepCopy,
@@ -17,11 +19,66 @@ import {
   isValidUndefined,
   createZip,
   getNpmPackageVersion,
+  copyDirectory,
+  hasParameter,
+  getParameter,
+  getIntParameter,
+  resolveHostname,
 } from './utils';
 import { promises as fs } from 'fs';
+import { AnsiLogger } from 'node-ansi-logger';
 import path from 'path';
+import { jest } from '@jest/globals';
 
 describe('Utils test', () => {
+  let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
+  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
+  const debug = false;
+
+  if (!debug) {
+    // Spy on and mock AnsiLogger.log
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
+      //
+    });
+    // Spy on and mock console.log
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
+      //
+    });
+    // Spy on and mock console.debug
+    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {
+      //
+    });
+    // Spy on and mock console.info
+    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {
+      //
+    });
+    // Spy on and mock console.warn
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
+      //
+    });
+    // Spy on and mock console.error
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
+      //
+    });
+  } else {
+    // Spy on AnsiLogger.log
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
+    // Spy on console.log
+    consoleLogSpy = jest.spyOn(console, 'log');
+    // Spy on console.debug
+    consoleDebugSpy = jest.spyOn(console, 'debug');
+    // Spy on console.info
+    consoleInfoSpy = jest.spyOn(console, 'info');
+    // Spy on console.warn
+    consoleWarnSpy = jest.spyOn(console, 'warn');
+    // Spy on console.error
+    consoleErrorSpy = jest.spyOn(console, 'error');
+  }
+
   const obj1 = {
     a: 1,
     b: '2',
@@ -48,6 +105,16 @@ describe('Utils test', () => {
     roller2PM = JSON.parse(data);
     data = await fs.readFile(path.join('src', 'mock', 'shellyplus2pm-5443b23d81f8.switch.json'), 'utf8');
     switch2PM = JSON.parse(data);
+  });
+
+  beforeEach(async () => {
+    // Clear all mocks
+    jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    // Restore all mocks
+    jest.restoreAllMocks();
   });
 
   test('Deep equal', () => {
@@ -78,7 +145,6 @@ describe('Utils test', () => {
   });
 
   test('Deep copy switch2PM changed', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const copy: any = deepCopy(switch2PM);
     copy.status.ws.connected = true;
     expect(deepEqual(switch2PM, copy)).toBeFalsy();
@@ -355,6 +421,82 @@ describe('Utils test', () => {
     expect(isValidUndefined(undefined)).toBe(true);
     expect(isValidUndefined({ x: 1, y: 4 })).toBe(false);
     expect(isValidUndefined([1, 4, 'string'])).toBe(false);
+  });
+
+  it('hasParameter should retrive the parameter', () => {
+    expect(hasParameter('logger')).toBe(false);
+
+    const argv = process.argv;
+    process.argv = ['node', 'index.js', '--experimental-vm-modules', '--debug', '--inspect'];
+    expect(hasParameter('experimental-vm-modules')).toBe(true);
+    expect(hasParameter('debug')).toBe(true);
+    process.argv = ['node', 'index.js', '-experimental-vm-modules', '-debug', '--inspect'];
+    expect(hasParameter('experimental-vm-modules')).toBe(true);
+    expect(hasParameter('debug')).toBe(true);
+    process.argv = argv;
+  });
+
+  it('getParameter should retrive the parameter', () => {
+    const argv = process.argv;
+    process.argv = ['node', 'index.js', '--experimental-vm-modules', '--debug', '--logger', 'debug'];
+    expect(getParameter('assert')).toBe(undefined);
+    expect(getParameter('logger')).toBe('debug');
+    process.argv = ['node', 'index.js', '-experimental-vm-modules', '-debug', '-logger', 'debug'];
+    expect(getParameter('node')).toBe(undefined);
+    expect(getParameter('logger')).toBe('debug');
+    process.argv = argv;
+  });
+
+  it('getIntParameter should retrive the parameter', () => {
+    const argv = process.argv;
+    process.argv = ['node', 'index.js', '--experimental-vm-modules', '--debug', '--logger', '1'];
+    expect(getIntParameter('debug')).toBe(undefined);
+    expect(getIntParameter('logger')).toBe(1);
+    process.argv = ['node', 'index.js', '-experimental-vm-modules', '-debug', '-logger', '5'];
+    expect(getIntParameter('debug')).toBe(undefined);
+    expect(getIntParameter('logger')).toBe(5);
+    process.argv = argv;
+  });
+
+  it('should not resolve localhost 0', async () => {
+    const result = await resolveHostname('localhost', 0);
+    // console.log('Resolved localhost:', result);
+    expect(result).toBeDefined();
+    expect(result).not.toBeNull();
+    expect(typeof result).toBe('string');
+    expect(result).toBe('::1');
+  });
+
+  it('should not resolve localhost 4', async () => {
+    const result = await resolveHostname('localhost', 4);
+    // console.log('Resolved localhost:', result);
+    expect(result).toBeDefined();
+    expect(result).not.toBeNull();
+    expect(typeof result).toBe('string');
+    expect(result).toBe('127.0.0.1');
+  });
+
+  it('should not resolve localhost 6', async () => {
+    const result = await resolveHostname('localhost', 6);
+    // console.log('Resolved localhost:', result);
+    expect(result).toBeDefined();
+    expect(result).not.toBeNull();
+    expect(typeof result).toBe('string');
+    expect(result).toBe('::1');
+  });
+
+  it('should resolve www.npmjs.com 0', async () => {
+    const result = await resolveHostname('www.npmjs.com', 0);
+    // console.log('Resolved www.npmjs.com:', result);
+    expect(result).toBeDefined();
+    expect(result).not.toBeNull();
+    expect(typeof result).toBe('string');
+  });
+
+  it('should copy a directory', async () => {
+    await fs.mkdir('test', { recursive: true });
+    const result = await copyDirectory(path.join('.', 'docker'), path.join('.', 'test'));
+    expect(result).toBeTruthy();
   });
 
   it('should zip a file', async () => {

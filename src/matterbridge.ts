@@ -35,7 +35,7 @@ import { NodeStorageManager, NodeStorage } from './storage/export.js';
 import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN, nt } from './logger/export.js';
 
 // Matterbridge
-import { logInterfaces, copyDirectory, getParameter, getIntParameter, hasParameter } from './utils/utils.js';
+import { logInterfaces, copyDirectory, getParameter, getIntParameter, hasParameter, getNpmPackageVersion } from './utils/utils.js';
 import { MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
@@ -72,8 +72,10 @@ export class Matterbridge extends EventEmitter {
     totalMemory: '',
     freeMemory: '',
     systemUptime: '',
+    cpuUsed: '',
     rss: '',
-    heap: '',
+    heapTotal: '',
+    heapUsed: '',
   };
 
   public matterbridgeInformation: MatterbridgeInformation = {
@@ -358,6 +360,7 @@ export class Matterbridge extends EventEmitter {
       this.log.logLevel = await this.nodeContext.get<LogLevel>('matterbridgeLogLevel', LogLevel.INFO);
     }
     MatterbridgeEndpoint.logLevel = this.log.logLevel;
+    this.matterbridgeInformation.loggerLevel = this.log.logLevel;
 
     // Create the file logger for matterbridge (context: matterbridgeFileLog)
     if (hasParameter('filelogger') || (await this.nodeContext.get<boolean>('matterbridgeFileLog', false))) {
@@ -393,6 +396,7 @@ export class Matterbridge extends EventEmitter {
     }
     Logger.format = MatterLogFormat.ANSI;
     Logger.setLogger('default', this.createMatterLogger());
+    this.matterbridgeInformation.matterLoggerLevel = Logger.defaultLogLevel;
 
     // Create the file logger for matter.js (context: matterFileLog)
     if (hasParameter('matterfilelogger') || (await this.nodeContext.get<boolean>('matterFileLog', false))) {
@@ -658,6 +662,12 @@ export class Matterbridge extends EventEmitter {
     // Initialize frontend
     if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.frontend.start(getIntParameter('frontend'));
     this.frontend.logLevel = this.log.logLevel;
+
+    // Check now the latest versions of matterbridge and plugins
+    this.getMatterbridgeLatestVersion();
+    for (const plugin of this.plugins) {
+      this.getPluginLatestVersion(plugin);
+    }
 
     // Check each 60 minutes the latest versions
     this.checkUpdateInterval = setInterval(
@@ -1014,49 +1024,47 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Retrieves the latest version of Matterbridge and performs necessary actions based on the version comparison.
+   * Retrieves the latest version of Matterbridge and updates the matterbridgeLatestVersion property.
+   * If there is an error retrieving the latest version, logs an error message.
+   *
    * @private
-   * @returns {Promise<void>} A promise that resolves when the latest version is retrieved and actions are performed.
+   * @returns {Promise<void>} A promise that resolves when the latest version is retrieved.
    */
   private async getMatterbridgeLatestVersion(): Promise<void> {
-    this.getLatestVersion('matterbridge')
-      .then(async (matterbridgeLatestVersion) => {
-        this.matterbridgeLatestVersion = matterbridgeLatestVersion;
-        this.matterbridgeInformation.matterbridgeLatestVersion = this.matterbridgeLatestVersion;
-        this.log.debug(`Matterbridge Latest Version: ${this.matterbridgeLatestVersion}`);
+    getNpmPackageVersion('matterbridge')
+      .then(async (version) => {
+        this.matterbridgeLatestVersion = version;
+        this.matterbridgeInformation.matterbridgeLatestVersion = version;
         await this.nodeContext?.set<string>('matterbridgeLatestVersion', this.matterbridgeLatestVersion);
         if (this.matterbridgeVersion !== this.matterbridgeLatestVersion) {
           this.log.notice(`Matterbridge is out of date. Current version: ${this.matterbridgeVersion}. Latest version: ${this.matterbridgeLatestVersion}.`);
         } else {
           this.log.debug(`Matterbridge is up to date. Current version: ${this.matterbridgeVersion}. Latest version: ${this.matterbridgeLatestVersion}.`);
         }
+        this.frontend.wssSendRefreshRequired();
       })
-      .catch((error: Error) => {
+      .catch((error) => {
         this.log.error(`Error getting Matterbridge latest version: ${error.message}`);
-        // error.stack && this.log.debug(error.stack);
       });
   }
 
   /**
    * Retrieves the latest version of a plugin and updates the plugin's latestVersion property.
-   * If the plugin's version is different from the latest version, logs a warning message.
-   * If the plugin's version is the same as the latest version, logs an info message.
    * If there is an error retrieving the latest version, logs an error message.
    *
    * @private
    * @param {RegisteredPlugin} plugin - The plugin for which to retrieve the latest version.
-   * @returns {Promise<void>} A promise that resolves when the latest version is retrieved and actions are performed.
+   * @returns {Promise<void>} A promise that resolves when the latest version is retrieved.
    */
   private async getPluginLatestVersion(plugin: RegisteredPlugin): Promise<void> {
-    this.getLatestVersion(plugin.name)
-      .then(async (latestVersion) => {
-        plugin.latestVersion = latestVersion;
-        if (plugin.version !== latestVersion) this.log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest version: ${latestVersion}.`);
-        else this.log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest version: ${latestVersion}.`);
+    getNpmPackageVersion(plugin.name)
+      .then((version) => {
+        plugin.latestVersion = version;
+        if (plugin.version !== plugin.latestVersion) this.log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
+        else this.log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
       })
-      .catch((error: Error) => {
+      .catch((error) => {
         this.log.error(`Error getting ${plg}${plugin.name}${er} latest version: ${error.message}`);
-        // error.stack && this.log.debug(error.stack);
       });
   }
 
@@ -1195,6 +1203,9 @@ export class Matterbridge extends EventEmitter {
     for (const plugin of this.plugins) {
       await this.removeAllBridgedEndpoints(plugin.name);
     }
+    this.log.debug('Waiting for the MessageExchange to finish...');
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second for MessageExchange to finish
+    this.log.debug('Cleaning up and shutting down...');
     await this.cleanup('unregistered all devices and shutting down...', false);
   }
 
@@ -1202,14 +1213,6 @@ export class Matterbridge extends EventEmitter {
    * Reset commissioning and shut down the process.
    */
   async shutdownProcessAndReset() {
-    this.log.info('Resetting Matterbridge commissioning information...');
-    await this.matterStorageManager?.createContext('events')?.clearAll();
-    await this.matterStorageManager?.createContext('fabrics')?.clearAll();
-    await this.matterStorageManager?.createContext('root')?.clearAll();
-    await this.matterStorageManager?.createContext('sessions')?.clearAll();
-    await this.matterbridgeContext?.clearAll();
-    await this.stopMatterStorage();
-    this.log.info('Matter storage reset done! Remove the bridge from the controller.');
     await this.cleanup('shutting down with reset...', false);
   }
 
@@ -1217,50 +1220,6 @@ export class Matterbridge extends EventEmitter {
    * Factory reset and shut down the process.
    */
   async shutdownProcessAndFactoryReset() {
-    try {
-      // Delete old matter storage file and backup
-      const file = path.join(this.matterbridgeDirectory, 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.json');
-      this.log.info(`Unlinking old matter storage file: ${file}`);
-      await fs.unlink(file);
-      const backup = path.join(this.matterbridgeDirectory, 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.backup.json');
-      this.log.info(`Unlinking old matter storage backup file: ${backup}`);
-      await fs.unlink(backup);
-    } catch (err) {
-      if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
-        this.log.error(`Error unlinking old matter storage file: ${err}`);
-      }
-    }
-    try {
-      // Delete matter node storage directory with its subdirectories and backup
-      const dir = path.join(this.matterbridgeDirectory, 'matterstorage' + (getParameter('profile') ? '.' + getParameter('profile') : ''));
-      this.log.info(`Removing matter node storage directory: ${dir}`);
-      await fs.rm(dir, { recursive: true });
-      const backup = path.join(this.matterbridgeDirectory, 'matterstorage' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.backup');
-      this.log.info(`Removing matter node storage backup directory: ${backup}`);
-      await fs.rm(backup, { recursive: true });
-    } catch (err) {
-      if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
-        this.log.error(`Error removing matter storage directory: ${err}`);
-      }
-    }
-    try {
-      // Delete node storage directory with its subdirectories and backup
-      const dir = path.join(this.matterbridgeDirectory, 'storage' + (getParameter('profile') ? '.' + getParameter('profile') : ''));
-      this.log.info(`Removing storage directory: ${dir}`);
-      await fs.rm(dir, { recursive: true });
-      const backup = path.join(this.matterbridgeDirectory, 'storage' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.backup');
-      this.log.info(`Removing storage backup directory: ${backup}`);
-      await fs.rm(backup, { recursive: true });
-    } catch (err) {
-      if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
-        this.log.error(`Error removing storage directory: ${err}`);
-      }
-    }
-    this.log.info('Factory reset done! Remove all paired fabrics from the controllers.');
-    this.nodeContext = undefined;
-    this.nodeStorage = undefined;
-    this.plugins.clear();
-    this.devices.clear();
     await this.cleanup('shutting down with factory reset...', false);
   }
 
@@ -1316,6 +1275,8 @@ export class Matterbridge extends EventEmitter {
 
       // Stopping matter server nodes
       this.log.notice(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
+      this.log.debug('Waiting for the MessageExchange to finish...');
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second for MessageExchange to finish
       if (this.bridgeMode === 'bridge') {
         if (this.serverNode) {
           await this.stopServerNode(this.serverNode);
@@ -1331,6 +1292,17 @@ export class Matterbridge extends EventEmitter {
         }
       }
       this.log.notice('Stopped matter server nodes');
+
+      // Matter commisioning reset
+      if (message === 'shutting down with reset...') {
+        this.log.info('Resetting Matterbridge commissioning information...');
+        await this.matterStorageManager?.createContext('events')?.clearAll();
+        await this.matterStorageManager?.createContext('fabrics')?.clearAll();
+        await this.matterStorageManager?.createContext('root')?.clearAll();
+        await this.matterStorageManager?.createContext('sessions')?.clearAll();
+        await this.matterbridgeContext?.clearAll();
+        this.log.info('Matter storage reset done! Remove the bridge from the controller.');
+      }
 
       // Stop matter storage
       await this.stopMatterStorage();
@@ -1382,6 +1354,50 @@ export class Matterbridge extends EventEmitter {
       this.plugins.clear();
       this.devices.clear();
 
+      // Factory reset
+      if (message === 'shutting down with factory reset...') {
+        try {
+          // Delete old matter storage file and backup
+          const file = path.join(this.matterbridgeDirectory, 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.json');
+          this.log.info(`Unlinking old matter storage file: ${file}`);
+          await fs.unlink(file);
+          const backup = path.join(this.matterbridgeDirectory, 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.backup.json');
+          this.log.info(`Unlinking old matter storage backup file: ${backup}`);
+          await fs.unlink(backup);
+        } catch (err) {
+          if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
+            this.log.error(`Error unlinking old matter storage file: ${err}`);
+          }
+        }
+        try {
+          // Delete matter node storage directory with its subdirectories and backup
+          const dir = path.join(this.matterbridgeDirectory, 'matterstorage' + (getParameter('profile') ? '.' + getParameter('profile') : ''));
+          this.log.info(`Removing matter node storage directory: ${dir}`);
+          await fs.rm(dir, { recursive: true });
+          const backup = path.join(this.matterbridgeDirectory, 'matterstorage' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.backup');
+          this.log.info(`Removing matter node storage backup directory: ${backup}`);
+          await fs.rm(backup, { recursive: true });
+        } catch (err) {
+          if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
+            this.log.error(`Error removing matter storage directory: ${err}`);
+          }
+        }
+        try {
+          // Delete node storage directory with its subdirectories and backup
+          const dir = path.join(this.matterbridgeDirectory, 'storage' + (getParameter('profile') ? '.' + getParameter('profile') : ''));
+          this.log.info(`Removing storage directory: ${dir}`);
+          await fs.rm(dir, { recursive: true });
+          const backup = path.join(this.matterbridgeDirectory, 'storage' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.backup');
+          this.log.info(`Removing storage backup directory: ${backup}`);
+          await fs.rm(backup, { recursive: true });
+        } catch (err) {
+          if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
+            this.log.error(`Error removing storage directory: ${err}`);
+          }
+        }
+        this.log.info('Factory reset done! Remove all paired fabrics from the controllers.');
+      }
+
       // Deregisters the process handlers
       this.deregisterProcesslHandlers();
 
@@ -1389,7 +1405,7 @@ export class Matterbridge extends EventEmitter {
         if (message === 'updating...') {
           this.log.info('Cleanup completed. Updating...');
           Matterbridge.instance = undefined;
-          this.emit('update'); // Restart the process but the update has been done before
+          this.emit('update'); // Restart the process but the update has been done before. TODO move all updates to the cli
         } else if (message === 'restarting...') {
           this.log.info('Cleanup completed. Restarting...');
           Matterbridge.instance = undefined;
@@ -2180,10 +2196,6 @@ export class Matterbridge extends EventEmitter {
   private async stopServerNode(matterServerNode: ServerNode): Promise<void> {
     if (!matterServerNode) return;
     this.log.notice(`Closing ${matterServerNode.id} server node`);
-    /*
-    await matterServerNode.close();
-    this.log.info(`Closed ${matterServerNode.id} server node`);
-    */
 
     // Helper function to add a timeout to a promise
     const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
@@ -2202,7 +2214,7 @@ export class Matterbridge extends EventEmitter {
     };
 
     try {
-      await withTimeout(matterServerNode.close(), 5000); // 5 seconds timeout
+      await withTimeout(matterServerNode.close(), 30000); // 30 seconds timeout to allow slow devices to close gracefully
       this.log.info(`Closed ${matterServerNode.id} server node`);
     } catch (error) {
       this.log.error(`Failed to close ${matterServerNode.id} server node: ${error instanceof Error ? error.message : error}`);

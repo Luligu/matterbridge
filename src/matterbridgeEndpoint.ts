@@ -69,6 +69,7 @@ import {
   getAttribute,
   checkNotLatinCharacters,
   generateUniqueId,
+  subscribeAttribute,
 } from './matterbridgeEndpointHelpers.js';
 
 // @matter
@@ -321,7 +322,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     // console.log('MatterbridgeEndpoint.optionsV8', optionsV8);
 
     // Create the logger
-    this.log = new AnsiLogger({ logName: 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
+    this.log = new AnsiLogger({ logName: options.uniqueStorageKey ?? 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
     this.log.debug(
       `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} ` +
         `id: ${CYAN}${options.uniqueStorageKey}${db} number: ${CYAN}${options.endpointId}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
@@ -433,36 +434,15 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Subscribes to the provided attribute on a cluster.
    *
-   * @param {ClusterId} clusterId - The ID of the cluster.
+   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to subscribe the attribute to.
    * @param {string} attribute - The name of the attribute to subscribe to.
    * @param {(newValue: any, oldValue: any) => void} listener - A callback function that will be called when the attribute value changes.
    * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
-   * @returns {boolean} - A boolean indicating whether the subscription was successful.
+   * @returns {Promise<boolean>} - A boolean indicating whether the subscription was successful.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async subscribeAttribute(clusterId: ClusterId, attribute: string, listener: (newValue: any, oldValue: any) => void, log?: AnsiLogger): Promise<boolean> {
-    const clusterName = lowercaseFirstLetter(getClusterNameById(clusterId));
-
-    if (this.construction.status !== Lifecycle.Status.Active) {
-      // this.log.error(`subscribeAttribute ${hk}${clusterName}.${attribute}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
-      await this.construction.ready;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const events = this.events as Record<string, Record<string, any>>;
-    if (!(clusterName in events)) {
-      this.log.error(`subscribeAttribute ${hk}${attribute}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${this.maybeId}${er}:${or}${this.maybeNumber}${er}`);
-      return false;
-    }
-
-    attribute = lowercaseFirstLetter(attribute) + '$Changed';
-    if (!(attribute in events[clusterName])) {
-      this.log.error(`subscribeAttribute error: Attribute ${hk}${attribute}${er} not found on Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${this.maybeId}${er}:${or}${this.maybeNumber}${er}`);
-      return false;
-    }
-    events[clusterName][attribute].on(listener);
-    log?.info(`${db}Subscribed endpoint ${or}${this.id}${db}:${or}${this.number}${db} attribute ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db}`);
-    return true;
+  async subscribeAttribute(cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, listener: (newValue: any, oldValue: any) => void, log?: AnsiLogger): Promise<boolean> {
+    return await subscribeAttribute(this, cluster, attribute, listener, log);
   }
 
   /**
@@ -500,10 +480,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Adds cluster servers from the provided server list.
    *
    * @param {ClusterId[]} serverList - The list of cluster IDs to add.
-   * @returns {Promise<this>} The current MatterbridgeEndpoint instance for chaining.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  addClusterServers(serverList: ClusterId[]): void {
+  addClusterServers(serverList: ClusterId[]) {
     addClusterServers(this, serverList);
+    return this;
   }
 
   /**
@@ -617,7 +598,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Adds a child endpoint with the specified device types and options.
    * If the child endpoint is not already present, it will be created and added.
-   * If the child endpoint is already present, the device types will be added to the existing child endpoint.
+   * If the child endpoint is already present, the existing child endpoint will be returned.
    *
    * @param {string} endpointName - The name of the new endpoint to add.
    * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The device types to add.
@@ -1591,7 +1572,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default momentary switch cluster server.
    *
    * @remarks
-   * This method adds a cluster server with default momentary switch features and configurations suitable for (AppleHome) Single Double Long automations.
+   * This method adds a cluster server with default momentary switch features and configuration suitable for (AppleHome) Single Double Long automations.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultSwitchClusterServer() {
@@ -1613,6 +1594,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @remarks
    * This method adds a cluster server with default latching switch features and configuration suitable for a latching switch with 2 positions.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultLatchingSwitchClusterServer() {
     this.behaviors.require(

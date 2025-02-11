@@ -21,13 +21,20 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/frontend/build ./frontend/build
 RUN npm link
 
+# Install curl for docker health
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # Install Matterbridge plugins
-RUN npm install -g --omit=dev matterbridge-example-accessory-platform
-RUN npm install -g --omit=dev matterbridge-example-dynamic-platform
 RUN npm install -g --omit=dev matterbridge-zigbee2mqtt
 RUN npm install -g --omit=dev matterbridge-somfy-tahoma
 RUN npm install -g --omit=dev matterbridge-shelly
 RUN npm install -g --omit=dev matterbridge-hass
+RUN npm install -g --omit=dev matterbridge-test
+RUN npm install -g --omit=dev matterbridge-example-accessory-platform
+RUN npm install -g --omit=dev matterbridge-example-dynamic-platform
 RUN npm install -g --omit=dev matterbridge-eve-door
 RUN npm install -g --omit=dev matterbridge-eve-motion
 RUN npm install -g --omit=dev matterbridge-eve-energy

@@ -8,6 +8,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 
 // @mui
 import { ThemeProvider } from '@mui/material';
+import { SnackbarProvider } from 'notistack';
 
 // Frontend
 import Header from './components/Header';
@@ -17,6 +18,7 @@ import Settings from './components/Settings';
 import Test from './components/Test';
 import Logs from './components/Logs';
 import { WebSocketProvider } from './components/WebSocketProvider';
+import { UiProvider } from './components/UiProvider';
 import { createMuiTheme, getCssVariable } from './components/muiTheme';
 
 export const debug = false;
@@ -131,23 +133,27 @@ function LoginForm() {
 
   if (loggedIn) {
     return (
-      <WebSocketProvider>
-        <ThemeProvider theme={theme}>
-          <Router basename={baseName}>
-            <div className="MbfScreen">
-              <Header />
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/devices" element={<Devices />} />
-                <Route path="/log" element={<Logs />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/test" element={<Test />} />
-                <Route path="*" element={<Navigate to="/" />} /> 
-              </Routes>
-            </div>
-          </Router>
-        </ThemeProvider>
-      </WebSocketProvider>
+      <ThemeProvider theme={theme}>
+        <SnackbarProvider maxSnack={5} preventDuplicate anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+          <UiProvider>
+            <WebSocketProvider>
+              <Router basename={baseName}>
+                <div className="MbfScreen">
+                  <Header />
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/devices" element={<Devices />} />
+                    <Route path="/log" element={<Logs />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/test" element={<Test />} />
+                    <Route path="*" element={<Navigate to="/" />} /> 
+                  </Routes>
+                </div>
+              </Router>
+            </WebSocketProvider>
+          </UiProvider>
+        </SnackbarProvider>
+      </ThemeProvider>
     );
   } else {
     return (
