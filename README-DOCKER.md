@@ -79,7 +79,7 @@ services:
       timeout: 10s
 ```
 
-Replace USER with your user name (i.e. ubuntu or pi).
+Replace USER with your user name (i.e. ubuntu or pi: "/home/ubuntu/Matterbridge:/root/Matterbridge").
 
 copy it in the home directory or edit the existing one to add the matterbridge service.
 

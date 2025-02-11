@@ -93,4 +93,8 @@ COPY --from=builder /matterbridge-eve-room/*.tgz .
 COPY --from=builder /matterbridge-eve-weather/*.tgz .
 RUN npm install -g --omit=dev *.tgz && rm *.tgz && node -v && npm -v && npm list -g && npm cache clean --force && rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Add Docker HEALTHCHECK
+HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
+  CMD curl --fail http://localhost:8283/health || exit 1
+
 CMD ["matterbridge", "-docker"]
