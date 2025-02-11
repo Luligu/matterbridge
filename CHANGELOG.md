@@ -33,7 +33,7 @@ matterbridge-zigbee2mqtt v. 2.4.4
 matterbridge-somfy-tahoma v. 1.2.3
 matterbridge-hass v. 0.0.8
 
-## [2.1.5] - 2025-02-10
+## [2.1.5] - 2025-02-11
 
 ### Added
 
@@ -42,15 +42,17 @@ matterbridge-hass v. 0.0.8
 - [frontend]: Added cpuUsed, rss and heapUsed to SystemInformation.
 - [frontend]: Added UiProvider.
 - [frontend]: Added wssSendCpuUpdate, wssSendMemoryUpdate and wssSendSnackbarMessage.
+- [docker]: Added health check to docker images. See README-DOCKER.md with the updated configuration.
 
 ### Changed
 
-- [matterbridge]: Calls getNpmPackageVersion() instead of npm to get latest version.
+- [matterbridge]: Calls getNpmPackageVersion() instead of npm to get latest version to optimize memory and cpu usage.
 - [matterbridge]: Memory optimization on MatterbridgeEndpoint.
 
 ### Fixed
 
 - [matterbridge]: Refactor shutdown sequences for reset and factory reset.
+- [matterbridge]: Refactor reset devices adding a wait of 1 sec to allow matter to deliver all messages before shutting down.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">

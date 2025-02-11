@@ -71,6 +71,12 @@ services:
     volumes:
       - "/home/<USER>/Matterbridge:/root/Matterbridge"        # Mounts the Matterbridge plugin directory
       - "/home/<USER>/.matterbridge:/root/.matterbridge"      # Mounts the Matterbridge storage directory
+    healthcheck:
+      test: curl --fail localhost:8283/health || exit 1
+      interval: 60s
+      retries: 5
+      start_period: 60s
+      timeout: 10s
 ```
 
 Replace USER with your user name (i.e. ubuntu or pi).
