@@ -1044,7 +1044,7 @@ export class Matterbridge extends EventEmitter {
         this.frontend.wssSendRefreshRequired();
       })
       .catch((error) => {
-        this.log.error(`Error getting Matterbridge latest version: ${error.message}`);
+        this.log.warn(`Error getting Matterbridge latest version: ${error.message}`);
       });
   }
 
@@ -1064,7 +1064,7 @@ export class Matterbridge extends EventEmitter {
         else this.log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
       })
       .catch((error) => {
-        this.log.error(`Error getting ${plg}${plugin.name}${er} latest version: ${error.message}`);
+        this.log.warn(`Error getting ${plg}${plugin.name}${er} latest version: ${error.message}`);
       });
   }
 
