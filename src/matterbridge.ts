@@ -213,6 +213,12 @@ export class Matterbridge extends EventEmitter {
       plugin.platform.log.logLevel = plugin.platform.config.debug === true ? LogLevel.DEBUG : this.log.logLevel;
       await plugin.platform.onChangeLoggerLevel(plugin.platform.config.debug === true ? LogLevel.DEBUG : this.log.logLevel);
     }
+    // Set the global logger callback for the WebSocketServer to the common minimum logLevel
+    let callbackLogLevel = LogLevel.NOTICE;
+    if (this.matterbridgeInformation.loggerLevel === LogLevel.INFO || this.matterbridgeInformation.matterLoggerLevel === MatterLogLevel.INFO) callbackLogLevel = LogLevel.INFO;
+    if (this.matterbridgeInformation.loggerLevel === LogLevel.DEBUG || this.matterbridgeInformation.matterLoggerLevel === MatterLogLevel.DEBUG) callbackLogLevel = LogLevel.DEBUG;
+    AnsiLogger.setGlobalCallback(this.frontend.wssSendMessage.bind(this.frontend), callbackLogLevel);
+    this.log.debug(`WebSocketServer logger global callback set to ${callbackLogLevel}`);
   }
 
   /** ***********************************************************************************************************************************/

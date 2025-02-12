@@ -281,7 +281,7 @@ describe('MatterbridgeEndpoint class', () => {
             { deviceType: occupancySensor.code, revision: occupancySensor.revision },
           ],
         }),
-      ).toThrow();
+      ).not.toThrow();
       await expect(server.add(child)).resolves.toBeDefined();
       logEndpoint(EndpointServer.forEndpoint(child));
     });
