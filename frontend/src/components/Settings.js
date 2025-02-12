@@ -25,7 +25,7 @@ function Settings() {
   // WebSocket context
   const { online, addListener, removeListener, sendMessage } = useContext(WebSocketContext);
 
-  const [matterbridgeInfo, setMatterbridgeInfo] = useState({});
+  const [matterbridgeInfo, setMatterbridgeInfo] = useState(null);
 
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
@@ -56,6 +56,8 @@ function Settings() {
     }
   }, [online, sendMessage]);
 
+  if(!matterbridgeInfo) return null;
+  
   if(debug) console.log('Settings rendering...');
   if (!online) {
     return ( <Connecting /> );
@@ -102,7 +104,7 @@ function MatterbridgeSettings({ matterbridgeInfo }) {
 
   // Define a function to handle change bridge mode 
   const handleChangeBridgeMode = (event) => {
-    console.log('handleChangeBridgeMode called with value:', event.target.value);
+    if(debug) console.log('handleChangeBridgeMode called with value:', event.target.value);
     setSelectedBridgeMode(event.target.value);
     sendCommandToMatterbridge('setbridgemode', event.target.value);
     showSnackbarMessage('Restart Matterbridge to apply changes', 5);
@@ -110,21 +112,21 @@ function MatterbridgeSettings({ matterbridgeInfo }) {
 
   // Define a function to handle change debug level
   const handleChangeMbLoggerLevel = (event) => {
-    console.log('handleChangeMbLoggerLevel called with value:', event.target.value);
+    if(debug) console.log('handleChangeMbLoggerLevel called with value:', event.target.value);
     setSelectedMbLoggerLevel(event.target.value);
     sendCommandToMatterbridge('setmbloglevel', event.target.value);
   };
 
   // Define a function to handle change matterbridge log file
   const handleLogOnFileMbChange = (event) => {
-    console.log('handleLogOnFileMbChange called with value:', event.target.checked);
+    if(debug) console.log('handleLogOnFileMbChange called with value:', event.target.checked);
     setLogOnFileMb(event.target.checked);
     sendCommandToMatterbridge('setmblogfile', event.target.checked ? 'true' : 'false');
   };
 
   // Define a function to handle change password
   const handleChangePassword = (event) => {
-    console.log('handleChangePassword called with value:', event.target.value);
+    if(debug) console.log('handleChangePassword called with value:', event.target.value);
     setPassword(event.target.value);
     sendCommandToMatterbridge('setpassword', '*'+event.target.value+'*');
   };
@@ -132,7 +134,7 @@ function MatterbridgeSettings({ matterbridgeInfo }) {
   // Define a function to handle change theme
   const handleChangeTheme = (event) => {
     const newTheme = event.target.value;
-    console.log('handleChangeTheme called with value:', newTheme);
+    if(debug) console.log('handleChangeTheme called with value:', newTheme);
     setFrontendTheme(newTheme);
     localStorage.setItem('frontendTheme', newTheme);
     document.body.setAttribute("frontend-theme", newTheme);
@@ -213,21 +215,21 @@ function MatterSettings({ matterbridgeInfo }) {
 
   // Define a function to handle change debug level
   const handleChangeMjLoggerLevel = (event) => {
-    console.log('handleChangeMjLoggerLevel called with value:', event.target.value);
+    if(debug) console.log('handleChangeMjLoggerLevel called with value:', event.target.value);
     setSelectedMjLoggerLevel(event.target.value);
     sendCommandToMatterbridge('setmjloglevel', event.target.value);
   };
 
   // Define a function to handle change matter log file
   const handleLogOnFileMjChange = (event) => {
-    console.log('handleLogOnFileMjChange called with value:', event.target.checked);
+    if(debug) console.log('handleLogOnFileMjChange called with value:', event.target.checked);
     setLogOnFileMj(event.target.checked);
     sendCommandToMatterbridge('setmjlogfile', event.target.checked ? 'true' : 'false');
   };
 
   // Define a function to handle change mdnsInterface
   const handleChangeMdnsInterface = (event) => {
-    console.log('handleChangeMdnsInterface called with value:', event.target.value);
+    if(debug) console.log('handleChangeMdnsInterface called with value:', event.target.value);
     setmdnsInterface(event.target.value);
     sendCommandToMatterbridge('setmdnsinterface', '*'+event.target.value+'*');
     showSnackbarMessage('Restart Matterbridge to apply changes', 5);
@@ -235,7 +237,7 @@ function MatterSettings({ matterbridgeInfo }) {
 
   // Define a function to handle change mdnsInterface
   const handleChangeIpv4Address = (event) => {
-    console.log('handleChangeIpv4Address called with value:', event.target.value);
+    if(debug) console.log('handleChangeIpv4Address called with value:', event.target.value);
     setIpv4Address(event.target.value);
     sendCommandToMatterbridge('setipv4address', '*'+event.target.value+'*');
     showSnackbarMessage('Restart Matterbridge to apply changes', 5);
@@ -243,7 +245,7 @@ function MatterSettings({ matterbridgeInfo }) {
 
   // Define a function to handle change mdnsInterface
   const handleChangeIpv6Address = (event) => {
-    console.log('handleChangeIpv6Address called with value:', event.target.value);
+    if(debug) console.log('handleChangeIpv6Address called with value:', event.target.value);
     setIpv6Address(event.target.value);
     sendCommandToMatterbridge('setipv6address', '*'+event.target.value+'*');
     showSnackbarMessage('Restart Matterbridge to apply changes', 5);
@@ -251,7 +253,7 @@ function MatterSettings({ matterbridgeInfo }) {
 
   // Define a function to handle change matterPort
   const handleChangeMatterPort = (event) => {
-    console.log('handleChangeMatterPort called with value:', event.target.value);
+    if(debug) console.log('handleChangeMatterPort called with value:', event.target.value);
     setMatterPort(event.target.value);
     sendCommandToMatterbridge('setmatterport', event.target.value);
     showSnackbarMessage('Restart Matterbridge to apply changes', 5);
@@ -259,7 +261,7 @@ function MatterSettings({ matterbridgeInfo }) {
 
   // Define a function to handle change matterDiscriminator
   const handleChangeMatterDiscriminator = (event) => {
-    console.log('handleChangeMatterDiscriminator called with value:', event.target.value);
+    if(debug) console.log('handleChangeMatterDiscriminator called with value:', event.target.value);
     setMatterDiscriminator(event.target.value);
     sendCommandToMatterbridge('setmatterdiscriminator', event.target.value);
     showSnackbarMessage('Restart Matterbridge to apply changes', 5);
@@ -267,7 +269,7 @@ function MatterSettings({ matterbridgeInfo }) {
 
   // Define a function to handle change matterPasscode
   const handleChangemMatterPasscode = (event) => {
-    console.log('handleChangemMatterPasscode called with value:', event.target.value);
+    if(debug) console.log('handleChangemMatterPasscode called with value:', event.target.value);
     setMatterPasscode(event.target.value);
     sendCommandToMatterbridge('setmatterpasscode', event.target.value);
     showSnackbarMessage('Restart Matterbridge to apply changes', 5);
@@ -358,7 +360,7 @@ function MatterSettings({ matterbridgeInfo }) {
   );
 }
 
-// <FormControl sx={{ gap: '10px', margin: '0px', padding: '10px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
+// Define the MatterbridgeInfo component
 function MatterbridgeInfo({ matterbridgeInfo }) {
   return (
     <div className="MbfWindowDiv" style={{ flex: '0 0 auto' }}>

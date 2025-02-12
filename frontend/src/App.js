@@ -134,7 +134,7 @@ function LoginForm() {
   if (loggedIn) {
     return (
       <ThemeProvider theme={theme}>
-        <SnackbarProvider maxSnack={5} preventDuplicate anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+        <SnackbarProvider maxSnack={10} preventDuplicate anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
           <UiProvider>
             <WebSocketProvider>
               <Router basename={baseName}>

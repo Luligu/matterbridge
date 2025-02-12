@@ -21,18 +21,10 @@ import { WebSocketContext } from './WebSocketProvider';
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import { debug } from '../App';
 
-export function InstallAddPlugins({ reloadSettings }) {
-  if(debug) console.log('AddRemovePlugins');
-
+export function InstallAddPlugins() {
   const [pluginName, setPluginName] = useState('matterbridge-');
-  const [open, setSnack] = useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
   const { logMessage } = useContext(WebSocketContext);
-
-  const handleSnackClose = (event, reason) => {
-    if (reason === 'clickaway') return;
-    setSnack(false);
-  };
 
   const handleInstallPluginClick = () => {
     const plugin = pluginName.split('@')[0];
@@ -41,17 +33,11 @@ export function InstallAddPlugins({ reloadSettings }) {
     else
       logMessage('Plugins', `Installing plugin: ${pluginName}`);
     sendCommandToMatterbridge('installplugin', pluginName);
-    setTimeout(() => {
-      reloadSettings();
-    }, 5000);
   };
 
   const handleAddPluginClick = () => {
     logMessage('Plugins', `Adding plugin: ${pluginName}`);
     sendCommandToMatterbridge('addplugin', pluginName);
-    setTimeout(() => {
-      reloadSettings();
-    }, 1000);
   };
 
   const handleClickVertical = (event) => {
@@ -59,16 +45,13 @@ export function InstallAddPlugins({ reloadSettings }) {
   };
 
   const handleCloseMenu = (value) => {
-    // console.log('handleCloseMenu:', value);
     if (value !== '') setPluginName(value);
     setAnchorEl(null);
   };
 
+  if(debug) console.log('AddRemovePlugins rendering...');
   return (
     <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', alignItems: 'center', justifyContent: 'space-between', margin: '0px', padding: '10px', gap: '20px' }}>
-      <Snackbar anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} open={open} onClose={handleSnackClose} autoHideDuration={5000}>
-        <Alert onClose={handleSnackClose} severity="info" variant="filled" sx={{ width: '100%', bgcolor: 'var(--primary-color)' }}>Restart required</Alert>
-      </Snackbar>
       <TextField value={pluginName} onChange={(event) => { setPluginName(event.target.value); }} size="small" id="plugin-name" label="Plugin name or plugin path" variant="outlined" fullWidth />
       <IconButton onClick={handleClickVertical}>
         <MoreVert />

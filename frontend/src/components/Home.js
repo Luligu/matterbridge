@@ -300,7 +300,7 @@ function Home() {
             <div className="MbfWindowHeader">
               <p className="MbfWindowHeaderText">Install add plugin</p>
             </div>
-            <InstallAddPlugins ref={refAddRemove} plugins={plugins} reloadSettings={reloadSettings} />
+            <InstallAddPlugins/>
           </div>
         }
 

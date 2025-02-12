@@ -124,12 +124,10 @@ export function WebSocketProvider({ children }) {
           return; // Ignore messages without an ID
         } else if (msg.id === WS_ID_REFRESH_NEEDED) {
           if (debug) console.log(`WebSocket WS_ID_REFRESH_NEEDED message:`, msg, 'listeners:', listenersRef.current.length);
-          // setRefresh(true);
           listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
           return;
         } else if (msg.id === WS_ID_RESTART_NEEDED) {
           if (debug) console.log(`WebSocket WS_ID_RESTART_NEEDED message:`, msg, 'listeners:', listenersRef.current.length);
-          // setRestart(true);
           listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
           return;
         } else if (msg.id === WS_ID_CPU_UPDATE) {

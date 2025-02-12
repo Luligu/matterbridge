@@ -45,26 +45,30 @@ function Header() {
   };
 
   const handleUpdateClick = () => {
-    logMessage('Matterbridge', `Updating matterbridge...`);
-    showSnackbarMessage('Updating matterbridge...', 30);
-    sendCommandToMatterbridge('update', 'now');
+    sendMessage({ method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: 'matterbridge', restart: true } });
+    // logMessage('Matterbridge', `Updating matterbridge...`);
+    // showSnackbarMessage('Updating matterbridge...', 30);
+    // sendCommandToMatterbridge('update', 'now');
   };
 
   const handleRestartClick = () => {
-    logMessage('Matterbridge', `Restarting matterbridge...`);
-    showSnackbarMessage('Restarting matterbridge...', 10);
+    // logMessage('Matterbridge', `Restarting matterbridge...`);
+    // showSnackbarMessage('Restarting matterbridge...', 10);
     if (settings.matterbridgeInformation.restartMode === '') {
-      sendCommandToMatterbridge('restart', 'now');
+      // sendCommandToMatterbridge('restart', 'now');
+      sendMessage({ method: "/api/restart", src: "Frontend", dst: "Matterbridge", params: {} });
     }
     else {
-      sendCommandToMatterbridge('shutdown', 'now');
+      // sendCommandToMatterbridge('shutdown', 'now');
+      sendMessage({ method: "/api/shutdown", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   };
 
   const handleShutdownClick = () => {
-    logMessage('Matterbridge', `Shutting down matterbridge...`);
-    showSnackbarMessage('Shutting down matterbridge...', 10);
-    sendCommandToMatterbridge('shutdown', 'now');
+    // logMessage('Matterbridge', `Shutting down matterbridge...`);
+    // showSnackbarMessage('Shutting down matterbridge...', 10);
+    // sendCommandToMatterbridge('shutdown', 'now');
+    sendMessage({ method: "/api/shutdown", src: "Frontend", dst: "Matterbridge", params: {} });
   };
 
   const handleMenuOpen = (event) => {
