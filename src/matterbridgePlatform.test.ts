@@ -306,14 +306,25 @@ describe('Matterbridge platform', () => {
     platform.config.deviceEntityBlackList = {};
   });
 
+  test('should check checkNotLatinCharacters', async () => {
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'nonLatin' }, true);
+    testDevice.createDefaultBasicInformationClusterServer('nonLatin조명', 'serial012345', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
+    testDevice.addRequiredClusterServers();
+    await platform.registerDevice(testDevice);
+    expect(platform.hasDeviceName('nonLatin조명')).toBeTruthy();
+    expect(platform.hasDeviceName('none')).toBeFalsy();
+    expect(platform.registeredEndpoints.has(testDevice.uniqueId ?? 'none')).toBeTruthy();
+    expect(platform.registeredEndpointsByName.has('nonLatin조명')).toBeTruthy();
+  });
+
   test('checkEndpointNumbers should be empty', async () => {
-    const context = await platform.storage?.createStorage('context');
+    const context = await platform.storage?.createStorage('endpointNumbers');
     await context?.set('endpointMap', []);
     expect(await platform.checkEndpointNumbers()).toBe(0);
   });
 
   test('checkEndpointNumbers should not validate without uniqueId', async () => {
-    const context = await platform.storage?.createStorage('context');
+    const context = await platform.storage?.createStorage('endpointNumbers');
     await context?.set('endpointMap', []);
     const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
     testDevice.uniqueId = 'test';
@@ -325,12 +336,17 @@ describe('Matterbridge platform', () => {
   });
 
   test('checkEndpointNumbers should not be empty', async () => {
-    const context = await platform.storage?.createStorage('context');
+    const context = await platform.storage?.createStorage('endpointNumbers');
     await context?.set('endpointMap', []);
     const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
     testDevice.addRequiredClusterServers();
     await platform.registerDevice(testDevice);
+    expect(platform.hasDeviceName('test')).toBeTruthy();
+    expect(platform.hasDeviceName('none')).toBeFalsy();
+    expect(platform.registeredEndpoints.has(testDevice.uniqueId ?? 'none')).toBeTruthy();
+    expect(platform.registeredEndpointsByName.has('test')).toBeTruthy();
+
     testDevice.number = 100;
     (matterbridge as any).devices.set(testDevice);
     expect(await platform.checkEndpointNumbers()).toBe(1);
@@ -430,11 +446,12 @@ describe('Matterbridge platform', () => {
     await platform.registerDevice(testDevice);
     testDevice.number = 101;
     (matterbridge as any).devices.set(testDevice);
-    expect(await testDevice.getChildEndpoints()).toHaveLength(2);
+    expect(testDevice.getChildEndpoints()).toHaveLength(2);
     jest.clearAllMocks();
     expect(await platform.checkEndpointNumbers()).toBe(3);
-    expect(loggerLogSpy).toHaveBeenCalledTimes(4);
+    expect(loggerLogSpy).toHaveBeenCalledTimes(5);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Checking endpoint numbers...');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Saving endpointNumbers...');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Endpoint numbers check completed.');
   });
 

@@ -39,6 +39,7 @@ matterbridge-hass v. 0.0.8
 
 - [docker]: Added health check directly inside the docker image. No need to change configuration.
 - [platform]: Added saving to storage the selects for faster loading.
+- [icon]: Added matterbridge svg icon (thanks: https://github.com/robvanoostenrijk https://github.com/stuntguy3000).
 - [frontend]: Frontend v.2.4.2.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
