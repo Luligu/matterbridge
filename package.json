@@ -130,6 +130,7 @@
     "cleanBuildProduction": "npm run clean && npm run buildProduction",
     "deepClean": "npx rimraf tsconfig.tsbuildinfo package-lock.json npm-shrinkwrap.json ./dist ./node_modules",
     "deepCleanBuild": "npm run deepClean && npm install && npm run build && npm link",
+    "checkBeforePush": "npm run deepCleanBuild && npm run lint && npm run format && npm run test",
     "prepublishOnly": "npm pkg delete devDependencies scripts && npm install --omit=dev && npm shrinkwrap",
     "prepublishOnlyProduction": "npm run cleanBuildProduction && npm pkg delete devDependencies scripts types && npx rimraf ./node_modules && npm install --omit=dev && npm shrinkwrap",
     "npmPack": "copy package.json package.log && npm run prepublishOnlyProduction && npm pack && copy package.log package.json && npm run deepCleanBuild",

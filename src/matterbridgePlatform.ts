@@ -84,7 +84,7 @@ export class MatterbridgePlatform {
     this.config = config;
 
     // create the NodeStorageManager for the plugin platform
-    if (!isValidString(this.config.name)) return;
+    if (!isValidString(this.config.name) || this.config.name === '') return;
     this.log.debug(`Creating storage for plugin ${this.config.name} in ${path.join(this.matterbridge.matterbridgeDirectory, this.config.name)}`);
     this.storage = new NodeStorageManager({
       dir: path.join(this.matterbridge.matterbridgeDirectory, this.config.name),

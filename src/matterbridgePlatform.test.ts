@@ -306,6 +306,18 @@ describe('Matterbridge platform', () => {
     platform.config.deviceEntityBlackList = {};
   });
 
+  it('should not create storage manager without a name', async () => {
+    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: undefined, type: 'type', debug: false, unregisterOnShutdown: false });
+    expect(platform.storage).toBeUndefined();
+    expect(await platform.checkEndpointNumbers()).toBe(-1);
+  });
+
+  it('should not create storage manager with name empty', async () => {
+    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: '', type: 'type', debug: false, unregisterOnShutdown: false });
+    expect(platform.storage).toBeUndefined();
+    expect(await platform.checkEndpointNumbers()).toBe(-1);
+  });
+
   test('should check checkNotLatinCharacters', async () => {
     const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'nonLatin' }, true);
     testDevice.createDefaultBasicInformationClusterServer('nonLatin조명', 'serial012345', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
