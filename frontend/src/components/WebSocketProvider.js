@@ -241,6 +241,7 @@ export function WebSocketProvider({ children }) {
       console.error(`WebSocket: Disconnected from WebSocket: ${wssHost}`);
       logMessage('WebSocket', `Disconnected from WebSocket: ${wssHost}`);
       setOnline(false);
+      closeSnackbar();
       clearTimeout(startTimeoutRef.current);
       clearTimeout(offlineTimeoutRef.current);
       clearInterval(pingIntervalRef.current);
