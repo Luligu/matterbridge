@@ -15,6 +15,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Environment, StorageService } from '@matter/main';
 import path from 'path';
 import os from 'os';
+import { waiter } from './utils/utils.js';
 
 describe('Matterbridge platform', () => {
   let matterbridge: Matterbridge;
@@ -316,6 +317,40 @@ describe('Matterbridge platform', () => {
     const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: '', type: 'type', debug: false, unregisterOnShutdown: false });
     expect(platform.storage).toBeUndefined();
     expect(await platform.checkEndpointNumbers()).toBe(-1);
+  });
+
+  it('should save the select', async () => {
+    let platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', debug: false, unregisterOnShutdown: false });
+    expect(platform.storage).toBeDefined();
+    expect(platform.context).toBeUndefined();
+    await waiter('storage and context', () => platform.context !== undefined);
+    expect(platform.storage).toBeDefined();
+    expect(platform.context).toBeDefined();
+    platform.selectDevice.clear();
+    platform.selectEntity.clear();
+    platform.selectDevice.set('serial', { serial: 'serial', name: 'name' });
+    platform.selectEntity.set('name', { name: 'name', description: 'description' });
+    await platform.onShutdown();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Saving 1 selectDevice...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Saving 1 selectEntity...`);
+    loggerLogSpy.mockClear();
+
+    platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', debug: false, unregisterOnShutdown: false });
+    await platform.ready;
+    expect(platform.storage).toBeDefined();
+    expect(platform.context).toBeDefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgePlatform for plugin matterbridge-jest is fully initialized`);
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loading selectDevice for plugin matterbridge-jest`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loading selectEntity for plugin matterbridge-jest`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded 1 selectDevice for plugin matterbridge-jest`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded 1 selectEntity for plugin matterbridge-jest`);
+
+    expect(platform.selectDevice.has('serial')).toBeTruthy();
+    expect(platform.selectEntity.has('name')).toBeTruthy();
+    platform.selectDevice.clear();
+    platform.selectEntity.clear();
+    await platform.onShutdown();
   });
 
   test('should check checkNotLatinCharacters', async () => {
