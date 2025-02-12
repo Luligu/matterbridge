@@ -33,6 +33,18 @@ matterbridge-zigbee2mqtt v. 2.4.4
 matterbridge-somfy-tahoma v. 1.2.3
 matterbridge-hass v. 0.0.8
 
+## [2.1.6] - 2025-02-12
+
+### Added
+
+- [docker]: Added health check directly inside the docker image. No need to change configuration.
+- [platform]: Added saving to storage the selects for faster loading.
+- [frontend]: Frontend v.2.4.2.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [2.1.5] - 2025-02-11
 
 ### Added

@@ -352,24 +352,6 @@ export class Frontend {
       const { default: module } = await import('module');
       const loadedModules = (module as unknown as ModuleWithCache)._cache ? Object.keys((module as unknown as ModuleWithCache)._cache).sort() : [];
 
-      /*
-      if (req.query.heapdump === 'true') {
-        const { default: heapdump } = await import('heapdump');
-        const filename = `heapdump-${Date.now()}.heapsnapshot`;
-
-        heapdump.writeSnapshot(filename, (err, dumpFilename) => {
-          if (err) {
-            this.log.error(`Heap dump error: ${err.message}`);
-            return res.status(500).json({ error: 'Heap dump failed', details: err.message });
-          }
-
-          this.log.info(`Heap dump written to ${dumpFilename}`);
-          return res.status(200).json({ ...memoryReport, heapdump: dumpFilename });
-        });
-        return; // Exit early since heapdump response is handled inside callback
-      }
-      */
-
       const memoryReport = {
         memoryUsage,
         heapStats,
@@ -400,9 +382,7 @@ export class Frontend {
     // Endpoint to provide plugins
     this.expressApp.get('/api/plugins', async (req, res) => {
       this.log.debug('The frontend sent /api/plugins');
-      const response = this.getBaseRegisteredPlugins();
-      // this.log.debug('Response:', debugStringify(response));
-      res.json(response);
+      res.json(this.getBaseRegisteredPlugins());
     });
 
     // Endpoint to provide devices
@@ -425,7 +405,6 @@ export class Frontend {
           cluster: cluster,
         });
       });
-      // this.log.debug('Response:', debugStringify(data));
       res.json(devices);
     });
 
@@ -660,15 +639,7 @@ export class Frontend {
           this.log.logLevel = LogLevel.FATAL;
         }
         await this.matterbridge.nodeContext?.set('matterbridgeLogLevel', this.log.logLevel);
-        this.matterbridge.log.logLevel = this.log.logLevel;
-        MatterbridgeEndpoint.logLevel = this.log.logLevel;
-        this.matterbridge.devices.logLevel = this.log.logLevel;
-        this.matterbridge.plugins.logLevel = this.log.logLevel;
-        for (const plugin of this.matterbridge.plugins) {
-          if (!plugin.platform || !plugin.platform.config) continue;
-          plugin.platform.log.logLevel = (plugin.platform.config.debug as boolean) ? LogLevel.DEBUG : this.log.logLevel;
-          await plugin.platform.onChangeLoggerLevel((plugin.platform.config.debug as boolean) ? LogLevel.DEBUG : this.log.logLevel);
-        }
+        await this.matterbridge.setLogLevel(this.log.logLevel);
         res.json({ message: 'Command received' });
         return;
       }
@@ -850,13 +821,17 @@ export class Frontend {
       if (command === 'installplugin') {
         param = param.replace(/\*/g, '\\');
         this.log.info(`Installing plugin ${plg}${param}${nf}...`);
+        this.wssSendSnackbarMessage(`Installing package ${param}`);
         try {
           await this.matterbridge.spawnCommand('npm', ['install', '-g', param, '--omit=dev', '--verbose']);
           this.log.info(`Plugin ${plg}${param}${nf} installed. Full restart required.`);
+          this.wssSendSnackbarMessage(`Installed package ${param}`);
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           this.log.error(`Error installing plugin ${plg}${param}${er}`);
+          this.wssSendSnackbarMessage(`Package ${param} not installed`);
         }
+        this.wssSendSnackbarMessage(`Restart required`, 0);
         this.wssSendRestartRequired();
         param = param.split('@')[0];
         // Also add the plugin to matterbridge so no return!
@@ -876,10 +851,11 @@ export class Frontend {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (this.matterbridge as any).createDynamicPlugin(plugin, true);
           }
-          this.matterbridge.plugins.load(plugin, true, 'The plugin has been added', true); // No await do it in the background
+          this.matterbridge.plugins.load(plugin, true, 'The plugin has been added', true).then(() => {
+            this.wssSendRefreshRequired();
+          });
         }
         res.json({ message: 'Command received' });
-        this.wssSendRefreshRequired();
         return;
       }
       // Handle the command removeplugin from Home
@@ -915,7 +891,9 @@ export class Frontend {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (this.matterbridge as any).createDynamicPlugin(plugin, true);
             }
-            this.matterbridge.plugins.load(plugin, true, 'The plugin has been enabled', true); // No await do it in the background since the server node is already started
+            this.matterbridge.plugins.load(plugin, true, 'The plugin has been enabled', true).then(() => {
+              this.wssSendRefreshRequired();
+            });
           }
         }
         res.json({ message: 'Command received' });
@@ -1311,9 +1289,8 @@ export class Frontend {
   }
 
   /**
-   * Handles incoming websocket messages for the Matterbridge.
+   * Handles incoming websocket messages for the Matterbridge frontend.
    *
-   * @param {Matterbridge} this - The Matterbridge instance.
    * @param {WebSocket} client - The websocket client that sent the message.
    * @param {WebSocket.RawData} message - The raw data of the message received from the client.
    * @returns {Promise<void>} A promise that resolves when the message has been handled.
@@ -1353,13 +1330,24 @@ export class Frontend {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/install' }));
           return;
         }
+        this.wssSendSnackbarMessage(`Installing package ${data.params.packageName}`);
         this.matterbridge
           .spawnCommand('npm', ['install', '-g', data.params.packageName, '--omit=dev', '--verbose'])
           .then((response) => {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
+            this.wssSendSnackbarMessage(`Installed package ${data.params.packageName}`);
+            if (data.params.restart !== true) {
+              this.wssSendSnackbarMessage(`Restart required`, 0);
+            } else {
+              if (this.matterbridge.restartMode !== '') {
+                this.wssSendSnackbarMessage(`Restarting matterbridge...`, 0);
+                this.matterbridge.shutdownProcess();
+              } else this.wssSendSnackbarMessage(`Restart required`, 0);
+            }
           })
           .catch((error) => {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error }));
+            this.wssSendSnackbarMessage(`Package ${data.params.packageName} not installed`);
           });
         return;
       } else if (data.method === '/api/uninstall') {
@@ -1367,6 +1355,7 @@ export class Frontend {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/uninstall' }));
           return;
         }
+        this.wssSendSnackbarMessage(`Uninstalling package ${data.params.packageName}`);
         this.matterbridge
           .spawnCommand('npm', ['uninstall', '-g', data.params.packageName, '--verbose'])
           .then((response) => {
@@ -1374,12 +1363,16 @@ export class Frontend {
           })
           .catch((error) => {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error }));
+            this.wssSendSnackbarMessage(`Uninstalled package ${data.params.packageName}`);
+            this.wssSendSnackbarMessage(`Restart required`, 0);
           });
         return;
       } else if (data.method === '/api/restart') {
+        this.wssSendSnackbarMessage(`Restarting matterbridge...`, 0);
         await this.matterbridge.restartProcess();
         return;
       } else if (data.method === '/api/shutdown') {
+        this.wssSendSnackbarMessage(`Shutting down matterbridge...`, 0);
         await this.matterbridge.shutdownProcess();
         return;
       } else if (data.method === '/api/advertise') {

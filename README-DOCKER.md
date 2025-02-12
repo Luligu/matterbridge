@@ -18,6 +18,22 @@
 
 The Matterbridge Docker image, which includes a manifest list for the linux/amd64, linux/arm64 and linux/arm/v7 architectures, is published on Docker Hub.
 
+It is based on node:22-bookworm-slim and integrates the health check.
+
+How Health Checks Work in Different Scenarios
+
+With docker-compose
+
+Docker monitors the health check and can restart the container if needed.
+
+With docker run
+
+The health check still runs in the background, but:
+The container doesn’t restart automatically if it becomes unhealthy.
+You must manually check the health status:
+
+docker exec -it matterbridge curl -v http://localhost:8283/health
+
 ### First create the Matterbridge directories
 
 This will create the required directories in your home directory if they don't exist
@@ -71,12 +87,6 @@ services:
     volumes:
       - "/home/<USER>/Matterbridge:/root/Matterbridge"        # Mounts the Matterbridge plugin directory
       - "/home/<USER>/.matterbridge:/root/.matterbridge"      # Mounts the Matterbridge storage directory
-    healthcheck:
-      test: curl --fail localhost:8283/health || exit 1
-      interval: 60s
-      retries: 5
-      start_period: 60s
-      timeout: 10s
 ```
 
 Replace USER with your user name (i.e. ubuntu or pi: "/home/ubuntu/Matterbridge:/root/Matterbridge").

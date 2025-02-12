@@ -93,6 +93,31 @@ export class MatterbridgePlatform {
       logging: false,
       forgiveParseErrors: true,
     });
+
+    // create the context storage for the plugin platform
+    this.log.debug(`Creating context for plugin ${this.config.name}`);
+    this.storage.createStorage('context').then((context) => {
+      this.context = context;
+      this.log.debug(`Created context for plugin ${this.config.name}`);
+    });
+
+    // create the selectDevice storage for the plugin platform
+    this.log.debug(`Loading selectDevice for plugin ${this.config.name}`);
+    this.storage.createStorage('selectDevice').then((context) => {
+      context.get<{ serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[]>('selectDevice', []).then((selectDevice) => {
+        for (const device of selectDevice) this.selectDevice.set(device.serial, device);
+      });
+      this.log.debug(`Loaded ${this.selectDevice.size} selectDevice for plugin ${this.config.name}`);
+    });
+
+    // create the selectEntity storage for the plugin platform
+    this.log.debug(`Loading selectEntity for plugin ${this.config.name}`);
+    this.storage.createStorage('selectEntity').then((context) => {
+      context.get<{ name: string; description: string; icon?: string }[]>('selectEntity', []).then((selectEntity) => {
+        for (const entity of selectEntity) this.selectEntity.set(entity.name, entity);
+      });
+      this.log.debug(`Loaded ${this.selectEntity.size} selectEntity for plugin ${this.config.name}`);
+    });
   }
 
   /**
@@ -118,18 +143,31 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * This method can be overridden in the extended class. Call super.onShutdown() to run checkEndpointNumbers() and cleanup memory.
+   * This method can be overridden in the extended class. In this case always call super.onShutdown() to save the selects, run checkEndpointNumbers() and cleanup memory.
    * It is called when the platform is shutting down.
    * Use this method to clean up any resources.
    * @param {string} [reason] - The reason for shutting down.
    */
   async onShutdown(reason?: string) {
     this.log.debug(`Shutting down platform ${this.name}`, reason);
+    if (this.storage) {
+      this.log.debug(`Saving ${this.selectDevice.size} selectDevice...`);
+      const selectDevice = await this.storage.createStorage('selectDevice');
+      await selectDevice.set('selectDevice', Array.from(this.selectDevice.values()));
+      await selectDevice.close();
+
+      this.log.debug(`Saving ${this.selectEntity.size} selectEntity...`);
+      const selectEntity = await this.storage.createStorage('selectEntity');
+      await selectEntity.set('selectEntity', Array.from(this.selectEntity.values()));
+      await selectEntity.close();
+    }
+
     await this.checkEndpointNumbers();
     this.selectDevice.clear();
     this.selectEntity.clear();
     this.registeredEndpoints.clear();
     this.registeredEndpointsByName.clear();
+    this.log.debug('Saving context...');
     await this.context?.close();
     this.context = undefined;
     await this.storage?.close();
@@ -302,7 +340,7 @@ export class MatterbridgePlatform {
   async checkEndpointNumbers() {
     if (!this.storage) return -1;
     this.log.debug('Checking endpoint numbers...');
-    const context = await this.storage.createStorage('context');
+    const context = await this.storage.createStorage('endpointNumbers');
     const separator = '|.|';
     const endpointMap = new Map<string, EndpointNumber>(await context.get<[string, EndpointNumber][]>('endpointMap', []));
 
@@ -332,7 +370,9 @@ export class MatterbridgePlatform {
         }
       }
     }
+    this.log.debug('Saving endpointNumbers...');
     await context.set('endpointMap', Array.from(endpointMap.entries()));
+    await context.close();
     this.log.debug('Endpoint numbers check completed.');
     return endpointMap.size;
   }

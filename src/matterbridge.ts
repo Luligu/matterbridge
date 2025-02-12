@@ -197,6 +197,24 @@ export class Matterbridge extends EventEmitter {
     return this.plugins.array();
   }
 
+  /**
+   * Set the logger logLevel for the Matterbridge classes.
+   * @param {LogLevel} logLevel The logger logLevel to set.
+   */
+  async setLogLevel(logLevel: LogLevel) {
+    if (this.log) this.log.logLevel = logLevel;
+    this.matterbridgeInformation.loggerLevel = logLevel;
+    this.frontend.logLevel = logLevel;
+    MatterbridgeEndpoint.logLevel = logLevel;
+    if (this.devices) this.devices.logLevel = logLevel;
+    if (this.plugins) this.plugins.logLevel = logLevel;
+    for (const plugin of this.plugins) {
+      if (!plugin.platform || !plugin.platform.log || !plugin.platform.config) continue;
+      plugin.platform.log.logLevel = plugin.platform.config.debug === true ? LogLevel.DEBUG : this.log.logLevel;
+      await plugin.platform.onChangeLoggerLevel(plugin.platform.config.debug === true ? LogLevel.DEBUG : this.log.logLevel);
+    }
+  }
+
   /** ***********************************************************************************************************************************/
   /**                                              loadInstance() and cleanup() methods                                                 */
   /** ***********************************************************************************************************************************/
@@ -359,6 +377,7 @@ export class Matterbridge extends EventEmitter {
     } else {
       this.log.logLevel = await this.nodeContext.get<LogLevel>('matterbridgeLogLevel', LogLevel.INFO);
     }
+    this.frontend.logLevel = this.log.logLevel;
     MatterbridgeEndpoint.logLevel = this.log.logLevel;
     this.matterbridgeInformation.loggerLevel = this.log.logLevel;
 
@@ -661,7 +680,6 @@ export class Matterbridge extends EventEmitter {
 
     // Initialize frontend
     if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.frontend.start(getIntParameter('frontend'));
-    this.frontend.logLevel = this.log.logLevel;
 
     // Check now the latest versions of matterbridge and plugins
     this.getMatterbridgeLatestVersion();
@@ -984,25 +1002,6 @@ export class Matterbridge extends EventEmitter {
     // Command line arguments (excluding 'node' and the script name)
     const cmdArgs = process.argv.slice(2).join(' ');
     this.log.debug(`Command Line Arguments: ${cmdArgs}`);
-  }
-
-  /**
-   * Retrieves the latest version of a package from the npm registry.
-   * @param packageName - The name of the package.
-   * @returns A Promise that resolves to the latest version of the package.
-   */
-  private async getLatestVersion(packageName: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      this.execRunningCount++;
-      exec(`npm view ${packageName} version`, (error: ExecException | null, stdout: string) => {
-        this.execRunningCount--;
-        if (error) {
-          reject(error);
-        } else {
-          resolve(stdout.trim());
-        }
-      });
-    });
   }
 
   /**
