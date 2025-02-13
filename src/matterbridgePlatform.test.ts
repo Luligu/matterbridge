@@ -321,18 +321,25 @@ describe('Matterbridge platform', () => {
 
   it('should save the select', async () => {
     let platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', debug: false, unregisterOnShutdown: false });
-    expect(platform.storage).toBeDefined();
-    expect(platform.context).toBeUndefined();
-    await waiter('storage and context', () => platform.context !== undefined);
+    await platform.ready;
     expect(platform.storage).toBeDefined();
     expect(platform.context).toBeDefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgePlatform for plugin matterbridge-jest is fully initialized`);
     platform.selectDevice.clear();
     platform.selectEntity.clear();
-    platform.selectDevice.set('serial', { serial: 'serial', name: 'name' });
-    platform.selectEntity.set('name', { name: 'name', description: 'description' });
+    for (let i = 1; i <= 100; i++) {
+      platform.selectDevice.set('serial' + i, { serial: 'serial' + i, name: 'name' + i });
+      platform.selectEntity.set('name' + i, { name: 'name' + i, description: 'description' + i });
+    }
+    expect(platform.selectDevice.size).toBe(100);
+    expect(platform.selectDevice.has('serial1')).toBeTruthy();
+    expect(platform.selectDevice.has('serial100')).toBeTruthy();
+    expect(platform.selectEntity.size).toBe(100);
+    expect(platform.selectEntity.has('name1')).toBeTruthy();
+    expect(platform.selectEntity.has('name100')).toBeTruthy();
     await platform.onShutdown();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Saving 1 selectDevice...`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Saving 1 selectEntity...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Saving 100 selectDevice...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Saving 100 selectEntity...`);
     loggerLogSpy.mockClear();
 
     platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', debug: false, unregisterOnShutdown: false });
@@ -343,11 +350,15 @@ describe('Matterbridge platform', () => {
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loading selectDevice for plugin matterbridge-jest`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loading selectEntity for plugin matterbridge-jest`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded 1 selectDevice for plugin matterbridge-jest`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded 1 selectEntity for plugin matterbridge-jest`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded 100 selectDevice for plugin matterbridge-jest`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded 100 selectEntity for plugin matterbridge-jest`);
 
-    expect(platform.selectDevice.has('serial')).toBeTruthy();
-    expect(platform.selectEntity.has('name')).toBeTruthy();
+    expect(platform.selectDevice.size).toBe(100);
+    expect(platform.selectDevice.has('serial1')).toBeTruthy();
+    expect(platform.selectDevice.has('serial100')).toBeTruthy();
+    expect(platform.selectEntity.size).toBe(100);
+    expect(platform.selectEntity.has('name1')).toBeTruthy();
+    expect(platform.selectEntity.has('name100')).toBeTruthy();
     platform.selectDevice.clear();
     platform.selectEntity.clear();
     await platform.onShutdown();
@@ -441,22 +452,26 @@ describe('Matterbridge platform', () => {
     const testDevice = new MatterbridgeEndpoint(contactSensor, { uniqueStorageKey: 'test' }, true);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
     testDevice.addRequiredClusterServers();
-    const child1 = testDevice.addChildDeviceType('child1', [temperatureSensor], undefined, true);
+    const child1 = testDevice.addChildDeviceType('child1', temperatureSensor, undefined, true);
     child1.addRequiredClusterServers();
     child1.number = 201;
-    const child2 = testDevice.addChildDeviceType('child2', [humiditySensor], undefined, true);
+    const child2 = testDevice.addChildDeviceType('child2', humiditySensor, undefined, true);
     child2.addRequiredClusterServers();
     child2.number = 202;
+    const child3 = testDevice.addChildDeviceType('child3', humiditySensor, undefined, true);
+    child3.addRequiredClusterServers();
+    // child3.number = undefined;
     await platform.registerDevice(testDevice);
     testDevice.number = 101;
     (matterbridge as any).devices.set(testDevice);
-    expect(await testDevice.getChildEndpoints()).toHaveLength(2);
+    expect(testDevice.getChildEndpoints()).toHaveLength(3);
     jest.clearAllMocks();
     expect(await platform.checkEndpointNumbers()).toBe(3);
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.WARN, `Endpoint number for device ${CYAN}${testDevice.uniqueId}${wr} changed from ${CYAN}100${wr} to ${CYAN}101${wr}`);
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.DEBUG, `Setting endpoint number for device ${CYAN}${testDevice.uniqueId}${db} to ${CYAN}${testDevice.maybeNumber}${db}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Setting child endpoint number for device ${CYAN}${testDevice.uniqueId}${db}.${CYAN}child1${db} to ${CYAN}201${db}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Setting child endpoint number for device ${CYAN}${testDevice.uniqueId}${db}.${CYAN}child2${db} to ${CYAN}202${db}`);
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.DEBUG, `Setting child endpoint number for device ${CYAN}${testDevice.uniqueId}${db}.${CYAN}child3${db} to ${CYAN}202${db}`);
   });
 
   test('checkEndpointNumbers should validate the testDevice with child endpoints', async () => {
@@ -472,7 +487,7 @@ describe('Matterbridge platform', () => {
     await platform.registerDevice(testDevice);
     testDevice.number = 101;
     (matterbridge as any).devices.set(testDevice);
-    expect(await testDevice.getChildEndpoints()).toHaveLength(2);
+    expect(testDevice.getChildEndpoints()).toHaveLength(2);
     jest.clearAllMocks();
     expect(await platform.checkEndpointNumbers()).toBe(3);
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.WARN, expect.anything());

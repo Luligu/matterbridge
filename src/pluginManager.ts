@@ -4,7 +4,7 @@
  * @file plugins.ts
  * @author Luca Liguori
  * @date 2024-07-14
- * @version 1.1.0
+ * @version 1.1.1
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -621,7 +621,7 @@ export class PluginManager {
         plugin.error = true;
       }
     } catch (err) {
-      this.log.error(`Failed to load plugin ${plg}${plugin.name}${er}: ${err}`);
+      this.log.error(`Failed to load plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message : err}`);
       plugin.error = true;
     }
     return undefined;
@@ -658,7 +658,7 @@ export class PluginManager {
       return plugin;
     } catch (err) {
       plugin.error = true;
-      this.log.error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err}`);
+      this.log.error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message : err}`);
     }
     return undefined;
   }
@@ -725,7 +725,7 @@ export class PluginManager {
       this.log.debug(`Plugin ${plg}${plugin.name}${db} not configured`);
     }
     if (!plugin.platform) {
-      this.log.debug(`*Plugin ${plg}${plugin.name}${db} no platform found`);
+      this.log.debug(`Plugin ${plg}${plugin.name}${db} no platform found`);
       return undefined;
     }
     this.log.info(`Shutting down plugin ${plg}${plugin.name}${nf}: ${reason}...`);
@@ -746,7 +746,7 @@ export class PluginManager {
       this.log.notice(`Shutdown of plugin ${plg}${plugin.name}${nt} completed`);
       return plugin;
     } catch (err) {
-      this.log.error(`Failed to shut down plugin ${plg}${plugin.name}${er}: ${err}`);
+      this.log.error(`Failed to shut down plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message : err}`);
     }
     return undefined;
   }
@@ -775,30 +775,26 @@ export class PluginManager {
       if (config.unregisterOnShutdown === undefined) config.unregisterOnShutdown = false;
       return config;
     } catch (err) {
-      if (err) {
-        const nodeErr = err as NodeJS.ErrnoException;
-        if (nodeErr.code === 'ENOENT') {
-          let config: PlatformConfig;
-          if (plugin.name === 'matterbridge-zigbee2mqtt') config = zigbee2mqtt_config;
-          else if (plugin.name === 'matterbridge-somfy-tahoma') config = somfytahoma_config;
-          else if (plugin.name === 'matterbridge-shelly') config = shelly_config;
-          else config = { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
-          try {
-            await fs.writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
-            this.log.debug(`Created config file ${configFile} for plugin ${plg}${plugin.name}${db}.`);
-            // this.log.debug(`Created config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
-            return config;
-          } catch (err) {
-            this.log.error(`Error creating config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err}`);
-            return config;
-          }
-        } else {
-          this.log.error(`Error accessing config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err}`);
-          return { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
+      const nodeErr = err as NodeJS.ErrnoException;
+      if (nodeErr.code === 'ENOENT') {
+        let config: PlatformConfig;
+        if (plugin.name === 'matterbridge-zigbee2mqtt') config = zigbee2mqtt_config;
+        else if (plugin.name === 'matterbridge-somfy-tahoma') config = somfytahoma_config;
+        else if (plugin.name === 'matterbridge-shelly') config = shelly_config;
+        else config = { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
+        try {
+          await fs.writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
+          this.log.debug(`Created config file ${configFile} for plugin ${plg}${plugin.name}${db}.`);
+          // this.log.debug(`Created config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
+          return config;
+        } catch (err) {
+          this.log.error(`Error creating config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message : err}`);
+          return config;
         }
+      } else {
+        this.log.error(`Error accessing config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message : err}`);
+        return { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
       }
-      this.log.error(`Error loading config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err}`);
-      return { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
     }
   }
 

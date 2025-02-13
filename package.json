@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "2.1.6-dev.2",
+  "version": "2.1.6-dev.3",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -130,7 +130,7 @@
     "cleanBuildProduction": "npm run clean && npm run buildProduction",
     "deepClean": "npx rimraf tsconfig.tsbuildinfo package-lock.json npm-shrinkwrap.json ./dist ./node_modules",
     "deepCleanBuild": "npm run deepClean && npm install && npm run build && npm link",
-    "runMeBeforePublish": "npm run deepCleanBuild && npm run lint && npm run format && npm run test:coverage",
+    "runMeBeforePublish": "npm run lint && npm run format && npm run build && npm run test",
     "prepublishOnly": "npm pkg delete devDependencies scripts && npm install --omit=dev && npm shrinkwrap",
     "prepublishOnlyProduction": "npm run cleanBuildProduction && npm pkg delete devDependencies scripts types && npx rimraf ./node_modules && npm install --omit=dev && npm shrinkwrap",
     "npmPack": "copy package.json package.log && npm run prepublishOnlyProduction && npm pack && copy package.log package.json && npm run deepCleanBuild",

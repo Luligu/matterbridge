@@ -2084,6 +2084,7 @@ export class Matterbridge extends EventEmitter {
         sanitizeFabrics(serverNode.state.commissioning.fabrics, true);
       }
       this.frontend.wssSendRefreshRequired();
+      this.frontend.wssSendSnackbarMessage(`${storeId} is online`);
     });
 
     /** This event is triggered when the device went offline. it is not longer discoverable or connectable in the network. */
