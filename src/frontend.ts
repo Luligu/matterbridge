@@ -928,22 +928,6 @@ export class Frontend {
   }
 
   async stop() {
-    // Start the memory check. This will not allow the process to exit but will log the memory usage for 5 minutes.
-    if (hasParameter('memorycheck')) {
-      this.wssSendSnackbarMessage('Memory check started', getIntParameter('memorycheck') ?? 5 * 60 * 1000);
-      await new Promise<void>((resolve) => {
-        this.log.debug(`***Memory check started for ${getIntParameter('memorycheck') ?? 5 * 60 * 1000} ms`);
-        setTimeout(
-          () => {
-            this.wssSendSnackbarMessage('Memory check stopped', 10);
-            this.log.debug(`***Memory check stopped after ${getIntParameter('memorycheck') ?? 5 * 60 * 1000} ms`);
-            resolve();
-          },
-          getIntParameter('memorycheck') ?? 5 * 60 * 1000,
-        );
-      });
-    }
-
     // Close the http server
     if (this.httpServer) {
       this.httpServer.close();

@@ -148,14 +148,14 @@
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest && npm run test"
   },
   "dependencies": {
-    "@matter/main": "^0.12.4-alpha.0-20250212-b2729c9eb",
+    "@matter/main": "^0.12.4-alpha.0-20250213-1187f81eb",
     "archiver": "7.0.1",
     "express": "4.21.2",
     "glob": "11.0.1",
     "https": "1.0.0",
     "node-ansi-logger": "3.0.0",
     "node-persist-manager": "1.0.8",
-    "ws": "8.18.0"
+    "ws": "8.18.0" 
   },
   "devDependencies": {
     "@eslint/js": "9.20.0",

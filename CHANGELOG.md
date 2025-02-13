@@ -33,7 +33,7 @@ matterbridge-zigbee2mqtt v. 2.4.4
 matterbridge-somfy-tahoma v. 1.2.3
 matterbridge-hass v. 0.0.8
 
-## [2.1.6] - 2025-02-12
+## [2.1.6] - 2025-02-13
 
 ### Added
 
@@ -45,6 +45,7 @@ matterbridge-hass v. 0.0.8
 ### Changed
 
 - [package]: Update matter.js to 0.12.4-alpha.0-20250212-b2729c9eb
+- [package]: Update matter.js to 0.12.4-alpha.0-20250213-1187f81eb
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
