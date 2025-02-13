@@ -25,16 +25,47 @@
 /* eslint-disable no-console */
 import { Matterbridge } from './matterbridge.js';
 
+import type { Session } from 'node:inspector';
+
 let instance: Matterbridge | undefined;
 const cli = '\u001B[32m';
 const er = '\u001B[38;5;9m';
 const rs = '\u001B[40;0m';
 
 async function main() {
+  if (process.argv.includes('-inspector')) await startInspector();
+
   if (process.argv.includes('-debug')) console.log(cli + `CLI: ${process.argv.includes('-edge') ? 'MatterbridgeEdge' : 'Matterbridge'}.loadInstance() called` + rs);
   instance = await Matterbridge.loadInstance(true);
   registerHandlers();
   if (process.argv.includes('-debug')) console.log(cli + `CLI: ${process.argv.includes('-edge') ? 'MatterbridgeEdge' : 'Matterbridge'}.loadInstance() exited` + rs);
+}
+
+let session: Session;
+
+async function startInspector() {
+  const { Session } = await import('node:inspector');
+
+  session = new Session();
+  session.connect();
+  session.post('HeapProfiler.startSampling', {}, (err) => {
+    if (err) console.error(err);
+    else console.log(cli + `CLI: Heap sampling started` + rs);
+  });
+}
+
+async function stopInspector() {
+  const { writeFileSync } = await import('node:fs');
+
+  session.post('HeapProfiler.stopSampling', (err, result) => {
+    if (err) {
+      console.error(err);
+    } else {
+      const profile = JSON.stringify(result.profile, null, 2);
+      writeFileSync('heap-sampling-profile.heapsampling.json', profile);
+      console.log(cli + `CLI: Heap sampling profile saved to heap-sampling-profile.heapsnapshot` + rs);
+    }
+  });
 }
 
 function registerHandlers() {
@@ -45,6 +76,9 @@ function registerHandlers() {
 
 async function shutdown() {
   if (process.argv.includes('-debug')) console.log(cli + 'CLI: received shutdown event, exiting...' + rs);
+
+  if (process.argv.includes('-inspector')) await stopInspector();
+
   process.exit(0);
 }
 
