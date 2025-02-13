@@ -203,6 +203,7 @@ migrationV8.txt
 migrationV8-answered.txt
 matterstorage
 matterstorage.backup
+heap-sampling-profile.heapsnapshot
 
 TODO.md
 CODEOWNERS

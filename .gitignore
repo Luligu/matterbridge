@@ -47,3 +47,4 @@ test
 eveHistory.test.ts
 eveHistoryBehavior.ts
 eveHistoryCluster.ts
+heap-sampling-profile.heapsnapshot
