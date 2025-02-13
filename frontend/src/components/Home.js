@@ -36,7 +36,6 @@ import { SystemInfoTable } from './SystemInfoTable';
 import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
 import { QRDiv } from './QRDiv';
 import { InstallAddPlugins } from './InstallAddPlugins';
-import { ConfirmCancelForm } from './ConfirmCancelForm';
 import { configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, ErrorListTemplate, FieldErrorTemplate, RemoveButton, CheckboxWidget, createConfigTheme, DescriptionFieldTemplate } from './configEditor';
 import { getCssVariable } from './muiTheme';
 import { debug } from '../App';

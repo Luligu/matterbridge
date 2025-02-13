@@ -561,7 +561,7 @@ function Devices() {
         </div>
       )}
 
-      {/* Clusters Table */}
+      {/* Icon View mode*/}
       {viewMode === 'icon' && (
         <DevicesIcons filter={filter} devices={filteredDevices} />
       )}
