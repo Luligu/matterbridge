@@ -598,7 +598,7 @@ describe('PluginManager', () => {
   }, 300000);
 
   test('install plugin matterbridge-example-accessory-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     const version = await plugins.install('matterbridge-example-accessory-platform');
     expect(version).not.toBeUndefined();
