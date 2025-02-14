@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest'];
+process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'JestDynamic'];
 
 import { jest } from '@jest/globals';
 

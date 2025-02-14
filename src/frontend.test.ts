@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'frontend.test.js', '-logger', 'info', '-matterlogger', 'notice', '-bridge', '-profile', 'Jest', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
+process.argv = ['node', 'frontend.test.js', '-logger', 'info', '-matterlogger', 'notice', '-bridge', '-profile', 'JestFrontend', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
@@ -132,6 +132,15 @@ describe('Matterbridge frontend', () => {
       expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
       expect((matterbridge as any).frontend.expressApp).toBeDefined();
       expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
+
+      // prettier-ignore
+      await waiter('Initialize done', () => { return (matterbridge as any).initialized === true; });
+      // prettier-ignore
+      await waiter('Frontend Initialize done', () => { return (matterbridge as any).frontend.httpServer!==undefined; });
+      // prettier-ignore
+      await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).frontend.webSocketServer!==undefined; });
+      // prettier-ignore
+      await waiter('Matter server node started', () => { return (matterbridge as any).reachabilityTimeout; });
     });
 
     test('POST /api/login with valid password', async () => {
@@ -234,7 +243,7 @@ describe('Matterbridge frontend', () => {
     test('Matterbridge.loadInstance(true) -bridge mode and send /api/restart', async () => {
       matterbridge = await Matterbridge.loadInstance(true);
       expect(matterbridge).toBeDefined();
-      expect(matterbridge.profile).toBe('Jest');
+      expect(matterbridge.profile).toBe('JestFrontend');
       expect(matterbridge.bridgeMode).toBe('bridge');
       expect((matterbridge as any).initialized).toBe(true);
 
@@ -275,7 +284,7 @@ describe('Matterbridge frontend', () => {
     test('Matterbridge.loadInstance(true) -bridge mode and send /api/shutdown', async () => {
       matterbridge = await Matterbridge.loadInstance(true);
       expect(matterbridge).toBeDefined();
-      expect(matterbridge.profile).toBe('Jest');
+      expect(matterbridge.profile).toBe('JestFrontend');
       expect(matterbridge.bridgeMode).toBe('bridge');
       expect((matterbridge as any).initialized).toBe(true);
 
@@ -316,7 +325,7 @@ describe('Matterbridge frontend', () => {
     test('Matterbridge.loadInstance(true) -bridge mode', async () => {
       matterbridge = await Matterbridge.loadInstance(true);
       expect(matterbridge).toBeDefined();
-      expect(matterbridge.profile).toBe('Jest');
+      expect(matterbridge.profile).toBe('JestFrontend');
       expect(matterbridge.bridgeMode).toBe('bridge');
       expect((matterbridge as any).initialized).toBe(true);
 

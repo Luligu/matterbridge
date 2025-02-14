@@ -15,7 +15,6 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Environment, StorageService } from '@matter/main';
 import path from 'path';
 import os from 'os';
-import { waiter } from './utils/utils.js';
 
 describe('Matterbridge platform', () => {
   let matterbridge: Matterbridge;
