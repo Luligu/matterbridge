@@ -590,7 +590,7 @@ describe('PluginManager', () => {
   });
 
   test('install plugin matterbridge-xyz', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     expect(await plugins.install('matterbridge-xyz')).toBeUndefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Installing plugin ${plg}matterbridge-xyz${nf}`);
@@ -607,7 +607,7 @@ describe('PluginManager', () => {
   }, 300000);
 
   test('install plugin matterbridge-example-dynamic-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     const version = await plugins.install('matterbridge-example-dynamic-platform');
     expect(version).not.toBeUndefined();
@@ -616,7 +616,7 @@ describe('PluginManager', () => {
   }, 300000);
 
   test('add plugin matterbridge-xyz', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     expect(plugins.length).toBe(0);
     const plugin = await plugins.add('matterbridge-xyz');
@@ -626,7 +626,7 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('add plugin matterbridge-example-accessory-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     expect(plugins.length).toBe(0);
     const plugin = await plugins.add('matterbridge-example-accessory-platform');
@@ -663,7 +663,7 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('add plugin matterbridge-example-dynamic-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     expect(plugins.length).toBe(1);
     const plugin = await plugins.add('matterbridge-example-dynamic-platform');
