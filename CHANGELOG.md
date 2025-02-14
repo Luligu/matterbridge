@@ -41,7 +41,7 @@ matterbridge-hass v. 0.0.8
 - [platform]: Saving in the storage the selects for faster loading of plugins.
 - [icon]: Added matterbridge svg icon (thanks: https://github.com/robvanoostenrijk https://github.com/stuntguy3000).
 - [frontend]: Frontend v.2.4.2.
-- [PluginManager]: Refactor to optimize memory.
+- [PluginManager]: Refactor PluginManager to optimize memory and load time.
 
 ### Changed
 

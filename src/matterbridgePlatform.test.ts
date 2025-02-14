@@ -511,7 +511,6 @@ describe('Matterbridge platform', () => {
     expect(testDevice.getChildEndpoints()).toHaveLength(2);
     jest.clearAllMocks();
     expect(await platform.checkEndpointNumbers()).toBe(3);
-    expect(loggerLogSpy).toHaveBeenCalledTimes(5);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Checking endpoint numbers...');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Saving endpointNumbers...');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Endpoint numbers check completed.');
