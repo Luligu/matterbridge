@@ -201,88 +201,88 @@ describe('PluginManager', () => {
   });
 
   test('resolve plugin should log errors', async () => {
-    const packageFilePath = path.join('.', 'test', 'package.json');
-    await fs.writeFile(packageFilePath, JSON.stringify({ notname: 'test', type: 'module', main: 'index.js' }, undefined, 2), 'utf8');
-    let result = await plugins.resolve('./test');
+    const packageFilePath = path.join('.', 'src', 'mock', 'plugintest', 'package.json');
+    await fs.writeFile(packageFilePath, JSON.stringify({ notname: 'test', type: 'module', main: 'index.js' }), 'utf8');
+    let result = await plugins.resolve('./src/mock/plugintest');
     expect(result).toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Package.json name not found'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'notmodule', main: 'index.js' }), 'utf8');
-    result = await plugins.resolve('./test');
+    result = await plugins.resolve('./src/mock/plugintest');
     expect(result).toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('is not a module'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', notmain: 'index.js' }), 'utf8');
-    result = await plugins.resolve('./test');
+    result = await plugins.resolve('./src/mock/plugintest');
     expect(result).toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('has no main entrypoint'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', dependencies: { matterbridge: '1.0.0' } }), 'utf8');
-    result = await plugins.resolve('./test');
+    result = await plugins.resolve('./src/mock/plugintest');
     expect(result).toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found matterbridge package in the plugin dependencies.'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', devDependencies: { matterbridge: '1.0.0' } }), 'utf8');
-    result = await plugins.resolve('./test');
+    result = await plugins.resolve('./src/mock/plugintest');
     expect(result).toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found matterbridge package in the plugin devDependencies.'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', peerDependencies: { matterbridge: '1.0.0' } }), 'utf8');
-    result = await plugins.resolve('./test');
+    result = await plugins.resolve('./src/mock/plugintest');
     expect(result).toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found matterbridge package in the plugin peerDependencies.'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', dependencies: { '@project-chip': '1.0.0' } }), 'utf8');
-    result = await plugins.resolve('./test');
+    result = await plugins.resolve('./src/mock/plugintest');
     expect(result).toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', devDependencies: { '@project-chip': '1.0.0' } }), 'utf8');
-    result = await plugins.resolve('./test');
+    result = await plugins.resolve('./src/mock/plugintest');
     expect(result).toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', peerDependencies: { '@project-chip': '1.0.0' } }), 'utf8');
-    result = await plugins.resolve('./test');
+    result = await plugins.resolve('./src/mock/plugintest');
     expect(result).toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', dependencies: { '@matter': '1.0.0' } }), 'utf8');
-    result = await plugins.resolve('./test');
+    result = await plugins.resolve('./src/mock/plugintest');
     expect(result).toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', devDependencies: { '@matter': '1.0.0' } }), 'utf8');
-    result = await plugins.resolve('./test');
+    result = await plugins.resolve('./src/mock/plugintest');
     expect(result).toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', peerDependencies: { '@matter': '1.0.0' } }), 'utf8');
-    result = await plugins.resolve('./test');
+    result = await plugins.resolve('./src/mock/plugintest');
     expect(result).toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js' }), 'utf8');
-    result = await plugins.resolve('./test');
+    result = await plugins.resolve('./src/mock/plugintest');
     expect(result).not.toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Resolved plugin path'));
   });
 
   test('parse plugin', async () => {
-    const packageFilePath = path.join('.', 'test', 'package.json');
-    (plugins as any)._plugins.set('matterbridge-test', { name: 'matterbridge-test', path: './test/package.json', type: 'Any', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' });
+    const packageFilePath = path.join('.', 'src', 'mock', 'plugintest', 'package.json');
+    (plugins as any)._plugins.set('matterbridge-test', { name: 'matterbridge-test', path: './src/mock/plugintest/package.json', type: 'Any', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' });
     const plugin = plugins.get('matterbridge-test');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -438,8 +438,8 @@ describe('PluginManager', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Enabled plugin ${plg}matterbridge-mock3${nf}`);
 
     loggerLogSpy.mockClear();
-    expect(await plugins.enable('./test/package.json')).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to enable plugin ${plg}./test/package.json${er}: plugin not registered`);
+    expect(await plugins.enable('./src/mock/plugintest/package.json')).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to enable plugin ${plg}./src/mock/plugintest/package.json${er}: plugin not registered`);
 
     loggerLogSpy.mockClear();
     jest.spyOn(plugins, 'saveToStorage').mockImplementationOnce(async () => {
@@ -464,8 +464,8 @@ describe('PluginManager', () => {
     expect((await plugins.disable('./src/mock/plugin3'))?.enabled).toBeFalsy();
 
     loggerLogSpy.mockClear();
-    expect(await plugins.disable('./test/package.json')).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to disable plugin ${plg}./test/package.json${er}: plugin not registered`);
+    expect(await plugins.disable('./src/mock/plugintest/package.json')).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to disable plugin ${plg}./src/mock/plugintest/package.json${er}: plugin not registered`);
 
     loggerLogSpy.mockClear();
     jest.spyOn(plugins, 'saveToStorage').mockImplementationOnce(async () => {
@@ -492,8 +492,8 @@ describe('PluginManager', () => {
     expect(plugins.length).toBe(0);
 
     loggerLogSpy.mockClear();
-    expect(await plugins.remove('./test/package.json')).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to remove plugin ${plg}./test/package.json${er}: plugin not registered`);
+    expect(await plugins.remove('./src/mock/plugintest/package.json')).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to remove plugin ${plg}./src/mock/plugintest/package.json${er}: plugin not registered`);
 
     loggerLogSpy.mockClear();
     plugins.set({ name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
