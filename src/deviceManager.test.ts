@@ -231,4 +231,11 @@ describe('DeviceManager with real devices', () => {
     await matterbridge.removeBridgedEndpoint('matterbridge-mock2', device2);
     expect(devices.size).toBe(0);
   });
+
+  test('Cleanup storage', async () => {
+    process.argv.push('-factoryreset');
+    (matterbridge as any).initialized = true;
+    await (matterbridge as any).parseCommandLine();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
+  }, 60000);
 });

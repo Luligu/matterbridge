@@ -1265,14 +1265,10 @@ describe('PluginManager', () => {
     jest.unstable_mockModule('node:child_process', () => jest.requireActual('node:child_process'));
   }, 300000);
 
-  test('cleanup Jest profile', async () => {
-    plugins.clear();
-    expect(await plugins.saveToStorage()).toBe(0);
-    /*
-    if (getMacAddress() === 'c4:cb:76:b3:cd:1f') {
-      execSync('npm uninstall -g matterbridge-example-accessory-platform');
-      execSync('npm uninstall -g matterbridge-example-dynamic-platform');
-    }
-    */
+  test('Cleanup storage', async () => {
+    process.argv.push('-factoryreset');
+    (matterbridge as any).initialized = true;
+    await (matterbridge as any).parseCommandLine();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
   }, 60000);
 });

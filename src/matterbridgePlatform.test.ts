@@ -569,4 +569,11 @@ describe('Matterbridge platform', () => {
     expect(platform.registeredEndpointsByName.size).toBe(1);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Device with name ${CYAN}${device.deviceName}${er} is already registered. The device will not be added. Please change the device name.`);
   });
+
+  test('Cleanup storage', async () => {
+    process.argv.push('-factoryreset');
+    (matterbridge as any).initialized = true;
+    await (matterbridge as any).parseCommandLine();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
+  }, 60000);
 });

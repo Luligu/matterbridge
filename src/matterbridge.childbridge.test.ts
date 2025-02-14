@@ -162,4 +162,11 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     await matterbridge.destroyInstance();
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
   }, 60000);
+
+  test('Cleanup storage', async () => {
+    process.argv.push('-factoryreset');
+    (matterbridge as any).initialized = true;
+    await (matterbridge as any).parseCommandLine();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
+  }, 60000);
 });

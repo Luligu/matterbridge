@@ -1180,5 +1180,12 @@ describe('Matterbridge frontend', () => {
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `WebSocket server closed successfully`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
     }, 60000);
+
+    test('Cleanup storage', async () => {
+      process.argv.push('-factoryreset');
+      (matterbridge as any).initialized = true;
+      await (matterbridge as any).parseCommandLine();
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
+    }, 60000);
   });
 });
