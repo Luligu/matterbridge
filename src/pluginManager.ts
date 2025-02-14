@@ -21,21 +21,19 @@
  * limitations under the License. *
  */
 
-// NodeStorage and AnsiLogger modules
-import { AnsiLogger, BLUE, db, er, LogLevel, nf, nt, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from './logger/export.js';
-import { NodeStorage } from './storage/export.js';
+// AnsiLogger module
+import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, db, er, nf, nt, rs, wr } from './logger/export.js';
 
-// Node.js modules
-import path from 'path';
-import { promises as fs } from 'fs';
-import { pathToFileURL } from 'url';
-import { exec, ExecException } from 'child_process';
+// NodeStorage module
+import { NodeStorage } from './storage/export.js';
 
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
-import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
 import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
-import { shelly_config, somfytahoma_config, zigbee2mqtt_config } from './defaultConfigSchema.js';
+import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
+
+// Node.js import type
+import type { ExecException } from 'node:child_process';
 
 export class PluginManager {
   private _plugins = new Map<string, RegisteredPlugin>();
@@ -153,6 +151,8 @@ export class PluginManager {
    * @returns The path to the resolved package.json file, or null if the package.json file is not found or does not contain a name.
    */
   async resolve(pluginPath: string): Promise<string | null> {
+    const { default: path } = await import('node:path');
+    const { promises } = await import('node:fs');
     if (!pluginPath.endsWith('package.json')) pluginPath = path.join(pluginPath, 'package.json');
 
     // Resolve the package.json of the plugin
@@ -161,7 +161,7 @@ export class PluginManager {
 
     // Check if the package.json file exists
     try {
-      await fs.access(packageJsonPath);
+      await promises.access(packageJsonPath);
     } catch {
       this.log.debug(`Package.json not found at ${plg}${packageJsonPath}${db}`);
       packageJsonPath = path.join(this.matterbridge.globalModulesDirectory, pluginPath);
@@ -169,7 +169,7 @@ export class PluginManager {
     }
     try {
       // Load the package.json of the plugin
-      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+      const packageJson = JSON.parse(await promises.readFile(packageJsonPath, 'utf8'));
       if (!packageJson.name) {
         this.log.error(`Package.json name not found at ${packageJsonPath}`);
         return null;
@@ -245,9 +245,10 @@ export class PluginManager {
    * @returns A Promise that resolves to the package.json object or undefined if the package.json could not be loaded.
    */
   async parse(plugin: RegisteredPlugin): Promise<Record<string, string | number | object> | null> {
-    this.log.debug(`Parsing package.json of plugin ${plg}${plugin.name}${db}`);
+    const { promises } = await import('node:fs');
     try {
-      const packageJson = JSON.parse(await fs.readFile(plugin.path, 'utf8'));
+      this.log.debug(`Parsing package.json of plugin ${plg}${plugin.name}${db}`);
+      const packageJson = JSON.parse(await promises.readFile(plugin.path, 'utf8'));
       if (!packageJson.name) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no name in package.json`);
       if (!packageJson.version) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no version in package.json`);
       if (!packageJson.description) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no description in package.json`);
@@ -327,6 +328,7 @@ export class PluginManager {
    * @returns {Promise<RegisteredPlugin | null>} A promise that resolves to the enabled plugin object, or null if the plugin could not be enabled.
    */
   async enable(nameOrPath: string): Promise<RegisteredPlugin | null> {
+    const { promises } = await import('node:fs');
     if (!nameOrPath || nameOrPath === '') return null;
     if (this._plugins.has(nameOrPath)) {
       const plugin = this._plugins.get(nameOrPath) as RegisteredPlugin;
@@ -341,7 +343,7 @@ export class PluginManager {
       return null;
     }
     try {
-      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+      const packageJson = JSON.parse(await promises.readFile(packageJsonPath, 'utf8'));
       const plugin = this._plugins.get(packageJson.name);
       if (!plugin) {
         this.log.error(`Failed to enable plugin ${plg}${nameOrPath}${er}: plugin not registered`);
@@ -368,6 +370,7 @@ export class PluginManager {
    * @returns {Promise<RegisteredPlugin | null>} A promise that resolves to the enabled plugin object, or null if the plugin could not be enabled.
    */
   async disable(nameOrPath: string): Promise<RegisteredPlugin | null> {
+    const { promises } = await import('node:fs');
     if (!nameOrPath || nameOrPath === '') return null;
     if (this._plugins.has(nameOrPath)) {
       const plugin = this._plugins.get(nameOrPath) as RegisteredPlugin;
@@ -382,7 +385,7 @@ export class PluginManager {
       return null;
     }
     try {
-      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+      const packageJson = JSON.parse(await promises.readFile(packageJsonPath, 'utf8'));
       const plugin = this._plugins.get(packageJson.name);
       if (!plugin) {
         this.log.error(`Failed to disable plugin ${plg}${nameOrPath}${er}: plugin not registered`);
@@ -409,6 +412,7 @@ export class PluginManager {
    * @returns {Promise<RegisteredPlugin | null>} A promise that resolves to the removed plugin object, or null if the plugin could not be removed.
    */
   async remove(nameOrPath: string): Promise<RegisteredPlugin | null> {
+    const { promises } = await import('node:fs');
     if (!nameOrPath || nameOrPath === '') return null;
     if (this._plugins.has(nameOrPath)) {
       const plugin = this._plugins.get(nameOrPath) as RegisteredPlugin;
@@ -423,7 +427,7 @@ export class PluginManager {
       return null;
     }
     try {
-      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+      const packageJson = JSON.parse(await promises.readFile(packageJsonPath, 'utf8'));
       const plugin = this._plugins.get(packageJson.name);
       if (!plugin) {
         this.log.error(`Failed to remove plugin ${plg}${nameOrPath}${er}: plugin not registered`);
@@ -451,6 +455,7 @@ export class PluginManager {
    * @returns {Promise<RegisteredPlugin | null>} A promise that resolves to the added plugin object, or null if the plugin could not be added.
    */
   async add(nameOrPath: string): Promise<RegisteredPlugin | null> {
+    const { promises } = await import('node:fs');
     if (!nameOrPath || nameOrPath === '') return null;
     const packageJsonPath = await this.resolve(nameOrPath);
     if (!packageJsonPath) {
@@ -458,7 +463,7 @@ export class PluginManager {
       return null;
     }
     try {
-      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+      const packageJson = JSON.parse(await promises.readFile(packageJsonPath, 'utf8'));
       if (this._plugins.get(packageJson.name)) {
         this.log.info(`Plugin ${plg}${nameOrPath}${nf} already registered`);
         return null;
@@ -469,7 +474,7 @@ export class PluginManager {
       const plugin = this._plugins.get(packageJson.name);
       return plugin || null;
     } catch (err) {
-      this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err}`);
+      this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message : err}`);
       return null;
     }
   }
@@ -484,11 +489,11 @@ export class PluginManager {
    * @returns {Promise<string | undefined>} A promise that resolves to the installed version of the plugin, or undefined if the installation failed.
    */
   async install(name: string): Promise<string | undefined> {
+    const { exec } = await import('node:child_process');
     await this.uninstall(name);
     this.log.info(`Installing plugin ${plg}${name}${nf}`);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    return new Promise((resolve, reject) => {
-      exec(`npm install -g ${name} --omit=dev --force`, (error: ExecException | null, stdout: string, stderr: string) => {
+    return new Promise((resolve) => {
+      exec(`npm install -g ${name} --omit=dev`, (error: ExecException | null, stdout: string, stderr: string) => {
         if (error) {
           this.log.error(`Failed to install plugin ${plg}${name}${er}: ${error}`);
           this.log.debug(`Failed to install plugin ${plg}${name}${db}: ${stderr}`);
@@ -529,10 +534,10 @@ export class PluginManager {
    * @returns {Promise<string | undefined>} A promise that resolves to the name of the uninstalled plugin, or undefined if the uninstallation failed.
    */
   async uninstall(name: string): Promise<string | undefined> {
+    const { exec } = await import('node:child_process');
     this.log.info(`Uninstalling plugin ${plg}${name}${nf}`);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    return new Promise((resolve, reject) => {
-      exec(`npm uninstall -g ${name} --force`, (error: ExecException | null, stdout: string, stderr: string) => {
+    return new Promise((resolve) => {
+      exec(`npm uninstall -g ${name}`, (error: ExecException | null, stdout: string, stderr: string) => {
         if (error) {
           this.log.error(`Failed to uninstall plugin ${plg}${name}${er}: ${error}`);
           this.log.debug(`Failed to uninstall plugin ${plg}${name}${db}: ${stderr}`);
@@ -555,6 +560,8 @@ export class PluginManager {
    * @throws An error if the plugin is not enabled, already loaded, or fails to load.
    */
   async load(plugin: RegisteredPlugin, start = false, message = '', configure = false): Promise<MatterbridgePlatform | undefined> {
+    const { promises } = await import('node:fs');
+    const { default: path } = await import('node:path');
     if (!plugin.enabled) {
       this.log.error(`Plugin ${plg}${plugin.name}${er} not enabled`);
       return undefined;
@@ -566,10 +573,11 @@ export class PluginManager {
     this.log.info(`Loading plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
     try {
       // Load the package.json of the plugin
-      const packageJson = JSON.parse(await fs.readFile(plugin.path, 'utf8'));
+      const packageJson = JSON.parse(await promises.readFile(plugin.path, 'utf8'));
       // Resolve the main module path relative to package.json
       const pluginEntry = path.resolve(path.dirname(plugin.path), packageJson.main);
       // Dynamically import the plugin
+      const { pathToFileURL } = await import('node:url');
       const pluginUrl = pathToFileURL(pluginEntry);
       this.log.debug(`Importing plugin ${plg}${plugin.name}${db} from ${pluginUrl.href}`);
       const pluginInstance = await import(pluginUrl.href);
@@ -761,10 +769,13 @@ export class PluginManager {
    * @returns A promise that resolves to the loaded or created configuration.
    */
   async loadConfig(plugin: RegisteredPlugin): Promise<PlatformConfig> {
+    const { default: path } = await import('node:path');
+    const { promises } = await import('node:fs');
+    const { shelly_config, somfytahoma_config, zigbee2mqtt_config } = await import('./defaultConfigSchema.js');
     const configFile = path.join(this.matterbridge.matterbridgeDirectory, `${plugin.name}.config.json`);
     try {
-      await fs.access(configFile);
-      const data = await fs.readFile(configFile, 'utf8');
+      await promises.access(configFile);
+      const data = await promises.readFile(configFile, 'utf8');
       const config = JSON.parse(data) as PlatformConfig;
       this.log.debug(`Loaded config file ${configFile} for plugin ${plg}${plugin.name}${db}.`);
       // this.log.debug(`Loaded config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
@@ -783,7 +794,7 @@ export class PluginManager {
         else if (plugin.name === 'matterbridge-shelly') config = shelly_config;
         else config = { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
         try {
-          await fs.writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
+          await promises.writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
           this.log.debug(`Created config file ${configFile} for plugin ${plg}${plugin.name}${db}.`);
           // this.log.debug(`Created config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
           return config;
@@ -811,13 +822,15 @@ export class PluginManager {
    * @throws {Error} If the plugin's configuration is not found.
    */
   async saveConfigFromPlugin(plugin: RegisteredPlugin): Promise<void> {
+    const { default: path } = await import('node:path');
+    const { promises } = await import('node:fs');
     if (!plugin.platform?.config) {
       this.log.error(`Error saving config file for plugin ${plg}${plugin.name}${er}: config not found`);
       return Promise.reject(new Error(`Error saving config file for plugin ${plg}${plugin.name}${er}: config not found`));
     }
     const configFile = path.join(this.matterbridge.matterbridgeDirectory, `${plugin.name}.config.json`);
     try {
-      await fs.writeFile(configFile, JSON.stringify(plugin.platform.config, null, 2), 'utf8');
+      await promises.writeFile(configFile, JSON.stringify(plugin.platform.config, null, 2), 'utf8');
       this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
       // this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, plugin.platform.config);
       return Promise.resolve();
@@ -841,13 +854,15 @@ export class PluginManager {
    * @returns {Promise<void>} A promise that resolves when the configuration is successfully saved, or returns if an error occurs.
    */
   async saveConfigFromJson(plugin: RegisteredPlugin, config: PlatformConfig): Promise<void> {
+    const { default: path } = await import('node:path');
+    const { promises } = await import('node:fs');
     if (!config.name || !config.type || config.name !== plugin.name) {
       this.log.error(`Error saving config file for plugin ${plg}${plugin.name}${er}. Wrong config data content:${rs}\n`, config);
       return;
     }
     const configFile = path.join(this.matterbridge.matterbridgeDirectory, `${plugin.name}.config.json`);
     try {
-      await fs.writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
+      await promises.writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
       plugin.configJson = config;
       this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
       // this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
@@ -868,10 +883,11 @@ export class PluginManager {
    * @returns {Promise<PlatformSchema>} A promise that resolves to the loaded schema object, or the default schema if the schema file is not found.
    */
   async loadSchema(plugin: RegisteredPlugin): Promise<PlatformSchema> {
+    const { promises } = await import('node:fs');
     const schemaFile = plugin.path.replace('package.json', `${plugin.name}.schema.json`);
     try {
-      await fs.access(schemaFile);
-      const data = await fs.readFile(schemaFile, 'utf8');
+      await promises.access(schemaFile);
+      const data = await promises.readFile(schemaFile, 'utf8');
       const schema = JSON.parse(data) as PlatformSchema;
       schema.title = plugin.description;
       schema.description = plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author;
