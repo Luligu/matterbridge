@@ -48,6 +48,7 @@ matterbridge-hass v. 0.0.8
 
 - [package]: Update matter.js to 0.12.4-alpha.0-20250212-b2729c9eb
 - [package]: Update matter.js to 0.12.4-alpha.0-20250213-1187f81eb
+- [package]: Update matter.js to 0.12.4-alpha.0-20250215-5af08a8d6
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">

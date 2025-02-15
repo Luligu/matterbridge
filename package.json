@@ -139,9 +139,9 @@
     "npmPublishTagLatest": "copy package.json package.log && npm run prepublishOnlyProduction && npm publish --tag latest && copy package.log package.json && npm run deepCleanBuild",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u && npm run deepCleanBuild",
-    "updateMatter:latest": "npm install @matter/main@latest && npm install && npm run deepClean",
-    "updateMatter:dev": "npm install @matter/main@dev && npm install && npm run deepClean",
-    "updateMatter:loc": "npm install ../matter.js/packages/matter.js && npm install && npm run deepClean",
+    "updateMatter:latest": "npm install @matter/main@latest && npm install && npm run deepCleanBuild",
+    "updateMatter:dev": "npm install @matter/main@dev && npm install && npm run deepCleanBuild",
+    "updateMatter:loc": "npm install ../matter.js/packages/matter.js && npm install && npm run deepCleanBuild",
     "install:dependencies": "npm install @matter/main @matter/nodejs @project-chip/matter.js archiver express glob https node-ansi-logger node-persist-manager ws",
     "install:typescript": "npm install --save-dev @types/express @types/node @types/ws typescript && npm run build",
     "install:eslint": "npm install --save-dev eslint @eslint/js @types/eslint__js typescript-eslint && npm run lint",
@@ -149,7 +149,7 @@
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest && npm run test"
   },
   "dependencies": {
-    "@matter/main": "^0.12.4-alpha.0-20250213-1187f81eb",
+    "@matter/main": "^0.12.4-alpha.0-20250215-5af08a8d6",
     "archiver": "7.0.1",
     "express": "4.21.2",
     "glob": "11.0.1",
