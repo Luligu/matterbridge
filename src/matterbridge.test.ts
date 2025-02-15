@@ -19,6 +19,12 @@ const plg = '\u001B[38;5;33m';
 const dev = '\u001B[38;5;79m';
 const typ = '\u001B[38;5;207m';
 
+const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
+  // eslint-disable-next-line no-console
+  console.log('mockImplementation of process.exit() called');
+  return undefined as never;
+});
+
 describe('Matterbridge', () => {
   let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -285,7 +291,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).hasCleanupStarted).toBe(false);
 
       const shutdownPromise = new Promise((resolve) => {
-        matterbridge.on('shutdown', resolve);
+        matterbridge.on('shutdown', resolve as () => void);
       });
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-help'];
       await (matterbridge as any).parseCommandLine();
@@ -299,7 +305,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).hasCleanupStarted).toBe(false);
 
       const shutdownPromise = new Promise((resolve) => {
-        matterbridge.on('shutdown', resolve);
+        matterbridge.on('shutdown', resolve as () => void);
       });
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-list'];
       await (matterbridge as any).parseCommandLine();
@@ -314,7 +320,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).hasCleanupStarted).toBe(false);
 
       const shutdownPromise = new Promise((resolve) => {
-        matterbridge.on('shutdown', resolve);
+        matterbridge.on('shutdown', resolve as () => void);
       });
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-logstorage'];
       await (matterbridge as any).parseCommandLine();
@@ -328,7 +334,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).hasCleanupStarted).toBe(false);
 
       const shutdownPromise = new Promise((resolve) => {
-        matterbridge.on('shutdown', resolve);
+        matterbridge.on('shutdown', resolve as () => void);
       });
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-loginterfaces'];
       await (matterbridge as any).parseCommandLine();
@@ -342,7 +348,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).hasCleanupStarted).toBe(false);
 
       const shutdownPromise = new Promise((resolve) => {
-        matterbridge.on('shutdown', resolve);
+        matterbridge.on('shutdown', resolve as () => void);
       });
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-reset'];
       await (matterbridge as any).parseCommandLine();
@@ -356,7 +362,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).hasCleanupStarted).toBe(false);
 
       const shutdownPromise = new Promise((resolve) => {
-        matterbridge.on('shutdown', resolve);
+        matterbridge.on('shutdown', resolve as () => void);
       });
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-reset', 'xxx'];
       (matterbridge as any).log.logLevel = LogLevel.DEBUG;
@@ -372,7 +378,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).hasCleanupStarted).toBe(false);
 
       const shutdownPromise = new Promise((resolve) => {
-        matterbridge.on('shutdown', resolve);
+        matterbridge.on('shutdown', resolve as () => void);
       });
       let plugins = (await (matterbridge as any).plugins) as RegisteredPlugin[];
       expect(plugins).toHaveLength(0);
@@ -399,7 +405,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).hasCleanupStarted).toBe(false);
 
       const shutdownPromise = new Promise((resolve) => {
-        matterbridge.on('shutdown', resolve);
+        matterbridge.on('shutdown', resolve as () => void);
       });
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-disable', './src/mock/plugin1'];
       (matterbridge as any).log.logLevel = LogLevel.DEBUG;
@@ -422,7 +428,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).hasCleanupStarted).toBe(false);
 
       const shutdownPromise = new Promise((resolve) => {
-        matterbridge.on('shutdown', resolve);
+        matterbridge.on('shutdown', resolve as () => void);
       });
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-enable', './src/mock/plugin1'];
       (matterbridge as any).log.logLevel = LogLevel.DEBUG;
@@ -445,7 +451,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).hasCleanupStarted).toBe(false);
 
       const shutdownPromise = new Promise((resolve) => {
-        matterbridge.on('shutdown', resolve);
+        matterbridge.on('shutdown', resolve as () => void);
       });
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-remove', './src/mock/plugin1'];
       (matterbridge as any).log.logLevel = LogLevel.DEBUG;
@@ -463,7 +469,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).hasCleanupStarted).toBe(false);
 
       const shutdownPromise = new Promise((resolve) => {
-        matterbridge.on('shutdown', resolve);
+        matterbridge.on('shutdown', resolve as () => void);
       });
       process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug', '-add', './src/mock/plugin1'];
       (matterbridge as any).log.logLevel = LogLevel.DEBUG;

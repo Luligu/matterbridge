@@ -501,6 +501,7 @@ export class PluginManager {
         } else {
           this.log.info(`Installed plugin ${plg}${name}${nf}`);
           this.log.debug(`Installed plugin ${plg}${name}${db}: ${stdout}`);
+
           // Get the installed version
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           exec(`npm list -g ${name} --depth=0`, (listError, listStdout, listStderr) => {

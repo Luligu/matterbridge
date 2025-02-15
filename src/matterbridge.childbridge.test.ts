@@ -18,6 +18,12 @@ const plg = '\u001B[38;5;33m';
 const dev = '\u001B[38;5;79m';
 const typ = '\u001B[38;5;207m';
 
+const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
+  // eslint-disable-next-line no-console
+  console.log('mockImplementation of process.exit() called');
+  return undefined as never;
+});
+
 describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   let matterbridge: Matterbridge;
 

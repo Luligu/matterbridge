@@ -7,9 +7,9 @@ import { jest } from '@jest/globals';
 
 // jest.mock('@project-chip/matter-node.js/util');
 
-import { AnsiLogger, db, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
-import { wait, waiter } from './utils/utils.js';
+import { waiter } from './utils/utils.js';
 import { Environment, StorageService } from '@matter/main';
 import path from 'path';
 import os from 'os';
@@ -18,6 +18,12 @@ import os from 'os';
 const plg = '\u001B[38;5;33m';
 const dev = '\u001B[38;5;79m';
 const typ = '\u001B[38;5;207m';
+
+const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
+  // eslint-disable-next-line no-console
+  console.log('mockImplementation of process.exit() called');
+  return undefined as never;
+});
 
 describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   let matterbridge: Matterbridge;
@@ -100,6 +106,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
 
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeDefined();
+    matterbridge.log.warn('***Matterbridge instance loaded');
     expect(matterbridge.profile).toBe('JestBridge');
     expect(matterbridge.bridgeMode).toBe('bridge');
 

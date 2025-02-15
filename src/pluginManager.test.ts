@@ -9,7 +9,7 @@ import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { execSync } from 'child_process';
-import { getMacAddress, waiter } from './utils/utils.js';
+import { waiter } from './utils/utils.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { DeviceManager } from './deviceManager.js';
@@ -93,9 +93,6 @@ describe('PluginManager', () => {
   });
 
   afterAll(async () => {
-    // Destroy the matterbridge instance
-    await matterbridge.destroyInstance();
-
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -1265,10 +1262,19 @@ describe('PluginManager', () => {
     jest.unstable_mockModule('node:child_process', () => jest.requireActual('node:child_process'));
   }, 300000);
 
+  test('Matterbridge.destroyInstance()', async () => {
+    // Close the Matterbridge instance
+    await matterbridge.destroyInstance();
+
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }, 60000);
+
   test('Cleanup storage', async () => {
     process.argv.push('-factoryreset');
     (matterbridge as any).initialized = true;
     await (matterbridge as any).parseCommandLine();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }, 60000);
 });

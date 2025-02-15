@@ -15,6 +15,10 @@ import { MdnsService } from '@matter/main/protocol';
 import http from 'http';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
+const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
+  return undefined as never;
+});
+
 // Default colors
 const plg = '\u001B[38;5;33m';
 const dev = '\u001B[38;5;79m';
