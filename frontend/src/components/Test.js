@@ -26,6 +26,7 @@ function Test() {
   const [clusters, setClusters] = useState([]);
   const [cpu, setCpu] = useState(null);
   const [memory, setMemory] = useState(null);
+  const [uptime, setUptime] = useState(null);
   const uniqueId = useRef(null);
 
   if(!uniqueId.current) {
@@ -40,7 +41,7 @@ function Test() {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'restart_required') {
           if(debug) console.log('Test received restart_required');
-          showSnackbarMessage('Restart required', 60);
+          showSnackbarMessage('Restart required', 0);
         }
         if (msg.method === 'refresh_required') {
           if(debug) console.log('Test received refresh_required');
@@ -51,13 +52,18 @@ function Test() {
         }
         if (msg.method === 'memory_update') {
           if(debug) console.log('Test received memory_update', msg);
-          showSnackbarMessage('Test received memory_update', 30);
+          showSnackbarMessage('Test received memory_update');
           setMemory(msg.params);
         }
         if (msg.method === 'cpu_update') {
           if(debug) console.log('Test received cpu_update', msg);
-          showSnackbarMessage('Test received cpu_update', 10);
+          showSnackbarMessage('Test received cpu_update');
           setCpu(msg.params);
+        }
+        if (msg.method === 'uptime_update') {
+          if(debug) console.log('Test received uptime_update', msg);
+          showSnackbarMessage('Test received uptime_update');
+          setUptime(msg.params);
         }
         if (msg.method === '/api/settings' && msg.response) {
           if(debug) console.log('Test received /api/settings:', msg.response);
@@ -119,17 +125,18 @@ function Test() {
   return (
     <div className="MbfPageDiv" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
 
-      <div style={{ display: 'flex', gap: '20px', width: '100%' }}>
-        {settings && settings.systemInformation && <SystemInfoTable systemInfo={settings.systemInformation}/>}
-      </div>  
+      {/*<div style={{ display: 'flex', gap: '20px', width: '100%' }}>
+        {settings && settings.systemInformation && <SystemInfoTable systemInfo={settings.systemInformation} compact={false}/>}
+      </div>*/}
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%' }}>
         <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
         <p>Welcome to the Test page of the Matterbridge frontend</p>
         {cpu && memory &&
           <div>
-            <p>cpuUsed: {cpu.cpuUsed}</p>
-            <p>systemUptime: {memory.systemUptime}</p>
+            <p>cpuUsage: {cpu.cpuUsage.toFixed(2) + ' %'}</p>
+            <p>systemUptime: {uptime.systemUptime}</p>
+            <p>processUptime: {uptime.processUptime}</p>
             <p>freeMemory {memory.freeMemory}</p>
             <p>totalMemory {memory.totalMemory}</p>
             <p>rss {memory.rss}</p>
