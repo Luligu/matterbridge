@@ -25,14 +25,23 @@
 /* eslint-disable no-console */
 import { Matterbridge } from './matterbridge.js';
 
+// Node modules type import
 import type { Session } from 'node:inspector';
 import type os from 'node:os';
 
-let instance: Matterbridge | undefined;
-let session: Session;
+import { EventEmitter } from 'events';
+
+export const cliEmitter = new EventEmitter();
+
+export let instance: Matterbridge | undefined;
+
+// Inspectop
+let session: Session | undefined;
+
+// Cpu and memory check
 let memoryCheckInterval: NodeJS.Timeout;
 let prevCpus: os.CpuInfo[];
-let lastCpuUsage = 0;
+export let lastCpuUsage = 0;
 
 const cli = '\u001B[32m';
 const er = '\u001B[38;5;9m';
@@ -43,20 +52,25 @@ const YELLOW = '\u001B[33m';
 const BRIGHT = '\u001B[1m';
 
 async function main() {
-  if (process.argv.includes('-memorycheck')) await startMemoryCheck();
+  await startCpuMemoryCheck();
 
   if (process.argv.includes('-inspector')) await startInspector();
 
-  if (process.argv.includes('-debug')) console.log(cli + `CLI: ${process.argv.includes('-edge') ? 'MatterbridgeEdge' : 'Matterbridge'}.loadInstance() called` + rs);
+  if (process.argv.includes('-debug')) console.log(cli + `CLI: Matterbridge.loadInstance() called` + rs);
+
   instance = await Matterbridge.loadInstance(true);
+
   registerHandlers();
-  if (process.argv.includes('-debug')) console.log(cli + `CLI: ${process.argv.includes('-edge') ? 'MatterbridgeEdge' : 'Matterbridge'}.loadInstance() exited` + rs);
+
+  if (process.argv.includes('-debug')) console.log(cli + `CLI: Matterbridge.loadInstance() exited` + rs);
 }
 
-async function startMemoryCheck() {
+async function startCpuMemoryCheck() {
   const os = await import('node:os');
-  console.log(cli + `CLI: Memory check started` + rs);
+
+  if (process.argv.includes('-debug')) console.log(cli + `CLI: Cpu memory check started` + rs);
   prevCpus = os.cpus();
+  clearInterval(memoryCheckInterval);
 
   const formatMemoryUsage = (bytes: number): string => {
     if (bytes >= 1024 ** 3) {
@@ -68,13 +82,46 @@ async function startMemoryCheck() {
     }
   };
 
+  const formatOsUpTime = (seconds: number): string => {
+    if (seconds >= 86400) {
+      const days = Math.floor(seconds / 86400);
+      return `${days} day${days !== 1 ? 's' : ''}`;
+    }
+    if (seconds >= 3600) {
+      const hours = Math.floor(seconds / 3600);
+      return `${hours} hour${hours !== 1 ? 's' : ''}`;
+    }
+    if (seconds >= 60) {
+      const minutes = Math.floor(seconds / 60);
+      return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+    }
+    return `${seconds} second${seconds !== 1 ? 's' : ''}`;
+  };
+
   const interval = () => {
+    // Get the os uptime
+    const systemUptime = formatOsUpTime(Math.floor(os.uptime()));
+    const processUptime = formatOsUpTime(Math.floor(process.uptime()));
+    cliEmitter.emit('uptime', systemUptime, processUptime);
+
+    // Get the memory usage
+    const totalMememory = formatMemoryUsage(os.totalmem());
+    const freeMemory = formatMemoryUsage(os.freemem());
+    const memoryUsageRaw = process.memoryUsage();
+    const rss = formatMemoryUsage(memoryUsageRaw.rss);
+    const heapTotal = formatMemoryUsage(memoryUsageRaw.heapTotal);
+    const heapUsed = formatMemoryUsage(memoryUsageRaw.heapUsed);
+    const external = formatMemoryUsage(memoryUsageRaw.external);
+    const arrayBuffers = formatMemoryUsage(memoryUsageRaw.arrayBuffers);
+    cliEmitter.emit('memory', totalMememory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers);
+
     // Get the cpu usage
     const currCpus = os.cpus();
     let cpuUsageLog: string;
     if (currCpus.length !== prevCpus.length) {
       prevCpus = currCpus; // Reset the previous cpus
-      cpuUsageLog = lastCpuUsage.toFixed(2);
+      if (process.argv.includes('-debug')) console.log(cli + `CLI: Cpu check length failed, resetting previous cpus` + rs);
+      return;
     }
     let totalIdle = 0,
       totalTick = 0;
@@ -88,45 +135,35 @@ async function startMemoryCheck() {
     });
     const cpuUsage = 100 - (totalIdle / totalTick) * 100;
     if (totalTick === 0 || isNaN(cpuUsage) || !isFinite(cpuUsage) || cpuUsage <= 0) {
+      if (process.argv.includes('-debug') && lastCpuUsage != 0) console.log(cli + `CLI: Cpu check failed, using previous cpus` + rs);
       cpuUsageLog = lastCpuUsage.toFixed(2);
+    } else {
+      cpuUsageLog = cpuUsage.toFixed(2);
+      lastCpuUsage = cpuUsage;
+      cliEmitter.emit('cpu', lastCpuUsage);
     }
     prevCpus = currCpus;
-    lastCpuUsage = cpuUsage;
-    cpuUsageLog = cpuUsage.toFixed(2);
 
-    // Get the memory usage
-    const memoryUsageRaw = process.memoryUsage();
-    const memoryUsage = {
-      rss: formatMemoryUsage(memoryUsageRaw.rss),
-      heapTotal: formatMemoryUsage(memoryUsageRaw.heapTotal),
-      heapUsed: formatMemoryUsage(memoryUsageRaw.heapUsed),
-      external: formatMemoryUsage(memoryUsageRaw.external),
-      arrayBuffers: formatMemoryUsage(memoryUsageRaw.arrayBuffers),
-    };
-    console.log(
-      `${YELLOW}${BRIGHT}Cpu usage:${db} ${CYAN}${cpuUsageLog.padStart(6, ' ')} %${db} ${YELLOW}${BRIGHT}Memory usage:${db} rss ${CYAN}${memoryUsage.rss}${db} heapTotal ${CYAN}${memoryUsage.heapTotal}${db} heapUsed ${CYAN}${memoryUsage.heapUsed}${db} external ${memoryUsage.external} arrayBuffers ${memoryUsage.arrayBuffers}` +
-        rs,
-    );
+    // Show the cpu and memory usage
+    if (process.argv.includes('-debug'))
+      console.log(
+        `${YELLOW}${BRIGHT}Cpu usage:${db} ${CYAN}${cpuUsageLog.padStart(6, ' ')} %${db} ${YELLOW}${BRIGHT}Memory usage:${db} rss ${CYAN}${rss}${db} heapTotal ${CYAN}${heapTotal}${db} heapUsed ${CYAN}${heapUsed}${db} external ${external} arrayBuffers ${arrayBuffers}` +
+          rs,
+      );
   };
   interval();
-  memoryCheckInterval = setInterval(interval, 1000);
+  memoryCheckInterval = setInterval(interval, 10 * 1000);
 }
 
-async function stopMemoryCheck() {
-  console.log(cli + `CLI: Stopping memory check in 5 minute` + rs);
-  instance = undefined;
-  setTimeout(
-    () => {
-      console.log(cli + `CLI: Memory check stopped` + rs);
-      clearInterval(memoryCheckInterval);
-      process.exit(0);
-    },
-    5 * 60 * 1000,
-  );
+async function stopCpuMemoryCheck() {
+  if (process.argv.includes('-debug')) console.log(cli + `CLI: Cpu memory check stopped` + rs);
+  clearInterval(memoryCheckInterval);
 }
 
 async function startInspector() {
   const { Session } = await import('node:inspector');
+
+  if (process.argv.includes('-debug')) console.log(cli + `CLI: Starting heap sampling...` + rs);
 
   session = new Session();
   session.connect();
@@ -139,14 +176,18 @@ async function startInspector() {
 async function stopInspector() {
   const { writeFileSync } = await import('node:fs');
 
-  session.post('HeapProfiler.stopSampling', (err, result) => {
+  if (process.argv.includes('-debug')) console.log(cli + `CLI: Stopping heap sampling...` + rs);
+
+  session?.post('HeapProfiler.stopSampling', (err, result) => {
     if (err) {
       console.error(err);
     } else {
       const profile = JSON.stringify(result.profile, null, 2);
-      writeFileSync('heap-sampling-profile.heapsampling.json', profile);
+      writeFileSync('heap-sampling-profile.heapsnapshot', profile);
       console.log(cli + `CLI: Heap sampling profile saved to heap-sampling-profile.heapsnapshot` + rs);
     }
+    session?.disconnect();
+    session = undefined;
   });
 }
 
@@ -154,6 +195,8 @@ function registerHandlers() {
   if (instance) instance.on('shutdown', async () => shutdown());
   if (instance) instance.on('restart', async () => restart());
   if (instance) instance.on('update', async () => update());
+  if (instance) instance.on('startmemorycheck', async () => start());
+  if (instance) instance.on('stopmemorycheck', async () => stop());
 }
 
 async function shutdown() {
@@ -161,11 +204,9 @@ async function shutdown() {
 
   if (process.argv.includes('-inspector')) await stopInspector();
 
-  if (process.argv.includes('-memorycheck')) {
-    await stopMemoryCheck();
-  } else {
-    process.exit(0);
-  }
+  await stopCpuMemoryCheck();
+
+  process.exit(0);
 }
 
 async function restart() {
@@ -179,6 +220,16 @@ async function update() {
   // TODO: Implement update logic outside of matterbridge
   instance = await Matterbridge.loadInstance(true);
   registerHandlers();
+}
+
+async function start() {
+  if (process.argv.includes('-debug')) console.log(cli + 'CLI: received start memory check event' + rs);
+  startCpuMemoryCheck();
+}
+
+async function stop() {
+  if (process.argv.includes('-debug')) console.log(cli + 'CLI: received stop memory check event' + rs);
+  stopCpuMemoryCheck();
 }
 
 process.title = 'matterbridge';

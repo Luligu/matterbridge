@@ -92,7 +92,8 @@ export interface SystemInformation {
   totalMemory: string;
   freeMemory: string;
   systemUptime: string;
-  cpuUsed: string;
+  processUptime: string;
+  cpuUsage: string;
   rss: string;
   heapTotal: string;
   heapUsed: string;
