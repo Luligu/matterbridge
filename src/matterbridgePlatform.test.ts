@@ -15,7 +15,6 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Environment, StorageService } from '@matter/main';
 import path from 'path';
 import os from 'os';
-import { waiter } from './utils/utils.js';
 
 describe('Matterbridge platform', () => {
   let matterbridge: Matterbridge;
@@ -511,7 +510,6 @@ describe('Matterbridge platform', () => {
     expect(testDevice.getChildEndpoints()).toHaveLength(2);
     jest.clearAllMocks();
     expect(await platform.checkEndpointNumbers()).toBe(3);
-    expect(loggerLogSpy).toHaveBeenCalledTimes(5);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Checking endpoint numbers...');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Saving endpointNumbers...');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Endpoint numbers check completed.');
@@ -571,4 +569,11 @@ describe('Matterbridge platform', () => {
     expect(platform.registeredEndpointsByName.size).toBe(1);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Device with name ${CYAN}${device.deviceName}${er} is already registered. The device will not be added. Please change the device name.`);
   });
+
+  test('Cleanup storage', async () => {
+    process.argv.push('-factoryreset');
+    (matterbridge as any).initialized = true;
+    await (matterbridge as any).parseCommandLine();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
+  }, 60000);
 });

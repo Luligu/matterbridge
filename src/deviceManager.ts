@@ -21,8 +21,10 @@
  * limitations under the License. *
  */
 
-// NodeStorage and AnsiLogger modules
+// AnsiLogger module
 import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from './logger/export.js';
+
+// NodeStorage module
 import { NodeStorage } from './storage/export.js';
 
 // Matterbridge

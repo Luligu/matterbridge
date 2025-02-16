@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-logger', 'info', '-matterlogger', 'info', '-bridge', '-frontend', '0', '-profile', 'Jest'];
+process.argv = ['node', 'matterbridge.test.js', '-logger', 'info', '-matterlogger', 'info', '-bridge', '-frontend', '0', '-profile', 'JestDeviceManager'];
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, BLUE, db, er, LogLevel, nf, nt, pl, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
@@ -231,4 +231,11 @@ describe('DeviceManager with real devices', () => {
     await matterbridge.removeBridgedEndpoint('matterbridge-mock2', device2);
     expect(devices.size).toBe(0);
   });
+
+  test('Cleanup storage', async () => {
+    process.argv.push('-factoryreset');
+    (matterbridge as any).initialized = true;
+    await (matterbridge as any).parseCommandLine();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
+  }, 60000);
 });

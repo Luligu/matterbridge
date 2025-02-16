@@ -34,10 +34,10 @@ import path from 'path';
 import { promises as fs } from 'fs';
 
 // AnsiLogger module
-import { AnsiLogger, CYAN, db, debugStringify, er, LogLevel, nf, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from './logger/export.js';
+import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from './logger/export.js';
 
 // Matterbridge
-import { createZip, deepCopy, getIntParameter, hasParameter, isValidNumber, isValidObject, isValidString } from './utils/utils.js';
+import { createZip, deepCopy, hasParameter, isValidNumber, isValidObject, isValidString } from './utils/utils.js';
 import { ApiClusters, ApiDevices, BaseRegisteredPlugin, plg, RegisteredPlugin } from './matterbridgeTypes.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -73,10 +73,16 @@ export const WS_ID_CPU_UPDATE = 3;
 export const WS_ID_MEMORY_UPDATE = 4;
 
 /**
+ * Websocket message ID indicating an uptime update.
+ * @constant {number}
+ */
+export const WS_ID_UPTIME_UPDATE = 5;
+
+/**
  * Websocket message ID indicating a memory update.
  * @constant {number}
  */
-export const WS_ID_SNACKBAR = 5;
+export const WS_ID_SNACKBAR = 6;
 
 /**
  * Initializes the frontend of Matterbridge.
@@ -271,10 +277,18 @@ export class Frontend {
       this.log.error(`WebSocketServer error: ${error}`);
     });
 
-    // Start the memory dump interval
-    if (hasParameter('memorydump')) {
-      this.startCpuMemoryDump();
-    }
+    // Subscribe to cli events
+    const { cliEmitter } = await import('./cli.js');
+
+    cliEmitter.on('uptime', (systemUptime: string, processUptime: string) => {
+      this.wssSendUptimeUpdate(systemUptime, processUptime);
+    });
+    cliEmitter.on('memory', (totalMememory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string) => {
+      this.wssSendMemoryUpdate(totalMememory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers);
+    });
+    cliEmitter.on('cpu', (cpuUsage: number) => {
+      this.wssSendCpuUpdate(cpuUsage);
+    });
 
     // Endpoint to validate login code
     this.expressApp.post('/api/login', express.json(), async (req, res) => {
@@ -968,11 +982,6 @@ export class Frontend {
       });
       this.webSocketServer = undefined;
     }
-
-    // Stop the memory dump interval
-    if (hasParameter('memorydump')) {
-      this.stopCpuMemoryDump();
-    }
   }
 
   // Function to format bytes to KB, MB, or GB
@@ -987,9 +996,7 @@ export class Frontend {
   };
 
   // Function to format system uptime with only the most significant unit
-  private formatOsUpTime = (): string => {
-    const seconds = os.uptime();
-
+  private formatOsUpTime = (seconds: number): string => {
     if (seconds >= 86400) {
       const days = Math.floor(seconds / 86400);
       return `${days} day${days !== 1 ? 's' : ''}`;
@@ -1005,120 +1012,19 @@ export class Frontend {
     return `${seconds} second${seconds !== 1 ? 's' : ''}`;
   };
 
-  private getCpuUsage = () => {
-    const currCpus = os.cpus();
-    if (currCpus.length !== this.prevCpus.length) {
-      this.prevCpus = deepCopy(currCpus); // Reset the previous cpus
-      this.log.debug(`***Cpu usage reset. Current cpus: ${currCpus.length}. Previous cpus: ${this.prevCpus.length}.`);
-      return this.lastCpuUsage.toFixed(2);
-    }
-    let totalIdle = 0,
-      totalTick = 0;
-
-    // Get the cpu usage
-    this.prevCpus.forEach((prevCpu, i) => {
-      const currCpu = currCpus[i];
-
-      const idleDiff = currCpu.times.idle - prevCpu.times.idle;
-      const totalDiff = (Object.keys(currCpu.times) as (keyof typeof currCpu.times)[]).reduce((acc, key) => acc + (currCpu.times[key] - prevCpu.times[key]), 0);
-
-      totalIdle += idleDiff;
-      totalTick += totalDiff;
-    });
-    const cpuUsage = 100 - (totalIdle / totalTick) * 100;
-    if (totalTick === 0 || isNaN(cpuUsage) || !isFinite(cpuUsage) || cpuUsage <= 0) {
-      this.log.debug('***Invalid cpu usage. Returning the previous one.');
-      return this.lastCpuUsage.toFixed(2);
-    }
-    this.prevCpus = deepCopy(currCpus);
-    this.lastCpuUsage = cpuUsage;
-    return cpuUsage.toFixed(2);
-  };
-
-  private startCpuMemoryDump() {
-    clearInterval(this.memoryInterval);
-    clearTimeout(this.memoryTimeout);
-
-    const interval = () => {
-      // Get the cpu usage
-      const cpuUsage = this.getCpuUsage();
-
-      // Get the memory usage
-      const memoryUsageRaw = process.memoryUsage();
-      this.memoryData.push({ ...memoryUsageRaw, cpu: cpuUsage });
-      const memoryUsage = {
-        rss: this.formatMemoryUsage(memoryUsageRaw.rss),
-        heapTotal: this.formatMemoryUsage(memoryUsageRaw.heapTotal),
-        heapUsed: this.formatMemoryUsage(memoryUsageRaw.heapUsed),
-        external: this.formatMemoryUsage(memoryUsageRaw.external),
-        arrayBuffers: this.formatMemoryUsage(memoryUsageRaw.arrayBuffers),
-      };
-
-      this.log.debug(
-        `***Cpu usage: ${CYAN}${cpuUsage.padStart(6, ' ')} %${db} - Memory usage: rss ${CYAN}${memoryUsage.rss}${db} heapTotal ${CYAN}${memoryUsage.heapTotal}${db} heapUsed ${CYAN}${memoryUsage.heapUsed}${db} external ${memoryUsage.external} arrayBuffers ${memoryUsage.arrayBuffers}`,
-      );
-
-      // Update the system information
-      this.matterbridge.systemInformation.freeMemory = this.formatMemoryUsage(os.freemem());
-      this.matterbridge.systemInformation.totalMemory = this.formatMemoryUsage(os.totalmem());
-      this.matterbridge.systemInformation.systemUptime = this.formatOsUpTime();
-      this.matterbridge.systemInformation.cpuUsed = cpuUsage;
-      this.matterbridge.systemInformation.rss = this.formatMemoryUsage(process.memoryUsage().rss);
-      this.matterbridge.systemInformation.heapTotal = this.formatMemoryUsage(process.memoryUsage().heapTotal);
-      this.matterbridge.systemInformation.heapUsed = this.formatMemoryUsage(process.memoryUsage().heapUsed);
-
-      this.wssSendCpuUpdate(this.matterbridge.systemInformation.cpuUsed);
-      this.wssSendMemoryUpdate(
-        this.matterbridge.systemInformation.freeMemory,
-        this.matterbridge.systemInformation.totalMemory,
-        this.matterbridge.systemInformation.systemUptime,
-        this.matterbridge.systemInformation.rss,
-        this.matterbridge.systemInformation.heapUsed,
-        this.matterbridge.systemInformation.heapTotal,
-      );
-    };
-    interval();
-    this.memoryInterval = setInterval(interval, getIntParameter('memoryinterval') ?? 1000).unref(); // 1 second
-    this.memoryTimeout = setTimeout(
-      () => {
-        this.stopCpuMemoryDump();
-      },
-      getIntParameter('memorytimeout') ?? 600000, // 10 minutes
-    ).unref();
-  }
-
-  private stopCpuMemoryDump() {
-    clearInterval(this.memoryInterval);
-    this.memoryInterval = undefined;
-    clearTimeout(this.memoryTimeout);
-    this.memoryTimeout = undefined;
-    for (const memory of this.memoryData) {
-      const memoryUsage = {
-        rss: this.formatMemoryUsage(memory.rss),
-        heapTotal: this.formatMemoryUsage(memory.heapTotal),
-        heapUsed: this.formatMemoryUsage(memory.heapUsed),
-        external: this.formatMemoryUsage(memory.external),
-        arrayBuffers: this.formatMemoryUsage(memory.arrayBuffers),
-      };
-      // eslint-disable-next-line no-console
-      console.log(
-        `${YELLOW}Cpu usage:${db} ${CYAN}${memory.cpu.padStart(6, ' ')} %${db} - ${YELLOW}Memory usage:${db} rss ${CYAN}${memoryUsage.rss}${db} heapTotal ${CYAN}${memoryUsage.heapTotal}${db} heapUsed ${CYAN}${memoryUsage.heapUsed}${db} external ${memoryUsage.external} arrayBuffers ${memoryUsage.arrayBuffers}${rs}`,
-      );
-    }
-    this.memoryData = [];
-    this.prevCpus = [];
-  }
-
   /**
    * Retrieves the api settings data.
    * @returns {Promise<object>} A promise that resolve in the api settings object.
    */
   private async getApiSettings() {
+    const { lastCpuUsage } = await import('./cli.js');
+
     // Update the system information
     this.matterbridge.systemInformation.totalMemory = this.formatMemoryUsage(os.totalmem());
     this.matterbridge.systemInformation.freeMemory = this.formatMemoryUsage(os.freemem());
-    this.matterbridge.systemInformation.systemUptime = this.formatOsUpTime();
-    this.matterbridge.systemInformation.cpuUsed = this.getCpuUsage();
+    this.matterbridge.systemInformation.systemUptime = this.formatOsUpTime(os.uptime());
+    this.matterbridge.systemInformation.processUptime = this.formatOsUpTime(Math.floor(process.uptime()));
+    this.matterbridge.systemInformation.cpuUsage = lastCpuUsage.toFixed(2) + ' %';
     this.matterbridge.systemInformation.rss = this.formatMemoryUsage(process.memoryUsage().rss);
     this.matterbridge.systemInformation.heapTotal = this.formatMemoryUsage(process.memoryUsage().heapTotal);
     this.matterbridge.systemInformation.heapUsed = this.formatMemoryUsage(process.memoryUsage().heapUsed);
@@ -1609,13 +1515,12 @@ export class Frontend {
    * Sends a memory update message to all connected clients.
    *
    */
-  wssSendCpuUpdate(cpuUsed: string) {
-    this.log.debug('Sending a memory update message to all connected clients');
-    this.matterbridge.matterbridgeInformation.restartRequired = true;
+  wssSendCpuUpdate(cpuUsage: number) {
+    this.log.debug('Sending a cpu update message to all connected clients');
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ id: WS_ID_CPU_UPDATE, src: 'Matterbridge', dst: 'Frontend', method: 'cpu_update', params: { cpuUsed } }));
+        client.send(JSON.stringify({ id: WS_ID_CPU_UPDATE, src: 'Matterbridge', dst: 'Frontend', method: 'cpu_update', params: { cpuUsage } }));
       }
     });
   }
@@ -1624,13 +1529,26 @@ export class Frontend {
    * Sends a cpu update message to all connected clients.
    *
    */
-  wssSendMemoryUpdate(freeMemory: string, totalMemory: string, systemUptime: string, rss: string, heapUsed: string, heapTotal: string) {
-    this.log.debug('Sending a cpu update message to all connected clients');
-    this.matterbridge.matterbridgeInformation.restartRequired = true;
+  wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string) {
+    this.log.debug('Sending a memory update message to all connected clients');
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ id: WS_ID_MEMORY_UPDATE, src: 'Matterbridge', dst: 'Frontend', method: 'memory_update', params: { freeMemory, totalMemory, systemUptime, rss, heapUsed, heapTotal } }));
+        client.send(JSON.stringify({ id: WS_ID_MEMORY_UPDATE, src: 'Matterbridge', dst: 'Frontend', method: 'memory_update', params: { totalMemory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers } }));
+      }
+    });
+  }
+
+  /**
+   * Sends a memory update message to all connected clients.
+   *
+   */
+  wssSendUptimeUpdate(systemUptime: string, processUptime: string) {
+    this.log.debug('Sending a uptime update message to all connected clients');
+    // Send the message to all connected clients
+    this.webSocketServer?.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ id: WS_ID_UPTIME_UPDATE, src: 'Matterbridge', dst: 'Frontend', method: 'uptime_update', params: { systemUptime, processUptime } }));
       }
     });
   }

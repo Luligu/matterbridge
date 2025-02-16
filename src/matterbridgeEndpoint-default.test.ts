@@ -111,49 +111,57 @@ describe('MatterbridgeEndpoint class', () => {
     });
   }
 
-  // Spy on and mock AnsiLogger.log
-  const loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
-    //
-  });
-  // Spy on and mock console.log
-  const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
-    //
-  });
-  // Spy on and mock console.log
-  const consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {
-    //
-  });
-  // Spy on and mock console.log
-  const consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {
-    //
-  });
-  // Spy on and mock console.log
-  const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
-    //
-  });
-  // Spy on and mock console.log
-  const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
-    //
-  });
+  let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
+  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
+  const debug = false;
 
-  /*
-  // Spy on AnsiLogger.log
-  const loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  // Spy on console.log
-  const consoleLogSpy = jest.spyOn(console, 'log');
-  // Spy on console.debug
-  const consoleDebugSpy = jest.spyOn(console, 'debug');
-  // Spy on console.info
-  const consoleInfoSpy = jest.spyOn(console, 'info');
-  // Spy on console.warn
-  const consoleWarnSpy = jest.spyOn(console, 'warn');
-  // Spy on console.error
-  const consoleErrorSpy = jest.spyOn(console, 'error');
-  */
+  if (!debug) {
+    // Spy on and mock AnsiLogger.log
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
+      //
+    });
+    // Spy on and mock console.log
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
+      //
+    });
+    // Spy on and mock console.debug
+    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {
+      //
+    });
+    // Spy on and mock console.info
+    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {
+      //
+    });
+    // Spy on and mock console.warn
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
+      //
+    });
+    // Spy on and mock console.error
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
+      //
+    });
+  } else {
+    // Spy on AnsiLogger.log
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
+    // Spy on console.log
+    consoleLogSpy = jest.spyOn(console, 'log');
+    // Spy on console.debug
+    consoleDebugSpy = jest.spyOn(console, 'debug');
+    // Spy on console.info
+    consoleInfoSpy = jest.spyOn(console, 'info');
+    // Spy on console.warn
+    consoleWarnSpy = jest.spyOn(console, 'warn');
+    // Spy on console.error
+    consoleErrorSpy = jest.spyOn(console, 'error');
+  }
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
-    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-profile', 'JestDefault', '-bridge', '-logger', 'info', '-matterlogger', 'info'];
+    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-profile', 'JestDefault', '-bridge', '-logger', 'info', '-matterlogger', 'info'];
     matterbridge = await Matterbridge.loadInstance(true);
     await matterbridge.matterStorageManager?.createContext('events')?.clearAll();
     await matterbridge.matterStorageManager?.createContext('fabrics')?.clearAll();
@@ -176,6 +184,11 @@ describe('MatterbridgeEndpoint class', () => {
   afterAll(async () => {
     // Close the Matterbridge instance
     await matterbridge.destroyInstance();
+
+    // Cleanup the storages
+    process.argv.push('-factoryreset');
+    (matterbridge as any).initialized = true;
+    await (matterbridge as any).parseCommandLine();
 
     // Restore all mocks
     jest.restoreAllMocks();

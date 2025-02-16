@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-childbridge', '-profile', 'Jest', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
+process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-childbridge', '-frontend', '8802', '-profile', 'JestChildbridge', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
 
 import { jest } from '@jest/globals';
 
@@ -17,6 +17,12 @@ import os from 'os';
 const plg = '\u001B[38;5;33m';
 const dev = '\u001B[38;5;79m';
 const typ = '\u001B[38;5;207m';
+
+const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
+  // eslint-disable-next-line no-console
+  console.log('mockImplementation of process.exit() called');
+  return undefined as never;
+});
 
 describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   let matterbridge: Matterbridge;
@@ -99,7 +105,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     matterbridge = await Matterbridge.loadInstance(true);
 
     expect(matterbridge).toBeDefined();
-    expect(matterbridge.profile).toBe('Jest');
+    expect(matterbridge.profile).toBe('JestChildbridge');
     expect(matterbridge.bridgeMode).toBe('childbridge');
 
     // Clear all plugins
@@ -122,13 +128,13 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
 
     expect((matterbridge as any).nodeStorage).toBeDefined();
     expect((matterbridge as any).nodeContext).toBeDefined();
-    expect((matterbridge as any).nodeStorageName).toBe('storage.Jest');
+    expect((matterbridge as any).nodeStorageName).toBe('storage.JestChildbridge');
 
     expect((matterbridge as any).matterStorageService).toBeDefined();
     expect((matterbridge as any).matterStorageManager).toBeDefined();
     expect((matterbridge as any).matterbridgeContext).toBeDefined();
     expect((matterbridge as any).mattercontrollerContext).toBeUndefined();
-    expect((matterbridge as any).matterStorageName).toBe('matterstorage.Jest');
+    expect((matterbridge as any).matterStorageName).toBe('matterstorage.JestChildbridge');
 
     expect((matterbridge as any).matterStorageService).toBeDefined();
     expect((matterbridge as any).matterStorageManager).toBeDefined();
@@ -153,7 +159,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       true,
     );
     // expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8802${UNDERLINEOFF}${rs}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in childbridge mode...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval in childbridge mode`);
   }, 60000);
@@ -161,5 +167,12 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   test('Matterbridge.destroyInstance() -childbridge mode', async () => {
     await matterbridge.destroyInstance();
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+  }, 60000);
+
+  test('Cleanup storage', async () => {
+    process.argv.push('-factoryreset');
+    (matterbridge as any).initialized = true;
+    await (matterbridge as any).parseCommandLine();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
   }, 60000);
 });

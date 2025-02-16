@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-profile', 'Jest'];
+process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-profile', 'JestPluginManager'];
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, db, er, LogLevel, nf, nt, pl, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
@@ -9,10 +9,11 @@ import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { execSync } from 'child_process';
-import { getMacAddress, waiter } from './utils/utils.js';
+import { waiter } from './utils/utils.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { DeviceManager } from './deviceManager.js';
+import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -23,6 +24,8 @@ describe('PluginManager', () => {
   let matterbridge: Matterbridge;
   let plugins: PluginManager;
   let devices: DeviceManager;
+
+  let parseSpy: jest.SpiedFunction<typeof JSON.parse>;
 
   let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -78,18 +81,18 @@ describe('PluginManager', () => {
   });
 
   beforeEach(async () => {
+    // Spy on JSON.parse
+    parseSpy = jest.spyOn(JSON, 'parse');
     // Clear all mocks
     jest.clearAllMocks();
   });
 
   afterEach(async () => {
-    //
+    // Restore JSON.parse
+    parseSpy.mockRestore();
   });
 
   afterAll(async () => {
-    // Destroy the matterbridge instance
-    await matterbridge.destroyInstance();
-
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -112,11 +115,17 @@ describe('PluginManager', () => {
   test('size returns correct number of plugins', () => {
     expect(plugins.size).toBe(0);
     expect(plugins.length).toBe(0);
-    (plugins as any)._plugins.set('matterbridge-mock1', { name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
-    (plugins as any)._plugins.set('matterbridge-mock2', { name: 'matterbridge-mock2', path: './src/mock/plugin2/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
-    (plugins as any)._plugins.set('matterbridge-mock3', { name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
+    plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
+    plugins.set({ name: 'matterbridge-mock2', path: './src/mock/plugin2/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
+    plugins.set({ name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
     expect(plugins.size).toBe(3);
     expect(plugins.length).toBe(3);
+    expect(plugins.array()).toHaveLength(3);
+    expect(plugins.array()).toEqual([
+      { 'author': 'To update', 'description': 'To update', 'name': 'matterbridge-mock1', 'path': './src/mock/plugin1/package.json', 'type': 'Unknown', 'version': '1.0.0' },
+      { 'author': 'To update', 'description': 'To update', 'name': 'matterbridge-mock2', 'path': './src/mock/plugin2/package.json', 'type': 'Unknown', 'version': '1.0.0' },
+      { 'author': 'To update', 'description': 'To update', 'name': 'matterbridge-mock3', 'path': './src/mock/plugin3/package.json', 'type': 'Unknown', 'version': '1.0.0' },
+    ]);
   });
 
   test('has returns true if plugin exists', () => {
@@ -180,7 +189,211 @@ describe('PluginManager', () => {
     expect(await plugins.resolve('./src/mock/plugin3')).not.toBeNull();
   });
 
+  test('resolve plugin should fail', async () => {
+    const result = await plugins.resolve('xyz');
+    expect(result).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Package.json not found at'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Trying at'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Failed to resolve plugin path'));
+  });
+
+  test('resolve plugin should log errors', async () => {
+    const packageFilePath = path.join('.', 'src', 'mock', 'plugintest', 'package.json');
+    await fs.writeFile(packageFilePath, JSON.stringify({ notname: 'test', type: 'module', main: 'index.js' }), 'utf8');
+    let result = await plugins.resolve('./src/mock/plugintest');
+    expect(result).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Package.json name not found'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'notmodule', main: 'index.js' }), 'utf8');
+    result = await plugins.resolve('./src/mock/plugintest');
+    expect(result).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('is not a module'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', notmain: 'index.js' }), 'utf8');
+    result = await plugins.resolve('./src/mock/plugintest');
+    expect(result).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('has no main entrypoint'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', dependencies: { matterbridge: '1.0.0' } }), 'utf8');
+    result = await plugins.resolve('./src/mock/plugintest');
+    expect(result).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found matterbridge package in the plugin dependencies.'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', devDependencies: { matterbridge: '1.0.0' } }), 'utf8');
+    result = await plugins.resolve('./src/mock/plugintest');
+    expect(result).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found matterbridge package in the plugin devDependencies.'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', peerDependencies: { matterbridge: '1.0.0' } }), 'utf8');
+    result = await plugins.resolve('./src/mock/plugintest');
+    expect(result).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found matterbridge package in the plugin peerDependencies.'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', dependencies: { '@project-chip': '1.0.0' } }), 'utf8');
+    result = await plugins.resolve('./src/mock/plugintest');
+    expect(result).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', devDependencies: { '@project-chip': '1.0.0' } }), 'utf8');
+    result = await plugins.resolve('./src/mock/plugintest');
+    expect(result).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', peerDependencies: { '@project-chip': '1.0.0' } }), 'utf8');
+    result = await plugins.resolve('./src/mock/plugintest');
+    expect(result).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', dependencies: { '@matter': '1.0.0' } }), 'utf8');
+    result = await plugins.resolve('./src/mock/plugintest');
+    expect(result).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', devDependencies: { '@matter': '1.0.0' } }), 'utf8');
+    result = await plugins.resolve('./src/mock/plugintest');
+    expect(result).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', peerDependencies: { '@matter': '1.0.0' } }), 'utf8');
+    result = await plugins.resolve('./src/mock/plugintest');
+    expect(result).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js' }), 'utf8');
+    result = await plugins.resolve('./src/mock/plugintest');
+    expect(result).not.toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Resolved plugin path'));
+  });
+
   test('parse plugin', async () => {
+    const packageFilePath = path.join('.', 'src', 'mock', 'plugintest', 'package.json');
+    (plugins as any)._plugins.set('matterbridge-test', { name: 'matterbridge-test', path: './src/mock/plugintest/package.json', type: 'Any', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' });
+    const plugin = plugins.get('matterbridge-test');
+    expect(plugin).not.toBeUndefined();
+    if (!plugin) return;
+    expect(await plugins.parse(plugin)).not.toBeNull();
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
+    expect(await plugins.parse(plugin)).not.toBeNull();
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ notname: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
+    expect(await plugins.parse(plugin)).not.toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, expect.stringContaining('has no name in package.json'));
+    expect(plugin.name).toBe('Unknown name');
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', notversion: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
+    expect(await plugins.parse(plugin)).not.toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, expect.stringContaining('has no version in package.json'));
+    expect(plugin.version).toBe('1.0.0');
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', version: '1.0.0', notdescription: 'To update', author: 'To update' }), 'utf8');
+    expect(await plugins.parse(plugin)).not.toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, expect.stringContaining('has no description in package.json'));
+    expect(plugin.description).toBe('Unknown description');
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', notauthor: 'To update' }), 'utf8');
+    expect(await plugins.parse(plugin)).not.toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, expect.stringContaining('has no author in package.json'));
+    expect(plugin.author).toBe('Unknown author');
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', nottype: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
+    expect(await plugins.parse(plugin)).not.toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('is not a module'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'notmodule', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
+    expect(await plugins.parse(plugin)).not.toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('is not a module'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', notmain: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
+    expect(await plugins.parse(plugin)).not.toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('has no main entrypoint in package.json'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
+    plugin.type = undefined as unknown as string;
+    expect(await plugins.parse(plugin)).not.toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, expect.stringContaining('has no type'));
+    plugin.type = 'Any';
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ dependencies: { matterbridge: '1.0.0' }, name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
+    expect(await plugins.parse(plugin)).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found matterbridge package'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ devDependencies: { matterbridge: '1.0.0' }, name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
+    expect(await plugins.parse(plugin)).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found matterbridge package'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ peerDependencies: { matterbridge: '1.0.0' }, name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
+    expect(await plugins.parse(plugin)).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found matterbridge package'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ dependencies: { '@project-chip': '1.0.0' }, name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
+    expect(await plugins.parse(plugin)).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ devDependencies: { '@project-chip': '1.0.0' }, name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
+    expect(await plugins.parse(plugin)).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ peerDependencies: { '@project-chip': '1.0.0' }, name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
+    expect(await plugins.parse(plugin)).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ dependencies: { '@matter': '1.0.0' }, name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
+    expect(await plugins.parse(plugin)).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ devDependencies: { '@matter': '1.0.0' }, name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
+    expect(await plugins.parse(plugin)).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ peerDependencies: { '@matter': '1.0.0' }, name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
+    expect(await plugins.parse(plugin)).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+
+    loggerLogSpy.mockClear();
+    await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
+    loggerLogSpy.mockImplementationOnce((level: string, message: string, ...parameters: any[]) => {
+      throw new Error('Test error');
+    });
+    expect(await plugins.parse(plugin)).toBeNull();
+    expect(plugin.error).toBe(true);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Failed to parse package.json of plugin'));
+    plugin.error = false;
+
+    (plugins as any)._plugins.delete('matterbridge-test');
+  });
+
+  test('parse registered plugin', async () => {
     let count = 0;
     for (const plugin of plugins) {
       expect(await plugins.parse(plugin)).not.toBeNull();
@@ -200,17 +413,38 @@ describe('PluginManager', () => {
   });
 
   test('enable plugin', async () => {
+    expect(await plugins.enable(undefined as unknown as string)).toBeNull();
+    expect(await plugins.enable(null as unknown as string)).toBeNull();
     expect(await plugins.enable('')).toBeNull();
     expect(await plugins.enable('xyz')).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to enable plugin ${plg}xyz${er}: package.json not found`);
 
+    loggerLogSpy.mockClear();
     expect(await plugins.enable('./src/mock/plugin1')).not.toBeNull();
     expect((await plugins.enable('./src/mock/plugin1'))?.enabled).toBeTruthy();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Enabled plugin ${plg}matterbridge-mock1${nf}`);
 
+    loggerLogSpy.mockClear();
     expect(await plugins.enable('./src/mock/plugin2')).not.toBeNull();
     expect((await plugins.enable('./src/mock/plugin2'))?.enabled).toBeTruthy();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Enabled plugin ${plg}matterbridge-mock2${nf}`);
 
+    loggerLogSpy.mockClear();
     expect(await plugins.enable('./src/mock/plugin3')).not.toBeNull();
     expect((await plugins.enable('./src/mock/plugin3'))?.enabled).toBeTruthy();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Enabled plugin ${plg}matterbridge-mock3${nf}`);
+
+    loggerLogSpy.mockClear();
+    expect(await plugins.enable('./src/mock/plugintest/package.json')).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to enable plugin ${plg}./src/mock/plugintest/package.json${er}: plugin not registered`);
+
+    loggerLogSpy.mockClear();
+    jest.spyOn(plugins, 'saveToStorage').mockImplementationOnce(async () => {
+      throw new Error('Test error');
+    });
+    expect(await plugins.enable('./src/mock/plugin3')).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Enabled plugin ${plg}matterbridge-mock3${nf}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to parse package.json of plugin`));
   });
 
   test('disable plugin', async () => {
@@ -225,6 +459,18 @@ describe('PluginManager', () => {
 
     expect(await plugins.disable('./src/mock/plugin3')).not.toBeNull();
     expect((await plugins.disable('./src/mock/plugin3'))?.enabled).toBeFalsy();
+
+    loggerLogSpy.mockClear();
+    expect(await plugins.disable('./src/mock/plugintest/package.json')).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to disable plugin ${plg}./src/mock/plugintest/package.json${er}: plugin not registered`);
+
+    loggerLogSpy.mockClear();
+    jest.spyOn(plugins, 'saveToStorage').mockImplementationOnce(async () => {
+      throw new Error('Test error');
+    });
+    expect(await plugins.disable('./src/mock/plugin3')).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Disabled plugin ${plg}matterbridge-mock3${nf}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to parse package.json of plugin`));
   });
 
   test('remove plugin', async () => {
@@ -241,6 +487,21 @@ describe('PluginManager', () => {
 
     expect(await plugins.remove('./src/mock/plugin3')).not.toBeNull();
     expect(plugins.length).toBe(0);
+
+    loggerLogSpy.mockClear();
+    expect(await plugins.remove('./src/mock/plugintest/package.json')).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to remove plugin ${plg}./src/mock/plugintest/package.json${er}: plugin not registered`);
+
+    loggerLogSpy.mockClear();
+    plugins.set({ name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
+    jest.spyOn(plugins, 'saveToStorage').mockImplementationOnce(async () => {
+      throw new Error('Test error');
+    });
+    expect(await plugins.remove('./src/mock/plugin3')).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Removed plugin ${plg}matterbridge-mock3${nf}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to parse package.json of plugin`));
+
+    expect(plugins.length).toBe(0);
   });
 
   test('add plugin', async () => {
@@ -255,6 +516,20 @@ describe('PluginManager', () => {
     expect(plugins.length).toBe(2);
     expect(await plugins.add('./src/mock/plugin3')).not.toBeNull();
     expect(await plugins.add('matterbridge-mock3')).toBeNull();
+    expect(plugins.length).toBe(3);
+
+    loggerLogSpy.mockClear();
+    expect(await plugins.remove('./src/mock/plugin3')).not.toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Removed plugin ${plg}matterbridge-mock3${nf}`);
+
+    loggerLogSpy.mockClear();
+    jest.spyOn(plugins, 'saveToStorage').mockImplementationOnce(async () => {
+      throw new Error('Test error');
+    });
+    expect(await plugins.add('./src/mock/plugin3')).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-mock3${nf}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to parse package.json of plugin`));
+
     expect(plugins.length).toBe(3);
   });
 
@@ -275,6 +550,7 @@ describe('PluginManager', () => {
 
   test('add/disable/enable/remove plugin matterbridge-eve-door', async () => {
     execSync('npm install -g matterbridge-eve-door --omit=dev');
+
     expect(plugins.length).toBe(0);
     expect(await plugins.add('matterbridge-eve-door')).not.toBeNull();
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-eve-door${nf}`);
@@ -311,13 +587,15 @@ describe('PluginManager', () => {
   });
 
   test('install plugin matterbridge-xyz', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     expect(await plugins.install('matterbridge-xyz')).toBeUndefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Installing plugin ${plg}matterbridge-xyz${nf}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to install plugin ${plg}matterbridge-xyz${er}:`));
   }, 300000);
 
   test('install plugin matterbridge-example-accessory-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     const version = await plugins.install('matterbridge-example-accessory-platform');
     expect(version).not.toBeUndefined();
@@ -326,7 +604,7 @@ describe('PluginManager', () => {
   }, 300000);
 
   test('install plugin matterbridge-example-dynamic-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     const version = await plugins.install('matterbridge-example-dynamic-platform');
     expect(version).not.toBeUndefined();
@@ -335,7 +613,7 @@ describe('PluginManager', () => {
   }, 300000);
 
   test('add plugin matterbridge-xyz', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     expect(plugins.length).toBe(0);
     const plugin = await plugins.add('matterbridge-xyz');
@@ -345,13 +623,34 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('add plugin matterbridge-example-accessory-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     expect(plugins.length).toBe(0);
     const plugin = await plugins.add('matterbridge-example-accessory-platform');
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-example-accessory-platform${nf}`);
     expect(plugin).not.toBeNull();
     expect(plugins.length).toBe(1);
+
+    loggerLogSpy.mockClear();
+    expect(await plugins.add('matterbridge-example-accessory-platform')).toBe(null);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Plugin ${plg}matterbridge-example-accessory-platform${nf} already registered`);
+    expect(plugins.length).toBe(1);
+
+    /*
+    loggerLogSpy.mockClear();
+    let count = 0;
+    const parseSpy = jest.spyOn(JSON, 'parse').mockImplementation(() => {
+      count++;
+      if (count === 1) {
+        return {};
+      }
+      throw new Error('Test error');
+    });
+    expect(await plugins.add('matterbridge-example-accessory-platform')).toBe(null);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to parse package.json of plugin ${plg}matterbridge-example-accessory-platform${er}: Test error`);
+    expect(plugins.length).toBe(1);
+    jest.spyOn(JSON, 'parse');
+    */
 
     const newPlugin = plugins.get('matterbridge-example-accessory-platform');
     expect(newPlugin).not.toBeUndefined();
@@ -361,7 +660,7 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('add plugin matterbridge-example-dynamic-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     expect(plugins.length).toBe(1);
     const plugin = await plugins.add('matterbridge-example-dynamic-platform');
@@ -377,7 +676,7 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('load default config plugin matterbridge-example-accessory-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     const configFileName = path.join(matterbridge.matterbridgeDirectory, `matterbridge-example-accessory-platform.config.json`);
     const deleteConfig = async () => {
@@ -426,7 +725,7 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('save config from plugin matterbridge-example-accessory-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     expect(plugins.length).toBe(2);
     const plugin = plugins.get('matterbridge-example-accessory-platform');
@@ -434,16 +733,35 @@ describe('PluginManager', () => {
     if (!plugin) return;
     const platform = await plugins.load(plugin);
     expect(platform).toBeDefined();
+    expect(plugin.platform).toBeDefined();
+    if (!plugin.platform) return;
     expect(plugin.name).toBe('matterbridge-example-accessory-platform');
     expect(plugin.type).toBe('AccessoryPlatform');
+
+    const config = plugin.platform.config;
+    plugin.platform.config = undefined as unknown as PlatformConfig;
+    await expect(plugins.saveConfigFromPlugin(plugin)).rejects.toThrow(`Error saving config file for plugin ${plg}${plugin.name}${er}: config not found`);
+    plugin.platform.config = config;
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Error saving config file for plugin ${plg}${plugin.name}${er}: config not found`);
+
+    loggerLogSpy.mockClear();
+    jest.spyOn(fs, 'writeFile').mockImplementationOnce(async () => {
+      throw new Error('Test error');
+    });
+    // await plugins.saveConfigFromPlugin(plugin);
+    await expect(plugins.saveConfigFromPlugin(plugin)).rejects.toThrow();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error saving config file`));
+
+    loggerLogSpy.mockClear();
     await plugins.saveConfigFromPlugin(plugin);
     const configFile = path.join(matterbridge.matterbridgeDirectory, `${plugin.name}.config.json`);
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
+
     await plugins.shutdown(plugin, 'Test with Jest', true, true);
   }, 60000);
 
   test('save config from json matterbridge-example-accessory-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     expect(plugins.length).toBe(2);
     const plugin = plugins.get('matterbridge-example-accessory-platform');
@@ -453,15 +771,32 @@ describe('PluginManager', () => {
     expect(platform).toBeDefined();
     expect(plugin.name).toBe('matterbridge-example-accessory-platform');
     expect(plugin.type).toBe('AccessoryPlatform');
-    const config = await plugins.loadConfig(plugin);
+
+    let config = await plugins.loadConfig(plugin);
+    config.name = undefined;
+    loggerLogSpy.mockClear();
+    await plugins.saveConfigFromJson(plugin, config);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error saving config file for plugin ${plg}${plugin.name}${er}.`), expect.any(Object));
+
+    loggerLogSpy.mockClear();
+    jest.spyOn(fs, 'writeFile').mockImplementationOnce(async () => {
+      throw new Error('Test error');
+    });
+    config = await plugins.loadConfig(plugin);
+    await plugins.saveConfigFromJson(plugin, config);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error saving config file`));
+
+    loggerLogSpy.mockClear();
+    config = await plugins.loadConfig(plugin);
     await plugins.saveConfigFromJson(plugin, config);
     const configFile = path.join(matterbridge.matterbridgeDirectory, `${plugin.name}.config.json`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.DEBUG, `Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
+
     await plugins.shutdown(plugin, 'Test with Jest', true, true);
   }, 60000);
 
   test('load schema plugin matterbridge-example-accessory-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     expect(plugins.length).toBe(2);
     const plugin = plugins.get('matterbridge-example-accessory-platform');
@@ -491,7 +826,7 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('load default schema plugin matterbridge-example-accessory-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     expect(plugins.length).toBe(2);
     const plugin = plugins.get('matterbridge-example-accessory-platform');
@@ -521,13 +856,27 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('should not load plugin matterbridge-example-accessory-platform if parse error', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
 
-    jest.spyOn(JSON, 'parse').mockImplementationOnce(() => {
+    loggerLogSpy.mockClear();
+    plugin.enabled = false;
+    await plugins.load(plugin, false, 'Test with Jest');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Plugin ${plg}${plugin.name}${er} not enabled`);
+    plugin.enabled = true;
+
+    loggerLogSpy.mockClear();
+    const savedPlatform = plugin.platform;
+    plugin.platform = {} as unknown as MatterbridgePlatform;
+    await plugins.load(plugin, false, 'Test with Jest');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Plugin ${plg}${plugin.name}${er} already loaded`);
+    plugin.platform = savedPlatform;
+
+    loggerLogSpy.mockClear();
+    parseSpy.mockImplementationOnce(() => {
       throw new Error('Test error');
     });
     const platform = await plugins.load(plugin, false, 'Test with Jest');
@@ -537,7 +886,7 @@ describe('PluginManager', () => {
   });
 
   test('load plugin matterbridge-example-accessory-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
@@ -566,7 +915,7 @@ describe('PluginManager', () => {
   });
 
   test('load, start and configure in parallel plugin matterbridge-example-dynamic-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     const plugin = plugins.get('matterbridge-example-dynamic-platform');
     expect(plugin).not.toBeUndefined();
@@ -576,14 +925,6 @@ describe('PluginManager', () => {
     expect(plugin.loaded).toBe(undefined);
     expect(plugin.started).toBe(undefined);
     expect(plugin.configured).toBe(undefined);
-  });
-
-  test('wait for plugin matterbridge-example-dynamic-platform to load and start', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
-    const plugin = plugins.get('matterbridge-example-dynamic-platform');
-    expect(plugin).not.toBeUndefined();
-    if (!plugin) return;
     await waiter(
       'Plugin to start',
       () => {
@@ -599,7 +940,7 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('should not start plugin matterbridge-example-accessory-platform if not loaded', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
@@ -616,7 +957,7 @@ describe('PluginManager', () => {
   });
 
   test('should not start plugin matterbridge-example-accessory-platform if no platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
@@ -634,7 +975,7 @@ describe('PluginManager', () => {
   });
 
   test('should not start plugin matterbridge-example-accessory-platform if already started', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
@@ -651,7 +992,7 @@ describe('PluginManager', () => {
   });
 
   test('should log start plugin matterbridge-example-accessory-platform if it throws', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
@@ -673,7 +1014,7 @@ describe('PluginManager', () => {
   });
 
   test('start plugin matterbridge-example-accessory-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     let plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
@@ -700,7 +1041,7 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('configure plugin matterbridge-example-accessory-platform should log errors', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
@@ -732,7 +1073,7 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('configure plugin matterbridge-example-accessory-platform should log if it throws', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     // loggerLogSpy.mockRestore();
     // consoleLogSpy.mockRestore();
@@ -755,7 +1096,7 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('configure plugin matterbridge-example-accessory-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     let plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
@@ -773,7 +1114,7 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('should not shutdown plugin matterbridge-example-accessory-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
@@ -818,7 +1159,7 @@ describe('PluginManager', () => {
   });
 
   test('shutdown plugin matterbridge-example-accessory-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     let plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
@@ -855,7 +1196,7 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('shutdown plugin matterbridge-example-dynamic-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     let plugin = plugins.get('matterbridge-example-dynamic-platform');
     expect(plugin).not.toBeUndefined();
@@ -869,15 +1210,16 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('uninstall not existing plugin matterbridge-xyz', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     expect(await plugins.uninstall('matterbridge-xyz')).toBeDefined();
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalling plugin ${plg}matterbridge-xyz${nf}`);
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalled plugin ${plg}matterbridge-xyz${nf}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalling plugin ${plg}matterbridge-xyz${nf}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalled plugin ${plg}matterbridge-xyz${nf}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Uninstalled plugin ${plg}matterbridge-xyz${db}:`));
   }, 300000);
 
   test('uninstall plugin matterbridge-example-accessory-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     expect(await plugins.uninstall('matterbridge-example-accessory-platform')).toBeDefined();
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalling plugin ${plg}matterbridge-example-accessory-platform${nf}`);
@@ -885,19 +1227,54 @@ describe('PluginManager', () => {
   }, 300000);
 
   test('uninstall plugin matterbridge-example-dynamic-platform', async () => {
-    if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
 
     expect(await plugins.uninstall('matterbridge-example-dynamic-platform')).toBeDefined();
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalling plugin ${plg}matterbridge-example-dynamic-platform${nf}`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalled plugin ${plg}matterbridge-example-dynamic-platform${nf}`);
   }, 300000);
 
-  test('cleanup Jest profile', async () => {
-    plugins.clear();
-    expect(await plugins.saveToStorage()).toBe(0);
-    if (getMacAddress() === '30:f6:ef:69:2b:c5') {
-      execSync('npm uninstall -g matterbridge-example-accessory-platform');
-      execSync('npm uninstall -g matterbridge-example-dynamic-platform');
-    }
+  test('install not existing plugin matterbridge-xyz with mock', async () => {
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+
+    jest.unstable_mockModule('node:child_process', () => ({
+      exec: jest.fn((cmd, callback: (error: Error | null, stdout: string, stderr: string) => void) => {
+        callback(new Error('Test error'), '', '');
+      }),
+    }));
+    expect(await plugins.install('matterbridge-xyz')).toBeUndefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to install plugin ${plg}matterbridge-xyz${er}:`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Failed to install plugin ${plg}matterbridge-xyz${db}:`));
+    jest.unstable_mockModule('node:child_process', () => jest.requireActual('node:child_process'));
+  }, 300000);
+
+  test('uninstall not existing plugin matterbridge-xyz with mock', async () => {
+    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
+
+    jest.unstable_mockModule('node:child_process', () => ({
+      exec: jest.fn((cmd, callback: (error: Error | null, stdout: string, stderr: string) => void) => {
+        callback(new Error('Test error'), '', '');
+      }),
+    }));
+    expect(await plugins.uninstall('matterbridge-xyz')).toBeUndefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to uninstall plugin ${plg}matterbridge-xyz${er}:`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Failed to uninstall plugin ${plg}matterbridge-xyz${db}:`));
+    jest.unstable_mockModule('node:child_process', () => jest.requireActual('node:child_process'));
+  }, 300000);
+
+  test('Matterbridge.destroyInstance()', async () => {
+    // Close the Matterbridge instance
+    await matterbridge.destroyInstance();
+
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }, 60000);
+
+  test('Cleanup storage', async () => {
+    process.argv.push('-factoryreset');
+    (matterbridge as any).initialized = true;
+    await (matterbridge as any).parseCommandLine();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }, 60000);
 });

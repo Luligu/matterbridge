@@ -8,9 +8,8 @@ import CloseIcon from '@mui/icons-material/Close';
 
 // Local modules
 import { ConfirmCancelForm } from './ConfirmCancelForm';
-// import { debug } from '../App';
-
-const debug = true;
+import { debug } from '../App';
+// const debug = true;
 
 export const UiContext = createContext();
 

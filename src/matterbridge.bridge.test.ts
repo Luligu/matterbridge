@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-profile', 'Jest', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
+process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-frontend', '8801', '-profile', 'JestBridge', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
 
 import { jest } from '@jest/globals';
 
 // jest.mock('@project-chip/matter-node.js/util');
 
-import { AnsiLogger, db, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
-import { wait, waiter } from './utils/utils.js';
+import { waiter } from './utils/utils.js';
 import { Environment, StorageService } from '@matter/main';
 import path from 'path';
 import os from 'os';
@@ -18,6 +18,12 @@ import os from 'os';
 const plg = '\u001B[38;5;33m';
 const dev = '\u001B[38;5;79m';
 const typ = '\u001B[38;5;207m';
+
+const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
+  // eslint-disable-next-line no-console
+  console.log('mockImplementation of process.exit() called');
+  return undefined as never;
+});
 
 describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   let matterbridge: Matterbridge;
@@ -100,7 +106,8 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
 
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeDefined();
-    expect(matterbridge.profile).toBe('Jest');
+    matterbridge.log.warn('***Matterbridge instance loaded');
+    expect(matterbridge.profile).toBe('JestBridge');
     expect(matterbridge.bridgeMode).toBe('bridge');
 
     // Clear all plugins
@@ -123,13 +130,13 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
 
     expect((matterbridge as any).nodeStorage).toBeDefined();
     expect((matterbridge as any).nodeContext).toBeDefined();
-    expect((matterbridge as any).nodeStorageName).toBe('storage.Jest');
+    expect((matterbridge as any).nodeStorageName).toBe('storage.JestBridge');
 
     expect((matterbridge as any).matterStorageService).toBeDefined();
     expect((matterbridge as any).matterStorageManager).toBeDefined();
     expect((matterbridge as any).matterbridgeContext).toBeDefined();
     expect((matterbridge as any).mattercontrollerContext).toBeUndefined();
-    expect((matterbridge as any).matterStorageName).toBe('matterstorage.Jest');
+    expect((matterbridge as any).matterStorageName).toBe('matterstorage.JestBridge');
 
     expect((matterbridge as any).serverNode).toBeDefined();
     expect((matterbridge as any).aggregatorNode).toBeDefined();
@@ -150,7 +157,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
       true,
     );
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8283${UNDERLINEOFF}${rs}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8801${UNDERLINEOFF}${rs}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in bridge mode`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval for Matterbridge`);
@@ -161,5 +168,12 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     await matterbridge.destroyInstance();
 
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+  }, 60000);
+
+  test('Cleanup storage', async () => {
+    process.argv.push('-factoryreset');
+    (matterbridge as any).initialized = true;
+    await (matterbridge as any).parseCommandLine();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
   }, 60000);
 });

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'frontend.test.js', '-logger', 'info', '-matterlogger', 'notice', '-bridge', '-profile', 'Jest', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
+process.argv = ['node', 'frontend.test.js', '-logger', 'info', '-matterlogger', 'notice', '-bridge', '-profile', 'JestFrontend', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
@@ -14,6 +14,10 @@ import { RegisteredPlugin } from './matterbridgeTypes.js';
 import { MdnsService } from '@matter/main/protocol';
 import http from 'http';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+
+const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
+  return undefined as never;
+});
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -132,6 +136,15 @@ describe('Matterbridge frontend', () => {
       expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
       expect((matterbridge as any).frontend.expressApp).toBeDefined();
       expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
+
+      // prettier-ignore
+      await waiter('Initialize done', () => { return (matterbridge as any).initialized === true; });
+      // prettier-ignore
+      await waiter('Frontend Initialize done', () => { return (matterbridge as any).frontend.httpServer!==undefined; });
+      // prettier-ignore
+      await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).frontend.webSocketServer!==undefined; });
+      // prettier-ignore
+      await waiter('Matter server node started', () => { return (matterbridge as any).reachabilityTimeout; });
     });
 
     test('POST /api/login with valid password', async () => {
@@ -234,7 +247,7 @@ describe('Matterbridge frontend', () => {
     test('Matterbridge.loadInstance(true) -bridge mode and send /api/restart', async () => {
       matterbridge = await Matterbridge.loadInstance(true);
       expect(matterbridge).toBeDefined();
-      expect(matterbridge.profile).toBe('Jest');
+      expect(matterbridge.profile).toBe('JestFrontend');
       expect(matterbridge.bridgeMode).toBe('bridge');
       expect((matterbridge as any).initialized).toBe(true);
 
@@ -275,7 +288,7 @@ describe('Matterbridge frontend', () => {
     test('Matterbridge.loadInstance(true) -bridge mode and send /api/shutdown', async () => {
       matterbridge = await Matterbridge.loadInstance(true);
       expect(matterbridge).toBeDefined();
-      expect(matterbridge.profile).toBe('Jest');
+      expect(matterbridge.profile).toBe('JestFrontend');
       expect(matterbridge.bridgeMode).toBe('bridge');
       expect((matterbridge as any).initialized).toBe(true);
 
@@ -316,7 +329,7 @@ describe('Matterbridge frontend', () => {
     test('Matterbridge.loadInstance(true) -bridge mode', async () => {
       matterbridge = await Matterbridge.loadInstance(true);
       expect(matterbridge).toBeDefined();
-      expect(matterbridge.profile).toBe('Jest');
+      expect(matterbridge.profile).toBe('JestFrontend');
       expect(matterbridge.bridgeMode).toBe('bridge');
       expect((matterbridge as any).initialized).toBe(true);
 
@@ -1170,6 +1183,13 @@ describe('Matterbridge frontend', () => {
 
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `WebSocket server closed successfully`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    }, 60000);
+
+    test('Cleanup storage', async () => {
+      process.argv.push('-factoryreset');
+      (matterbridge as any).initialized = true;
+      await (matterbridge as any).parseCommandLine();
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
     }, 60000);
   });
 });

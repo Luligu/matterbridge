@@ -54,6 +54,17 @@ const dev = '\u001B[38;5;79m';
 const typ = '\u001B[38;5;207m';
 
 /**
+ * Represents the Matterbridge events.
+ */
+interface MatterbridgeEvent {
+  shutdown: [];
+  restart: [];
+  update: [];
+  startmemorycheck: [];
+  stopmemorycheck: [];
+}
+
+/**
  * Represents the Matterbridge application.
  */
 export class Matterbridge extends EventEmitter {
@@ -72,7 +83,8 @@ export class Matterbridge extends EventEmitter {
     totalMemory: '',
     freeMemory: '',
     systemUptime: '',
-    cpuUsed: '',
+    processUptime: '',
+    cpuUsage: '',
     rss: '',
     heapTotal: '',
     heapUsed: '',
@@ -179,6 +191,30 @@ export class Matterbridge extends EventEmitter {
   // We load asyncronously so is private
   protected constructor() {
     super();
+  }
+
+  /**
+   * Emits an event of the specified type with the provided arguments.
+   *
+   * @template K - The type of the event.
+   * @param {K} eventName - The name of the event to emit.
+   * @param {...MatterbridgeEvent[K]} args - The arguments to pass to the event listeners.
+   * @returns {boolean} - Returns true if the event had listeners, false otherwise.
+   */
+  override emit<K extends keyof MatterbridgeEvent>(eventName: K, ...args: MatterbridgeEvent[K]): boolean {
+    return super.emit(eventName, ...args);
+  }
+
+  /**
+   * Registers an event listener for the specified event type.
+   *
+   * @template K - The type of the event.
+   * @param {K} eventName - The name of the event to listen for.
+   * @param {(...args: MatterbridgeEvent[K]) => void} listener - The callback function to invoke when the event is emitted.
+   * @returns {this} - Returns the instance of the Matterbridge class.
+   */
+  override on<K extends keyof MatterbridgeEvent>(eventName: K, listener: (...args: MatterbridgeEvent[K]) => void): this {
+    return super.on(eventName, listener);
   }
 
   /**

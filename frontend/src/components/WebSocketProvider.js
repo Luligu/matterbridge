@@ -13,7 +13,8 @@ export const WS_ID_REFRESH_NEEDED = 1;
 export const WS_ID_RESTART_NEEDED = 2;
 export const WS_ID_CPU_UPDATE = 3;
 export const WS_ID_MEMORY_UPDATE = 4;
-export const WS_ID_SNACKBAR = 5;
+export const WS_ID_UPTIME_UPDATE = 5;
+export const WS_ID_SNACKBAR = 6;
 
 export const WebSocketMessagesContext = createContext(); // messages
 export const WebSocketContext = createContext(); // , setMessages, sendMessage, logMessage, setLogFilters, online, addListener, removeListener
