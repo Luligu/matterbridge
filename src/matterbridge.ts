@@ -136,6 +136,7 @@ export class Matterbridge extends EventEmitter {
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   public restartMode: 'service' | 'docker' | '' = '';
   public profile = getParameter('profile');
+  public shutdown = false;
   public edge = true;
 
   public log!: AnsiLogger;
@@ -605,7 +606,7 @@ export class Matterbridge extends EventEmitter {
       - disable [plugin name]: disable the globally installed plugin with the given name
       - reset [plugin path]:   remove the commissioning for the plugin from the given absolute or relative path (childbridge mode). Shutdown Matterbridge before using it!
       - reset [plugin name]:   remove the commissioning for the globally installed plugin (childbridge mode). Shutdown Matterbridge before using it!${rs}`);
-      this.emit('shutdown');
+      this.shutdown = true;
       return;
     }
 
@@ -633,7 +634,7 @@ export class Matterbridge extends EventEmitter {
           this.log.info(`  └─ endpoint ${RED}${device.endpoint}${nf} ${typ}${device.endpointName}${nf} ${debugStringify(device.clusterServersId)}`);
         }
       });
-      this.emit('shutdown');
+      this.shutdown = true;
       return;
     }
 
@@ -644,44 +645,45 @@ export class Matterbridge extends EventEmitter {
         this.log.info(`${plg}${plugin.name}${nf} storage log`);
         await plugin.nodeContext?.logStorage();
       }
-      this.emit('shutdown');
+      this.shutdown = true;
       return;
     }
 
     if (hasParameter('loginterfaces')) {
       this.log.info(`${plg}Matterbridge${nf} network interfaces log`);
       logInterfaces();
-      this.emit('shutdown');
+      this.shutdown = true;
       return;
     }
 
     if (getParameter('add')) {
       this.log.debug(`Adding plugin ${getParameter('add')}`);
       await this.plugins.add(getParameter('add') as string);
-      this.emit('shutdown');
+      this.shutdown = true;
       return;
     }
     if (getParameter('remove')) {
       this.log.debug(`Removing plugin ${getParameter('remove')}`);
       await this.plugins.remove(getParameter('remove') as string);
-      this.emit('shutdown');
+      this.shutdown = true;
       return;
     }
     if (getParameter('enable')) {
       this.log.debug(`Enabling plugin ${getParameter('enable')}`);
       await this.plugins.enable(getParameter('enable') as string);
-      this.emit('shutdown');
+      this.shutdown = true;
       return;
     }
     if (getParameter('disable')) {
       this.log.debug(`Disabling plugin ${getParameter('disable')}`);
       await this.plugins.disable(getParameter('disable') as string);
-      this.emit('shutdown');
+      this.shutdown = true;
       return;
     }
 
     if (hasParameter('factoryreset')) {
       await this.shutdownProcessAndFactoryReset();
+      this.shutdown = true;
       return;
     }
 
@@ -696,6 +698,7 @@ export class Matterbridge extends EventEmitter {
     // Clear the matterbridge context if the reset parameter is set
     if (hasParameter('reset') && getParameter('reset') === undefined) {
       await this.shutdownProcessAndReset();
+      this.shutdown = true;
       return;
     }
 
@@ -705,18 +708,21 @@ export class Matterbridge extends EventEmitter {
       const plugin = this.plugins.get(getParameter('reset') as string);
       if (plugin) {
         const matterStorageManager = await this.matterStorageService?.open(plugin.name);
-        if (!matterStorageManager) this.log.error(`Plugin ${plg}${plugin.name}${er} storageManager not found`);
-        await matterStorageManager?.createContext('events')?.clearAll();
-        await matterStorageManager?.createContext('fabrics')?.clearAll();
-        await matterStorageManager?.createContext('root')?.clearAll();
-        await matterStorageManager?.createContext('sessions')?.clearAll();
-        await matterStorageManager?.createContext('persist')?.clearAll();
-        this.log.info(`Reset commissionig for plugin ${plg}${plugin.name}${nf} done! Remove the device from the controller.`);
+        if (!matterStorageManager) {
+          this.log.error(`Plugin ${plg}${plugin.name}${er} storageManager not found`);
+        } else {
+          await matterStorageManager?.createContext('events')?.clearAll();
+          await matterStorageManager?.createContext('fabrics')?.clearAll();
+          await matterStorageManager?.createContext('root')?.clearAll();
+          await matterStorageManager?.createContext('sessions')?.clearAll();
+          await matterStorageManager?.createContext('persist')?.clearAll();
+          this.log.info(`Reset commissionig for plugin ${plg}${plugin.name}${nf} done! Remove the device from the controller.`);
+        }
       } else {
         this.log.warn(`Plugin ${plg}${getParameter('reset')}${wr} not registerd in matterbridge`);
       }
       await this.stopMatterStorage();
-      this.emit('shutdown');
+      this.shutdown = true;
       return;
     }
 
