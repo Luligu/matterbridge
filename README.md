@@ -167,7 +167,7 @@ The other Home Assistant Community Add-ons and plugins are not verified to work 
 ### Shelly
 
 <a href="https://github.com/Luligu/matterbridge-shelly">
-  <img src="screenshot/Shelly.png" alt="Shelly plugin logo" width="100" />
+  <img src="screenshot/Shelly.svg" alt="Shelly plugin logo" width="100" />
 </a>
 
 Matterbridge shelly plugin allows you to expose all Shelly Gen 1, Gen 2, Gen 3 and BLU devices to Matter.
@@ -196,7 +196,7 @@ Features:
 ### Zigbee2MQTT
 
 <a href="https://github.com/Luligu/matterbridge-zigbee2mqtt">
-  <img src="screenshot/Zigbee2MQTT.png" alt="Zigbee2MQTT plugin logo" width="100" />
+  <img src="screenshot/Zigbee2MQTT.svg" alt="Zigbee2MQTT plugin logo" width="100" />
 </a>
 
 Matterbridge zigbee2mqtt is a matterbridge production-level plugin that expose all zigbee2mqtt devices and groups to Matter.
@@ -206,7 +206,7 @@ No hub or dedicated hardware needed.
 ### Somfy tahoma
 
 <a href="https://github.com/Luligu/matterbridge-somfy-tahoma">
-  <img src="screenshot/Somfy.png" alt="Somfy plugin logo" width="100" />
+  <img src="screenshot/Somfy.svg" alt="Somfy plugin logo" width="100" />
 </a>
 
 Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose the Somfy Tahoma screen devices to Matter.
