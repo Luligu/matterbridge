@@ -12,6 +12,9 @@ import { wait, waiter } from './utils/utils.js';
 import { Environment, StorageService } from '@matter/main';
 import path from 'path';
 import os from 'os';
+import { PluginManager } from './pluginManager.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { pressureSensor } from './matterbridgeDeviceTypes.js';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -26,6 +29,7 @@ const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | num
 
 describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   let matterbridge: Matterbridge;
+  let plugins: PluginManager;
 
   let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -103,6 +107,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     await matterStorageManager?.createContext('sessions')?.clearAll();
 
     matterbridge = await Matterbridge.loadInstance(true);
+    plugins = (matterbridge as any).plugins;
 
     expect(matterbridge).toBeDefined();
     expect(matterbridge.profile).toBe('JestChildbridge');
@@ -158,15 +163,150 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       1000,
       true,
     );
+
     // expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8802${UNDERLINEOFF}${rs}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in childbridge mode...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval in childbridge mode`);
   }, 60000);
 
+  test('add plugin', async () => {
+    plugins = (matterbridge as any).plugins;
+    expect(plugins.length).toBe(0);
+    expect(await plugins.add('./src/mock/plugin1')).not.toBeNull();
+    expect(plugins.length).toBe(1);
+    expect(await plugins.add('./src/mock/plugin2')).not.toBeNull();
+    expect(plugins.length).toBe(2);
+    expect(await plugins.add('./src/mock/plugin3')).not.toBeNull();
+    expect(plugins.length).toBe(3);
+  });
+
+  test('create and start server node', async () => {
+    plugins = (matterbridge as any).plugins;
+    for (const plugin of plugins) {
+      await (matterbridge as any).createDynamicPlugin(plugin, true);
+      expect(plugin.serverNode).toBeDefined();
+      expect(plugin.aggregatorNode).toBeDefined();
+      expect(plugin.serverNode?.lifecycle.isReady).toBeTruthy();
+      expect(plugin.serverNode?.lifecycle.isOnline).toBeTruthy();
+      expect(plugin.serverNode?.lifecycle.isCommissioned).toBeFalsy();
+      await plugins.load(plugin);
+      expect(plugin.loaded).toBeTruthy();
+    }
+  });
+
   test('Matterbridge.destroyInstance() -childbridge mode', async () => {
+    expect(matterbridge.bridgeMode).toBe('childbridge');
+    for (const plugin of plugins) {
+      expect(plugin.serverNode).toBeDefined();
+    }
     await matterbridge.destroyInstance();
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock1 MdnsService`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock2 MdnsService`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock3 MdnsService`);
+  }, 60000);
+
+  test('Restart initialize() -childbridge mode', async () => {
+    expect((matterbridge as any).initialized).toBeFalsy();
+    await matterbridge.initialize();
+    expect((matterbridge as any).initialized).toBeTruthy();
+
+    plugins = (matterbridge as any).plugins;
+    expect(plugins.length).toBe(3);
+    for (const plugin of plugins) {
+      expect(plugin.type).toBe('DynamicPlatform');
+      // plugin.addedDevices = 1;
+    }
+
+    await waiter(
+      'Matter server started',
+      () => {
+        return (matterbridge as any).configureTimeout !== undefined && plugins.array()[0].reachabilityTimeout !== undefined && plugins.array()[1].reachabilityTimeout !== undefined && plugins.array()[2].reachabilityTimeout !== undefined;
+      },
+      false,
+      60000,
+      1000,
+      true,
+    );
+
+    await waiter(
+      'Matter server online',
+      () => {
+        return plugins.array()[0].serverNode?.lifecycle.isOnline === true && plugins.array()[1].serverNode?.lifecycle.isOnline === true && plugins.array()[2].serverNode?.lifecycle.isOnline === true;
+      },
+      false,
+      60000,
+      1000,
+      true,
+    );
+
+    for (const plugin of plugins) {
+      expect(plugin.serverNode).toBeDefined();
+      expect(plugin.aggregatorNode).toBeDefined();
+      expect(plugin.serverNode?.lifecycle.isReady).toBeTruthy();
+      expect(plugin.serverNode?.lifecycle.isOnline).toBeTruthy();
+      expect(plugin.serverNode?.lifecycle.isCommissioned).toBeFalsy();
+    }
+  }, 60000);
+
+  test('stop advertise node', async () => {
+    for (const plugin of plugins) {
+      await matterbridge.stopAdvertiseServerNode(plugin.serverNode);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Stopped advertising for`));
+    }
+  });
+
+  test('advertise node', async () => {
+    for (const plugin of plugins) {
+      const pairing = await matterbridge.advertiseServerNode(plugin.serverNode);
+      expect(pairing).toBeDefined();
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`is now started`));
+    }
+  });
+
+  test('add device -childbridge mode', async () => {
+    let i = 1;
+    for (const plugin of plugins) {
+      const device = new MatterbridgeEndpoint(pressureSensor, { uniqueStorageKey: 'pressureSensor' + i })
+        .createDefaultBridgedDeviceBasicInformationClusterServer('Pressure sensor ' + i, '0x123456789', 0xfff1, 'Matterbridge', 'PressureSensor')
+        .addRequiredClusterServers();
+      expect(device).toBeDefined();
+      device.plugin = 'matterbridge-mock' + i;
+      await matterbridge.addBridgedEndpoint('matterbridge-mock' + i++, device);
+    }
+  }, 60000);
+
+  test('remove all devices', async () => {
+    expect(plugins.length).toBe(3);
+    expect(matterbridge.devices.size).toBe(3);
+    let i = 1;
+    for (const plugin of plugins) {
+      expect(plugin.type).toBe('DynamicPlatform');
+      expect(plugin.addedDevices).toBe(1);
+      expect(plugin.registeredDevices).toBe(1);
+      await matterbridge.removeAllBridgedEndpoints('matterbridge-mock' + i);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Removing all bridged endpoints for plugin ${plg}${'matterbridge-mock' + i}${db}`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Removing bridged endpoint ${plg}${'matterbridge-mock' + i++}${db}`));
+      expect(plugin.addedDevices).toBe(0);
+      expect(plugin.registeredDevices).toBe(0);
+    }
+    expect(plugins.length).toBe(3);
+    expect(matterbridge.devices.size).toBe(0);
+  }, 60000);
+
+  test('Again Matterbridge.destroyInstance() -childbridge mode', async () => {
+    expect(matterbridge.bridgeMode).toBe('childbridge');
+    for (const plugin of plugins) {
+      expect(plugin.serverNode).toBeDefined();
+    }
+    await matterbridge.destroyInstance();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock1 MdnsService`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock2 MdnsService`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock3 MdnsService`);
   }, 60000);
 
   test('Cleanup storage', async () => {
