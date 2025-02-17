@@ -351,7 +351,7 @@ Place your own certificates in the `.matterbridge/cert` directory:
 - `key.pem`
 - `ca.pem` (optional)
 
-![image](https://github.com/user-attachments/assets/846785ca-6f5c-458b-b786-a6417a4da319)
+![image](screenshot/Screenshot%20Certificates.png)
 
 ### Change the command line
 
@@ -365,7 +365,7 @@ matterbridge -ssl -frontend 443
 
 If the certificate are correctly configured, you will be able to connect with https to the frontend.
 
-![image](https://github.com/user-attachments/assets/9c38776d-064f-4d91-9359-a2cd3319b1ff)
+![image](screenshot/Screenshot%20Browser%20Secured.png)
 
 ## How to send the debug log files
 
@@ -373,9 +373,9 @@ If the certificate are correctly configured, you will be able to connect with ht
 
 In the frontend, go to settings and enable debug mode as shown below:
 
-![Debug Matterbridge Settings](https://github.com/user-attachments/assets/83181dc2-969a-4b71-aff4-f1498fa1d665)
+![Debug Matterbridge Settings](screenshot/Screenshot%20Matterbridge%20Logger%20Debug.png)
 
-![Debug Matter Settings](https://github.com/user-attachments/assets/617961a9-7cb0-46cf-9878-981f61738f8c)
+![Debug Matter Settings](screenshot/Screenshot%20Matter%20Logger%20Debug.png)
 
 ### Restart
 
@@ -383,7 +383,7 @@ Wait a few minutes to allow the logs to to accumulate.
 
 Then, from the dots menu in the frontend, download the `matterbridge.log` and `matter.log` files.
 
-![image](https://github.com/user-attachments/assets/04ba65f6-594a-4ff8-9732-3df049f5a33e)
+![image](screenshot/Screenshot%20Debug%20Download%20Logs.png)
 
 # Known general issues
 
