@@ -5,8 +5,8 @@ on:
     branches:
       - dev
     paths-ignore:
-      - '**/screenshot/*'
-      - '/*.md
+      - '/screenshot/*'
+      - '/*.md'
 
 jobs:
   build-and-push:
