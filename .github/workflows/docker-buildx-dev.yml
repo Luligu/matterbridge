@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - dev
+    paths-ignore:
+      - '**/screenshots/*'
+      - '/*.md
 
 jobs:
   build-and-push:

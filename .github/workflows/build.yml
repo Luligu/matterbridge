@@ -1,6 +1,14 @@
 name: Install, Lint, Test and Build
 
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - '**/screenshots/*'
+      - '/*.md
+  pull_request:
+    paths-ignore:
+      - '**/screenshots/*'
+      - '/*.md
 
 jobs:
   build:
