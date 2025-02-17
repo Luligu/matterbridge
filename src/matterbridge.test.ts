@@ -96,6 +96,7 @@ describe('Matterbridge', () => {
       expect((Matterbridge as any).instance).toBeUndefined();
       matterbridge = await Matterbridge.loadInstance(false);
       matterbridge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+      expect((Matterbridge as any).instance).toBeDefined();
       expect(matterbridge).toBeDefined();
       expect(matterbridge.profile).toBe('Jest');
       expect(matterbridge.nodeStorageName).toBe('storage.Jest');
@@ -122,13 +123,18 @@ describe('Matterbridge', () => {
 
       // Destroy the Matterbridge instance
       await matterbridge.destroyInstance();
+
+      expect((matterbridge as any).initialized).toBeFalsy();
+      expect((Matterbridge as any).instance).toBeDefined(); // Instance is still defined cause cleanup() is not called when initialized is false
     });
 
-    test('Matterbridge.loadInstance(true)', async () => {
+    test('Matterbridge.loadInstance(true) should not initialize', async () => {
       expect((Matterbridge as any).instance).toBeDefined();
       matterbridge = await Matterbridge.loadInstance(true);
       expect((matterbridge as any).initialized).toBeFalsy();
+
       if (!(matterbridge as any).initialized) await matterbridge.initialize();
+      expect((matterbridge as any).initialized).toBeTruthy();
       matterbridge.plugins.clear();
       await matterbridge.plugins.saveToStorage();
 
@@ -158,6 +164,9 @@ describe('Matterbridge', () => {
 
       // Destroy the Matterbridge instance
       await matterbridge.destroyInstance();
+
+      expect((matterbridge as any).initialized).toBeFalsy();
+      expect((Matterbridge as any).instance).toBeUndefined(); // Instance is not defined cause cleanup() has been called
     });
 
     test('Matterbridge.loadInstance(true) with frontend', async () => {
@@ -165,8 +174,8 @@ describe('Matterbridge', () => {
 
       expect((Matterbridge as any).instance).toBeUndefined();
       matterbridge = await Matterbridge.loadInstance(true);
+      expect((Matterbridge as any).instance).toBeDefined();
       expect((matterbridge as any).initialized).toBeTruthy();
-      if (!(matterbridge as any).initialized) await matterbridge.initialize();
 
       expect(matterbridge).toBeDefined();
       expect(matterbridge.profile).toBe('Jest');
