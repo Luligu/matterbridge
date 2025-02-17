@@ -9,7 +9,7 @@ import eslintPluginN from 'eslint-plugin-n';
 export default [
   {
     name: 'global ignores',
-    ignores: ['dist/', 'build/', 'node_modules/', 'coverage/', 'frontend/'],
+    ignores: ['dist/', 'build/', 'node_modules/', 'coverage/', 'frontend/', 'rock-s0/'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.strict,
