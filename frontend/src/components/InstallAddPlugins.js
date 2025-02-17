@@ -1,10 +1,9 @@
+/* eslint-disable no-console */
 // React
 import React, { useState, useContext } from 'react';
 
 // @mui/material
 import TextField from '@mui/material/TextField';
-import Alert from '@mui/material/Alert';
-import Snackbar from '@mui/material/Snackbar';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';

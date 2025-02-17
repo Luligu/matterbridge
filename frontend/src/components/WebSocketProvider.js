@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-console */
 // React
 import React, { useEffect, useRef, useState, useCallback, useMemo, createContext, useContext } from 'react';
 
@@ -72,7 +74,7 @@ export function WebSocketProvider({ children }) {
         wsRef.current.send(msg);
         if (debug) console.log(`WebSocket sent message:`, message);
       } catch (error) {
-        // eslint-disable-next-line no-console  
+         
         console.error(`WebSocket error sending message: ${error}`);
       }
     } else {
@@ -210,7 +212,7 @@ export function WebSocketProvider({ children }) {
           return newMessages;
         });
       } catch (error) {
-        // eslint-disable-next-line no-console
+         
         console.error(`WebSocketUse error parsing message: ${error}`);
       }
     };

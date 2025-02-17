@@ -154,7 +154,7 @@ function Header() {
 
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
-      /*Header listener*/
+      /* Header listener */
       if (debug) console.log('Header received WebSocket Message:', msg);
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'refresh_required') {

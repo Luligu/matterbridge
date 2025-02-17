@@ -1,3 +1,6 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-console */
 // React
 import React, { useContext, useEffect, useState } from 'react';
 
@@ -154,47 +157,47 @@ function Device({ device, endpoint, id, deviceType, clusters }) {
       {deviceType===0x002b && clusters.filter(cluster => cluster.clusterName === 'FanControl' && cluster.attributeName === 'percentCurrent').map(cluster => (
         <Render icon={<AirIcon/>} cluster={cluster} value={cluster.attributeValue} unit='%'/>
       ))}
-      {/*GenericSwitch*/}
+      {/* GenericSwitch */}
       {deviceType===0x000f && clusters.filter(cluster => cluster.clusterName === 'Switch' && cluster.attributeName === 'currentPosition').map(cluster => (
         <Render icon={<RadioButtonCheckedIcon/>} cluster={cluster} value={cluster.attributeValue} unit='pos'/>
       ))}
-      {/*ModeSelect*/}
+      {/* ModeSelect */}
       {deviceType===0x0027 && clusters.filter(cluster => cluster.clusterName === 'ModeSelect' && cluster.attributeName === 'currentMode').map(cluster => (
         <Render icon={<ChecklistIcon/>} cluster={cluster} value={cluster.attributeValue} unit='mode'/>
       ))}
-      {/*Pump*/}
+      {/* Pump */}
       {deviceType===0x0303 && clusters.filter(cluster => cluster.clusterName === 'OnOff' && cluster.attributeName === 'onOff').map(cluster => (
         <Render icon={<CycloneIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ? 'On' : 'Off'}/>
       ))}
-      {/*Air purifier*/}
+      {/* Air purifier */}
       {deviceType===0x002d && clusters.filter(cluster => cluster.clusterName === 'FanControl' && cluster.attributeName === 'percentCurrent').map(cluster => (
         <Render icon={<HvacIcon/>} cluster={cluster} value={cluster.attributeValue} unit='%'/>
       ))}
-      {/*Air conditioner*/}
+      {/* Air conditioner */}
       {deviceType===0x0072 && clusters.filter(cluster => cluster.clusterName === 'Thermostat' && cluster.attributeName === 'localTemperature').map(cluster => (
         <Render icon={<HvacIcon/>} cluster={cluster} value={(cluster.attributeLocalValue ?? 0)/100} unit='°C'/>
       ))}
-      {/*Water leak detector*/}
+      {/* Water leak detector */}
       {deviceType===0x0043 && clusters.filter(cluster => cluster.clusterName === 'BooleanState' && cluster.attributeName === 'stateValue').map(cluster => (
         <Render icon={<WaterIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ?'No leak':'Leak'}/>
       ))}
-      {/*Water freeze detector*/}
+      {/* Water freeze detector */}
       {deviceType===0x0041 && clusters.filter(cluster => cluster.clusterName === 'BooleanState' && cluster.attributeName === 'stateValue').map(cluster => (
         <Render icon={<AcUnitIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ?'No freeze':'Freeze'}/>
       ))}
-      {/*Rain sensor*/}
+      {/* Rain sensor */}
       {deviceType===0x0044 && clusters.filter(cluster => cluster.clusterName === 'BooleanState' && cluster.attributeName === 'stateValue').map(cluster => (
         <Render icon={<ThunderstormIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ?'No rain':'Rain'}/>
       ))}
-      {/*SmokeCoAlarm*/}
+      {/* SmokeCoAlarm */}
       {deviceType===0x0076 && clusters.filter(cluster => cluster.clusterName === 'SmokeCoAlarm' && cluster.attributeName === 'smokeState').map(cluster => (
         <Render icon={<LocalFireDepartmentIcon/>} cluster={cluster} value={cluster.attributeLocalValue===0 ?'No smoke':'Smoke'}/>
       ))}
-      {/*WaterValve*/}
+      {/* WaterValve */}
       {deviceType===0x0042 && clusters.filter(cluster => cluster.clusterName === 'ValveConfigurationAndControl' && cluster.attributeName === 'currentState').map(cluster => (
         <Render icon={<OpacityIcon/>} cluster={cluster} value={cluster.attributeLocalValue===0 ?'Closed':'Opened'}/>
       ))}
-      {/*AirQuality*/}
+      {/* AirQuality */}
       {deviceType===0x002c && clusters.filter(cluster => cluster.clusterName === 'AirQuality' && cluster.attributeName === 'airQuality').map(cluster => (
         <Render icon={<MasksIcon/>} cluster={cluster} value={airQualityLookup[cluster.attributeLocalValue ?? 0]}/>
       ))}
@@ -360,7 +363,7 @@ export function DevicesIcons({filter}) {
       </Dialog>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', paddingBottom: '5px', gap: '20px', width: '100%', overflow: 'auto' }}>
-        {/*<Typography>Loading... {devices.length} devices, {Object.keys(endpoints).length} endpoints, {Object.keys(deviceTypes).length} deviceTypes</Typography>*/}
+        {/* <Typography>Loading... {devices.length} devices, {Object.keys(endpoints).length} endpoints, {Object.keys(deviceTypes).length} deviceTypes</Typography> */}
         {filteredDevices.map((device) => (
           endpoints[device.serial] && endpoints[device.serial].map((endpoint) => (
             endpoint.deviceTypes.map((deviceType) => (

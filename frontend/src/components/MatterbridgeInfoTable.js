@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // Frontend
 import { TruncatedText } from './TruncatedText';
 // import { debug } from '../App';

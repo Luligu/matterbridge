@@ -1,3 +1,6 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-console */
 // React
 import { useState, useMemo } from 'react';
 
@@ -452,7 +455,7 @@ export function ArrayFieldTemplate(props) {
 }
 
 export function ObjectFieldTemplate(props) {
-  const { onAddClick, schema, properties, title, description, formData, registry } = props;
+  const { onAddClick, schema, properties, title, description } = props;
 
   const [dialogDeviceOpen, setDialogDeviceOpen] = useState(false);
   const [filter, setFilter] = useState('');

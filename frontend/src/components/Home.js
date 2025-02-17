@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-console */
 
 // React
@@ -62,7 +64,7 @@ function Home() {
   const { showSnackbarMessage, showConfirmCancelDialog } = useContext(UiContext);
   const { logMessage, addListener, removeListener, online, sendMessage } = useContext(WebSocketContext);
 
-  const refAddRemove = useRef(null);
+  // const refAddRemove = useRef(null);
   const refRegisteredPlugins = useRef(null);
 
   const primaryColor = useMemo(() => getCssVariable('--primary-color', '#009a00'), []);
@@ -283,17 +285,17 @@ function Home() {
         </Dialog>
       </ThemeProvider>
 
-      {/*Left column*/}
+      {/* Left column */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>
         {matterbridgeInfo && <QRDiv matterbridgeInfo={matterbridgeInfo} plugin={selectedRow === -1 ? undefined : plugins[selectedRow]} />}
         {systemInfo && <SystemInfoTable systemInfo={systemInfo} compact={true} />}
         {qrCode === '' && matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo} />}
       </div>
 
-      {/*Right column*/}
+      {/* Right column */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: '20px' }}>
 
-        {/*Install add plugin*/}
+        {/* Install add plugin */}
         {matterbridgeInfo && !matterbridgeInfo.readOnly &&
           <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
             <div className="MbfWindowHeader">
@@ -303,7 +305,7 @@ function Home() {
           </div>
         }
 
-        {/*Registered plugins*/}
+        {/* Registered plugins */}
         <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
           <div className="MbfWindowDivTable" style={{ flex: '0 0 auto', overflow: 'hidden' }}>
             <table ref={refRegisteredPlugins}>
@@ -390,7 +392,7 @@ function Home() {
           </div>
         </div>
 
-        {/*Logs*/}
+        {/* Logs*/}
         <div className="MbfWindowDiv" style={{ flex: '1 1 auto', width: '100%', overflow: 'hidden' }}>
           <div className="MbfWindowHeader" style={{ flexShrink: 0 }}>
             <div className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // Frontend
 import { debug } from '../App';
 

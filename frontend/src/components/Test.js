@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable no-console */
 // React
 import React, { useContext, useEffect, useState, useRef } from 'react';
 
@@ -101,7 +103,7 @@ function Test() {
       removeListener(handleWebSocketMessage);
       if(debug) console.log('Test useEffect WebSocketMessage unmounted');
     };
-  }, [addListener, removeListener, sendMessage]);
+  }, [addListener, removeListener, sendMessage, showSnackbarMessage]);
   
   useEffect(() => {
     if(debug) console.log('Test useEffect online mounting');
@@ -125,9 +127,9 @@ function Test() {
   return (
     <div className="MbfPageDiv" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
 
-      {/*<div style={{ display: 'flex', gap: '20px', width: '100%' }}>
+      {/* <div style={{ display: 'flex', gap: '20px', width: '100%' }}>
         {settings && settings.systemInformation && <SystemInfoTable systemInfo={settings.systemInformation} compact={false}/>}
-      </div>*/}
+      </div> */}
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%' }}>
         <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
