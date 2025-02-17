@@ -22,13 +22,17 @@
  */
 
 // Node.js modules
-import os from 'os';
-import path from 'path';
+import os from 'node:os';
+import path from 'node:path';
 
+// Node.js modules import types
+import type { ExecException } from 'node:child_process';
+
+// Archiver module import types
 import type { ArchiverError, EntryData } from 'archiver';
 
 // AnsiLogger module
-import { AnsiLogger, idn, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, idn, LogLevel, rs, TimestampFormat } from '../logger/export.js';
 
 const log = new AnsiLogger({ logName: 'MatterbridgeUtils', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
 
@@ -264,115 +268,6 @@ export function getMacAddress(): string | undefined {
 }
 
 /**
- * Checks if a given string is a valid IPv4 address.
- *
- * @param {string} ipv4Address - The string to be checked.
- * @returns {boolean} - Returns true if the string is a valid IPv4 address, otherwise returns false.
- */
-export function isValidIpv4Address(ipv4Address: string): boolean {
-  const ipv4Regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-  return ipv4Regex.test(ipv4Address);
-}
-
-/**
- * Checks if a value is a valid number within the specified range.
- *
- * @param {any} value - The value to be checked.
- * @param {number} min - The minimum value allowed (optional).
- * @param {number} max - The maximum value allowed (optional).
- * @returns {boolean} Returns true if the value is a valid number within the specified range, otherwise false.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isValidNumber(value: any, min?: number, max?: number): value is number {
-  if (value === undefined || value === null || typeof value !== 'number' || Number.isNaN(value)) return false;
-  if (min !== undefined && value < min) return false;
-  if (max !== undefined && value > max) return false;
-  return true;
-}
-
-/**
- * Checks if a value is a valid boolean.
- *
- * @param {any} value - The value to be checked.
- * @returns {boolean} `true` if the value is a valid boolean, `false` otherwise.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isValidBoolean(value: any): value is boolean {
-  return value !== undefined && value !== null && typeof value === 'boolean';
-}
-
-/**
- * Checks if a value is a valid string.
- *
- * @param {any} value - The value to be checked.
- * @param {number} minLength - The min string length (optional).
- * @param {number} maxLength - The max string length (optional).
- * @returns {boolean} A boolean indicating whether the value is a valid string.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isValidString(value: any, minLength?: number, maxLength?: number): value is string {
-  if (value === undefined || value === null || typeof value !== 'string') return false;
-  if (minLength !== undefined && value.length < minLength) return false;
-  if (maxLength !== undefined && value.length > maxLength) return false;
-  return true;
-}
-
-/**
- * Checks if a value is a valid object.
- *
- * @param {any} value - The value to be checked.
- * @param {number} minLength - The min number of keys (optional).
- * @param {number} maxLength - The max number of keys (optional).
- * @returns {boolean} A boolean indicating whether the value is a valid object.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isValidObject(value: any, minLength?: number, maxLength?: number): value is object {
-  if (value === undefined || value === null || typeof value !== 'object' || Array.isArray(value)) return false;
-  const keys = Object.keys(value);
-  if (minLength !== undefined && keys.length < minLength) return false;
-  if (maxLength !== undefined && keys.length > maxLength) return false;
-  return true;
-}
-
-/**
- * Checks if a value is a valid array.
- *
- * @param {any} value - The value to be checked.
- * @param {number} minLength - The min number of elements (optional).
- * @param {number} maxLength - The max number of elements (optional).
- * @returns {boolean} A boolean indicating whether the value is a valid array.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isValidArray(value: any, minLength?: number, maxLength?: number): value is unknown[] {
-  if (value === undefined || value === null || !Array.isArray(value)) return false;
-  if (minLength !== undefined && value.length < minLength) return false;
-  if (maxLength !== undefined && value.length > maxLength) return false;
-  return true;
-}
-
-/**
- * Checks if the given value is null.
- *
- * @param {any} value - The value to check.
- * @returns {boolean} `true` if the value is null, `false` otherwise.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isValidNull(value: any): value is null {
-  return value === null;
-}
-
-/**
- * Checks if a value is undefined.
- *
- * @param {any} value - The value to check.
- * @returns {boolean} `true` if the value is undefined, `false` otherwise.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isValidUndefined(value: any): value is undefined {
-  return value === undefined;
-}
-
-/**
  * Logs the available network interfaces and their details.
  * @param {boolean} log - Whether to enable logging of network interface details.
  * @returns {string | undefined} The IPv6 address of the network interface, if available.
@@ -599,47 +494,6 @@ export async function resolveHostname(hostname: string, family: 0 | 4 | 6 = 4): 
 }
 
 /**
- * Retrieves the value of a command-line parameter.
- *
- * @param {string} name - The name of the parameter to retrieve.
- * @returns {string | undefined} The value of the parameter, or undefined if not found.
- */
-export function getParameter(name: string): string | undefined {
-  const commandArguments = process.argv.slice(2);
-  let markerIndex = commandArguments.indexOf(`-${name}`);
-  if (markerIndex === -1) markerIndex = commandArguments.indexOf(`--${name}`);
-  if (markerIndex === -1 || markerIndex + 1 === commandArguments.length) return undefined;
-  return commandArguments[markerIndex + 1];
-}
-
-/**
- * Checks if a command-line parameter is present.
- *
- * @param {string} name - The name of the parameter to check.
- * @returns {boolean} True if the parameter is present, otherwise false.
- */
-export function hasParameter(name: string): boolean {
-  const commandArguments = process.argv.slice(2);
-  let markerIncluded = commandArguments.includes(`-${name}`);
-  if (!markerIncluded) markerIncluded = commandArguments.includes(`--${name}`);
-  return markerIncluded;
-}
-
-/**
- * Retrieves the value of a command-line parameter as an integer.
- *
- * @param {string} name - The name of the parameter to retrieve.
- * @returns {number | undefined} The integer value of the parameter, or undefined if not found or invalid.
- */
-export function getIntParameter(name: string): number | undefined {
-  const value = getParameter(name);
-  if (value === undefined) return undefined;
-  const intValue = parseInt(value, 10);
-  if (!isValidNumber(intValue)) return undefined;
-  return intValue;
-}
-
-/**
  * Retrieves the version of an npm package from the npm registry.
  *
  * @param {string} packageName - The name of the npm package.
@@ -693,6 +547,23 @@ export async function getNpmPackageVersion(packageName: string, tag = 'latest', 
     req.on('error', (error) => {
       clearTimeout(timeoutId);
       reject(new Error(`Request failed: ${error instanceof Error ? error.message : error}`));
+    });
+  });
+}
+
+/**
+ * Retrieves the path to the global Node.js modules directory.
+ * @returns A promise that resolves to the path of the global Node.js modules directory.
+ */
+export async function getGlobalNodeModules(): Promise<string> {
+  const { exec } = await import('node:child_process');
+  return new Promise((resolve, reject) => {
+    exec('npm root -g', (error: ExecException | null, stdout: string) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(stdout.trim());
+      }
     });
   });
 }

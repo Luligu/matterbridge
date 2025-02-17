@@ -26,7 +26,7 @@ import { AnsiLogger, BLUE, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStr
 
 // Matterbridge
 import { bridgedNode, DeviceTypeDefinition, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
-import { isValidNumber, isValidObject } from './utils/utils.js';
+import { isValidNumber, isValidObject } from './utils/export.js';
 import {
   MatterbridgeBehavior,
   MatterbridgeBehaviorDevice,

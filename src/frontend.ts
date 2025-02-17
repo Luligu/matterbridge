@@ -37,10 +37,11 @@ import { promises as fs } from 'fs';
 import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from './logger/export.js';
 
 // Matterbridge
-import { createZip, deepCopy, hasParameter, isValidNumber, isValidObject, isValidString } from './utils/utils.js';
+import { createZip, deepCopy, isValidNumber, isValidObject, isValidString } from './utils/export.js';
 import { ApiClusters, ApiDevices, BaseRegisteredPlugin, plg, RegisteredPlugin } from './matterbridgeTypes.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { hasParameter } from './utils/export.js';
 
 /**
  * Websocket message ID for logging.

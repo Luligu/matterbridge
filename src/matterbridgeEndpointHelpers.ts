@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // Node.js modules
-import { createHash } from 'crypto';
+import { createHash } from 'node:crypto';
 
 // AnsiLogger module
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, or, YELLOW, zb } from './logger/export.js';
 
 // Matterbridge
+import { deepCopy, deepEqual, isValidArray } from './utils/export.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
   MatterbridgeIdentifyServer,
@@ -99,7 +100,6 @@ import { Pm25ConcentrationMeasurementServer } from '@matter/main/behaviors/pm25-
 import { Pm10ConcentrationMeasurementServer } from '@matter/main/behaviors/pm10-concentration-measurement';
 import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/radon-concentration-measurement';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
-import { deepCopy, deepEqual, isValidArray } from './utils/utils.js';
 
 export function capitalizeFirstLetter(name: string): string {
   if (!name) return name;

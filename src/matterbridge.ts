@@ -22,20 +22,20 @@
  */
 
 // Node.js modules
-import { fileURLToPath } from 'url';
-import { promises as fs } from 'fs';
-import { ExecException, exec, spawn } from 'child_process';
-import EventEmitter from 'events';
-import os from 'os';
-import path from 'path';
-import { randomBytes } from 'crypto';
+import os from 'node:os';
+import path from 'node:path';
+import { promises as fs } from 'node:fs';
+import EventEmitter from 'node:events';
 
-// NodeStorage and AnsiLogger modules
-import { NodeStorageManager, NodeStorage } from './storage/export.js';
+// AnsiLogger module
 import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN, nt } from './logger/export.js';
 
+// NodeStorage module
+import { NodeStorageManager, NodeStorage } from './storage/export.js';
+
 // Matterbridge
-import { logInterfaces, copyDirectory, getParameter, getIntParameter, hasParameter, getNpmPackageVersion } from './utils/utils.js';
+import { getParameter, getIntParameter, hasParameter } from './utils/export.js';
+import { logInterfaces, copyDirectory, getNpmPackageVersion, getGlobalNodeModules } from './utils/utils.js';
 import { MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
@@ -285,6 +285,7 @@ export class Matterbridge extends EventEmitter {
    *
    */
   async destroyInstance() {
+    this.log.info(`Destroy instance...`);
     // Save server nodes to close
     const servers: ServerNode<ServerNode.RootEndpoint>[] = [];
     if (this.bridgeMode === 'bridge') {
@@ -298,6 +299,7 @@ export class Matterbridge extends EventEmitter {
     // Cleanup
     await this.cleanup('destroying instance...', false);
     // Close servers mdns service
+    this.log.info(`Dispose ${servers.length} MdnsService...`);
     for (const server of servers) {
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       this.log.info(`Closed ${server.id} MdnsService`);
@@ -956,6 +958,7 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`Home Directory: ${this.homeDirectory}`);
 
     // Package root directory
+    const { fileURLToPath } = await import('node:url');
     const currentFileDirectory = path.dirname(fileURLToPath(import.meta.url));
     this.rootDirectory = path.resolve(currentFileDirectory, '../');
     this.matterbridgeInformation.rootDirectory = this.rootDirectory;
@@ -966,7 +969,9 @@ export class Matterbridge extends EventEmitter {
     // First run of Matterbridge so the node storage is empty
     if (this.globalModulesDirectory === '') {
       try {
-        this.globalModulesDirectory = await this.getGlobalNodeModules();
+        this.execRunningCount++;
+        this.globalModulesDirectory = await getGlobalNodeModules();
+        this.execRunningCount--;
         this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory;
         this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
         await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
@@ -1050,24 +1055,6 @@ export class Matterbridge extends EventEmitter {
     // Command line arguments (excluding 'node' and the script name)
     const cmdArgs = process.argv.slice(2).join(' ');
     this.log.debug(`Command Line Arguments: ${cmdArgs}`);
-  }
-
-  /**
-   * Retrieves the path to the global Node.js modules directory.
-   * @returns A promise that resolves to the path of the global Node.js modules directory.
-   */
-  private async getGlobalNodeModules(): Promise<string> {
-    return new Promise((resolve, reject) => {
-      this.execRunningCount++;
-      exec('npm root -g', (error: ExecException | null, stdout: string) => {
-        this.execRunningCount--;
-        if (error) {
-          reject(error);
-        } else {
-          resolve(stdout.trim());
-        }
-      });
-    });
   }
 
   /**
@@ -1585,18 +1572,12 @@ export class Matterbridge extends EventEmitter {
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
   private async startChildbridge(): Promise<void> {
-    // Matterbridge.addBridgedDevice creates the commissionig servers and add the devices to the the commissioning server or to the aggregator
-    // Plugins are configured by a timer when matter server is started and plugin.configured is set to true
-
     if (!this.matterStorageManager) throw new Error('No storage manager initialized');
+
     for (const plugin of this.plugins) {
       if (!plugin.enabled) continue;
       if (plugin.type === 'DynamicPlatform') {
-        plugin.locked = true;
-        plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', bridge.code, this.aggregatorVendorId, 'Matterbridge', this.aggregatorProductId, plugin.description);
-        plugin.serverNode = await this.createServerNode(plugin.storageContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
-        plugin.aggregatorNode = await this.createAggregatorNode(plugin.storageContext);
-        await plugin.serverNode.add(plugin.aggregatorNode);
+        await this.createDynamicPlugin(plugin);
       }
     }
 
@@ -1650,7 +1631,7 @@ export class Matterbridge extends EventEmitter {
 
       for (const plugin of this.plugins) {
         if (!plugin.enabled || plugin.error) continue;
-        if (!plugin.addedDevices || plugin.addedDevices === 0) {
+        if (plugin.type !== 'DynamicPlatform' && (!plugin.addedDevices || plugin.addedDevices === 0)) {
           this.log.error(`Plugin ${plg}${plugin.name}${er} didn't add any devices to Matterbridge. Verify the plugin configuration.`);
           continue;
         }
@@ -1952,6 +1933,7 @@ export class Matterbridge extends EventEmitter {
    * @returns {Promise<StorageContext>} The storage context for the commissioning server.
    */
   private async createServerNodeContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string, serialNumber?: string): Promise<StorageContext> {
+    const { randomBytes } = await import('crypto');
     if (!this.matterStorageService) throw new Error('No storage service initialized');
 
     this.log.info(`Creating server node storage context "${pluginName}.persist" for ${pluginName}...`);
@@ -2270,19 +2252,31 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Advertises the specified server node if it is commissioned.
+   * Advertises the specified server node.
    *
    * @param {ServerNode} [matterServerNode] - The server node to advertise.
    * @returns {Promise<{ qrPairingCode: string, manualPairingCode: string } | undefined>} A promise that resolves to the pairing codes if the server node is advertised, or undefined if not.
    */
   async advertiseServerNode(matterServerNode?: ServerNode): Promise<{ qrPairingCode: string; manualPairingCode: string } | undefined> {
-    if (matterServerNode && matterServerNode.lifecycle.isCommissioned) {
+    if (matterServerNode) {
       await matterServerNode.env.get(DeviceCommissioner)?.allowBasicCommissioning();
       const { qrPairingCode, manualPairingCode } = matterServerNode.state.commissioning.pairingCodes;
       this.log.notice(`Advertising for ${matterServerNode.id} is now started with the following pairing codes: qrPairingCode ${qrPairingCode}, manualPairingCode ${manualPairingCode}`);
       return { qrPairingCode, manualPairingCode };
     }
-    return undefined;
+  }
+
+  /**
+   * Stop advertise the specified server node.
+   *
+   * @param {ServerNode} [matterServerNode] - The server node to advertise.
+   * @returns {Promise<void>} A promise that resolves when the server node has stopped advertising.
+   */
+  async stopAdvertiseServerNode(matterServerNode?: ServerNode): Promise<void> {
+    if (matterServerNode && matterServerNode.lifecycle.isOnline) {
+      await matterServerNode.env.get(DeviceCommissioner)?.endCommissioning();
+      this.log.notice(`Stopped advertising for ${matterServerNode.id}`);
+    }
   }
 
   /**
@@ -2373,16 +2367,6 @@ export class Matterbridge extends EventEmitter {
       this.log.info(`Removed bridged endpoint(${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${zb}${device.name}${nf}) for plugin ${plg}${pluginName}${nf}`);
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
       if (plugin.addedDevices !== undefined) plugin.addedDevices--;
-      // Close the server node TODO check if this is correct
-      if (plugin.registeredDevices === 0 && plugin.addedDevices === 0) {
-        if (plugin.serverNode) {
-          await this.stopServerNode(plugin.serverNode);
-          plugin.locked = false;
-          plugin.aggregatorNode = undefined;
-          plugin.serverNode = undefined;
-          this.log.info(`Stopped server node for plugin ${plg}${pluginName}${nf}`);
-        }
-      }
     }
     // Remove the device from the DeviceManager
     this.devices.remove(device);
@@ -2506,7 +2490,7 @@ export class Matterbridge extends EventEmitter {
 
   private getVendorIdName = (vendorId: number | undefined) => {
     if (!vendorId) return '';
-    let vendorName = '';
+    let vendorName = '(Unknown vendorId)';
     switch (vendorId) {
       case 4937:
         vendorName = '(AppleHome)';
@@ -2536,10 +2520,7 @@ export class Matterbridge extends EventEmitter {
         vendorName = '(eWeLink)';
         break;
       case 65521:
-        vendorName = '(PythonMatterServer)';
-        break;
-      default:
-        vendorName = '(unknown)';
+        vendorName = '(MatterServer)';
         break;
     }
     return vendorName;
@@ -2552,6 +2533,8 @@ export class Matterbridge extends EventEmitter {
    * @returns {Promise<boolean>} A promise that resolves when the child process exits successfully, or rejects if there is an error.
    */
   async spawnCommand(command: string, args: string[] = []): Promise<boolean> {
+    const { spawn } = await import('node:child_process');
+
     /*
     npm > npm.cmd on windows
     cmd.exe ['dir'] on windows

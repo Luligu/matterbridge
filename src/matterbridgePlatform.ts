@@ -25,7 +25,7 @@
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
-import { isValidArray, isValidObject, isValidString } from './utils/utils.js';
+import { isValidArray, isValidObject, isValidString } from './utils/export.js';
 
 // AnsiLogger module
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from './logger/export.js';
@@ -37,7 +37,7 @@ import { NodeStorage, NodeStorageManager } from './storage/export.js';
 import { EndpointNumber } from '@matter/main';
 
 // Node.js module
-import path from 'path';
+import path from 'node:path';
 
 // Platform types
 export type PlatformConfigValue = string | number | boolean | bigint | object | undefined | null;
