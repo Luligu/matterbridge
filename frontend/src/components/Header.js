@@ -191,7 +191,7 @@ function Header() {
   return (
     <div className="header">
       <div className="sub-header">
-        <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '30px' }} />
+        <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '30px' }} />
         <h2 style={{ fontSize: '22px', color: 'var(--main-icon-color)', margin: '0px' }}>Matterbridge</h2>
         <nav>
           <Link to="/" className="nav-link">Home</Link>

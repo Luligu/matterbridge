@@ -130,7 +130,7 @@ function Test() {
       </div>*/}
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%' }}>
-        <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
+        <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
         <p>Welcome to the Test page of the Matterbridge frontend</p>
         {cpu && memory &&
           <div>

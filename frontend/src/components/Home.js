@@ -273,7 +273,7 @@ function Home() {
           maxWidth='800px'>
           <DialogTitle gap={'20px'}>
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-              <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
+              <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
               <h3>Matterbridge plugin configuration</h3>
             </div>
           </DialogTitle>
