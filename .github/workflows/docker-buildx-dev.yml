@@ -5,7 +5,7 @@ on:
     branches:
       - dev
     paths-ignore:
-      - '**/screenshots/*'
+      - '**/screenshot/*'
       - '/*.md
 
 jobs:

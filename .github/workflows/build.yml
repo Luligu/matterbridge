@@ -3,11 +3,11 @@ name: Install, Lint, Test and Build
 on:
   push:
     paths-ignore:
-      - '**/screenshots/*'
+      - '**/screenshot/*'
       - '/*.md
   pull_request:
     paths-ignore:
-      - '**/screenshots/*'
+      - '**/screenshot/*'
       - '/*.md
 
 jobs:
