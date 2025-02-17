@@ -1933,7 +1933,7 @@ export class Matterbridge extends EventEmitter {
    * @returns {Promise<StorageContext>} The storage context for the commissioning server.
    */
   private async createServerNodeContext(pluginName: string, deviceName: string, deviceType: DeviceTypeId, vendorId: number, vendorName: string, productId: number, productName: string, serialNumber?: string): Promise<StorageContext> {
-    const { randomBytes } = await import('crypto');
+    const { randomBytes } = await import('node:crypto');
     if (!this.matterStorageService) throw new Error('No storage service initialized');
 
     this.log.info(`Creating server node storage context "${pluginName}.persist" for ${pluginName}...`);

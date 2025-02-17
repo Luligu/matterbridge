@@ -25,13 +25,13 @@
 import { EndpointServer, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat } from '@matter/main';
 
 // Node modules
-import { Server as HttpServer, createServer, IncomingMessage } from 'http';
+import { Server as HttpServer, createServer, IncomingMessage } from 'node:http';
 import https from 'https';
 import express from 'express';
 import WebSocket, { WebSocketServer } from 'ws';
-import os from 'os';
-import path from 'path';
-import { promises as fs } from 'fs';
+import os from 'node:os';
+import path from 'node:path';
+import { promises as fs } from 'node:fs';
 
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from './logger/export.js';
@@ -364,7 +364,7 @@ export class Frontend {
       interface ModuleWithCache {
         _cache: Record<string, unknown>;
       }
-      const { default: module } = await import('module');
+      const { default: module } = await import('node:module');
       const loadedModules = (module as unknown as ModuleWithCache)._cache ? Object.keys((module as unknown as ModuleWithCache)._cache).sort() : [];
 
       const memoryReport = {

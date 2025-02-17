@@ -361,7 +361,7 @@ export async function wait(timeout = 1000, name?: string, debug = false): Promis
 export async function createZip(outputPath: string, ...sourcePaths: string[]): Promise<number> {
   const { default: archiver } = await import('archiver');
   const { glob } = await import('glob');
-  const { createWriteStream, statSync } = await import('fs');
+  const { createWriteStream, statSync } = await import('node:fs');
 
   log.logLevel = LogLevel.INFO;
   log.logName = 'Archive';
@@ -443,7 +443,7 @@ export async function createZip(outputPath: string, ...sourcePaths: string[]): P
  * @throws {Error} - Throws an error if the copy operation fails.
  */
 export async function copyDirectory(srcDir: string, destDir: string): Promise<boolean> {
-  const fs = await import('fs').then((mod) => mod.promises);
+  const fs = await import('node:fs').then((mod) => mod.promises);
 
   log.debug(`copyDirectory: copying directory from ${srcDir} to ${destDir}`);
   try {
@@ -483,7 +483,7 @@ export async function copyDirectory(srcDir: string, destDir: string): Promise<bo
  * This function uses DNS lookup to resolve the hostname, which can take some time to complete.
  */
 export async function resolveHostname(hostname: string, family: 0 | 4 | 6 = 4): Promise<string | null> {
-  const dns = await import('dns');
+  const dns = await import('node:dns');
   try {
     const addresses = await dns.promises.lookup(hostname.toLowerCase() /* + '.local'*/, { family });
     return addresses.address;

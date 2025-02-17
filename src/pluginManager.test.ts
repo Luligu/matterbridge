@@ -8,10 +8,10 @@ import { AnsiLogger, db, er, LogLevel, nf, nt, pl, UNDERLINE, UNDERLINEOFF } fro
 import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
-import { execSync } from 'child_process';
+import { execSync } from 'node:child_process';
 import { waiter } from './utils/utils.js';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
 

@@ -13,8 +13,8 @@ import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Environment, StorageService } from '@matter/main';
-import path from 'path';
-import os from 'os';
+import path from 'node:path';
+import os from 'node:os';
 
 describe('Matterbridge platform', () => {
   let matterbridge: Matterbridge;

@@ -12,7 +12,7 @@ import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matte
 import { Identify } from '@matter/main/clusters';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 import { MdnsService } from '@matter/main/protocol';
-import http from 'http';
+import http from 'node:http';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {

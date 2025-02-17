@@ -11,8 +11,8 @@ import { AnsiLogger, db, LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi
 import { Matterbridge } from './matterbridge.js';
 import { waiter } from './utils/utils.js';
 import { Environment, StorageService } from '@matter/main';
-import path from 'path';
-import os from 'os';
+import path from 'node:path';
+import os from 'node:os';
 import { PluginManager } from './pluginManager.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { pressureSensor } from './matterbridgeDeviceTypes.js';

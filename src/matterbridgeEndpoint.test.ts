@@ -66,7 +66,7 @@ import {
   TimeSynchronizationServer,
 } from '@matter/node/behaviors';
 import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
-import { log } from 'console';
+import { log } from 'node:console';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
