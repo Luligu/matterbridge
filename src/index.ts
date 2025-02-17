@@ -4,7 +4,7 @@
  * @file index.ts
  * @author Luca Liguori
  * @date 2023-12-29
- * @version 1.0.6
+ * @version 1.0.7
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
  *
@@ -21,7 +21,12 @@
  * limitations under the License. *
  */
 
+// Matterbridge
 import { Matterbridge } from './matterbridge.js';
+import { hasParameter } from './utils/export.js';
+
+// AnsiLogger module
+import { AnsiLogger, LogLevel, TimestampFormat } from './logger/export.js';
 
 // @matter
 export {
@@ -57,19 +62,14 @@ export * from './matterbridgePlatform.js';
 export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
 
-const cli = '\u001B[32m';
-const er = '\u001B[38;5;9m';
-const rs = '\u001B[40;0m';
+const log = new AnsiLogger({ logName: 'Main', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 
 async function main() {
-  // eslint-disable-next-line no-console
-  if (process.argv.includes('-debug')) console.log(cli + 'MAIN: Matterbridge.loadInstance() called' + rs);
+  log.debug('***Matterbridge.loadInstance() called');
   await Matterbridge.loadInstance();
-  // eslint-disable-next-line no-console
-  if (process.argv.includes('-debug')) console.log(cli + 'MAIN: Matterbridge.loadInstance() exited' + rs);
+  log.debug('***Matterbridge.loadInstance() exited');
 }
 
 main().catch((error) => {
-  // eslint-disable-next-line no-console
-  console.error(er + `MAIN: Matterbridge.loadInstance() failed with error: ${error}` + rs);
+  log.error(`Matterbridge.loadInstance() failed with error: ${error instanceof Error ? error.message : error}`);
 });

@@ -1,11 +1,11 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-process.argv = ['node', './cli.js', '-memorycheck', '-inspector', '-frontend', '0', '-profile', 'JestCli', '-debug', '-logger', 'debug', '-matterlogger', 'debug'];
+process.argv = ['node', './cli.js', '-memorycheck', '-inspect', '-frontend', '0', '-profile', 'JestCli', '-debug', '-logger', 'debug', '-matterlogger', 'debug'];
 
 import { jest } from '@jest/globals';
 
-import { AnsiLogger } from 'node-ansi-logger';
+import { AnsiLogger, BRIGHT, LogLevel, YELLOW } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { MockMatterbridge } from './mock/mockMatterbridge.js';
 
@@ -46,7 +46,7 @@ if (!debug) {
   // Spy on AnsiLogger.log
   loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
   // Spy on console.log
-  consoleLogSpy = jest.spyOn(console, 'log');
+  loggerLogSpy = jest.spyOn(console, 'log');
   // Spy on console.debug
   consoleDebugSpy = jest.spyOn(console, 'debug');
   // Spy on console.info
@@ -84,6 +84,9 @@ describe('Matterbridge', () => {
   });
 
   it('should start matterbridge', async () => {
+    expect(loggerLogSpy).toHaveBeenCalledTimes(0);
+    expect(loadInstance).toHaveBeenCalledTimes(0);
+
     // Dynamically import the cli module
     const cli = await import('./cli.js');
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -92,11 +95,13 @@ describe('Matterbridge', () => {
     matterbridge = cli.instance as unknown as Matterbridge;
 
     expect(loadInstance).toHaveBeenCalledTimes(1);
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001B[32mCLI: Cpu memory check started\u001B[40;0m');
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001B[32mCLI: Starting heap sampling...\u001B[40;0m');
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001B[32mCLI: Heap sampling started\u001B[40;0m');
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001B[32mCLI: Matterbridge.loadInstance() called\u001B[40;0m');
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001B[32mCLI: Matterbridge.loadInstance() exited\u001B[40;0m');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cli main() started');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cpu memory check started');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Starting heap sampling...');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Started heap sampling');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Matterbridge.loadInstance(true) called');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Matterbridge.loadInstance(true) exited');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***${YELLOW}${BRIGHT}Cpu usage:`));
   }, 10000);
 
   it('should shutdown matterbridge', async () => {
@@ -105,10 +110,11 @@ describe('Matterbridge', () => {
     matterbridge.emit('shutdown');
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001B[32mCLI: received shutdown event, exiting...\u001B[40;0m');
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001B[32mCLI: Stopping heap sampling...\u001B[40;0m');
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001B[32mCLI: Heap sampling profile saved to heap-sampling-profile.heapsnapshot\u001B[40;0m');
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001B[32mCLI: Cpu memory check stopped\u001B[40;0m');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received shutdown event, exiting...');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Stopping heap sampling...');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Heap sampling profile saved to Heap-sampling-profile.heapprofile');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Stopped heap sampling');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Cpu memory check stopped.'));
     expect(exit).toHaveBeenCalled();
   }, 10000);
 
@@ -118,7 +124,7 @@ describe('Matterbridge', () => {
     matterbridge.emit('startmemorycheck');
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001B[32mCLI: received start memory check event\u001B[40;0m');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received start memory check event');
     expect(exit).not.toHaveBeenCalled();
   }, 10000);
 
@@ -128,7 +134,7 @@ describe('Matterbridge', () => {
     matterbridge.emit('stopmemorycheck');
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001B[32mCLI: received stop memory check event\u001B[40;0m');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received stop memory check event');
     expect(exit).not.toHaveBeenCalled();
   }, 10000);
 
@@ -138,7 +144,7 @@ describe('Matterbridge', () => {
     matterbridge.emit('restart');
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001B[32mCLI: received restart event, loading...\u001B[40;0m');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received restart event, loading...');
     expect(loadInstance).toHaveBeenCalledTimes(1);
   }, 60000);
 
@@ -148,7 +154,7 @@ describe('Matterbridge', () => {
     matterbridge.emit('update');
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001B[32mCLI: received update event, updating...\u001B[40;0m');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received update event, updating...');
     expect(loadInstance).toHaveBeenCalledTimes(1);
 
     matterbridge.emit('shutdown');
