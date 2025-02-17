@@ -1,4 +1,4 @@
-# <img src="https://github.com/Luligu/matterbridge/blob/main/frontend/public/matterbridge%2064x64.png" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge changelog
+# <img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -260,7 +260,7 @@ matterbridge-hass v. 0.0.8
 
 ### Added
 
-- [edge]: Added guide https://github.com/Luligu/matterbridge/blob/dev/README-EDGE.md.
+- [edge]: Added guide [README-EDGE.md](README-EDGE.md).
 - [storage]: Added conversion from old matter storage to the new api format with fabrics, resumptionRecords, network, commissioning, operationalCredentials, acl and parts number. The conversion is triggered every time you shutdown or restart matterbridge till the new storage has been used with matterbridge edge.
 - [storage]: Added conversion for child endpoint numbers.
 - [storage]: Added conversion for childbridge mode.
@@ -397,7 +397,7 @@ It is possible that some controllers see them as new devices or need time to rea
 ### Added
 
 - [matter.js]: Almost completed the phase 2 of migration to edge (matter.js new API).
-- [nginx]: Added the route /matterbridge/ to be used with nginx proxy server https://github.com/Luligu/matterbridge/blob/dev/README-NGINX.md.
+- [nginx]: Added the route /matterbridge/ to be used with nginx proxy server [README-NGINX.md](README-NGINX.md).
 - [config]: Config and schema are loaded before loading the plugin to allow to configure the plugin even when it throws error on load.
 - [config]: Added version to the config.
 - [frontend]: Added badge "edge" when running in edge mode.
@@ -601,7 +601,7 @@ It is possible that some controllers see them as new devices or need time to rea
 
 ### Breaking Changes for developers
 
-- please read this [Development guide lines](https://github.com/Luligu/matterbridge/blob/main/README-DEV.md)
+- please read this [Development guide lines](README-DEV.md)
 
 ### Added
 
