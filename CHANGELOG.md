@@ -40,10 +40,11 @@ matterbridge-hass v. 0.0.8
 - [docker]: Added health check directly in the docker image. No need to change configuration of docker compose.
 - [platform]: Saving in the storage the selects for faster loading of plugins.
 - [icon]: Added matterbridge svg icon (thanks: https://github.com/robvanoostenrijk https://github.com/stuntguy3000).
-- [frontend]: Added processUptime.
+- [pluginManager]: Refactor PluginManager to optimize memory and load time.
 - [frontend]: Frontend v.2.4.2.
-- [PluginManager]: Refactor PluginManager to optimize memory and load time.
+- [frontend]: Added processUptime.
 - [frontend]: Added Share fabrics and Stop sharing to the menu. This allows to pair other controllers without the need to share from the first controller.
+- [utils]: Optimized memory and loading time.
 
 ### Changed
 

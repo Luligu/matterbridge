@@ -6,7 +6,7 @@ process.argv = ['node', 'frontend.test.js', '-logger', 'info', '-matterlogger', 
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
-import { wait, waiter } from './utils/utils.js';
+import { wait, waiter } from './utils/export.js';
 import WebSocket from 'ws';
 import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { Identify } from '@matter/main/clusters';

@@ -8,7 +8,7 @@ import { jest } from '@jest/globals';
 
 import { AnsiLogger, db, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
-import { wait, waiter } from './utils/utils.js';
+import { wait, waiter } from './utils/export.js';
 import { Environment, StorageService } from '@matter/main';
 import path from 'node:path';
 import os from 'node:os';

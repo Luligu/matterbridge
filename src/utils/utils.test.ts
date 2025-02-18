@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { deepEqual, deepCopy, getIpv4InterfaceAddress, getIpv6InterfaceAddress, logInterfaces, waiter, wait, getMacAddress, createZip, getNpmPackageVersion, copyDirectory, resolveHostname } from './utils';
+import { deepEqual, deepCopy, getIpv4InterfaceAddress, getIpv6InterfaceAddress, logInterfaces, waiter, wait, getMacAddress, createZip, getNpmPackageVersion, copyDirectory, resolveHostname } from './export';
 import { hasParameter, getParameter, getIntParameter, isValidIpv4Address, isValidNumber, isValidBoolean, isValidString, isValidObject, isValidArray, isValidNull, isValidUndefined } from './export';
 import { promises as fs } from 'node:fs';
 import { AnsiLogger } from 'node-ansi-logger';

@@ -34,8 +34,8 @@ import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW,
 import { NodeStorageManager, NodeStorage } from './storage/export.js';
 
 // Matterbridge
-import { getParameter, getIntParameter, hasParameter } from './utils/export.js';
-import { logInterfaces, copyDirectory, getNpmPackageVersion, getGlobalNodeModules } from './utils/utils.js';
+import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout } from './utils/export.js';
+import { logInterfaces, getNpmPackageVersion, getGlobalNodeModules } from './utils/network.js';
 import { MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
@@ -2231,22 +2231,6 @@ export class Matterbridge extends EventEmitter {
   private async stopServerNode(matterServerNode: ServerNode): Promise<void> {
     if (!matterServerNode) return;
     this.log.notice(`Closing ${matterServerNode.id} server node`);
-
-    // Helper function to add a timeout to a promise
-    const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
-      return new Promise<T>((resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error('Operation timed out')), ms);
-        promise
-          .then((result) => {
-            clearTimeout(timer); // Prevent memory leak
-            resolve(result);
-          })
-          .catch((error) => {
-            clearTimeout(timer); // Ensure timeout does not fire if promise rejects first
-            reject(error);
-          });
-      });
-    };
 
     try {
       await withTimeout(matterServerNode.close(), 30000); // 30 seconds timeout to allow slow devices to close gracefully

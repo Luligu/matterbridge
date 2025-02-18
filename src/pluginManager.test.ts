@@ -9,7 +9,7 @@ import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { execSync } from 'node:child_process';
-import { waiter } from './utils/utils.js';
+import { waiter } from './utils/export.js';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { DeviceManager } from './deviceManager.js';
