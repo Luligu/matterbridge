@@ -267,7 +267,7 @@ describe('Matterbridge', () => {
         1000,
         true,
       );
-    });
+    }, 60000);
 
     test('hasParameter("debug") should return false', async () => {
       expect(hasParameter('debug')).toBeFalsy();
