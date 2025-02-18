@@ -151,7 +151,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect((matterbridge as any).discriminator).toBe(3860 + 1);
 
     await waiter(
-      'Matter server started',
+      'Matter server started and online',
       () => {
         return (matterbridge as any).configureTimeout !== undefined && (matterbridge as any).reachabilityTimeout !== undefined && matterbridge.serverNode?.lifecycle.isOnline === true;
       },
@@ -177,7 +177,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   test('advertise node', async () => {
     const pairing = await matterbridge.advertiseServerNode(matterbridge.serverNode);
     expect(pairing).toBeDefined();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Advertising for Matterbridge is now started`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Started advertising for Matterbridge`));
   });
 
   test('add plugin', async () => {
@@ -246,7 +246,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   test('advertise node 2', async () => {
     const pairing = await matterbridge.advertiseServerNode(matterbridge.serverNode);
     expect(pairing).toBeDefined();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Advertising for Matterbridge is now started`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Started advertising for Matterbridge`));
   });
 
   test('add device -bridge mode', async () => {

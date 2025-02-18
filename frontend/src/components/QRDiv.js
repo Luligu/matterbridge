@@ -7,7 +7,7 @@ import { QRCodeSVG } from 'qrcode.react';
 
 export function QRDiv({ matterbridgeInfo, plugin }) {
   if(debug) console.log('QRDiv:', matterbridgeInfo, plugin);
-  if (matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === true && matterbridgeInfo.matterbridgeFabricInformations) {
+  if (matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === true && matterbridgeInfo.matterbridgeAdvertise === false && matterbridgeInfo.matterbridgeFabricInformations) {
     if (debug) console.log(`QRDiv: paired ${matterbridgeInfo.matterbridgePaired}, got ${matterbridgeInfo.matterbridgeFabricInformations?.length} fabrics, got ${matterbridgeInfo.matterbridgeSessionInformations?.length} sessions`);
     return (
       <div className="MbfWindowDiv" style={{ alignItems: 'center', minWidth: '302px', overflow: 'hidden' }} >
@@ -45,7 +45,7 @@ export function QRDiv({ matterbridgeInfo, plugin }) {
         </div>
       </div>
     );
-  } else if (matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === false && matterbridgeInfo.matterbridgeQrPairingCode && matterbridgeInfo.matterbridgeManualPairingCode) {
+  } else if (matterbridgeInfo.bridgeMode === 'bridge' && (matterbridgeInfo.matterbridgePaired === false || matterbridgeInfo.matterbridgeAdvertise === true) && matterbridgeInfo.matterbridgeQrPairingCode && matterbridgeInfo.matterbridgeManualPairingCode) {
     if (debug) console.log(`QRDiv: qrText ${matterbridgeInfo.matterbridgeQrPairingCode} pairingText ${matterbridgeInfo.matterbridgeManualPairingCode}`);
     return (
       <div className="MbfWindowDiv" style={{ alignItems: 'center', minWidth: '302px' }}>

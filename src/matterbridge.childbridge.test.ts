@@ -154,7 +154,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect((matterbridge as any).discriminator).toBe(3860);
 
     await waiter(
-      'Matter server started',
+      'Matterbridge started',
       () => {
         return (matterbridge as any).configureTimeout !== undefined;
       },
@@ -164,7 +164,8 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       true,
     );
 
-    // expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
+    // Now in childbridgemode we have no serverNodes running since 0 plugins.
+
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8802${UNDERLINEOFF}${rs}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in childbridge mode...`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval in childbridge mode`);
@@ -181,7 +182,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(plugins.length).toBe(3);
   });
 
-  test('create and start server node', async () => {
+  test('create and start server node for each plugin', async () => {
     plugins = (matterbridge as any).plugins;
     for (const plugin of plugins) {
       await (matterbridge as any).createDynamicPlugin(plugin, true);
@@ -199,6 +200,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(matterbridge.bridgeMode).toBe('childbridge');
     for (const plugin of plugins) {
       expect(plugin.serverNode).toBeDefined();
+      expect(plugin.aggregatorNode).toBeDefined();
     }
     await matterbridge.destroyInstance();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
@@ -217,11 +219,10 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(plugins.length).toBe(3);
     for (const plugin of plugins) {
       expect(plugin.type).toBe('DynamicPlatform');
-      // plugin.addedDevices = 1;
     }
 
     await waiter(
-      'Matter server started',
+      'Matterbridge started',
       () => {
         return (matterbridge as any).configureTimeout !== undefined && plugins.array()[0].reachabilityTimeout !== undefined && plugins.array()[1].reachabilityTimeout !== undefined && plugins.array()[2].reachabilityTimeout !== undefined;
       },
@@ -232,7 +233,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     );
 
     await waiter(
-      'Matter server online',
+      'Matter servers online',
       () => {
         return plugins.array()[0].serverNode?.lifecycle.isOnline === true && plugins.array()[1].serverNode?.lifecycle.isOnline === true && plugins.array()[2].serverNode?.lifecycle.isOnline === true;
       },
@@ -254,7 +255,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   test('stop advertise node', async () => {
     for (const plugin of plugins) {
       await matterbridge.stopAdvertiseServerNode(plugin.serverNode);
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Stopped advertising for`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Stopped advertising for ${plugin.name}`));
     }
   });
 
@@ -262,7 +263,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     for (const plugin of plugins) {
       const pairing = await matterbridge.advertiseServerNode(plugin.serverNode);
       expect(pairing).toBeDefined();
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`is now started`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Started advertising for ${plugin.name}`));
     }
   });
 

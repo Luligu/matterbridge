@@ -15,6 +15,8 @@ import DownloadIcon from '@mui/icons-material/Download';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
+import IosShareIcon from '@mui/icons-material/IosShare';
+import BlockIcon from '@mui/icons-material/Block';
 
 // Frontend
 import { sendCommandToMatterbridge } from './sendApiCommand';
@@ -46,29 +48,27 @@ function Header() {
 
   const handleUpdateClick = () => {
     sendMessage({ method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: 'matterbridge', restart: true } });
-    // logMessage('Matterbridge', `Updating matterbridge...`);
-    // showSnackbarMessage('Updating matterbridge...', 30);
-    // sendCommandToMatterbridge('update', 'now');
   };
 
   const handleRestartClick = () => {
-    // logMessage('Matterbridge', `Restarting matterbridge...`);
-    // showSnackbarMessage('Restarting matterbridge...', 10);
     if (settings.matterbridgeInformation.restartMode === '') {
-      // sendCommandToMatterbridge('restart', 'now');
       sendMessage({ method: "/api/restart", src: "Frontend", dst: "Matterbridge", params: {} });
     }
     else {
-      // sendCommandToMatterbridge('shutdown', 'now');
       sendMessage({ method: "/api/shutdown", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   };
 
   const handleShutdownClick = () => {
-    // logMessage('Matterbridge', `Shutting down matterbridge...`);
-    // showSnackbarMessage('Shutting down matterbridge...', 10);
-    // sendCommandToMatterbridge('shutdown', 'now');
     sendMessage({ method: "/api/shutdown", src: "Frontend", dst: "Matterbridge", params: {} });
+  };
+
+  const handleStartAdvertiseClick = () => {
+    sendMessage({ method: "/api/advertise", src: "Frontend", dst: "Matterbridge", params: {} });
+  };
+
+  const handleStopAdvertiseClick = () => {
+    sendMessage({ method: "/api/stopadvertise", src: "Frontend", dst: "Matterbridge", params: {} });
   };
 
   const handleMenuOpen = (event) => {
@@ -104,6 +104,10 @@ function Header() {
       handleRestartClick();
     } else if (value === 'shutdown') {
       handleShutdownClick();
+    } else if (value === 'startshare') {
+      handleStartAdvertiseClick();
+    } else if (value === 'stopshare') {
+      handleStopAdvertiseClick();
     } else if (value === 'create-backup') {
       logMessage('Matterbridge', `Creating backup...`);
       showSnackbarMessage('Creating backup...', 10);
@@ -165,6 +169,12 @@ function Header() {
           if (debug) console.log('Header received settings:', msg.response);
           setSettings(msg.response);
         }
+        if (msg.method === '/api/advertise') {
+          if (debug) console.log('Header received advertise:', msg.response);
+        }
+        if (msg.method === '/api/stopadvertise') {
+          if (debug) console.log('Header received advertise:', msg.response);
+        }
       }
     };
 
@@ -175,7 +185,7 @@ function Header() {
       removeListener(handleWebSocketMessage);
       if (debug) console.log('Header removed WebSocket listener');
     };
-  }, [addListener, removeListener, sendMessage]);
+  }, [addListener, removeListener, sendMessage, showSnackbarMessage]);
 
   useEffect(() => {
     if (online) {
@@ -279,6 +289,18 @@ function Header() {
             <MenuItem onClick={() => handleMenuCloseConfirm('shutdown')}>
               <ListItemIcon><PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
               <ListItemText primary="Shutdown" />
+            </MenuItem>
+            : null}
+          {settings.matterbridgeInformation.matterbridgePaired === true && settings.matterbridgeInformation.matterbridgeAdvertise === false?
+            <MenuItem onClick={() => handleMenuCloseConfirm('startshare')}>
+              <ListItemIcon><IosShareIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+              <ListItemText primary="Share fabrics" />
+            </MenuItem>
+            : null}
+          {settings.matterbridgeInformation.matterbridgeAdvertise === true ?
+            <MenuItem onClick={() => handleMenuCloseConfirm('stopshare')}>
+              <ListItemIcon><BlockIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+              <ListItemText primary="Stop sharing" />
             </MenuItem>
             : null}
           <Divider />

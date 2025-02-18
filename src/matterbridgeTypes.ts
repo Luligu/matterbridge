@@ -113,6 +113,7 @@ export interface MatterbridgeInformation {
   matterbridgeFabricInformations: SanitizedExposedFabricInformation[] | undefined;
   matterbridgeSessionInformations: SanitizedSessionInformation[] | undefined;
   matterbridgePaired: boolean | undefined;
+  matterbridgeAdvertise: boolean | undefined;
   bridgeMode: string;
   restartMode: string;
   readOnly: boolean;

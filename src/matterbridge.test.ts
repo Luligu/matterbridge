@@ -97,12 +97,19 @@ describe('Matterbridge', () => {
       matterbridge = await Matterbridge.loadInstance(false);
       matterbridge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
       expect((Matterbridge as any).instance).toBeDefined();
+      expect((matterbridge as any).initialized).toBeFalsy();
       expect(matterbridge).toBeDefined();
       expect(matterbridge.profile).toBe('Jest');
       expect(matterbridge.nodeStorageName).toBe('storage.Jest');
       expect(matterbridge.matterStorageName).toBe('matterstorage.Jest');
       expect(matterbridge.matterbrideLoggerFile).toBe('matterbridge.Jest.log');
       expect(matterbridge.matterLoggerFile).toBe('matter.Jest.log');
+      expect(matterbridge.serverNode).toBeUndefined();
+      expect(matterbridge.aggregatorNode).toBeUndefined();
+      expect(matterbridge.matterStorageManager).toBeUndefined();
+      expect(matterbridge.matterStorageService).toBeUndefined();
+      expect(matterbridge.matterbridgeContext).toBeUndefined();
+
       expect((matterbridge as any).initialized).toBeFalsy();
       expect((matterbridge as any).log).toBeDefined();
       expect((matterbridge as any).homeDirectory).toBe('');
@@ -125,6 +132,7 @@ describe('Matterbridge', () => {
       await matterbridge.destroyInstance();
 
       expect((matterbridge as any).initialized).toBeFalsy();
+      expect((matterbridge as any).hasCleanupStarted).toBeFalsy();
       expect((Matterbridge as any).instance).toBeDefined(); // Instance is still defined cause cleanup() is not called when initialized is false
     });
 
@@ -132,11 +140,26 @@ describe('Matterbridge', () => {
       expect((Matterbridge as any).instance).toBeDefined();
       matterbridge = await Matterbridge.loadInstance(true);
       expect((matterbridge as any).initialized).toBeFalsy();
-
-      if (!(matterbridge as any).initialized) await matterbridge.initialize();
+      await matterbridge.initialize();
       expect((matterbridge as any).initialized).toBeTruthy();
+      expect(matterbridge.serverNode).toBeDefined();
+      expect(matterbridge.aggregatorNode).toBeDefined();
+      expect(matterbridge.matterStorageManager).toBeDefined();
+      expect(matterbridge.matterStorageService).toBeDefined();
+      expect(matterbridge.matterbridgeContext).toBeDefined();
       matterbridge.plugins.clear();
       await matterbridge.plugins.saveToStorage();
+
+      await waiter(
+        'Matter server node started',
+        () => {
+          return (matterbridge as any).configureTimeout !== undefined && (matterbridge as any).reachabilityTimeout !== undefined && matterbridge.serverNode?.lifecycle.isOnline === true;
+        },
+        false,
+        60000,
+        1000,
+        true,
+      );
 
       expect(matterbridge).toBeDefined();
       expect(matterbridge.profile).toBe('Jest');
@@ -157,6 +180,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).devices).toBeDefined();
       expect((matterbridge as any).devices.size).toBe(0);
 
+      // -frontend 0
       expect((matterbridge as any).frontend.httpServer).toBeUndefined();
       expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
       expect((matterbridge as any).frontend.expressApp).toBeUndefined();
@@ -164,8 +188,10 @@ describe('Matterbridge', () => {
 
       // Destroy the Matterbridge instance
       await matterbridge.destroyInstance();
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
 
       expect((matterbridge as any).initialized).toBeFalsy();
+      expect((matterbridge as any).hasCleanupStarted).toBeFalsy();
       expect((Matterbridge as any).instance).toBeUndefined(); // Instance is not defined cause cleanup() has been called
     });
 
@@ -176,6 +202,17 @@ describe('Matterbridge', () => {
       matterbridge = await Matterbridge.loadInstance(true);
       expect((Matterbridge as any).instance).toBeDefined();
       expect((matterbridge as any).initialized).toBeTruthy();
+
+      await waiter(
+        'Matter server node started',
+        () => {
+          return (matterbridge as any).configureTimeout !== undefined && (matterbridge as any).reachabilityTimeout !== undefined && matterbridge.serverNode?.lifecycle.isOnline === true;
+        },
+        false,
+        60000,
+        1000,
+        true,
+      );
 
       expect(matterbridge).toBeDefined();
       expect(matterbridge.profile).toBe('Jest');
@@ -188,6 +225,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).plugins).toBeDefined();
       expect((matterbridge as any).devices.size).toBe(0);
 
+      // -frontend 8081
       expect((matterbridge as any).frontend.httpServer).toBeDefined();
       expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
       expect((matterbridge as any).frontend.expressApp).toBeDefined();
@@ -217,11 +255,12 @@ describe('Matterbridge', () => {
       expect(matterbridge.profile).toBe('Jest');
       expect((matterbridge as any).initialized).toBe(true);
       expect((matterbridge as any).hasCleanupStarted).toBe(false);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Matterbridge profile: Jest'));
 
       await waiter(
-        'Matter server started',
+        'Matter server node started',
         () => {
-          return (matterbridge as any).configureTimeout !== undefined && (matterbridge as any).reachabilityTimeout !== undefined && matterbridge.matterbridgeQrPairingCode !== undefined;
+          return (matterbridge as any).configureTimeout !== undefined && (matterbridge as any).reachabilityTimeout !== undefined && matterbridge.serverNode?.lifecycle.isOnline === true;
         },
         false,
         60000,

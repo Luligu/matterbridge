@@ -1266,7 +1266,19 @@ export class Frontend {
         return;
       } else if (data.method === '/api/advertise') {
         const pairingCodes = await this.matterbridge.advertiseServerNode(this.matterbridge.serverNode);
+        this.matterbridge.matterbridgeInformation.matterbridgeAdvertise = true;
+        this.matterbridge.matterbridgeQrPairingCode = pairingCodes?.qrPairingCode;
+        this.matterbridge.matterbridgeManualPairingCode = pairingCodes?.manualPairingCode;
+        this.wssSendRefreshRequired();
+        this.wssSendSnackbarMessage(`Started fabrics share`, 0);
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: pairingCodes }));
+        return;
+      } else if (data.method === '/api/stopadvertise') {
+        await this.matterbridge.stopAdvertiseServerNode(this.matterbridge.serverNode);
+        this.matterbridge.matterbridgeInformation.matterbridgeAdvertise = false;
+        this.wssSendRefreshRequired();
+        this.wssSendSnackbarMessage(`Stopped fabrics share`, 0);
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src }));
         return;
       } else if (data.method === '/api/settings') {
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: await this.getApiSettings() }));

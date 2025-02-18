@@ -103,6 +103,7 @@ export class Matterbridge extends EventEmitter {
     matterbridgeFabricInformations: [],
     matterbridgeSessionInformations: [],
     matterbridgePaired: false,
+    matterbridgeAdvertise: false,
     bridgeMode: '',
     restartMode: '',
     readOnly: hasParameter('readonly'),
@@ -398,7 +399,7 @@ export class Matterbridge extends EventEmitter {
     // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode)
     this.discriminator = getIntParameter('discriminator') ?? (await this.nodeContext.get<number>('matterdiscriminator')) ?? PaseClient.generateRandomDiscriminator();
 
-    this.log.debug(`Initializing commissioning server for Matterbridge... on port ${this.port} with passcode ${this.passcode} and discriminator ${this.discriminator}`);
+    this.log.debug(`Initializing server node for Matterbridge... on port ${this.port} with passcode ${this.passcode} and discriminator ${this.discriminator}`);
 
     // Set matterbridge logger level (context: matterbridgeLogLevel)
     if (hasParameter('logger')) {
@@ -435,6 +436,8 @@ export class Matterbridge extends EventEmitter {
     this.log.notice('Matterbridge is starting...');
 
     this.log.debug(`Matterbridge logLevel: ${this.log.logLevel} fileLoger: ${this.matterbridgeInformation.fileLogger}.`);
+
+    if (this.profile !== undefined) this.log.debug(`Matterbridge profile: ${this.profile}.`);
 
     // Set matter.js logger level, format and logger (context: matterLogLevel)
     if (hasParameter('matterlogger')) {
@@ -684,6 +687,7 @@ export class Matterbridge extends EventEmitter {
     }
 
     if (hasParameter('factoryreset')) {
+      this.initialized = true;
       await this.shutdownProcessAndFactoryReset();
       this.shutdown = true;
       return;
@@ -699,6 +703,7 @@ export class Matterbridge extends EventEmitter {
 
     // Clear the matterbridge context if the reset parameter is set
     if (hasParameter('reset') && getParameter('reset') === undefined) {
+      this.initialized = true;
       await this.shutdownProcessAndReset();
       this.shutdown = true;
       return;
@@ -2261,7 +2266,7 @@ export class Matterbridge extends EventEmitter {
     if (matterServerNode) {
       await matterServerNode.env.get(DeviceCommissioner)?.allowBasicCommissioning();
       const { qrPairingCode, manualPairingCode } = matterServerNode.state.commissioning.pairingCodes;
-      this.log.notice(`Advertising for ${matterServerNode.id} is now started with the following pairing codes: qrPairingCode ${qrPairingCode}, manualPairingCode ${manualPairingCode}`);
+      this.log.notice(`Started advertising for ${matterServerNode.id} with the following pairing codes: qrPairingCode ${qrPairingCode}, manualPairingCode ${manualPairingCode}`);
       return { qrPairingCode, manualPairingCode };
     }
   }

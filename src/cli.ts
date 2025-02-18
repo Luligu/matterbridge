@@ -244,7 +244,7 @@ async function main() {
   log.debug(`***Matterbridge.loadInstance(true) exited`);
 
   // Check if the instance needs to shut down from parseCommandLine()
-  if (instance.shutdown) {
+  if (!instance || instance.shutdown) {
     shutdown();
   } else {
     registerHandlers();
