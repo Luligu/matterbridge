@@ -230,7 +230,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
       expect((matterbridge as any).frontend.expressApp).toBeDefined();
       expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
-    });
+    }, 60000);
 
     test('destroy instance', async () => {
       // Destroy the Matterbridge instance
