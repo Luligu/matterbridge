@@ -44,6 +44,7 @@ matterbridge-hass v. 0.0.8
 - [frontend]: Frontend v.2.4.2.
 - [frontend]: Added processUptime.
 - [frontend]: Added Share fabrics and Stop sharing to the menu. This allows to pair other controllers without the need to share from the first controller.
+- [frontend]: Added subscriptions to QRDiv.
 - [utils]: Optimized memory and loading time.
 
 ### Changed
