@@ -54,6 +54,10 @@ matterbridge-hass v. 0.0.8
 - [package]: Update matter.js to 0.12.4-alpha.0-20250215-5af08a8d6
 - [package]: Update matter.js to 0.12.4-alpha.0-20250217-b0bba5179
 
+### Fixed
+
+- [matterbridge]: Check endpoint state in /api/devices.
+
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
 </a>

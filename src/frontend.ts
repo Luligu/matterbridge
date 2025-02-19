@@ -406,7 +406,7 @@ export class Frontend {
       const devices: ApiDevices[] = [];
       this.matterbridge.devices.forEach(async (device) => {
         // Check if the device has the required properties
-        if (!device.plugin || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId) return;
+        if (!device.plugin || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) return;
         const cluster = this.getClusterTextFromDevice(device);
         devices.push({
           pluginName: device.plugin,
@@ -1293,7 +1293,7 @@ export class Frontend {
           // Filter by pluginName if provided
           if (data.params.pluginName && data.params.pluginName !== device.plugin) return;
           // Check if the device has the required properties
-          if (!device.plugin || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId) return;
+          if (!device.plugin || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) return;
           const cluster = this.getClusterTextFromDevice(device);
           devices.push({
             pluginName: device.plugin,
