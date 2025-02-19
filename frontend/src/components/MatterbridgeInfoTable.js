@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
 // Frontend
 import { TruncatedText } from './TruncatedText';
-// import { debug } from '../App';
-const debug = true;
+import { debug } from '../App';
+// const debug = true;
 
 // This function takes systemInfo as a parameter and returns a table element with the systemInfo
 export function MatterbridgeInfoTable({ matterbridgeInfo }) {
@@ -10,8 +10,8 @@ export function MatterbridgeInfoTable({ matterbridgeInfo }) {
 
   const excludeKeys = ['matterbridgeVersion', 'matterbridgeLatestVersion', 'matterFileLogger', 'fileLogger', 'matterLoggerLevel', 'loggerLevel',
     'bridgeMode', 'restartMode', 'matterbridgeFabricInformations', 'matterbridgeSessionInformations', 'restartRequired', 'refreshRequired', 'matterbridgeQrPairingCode', 'matterbridgeManualPairingCode',
-    'mattermdnsinterface', 'matteripv4address', 'matteripv6address', 'matterbridgePaired', 'matterbridgeConnected', 'readOnly', 'matterPort', 'matterDiscriminator', 'matterPasscode'];
-  if (matterbridgeInfo.bridgeMode === 'childbridge') excludeKeys.push('matterbridgePaired');
+    'mattermdnsinterface', 'matteripv4address', 'matteripv6address', 'matterbridgePaired', 'matterbridgeConnected', 'matterbridgeAdvertise', 'readOnly', 'matterPort', 'matterDiscriminator', 'matterPasscode'];
+  // if (matterbridgeInfo.bridgeMode === 'childbridge') excludeKeys.push('matterbridgePaired');
 
   return (
     <div className="MbfWindowDiv" style={{ minWidth: '302px' }}>
