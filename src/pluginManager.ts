@@ -613,8 +613,8 @@ export class PluginManager {
         plugin.loaded = true;
         plugin.registeredDevices = 0;
         plugin.addedDevices = 0;
-        plugin.configJson = config;
-        plugin.schemaJson = await this.loadSchema(plugin);
+        // plugin.configJson = config;
+        // plugin.schemaJson = await this.loadSchema(plugin);
 
         await this.saveToStorage(); // Save the plugin to storage
 
