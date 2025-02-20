@@ -61,7 +61,7 @@ export class MatterbridgePlatform {
   version = '1.0.0'; // Will be set by the loadPlugin() method using the package.json value.
 
   // Platform storage
-  storage?: NodeStorageManager;
+  storage: NodeStorageManager;
   context?: NodeStorage;
 
   // Device and entity selection
@@ -69,10 +69,10 @@ export class MatterbridgePlatform {
   selectEntity = new Map<string, { name: string; description: string; icon?: string }>();
 
   // Promises for storage
-  private contextReady?: Promise<NodeStorage>;
-  private selectDeviceContextReady?: Promise<void>;
-  private selectEntityContextReady?: Promise<void>;
-  ready!: Promise<void>;
+  private contextReady: Promise<void>;
+  private selectDeviceContextReady: Promise<void>;
+  private selectEntityContextReady: Promise<void>;
+  ready: Promise<void>;
 
   // Registered devices
   registeredEndpoints = new Map<string, MatterbridgeEndpoint>(); // uniqueId, MatterbridgeEndpoint
@@ -90,7 +90,7 @@ export class MatterbridgePlatform {
     this.config = config;
 
     // create the NodeStorageManager for the plugin platform
-    if (!isValidString(this.config.name) || this.config.name === '') return;
+    if (!isValidString(this.config.name) || this.config.name === '') throw new Error('Platform: the plugin name is missing or invalid.');
     this.log.debug(`Creating storage for plugin ${this.config.name} in ${path.join(this.matterbridge.matterbridgeDirectory, this.config.name)}`);
     this.storage = new NodeStorageManager({
       dir: path.join(this.matterbridge.matterbridgeDirectory, this.config.name),
@@ -104,8 +104,8 @@ export class MatterbridgePlatform {
     this.log.debug(`Creating context for plugin ${this.config.name}`);
     this.contextReady = this.storage.createStorage('context').then((context) => {
       this.context = context;
+      this.context.remove('endpointMap'); // Remove the old endpointMap TODO: remove in future versions
       this.log.debug(`Created context for plugin ${this.config.name}`);
-      return context;
     });
 
     // create the selectDevice storage for the plugin platform
@@ -144,7 +144,7 @@ export class MatterbridgePlatform {
 
   /**
    * This method can be overridden in the extended class. Call super.onConfigure() to run checkEndpointNumbers().
-   * It is called after the platform has been commissioned.
+   * It is called after the platform has started.
    * Use this method to perform any configuration of your devices.
    */
   async onConfigure() {
@@ -160,6 +160,7 @@ export class MatterbridgePlatform {
    */
   async onShutdown(reason?: string) {
     this.log.debug(`Shutting down platform ${this.name}`, reason);
+
     // Save the selectDevice and selectEntity
     if (this.storage) {
       this.log.debug(`Saving ${this.selectDevice.size} selectDevice...`);
@@ -172,21 +173,20 @@ export class MatterbridgePlatform {
       await selectEntity.set('selectEntity', Array.from(this.selectEntity.values()));
       await selectEntity.close();
     }
+
     // Check and update the endpoint numbers
     await this.checkEndpointNumbers();
+
     // Cleanup memory
     this.selectDevice.clear();
     this.selectEntity.clear();
     this.registeredEndpoints.clear();
     this.registeredEndpointsByName.clear();
-    this.contextReady = undefined;
-    this.selectDeviceContextReady = undefined;
-    this.selectEntityContextReady = undefined;
+
     // Close the storage
     await this.context?.close();
     this.context = undefined;
     await this.storage?.close();
-    this.storage = undefined;
   }
 
   /**

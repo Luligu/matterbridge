@@ -15,6 +15,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Environment, StorageService } from '@matter/main';
 import path from 'node:path';
 import os from 'node:os';
+import { waiter } from './utils/export.js';
 
 describe('Matterbridge platform', () => {
   let matterbridge: Matterbridge;
@@ -81,16 +82,9 @@ describe('Matterbridge platform', () => {
       // console.log(`Mocked removeAllBridgedEndpoint: ${pluginName}`);
       return Promise.resolve();
     });
-
-    // Load the Matterbridge instance
-    matterbridge = await Matterbridge.loadInstance(true);
-    platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'test', type: 'type', debug: false, unregisterOnShutdown: false });
   });
 
   afterAll(async () => {
-    // Destroy the Matterbridge instance
-    await matterbridge.destroyInstance();
-
     // Restore all mocks
     jest.restoreAllMocks();
   }, 60000);
@@ -98,6 +92,16 @@ describe('Matterbridge platform', () => {
   beforeEach(() => {
     // Clear all mocks
     jest.clearAllMocks();
+  });
+
+  test('should do a partial mock of AnsiLogger', () => {
+    const log = new AnsiLogger({ logName: 'Mocked log' });
+    expect(log).toBeDefined();
+    log.log(LogLevel.INFO, 'Hello, world!');
+    log.logLevel = LogLevel.DEBUG;
+    expect(log.log).toBeDefined();
+    expect(log.log).toHaveBeenCalled();
+    expect(log.log).toHaveBeenCalledWith(LogLevel.INFO, 'Hello, world!');
   });
 
   test('should clear JestPlatform', async () => {
@@ -115,30 +119,48 @@ describe('Matterbridge platform', () => {
     await matterStorageManager?.createContext('sessions')?.clearAll();
   });
 
-  test('should be instance of MattebridgePlatform', () => {
-    expect(platform).toBeInstanceOf(MatterbridgePlatform);
-  });
+  test('should create an instance of Matterbridge', async () => {
+    // Load the Matterbridge instance
+    matterbridge = await Matterbridge.loadInstance(true);
+    expect(matterbridge).toBeInstanceOf(Matterbridge);
 
-  test('should have created an instance of NodeStorageManager', () => {
+    const checkOnline = () => {
+      return (matterbridge as any).configureTimeout !== undefined && (matterbridge as any).reachabilityTimeout !== undefined && matterbridge.serverNode?.lifecycle.isOnline === true;
+    };
+    await waiter('Matter server node started and online', checkOnline, true, 60000, 1000, true);
+  }, 60000);
+
+  test('should have created an instance of NodeStorageManager', async () => {
     platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'test', type: 'type', debug: false, unregisterOnShutdown: false });
+    expect(platform).toBeDefined();
+    expect(platform).toBeInstanceOf(MatterbridgePlatform);
     expect(platform.storage).toBeDefined();
     expect(platform.storage).toBeInstanceOf(NodeStorageManager);
+    expect(platform.context).toBeUndefined();
+    expect(platform.selectDevice).toBeDefined();
+    expect(platform.selectDevice).toBeInstanceOf(Map);
+    expect(platform.selectDevice.size).toBe(0);
+    expect(platform.selectEntity).toBeDefined();
+    expect(platform.selectEntity).toBeInstanceOf(Map);
+    expect(platform.selectEntity.size).toBe(0);
+    expect((platform as any).contextReady).toBeInstanceOf(Promise);
+    expect((platform as any).selectDeviceContextReady).toBeInstanceOf(Promise);
+    expect((platform as any).selectEntityContextReady).toBeInstanceOf(Promise);
+    expect(platform.ready).toBeInstanceOf(Promise);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Creating storage for plugin test'));
-  });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Creating context for plugin test'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Loading selectDevice for plugin test'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Loading selectEntity for plugin test'));
 
-  test('should do a partial mock of AnsiLogger', () => {
-    const log = new AnsiLogger({ logName: 'Mocked log' });
-    expect(log).toBeDefined();
-    log.log(LogLevel.INFO, 'Hello, world!');
-    log.logLevel = LogLevel.DEBUG;
-    expect(log.log).toBeDefined();
-    expect(log.log).toHaveBeenCalled();
-    expect(log.log).toHaveBeenCalledWith(LogLevel.INFO, 'Hello, world!');
+    jest.clearAllMocks();
+    await platform.ready;
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Created context for plugin test'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Loaded 0 selectDevice for plugin test'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Loaded 0 selectEntity for plugin test'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('MatterbridgePlatform for plugin test is fully initialized'));
   });
 
   test('onStart should throw an error if not overridden', async () => {
-    // (platform.log.debug as jest.Mock).mockClear();
-    // expect.assertions(2);
     try {
       await platform.onStart('test reason');
     } catch (error) {
@@ -189,34 +211,34 @@ describe('Matterbridge platform', () => {
   it('should validate with white list', () => {
     platform.config.whiteList = ['white1', 'white2', 'white3'];
     platform.config.blackList = [];
-    expect(platform.validateDeviceWhiteBlackList('white1')).toBe(true);
-    expect(platform.validateDeviceWhiteBlackList('black2')).toBe(false);
-    expect(platform.validateDeviceWhiteBlackList(['white1', 'black2'])).toBe(true);
-    expect(platform.validateDeviceWhiteBlackList('xDevice')).toBe(false);
-    expect(platform.validateDeviceWhiteBlackList('')).toBe(false);
+    expect(platform.validateDevice('white1')).toBe(true);
+    expect(platform.validateDevice('black2')).toBe(false);
+    expect(platform.validateDevice(['white1', 'black2'])).toBe(true);
+    expect(platform.validateDevice('xDevice')).toBe(false);
+    expect(platform.validateDevice('')).toBe(false);
   });
 
   it('should validate with black list', () => {
     platform.config.whiteList = [];
     platform.config.blackList = ['black1', 'black2', 'black3'];
-    expect(platform.validateDeviceWhiteBlackList('whiteDevice')).toBe(true);
-    expect(platform.validateDeviceWhiteBlackList('black1')).toBe(false);
-    expect(platform.validateDeviceWhiteBlackList('black2')).toBe(false);
-    expect(platform.validateDeviceWhiteBlackList('black3')).toBe(false);
-    expect(platform.validateDeviceWhiteBlackList(['x', 'y', 'z'])).toBe(true);
-    expect(platform.validateDeviceWhiteBlackList(['x', 'y', 'z', 'black3'])).toBe(false);
-    expect(platform.validateDeviceWhiteBlackList('xDevice')).toBe(true);
-    expect(platform.validateDeviceWhiteBlackList('')).toBe(true);
+    expect(platform.validateDevice('whiteDevice')).toBe(true);
+    expect(platform.validateDevice('black1')).toBe(false);
+    expect(platform.validateDevice('black2')).toBe(false);
+    expect(platform.validateDevice('black3')).toBe(false);
+    expect(platform.validateDevice(['x', 'y', 'z'])).toBe(true);
+    expect(platform.validateDevice(['x', 'y', 'z', 'black3'])).toBe(false);
+    expect(platform.validateDevice('xDevice')).toBe(true);
+    expect(platform.validateDevice('')).toBe(true);
   });
 
   it('should validate with no white and black list', () => {
     platform.config.whiteList = [];
     platform.config.blackList = [];
-    expect(platform.validateDeviceWhiteBlackList('whiteDevice')).toBe(true);
-    expect(platform.validateDeviceWhiteBlackList(['whiteDevice', '123456'])).toBe(true);
-    expect(platform.validateDeviceWhiteBlackList('blackDevice')).toBe(true);
-    expect(platform.validateDeviceWhiteBlackList(['blackDevice', '123456'])).toBe(true);
-    expect(platform.validateDeviceWhiteBlackList('')).toBe(true);
+    expect(platform.validateDevice('whiteDevice')).toBe(true);
+    expect(platform.validateDevice(['whiteDevice', '123456'])).toBe(true);
+    expect(platform.validateDevice('blackDevice')).toBe(true);
+    expect(platform.validateDevice(['blackDevice', '123456'])).toBe(true);
+    expect(platform.validateDevice('')).toBe(true);
   });
 
   it('should validate with undefined list', () => {
@@ -224,9 +246,9 @@ describe('Matterbridge platform', () => {
     platform.config.entityBlackList = undefined;
     platform.config.deviceEntityBlackList = undefined;
 
-    expect(platform.validateEntityBlackList('any', 'whiteEntity')).toBe(true);
-    expect(platform.validateEntityBlackList('any', 'blackEntity')).toBe(true);
-    expect(platform.validateEntityBlackList('any', '')).toBe(true);
+    expect(platform.validateEntity('any', 'whiteEntity')).toBe(true);
+    expect(platform.validateEntity('any', 'blackEntity')).toBe(true);
+    expect(platform.validateEntity('any', '')).toBe(true);
 
     platform.config.entityWhiteList = [];
     platform.config.entityBlackList = [];
@@ -238,9 +260,9 @@ describe('Matterbridge platform', () => {
     platform.config.entityBlackList = [];
     platform.config.deviceEntityBlackList = {};
 
-    expect(platform.validateEntityBlackList('any', 'whiteEntity')).toBe(true);
-    expect(platform.validateEntityBlackList('any', 'blackEntity')).toBe(true);
-    expect(platform.validateEntityBlackList('any', '')).toBe(true);
+    expect(platform.validateEntity('any', 'whiteEntity')).toBe(true);
+    expect(platform.validateEntity('any', 'blackEntity')).toBe(true);
+    expect(platform.validateEntity('any', '')).toBe(true);
 
     platform.config.entityWhiteList = [];
     platform.config.entityBlackList = [];
@@ -252,9 +274,9 @@ describe('Matterbridge platform', () => {
     platform.config.entityBlackList = ['blackEntity'];
     platform.config.deviceEntityBlackList = {};
 
-    expect(platform.validateEntityBlackList('any', 'whiteEntity')).toBe(true);
-    expect(platform.validateEntityBlackList('any', 'blackEntity')).toBe(false);
-    expect(platform.validateEntityBlackList('any', '')).toBe(true);
+    expect(platform.validateEntity('any', 'whiteEntity')).toBe(true);
+    expect(platform.validateEntity('any', 'blackEntity')).toBe(false);
+    expect(platform.validateEntity('any', '')).toBe(true);
 
     platform.config.entityWhiteList = [];
     platform.config.entityBlackList = [];
@@ -266,9 +288,9 @@ describe('Matterbridge platform', () => {
     platform.config.entityBlackList = [];
     platform.config.deviceEntityBlackList = {};
 
-    expect(platform.validateEntityBlackList('any', 'whiteEntity')).toBe(true);
-    expect(platform.validateEntityBlackList('any', 'blackEntity')).toBe(false);
-    expect(platform.validateEntityBlackList('any', '')).toBe(false);
+    expect(platform.validateEntity('any', 'whiteEntity')).toBe(true);
+    expect(platform.validateEntity('any', 'blackEntity')).toBe(false);
+    expect(platform.validateEntity('any', '')).toBe(false);
 
     platform.config.entityWhiteList = [];
     platform.config.entityBlackList = [];
@@ -292,30 +314,30 @@ describe('Matterbridge platform', () => {
   it('should validate with device entity black list and entity black list', () => {
     platform.config.entityBlackList = ['blackEntity'];
     platform.config.deviceEntityBlackList = { device1: ['blackEntityDevice1'] };
-    expect(platform.validateEntityBlackList('any', 'whiteEntity')).toBe(true);
-    expect(platform.validateEntityBlackList('any', 'blackEntity')).toBe(false);
-    expect(platform.validateEntityBlackList('any', 'blackEntityDevice1')).toBe(true);
-    expect(platform.validateEntityBlackList('any', '')).toBe(true);
+    expect(platform.validateEntity('any', 'whiteEntity')).toBe(true);
+    expect(platform.validateEntity('any', 'blackEntity')).toBe(false);
+    expect(platform.validateEntity('any', 'blackEntityDevice1')).toBe(true);
+    expect(platform.validateEntity('any', '')).toBe(true);
 
-    expect(platform.validateEntityBlackList('device1', 'whiteEntity')).toBe(true);
-    expect(platform.validateEntityBlackList('device1', 'blackEntity')).toBe(false);
-    expect(platform.validateEntityBlackList('device1', 'blackEntityDevice1')).toBe(false);
-    expect(platform.validateEntityBlackList('device1', '')).toBe(true);
+    expect(platform.validateEntity('device1', 'whiteEntity')).toBe(true);
+    expect(platform.validateEntity('device1', 'blackEntity')).toBe(false);
+    expect(platform.validateEntity('device1', 'blackEntityDevice1')).toBe(false);
+    expect(platform.validateEntity('device1', '')).toBe(true);
 
     platform.config.entityBlackList = [];
     platform.config.deviceEntityBlackList = {};
   });
 
   it('should not create storage manager without a name', async () => {
-    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: undefined, type: 'type', debug: false, unregisterOnShutdown: false });
-    expect(platform.storage).toBeUndefined();
-    expect(await platform.checkEndpointNumbers()).toBe(-1);
+    expect(() => {
+      new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: undefined, type: 'type', debug: false, unregisterOnShutdown: false });
+    }).toThrow();
   });
 
   it('should not create storage manager with name empty', async () => {
-    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: '', type: 'type', debug: false, unregisterOnShutdown: false });
-    expect(platform.storage).toBeUndefined();
-    expect(await platform.checkEndpointNumbers()).toBe(-1);
+    expect(() => {
+      new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: '', type: 'type', debug: false, unregisterOnShutdown: false });
+    }).toThrow();
   });
 
   it('should save the select', async () => {
@@ -346,12 +368,10 @@ describe('Matterbridge platform', () => {
     expect(platform.storage).toBeDefined();
     expect(platform.context).toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgePlatform for plugin matterbridge-jest is fully initialized`);
-
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loading selectDevice for plugin matterbridge-jest`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loading selectEntity for plugin matterbridge-jest`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded 100 selectDevice for plugin matterbridge-jest`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded 100 selectEntity for plugin matterbridge-jest`);
-
     expect(platform.selectDevice.size).toBe(100);
     expect(platform.selectDevice.has('serial1')).toBeTruthy();
     expect(platform.selectDevice.has('serial100')).toBeTruthy();
@@ -570,7 +590,15 @@ describe('Matterbridge platform', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Device with name ${CYAN}${device.deviceName}${er} is already registered. The device will not be added. Please change the device name.`);
   });
 
-  test('Cleanup storage', async () => {
+  test('destroyInstance()', async () => {
+    // Close the Matterbridge instance
+    await matterbridge.destroyInstance();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed Matterbridge MdnsService`);
+  }, 60000);
+
+  test('cleanup storage', async () => {
     process.argv.push('-factoryreset');
     (matterbridge as any).initialized = true;
     await (matterbridge as any).parseCommandLine();
