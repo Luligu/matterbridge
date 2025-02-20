@@ -10,7 +10,7 @@ export function MatterbridgeInfoTable({ matterbridgeInfo }) {
 
   const excludeKeys = ['matterbridgeVersion', 'matterbridgeLatestVersion', 'matterFileLogger', 'fileLogger', 'matterLoggerLevel', 'loggerLevel',
     'bridgeMode', 'restartMode', 'matterbridgeFabricInformations', 'matterbridgeSessionInformations', 'restartRequired', 'refreshRequired', 'matterbridgeQrPairingCode', 'matterbridgeManualPairingCode',
-    'mattermdnsinterface', 'matteripv4address', 'matteripv6address', 'matterbridgePaired', 'matterbridgeConnected', 'matterbridgeAdvertise', 'readOnly', 'matterPort', 'matterDiscriminator', 'matterPasscode'];
+    'mattermdnsinterface', 'matteripv4address', 'matteripv6address', 'matterbridgePaired', 'matterbridgeConnected', 'matterbridgeAdvertise', 'readOnly', 'shellyBoard', 'matterPort', 'matterDiscriminator', 'matterPasscode'];
   // if (matterbridgeInfo.bridgeMode === 'childbridge') excludeKeys.push('matterbridgePaired');
 
   return (

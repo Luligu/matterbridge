@@ -117,6 +117,7 @@ export interface MatterbridgeInformation {
   bridgeMode: string;
   restartMode: string;
   readOnly: boolean;
+  shellyBoard: boolean;
   profile?: string;
   loggerLevel: LogLevel;
   fileLogger: boolean;

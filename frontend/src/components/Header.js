@@ -211,29 +211,34 @@ function Header() {
         </nav>
       </div>
       <div className="sub-header">
-        <Tooltip title="Matterbridge status">
-          {online ? <span className="status-enabled" style={{ cursor: 'default' }}>Online</span> : <span className="status-disabled" style={{ cursor: 'default' }}>Offline</span>}
-        </Tooltip>
         {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
           <Tooltip title="Sponsor Matterbridge and its plugins">
             <span className="status-sponsor" onClick={handleSponsorClick}>Sponsor</span>
           </Tooltip>
         }
-        {settings.matterbridgeInformation.matterbridgeLatestVersion === undefined || settings.matterbridgeInformation.matterbridgeVersion === settings.matterbridgeInformation.matterbridgeLatestVersion || settings.matterbridgeInformation.readOnly ?
-          <Tooltip title="Matterbridge version"><span className="status-information" onClick={handleChangelogClick}>v.{settings.matterbridgeInformation.matterbridgeVersion}</span></Tooltip> :
-          <Tooltip title="New Matterbridge version available, click to install"><span className="status-warning" onClick={handleUpdateClick}>Update v.{settings.matterbridgeInformation.matterbridgeVersion} to v.{settings.matterbridgeInformation.matterbridgeLatestVersion}</span></Tooltip>
-        }
-        {settings.matterbridgeInformation.edge === true ? (
-          <Tooltip title="Edge mode">
-            <span className="status-information" style={{ cursor: 'default' }}>edge</span>
+        {!settings.matterbridgeInformation.readOnly && (settings.matterbridgeInformation.matterbridgeLatestVersion === undefined || settings.matterbridgeInformation.matterbridgeVersion === settings.matterbridgeInformation.matterbridgeLatestVersion) &&
+          <Tooltip title="Matterbridge version">
+            <span className="status-information" onClick={handleChangelogClick}>
+              v.{settings.matterbridgeInformation.matterbridgeVersion}
+            </span>
           </Tooltip>
-        ) : null}
-        {settings.matterbridgeInformation.bridgeMode !== '' ? (
+        }
+        {!settings.matterbridgeInformation.readOnly && settings.matterbridgeInformation.matterbridgeLatestVersion !== undefined && settings.matterbridgeInformation.matterbridgeVersion !== settings.matterbridgeInformation.matterbridgeLatestVersion &&
+          <Tooltip title="New Matterbridge version available, click to install">
+            <span className="status-warning" onClick={handleUpdateClick}>
+              Update v.{settings.matterbridgeInformation.matterbridgeVersion} to v.{settings.matterbridgeInformation.matterbridgeLatestVersion}
+            </span>
+          </Tooltip>
+        }
+        {settings.matterbridgeInformation.readOnly && settings.matterbridgeInformation.matterbridgeVersion &&
+          <img src="Shelly.svg" alt="Shelly Icon" style={{ height: '30px', padding: '0px', margin: '0px', marginRight: '20px' }}/>
+        }
+        {settings.matterbridgeInformation.bridgeMode !== '' && settings.matterbridgeInformation.readOnly === false ? (
           <Tooltip title="Bridge mode">
             <span className="status-information" style={{ cursor: 'default' }}>{settings.matterbridgeInformation.bridgeMode}</span>
           </Tooltip>
         ) : null}
-        {settings.matterbridgeInformation.restartMode !== '' ? (
+        {settings.matterbridgeInformation.restartMode !== '' && settings.matterbridgeInformation.readOnly === false ? (
           <Tooltip title="Restart mode">
             <span className="status-information" style={{ cursor: 'default' }}>{settings.matterbridgeInformation.restartMode}</span>
           </Tooltip>
@@ -357,10 +362,12 @@ function Header() {
               <ListItemIcon><PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
               <ListItemText primary="Reset commissioning..." />
             </MenuItem>
-            <MenuItem onClick={() => { handleResetMenuClose(); showConfirmCancelDialog('Factory reset and shutdown', 'Are you sure you want to factory reset Matterbridge? You will have to manually remove Matterbridge from the controller.', 'factoryreset', handleMenuCloseConfirm, handleMenuCloseCancel); }}>
-              <ListItemIcon><PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
-              <ListItemText primary="Factory reset..." />
-            </MenuItem>
+            {!settings.matterbridgeInformation.readOnly &&
+              <MenuItem onClick={() => { handleResetMenuClose(); showConfirmCancelDialog('Factory reset and shutdown', 'Are you sure you want to factory reset Matterbridge? You will have to manually remove Matterbridge from the controller.', 'factoryreset', handleMenuCloseConfirm, handleMenuCloseCancel); }}>
+                <ListItemIcon><PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+                <ListItemText primary="Factory reset..." />
+              </MenuItem>
+            }
           </Menu>
 
         </Menu>

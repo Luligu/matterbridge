@@ -150,8 +150,8 @@ function MatterbridgeSettings({ matterbridgeInfo }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <FormLabel style={{padding: '0px', margin: '0px'}} id="matterbridgeInfo-mode">Matterbridge mode:</FormLabel>
             <RadioGroup row name="mode-buttons-group" value={selectedBridgeMode} onChange={handleChangeBridgeMode}>
-              <FormControlLabel value="bridge" control={<Radio />} label="Bridge" />
-              <FormControlLabel value="childbridge" control={<Radio />} label="Childbridge" />
+              <FormControlLabel value="bridge" control={<Radio />} label="Bridge" disabled={matterbridgeInfo.readOnly===true}/>
+              <FormControlLabel value="childbridge" control={<Radio />} label="Childbridge" disabled={matterbridgeInfo.readOnly===true}/>
             </RadioGroup>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -167,20 +167,20 @@ function MatterbridgeSettings({ matterbridgeInfo }) {
             <FormControlLabel style={{padding: '0px', margin: '0px'}} control={<Checkbox checked={logOnFileMb} onChange={handleLogOnFileMbChange} name="logOnFileMb" />} label="Log on file:" labelPlacement="start"/>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <FormLabel style={{padding: '0px', margin: '0px'}} id="mb-password-label">Frontend password:</FormLabel>
-            <TextField value={password} onChange={handleChangePassword} size="small" id="mb-password" type="password" autoComplete="current-password" variant="outlined" 
-              fullWidth
-              sx={{ height: '30px', flexGrow: 0 }} 
-              InputProps={{ sx: { height: '30px', padding: '0' } }}
-            />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <FormLabel style={{padding: '0px', margin: '0px'}} id="frontend-theme-label">Frontend theme:</FormLabel>
             <Select style={{ height: '30px' }} labelId="frontend-theme-label" id="frontend-theme" value={frontendTheme} onChange={handleChangeTheme}>
               <MenuItem value='classic'>Classic</MenuItem>
               <MenuItem value='light'>Light</MenuItem>
               <MenuItem value='dark'>Dark</MenuItem>
             </Select>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="mb-password-label">Frontend password:</FormLabel>
+            <TextField value={password} onChange={handleChangePassword} size="small" id="mb-password" type="password" autoComplete="current-password" variant="outlined" 
+              fullWidth
+              sx={{ height: '30px', flexGrow: 0 }} 
+              InputProps={{ sx: { height: '30px', padding: '0' } }}
+            />
           </div>
         </Box>
       </div>
@@ -298,6 +298,7 @@ function MatterSettings({ matterbridgeInfo }) {
             <FormLabel style={{padding: '0px', margin: '0px'}}>Mdns interface:</FormLabel>
             <TextField value={mdnsInterface} onChange={handleChangeMdnsInterface} size="small" variant="outlined" 
               style={{ height: '30px', flexGrow: 1 }} InputProps={{
+                readOnly: matterbridgeInfo.readOnly===true, 
                 style: {
                   height: '30px',
                   padding: '0',
@@ -308,6 +309,7 @@ function MatterSettings({ matterbridgeInfo }) {
             <FormLabel style={{padding: '0px', margin: '0px'}}>Ipv4 address:</FormLabel>
             <TextField value={ipv4Address} onChange={handleChangeIpv4Address} size="small" variant="outlined" 
               style={{ height: '30px', flexGrow: 1  }} InputProps={{
+                readOnly: matterbridgeInfo.readOnly===true, 
                 style: {
                   height: '30px',
                   padding: '0',
@@ -318,6 +320,7 @@ function MatterSettings({ matterbridgeInfo }) {
             <FormLabel style={{padding: '0px', margin: '0px'}}>Ipv6 address:</FormLabel>
             <TextField value={ipv6Address} onChange={handleChangeIpv6Address} size="small" variant="outlined"
               style={{ height: '30px', flexGrow: 1 }} InputProps={{
+                readOnly: matterbridgeInfo.readOnly===true, 
                 style: {
                   height: '30px',
                   padding: '0',
@@ -328,6 +331,7 @@ function MatterSettings({ matterbridgeInfo }) {
             <FormLabel style={{padding: '0px', margin: '0px'}}>Commissioning port:</FormLabel>
             <TextField value={matterPort} onChange={handleChangeMatterPort} size="small" variant="outlined"
               style={{ height: '30px', flexGrow: 1 }} InputProps={{
+                readOnly: matterbridgeInfo.readOnly===true, 
                 style: {
                   height: '30px',
                   padding: '0',
@@ -338,6 +342,7 @@ function MatterSettings({ matterbridgeInfo }) {
             <FormLabel style={{padding: '0px', margin: '0px'}}>Commissioning discriminator:</FormLabel>
             <TextField value={matterDiscriminator} onChange={handleChangeMatterDiscriminator} size="small" variant="outlined"
               style={{ height: '30px', flexGrow: 1 }} InputProps={{
+                readOnly: matterbridgeInfo.readOnly===true, 
                 style: {
                   height: '30px',
                   padding: '0',
@@ -348,6 +353,7 @@ function MatterSettings({ matterbridgeInfo }) {
             <FormLabel style={{padding: '0px', margin: '0px'}}>Commissioning passcode:</FormLabel>
             <TextField value={matterPasscode} onChange={handleChangemMatterPasscode} size="small" variant="outlined"
               style={{ height: '30px', flexGrow: 1 }} InputProps={{
+                readOnly: matterbridgeInfo.readOnly===true, 
                 style: {
                   height: '30px',
                   padding: '0',
