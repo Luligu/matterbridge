@@ -13,19 +13,24 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 
 // Frontend
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import { Connecting } from './Connecting';
 import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
+import { NetworkConfigDialog } from './NetworkConfigDialog';
+import { ChangePasswordDialog } from './ChangePasswordDialog';
 import { debug } from '../App';
 
 function Settings() {
   // WebSocket context
   const { online, addListener, removeListener, sendMessage } = useContext(WebSocketContext);
 
+  // State variables
   const [matterbridgeInfo, setMatterbridgeInfo] = useState(null);
+  const [systemInfo, setSystemInfo] = useState(null);
 
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
@@ -37,6 +42,7 @@ function Settings() {
         if (msg.method === '/api/settings') {
           if(debug) console.log('Settings received /api/settings:', msg.response);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
+          setSystemInfo(msg.response.systemInformation);
         }
       }
     };
@@ -65,7 +71,7 @@ function Settings() {
   return (
     <div className="MbfPageDiv">
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', width: '100%' }}>
-        <MatterbridgeSettings matterbridgeInfo={matterbridgeInfo}/>
+        <MatterbridgeSettings matterbridgeInfo={matterbridgeInfo} systemInfo={systemInfo}/>
         <MatterSettings matterbridgeInfo={matterbridgeInfo}/>
         <MatterbridgeInfo matterbridgeInfo={matterbridgeInfo}/>
       </div>  
@@ -73,15 +79,29 @@ function Settings() {
   );
 }
 
-function MatterbridgeSettings({ matterbridgeInfo }) {
+function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
   const [selectedBridgeMode, setSelectedBridgeMode] = useState('bridge'); 
   const [selectedMbLoggerLevel, setSelectedMbLoggerLevel] = useState('Info'); 
   const [logOnFileMb, setLogOnFileMb] = useState(false);
-  const [password, setPassword] = useState('');
   const [frontendTheme, setFrontendTheme] = useState('dark');
 
   // Ui context
   const { showSnackbarMessage } = useContext(UiContext);
+
+  // Network config dialog
+  const [openNetConfig, setOpenNetConfig] = useState(false);
+  const handleCloseNetConfig = () => setOpenNetConfig(false);
+  const handleSaveNetConfig = (_config) => {
+    //
+  };
+
+  // Network config dialog
+  const [openChangePassword, setOpenChangePassword] = useState(false);
+  const handleCloseChangePassword = () => setOpenChangePassword(false);
+  const handleSaveChangePassword = (password) => {
+    if(debug) console.log('handleSaveChangePassword called with password:', password);
+    sendCommandToMatterbridge('setpassword', '*'+password+'*');
+  };
 
   useEffect(() => {
     if (matterbridgeInfo.bridgeMode === undefined) return;
@@ -124,13 +144,6 @@ function MatterbridgeSettings({ matterbridgeInfo }) {
     sendCommandToMatterbridge('setmblogfile', event.target.checked ? 'true' : 'false');
   };
 
-  // Define a function to handle change password
-  const handleChangePassword = (event) => {
-    if(debug) console.log('handleChangePassword called with value:', event.target.value);
-    setPassword(event.target.value);
-    sendCommandToMatterbridge('setpassword', '*'+event.target.value+'*');
-  };
-
   // Define a function to handle change theme
   const handleChangeTheme = (event) => {
     const newTheme = event.target.value;
@@ -145,6 +158,8 @@ function MatterbridgeSettings({ matterbridgeInfo }) {
       <div className="MbfWindowHeader">
         <p className="MbfWindowHeaderText">Matterbridge settings</p>
       </div>
+      <NetworkConfigDialog open={openNetConfig} ip={systemInfo.ipv4Address} onClose={handleCloseNetConfig} onSave={handleSaveNetConfig}/>
+      <ChangePasswordDialog open={openChangePassword} onClose={handleCloseChangePassword} onSave={handleSaveChangePassword}/>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: '0 0 auto' }}>
         <Box sx={{ gap: '10px', margin: '0px', padding: '10px', width: '400px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -174,14 +189,19 @@ function MatterbridgeSettings({ matterbridgeInfo }) {
               <MenuItem value='dark'>Dark</MenuItem>
             </Select>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <FormLabel style={{padding: '0px', margin: '0px'}} id="mb-password-label">Frontend password:</FormLabel>
-            <TextField value={password} onChange={handleChangePassword} size="small" id="mb-password" type="password" autoComplete="current-password" variant="outlined" 
-              fullWidth
-              sx={{ height: '30px', flexGrow: 0 }} 
-              InputProps={{ sx: { height: '30px', padding: '0' } }}
-            />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
+            <Button variant="contained" color="primary" onClick={() => setOpenChangePassword(true)}>
+              Change password
+            </Button>
           </div>
+          {matterbridgeInfo.shellyBoard && 
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
+              <Button variant="contained" color="primary" onClick={() => setOpenNetConfig(true)}>
+                Configure Network
+              </Button>
+            </div>
+          } 
+
         </Box>
       </div>
     </div>
