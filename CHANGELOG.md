@@ -33,7 +33,7 @@ matterbridge-zigbee2mqtt v. 2.4.4
 matterbridge-somfy-tahoma v. 1.2.3
 matterbridge-hass v. 0.0.8
 
-## [2.1.6] - 2025-02-20
+## [2.1.6] - 2025-02-23
 
 ### Added
 
@@ -41,7 +41,7 @@ matterbridge-hass v. 0.0.8
 - [platform]: Saving in the storage the selects for faster loading of plugins.
 - [icon]: Added matterbridge svg icon (thanks: https://github.com/robvanoostenrijk https://github.com/stuntguy3000).
 - [pluginManager]: Refactor PluginManager to optimize memory and load time.
-- [frontend]: Frontend v.2.4.2.
+- [frontend]: Frontend v.2.4.3. Please refresh the frontend page after the update.
 - [frontend]: Added processUptime.
 - [frontend]: Added Share fabrics and Stop sharing to the menu. This allows to pair other controllers without the need to share from the first controller.
 - [frontend]: Added subscriptions to QRDiv.
