@@ -108,6 +108,8 @@ export class Matterbridge extends EventEmitter {
     restartMode: '',
     readOnly: hasParameter('readonly') || hasParameter('shelly'),
     shellyBoard: hasParameter('shelly'),
+    shellySysUpdate: false,
+    shellyMainUpdate: false,
     profile: getParameter('profile'),
     loggerLevel: LogLevel.INFO,
     fileLogger: false,
@@ -736,6 +738,15 @@ export class Matterbridge extends EventEmitter {
 
     // Initialize frontend
     if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.frontend.start(getIntParameter('frontend'));
+
+    // Check now for Shelly updates
+    if (hasParameter('shelly')) {
+      setTimeout(async () => {
+        const { getShellySysUpdate, getShellyMainUpdate } = await import('./shelly.js');
+        getShellySysUpdate(this);
+        getShellyMainUpdate(this);
+      }, 30 * 1000).unref();
+    }
 
     // Check now the latest versions of matterbridge and plugins
     this.getMatterbridgeLatestVersion();

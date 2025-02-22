@@ -86,6 +86,26 @@ export const WS_ID_UPTIME_UPDATE = 5;
 export const WS_ID_SNACKBAR = 6;
 
 /**
+ * Websocket message ID indicating a shelly system update.
+ * check:
+ * curl -k http://127.0.0.1:8101/api/updates/sys/check
+ * perform:
+ * curl -k http://127.0.0.1:8101/api/updates/sys/perform
+ * @constant {number}
+ */
+export const WS_ID_SHELLY_SYS_UPDATE = 100;
+
+/**
+ * Websocket message ID indicating a shelly main update.
+ * check:
+ * curl -k http://127.0.0.1:8101/api/updates/main/check
+ * perform:
+ * curl -k http://127.0.0.1:8101/api/updates/main/perform
+ * @constant {number}
+ */
+export const WS_ID_SHELLY_MAIN_UPDATE = 101;
+
+/**
  * Initializes the frontend of Matterbridge.
  *
  * @param port The port number to run the frontend server on. Default is 8283.
@@ -1256,6 +1276,14 @@ export class Frontend {
             this.wssSendSnackbarMessage(`Restart required`, 0);
           });
         return;
+      } else if (data.method === '/api/shellysysupdate') {
+        const { triggerShellySysUpdate } = await import('./shelly.js');
+        triggerShellySysUpdate(this.matterbridge);
+        return;
+      } else if (data.method === '/api/shellymainupdate') {
+        const { triggerShellyMainUpdate } = await import('./shelly.js');
+        triggerShellyMainUpdate(this.matterbridge);
+        return;
       } else if (data.method === '/api/restart') {
         this.wssSendSnackbarMessage(`Restarting matterbridge...`, 0);
         await this.matterbridge.restartProcess();
@@ -1410,7 +1438,7 @@ export class Frontend {
         });
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, deviceName, serialNumber, endpoint: data.params.endpoint, deviceTypes, response: clusters }));
         return;
-      } else if (data.method === '/api/select') {
+      } else if (data.method === '/api/select' || data.method === '/api/select/devices') {
         if (!isValidString(data.params.plugin, 10)) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select' }));
           return;
@@ -1576,6 +1604,20 @@ export class Frontend {
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({ id: WS_ID_SNACKBAR, src: 'Matterbridge', dst: 'Frontend', method: 'memory_update', params: { message, timeout } }));
+      }
+    });
+  }
+
+  /**
+   * Sends a message to all connected clients.
+   *
+   */
+  wssBroadcastMessage(id: number, method?: string, params?: Record<string, string | number | boolean>) {
+    this.log.debug(`Sending a broadcast message id ${id} method ${method} params ${debugStringify(params ?? {})} to all connected clients`);
+    // Send the message to all connected clients
+    this.webSocketServer?.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ id, src: 'Matterbridge', dst: 'Frontend', method, params }));
       }
     });
   }

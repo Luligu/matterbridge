@@ -118,6 +118,8 @@ export interface MatterbridgeInformation {
   restartMode: string;
   readOnly: boolean;
   shellyBoard: boolean;
+  shellySysUpdate: boolean;
+  shellyMainUpdate: boolean;
   profile?: string;
   loggerLevel: LogLevel;
   fileLogger: boolean;
