@@ -144,7 +144,7 @@
     "updateMatter:loc": "npm install ../matter.js/packages/matter.js && npm install && npm run deepCleanBuild",
     "install:dependencies": "npm install @matter/main @matter/nodejs @project-chip/matter.js archiver express glob https node-ansi-logger node-persist-manager ws",
     "install:typescript": "npm install --save-dev @types/express @types/node @types/ws typescript && npm run build",
-    "install:eslint": "npm install --save-dev eslint @eslint/js @types/eslint__js typescript-eslint && npm run lint",
+    "install:eslint": "npm install --save-dev @eslint/js typescript-eslint && npm run lint",
     "install:prettier": "npm install --save-dev prettier eslint-config-prettier eslint-plugin-prettier && npm run format",
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest && npm run test"
   },
