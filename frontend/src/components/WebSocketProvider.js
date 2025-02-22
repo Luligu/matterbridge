@@ -6,6 +6,7 @@ import React, { useEffect, useRef, useState, useCallback, useMemo, createContext
 // Local modules
 import { UiContext } from './UiProvider';
 import { debug } from '../App';
+// const debug = true;
 
 /**
  * Websocket message IDs taken from frontend.ts
@@ -17,6 +18,26 @@ export const WS_ID_CPU_UPDATE = 3;
 export const WS_ID_MEMORY_UPDATE = 4;
 export const WS_ID_UPTIME_UPDATE = 5;
 export const WS_ID_SNACKBAR = 6;
+
+/**
+ * Websocket message ID indicating a shelly system update.
+ * check:
+ * curl -k http://127.0.0.1:8101/api/updates/sys/check
+ * perform:
+ * curl -k http://127.0.0.1:8101/api/updates/sys/perform
+ * @constant {number}
+ */
+export const WS_ID_SHELLY_SYS_UPDATE = 100;
+
+/**
+ * Websocket message ID indicating a shelly main update.
+ * check:
+ * curl -k http://127.0.0.1:8101/api/updates/main/check
+ * perform:
+ * curl -k http://127.0.0.1:8101/api/updates/main/perform
+ * @constant {number}
+ */
+export const WS_ID_SHELLY_MAIN_UPDATE = 101;
 
 export const WebSocketMessagesContext = createContext(); // messages
 export const WebSocketContext = createContext(); // , setMessages, sendMessage, logMessage, setLogFilters, online, addListener, removeListener
@@ -35,7 +56,7 @@ export function WebSocketProvider({ children }) {
   const listenersRef = useRef([]);
   const wsRef = useRef(null);
   const retryCountRef = useRef(1);
-  const uniqueIdRef = useRef(Math.floor(Math.random() * (999999 - 10 + 1)) + 10);
+  const uniqueIdRef = useRef(Math.floor(Math.random() * (999999 - 1000 + 1)) + 1000);
   const pingIntervalRef = useRef(null);
   const offlineTimeoutRef = useRef(null);
   const startTimeoutRef = useRef(null);
@@ -63,7 +84,7 @@ export function WebSocketProvider({ children }) {
   }, [logFilterSearch]);
 
   const getUniqueId = useCallback(() => {
-    return Math.floor(Math.random() * (999999 - 10 + 1)) + 10;
+    return Math.floor(Math.random() * (999999 - 1000 + 1)) + 1000;
   }, []);
 
   const sendMessage = useCallback((message) => {
@@ -74,7 +95,6 @@ export function WebSocketProvider({ children }) {
         wsRef.current.send(msg);
         if (debug) console.log(`WebSocket sent message:`, message);
       } catch (error) {
-         
         console.error(`WebSocket error sending message: ${error}`);
       }
     } else {
@@ -145,6 +165,14 @@ export function WebSocketProvider({ children }) {
           if (debug) console.log(`WebSocket WS_ID_SNACKBAR message:`, msg, 'listeners:', listenersRef.current.length);
           showSnackbarMessage(msg.params.message, msg.params.timeout);
           return;
+        } else if (msg.id === WS_ID_SHELLY_SYS_UPDATE) {
+          if (debug) console.log(`WebSocket WS_ID_SHELLY_SYS_UPDATE message:`, msg, 'listeners:', listenersRef.current.length);
+          listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
+          return;
+        } else if (msg.id === WS_ID_SHELLY_MAIN_UPDATE) {
+          if (debug) console.log(`WebSocket WS_ID_SHELLY_MAIN_UPDATE message:`, msg, 'listeners:', listenersRef.current.length);
+          listenersRef.current.forEach(listener => listener(msg)); // Notify all listeners
+          return;
         } else if (msg.id === uniqueIdRef.current && msg.src === 'Matterbridge' && msg.dst === 'Frontend' && msg.response === 'pong') {
           if (debug) console.log(`WebSocket pong response message:`, msg, 'listeners:', listenersRef.current.length);
           clearTimeout(offlineTimeoutRef.current);
@@ -212,7 +240,6 @@ export function WebSocketProvider({ children }) {
           return newMessages;
         });
       } catch (error) {
-         
         console.error(`WebSocketUse error parsing message: ${error}`);
       }
     };
