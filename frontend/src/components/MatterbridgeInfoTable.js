@@ -9,9 +9,10 @@ export function MatterbridgeInfoTable({ matterbridgeInfo }) {
   if(debug) console.log('MatterbridgeInfoTable:', matterbridgeInfo);
 
   const excludeKeys = ['matterbridgeVersion', 'matterbridgeLatestVersion', 'matterFileLogger', 'fileLogger', 'matterLoggerLevel', 'loggerLevel',
-    'bridgeMode', 'restartMode', 'matterbridgeFabricInformations', 'matterbridgeSessionInformations', 'restartRequired', 'refreshRequired', 'matterbridgeQrPairingCode', 'matterbridgeManualPairingCode',
-    'mattermdnsinterface', 'matteripv4address', 'matteripv6address', 'matterbridgePaired', 'matterbridgeConnected', 'matterbridgeAdvertise', 'readOnly', 'shellyBoard', 'matterPort', 'matterDiscriminator', 'matterPasscode'];
-  // if (matterbridgeInfo.bridgeMode === 'childbridge') excludeKeys.push('matterbridgePaired');
+    'bridgeMode', 'restartMode', 'matterbridgeFabricInformations', 'matterbridgeSessionInformations', 'restartRequired', 'refreshRequired', 
+    'matterbridgeQrPairingCode', 'matterbridgeManualPairingCode',
+    'mattermdnsinterface', 'matteripv4address', 'matteripv6address', 'matterbridgePaired', 'matterbridgeConnected', 'matterbridgeAdvertise', 
+    'readOnly', 'shellyBoard', 'shellySysUpdate', 'shellyMainUpdate', 'matterPort', 'matterDiscriminator', 'matterPasscode'];
 
   return (
     <div className="MbfWindowDiv" style={{ minWidth: '302px' }}>
