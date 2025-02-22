@@ -21,7 +21,7 @@ import BlockIcon from '@mui/icons-material/Block';
 // Frontend
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import { UiContext } from './UiProvider';
-import { WebSocketContext } from './WebSocketProvider';
+import { WebSocketContext, WS_ID_SHELLY_SYS_UPDATE, WS_ID_SHELLY_MAIN_UPDATE } from './WebSocketProvider';
 import { debug } from '../App';
 // const debug = true;
 
@@ -48,6 +48,18 @@ function Header() {
 
   const handleUpdateClick = () => {
     sendMessage({ method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: 'matterbridge', restart: true } });
+  };
+
+  const handleShellySystemUpdateClick = () => {
+    if(debug) console.log('Header: handleShellySystemUpdateClick');
+    logMessage('Matterbridge', `Installing system updates...`);
+    sendMessage({ method: "/api/shellysysupdate", src: "Frontend", dst: "Matterbridge", params: { } });
+  };
+
+  const handleShellyMainUpdateClick = () => {
+    if(debug) console.log('Header: handleShellyMainUpdateClick');
+    logMessage('Matterbridge', `Installing software updates...`);
+    sendMessage({ method: "/api/shellymainupdate", src: "Frontend", dst: "Matterbridge", params: { } });
   };
 
   const handleRestartClick = () => {
@@ -100,6 +112,10 @@ function Header() {
       window.location.href = './api/download-backup';
     } else if (value === 'update') {
       handleUpdateClick();
+    } else if (value === 'shelly-sys-update') {
+      handleShellySystemUpdateClick();
+    } else if (value === 'shelly-main-update') {
+      handleShellyMainUpdateClick();
     } else if (value === 'restart') {
       handleRestartClick();
     } else if (value === 'shutdown') {
@@ -174,6 +190,15 @@ function Header() {
         }
         if (msg.method === '/api/stopadvertise') {
           if (debug) console.log('Header received advertise:', msg.response);
+        }
+        if (msg.id === WS_ID_SHELLY_SYS_UPDATE) {
+          if (debug) console.log('Header received WS_ID_SHELLY_SYS_UPDATE:');
+          setSettings(prevSettings => ({ ...prevSettings, matterbridgeInformation: { ...prevSettings.matterbridgeInformation, shellySysUpdate: msg.params.available } }));
+
+        }
+        if (msg.id === WS_ID_SHELLY_MAIN_UPDATE) {
+          if (debug) console.log('Header received WS_ID_SHELLY_MAIN_UPDATE:');
+          setSettings(prevSettings => ({ ...prevSettings, matterbridgeInformation: { ...prevSettings.matterbridgeInformation, shellyMainUpdate: msg.params.available } }));
         }
       }
     };
@@ -262,6 +287,20 @@ function Header() {
             </IconButton>
           </Tooltip>
         }
+        {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellySysUpdate &&
+          <Tooltip title="Shelly system update">
+            <IconButton style={{ color: 'var(--primary-color)' }} onClick={handleShellySystemUpdateClick}>
+              <SystemUpdateAltIcon />
+            </IconButton>
+          </Tooltip>
+        }
+        {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellyMainUpdate &&
+          <Tooltip title="Shelly software update">
+            <IconButton style={{ color: 'var(--primary-color)' }} onClick={handleShellyMainUpdateClick}>
+              <SystemUpdateAltIcon />
+            </IconButton>
+          </Tooltip>
+        }
         <Tooltip title="Restart matterbridge">
           <IconButton onClick={handleRestartClick}>
             <RestartAltIcon />
@@ -280,10 +319,22 @@ function Header() {
           </IconButton>
         </Tooltip>
         <Menu id="command-menu" anchorEl={menuAnchorEl} keepMounted open={Boolean(menuAnchorEl)} onClose={() => handleMenuCloseConfirm('')} >
-          {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
+        {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
             <MenuItem onClick={() => handleMenuCloseConfirm('update')}>
               <ListItemIcon><SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
               <ListItemText primary="Update" />
+            </MenuItem>
+          }
+          {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellySysUpdate &&
+            <MenuItem onClick={() => handleMenuCloseConfirm('shelly-sys-update')}>
+              <ListItemIcon><SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+              <ListItemText primary="Shelly system update" />
+            </MenuItem>
+          }
+          {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellyMainUpdate &&
+            <MenuItem onClick={() => handleMenuCloseConfirm('shelly-main-update')}>
+              <ListItemIcon><SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+              <ListItemText primary="Shelly software update" />
             </MenuItem>
           }
           <MenuItem onClick={() => handleMenuCloseConfirm('restart')}>
