@@ -847,8 +847,9 @@ export class Frontend {
           const plugin = this.matterbridge.plugins.get(param);
           if (!plugin) return;
           this.matterbridge.plugins.saveConfigFromJson(plugin, req.body);
+          this.wssSendSnackbarMessage(`Saved config for plugin ${param}`);
+          this.wssSendRestartRequired();
         }
-        this.wssSendRestartRequired();
         res.json({ message: 'Command received' });
         return;
       }
@@ -1284,6 +1285,15 @@ export class Frontend {
         const { triggerShellyMainUpdate } = await import('./shelly.js');
         triggerShellyMainUpdate(this.matterbridge);
         return;
+      } else if (data.method === '/api/shellynetconfig') {
+        this.log.debug('/api/shellynetconfig:', data.params);
+        const { triggerShellyChangeIp: triggerShellyChangeNet } = await import('./shelly.js');
+        triggerShellyChangeNet(this.matterbridge, data.params as { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string });
+        return;
+      } else if (data.method === '/api/reboot') {
+        const { triggerShellyReboot } = await import('./shelly.js');
+        triggerShellyReboot(this.matterbridge);
+        return;
       } else if (data.method === '/api/restart') {
         this.wssSendSnackbarMessage(`Restarting matterbridge...`, 0);
         await this.matterbridge.restartProcess();
@@ -1544,6 +1554,7 @@ export class Frontend {
   wssSendRestartRequired() {
     this.log.debug('Sending a restart required message to all connected clients');
     this.matterbridge.matterbridgeInformation.restartRequired = true;
+    this.wssSendSnackbarMessage(`Restart required`, 0);
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
