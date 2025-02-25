@@ -28,14 +28,14 @@ import { promises as fs } from 'node:fs';
 import EventEmitter from 'node:events';
 
 // AnsiLogger module
-import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN, nt } from './logger/export.js';
+import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN } from './logger/export.js';
 
 // NodeStorage module
 import { NodeStorageManager, NodeStorage } from './storage/export.js';
 
 // Matterbridge
 import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout } from './utils/export.js';
-import { logInterfaces, getNpmPackageVersion, getGlobalNodeModules } from './utils/network.js';
+import { logInterfaces, getGlobalNodeModules } from './utils/network.js';
 import { MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
@@ -47,6 +47,7 @@ import { Frontend } from './frontend.js';
 import { DeviceTypeId, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, StorageService, Environment, ServerNode, FabricIndex, SessionsBehavior } from '@matter/main';
 import { DeviceCommissioner, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
+import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -161,6 +162,7 @@ export class Matterbridge extends EventEmitter {
   private execRunningCount = 0;
   private startMatterInterval: NodeJS.Timeout | undefined;
   private checkUpdateInterval: NodeJS.Timeout | undefined;
+  private checkUpdateTimeout: NodeJS.Timeout | undefined;
   private configureTimeout: NodeJS.Timeout | undefined;
   private reachabilityTimeout: NodeJS.Timeout | undefined;
   private sigintHandler: NodeJS.SignalsListener | undefined;
@@ -739,32 +741,20 @@ export class Matterbridge extends EventEmitter {
     // Initialize frontend
     if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.frontend.start(getIntParameter('frontend'));
 
-    // Check now for Shelly updates
-    if (hasParameter('shelly')) {
-      setTimeout(async () => {
-        const { getShellySysUpdate, getShellyMainUpdate } = await import('./shelly.js');
-        getShellySysUpdate(this);
-        getShellyMainUpdate(this);
-      }, 30 * 1000).unref();
-    }
+    // Check in 30 seconds the latest versions
+    this.checkUpdateTimeout = setTimeout(async () => {
+      const { checkUpdates } = await import('./update.js');
+      checkUpdates(this);
+    }, 30 * 1000).unref();
 
-    // Check now the latest versions of matterbridge and plugins
-    this.getMatterbridgeLatestVersion();
-    for (const plugin of this.plugins) {
-      this.getPluginLatestVersion(plugin);
-    }
-
-    // Check each 60 minutes the latest versions
+    // Check each 24 hours the latest versions
     this.checkUpdateInterval = setInterval(
-      () => {
-        this.getMatterbridgeLatestVersion();
-        for (const plugin of this.plugins) {
-          this.getPluginLatestVersion(plugin);
-        }
-        this.frontend.wssSendRefreshRequired();
+      async () => {
+        const { checkUpdates } = await import('./update.js');
+        checkUpdates(this);
       },
-      60 * 60 * 1000,
-    );
+      24 * 60 * 60 * 1000,
+    ).unref();
 
     // Start the matterbridge in mode test
     if (hasParameter('test')) {
@@ -825,8 +815,6 @@ export class Matterbridge extends EventEmitter {
         plugin.error = true;
         continue;
       }
-      // Check if the plugin has a new version
-      // this.getPluginLatestVersion(plugin); // No await do it asyncronously
       if (!plugin.enabled) {
         this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
         continue;
@@ -1075,51 +1063,6 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Retrieves the latest version of Matterbridge and updates the matterbridgeLatestVersion property.
-   * If there is an error retrieving the latest version, logs an error message.
-   *
-   * @private
-   * @returns {Promise<void>} A promise that resolves when the latest version is retrieved.
-   */
-  private async getMatterbridgeLatestVersion(): Promise<void> {
-    getNpmPackageVersion('matterbridge')
-      .then(async (version) => {
-        this.matterbridgeLatestVersion = version;
-        this.matterbridgeInformation.matterbridgeLatestVersion = version;
-        await this.nodeContext?.set<string>('matterbridgeLatestVersion', this.matterbridgeLatestVersion);
-        if (this.matterbridgeVersion !== this.matterbridgeLatestVersion) {
-          this.log.notice(`Matterbridge is out of date. Current version: ${this.matterbridgeVersion}. Latest version: ${this.matterbridgeLatestVersion}.`);
-        } else {
-          this.log.debug(`Matterbridge is up to date. Current version: ${this.matterbridgeVersion}. Latest version: ${this.matterbridgeLatestVersion}.`);
-        }
-        this.frontend.wssSendRefreshRequired();
-      })
-      .catch((error) => {
-        this.log.warn(`Error getting Matterbridge latest version: ${error.message}`);
-      });
-  }
-
-  /**
-   * Retrieves the latest version of a plugin and updates the plugin's latestVersion property.
-   * If there is an error retrieving the latest version, logs an error message.
-   *
-   * @private
-   * @param {RegisteredPlugin} plugin - The plugin for which to retrieve the latest version.
-   * @returns {Promise<void>} A promise that resolves when the latest version is retrieved.
-   */
-  private async getPluginLatestVersion(plugin: RegisteredPlugin): Promise<void> {
-    getNpmPackageVersion(plugin.name)
-      .then((version) => {
-        plugin.latestVersion = version;
-        if (plugin.version !== plugin.latestVersion) this.log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
-        else this.log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
-      })
-      .catch((error) => {
-        this.log.warn(`Error getting ${plg}${plugin.name}${er} latest version: ${error.message}`);
-      });
-  }
-
-  /**
    * Creates a MatterLogger function to show the matter.js log messages in AnsiLogger (for the frontend).
    *
    * @returns {Function} The MatterLogger function.
@@ -1290,6 +1233,13 @@ export class Matterbridge extends EventEmitter {
         clearInterval(this.startMatterInterval);
         this.startMatterInterval = undefined;
         this.log.debug('Start matter interval cleared');
+      }
+
+      // Clear the check update timeout
+      if (this.checkUpdateTimeout) {
+        clearInterval(this.checkUpdateTimeout);
+        this.checkUpdateTimeout = undefined;
+        this.log.debug('Check update timeout cleared');
       }
 
       // Clear the check update interval
@@ -1485,6 +1435,7 @@ export class Matterbridge extends EventEmitter {
   private async createAccessoryPlugin(plugin: RegisteredPlugin, device: MatterbridgeEndpoint, start = false): Promise<void> {
     if (!plugin.locked && device.deviceName && device.vendorId && device.productId && device.vendorName && device.productName) {
       plugin.locked = true;
+      plugin.device = device;
       plugin.storageContext = await this.createServerNodeContext(plugin.name, device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
       plugin.serverNode = await this.createServerNode(plugin.storageContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
       this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to ${plg}${plugin.name}${db} server node`);
@@ -1576,7 +1527,6 @@ export class Matterbridge extends EventEmitter {
       // Setting reachability to true
       this.reachabilityTimeout = setTimeout(() => {
         this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
-        if (this.serverNode) this.setServerNodeReachability(this.serverNode, true);
         if (this.aggregatorNode) this.setAggregatorReachability(this.aggregatorNode, true);
         this.frontend.wssSendRefreshRequired();
       }, 60 * 1000);
@@ -1669,9 +1619,7 @@ export class Matterbridge extends EventEmitter {
 
         // Setting reachability to true
         plugin.reachabilityTimeout = setTimeout(() => {
-          this.log.info(`Setting reachability to true for ${plg}${plugin.name}${db}`);
-          if (plugin.serverNode) this.setServerNodeReachability(plugin.serverNode, true);
-          if (plugin.type === 'AccessoryPlatform' && plugin.device) this.setDeviceReachability(plugin.device, true);
+          this.log.info(`Setting reachability to true for ${plg}${plugin.name}${db} type ${plugin.type} server node ${plugin.serverNode !== undefined} aggragator node ${plugin.aggregatorNode !== undefined} device ${plugin.device !== undefined}`);
           if (plugin.type === 'DynamicPlatform' && plugin.aggregatorNode) this.setAggregatorReachability(plugin.aggregatorNode, true);
           this.frontend.wssSendRefreshRequired();
         }, 60 * 1000);
@@ -2441,52 +2389,16 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Sets the reachability of a matter server node and trigger ReachableChanged event.
-   *
-   * @param {ServerNode<ServerNode.RootEndpoint>} serverNode - The commissioning server to set the reachability for.
-   * @param {boolean} reachable - The new reachability status.
-   */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private setServerNodeReachability(serverNode: ServerNode<ServerNode.RootEndpoint>, reachable: boolean) {
-    /*
-    const basicInformationCluster = commissioningServer?.getRootClusterServer(BasicInformationCluster);
-    if (basicInformationCluster && basicInformationCluster.attributes.reachable !== undefined) basicInformationCluster.setReachableAttribute(reachable);
-    if (basicInformationCluster && basicInformationCluster.triggerReachableChangedEvent) basicInformationCluster.triggerReachableChangedEvent({ reachableNewValue: reachable });
-    */
-  }
-
-  /**
-   * Sets the reachability of the specified matter aggregator and its bridged devices and trigger.
-   * @param {EndpointNode<AggregatorEndpoint>} aggregatorNode - The matter aggregator to set the reachability for.
+   * Sets the reachability of the specified aggregator node bridged devices and trigger.
+   * @param {EndpointNode<AggregatorEndpoint>} aggregatorNode - The aggregator node to set the reachability for.
    * @param {boolean} reachable - A boolean indicating the reachability status to set.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private setAggregatorReachability(aggregatorNode: EndpointNode<AggregatorEndpoint>, reachable: boolean) {
-    /*
-    const basicInformationCluster = matterAggregator.getClusterServer(BasicInformationCluster);
-    if (basicInformationCluster && basicInformationCluster.attributes.reachable !== undefined) basicInformationCluster.setReachableAttribute(reachable);
-    if (basicInformationCluster && basicInformationCluster.triggerReachableChangedEvent) basicInformationCluster.triggerReachableChangedEvent({ reachableNewValue: reachable });
-    matterAggregator.getBridgedDevices().forEach((device) => {
-      this.log.debug(`Setting reachability to true for bridged device: ${dev}${device.name}${nf}`);
-      device.getClusterServer(BridgedDeviceBasicInformationCluster)?.setReachableAttribute(reachable);
-      device.getClusterServer(BridgedDeviceBasicInformationCluster)?.triggerReachableChangedEvent({ reachableNewValue: reachable });
-    });
-    */
-  }
-
-  /**
-   * Sets the reachability of a device and trigger.
-   *
-   * @param {MatterbridgeEndpoint} device - The device to set the reachability for.
-   * @param {boolean} reachable - The new reachability status of the device.
-   */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private setDeviceReachability(device: MatterbridgeEndpoint, reachable: boolean) {
-    /*
-    const basicInformationCluster = device.getClusterServer(BasicInformationCluster);
-    if (basicInformationCluster && basicInformationCluster.attributes.reachable !== undefined) basicInformationCluster.setReachableAttribute(reachable);
-    if (basicInformationCluster && basicInformationCluster.triggerReachableChangedEvent) basicInformationCluster.triggerReachableChangedEvent({ reachableNewValue: reachable });
-    */
+  private async setAggregatorReachability(aggregatorNode: EndpointNode<AggregatorEndpoint>, reachable: boolean) {
+    for (const child of aggregatorNode.parts) {
+      this.log.debug(`Setting reachability of ${(child as unknown as MatterbridgeEndpoint)?.deviceName} to ${reachable}`);
+      await child.setStateOf(BridgedDeviceBasicInformationServer, { reachable });
+      child.act((agent) => child.eventsOf(BridgedDeviceBasicInformationServer).reachableChanged.emit({ reachableNewValue: true }, agent.context));
+    }
   }
 
   private getVendorIdName = (vendorId: number | undefined) => {
