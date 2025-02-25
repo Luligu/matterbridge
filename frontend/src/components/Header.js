@@ -255,8 +255,15 @@ function Header() {
             </span>
           </Tooltip>
         }
-        {settings.matterbridgeInformation.readOnly && settings.matterbridgeInformation.matterbridgeVersion &&
-          <img src="Shelly.svg" alt="Shelly Icon" style={{ height: '30px', padding: '0px', margin: '0px', marginRight: '20px' }}/>
+        {settings.matterbridgeInformation.shellyBoard &&
+          <img src="Shelly.svg" alt="Shelly Icon" style={{ height: '30px', padding: '0px', margin: '0px', marginRight: '30px' }}/>
+        }
+        {settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.xxxmatterbridgeVersion &&
+          <Tooltip title="Matterbridge version">
+            <span style={{ fontSize: '12px', color: 'var(--main-icon-color)' }} onClick={handleChangelogClick}>
+              v.{settings.matterbridgeInformation.matterbridgeVersion}
+            </span>
+          </Tooltip>
         }
         {settings.matterbridgeInformation.bridgeMode !== '' && settings.matterbridgeInformation.readOnly === false ? (
           <Tooltip title="Bridge mode">

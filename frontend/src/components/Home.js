@@ -61,7 +61,7 @@ function Home() {
   };
   const handleCloseConfig = () => {
     setOpenConfig(false);
-    showSnackbarMessage('Restart required', 30);
+    // showSnackbarMessage('Restart required', 30);
   };
 
   const columns = React.useMemo(() => [

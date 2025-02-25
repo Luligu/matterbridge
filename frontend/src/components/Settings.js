@@ -88,14 +88,18 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
   // Ui context
   const { showSnackbarMessage } = useContext(UiContext);
 
+  // WebSocket context
+  const { sendMessage } = useContext(WebSocketContext);
+
   // Network config dialog
   const [openNetConfig, setOpenNetConfig] = useState(false);
   const handleCloseNetConfig = () => setOpenNetConfig(false);
-  const handleSaveNetConfig = (_config) => {
-    //
+  const handleSaveNetConfig = (config) => {
+    if(debug) console.log('handleSaveNetConfig called with config:', config);
+    sendMessage({ method: "/api/shellynetconfig", src: "Frontend", dst: "Matterbridge", params: config });
   };
 
-  // Network config dialog
+  // Change password dialog
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const handleCloseChangePassword = () => setOpenChangePassword(false);
   const handleSaveChangePassword = (password) => {
@@ -197,7 +201,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
           {matterbridgeInfo.shellyBoard && 
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
               <Button variant="contained" color="primary" onClick={() => setOpenNetConfig(true)}>
-                Configure Network
+                Configure IP
               </Button>
             </div>
           } 

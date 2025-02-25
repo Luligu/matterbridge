@@ -51,7 +51,7 @@ export const NetworkConfigDialog = ({ open, ip, onClose, onSave }) => {
         return;
       }
       onClose();
-    }} maxWidth="sm" style={{ maxWidth: '500px', margin: 'auto' }}>
+    }} maxWidth="sm" style={{ maxWidth: '550px', margin: 'auto' }}>
       <DialogTitle gap={'20px'}>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
           <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
@@ -99,7 +99,7 @@ export const NetworkConfigDialog = ({ open, ip, onClose, onSave }) => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                label="DNS Servers"
+                label="DNS Server"
                 fullWidth
                 value={staticConfig.dns}
                 onChange={handleFieldChange('dns')}

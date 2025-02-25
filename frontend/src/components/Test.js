@@ -4,6 +4,7 @@
 import React, { useContext, useEffect, useState, useRef } from 'react';
 
 // @mui/material
+import { Box, Paper, Typography } from '@mui/material';
 
 // @mui/icons-material
 
@@ -124,11 +125,52 @@ function Test() {
   if (!online) {
     return ( <Connecting /> );
   }
+  /*
   return (
     <div className="MbfPageDiv" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%' }}>
         <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '256px', width: '256px' }} />
         <p>Welcome to the Test page of the Matterbridge frontend</p>
+      </div>  
+    </div>
+  );
+  */
+  return (
+    <div className="MbfPageDiv" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%' }}>
+
+        {/* First row: Header */}
+        <Paper sx={{ flex: 1, p: 2 }} elevation={3}>
+          <Typography variant="h4" align="center">
+            Matterbridge Dashboard
+          </Typography>
+        </Paper>
+
+        {/* Second row: Three Papers for Memory, CPU, RSS */}
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Paper sx={{ flex: 1, p: 2 }} elevation={3}>
+            <Typography variant="h6" align="center">
+              Memory
+            </Typography>
+            {/* Insert memory-related content here */}
+          </Paper>
+          <Paper sx={{ flex: 1, p: 2 }} elevation={3}>
+            <Typography variant="h6" align="center">
+              CPU
+            </Typography>
+            {/* Insert CPU-related content here */}
+          </Paper>
+          <Paper sx={{ flex: 1, p: 2 }} elevation={3}>
+            <Typography variant="h6" align="center">
+              RSS
+            </Typography>
+            {/* Insert RSS-related content here */}
+          </Paper>
+        </Box>
+
+        <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '256px', width: '256px', margin: '10px' }}/>
+        <p>Welcome to the Test page of the Matterbridge frontend</p>
+
       </div>  
     </div>
   );

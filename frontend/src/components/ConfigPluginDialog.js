@@ -12,15 +12,34 @@ import { ThemeProvider } from '@mui/material';
 
 // @rjsf
 import Form from '@rjsf/mui';
+// import Form from '@rjsf/core'; 
 import validator from '@rjsf/validator-ajv8';
 
 // Frontend
 import { sendCommandToMatterbridge } from './sendApiCommand';
-import { configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, ErrorListTemplate, FieldErrorTemplate, RemoveButton, CheckboxWidget, createConfigTheme, DescriptionFieldTemplate } from './configEditor';
+import { ArrayFieldTemplate, ObjectFieldTemplate, TitleFieldTemplate, DescriptionFieldTemplate, ErrorListTemplate, FieldErrorTemplate, RemoveButton, CheckboxWidget, createConfigTheme } from './configEditor';
+// import { ArrayFieldTemplate, ObjectFieldTemplate, TitleFieldTemplate, DescriptionFieldTemplate, BaseInputTemplate, ErrorListTemplate, FieldErrorTemplate, RemoveButton, SubmitButton, CheckboxWidget, createConfigTheme } from './configEditor';
 import { getCssVariable } from './muiTheme';
 import { debug } from '../App';
 // const debug = true;
 
+const configUiSchema = {
+  "password": {
+    "ui:widget": "password",
+  },
+  "ui:submitButtonOptions": {
+    "props": {
+      "variant": "contained",
+      "disabled": false,
+      "className": "configSubmitButton",
+      sx: { margin: '0px', marginLeft: '20px', marginBottom: '10px' },
+      style: { margin: '0px', marginLeft: '20px', marginBottom: '10px' },
+    },
+    "norender": false,
+    "submitText": "Save the changes to the config file",
+  },
+  'ui:globalOptions': { orderable: true },
+};
 
 export const ConfigPluginDialog = ({ open, onClose, config, schema }) => {
 
@@ -44,7 +63,7 @@ export const ConfigPluginDialog = ({ open, onClose, config, schema }) => {
       maxWidth='800px'>
       <DialogTitle gap={'20px'}>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-          <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
+          <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
           <h3>Matterbridge plugin configuration</h3>
         </div>
       </DialogTitle>
@@ -57,7 +76,7 @@ export const ConfigPluginDialog = ({ open, onClose, config, schema }) => {
               uiSchema={configUiSchema}
               validator={validator}
               widgets={{ CheckboxWidget }}
-              templates={{ ArrayFieldTemplate, ObjectFieldTemplate, DescriptionFieldTemplate, FieldErrorTemplate, ErrorListTemplate, ButtonTemplates: { RemoveButton } }}
+              templates={{ ArrayFieldTemplate, ObjectFieldTemplate, TitleFieldTemplate, DescriptionFieldTemplate, FieldErrorTemplate, ErrorListTemplate, ButtonTemplates: { RemoveButton } }}
               onSubmit={handleSaveChanges} />
           </div>
         </ThemeProvider>
