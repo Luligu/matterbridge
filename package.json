@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "2.1.6-dev.9",
+  "version": "2.2.0-dev.2",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -144,12 +144,12 @@
     "updateMatter:loc": "npm install ../matter.js/packages/matter.js && npm install && npm run deepCleanBuild",
     "install:dependencies": "npm install @matter/main @matter/nodejs @project-chip/matter.js archiver express glob https node-ansi-logger node-persist-manager ws",
     "install:typescript": "npm install --save-dev @types/express @types/node @types/ws typescript && npm run build",
-    "install:eslint": "npm install --save-dev @eslint/js typescript-eslint && npm run lint",
+    "install:eslint": "npm uninstall eslint @types/eslint__js && npm install --save-dev @eslint/js typescript-eslint && npm run lint",
     "install:prettier": "npm install --save-dev prettier eslint-config-prettier eslint-plugin-prettier && npm run format",
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest && npm run test"
   },
   "dependencies": {
-    "@matter/main": "^0.12.4-alpha.0-20250217-b0bba5179",
+    "@matter/main": "0.12.4-alpha.0-20250224-46934b522",
     "archiver": "7.0.1",
     "express": "4.21.2",
     "glob": "11.0.1",
@@ -173,7 +173,7 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "jest": "29.7.0",
     "prettier": "3.5.2",
-    "ts-jest": "29.2.5",
+    "ts-jest": "29.2.6",
     "typescript": "5.7.3",
     "typescript-eslint": "8.24.1"
   }

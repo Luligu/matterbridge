@@ -33,7 +33,7 @@ matterbridge-zigbee2mqtt v. 2.4.4
 matterbridge-somfy-tahoma v. 1.2.3
 matterbridge-hass v. 0.0.8
 
-## [2.1.6] - 2025-02-23
+## [2.2.0] - 2025-02-25
 
 ### Added
 
@@ -41,11 +41,12 @@ matterbridge-hass v. 0.0.8
 - [platform]: Saving in the storage the selects for faster loading of plugins.
 - [icon]: Added matterbridge svg icon (thanks: https://github.com/robvanoostenrijk https://github.com/stuntguy3000).
 - [pluginManager]: Refactor PluginManager to optimize memory and load time.
-- [frontend]: Frontend v.2.4.3. Please refresh the frontend page after the update.
+- [frontend]: Frontend v.2.4.5. Please refresh the frontend page after the update.
 - [frontend]: Added processUptime.
 - [frontend]: Added Share fabrics and Stop sharing to the menu. This allows to pair other controllers without the need to share from the first controller.
 - [frontend]: Added subscriptions to QRDiv.
 - [utils]: Optimized memory and loading time.
+- [shelly]: Added all shelly api to be used when matterbridge is running on the shelly matterbridge board.
 
 ### Changed
 
@@ -53,6 +54,9 @@ matterbridge-hass v. 0.0.8
 - [package]: Update matter.js to 0.12.4-alpha.0-20250213-1187f81eb
 - [package]: Update matter.js to 0.12.4-alpha.0-20250215-5af08a8d6
 - [package]: Update matter.js to 0.12.4-alpha.0-20250217-b0bba5179
+- [package]: Update matter.js to 0.12.4-alpha.0-20250223-1e0341a1a
+- [package]: Update matter.js to 0.12.4-alpha.0-20250224-46934b522
+- [matterbridge]: The check for available updates now runs at restart and each 24 hours after.
 
 ### Fixed
 
