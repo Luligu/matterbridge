@@ -75,6 +75,10 @@ function Header() {
     sendMessage({ method: "/api/shutdown", src: "Frontend", dst: "Matterbridge", params: {} });
   };
 
+  const handleRebootClick = () => {
+    sendMessage({ method: "/api/reboot", src: "Frontend", dst: "Matterbridge", params: {} });
+  };
+
   const handleStartAdvertiseClick = () => {
     sendMessage({ method: "/api/advertise", src: "Frontend", dst: "Matterbridge", params: {} });
   };
@@ -120,6 +124,8 @@ function Header() {
       handleRestartClick();
     } else if (value === 'shutdown') {
       handleShutdownClick();
+    } else if (value === 'reboot') {
+      handleRebootClick();
     } else if (value === 'startshare') {
       handleStartAdvertiseClick();
     } else if (value === 'stopshare') {
@@ -354,6 +360,12 @@ function Header() {
               <ListItemText primary="Shutdown" />
             </MenuItem>
             : null}
+          {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard &&
+            <MenuItem onClick={() => { showConfirmCancelDialog('Reboot', 'Are you sure you want to reboot the Shelly board?', 'reboot', handleMenuCloseConfirm, handleMenuCloseCancel); }}>
+              <ListItemIcon><RestartAltIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+              <ListItemText primary="Reboot" />
+            </MenuItem>
+          }
           {settings.matterbridgeInformation.matterbridgePaired === true && settings.matterbridgeInformation.matterbridgeAdvertise === false?
             <MenuItem onClick={() => handleMenuCloseConfirm('startshare')}>
               <ListItemIcon><IosShareIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
