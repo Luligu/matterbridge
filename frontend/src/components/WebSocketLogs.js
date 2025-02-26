@@ -15,7 +15,7 @@ const detectTouchscreen = () => {
   };
 
 export function WebSocketLogs() {
-    const { messages } = useContext(WebSocketMessagesContext);
+    const { messages, autoScroll } = useContext(WebSocketMessagesContext);
     const [isHovering, setIsHovering] = useState(false); // State to track mouse hover
 
     const endOfMessagesRef = useRef(null); // Create a ref for scrolling
@@ -25,11 +25,11 @@ export function WebSocketLogs() {
     
     // Scroll to the bottom of the message list on every update, only if the user is not hovering and not on a touchscreen
     useEffect(() => {
-        if (!isHovering && !detectTouchscreen()) {
-            // console.log(`isHovering: ${isHovering}`);
+        // console.log(`WebSocketLogs autoScroll: ${autoScroll} isHovering: ${isHovering}`);
+        if (autoScroll && !isHovering && !detectTouchscreen()) {
             endOfMessagesRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [messages, isHovering]);
+    }, [messages, isHovering, autoScroll]);
 
     return (
         <div style={{ margin: '0px', padding: '0px' }}>

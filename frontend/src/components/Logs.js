@@ -9,6 +9,8 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 
 // @mui/icons-material
 import DeleteForever from '@mui/icons-material/DeleteForever';
@@ -18,29 +20,35 @@ import { WebSocketLogs } from './WebSocketLogs';
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import { debug } from '../App';
+// const debug = true;
 
 function Logs() {
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');
-  const { setMessages, setLogFilters, online } = useContext(WebSocketContext);
+  const { setMessages, setLogFilters, online, autoScroll, setAutoScroll } = useContext(WebSocketContext);
 
   const handleChangeLevel = (event) => {
     setLogFilterLevel(event.target.value);
     setLogFilters(event.target.value, logFilterSearch);
     localStorage.setItem('logFilterLevel', event.target.value);
-    console.log('handleChangeLevel called with value:', event.target.value);
+    if(debug) console.log('handleChangeLevel called with value:', event.target.value);
   };
 
   const handleChangeSearch = (event) => {
     setLogFilterSearch(event.target.value);
     setLogFilters(logFilterLevel, event.target.value);
     localStorage.setItem('logFilterSearch', event.target.value);
-    console.log('handleChangeSearch called with value:', event.target.value);
+    if(debug) console.log('handleChangeSearch called with value:', event.target.value);
   };
 
   const handleClearLogsClick = () => {
-    console.log('handleClearLogsClick called');
+    if(debug) console.log('handleClearLogsClick called');
     setMessages([]);
+  };
+
+  const handleAutoScrollChange = (event) => {
+    setAutoScroll(event.target.checked);
+    if(debug) console.log('handleAutoScrollChange called with value:', event.target.checked);
   };
 
   if(debug) console.log('Logs rendering...');
@@ -69,6 +77,11 @@ function Logs() {
                 backgroundColor: 'var(--main-bg-color)',
               },
             }}/>
+          <FormControlLabel
+            control={<Checkbox checked={autoScroll} onChange={handleAutoScrollChange} />}
+            label="Auto Scroll"
+            style={{ color: 'var(--div-text-color)' }}
+          />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <Tooltip title="Clear the logs">

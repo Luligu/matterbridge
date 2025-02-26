@@ -50,7 +50,7 @@ function Home() {
   const [logFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
 
   const { showSnackbarMessage, showConfirmCancelDialog } = useContext(UiContext);
-  const { logMessage, addListener, removeListener, online, sendMessage } = useContext(WebSocketContext);
+  const { logMessage, addListener, removeListener, online, sendMessage, autoScroll } = useContext(WebSocketContext);
 
   const refRegisteredPlugins = useRef(null);
 
@@ -364,7 +364,7 @@ function Home() {
             <div className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>
               Logs
               <span style={{ fontWeight: 'normal', fontSize: '12px', marginTop: '2px' }}>
-                Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}"
+                Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}" Scroll: {autoScroll ? 'auto' : 'manual'} 
               </span>
             </div>
           </div>

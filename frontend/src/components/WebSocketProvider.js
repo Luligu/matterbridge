@@ -47,6 +47,8 @@ export function WebSocketProvider({ children }) {
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
   const [messages, setMessages] = useState([]);
+  const [maxMessages, setMaxMessages] = useState(1000);
+  const [autoScroll, setAutoScroll] = useState(true);
   const [online, setOnline] = useState(false);
 
   // Contexts
@@ -68,7 +70,7 @@ export function WebSocketProvider({ children }) {
   const isIngress = useMemo(() => window.location.href.includes('api/hassio_ingress'), []);
 
   // Constants
-  const maxMessages = 1000;
+  // const maxMessages = 1000;
   const maxRetries = 100;
 
   const pingIntervalSeconds = 60;
@@ -303,20 +305,28 @@ export function WebSocketProvider({ children }) {
 
   const contextMessagesValue = useMemo(() => ({
     messages,
+    maxMessages,
+    autoScroll,
     setMessages,
     setLogFilters,
-  }), [messages]);
+    setMaxMessages,
+    setAutoScroll,
+  }), [messages, setMessages, setLogFilters]);
 
   const contextValue = useMemo(() => ({
+    maxMessages,
+    autoScroll,
     setMessages,
     setLogFilters,
+    setMaxMessages,
+    setAutoScroll,
     online,
     getUniqueId,
     addListener,
     removeListener,
     sendMessage,
     logMessage,
-  }), [ setMessages, setLogFilters, online, addListener, removeListener, sendMessage, logMessage]);
+  }), [maxMessages, autoScroll, setMessages, setLogFilters, setMaxMessages, setAutoScroll, online, addListener, removeListener, sendMessage, logMessage]);
 
   return (
     <WebSocketMessagesContext.Provider value={contextMessagesValue}>
