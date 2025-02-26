@@ -94,15 +94,15 @@ export function SystemInfoTable({ systemInfo, compact }) {
 
   if (!localSystemInfo) return null;
 
+  if(debug) console.log('SystemInfoTable rendering...');
+
   return (
     <div className="MbfWindowDiv" style={{ minWidth: '302px', overflow: 'hidden' }}>
-      <div className="MbfWindowDivTable" style={{ overflow: 'hidden' }}>
+      <div className="MbfWindowHeader">
+        <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>System Information</p>
+      </div>
+      <div className="MbfWindowDivTable">
         <table >
-          <thead>
-            <tr>
-              <th colSpan="2">System Information</th>
-            </tr>
-          </thead>
           <tbody>
             {Object.entries(localSystemInfo).map(([key, value], index) => (
               <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ borderTop: '1px solid #ddd' }}>
