@@ -236,8 +236,8 @@ export function WebSocketProvider({ children }) {
           const newMessages = [...prevMessages, newMessage];
           // Check if the new array length exceeds the maximum allowed
           if (newMessages.length > maxMessages) {
-            // Remove the oldest messages to maintain maxMessages count
-            return newMessages.slice(newMessages.length - maxMessages);
+            // Remove 10% of the oldest messages to maintain maxMessages count
+            return newMessages.slice(maxMessages / 10);
           }
           return newMessages;
         });
