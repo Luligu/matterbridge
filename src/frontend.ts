@@ -556,6 +556,23 @@ export class Frontend {
       });
     });
 
+    // Endpoint to download the matter log
+    this.expressApp.get('/api/shellydownloadsystemlog', async (req, res) => {
+      this.log.debug('The frontend sent /api/shellydownloadsystemlog');
+      try {
+        await fs.access(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), fs.constants.F_OK);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (error) {
+        fs.appendFile(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'Create the Shelly system log before downloading it.');
+      }
+      res.download(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'shelly.log', (error) => {
+        if (error) {
+          this.log.error(`Error downloading Shelly system log file: ${error instanceof Error ? error.message : error}`);
+          res.status(500).send('Error downloading Shelly system log file');
+        }
+      });
+    });
+
     // Endpoint to download the matter storage file
     this.expressApp.get('/api/download-mjstorage', async (req, res) => {
       this.log.debug('The frontend sent /api/download-mjstorage');
@@ -1284,6 +1301,10 @@ export class Frontend {
       } else if (data.method === '/api/shellymainupdate') {
         const { triggerShellyMainUpdate } = await import('./shelly.js');
         triggerShellyMainUpdate(this.matterbridge);
+        return;
+      } else if (data.method === '/api/shellycreatesystemlog') {
+        const { createShellySystemLog } = await import('./shelly.js');
+        createShellySystemLog(this.matterbridge);
         return;
       } else if (data.method === '/api/shellynetconfig') {
         this.log.debug('/api/shellynetconfig:', data.params);
