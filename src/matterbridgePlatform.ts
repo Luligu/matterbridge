@@ -65,18 +65,21 @@ export class MatterbridgePlatform {
   context?: NodeStorage;
 
   // Device and entity selection
-  selectDevice = new Map<string, { serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }>();
-  selectEntity = new Map<string, { name: string; description: string; icon?: string }>();
+  readonly selectDevice = new Map<string, { serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }>();
+  readonly selectEntity = new Map<string, { name: string; description: string; icon?: string }>();
 
   // Promises for storage
-  private contextReady: Promise<void>;
-  private selectDeviceContextReady: Promise<void>;
-  private selectEntityContextReady: Promise<void>;
+  private _contextReady: Promise<void>;
+  private _selectDeviceContextReady: Promise<void>;
+  private _selectEntityContextReady: Promise<void>;
   ready: Promise<void>;
 
   // Registered devices
-  registeredEndpoints = new Map<string, MatterbridgeEndpoint>(); // uniqueId, MatterbridgeEndpoint
-  registeredEndpointsByName = new Map<string, MatterbridgeEndpoint>(); // deviceName, MatterbridgeEndpoint
+  private readonly _registeredEndpoints = new Map<string, MatterbridgeEndpoint>(); // uniqueId, MatterbridgeEndpoint
+  private readonly _registeredEndpointsByName = new Map<string, MatterbridgeEndpoint>(); // deviceName, MatterbridgeEndpoint
+
+  // Stored devices
+  private readonly _storedDevices = new Map<string, { serial: string; name: string; configUrl?: string }>(); // serial, { serial, name }
 
   /**
    * Creates an instance of the base MatterbridgePlatform. It is extended by the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
@@ -102,7 +105,7 @@ export class MatterbridgePlatform {
 
     // create the context storage for the plugin platform
     this.log.debug(`Creating context for plugin ${this.config.name}`);
-    this.contextReady = this.storage.createStorage('context').then((context) => {
+    this._contextReady = this.storage.createStorage('context').then((context) => {
       this.context = context;
       this.context.remove('endpointMap'); // Remove the old endpointMap TODO: remove in future versions
       this.log.debug(`Created context for plugin ${this.config.name}`);
@@ -110,7 +113,7 @@ export class MatterbridgePlatform {
 
     // create the selectDevice storage for the plugin platform
     this.log.debug(`Loading selectDevice for plugin ${this.config.name}`);
-    this.selectDeviceContextReady = this.storage.createStorage('selectDevice').then(async (context) => {
+    this._selectDeviceContextReady = this.storage.createStorage('selectDevice').then(async (context) => {
       const selectDevice = await context.get<{ serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[]>('selectDevice', []);
       for (const device of selectDevice) this.selectDevice.set(device.serial, device);
       this.log.debug(`Loaded ${this.selectDevice.size} selectDevice for plugin ${this.config.name}`);
@@ -118,14 +121,14 @@ export class MatterbridgePlatform {
 
     // create the selectEntity storage for the plugin platform
     this.log.debug(`Loading selectEntity for plugin ${this.config.name}`);
-    this.selectEntityContextReady = this.storage.createStorage('selectEntity').then(async (context) => {
+    this._selectEntityContextReady = this.storage.createStorage('selectEntity').then(async (context) => {
       const selectEntity = await context.get<{ name: string; description: string; icon?: string }[]>('selectEntity', []);
       for (const entity of selectEntity) this.selectEntity.set(entity.name, entity);
       this.log.debug(`Loaded ${this.selectEntity.size} selectEntity for plugin ${this.config.name}`);
     });
 
     // Create the `ready` promise for the platform
-    this.ready = Promise.all([this.contextReady, this.selectDeviceContextReady, this.selectEntityContextReady]).then(() => {
+    this.ready = Promise.all([this._contextReady, this._selectDeviceContextReady, this._selectEntityContextReady]).then(() => {
       this.log.debug(`MatterbridgePlatform for plugin ${this.config.name} is fully initialized`);
     });
   }
@@ -180,8 +183,9 @@ export class MatterbridgePlatform {
     // Cleanup memory
     this.selectDevice.clear();
     this.selectEntity.clear();
-    this.registeredEndpoints.clear();
-    this.registeredEndpointsByName.clear();
+    this._registeredEndpoints.clear();
+    this._registeredEndpointsByName.clear();
+    this._storedDevices.clear();
 
     // Close the storage
     await this.context?.close();
@@ -203,7 +207,7 @@ export class MatterbridgePlatform {
    * @returns {boolean} True if the device is already registered, false otherwise.
    */
   hasDeviceName(deviceName: string): boolean {
-    return this.registeredEndpointsByName.has(deviceName);
+    return this._registeredEndpointsByName.has(deviceName);
   }
 
   /**
@@ -212,7 +216,7 @@ export class MatterbridgePlatform {
    */
   async registerDevice(device: MatterbridgeEndpoint) {
     device.plugin = this.name;
-    if (device.deviceName && this.registeredEndpointsByName.has(device.deviceName)) {
+    if (device.deviceName && this._registeredEndpointsByName.has(device.deviceName)) {
       this.log.error(`Device with name ${CYAN}${device.deviceName}${er} is already registered. The device will not be added. Please change the device name.`);
       return;
     }
@@ -220,8 +224,8 @@ export class MatterbridgePlatform {
       this.log.debug(`Device with name ${CYAN}${device.deviceName}${db} has non latin characters.`);
     }
     await this.matterbridge.addBridgedEndpoint(this.name, device);
-    if (device.uniqueId) this.registeredEndpoints.set(device.uniqueId, device);
-    if (device.deviceName) this.registeredEndpointsByName.set(device.deviceName, device);
+    if (device.uniqueId) this._registeredEndpoints.set(device.uniqueId, device);
+    if (device.deviceName) this._registeredEndpointsByName.set(device.deviceName, device);
   }
 
   /**
@@ -230,8 +234,8 @@ export class MatterbridgePlatform {
    */
   async unregisterDevice(device: MatterbridgeEndpoint) {
     await this.matterbridge.removeBridgedEndpoint(this.name, device);
-    if (device.uniqueId) this.registeredEndpoints.delete(device.uniqueId);
-    if (device.deviceName) this.registeredEndpointsByName.delete(device.deviceName);
+    if (device.uniqueId) this._registeredEndpoints.delete(device.uniqueId);
+    if (device.deviceName) this._registeredEndpointsByName.delete(device.deviceName);
   }
 
   /**
@@ -239,8 +243,20 @@ export class MatterbridgePlatform {
    */
   async unregisterAllDevices() {
     await this.matterbridge.removeAllBridgedEndpoints(this.name);
-    this.registeredEndpoints.clear();
-    this.registeredEndpointsByName.clear();
+    this._registeredEndpoints.clear();
+    this._registeredEndpointsByName.clear();
+  }
+
+  /**
+   * Store a device that will not be registered. To be used by the Devices page in the frontend.
+   * @param {string} serial - The serial number of the device to store.
+   * @param {string} name - The name of the device to store.
+   * @param {string} [configUrl] - The URL of the device configuration.
+   * @returns {Promise<void>} A promise that resolves when the device is stored.
+   */
+  async storeDevice(serial: string, name: string, configUrl?: string): Promise<void> {
+    this.log.debug(`Stored device with serial ${CYAN}${serial}${db} name ${CYAN}${name}${db}`);
+    this._storedDevices.set(serial, { serial, name, configUrl });
   }
 
   /**
