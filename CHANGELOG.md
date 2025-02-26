@@ -13,27 +13,7 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
-### Breaking Changes
-
-Starting from v. 2.0.0, Matterbridge is running only in mode edge (no parameter needed and no badge in the frontend).
-
-Starting from v. 2.1.0, the legacy old api of matter.js have been completely removed from Matterbridge and from all plugins.
-
-For this reason there is no compatibility with the old versions of the plugins.
-
-You need to update all plugins you use and Matterbridge in the same moment.
-
-I suggest to first update all plugins without restarting and then to update Matterbridge so when it restarts, all versions will be the latest.
-
-If you use docker, all plugins are already installed in the image so you just need to pull the new image.
-
-Compatibility list:
-matterbridge-shelly v. 1.1.5
-matterbridge-zigbee2mqtt v. 2.4.4
-matterbridge-somfy-tahoma v. 1.2.3
-matterbridge-hass v. 0.0.8
-
-## [2.2.0] - 2025-02-25
+## [2.2.0] - 2025-02-28
 
 ### Added
 
@@ -41,21 +21,17 @@ matterbridge-hass v. 0.0.8
 - [platform]: Saving in the storage the selects for faster loading of plugins.
 - [icon]: Added matterbridge svg icon (thanks: https://github.com/robvanoostenrijk https://github.com/stuntguy3000).
 - [pluginManager]: Refactor PluginManager to optimize memory and load time.
-- [frontend]: Frontend v.2.4.5. Please refresh the frontend page after the update.
-- [frontend]: Added processUptime.
+- [frontend]: Frontend v.2.4.6. Please refresh the frontend page after the update.
+- [frontend]: Added processUptime to SystemInfo.
 - [frontend]: Added Share fabrics and Stop sharing to the menu. This allows to pair other controllers without the need to share from the first controller.
 - [frontend]: Added subscriptions to QRDiv.
+- [frontend]: Added autoScroll option for the logs. Default is enabled.
 - [utils]: Optimized memory and loading time.
 - [shelly]: Added all shelly api to be used when matterbridge is running on the shelly matterbridge board.
 
 ### Changed
 
-- [package]: Update matter.js to 0.12.4-alpha.0-20250212-b2729c9eb
-- [package]: Update matter.js to 0.12.4-alpha.0-20250213-1187f81eb
-- [package]: Update matter.js to 0.12.4-alpha.0-20250215-5af08a8d6
-- [package]: Update matter.js to 0.12.4-alpha.0-20250217-b0bba5179
-- [package]: Update matter.js to 0.12.4-alpha.0-20250223-1e0341a1a
-- [package]: Update matter.js to 0.12.4-alpha.0-20250224-46934b522
+- [package]: Update matter.js to 0.12.4
 - [matterbridge]: The check for available updates now runs at restart and each 24 hours after.
 
 ### Fixed
