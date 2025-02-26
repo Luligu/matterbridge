@@ -63,14 +63,15 @@ const devicesColumns = [
     accessor: 'configButton',
     noSort: true,
     Cell: ({ row }) => (
+      row.original.configUrl ? (
       <IconButton
         onClick={() => window.open(row.original.configUrl, '_blank')}
         aria-label="Open Config"
-        disabled={!row.original.configUrl}
         sx={{ margin: 0, padding: 0 }}
       >
-        <SettingsIcon />
+        <SettingsIcon fontSize="small"/>
       </IconButton>
+      ) : null
     ),
   },
   {
