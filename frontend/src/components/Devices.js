@@ -446,7 +446,7 @@ function Devices() {
             value={filter}
             onChange={handleFilterChange}
             placeholder="Enter the device name or serial number"
-            sx={{ width: '300px' }}
+            sx={{ width: '320px' }}
             InputProps={{
               style: {
                 backgroundColor: 'var(--main-bg-color)',

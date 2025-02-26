@@ -62,6 +62,18 @@ function Header() {
     sendMessage({ method: "/api/shellymainupdate", src: "Frontend", dst: "Matterbridge", params: { } });
   };
 
+  const handleShellyCreateSystemLog = () => {
+    if(debug) console.log('Header: handleShellyCreateSystemLog');
+    sendMessage({ method: "/api/shellycreatesystemlog", src: "Frontend", dst: "Matterbridge", params: { } });
+  };
+
+  const handleShellyDownloadSystemLog = () => {
+    if(debug) console.log('Header: handleShellyDownloadSystemLog');
+    logMessage('Matterbridge', `Downloading Shelly system log...`);
+    showSnackbarMessage('Downloading Shelly system log...', 5);
+    window.location.href = './api/shellydownloadsystemlog';
+};
+
   const handleRestartClick = () => {
     if (settings.matterbridgeInformation.restartMode === '') {
       sendMessage({ method: "/api/restart", src: "Frontend", dst: "Matterbridge", params: {} });
@@ -120,6 +132,10 @@ function Header() {
       handleShellySystemUpdateClick();
     } else if (value === 'shelly-main-update') {
       handleShellyMainUpdateClick();
+    } else if (value === 'shelly-create-system-log') {
+      handleShellyCreateSystemLog();
+    } else if (value === 'shelly-download-system-log') {
+      handleShellyDownloadSystemLog(); 
     } else if (value === 'restart') {
       handleRestartClick();
     } else if (value === 'shutdown') {
@@ -400,6 +416,20 @@ function Header() {
               <ListItemIcon><DownloadIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
               <ListItemText primary="Matter storage" />
             </MenuItem>
+
+            {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard &&
+              <MenuItem onClick={() => { handleMenuCloseConfirm('shelly-create-system-log'); handleDownloadMenuClose(); }}>
+                <ListItemIcon><DownloadIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+                <ListItemText primary="Create Shelly system log" />
+              </MenuItem>
+            }
+            {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard &&
+              <MenuItem onClick={() => { handleMenuCloseConfirm('shelly-download-system-log'); handleDownloadMenuClose(); }}>
+                <ListItemIcon><DownloadIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+                <ListItemText primary="Download Shelly system log" />
+              </MenuItem>
+            }
+
           </Menu>
 
           <Divider />
