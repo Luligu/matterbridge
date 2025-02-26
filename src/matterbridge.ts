@@ -1195,7 +1195,7 @@ export class Matterbridge extends EventEmitter {
   async unregisterAndShutdownProcess() {
     this.log.info('Unregistering all devices and shutting down...');
     for (const plugin of this.plugins) {
-      await this.removeAllBridgedEndpoints(plugin.name);
+      await this.removeAllBridgedEndpoints(plugin.name, 250);
     }
     this.log.debug('Waiting for the MessageExchange to finish...');
     await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second for MessageExchange to finish
@@ -2325,12 +2325,14 @@ export class Matterbridge extends EventEmitter {
    * Removes all bridged endpoints from the specified plugin.
    *
    * @param {string} pluginName - The name of the plugin.
+   * @param {number} [delay=0] - The delay in milliseconds between removing each bridged endpoint (default: 0).
    * @returns {Promise<void>} A promise that resolves when all bridged endpoints have been removed.
    */
-  async removeAllBridgedEndpoints(pluginName: string): Promise<void> {
+  async removeAllBridgedEndpoints(pluginName: string, delay = 0): Promise<void> {
     this.log.debug(`Removing all bridged endpoints for plugin ${plg}${pluginName}${db}`);
     for (const device of this.devices.array().filter((device) => device.plugin === pluginName)) {
       await this.removeBridgedEndpoint(pluginName, device);
+      if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 
