@@ -44,6 +44,16 @@ export type PlatformConfigValue = string | number | boolean | bigint | object | 
 
 export type PlatformConfig = Record<string, PlatformConfigValue>;
 
+export interface DefaultPlatformConfig {
+  name: string;
+  type: string;
+  version: string;
+  whiteList?: string[];
+  blackList?: string[];
+  debug: boolean;
+  unregisterOnShutdown: boolean;
+}
+
 export type PlatformSchemaValue = string | number | boolean | bigint | object | undefined | null;
 
 export type PlatformSchema = Record<string, PlatformSchemaValue>;
