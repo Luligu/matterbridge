@@ -578,6 +578,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {Function} callback - The callback function to call with the cluster name, cluster id, attribute name, attribute id and attribute value.
    */
   forEachAttribute(callback: (clusterName: string, clusterId: number, attributeName: string, attributeId: number, attributeValue: boolean | number | bigint | string | object | null | undefined) => void): void {
+    if (!this.lifecycle.isReady || this.construction.status !== Lifecycle.Status.Active) return;
+
     for (const [clusterName, clusterAttributes] of Object.entries(this.state as unknown as Record<string, Record<string, boolean | number | bigint | string | object | undefined | null>>)) {
       for (const [attributeName, attributeValue] of Object.entries(clusterAttributes)) {
         const clusterId = getClusterId(this, clusterName);

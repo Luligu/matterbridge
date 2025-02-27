@@ -22,7 +22,7 @@
  */
 
 // @matter
-import { EndpointServer, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat } from '@matter/main';
+import { EndpointServer, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle } from '@matter/main';
 
 // Node modules
 import { Server as HttpServer, createServer, IncomingMessage } from 'node:http';
@@ -1094,6 +1094,8 @@ export class Frontend {
    * @returns {string} The attributes description of the cluster servers in the device.
    */
   private getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
+    if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return '';
+
     const getAttribute = (device: MatterbridgeEndpoint, cluster: string, attribute: string) => {
       let value = undefined;
       Object.entries(device.state)
