@@ -87,19 +87,9 @@ describe('Matterbridge frontend', () => {
     let matterbridge: Matterbridge;
     let baseUrl: string;
 
-    beforeAll(async () => {
-      // Load the Matterbridge instance
-      // matterbridge = await Matterbridge.loadInstance(true);
-    });
-
     beforeEach(() => {
       // Clear all mocks
       jest.clearAllMocks();
-    });
-
-    afterAll(async () => {
-      // Close the Matterbridge instance
-      // await matterbridge.destroyInstance();
     });
 
     const makeRequest = (path: string, method: string, body?: any) => {
