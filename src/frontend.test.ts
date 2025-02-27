@@ -89,7 +89,7 @@ describe('Matterbridge frontend', () => {
 
     beforeAll(async () => {
       // Load the Matterbridge instance
-      matterbridge = await Matterbridge.loadInstance(true);
+      // matterbridge = await Matterbridge.loadInstance(true);
     });
 
     beforeEach(() => {
@@ -99,7 +99,7 @@ describe('Matterbridge frontend', () => {
 
     afterAll(async () => {
       // Close the Matterbridge instance
-      await matterbridge.destroyInstance();
+      // await matterbridge.destroyInstance();
     });
 
     const makeRequest = (path: string, method: string, body?: any) => {
@@ -131,6 +131,14 @@ describe('Matterbridge frontend', () => {
       });
     };
 
+    test('Matterbridge.loadInstance(true) -bridge mode', async () => {
+      matterbridge = await Matterbridge.loadInstance(true);
+      expect(matterbridge).toBeDefined();
+      expect(matterbridge.profile).toBe('JestFrontend');
+      expect(matterbridge.bridgeMode).toBe('bridge');
+      expect((matterbridge as any).initialized).toBe(true);
+    });
+
     test('Reset Jest plugins', async () => {
       matterbridge.plugins.clear();
       expect(await matterbridge.plugins.saveToStorage()).toBe(0);
@@ -150,7 +158,9 @@ describe('Matterbridge frontend', () => {
       await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).frontend.webSocketServer!==undefined; });
       // prettier-ignore
       await waiter('Matter server node started', () => { return (matterbridge as any).reachabilityTimeout; });
-    });
+      // prettier-ignore
+      await waiter('Matter server node started', () => { return matterbridge.serverNode?.lifecycle.isOnline === true; });
+    }, 60000);
 
     test('POST /api/login with valid password', async () => {
       // Set the password in the nodeContext

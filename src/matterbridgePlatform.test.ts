@@ -143,9 +143,9 @@ describe('Matterbridge platform', () => {
     expect(platform.selectEntity).toBeDefined();
     expect(platform.selectEntity).toBeInstanceOf(Map);
     expect(platform.selectEntity.size).toBe(0);
-    expect((platform as any).contextReady).toBeInstanceOf(Promise);
-    expect((platform as any).selectDeviceContextReady).toBeInstanceOf(Promise);
-    expect((platform as any).selectEntityContextReady).toBeInstanceOf(Promise);
+    expect((platform as any)._contextReady).toBeInstanceOf(Promise);
+    expect((platform as any)._selectDeviceContextReady).toBeInstanceOf(Promise);
+    expect((platform as any)._selectEntityContextReady).toBeInstanceOf(Promise);
     expect(platform.ready).toBeInstanceOf(Promise);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Creating storage for plugin test'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Creating context for plugin test'));
@@ -390,8 +390,8 @@ describe('Matterbridge platform', () => {
     await platform.registerDevice(testDevice);
     expect(platform.hasDeviceName('nonLatin조명')).toBeTruthy();
     expect(platform.hasDeviceName('none')).toBeFalsy();
-    expect(platform.registeredEndpoints.has(testDevice.uniqueId ?? 'none')).toBeTruthy();
-    expect(platform.registeredEndpointsByName.has('nonLatin조명')).toBeTruthy();
+    expect((platform as any)._registeredEndpoints.has(testDevice.uniqueId ?? 'none')).toBeTruthy();
+    expect((platform as any)._registeredEndpointsByName.has('nonLatin조명')).toBeTruthy();
   });
 
   test('checkEndpointNumbers should be empty', async () => {
@@ -421,8 +421,8 @@ describe('Matterbridge platform', () => {
     await platform.registerDevice(testDevice);
     expect(platform.hasDeviceName('test')).toBeTruthy();
     expect(platform.hasDeviceName('none')).toBeFalsy();
-    expect(platform.registeredEndpoints.has(testDevice.uniqueId ?? 'none')).toBeTruthy();
-    expect(platform.registeredEndpointsByName.has('test')).toBeTruthy();
+    expect((platform as any)._registeredEndpoints.has(testDevice.uniqueId ?? 'none')).toBeTruthy();
+    expect((platform as any)._registeredEndpointsByName.has('test')).toBeTruthy();
 
     testDevice.number = 100;
     (matterbridge as any).devices.set(testDevice);
@@ -555,7 +555,7 @@ describe('Matterbridge platform', () => {
     const testDevice = new MatterbridgeEndpoint(powerSource);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
     await platform.registerDevice(testDevice);
-    expect(platform.registeredEndpoints.size).toBe(1);
+    expect((platform as any)._registeredEndpoints.size).toBe(1);
     expect(matterbridge.addBridgedEndpoint).toHaveBeenCalled();
   });
 
@@ -564,29 +564,29 @@ describe('Matterbridge platform', () => {
     const testDevice = new MatterbridgeEndpoint(powerSource);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
     await platform.unregisterDevice(testDevice);
-    expect(platform.registeredEndpoints.size).toBe(0);
+    expect((platform as any)._registeredEndpoints.size).toBe(0);
     expect(matterbridge.removeBridgedEndpoint).toHaveBeenCalled();
   });
 
   test('unregisterAllDevices calls matterbridge.removeAllBridgedEndpoints with correct parameters', async () => {
     await platform.unregisterAllDevices();
-    expect(platform.registeredEndpoints.size).toBe(0);
+    expect((platform as any)._registeredEndpoints.size).toBe(0);
     expect(matterbridge.removeAllBridgedEndpoints).toHaveBeenCalled();
   });
 
   test('registerDevice should log error if the device name already exist', async () => {
     await platform.unregisterAllDevices();
-    expect(platform.registeredEndpoints.size).toBe(0);
-    expect(platform.registeredEndpointsByName.size).toBe(0);
+    expect((platform as any)._registeredEndpoints.size).toBe(0);
+    expect((platform as any)._registeredEndpointsByName.size).toBe(0);
     expect(matterbridge.removeAllBridgedEndpoints).toHaveBeenCalled();
 
-    platform.registeredEndpoints.set('test', new MatterbridgeEndpoint(powerSource));
-    platform.registeredEndpointsByName.set('test', new MatterbridgeEndpoint(powerSource));
+    (platform as any)._registeredEndpoints.set('test', new MatterbridgeEndpoint(powerSource));
+    (platform as any)._registeredEndpointsByName.set('test', new MatterbridgeEndpoint(powerSource));
     const device = new MatterbridgeEndpoint(powerSource);
     device.createDefaultBasicInformationClusterServer('test', 'serial01234', 0xfff1, 'Matterbridge', 0x8001, 'Test device');
     await platform.registerDevice(device);
-    expect(platform.registeredEndpoints.size).toBe(1);
-    expect(platform.registeredEndpointsByName.size).toBe(1);
+    expect((platform as any)._registeredEndpoints.size).toBe(1);
+    expect((platform as any)._registeredEndpointsByName.size).toBe(1);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Device with name ${CYAN}${device.deviceName}${er} is already registered. The device will not be added. Please change the device name.`);
   });
 
