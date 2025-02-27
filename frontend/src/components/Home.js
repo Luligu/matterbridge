@@ -1,15 +1,11 @@
 /* eslint-disable no-console */
 
 // React
-import React, { useEffect, useState, useRef, useContext, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useContext, useCallback } from 'react';
 
 // @mui/material
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
-import { ThemeProvider } from '@mui/material';
 
 // @mui/icons-material
 import DeleteForever from '@mui/icons-material/DeleteForever';
@@ -20,10 +16,6 @@ import Help from '@mui/icons-material/Help';
 import Announcement from '@mui/icons-material/Announcement';
 import QrCode2 from '@mui/icons-material/QrCode2';
 import Unpublished from '@mui/icons-material/Unpublished';
-
-// @rjsf
-import Form from '@rjsf/mui';
-import validator from '@rjsf/validator-ajv8';
 
 // Frontend
 import { StatusIndicator } from './StatusIndicator';
@@ -36,9 +28,7 @@ import { SystemInfoTable } from './SystemInfoTable';
 import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
 import { QRDiv } from './QRDiv';
 import { InstallAddPlugins } from './InstallAddPlugins';
-import { ConfirmCancelForm } from './ConfirmCancelForm';
-import { configUiSchema, ArrayFieldTemplate, ObjectFieldTemplate, ErrorListTemplate, FieldErrorTemplate, RemoveButton, CheckboxWidget, createConfigTheme, DescriptionFieldTemplate } from './configEditor';
-import { getCssVariable } from './muiTheme';
+import { ConfigPluginDialog } from './ConfigPluginDialog';
 import { debug } from '../App';
 // const debug = true;
 
@@ -48,37 +38,30 @@ export let selectEntities = [];
 
 function Home() {
   const [qrCode, setQrCode] = useState('');
-  const [pairingCode, setPairingCode] = useState('');
+  const [_pairingCode, setPairingCode] = useState('');
   const [systemInfo, setSystemInfo] = useState(null);
   const [matterbridgeInfo, setMatterbridgeInfo] = useState(null);
   const [plugins, setPlugins] = useState([]);
   const [selectedRow, setSelectedRow] = useState(-1); // -1 no selection, 0 or greater for selected row
-  const [selectedPluginName, setSelectedPluginName] = useState('none'); // -1 no selection, 0 or greater for selected row
+  const [_selectedPluginName, setSelectedPluginName] = useState('none'); // -1 no selection, 0 or greater for selected row
   const [selectedPluginConfig, setSelectedPluginConfig] = useState({});
   const [selectedPluginSchema, setSelectedPluginSchema] = useState({});
-  const [openConfig, setOpenConfig] = useState(false);
   const [logFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
   const [logFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
 
   const { showSnackbarMessage, showConfirmCancelDialog } = useContext(UiContext);
-  const { logMessage, addListener, removeListener, online, sendMessage } = useContext(WebSocketContext);
+  const { logMessage, addListener, removeListener, online, sendMessage, autoScroll } = useContext(WebSocketContext);
 
-  const refAddRemove = useRef(null);
   const refRegisteredPlugins = useRef(null);
 
-  const primaryColor = useMemo(() => getCssVariable('--primary-color', '#009a00'), []);
-  const theme = useMemo(() => createConfigTheme(primaryColor), [primaryColor]);
-
+  // ConfigPluginDialog
+  const [openConfig, setOpenConfig] = useState(false);
   const handleOpenConfig = () => {
     setOpenConfig(true);
   };
-
   const handleCloseConfig = () => {
     setOpenConfig(false);
-    showSnackbarMessage('Restart required', 30);
-    setTimeout(() => {
-      reloadSettings();
-    }, 1000);
+    // showSnackbarMessage('Restart required', 30);
   };
 
   const columns = React.useMemo(() => [
@@ -90,16 +73,14 @@ function Home() {
     { Header: 'Devices', accessor: 'devices' },
     { Header: 'Tools', accessor: 'qrcode' },
     { Header: 'Status', accessor: 'status' },
-  ],
-    []
-  );
+  ], []);
 
   // Function to reload settings on demand
-  const reloadSettings = () => {
+  const reloadSettings = useCallback(() => {
     if (debug) console.log('reloadSettings');
     sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
     sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
-  };
+  }, [sendMessage]);
 
   const handleSelectQRCode = (row) => {
     if (selectedRow === row) {
@@ -252,14 +233,14 @@ function Home() {
       removeListener(handleWebSocketMessage);
       if (debug) console.log('Home removed WebSocket listener');
     };
-  }, [addListener, removeListener, sendMessage]);
+  }, [addListener, removeListener, sendMessage, reloadSettings]);
 
   useEffect(() => {
     if (online) {
       if (debug) console.log('Home received online');
       reloadSettings();
     }
-  }, [online]);
+  }, [online, reloadSettings]);
 
   if(debug) console.log('Home rendering...');
   if (!online) {
@@ -267,44 +248,30 @@ function Home() {
   }
   return (
     <div className="MbfPageDiv" style={{ flexDirection: 'row' }}>
-      <ThemeProvider theme={theme}>
-        <Dialog
-          open={openConfig}
-          onClose={handleCloseConfig}
-          maxWidth='800px'>
-          <DialogTitle gap={'20px'}>
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-              <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
-              <h3>Matterbridge plugin configuration</h3>
-            </div>
-          </DialogTitle>
-          <DialogContent style={{ padding: '0px', margin: '0px' }}>
-            <DialogConfigPlugin config={selectedPluginConfig} schema={selectedPluginSchema} handleCloseConfig={handleCloseConfig} />
-          </DialogContent>
-        </Dialog>
-      </ThemeProvider>
+      {/* Config plugin dialog */}
+      <ConfigPluginDialog open={openConfig} onClose={handleCloseConfig} config={selectedPluginConfig} schema={selectedPluginSchema} />
 
-      {/*Left column*/}
+      {/* Left column */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>
         {matterbridgeInfo && <QRDiv matterbridgeInfo={matterbridgeInfo} plugin={selectedRow === -1 ? undefined : plugins[selectedRow]} />}
         {systemInfo && <SystemInfoTable systemInfo={systemInfo} compact={true} />}
         {qrCode === '' && matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo} />}
       </div>
 
-      {/*Right column*/}
+      {/* Right column */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: '20px' }}>
 
-        {/*Install add plugin*/}
+        {/* Install add plugin */}
         {matterbridgeInfo && !matterbridgeInfo.readOnly &&
           <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
             <div className="MbfWindowHeader">
               <p className="MbfWindowHeaderText">Install add plugin</p>
             </div>
-            <InstallAddPlugins ref={refAddRemove} plugins={plugins} reloadSettings={reloadSettings} />
+            <InstallAddPlugins/>
           </div>
         }
 
-        {/*Registered plugins*/}
+        {/* Registered plugins */}
         <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
           <div className="MbfWindowDivTable" style={{ flex: '0 0 auto', overflow: 'hidden' }}>
             <table ref={refRegisteredPlugins}>
@@ -391,13 +358,13 @@ function Home() {
           </div>
         </div>
 
-        {/*Logs*/}
+        {/* Logs*/}
         <div className="MbfWindowDiv" style={{ flex: '1 1 auto', width: '100%', overflow: 'hidden' }}>
           <div className="MbfWindowHeader" style={{ flexShrink: 0 }}>
             <div className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>
               Logs
               <span style={{ fontWeight: 'normal', fontSize: '12px', marginTop: '2px' }}>
-                Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}"
+                Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}" Scroll: {autoScroll ? 'auto' : 'manual'} 
               </span>
             </div>
           </div>
@@ -438,35 +405,5 @@ function Home() {
           </div>
         </div>
 */
-
-function DialogConfigPlugin({ config, schema, handleCloseConfig }) {
-  // console.log('DialogConfigPlugin:', config, schema);
-
-  const handleSaveChanges = ({ formData }) => {
-    // console.log('handleSaveChanges:', formData);
-    const config = JSON.stringify(formData, null, 2)
-    sendCommandToMatterbridge('saveconfig', formData.name, config);
-    // Close the dialog
-    handleCloseConfig();
-  };
-
-  const primaryColor = useMemo(() => getCssVariable('--primary-color', '#009a00'), []);
-  const configTheme = useMemo(() => createConfigTheme(primaryColor), [primaryColor]);
-
-  return (
-    <ThemeProvider theme={configTheme}>
-      <div style={{ width: '800px', height: '600px', overflow: 'auto' }}>
-        <Form
-          schema={schema}
-          formData={config}
-          uiSchema={configUiSchema}
-          validator={validator}
-          widgets={{ CheckboxWidget: CheckboxWidget }}
-          templates={{ ArrayFieldTemplate, ObjectFieldTemplate, DescriptionFieldTemplate, FieldErrorTemplate, ErrorListTemplate, ButtonTemplates: { RemoveButton } }}
-          onSubmit={handleSaveChanges} />
-      </div>
-    </ThemeProvider>
-  );
-}
 
 export default Home;

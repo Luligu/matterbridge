@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable no-console */
 // Send a POST request to the Matterbridge API
 export function sendCommandToMatterbridge(command, param, body) {
   const sanitizedParam = param.replace(/\\/g, '*');
@@ -15,7 +17,7 @@ export function sendCommandToMatterbridge(command, param, body) {
     }
     return response.json();
   })
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   .then(json => {
     // console.log('Command sent successfully:', json);
   })

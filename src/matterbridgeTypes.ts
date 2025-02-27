@@ -92,7 +92,8 @@ export interface SystemInformation {
   totalMemory: string;
   freeMemory: string;
   systemUptime: string;
-  cpuUsed: string;
+  processUptime: string;
+  cpuUsage: string;
   rss: string;
   heapTotal: string;
   heapUsed: string;
@@ -112,9 +113,13 @@ export interface MatterbridgeInformation {
   matterbridgeFabricInformations: SanitizedExposedFabricInformation[] | undefined;
   matterbridgeSessionInformations: SanitizedSessionInformation[] | undefined;
   matterbridgePaired: boolean | undefined;
+  matterbridgeAdvertise: boolean | undefined;
   bridgeMode: string;
   restartMode: string;
   readOnly: boolean;
+  shellyBoard: boolean;
+  shellySysUpdate: boolean;
+  shellyMainUpdate: boolean;
   profile?: string;
   loggerLevel: LogLevel;
   fileLogger: boolean;

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // Frontend
 import { debug } from '../App';
 
@@ -6,7 +7,7 @@ import { QRCodeSVG } from 'qrcode.react';
 
 export function QRDiv({ matterbridgeInfo, plugin }) {
   if(debug) console.log('QRDiv:', matterbridgeInfo, plugin);
-  if (matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === true && matterbridgeInfo.matterbridgeFabricInformations) {
+  if (matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === true && matterbridgeInfo.matterbridgeAdvertise === false && matterbridgeInfo.matterbridgeFabricInformations) {
     if (debug) console.log(`QRDiv: paired ${matterbridgeInfo.matterbridgePaired}, got ${matterbridgeInfo.matterbridgeFabricInformations?.length} fabrics, got ${matterbridgeInfo.matterbridgeSessionInformations?.length} sessions`);
     return (
       <div className="MbfWindowDiv" style={{ alignItems: 'center', minWidth: '302px', overflow: 'hidden' }} >
@@ -19,7 +20,15 @@ export function QRDiv({ matterbridgeInfo, plugin }) {
               <p className="status-blue" style={{ margin: '0px 10px 10px 10px', fontSize: '14px', padding: 0, color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)' }}>Fabric: {fabric.fabricIndex}</p>
               <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
               {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Label: {fabric.label}</p>}
-              <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Active sessions: {matterbridgeInfo.matterbridgeSessionInformations ? matterbridgeInfo.matterbridgeSessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length : '0'}</p>
+              <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>
+                Active sessions: {matterbridgeInfo.matterbridgeSessionInformations ? 
+                  matterbridgeInfo.matterbridgeSessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex && session.isPeerActive === true).length :
+                  '0'}
+                {' '}
+                subscriptions: {matterbridgeInfo.matterbridgeSessionInformations ? 
+                  matterbridgeInfo.matterbridgeSessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex && session.isPeerActive === true && session.numberOfActiveSubscriptions > 0).length :
+                  '0'}
+              </p>
             </div>
           ))}
         </div>
@@ -38,13 +47,21 @@ export function QRDiv({ matterbridgeInfo, plugin }) {
               <p className="status-blue" style={{ margin: '0px 10px 10px 10px', fontSize: '14px', padding: 0, color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)' }}>Fabric: {fabric.fabricIndex}</p>
               <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
               {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Label: {fabric.label}</p>}
-              <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Active sessions: {plugin.sessionInformations ? plugin.sessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex).length : '0'}</p>
+              <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>
+                Active sessions: {plugin.sessionInformations ?
+                  plugin.sessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex && session.isPeerActive === true).length :
+                  '0'}
+                {' '}
+                subscriptions: {plugin.sessionInformations ? 
+                  plugin.sessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex && session.isPeerActive === true && session.numberOfActiveSubscriptions > 0).length :
+                  '0'}
+              </p>
             </div>
           ))}
         </div>
       </div>
     );
-  } else if (matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === false && matterbridgeInfo.matterbridgeQrPairingCode && matterbridgeInfo.matterbridgeManualPairingCode) {
+  } else if (matterbridgeInfo.bridgeMode === 'bridge' && (matterbridgeInfo.matterbridgePaired === false || matterbridgeInfo.matterbridgeAdvertise === true) && matterbridgeInfo.matterbridgeQrPairingCode && matterbridgeInfo.matterbridgeManualPairingCode) {
     if (debug) console.log(`QRDiv: qrText ${matterbridgeInfo.matterbridgeQrPairingCode} pairingText ${matterbridgeInfo.matterbridgeManualPairingCode}`);
     return (
       <div className="MbfWindowDiv" style={{ alignItems: 'center', minWidth: '302px' }}>

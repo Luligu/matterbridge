@@ -1,3 +1,6 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-console */
 // React
 import { useState, useMemo } from 'react';
 
@@ -36,13 +39,12 @@ import DeviceHubIcon from '@mui/icons-material/DeviceHub'; // For entities icon=
 
 // @rjsf
 import { Templates } from '@rjsf/mui';
+import { getSubmitButtonOptions, FormContextType, RJSFSchema, StrictRJSFSchema, SubmitButtonProps } from '@rjsf/utils';
 
 // Frontend custom components
 import { getCssVariable } from './muiTheme';
 import { selectDevices, selectEntities } from './Home';
 import { debug } from '../App';
-
-const { BaseInputTemplate } = Templates;
 
 const titleSx = { fontSize: '16px', fontWeight: 'bold', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' };
 const descriptionSx = { fontSize: '12px', fontWeight: 'normal', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' };
@@ -106,6 +108,7 @@ export function createConfigTheme(primaryColor) {
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
               borderColor: 'var(--primary-color)',
             },
+            padding: '4px 8px',
           },
           input: {
             color: 'var(--div-text-color)',
@@ -325,7 +328,7 @@ export function ArrayFieldTemplate(props) {
           <Box sx={{ flexGrow: 1 }}>
             {element.children}
           </Box>
-          <IconButton disabled={!element.hasMoveUp} onClick={element.onReorderClick(element.index, element.index - 1)}>
+          <IconButton disabled={!element.hasMoveUp} onClick={element.onReorderClick(element.index, element.index - 1)} sx={{ marginLeft: '5px'}}>
             <KeyboardDoubleArrowUpIcon />
           </IconButton>
           <IconButton disabled={!element.hasMoveDown} onClick={element.onReorderClick(element.index, element.index + 1)}>
@@ -452,7 +455,7 @@ export function ArrayFieldTemplate(props) {
 }
 
 export function ObjectFieldTemplate(props) {
-  const { onAddClick, schema, properties, title, description, formData, registry } = props;
+  const { onAddClick, schema, properties, title, description } = props;
 
   const [dialogDeviceOpen, setDialogDeviceOpen] = useState(false);
   const [filter, setFilter] = useState('');
@@ -514,7 +517,7 @@ export function ObjectFieldTemplate(props) {
           <Typography sx={titleSx}>{schema.title}</Typography>
         </Box>
       )}
-      {/* Title and Add for object */}
+      {/* Title, Select and Add for object */}
       {title && !isRoot && (
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0px', margin: '0px', marginBottom: '0px' }}>
           <Typography sx={titleSx}>{title}</Typography>
@@ -605,17 +608,18 @@ export function ObjectFieldTemplate(props) {
 
 export function CheckboxWidget(props) {
   // console.log('CheckboxWidget: props', props);
+  const { name, value, schema, onChange } = props;
   return (
     <Box sx={{ padding: '10px', margin: '0px', border: '1px solid grey' }}>
-      {props.name && (
+      {name && (
         <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', padding: '0px', margin: '0px' }}>
-          <Typography sx={titleSx}>{props.name}</Typography>
-          <Checkbox checked={props.value} onChange={() => props.onChange(!props.value)} />
+          <Typography sx={titleSx}>{name}</Typography>
+          <Checkbox checked={value} onChange={() => onChange(!value)} />
         </Box>
       )}
-      {props.schema.description && (
+      {schema.description && (
         <Box sx={{ padding: '0px', margin: '0px' }}>
-          <Typography sx={descriptionSx}>{props.schema.description}</Typography>
+          <Typography sx={descriptionSx}>{schema.description}</Typography>
         </Box>
       )}
     </Box>
@@ -627,7 +631,17 @@ export function DescriptionFieldTemplate(props) {
   if (!description) return null;
   return (
     <Box sx={{ padding: '0px', margin: '0px', marginTop: '5px' }}>
-      <Typography sx={descriptionSx}>{description}</Typography>
+      <Typography sx={descriptionSx}>dft {description}</Typography>
+    </Box>
+  );
+}
+
+export function TitleFieldTemplate(props) {
+  const { id, required, title } = props;
+  if (!title) return null;
+  return (
+    <Box sx={{ padding: '0px', margin: '0px', marginTop: '5px' }}>
+      <Typography sx={titleSx}>tft {title}{required && <mark>***</mark>}</Typography>
     </Box>
   );
 }
@@ -676,29 +690,67 @@ export function RemoveButton(props) {
   );
 }
 
-export function customBaseInputTemplate(props) {
-  const customProps = {};
+export function SubmitButton({ uiSchema }) {
+  const { submitText, norender, props: submitButtonProps = {} } = getSubmitButtonOptions(uiSchema);
+  if (norender) {
+    return null;
+  }
   return (
-    <Box sx={{ padding: '10px', margin: '0px', border: '1px solid grey' }}>
-      <BaseInputTemplate {...props} {...customProps} />
+    <Box sx={{ padding: '0px', margin: '0px' }}>
+      <Button type='submit' variant='contained' color='primary' {...submitButtonProps}>
+        {submitText}
+      </Button>
+      <Button variant='contained' color='primary'>
+        Cancel
+      </Button>
     </Box>
-  );
+);
 }
 
-export const configUiSchema = {
-  "password": {
-    "ui:widget": "password",
-  },
-  "ui:submitButtonOptions": {
-    "props": {
-      "variant": "contained",
-      "disabled": false,
-      "className": "configSubmitButton",
-      sx: { margin: '0px', marginLeft: '20px', marginBottom: '10px' },
-      style: { margin: '0px', marginLeft: '20px', marginBottom: '10px' },
-    },
-    "norender": false,
-    "submitText": "Save the changes to the config file",
-  },
-  'ui:globalOptions': { orderable: true },
+export function BaseInputTemplate(props) {
+  const { 
+    id,
+    name, // remove this from textFieldProps
+    placeholder,
+    required,
+    readonly,
+    disabled,
+    type,
+    label,
+    hideLabel,
+    hideError,
+    value,
+    onChange,
+    onChangeOverride,
+    onBlur,
+    onFocus,
+    autofocus,
+    options,
+    schema,
+    uiSchema,
+    rawErrors = [],
+    formContext,
+    registry,
+    InputLabelProps,
+    } = props;
+
+  return (
+    <Box sx={{ padding: '0px', margin: '0px', marginTop: '5px', border: '1px solid red' }}>
+      <TextField
+        id={id}
+        placeholder={placeholder}
+        label={label}
+        autoFocus={autofocus}
+        required={required}
+        disabled={disabled || readonly}
+        value={value || value === 0 ? value : ''}
+        error={rawErrors.length > 0}
+        onChange={onChangeOverride || onChange}
+        onBlur={onBlur}
+        onFocus={onFocus}
+        fullWidth
+      />
+    </Box>
+  );
 };
+

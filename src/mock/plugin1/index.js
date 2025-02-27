@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 export default function initializePlugin(matterbridge, log, config) {
   return new MockPlatform(matterbridge, log, config);
 }

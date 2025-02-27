@@ -1,4 +1,4 @@
-# <img src="https://github.com/Luligu/matterbridge/blob/main/frontend/public/matterbridge%2064x64.png" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge
+# <img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
 [![npm downloads](https://img.shields.io/npm/dt/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
@@ -48,6 +48,7 @@ To run Matterbridge, you need either a [Node.js](https://nodejs.org/en) environm
 
 If you don't have Node.js already install, please use this method to install it on a debian device: https://github.com/nodesource/distributions.
 The supported versions of node are 18, 20 and 22. Please install node 22 LTS.
+Node 23 is not supported.
 Nvm is not a good choice and should not be used for production.
 
 If you don't have Docker already install, please use this method to install it on a debian device: https://docs.docker.com/desktop/setup/install/linux/debian/.
@@ -121,34 +122,34 @@ To use the frontend with ssl place the certificates in the .matterbridge/certs d
 From the frontend you can do all operations in an easy way.
 
 Home page:
-![See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/screenshot/Screenshot%20home.jpg)
+![See the screenshot here](screenshot/Screenshot%20home.jpg)
 
 Devices page:
-[See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/screenshot/Screenshot%20devices.jpg)
+[See the screenshot here](screenshot/Screenshot%20devices.jpg)
 
 Logs page:
-[See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/screenshot/Screenshot%20logs.jpg)
+[See the screenshot here](screenshot/Screenshot%20logs.jpg)
 
 Config editor:
-[See the screenshot here](https://github.com/Luligu/matterbridge/blob/main/screenshot/Screenshot%20config%20editor.jpg)
+[See the screenshot here](screenshot/Screenshot%20config%20editor.jpg)
 
 ## Advanced configurations
 
 ### Run matterbridge as a daemon with systemctl (Linux only)
 
-[Service configurations](https://github.com/Luligu/matterbridge/blob/main/README-SERVICE.md)
+[Service configurations](README-SERVICE.md)
 
 ### Run matterbridge with docker and docker compose
 
-[Docker configurations](https://github.com/Luligu/matterbridge/blob/main/README-DOCKER.md)
+[Docker configurations](README-DOCKER.md)
 
 ### Run matterbridge with podman
 
-[Podman configurations](https://github.com/Luligu/matterbridge/blob/main/README-PODMAN.md)
+[Podman configurations](README-PODMAN.md)
 
 ### Run matterbridge with nginx
 
-[Nginx configurations](https://github.com/Luligu/matterbridge/blob/main/README-NGINX.md)
+[Nginx configurations](README-NGINX.md)
 
 ### Run matterbridge as an home assistant add-on with the official add-on
 
@@ -160,14 +161,14 @@ The other Home Assistant Community Add-ons and plugins are not verified to work 
 
 ## Development
 
-[Development](https://github.com/Luligu/matterbridge/blob/main/README-DEV.md)
+[Development](README-DEV.md)
 
 ## Plugins
 
 ### Shelly
 
 <a href="https://github.com/Luligu/matterbridge-shelly">
-  <img src="https://github.com/Luligu/matterbridge/blob/dev/screenshot/Shelly.png" alt="Shelly plugin logo" width="100" />
+  <img src="screenshot/Shelly.svg" alt="Shelly plugin logo" width="100" />
 </a>
 
 Matterbridge shelly plugin allows you to expose all Shelly Gen 1, Gen 2, Gen 3 and BLU devices to Matter.
@@ -196,7 +197,7 @@ Features:
 ### Zigbee2MQTT
 
 <a href="https://github.com/Luligu/matterbridge-zigbee2mqtt">
-  <img src="https://github.com/Luligu/matterbridge/blob/dev/screenshot/Zigbee2MQTT.png" alt="Zigbee2MQTT plugin logo" width="100" />
+  <img src="screenshot/Zigbee2MQTT.svg" alt="Zigbee2MQTT plugin logo" width="100" />
 </a>
 
 Matterbridge zigbee2mqtt is a matterbridge production-level plugin that expose all zigbee2mqtt devices and groups to Matter.
@@ -206,7 +207,7 @@ No hub or dedicated hardware needed.
 ### Somfy tahoma
 
 <a href="https://github.com/Luligu/matterbridge-somfy-tahoma">
-  <img src="https://github.com/Luligu/matterbridge/blob/dev/screenshot/Somfy.png" alt="Somfy plugin logo" width="100" />
+  <img src="screenshot/Somfy.svg" alt="Somfy plugin logo" width="100" />
 </a>
 
 Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose the Somfy Tahoma screen devices to Matter.
@@ -351,7 +352,7 @@ Place your own certificates in the `.matterbridge/cert` directory:
 - `key.pem`
 - `ca.pem` (optional)
 
-![image](https://github.com/user-attachments/assets/846785ca-6f5c-458b-b786-a6417a4da319)
+![image](screenshot/Screenshot%20Certificates.png)
 
 ### Change the command line
 
@@ -365,7 +366,7 @@ matterbridge -ssl -frontend 443
 
 If the certificate are correctly configured, you will be able to connect with https to the frontend.
 
-![image](https://github.com/user-attachments/assets/9c38776d-064f-4d91-9359-a2cd3319b1ff)
+![image](screenshot/Screenshot%20Browser%20Secured.png)
 
 ## How to send the debug log files
 
@@ -373,9 +374,9 @@ If the certificate are correctly configured, you will be able to connect with ht
 
 In the frontend, go to settings and enable debug mode as shown below:
 
-![Debug Matterbridge Settings](https://github.com/user-attachments/assets/83181dc2-969a-4b71-aff4-f1498fa1d665)
+![Debug Matterbridge Settings](screenshot/Screenshot%20Matterbridge%20Logger%20Debug.png)
 
-![Debug Matter Settings](https://github.com/user-attachments/assets/617961a9-7cb0-46cf-9878-981f61738f8c)
+![Debug Matter Settings](screenshot/Screenshot%20Matter%20Logger%20Debug.png)
 
 ### Restart
 
@@ -383,7 +384,7 @@ Wait a few minutes to allow the logs to to accumulate.
 
 Then, from the dots menu in the frontend, download the `matterbridge.log` and `matter.log` files.
 
-![image](https://github.com/user-attachments/assets/04ba65f6-594a-4ff8-9732-3df049f5a33e)
+![image](screenshot/Screenshot%20Debug%20Download%20Logs.png)
 
 # Known general issues
 

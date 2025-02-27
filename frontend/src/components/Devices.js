@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // React
 import React, { useContext, useEffect, useState } from 'react';
 import { useTable, useSortBy } from 'react-table';
@@ -62,14 +63,15 @@ const devicesColumns = [
     accessor: 'configButton',
     noSort: true,
     Cell: ({ row }) => (
+      row.original.configUrl ? (
       <IconButton
         onClick={() => window.open(row.original.configUrl, '_blank')}
         aria-label="Open Config"
-        disabled={!row.original.configUrl}
         sx={{ margin: 0, padding: 0 }}
       >
-        <SettingsIcon />
+        <SettingsIcon fontSize="small"/>
       </IconButton>
+      ) : null
     ),
   },
   {
@@ -444,7 +446,7 @@ function Devices() {
             value={filter}
             onChange={handleFilterChange}
             placeholder="Enter the device name or serial number"
-            sx={{ width: '300px' }}
+            sx={{ width: '320px' }}
             InputProps={{
               style: {
                 backgroundColor: 'var(--main-bg-color)',
@@ -561,7 +563,7 @@ function Devices() {
         </div>
       )}
 
-      {/* Clusters Table */}
+      {/* Icon View mode*/}
       {viewMode === 'icon' && (
         <DevicesIcons filter={filter} devices={filteredDevices} />
       )}

@@ -1,4 +1,4 @@
-# <img src="https://github.com/Luligu/matterbridge/blob/main/frontend/public/matterbridge%2064x64.png" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge changelog
+# <img src="frontend/public/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -13,25 +13,34 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
-### Breaking Changes
+## [2.2.0] - 2025-02-27
 
-Starting from v. 2.0.0, Matterbridge is running only in mode edge (no parameter needed and no badge in the frontend).
+### Added
 
-Starting from v. 2.1.0, the legacy old api of matter.js have been completely removed from Matterbridge and from all plugins.
+- [docker]: Added health check directly in the docker image. No need to change configuration of docker compose.
+- [platform]: Saving in the storage the selects for faster loading of plugins.
+- [icon]: Added matterbridge svg icon (thanks: https://github.com/robvanoostenrijk https://github.com/stuntguy3000).
+- [pluginManager]: Refactor PluginManager to optimize memory and load time.
+- [frontend]: Frontend v.2.4.6. Please refresh the frontend page after the update.
+- [frontend]: Added processUptime to SystemInfo.
+- [frontend]: Added Share fabrics and Stop sharing to the menu. This allows to pair other controllers without the need to share from the first controller.
+- [frontend]: Added subscriptions to QRDiv.
+- [frontend]: Added autoScroll option for the logs. Default is enabled.
+- [utils]: Optimized memory and loading time.
+- [shelly]: Added all shelly api to be used when matterbridge is running on the shelly matterbridge board.
 
-For this reason there is no compatibility with the old versions of the plugins.
+### Changed
 
-You need to update all plugins you use and Matterbridge in the same moment.
+- [package]: Update matter.js to 0.12.4
+- [matterbridge]: The check for available updates now runs at restart and each 24 hours after.
 
-I suggest to first update all plugins without restarting and then to update Matterbridge so when it restarts, all versions will be the latest.
+### Fixed
 
-If you use docker, all plugins are already installed in the image so you just need to pull the new image.
+- [matterbridge]: Check endpoint state in /api/devices.
 
-Compatibility list:
-matterbridge-shelly v. 1.1.5
-matterbridge-zigbee2mqtt v. 2.4.4
-matterbridge-somfy-tahoma v. 1.2.3
-matterbridge-hass v. 0.0.8
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
 
 ## [2.1.5] - 2025-02-11
 
@@ -238,7 +247,7 @@ matterbridge-hass v. 0.0.8
 
 ### Added
 
-- [edge]: Added guide https://github.com/Luligu/matterbridge/blob/dev/README-EDGE.md.
+- [edge]: Added guide [README-EDGE.md](README-EDGE.md).
 - [storage]: Added conversion from old matter storage to the new api format with fabrics, resumptionRecords, network, commissioning, operationalCredentials, acl and parts number. The conversion is triggered every time you shutdown or restart matterbridge till the new storage has been used with matterbridge edge.
 - [storage]: Added conversion for child endpoint numbers.
 - [storage]: Added conversion for childbridge mode.
@@ -375,7 +384,7 @@ It is possible that some controllers see them as new devices or need time to rea
 ### Added
 
 - [matter.js]: Almost completed the phase 2 of migration to edge (matter.js new API).
-- [nginx]: Added the route /matterbridge/ to be used with nginx proxy server https://github.com/Luligu/matterbridge/blob/dev/README-NGINX.md.
+- [nginx]: Added the route /matterbridge/ to be used with nginx proxy server [README-NGINX.md](README-NGINX.md).
 - [config]: Config and schema are loaded before loading the plugin to allow to configure the plugin even when it throws error on load.
 - [config]: Added version to the config.
 - [frontend]: Added badge "edge" when running in edge mode.
@@ -579,7 +588,7 @@ It is possible that some controllers see them as new devices or need time to rea
 
 ### Breaking Changes for developers
 
-- please read this [Development guide lines](https://github.com/Luligu/matterbridge/blob/main/README-DEV.md)
+- please read this [Development guide lines](README-DEV.md)
 
 ### Added
 

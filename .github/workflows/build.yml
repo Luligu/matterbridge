@@ -1,6 +1,14 @@
 name: Install, Lint, Test and Build
 
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - '/screenshot/*'
+      - '/*.md'
+  pull_request:
+    paths-ignore:
+      - '/screenshot/*'
+      - '/*.md'
 
 jobs:
   build:
@@ -16,7 +24,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Use Node.js ${{ matrix.node-version }} 
+      - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -26,7 +34,7 @@ jobs:
 
       - name: Verify Node.js version
         run: node -v
-  
+
       - name: Verify Npm version
         run: npm -v
 

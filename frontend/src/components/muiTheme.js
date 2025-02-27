@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // @mui
 import { createTheme } from '@mui/material';
 
@@ -111,6 +112,7 @@ export function createMuiTheme(primaryColor) {
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
               borderColor: 'var(--primary-color)',
             },
+            padding: '4px 8px', 
           },
           input: {
             color: 'var(--div-text-color)',

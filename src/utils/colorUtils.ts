@@ -21,7 +21,7 @@
  * limitations under the License. *
  */
 
-import { assert } from 'console';
+import { assert } from 'node:console';
 
 export interface RGB {
   r: number;

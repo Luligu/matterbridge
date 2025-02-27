@@ -134,7 +134,7 @@ function LoginForm() {
   if (loggedIn) {
     return (
       <ThemeProvider theme={theme}>
-        <SnackbarProvider maxSnack={5} preventDuplicate anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+        <SnackbarProvider maxSnack={10} preventDuplicate anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
           <UiProvider>
             <WebSocketProvider>
               <Router basename={baseName}>
@@ -160,7 +160,7 @@ function LoginForm() {
       <div style={containerStyle}>
         <form onSubmit={handleSubmit} style={formStyle}>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-            <img src="matterbridge 64x64.png" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
+            <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '64px', width: '64px' }} />
             <h3 style={{color: 'var(--div-text-color)' }}>Welcome to Matterbridge</h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
