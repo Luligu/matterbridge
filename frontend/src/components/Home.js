@@ -31,6 +31,7 @@ function Home() {
   const [matterbridgeInfo, setMatterbridgeInfo] = useState(null);
   const [_plugins, setPlugins] = useState([]);
   const [selectPlugin, setSelectPlugin] = useState(undefined);
+  const [homePageMode] = useState(localStorage.getItem('homePageMode')??'logs');
 
   // Contexts
   const { addListener, removeListener, online, sendMessage, logFilterLevel, logFilterSearch, autoScroll } = useContext(WebSocketContext);
@@ -133,8 +134,12 @@ function Home() {
           <HomeDevices/>
         }
 
+        {/* Devices (can grow) */}
+        {matterbridgeInfo && !matterbridgeInfo.shellyBoard && homePageMode === 'devices' &&
+          <HomeDevices/>
+        }
         {/* Logs (can grow) */}
-        {matterbridgeInfo && !matterbridgeInfo.shellyBoard &&
+        {matterbridgeInfo && !matterbridgeInfo.shellyBoard && homePageMode === 'logs' &&
           <div className="MbfWindowDiv" style={{ flex: '1 1 auto', width: '100%', overflow: 'hidden' }}>
             <div className="MbfWindowHeader" style={{ flexShrink: 0 }}>
               <div className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>
