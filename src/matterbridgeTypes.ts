@@ -178,6 +178,7 @@ export interface ApiDevices {
   productUrl: string;
   configUrl?: string;
   uniqueId: string;
+  reachable: boolean;
   cluster: string;
 }
 
