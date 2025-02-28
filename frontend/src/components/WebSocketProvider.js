@@ -316,6 +316,8 @@ export function WebSocketProvider({ children }) {
   const contextValue = useMemo(() => ({
     maxMessages,
     autoScroll,
+    logFilterLevel,
+    logFilterSearch,
     setMessages,
     setLogFilters,
     setMaxMessages,
