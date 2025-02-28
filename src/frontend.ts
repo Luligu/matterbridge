@@ -42,6 +42,7 @@ import { ApiClusters, ApiDevices, BaseRegisteredPlugin, plg, RegisteredPlugin } 
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { hasParameter } from './utils/export.js';
+import { BridgedDeviceBasicInformation } from '@matter/main/clusters';
 
 /**
  * Websocket message ID for logging.
@@ -437,6 +438,7 @@ export class Frontend {
           productUrl: device.productUrl,
           configUrl: device.configUrl,
           uniqueId: device.uniqueId,
+          reachable: this.getReachability(device),
           cluster: cluster,
         });
       });
@@ -1089,6 +1091,19 @@ export class Frontend {
   }
 
   /**
+   * Retrieves the reachable attribute.
+   * @param {MatterbridgeDevice} device - The MatterbridgeDevice object.
+   * @returns {boolean} The reachable attribute.
+   */
+  private getReachability(device: MatterbridgeEndpoint): boolean {
+    if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return false;
+
+    if (device.hasClusterServer(BridgedDeviceBasicInformation.Cluster.id)) return device.getAttribute(BridgedDeviceBasicInformation.Cluster.id, 'reachable') as boolean;
+    if (this.matterbridge.bridgeMode === 'childbridge') return true;
+    return false;
+  }
+
+  /**
    * Retrieves the cluster text description from a given device.
    * @param {MatterbridgeDevice} device - The MatterbridgeDevice object.
    * @returns {string} The attributes description of the cluster servers in the device.
@@ -1365,6 +1380,7 @@ export class Frontend {
             productUrl: device.productUrl,
             configUrl: device.configUrl,
             uniqueId: device.uniqueId,
+            reachable: this.getReachability(device),
             cluster: cluster,
           });
         });
