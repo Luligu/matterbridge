@@ -28,46 +28,12 @@ import { Connecting } from './Connecting';
 // import { debug } from '../App';
 const debug = true;
 
-const devicesColumns = [
-  {
-    Header: 'Plugin',
-    accessor: 'pluginName',
-  },
-  {
-    Header: 'Name',
-    accessor: 'name',
-  },
-  {
-    Header: 'Serial',
-    accessor: 'serial',
-  },
-  {
-    Header: 'Url',
-    accessor: 'configUrl',
-  },
-  {
-    Header: 'Config',
-    accessor: 'configButton',
-    noSort: true,
-    Cell: ({ row }) => (
-      row.original.configUrl ? (
-      <IconButton
-        onClick={() => window.open(row.original.configUrl, '_blank')}
-        aria-label="Open config url"
-        sx={{ margin: 0, padding: 0 }}
-      >
-        <SettingsIcon fontSize="small"/>
-      </IconButton>
-      ) : null
-    ),
-  },
-];
 
-export function HomeDevicesTable({ data, columnVisibility }) {
+export function HomeDevicesTable({ data, columns, columnVisibility }) {
   // Filter columns based on visibility
   const visibleColumns = React.useMemo(
-    () => devicesColumns.filter(column => columnVisibility[column.accessor]),
-    [columnVisibility]
+    () => columns.filter(column => columnVisibility[column.accessor]),
+    [columnVisibility, columns]
   );
   
   // React-Table
@@ -130,10 +96,65 @@ export function HomeDevices() {
     pluginName: true,
     name: true,
     serial: true,
+    reachable: true,
     configUrl: false,
-    configButton: true,
+    actions: true,
   });
 
+  const devicesColumns = [
+    {
+      Header: 'Plugin',
+      accessor: 'pluginName',
+    },
+    {
+      Header: 'Name',
+      accessor: 'name',
+    },
+    {
+      Header: 'Serial',
+      accessor: 'serial',
+    },
+    {
+      Header: 'Availability',
+      accessor: 'reachable',
+      Cell: ({ row }) => (
+        row.original.reachable===true ? 'Online' : <span style={{ color: 'red' }}>Offline</span>
+      ),
+    },
+    {
+      Header: 'Url',
+      accessor: 'configUrl',
+    },
+    {
+      Header: 'Actions',
+      accessor: 'actions',
+      noSort: true,
+      Cell: ({ row }) => (
+        <div style={{ display: 'flex', flexDirection: 'row' }}>
+          {row.original.configUrl &&
+            <Tooltip title="Open the configuration page">
+              <IconButton
+                onClick={() => window.open(row.original.configUrl, '_blank')}
+                aria-label="Open config url"
+                sx={{ margin: 0, padding: 0 }}
+              >
+                <SettingsIcon fontSize="small"/>
+              </IconButton>
+            </Tooltip>
+          }
+          <Tooltip title="Select/unselect the device">
+            <Checkbox
+              checked={row.original.selected} 
+              onChange={(event) => handleCheckboxChange(event, row.original)} 
+              sx={{ margin: '0', marginLeft: '8px', padding: '0', }}
+              size="small"
+            />
+          </Tooltip>
+        </div>
+      ),
+    },
+  ];
+  
   // WebSocket message handler effect
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
@@ -144,6 +165,7 @@ export function HomeDevices() {
         }
         if (msg.method === '/api/devices') {
           if(debug) console.log(`HomeDevices received ${msg.response.length} devices:`, msg.response);
+          for (const device of msg.response) device.selected = true;
           setDevices(msg.response);
         }
       }
@@ -183,6 +205,15 @@ export function HomeDevices() {
     });
   };
 
+  const handleCheckboxChange = (event, device) => {
+    if(debug) console.log(`handleCheckboxChange: checkbox changed for device: ${device.name}, checked: ${event.target.checked}`);
+    setDevices((prevDevices) =>
+      prevDevices.map((d) =>
+        d.serial === device.serial ? { ...d, selected: event.target.checked } : d
+      )
+    );
+  };
+
   useEffect(() => {
     const storedVisibility = localStorage.getItem('homeDevicesColumnVisibility');
     if (storedVisibility) {
@@ -207,7 +238,7 @@ export function HomeDevices() {
                   key={column.accessor}
                   control={
                     <Checkbox
-                      disabled={['name', 'serial', 'configButton'].includes(column.accessor)}
+                      disabled={['name', 'serial', 'actions'].includes(column.accessor)}
                       checked={devicesColumnVisibility[column.accessor]}
                       onChange={() => handleDevicesColumnVisibilityChange(column.accessor)}
                     />
@@ -233,7 +264,7 @@ export function HomeDevices() {
           </div>
         </div>
         <div className="MbfWindowBodyColumn" style={{margin: '0px', padding: '0px', gap: '0', overflow: 'auto'}} >
-          <HomeDevicesTable data={devices} columnVisibility={devicesColumnVisibility}/>
+          <HomeDevicesTable data={devices} columns={devicesColumns} columnVisibility={devicesColumnVisibility}/>
         </div>
       </div>
 
