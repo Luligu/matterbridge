@@ -23,6 +23,10 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import TableViewIcon from '@mui/icons-material/TableView';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 
+// @mdi/js
+import Icon from '@mdi/react';
+import { mdiSortAscending, mdiSortDescending } from '@mdi/js';
+
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
@@ -55,7 +59,7 @@ const devicesColumns = [
     accessor: 'uniqueId',
   },
   {
-    Header: 'Config Url',
+    Header: 'Url',
     accessor: 'configUrl',
   },
   {
@@ -165,16 +169,16 @@ function DevicesTable({ data, columnVisibility, setPlugin, setEndpoint, setDevic
         {headerGroups.map(headerGroup => (
           <tr {...headerGroup.getHeaderGroupProps()}>
             {headerGroup.headers.map(column => (
-              <th {...column.getHeaderProps({ ...column.getSortByToggleProps(), title: '' })}>
+              <th {...column.getHeaderProps(column.noSort ? undefined : column.getSortByToggleProps())}>
                 {column.render('Header')}
                 {/* Add a sort direction indicator */}
                 {!column.noSort && (
-                  <span>
+                  <span style={{ margin: '0px', marginLeft: '5px', padding: '0px' }}>
                     {column.isSorted
                       ? column.isSortedDesc
-                        ? ' 🔽'
-                        : ' 🔼'
-                      : '🔽🔼'}
+                        ? <Icon path={mdiSortDescending} size='15px'/>
+                        : <Icon path={mdiSortAscending} size='15px'/>
+                    : null}
                   </span>
                 )}
               </th>
