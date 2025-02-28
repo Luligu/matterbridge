@@ -84,6 +84,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
   const [selectedMbLoggerLevel, setSelectedMbLoggerLevel] = useState('Info'); 
   const [logOnFileMb, setLogOnFileMb] = useState(false);
   const [frontendTheme, setFrontendTheme] = useState('dark');
+  const [homePageMode, setHomePageMode] = useState(localStorage.getItem('homePageMode')??'logs');
 
   // Ui context
   const { showSnackbarMessage } = useContext(UiContext);
@@ -157,6 +158,14 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
     document.body.setAttribute("frontend-theme", newTheme);
   };
 
+  // Define a function to handle change home page setup
+  const handleChangeHomePageMode = (event) => {
+    const newValue = event.target.value;
+    if(debug) console.log('handleChangeHomePageMode called with value:', newValue);
+    setHomePageMode(newValue);
+    localStorage.setItem('homePageMode', newValue);
+  };
+
   return (
     <div className="MbfWindowDiv" style={{ flex: '0 0 auto' }}>
       <div className="MbfWindowHeader">
@@ -185,12 +194,19 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
             </Select>
             <FormControlLabel style={{padding: '0px', margin: '0px'}} control={<Checkbox checked={logOnFileMb} onChange={handleLogOnFileMbChange} name="logOnFileMb" />} label="Log on file:" labelPlacement="start"/>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '10px' }}>
             <FormLabel style={{padding: '0px', margin: '0px'}} id="frontend-theme-label">Frontend theme:</FormLabel>
             <Select style={{ height: '30px' }} labelId="frontend-theme-label" id="frontend-theme" value={frontendTheme} onChange={handleChangeTheme}>
               <MenuItem value='classic'>Classic</MenuItem>
               <MenuItem value='light'>Light</MenuItem>
               <MenuItem value='dark'>Dark</MenuItem>
+            </Select>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '10px' }}>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="frontend-home-label">Home page setup:</FormLabel>
+            <Select style={{ height: '30px' }} labelId="frontend-home-label" id="frontend-home" value={homePageMode} onChange={handleChangeHomePageMode}>
+              <MenuItem value='logs'>Logs</MenuItem>
+              <MenuItem value='devices'>Devices</MenuItem>
             </Select>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
