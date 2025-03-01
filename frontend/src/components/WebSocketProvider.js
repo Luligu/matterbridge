@@ -200,6 +200,9 @@ export function WebSocketProvider({ children }) {
         if (logFilterSearchRef.current !== '*' && logFilterSearchRef.current !== '' && !msg.message.toLowerCase().includes(logFilterSearchRef.current.toLowerCase()) && !msg.name.toLowerCase().includes(logFilterSearchRef.current.toLowerCase())) return;
         // console.log(`useWebSocket afterfilter: debugLevel: '${debugLevel}'-'${msg.subType}' searchCriteria: '${searchCriteria}'`);
 
+        // Ignore uncommissioned messages
+        if(msg.name === 'Commissioning' && msg.message.includes('is uncommissioned')) return;
+
         setMessages(prevMessages => {
           // Create new array with new message
           const timeString = `<span style="color: #505050;">[${msg.time}]</span>`;
