@@ -18,8 +18,8 @@ import { InstallAddPlugins } from './InstallAddPlugins';
 import { HomePlugins } from './HomePlugins';
  
 import { HomeDevices } from './HomeDevices';
-// import { debug } from '../App';
-const debug = true;
+import { debug } from '../App';
+// const debug = true;
 
 export let pluginName = '';
 export let selectDevices = [];
@@ -31,6 +31,7 @@ function Home() {
   const [matterbridgeInfo, setMatterbridgeInfo] = useState(null);
   const [_plugins, setPlugins] = useState([]);
   const [selectPlugin, setSelectPlugin] = useState(undefined);
+  const [homePagePlugins] = useState(localStorage.getItem('homePagePlugins')==='true' ? true : false);
   const [homePageMode] = useState(localStorage.getItem('homePageMode')??'logs');
 
   // Contexts
@@ -117,7 +118,7 @@ function Home() {
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: '20px' }}>
 
         {/* Install add plugin */}
-        {matterbridgeInfo && !matterbridgeInfo.readOnly &&
+        {homePagePlugins && matterbridgeInfo && !matterbridgeInfo.readOnly &&
           <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
             <div className="MbfWindowHeader">
               <p className="MbfWindowHeaderText">Install add plugin</p>
@@ -127,7 +128,9 @@ function Home() {
         }
 
         {/* Plugins */}
-        <HomePlugins selectPlugin={handleSelectPlugin}/>
+        {homePagePlugins &&
+          <HomePlugins selectPlugin={handleSelectPlugin}/>
+        }
 
         {/* Devices (can grow) */}
         {matterbridgeInfo && matterbridgeInfo.shellyBoard &&
