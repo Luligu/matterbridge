@@ -30,6 +30,9 @@ const debug = true;
 
 
 export function HomeDevicesTable({ data, columns, columnVisibility }) {
+  // Add state to manage the sorting state
+  const [sortBy, setSortBy] = useState([]);
+  
   // Filter columns based on visibility
   const visibleColumns = React.useMemo(
     () => columns.filter(column => columnVisibility[column.accessor]),
@@ -90,7 +93,10 @@ export function HomeDevicesTable({ data, columns, columnVisibility }) {
 
 export function HomeDevices() {
   const { online, sendMessage, addListener, removeListener } = useContext(WebSocketContext);
+  const [plugins, setPlugins] = useState([]);
   const [devices, setDevices] = useState([]);
+  const [selectDevices, setSelectDevices] = useState([]);
+  const [mixedDevices, setMixedDevices] = useState([]);
   const [dialogDevicesOpen, setDialogDevicesOpen] = useState(false);
   const [devicesColumnVisibility, setDevicesColumnVisibility] = useState({
     pluginName: true,
@@ -118,8 +124,13 @@ export function HomeDevices() {
       Header: 'Availability',
       accessor: 'reachable',
       Cell: ({ row }) => (
-        row.original.reachable===true ? 'Online' : <span style={{ color: 'red' }}>Offline</span>
+        row.original.reachable===true ? 'Online' : row.original.reachable===false ? <span style={{ color: 'red' }}>Offline</span> : ''
       ),
+      sortType: (rowA, rowB) => {
+        const a = rowA.original.reachable===true ? 1 : rowA.original.reachable===false ? 0 : -1;
+        const b = rowB.original.reachable===true ? 1 : rowB.original.reachable===false ? 0 : -1;
+        return a - b;
+      },
     },
     {
       Header: 'Url',
@@ -131,7 +142,7 @@ export function HomeDevices() {
       noSort: true,
       Cell: ({ row }) => (
         <div style={{ display: 'flex', flexDirection: 'row' }}>
-          {row.original.configUrl &&
+          {row.original.configUrl ?
             <Tooltip title="Open the configuration page">
               <IconButton
                 onClick={() => window.open(row.original.configUrl, '_blank')}
@@ -140,16 +151,22 @@ export function HomeDevices() {
               >
                 <SettingsIcon fontSize="small"/>
               </IconButton>
-            </Tooltip>
+            </Tooltip> 
+          :
+            <div style={{ width: '20px', height: '20px' }}></div>
           }
-          <Tooltip title="Select/unselect the device">
-            <Checkbox
-              checked={row.original.selected} 
-              onChange={(event) => handleCheckboxChange(event, row.original)} 
-              sx={{ margin: '0', marginLeft: '8px', padding: '0', }}
-              size="small"
-            />
-          </Tooltip>
+          {row.original.selected!==undefined ?
+            <Tooltip title="Select/unselect the device">
+              <Checkbox
+                checked={row.original.selected} 
+                onChange={(event) => handleCheckboxChange(event, row.original)} 
+                sx={{ margin: '0', marginLeft: '8px', padding: '0', }}
+                size="small"
+              />
+            </Tooltip>
+          :
+            <div style={{ width: '20px', height: '20px' }}></div>
+          }
         </div>
       ),
     },
@@ -161,12 +178,46 @@ export function HomeDevices() {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'refresh_required') {
           if(debug) console.log('HomeDevices received refresh_required');
-          sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+          sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+        }
+        if (msg.method === '/api/plugins') {
+          if(debug) console.log(`HomeDevices received ${msg.response?.length} plugins:`, msg.response);
+          if(msg.response) {
+            setPlugins(msg.response);
+
+            sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+            if(debug) console.log(`HomeDevices sent /api/devices`);
+
+            for (const plugin of msg.response) {
+              if(plugin.started && !plugin.error) {
+                sendMessage({ method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name} });
+                if(debug) console.log(`HomeDevices sent /api/select/devices for plugin: ${plugin.name}`);
+              } 
+            }
+          }
         }
         if (msg.method === '/api/devices') {
-          if(debug) console.log(`HomeDevices received ${msg.response.length} devices:`, msg.response);
-          for (const device of msg.response) device.selected = true;
-          setDevices(msg.response);
+          if(debug) console.log(`HomeDevices received ${msg.response?.length} devices:`, msg.response);
+          if(msg.response) {
+            for (const device of msg.response) {
+              if(plugins.length===0) console.error(`HomeDevices: /api/devices with plugins lenght 0`);
+              const plugin = plugins.find((p) => p.name === device.pluginName);
+              if(!plugin) console.error(`HomeDevices: device ${device.deviceName} has no plugin ${device.pluginName}`);
+              if(plugin?.hasBlackList===true) {
+                device.selected = true;
+              } else {
+                device.selected = undefined;
+              }
+            }
+            setDevices(msg.response);
+          }
+        }
+        if (msg.method === '/api/select/devices') {
+          if(debug) console.log(`HomeDevices received ${msg.response?.length} selectDevices:`, msg.response);
+          if(msg.response) {
+            for (const device of msg.response) device.selected = false;
+            setSelectDevices(msg.response);
+          }
         }
       }
     };
@@ -178,15 +229,30 @@ export function HomeDevices() {
       removeListener(handleWebSocketMessage);
       if(debug) console.log('HomeDevices removed WebSocket listener');
     };
-  }, [addListener, removeListener, sendMessage]);
+  }, [plugins, addListener, removeListener, sendMessage]);
+  
+  // Mix devices and selectDevices
+  useEffect(() => {
+    if(debug) console.log('HomeDevices mixing devices and selectDevices');
+    const mixed = [];
+    for (const device of devices) {
+      mixed.push(device);
+    }
+    for (const selectDevice of selectDevices) {
+      if (!devices.find((d) => d.pluginName === selectDevice.pluginName && d.serial.includes(selectDevice.serial))) {
+        // if(debug) console.log('HomeDevices mixing selectDevice:', storedDevice.pluginName, storedDevice.serial);
+        mixed.push(selectDevice);
+      }
+    }
+    setMixedDevices(mixed);
+  }, [plugins, devices, selectDevices, setMixedDevices]);
   
   // Send API requests when online
   useEffect(() => {
     if (online) {
-      if(debug) console.log('Devices sending api requests');
-      // sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-      // sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+      if(debug) console.log('HomeDevices sending api requests');
+      sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+      // sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   }, [online, sendMessage]);
 
@@ -201,23 +267,30 @@ export function HomeDevices() {
         [accessor]: !prev[accessor],
       };
       localStorage.setItem('homeDevicesColumnVisibility', JSON.stringify(newVisibility));
+      if(debug) console.log(`HomeDevices effect: saved column visibility to localStorage`);
       return newVisibility;
     });
   };
 
   const handleCheckboxChange = (event, device) => {
-    if(debug) console.log(`handleCheckboxChange: checkbox changed for device: ${device.name}, checked: ${event.target.checked}`);
-    setDevices((prevDevices) =>
+    if(debug) console.log(`handleCheckboxChange: checkbox changed to ${event.target.checked} for device ${device.name} serial ${device.serial}`);
+    setMixedDevices((prevDevices) =>
       prevDevices.map((d) =>
         d.serial === device.serial ? { ...d, selected: event.target.checked } : d
       )
     );
+    if(event.target.checked ) {
+      sendMessage({ method: "/api/command", src: "Frontend", dst: "Matterbridge", params: { command: 'selectdevice', plugin: device.pluginName, serial: device.serial } });
+    } else {
+      sendMessage({ method: "/api/command", src: "Frontend", dst: "Matterbridge", params: { command: 'unselectdevice', plugin: device.pluginName, serial: device.serial } });
+    }
   };
 
   useEffect(() => {
     const storedVisibility = localStorage.getItem('homeDevicesColumnVisibility');
     if (storedVisibility) {
       setDevicesColumnVisibility(JSON.parse(storedVisibility));
+      if(debug) console.log(`HomeDevices effect: loaded column visibility from localStorage`);
     }
   }, []);
 
@@ -238,7 +311,7 @@ export function HomeDevices() {
                   key={column.accessor}
                   control={
                     <Checkbox
-                      disabled={['name', 'serial', 'actions'].includes(column.accessor)}
+                      disabled={['name', 'actions'].includes(column.accessor)}
                       checked={devicesColumnVisibility[column.accessor]}
                       onChange={() => handleDevicesColumnVisibilityChange(column.accessor)}
                     />
@@ -264,7 +337,7 @@ export function HomeDevices() {
           </div>
         </div>
         <div className="MbfWindowBodyColumn" style={{margin: '0px', padding: '0px', gap: '0', overflow: 'auto'}} >
-          <HomeDevicesTable data={devices} columns={devicesColumns} columnVisibility={devicesColumnVisibility}/>
+          <HomeDevicesTable data={mixedDevices} columns={devicesColumns} columnVisibility={devicesColumnVisibility}/>
         </div>
       </div>
 

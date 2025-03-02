@@ -21,18 +21,14 @@ import { HomeDevices } from './HomeDevices';
 import { debug } from '../App';
 // const debug = true;
 
-export let pluginName = '';
-export let selectDevices = [];
-export let selectEntities = [];
-
 function Home() {
   // States
   const [systemInfo, setSystemInfo] = useState(null);
   const [matterbridgeInfo, setMatterbridgeInfo] = useState(null);
   const [_plugins, setPlugins] = useState([]);
   const [selectPlugin, setSelectPlugin] = useState(undefined);
-  const [homePagePlugins] = useState(localStorage.getItem('homePagePlugins')==='true' ? true : false);
-  const [homePageMode] = useState(localStorage.getItem('homePageMode')??'logs');
+  const [homePagePlugins] = useState(localStorage.getItem('homePagePlugins')==='false' ? false : true); // default true
+  const [homePageMode, setHomePageMode] = useState(localStorage.getItem('homePageMode')??'logs'); // default logs
 
   // Contexts
   const { addListener, removeListener, online, sendMessage, logFilterLevel, logFilterSearch, autoScroll } = useContext(WebSocketContext);
@@ -58,28 +54,16 @@ function Home() {
           if (debug) console.log('Home received settings:', msg.response);
           setSystemInfo(msg.response.systemInformation);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
+          if(msg.response.matterbridgeInformation.shellyBoard) {
+            if(!localStorage.getItem('homePageMode')) {
+              localStorage.setItem('homePageMode', 'devices');
+              setHomePageMode('devices');
+            }
+          }
         }
         if (msg.method === '/api/plugins') {
           if (debug) console.log('Home received plugins:', msg.response);
           setPlugins(msg.response);
-        }
-        if (msg.method === '/api/select') {
-          if (msg.response) {
-            if (debug) console.log('Home received /api/select:', msg.response);
-            selectDevices = msg.response;
-          }
-          if (msg.error) {
-            console.error('Home received /api/select error:', msg.error);
-          }
-        }
-        if (msg.method === '/api/select/entities') {
-          if (msg.response) {
-            if (debug) console.log('Home received /api/select/entities:', msg.response);
-            selectEntities = msg.response;
-          }
-          if (msg.error) {
-            console.error('Home received /api/select/entities error:', msg.error);
-          }
         }
       }
     };
@@ -117,11 +101,11 @@ function Home() {
       {/* Right column */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: '20px' }}>
 
-        {/* Install add plugin */}
+        {/* Install plugins */}
         {homePagePlugins && matterbridgeInfo && !matterbridgeInfo.readOnly &&
           <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
             <div className="MbfWindowHeader">
-              <p className="MbfWindowHeaderText">Install add plugin</p>
+              <p className="MbfWindowHeaderText">Install plugins</p>
             </div>
             <InstallAddPlugins/>
           </div>
@@ -133,16 +117,11 @@ function Home() {
         }
 
         {/* Devices (can grow) */}
-        {matterbridgeInfo && matterbridgeInfo.shellyBoard &&
-          <HomeDevices/>
-        }
-
-        {/* Devices (can grow) */}
-        {matterbridgeInfo && !matterbridgeInfo.shellyBoard && homePageMode === 'devices' &&
+        {homePageMode === 'devices' &&
           <HomeDevices/>
         }
         {/* Logs (can grow) */}
-        {matterbridgeInfo && !matterbridgeInfo.shellyBoard && homePageMode === 'logs' &&
+        {homePageMode === 'logs' &&
           <div className="MbfWindowDiv" style={{ flex: '1 1 auto', width: '100%', overflow: 'hidden' }}>
             <div className="MbfWindowHeader" style={{ flexShrink: 0 }}>
               <div className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>

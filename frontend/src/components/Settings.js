@@ -85,7 +85,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
   const [selectedMbLoggerLevel, setSelectedMbLoggerLevel] = useState('Info'); 
   const [logOnFileMb, setLogOnFileMb] = useState(false);
   const [frontendTheme, setFrontendTheme] = useState('dark');
-  const [homePagePlugins, setHomePagePlugins] = useState(localStorage.getItem('homePagePlugins')==='true' ? true : false);
+  const [homePagePlugins, setHomePagePlugins] = useState(localStorage.getItem('homePagePlugins')==='false' ? false : true);
   const [homePageMode, setHomePageMode] = useState(localStorage.getItem('homePageMode')??'logs');
 
   // Ui context
@@ -217,7 +217,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
             <Checkbox checked={homePagePlugins} onChange={handleChangeHomePagePlugins} name="showPlugins" />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '5px' }}>
-            <FormLabel style={{padding: '0px', margin: '0px'}} id="frontend-home-label">Home page panel:</FormLabel>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="frontend-home-label">Home page bottom panel:</FormLabel>
             <Select style={{ height: '30px' }} labelId="frontend-home-label" id="frontend-home" value={homePageMode} onChange={handleChangeHomePageMode}>
               <MenuItem value='logs'>Logs</MenuItem>
               <MenuItem value='devices'>Devices</MenuItem>

@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "2.4.6",
+  "version": "2.5.0",
   "private": true,
   "homepage": "./",
   "scripts": {
@@ -43,6 +43,8 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@fontsource/roboto": "^5.1.0",
+    "@mdi/js": "^7.4.47",
+    "@mdi/react": "^1.6.1",
     "@mui/icons-material": "^5.16.7",
     "@mui/material": "^5.16.7",
     "@rjsf/core": "^5.22.4",

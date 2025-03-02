@@ -41,7 +41,7 @@ const configUiSchema = {
   'ui:globalOptions': { orderable: true },
 };
 
-export const ConfigPluginDialog = ({ open, onClose, config, schema }) => {
+export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
 
   const primaryColor = useMemo(() => getCssVariable('--primary-color', '#009a00'), []);
   const configTheme = useMemo(() => createConfigTheme(primaryColor), [primaryColor]);
@@ -49,6 +49,7 @@ export const ConfigPluginDialog = ({ open, onClose, config, schema }) => {
   const handleSaveChanges = ({ formData }) => {
     if(debug) console.log('handleSaveChanges:', formData);
     // Save the configuration
+    plugin.configJson = formData;
     const config = JSON.stringify(formData, null, 2)
     sendCommandToMatterbridge('saveconfig', formData.name, config);
     // Close the dialog
@@ -71,8 +72,8 @@ export const ConfigPluginDialog = ({ open, onClose, config, schema }) => {
         <ThemeProvider theme={configTheme}>
           <div style={{ width: '800px', height: '600px', overflow: 'auto' }}>
             <Form
-              schema={schema}
-              formData={config}
+              schema={plugin.schemaJson}
+              formData={plugin.configJson}
               uiSchema={configUiSchema}
               validator={validator}
               widgets={{ CheckboxWidget }}

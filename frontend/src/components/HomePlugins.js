@@ -33,8 +33,11 @@ import { Connecting } from './Connecting';
 import { StatusIndicator } from './StatusIndicator';
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import { ConfigPluginDialog } from './ConfigPluginDialog';
-// import { debug } from '../App';
-const debug = true;
+import { debug } from '../App';
+// const debug = true;
+
+export let selectDevices = [];
+export let selectEntities = [];
 
 function HomePluginsTable({ data, columns, columnVisibility }) {
   // Filter columns based on visibility
@@ -221,6 +224,24 @@ export function HomePlugins({selectPlugin}) {
           if(debug) console.log(`HomePlugins received ${msg.response.length} plugins:`, msg.response);
           setPlugins(msg.response);
         }
+        if (msg.method === '/api/select/devices') {
+          if (msg.response) {
+            if (debug) console.log('Home received /api/select/devices:', msg.response);
+            selectDevices = msg.response;
+          }
+          if (msg.error) {
+            console.error('Home received /api/select/devices error:', msg.error);
+          }
+        }
+        if (msg.method === '/api/select/entities') {
+          if (msg.response) {
+            if (debug) console.log('Home received /api/select/entities:', msg.response);
+            selectEntities = msg.response;
+          }
+          if (msg.error) {
+            console.error('Home received /api/select/entities error:', msg.error);
+          }
+        }
       }
     };
 
@@ -242,6 +263,7 @@ export function HomePlugins({selectPlugin}) {
     }
   }, [online, sendMessage]);
 
+  // Load column visibility from local storage
   useEffect(() => {
     const storedVisibility = localStorage.getItem('homePluginsColumnVisibility');
     if (storedVisibility) {
@@ -249,6 +271,7 @@ export function HomePlugins({selectPlugin}) {
     }
   }, []);
 
+  // Toggle configure columns dialog
   const handleDialogPluginsColumnsToggle = () => {
     setDialogPluginsColumnsOpen(!dialogPluginsColumnsOpen);
   };
@@ -328,24 +351,24 @@ export function HomePlugins({selectPlugin}) {
     window.open(`https://github.com/Luligu/${plugin.name}/blob/main/CHANGELOG.md`, '_blank');
   };
   
+  // ConfigPluginDialog
+  const [selectedPlugin, setSelectedPlugin] = useState({});
+  const [openConfigPluginDialog, setOpenConfigPluginDialog] = useState(false);
+
   const handleConfigPlugin = (plugin) => {
     if (debug) console.log('handleConfigPlugin plugin:', plugin.name);
-    sendMessage({ method: "/api/select", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
+    sendMessage({ method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
     sendMessage({ method: "/api/select/entities", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
-    setSelectedPluginConfig(plugin.configJson);
-    setSelectedPluginSchema(plugin.schemaJson);
+    setSelectedPlugin(plugin);
     handleOpenConfig();
   };
 
-  // ConfigPluginDialog
-  const [selectedPluginConfig, setSelectedPluginConfig] = useState({});
-  const [selectedPluginSchema, setSelectedPluginSchema] = useState({});
-  const [openConfig, setOpenConfig] = useState(false);
   const handleOpenConfig = () => {
-    setOpenConfig(true);
+    setOpenConfigPluginDialog(true);
   };
+
   const handleCloseConfig = () => {
-    setOpenConfig(false);
+    setOpenConfigPluginDialog(false);
   };
 
   if(debug) console.log('HomePlugins rendering...');
@@ -356,7 +379,7 @@ export function HomePlugins({selectPlugin}) {
       <div className="MbfWindowDiv" style={{ margin: '0', padding: '0', gap: '0', width: '100%', flex: '0 0 auto', overflow: 'hidden' }}>
 
         {/* Config plugin dialog */}
-        <ConfigPluginDialog open={openConfig} onClose={handleCloseConfig} config={selectedPluginConfig} schema={selectedPluginSchema} />
+        <ConfigPluginDialog open={openConfigPluginDialog} onClose={handleCloseConfig} plugin={selectedPlugin}/>
 
         {/* HomePlugins Configure Columns Dialog */}
         <Dialog open={dialogPluginsColumnsOpen} onClose={handleDialogPluginsColumnsToggle}>
