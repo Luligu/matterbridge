@@ -214,7 +214,7 @@ Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose 
 
 ### Accessory platform example
 
-This an example of an accessory platform plugin.
+This is an example of an accessory platform plugin.
 
 It exposes a virtual cover device that continuously moves position and shows how to use the command handlers (you can control the device).
 
@@ -224,7 +224,7 @@ An Accessory platform plugin only exposes one device.
 
 ### Dynamic platform example
 
-This an example of a dynamic platform plugin.
+This is an example of a dynamic platform plugin.
 
 It exposes:
 

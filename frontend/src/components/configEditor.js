@@ -38,12 +38,11 @@ import ViewInArIcon from '@mui/icons-material/ViewInAr'; // For entities icon=co
 import DeviceHubIcon from '@mui/icons-material/DeviceHub'; // For entities icon=matter
 
 // @rjsf
-import { Templates } from '@rjsf/mui';
 import { getSubmitButtonOptions, FormContextType, RJSFSchema, StrictRJSFSchema, SubmitButtonProps } from '@rjsf/utils';
 
 // Frontend custom components
 import { getCssVariable } from './muiTheme';
-import { selectDevices, selectEntities } from './Home';
+import { selectDevices, selectEntities } from './HomePlugins';
 import { debug } from '../App';
 
 const titleSx = { fontSize: '16px', fontWeight: 'bold', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' };
@@ -642,6 +641,16 @@ export function TitleFieldTemplate(props) {
   return (
     <Box sx={{ padding: '0px', margin: '0px', marginTop: '5px' }}>
       <Typography sx={titleSx}>tft {title}{required && <mark>***</mark>}</Typography>
+    </Box>
+  );
+}
+
+export function TitleFieldTemplate(props) {
+  const { id, required, title } = props;
+  if (!title) return null;
+  return (
+    <Box sx={{ padding: '0px', margin: '0px', marginTop: '5px' }}>
+      <Typography sx={titleSx}>{title}{required && <mark>***</mark>}</Typography>
     </Box>
   );
 }

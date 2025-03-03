@@ -426,7 +426,7 @@ export class Matterbridge extends EventEmitter {
         this.log.logLevel = LogLevel.INFO;
       }
     } else {
-      this.log.logLevel = await this.nodeContext.get<LogLevel>('matterbridgeLogLevel', LogLevel.INFO);
+      this.log.logLevel = await this.nodeContext.get<LogLevel>('matterbridgeLogLevel', this.matterbridgeInformation.shellyBoard ? LogLevel.NOTICE : LogLevel.INFO);
     }
     this.frontend.logLevel = this.log.logLevel;
     MatterbridgeEndpoint.logLevel = this.log.logLevel;
@@ -464,7 +464,7 @@ export class Matterbridge extends EventEmitter {
         Logger.defaultLogLevel = MatterLogLevel.INFO;
       }
     } else {
-      Logger.defaultLogLevel = await this.nodeContext.get<number>('matterLogLevel', MatterLogLevel.INFO);
+      Logger.defaultLogLevel = await this.nodeContext.get<number>('matterLogLevel', this.matterbridgeInformation.shellyBoard ? MatterLogLevel.NOTICE : MatterLogLevel.INFO);
     }
     Logger.format = MatterLogFormat.ANSI;
     Logger.setLogger('default', this.createMatterLogger());

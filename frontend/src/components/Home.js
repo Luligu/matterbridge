@@ -1,227 +1,69 @@
 /* eslint-disable no-console */
 
 // React
-import React, { useEffect, useState, useRef, useContext, useCallback } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 
 // @mui/material
-import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
 
 // @mui/icons-material
-import DeleteForever from '@mui/icons-material/DeleteForever';
-import PublishedWithChanges from '@mui/icons-material/PublishedWithChanges';
-import Settings from '@mui/icons-material/Settings';
-import Favorite from '@mui/icons-material/Favorite';
-import Help from '@mui/icons-material/Help';
-import Announcement from '@mui/icons-material/Announcement';
-import QrCode2 from '@mui/icons-material/QrCode2';
-import Unpublished from '@mui/icons-material/Unpublished';
 
 // Frontend
-import { StatusIndicator } from './StatusIndicator';
-import { sendCommandToMatterbridge } from './sendApiCommand';
 import { WebSocketLogs } from './WebSocketLogs';
 import { WebSocketContext } from './WebSocketProvider';
-import { UiContext } from './UiProvider';
 import { Connecting } from './Connecting';
 import { SystemInfoTable } from './SystemInfoTable';
 import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
 import { QRDiv } from './QRDiv';
 import { InstallAddPlugins } from './InstallAddPlugins';
-import { ConfigPluginDialog } from './ConfigPluginDialog';
+import { HomePlugins } from './HomePlugins';
+ 
+import { HomeDevices } from './HomeDevices';
 import { debug } from '../App';
 // const debug = true;
 
-export let pluginName = '';
-export let selectDevices = [];
-export let selectEntities = [];
-
 function Home() {
-  const [qrCode, setQrCode] = useState('');
-  const [_pairingCode, setPairingCode] = useState('');
+  // States
   const [systemInfo, setSystemInfo] = useState(null);
   const [matterbridgeInfo, setMatterbridgeInfo] = useState(null);
-  const [plugins, setPlugins] = useState([]);
-  const [selectedRow, setSelectedRow] = useState(-1); // -1 no selection, 0 or greater for selected row
-  const [_selectedPluginName, setSelectedPluginName] = useState('none'); // -1 no selection, 0 or greater for selected row
-  const [selectedPluginConfig, setSelectedPluginConfig] = useState({});
-  const [selectedPluginSchema, setSelectedPluginSchema] = useState({});
-  const [logFilterLevel] = useState(localStorage.getItem('logFilterLevel') ?? 'info');
-  const [logFilterSearch] = useState(localStorage.getItem('logFilterSearch') ?? '*');
+  const [_plugins, setPlugins] = useState([]);
+  const [selectPlugin, setSelectPlugin] = useState(undefined);
+  const [homePagePlugins] = useState(localStorage.getItem('homePagePlugins')==='false' ? false : true); // default true
+  const [homePageMode, setHomePageMode] = useState(localStorage.getItem('homePageMode')??'logs'); // default logs
 
-  const { showSnackbarMessage, showConfirmCancelDialog } = useContext(UiContext);
-  const { logMessage, addListener, removeListener, online, sendMessage, autoScroll } = useContext(WebSocketContext);
+  // Contexts
+  const { addListener, removeListener, online, sendMessage, logFilterLevel, logFilterSearch, autoScroll } = useContext(WebSocketContext);
 
-  const refRegisteredPlugins = useRef(null);
-
-  // ConfigPluginDialog
-  const [openConfig, setOpenConfig] = useState(false);
-  const handleOpenConfig = () => {
-    setOpenConfig(true);
-  };
-  const handleCloseConfig = () => {
-    setOpenConfig(false);
-    // showSnackbarMessage('Restart required', 30);
-  };
-
-  const columns = React.useMemo(() => [
-    { Header: 'Name', accessor: 'name' },
-    { Header: 'Description', accessor: 'description' },
-    { Header: 'Version', accessor: 'version' },
-    { Header: 'Author', accessor: 'author' },
-    { Header: 'Type', accessor: 'type' },
-    { Header: 'Devices', accessor: 'devices' },
-    { Header: 'Tools', accessor: 'qrcode' },
-    { Header: 'Status', accessor: 'status' },
-  ], []);
-
-  // Function to reload settings on demand
-  const reloadSettings = useCallback(() => {
-    if (debug) console.log('reloadSettings');
-    sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-    sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
-  }, [sendMessage]);
-
-  const handleSelectQRCode = (row) => {
-    if (selectedRow === row) {
-      setSelectedRow(-1);
-      setSelectedPluginName('none');
-      setQrCode('');
-      setPairingCode('');
+  const handleSelectPlugin = useCallback((plugin) => {
+    if (debug) console.log('handleSelectPlugin plugin:', plugin.name);
+    if (!selectPlugin) {
+      setSelectPlugin(plugin);
     } else {
-      reloadSettings();
-      setSelectedRow(row);
-      setSelectedPluginName(plugins[row].name);
-      setQrCode(plugins[row].qrPairingCode);
-      setPairingCode(plugins[row].manualPairingCode);
+      setSelectPlugin(undefined);
     }
-    if (debug) console.log('Selected row:', row, 'plugin:', plugins[row].name, 'qrcode:', plugins[row].qrPairingCode);
-  };
-
-  const handleEnableDisablePlugin = (row) => {
-    if (debug)  console.log('Selected row:', row, 'plugin:', plugins[row].name, 'enabled:', plugins[row].enabled);
-    if (plugins[row].enabled === true) {
-      plugins[row].enabled = false;
-      logMessage('Plugins', `Disabling plugin: ${plugins[row].name}`);
-      sendCommandToMatterbridge('disableplugin', plugins[row].name);
-    }
-    else {
-      plugins[row].enabled = true;
-      logMessage('Plugins', `Enabling plugin: ${plugins[row].name}`);
-      sendCommandToMatterbridge('enableplugin', plugins[row].name);
-    }
-    if (matterbridgeInfo.bridgeMode === 'childbridge') {
-      setTimeout(() => {
-        reloadSettings();
-      }, 500);
-    }
-    if (matterbridgeInfo.bridgeMode === 'bridge') {
-      setTimeout(() => {
-        reloadSettings();
-      }, 500);
-    }
-  };
-
-  const handleUpdatePlugin = (row) => {
-    if (debug) console.log('handleUpdate row:', row, 'plugin:', plugins[row].name);
-    logMessage('Plugins', `Updating plugin: ${plugins[row].name}`);
-    sendCommandToMatterbridge('installplugin', plugins[row].name);
-    showSnackbarMessage('Restart required', 30);
-  };
-
-  const handleRemovePlugin = (row) => {
-    if (debug) console.log('handleRemovePluginClick row:', row, 'plugin:', plugins[row].name);
-    logMessage('Plugins', `Removing plugin: ${plugins[row].name}`);
-    sendCommandToMatterbridge('removeplugin', plugins[row].name);
-    setTimeout(() => {
-      reloadSettings();
-    }, 500);
-  };
-
-  const handleConfigPlugin = (row) => {
-    if (debug) console.log('handleConfigPlugin row:', row, 'plugin:', plugins[row].name);
-    pluginName = plugins[row].name;
-    sendMessage({ method: "/api/select", src: "Frontend", dst: "Matterbridge", params: { plugin: pluginName } });
-    sendMessage({ method: "/api/select/entities", src: "Frontend", dst: "Matterbridge", params: { plugin: pluginName } });
-    setSelectedPluginConfig(plugins[row].configJson);
-    setSelectedPluginSchema(plugins[row].schemaJson);
-    handleOpenConfig();
-  };
-
-  const handleSponsorPlugin = (row) => {
-    if (debug) console.log('handleSponsorPlugin row:', row, 'plugin:', plugins[row].name);
-    window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
-  };
-
-  const handleHelpPlugin = (row) => {
-    if (debug) console.log('handleHelpPlugin row:', row, 'plugin:', plugins[row].name);
-    window.open(`https://github.com/Luligu/${plugins[row].name}/blob/main/README.md`, '_blank');
-  };
-
-  const handleChangelogPlugin = (row) => {
-    if (debug) console.log('handleChangelogPlugin row:', row, 'plugin:', plugins[row].name);
-    window.open(`https://github.com/Luligu/${plugins[row].name}/blob/main/CHANGELOG.md`, '_blank');
-  };
-
-  const confirmCancelFormRow = useRef(-1);
-
-  const handleActionWithConfirmCancel = (title, message, command, index) => {
-    if (debug) console.log(`handleActionWithConfirmCancel ${command} ${index}`);
-    confirmCancelFormRow.current = index;
-    showConfirmCancelDialog(title, message, command, handleConfirm, handleCancel);
-  };
-
-  const handleConfirm = (command) => {
-    if (debug) console.log(`handleConfirm action confirmed ${command} ${confirmCancelFormRow.current}`);
-    if (command === 'remove' && confirmCancelFormRow.current !== -1) {
-      handleRemovePlugin(confirmCancelFormRow.current);
-    } else if (command === 'disable' && confirmCancelFormRow.current !== -1) {
-      handleEnableDisablePlugin(confirmCancelFormRow.current);
-    }
-  };
-
-  const handleCancel = (command) => {
-    if (debug) console.log(`handleCancel action canceled ${command} ${confirmCancelFormRow.current}`);
-  };
+  }, [selectPlugin]);
 
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
-      if (debug) console.log('Home Received WebSocket Message:', msg);
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'refresh_required') {
           if (debug) console.log('Home received refresh_required');
-          reloadSettings();
+          sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+          sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === '/api/settings') {
           if (debug) console.log('Home received settings:', msg.response);
-          if (msg.response.matterbridgeInformation.bridgeMode === 'bridge') {
-            setQrCode(msg.response.matterbridgeInformation.matterbridgeQrPairingCode);
-            setPairingCode(msg.response.matterbridgeInformation.matterbridgeManualPairingCode);
-          }
           setSystemInfo(msg.response.systemInformation);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
+          if(msg.response.matterbridgeInformation.shellyBoard) {
+            if(!localStorage.getItem('homePageMode')) {
+              localStorage.setItem('homePageMode', 'devices');
+              setHomePageMode('devices');
+            }
+          }
         }
         if (msg.method === '/api/plugins') {
           if (debug) console.log('Home received plugins:', msg.response);
           setPlugins(msg.response);
-        }
-        if (msg.method === '/api/select') {
-          if (msg.response) {
-            if (debug) console.log('Home received /api/select:', msg.response);
-            selectDevices = msg.response;
-          }
-          if (msg.error) {
-            console.error('Home received /api/select error:', msg.error);
-          }
-        }
-        if (msg.method === '/api/select/entities') {
-          if (msg.response) {
-            if (debug) console.log('Home received /api/select/entities:', msg.response);
-            selectEntities = msg.response;
-          }
-          if (msg.error) {
-            console.error('Home received /api/select/entities error:', msg.error);
-          }
         }
       }
     };
@@ -238,9 +80,10 @@ function Home() {
   useEffect(() => {
     if (online) {
       if (debug) console.log('Home received online');
-      reloadSettings();
+      sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
     }
-  }, [online, reloadSettings]);
+  }, [online, sendMessage]);
 
   if(debug) console.log('Home rendering...');
   if (!online) {
@@ -248,162 +91,55 @@ function Home() {
   }
   return (
     <div className="MbfPageDiv" style={{ flexDirection: 'row' }}>
-      {/* Config plugin dialog */}
-      <ConfigPluginDialog open={openConfig} onClose={handleCloseConfig} config={selectedPluginConfig} schema={selectedPluginSchema} />
-
       {/* Left column */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>
-        {matterbridgeInfo && <QRDiv matterbridgeInfo={matterbridgeInfo} plugin={selectedRow === -1 ? undefined : plugins[selectedRow]} />}
+        {matterbridgeInfo && <QRDiv matterbridgeInfo={matterbridgeInfo} plugin={selectPlugin} />}
         {systemInfo && <SystemInfoTable systemInfo={systemInfo} compact={true} />}
-        {qrCode === '' && matterbridgeInfo && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo} />}
+        {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo} />}
       </div>
 
       {/* Right column */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: '20px' }}>
 
-        {/* Install add plugin */}
-        {matterbridgeInfo && !matterbridgeInfo.readOnly &&
+        {/* Install plugins */}
+        {homePagePlugins && matterbridgeInfo && !matterbridgeInfo.readOnly &&
           <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
             <div className="MbfWindowHeader">
-              <p className="MbfWindowHeaderText">Install add plugin</p>
+              <p className="MbfWindowHeaderText">Install plugins</p>
             </div>
             <InstallAddPlugins/>
           </div>
         }
 
-        {/* Registered plugins */}
-        <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
-          <div className="MbfWindowDivTable" style={{ flex: '0 0 auto', overflow: 'hidden' }}>
-            <table ref={refRegisteredPlugins}>
-              <thead>
-                <tr>
-                  <th colSpan="8">Registered plugins</th>
-                </tr>
-                <tr>
-                  {columns.map((column, index) => (
-                    <th key={index}>{column.Header}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {plugins.map((plugin, index) => (
+        {/* Plugins */}
+        {homePagePlugins &&
+          <HomePlugins selectPlugin={handleSelectPlugin}/>
+        }
 
-                  <tr key={index} className={selectedRow === index ? 'table-content-selected' : index % 2 === 0 ? 'table-content-even' : 'table-content-odd'}>
-
-                    <td><Tooltip title={plugin.path}>{plugin.name}</Tooltip></td>
-                    <td>{plugin.description}</td>
-
-                    {plugin.latestVersion === undefined || plugin.latestVersion === plugin.version || (matterbridgeInfo && matterbridgeInfo.readOnly) ?
-                      <td><Tooltip title="Plugin version">{plugin.version}</Tooltip></td> :
-                      <td><Tooltip title="New plugin version available, click to install"><span className="status-warning" onClick={() => handleUpdatePlugin(index)}>Update v.{plugin.version} to v.{plugin.latestVersion}</span></Tooltip></td>
-                    }
-                    <td>{plugin.author.replace('https://github.com/', '')}</td>
-
-                    <td>{plugin.type === 'DynamicPlatform' ? 'Dynamic' : 'Accessory'}</td>
-                    <td>{plugin.registeredDevices}</td>
-                    <td>
-                      <>
-                        {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.error && plugin.enabled ? <Tooltip title="Shows the QRCode or the fabrics"><IconButton style={{ margin: '0', padding: '0' }} onClick={() => handleSelectQRCode(index)} size="small"><QrCode2 /></IconButton></Tooltip> : <></>}
-                        <Tooltip title="Plugin config"><IconButton style={{ margin: '0', padding: '0' }} onClick={() => handleConfigPlugin(index)} size="small"><Settings /></IconButton></Tooltip>
-                        {matterbridgeInfo && !matterbridgeInfo.readOnly &&
-                          <Tooltip title="Remove the plugin"><IconButton style={{ margin: '0', padding: '0' }} onClick={() => { handleActionWithConfirmCancel('Remove plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'remove', index); }} size="small"><DeleteForever /></IconButton></Tooltip>
-                        }
-                        {plugin.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{ margin: '0', padding: '0' }} onClick={() => { handleActionWithConfirmCancel('Disable plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'disable', index); }} size="small"><Unpublished /></IconButton></Tooltip> : <></>}
-                        {!plugin.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{ margin: '0', padding: '0' }} onClick={() => handleEnableDisablePlugin(index)} size="small"><PublishedWithChanges /></IconButton></Tooltip> : <></>}
-                        <Tooltip title="Plugin help"><IconButton style={{ margin: '0', padding: '0' }} onClick={() => handleHelpPlugin(index)} size="small"><Help /></IconButton></Tooltip>
-                        <Tooltip title="Plugin version history"><IconButton style={{ margin: '0', padding: '0' }} onClick={() => handleChangelogPlugin(index)} size="small"><Announcement /></IconButton></Tooltip>
-                        {matterbridgeInfo && !matterbridgeInfo.readOnly &&
-                          <Tooltip title="Sponsor the plugin"><IconButton style={{ margin: '0', padding: '0', color: '#b6409c' }} onClick={() => handleSponsorPlugin(index)} size="small"><Favorite /></IconButton></Tooltip>
-                        }
-                      </>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', gap: '5px' }}>
-
-                        {plugin.error ?
-                          <>
-                            <StatusIndicator status={false} enabledText='Error' disabledText='Error' tooltipText='The plugin is in error state. Check the log!' /></> :
-                          <>
-                            {plugin.enabled === false ?
-                              <>
-                                <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled' /></> :
-                              <>
-                                {plugin.loaded && plugin.started && plugin.configured && plugin.paired ?
-                                  <>
-                                    <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running' /></> :
-                                  <>
-                                    {plugin.loaded && plugin.started && plugin.configured ?
-                                      <>
-                                        <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running' /></> :
-                                      <>
-                                        <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled' />
-                                        <StatusIndicator status={plugin.loaded} enabledText='Loaded' tooltipText='Whether the plugin has been loaded' />
-                                        <StatusIndicator status={plugin.started} enabledText='Started' tooltipText='Whether the plugin started' />
-                                        <StatusIndicator status={plugin.configured} enabledText='Configured' tooltipText='Whether the plugin has been configured' />
-                                        {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' ? <StatusIndicator status={plugin.paired} enabledText='Paired' tooltipText='Whether the plugin has been paired' /> : <></>}
-                                      </>
-                                    }
-                                  </>
-                                }
-                              </>
-                            }
-                          </>
-                        }
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Logs*/}
-        <div className="MbfWindowDiv" style={{ flex: '1 1 auto', width: '100%', overflow: 'hidden' }}>
-          <div className="MbfWindowHeader" style={{ flexShrink: 0 }}>
-            <div className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>
-              Logs
-              <span style={{ fontWeight: 'normal', fontSize: '12px', marginTop: '2px' }}>
-                Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}" Scroll: {autoScroll ? 'auto' : 'manual'} 
-              </span>
+        {/* Devices (can grow) */}
+        {homePageMode === 'devices' &&
+          <HomeDevices/>
+        }
+        {/* Logs (can grow) */}
+        {homePageMode === 'logs' &&
+          <div className="MbfWindowDiv" style={{ flex: '1 1 auto', width: '100%', overflow: 'hidden' }}>
+            <div className="MbfWindowHeader" style={{ flexShrink: 0 }}>
+              <div className="MbfWindowHeaderText" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                Logs
+                <span style={{ fontWeight: 'normal', fontSize: '12px', marginTop: '2px' }}>
+                  Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}" Scroll: {autoScroll ? 'auto' : 'manual'} 
+                </span>
+              </div>
+            </div>
+            <div style={{ flex: '1 1 auto', margin: '0px', padding: '10px', overflow: 'auto' }}>
+              <WebSocketLogs />
             </div>
           </div>
-          <div style={{ flex: '1 1 auto', margin: '0px', padding: '10px', overflow: 'auto' }}>
-            <WebSocketLogs />
-          </div>
-        </div>
+        }
 
       </div>
     </div>
   );
 }
-
-/*
-        <div className="MbfWindowDiv" style={{ flex: '1 1 auto', width: '100%', overflow: 'hidden' }}>
-          <div className="MbfWindowHeader" style={{ flexShrink: 0 }}>
-            <div className="MbfWindowHeaderText" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-
-              <div>
-                Logs
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'row', gap: '2px' }}>
-                <p style={{ margin: '0px', padding: '0px' }}>
-                  Filter: logger level "{logFilterLevel}" and search "{logFilterSearch}"
-                </p>
-                <Tooltip title="Clear the logs">
-                  <IconButton onClick={setMessages([])} style={{ margin: '0px', padding: '0px', width: '19px', height: '19px' }}>
-                    <DeleteForever style={{ color: 'var(--header-text-color)', fontSize: '19px' }} />
-                  </IconButton>
-                </Tooltip>
-              </div>
-
-            </div>
-          </div>
-          <div style={{ flex: '1 1 auto', margin: '0px', padding: '10px', overflow: 'auto' }}>
-            <WebSocketLogs />
-          </div>
-        </div>
-*/
 
 export default Home;

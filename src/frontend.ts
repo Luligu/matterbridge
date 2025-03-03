@@ -37,11 +37,12 @@ import { promises as fs } from 'node:fs';
 import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from './logger/export.js';
 
 // Matterbridge
-import { createZip, deepCopy, isValidNumber, isValidObject, isValidString } from './utils/export.js';
+import { createZip, deepCopy, isValidArray, isValidNumber, isValidObject, isValidString } from './utils/export.js';
 import { ApiClusters, ApiDevices, BaseRegisteredPlugin, plg, RegisteredPlugin } from './matterbridgeTypes.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { hasParameter } from './utils/export.js';
+import { BridgedDeviceBasicInformation } from '@matter/main/clusters';
 
 /**
  * Websocket message ID for logging.
@@ -437,6 +438,7 @@ export class Frontend {
           productUrl: device.productUrl,
           configUrl: device.configUrl,
           uniqueId: device.uniqueId,
+          reachable: this.getReachability(device),
           cluster: cluster,
         });
       });
@@ -899,6 +901,7 @@ export class Frontend {
         param = param.replace(/\*/g, '\\');
         const plugin = await this.matterbridge.plugins.add(param);
         if (plugin) {
+          this.wssSendSnackbarMessage(`Added plugin ${param}`);
           if (this.matterbridge.bridgeMode === 'childbridge') {
             // We don't know now if the plugin is a dynamic platform or an accessory platform so we create the server node and the aggregator node
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -919,6 +922,7 @@ export class Frontend {
           const plugin = this.matterbridge.plugins.get(param) as RegisteredPlugin;
           await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been removed.', true); // This will also close the server node in childbridge mode
           await this.matterbridge.plugins.remove(param);
+          this.wssSendSnackbarMessage(`Removed plugin ${param}`);
         }
         res.json({ message: 'Command received' });
         this.wssSendRefreshRequired();
@@ -940,6 +944,7 @@ export class Frontend {
             plugin.registeredDevices = undefined;
             plugin.addedDevices = undefined;
             await this.matterbridge.plugins.enable(param);
+            this.wssSendSnackbarMessage(`Enabled plugin ${param}`);
             if (this.matterbridge.bridgeMode === 'childbridge' && plugin.type === 'DynamicPlatform') {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (this.matterbridge as any).createDynamicPlugin(plugin, true);
@@ -962,6 +967,7 @@ export class Frontend {
           if (plugin && plugin.enabled) {
             await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been disabled.', true); // This will also close the server node in childbridge mode
             await this.matterbridge.plugins.disable(param);
+            this.wssSendSnackbarMessage(`Disabled plugin ${param}`);
           }
         }
         res.json({ message: 'Command received' });
@@ -1089,6 +1095,19 @@ export class Frontend {
   }
 
   /**
+   * Retrieves the reachable attribute.
+   * @param {MatterbridgeDevice} device - The MatterbridgeDevice object.
+   * @returns {boolean} The reachable attribute.
+   */
+  private getReachability(device: MatterbridgeEndpoint): boolean {
+    if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return false;
+
+    if (device.hasClusterServer(BridgedDeviceBasicInformation.Cluster.id)) return device.getAttribute(BridgedDeviceBasicInformation.Cluster.id, 'reachable') as boolean;
+    if (this.matterbridge.bridgeMode === 'childbridge') return true;
+    return false;
+  }
+
+  /**
    * Retrieves the cluster text description from a given device.
    * @param {MatterbridgeDevice} device - The MatterbridgeDevice object.
    * @returns {string} The attributes description of the cluster servers in the device.
@@ -1212,6 +1231,8 @@ export class Frontend {
         manualPairingCode: plugin.manualPairingCode,
         configJson: plugin.configJson,
         schemaJson: plugin.schemaJson,
+        hasWhiteList: plugin.configJson?.whiteList !== undefined,
+        hasBlackList: plugin.configJson?.blackList !== undefined,
       });
     }
     return baseRegisteredPlugins;
@@ -1365,6 +1386,7 @@ export class Frontend {
             productUrl: device.productUrl,
             configUrl: device.configUrl,
             uniqueId: device.uniqueId,
+            reachable: this.getReachability(device),
             cluster: cluster,
           });
         });
@@ -1481,7 +1503,8 @@ export class Frontend {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select' }));
           return;
         }
-        const selectDeviceValues = plugin.platform?.selectDevice ? Array.from(plugin.platform.selectDevice.values()).sort((keyA, keyB) => keyA.name.localeCompare(keyB.name)) : [];
+        // const selectDeviceValues = plugin.platform?.selectDevice ? Array.from(plugin.platform.selectDevice.values()).sort((keyA, keyB) => keyA.name.localeCompare(keyB.name)) : [];
+        const selectDeviceValues = plugin.platform?.getSelectDevices().sort((keyA, keyB) => keyA.name.localeCompare(keyB.name));
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: selectDeviceValues }));
         return;
       } else if (data.method === '/api/select/entities') {
@@ -1494,9 +1517,64 @@ export class Frontend {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select/entities' }));
           return;
         }
-        const selectEntityValues = plugin.platform?.selectDevice ? Array.from(plugin.platform.selectEntity.values()).sort((keyA, keyB) => keyA.name.localeCompare(keyB.name)) : [];
+        // const selectEntityValues = plugin.platform?.selectDevice ? Array.from(plugin.platform.selectEntity.values()).sort((keyA, keyB) => keyA.name.localeCompare(keyB.name)) : [];
+        const selectEntityValues = plugin.platform?.getSelectEntities().sort((keyA, keyB) => keyA.name.localeCompare(keyB.name));
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: selectEntityValues }));
         return;
+      } else if (data.method === '/api/command') {
+        if (!isValidString(data.params.command, 5)) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter command in /api/command' }));
+          return;
+        }
+        if (data.params.command === 'selectdevice' && isValidString(data.params.plugin, 10) && isValidString(data.params.serial, 1)) {
+          const plugin = this.matterbridge.plugins.get(data.params.plugin);
+          if (!plugin) {
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/command' }));
+            return;
+          }
+          const config = plugin.configJson;
+          if (config) {
+            if (config.postfix) {
+              data.params.serial = data.params.serial.replace('-' + config.postfix, '');
+            }
+            // Add the serial to the whiteList if the whiteList exists and the serial is not already in it
+            if (isValidArray(config.whiteList, 1)) {
+              if (!config.whiteList.includes(data.params.serial)) {
+                config.whiteList.push(data.params.serial);
+              }
+            }
+            // Remove the serial from the blackList if the blackList exists and the serial is in it
+            if (isValidArray(config.blackList, 1)) {
+              if (config.blackList.includes(data.params.serial)) {
+                config.blackList = config.blackList.filter((serial) => serial !== data.params.serial);
+              }
+            }
+            if (plugin.platform) plugin.platform.config = config;
+            await this.matterbridge.plugins.saveConfigFromPlugin(plugin);
+            this.wssSendRestartRequired();
+          }
+        } else if (data.params.command === 'unselectdevice' && isValidString(data.params.plugin, 10) && isValidString(data.params.serial, 1)) {
+          const plugin = this.matterbridge.plugins.get(data.params.plugin);
+          if (!plugin) {
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/command' }));
+            return;
+          }
+          const config = plugin.configJson;
+          if (config) {
+            if (config.postfix) {
+              data.params.serial = data.params.serial.replace('-' + config.postfix, '');
+            }
+            // Add the serial to the blackList
+            if (isValidArray(config.blackList)) {
+              if (!config.blackList.includes(data.params.serial)) {
+                config.blackList.push(data.params.serial);
+              }
+            }
+            if (plugin.platform) plugin.platform.config = config;
+            await this.matterbridge.plugins.saveConfigFromPlugin(plugin);
+            this.wssSendRestartRequired();
+          }
+        }
       } else {
         this.log.error(`Invalid method from websocket client: ${debugStringify(data)}`);
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid method' }));

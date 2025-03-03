@@ -124,6 +124,7 @@ function LoginForm() {
   const baseName = window.location.href.includes("/matterbridge/") ? "/matterbridge" :
   window.location.href.includes("/api/hassio_ingress/") ? window.location.pathname :
   "/";
+  console.log(`Loading App.js: href="${window.location.href}" pathname="${window.location.pathname}" baseName="${baseName}"`);
   // console.log(`Ingress check: window.location.href=${window.location.href} baseName=${baseName}`);
   // Ingress check: window.location.href=http://homeassistant.local:8123/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/ baseName=/api/hassio_ingress/nD0C1__RqgwrZT_UdHObtcPNN7fCFxCjlmPQfCzVKI8/
 

@@ -25,7 +25,8 @@ import { debug } from '../App';
 function Logs() {
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');
-  const { setMessages, setLogFilters, online, autoScroll, setAutoScroll } = useContext(WebSocketContext);
+  const [logAutoScroll, setLogAutoScroll] = useState(localStorage.getItem('logAutoScroll')??true);
+  const { setMessages, setLogFilters, online, setAutoScroll } = useContext(WebSocketContext);
 
   const handleChangeLevel = (event) => {
     setLogFilterLevel(event.target.value);
@@ -39,6 +40,13 @@ function Logs() {
     setLogFilters(logFilterLevel, event.target.value);
     localStorage.setItem('logFilterSearch', event.target.value);
     if(debug) console.log('handleChangeSearch called with value:', event.target.value);
+  };
+
+  const handleAutoScrollChange = (event) => {
+    setLogAutoScroll(event.target.checked);
+    setAutoScroll(event.target.checked);
+    localStorage.setItem('logAutoScroll', event.target.value);
+    if(debug) console.log('handleAutoScrollChange called with value:', event.target.checked);
   };
 
   const handleClearLogsClick = () => {
@@ -78,8 +86,8 @@ function Logs() {
               },
             }}/>
           <FormControlLabel
-            control={<Checkbox checked={autoScroll} onChange={handleAutoScrollChange} />}
-            label="Auto Scroll"
+            control={<Checkbox checked={logAutoScroll} onChange={handleAutoScrollChange} />}
+            label="Auto scroll"
             style={{ color: 'var(--div-text-color)' }}
           />
         </div>

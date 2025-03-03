@@ -74,6 +74,8 @@ export interface BaseRegisteredPlugin {
   manualPairingCode?: string;
   configJson?: PlatformConfig;
   schemaJson?: PlatformSchema;
+  hasWhiteList?: boolean;
+  hasBlackList?: boolean;
 }
 
 // Define an interface for storing the system information
@@ -178,6 +180,7 @@ export interface ApiDevices {
   productUrl: string;
   configUrl?: string;
   uniqueId: string;
+  reachable: boolean;
   cluster: string;
 }
 

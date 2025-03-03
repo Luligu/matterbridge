@@ -13,6 +13,27 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
+## [2.2.1] - 2025-03-02
+
+### Added
+
+- [frontend]: Frontend v.2.5.0.
+- [frontend]: Added in the Settings the option to hide Install plugins and Plugins in the Home page.
+- [frontend]: Added in the Settings the option to have Logs or Devices as the bottom panel in the Home page.
+
+### Changed
+
+- [frontend]: Refactor Home page and added HomeDevices and HomePlugins react components.
+- [frontend]: Persist in localStorage the Auto scroll setting.
+- [frontend]: Added @mdi package for icons.
+- [package]: Update matter.js to 0.12.5.
+
+### Fixed
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [2.2.0] - 2025-02-27
 
 ### Added

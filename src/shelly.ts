@@ -138,7 +138,7 @@ async function verifyShellyUpdate(matterbridge: Matterbridge, api: string, name:
       getShelly(api, 10 * 1000)
         .then(async (data: { updatingInProgress: boolean }) => {
           if (data.updatingInProgress) {
-            matterbridge.log.notice(`${name} in progress...`);
+            matterbridge.log.debug(`${name} in progress...`);
             matterbridge.frontend.wssSendSnackbarMessage(`${name} in progress...`, 20);
           } else {
             matterbridge.log.notice(`${name} installed`);
