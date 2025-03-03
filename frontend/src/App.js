@@ -108,16 +108,16 @@ function LoginForm() {
   
   // Set the frontned theme in document.body
   useEffect(() => {
-    // console.log('Setting frontend theme');
+    if(debug) console.log('Setting frontend theme');
     const savedTheme = localStorage.getItem('frontendTheme');
-    // console.log('Saved theme:', savedTheme);
+    if(debug)  console.log('Saved theme:', savedTheme);
     if (savedTheme) {
       document.body.setAttribute("frontend-theme", savedTheme); // Set the saved theme
     } else {
       document.body.setAttribute("frontend-theme", "dark"); // Set the default theme to dark
     }
     const primaryColorFromCSS = getCssVariable('--primary-color', '#1976d2');
-    // console.log('Primary color from CSS:', primaryColorFromCSS);
+    if(debug)  console.log('Primary color from CSS:', primaryColorFromCSS);
     setPrimaryColor(primaryColorFromCSS);
   }, []);
 
