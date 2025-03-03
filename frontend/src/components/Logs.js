@@ -25,7 +25,7 @@ import { debug } from '../App';
 function Logs() {
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem('logFilterLevel')??'info');
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem('logFilterSearch')??'*');
-  const [logAutoScroll, setLogAutoScroll] = useState(localStorage.getItem('logAutoScroll')??true);
+  const [logAutoScroll, setLogAutoScroll] = useState(localStorage.getItem('logAutoScroll')==='false' ? false : true);
   const { setMessages, setLogFilters, online, setAutoScroll } = useContext(WebSocketContext);
 
   const handleChangeLevel = (event) => {
@@ -45,18 +45,13 @@ function Logs() {
   const handleAutoScrollChange = (event) => {
     setLogAutoScroll(event.target.checked);
     setAutoScroll(event.target.checked);
-    localStorage.setItem('logAutoScroll', event.target.value);
+    localStorage.setItem('logAutoScroll', event.target.value ? 'true' : 'false');
     if(debug) console.log('handleAutoScrollChange called with value:', event.target.checked);
   };
 
   const handleClearLogsClick = () => {
     if(debug) console.log('handleClearLogsClick called');
     setMessages([]);
-  };
-
-  const handleAutoScrollChange = (event) => {
-    setAutoScroll(event.target.checked);
-    if(debug) console.log('handleAutoScrollChange called with value:', event.target.checked);
   };
 
   if(debug) console.log('Logs rendering...');
