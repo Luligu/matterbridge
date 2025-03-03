@@ -25,14 +25,19 @@ import { mdiSortAscending, mdiSortDescending } from '@mdi/js';
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
-// import { debug } from '../App';
-const debug = true;
+import { debug } from '../App';
+// const debug = true;
 
 
 export function HomeDevicesTable({ data, columns, columnVisibility }) {
-  // Add state to manage the sorting state
-  const [sortBy, setSortBy] = useState([]);
-  
+  // Load saved sort state from localStorage
+  const initialSortBy = React.useMemo(() => {
+    const saved = localStorage.getItem('homeDevicesColumnsSortBy');
+    if(debug) console.log(`HomeDevicesTable retrieved sortBy: ${JSON.stringify(JSON.parse(saved), null, 2)}`);
+    return saved ? JSON.parse(saved) : [{id: 'name', desc: false}];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [columns]);
+
   // Filter columns based on visibility
   const visibleColumns = React.useMemo(
     () => columns.filter(column => columnVisibility[column.accessor]),
@@ -46,7 +51,14 @@ export function HomeDevicesTable({ data, columns, columnVisibility }) {
     headerGroups,
     rows,
     prepareRow,
-  } = useTable({ columns: visibleColumns, data }, useSortBy);
+    state: { sortBy },
+  } = useTable({ columns: visibleColumns, data, initialState: { sortBy: initialSortBy }, }, useSortBy);
+
+  // Persist sort state whenever it changes
+  React.useEffect(() => {
+    if(debug) console.log(`HomeDevicesTable saved sortBy: ${JSON.stringify(sortBy, null, 2)}`);
+    localStorage.setItem('homeDevicesColumnsSortBy', JSON.stringify(sortBy));
+  }, [sortBy]);
 
   return (
     <table {...getTableProps()} style={{ border: 'none', borderCollapse: 'collapse' }}>
@@ -184,12 +196,14 @@ export function HomeDevices() {
           if(debug) console.log(`HomeDevices received ${msg.response?.length} plugins:`, msg.response);
           if(msg.response) {
             setPlugins(msg.response);
+            setDevices([]);
+            setSelectDevices([]);
 
             sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
             if(debug) console.log(`HomeDevices sent /api/devices`);
 
             for (const plugin of msg.response) {
-              if(plugin.started && !plugin.error) {
+              if(plugin.started===true && plugin.error!==true) {
                 sendMessage({ method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name} });
                 if(debug) console.log(`HomeDevices sent /api/select/devices for plugin: ${plugin.name}`);
               } 
