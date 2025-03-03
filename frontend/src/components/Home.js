@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 
 // React
-import React, { useEffect, useState, useContext, useCallback } from 'react';
+import React, { useEffect, useState, useContext, useCallback, useRef } from 'react';
 
 // @mui/material
 
@@ -18,20 +18,20 @@ import { InstallAddPlugins } from './InstallAddPlugins';
 import { HomePlugins } from './HomePlugins';
  
 import { HomeDevices } from './HomeDevices';
-import { debug } from '../App';
-// const debug = true;
+// import { debug } from '../App';
+const debug = true;
 
 function Home() {
   // States
   const [systemInfo, setSystemInfo] = useState(null);
   const [matterbridgeInfo, setMatterbridgeInfo] = useState(null);
-  const [_plugins, setPlugins] = useState([]);
   const [selectPlugin, setSelectPlugin] = useState(undefined);
   const [homePagePlugins] = useState(localStorage.getItem('homePagePlugins')==='false' ? false : true); // default true
   const [homePageMode, setHomePageMode] = useState(localStorage.getItem('homePageMode')??'logs'); // default logs
-
   // Contexts
-  const { addListener, removeListener, online, sendMessage, logFilterLevel, logFilterSearch, autoScroll } = useContext(WebSocketContext);
+  const { addListener, removeListener, online, sendMessage, logFilterLevel, logFilterSearch, autoScroll, getUniqueId } = useContext(WebSocketContext);
+  // Refs
+  const uniqueId = useRef(getUniqueId());
 
   const handleSelectPlugin = useCallback((plugin) => {
     if (debug) console.log('handleSelectPlugin plugin:', plugin.name);
@@ -45,12 +45,13 @@ function Home() {
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        if (msg.method === 'refresh_required') {
-          if (debug) console.log('Home received refresh_required');
-          sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-          sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+        // Broadcast messages
+        if (msg.method === 'refresh_required' && msg.params.changed !== 'matterbridgeLatestVersion' && msg.params.changed !== 'reachability') {
+          if (debug) console.log(`Home received refresh_required: changed=${msg.params.changed}`);
+          sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
-        if (msg.method === '/api/settings') {
+        // Local messages
+        if (msg.id === uniqueId.current && msg.method === '/api/settings') {
           if (debug) console.log('Home received settings:', msg.response);
           setSystemInfo(msg.response.systemInformation);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
@@ -61,15 +62,11 @@ function Home() {
             }
           }
         }
-        if (msg.method === '/api/plugins') {
-          if (debug) console.log('Home received plugins:', msg.response);
-          setPlugins(msg.response);
-        }
       }
     };
 
     addListener(handleWebSocketMessage);
-    if (debug) console.log('Home added WebSocket listener');
+    if (debug) console.log(`Home added WebSocket listener id ${uniqueId.current}`);
 
     return () => {
       removeListener(handleWebSocketMessage);
@@ -80,29 +77,28 @@ function Home() {
   useEffect(() => {
     if (online) {
       if (debug) console.log('Home received online');
-      sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   }, [online, sendMessage]);
 
   if(debug) console.log('Home rendering...');
-  if (!online) {
+  if (!online || !systemInfo || !matterbridgeInfo) {
     return (<Connecting />);
   }
   return (
     <div className="MbfPageDiv" style={{ flexDirection: 'row' }}>
       {/* Left column */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>
-        {matterbridgeInfo && <QRDiv matterbridgeInfo={matterbridgeInfo} plugin={selectPlugin} />}
-        {systemInfo && <SystemInfoTable systemInfo={systemInfo} compact={true} />}
-        {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo} />}
+        <QRDiv matterbridgeInfo={matterbridgeInfo} plugin={selectPlugin}/>
+        <SystemInfoTable systemInfo={systemInfo} compact={true}/>
+        {matterbridgeInfo.bridgeMode === 'childbridge' && <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo}/>}
       </div>
 
       {/* Right column */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: '20px' }}>
 
         {/* Install plugins */}
-        {homePagePlugins && matterbridgeInfo && !matterbridgeInfo.readOnly &&
+        {homePagePlugins && !matterbridgeInfo.readOnly &&
           <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
             <div className="MbfWindowHeader">
               <p className="MbfWindowHeaderText">Install plugins</p>

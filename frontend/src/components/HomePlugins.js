@@ -33,8 +33,8 @@ import { Connecting } from './Connecting';
 import { StatusIndicator } from './StatusIndicator';
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import { ConfigPluginDialog } from './ConfigPluginDialog';
-// import { debug } from '../App';
-const debug = true;
+import { debug } from '../App';
+// const debug = true;
 
 export let selectDevices = [];
 export let selectEntities = [];
