@@ -1550,7 +1550,7 @@ export class Frontend {
             }
             if (plugin.platform) plugin.platform.config = config;
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin);
-            this.wssSendRestartRequired();
+            this.wssSendRestartRequired(false);
           }
         } else if (data.params.command === 'unselectdevice' && isValidString(data.params.plugin, 10) && isValidString(data.params.serial, 1)) {
           const plugin = this.matterbridge.plugins.get(data.params.plugin);
@@ -1563,6 +1563,12 @@ export class Frontend {
             if (config.postfix) {
               data.params.serial = data.params.serial.replace('-' + config.postfix, '');
             }
+            // Remove the serial from the whiteList if the whiteList exists and the serial is in it
+            if (isValidArray(config.whiteList, 1)) {
+              if (config.whiteList.includes(data.params.serial)) {
+                config.whiteList = config.whiteList.filter((serial) => serial !== data.params.serial);
+              }
+            }
             // Add the serial to the blackList
             if (isValidArray(config.blackList)) {
               if (!config.blackList.includes(data.params.serial)) {
@@ -1571,7 +1577,7 @@ export class Frontend {
             }
             if (plugin.platform) plugin.platform.config = config;
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin);
-            this.wssSendRestartRequired();
+            this.wssSendRestartRequired(false);
           }
         }
       } else {
@@ -1651,10 +1657,10 @@ export class Frontend {
    * Sends a need to restart WebSocket message to all connected clients.
    *
    */
-  wssSendRestartRequired() {
+  wssSendRestartRequired(snackbar = true) {
     this.log.debug('Sending a restart required message to all connected clients');
     this.matterbridge.matterbridgeInformation.restartRequired = true;
-    this.wssSendSnackbarMessage(`Restart required`, 0);
+    if (snackbar === true) this.wssSendSnackbarMessage(`Restart required`, 0);
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {

@@ -105,6 +105,9 @@ export function HomeDevicesTable({ data, columns, columnVisibility }) {
 
 export function HomeDevices() {
   const { online, sendMessage, addListener, removeListener } = useContext(WebSocketContext);
+  const [restart, setRestart] = useState(false);
+  const [_systemInfo, setSystemInfo] = useState(null);
+  const [_matterbridgeInfo, setMatterbridgeInfo] = useState(null);
   const [plugins, setPlugins] = useState([]);
   const [devices, setDevices] = useState([]);
   const [selectDevices, setSelectDevices] = useState([]);
@@ -192,6 +195,16 @@ export function HomeDevices() {
           if(debug) console.log('HomeDevices received refresh_required');
           sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
+        if (msg.method === 'restart_required') {
+          if(debug) console.log('HomeDevices received restart_required');
+          setRestart(true);
+        }
+        if (msg.method === '/api/settings') {
+          if (debug) console.log('Home received settings:', msg.response);
+          setSystemInfo(msg.response.systemInformation);
+          setMatterbridgeInfo(msg.response.matterbridgeInformation);
+          setRestart(msg.response.matterbridgeInformation.restartRequired);
+        }
         if (msg.method === '/api/plugins') {
           if(debug) console.log(`HomeDevices received ${msg.response?.length} plugins:`, msg.response);
           if(msg.response) {
@@ -265,8 +278,8 @@ export function HomeDevices() {
   useEffect(() => {
     if (online) {
       if(debug) console.log('HomeDevices sending api requests');
+      sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
       sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
-      // sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   }, [online, sendMessage]);
 
@@ -352,6 +365,13 @@ export function HomeDevices() {
         </div>
         <div className="MbfWindowBodyColumn" style={{margin: '0px', padding: '0px', gap: '0', overflow: 'auto'}} >
           <HomeDevicesTable data={mixedDevices} columns={devicesColumns} columnVisibility={devicesColumnVisibility}/>
+        </div>
+        <div className="MbfWindowFooter" style={{margin: '0', padding: '0', borderTop: '1px solid var(--table-border-color)', display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
+            <p className="MbfWindowFooterText" style={{margin: '0', padding: '5px', paddingLeft: '10px', paddingRight: '10px', fontWeight: 'normal', fontSize: '14px', textAlign: 'left'}}>Registered devices: {devices.length.toString()}</p>
+            {restart && 
+              <p className="MbfWindowFooterText" style={{margin: '0', padding: '5px', paddingLeft: '10px', paddingRight: '10px', fontWeight: 'normal', fontSize: '14px', textAlign: 'left', color:'var(--main-button-color)', backgroundColor: 'var(--primary-color)'}}>Restart required</p>
+            }  
+
         </div>
       </div>
 

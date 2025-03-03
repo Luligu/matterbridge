@@ -28,6 +28,7 @@ import { debug } from '../App';
 function Header() {
   const { showSnackbarMessage, showConfirmCancelDialog } = useContext(UiContext);
   const { online, sendMessage, logMessage, addListener, removeListener } = useContext(WebSocketContext);
+  const [restart, setRestart] = useState(false);
   const [settings, setSettings] = useState({});
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [backupMenuAnchorEl, setBackupMenuAnchorEl] = useState(null);
@@ -203,9 +204,14 @@ function Header() {
           if (debug) console.log('Header received refresh_required');
           sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
+        if (msg.method === 'restart_required') {
+          if (debug) console.log('Header received restart_required');
+          setRestart(true);
+        }
         if (msg.method === '/api/settings') {
           if (debug) console.log('Header received settings:', msg.response);
           setSettings(msg.response);
+          setRestart(msg.response.matterbridgeInformation.restartRequired);
         }
         if (msg.method === '/api/advertise') {
           if (debug) console.log('Header received advertise:', msg.response);
@@ -331,13 +337,13 @@ function Header() {
           </Tooltip>
         }
         <Tooltip title="Restart matterbridge">
-          <IconButton onClick={handleRestartClick}>
+          <IconButton style={{ color: restart ? 'var(--primary-color)' : '' }} onClick={handleRestartClick}>
             <RestartAltIcon />
           </IconButton>
         </Tooltip>
         {settings.matterbridgeInformation.restartMode === '' ? (
           <Tooltip title="Shut down matterbridge">
-            <IconButton onClick={handleShutdownClick}>
+            <IconButton style={{ color: restart ? 'var(--primary-color)' : '' }} onClick={handleShutdownClick}>
               <PowerSettingsNewIcon />
             </IconButton>
           </Tooltip>

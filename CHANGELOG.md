@@ -13,6 +13,18 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
+## [2.2.2] - 2025-03-03
+
+### Added
+
+- [frontend]: Frontend v.2.5.0.
+- [frontend]: Added in the Header the primary color for restart icon when restart is needed.
+- [frontend]: Added in the HomeDevices a message when restart is needed.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [2.2.1] - 2025-03-02
 
 ### Added
