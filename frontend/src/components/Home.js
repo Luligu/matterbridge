@@ -75,7 +75,7 @@ function Home() {
       removeListener(handleWebSocketMessage);
       if (debug) console.log('Home removed WebSocket listener');
     };
-  }, [addListener, removeListener, sendMessage, reloadSettings]);
+  }, [addListener, removeListener, sendMessage]);
 
   useEffect(() => {
     if (online) {

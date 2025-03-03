@@ -886,7 +886,6 @@ export class Frontend {
           this.log.error(`Error installing plugin ${plg}${param}${er}`);
           this.wssSendSnackbarMessage(`Package ${param} not installed`);
         }
-        this.wssSendSnackbarMessage(`Restart required`, 0);
         this.wssSendRestartRequired();
         param = param.split('@')[0];
         // Also add the plugin to matterbridge so no return!

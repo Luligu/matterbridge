@@ -28,8 +28,6 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 - [frontend]: Added @mdi package for icons.
 - [package]: Update matter.js to 0.12.5.
 
-### Fixed
-
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
 </a>
