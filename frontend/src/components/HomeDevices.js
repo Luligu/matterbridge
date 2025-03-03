@@ -366,10 +366,10 @@ export function HomeDevices() {
         <div className="MbfWindowBodyColumn" style={{margin: '0px', padding: '0px', gap: '0', overflow: 'auto'}} >
           <HomeDevicesTable data={mixedDevices} columns={devicesColumns} columnVisibility={devicesColumnVisibility}/>
         </div>
-        <div className="MbfWindowFooter" style={{margin: '0', padding: '0', borderTop: '1px solid var(--table-border-color)', display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
-            <p className="MbfWindowFooterText" style={{margin: '0', padding: '5px', paddingLeft: '10px', paddingRight: '10px', fontWeight: 'normal', fontSize: '14px', textAlign: 'left'}}>Registered devices: {devices.length.toString()}</p>
+        <div className="MbfWindowFooter" style={{margin: '0', padding: '0px', paddingLeft: '10px', paddingRight: '10px', borderTop: '1px solid var(--table-border-color)', display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
+            <p className="MbfWindowFooterText" style={{margin: '0', padding: '5px', fontWeight: 'normal', fontSize: '14px'}}>Registered devices: {devices.length.toString()}</p>
             {restart && 
-              <p className="MbfWindowFooterText" style={{margin: '0', padding: '5px', paddingLeft: '10px', paddingRight: '10px', fontWeight: 'normal', fontSize: '14px', textAlign: 'left', color:'var(--main-button-color)', backgroundColor: 'var(--primary-color)'}}>Restart required</p>
+              <p className="MbfWindowFooterText" style={{margin: '0', padding: '2px', fontWeight: 'normal', fontSize: '14px', borderRadius: '0.25rem', color:'var(--main-button-color)', backgroundColor: 'var(--primary-color)'}}>Restart required</p>
             }  
 
         </div>
