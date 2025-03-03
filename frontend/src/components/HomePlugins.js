@@ -33,8 +33,8 @@ import { Connecting } from './Connecting';
 import { StatusIndicator } from './StatusIndicator';
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import { ConfigPluginDialog } from './ConfigPluginDialog';
-import { debug } from '../App';
-// const debug = true;
+// import { debug } from '../App';
+const debug = true;
 
 export let selectDevices = [];
 export let selectEntities = [];
@@ -89,8 +89,12 @@ function HomePluginsTable({ data, columns, columnVisibility }) {
 }
 
 export function HomePlugins({selectPlugin}) {
-  const { online, logMessage, sendMessage, addListener, removeListener } = useContext(WebSocketContext);
-  const { _showSnackbarMessage, showConfirmCancelDialog } = useContext(UiContext);
+  // Contexts
+  const { online, logMessage, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
+  const { showConfirmCancelDialog } = useContext(UiContext);
+  // Refs
+  const uniqueId = useRef(getUniqueId());
+  // States
   const [_systemInfo, setSystemInfo] = useState(null);
   const [matterbridgeInfo, setMatterbridgeInfo] = useState(null);
   const [plugins, setPlugins] = useState([]);
@@ -105,6 +109,7 @@ export function HomePlugins({selectPlugin}) {
     actions: true,
     status: true,
   });
+
   const pluginsColumns = [
     {
       Header: 'Name',
@@ -210,43 +215,45 @@ export function HomePlugins({selectPlugin}) {
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
-        if (msg.method === 'refresh_required') {
-          if(debug) console.log('HomePlugins received refresh_required');
-          sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-          sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+        // Broadcast messages
+        if (msg.method === 'refresh_required' && msg.params.changed === 'plugins') {
+          if(debug) console.log('HomePlugins received refresh_required for', msg.params.changed);
+          // sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+          sendMessage({ id: uniqueId.current, method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
-        if (msg.method === '/api/settings') {
-          if (debug) console.log('HomePlugins received settings:', msg.response);
+        // Local messages
+        if (msg.id === uniqueId.current && msg.method === '/api/settings') {
+          if (debug) console.log(`HomePlugins (id: ${msg.id}) received settings:`, msg.response);
           setSystemInfo(msg.response.systemInformation);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
         }
-        if (msg.method === '/api/plugins') {
-          if(debug) console.log(`HomePlugins received ${msg.response.length} plugins:`, msg.response);
+        if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
+          if(debug) console.log(`HomePlugins (id: ${msg.id}) received ${msg.response.length} plugins:`, msg.response);
           setPlugins(msg.response);
         }
-        if (msg.method === '/api/select/devices') {
+        if (msg.id === uniqueId.current && msg.method === '/api/select/devices') {
           if (msg.response) {
-            if (debug) console.log('Home received /api/select/devices:', msg.response);
+            if (debug) console.log(`HomePlugins (id: ${msg.id}) received /api/select/devices:`, msg.response);
             selectDevices = msg.response;
           }
           if (msg.error) {
-            console.error('Home received /api/select/devices error:', msg.error);
+            console.error('HomePlugins received /api/select/devices error:', msg.error);
           }
         }
-        if (msg.method === '/api/select/entities') {
+        if (msg.id === uniqueId.current && msg.method === '/api/select/entities') {
           if (msg.response) {
-            if (debug) console.log('Home received /api/select/entities:', msg.response);
+            if (debug) console.log(`HomePlugins (id: ${msg.id}) received /api/select/entities:`, msg.response);
             selectEntities = msg.response;
           }
           if (msg.error) {
-            console.error('Home received /api/select/entities error:', msg.error);
+            console.error('HomePlugins received /api/select/entities error:', msg.error);
           }
         }
       }
     };
 
     addListener(handleWebSocketMessage);
-    if(debug) console.log('HomePlugins added WebSocket listener');
+    if(debug) console.log('HomePlugins added WebSocket listener id:', uniqueId.current);
 
     return () => {
       removeListener(handleWebSocketMessage);
@@ -258,8 +265,8 @@ export function HomePlugins({selectPlugin}) {
   useEffect(() => {
     if (online) {
       if(debug) console.log('HomePlugins sending api requests');
-      sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   }, [online, sendMessage]);
 
@@ -296,7 +303,7 @@ export function HomePlugins({selectPlugin}) {
   };
 
   const handleConfirm = (command) => {
-    if (debug) console.log(`handleConfirm action confirmed ${command} ${confirmCancelPluginRef.current}`);
+    if (debug) console.log(`handleConfirm action confirmed ${command} ${confirmCancelPluginRef.current.name}`);
     if (command === 'remove' && confirmCancelPluginRef.current) {
       handleRemovePlugin(confirmCancelPluginRef.current);
     } else if (command === 'disable' && confirmCancelPluginRef.current) {
@@ -306,7 +313,7 @@ export function HomePlugins({selectPlugin}) {
   };
 
   const handleCancel = (command) => {
-    if (debug) console.log(`handleCancel action canceled ${command} ${confirmCancelPluginRef.current}`);
+    if (debug) console.log(`handleCancel action canceled ${command} ${confirmCancelPluginRef.current.name}`);
     confirmCancelPluginRef.current = null;
   };
 
@@ -357,8 +364,10 @@ export function HomePlugins({selectPlugin}) {
 
   const handleConfigPlugin = (plugin) => {
     if (debug) console.log('handleConfigPlugin plugin:', plugin.name);
-    sendMessage({ method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
-    sendMessage({ method: "/api/select/entities", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
+    selectDevices = [];
+    selectEntities = [];
+    sendMessage({ id: uniqueId.current, method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
+    sendMessage({ id: uniqueId.current, method: "/api/select/entities", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
     setSelectedPlugin(plugin);
     handleOpenConfig();
   };

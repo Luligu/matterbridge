@@ -22,8 +22,8 @@ import BlockIcon from '@mui/icons-material/Block';
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import { UiContext } from './UiProvider';
 import { WebSocketContext, WS_ID_SHELLY_SYS_UPDATE, WS_ID_SHELLY_MAIN_UPDATE } from './WebSocketProvider';
-// import { debug } from '../App';
-const debug = true;
+import { debug } from '../App';
+// const debug = true;
 
 function Header() {
   // Contexts
@@ -245,8 +245,7 @@ function Header() {
 
     return () => {
       removeListener(handleWebSocketMessage);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      if (debug) console.log(`Header removed WebSocket listener id ${uniqueId.current}`);
+      if (debug) console.log(`Header removed WebSocket listener`);
     };
   }, [addListener, removeListener, sendMessage, showSnackbarMessage]);
 
