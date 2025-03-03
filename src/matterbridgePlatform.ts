@@ -75,7 +75,7 @@ export class MatterbridgePlatform {
   context?: NodeStorage;
 
   // Device and entity selection
-  readonly selectDevice = new Map<string, { serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }>();
+  readonly selectDevice = new Map<string, { serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }>();
   readonly selectEntity = new Map<string, { name: string; description: string; icon?: string }>();
 
   // Promises for storage
@@ -89,7 +89,7 @@ export class MatterbridgePlatform {
   private readonly _registeredEndpointsByName = new Map<string, MatterbridgeEndpoint>(); // deviceName, MatterbridgeEndpoint
 
   // Stored devices
-  private readonly _storedDevices = new Map<string, { serial: string; name: string; configUrl?: string }>(); // serial, { serial, name }
+  private readonly _storedDevices = new Map<string, { pluginName: string; serial: string; name: string; configUrl?: string }>(); // serial, { serial, name }
 
   /**
    * Creates an instance of the base MatterbridgePlatform. It is extended by the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
@@ -162,6 +162,11 @@ export class MatterbridgePlatform {
    */
   async onConfigure() {
     this.log.debug(`Configuring platform ${this.name}`);
+
+    // Save the selectDevice and selectEntity
+    await this.saveSelects();
+
+    // Check and update the endpoint numbers
     await this.checkEndpointNumbers();
   }
 
@@ -175,17 +180,7 @@ export class MatterbridgePlatform {
     this.log.debug(`Shutting down platform ${this.name}`, reason);
 
     // Save the selectDevice and selectEntity
-    if (this.storage) {
-      this.log.debug(`Saving ${this.selectDevice.size} selectDevice...`);
-      const selectDevice = await this.storage.createStorage('selectDevice');
-      await selectDevice.set('selectDevice', Array.from(this.selectDevice.values()));
-      await selectDevice.close();
-
-      this.log.debug(`Saving ${this.selectEntity.size} selectEntity...`);
-      const selectEntity = await this.storage.createStorage('selectEntity');
-      await selectEntity.set('selectEntity', Array.from(this.selectEntity.values()));
-      await selectEntity.close();
-    }
+    await this.saveSelects();
 
     // Check and update the endpoint numbers
     await this.checkEndpointNumbers();
@@ -258,15 +253,114 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * Store a device that will not be registered. To be used by the Devices page in the frontend.
-   * @param {string} serial - The serial number of the device to store.
-   * @param {string} name - The name of the device to store.
-   * @param {string} [configUrl] - The URL of the device configuration.
-   * @returns {Promise<void>} A promise that resolves when the device is stored.
+   * Saves the select devices and entities to storage.
+   *
+   * This method saves the current state of `selectDevice` and `selectEntity` maps to their respective storage.
+   * It logs the number of items being saved and ensures that the storage is properly closed after saving.
+   *
+   * @returns {Promise<void>} A promise that resolves when the save operation is complete.
    */
-  async storeDevice(serial: string, name: string, configUrl?: string): Promise<void> {
-    this.log.debug(`Stored device with serial ${CYAN}${serial}${db} name ${CYAN}${name}${db}`);
-    this._storedDevices.set(serial, { serial, name, configUrl });
+  private async saveSelects(): Promise<void> {
+    if (this.storage) {
+      this.log.debug(`Saving ${this.selectDevice.size} selectDevice...`);
+      const selectDevice = await this.storage.createStorage('selectDevice');
+      await selectDevice.set('selectDevice', Array.from(this.selectDevice.values()));
+      await selectDevice.close();
+
+      this.log.debug(`Saving ${this.selectEntity.size} selectEntity...`);
+      const selectEntity = await this.storage.createStorage('selectEntity');
+      await selectEntity.set('selectEntity', Array.from(this.selectEntity.values()));
+      await selectEntity.close();
+    }
+  }
+
+  /**
+   * Clears the select device and entity maps.
+   *
+   * @returns {void}
+   */
+  async clearSelect(): Promise<void> {
+    this.selectDevice.clear();
+    this.selectEntity.clear();
+    await this.saveSelects();
+  }
+
+  /**
+   * Set the select device in the platform map.
+   *
+   * @param {string} serial - The serial number of the device.
+   * @param {string} name - The name of the device.
+   * @param {string} [configUrl] - The configuration URL of the device.
+   * @param {string} [icon] - The icon of the device.
+   * @param {Array<{ name: string; description: string; icon?: string }>} [entities] - The entities associated with the device.
+   * @returns {void}
+   */
+  setSelectDevice(serial: string, name: string, configUrl?: string, icon?: string, entities?: { name: string; description: string; icon?: string }[]): void {
+    const device = this.selectDevice.get(serial);
+    if (device) {
+      device.serial = serial;
+      device.name = name;
+      if (configUrl) device.configUrl = configUrl;
+      if (icon) device.icon = icon;
+      if (entities) device.entities = entities;
+    } else {
+      this.selectDevice.set(serial, { serial, name, configUrl, icon, entities });
+    }
+  }
+
+  /**
+   * Set the select device entity in the platform map.
+   *
+   * @param {string} serial - The serial number of the device.
+   * @param {string} entityName - The name of the entity.
+   * @param {string} entityDescription - The description of the entity.
+   * @param {string} [entityIcon] - The icon of the entity.
+   * @returns {void}
+   */
+  setSelectDeviceEntity(serial: string, entityName: string, entityDescription: string, entityIcon?: string): void {
+    const device = this.selectDevice.get(serial);
+    if (device) {
+      if (!device.entities) device.entities = [];
+      if (!device.entities.find((entity) => entity.name === entityName)) device.entities.push({ name: entityName, description: entityDescription, icon: entityIcon });
+    }
+  }
+
+  /**
+   * Retrieves the select devices from the platform map.
+   *
+   * @returns {{ pluginName: string; serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[]} The selected devices array.
+   */
+  getSelectDevices(): { pluginName: string; serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[] {
+    const selectDevices: { pluginName: string; serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[] = [];
+    this.selectDevice.values().forEach((device) => {
+      selectDevices.push({ pluginName: this.name, ...device });
+    });
+    return selectDevices;
+  }
+
+  /**
+   * Set the select entity in the platform map.
+   *
+   * @param {string} name - The entity name.
+   * @param {string} description - The entity description.
+   * @param {string} [icon] - The entity icon.
+   * @returns {void}
+   */
+  setSelectEntity(name: string, description: string, icon?: string): void {
+    this.selectEntity.set(name, { name, description, icon });
+  }
+
+  /**
+   * Retrieve the select entities.
+   *
+   * @returns {{ pluginName: string; name: string; description: string; icon?: string }[]} The select entities array.
+   */
+  getSelectEntities(): { pluginName: string; name: string; description: string; icon?: string }[] {
+    const selectEntities: { pluginName: string; name: string; description: string; icon?: string }[] = [];
+    this.selectEntity.values().forEach((entity) => {
+      selectEntities.push({ pluginName: this.name, ...entity });
+    });
+    return selectEntities;
   }
 
   /**

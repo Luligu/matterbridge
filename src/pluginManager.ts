@@ -832,6 +832,7 @@ export class PluginManager {
     const configFile = path.join(this.matterbridge.matterbridgeDirectory, `${plugin.name}.config.json`);
     try {
       await promises.writeFile(configFile, JSON.stringify(plugin.platform.config, null, 2), 'utf8');
+      plugin.configJson = plugin.platform.config;
       this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
       // this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, plugin.platform.config);
       return Promise.resolve();
@@ -865,6 +866,7 @@ export class PluginManager {
     try {
       await promises.writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
       plugin.configJson = config;
+      if (plugin.platform) plugin.platform.config = config;
       this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
       // this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
     } catch (err) {

@@ -74,6 +74,8 @@ export interface BaseRegisteredPlugin {
   manualPairingCode?: string;
   configJson?: PlatformConfig;
   schemaJson?: PlatformSchema;
+  hasWhiteList?: boolean;
+  hasBlackList?: boolean;
 }
 
 // Define an interface for storing the system information
