@@ -102,12 +102,12 @@ export function SystemInfoTable({ systemInfo, compact }) {
         <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>System Information</p>
       </div>
       <div className="MbfWindowDivTable">
-        <table >
-          <tbody>
+        <table style={{ border: 'none', borderCollapse: 'collapse' }}>
+          <tbody style={{ border: 'none', borderCollapse: 'collapse' }}>
             {Object.entries(localSystemInfo).map(([key, value], index) => (
-              <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ borderTop: '1px solid #ddd' }}>
-                <td>{key}</td>
-                <td>
+              <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ border: 'none', borderCollapse: 'collapse' }}>
+                <td style={{ border: 'none', borderCollapse: 'collapse' }}>{key}</td>
+                <td style={{ border: 'none', borderCollapse: 'collapse' }}>
                   <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={25} />
                 </td>
               </tr>
