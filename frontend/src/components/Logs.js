@@ -54,6 +54,11 @@ function Logs() {
     setMessages([]);
   };
 
+  const handleAutoScrollChange = (event) => {
+    setAutoScroll(event.target.checked);
+    if(debug) console.log('handleAutoScrollChange called with value:', event.target.checked);
+  };
+
   if(debug) console.log('Logs rendering...');
   if (!online) {
     return ( <Connecting /> );

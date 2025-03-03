@@ -630,7 +630,17 @@ export function DescriptionFieldTemplate(props) {
   if (!description) return null;
   return (
     <Box sx={{ padding: '0px', margin: '0px', marginTop: '5px' }}>
-      <Typography sx={descriptionSx}>{description}</Typography>
+      <Typography sx={descriptionSx}>dft {description}</Typography>
+    </Box>
+  );
+}
+
+export function TitleFieldTemplate(props) {
+  const { id, required, title } = props;
+  if (!title) return null;
+  return (
+    <Box sx={{ padding: '0px', margin: '0px', marginTop: '5px' }}>
+      <Typography sx={titleSx}>tft {title}{required && <mark>***</mark>}</Typography>
     </Box>
   );
 }
