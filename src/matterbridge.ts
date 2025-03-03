@@ -123,7 +123,7 @@ export class Matterbridge extends EventEmitter {
     matterDiscriminator: undefined,
     matterPasscode: undefined,
     restartRequired: false,
-    refreshRequired: false,
+    updateRequired: false,
   };
 
   public homeDirectory = '';
@@ -830,7 +830,7 @@ export class Matterbridge extends EventEmitter {
       plugin.manualPairingCode = undefined;
       this.plugins.load(plugin, true, 'Matterbridge is starting'); // No await do it asyncronously
     }
-    this.frontend.wssSendRefreshRequired();
+    this.frontend.wssSendRefreshRequired('plugins');
   }
 
   /**
@@ -1521,14 +1521,14 @@ export class Matterbridge extends EventEmitter {
             this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
           }
         }
-        this.frontend.wssSendRefreshRequired();
+        this.frontend.wssSendRefreshRequired('plugins');
       }, 30 * 1000);
 
       // Setting reachability to true
       this.reachabilityTimeout = setTimeout(() => {
         this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
         if (this.aggregatorNode) this.setAggregatorReachability(this.aggregatorNode, true);
-        this.frontend.wssSendRefreshRequired();
+        this.frontend.wssSendRefreshRequired('reachability');
       }, 60 * 1000);
     }, 1000);
   }
@@ -1593,7 +1593,7 @@ export class Matterbridge extends EventEmitter {
             this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
           }
         }
-        this.frontend.wssSendRefreshRequired();
+        this.frontend.wssSendRefreshRequired('plugins');
       }, 30 * 1000);
 
       for (const plugin of this.plugins) {
@@ -1621,7 +1621,7 @@ export class Matterbridge extends EventEmitter {
         plugin.reachabilityTimeout = setTimeout(() => {
           this.log.info(`Setting reachability to true for ${plg}${plugin.name}${db} type ${plugin.type} server node ${plugin.serverNode !== undefined} aggragator node ${plugin.aggregatorNode !== undefined} device ${plugin.device !== undefined}`);
           if (plugin.type === 'DynamicPlatform' && plugin.aggregatorNode) this.setAggregatorReachability(plugin.aggregatorNode, true);
-          this.frontend.wssSendRefreshRequired();
+          this.frontend.wssSendRefreshRequired('reachability');
         }, 60 * 1000);
       }
     }, 1000);
@@ -2072,7 +2072,8 @@ export class Matterbridge extends EventEmitter {
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
         sanitizeFabrics(serverNode.state.commissioning.fabrics, true);
       }
-      this.frontend.wssSendRefreshRequired();
+      this.frontend.wssSendRefreshRequired('plugins');
+      this.frontend.wssSendRefreshRequired('settings');
       this.frontend.wssSendSnackbarMessage(`${storeId} is online`);
     });
 
@@ -2096,7 +2097,9 @@ export class Matterbridge extends EventEmitter {
           plugin.paired = undefined;
         }
       }
-      this.frontend.wssSendRefreshRequired();
+      this.frontend.wssSendRefreshRequired('plugins');
+      this.frontend.wssSendRefreshRequired('settings');
+      this.frontend.wssSendSnackbarMessage(`${storeId} is offline`);
     });
 
     /**
@@ -2118,7 +2121,7 @@ export class Matterbridge extends EventEmitter {
       }
       this.log.notice(`Commissioned fabric index ${fabricIndex} ${action} on server node for ${storeId}: ${debugStringify(serverNode.state.commissioning.fabrics[fabricIndex])}`);
       sanitizeFabrics(serverNode.state.commissioning.fabrics);
-      this.frontend.wssSendRefreshRequired();
+      this.frontend.wssSendRefreshRequired('fabrics');
     });
 
     const sanitizeSessions = (sessions: SessionsBehavior.Session[]) => {
@@ -2147,7 +2150,7 @@ export class Matterbridge extends EventEmitter {
     serverNode.events.sessions.opened.on((session) => {
       this.log.notice(`Session opened on server node for ${storeId}: ${debugStringify(session)}`);
       sanitizeSessions(Object.values(serverNode.state.sessions.sessions));
-      this.frontend.wssSendRefreshRequired();
+      this.frontend.wssSendRefreshRequired('sessions');
     });
 
     /**
@@ -2156,14 +2159,14 @@ export class Matterbridge extends EventEmitter {
     serverNode.events.sessions.closed.on((session) => {
       this.log.notice(`Session closed on server node for ${storeId}: ${debugStringify(session)}`);
       sanitizeSessions(Object.values(serverNode.state.sessions.sessions));
-      this.frontend.wssSendRefreshRequired();
+      this.frontend.wssSendRefreshRequired('sessions');
     });
 
     /** This event is triggered when a subscription gets added or removed on an operative session. */
     serverNode.events.sessions.subscriptionsChanged.on((session) => {
       this.log.notice(`Session subscriptions changed on server node for ${storeId}: ${debugStringify(session)}`);
       sanitizeSessions(Object.values(serverNode.state.sessions.sessions));
-      this.frontend.wssSendRefreshRequired();
+      this.frontend.wssSendRefreshRequired('sessions');
     });
 
     this.log.info(`Created server node for ${storeId}`);

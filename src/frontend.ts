@@ -87,6 +87,12 @@ export const WS_ID_UPTIME_UPDATE = 5;
 export const WS_ID_SNACKBAR = 6;
 
 /**
+ * Websocket message ID indicating a memory update.
+ * @constant {number}
+ */
+export const WS_ID_UPDATE_NEEDED = 7;
+
+/**
  * Websocket message ID indicating a shelly system update.
  * check:
  * curl -k http://127.0.0.1:8101/api/updates/sys/check
@@ -907,7 +913,7 @@ export class Frontend {
             (this.matterbridge as any).createDynamicPlugin(plugin, true);
           }
           this.matterbridge.plugins.load(plugin, true, 'The plugin has been added', true).then(() => {
-            this.wssSendRefreshRequired();
+            this.wssSendRefreshRequired('plugins');
           });
         }
         res.json({ message: 'Command received' });
@@ -922,9 +928,9 @@ export class Frontend {
           await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been removed.', true); // This will also close the server node in childbridge mode
           await this.matterbridge.plugins.remove(param);
           this.wssSendSnackbarMessage(`Removed plugin ${param}`);
+          this.wssSendRefreshRequired('plugins');
         }
         res.json({ message: 'Command received' });
-        this.wssSendRefreshRequired();
         return;
       }
       // Handle the command enableplugin from Home
@@ -949,12 +955,11 @@ export class Frontend {
               (this.matterbridge as any).createDynamicPlugin(plugin, true);
             }
             this.matterbridge.plugins.load(plugin, true, 'The plugin has been enabled', true).then(() => {
-              this.wssSendRefreshRequired();
+              this.wssSendRefreshRequired('plugins');
             });
           }
         }
         res.json({ message: 'Command received' });
-        this.wssSendRefreshRequired();
         return;
       }
       // Handle the command disableplugin from Home
@@ -967,10 +972,10 @@ export class Frontend {
             await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been disabled.', true); // This will also close the server node in childbridge mode
             await this.matterbridge.plugins.disable(param);
             this.wssSendSnackbarMessage(`Disabled plugin ${param}`);
+            this.wssSendRefreshRequired('plugins');
           }
         }
         res.json({ message: 'Command received' });
-        this.wssSendRefreshRequired();
         return;
       }
     });
@@ -1350,14 +1355,14 @@ export class Frontend {
         this.matterbridge.matterbridgeInformation.matterbridgeAdvertise = true;
         this.matterbridge.matterbridgeQrPairingCode = pairingCodes?.qrPairingCode;
         this.matterbridge.matterbridgeManualPairingCode = pairingCodes?.manualPairingCode;
-        this.wssSendRefreshRequired();
+        this.wssSendRefreshRequired('matterbridgeAdvertise');
         this.wssSendSnackbarMessage(`Started fabrics share`, 0);
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: pairingCodes }));
         return;
       } else if (data.method === '/api/stopadvertise') {
         await this.matterbridge.stopAdvertiseServerNode(this.matterbridge.serverNode);
         this.matterbridge.matterbridgeInformation.matterbridgeAdvertise = false;
-        this.wssSendRefreshRequired();
+        this.wssSendRefreshRequired('matterbridgeAdvertise');
         this.wssSendSnackbarMessage(`Stopped fabrics share`, 0);
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src }));
         return;
@@ -1641,14 +1646,25 @@ export class Frontend {
   /**
    * Sends a need to refresh WebSocket message to all connected clients.
    *
+   * @param {string} changed - The changed value. If null, the whole page will be refreshed.
+   * possible values:
+   * - 'matterbridgeLatestVersion'
+   * - 'matterbridgeAdvertise'
+   * - 'online'
+   * - 'offline'
+   * - 'reachability'
+   * - 'settings'
+   * - 'plugins'
+   * - 'devices'
+   * - 'fabrics'
+   * - 'sessions'
    */
-  wssSendRefreshRequired() {
+  wssSendRefreshRequired(changed: string | null = null) {
     this.log.debug('Sending a refresh required message to all connected clients');
-    this.matterbridge.matterbridgeInformation.refreshRequired = true;
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ id: WS_ID_REFRESH_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', params: {} }));
+        client.send(JSON.stringify({ id: WS_ID_REFRESH_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', params: { changed: changed } }));
       }
     });
   }
@@ -1665,6 +1681,21 @@ export class Frontend {
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({ id: WS_ID_RESTART_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', params: {} }));
+      }
+    });
+  }
+
+  /**
+   * Sends a need to update WebSocket message to all connected clients.
+   *
+   */
+  wssSendUpdateRequired() {
+    this.log.debug('Sending an update required message to all connected clients');
+    this.matterbridge.matterbridgeInformation.updateRequired = true;
+    // Send the message to all connected clients
+    this.webSocketServer?.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ id: WS_ID_UPDATE_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', params: {} }));
       }
     });
   }

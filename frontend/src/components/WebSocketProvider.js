@@ -18,6 +18,7 @@ export const WS_ID_CPU_UPDATE = 3;
 export const WS_ID_MEMORY_UPDATE = 4;
 export const WS_ID_UPTIME_UPDATE = 5;
 export const WS_ID_SNACKBAR = 6;
+export const WS_ID_UPDATE_NEEDED = 7;
 
 /**
  * Websocket message ID indicating a shelly system update.

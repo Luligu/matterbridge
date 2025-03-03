@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 
 // React
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 // @mui
@@ -22,14 +22,20 @@ import BlockIcon from '@mui/icons-material/Block';
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import { UiContext } from './UiProvider';
 import { WebSocketContext, WS_ID_SHELLY_SYS_UPDATE, WS_ID_SHELLY_MAIN_UPDATE } from './WebSocketProvider';
-import { debug } from '../App';
-// const debug = true;
+// import { debug } from '../App';
+const debug = true;
 
 function Header() {
+  // Contexts
   const { showSnackbarMessage, showConfirmCancelDialog } = useContext(UiContext);
-  const { online, sendMessage, logMessage, addListener, removeListener } = useContext(WebSocketContext);
+  const { online, sendMessage, logMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
+  // States
   const [restart, setRestart] = useState(false);
-  const [settings, setSettings] = useState({});
+  const [update, setUpdate] = useState(false);
+  const [settings, setSettings] = useState(null);
+  // Refs
+  const uniqueId = useRef(getUniqueId());
+  // Menu states
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [backupMenuAnchorEl, setBackupMenuAnchorEl] = useState(null);
   const [downloadMenuAnchorEl, setDownloadMenuAnchorEl] = useState(null);
@@ -48,24 +54,24 @@ function Header() {
   };
 
   const handleUpdateClick = () => {
-    sendMessage({ method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: 'matterbridge', restart: true } });
+    sendMessage({ id: uniqueId.current, method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: 'matterbridge', restart: true } });
   };
 
   const handleShellySystemUpdateClick = () => {
     if(debug) console.log('Header: handleShellySystemUpdateClick');
     logMessage('Matterbridge', `Installing system updates...`);
-    sendMessage({ method: "/api/shellysysupdate", src: "Frontend", dst: "Matterbridge", params: { } });
+    sendMessage({ id: uniqueId.current, method: "/api/shellysysupdate", src: "Frontend", dst: "Matterbridge", params: { } });
   };
 
   const handleShellyMainUpdateClick = () => {
     if(debug) console.log('Header: handleShellyMainUpdateClick');
     logMessage('Matterbridge', `Installing software updates...`);
-    sendMessage({ method: "/api/shellymainupdate", src: "Frontend", dst: "Matterbridge", params: { } });
+    sendMessage({ id: uniqueId.current, method: "/api/shellymainupdate", src: "Frontend", dst: "Matterbridge", params: { } });
   };
 
   const handleShellyCreateSystemLog = () => {
     if(debug) console.log('Header: handleShellyCreateSystemLog');
-    sendMessage({ method: "/api/shellycreatesystemlog", src: "Frontend", dst: "Matterbridge", params: { } });
+    sendMessage({ id: uniqueId.current, method: "/api/shellycreatesystemlog", src: "Frontend", dst: "Matterbridge", params: { } });
   };
 
   const handleShellyDownloadSystemLog = () => {
@@ -77,27 +83,27 @@ function Header() {
 
   const handleRestartClick = () => {
     if (settings.matterbridgeInformation.restartMode === '') {
-      sendMessage({ method: "/api/restart", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, method: "/api/restart", src: "Frontend", dst: "Matterbridge", params: {} });
     }
     else {
-      sendMessage({ method: "/api/shutdown", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, method: "/api/shutdown", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   };
 
   const handleShutdownClick = () => {
-    sendMessage({ method: "/api/shutdown", src: "Frontend", dst: "Matterbridge", params: {} });
+    sendMessage({ id: uniqueId.current, method: "/api/shutdown", src: "Frontend", dst: "Matterbridge", params: {} });
   };
 
   const handleRebootClick = () => {
-    sendMessage({ method: "/api/reboot", src: "Frontend", dst: "Matterbridge", params: {} });
+    sendMessage({ id: uniqueId.current, method: "/api/reboot", src: "Frontend", dst: "Matterbridge", params: {} });
   };
 
   const handleStartAdvertiseClick = () => {
-    sendMessage({ method: "/api/advertise", src: "Frontend", dst: "Matterbridge", params: {} });
+    sendMessage({ id: uniqueId.current, method: "/api/advertise", src: "Frontend", dst: "Matterbridge", params: {} });
   };
 
   const handleStopAdvertiseClick = () => {
-    sendMessage({ method: "/api/stopadvertise", src: "Frontend", dst: "Matterbridge", params: {} });
+    sendMessage({ id: uniqueId.current, method: "/api/stopadvertise", src: "Frontend", dst: "Matterbridge", params: {} });
   };
 
   const handleMenuOpen = (event) => {
@@ -198,26 +204,29 @@ function Header() {
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
       /* Header listener */
-      if (debug) console.log('Header received WebSocket Message:', msg);
+      // if (debug) console.log(`Header received WebSocket Message id ${msg.id}:`, msg);
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
+        // Local messages
+        if (msg.id === uniqueId.current && msg.method === '/api/settings') {
+          if (debug) console.log('Header received settings:', msg.response);
+          setSettings(msg.response);
+          setRestart(msg.response.matterbridgeInformation.restartRequired);
+          setUpdate(msg.response.matterbridgeInformation.updateRequired);
+        }
+        // Broadcast messages
         if (msg.method === 'refresh_required') {
-          if (debug) console.log('Header received refresh_required');
-          sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+          if (msg.params.changed === null || msg.params.changed === 'settings' || msg.params.changed === 'fabrics') {
+            if (debug) console.log(`Header received refresh_required: changed: ${msg.params.changed}`);
+            sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+          }
         }
         if (msg.method === 'restart_required') {
           if (debug) console.log('Header received restart_required');
           setRestart(true);
         }
-        if (msg.method === '/api/settings') {
-          if (debug) console.log('Header received settings:', msg.response);
-          setSettings(msg.response);
-          setRestart(msg.response.matterbridgeInformation.restartRequired);
-        }
-        if (msg.method === '/api/advertise') {
-          if (debug) console.log('Header received advertise:', msg.response);
-        }
-        if (msg.method === '/api/stopadvertise') {
-          if (debug) console.log('Header received advertise:', msg.response);
+        if (msg.method === 'update_required') {
+          if (debug) console.log('Header received update_required');
+          setUpdate(true);
         }
         if (msg.id === WS_ID_SHELLY_SYS_UPDATE) {
           if (debug) console.log('Header received WS_ID_SHELLY_SYS_UPDATE:');
@@ -232,23 +241,24 @@ function Header() {
     };
 
     addListener(handleWebSocketMessage);
-    if (debug) console.log('Header added WebSocket listener');
+    if (debug) console.log(`Header added WebSocket listener id ${uniqueId.current}`);
 
     return () => {
       removeListener(handleWebSocketMessage);
-      if (debug) console.log('Header removed WebSocket listener');
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      if (debug) console.log(`Header removed WebSocket listener id ${uniqueId.current}`);
     };
   }, [addListener, removeListener, sendMessage, showSnackbarMessage]);
 
   useEffect(() => {
     if (online) {
       if (debug) console.log('Header sending /api/settings requests');
-      sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   }, [online, sendMessage]);
 
   if(debug) console.log('Header rendering...');
-  if (!online || settings.matterbridgeInformation === undefined) {
+  if (!online || !settings) {
     return null;
   }
   return (
@@ -317,7 +327,7 @@ function Header() {
         </Tooltip>
         {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
           <Tooltip title="Update matterbridge">
-            <IconButton onClick={handleUpdateClick}>
+            <IconButton style={{ color: update ? 'var(--primary-color)' : undefined }} onClick={handleUpdateClick}>
               <SystemUpdateAltIcon />
             </IconButton>
           </Tooltip>
@@ -337,7 +347,7 @@ function Header() {
           </Tooltip>
         }
         <Tooltip title="Restart matterbridge">
-          <IconButton style={{ color: restart ? 'var(--primary-color)' : '' }} onClick={handleRestartClick}>
+          <IconButton style={{ color: restart ? 'var(--primary-color)' : undefined }} onClick={handleRestartClick}>
             <RestartAltIcon />
           </IconButton>
         </Tooltip>
@@ -388,7 +398,7 @@ function Header() {
               <ListItemText primary="Reboot" />
             </MenuItem>
           }
-          {settings.matterbridgeInformation.matterbridgePaired === true && settings.matterbridgeInformation.matterbridgeAdvertise === false?
+          {settings.matterbridgeInformation.matterbridgePaired === true && settings.matterbridgeInformation.matterbridgeAdvertise === false ?
             <MenuItem onClick={() => handleMenuCloseConfirm('startshare')}>
               <ListItemIcon><IosShareIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
               <ListItemText primary="Share fabrics" />
