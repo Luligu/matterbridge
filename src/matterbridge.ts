@@ -143,6 +143,7 @@ export class Matterbridge extends EventEmitter {
   public profile = getParameter('profile');
   public shutdown = false;
   public edge = true;
+  private readonly failCountLimit = hasParameter('shelly') ? 120 : 60;
 
   public log!: AnsiLogger;
   public matterbrideLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
@@ -1494,9 +1495,9 @@ export class Matterbridge extends EventEmitter {
         }
 
         if (!plugin.loaded || !plugin.started) {
-          this.log.debug(`Waiting (failSafeCount=${failCount}/60) in startMatterInterval interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
+          this.log.debug(`Waiting (failSafeCount=${failCount}/${this.failCountLimit}) in startMatterInterval interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`);
           failCount++;
-          if (failCount > 60) {
+          if (failCount > this.failCountLimit) {
             this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error state.`);
             plugin.error = true;
           }
@@ -1569,9 +1570,9 @@ export class Matterbridge extends EventEmitter {
         this.log.debug(`Checking plugin ${plg}${plugin.name}${db} to start matter in childbridge mode...`);
         if (!plugin.loaded || !plugin.started) {
           allStarted = false;
-          this.log.debug(`Waiting (failSafeCount=${failCount}/60) for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
+          this.log.debug(`Waiting (failSafeCount=${failCount}/${this.failCountLimit}) for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`);
           failCount++;
-          if (failCount > 60) {
+          if (failCount > this.failCountLimit) {
             this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error mode.`);
             plugin.error = true;
           }
