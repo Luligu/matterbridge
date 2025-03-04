@@ -157,7 +157,7 @@ export function HomePlugins({selectPlugin}) {
           {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.original.error && plugin.original.enabled && 
             <Tooltip title="Shows the QRCode or the fabrics"><IconButton style={{ margin: '0', padding: '0' }} onClick={() => selectPlugin(plugin.original)} size="small"><QrCode2/></IconButton></Tooltip>
           }
-          <Tooltip title="Plugin config"><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleConfigPlugin(plugin.original)} size="small"><Settings/></IconButton></Tooltip>
+          <Tooltip title="Plugin config"><IconButton disabled={matterbridgeInfo?.restartRequired === true} style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleConfigPlugin(plugin.original)} size="small"><Settings/></IconButton></Tooltip>
           {matterbridgeInfo && !matterbridgeInfo.readOnly &&
             <Tooltip title="Remove the plugin"><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => { handleActionWithConfirmCancel('Remove plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'remove', plugin.original); }} size="small"><DeleteForever/></IconButton></Tooltip>
           }
@@ -220,6 +220,10 @@ export function HomePlugins({selectPlugin}) {
           if(debug) console.log('HomePlugins received refresh_required for', msg.params.changed);
           // sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
           sendMessage({ id: uniqueId.current, method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+        }
+        if (msg.method === 'restart_required') {
+          if(debug) console.log('HomePlugins received restart_required');
+          sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         // Local messages
         if (msg.id === uniqueId.current && msg.method === '/api/settings') {

@@ -166,7 +166,7 @@ export function WebSocketProvider({ children }) {
           return;
         } else if (msg.id === WS_ID_SNACKBAR) {
           if (debug) console.log(`WebSocket WS_ID_SNACKBAR message:`, msg, 'listeners:', listenersRef.current.length);
-          showSnackbarMessage(msg.params.message, msg.params.timeout);
+          showSnackbarMessage(msg.params.message, msg.params.timeout, msg.params.severity);
           return;
         } else if (msg.id === WS_ID_SHELLY_SYS_UPDATE) {
           if (debug) console.log(`WebSocket WS_ID_SHELLY_SYS_UPDATE message:`, msg, 'listeners:', listenersRef.current.length);

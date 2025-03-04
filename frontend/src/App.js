@@ -21,8 +21,11 @@ import { WebSocketProvider } from './components/WebSocketProvider';
 import { UiProvider } from './components/UiProvider';
 import { createMuiTheme, getCssVariable } from './components/muiTheme';
 
-export const debug = false;
+export var debug = false;
 
+export const toggleDebug = () => {
+  debug = !debug;
+}
 // Create a context for the authentication state
 const AuthContext = createContext();
 
@@ -121,7 +124,7 @@ function LoginForm() {
     setPrimaryColor(primaryColorFromCSS);
   }, []);
 
-  const baseName = window.location.href.includes("/matterbridge/") ? "/matterbridge" :
+  const baseName = window.location.pathname.includes("/matterbridge/") ? "/matterbridge" :
   window.location.href.includes("/api/hassio_ingress/") ? window.location.pathname :
   "/";
   console.log(`Loading App.js: href="${window.location.href}" pathname="${window.location.pathname}" baseName="${baseName}"`);

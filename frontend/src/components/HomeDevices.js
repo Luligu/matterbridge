@@ -25,8 +25,8 @@ import { mdiSortAscending, mdiSortDescending } from '@mdi/js';
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
-// import { debug } from '../App';
-const debug = true;
+import { debug } from '../App';
+// const debug = true;
 
 
 export function HomeDevicesTable({ data, columns, columnVisibility }) {

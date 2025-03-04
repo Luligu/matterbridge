@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars */
+ 
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-console */
 // React
@@ -20,7 +20,7 @@ export function UiProvider({ children }) {
   // Snackbar
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
-  const showSnackbarMessage = useCallback((message, timeout, variant) => {
+  const showSnackbarMessage = useCallback((message, timeout, severity) => {
     // default | error | success | warning | info
     if(debug) console.log(`UiProvider showSnackbarMessage: message ${message} timeout ${timeout}`);
     enqueueSnackbar(message, { 
@@ -32,10 +32,10 @@ export function UiProvider({ children }) {
         <Box key={key} sx={{ margin: '0', padding: '0', width: '300px', marginRight: '30px' }}> 
           <Alert
             key={key}
-            severity="info"
+            severity={severity ?? "info"}
             variant="filled"
             sx={{
-              backgroundColor: 'var(--primary-color)',
+              // backgroundColor: 'var(--primary-color)',
               color: '#fff',
               fontWeight: 'normal',
               width: '100%',

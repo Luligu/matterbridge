@@ -22,7 +22,7 @@ import BlockIcon from '@mui/icons-material/Block';
 import { sendCommandToMatterbridge } from './sendApiCommand';
 import { UiContext } from './UiProvider';
 import { WebSocketContext, WS_ID_SHELLY_SYS_UPDATE, WS_ID_SHELLY_MAIN_UPDATE } from './WebSocketProvider';
-import { debug } from '../App';
+import { debug, toggleDebug } from '../App';
 // const debug = true;
 
 function Header() {
@@ -215,7 +215,7 @@ function Header() {
         }
         // Broadcast messages
         if (msg.method === 'refresh_required') {
-          if (msg.params.changed === null || msg.params.changed === 'settings' || msg.params.changed === 'fabrics') {
+          if (msg.params.changed === null || msg.params.changed === 'matterbridgeLatestVersion' || msg.params.changed === 'fabrics') {
             if (debug) console.log(`Header received refresh_required: changed=${msg.params.changed}`);
             sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
           }
@@ -256,6 +256,11 @@ function Header() {
     }
   }, [online, sendMessage]);
 
+  const handleLogoClick = () => {
+    toggleDebug();
+    if (debug) console.log('Matterbridge logo clicked: debug is now', debug);
+  };
+
   if(debug) console.log('Header rendering...');
   if (!online || !settings) {
     return null;
@@ -263,7 +268,7 @@ function Header() {
   return (
     <div className="header">
       <div className="sub-header">
-        <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '30px' }} />
+        <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '30px' }} onClick={handleLogoClick}/>
         <h2 style={{ fontSize: '22px', color: 'var(--main-icon-color)', margin: '0px' }}>Matterbridge</h2>
         <nav>
           <Link to="/" className="nav-link">Home</Link>
@@ -278,14 +283,14 @@ function Header() {
             <span className="status-sponsor" onClick={handleSponsorClick}>Sponsor</span>
           </Tooltip>
         }
-        {!settings.matterbridgeInformation.readOnly && (settings.matterbridgeInformation.matterbridgeLatestVersion === undefined || settings.matterbridgeInformation.matterbridgeVersion === settings.matterbridgeInformation.matterbridgeLatestVersion) &&
+        {!settings.matterbridgeInformation.readOnly && !update &&
           <Tooltip title="Matterbridge version">
             <span className="status-information" onClick={handleChangelogClick}>
               v.{settings.matterbridgeInformation.matterbridgeVersion}
             </span>
           </Tooltip>
         }
-        {!settings.matterbridgeInformation.readOnly && settings.matterbridgeInformation.matterbridgeLatestVersion !== undefined && settings.matterbridgeInformation.matterbridgeVersion !== settings.matterbridgeInformation.matterbridgeLatestVersion &&
+        {!settings.matterbridgeInformation.readOnly && update &&
           <Tooltip title="New Matterbridge version available, click to install">
             <span className="status-warning" onClick={handleUpdateClick}>
               Update v.{settings.matterbridgeInformation.matterbridgeVersion} to v.{settings.matterbridgeInformation.matterbridgeLatestVersion}

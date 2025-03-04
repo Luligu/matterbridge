@@ -17,7 +17,7 @@ export function SystemInfoTable({ systemInfo, compact }) {
   // WebSocket context
   const { sendMessage, addListener, removeListener } = useContext(WebSocketContext);
 
-  if(debug) console.log('SystemInfoTable:', localSystemInfo, compact);
+  if(debug) console.log('SystemInfoTable:', localSystemInfo, 'compact:', compact);
 
   if (compact && localSystemInfo.totalMemory) {
     const totalMemory = localSystemInfo.totalMemory;
@@ -89,8 +89,6 @@ export function SystemInfoTable({ systemInfo, compact }) {
       if(debug) console.log('SystemInfoTable useEffect WebSocketMessage unmounted');
     };
   }, [addListener, removeListener, sendMessage]);
-
-  if(debug) console.log('SystemInfoTable rendering...');
 
   if (!localSystemInfo) return null;
 
