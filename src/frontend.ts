@@ -26,12 +26,13 @@ import { EndpointServer, Logger, LogLevel as MatterLogLevel, LogFormat as Matter
 
 // Node modules
 import { Server as HttpServer, createServer, IncomingMessage } from 'node:http';
-import https from 'https';
-import express from 'express';
-import WebSocket, { WebSocketServer } from 'ws';
 import os from 'node:os';
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
+import https from 'https';
+import express from 'express';
+import WebSocket, { WebSocketServer } from 'ws';
+import multer from 'multer';
 
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from './logger/export.js';
@@ -43,6 +44,9 @@ import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { hasParameter } from './utils/export.js';
 import { BridgedDeviceBasicInformation } from '@matter/main/clusters';
+
+// Cli
+import { cliEmitter } from './cli.js';
 
 /**
  * Websocket message ID for logging.
@@ -147,6 +151,11 @@ export class Frontend {
     this.port = port;
     this.log.debug(`Initializing the frontend ${hasParameter('ssl') ? 'https' : 'http'} server on port ${YELLOW}${this.port}${db}`);
 
+    // Initialize multer with the upload directory
+    const uploadDir = path.join(this.matterbridge.matterbridgeDirectory, 'uploads');
+    await fs.mkdir(uploadDir, { recursive: true });
+    const upload = multer({ dest: uploadDir });
+
     // Create the express app that serves the frontend
     this.expressApp = express();
 
@@ -157,6 +166,8 @@ export class Frontend {
       next();
     });
     */
+    // Increase the request body size limit
+    this.expressApp.use(express.json({ limit: '50mb' }));
 
     // Serve static files from '/static' endpoint
     this.expressApp.use(express.static(path.join(this.matterbridge.rootDirectory, 'frontend/build')));
@@ -306,8 +317,6 @@ export class Frontend {
     });
 
     // Subscribe to cli events
-    const { cliEmitter } = await import('./cli.js');
-
     cliEmitter.on('uptime', (systemUptime: string, processUptime: string) => {
       this.wssSendUptimeUpdate(systemUptime, processUptime);
     });
@@ -642,7 +651,7 @@ export class Frontend {
     });
 
     // Endpoint to receive commands
-    this.expressApp.post('/api/command/:command/:param', express.json(), async (req, res) => {
+    this.expressApp.post('/api/command/:command/:param', express.json(), async (req, res): Promise<void> => {
       const command = req.params.command;
       let param = req.params.param;
       this.log.debug(`The frontend sent /api/command/${command}/${param}`);
@@ -980,6 +989,38 @@ export class Frontend {
       }
     });
 
+    this.expressApp.post('/api/uploadpackage', upload.single('file'), async (req, res) => {
+      const { filename } = req.body;
+      const file = req.file;
+
+      if (!file || !filename) {
+        this.log.error(`uploadpackage: invalid request: file and filename are required`);
+        res.status(400).send('Invalid request: file and filename are required');
+        return;
+      }
+
+      // Define the path where the plugin file will be saved
+      const filePath = path.join(this.matterbridge.matterbridgeDirectory, 'uploads', filename);
+
+      try {
+        // Move the uploaded file to the specified path
+        await fs.rename(file.path, filePath);
+        this.log.info(`File ${plg}${filename}${nf} uploaded successfully`);
+
+        // Install the plugin package
+        if (filename.endsWith('.tgz')) {
+          await this.matterbridge.spawnCommand('npm', ['install', '-g', filePath, '--omit=dev', '--verbose']);
+          this.log.info(`Plugin package ${plg}${filename}${nf} installed successfully. Full restart required.`);
+          this.wssSendSnackbarMessage(`Installed package ${filename}`, 10, 'success');
+          this.wssSendRestartRequired();
+          res.send(`Plugin package ${filename} uploaded and installed successfully`);
+        } else res.send(`File ${filename} uploaded successfully`);
+      } catch (err) {
+        this.log.error(`Error uploading or installing plugin package file ${plg}${filename}${er}:`, err);
+        res.status(500).send(`Error uploading or installing plugin package ${filename}`);
+      }
+    });
+
     // Fallback for routing (must be the last route)
     this.expressApp.get('*', (req, res) => {
       this.log.debug('The frontend sent:', req.url);
@@ -991,6 +1032,9 @@ export class Frontend {
   }
 
   async stop() {
+    // Remove all listeners from the cliEmitter
+    cliEmitter.removeAllListeners();
+
     // Close the http server
     if (this.httpServer) {
       this.httpServer.close();
@@ -1744,20 +1788,26 @@ export class Frontend {
 
   /**
    * Sends a cpu update message to all connected clients.
+   * @param {string} message - The message to send.
+   * @param {number} timeout - The timeout in seconds for the snackbar message.
+   * @param {'info' | 'warning' | 'error' | 'success'} severity - The severity of the snackbar message (default info).
    *
    */
-  wssSendSnackbarMessage(message: string, timeout = 5) {
+  wssSendSnackbarMessage(message: string, timeout = 5, severity: 'info' | 'warning' | 'error' | 'success' = 'info') {
     this.log.debug('Sending a snackbar message to all connected clients');
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ id: WS_ID_SNACKBAR, src: 'Matterbridge', dst: 'Frontend', method: 'memory_update', params: { message, timeout } }));
+        client.send(JSON.stringify({ id: WS_ID_SNACKBAR, src: 'Matterbridge', dst: 'Frontend', method: 'memory_update', params: { message, timeout, severity } }));
       }
     });
   }
 
   /**
    * Sends a message to all connected clients.
+   * @param {number} id - The message id.
+   * @param {string} method - The message method.
+   * @param {Record<string, string | number | boolean>} params - The message parameters.
    *
    */
   wssBroadcastMessage(id: number, method?: string, params?: Record<string, string | number | boolean>) {

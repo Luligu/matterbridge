@@ -1491,6 +1491,7 @@ export class Matterbridge extends EventEmitter {
           this.log.error(`The plugin ${plg}${plugin.name}${er} is in error state.`);
           this.log.error('The bridge will not start until the problem is solved to prevent the controllers from deleting all registered devices.');
           this.log.error('If you want to start the bridge disable the plugin in error state and restart.');
+          this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} is in error state. Check the logs.`, 0, 'error');
           return;
         }
 
@@ -1516,7 +1517,9 @@ export class Matterbridge extends EventEmitter {
         for (const plugin of this.plugins) {
           if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
           try {
-            await this.plugins.configure(plugin);
+            if ((await this.plugins.configure(plugin)) === undefined) {
+              this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} failed to configure. Check the logs.`, 0, 'error');
+            }
           } catch (error) {
             plugin.error = true;
             this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
@@ -1564,6 +1567,7 @@ export class Matterbridge extends EventEmitter {
           this.log.error(`The plugin ${plg}${plugin.name}${er} is in error state.`);
           this.log.error('The bridge will not start until the problem is solved to prevent the controllers from deleting all registered devices.');
           this.log.error('If you want to start the bridge disable the plugin in error state and restart.');
+          this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} is in error state. Check the logs.`, 0, 'error');
           return;
         }
 
@@ -1588,7 +1592,9 @@ export class Matterbridge extends EventEmitter {
         for (const plugin of this.plugins) {
           if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
           try {
-            await this.plugins.configure(plugin); // TODO No await do it in parallel
+            if ((await this.plugins.configure(plugin)) === undefined) {
+              this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} failed to configure. Check the logs.`, 0, 'error');
+            }
           } catch (error) {
             plugin.error = true;
             this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
@@ -2075,7 +2081,7 @@ export class Matterbridge extends EventEmitter {
       }
       this.frontend.wssSendRefreshRequired('plugins');
       this.frontend.wssSendRefreshRequired('settings');
-      this.frontend.wssSendSnackbarMessage(`${storeId} is online`);
+      this.frontend.wssSendSnackbarMessage(`${storeId} is online`, 5, 'success');
     });
 
     /** This event is triggered when the device went offline. it is not longer discoverable or connectable in the network. */
@@ -2100,7 +2106,7 @@ export class Matterbridge extends EventEmitter {
       }
       this.frontend.wssSendRefreshRequired('plugins');
       this.frontend.wssSendRefreshRequired('settings');
-      this.frontend.wssSendSnackbarMessage(`${storeId} is offline`);
+      this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
     });
 
     /**
