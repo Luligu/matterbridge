@@ -29,7 +29,7 @@ export function UiProvider({ children }) {
       persist: timeout === 0,
       dense: true,
       content: (key) => (
-        <Box key={key} sx={{ width: '300px', marginRight: '30px' }}> 
+        <Box key={key} sx={{ margin: '0', padding: '0', width: '300px', marginRight: '30px' }}> 
           <Alert
             key={key}
             severity="info"
@@ -40,7 +40,7 @@ export function UiProvider({ children }) {
               fontWeight: 'normal',
               width: '100%',
               cursor: 'pointer', 
-
+              padding: '2px 10px',
             }}
             onClick={() => closeSnackbar(key)}
             action={
