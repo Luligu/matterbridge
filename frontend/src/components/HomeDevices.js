@@ -108,6 +108,7 @@ export function HomeDevices() {
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
   // States
   const [restart, setRestart] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [_systemInfo, setSystemInfo] = useState(null);
   const [_matterbridgeInfo, setMatterbridgeInfo] = useState(null);
   const [plugins, setPlugins] = useState([]);
@@ -214,6 +215,17 @@ export function HomeDevices() {
         if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
           if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} plugins:`, msg.response);
           if(msg.response) {
+
+            let running = true;
+            for (const plugin of msg.response) {
+              if(plugin.enabled!==true) continue;
+              if(plugin.loaded!==true || plugin.started!==true || plugin.configured!==true || plugin.error===true) {
+                running = false;
+              }
+            }
+            if(!running) return;
+
+            setLoading(false);
             setPlugins(msg.response);
             setDevices([]);
             setSelectDevices([]);
@@ -222,7 +234,7 @@ export function HomeDevices() {
             if(debug) console.log(`HomeDevices sent /api/devices`);
 
             for (const plugin of msg.response) {
-              if(plugin.started===true && plugin.error!==true) {
+              if(plugin.enabled===true && plugin.loaded===true && plugin.started===true && plugin.configured===true && plugin.error!==true) {
                 sendMessage({ id: uniqueId.current, method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name} });
                 if(debug) console.log(`HomeDevices sent /api/select/devices for plugin: ${plugin.name}`);
               } 
@@ -373,11 +385,9 @@ export function HomeDevices() {
           <HomeDevicesTable data={mixedDevices} columns={devicesColumns} columnVisibility={devicesColumnVisibility}/>
         </div>
         <div className="MbfWindowFooter" style={{margin: '0', padding: '0px', paddingLeft: '10px', paddingRight: '10px', borderTop: '1px solid var(--table-border-color)', display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
-            <p className="MbfWindowFooterText" style={{margin: '0', padding: '5px', fontWeight: 'normal', fontSize: '14px', color: 'var(--secondary-color)'}}>Registered devices: {devices.length.toString()}</p>
-            {restart && 
-              <p className="MbfWindowFooterText" style={{margin: '0', padding: '2px', fontWeight: 'normal', fontSize: '14px', color:'var(--secondary-color)'}}>Restart required</p>
-            }  
-
+            {loading && <p className="MbfWindowFooterText" style={{margin: '0', padding: '2px', fontWeight: 'normal', fontSize: '14px', color:'var(--secondary-color)'}}>Waiting for plugins...</p>}  
+            {!loading && <p className="MbfWindowFooterText" style={{margin: '0', padding: '5px', fontWeight: 'normal', fontSize: '14px', color: 'var(--secondary-color)'}}>Registered devices: {devices.length.toString()}</p>}
+            {restart && <p className="MbfWindowFooterText" style={{margin: '0', padding: '2px', fontWeight: 'normal', fontSize: '14px', color:'var(--secondary-color)'}}>Restart required</p>}  
         </div>
       </div>
 
