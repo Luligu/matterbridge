@@ -166,8 +166,6 @@ export class Frontend {
       next();
     });
     */
-    // Increase the request body size limit
-    this.expressApp.use(express.json({ limit: '50mb' }));
 
     // Serve static files from '/static' endpoint
     this.expressApp.use(express.static(path.join(this.matterbridge.rootDirectory, 'frontend/build')));
