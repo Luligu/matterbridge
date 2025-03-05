@@ -45,9 +45,6 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { hasParameter } from './utils/export.js';
 import { BridgedDeviceBasicInformation } from '@matter/main/clusters';
 
-// Cli
-import { cliEmitter } from './cli.js';
-
 /**
  * Websocket message ID for logging.
  * @constant {number}
@@ -116,11 +113,6 @@ export const WS_ID_SHELLY_SYS_UPDATE = 100;
  */
 export const WS_ID_SHELLY_MAIN_UPDATE = 101;
 
-/**
- * Initializes the frontend of Matterbridge.
- *
- * @param port The port number to run the frontend server on. Default is 8283.
- */
 export class Frontend {
   private matterbridge: Matterbridge;
   private log: AnsiLogger;
@@ -315,6 +307,7 @@ export class Frontend {
     });
 
     // Subscribe to cli events
+    const { cliEmitter } = await import('./cli.js');
     cliEmitter.on('uptime', (systemUptime: string, processUptime: string) => {
       this.wssSendUptimeUpdate(systemUptime, processUptime);
     });
@@ -1031,7 +1024,7 @@ export class Frontend {
 
   async stop() {
     // Remove all listeners from the cliEmitter
-    cliEmitter.removeAllListeners();
+    // cliEmitter.removeAllListeners();
 
     // Close the http server
     if (this.httpServer) {
