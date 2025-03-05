@@ -4,8 +4,10 @@
 import React, { useEffect, useState, useContext, useCallback, useRef } from 'react';
 
 // @mui/material
+import Button from '@mui/material/Button';
 
 // @mui/icons-material
+import Refresh from '@mui/icons-material/Refresh';
 
 // Frontend
 import { WebSocketLogs } from './WebSocketLogs';
@@ -28,6 +30,7 @@ function Home() {
   const [selectPlugin, setSelectPlugin] = useState(undefined);
   const [homePagePlugins] = useState(localStorage.getItem('homePagePlugins')==='false' ? false : true); // default true
   const [homePageMode, setHomePageMode] = useState(localStorage.getItem('homePageMode')??'logs'); // default logs
+  const [browserRefresh, setBrowserRefresh] = useState(false);
   // Contexts
   const { addListener, removeListener, online, sendMessage, logFilterLevel, logFilterSearch, autoScroll, getUniqueId } = useContext(WebSocketContext);
   // Refs
@@ -55,6 +58,10 @@ function Home() {
           if (debug) console.log('Home received settings:', msg.response);
           setSystemInfo(msg.response.systemInformation);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
+          if(msg.response.matterbridgeInformation.matterbridgeVersion !== localStorage.getItem('matterbridgeVersion')) {
+            localStorage.setItem('matterbridgeVersion', msg.response.matterbridgeInformation.matterbridgeVersion);
+            setBrowserRefresh(true);
+          }
           if(msg.response.matterbridgeInformation.shellyBoard) {
             if(!localStorage.getItem('homePageMode')) {
               localStorage.setItem('homePageMode', 'devices');
@@ -96,6 +103,19 @@ function Home() {
 
       {/* Right column */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: '20px' }}>
+
+        {/* Refresh page */}
+        {browserRefresh &&
+          <div className="MbfWindowDiv" style={{ flex: '0 0 auto', width: '100%', overflow: 'hidden' }}>
+            <div className="MbfWindowHeader">
+              <p className="MbfWindowHeaderText">Update</p>
+            </div>
+            <div className="MbfWindowBody" style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <h4 style={{ margin: 0 }}>Matterbridge has been updated. You are viewing an outdated web UI. Please refresh the page now.</h4>
+              <Button onClick={() => window.location.reload()} endIcon={<Refresh />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>Refresh</Button>
+            </div>
+          </div>
+        }
 
         {/* Install plugins */}
         {homePagePlugins && !matterbridgeInfo.readOnly &&
