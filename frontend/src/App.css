@@ -18,7 +18,7 @@
   --main-label-color: var(--main-grey-color);
 
   --primary-color: #009a00;
-  --secondary-color: #316dc7;
+  --secondary-color: #92771f;
 
   --header-bg-color: var(--primary-color);
   --header-text-color: white;
@@ -472,6 +472,15 @@ h3 {
   text-align: center;
   margin: 0px;
   padding: 5px;
+}
+
+/* Define the style for the body element */
+.MbfWindowBody {
+  display: flex;
+  flex: 1 1 auto;
+  margin: 0px;
+  padding: 10px;
+  gap: 10px;
 }
 
 /* Define the style for the body element */

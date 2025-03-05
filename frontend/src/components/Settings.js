@@ -88,9 +88,6 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
   const [homePagePlugins, setHomePagePlugins] = useState(localStorage.getItem('homePagePlugins')==='false' ? false : true);
   const [homePageMode, setHomePageMode] = useState(localStorage.getItem('homePageMode')??'logs');
 
-  // Ui context
-  const { showSnackbarMessage } = useContext(UiContext);
-
   // WebSocket context
   const { sendMessage } = useContext(WebSocketContext);
 
@@ -134,7 +131,6 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
     if(debug) console.log('handleChangeBridgeMode called with value:', event.target.value);
     setSelectedBridgeMode(event.target.value);
     sendCommandToMatterbridge('setbridgemode', event.target.value);
-    showSnackbarMessage('Restart Matterbridge to apply changes', 5);
   };
 
   // Define a function to handle change debug level

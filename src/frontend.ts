@@ -26,12 +26,13 @@ import { EndpointServer, Logger, LogLevel as MatterLogLevel, LogFormat as Matter
 
 // Node modules
 import { Server as HttpServer, createServer, IncomingMessage } from 'node:http';
-import https from 'https';
-import express from 'express';
-import WebSocket, { WebSocketServer } from 'ws';
 import os from 'node:os';
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
+import https from 'https';
+import express from 'express';
+import WebSocket, { WebSocketServer } from 'ws';
+import multer from 'multer';
 
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from './logger/export.js';
@@ -87,6 +88,12 @@ export const WS_ID_UPTIME_UPDATE = 5;
 export const WS_ID_SNACKBAR = 6;
 
 /**
+ * Websocket message ID indicating a memory update.
+ * @constant {number}
+ */
+export const WS_ID_UPDATE_NEEDED = 7;
+
+/**
  * Websocket message ID indicating a shelly system update.
  * check:
  * curl -k http://127.0.0.1:8101/api/updates/sys/check
@@ -106,11 +113,6 @@ export const WS_ID_SHELLY_SYS_UPDATE = 100;
  */
 export const WS_ID_SHELLY_MAIN_UPDATE = 101;
 
-/**
- * Initializes the frontend of Matterbridge.
- *
- * @param port The port number to run the frontend server on. Default is 8283.
- */
 export class Frontend {
   private matterbridge: Matterbridge;
   private log: AnsiLogger;
@@ -140,6 +142,11 @@ export class Frontend {
   async start(port = 8283) {
     this.port = port;
     this.log.debug(`Initializing the frontend ${hasParameter('ssl') ? 'https' : 'http'} server on port ${YELLOW}${this.port}${db}`);
+
+    // Initialize multer with the upload directory
+    const uploadDir = path.join(this.matterbridge.matterbridgeDirectory, 'uploads');
+    await fs.mkdir(uploadDir, { recursive: true });
+    const upload = multer({ dest: uploadDir });
 
     // Create the express app that serves the frontend
     this.expressApp = express();
@@ -301,7 +308,6 @@ export class Frontend {
 
     // Subscribe to cli events
     const { cliEmitter } = await import('./cli.js');
-
     cliEmitter.on('uptime', (systemUptime: string, processUptime: string) => {
       this.wssSendUptimeUpdate(systemUptime, processUptime);
     });
@@ -636,7 +642,7 @@ export class Frontend {
     });
 
     // Endpoint to receive commands
-    this.expressApp.post('/api/command/:command/:param', express.json(), async (req, res) => {
+    this.expressApp.post('/api/command/:command/:param', express.json(), async (req, res): Promise<void> => {
       const command = req.params.command;
       let param = req.params.param;
       this.log.debug(`The frontend sent /api/command/${command}/${param}`);
@@ -907,7 +913,7 @@ export class Frontend {
             (this.matterbridge as any).createDynamicPlugin(plugin, true);
           }
           this.matterbridge.plugins.load(plugin, true, 'The plugin has been added', true).then(() => {
-            this.wssSendRefreshRequired();
+            this.wssSendRefreshRequired('plugins');
           });
         }
         res.json({ message: 'Command received' });
@@ -922,9 +928,9 @@ export class Frontend {
           await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been removed.', true); // This will also close the server node in childbridge mode
           await this.matterbridge.plugins.remove(param);
           this.wssSendSnackbarMessage(`Removed plugin ${param}`);
+          this.wssSendRefreshRequired('plugins');
         }
         res.json({ message: 'Command received' });
-        this.wssSendRefreshRequired();
         return;
       }
       // Handle the command enableplugin from Home
@@ -949,12 +955,11 @@ export class Frontend {
               (this.matterbridge as any).createDynamicPlugin(plugin, true);
             }
             this.matterbridge.plugins.load(plugin, true, 'The plugin has been enabled', true).then(() => {
-              this.wssSendRefreshRequired();
+              this.wssSendRefreshRequired('plugins');
             });
           }
         }
         res.json({ message: 'Command received' });
-        this.wssSendRefreshRequired();
         return;
       }
       // Handle the command disableplugin from Home
@@ -967,11 +972,43 @@ export class Frontend {
             await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been disabled.', true); // This will also close the server node in childbridge mode
             await this.matterbridge.plugins.disable(param);
             this.wssSendSnackbarMessage(`Disabled plugin ${param}`);
+            this.wssSendRefreshRequired('plugins');
           }
         }
         res.json({ message: 'Command received' });
-        this.wssSendRefreshRequired();
         return;
+      }
+    });
+
+    this.expressApp.post('/api/uploadpackage', upload.single('file'), async (req, res) => {
+      const { filename } = req.body;
+      const file = req.file;
+
+      if (!file || !filename) {
+        this.log.error(`uploadpackage: invalid request: file and filename are required`);
+        res.status(400).send('Invalid request: file and filename are required');
+        return;
+      }
+
+      // Define the path where the plugin file will be saved
+      const filePath = path.join(this.matterbridge.matterbridgeDirectory, 'uploads', filename);
+
+      try {
+        // Move the uploaded file to the specified path
+        await fs.rename(file.path, filePath);
+        this.log.info(`File ${plg}${filename}${nf} uploaded successfully`);
+
+        // Install the plugin package
+        if (filename.endsWith('.tgz')) {
+          await this.matterbridge.spawnCommand('npm', ['install', '-g', filePath, '--omit=dev', '--verbose']);
+          this.log.info(`Plugin package ${plg}${filename}${nf} installed successfully. Full restart required.`);
+          this.wssSendSnackbarMessage(`Installed package ${filename}`, 10, 'success');
+          this.wssSendRestartRequired();
+          res.send(`Plugin package ${filename} uploaded and installed successfully`);
+        } else res.send(`File ${filename} uploaded successfully`);
+      } catch (err) {
+        this.log.error(`Error uploading or installing plugin package file ${plg}${filename}${er}:`, err);
+        res.status(500).send(`Error uploading or installing plugin package ${filename}`);
       }
     });
 
@@ -986,6 +1023,9 @@ export class Frontend {
   }
 
   async stop() {
+    // Remove all listeners from the cliEmitter
+    // cliEmitter.removeAllListeners();
+
     // Close the http server
     if (this.httpServer) {
       this.httpServer.close();
@@ -1350,14 +1390,14 @@ export class Frontend {
         this.matterbridge.matterbridgeInformation.matterbridgeAdvertise = true;
         this.matterbridge.matterbridgeQrPairingCode = pairingCodes?.qrPairingCode;
         this.matterbridge.matterbridgeManualPairingCode = pairingCodes?.manualPairingCode;
-        this.wssSendRefreshRequired();
+        this.wssSendRefreshRequired('matterbridgeAdvertise');
         this.wssSendSnackbarMessage(`Started fabrics share`, 0);
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: pairingCodes }));
         return;
       } else if (data.method === '/api/stopadvertise') {
         await this.matterbridge.stopAdvertiseServerNode(this.matterbridge.serverNode);
         this.matterbridge.matterbridgeInformation.matterbridgeAdvertise = false;
-        this.wssSendRefreshRequired();
+        this.wssSendRefreshRequired('matterbridgeAdvertise');
         this.wssSendSnackbarMessage(`Stopped fabrics share`, 0);
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src }));
         return;
@@ -1550,7 +1590,7 @@ export class Frontend {
             }
             if (plugin.platform) plugin.platform.config = config;
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin);
-            this.wssSendRestartRequired();
+            this.wssSendRestartRequired(false);
           }
         } else if (data.params.command === 'unselectdevice' && isValidString(data.params.plugin, 10) && isValidString(data.params.serial, 1)) {
           const plugin = this.matterbridge.plugins.get(data.params.plugin);
@@ -1563,6 +1603,12 @@ export class Frontend {
             if (config.postfix) {
               data.params.serial = data.params.serial.replace('-' + config.postfix, '');
             }
+            // Remove the serial from the whiteList if the whiteList exists and the serial is in it
+            if (isValidArray(config.whiteList, 1)) {
+              if (config.whiteList.includes(data.params.serial)) {
+                config.whiteList = config.whiteList.filter((serial) => serial !== data.params.serial);
+              }
+            }
             // Add the serial to the blackList
             if (isValidArray(config.blackList)) {
               if (!config.blackList.includes(data.params.serial)) {
@@ -1571,7 +1617,7 @@ export class Frontend {
             }
             if (plugin.platform) plugin.platform.config = config;
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin);
-            this.wssSendRestartRequired();
+            this.wssSendRestartRequired(false);
           }
         }
       } else {
@@ -1635,14 +1681,25 @@ export class Frontend {
   /**
    * Sends a need to refresh WebSocket message to all connected clients.
    *
+   * @param {string} changed - The changed value. If null, the whole page will be refreshed.
+   * possible values:
+   * - 'matterbridgeLatestVersion'
+   * - 'matterbridgeAdvertise'
+   * - 'online'
+   * - 'offline'
+   * - 'reachability'
+   * - 'settings'
+   * - 'plugins'
+   * - 'devices'
+   * - 'fabrics'
+   * - 'sessions'
    */
-  wssSendRefreshRequired() {
+  wssSendRefreshRequired(changed: string | null = null) {
     this.log.debug('Sending a refresh required message to all connected clients');
-    this.matterbridge.matterbridgeInformation.refreshRequired = true;
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ id: WS_ID_REFRESH_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', params: {} }));
+        client.send(JSON.stringify({ id: WS_ID_REFRESH_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', params: { changed: changed } }));
       }
     });
   }
@@ -1651,14 +1708,29 @@ export class Frontend {
    * Sends a need to restart WebSocket message to all connected clients.
    *
    */
-  wssSendRestartRequired() {
+  wssSendRestartRequired(snackbar = true) {
     this.log.debug('Sending a restart required message to all connected clients');
     this.matterbridge.matterbridgeInformation.restartRequired = true;
-    this.wssSendSnackbarMessage(`Restart required`, 0);
+    if (snackbar === true) this.wssSendSnackbarMessage(`Restart required`, 0);
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({ id: WS_ID_RESTART_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', params: {} }));
+      }
+    });
+  }
+
+  /**
+   * Sends a need to update WebSocket message to all connected clients.
+   *
+   */
+  wssSendUpdateRequired() {
+    this.log.debug('Sending an update required message to all connected clients');
+    this.matterbridge.matterbridgeInformation.updateRequired = true;
+    // Send the message to all connected clients
+    this.webSocketServer?.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ id: WS_ID_UPDATE_NEEDED, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', params: {} }));
       }
     });
   }
@@ -1707,20 +1779,26 @@ export class Frontend {
 
   /**
    * Sends a cpu update message to all connected clients.
+   * @param {string} message - The message to send.
+   * @param {number} timeout - The timeout in seconds for the snackbar message.
+   * @param {'info' | 'warning' | 'error' | 'success'} severity - The severity of the snackbar message (default info).
    *
    */
-  wssSendSnackbarMessage(message: string, timeout = 5) {
+  wssSendSnackbarMessage(message: string, timeout = 5, severity: 'info' | 'warning' | 'error' | 'success' = 'info') {
     this.log.debug('Sending a snackbar message to all connected clients');
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ id: WS_ID_SNACKBAR, src: 'Matterbridge', dst: 'Frontend', method: 'memory_update', params: { message, timeout } }));
+        client.send(JSON.stringify({ id: WS_ID_SNACKBAR, src: 'Matterbridge', dst: 'Frontend', method: 'memory_update', params: { message, timeout, severity } }));
       }
     });
   }
 
   /**
    * Sends a message to all connected clients.
+   * @param {number} id - The message id.
+   * @param {string} method - The message method.
+   * @param {Record<string, string | number | boolean>} params - The message parameters.
    *
    */
   wssBroadcastMessage(id: number, method?: string, params?: Record<string, string | number | boolean>) {

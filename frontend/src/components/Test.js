@@ -113,13 +113,17 @@ function Test() {
       sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
       sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
       sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+      showSnackbarMessage('Test useEffect online received online (info)', 30, 'info');
+      showSnackbarMessage('Test useEffect online received online (warning)', 30, 'warning');
+      showSnackbarMessage('Test useEffect online received online (error)', 30, 'error');
+      showSnackbarMessage('Test useEffect online received online (success)', 30, 'success');
     }
     if(debug) console.log('Test useEffect online mounted');
 
     return () => {
       if(debug) console.log('Test useEffect online unmounted');
     };
-  }, [online, sendMessage]);
+  }, [online, sendMessage, showSnackbarMessage]);
   
   if(debug) console.log('Test rendering...');
   if (!online) {

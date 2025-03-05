@@ -134,7 +134,7 @@ export interface MatterbridgeInformation {
   matterDiscriminator: number | undefined;
   matterPasscode: number | undefined;
   restartRequired: boolean;
-  refreshRequired: boolean;
+  updateRequired: boolean;
 }
 
 export interface SanitizedExposedFabricInformation {

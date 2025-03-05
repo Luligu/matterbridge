@@ -1,9 +1,12 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable no-console */
+
+// Frontend
+import { debug } from '../App';
+
 // Send a POST request to the Matterbridge API
 export function sendCommandToMatterbridge(command, param, body) {
   const sanitizedParam = param.replace(/\\/g, '*');
-  // console.log('sendCommandToMatterbridge:', command, param, sanitizedParam);
+  if(debug) console.log('sendCommandToMatterbridge:', command, param, sanitizedParam);
   fetch(`./api/command/${command}/${sanitizedParam}`, {
     method: 'POST',
     headers: {
@@ -19,7 +22,7 @@ export function sendCommandToMatterbridge(command, param, body) {
   })
    
   .then(json => {
-    // console.log('Command sent successfully:', json);
+    if(debug) console.log('Command sent successfully:', json);
   })
   .catch(error => {
     console.error('Error sending command:', error);

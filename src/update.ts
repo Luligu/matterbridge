@@ -63,7 +63,8 @@ async function getMatterbridgeLatestVersion(matterbridge: Matterbridge): Promise
       await matterbridge.nodeContext?.set<string>('matterbridgeLatestVersion', matterbridge.matterbridgeLatestVersion);
       if (matterbridge.matterbridgeVersion !== matterbridge.matterbridgeLatestVersion) {
         matterbridge.log.notice(`Matterbridge is out of date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${matterbridge.matterbridgeLatestVersion}.`);
-        matterbridge.frontend.wssSendRefreshRequired();
+        matterbridge.frontend.wssSendRefreshRequired('matterbridgeLatestVersion');
+        matterbridge.frontend.wssSendUpdateRequired();
       } else {
         matterbridge.log.debug(`Matterbridge is up to date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${matterbridge.matterbridgeLatestVersion}.`);
       }
@@ -89,7 +90,7 @@ async function getPluginLatestVersion(matterbridge: Matterbridge, plugin: Regist
       plugin.latestVersion = version;
       if (plugin.version !== plugin.latestVersion) {
         matterbridge.log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
-        matterbridge.frontend.wssSendRefreshRequired();
+        matterbridge.frontend.wssSendRefreshRequired('plugins');
       } else {
         matterbridge.log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
       }

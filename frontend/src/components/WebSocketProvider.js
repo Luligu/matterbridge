@@ -18,6 +18,7 @@ export const WS_ID_CPU_UPDATE = 3;
 export const WS_ID_MEMORY_UPDATE = 4;
 export const WS_ID_UPTIME_UPDATE = 5;
 export const WS_ID_SNACKBAR = 6;
+export const WS_ID_UPDATE_NEEDED = 7;
 
 /**
  * Websocket message ID indicating a shelly system update.
@@ -165,7 +166,7 @@ export function WebSocketProvider({ children }) {
           return;
         } else if (msg.id === WS_ID_SNACKBAR) {
           if (debug) console.log(`WebSocket WS_ID_SNACKBAR message:`, msg, 'listeners:', listenersRef.current.length);
-          showSnackbarMessage(msg.params.message, msg.params.timeout);
+          showSnackbarMessage(msg.params.message, msg.params.timeout, msg.params.severity);
           return;
         } else if (msg.id === WS_ID_SHELLY_SYS_UPDATE) {
           if (debug) console.log(`WebSocket WS_ID_SHELLY_SYS_UPDATE message:`, msg, 'listeners:', listenersRef.current.length);

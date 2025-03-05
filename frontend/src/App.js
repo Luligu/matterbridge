@@ -21,8 +21,11 @@ import { WebSocketProvider } from './components/WebSocketProvider';
 import { UiProvider } from './components/UiProvider';
 import { createMuiTheme, getCssVariable } from './components/muiTheme';
 
-export const debug = false;
+export var debug = false;
 
+export const toggleDebug = () => {
+  debug = !debug;
+}
 // Create a context for the authentication state
 const AuthContext = createContext();
 
@@ -108,20 +111,20 @@ function LoginForm() {
   
   // Set the frontned theme in document.body
   useEffect(() => {
-    // console.log('Setting frontend theme');
+    if(debug) console.log('Setting frontend theme');
     const savedTheme = localStorage.getItem('frontendTheme');
-    // console.log('Saved theme:', savedTheme);
+    if(debug)  console.log('Saved theme:', savedTheme);
     if (savedTheme) {
       document.body.setAttribute("frontend-theme", savedTheme); // Set the saved theme
     } else {
       document.body.setAttribute("frontend-theme", "dark"); // Set the default theme to dark
     }
     const primaryColorFromCSS = getCssVariable('--primary-color', '#1976d2');
-    // console.log('Primary color from CSS:', primaryColorFromCSS);
+    if(debug)  console.log('Primary color from CSS:', primaryColorFromCSS);
     setPrimaryColor(primaryColorFromCSS);
   }, []);
 
-  const baseName = window.location.href.includes("/matterbridge/") ? "/matterbridge" :
+  const baseName = window.location.pathname.includes("/matterbridge/") ? "/matterbridge" :
   window.location.href.includes("/api/hassio_ingress/") ? window.location.pathname :
   "/";
   console.log(`Loading App.js: href="${window.location.href}" pathname="${window.location.pathname}" baseName="${baseName}"`);
