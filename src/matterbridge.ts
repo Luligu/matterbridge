@@ -143,7 +143,7 @@ export class Matterbridge extends EventEmitter {
   public profile = getParameter('profile');
   public shutdown = false;
   public edge = true;
-  private readonly failCountLimit = hasParameter('shelly') ? 120 : 60;
+  private readonly failCountLimit = hasParameter('shelly') ? 600 : 60;
 
   public log!: AnsiLogger;
   public matterbrideLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
@@ -1518,7 +1518,7 @@ export class Matterbridge extends EventEmitter {
           if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
           try {
             if ((await this.plugins.configure(plugin)) === undefined) {
-              this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} failed to configure. Check the logs.`, 0, 'error');
+              if (plugin.configured !== true) this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} failed to configure. Check the logs.`, 0, 'error');
             }
           } catch (error) {
             plugin.error = true;
@@ -1593,7 +1593,7 @@ export class Matterbridge extends EventEmitter {
           if (!plugin.enabled || !plugin.loaded || !plugin.started || plugin.error) continue;
           try {
             if ((await this.plugins.configure(plugin)) === undefined) {
-              this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} failed to configure. Check the logs.`, 0, 'error');
+              if (plugin.configured !== true) this.frontend.wssSendSnackbarMessage(`The plugin ${plugin.name} failed to configure. Check the logs.`, 0, 'error');
             }
           } catch (error) {
             plugin.error = true;

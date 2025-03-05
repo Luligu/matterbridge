@@ -50,6 +50,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     if(debug) console.log('handleSaveChanges:', formData);
     // Save the configuration
     plugin.configJson = formData;
+    plugin.restartRequired = true;
     const config = JSON.stringify(formData, null, 2)
     sendCommandToMatterbridge('saveconfig', formData.name, config);
     // Close the dialog
