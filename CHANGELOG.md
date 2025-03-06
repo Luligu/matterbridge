@@ -13,6 +13,20 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
+## [2.2.3] - 2025-03-05
+
+### Changed
+
+- [matterbridge]: Timeout on shelly board.
+
+### Fixed
+
+- [matterbridge]: False error notification on configure plugin.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [2.2.2] - 2025-03-05
 
 ### Added

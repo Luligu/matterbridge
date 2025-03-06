@@ -385,7 +385,7 @@ export function HomeDevices() {
           <HomeDevicesTable data={mixedDevices} columns={devicesColumns} columnVisibility={devicesColumnVisibility}/>
         </div>
         <div className="MbfWindowFooter" style={{margin: '0', padding: '0px', paddingLeft: '10px', paddingRight: '10px', borderTop: '1px solid var(--table-border-color)', display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
-            {loading && <p className="MbfWindowFooterText" style={{margin: '0', padding: '2px', fontWeight: 'normal', fontSize: '14px', color:'var(--secondary-color)'}}>Waiting for plugins...</p>}  
+            {loading && <p className="MbfWindowFooterText" style={{margin: '0', padding: '2px', fontWeight: 'normal', fontSize: '14px', color:'var(--secondary-color)'}}>Waiting for the plugins to fully load...</p>}  
             {!loading && <p className="MbfWindowFooterText" style={{margin: '0', padding: '5px', fontWeight: 'normal', fontSize: '14px', color: 'var(--secondary-color)'}}>Registered devices: {devices.length.toString()}</p>}
             {restart && <p className="MbfWindowFooterText" style={{margin: '0', padding: '2px', fontWeight: 'normal', fontSize: '14px', color:'var(--secondary-color)'}}>Restart required</p>}  
         </div>
