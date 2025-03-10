@@ -48,6 +48,7 @@ import { DeviceTypeId, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLe
 import { DeviceCommissioner, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
+import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -143,7 +144,7 @@ export class Matterbridge extends EventEmitter {
   public profile = getParameter('profile');
   public shutdown = false;
   public edge = true;
-  private readonly failCountLimit = hasParameter('shelly') ? 600 : 60;
+  private readonly failCountLimit = hasParameter('shelly') ? 600 : 120;
 
   public log!: AnsiLogger;
   public matterbrideLoggerFile = 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.log';
@@ -2271,7 +2272,7 @@ export class Matterbridge extends EventEmitter {
       await this.aggregatorNode?.add(device);
     } else if (this.bridgeMode === 'childbridge') {
       if (plugin.type === 'AccessoryPlatform') {
-        this.createAccessoryPlugin(plugin, device);
+        await this.createAccessoryPlugin(plugin, device);
       }
       if (plugin.type === 'DynamicPlatform') {
         plugin.locked = true;
@@ -2284,6 +2285,8 @@ export class Matterbridge extends EventEmitter {
     if (plugin.addedDevices !== undefined) plugin.addedDevices++;
     // Add the device to the DeviceManager
     this.devices.set(device);
+    // Subscribe to the reachable$Changed event
+    await this.subscribeAttributeChanged(plugin, device);
     this.log.info(`Added and registered bridged endpoint (${plugin.registeredDevices}/${plugin.addedDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) for plugin ${plg}${pluginName}${nf}`);
   }
 
@@ -2347,6 +2350,38 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
+   * Subscribes to the attribute change event for the given device and plugin.
+   * Specifically, it listens for changes in the 'reachable' attribute of the
+   * BridgedDeviceBasicInformationServer cluster server of the bridged device or BasicInformationServer cluster server of server node.
+   *
+   * @param {RegisteredPlugin} plugin - The plugin associated with the device.
+   * @param {MatterbridgeEndpoint} device - The device to subscribe to attribute changes for.
+   * @returns {Promise<void>} A promise that resolves when the subscription is set up.
+   */
+  private async subscribeAttributeChanged(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
+    this.log.info(`Subscribing attributes for endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) plugin ${plg}${plugin.name}${nf}`);
+    if (this.bridgeMode === 'childbridge' && plugin.type === 'AccessoryPlatform' && plugin.serverNode) {
+      /*
+      this.log.info(`Accessory endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) subscribed to reachable$Changed`);
+      setTimeout(async () => {
+        this.log.info(`Accessory endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) changed to reachable false`);
+        await plugin.serverNode?.setStateOf(BasicInformationServer, { reachable: false });
+      }, 60000).unref();
+      */
+      plugin.serverNode.eventsOf(BasicInformationServer).reachable$Changed?.on((reachable: boolean) => {
+        this.log.info(`Accessory endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) is ${reachable ? 'reachable' : 'unreachable'}`);
+        this.frontend.wssSendAttributeChangedMessage(device.plugin, device.serialNumber, device.uniqueId, 'BasicInformationServer', 'reachable', reachable);
+      });
+    }
+    if (device.hasClusterServer(BridgedDeviceBasicInformationServer)) {
+      device.eventsOf(BridgedDeviceBasicInformationServer).reachable$Changed.on((reachable: boolean) => {
+        this.log.info(`Bridged endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) is ${reachable ? 'reachable' : 'unreachable'}`);
+        this.frontend.wssSendAttributeChangedMessage(device.plugin, device.serialNumber, device.uniqueId, 'BridgedDeviceBasicInformationServer', 'reachable', reachable);
+      });
+    }
+  }
+
+  /**
    * Sanitizes the fabric information by converting bigint properties to strings because `res.json` doesn't support bigint.
    *
    * @param {ExposedFabricInformation[]} fabricInfo - The array of exposed fabric information objects.
@@ -2405,12 +2440,15 @@ export class Matterbridge extends EventEmitter {
    * @param {EndpointNode<AggregatorEndpoint>} aggregatorNode - The aggregator node to set the reachability for.
    * @param {boolean} reachable - A boolean indicating the reachability status to set.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async setAggregatorReachability(aggregatorNode: EndpointNode<AggregatorEndpoint>, reachable: boolean) {
+    /*
     for (const child of aggregatorNode.parts) {
       this.log.debug(`Setting reachability of ${(child as unknown as MatterbridgeEndpoint)?.deviceName} to ${reachable}`);
       await child.setStateOf(BridgedDeviceBasicInformationServer, { reachable });
       child.act((agent) => child.eventsOf(BridgedDeviceBasicInformationServer).reachableChanged.emit({ reachableNewValue: true }, agent.context));
     }
+    */
   }
 
   private getVendorIdName = (vendorId: number | undefined) => {

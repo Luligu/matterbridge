@@ -82,16 +82,22 @@ export const WS_ID_MEMORY_UPDATE = 4;
 export const WS_ID_UPTIME_UPDATE = 5;
 
 /**
- * Websocket message ID indicating a memory update.
+ * Websocket message ID indicating a snackbar message.
  * @constant {number}
  */
 export const WS_ID_SNACKBAR = 6;
 
 /**
- * Websocket message ID indicating a memory update.
+ * Websocket message ID indicating matterbridge has un update available.
  * @constant {number}
  */
 export const WS_ID_UPDATE_NEEDED = 7;
+
+/**
+ * Websocket message ID indicating a state update.
+ * @constant {number}
+ */
+export const WS_ID_STATEUPDATE = 8;
 
 /**
  * Websocket message ID indicating a shelly system update.
@@ -308,6 +314,7 @@ export class Frontend {
 
     // Subscribe to cli events
     const { cliEmitter } = await import('./cli.js');
+    cliEmitter.removeAllListeners();
     cliEmitter.on('uptime', (systemUptime: string, processUptime: string) => {
       this.wssSendUptimeUpdate(systemUptime, processUptime);
     });
@@ -882,15 +889,15 @@ export class Frontend {
       if (command === 'installplugin') {
         param = param.replace(/\*/g, '\\');
         this.log.info(`Installing plugin ${plg}${param}${nf}...`);
-        this.wssSendSnackbarMessage(`Installing package ${param}`);
+        this.wssSendSnackbarMessage(`Installing package ${param}. Please wait...`);
         try {
           await this.matterbridge.spawnCommand('npm', ['install', '-g', param, '--omit=dev', '--verbose']);
           this.log.info(`Plugin ${plg}${param}${nf} installed. Full restart required.`);
-          this.wssSendSnackbarMessage(`Installed package ${param}`);
+          this.wssSendSnackbarMessage(`Installed package ${param}`, 10, 'success');
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           this.log.error(`Error installing plugin ${plg}${param}${er}`);
-          this.wssSendSnackbarMessage(`Package ${param} not installed`);
+          this.wssSendSnackbarMessage(`Package ${param} not installed`, 10, 'error');
         }
         this.wssSendRestartRequired();
         param = param.split('@')[0];
@@ -989,6 +996,7 @@ export class Frontend {
         res.status(400).send('Invalid request: file and filename are required');
         return;
       }
+      this.wssSendSnackbarMessage(`Installing package ${filename}. Please wait...`);
 
       // Define the path where the plugin file will be saved
       const filePath = path.join(this.matterbridge.matterbridgeDirectory, 'uploads', filename);
@@ -1008,6 +1016,7 @@ export class Frontend {
         } else res.send(`File ${filename} uploaded successfully`);
       } catch (err) {
         this.log.error(`Error uploading or installing plugin package file ${plg}${filename}${er}:`, err);
+        this.wssSendSnackbarMessage(`Error uploading or installing plugin package ${filename}`, 10, 'error');
         res.status(500).send(`Error uploading or installing plugin package ${filename}`);
       }
     });
@@ -1790,6 +1799,30 @@ export class Frontend {
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({ id: WS_ID_SNACKBAR, src: 'Matterbridge', dst: 'Frontend', method: 'memory_update', params: { message, timeout, severity } }));
+      }
+    });
+  }
+
+  /**
+   * Sends an attribute update message to all connected WebSocket clients.
+   *
+   * @param {string | undefined} plugin - The name of the plugin.
+   * @param {string | undefined} serialNumber - The serial number of the device.
+   * @param {string | undefined} uniqueId - The unique identifier of the device.
+   * @param {string} cluster - The cluster name where the attribute belongs.
+   * @param {string} attribute - The name of the attribute that changed.
+   * @param {number | string | boolean} value - The new value of the attribute.
+   *
+   * @remarks
+   * This method logs a debug message and sends a JSON-formatted message to all connected WebSocket clients
+   * with the updated attribute information.
+   */
+  wssSendAttributeChangedMessage(plugin: string | undefined, serialNumber: string | undefined, uniqueId: string | undefined, cluster: string, attribute: string, value: number | string | boolean) {
+    this.log.debug('Sending an attribute update message to all connected clients');
+    // Send the message to all connected clients
+    this.webSocketServer?.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ id: WS_ID_STATEUPDATE, src: 'Matterbridge', dst: 'Frontend', method: 'state_update', params: { plugin, serialNumber, uniqueId, cluster, attribute, value } }));
       }
     });
   }

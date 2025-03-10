@@ -617,7 +617,7 @@ describe('PluginManager', () => {
 
     expect(plugins.length).toBe(0);
     const plugin = await plugins.add('matterbridge-xyz');
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to add plugin ${plg}matterbridge-xyz${er}: package.json not found`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to add plugin ${plg}matterbridge-xyz${er}: package.json not found`);
     expect(plugin).toBeNull();
     expect(plugins.length).toBe(0);
   }, 60000);
@@ -627,8 +627,12 @@ describe('PluginManager', () => {
 
     expect(plugins.length).toBe(0);
     const plugin = await plugins.add('matterbridge-example-accessory-platform');
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-example-accessory-platform${nf}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-example-accessory-platform${nf}`);
     expect(plugin).not.toBeNull();
+    expect(plugin).not.toBeUndefined();
+    if (!plugin) return;
+    expect(plugin.name).toBe('matterbridge-example-accessory-platform');
+    expect(plugin.type).toBe('AnyPlatform');
     expect(plugins.length).toBe(1);
 
     loggerLogSpy.mockClear();
@@ -905,6 +909,7 @@ describe('PluginManager', () => {
 
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Loading plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
     // expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Loaded plugin ${plg}${plugin.name}${nf} type ${typ}${plugin?.type}${db} (entrypoint ${UNDERLINE}${plugin.path}${UNDERLINEOFF})`);
+    expect(plugin.name).toBe('matterbridge-example-accessory-platform');
     expect(plugin.type).toBe('AccessoryPlatform');
     expect(plugin.platform).toBeDefined();
     expect(plugin.loaded).toBe(true);
@@ -945,6 +950,8 @@ describe('PluginManager', () => {
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
+    expect(plugin.name).toBe('matterbridge-example-accessory-platform');
+    expect(plugin.type).toBe('AccessoryPlatform');
     expect(plugin.loaded).toBeTruthy();
     expect(plugin.started).toBeFalsy();
     expect(plugin.configured).toBeFalsy();
@@ -962,6 +969,8 @@ describe('PluginManager', () => {
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
+    expect(plugin.name).toBe('matterbridge-example-accessory-platform');
+    expect(plugin.type).toBe('AccessoryPlatform');
     expect(plugin.loaded).toBeTruthy();
     expect(plugin.started).toBeFalsy();
     expect(plugin.configured).toBeFalsy();
@@ -980,6 +989,8 @@ describe('PluginManager', () => {
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
+    expect(plugin.name).toBe('matterbridge-example-accessory-platform');
+    expect(plugin.type).toBe('AccessoryPlatform');
     expect(plugin.loaded).toBeTruthy();
     expect(plugin.started).toBeFalsy();
     expect(plugin.configured).toBeFalsy();
@@ -997,6 +1008,8 @@ describe('PluginManager', () => {
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
+    expect(plugin.name).toBe('matterbridge-example-accessory-platform');
+    expect(plugin.type).toBe('AccessoryPlatform');
     expect(plugin.loaded).toBeTruthy();
     expect(plugin.started).toBeFalsy();
     expect(plugin.configured).toBeFalsy();
@@ -1019,11 +1032,24 @@ describe('PluginManager', () => {
     let plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
+    expect(plugin.name).toBe('matterbridge-example-accessory-platform');
+    expect(plugin.type).toBe('AccessoryPlatform');
     expect(plugin.loaded).toBeTruthy();
+    expect(plugin.platform).toBeDefined();
     expect(plugin.started).toBeFalsy();
     expect(plugin.configured).toBeFalsy();
 
     plugin = await plugins.start(plugin, 'Test with Jest', false);
+
+    // Log all calls to loggerLogSpy
+    /*
+    consoleLogSpy.mockRestore();
+    loggerLogSpy.mock.calls.forEach((call, index) => {
+      console.log(`Call ${index + 1}:`, call);
+    });
+    */
+
+    expect(plugin).toBeDefined();
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Starting plugin ${plg}${plugin?.name}${nf} type ${typ}${plugin?.type}${nf}`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Started plugin ${plg}${plugin?.name}${nt} type ${typ}${plugin?.type}${nt}`);
     if (!plugin) return;

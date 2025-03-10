@@ -19,25 +19,8 @@ export const WS_ID_MEMORY_UPDATE = 4;
 export const WS_ID_UPTIME_UPDATE = 5;
 export const WS_ID_SNACKBAR = 6;
 export const WS_ID_UPDATE_NEEDED = 7;
-
-/**
- * Websocket message ID indicating a shelly system update.
- * check:
- * curl -k http://127.0.0.1:8101/api/updates/sys/check
- * perform:
- * curl -k http://127.0.0.1:8101/api/updates/sys/perform
- * @constant {number}
- */
+export const WS_ID_STATEUPDATE = 8;
 export const WS_ID_SHELLY_SYS_UPDATE = 100;
-
-/**
- * Websocket message ID indicating a shelly main update.
- * check:
- * curl -k http://127.0.0.1:8101/api/updates/main/check
- * perform:
- * curl -k http://127.0.0.1:8101/api/updates/main/perform
- * @constant {number}
- */
 export const WS_ID_SHELLY_MAIN_UPDATE = 101;
 
 export const WebSocketMessagesContext = createContext(); // messages

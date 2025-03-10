@@ -13,7 +13,26 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
+## [2.2.4] - 2025-03-10
+
+### Added
+
+- [frontend]: Frontend v.2.5.2.
+- [frontend]: Added push updates for reachability in the Home page Devices panel.
+
+### Changed
+
+- [package]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [2.2.3] - 2025-03-05
+
+### Added
+
+- [frontend]: Frontend v.2.5.1.
 
 ### Changed
 

@@ -42,14 +42,14 @@ export function InstallAddPlugins() {
     setDragging(false);
     const file = event.dataTransfer.files[0];
     if (file) {
-      logMessage('Plugins', `Installing package ${file.name}`);
+      logMessage('Plugins', `Installing package ${file.name}. Please wait...`);
 
       const formData = new FormData();
       formData.append('file', file);
       formData.append('filename', file.name);
   
       // Send the file content and filename to the server
-      fetch('/api/uploadpackage', {
+      fetch('./api/uploadpackage', {
         method: 'POST',
         body: formData,
       })
@@ -74,7 +74,7 @@ export function InstallAddPlugins() {
       formData.append('filename', file.name);
 
       // Send the file content and filename to the server
-      fetch('/api/uploadpackage', {
+      fetch('./api/uploadpackage', {
         method: 'POST',
         body: formData,
       })
