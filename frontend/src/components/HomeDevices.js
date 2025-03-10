@@ -197,13 +197,25 @@ export function HomeDevices() {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Broadcast messages
-        if (msg.method === 'refresh_required' && msg.params.changed !== 'matterbridgeLatestVersion' && msg.params.changed !== 'reachability') {
+        if (msg.method === 'refresh_required' && msg.params.changed !== 'sessions' && msg.params.changed !== 'matterbridgeLatestVersion' && msg.params.changed !== 'reachability') {
           if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.params.changed}`);
           sendMessage({ id: uniqueId.current, method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === 'restart_required') {
           if(debug) console.log('HomeDevices received restart_required');
           setRestart(true);
+        }
+        if (msg.method === 'state_update') {
+          if (msg.params.plugin && msg.params.serialNumber && msg.params.cluster.includes('BasicInformationServer') && msg.params.attribute === 'reachable') {
+            if(debug) console.log(`HomeDevices updating device reachability for plugin ${msg.params.plugin} serial ${msg.params.serialNumber} value ${msg.params.value}`);
+            setDevices((prevDevices) =>
+              prevDevices.map((d) =>
+                d.pluginName === msg.params.plugin && d.serial === msg.params.serialNumber
+                  ? { ...d, reachable: msg.params.value }
+                  : d
+              )
+            );
+          }
         }
         // Local messages
         if (msg.id === uniqueId.current && msg.method === '/api/settings') {
