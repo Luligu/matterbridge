@@ -68,7 +68,8 @@ export const ChangePasswordDialog = ({ open, onClose, onSave }) => {
               <TextField
                 type="password"
                 label="New Password"
-                size="small" variant="outlined" 
+                size="small" 
+                variant="outlined" 
                 fullWidth
                 value={newPassword}
                 onChange={handleNewPasswordChange}
@@ -78,7 +79,8 @@ export const ChangePasswordDialog = ({ open, onClose, onSave }) => {
               <TextField
                 type="password"
                 label="Confirm Password"
-                size="small" variant="outlined" 
+                size="small" 
+                variant="outlined" 
                 fullWidth
                 value={confirmPassword}
                 onChange={handleConfirmPasswordChange}

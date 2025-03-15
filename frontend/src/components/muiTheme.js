@@ -112,7 +112,8 @@ export function createMuiTheme(primaryColor) {
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
               borderColor: 'var(--primary-color)',
             },
-            padding: '4px 8px', 
+            // padding: '4px 8px', 
+            padding: '0px', 
           },
           input: {
             color: 'var(--div-text-color)',
