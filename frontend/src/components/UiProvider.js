@@ -35,7 +35,6 @@ export function UiProvider({ children }) {
             severity={severity ?? "info"}
             variant="filled"
             sx={{
-              // backgroundColor: 'var(--primary-color)',
               color: '#fff',
               fontWeight: 'normal',
               width: '100%',

@@ -29,8 +29,14 @@
       "react-app/jest"
     ],
     "rules": {
-    "no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }]
-    }  
+      "no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_"
+        }
+      ]
+    }
   },
   "browserslist": {
     "production": [
@@ -45,25 +51,24 @@
     ]
   },
   "dependencies": {
-    "@emotion/react": "^11.13.3",
-    "@emotion/styled": "^11.13.0",
-    "@fontsource/roboto": "^5.1.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@fontsource/roboto": "^5.2.5",
     "@mdi/js": "^7.4.47",
     "@mdi/react": "^1.6.1",
-    "@mui/icons-material": "^5.16.7",
-    "@mui/material": "^5.16.7",
-    "@rjsf/core": "^5.22.4",
-    "@rjsf/mui": "^5.22.4",
-    "@rjsf/utils": "^5.22.4",
-    "@rjsf/validator-ajv8": "^5.22.4",
+    "@mui/icons-material": "^5.16.14",
+    "@mui/material": "^5.16.14",
+    "@rjsf/core": "^5.24.8",
+    "@rjsf/utils": "^5.24.8",
+    "@rjsf/validator-ajv8": "^5.24.8",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
-    "notistack": "^2.0.8",
-    "qrcode.react": "^4.1.0",
+    "notistack": "^3.0.2",
+    "qrcode.react": "^4.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.28.0",
+    "react-router-dom": "^6.30.0",
     "react-scripts": "^5.0.1",
     "react-table": "^7.8.0",
     "web-vitals": "^2.1.4"

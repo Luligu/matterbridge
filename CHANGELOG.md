@@ -24,7 +24,8 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 ### Changed
 
 - [package]: Update dependencies.
-- [frontend]: Removed @rjsf/mui and use @rjsf/core (this allows to update to latest react and @mui packages).
+- [frontend]: Removed @rjsf/mui and use @rjsf/core (this will allow to update to the latest react and @mui packages).
+- [frontend]: Updated @emotion @fontsource/roboto @mdi @mui@5 @rjsf qrcode.react react-router-dom@6 notistack.
 
 ### Fixed
 

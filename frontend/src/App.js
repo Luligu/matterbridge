@@ -4,7 +4,7 @@ import './App.css';
 
 // React
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 
 // @mui
 import { ThemeProvider } from '@mui/material';
@@ -138,10 +138,10 @@ function LoginForm() {
   if (loggedIn) {
     return (
       <ThemeProvider theme={theme}>
-        <SnackbarProvider maxSnack={10} preventDuplicate anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+        <SnackbarProvider dense maxSnack={10} preventDuplicate anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
           <UiProvider>
             <WebSocketProvider>
-              <Router basename={baseName}>
+              <BrowserRouter basename={baseName} future={{ v7_relativeSplatPath: true, v7_startTransition: true, v7_fetcherPersist: true, v7_normalizeFormMethod: true, v7_partialHydration: true, v7_skipActionErrorRevalidation: true }}>
                 <div className="MbfScreen">
                   <Header />
                   <Routes>
@@ -153,7 +153,7 @@ function LoginForm() {
                     <Route path="*" element={<Navigate to="/" />} /> 
                   </Routes>
                 </div>
-              </Router>
+              </BrowserRouter>
             </WebSocketProvider>
           </UiProvider>
         </SnackbarProvider>
