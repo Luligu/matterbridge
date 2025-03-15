@@ -489,8 +489,11 @@ describe('Matterbridge frontend', () => {
       expect(ws.readyState).toBe(WebSocket.OPEN);
       const received = new Promise((resolve) => {
         const onMessage = (event: WebSocket.MessageEvent) => {
-          ws.removeEventListener('message', onMessage);
-          resolve(event.data);
+          const data = JSON.parse(event.data.toString());
+          if (data.id === 1 && data.src === 'Matterbridge' && data.dst === 'Jest test' && data.method === '/api/settings' && data.error === 'Invalid message') {
+            ws.removeEventListener('message', onMessage);
+            resolve(event.data);
+          }
         };
         ws.addEventListener('message', onMessage);
       });
@@ -505,8 +508,11 @@ describe('Matterbridge frontend', () => {
       expect(ws.readyState).toBe(WebSocket.OPEN);
       const received = new Promise((resolve) => {
         const onMessage = (event: WebSocket.MessageEvent) => {
-          ws.removeEventListener('message', onMessage);
-          resolve(event.data);
+          const data = JSON.parse(event.data.toString());
+          if (data.id === 1 && data.src === 'Matterbridge' && data.dst === 'Jest test' && data.method === '/api' && data.error === 'Invalid method') {
+            ws.removeEventListener('message', onMessage);
+            resolve(event.data);
+          }
         };
         ws.addEventListener('message', onMessage);
       });
