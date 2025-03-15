@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "2.5.2",
+  "version": "2.5.3",
   "private": true,
   "homepage": "./",
   "scripts": {
@@ -14,12 +14,14 @@
     "deepCleanRebuild": "npm run deepClean && npm install && npm run build",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u && npm install & npm run cleanBuild",
-    "install:react": "npm install react@latest react-dom@latest react-router-dom@latest react-scripts@latest react-table@latest",
-    "install:emotion": "npm install @emotion/react@latest @emotion/styled@latest",
-    "install:muimaterial": "npm install @mui/material@5.16.7 @mui/icons-material@5.16.7",
-    "install:roboto": "npm install @fontsource/roboto@latest",
-    "install:qrcode": "npm install qrcode.react@latest",
-    "install:rjsf": "npm install @rjsf/core@latest @rjsf/utils@latest @rjsf/validator-ajv8@latest @rjsf/mui@latest"
+    "install:react": "npm install react react-dom react-router-dom react-scripts react-table",
+    "install:emotion": "npm install @emotion/react @emotion/styled",
+    "install:muimaterial": "npm install @mui/material @mui/icons-material",
+    "install:mdi": "npm install @mdi/js @mdi/react",
+    "install:roboto": "npm install @fontsource/roboto",
+    "install:qrcode": "npm install qrcode.react",
+    "install:notistack": "npm install notistack",
+    "install:rjsf": "npm install @rjsf/core @rjsf/utils @rjsf/validator-ajv8"
   },
   "eslintConfig": {
     "extends": [

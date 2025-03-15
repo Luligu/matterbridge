@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "2.2.4",
+  "version": "2.2.5-dev.1",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -178,6 +178,6 @@
     "prettier": "3.5.3",
     "ts-jest": "29.2.6",
     "typescript": "5.8.2",
-    "typescript-eslint": "8.26.0"
+    "typescript-eslint": "8.26.1"
   }
 }

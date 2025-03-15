@@ -13,6 +13,27 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
+## [2.2.5] - 2025-03-15
+
+### Added
+
+- [frontend]: Frontend v.2.5.3.
+- [frontend]: The Devices panel on the Home page selects and unselects using the device serial or device name (it reads the plugin schema).
+- [frontend]: The select list panel in the config editor now shows as primary the device name and secondary the device serial.
+
+### Changed
+
+- [package]: Update dependencies.
+- [frontend]: Removed @rjsf/mui and use @rjsf/core (this allows to update to latest react and @mui packages).
+
+### Fixed
+
+- [frontend]: Fixed case where more then one plugin has select in the Home page Devices panel.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+</a>
+
 ## [2.2.4] - 2025-03-10
 
 ### Added
