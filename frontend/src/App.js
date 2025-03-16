@@ -4,7 +4,7 @@ import './App.css';
 
 // React
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, Navigate } from 'react-router';
 
 // @mui
 import { ThemeProvider } from '@mui/material';

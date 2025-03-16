@@ -38,19 +38,23 @@ const helpSx = { fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary
 const errorTitleSx = { fontSize: '16px', fontWeight: 'bold', backgroundColor: 'var(--div-bg-color)' };
 const iconButtonSx = { padding: '0px', margin: '0px' };
 const boxPadding = '5px 10px 5px 10px';
-const listButtonSx = { padding: '0px', margin: '0px', backgroundColor: 'var(--div-bg-color)', '&:hover': { backgroundColor: 'var(--div-bg-color)' } };
-const listIconStyle = { color: 'var(--div-text-color)' };
-const listPrimaryStyle = {
+const listItemButtonSx = { /* padding: '0px', margin: '0px', backgroundColor: 'var(--div-bg-color)', '&:hover': { backgroundColor: 'var(--div-bg-color)' }*/ };
+const listItemIconStyle = { /* color: 'var(--div-text-color)'*/ };
+const listItemTextPrimaryStyle = {
+  /*
   fontSize: '16px',
   fontWeight: 'bold',
   color: 'var(--div-text-color)',
   backgroundColor: 'var(--div-bg-color)',
+  */
 };
-const listSecondaryStyle = {
+const listItemTextSecondaryStyle = {
+  /*
   fontSize: '14px',
   fontWeight: 'normal',
   color: 'var(--div-text-color)',
   backgroundColor: 'var(--div-bg-color)',
+  */
 };
 let selectDevices = [];
 let selectEntities = [];
@@ -73,6 +77,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
       "ui:globalOptions": { orderable: true },
     }
   );
+  
   // const [selectDevices, setSelectDevices] = useState([]);
   // const [selectEntities, setSelectEntities] = useState([]);
   const [newkey, setNewkey] = useState(''); // For ObjectFieldTemplate select from device list 
@@ -108,7 +113,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
 
     // Move the ui: properties from the schema to the uiSchema
     if(formData !== undefined && schema !== undefined) {
-      if(rjsfDebug)  console.log('ConfigPluginDialog moveToUiSchema:', schema, uiSchema);
+      if(rjsfDebug) console.log('ConfigPluginDialog moveToUiSchema:', schema, uiSchema);
       Object.keys(schema.properties).forEach((key) => {
         Object.keys(schema.properties[key]).forEach((subkey) => {
           if (subkey.startsWith('ui:')) {
@@ -120,6 +125,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
           }
         });
       });
+      setUiSchema(uiSchema);
       if(rjsfDebug) console.log('ConfigPluginDialog moveToUiSchema:', schema, uiSchema);
     }
 
@@ -270,7 +276,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
   };
   
   function BaseInputTemplate(props) {
-    const { id, schema, uiSchema, value, options, label, type, placeholder, required, disabled, readonly, autofocus, 
+    const { id, name, schema, uiSchema, value, options, label, type, placeholder, required, disabled, readonly, autofocus, 
       onChange, onChangeOverride, onBlur, onFocus, rawErrors, hideError, registry, formContext } = props;
     if(rjsfDebug) console.log('BaseInputTemplate:', props);
     const _onChange = ({ target: { value } }) => onChange(value === '' ? options.emptyValue : value);
@@ -278,7 +284,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     const _onFocus = ({ target }) => onFocus(id, target && target.value);
     return (
       <Box sx={{ padding: '0px', margin: '0px' }}>
-        <TextField id={id} name={id} label={placeholder && placeholder!=='' ? label : undefined } variant="outlined" placeholder={placeholder && placeholder!=='' ? placeholder : label} required={required} disabled={disabled || readonly} autoFocus={autofocus} value={value || value === 0 ? value : ''} 
+        <TextField id={id} name={id} label={placeholder && placeholder!=='' ? label : undefined } variant="outlined" placeholder={placeholder && placeholder!=='' ? placeholder : label} 
+          required={required} disabled={disabled || readonly} autoFocus={autofocus} value={value || value === 0 ? value : ''} type={type} autoComplete={type==='password' ? 'current-password' : name}
           onChange={onChangeOverride || _onChange} onBlur={_onBlur} onFocus={_onFocus} fullWidth/>
       </Box>
     );
@@ -443,11 +450,11 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
             </Box>
             <List dense>
               {selectDevices.filter((v) => v.serial.toLowerCase().includes(filter.toLowerCase()) || v.name.toLowerCase().includes(filter.toLowerCase())).map((value, index) => (
-                <ListItemButton onClick={() => handleSelectDeviceValue(value)} key={index} sx={listButtonSx}>
-                  {value.icon === 'wifi' && <ListItemIcon><WifiIcon style={listIconStyle}/></ListItemIcon>}
-                  {value.icon === 'ble' && <ListItemIcon><BluetoothIcon style={listIconStyle} /></ListItemIcon>}
-                  {value.icon === 'hub' && <ListItemIcon><HubIcon style={listIconStyle} /></ListItemIcon>}
-                  <ListItemText primary={value.name} secondary={value.serial} primaryTypographyProps={{ style: listPrimaryStyle }} secondaryTypographyProps={{ style: listSecondaryStyle }}/>
+                <ListItemButton onClick={() => handleSelectDeviceValue(value)} key={index} sx={listItemButtonSx}>
+                  {value.icon === 'wifi' && <ListItemIcon><WifiIcon style={listItemIconStyle}/></ListItemIcon>}
+                  {value.icon === 'ble' && <ListItemIcon><BluetoothIcon style={listItemIconStyle} /></ListItemIcon>}
+                  {value.icon === 'hub' && <ListItemIcon><HubIcon style={listItemIconStyle} /></ListItemIcon>}
+                  <ListItemText primary={value.name} secondary={value.serial} primaryTypographyProps={{ style: listItemTextPrimaryStyle }} secondaryTypographyProps={{ style: listItemTextSecondaryStyle }}/>
                 </ListItemButton>
               ))}
             </List>
@@ -479,13 +486,13 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
             </Box>
             <List dense>
               {selectEntities.filter((v) => v.name.toLowerCase().includes(filter.toLowerCase()) || v.description.toLowerCase().includes(filter.toLowerCase())).map((value, index) => (
-                <ListItemButton onClick={() => handleSelectEntityValue(value)} key={index} sx={listButtonSx}>
-                  {value.icon === 'wifi' && <ListItemIcon><WifiIcon style={listIconStyle} /></ListItemIcon>}
-                  {value.icon === 'ble' && <ListItemIcon><BluetoothIcon style={listIconStyle} /></ListItemIcon>}
-                  {value.icon === 'hub' && <ListItemIcon><HubIcon style={listIconStyle} /></ListItemIcon>}
-                  {value.icon === 'component' && <ListItemIcon><ViewInArIcon style={listIconStyle} /></ListItemIcon>}
-                  {value.icon === 'matter' && <ListItemIcon><DeviceHubIcon style={listIconStyle} /></ListItemIcon>}
-                  <ListItemText primary={value.name} secondary={value.description} primaryTypographyProps={{ style: listPrimaryStyle }} secondaryTypographyProps={{ style: listSecondaryStyle }} />
+                <ListItemButton onClick={() => handleSelectEntityValue(value)} key={index} sx={listItemButtonSx}>
+                  {value.icon === 'wifi' && <ListItemIcon><WifiIcon style={listItemIconStyle} /></ListItemIcon>}
+                  {value.icon === 'ble' && <ListItemIcon><BluetoothIcon style={listItemIconStyle} /></ListItemIcon>}
+                  {value.icon === 'hub' && <ListItemIcon><HubIcon style={listItemIconStyle} /></ListItemIcon>}
+                  {value.icon === 'component' && <ListItemIcon><ViewInArIcon style={listItemIconStyle} /></ListItemIcon>}
+                  {value.icon === 'matter' && <ListItemIcon><DeviceHubIcon style={listItemIconStyle} /></ListItemIcon>}
+                  <ListItemText primary={value.name} secondary={value.description} primaryTypographyProps={{ style: listItemTextPrimaryStyle }} secondaryTypographyProps={{ style: listItemTextSecondaryStyle }} />
                 </ListItemButton>
               ))}
             </List>
@@ -510,13 +517,13 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
                 // console.log('ArrayFieldTemplate: handleSelectDeviceEntityValue value:', value, value.entities);
                 // console.log('ArrayFieldTemplate: handleSelectDeviceEntityValue schema:', schema);
                 return value.entities?.map((entity, index) => (
-                  <ListItemButton onClick={() => handleSelectDeviceEntityValue(entity)} key={index} sx={listButtonSx}>
-                    {entity.icon === 'wifi' && <ListItemIcon><WifiIcon style={listIconStyle} /></ListItemIcon>}
-                    {entity.icon === 'ble' && <ListItemIcon><BluetoothIcon style={listIconStyle} /></ListItemIcon>}
-                    {entity.icon === 'hub' && <ListItemIcon><HubIcon style={listIconStyle} /></ListItemIcon>}
-                    {entity.icon === 'component' && <ListItemIcon><ViewInArIcon style={listIconStyle} /></ListItemIcon>}
-                    {entity.icon === 'matter' && <ListItemIcon><DeviceHubIcon style={listIconStyle} /></ListItemIcon>}
-                    <ListItemText primary={entity.name} secondary={entity.description} primaryTypographyProps={{ style: listPrimaryStyle }} secondaryTypographyProps={{ style: listSecondaryStyle }} />
+                  <ListItemButton onClick={() => handleSelectDeviceEntityValue(entity)} key={index} sx={listItemButtonSx}>
+                    {entity.icon === 'wifi' && <ListItemIcon><WifiIcon style={listItemIconStyle} /></ListItemIcon>}
+                    {entity.icon === 'ble' && <ListItemIcon><BluetoothIcon style={listItemIconStyle} /></ListItemIcon>}
+                    {entity.icon === 'hub' && <ListItemIcon><HubIcon style={listItemIconStyle} /></ListItemIcon>}
+                    {entity.icon === 'component' && <ListItemIcon><ViewInArIcon style={listItemIconStyle} /></ListItemIcon>}
+                    {entity.icon === 'matter' && <ListItemIcon><DeviceHubIcon style={listItemIconStyle} /></ListItemIcon>}
+                    <ListItemText primary={entity.name} secondary={entity.description} primaryTypographyProps={{ style: listItemTextPrimaryStyle }} secondaryTypographyProps={{ style: listItemTextSecondaryStyle }} />
                   </ListItemButton>
                 ));
               })}
@@ -664,11 +671,11 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
             </Box>
             <List dense>
               {selectDevices.filter((v) => v.serial.toLowerCase().includes(filter.toLowerCase()) || v.name.toLowerCase().includes(filter.toLowerCase())).map((value, index) => (
-                <ListItemButton onClick={() => handleSelectDeviceValue(value)} key={index} sx={listButtonSx}>
-                  {value.icon === 'wifi' && <ListItemIcon><WifiIcon style={listIconStyle} /></ListItemIcon>}
-                  {value.icon === 'ble' && <ListItemIcon><BluetoothIcon style={listIconStyle} /></ListItemIcon>}
-                  {value.icon === 'hub' && <ListItemIcon><HubIcon style={listIconStyle} /></ListItemIcon>}
-                  <ListItemText primary={value.name} secondary={value.serial} primaryTypographyProps={{ style: listPrimaryStyle }} secondaryTypographyProps={{ style: listSecondaryStyle }} />
+                <ListItemButton onClick={() => handleSelectDeviceValue(value)} key={index} sx={listItemButtonSx}>
+                  {value.icon === 'wifi' && <ListItemIcon><WifiIcon style={listItemIconStyle} /></ListItemIcon>}
+                  {value.icon === 'ble' && <ListItemIcon><BluetoothIcon style={listItemIconStyle} /></ListItemIcon>}
+                  {value.icon === 'hub' && <ListItemIcon><HubIcon style={listItemIconStyle} /></ListItemIcon>}
+                  <ListItemText primary={value.name} secondary={value.serial} primaryTypographyProps={{ style: listItemTextPrimaryStyle }} secondaryTypographyProps={{ style: listItemTextSecondaryStyle }} />
                 </ListItemButton>
               ))}
             </List>

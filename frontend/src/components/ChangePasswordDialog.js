@@ -62,11 +62,12 @@ export const ChangePasswordDialog = ({ open, onClose, onSave }) => {
         </div>
       </DialogTitle>
       <DialogContent dividers>
-        <FormControl component="fieldset" fullWidth>
+        <FormControl component="fieldset" fullWidth sx={{ margin: 0, padding: 0, gap: '20px' }}>
           <Grid container spacing={2} sx={{ mt: 2 }}>
             <Grid item xs={12}>
               <TextField
                 type="password"
+                autoComplete='new-password'
                 label="New Password"
                 size="small" 
                 variant="outlined" 
@@ -78,6 +79,7 @@ export const ChangePasswordDialog = ({ open, onClose, onSave }) => {
             <Grid item xs={12}>
               <TextField
                 type="password"
+                autoComplete='new-password'
                 label="Confirm Password"
                 size="small" 
                 variant="outlined" 

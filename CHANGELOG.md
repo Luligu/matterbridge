@@ -17,7 +17,7 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 ### Added
 
-- [frontend]: Frontend v.2.5.3.
+- [frontend]: Frontend v.2.6.0.
 - [frontend]: The Devices panel on the Home page selects and unselects using the device serial or device name (it reads the plugin schema).
 - [frontend]: The select list panel in the config editor now shows as primary the device name and secondary the device serial.
 
@@ -25,7 +25,7 @@ Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord
 
 - [package]: Update dependencies.
 - [frontend]: Removed @rjsf/mui and use @rjsf/core (this will allow to update to the latest react and @mui packages).
-- [frontend]: Updated @emotion @fontsource/roboto @mdi @mui@5 @rjsf qrcode.react react-router-dom@6 notistack.
+- [frontend]: Updated @emotion @fontsource/roboto @mdi @mui@5 @rjsf qrcode.react react-router notistack packages.
 
 ### Fixed
 
