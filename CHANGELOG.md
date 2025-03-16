@@ -13,19 +13,21 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 
 Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
 
-## [2.2.5] - 2025-03-15
+## [2.2.5] - 2025-03-17
 
 ### Added
 
 - [frontend]: Frontend v.2.6.0.
 - [frontend]: The Devices panel on the Home page selects and unselects using the device serial or device name (it reads the plugin schema).
 - [frontend]: The select list panel in the config editor now shows as primary the device name and secondary the device serial.
+- [frontend]: Added download of plugins storage to the Download menu.
+- [frontend]: Added download of plugins config to the Download menu.
 
 ### Changed
 
 - [package]: Update dependencies.
 - [frontend]: Removed @rjsf/mui and use @rjsf/core (this will allow to update to the latest react and @mui packages).
-- [frontend]: Updated @emotion @fontsource/roboto @mdi @mui@5 @rjsf qrcode.react react-router notistack packages.
+- [frontend]: Updated @emotion @fontsource/roboto @mdi @mui @rjsf qrcode.react react-router notistack packages.
 
 ### Fixed
 

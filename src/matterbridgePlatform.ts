@@ -207,6 +207,24 @@ export class MatterbridgePlatform {
   }
 
   /**
+   * Called when a plugin config includes an action button or an action button with text field.
+   * @param {string} action The action that triggered the logger level change.
+   * @param {string} value The value of the logger level.
+   */
+  async onAction(action: string, value?: string) {
+    this.log.debug(`The plugin doesn't override onAction. Received action ${CYAN}${action}${db}${value ? ' with ' + CYAN + value + db : ''}`);
+  }
+
+  /**
+   * Called when the plugin config has been updated.
+   * @param {PlatformConfig} config The new plugin config.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async onConfigChanged(config: PlatformConfig) {
+    this.log.debug(`The plugin doesn't override onConfigChanged. Received new config.`);
+  }
+
+  /**
    * Check if a device with this name is already registered in the platform.
    * @param {string} deviceName - The device name to check.
    * @returns {boolean} True if the device is already registered, false otherwise.

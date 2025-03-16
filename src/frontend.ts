@@ -35,7 +35,7 @@ import WebSocket, { WebSocketServer } from 'ws';
 import multer from 'multer';
 
 // AnsiLogger module
-import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from './logger/export.js';
+import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, wr, YELLOW, nt } from './logger/export.js';
 
 // Matterbridge
 import { createZip, deepCopy, isValidArray, isValidNumber, isValidObject, isValidString } from './utils/export.js';
@@ -1569,6 +1569,20 @@ export class Frontend {
         const selectEntityValues = plugin.platform?.getSelectEntities().sort((keyA, keyB) => keyA.name.localeCompare(keyB.name));
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: selectEntityValues }));
         return;
+      } else if (data.method === '/api/action') {
+        if (!isValidString(data.params.plugin, 5) || !isValidString(data.params.action, 1)) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter command in /api/action' }));
+          return;
+        }
+        const plugin = this.matterbridge.plugins.get(data.params.plugin);
+        if (!plugin) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/action' }));
+          return;
+        }
+        plugin.platform?.onAction(data.params.action, data.params.value as string | undefined).catch((error) => {
+          this.log.error(`Error in plugin ${plugin.name} action ${data.params.action}: ${error}`);
+        });
+        this.log.notice(`Action ${CYAN}${data.params.action}${nt}${data.params.value ? ' with ' + CYAN + data.params.value + nt : ''} for plugin ${CYAN}${plugin.name}${nt}`);
       } else if (data.method === '/api/command') {
         if (!isValidString(data.params.command, 5)) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter command in /api/command' }));
