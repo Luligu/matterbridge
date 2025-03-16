@@ -5,7 +5,7 @@
 import React, { useContext, useEffect, useState, useRef } from 'react';
 
 // @mui/material
-import { Box, Button, Paper, Typography, Dialog, DialogContent, DialogTitle, Tooltip, Checkbox, IconButton, List, ListItem, ListItemText, ListItemIcon, TextField, ListItemButton, DialogActions } from '@mui/material';
+import { Box, Button, Paper, Typography, Dialog, DialogContent, DialogTitle, Tooltip, Checkbox, MenuItem, IconButton, List, ListItem, ListItemText, ListItemIcon, TextField, ListItemButton, DialogActions } from '@mui/material';
 
 // @mui/icons-material
 import DeleteForever from '@mui/icons-material/DeleteForever'; // For RemoveButton
@@ -23,7 +23,7 @@ import DeviceHubIcon from '@mui/icons-material/DeviceHub'; // For entities icon=
 // @rjsf
 import Form from '@rjsf/core'; 
 import validator from '@rjsf/validator-ajv8';
-import { getSubmitButtonOptions, getUiOptions, getTemplate, ADDITIONAL_PROPERTY_FLAG } from '@rjsf/utils';
+import { getSubmitButtonOptions, getUiOptions, getTemplate, enumOptionsValueForIndex, ariaDescribedByIds, enumOptionsIndexForValue, labelValue, ADDITIONAL_PROPERTY_FLAG } from '@rjsf/utils';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
@@ -40,22 +40,8 @@ const iconButtonSx = { padding: '0px', margin: '0px' };
 const boxPadding = '5px 10px 5px 10px';
 const listItemButtonSx = { /* padding: '0px', margin: '0px', backgroundColor: 'var(--div-bg-color)', '&:hover': { backgroundColor: 'var(--div-bg-color)' }*/ };
 const listItemIconStyle = { /* color: 'var(--div-text-color)'*/ };
-const listItemTextPrimaryStyle = {
-  /*
-  fontSize: '16px',
-  fontWeight: 'bold',
-  color: 'var(--div-text-color)',
-  backgroundColor: 'var(--div-bg-color)',
-  */
-};
-const listItemTextSecondaryStyle = {
-  /*
-  fontSize: '14px',
-  fontWeight: 'normal',
-  color: 'var(--div-text-color)',
-  backgroundColor: 'var(--div-bg-color)',
-  */
-};
+const listItemTextPrimaryStyle = { /* fontSize: '16px', fontWeight: 'bold', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' */ };
+const listItemTextSecondaryStyle = { /* fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' */ };
 let selectDevices = [];
 let selectEntities = [];
 
@@ -763,24 +749,39 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
   function CheckboxWidget(props) {
     const { name, value, schema, readonly, onChange } = props;
     if(rjsfDebug) console.log(`CheckboxWidget ${name}:`, props); 
+    const debug = true;
+
+    const [fieldValue, setFieldValue] = useState(undefined);
+
+    const onChangeField = (value) => {
+      if(debug) console.log(`CheckboxWidget ${name} onChangeField:`, value);
+      setFieldValue(value && value!=='' ? value : undefined);
+    };
+
+    const onClick = () => {
+      if(debug) console.log(`CheckboxWidget onClick plugin="${plugin.name}" action="${name}" value="${fieldValue}"`);
+      sendMessage({ id: uniqueId.current, method: "/api/action", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name, action: name, value: fieldValue } });
+      onClose();
+    };
+
     if(schema.buttonText && schema.description) {
       return (
         <Box sx={{ margin: '0px', padding: '10px', border: '1px solid grey', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography sx={descriptionSx}>{schema.description}</Typography>
-          <Button variant='contained' color='primary' onClick={onClose}>{schema.buttonText}</Button>
+          <Button variant='contained' color='primary' onClick={() => onClick()}>{schema.buttonText}</Button>
         </Box>
       );
     } else if(schema.buttonField && schema.description) {
       return (
         <Box sx={{ margin: '0px', padding: '10px', gap: '20px', border: '1px solid grey', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography sx={descriptionSx}>{schema.description}</Typography>
-          <TextField id={name} name={name} onChange={(event) => onChange(event.target.value)} sx={{ width: '250px', minWidth: '250px', maxWidth: '250px' }}/>
-          <Button variant='contained' color='primary' onClick={onClose}>{schema.buttonField}</Button>
+          <TextField id={name+'-input'} name={name} label={schema.textLabel} placeholder={schema.textPlaceholder} onChange={(event) => onChangeField(event.target.value)} sx={{ width: '250px', minWidth: '250px', maxWidth: '250px' }}/>
+          <Button id={name+'-button'} variant='contained' color='primary' disabled={fieldValue===undefined} onClick={() => onClick()}>{schema.buttonField}</Button>
         </Box>
       );
     }
     return (
-      <Box sx={{ margin: '0px', padding: '0px 10px', border: '1px solid grey' }}>
+      <Box sx={{ margin: '0px', padding: '5px 10px', border: '1px solid grey' }}>
         {name && (
           <Box sx={{ margin: '0px', padding: '0px', gap: '10px', display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
             <Typography sx={titleSx}>{name}</Typography>
@@ -793,6 +794,89 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
       </Box>
     );
   };
+
+  function SelectWidget({
+    schema,
+    id,
+    name, // remove this from textFieldProps
+    options,
+    label,
+    hideLabel,
+    required,
+    disabled,
+    placeholder,
+    readonly,
+    value,
+    multiple,
+    autofocus,
+    onChange,
+    onBlur,
+    onFocus,
+    errorSchema,
+    rawErrors = [],
+    registry,
+    uiSchema,
+    hideError,
+    formContext,
+    ...textFieldProps
+  }) {
+    const { enumOptions, enumDisabled, emptyValue: optEmptyVal } = options;
+
+    multiple = typeof multiple === 'undefined' ? false : !!multiple;
+
+    const emptyValue = multiple ? [] : '';
+    const isEmpty = typeof value === 'undefined' || (multiple && value.length < 1) || (!multiple && value === emptyValue);
+
+    const _onChange = ({ target: { value } }) =>
+      onChange(enumOptionsValueForIndex(value, enumOptions, optEmptyVal));
+    const _onBlur = ({ target }) =>
+      onBlur(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
+    const _onFocus = ({ target }) =>
+      onFocus(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
+    const selectedIndexes = enumOptionsIndexForValue(value, enumOptions, multiple);
+    const { InputLabelProps, SelectProps, autocomplete, ...textFieldRemainingProps } = textFieldProps;
+    const showPlaceholderOption = !multiple && schema.default === undefined;
+
+    return (
+      <TextField
+        id={id}
+        name={id}
+        // label={labelValue(label || undefined, hideLabel, undefined)}
+        value={!isEmpty && typeof selectedIndexes !== 'undefined' ? selectedIndexes : emptyValue}
+        required={required}
+        disabled={disabled || readonly}
+        autoFocus={autofocus}
+        autoComplete={autocomplete}
+        placeholder={placeholder}
+        error={rawErrors.length > 0}
+        onChange={_onChange}
+        onBlur={_onBlur}
+        onFocus={_onFocus}
+        {...(textFieldRemainingProps)}
+        select // Apply this and the following props after the potential overrides defined in textFieldProps
+        InputLabelProps={{
+          ...InputLabelProps,
+          shrink: !isEmpty,
+        }}
+        SelectProps={{
+          ...SelectProps,
+          multiple,
+        }}
+        aria-describedby={ariaDescribedByIds(id)}
+      >
+        {showPlaceholderOption && <MenuItem value=''>{placeholder}</MenuItem>}
+        {Array.isArray(enumOptions) &&
+          enumOptions.map(({ value, label }, i) => {
+            const disabled = Array.isArray(enumDisabled) && enumDisabled.indexOf(value) !== -1;
+            return (
+              <MenuItem key={i} value={String(i)} disabled={disabled}>
+                {label}
+              </MenuItem>
+            );
+          })}
+      </TextField>
+    );
+  }
 
   if(debug) console.log('ConfigPluginDialog rendering...');
   if(!open || !schema || !formData) return null;
@@ -812,13 +896,12 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
           validator={validator}
           templates={{ FieldTemplate, BaseInputTemplate, TitleFieldTemplate, DescriptionFieldTemplate, FieldHelpTemplate, FieldErrorTemplate, ErrorListTemplate, WrapIfAdditionalTemplate,
             ArrayFieldTitleTemplate, ArrayFieldDescriptionTemplate, ArrayFieldItemTemplate, ArrayFieldTemplate, ObjectFieldTemplate, ButtonTemplates: { SubmitButton, RemoveButton, AddButton, MoveUpButton, MoveDownButton } }}
-          widgets={{ CheckboxWidget }}
+          widgets={{ CheckboxWidget, SelectWidget }}
           onSubmit={handleSaveChanges} 
         />
       </DialogContent>
     </Dialog>
   );
 };
-
 
 

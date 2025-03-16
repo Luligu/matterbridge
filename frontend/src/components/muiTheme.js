@@ -54,6 +54,10 @@ export function createMuiTheme(primaryColor) {
             '&:hover': {
               backgroundColor: 'var(--main-button-bg-color)',
             },
+            '&.Mui-disabled': {
+              color: 'var(--main-button-color)',
+              backgroundColor: 'var(--main-grey-color)',
+            },
           },
           contained: {
             color: 'var(--main-button-color)',
