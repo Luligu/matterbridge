@@ -154,7 +154,7 @@ export function HomePlugins({selectPlugin}) {
           {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.original.error && plugin.original.enabled && 
             <Tooltip title="Shows the QRCode or the fabrics"><IconButton style={{ margin: '0', padding: '0' }} onClick={() => selectPlugin(plugin.original)} size="small"><QrCode2/></IconButton></Tooltip>
           }
-          <Tooltip title="Plugin config"><IconButton disabled={plugin.original.restartRequired === true/* matterbridgeInfo?.restartRequired === true*/} style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleConfigPlugin(plugin.original)} size="small"><Settings/></IconButton></Tooltip>
+          <Tooltip title="Plugin config"><IconButton disabled={plugin.original.restartRequired === true || matterbridgeInfo?.restartRequired === true} style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleConfigPlugin(plugin.original)} size="small"><Settings/></IconButton></Tooltip>
           {matterbridgeInfo && !matterbridgeInfo.readOnly &&
             <Tooltip title="Remove the plugin"><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => { handleActionWithConfirmCancel('Remove plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'remove', plugin.original); }} size="small"><DeleteForever/></IconButton></Tooltip>
           }
