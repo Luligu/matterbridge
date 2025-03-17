@@ -36,6 +36,10 @@ It runs perfectly on Windows too.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
+</a>
+
 ## Acknowledgements
 
 The project is build on top of https://github.com/project-chip/matter.js.
@@ -483,7 +487,7 @@ On my side I sponsor the packages that I use in this project. It would be nice t
 Click on the badge below to get started:
 
 <a href="https://www.buymeacoffee.com/luligugithub">
-  <img src="./yellow-button.png" alt="Buy me a coffee" width="120">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
 Thank you for your support!

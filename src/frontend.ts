@@ -1579,10 +1579,10 @@ export class Frontend {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/action' }));
           return;
         }
+        this.log.notice(`Action ${CYAN}${data.params.action}${nt}${data.params.value ? ' with ' + CYAN + data.params.value + nt : ''} for plugin ${CYAN}${plugin.name}${nt}`);
         plugin.platform?.onAction(data.params.action, data.params.value as string | undefined).catch((error) => {
           this.log.error(`Error in plugin ${plugin.name} action ${data.params.action}: ${error}`);
         });
-        this.log.notice(`Action ${CYAN}${data.params.action}${nt}${data.params.value ? ' with ' + CYAN + data.params.value + nt : ''} for plugin ${CYAN}${plugin.name}${nt}`);
       } else if (data.method === '/api/command') {
         if (!isValidString(data.params.command, 5)) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter command in /api/command' }));
