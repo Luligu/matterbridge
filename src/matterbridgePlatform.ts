@@ -208,20 +208,35 @@ export class MatterbridgePlatform {
 
   /**
    * Called when a plugin config includes an action button or an action button with text field.
-   * @param {string} action The action that triggered the logger level change.
-   * @param {string} value The value of the logger level.
+   * @param {string} action The action triggered by the button in plugin config.
+   * @param {string} value The value of the field of the action button.
+   * @param {string} id The id of the schema associated with the action.
+   *
+   * @remarks
+   * This method can be overridden in the extended class.
+   *
+   * Use this method to handle the action defined in the plugin schema:
+   *  "addDevice": {
+   *      "description": "Manually add a device that has not been discovered with mdns:",
+   *      "type": "boolean",
+   *      "buttonText": "ADD",      // The text on the button.
+   *      "buttonField": "ADD",     // The text on the button. This is used when the action includes a text field.
+   *      "buttonClose": false,     // optional, default is false. When true, the dialog will close after the action is sent.
+   *      "buttonSave": false,      // optional, default is false. When true, the dialog will close and trigger the restart required after the action is sent.
+   *      "textPlaceholder": "Enter the device IP address",   // optional: the placeholder text for the text field.
+   *      "default": false
+   *  },
    */
-  async onAction(action: string, value?: string) {
-    this.log.debug(`The plugin doesn't override onAction. Received action ${CYAN}${action}${db}${value ? ' with ' + CYAN + value + db : ''}`);
+  async onAction(action: string, value?: string, id?: string) {
+    this.log.debug(`The plugin doesn't override onAction. Received action ${CYAN}${action}${db}${value ? ' with ' + CYAN + value + db : ''} ${id ? ' for schema ' + CYAN + id + db : ''}`);
   }
 
   /**
    * Called when the plugin config has been updated.
    * @param {PlatformConfig} config The new plugin config.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async onConfigChanged(config: PlatformConfig) {
-    this.log.debug(`The plugin doesn't override onConfigChanged. Received new config.`);
+    this.log.debug(`The plugin ${CYAN}${config.name}${db} doesn't override onConfigChanged. Received new config.`);
   }
 
   /**

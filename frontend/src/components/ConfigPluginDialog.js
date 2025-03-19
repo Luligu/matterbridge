@@ -747,9 +747,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
   }
     
   function CheckboxWidget(props) {
-    const { name, value, schema, readonly, onChange } = props;
+    const { id, name, value, schema, readonly, onChange } = props;
     if(rjsfDebug) console.log(`CheckboxWidget ${name}:`, props); 
-    const debug = true;
 
     const [fieldValue, setFieldValue] = useState(undefined);
 
@@ -760,8 +759,9 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
 
     const onClick = () => {
       if(debug) console.log(`CheckboxWidget onClick plugin="${plugin.name}" action="${name}" value="${fieldValue}"`);
-      sendMessage({ id: uniqueId.current, method: "/api/action", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name, action: name, value: fieldValue } });
-      onClose();
+      sendMessage({ id: uniqueId.current, method: "/api/action", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name, action: name, value: fieldValue, id } });
+      if(schema.buttonClose===true) onClose();
+      else if(schema.buttonSave===true) handleSaveChanges({formData});
     };
 
     if(schema.buttonText && schema.description) {

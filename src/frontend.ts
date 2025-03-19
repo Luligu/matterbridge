@@ -1580,7 +1580,7 @@ export class Frontend {
           return;
         }
         this.log.notice(`Action ${CYAN}${data.params.action}${nt}${data.params.value ? ' with ' + CYAN + data.params.value + nt : ''} for plugin ${CYAN}${plugin.name}${nt}`);
-        plugin.platform?.onAction(data.params.action, data.params.value as string | undefined).catch((error) => {
+        plugin.platform?.onAction(data.params.action, data.params.value as string | undefined, data.params.id as string | undefined).catch((error) => {
           this.log.error(`Error in plugin ${plugin.name} action ${data.params.action}: ${error}`);
         });
       } else if (data.method === '/api/command') {
