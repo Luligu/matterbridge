@@ -32,6 +32,7 @@ RUN npm install -g --omit=dev matterbridge-zigbee2mqtt
 RUN npm install -g --omit=dev matterbridge-somfy-tahoma
 RUN npm install -g --omit=dev matterbridge-shelly
 RUN npm install -g --omit=dev matterbridge-hass
+RUN npm install -g --omit=dev matterbridge-webhooks
 RUN npm install -g --omit=dev matterbridge-test
 RUN npm install -g --omit=dev matterbridge-example-accessory-platform
 RUN npm install -g --omit=dev matterbridge-example-dynamic-platform
