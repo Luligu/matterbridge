@@ -35,7 +35,7 @@ import WebSocket, { WebSocketServer } from 'ws';
 import multer from 'multer';
 
 // AnsiLogger module
-import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from './logger/export.js';
+import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, wr, YELLOW, nt } from './logger/export.js';
 
 // Matterbridge
 import { createZip, deepCopy, isValidArray, isValidNumber, isValidObject, isValidString } from './utils/export.js';
@@ -1569,59 +1569,92 @@ export class Frontend {
         const selectEntityValues = plugin.platform?.getSelectEntities().sort((keyA, keyB) => keyA.name.localeCompare(keyB.name));
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: selectEntityValues }));
         return;
+      } else if (data.method === '/api/action') {
+        if (!isValidString(data.params.plugin, 5) || !isValidString(data.params.action, 1)) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter command in /api/action' }));
+          return;
+        }
+        const plugin = this.matterbridge.plugins.get(data.params.plugin);
+        if (!plugin) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/action' }));
+          return;
+        }
+        this.log.notice(`Action ${CYAN}${data.params.action}${nt}${data.params.value ? ' with ' + CYAN + data.params.value + nt : ''} for plugin ${CYAN}${plugin.name}${nt}`);
+        plugin.platform?.onAction(data.params.action, data.params.value as string | undefined, data.params.id as string | undefined).catch((error) => {
+          this.log.error(`Error in plugin ${plugin.name} action ${data.params.action}: ${error}`);
+        });
       } else if (data.method === '/api/command') {
         if (!isValidString(data.params.command, 5)) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter command in /api/command' }));
           return;
         }
-        if (data.params.command === 'selectdevice' && isValidString(data.params.plugin, 10) && isValidString(data.params.serial, 1)) {
+        if (data.params.command === 'selectdevice' && isValidString(data.params.plugin, 10) && isValidString(data.params.serial, 1) && isValidString(data.params.name, 1)) {
           const plugin = this.matterbridge.plugins.get(data.params.plugin);
           if (!plugin) {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/command' }));
             return;
           }
           const config = plugin.configJson;
-          if (config) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const select = (plugin.schemaJson?.properties as any)?.blackList?.selectFrom;
+          this.log.debug(`SelectDevice(selectMode ${select}) data ${debugStringify(data)}`);
+          if (select === 'serial') this.log.info(`Selected device serial ${data.params.serial}`);
+          if (select === 'name') this.log.info(`Selected device name ${data.params.name}`);
+          if (config && select && (select === 'serial' || select === 'name')) {
+            // Remove postfix from the serial if it exists
             if (config.postfix) {
               data.params.serial = data.params.serial.replace('-' + config.postfix, '');
             }
-            // Add the serial to the whiteList if the whiteList exists and the serial is not already in it
+            // Add the serial to the whiteList if the whiteList exists and the serial or name is not already in it
             if (isValidArray(config.whiteList, 1)) {
-              if (!config.whiteList.includes(data.params.serial)) {
+              if (select === 'serial' && !config.whiteList.includes(data.params.serial)) {
                 config.whiteList.push(data.params.serial);
+              } else if (select === 'name' && !config.whiteList.includes(data.params.name)) {
+                config.whiteList.push(data.params.name);
               }
             }
-            // Remove the serial from the blackList if the blackList exists and the serial is in it
+            // Remove the serial from the blackList if the blackList exists and the serial or name is in it
             if (isValidArray(config.blackList, 1)) {
-              if (config.blackList.includes(data.params.serial)) {
+              if (select === 'serial' && config.blackList.includes(data.params.serial)) {
                 config.blackList = config.blackList.filter((serial) => serial !== data.params.serial);
+              } else if (select === 'name' && config.blackList.includes(data.params.name)) {
+                config.blackList = config.blackList.filter((name) => name !== data.params.name);
               }
             }
             if (plugin.platform) plugin.platform.config = config;
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin);
             this.wssSendRestartRequired(false);
           }
-        } else if (data.params.command === 'unselectdevice' && isValidString(data.params.plugin, 10) && isValidString(data.params.serial, 1)) {
+        } else if (data.params.command === 'unselectdevice' && isValidString(data.params.plugin, 10) && isValidString(data.params.serial, 1) && isValidString(data.params.name, 1)) {
           const plugin = this.matterbridge.plugins.get(data.params.plugin);
           if (!plugin) {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/command' }));
             return;
           }
           const config = plugin.configJson;
-          if (config) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const select = (plugin.schemaJson?.properties as any)?.blackList?.selectFrom;
+          this.log.debug(`UnselectDevice(selectMode ${select}) data ${debugStringify(data)}`);
+          if (select === 'serial') this.log.info(`Unselected device serial ${data.params.serial}`);
+          if (select === 'name') this.log.info(`Unselected device name ${data.params.name}`);
+          if (config && select && (select === 'serial' || select === 'name')) {
             if (config.postfix) {
               data.params.serial = data.params.serial.replace('-' + config.postfix, '');
             }
             // Remove the serial from the whiteList if the whiteList exists and the serial is in it
             if (isValidArray(config.whiteList, 1)) {
-              if (config.whiteList.includes(data.params.serial)) {
+              if (select === 'serial' && config.whiteList.includes(data.params.serial)) {
                 config.whiteList = config.whiteList.filter((serial) => serial !== data.params.serial);
+              } else if (select === 'name' && config.whiteList.includes(data.params.name)) {
+                config.whiteList = config.whiteList.filter((name) => name !== data.params.name);
               }
             }
             // Add the serial to the blackList
             if (isValidArray(config.blackList)) {
-              if (!config.blackList.includes(data.params.serial)) {
+              if (select === 'serial' && !config.blackList.includes(data.params.serial)) {
                 config.blackList.push(data.params.serial);
+              } else if (select === 'name' && !config.blackList.includes(data.params.name)) {
+                config.blackList.push(data.params.name);
               }
             }
             if (plugin.platform) plugin.platform.config = config;

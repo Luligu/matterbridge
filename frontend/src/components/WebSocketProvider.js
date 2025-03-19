@@ -81,10 +81,10 @@ export function WebSocketProvider({ children }) {
         wsRef.current.send(msg);
         if (debug) console.log(`WebSocket sent message:`, message);
       } catch (error) {
-        console.error(`WebSocket error sending message: ${error}`);
+        if (debug) console.error(`WebSocket error sending message: ${error}`);
       }
     } else {
-      console.error(`WebSocket message not sent, WebSocket not connected:`, message);
+      if (debug) console.error(`WebSocket message not sent, WebSocket not connected:`, message);
     }
   }, []);
 
@@ -127,7 +127,7 @@ export function WebSocketProvider({ children }) {
       try {
         const msg = JSON.parse(event.data);
         if (msg.error) {
-          console.error(`WebSocket error message:`, msg);
+          if (debug) console.error(`WebSocket error message:`, msg);
         }
         if (msg.id === undefined) {
           return; // Ignore messages without an ID
@@ -246,7 +246,7 @@ export function WebSocketProvider({ children }) {
           sendMessage({ id: uniqueIdRef.current, method: "ping", src: "Frontend", dst: "Matterbridge", params: {} });
           clearTimeout(offlineTimeoutRef.current);
           offlineTimeoutRef.current = setTimeout(() => {
-            console.error(`WebSocketUse: No pong response received from WebSocket: ${wssHost}`);
+            if (debug) console.error(`WebSocketUse: No pong response received from WebSocket: ${wssHost}`);
             logMessage('WebSocket', `No pong response received from WebSocket: ${wssHost}`);
             setOnline(false);
           }, 1000 * offlineTimeoutSeconds);
@@ -257,7 +257,7 @@ export function WebSocketProvider({ children }) {
     };
 
     wsRef.current.onclose = () => {
-      console.error(`WebSocket: Disconnected from WebSocket: ${wssHost}`);
+      if (debug) console.error(`WebSocket: Disconnected from WebSocket: ${wssHost}`);
       logMessage('WebSocket', `Disconnected from WebSocket: ${wssHost}`);
       setOnline(false);
       closeSnackbar();
@@ -271,7 +271,7 @@ export function WebSocketProvider({ children }) {
     };
 
     wsRef.current.onerror = (error) => {
-      console.error(`WebSocket: WebSocket error connecting to ${wssHost}:`, error);
+      if (debug) console.error(`WebSocket: WebSocket error connecting to ${wssHost}:`, error);
       logMessage('WebSocket', `WebSocket error connecting to ${wssHost}`);
     };
   }, [wssHost]);

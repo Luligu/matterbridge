@@ -36,9 +36,6 @@ import { ConfigPluginDialog } from './ConfigPluginDialog';
 import { debug } from '../App';
 // const debug = true;
 
-export let selectDevices = [];
-export let selectEntities = [];
-
 function HomePluginsTable({ data, columns, columnVisibility }) {
   // Filter columns based on visibility
   const visibleColumns = React.useMemo(
@@ -157,7 +154,7 @@ export function HomePlugins({selectPlugin}) {
           {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.original.error && plugin.original.enabled && 
             <Tooltip title="Shows the QRCode or the fabrics"><IconButton style={{ margin: '0', padding: '0' }} onClick={() => selectPlugin(plugin.original)} size="small"><QrCode2/></IconButton></Tooltip>
           }
-          <Tooltip title="Plugin config"><IconButton disabled={matterbridgeInfo?.restartRequired === true} style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleConfigPlugin(plugin.original)} size="small"><Settings/></IconButton></Tooltip>
+          <Tooltip title="Plugin config"><IconButton disabled={plugin.original.restartRequired === true || matterbridgeInfo?.restartRequired === true} style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleConfigPlugin(plugin.original)} size="small"><Settings/></IconButton></Tooltip>
           {matterbridgeInfo && !matterbridgeInfo.readOnly &&
             <Tooltip title="Remove the plugin"><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => { handleActionWithConfirmCancel('Remove plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'remove', plugin.original); }} size="small"><DeleteForever/></IconButton></Tooltip>
           }
@@ -234,24 +231,6 @@ export function HomePlugins({selectPlugin}) {
         if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
           if(debug) console.log(`HomePlugins (id: ${msg.id}) received ${msg.response.length} plugins:`, msg.response);
           setPlugins(msg.response);
-        }
-        if (msg.id === uniqueId.current && msg.method === '/api/select/devices') {
-          if (msg.response) {
-            if (debug) console.log(`HomePlugins (id: ${msg.id}) received /api/select/devices:`, msg.response);
-            selectDevices = msg.response;
-          }
-          if (msg.error) {
-            console.error('HomePlugins received /api/select/devices error:', msg.error);
-          }
-        }
-        if (msg.id === uniqueId.current && msg.method === '/api/select/entities') {
-          if (msg.response) {
-            if (debug) console.log(`HomePlugins (id: ${msg.id}) received /api/select/entities:`, msg.response);
-            selectEntities = msg.response;
-          }
-          if (msg.error) {
-            console.error('HomePlugins received /api/select/entities error:', msg.error);
-          }
         }
       }
     };
@@ -368,8 +347,6 @@ export function HomePlugins({selectPlugin}) {
 
   const handleConfigPlugin = (plugin) => {
     if (debug) console.log('handleConfigPlugin plugin:', plugin.name);
-    selectDevices = [];
-    selectEntities = [];
     sendMessage({ id: uniqueId.current, method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
     sendMessage({ id: uniqueId.current, method: "/api/select/entities", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
     setSelectedPlugin(plugin);

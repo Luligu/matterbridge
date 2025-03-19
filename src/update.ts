@@ -23,7 +23,7 @@
 
 import { Matterbridge } from './matterbridge.js';
 import { plg, RegisteredPlugin } from './matterbridgeTypes.js';
-import { db, er, nt } from './logger/export.js';
+import { db, nt, wr } from './logger/export.js';
 
 /**
  * Checks for updates for Matterbridge and its plugins.
@@ -96,6 +96,6 @@ async function getPluginLatestVersion(matterbridge: Matterbridge, plugin: Regist
       }
     })
     .catch((error) => {
-      matterbridge.log.warn(`Error getting ${plg}${plugin.name}${er} latest version: ${error.message}`);
+      matterbridge.log.warn(`Error getting ${plg}${plugin.name}${wr} latest version: ${error.message}`);
     });
 }

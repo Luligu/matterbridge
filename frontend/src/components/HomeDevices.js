@@ -231,7 +231,7 @@ export function HomeDevices() {
             let running = true;
             for (const plugin of msg.response) {
               if(plugin.enabled!==true) continue;
-              if(plugin.loaded!==true || plugin.started!==true || plugin.configured!==true || plugin.error===true) {
+              if(plugin.loaded!==true || plugin.started!==true /* || plugin.configured!==true */ || plugin.error===true) {
                 running = false;
               }
             }
@@ -246,7 +246,7 @@ export function HomeDevices() {
             if(debug) console.log(`HomeDevices sent /api/devices`);
 
             for (const plugin of msg.response) {
-              if(plugin.enabled===true && plugin.loaded===true && plugin.started===true && plugin.configured===true && plugin.error!==true) {
+              if(plugin.enabled===true && plugin.loaded===true && plugin.started===true /* && plugin.configured===true */ && plugin.error!==true) {
                 sendMessage({ id: uniqueId.current, method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name} });
                 if(debug) console.log(`HomeDevices sent /api/select/devices for plugin: ${plugin.name}`);
               } 
@@ -270,10 +270,15 @@ export function HomeDevices() {
           }
         }
         if (msg.id === uniqueId.current && msg.method === '/api/select/devices') {
-          if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} selectDevices:`, msg.response);
+          if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} selectDevices for plugin ${msg.plugin}:`, msg.response);
           if(msg.response) {
-            for (const device of msg.response) device.selected = false;
-            setSelectDevices(msg.response);
+            setSelectDevices((prevSelectDevices) => {
+              // Filter out devices from the current plugin
+              const filteredDevices = prevSelectDevices.filter(device => device.pluginName !== msg.plugin);
+              // Add the new devices from the current plugin
+              const updatedDevices = msg.response.map(device => ({ ...device, selected: false }));
+              return [...filteredDevices, ...updatedDevices];
+            });
           }
         }
       }
@@ -337,9 +342,9 @@ export function HomeDevices() {
       )
     );
     if(event.target.checked ) {
-      sendMessage({ id: uniqueId.current, method: "/api/command", src: "Frontend", dst: "Matterbridge", params: { command: 'selectdevice', plugin: device.pluginName, serial: device.serial } });
+      sendMessage({ id: uniqueId.current, method: "/api/command", src: "Frontend", dst: "Matterbridge", params: { command: 'selectdevice', plugin: device.pluginName, serial: device.serial, name: device.name } });
     } else {
-      sendMessage({ id: uniqueId.current, method: "/api/command", src: "Frontend", dst: "Matterbridge", params: { command: 'unselectdevice', plugin: device.pluginName, serial: device.serial } });
+      sendMessage({ id: uniqueId.current, method: "/api/command", src: "Frontend", dst: "Matterbridge", params: { command: 'unselectdevice', plugin: device.pluginName, serial: device.serial, name: device.name } });
     }
   };
 

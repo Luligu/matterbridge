@@ -866,7 +866,11 @@ export class PluginManager {
     try {
       await promises.writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
       plugin.configJson = config;
-      if (plugin.platform) plugin.platform.config = config;
+      plugin.restartRequired = true;
+      if (plugin.platform) {
+        plugin.platform.config = config;
+        plugin.platform.onConfigChanged(config).catch((err) => this.log.error(`Error calling onConfigChanged for plugin ${plg}${plugin.name}${er}: ${err}`));
+      }
       this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
       // this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
     } catch (err) {
