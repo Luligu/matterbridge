@@ -179,13 +179,17 @@ export async function triggerShellyChangeIp(matterbridge: Matterbridge, config: 
   postShelly(api, data, 60 * 1000)
     .then(async () => {
       matterbridge.log.debug(`Triggered Shelly network configuration change: ${debugStringify(config)}`);
+      matterbridge.log.notice(`Changed Shelly network configuration`);
+      matterbridge.frontend.wssSendSnackbarMessage('Changed Shelly network configuration');
     })
     .catch((error) => {
       matterbridge.log.debug(`****Error triggering Shelly network configuration change: ${error instanceof Error ? error.message : error}`);
+      matterbridge.log.error(`Error changing Shelly network configuration: ${error instanceof Error ? error.message : error}`);
+      matterbridge.frontend.wssSendSnackbarMessage('Error changing Shelly network configuration', 10, 'error');
     })
     .finally(() => {
-      matterbridge.log.notice(`Changed Shelly network configuration`);
-      matterbridge.frontend.wssSendSnackbarMessage('Changed Shelly network configuration');
+      // matterbridge.log.notice(`Changed Shelly network configuration`);
+      // matterbridge.frontend.wssSendSnackbarMessage('Changed Shelly network configuration');
     });
 }
 
@@ -200,13 +204,69 @@ export async function triggerShellyReboot(matterbridge: Matterbridge): Promise<v
   postShelly('/api/system/reboot', {}, 60 * 1000)
     .then(async () => {
       matterbridge.log.debug(`Triggered Shelly system reboot`);
+      matterbridge.log.notice(`Rebooting Shelly board...`);
+      matterbridge.frontend.wssSendSnackbarMessage('Rebooting Shelly board...');
     })
     .catch((error) => {
       matterbridge.log.debug(`****Error triggering Shelly system reboot: ${error instanceof Error ? error.message : error}`);
+      matterbridge.log.error(`Error rebooting Shelly board: ${error instanceof Error ? error.message : error}`);
+      matterbridge.frontend.wssSendSnackbarMessage('Error rebooting Shelly board', 10, 'error');
     })
     .finally(() => {
-      matterbridge.log.notice(`Rebooting Shelly board...`);
-      matterbridge.frontend.wssSendSnackbarMessage('Rebooting Shelly board...');
+      // matterbridge.log.notice(`Rebooting Shelly board...`);
+      // matterbridge.frontend.wssSendSnackbarMessage('Rebooting Shelly board...');
+    });
+}
+
+/**
+ * Triggers Shelly soft reset.
+ * It will replaces network config with default one (edn0 on dhcp).
+ *
+ * @param {Matterbridge} matterbridge - The Matterbridge instance.
+ * @returns {Promise<void>} A promise that resolves when the operation is complete.
+ */
+export async function triggerShellySoftReset(matterbridge: Matterbridge): Promise<void> {
+  matterbridge.log.debug(`Triggering Shelly soft reset`);
+
+  getShelly('/api/reset/soft', 60 * 1000)
+    .then(async () => {
+      matterbridge.log.debug(`Triggered Shelly soft reset`);
+      matterbridge.log.notice(`Resetting the network parameters on Shelly board...`);
+      matterbridge.frontend.wssSendSnackbarMessage('Resetting the network parameters on Shelly board...');
+    })
+    .catch((error) => {
+      matterbridge.log.debug(`****Error triggering Shelly soft reset: ${error instanceof Error ? error.message : error}`);
+      matterbridge.log.error(`Error resetting the network parameters on Shelly board: ${error instanceof Error ? error.message : error}`);
+      matterbridge.frontend.wssSendSnackbarMessage('Error resetting the network parameters on Shelly board', 10, 'error');
+    })
+    .finally(() => {
+      // matterbridge.log.notice(`Resetting the network parameters on Shelly board...`);
+      // matterbridge.frontend.wssSendSnackbarMessage('Resetting the network parameters on Shelly board...');
+    });
+}
+/**
+ * Triggers Shelly soft reset.
+ * It will do a soft reset and will remove both directories .matterbridge Matterbridge.
+ * @param {Matterbridge} matterbridge - The Matterbridge instance.
+ * @returns {Promise<void>} A promise that resolves when the operation is complete.
+ */
+export async function triggerShellyHardReset(matterbridge: Matterbridge): Promise<void> {
+  matterbridge.log.debug(`Triggering Shelly hard reset`);
+
+  getShelly('/api/reset/hard', 60 * 1000)
+    .then(async () => {
+      matterbridge.log.debug(`Triggered Shelly hard reset`);
+      matterbridge.log.notice(`Factory resetting Shelly board...`);
+      matterbridge.frontend.wssSendSnackbarMessage('Factory resetting Shelly board...');
+    })
+    .catch((error) => {
+      matterbridge.log.debug(`****Error triggering Shelly hard reset: ${error instanceof Error ? error.message : error}`);
+      matterbridge.log.error(`Error while factory resetting the Shelly board: ${error instanceof Error ? error.message : error}`);
+      matterbridge.frontend.wssSendSnackbarMessage('Error while factory resetting the Shelly board', 10, 'error');
+    })
+    .finally(() => {
+      // matterbridge.log.notice(`Factory resetting Shelly board...`);
+      // matterbridge.frontend.wssSendSnackbarMessage('Factory resetting Shelly board...');
     });
 }
 
@@ -250,6 +310,10 @@ export async function createShellySystemLog(matterbridge: Matterbridge): Promise
  *      /api/updates/main/status  => {"updatingInProgress":true} or {"updatingInProgress":false}
  *
  *      /api/logs/system => text
+ *
+ *      /api/reset/soft => "ok"                 Replaces network config with default one (edn0 on dhcp)
+ *      /api/reset/hard => reboot on success    Hard reset makes soft reset + removing both directories .matterbridge Matterbridge + reboot
+ *
  *
  * @param {number} [timeout=5000] - The timeout duration in milliseconds (default is 60000ms).
  * @returns {Promise<any>} A promise that resolves to the response.

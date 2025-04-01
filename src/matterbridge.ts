@@ -97,6 +97,7 @@ export class Matterbridge extends EventEmitter {
     rootDirectory: '',
     matterbridgeDirectory: '',
     matterbridgePluginDirectory: '',
+    matterbridgeCertDirectory: '',
     globalModulesDirectory: '',
     matterbridgeVersion: '',
     matterbridgeLatestVersion: '',
@@ -131,6 +132,7 @@ export class Matterbridge extends EventEmitter {
   public rootDirectory = '';
   public matterbridgeDirectory = '';
   public matterbridgePluginDirectory = '';
+  public matterbridgeCertDirectory = '';
   public globalModulesDirectory = '';
   public matterbridgeVersion = '';
   public matterbridgeLatestVersion = '';
@@ -193,7 +195,9 @@ export class Matterbridge extends EventEmitter {
   serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
   aggregatorNode: EndpointNode<AggregatorEndpoint> | undefined;
   aggregatorVendorId = VendorId(getIntParameter('vendorId') ?? 0xfff1);
+  aggregatorVendorName = getParameter('vendorName') ?? 'Matterbridge';
   aggregatorProductId = getIntParameter('productId') ?? 0x8000;
+  aggregatorProductName = getParameter('productName') ?? 'Matterbridge aggregator';
 
   protected static instance: Matterbridge | undefined;
 
@@ -482,6 +486,19 @@ export class Matterbridge extends EventEmitter {
     }
     this.log.debug(`Matter logLevel: ${Logger.defaultLogLevel} fileLoger: ${this.matterbridgeInformation.matterFileLogger}.`);
 
+    // Log network interfaces
+    const networkInterfaces = os.networkInterfaces();
+    const availableAddresses = Object.entries(networkInterfaces);
+    const availableInterfaces = Object.keys(networkInterfaces);
+    for (const [ifaceName, ifaces] of availableAddresses) {
+      if (ifaces && ifaces.length > 0) {
+        this.log.debug(`Network interface: ${CYAN}${ifaceName}${db}:`);
+        ifaces.forEach((iface) => {
+          this.log.debug(`- ${CYAN}${iface.family}${db} address ${CYAN}${iface.address}${db} netmask ${CYAN}${iface.netmask}${db} mac ${CYAN}${iface.mac}${db} scopeid ${CYAN}${iface.scopeid}${db} ${iface.internal ? 'internal' : 'external'}`);
+        });
+      }
+    }
+
     // Set the interface to use for matter server node mdnsInterface
     if (hasParameter('mdnsinterface')) {
       this.mdnsInterface = getParameter('mdnsinterface');
@@ -491,13 +508,11 @@ export class Matterbridge extends EventEmitter {
     }
     // Validate mdnsInterface
     if (this.mdnsInterface) {
-      const networkInterfaces = os.networkInterfaces();
-      const availableInterfaces = Object.keys(networkInterfaces);
       if (!availableInterfaces.includes(this.mdnsInterface)) {
         this.log.error(`Invalid mdnsInterface: ${this.mdnsInterface}. Available interfaces are: ${availableInterfaces.join(', ')}. Using all available interfaces.`);
         this.mdnsInterface = undefined;
       } else {
-        this.log.info(`Using mdnsInterface '${this.mdnsInterface}' for the Matter server MdnsBroadcaster.`);
+        this.log.info(`Using mdnsInterface ${CYAN}${this.mdnsInterface}${nf} for the Matter MdnsBroadcaster.`);
       }
     }
     if (this.mdnsInterface) this.environment.vars.set('mdns.networkInterface', this.mdnsInterface);
@@ -509,6 +524,21 @@ export class Matterbridge extends EventEmitter {
       this.ipv4address = await this.nodeContext.get<string>('matteripv4address', undefined);
       if (this.ipv4address === '') this.ipv4address = undefined;
     }
+    // Validate ipv4address
+    if (this.ipv4address) {
+      let isValid = false;
+      for (const [ifaceName, ifaces] of availableAddresses) {
+        if (ifaces && ifaces.find((iface) => iface.address === this.ipv4address)) {
+          this.log.info(`Using ipv4address ${CYAN}${this.ipv4address}${nf} on interface ${CYAN}${ifaceName}${nf} for the Matter server node.`);
+          isValid = true;
+          break;
+        }
+      }
+      if (!isValid) {
+        this.log.error(`Invalid ipv4address: ${this.ipv4address}. Using all available addresses.`);
+        this.ipv4address = undefined;
+      }
+    }
 
     // Set the listeningAddressIpv6 for the matter commissioning server
     if (hasParameter('ipv6address')) {
@@ -516,6 +546,26 @@ export class Matterbridge extends EventEmitter {
     } else {
       this.ipv6address = await this.nodeContext?.get<string>('matteripv6address', undefined);
       if (this.ipv6address === '') this.ipv6address = undefined;
+    }
+    // Validate ipv6address
+    if (this.ipv6address) {
+      let isValid = false;
+      for (const [ifaceName, ifaces] of availableAddresses) {
+        if (ifaces && ifaces.find((iface) => (iface.scopeid === undefined || iface.scopeid === 0) && iface.address === this.ipv6address)) {
+          this.log.info(`Using ipv6address ${CYAN}${this.ipv6address}${nf} on interface ${CYAN}${ifaceName}${nf} for the Matter server node.`);
+          isValid = true;
+          break;
+        }
+        if (ifaces && ifaces.find((iface) => iface.scopeid && iface.scopeid > 0 && iface.address + '%' + (process.platform === 'win32' ? iface.scopeid : ifaceName) === this.ipv6address)) {
+          this.log.info(`Using ipv6address ${CYAN}${this.ipv6address}${nf} on interface ${CYAN}${ifaceName}${nf} for the Matter server node.`);
+          isValid = true;
+          break;
+        }
+      }
+      if (!isValid) {
+        this.log.error(`Invalid ipv6address: ${this.ipv6address}. Using all available addresses.`);
+        this.ipv6address = undefined;
+      }
     }
 
     // Initialize PluginManager
@@ -1043,6 +1093,28 @@ export class Matterbridge extends EventEmitter {
       }
     }
     this.log.debug(`Matterbridge Plugin Directory: ${this.matterbridgePluginDirectory}`);
+
+    // Create the matter cert directory in the home directory
+    this.matterbridgeCertDirectory = path.join(this.homeDirectory, '.mattercert');
+    this.matterbridgeInformation.matterbridgeCertDirectory = this.matterbridgeCertDirectory;
+    try {
+      await fs.access(this.matterbridgeCertDirectory);
+    } catch (err) {
+      if (err instanceof Error) {
+        const nodeErr = err as NodeJS.ErrnoException;
+        if (nodeErr.code === 'ENOENT') {
+          try {
+            await fs.mkdir(this.matterbridgeCertDirectory, { recursive: true });
+            this.log.info(`Created .mattercert directory: ${this.matterbridgeCertDirectory}`);
+          } catch (err) {
+            this.log.error(`Error creating .mattercert directory: ${err}`);
+          }
+        } else {
+          this.log.error(`Error accessing .mattercert directory: ${err}`);
+        }
+      }
+    }
+    this.log.debug(`Matterbridge Matter Cert Directory: ${this.matterbridgeCertDirectory}`);
 
     // Matterbridge version
     const packageJson = JSON.parse(await fs.readFile(path.join(this.rootDirectory, 'package.json'), 'utf-8'));
@@ -1858,7 +1930,7 @@ export class Matterbridge extends EventEmitter {
     this.matterStorageManager = await this.matterStorageService.open('Matterbridge');
     this.log.info('Matter node storage manager "Matterbridge" created');
 
-    this.matterbridgeContext = await this.createServerNodeContext('Matterbridge', 'Matterbridge', bridge.code, this.aggregatorVendorId, 'Matterbridge', this.aggregatorProductId, 'Matterbridge aggregator');
+    this.matterbridgeContext = await this.createServerNodeContext('Matterbridge', 'Matterbridge', bridge.code, this.aggregatorVendorId, this.aggregatorVendorName, this.aggregatorProductId, this.aggregatorProductName);
 
     this.log.info('Matter node storage started');
 
@@ -2076,6 +2148,26 @@ export class Matterbridge extends EventEmitter {
             }
           }
         }
+        setTimeout(
+          () => {
+            if (this.bridgeMode === 'bridge') {
+              this.matterbridgeQrPairingCode = undefined;
+              this.matterbridgeManualPairingCode = undefined;
+            }
+            if (this.bridgeMode === 'childbridge') {
+              const plugin = this.plugins.get(storeId);
+              if (plugin) {
+                plugin.qrPairingCode = undefined;
+                plugin.manualPairingCode = undefined;
+                this.frontend.wssSendRefreshRequired('plugins');
+              }
+            }
+            this.frontend.wssSendRefreshRequired('settings');
+            this.frontend.wssSendSnackbarMessage(`Advertising on server node for ${storeId} stopped. Restart to commission.`, 0);
+            this.log.notice(`Advertising on server node for ${storeId} stopped. Restart to commission.`);
+          },
+          15 * 60 * 1000,
+        ).unref();
       } else {
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
         sanitizeFabrics(serverNode.state.commissioning.fabrics, true);
@@ -2481,6 +2573,9 @@ export class Matterbridge extends EventEmitter {
         break;
       case 4742:
         vendorName = '(eWeLink)';
+        break;
+      case 5264:
+        vendorName = '(Shelly)';
         break;
       case 65521:
         vendorName = '(MatterServer)';

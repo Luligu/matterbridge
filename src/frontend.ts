@@ -734,37 +734,40 @@ export class Frontend {
 
       // Handle the command setmdnsinterface from Settings
       if (command === 'setmdnsinterface') {
-        param = param.slice(1, -1); // Remove the first and last characters *mdns*
-        this.matterbridge.matterbridgeInformation.mattermdnsinterface = param;
-        this.log.debug('Matter.js mdns interface:', param === '' ? 'All interfaces' : param);
-        await this.matterbridge.nodeContext?.set('mattermdnsinterface', param);
+        if (param === 'json' && isValidString(req.body.value)) {
+          this.matterbridge.matterbridgeInformation.mattermdnsinterface = req.body.value;
+          this.log.debug(`Matter.js mdns interface: ${req.body.value === '' ? 'all interfaces' : req.body.value}`);
+          await this.matterbridge.nodeContext?.set('mattermdnsinterface', req.body.value);
+        }
         res.json({ message: 'Command received' });
         return;
       }
 
       // Handle the command setipv4address from Settings
       if (command === 'setipv4address') {
-        param = param.slice(1, -1); // Remove the first and last characters *ip*
-        this.matterbridge.matterbridgeInformation.matteripv4address = param;
-        this.log.debug('Matter.js ipv4 address:', param === '' ? 'All ipv4 addresses' : param);
-        await this.matterbridge.nodeContext?.set('matteripv4address', param);
+        if (param === 'json' && isValidString(req.body.value)) {
+          this.log.debug(`Matter.js ipv4 address: ${req.body.value === '' ? 'all ipv4 addresses' : req.body.value}`);
+          this.matterbridge.matterbridgeInformation.matteripv4address = req.body.value;
+          await this.matterbridge.nodeContext?.set('matteripv4address', req.body.value);
+        }
         res.json({ message: 'Command received' });
         return;
       }
 
       // Handle the command setipv6address from Settings
       if (command === 'setipv6address') {
-        param = param.slice(1, -1); // Remove the first and last characters *ip*
-        this.matterbridge.matterbridgeInformation.matteripv6address = param;
-        this.log.debug('Matter.js ipv6 address:', param === '' ? 'All ipv6 addresses' : param);
-        await this.matterbridge.nodeContext?.set('matteripv6address', param);
+        if (param === 'json' && isValidString(req.body.value)) {
+          this.log.debug(`Matter.js ipv6 address: ${req.body.value === '' ? 'all ipv6 addresses' : req.body.value}`);
+          this.matterbridge.matterbridgeInformation.matteripv6address = req.body.value;
+          await this.matterbridge.nodeContext?.set('matteripv6address', req.body.value);
+        }
         res.json({ message: 'Command received' });
         return;
       }
 
       // Handle the command setmatterport from Settings
       if (command === 'setmatterport') {
-        const port = Math.min(Math.max(parseInt(param), 5540), 5560);
+        const port = Math.min(Math.max(parseInt(req.body.value), 5540), 5560);
         this.matterbridge.matterbridgeInformation.matterPort = port;
         this.log.debug(`Set matter commissioning port to ${CYAN}${port}${db}`);
         await this.matterbridge.nodeContext?.set<number>('matterport', port);
@@ -774,7 +777,7 @@ export class Frontend {
 
       // Handle the command setmatterdiscriminator from Settings
       if (command === 'setmatterdiscriminator') {
-        const discriminator = Math.min(Math.max(parseInt(param), 1000), 4095);
+        const discriminator = Math.min(Math.max(parseInt(req.body.value), 1000), 4095);
         this.matterbridge.matterbridgeInformation.matterDiscriminator = discriminator;
         this.log.debug(`Set matter commissioning discriminator to ${CYAN}${discriminator}${db}`);
         await this.matterbridge.nodeContext?.set<number>('matterdiscriminator', discriminator);
@@ -784,7 +787,7 @@ export class Frontend {
 
       // Handle the command setmatterpasscode from Settings
       if (command === 'setmatterpasscode') {
-        const passcode = Math.min(Math.max(parseInt(param), 10000000), 90000000);
+        const passcode = Math.min(Math.max(parseInt(req.body.value), 10000000), 90000000);
         this.matterbridge.matterbridgeInformation.matterPasscode = passcode;
         this.log.debug(`Set matter commissioning passcode to ${CYAN}${passcode}${db}`);
         await this.matterbridge.nodeContext?.set<number>('matterpasscode', passcode);
@@ -1381,6 +1384,14 @@ export class Frontend {
         this.log.debug('/api/shellynetconfig:', data.params);
         const { triggerShellyChangeIp: triggerShellyChangeNet } = await import('./shelly.js');
         triggerShellyChangeNet(this.matterbridge, data.params as { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string });
+        return;
+      } else if (data.method === '/api/softreset') {
+        const { triggerShellySoftReset } = await import('./shelly.js');
+        triggerShellySoftReset(this.matterbridge);
+        return;
+      } else if (data.method === '/api/hardreset') {
+        const { triggerShellyHardReset } = await import('./shelly.js');
+        triggerShellyHardReset(this.matterbridge);
         return;
       } else if (data.method === '/api/reboot') {
         const { triggerShellyReboot } = await import('./shelly.js');

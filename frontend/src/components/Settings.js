@@ -281,7 +281,7 @@ function MatterSettings({ matterbridgeInfo }) {
   const handleChangeMdnsInterface = (event) => {
     if(debug) console.log('handleChangeMdnsInterface called with value:', event.target.value);
     setmdnsInterface(event.target.value);
-    sendCommandToMatterbridge('setmdnsinterface', '*'+event.target.value+'*');
+    sendCommandToMatterbridge('setmdnsinterface', 'json', JSON.stringify({ value: event.target.value}));
     showSnackbarMessage('Restart Matterbridge to apply changes', 5);
   };
 
@@ -289,7 +289,7 @@ function MatterSettings({ matterbridgeInfo }) {
   const handleChangeIpv4Address = (event) => {
     if(debug) console.log('handleChangeIpv4Address called with value:', event.target.value);
     setIpv4Address(event.target.value);
-    sendCommandToMatterbridge('setipv4address', '*'+event.target.value+'*');
+    sendCommandToMatterbridge('setipv4address', 'json', JSON.stringify({ value: event.target.value}));
     showSnackbarMessage('Restart Matterbridge to apply changes', 5);
   };
 
@@ -297,7 +297,7 @@ function MatterSettings({ matterbridgeInfo }) {
   const handleChangeIpv6Address = (event) => {
     if(debug) console.log('handleChangeIpv6Address called with value:', event.target.value);
     setIpv6Address(event.target.value);
-    sendCommandToMatterbridge('setipv6address', '*'+event.target.value+'*');
+    sendCommandToMatterbridge('setipv6address', 'json', JSON.stringify({ value: event.target.value}) );
     showSnackbarMessage('Restart Matterbridge to apply changes', 5);
   };
 
@@ -305,7 +305,7 @@ function MatterSettings({ matterbridgeInfo }) {
   const handleChangeMatterPort = (event) => {
     if(debug) console.log('handleChangeMatterPort called with value:', event.target.value);
     setMatterPort(event.target.value);
-    sendCommandToMatterbridge('setmatterport', event.target.value);
+    sendCommandToMatterbridge('setmatterport', 'json', JSON.stringify({ value: event.target.value}) );
     showSnackbarMessage('Restart Matterbridge to apply changes', 5);
   };
 
@@ -313,7 +313,7 @@ function MatterSettings({ matterbridgeInfo }) {
   const handleChangeMatterDiscriminator = (event) => {
     if(debug) console.log('handleChangeMatterDiscriminator called with value:', event.target.value);
     setMatterDiscriminator(event.target.value);
-    sendCommandToMatterbridge('setmatterdiscriminator', event.target.value);
+    sendCommandToMatterbridge('setmatterdiscriminator', 'json', JSON.stringify({ value: event.target.value}) );
     showSnackbarMessage('Restart Matterbridge to apply changes', 5);
   };
 
@@ -321,7 +321,7 @@ function MatterSettings({ matterbridgeInfo }) {
   const handleChangemMatterPasscode = (event) => {
     if(debug) console.log('handleChangemMatterPasscode called with value:', event.target.value);
     setMatterPasscode(event.target.value);
-    sendCommandToMatterbridge('setmatterpasscode', event.target.value);
+    sendCommandToMatterbridge('setmatterpasscode', 'json', JSON.stringify({ value: event.target.value}) );
     showSnackbarMessage('Restart Matterbridge to apply changes', 5);
   };
 

@@ -107,15 +107,13 @@ export function getMacAddress(): string | undefined {
 /**
  * Logs the available network interfaces and their details.
  * @param {boolean} log - Whether to enable logging of network interface details.
- * @returns {string | undefined} The IPv6 address of the network interface, if available.
  */
-export function logInterfaces(debug = true): string | undefined {
+export function logInterfaces(debug = true): void {
   const log = new AnsiLogger({ logName: 'MatterbridgeUtils', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
 
   log.logLevel = LogLevel.INFO;
   log.logName = 'LogInterfaces';
 
-  let ipv6Address: string | undefined;
   const networkInterfaces = os.networkInterfaces();
   if (debug) log.info('Available Network Interfaces:');
   for (const [interfaceName, networkInterface] of Object.entries(networkInterfaces)) {
@@ -125,7 +123,6 @@ export function logInterfaces(debug = true): string | undefined {
       if (debug) log.info('Details:', detail);
     }
   }
-  return ipv6Address;
 }
 
 /**
@@ -158,7 +155,7 @@ export async function resolveHostname(hostname: string, family: 0 | 4 | 6 = 4): 
  * @returns {Promise<string>} A promise that resolves to the version string of the package.
  * @throws {Error} If the request fails or the tag is not found.
  */
-export async function getNpmPackageVersion(packageName: string, tag = 'latest', timeout = 5000): Promise<string> {
+export async function getNpmPackageVersion(packageName: string, tag = 'latest', timeout = 10000): Promise<string> {
   const https = await import('https');
   return new Promise((resolve, reject) => {
     const url = `https://registry.npmjs.org/${packageName}`;
