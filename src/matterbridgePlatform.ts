@@ -319,6 +319,17 @@ export class MatterbridgePlatform {
   }
 
   /**
+   * Clears the select for a single device.
+   *
+   * @param {string} device - The serial of the device to clear.
+   * @returns {void}
+   */
+  async clearDeviceSelect(device: string): Promise<void> {
+    this.selectDevice.delete(device);
+    await this.saveSelects();
+  }
+
+  /**
    * Set the select device in the platform map.
    *
    * @param {string} serial - The serial number of the device.

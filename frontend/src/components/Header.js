@@ -98,6 +98,14 @@ function Header() {
     sendMessage({ id: uniqueId.current, method: "/api/reboot", src: "Frontend", dst: "Matterbridge", params: {} });
   };
 
+  const handleSoftResetClick = () => {
+    sendMessage({ id: uniqueId.current, method: "/api/softreset", src: "Frontend", dst: "Matterbridge", params: {} });
+  };
+
+  const handleHardResetClick = () => {
+    sendMessage({ id: uniqueId.current, method: "/api/hardreset", src: "Frontend", dst: "Matterbridge", params: {} });
+  };
+
   const handleStartAdvertiseClick = () => {
     sendMessage({ id: uniqueId.current, method: "/api/advertise", src: "Frontend", dst: "Matterbridge", params: {} });
   };
@@ -151,6 +159,10 @@ function Header() {
       handleShellyCreateSystemLog();
     } else if (value === 'shelly-download-system-log') {
       handleShellyDownloadSystemLog(); 
+    } else if (value === 'softreset') {
+      handleSoftResetClick();
+    } else if (value === 'hardreset') {
+      handleHardResetClick();
     } else if (value === 'restart') {
       handleRestartClick();
     } else if (value === 'shutdown') {
@@ -407,7 +419,7 @@ function Header() {
           {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard &&
             <MenuItem onClick={() => { showConfirmCancelDialog('Reboot', 'Are you sure you want to reboot the Shelly board?', 'reboot', handleMenuCloseConfirm, handleMenuCloseCancel); }}>
               <ListItemIcon><RestartAltIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
-              <ListItemText primary="Reboot" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Reboot..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
           }
           {settings.matterbridgeInformation.matterbridgePaired === true && settings.matterbridgeInformation.matterbridgeAdvertise === false ?
@@ -444,7 +456,6 @@ function Header() {
               <ListItemIcon><DownloadIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
               <ListItemText primary="Matterbridge log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
-            <Divider />
             <MenuItem onClick={() => { handleMenuCloseConfirm('download-mjstorage'); handleDownloadMenuClose(); }}>
               <ListItemIcon><DownloadIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
               <ListItemText primary="Matter storage" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
@@ -501,6 +512,18 @@ function Header() {
             </MenuItem>
             {!settings.matterbridgeInformation.readOnly &&
               <MenuItem onClick={() => { handleResetMenuClose(); showConfirmCancelDialog('Factory reset and shutdown', 'Are you sure you want to factory reset Matterbridge? You will have to manually remove Matterbridge from the controller.', 'factoryreset', handleMenuCloseConfirm, handleMenuCloseCancel); }}>
+                <ListItemIcon><PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+                <ListItemText primary="Factory reset..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              </MenuItem>
+            }
+            {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard &&
+              <MenuItem onClick={() => { handleResetMenuClose(); showConfirmCancelDialog('Network reset', 'Are you sure you want to factory reset the network parameters?', 'softreset', handleMenuCloseConfirm, handleMenuCloseCancel); }}>
+                <ListItemIcon><PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+                <ListItemText primary="Reset network..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              </MenuItem>
+            }
+            {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard &&
+              <MenuItem onClick={() => { handleResetMenuClose(); showConfirmCancelDialog('Factory reset', 'Are you sure you want to factory reset Matterbridge? You will have to manually remove Matterbridge from the controller.', 'hardreset', handleMenuCloseConfirm, handleMenuCloseCancel); }}>
                 <ListItemIcon><PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
                 <ListItemText primary="Factory reset..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
               </MenuItem>

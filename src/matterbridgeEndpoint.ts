@@ -1052,7 +1052,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createOnOffClusterServer(onOff = false) {
-    this.behaviors.require(MatterbridgeOnOffServer, {
+    this.behaviors.require(MatterbridgeOnOffServer.for(ClusterType(OnOff.Base)), {
       onOff,
     });
     return this;
@@ -1629,34 +1629,34 @@ export class MatterbridgeEndpoint extends Endpoint {
         return false;
       }
       if (event === 'Single') {
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
-        this.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, log);
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
-        this.triggerEvent(Switch.Cluster.id, 'shortRelease', { previousPosition: 1 }, log);
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
-        this.triggerEvent(Switch.Cluster.id, 'multiPressComplete', { previousPosition: 1, totalNumberOfPressesCounted: 1 }, log);
         log?.info(`${db}Trigger endpoint ${or}${this.id}:${this.number}${db} event ${hk}Switch.SinglePress${db}`);
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
+        await this.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, log);
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
+        await this.triggerEvent(Switch.Cluster.id, 'shortRelease', { previousPosition: 1 }, log);
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
+        await this.triggerEvent(Switch.Cluster.id, 'multiPressComplete', { previousPosition: 1, totalNumberOfPressesCounted: 1 }, log);
       }
       if (event === 'Double') {
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
-        this.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, log);
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
-        this.triggerEvent(Switch.Cluster.id, 'shortRelease', { previousPosition: 1 }, log);
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
-        this.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, log);
-        this.triggerEvent(Switch.Cluster.id, 'multiPressOngoing', { newPosition: 1, currentNumberOfPressesCounted: 2 }, log);
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
-        this.triggerEvent(Switch.Cluster.id, 'shortRelease', { previousPosition: 1 }, log);
-        this.triggerEvent(Switch.Cluster.id, 'multiPressComplete', { previousPosition: 1, totalNumberOfPressesCounted: 2 }, log);
         log?.info(`${db}Trigger endpoint ${or}${this.id}:${this.number}${db} event ${hk}Switch.DoublePress${db}`);
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
+        await this.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, log);
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
+        await this.triggerEvent(Switch.Cluster.id, 'shortRelease', { previousPosition: 1 }, log);
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
+        await this.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, log);
+        await this.triggerEvent(Switch.Cluster.id, 'multiPressOngoing', { newPosition: 1, currentNumberOfPressesCounted: 2 }, log);
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
+        await this.triggerEvent(Switch.Cluster.id, 'shortRelease', { previousPosition: 1 }, log);
+        await this.triggerEvent(Switch.Cluster.id, 'multiPressComplete', { previousPosition: 1, totalNumberOfPressesCounted: 2 }, log);
       }
       if (event === 'Long') {
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
-        this.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, log);
-        this.triggerEvent(Switch.Cluster.id, 'longPress', { newPosition: 1 }, log);
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
-        this.triggerEvent(Switch.Cluster.id, 'longRelease', { previousPosition: 1 }, log);
         log?.info(`${db}Trigger endpoint ${or}${this.id}:${this.number}${db} event ${hk}Switch.LongPress${db}`);
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
+        await this.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, log);
+        await this.triggerEvent(Switch.Cluster.id, 'longPress', { newPosition: 1 }, log);
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
+        await this.triggerEvent(Switch.Cluster.id, 'longRelease', { previousPosition: 1 }, log);
       }
     }
     if (['Press', 'Release'].includes(event)) {
@@ -1665,14 +1665,14 @@ export class MatterbridgeEndpoint extends Endpoint {
         return false;
       }
       if (event === 'Press') {
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
-        this.triggerEvent(Switch.Cluster.id, 'switchLatched', { newPosition: 1 }, log);
         log?.info(`${db}Trigger endpoint ${or}${this.id}:${this.number}${db} event ${hk}Switch.Press${db}`);
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
+        await this.triggerEvent(Switch.Cluster.id, 'switchLatched', { newPosition: 1 }, log);
       }
       if (event === 'Release') {
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
-        this.triggerEvent(Switch.Cluster.id, 'switchLatched', { newPosition: 0 }, log);
         log?.info(`${db}Trigger endpoint ${or}${this.id}:${this.number}${db} event ${hk}Switch.Release${db}`);
+        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
+        await this.triggerEvent(Switch.Cluster.id, 'switchLatched', { newPosition: 0 }, log);
       }
     }
     return true;

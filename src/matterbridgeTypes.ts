@@ -108,6 +108,7 @@ export interface MatterbridgeInformation {
   rootDirectory: string;
   matterbridgeDirectory: string;
   matterbridgePluginDirectory: string;
+  matterbridgeCertDirectory: string;
   globalModulesDirectory: string;
   matterbridgeVersion: string;
   matterbridgeLatestVersion: string;
