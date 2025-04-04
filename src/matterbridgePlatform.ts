@@ -335,7 +335,7 @@ export class MatterbridgePlatform {
    * @param {string} serial - The serial number of the device.
    * @param {string} name - The name of the device.
    * @param {string} [configUrl] - The configuration URL of the device.
-   * @param {string} [icon] - The icon of the device.
+   * @param {string} [icon] - The icon of the device: 'wifi', 'ble', 'hub'
    * @param {Array<{ name: string; description: string; icon?: string }>} [entities] - The entities associated with the device.
    * @returns {void}
    */
@@ -358,7 +358,7 @@ export class MatterbridgePlatform {
    * @param {string} serial - The serial number of the device.
    * @param {string} entityName - The name of the entity.
    * @param {string} entityDescription - The description of the entity.
-   * @param {string} [entityIcon] - The icon of the entity.
+   * @param {string} [entityIcon] - The icon of the entity: 'wifi', 'ble', 'hub', 'component', 'matter'
    * @returns {void}
    */
   setSelectDeviceEntity(serial: string, entityName: string, entityDescription: string, entityIcon?: string): void {
@@ -387,7 +387,7 @@ export class MatterbridgePlatform {
    *
    * @param {string} name - The entity name.
    * @param {string} description - The entity description.
-   * @param {string} [icon] - The entity icon.
+   * @param {string} [icon] - The entity icon: 'wifi', 'ble', 'hub', 'component', 'matter'
    * @returns {void}
    */
   setSelectEntity(name: string, description: string, icon?: string): void {
