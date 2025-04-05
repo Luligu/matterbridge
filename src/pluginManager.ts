@@ -258,7 +258,12 @@ export class PluginManager {
       plugin.name = packageJson.name || 'Unknown name';
       plugin.version = packageJson.version || '1.0.0';
       plugin.description = packageJson.description || 'Unknown description';
-      plugin.author = packageJson.author || 'Unknown author';
+      if (!packageJson.author) plugin.author = 'Unknown author';
+      else if (typeof packageJson.author === 'string') plugin.author = packageJson.author;
+      else if (typeof packageJson.author === 'object') {
+        if (packageJson.author.name) plugin.author = packageJson.author.name;
+        else plugin.author = 'Unknown author';
+      }
       if (!plugin.path) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no path`);
       if (!plugin.type) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no type`);
 
@@ -468,7 +473,14 @@ export class PluginManager {
         this.log.info(`Plugin ${plg}${nameOrPath}${nf} already registered`);
         return null;
       }
-      this._plugins.set(packageJson.name, { name: packageJson.name, enabled: true, path: packageJsonPath, type: 'AnyPlatform', version: packageJson.version, description: packageJson.description, author: packageJson.author });
+      let author = '';
+      if (!packageJson.author) author = 'Unknown author';
+      else if (typeof packageJson.author === 'string') author = packageJson.author;
+      else if (typeof packageJson.author === 'object') {
+        if (packageJson.author.name) author = packageJson.author.name;
+        else author = 'Unknown author';
+      }
+      this._plugins.set(packageJson.name, { name: packageJson.name, enabled: true, path: packageJsonPath, type: 'AnyPlatform', version: packageJson.version, description: packageJson.description, author });
       this.log.info(`Added plugin ${plg}${packageJson.name}${nf}`);
       await this.saveToStorage();
       const plugin = this._plugins.get(packageJson.name);
@@ -592,7 +604,12 @@ export class PluginManager {
         plugin.name = packageJson.name;
         plugin.description = packageJson.description ?? 'No description';
         plugin.version = packageJson.version;
-        plugin.author = packageJson.author ?? 'Unknown';
+        if (!packageJson.author) plugin.author = 'Unknown author';
+        else if (typeof packageJson.author === 'string') plugin.author = packageJson.author;
+        else if (typeof packageJson.author === 'object') {
+          if (packageJson.author.name) plugin.author = packageJson.author.name;
+          else plugin.author = 'Unknown author';
+        }
         plugin.configJson = config;
         plugin.schemaJson = await this.loadSchema(plugin);
         config.name = plugin.name;
@@ -607,7 +624,12 @@ export class PluginManager {
         plugin.name = packageJson.name;
         plugin.description = packageJson.description ?? 'No description';
         plugin.version = packageJson.version;
-        plugin.author = packageJson.author ?? 'Unknown';
+        if (!packageJson.author) plugin.author = 'Unknown author';
+        else if (typeof packageJson.author === 'string') plugin.author = packageJson.author;
+        else if (typeof packageJson.author === 'object') {
+          if (packageJson.author.name) plugin.author = packageJson.author.name;
+          else plugin.author = 'Unknown author';
+        }
         plugin.type = platform.type;
         plugin.platform = platform;
         plugin.loaded = true;
