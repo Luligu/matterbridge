@@ -544,11 +544,11 @@ export async function subscribeAttribute(endpoint: MatterbridgeEndpoint, cluster
  *
  * @param {number} measuredValue - The measured value of the temperature x 100.
  */
-export function getDefaultTemperatureMeasurementClusterServer(measuredValue = 0) {
+export function getDefaultTemperatureMeasurementClusterServer(measuredValue = 0, minMeasuredValue: number | null = -27315, maxMeasuredValue: number | null = 32767) {
   return optionsFor(TemperatureMeasurementServer, {
     measuredValue,
-    minMeasuredValue: null,
-    maxMeasuredValue: null,
+    minMeasuredValue,
+    maxMeasuredValue,
     tolerance: 0,
   });
 }
@@ -600,7 +600,7 @@ export function getDefaultIlluminanceMeasurementClusterServer(measuredValue = 0)
  *
  * @param {number} measuredValue - The measured value of the flow in 10 x m3/h.
  */
-export function getDefaultFlowMeasurementClusterServer(measuredValue = 0) {
+export function getDefaultFlowMeasurementClusterServer(measuredValue = 0, minMeasuredValue: number | null = -27315, maxMeasuredValue: number | null = 32767) {
   return optionsFor(FlowMeasurementServer, {
     measuredValue,
     minMeasuredValue: null,
@@ -613,12 +613,20 @@ export function getDefaultFlowMeasurementClusterServer(measuredValue = 0) {
  * Get the default OccupancySensing cluster server options.
  *
  * @param {boolean} occupied - A boolean indicating whether the occupancy is occupied or not. Default is false.
+ *
+ * @remark The default value for the occupancy sensor type is PIR.
+ * Servers SHALL set these attributes for backward compatibility with clients implementing a cluster revision <= 4 as
+ * described in OccupancySensorType and OccupancySensorTypeBitmap Attributes.
+ * This replaces the 9 legacy attributes PIROccupiedToUnoccupiedDelay through PhysicalContactUnoccupiedToOccupiedThreshold.
  */
-export function getDefaultOccupancySensingClusterServer(occupied = false) {
-  return optionsFor(OccupancySensingServer, {
+export function getDefaultOccupancySensingClusterServer(occupied = false, holdTime = 30, holdTimeMin = 1, holdTimeMax = 300) {
+  return optionsFor(OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared), {
     occupancy: { occupied },
     occupancySensorType: OccupancySensing.OccupancySensorType.Pir,
     occupancySensorTypeBitmap: { pir: true, ultrasonic: false, physicalContact: false },
-    pirOccupiedToUnoccupiedDelay: 30,
+    pirOccupiedToUnoccupiedDelay: holdTime,
+    pirUnoccupiedToOccupiedDelay: holdTime,
+    holdTime,
+    holdTimeLimits: { holdTimeMin, holdTimeMax, holdTimeDefault: holdTime },
   });
 }

@@ -29,6 +29,33 @@ Features:
 - It is possible to choose the method: GET or POST.
 - The webhook can be tested directly in the frontend.
 
+## Breacking changes
+
+Matter 1.4
+
+New device types:
+
+- Mounted On/Off Control (a switch without client cluster!)
+- Mounted Dimmable Load Control (a dimmer switch without client cluster!)
+
+Modified clusters:
+
+- OccupancySensing cluster
+
+## [3.0.0] - 2025-04-??
+
+### Added
+
+- [addEndpoint]: Added an exception handler with deep stack on Aggregator.add() call.
+
+### Changed
+
+- [deviceTypes]: Updated device types to Matter 1.4
+
+### Fixed
+
+- [doorLock]: Fixed supportedOperatingModes inverted bitmap (Thanks Apollon).
+
 ## [2.2.6] - 2025-04-01
 
 ### Added

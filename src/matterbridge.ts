@@ -26,6 +26,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import EventEmitter from 'node:events';
+import { inspect } from 'node:util';
 
 // AnsiLogger module
 import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN } from './logger/export.js';
@@ -454,23 +455,23 @@ export class Matterbridge extends EventEmitter {
     if (hasParameter('matterlogger')) {
       const level = getParameter('matterlogger');
       if (level === 'debug') {
-        Logger.defaultLogLevel = MatterLogLevel.DEBUG;
+        Logger.level = MatterLogLevel.DEBUG;
       } else if (level === 'info') {
-        Logger.defaultLogLevel = MatterLogLevel.INFO;
+        Logger.level = MatterLogLevel.INFO;
       } else if (level === 'notice') {
-        Logger.defaultLogLevel = MatterLogLevel.NOTICE;
+        Logger.level = MatterLogLevel.NOTICE;
       } else if (level === 'warn') {
-        Logger.defaultLogLevel = MatterLogLevel.WARN;
+        Logger.level = MatterLogLevel.WARN;
       } else if (level === 'error') {
-        Logger.defaultLogLevel = MatterLogLevel.ERROR;
+        Logger.level = MatterLogLevel.ERROR;
       } else if (level === 'fatal') {
-        Logger.defaultLogLevel = MatterLogLevel.FATAL;
+        Logger.level = MatterLogLevel.FATAL;
       } else {
         this.log.warn(`Invalid matter.js logger level: ${level}. Using default level "info".`);
-        Logger.defaultLogLevel = MatterLogLevel.INFO;
+        Logger.level = MatterLogLevel.INFO;
       }
     } else {
-      Logger.defaultLogLevel = await this.nodeContext.get<number>('matterLogLevel', this.matterbridgeInformation.shellyBoard ? MatterLogLevel.NOTICE : MatterLogLevel.INFO);
+      Logger.level = (await this.nodeContext.get<number>('matterLogLevel', this.matterbridgeInformation.shellyBoard ? MatterLogLevel.NOTICE : MatterLogLevel.INFO)) as MatterLogLevel;
     }
     Logger.format = MatterLogFormat.ANSI;
     Logger.setLogger('default', this.createMatterLogger());
@@ -1699,7 +1700,7 @@ export class Matterbridge extends EventEmitter {
 
         // Setting reachability to true
         plugin.reachabilityTimeout = setTimeout(() => {
-          this.log.info(`Setting reachability to true for ${plg}${plugin.name}${db} type ${plugin.type} server node ${plugin.serverNode !== undefined} aggragator node ${plugin.aggregatorNode !== undefined} device ${plugin.device !== undefined}`);
+          this.log.info(`Setting reachability to true for ${plg}${plugin.name}${nf} type ${plugin.type} server node ${plugin.serverNode !== undefined} aggregator node ${plugin.aggregatorNode !== undefined} device ${plugin.device !== undefined}`);
           if (plugin.type === 'DynamicPlatform' && plugin.aggregatorNode) this.setAggregatorReachability(plugin.aggregatorNode, true);
           this.frontend.wssSendRefreshRequired('reachability');
         }, 60 * 1000);
@@ -2078,6 +2079,8 @@ export class Matterbridge extends EventEmitter {
         softwareVersionString: await storageContext.get<string>('softwareVersionString'),
         hardwareVersion: await storageContext.get<number>('hardwareVersion'),
         hardwareVersionString: await storageContext.get<string>('hardwareVersionString'),
+
+        reachable: true,
       },
     });
 
@@ -2361,16 +2364,41 @@ export class Matterbridge extends EventEmitter {
     if (this.bridgeMode === 'bridge') {
       this.log.debug(`Adding bridged endpoint ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} to Matterbridge aggregator node`);
       if (!this.aggregatorNode) this.log.error('Aggregator node not found for Matterbridge');
-      await this.aggregatorNode?.add(device);
+      try {
+        await this.aggregatorNode?.add(device);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : '';
+        const errorStack = error instanceof Error ? error.stack : '';
+        const errorDebug = inspect(error, { depth: 10 });
+        this.log.error(`Error adding bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for plugin ${plg}${pluginName}${er}: ${error} ${errorMessage} ${errorStack} ${errorDebug}`);
+        return;
+      }
     } else if (this.bridgeMode === 'childbridge') {
       if (plugin.type === 'AccessoryPlatform') {
-        await this.createAccessoryPlugin(plugin, device);
+        try {
+          this.log.debug(`Creating endpoint ${dev}${device.deviceName}${db} for AccessoryPlatform plugin ${plg}${plugin.name}${db} server node`);
+          await this.createAccessoryPlugin(plugin, device);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : '';
+          const errorStack = error instanceof Error ? error.stack : '';
+          const errorDebug = inspect(error, { depth: 10 });
+          this.log.error(`Error creating endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for AccessoryPlatform plugin ${plg}${pluginName}${er} server node: ${error} ${errorMessage} ${errorStack} ${errorDebug}`);
+          return;
+        }
       }
       if (plugin.type === 'DynamicPlatform') {
         plugin.locked = true;
-        this.log.debug(`Adding bridged endpoint ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} to ${plg}${plugin.name}${db} aggregator node`);
+        this.log.debug(`Adding bridged endpoint ${dev}${device.deviceName}${db} for DynamicPlatform plugin ${plg}${plugin.name}${db} aggregator node`);
         if (!plugin.aggregatorNode) this.log.error(`Aggregator node not found for plugin ${plg}${plugin.name}${db}`);
-        await plugin.aggregatorNode?.add(device);
+        try {
+          await plugin.aggregatorNode?.add(device);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : '';
+          const errorStack = error instanceof Error ? error.stack : '';
+          const errorDebug = inspect(error, { depth: 10 });
+          this.log.error(`Error adding bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for DynamicPlatform plugin ${plg}${pluginName}${er} aggregator node: ${error} ${errorMessage} ${errorStack} ${errorDebug}`);
+          return;
+        }
       }
     }
     if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
