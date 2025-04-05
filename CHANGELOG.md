@@ -29,6 +29,20 @@ Features:
 - It is possible to choose the method: GET or POST.
 - The webhook can be tested directly in the frontend.
 
+## [2.2.7] - 2025-04-05
+
+### Added
+
+### Changed
+
+### Fixed
+
+- [author]: Fixed case when author is an object in package.json.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [2.2.6] - 2025-04-01
 
 ### Added
