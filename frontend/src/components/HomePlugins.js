@@ -111,10 +111,24 @@ export function HomePlugins({selectPlugin}) {
     {
       Header: 'Name',
       accessor: 'name',
+      Cell: ({ row: plugin }) => (
+        <Tooltip title="Open the plugin homepage">
+          <span style={{ cursor: 'pointer' }} onClick={() => handleHomepagePlugin(plugin.original)}>
+            {plugin.original.name}
+          </span>
+        </Tooltip>
+      ),
     },
     {
       Header: 'Description',
       accessor: 'description',
+      Cell: ({ row: plugin }) => (
+        <Tooltip title="Open the plugin homepage">
+          <span style={{ cursor: 'pointer' }} onClick={() => handleHomepagePlugin(plugin.original)}>
+            {plugin.original.description}
+          </span>
+        </Tooltip>
+      ),
     },
     {
       Header: 'Version',
@@ -160,8 +174,8 @@ export function HomePlugins({selectPlugin}) {
           }
           {plugin.original.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => { handleActionWithConfirmCancel('Disable plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'disable', plugin.original); }} size="small"><Unpublished/></IconButton></Tooltip> : <></>}
           {!plugin.original.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleEnableDisablePlugin(plugin.original)} size="small"><PublishedWithChanges/></IconButton></Tooltip> : <></>}
-          <Tooltip title="Plugin help"><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleHelpPlugin(plugin.original)} size="small"><Help/></IconButton></Tooltip>
-          <Tooltip title="Plugin version history"><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleChangelogPlugin(plugin.original)} size="small"><Announcement/></IconButton></Tooltip>
+          <Tooltip title="Open the plugin help"><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleHelpPlugin(plugin.original)} size="small"><Help/></IconButton></Tooltip>
+          <Tooltip title="Open the plugin version history"><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleChangelogPlugin(plugin.original)} size="small"><Announcement/></IconButton></Tooltip>
           {matterbridgeInfo && !matterbridgeInfo.readOnly &&
             <Tooltip title="Sponsor the plugin"><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: '#b6409c' }} onClick={() => handleSponsorPlugin(plugin.original)} size="small"><Favorite/></IconButton></Tooltip>
           }
@@ -326,19 +340,24 @@ export function HomePlugins({selectPlugin}) {
     }
   };
 
+  const handleHomepagePlugin = (plugin) => {
+    if (debug) console.log(`handleHomepagePlugin plugin: ${plugin.name} homepage: ${plugin.homepage}`);
+    if (plugin.homepage) window.open(plugin.homepage, '_blank');
+  };
+
   const handleSponsorPlugin = (plugin) => {
-    if (debug) console.log('handleSponsorPlugin plugin:', plugin.name);
-    window.open('https://www.buymeacoffee.com/luligugithub', '_blank');
+    if (debug) console.log('handleSponsorPlugin plugin:', plugin.name, 'funding:', plugin.funding);
+    if (plugin.funding) window.open(plugin.funding, '_blank');
   };
 
   const handleHelpPlugin = (plugin) => {
-    if (debug) console.log('handleHelpPlugin plugin:', plugin.name);
-    window.open(`https://github.com/Luligu/${plugin.name}/blob/main/README.md`, '_blank');
+    if (debug) console.log('handleHelpPlugin plugin:', plugin.name, 'help:', plugin.help);
+    if (plugin.help) window.open(plugin.help, '_blank');
   };
 
   const handleChangelogPlugin = (plugin) => {
-    if (debug) console.log('handleChangelogPlugin plugin:', plugin.name);
-    window.open(`https://github.com/Luligu/${plugin.name}/blob/main/CHANGELOG.md`, '_blank');
+    if (debug) console.log('handleChangelogPlugin plugin:', plugin.name, 'changelog:', plugin.changelog);
+    if (plugin.changelog) window.open(plugin.changelog, '_blank');
   };
   
   // ConfigPluginDialog
