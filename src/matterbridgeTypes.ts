@@ -59,6 +59,10 @@ export interface BaseRegisteredPlugin {
   path: string;
   type: string;
   latestVersion?: string;
+  homepage?: string;
+  help?: string;
+  changelog?: string;
+  funding?: string;
   locked?: boolean;
   error?: boolean;
   enabled?: boolean;
