@@ -33,7 +33,7 @@ Features:
 
 ### Added
 
-- [package]: Process author, homepage, repository, funding, README.md and CHANGELOG.md for third-party plugins.
+- [package]: Process author, homepage, repository, funding, README.md and CHANGELOG.md for third-party plugins. If the default implementation doesn't fit, it is possible to add a custom property "help" and "changelog" to the package.json.
 - [frontend]: Added a link the plugin homepage (click on the plugin name or on the plugin description).
 
 ### Changed
