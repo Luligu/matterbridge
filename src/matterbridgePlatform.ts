@@ -228,7 +228,7 @@ export class MatterbridgePlatform {
    *  },
    */
   async onAction(action: string, value?: string, id?: string) {
-    this.log.debug(`The plugin doesn't override onAction. Received action ${CYAN}${action}${db}${value ? ' with ' + CYAN + value + db : ''} ${id ? ' for schema ' + CYAN + id + db : ''}`);
+    this.log.debug(`The plugin ${CYAN}${this.name}${db} doesn't override onAction. Received action ${CYAN}${action}${db}${value ? ' with ' + CYAN + value + db : ''} ${id ? ' for schema ' + CYAN + id + db : ''}`);
   }
 
   /**
@@ -335,7 +335,7 @@ export class MatterbridgePlatform {
    * @param {string} serial - The serial number of the device.
    * @param {string} name - The name of the device.
    * @param {string} [configUrl] - The configuration URL of the device.
-   * @param {string} [icon] - The icon of the device.
+   * @param {string} [icon] - The icon of the device: 'wifi', 'ble', 'hub'
    * @param {Array<{ name: string; description: string; icon?: string }>} [entities] - The entities associated with the device.
    * @returns {void}
    */
@@ -358,7 +358,7 @@ export class MatterbridgePlatform {
    * @param {string} serial - The serial number of the device.
    * @param {string} entityName - The name of the entity.
    * @param {string} entityDescription - The description of the entity.
-   * @param {string} [entityIcon] - The icon of the entity.
+   * @param {string} [entityIcon] - The icon of the entity: 'wifi', 'ble', 'hub', 'component', 'matter'
    * @returns {void}
    */
   setSelectDeviceEntity(serial: string, entityName: string, entityDescription: string, entityIcon?: string): void {
@@ -376,9 +376,9 @@ export class MatterbridgePlatform {
    */
   getSelectDevices(): { pluginName: string; serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[] {
     const selectDevices: { pluginName: string; serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[] = [];
-    this.selectDevice.values().forEach((device) => {
+    for (const device of this.selectDevice.values()) {
       selectDevices.push({ pluginName: this.name, ...device });
-    });
+    }
     return selectDevices;
   }
 
@@ -387,7 +387,7 @@ export class MatterbridgePlatform {
    *
    * @param {string} name - The entity name.
    * @param {string} description - The entity description.
-   * @param {string} [icon] - The entity icon.
+   * @param {string} [icon] - The entity icon: 'wifi', 'ble', 'hub', 'component', 'matter'
    * @returns {void}
    */
   setSelectEntity(name: string, description: string, icon?: string): void {
@@ -401,9 +401,9 @@ export class MatterbridgePlatform {
    */
   getSelectEntities(): { pluginName: string; name: string; description: string; icon?: string }[] {
     const selectEntities: { pluginName: string; name: string; description: string; icon?: string }[] = [];
-    this.selectEntity.values().forEach((entity) => {
+    for (const entity of this.selectEntity.values()) {
       selectEntities.push({ pluginName: this.name, ...entity });
-    });
+    }
     return selectEntities;
   }
 

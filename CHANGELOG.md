@@ -29,6 +29,27 @@ Features:
 - It is possible to choose the method: GET or POST.
 - The webhook can be tested directly in the frontend.
 
+## [2.2.7] - 2025-04-06
+
+### Added
+
+- [package]: Process author, homepage, repository, funding, README.md and CHANGELOG.md for third-party plugins. If the default implementation doesn't fit, it is possible to add a custom property "help" and "changelog" to the package.json.
+- [frontend]: Added a link the plugin homepage (click on the plugin name or on the plugin description).
+
+### Changed
+
+- [frontend]: Frontend v.2.6.1.
+- [package]: Update dependencies.
+
+### Fixed
+
+- [author]: Fixed case when author is an object in the package.json.
+- [platform]: Fix getSelectDevices and getSelectEntities on node < 22.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [2.2.6] - 2025-04-01
 
 ### Added

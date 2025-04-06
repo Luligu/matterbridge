@@ -115,16 +115,16 @@ describe('PluginManager', () => {
   test('size returns correct number of plugins', () => {
     expect(plugins.size).toBe(0);
     expect(plugins.length).toBe(0);
-    plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
-    plugins.set({ name: 'matterbridge-mock2', path: './src/mock/plugin2/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
-    plugins.set({ name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
+    plugins.set({ name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    plugins.set({ name: 'matterbridge-mock2', path: './src/mock/plugin2/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
+    plugins.set({ name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
     expect(plugins.size).toBe(3);
     expect(plugins.length).toBe(3);
     expect(plugins.array()).toHaveLength(3);
     expect(plugins.array()).toEqual([
-      { 'author': 'To update', 'description': 'To update', 'name': 'matterbridge-mock1', 'path': './src/mock/plugin1/package.json', 'type': 'Unknown', 'version': '1.0.0' },
-      { 'author': 'To update', 'description': 'To update', 'name': 'matterbridge-mock2', 'path': './src/mock/plugin2/package.json', 'type': 'Unknown', 'version': '1.0.0' },
-      { 'author': 'To update', 'description': 'To update', 'name': 'matterbridge-mock3', 'path': './src/mock/plugin3/package.json', 'type': 'Unknown', 'version': '1.0.0' },
+      { 'author': 'To update', 'description': 'To update', homepage: 'https://example.com', 'name': 'matterbridge-mock1', 'path': './src/mock/plugin1/package.json', 'type': 'Unknown', 'version': '1.0.0' },
+      { 'author': 'To update', 'description': 'To update', homepage: 'https://example.com', 'name': 'matterbridge-mock2', 'path': './src/mock/plugin2/package.json', 'type': 'Unknown', 'version': '1.0.0' },
+      { 'author': 'To update', 'description': 'To update', homepage: 'https://example.com', 'name': 'matterbridge-mock3', 'path': './src/mock/plugin3/package.json', 'type': 'Unknown', 'version': '1.0.0' },
     ]);
   });
 
@@ -393,6 +393,52 @@ describe('PluginManager', () => {
     (plugins as any)._plugins.delete('matterbridge-test');
   });
 
+  test('parse author', async () => {
+    expect(plugins.getAuthor({})).toBe('Unknown author');
+    expect(plugins.getAuthor({ author: undefined } as any)).toBe('Unknown author');
+    expect(plugins.getAuthor({ author: 'String name' })).toBe('String name');
+    expect(plugins.getAuthor({ author: { name: 'Object name' } })).toBe('Object name');
+  });
+
+  test('parse homepage', async () => {
+    expect(plugins.getHomepage({})).toBe(undefined);
+    expect(plugins.getHomepage({ homepage: undefined } as any)).toBe(undefined);
+    expect(plugins.getHomepage({ homepage: 'HomeUrl' })).toBe('HomeUrl');
+    expect(plugins.getHomepage({ homepage: 'git+HomeUrl.git' })).toBe('HomeUrl');
+    expect(plugins.getHomepage({ repository: { url: 'https://github.com/Luligu/matterbridge' } })).toBe('https://github.com/Luligu/matterbridge');
+    expect(plugins.getHomepage({ repository: { url: 'git+https://github.com/Luligu/matterbridge.git' } })).toBe('https://github.com/Luligu/matterbridge');
+  });
+
+  test('parse help', async () => {
+    expect(plugins.getHelp({})).toBe(undefined);
+    expect(plugins.getHelp({ help: 'HelpUrl' })).toBe(undefined);
+    expect(plugins.getHelp({ help: 'http://HelpUrl' })).toBe('http://HelpUrl');
+    expect(plugins.getHelp({ help: 'https://github.com/Luligu/matterbridge.git' })).toBe('https://github.com/Luligu/matterbridge.git');
+    expect(plugins.getHelp({ homepage: 'https://github.com/Luligu/matterbridge' })).toBe('https://github.com/Luligu/matterbridge/blob/main/README.md');
+    expect(plugins.getHelp({ homepage: 'git+https://github.com/Luligu/matterbridge.git' })).toBe('https://github.com/Luligu/matterbridge/blob/main/README.md');
+    expect(plugins.getHelp({ repository: { url: 'https://github.com/Luligu/matterbridge' } })).toBe('https://github.com/Luligu/matterbridge/blob/main/README.md');
+    expect(plugins.getHelp({ repository: { url: 'git+https://github.com/Luligu/matterbridge.git' } })).toBe('https://github.com/Luligu/matterbridge/blob/main/README.md');
+  });
+
+  test('parse changelog', async () => {
+    expect(plugins.getChangelog({})).toBe(undefined);
+    expect(plugins.getChangelog({ changelog: 'ChangelogUrl' })).toBe(undefined);
+    expect(plugins.getChangelog({ changelog: 'http://ChangelogUrl' })).toBe('http://ChangelogUrl');
+    expect(plugins.getChangelog({ changelog: 'https://github.com/Luligu/matterbridge.git' })).toBe('https://github.com/Luligu/matterbridge.git');
+    expect(plugins.getChangelog({ homepage: 'https://github.com/Luligu/matterbridge' })).toBe('https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md');
+    expect(plugins.getChangelog({ homepage: 'git+https://github.com/Luligu/matterbridge.git' })).toBe('https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md');
+    expect(plugins.getChangelog({ repository: { url: 'https://github.com/Luligu/matterbridge' } })).toBe('https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md');
+    expect(plugins.getChangelog({ repository: { url: 'git+https://github.com/Luligu/matterbridge.git' } })).toBe('https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md');
+  });
+
+  test('parse funding', async () => {
+    expect(plugins.getFunding({})).toBe(undefined);
+    expect(plugins.getFunding({ funding: 'FundingUrl' })).toBe(undefined);
+    expect(plugins.getFunding({ funding: 'https://www.buymeacoffee.com/luligugithub' })).toBe('https://www.buymeacoffee.com/luligugithub');
+    expect(plugins.getFunding({ funding: { type: 'whatever', url: 'https://www.buymeacoffee.com/luligugithub' } })).toBe('https://www.buymeacoffee.com/luligugithub');
+    expect(plugins.getFunding({ funding: { url: 'https://www.buymeacoffee.com/luligugithub' } })).toBe('https://www.buymeacoffee.com/luligugithub');
+  });
+
   test('parse registered plugin', async () => {
     let count = 0;
     for (const plugin of plugins) {
@@ -493,7 +539,7 @@ describe('PluginManager', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to remove plugin ${plg}./src/mock/plugintest/package.json${er}: plugin not registered`);
 
     loggerLogSpy.mockClear();
-    plugins.set({ name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });
+    plugins.set({ name: 'matterbridge-mock3', path: './src/mock/plugin3/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update', homepage: 'https://example.com' });
     jest.spyOn(plugins, 'saveToStorage').mockImplementationOnce(async () => {
       throw new Error('Test error');
     });

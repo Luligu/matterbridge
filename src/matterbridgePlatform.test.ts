@@ -221,6 +221,7 @@ describe('Matterbridge platform', () => {
   it('should validate with black list', () => {
     platform.config.whiteList = [];
     platform.config.blackList = ['black1', 'black2', 'black3'];
+    expect(platform.validateDeviceWhiteBlackList('whiteDevice')).toBe(true);
     expect(platform.validateDevice('whiteDevice')).toBe(true);
     expect(platform.validateDevice('black1')).toBe(false);
     expect(platform.validateDevice('black2')).toBe(false);
@@ -246,6 +247,7 @@ describe('Matterbridge platform', () => {
     platform.config.entityBlackList = undefined;
     platform.config.deviceEntityBlackList = undefined;
 
+    expect(platform.validateEntityBlackList('any', 'whiteEntity')).toBe(true);
     expect(platform.validateEntity('any', 'whiteEntity')).toBe(true);
     expect(platform.validateEntity('any', 'blackEntity')).toBe(true);
     expect(platform.validateEntity('any', '')).toBe(true);
@@ -381,6 +383,35 @@ describe('Matterbridge platform', () => {
     platform.selectDevice.clear();
     platform.selectEntity.clear();
     await platform.onShutdown();
+  });
+
+  test('should clear the selects', async () => {
+    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', debug: false, unregisterOnShutdown: false });
+    await platform.ready;
+    expect(platform.storage).toBeDefined();
+    expect(platform.context).toBeDefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgePlatform for plugin matterbridge-jest is fully initialized`);
+    platform.setSelectDevice('serial1', 'name1', 'url1', 'hub');
+    platform.setSelectDevice('serial1', 'name1', 'url1', 'hub', [{ name: 'name1', description: 'description1', icon: 'icon1' }]);
+    platform.setSelectDeviceEntity('serial1', 'name1', 'description1', 'icon1');
+    platform.setSelectEntity('name1', 'description1', 'hub');
+    platform.getSelectDevices();
+    platform.getSelectEntities();
+    platform.clearSelect();
+    expect(platform.selectDevice.size).toBe(0);
+    expect(platform.selectEntity.size).toBe(0);
+  });
+
+  test('should clear the device selects', async () => {
+    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), { name: 'matterbridge-jest', type: 'type', debug: false, unregisterOnShutdown: false });
+    await platform.ready;
+    expect(platform.storage).toBeDefined();
+    expect(platform.context).toBeDefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgePlatform for plugin matterbridge-jest is fully initialized`);
+    platform.setSelectDevice('serial1', 'name1', 'url1', 'hub');
+    platform.clearDeviceSelect('serial1');
+    expect(platform.selectDevice.size).toBe(0);
+    expect(platform.selectEntity.size).toBe(0);
   });
 
   test('should check checkNotLatinCharacters', async () => {
@@ -538,6 +569,16 @@ describe('Matterbridge platform', () => {
   test('onConfigure should log a message', async () => {
     await platform.onConfigure();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Configuring platform ');
+  });
+
+  test('onAction should log a message', async () => {
+    await platform.onAction('Test', 'value', 'id');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`doesn't override onAction.`));
+  });
+
+  test('onConfigChanged should log a message', async () => {
+    await platform.onConfigChanged({});
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`doesn't override onConfigChanged`));
   });
 
   test('onChangeLoggerLevel should log a debug message if not overridden', async () => {

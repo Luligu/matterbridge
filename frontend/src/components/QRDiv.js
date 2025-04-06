@@ -87,5 +87,29 @@ export function QRDiv({ matterbridgeInfo, plugin }) {
         </div>
       </div>
     );
+  } else if (matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === false && !matterbridgeInfo.matterbridgeQrPairingCode && !matterbridgeInfo.matterbridgeManualPairingCode) {
+    if (debug) console.log(`QRDiv: qrText ${matterbridgeInfo.matterbridgeQrPairingCode} pairingText ${matterbridgeInfo.matterbridgeManualPairingCode}`);
+    return (
+      <div className="MbfWindowDiv" style={{ alignItems: 'center', minWidth: '302px' }}>
+        <div className="MbfWindowHeader">
+          <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>QR pairing code</p>
+        </div>
+        <div className="MbfWindowFooter" style={{ padding: 0, marginTop: '-5px', height: '30px' }}>
+          <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Restart to generate a new QRCode.</p>
+        </div>
+      </div>
+    );
+  } else if (matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired === false && !plugin.qrPairingCode && !plugin.manualPairingCode) {
+    if (debug) console.log(`QRDiv: qrText ${plugin.qrPairingCode} pairingText ${plugin.manualPairingCode}`);
+    return (
+      <div className="MbfWindowDiv" style={{ alignItems: 'center', minWidth: '302px' }}>
+        <div className="MbfWindowHeader">
+          <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>QR pairing code</p>
+        </div>
+        <div className="MbfWindowFooter" style={{ padding: 0, marginTop: '-5px', height: '30px' }}>
+          <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Restart to generate a new QRCode.</p>
+        </div>
+      </div>
+    );
   }
 }

@@ -170,12 +170,12 @@ export class PluginManager {
     try {
       // Load the package.json of the plugin
       const packageJson = JSON.parse(await promises.readFile(packageJsonPath, 'utf8'));
+
+      // Check for main issues
       if (!packageJson.name) {
         this.log.error(`Package.json name not found at ${packageJsonPath}`);
         return null;
       }
-
-      // Check for main issues
       if (!packageJson.type || packageJson.type !== 'module') {
         this.log.error(`Plugin at ${packageJsonPath} is not a module`);
         return null;
@@ -240,6 +240,112 @@ export class PluginManager {
   }
 
   /**
+   * Get the author of a plugin from its package.json.
+   *
+   * @param {Record<string, string | number | Record<string, string | number | object>>} packageJson - The package.json object of the plugin.
+   * @returns {string} The author of the plugin, or 'Unknown author' if not found.
+   */
+  getAuthor(packageJson: Record<string, string | number | Record<string, string | number | object>>): string {
+    if (packageJson.author && typeof packageJson.author === 'string') return packageJson.author;
+    if (packageJson.author && typeof packageJson.author === 'object' && packageJson.author.name && typeof packageJson.author.name === 'string') return packageJson.author.name;
+    return 'Unknown author';
+  }
+
+  /**
+   * Get the homepage of a plugin from its package.json.
+   *
+   * @param {Record<string, string | number | Record<string, string | number | object>>} packageJson - The package.json object of the plugin.
+   * @returns {string | undefined} The homepage of the plugin, or undefined if not found.
+   */
+  getHomepage(packageJson: Record<string, string | number | Record<string, string | number | object>>): string | undefined {
+    if (packageJson.homepage && typeof packageJson.homepage === 'string') {
+      return packageJson.homepage.replace('git+', '').replace('.git', '');
+    }
+    if (packageJson.repository && typeof packageJson.repository === 'object' && packageJson.repository.url && typeof packageJson.repository.url === 'string') {
+      return packageJson.repository.url.replace('git+', '').replace('.git', '');
+    }
+  }
+
+  /**
+   * Get the help URL of a plugin from its package.json.
+   *
+   * @param {Record<string, string | number | Record<string, string | number | object>>} packageJson - The package.json object of the plugin.
+   * @returns {string | undefined} The URL to the help page or to the README file, or undefined if not found.
+   */
+  getHelp(packageJson: Record<string, string | number | Record<string, string | number | object>>): string | undefined {
+    // If there's a help field that looks like a URL, return it.
+    if (packageJson.help && typeof packageJson.help === 'string' && packageJson.help.startsWith('http')) {
+      return packageJson.help;
+    }
+
+    // Derive a base URL from homepage or repository.
+    let baseUrl: string | undefined;
+    if (packageJson.homepage && typeof packageJson.homepage === 'string') {
+      // Remove a trailing "/README.md" if present.
+      baseUrl = packageJson.homepage
+        .replace(/\/README\.md$/i, '')
+        .replace('git+', '')
+        .replace('.git', '');
+    } else if (packageJson.repository && typeof packageJson.repository === 'object' && packageJson.repository.url && typeof packageJson.repository.url === 'string') {
+      baseUrl = packageJson.repository.url.replace('git+', '').replace('.git', '');
+    }
+
+    return baseUrl ? `${baseUrl}/blob/main/README.md` : undefined;
+  }
+
+  /**
+   * Get the changelog URL of a plugin from its package.json.
+   *
+   * @param {Record<string, string | number | Record<string, string | number | object>>} packageJson - The package.json object of the plugin.
+   * @returns {string | undefined} The URL to the CHANGELOG file, or undefined if not found.
+   */
+  getChangelog(packageJson: Record<string, string | number | Record<string, string | number | object>>): string | undefined {
+    // If there's a changelog field that looks like a URL, return it.
+    if (packageJson.changelog && typeof packageJson.changelog === 'string' && packageJson.changelog.startsWith('http')) {
+      return packageJson.changelog;
+    }
+
+    // Derive a base URL from homepage or repository.
+    let baseUrl: string | undefined;
+    if (packageJson.homepage && typeof packageJson.homepage === 'string') {
+      baseUrl = packageJson.homepage
+        .replace(/\/README\.md$/i, '')
+        .replace('git+', '')
+        .replace('.git', '');
+    } else if (packageJson.repository && typeof packageJson.repository === 'object' && packageJson.repository.url && typeof packageJson.repository.url === 'string') {
+      baseUrl = packageJson.repository.url.replace('git+', '').replace('.git', '');
+    }
+
+    return baseUrl ? `${baseUrl}/blob/main/CHANGELOG.md` : undefined;
+  }
+
+  /**
+   * Get the first funding URL(s) of a plugin from its package.json.
+   *
+   * @param {Record<string, any>} packageJson - The package.json object of the plugin.
+   * @returns {string | undefined} The first funding URLs, or undefined if not found.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getFunding(packageJson: Record<string, any>): string | undefined {
+    const funding = packageJson.funding;
+    if (!funding) return undefined;
+    if (typeof funding === 'string' && !funding.startsWith('http')) return;
+    if (typeof funding === 'string' && funding.startsWith('http')) return funding;
+
+    // Normalize funding into an array.
+    const fundingEntries = Array.isArray(funding) ? funding : [funding];
+    for (const entry of fundingEntries) {
+      if (entry && typeof entry === 'string' && entry.startsWith('http')) {
+        // If the funding entry is a string, assume it is a URL.
+        return entry;
+      } else if (entry && typeof entry === 'object' && typeof entry.url === 'string' && entry.url.startsWith('http')) {
+        // If it's an object with a 'url' property, use that.
+        return entry.url;
+      }
+    }
+  }
+
+  /**
    * Loads and parse the plugin package.json and returns it.
    * @param plugin - The plugin to load the package from.
    * @returns A Promise that resolves to the package.json object or undefined if the package.json could not be loaded.
@@ -253,12 +359,17 @@ export class PluginManager {
       if (!packageJson.version) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no version in package.json`);
       if (!packageJson.description) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no description in package.json`);
       if (!packageJson.author) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no author in package.json`);
+      if (!packageJson.homepage) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no homepage in package.json`);
       if (!packageJson.type || packageJson.type !== 'module') this.log.error(`Plugin ${plg}${plugin.name}${er} is not a module`);
       if (!packageJson.main) this.log.error(`Plugin ${plg}${plugin.name}${er} has no main entrypoint in package.json`);
       plugin.name = packageJson.name || 'Unknown name';
       plugin.version = packageJson.version || '1.0.0';
       plugin.description = packageJson.description || 'Unknown description';
-      plugin.author = packageJson.author || 'Unknown author';
+      plugin.author = this.getAuthor(packageJson);
+      plugin.homepage = this.getHomepage(packageJson);
+      plugin.help = this.getHelp(packageJson);
+      plugin.changelog = this.getChangelog(packageJson);
+      plugin.funding = this.getFunding(packageJson);
       if (!plugin.path) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no path`);
       if (!plugin.type) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no type`);
 
@@ -468,7 +579,15 @@ export class PluginManager {
         this.log.info(`Plugin ${plg}${nameOrPath}${nf} already registered`);
         return null;
       }
-      this._plugins.set(packageJson.name, { name: packageJson.name, enabled: true, path: packageJsonPath, type: 'AnyPlatform', version: packageJson.version, description: packageJson.description, author: packageJson.author });
+      this._plugins.set(packageJson.name, {
+        name: packageJson.name,
+        enabled: true,
+        path: packageJsonPath,
+        type: 'AnyPlatform',
+        version: packageJson.version,
+        description: packageJson.description,
+        author: this.getAuthor(packageJson),
+      });
       this.log.info(`Added plugin ${plg}${packageJson.name}${nf}`);
       await this.saveToStorage();
       const plugin = this._plugins.get(packageJson.name);
@@ -592,7 +711,7 @@ export class PluginManager {
         plugin.name = packageJson.name;
         plugin.description = packageJson.description ?? 'No description';
         plugin.version = packageJson.version;
-        plugin.author = packageJson.author ?? 'Unknown';
+        plugin.author = this.getAuthor(packageJson);
         plugin.configJson = config;
         plugin.schemaJson = await this.loadSchema(plugin);
         config.name = plugin.name;
@@ -607,14 +726,12 @@ export class PluginManager {
         plugin.name = packageJson.name;
         plugin.description = packageJson.description ?? 'No description';
         plugin.version = packageJson.version;
-        plugin.author = packageJson.author ?? 'Unknown';
+        plugin.author = this.getAuthor(packageJson);
         plugin.type = platform.type;
         plugin.platform = platform;
         plugin.loaded = true;
         plugin.registeredDevices = 0;
         plugin.addedDevices = 0;
-        // plugin.configJson = config;
-        // plugin.schemaJson = await this.loadSchema(plugin);
 
         await this.saveToStorage(); // Save the plugin to storage
 
