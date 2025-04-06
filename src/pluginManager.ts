@@ -240,6 +240,18 @@ export class PluginManager {
   }
 
   /**
+   * Get the author of a plugin from its package.json.
+   *
+   * @param {Record<string, string | number | Record<string, string | number | object>>} packageJson - The package.json object of the plugin.
+   * @returns {string} The author of the plugin, or 'Unknown author' if not found.
+   */
+  getAuthor(packageJson: Record<string, string | number | Record<string, string | number | object>>): string {
+    if (packageJson.author && typeof packageJson.author === 'string') return packageJson.author;
+    if (packageJson.author && typeof packageJson.author === 'object' && packageJson.author.name && typeof packageJson.author.name === 'string') return packageJson.author.name;
+    return 'Unknown author';
+  }
+
+  /**
    * Loads and parse the plugin package.json and returns it.
    * @param plugin - The plugin to load the package from.
    * @returns A Promise that resolves to the package.json object or undefined if the package.json could not be loaded.
@@ -258,12 +270,7 @@ export class PluginManager {
       plugin.name = packageJson.name || 'Unknown name';
       plugin.version = packageJson.version || '1.0.0';
       plugin.description = packageJson.description || 'Unknown description';
-      if (!packageJson.author) plugin.author = 'Unknown author';
-      else if (typeof packageJson.author === 'string') plugin.author = packageJson.author;
-      else if (typeof packageJson.author === 'object') {
-        if (packageJson.author.name) plugin.author = packageJson.author.name;
-        else plugin.author = 'Unknown author';
-      }
+      plugin.author = this.getAuthor(packageJson);
       if (!plugin.path) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no path`);
       if (!plugin.type) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no type`);
 
@@ -473,13 +480,7 @@ export class PluginManager {
         this.log.info(`Plugin ${plg}${nameOrPath}${nf} already registered`);
         return null;
       }
-      let author = '';
-      if (!packageJson.author) author = 'Unknown author';
-      else if (typeof packageJson.author === 'string') author = packageJson.author;
-      else if (typeof packageJson.author === 'object') {
-        if (packageJson.author.name) author = packageJson.author.name;
-        else author = 'Unknown author';
-      }
+      const author = this.getAuthor(packageJson);
       this._plugins.set(packageJson.name, { name: packageJson.name, enabled: true, path: packageJsonPath, type: 'AnyPlatform', version: packageJson.version, description: packageJson.description, author });
       this.log.info(`Added plugin ${plg}${packageJson.name}${nf}`);
       await this.saveToStorage();
@@ -604,12 +605,7 @@ export class PluginManager {
         plugin.name = packageJson.name;
         plugin.description = packageJson.description ?? 'No description';
         plugin.version = packageJson.version;
-        if (!packageJson.author) plugin.author = 'Unknown author';
-        else if (typeof packageJson.author === 'string') plugin.author = packageJson.author;
-        else if (typeof packageJson.author === 'object') {
-          if (packageJson.author.name) plugin.author = packageJson.author.name;
-          else plugin.author = 'Unknown author';
-        }
+        plugin.author = this.getAuthor(packageJson);
         plugin.configJson = config;
         plugin.schemaJson = await this.loadSchema(plugin);
         config.name = plugin.name;
@@ -624,19 +620,12 @@ export class PluginManager {
         plugin.name = packageJson.name;
         plugin.description = packageJson.description ?? 'No description';
         plugin.version = packageJson.version;
-        if (!packageJson.author) plugin.author = 'Unknown author';
-        else if (typeof packageJson.author === 'string') plugin.author = packageJson.author;
-        else if (typeof packageJson.author === 'object') {
-          if (packageJson.author.name) plugin.author = packageJson.author.name;
-          else plugin.author = 'Unknown author';
-        }
+        plugin.author = this.getAuthor(packageJson);
         plugin.type = platform.type;
         plugin.platform = platform;
         plugin.loaded = true;
         plugin.registeredDevices = 0;
         plugin.addedDevices = 0;
-        // plugin.configJson = config;
-        // plugin.schemaJson = await this.loadSchema(plugin);
 
         await this.saveToStorage(); // Save the plugin to storage
 

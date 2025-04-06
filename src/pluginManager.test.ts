@@ -393,6 +393,13 @@ describe('PluginManager', () => {
     (plugins as any)._plugins.delete('matterbridge-test');
   });
 
+  test('parse author', async () => {
+    expect(plugins.getAuthor({})).toBe('Unknown author');
+    expect(plugins.getAuthor({ author: undefined } as any)).toBe('Unknown author');
+    expect(plugins.getAuthor({ author: 'String name' })).toBe('String name');
+    expect(plugins.getAuthor({ author: { name: 'Object name' } })).toBe('Object name');
+  });
+
   test('parse registered plugin', async () => {
     let count = 0;
     for (const plugin of plugins) {
