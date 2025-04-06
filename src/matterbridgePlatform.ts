@@ -228,7 +228,7 @@ export class MatterbridgePlatform {
    *  },
    */
   async onAction(action: string, value?: string, id?: string) {
-    this.log.debug(`The plugin doesn't override onAction. Received action ${CYAN}${action}${db}${value ? ' with ' + CYAN + value + db : ''} ${id ? ' for schema ' + CYAN + id + db : ''}`);
+    this.log.debug(`The plugin ${CYAN}${this.name}${db} doesn't override onAction. Received action ${CYAN}${action}${db}${value ? ' with ' + CYAN + value + db : ''} ${id ? ' for schema ' + CYAN + id + db : ''}`);
   }
 
   /**
@@ -376,9 +376,9 @@ export class MatterbridgePlatform {
    */
   getSelectDevices(): { pluginName: string; serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[] {
     const selectDevices: { pluginName: string; serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[] = [];
-    this.selectDevice.values().forEach((device) => {
+    for (const device of this.selectDevice.values()) {
       selectDevices.push({ pluginName: this.name, ...device });
-    });
+    }
     return selectDevices;
   }
 
@@ -401,9 +401,9 @@ export class MatterbridgePlatform {
    */
   getSelectEntities(): { pluginName: string; name: string; description: string; icon?: string }[] {
     const selectEntities: { pluginName: string; name: string; description: string; icon?: string }[] = [];
-    this.selectEntity.values().forEach((entity) => {
+    for (const entity of this.selectEntity.values()) {
       selectEntities.push({ pluginName: this.name, ...entity });
-    });
+    }
     return selectEntities;
   }
 
