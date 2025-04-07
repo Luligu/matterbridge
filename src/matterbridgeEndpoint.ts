@@ -1528,6 +1528,9 @@ export class MatterbridgeEndpoint extends Endpoint {
       openDuration: null,
       defaultOpenDuration: null,
       remainingDuration: null,
+      defaultOpenLevel: 100,
+      valveFault: { generalFault: false, blocked: false, leaking: false, notConnected: false, shortCircuit: false, currentExceeded: false },
+      levelStep: 1,
     });
     return this;
   }
@@ -1990,7 +1993,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     });
     return this;
   }
-  
+
   /**
    * @param {ConcentrationMeasurement.LevelValue} levelValue - The level value of the measurement (default to ConcentrationMeasurement.LevelValue.Unknown).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The measurement medium (default to ConcentrationMeasurement.MeasurementMedium.Air).

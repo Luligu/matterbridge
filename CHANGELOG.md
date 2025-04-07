@@ -35,18 +35,18 @@ Matter 1.4
 
 New device types:
 
-- Mounted On/Off Control (a switch without client cluster!)
-- Mounted Dimmable Load Control (a dimmer switch without client cluster!)
+- onOffMountedSwitch: Mounted On/Off Control (an onOff switch without client cluster!).
+- dimmableMountedSwitch: Mounted Dimmable Load Control (a dimmer switch without client cluster!).
 
 Modified clusters:
 
-- OccupancySensing cluster
+- OccupancySensing cluster.
 
 ## [3.0.0] - 2025-04-??
 
 ### Added
 
-- [addEndpoint]: Added an exception handler with deep stack on Aggregator.add() call.
+- [addEndpoint]: Added an error handler with deep stack on aggregatorNode.add() and serverNode.add() calls.
 
 ### Changed
 

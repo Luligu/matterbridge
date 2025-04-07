@@ -26,7 +26,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // @matter
-import { Behavior, NamedHandler } from '@matter/main';
+import { Behavior, MaybePromise, NamedHandler } from '@matter/main';
 
 // @matter clusters
 import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
@@ -49,8 +49,8 @@ import { ColorControlServer } from '@matter/main/behaviors/color-control';
 import { MovementDirection, MovementType, WindowCoveringServer } from '@matter/main/behaviors/window-covering';
 import { DoorLockServer } from '@matter/main/behaviors/door-lock';
 import { FanControlServer } from '@matter/main/behaviors/fan-control';
-import { ThermostatServer } from '@matter/main/behaviors/thermostat';
-import { ValveConfigurationAndControlServer } from '@matter/main/behaviors/valve-configuration-and-control';
+import { ThermostatBehavior } from '@matter/main/behaviors/thermostat';
+import { ValveConfigurationAndControlBehavior } from '@matter/main/behaviors/valve-configuration-and-control';
 import { ModeSelectServer } from '@matter/main/behaviors/mode-select';
 import { SmokeCoAlarmServer } from '@matter/main/behaviors/smoke-co-alarm';
 import { SwitchServer } from '@matter/main/behaviors/switch';
@@ -361,7 +361,7 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
   }
 }
 
-export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermostat.Feature.Cooling, Thermostat.Feature.Heating, Thermostat.Feature.AutoMode) {
+export class MatterbridgeThermostatServer extends ThermostatBehavior.with(Thermostat.Feature.Cooling, Thermostat.Feature.Heating, Thermostat.Feature.AutoMode) {
   override async setpointRaiseLower({ mode, amount }: Thermostat.SetpointRaiseLowerRequest) {
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     device.setpointRaiseLower({ mode, amount });
@@ -382,21 +382,28 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
       this.state.occupiedCoolingSetpoint = setpoint * 100;
       device.log.debug('Set occupiedCoolingSetpoint to:', setpoint);
     }
-
-    super.setpointRaiseLower({ mode, amount });
   }
 }
 
-export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigurationAndControlServer.with(ValveConfigurationAndControl.Feature.Level) {
-  override async open({ openDuration, targetLevel }: ValveConfigurationAndControl.OpenRequest) {
-    const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
-    device.open({ openDuration, targetLevel });
-    super.open({ openDuration, targetLevel });
+export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigurationAndControlBehavior.with(ValveConfigurationAndControl.Feature.Level) {
+  override initialize() {
+    // console.log('MatterbridgeValveConfigurationAndControlServer initialize');
   }
-  override async close() {
+
+  override open({ openDuration, targetLevel }: ValveConfigurationAndControl.OpenRequest): MaybePromise {
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
+    device.log.debug(`Command open called with openDuration: ${openDuration} targetLevel: ${targetLevel}`);
+    device.open({ openDuration, targetLevel });
+    this.state.targetLevel = targetLevel ?? 100;
+    this.state.currentLevel = targetLevel ?? 100;
+  }
+
+  override close(): MaybePromise {
+    const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
+    device.log.debug(`Command close called`);
     device.close();
-    super.close();
+    this.state.targetLevel = 0;
+    this.state.currentLevel = 0;
   }
 }
 
