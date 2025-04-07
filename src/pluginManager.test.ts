@@ -747,7 +747,7 @@ describe('PluginManager', () => {
       throw new Error('Test error');
     });
     let config = await plugins.loadConfig(plugin);
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.ERROR, `Error creating config file ${configFileName} for plugin ${plg}${plugin.name}${er}: Test error`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error creating config file ${configFileName} for plugin ${plg}${plugin.name}${er}: Test error`));
     loggerLogSpy.mockClear();
 
     await deleteConfig();
@@ -755,7 +755,7 @@ describe('PluginManager', () => {
       throw new Error('Test error');
     });
     config = await plugins.loadConfig(plugin);
-    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.ERROR, `Error accessing config file ${configFileName} for plugin ${plg}${plugin.name}${er}: Test error`);
+    expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error accessing config file ${configFileName} for plugin ${plg}${plugin.name}${er}: Test error`));
     loggerLogSpy.mockClear();
 
     await deleteConfig();
@@ -931,7 +931,7 @@ describe('PluginManager', () => {
     });
     const platform = await plugins.load(plugin, false, 'Test with Jest');
     expect(platform).toBeUndefined();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to load plugin ${plg}${plugin?.name}${er}: Test error`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to load plugin ${plg}${plugin?.name}${er}: Test error`));
     plugin.error = false;
   });
 
@@ -1068,7 +1068,7 @@ describe('PluginManager', () => {
     expect(result).toBeUndefined();
     expect(plugin.error).toBeTruthy();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Starting plugin ${plg}${plugin.name}${nf} type ${typ}${plugin?.type}${nf}`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to start plugin ${plg}${plugin.name}${er}: Test error`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to start plugin ${plg}${plugin.name}${er}: Test error`));
     plugin.error = false;
   });
 
@@ -1164,7 +1164,7 @@ describe('PluginManager', () => {
       });
     }
     await plugins.configure(plugin);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to configure plugin ${plg}${plugin.name}${er}: Error: Test error`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to configure plugin ${plg}${plugin.name}${er}: Test error`));
   }, 60000);
 
   test('configure plugin matterbridge-example-accessory-platform', async () => {
@@ -1227,7 +1227,7 @@ describe('PluginManager', () => {
     });
     result = await plugins.shutdown(plugin, 'Test with Jest', true, false);
     expect(result).toBeUndefined();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to shut down plugin ${plg}${plugin.name}${er}: Test error`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to shut down plugin ${plg}${plugin.name}${er}: Test error`));
   });
 
   test('shutdown plugin matterbridge-example-accessory-platform', async () => {

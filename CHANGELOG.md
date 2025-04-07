@@ -29,6 +29,21 @@ Features:
 - It is possible to choose the method: GET or POST.
 - The webhook can be tested directly in the frontend.
 
+## [2.2.8] - 2025-04-08
+
+### Added
+
+- [platform]: Added stack to errors messages.
+- [endpoint]: Added createLevelTvocMeasurementClusterServer()
+
+### Changed
+
+- [package]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [2.2.7] - 2025-04-06
 
 ### Added

@@ -21,11 +21,30 @@ Matterbridge exports from:
 "matterbridge"
 
 - Matterbridge and all Matterbridge related classes.
-- All relevant matter-node.js or matter.js clusters, classes and functions.
 
 "matterbridge/matter"
 
-- All relevant matter.js new api only exports (in beta).
+- All relevant matter.js exports.
+
+"matterbridge/matter/behaviors"
+
+- All matter.js behaviors.
+
+"matterbridge/matter/clusters"
+
+- All matter.js clusters.
+
+"matterbridge/matter/devices"
+
+- All matter.js devices.
+
+"matterbridge/matter/endpoints"
+
+- All matter.js endpoints.
+
+"matterbridge/matter/types"
+
+- All matter.js types.
 
 "matterbridge/cluster"
 
@@ -67,15 +86,6 @@ Matterbridge must be linked to the plugin in development only.
 
 I added some error messages when a plugin has wrong imports or configurations and the plugin will be disabled to prevent instability and crashes.
 
-## Migration to matter.js V8
-
-I'm working with matter.js team to define the strategy for the migration of Matterbridge to the new API.
-
-- First phase: create MatterbridgeEdge class: completed 95%
-- Second phase: create MatterbridgeEndpoint and MatterbridgeBehaviors classes: completed 95%
-- Third phase: modifiy all plugins to support both normal and edge mode of Matterbridge: completed 90%
-- Fourth phase: remove all old api code from Matterbridge and all plugins...
-
 ## How to create your plugin
 
 The easiest way is to clone:
@@ -84,7 +94,9 @@ The easiest way is to clone:
 
 - https://github.com/Luligu/matterbridge-example-dynamic-platform if you want to create a Dynamic Platform Plugin.
 
-Then change the name (keep matterbridge- at the beginning of the name), version, description and author in the package.json.
+Then change the name (keep matterbridge- at the beginning of the name), version, description, author and funding in the package.json.
+
+It is possible to add these custom properties to the package.json: help and changelog with a url that will be used in the frontend instead of the default (/blob/main/README.md and /blob/main/CHANGELOG.md).
 
 Add your plugin logic in platform.ts.
 
