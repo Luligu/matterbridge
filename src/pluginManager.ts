@@ -247,7 +247,7 @@ export class PluginManager {
    */
   getAuthor(packageJson: Record<string, string | number | Record<string, string | number | object>>): string {
     if (packageJson.author && typeof packageJson.author === 'string') return packageJson.author;
-    if (packageJson.author && typeof packageJson.author === 'object' && packageJson.author.name && typeof packageJson.author.name === 'string') return packageJson.author.name;
+    else if (packageJson.author && typeof packageJson.author === 'object' && packageJson.author.name && typeof packageJson.author.name === 'string') return packageJson.author.name;
     return 'Unknown author';
   }
 
@@ -258,10 +258,9 @@ export class PluginManager {
    * @returns {string | undefined} The homepage of the plugin, or undefined if not found.
    */
   getHomepage(packageJson: Record<string, string | number | Record<string, string | number | object>>): string | undefined {
-    if (packageJson.homepage && typeof packageJson.homepage === 'string') {
+    if (packageJson.homepage && typeof packageJson.homepage === 'string' && packageJson.homepage.includes('http')) {
       return packageJson.homepage.replace('git+', '').replace('.git', '');
-    }
-    if (packageJson.repository && typeof packageJson.repository === 'object' && packageJson.repository.url && typeof packageJson.repository.url === 'string') {
+    } else if (packageJson.repository && typeof packageJson.repository === 'object' && packageJson.repository.url && typeof packageJson.repository.url === 'string' && packageJson.repository.url.includes('http')) {
       return packageJson.repository.url.replace('git+', '').replace('.git', '');
     }
   }
@@ -276,21 +275,11 @@ export class PluginManager {
     // If there's a help field that looks like a URL, return it.
     if (packageJson.help && typeof packageJson.help === 'string' && packageJson.help.startsWith('http')) {
       return packageJson.help;
+    } else if (packageJson.repository && typeof packageJson.repository === 'object' && packageJson.repository.url && typeof packageJson.repository.url === 'string' && packageJson.repository.url.includes('http')) {
+      return packageJson.repository.url.replace('git+', '').replace('.git', '') + '/blob/main/README.md';
+    } else if (packageJson.homepage && typeof packageJson.homepage === 'string' && packageJson.homepage.includes('http')) {
+      return packageJson.homepage.replace('git+', '').replace('.git', '');
     }
-
-    // Derive a base URL from homepage or repository.
-    let baseUrl: string | undefined;
-    if (packageJson.homepage && typeof packageJson.homepage === 'string') {
-      // Remove a trailing "/README.md" if present.
-      baseUrl = packageJson.homepage
-        .replace(/\/README\.md$/i, '')
-        .replace('git+', '')
-        .replace('.git', '');
-    } else if (packageJson.repository && typeof packageJson.repository === 'object' && packageJson.repository.url && typeof packageJson.repository.url === 'string') {
-      baseUrl = packageJson.repository.url.replace('git+', '').replace('.git', '');
-    }
-
-    return baseUrl ? `${baseUrl}/blob/main/README.md` : undefined;
   }
 
   /**
@@ -303,20 +292,11 @@ export class PluginManager {
     // If there's a changelog field that looks like a URL, return it.
     if (packageJson.changelog && typeof packageJson.changelog === 'string' && packageJson.changelog.startsWith('http')) {
       return packageJson.changelog;
+    } else if (packageJson.repository && typeof packageJson.repository === 'object' && packageJson.repository.url && typeof packageJson.repository.url === 'string' && packageJson.repository.url.includes('http')) {
+      return packageJson.repository.url.replace('git+', '').replace('.git', '') + '/blob/main/CHANGELOG.md';
+    } else if (packageJson.homepage && typeof packageJson.homepage === 'string' && packageJson.homepage.includes('http')) {
+      return packageJson.homepage.replace('git+', '').replace('.git', '');
     }
-
-    // Derive a base URL from homepage or repository.
-    let baseUrl: string | undefined;
-    if (packageJson.homepage && typeof packageJson.homepage === 'string') {
-      baseUrl = packageJson.homepage
-        .replace(/\/README\.md$/i, '')
-        .replace('git+', '')
-        .replace('.git', '');
-    } else if (packageJson.repository && typeof packageJson.repository === 'object' && packageJson.repository.url && typeof packageJson.repository.url === 'string') {
-      baseUrl = packageJson.repository.url.replace('git+', '').replace('.git', '');
-    }
-
-    return baseUrl ? `${baseUrl}/blob/main/CHANGELOG.md` : undefined;
   }
 
   /**
@@ -419,7 +399,6 @@ export class PluginManager {
         return null;
       }
 
-      // await this.saveToStorage(); // No need to save the plugin to storage
       return packageJson;
     } catch (err) {
       this.log.error(`Failed to parse package.json of plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
@@ -727,6 +706,10 @@ export class PluginManager {
         plugin.description = packageJson.description ?? 'No description';
         plugin.version = packageJson.version;
         plugin.author = this.getAuthor(packageJson);
+        plugin.homepage = this.getHomepage(packageJson);
+        plugin.help = this.getHelp(packageJson);
+        plugin.changelog = this.getChangelog(packageJson);
+        plugin.funding = this.getFunding(packageJson);
         plugin.type = platform.type;
         plugin.platform = platform;
         plugin.loaded = true;

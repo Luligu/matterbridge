@@ -403,8 +403,9 @@ describe('PluginManager', () => {
   test('parse homepage', async () => {
     expect(plugins.getHomepage({})).toBe(undefined);
     expect(plugins.getHomepage({ homepage: undefined } as any)).toBe(undefined);
-    expect(plugins.getHomepage({ homepage: 'HomeUrl' })).toBe('HomeUrl');
-    expect(plugins.getHomepage({ homepage: 'git+HomeUrl.git' })).toBe('HomeUrl');
+    expect(plugins.getHomepage({ homepage: 'HomeUrl' })).toBe(undefined);
+    expect(plugins.getHomepage({ homepage: 'http://HomeUrl' })).toBe('http://HomeUrl');
+    expect(plugins.getHomepage({ homepage: 'git+HomeUrl.git' })).toBe(undefined);
     expect(plugins.getHomepage({ repository: { url: 'https://github.com/Luligu/matterbridge' } })).toBe('https://github.com/Luligu/matterbridge');
     expect(plugins.getHomepage({ repository: { url: 'git+https://github.com/Luligu/matterbridge.git' } })).toBe('https://github.com/Luligu/matterbridge');
   });
@@ -414,8 +415,8 @@ describe('PluginManager', () => {
     expect(plugins.getHelp({ help: 'HelpUrl' })).toBe(undefined);
     expect(plugins.getHelp({ help: 'http://HelpUrl' })).toBe('http://HelpUrl');
     expect(plugins.getHelp({ help: 'https://github.com/Luligu/matterbridge.git' })).toBe('https://github.com/Luligu/matterbridge.git');
-    expect(plugins.getHelp({ homepage: 'https://github.com/Luligu/matterbridge' })).toBe('https://github.com/Luligu/matterbridge/blob/main/README.md');
-    expect(plugins.getHelp({ homepage: 'git+https://github.com/Luligu/matterbridge.git' })).toBe('https://github.com/Luligu/matterbridge/blob/main/README.md');
+    expect(plugins.getHelp({ homepage: 'https://github.com/Luligu/matterbridge' })).toBe('https://github.com/Luligu/matterbridge');
+    expect(plugins.getHelp({ homepage: 'git+https://github.com/Luligu/matterbridge.git' })).toBe('https://github.com/Luligu/matterbridge');
     expect(plugins.getHelp({ repository: { url: 'https://github.com/Luligu/matterbridge' } })).toBe('https://github.com/Luligu/matterbridge/blob/main/README.md');
     expect(plugins.getHelp({ repository: { url: 'git+https://github.com/Luligu/matterbridge.git' } })).toBe('https://github.com/Luligu/matterbridge/blob/main/README.md');
   });
@@ -425,8 +426,8 @@ describe('PluginManager', () => {
     expect(plugins.getChangelog({ changelog: 'ChangelogUrl' })).toBe(undefined);
     expect(plugins.getChangelog({ changelog: 'http://ChangelogUrl' })).toBe('http://ChangelogUrl');
     expect(plugins.getChangelog({ changelog: 'https://github.com/Luligu/matterbridge.git' })).toBe('https://github.com/Luligu/matterbridge.git');
-    expect(plugins.getChangelog({ homepage: 'https://github.com/Luligu/matterbridge' })).toBe('https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md');
-    expect(plugins.getChangelog({ homepage: 'git+https://github.com/Luligu/matterbridge.git' })).toBe('https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md');
+    expect(plugins.getChangelog({ homepage: 'https://github.com/Luligu/matterbridge' })).toBe('https://github.com/Luligu/matterbridge');
+    expect(plugins.getChangelog({ homepage: 'git+https://github.com/Luligu/matterbridge.git' })).toBe('https://github.com/Luligu/matterbridge');
     expect(plugins.getChangelog({ repository: { url: 'https://github.com/Luligu/matterbridge' } })).toBe('https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md');
     expect(plugins.getChangelog({ repository: { url: 'git+https://github.com/Luligu/matterbridge.git' } })).toBe('https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md');
   });
