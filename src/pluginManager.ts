@@ -88,8 +88,8 @@ export class PluginManager {
     const tasks = Array.from(this._plugins.values()).map(async (plugin) => {
       try {
         await callback(plugin);
-      } catch (error) {
-        this.log.error(`Error processing forEach plugin ${plg}${plugin.name}${er}:`, error);
+      } catch (err) {
+        this.log.error(`Error processing forEach plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
         // throw error;
       }
     });
@@ -234,7 +234,7 @@ export class PluginManager {
       this.log.debug(`Resolved plugin path ${plg}${pluginPath}${db}: ${packageJsonPath}`);
       return packageJsonPath;
     } catch (err) {
-      this.log.error(`Failed to resolve plugin path ${plg}${pluginPath}${er}: ${err}`);
+      this.log.error(`Failed to resolve plugin path ${plg}${pluginPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
       return null;
     }
   }
@@ -422,7 +422,7 @@ export class PluginManager {
       // await this.saveToStorage(); // No need to save the plugin to storage
       return packageJson;
     } catch (err) {
-      this.log.error(`Failed to parse package.json of plugin ${plg}${plugin.name}${er}: ${err}`);
+      this.log.error(`Failed to parse package.json of plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
       plugin.error = true;
       return null;
     }
@@ -465,7 +465,7 @@ export class PluginManager {
       await this.saveToStorage();
       return plugin;
     } catch (err) {
-      this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err}`);
+      this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
       return null;
     }
   }
@@ -507,7 +507,7 @@ export class PluginManager {
       await this.saveToStorage();
       return plugin;
     } catch (err) {
-      this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err}`);
+      this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
       return null;
     }
   }
@@ -549,7 +549,7 @@ export class PluginManager {
       await this.saveToStorage();
       return plugin;
     } catch (err) {
-      this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err}`);
+      this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
       return null;
     }
   }
@@ -593,7 +593,7 @@ export class PluginManager {
       const plugin = this._plugins.get(packageJson.name);
       return plugin || null;
     } catch (err) {
-      this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message : err}`);
+      this.log.error(`Failed to parse package.json of plugin ${plg}${nameOrPath}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
       return null;
     }
   }
@@ -747,7 +747,7 @@ export class PluginManager {
         plugin.error = true;
       }
     } catch (err) {
-      this.log.error(`Failed to load plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message : err}`);
+      this.log.error(`Failed to load plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
       plugin.error = true;
     }
     return undefined;
@@ -784,7 +784,7 @@ export class PluginManager {
       return plugin;
     } catch (err) {
       plugin.error = true;
-      this.log.error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message : err}`);
+      this.log.error(`Failed to start plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
     }
     return undefined;
   }
@@ -820,7 +820,7 @@ export class PluginManager {
       return plugin;
     } catch (err) {
       plugin.error = true;
-      this.log.error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err}`);
+      this.log.error(`Failed to configure plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
     }
     return undefined;
   }
@@ -872,7 +872,7 @@ export class PluginManager {
       this.log.notice(`Shutdown of plugin ${plg}${plugin.name}${nt} completed`);
       return plugin;
     } catch (err) {
-      this.log.error(`Failed to shut down plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message : err}`);
+      this.log.error(`Failed to shut down plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
     }
     return undefined;
   }
@@ -917,11 +917,11 @@ export class PluginManager {
           // this.log.debug(`Created config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
           return config;
         } catch (err) {
-          this.log.error(`Error creating config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message : err}`);
+          this.log.error(`Error creating config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
           return config;
         }
       } else {
-        this.log.error(`Error accessing config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message : err}`);
+        this.log.error(`Error accessing config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
         return { name: plugin.name, type: plugin.type, debug: false, unregisterOnShutdown: false };
       }
     }
@@ -954,7 +954,7 @@ export class PluginManager {
       // this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, plugin.platform.config);
       return Promise.resolve();
     } catch (err) {
-      this.log.error(`Error saving config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err}`);
+      this.log.error(`Error saving config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
       return Promise.reject(err);
     }
   }
@@ -991,7 +991,7 @@ export class PluginManager {
       this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
       // this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
     } catch (err) {
-      this.log.error(`Error saving config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err}`);
+      this.log.error(`Error saving config file ${configFile} for plugin ${plg}${plugin.name}${er}: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
       return;
     }
   }
@@ -1018,8 +1018,8 @@ export class PluginManager {
       this.log.debug(`Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.`);
       // this.log.debug(`Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.\nSchema:${rs}\n`, schema);
       return schema;
-    } catch (error) {
-      this.log.debug(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema. Error: ${error instanceof Error ? error.message : error}`);
+    } catch (err) {
+      this.log.debug(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema. Error: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
       return this.getDefaultSchema(plugin);
     }
   }

@@ -1945,18 +1945,32 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default TotalVolatileOrganicCompoundsConcentrationMeasurement cluster server.
    *
-   * @param {number} measuredValue - The measured value of the concentration.
+   * @param {number} measuredValue - The measured value of the concentration (default to 0).
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
+   * @param {number} [uncertainty] - The uncertainty value (optional).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultTvocMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultTvocMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air, uncertainty?: number) {
     this.behaviors.require(TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
       maxMeasuredValue: null,
-      uncertainty: 0,
+      uncertainty,
       measurementUnit,
+      measurementMedium,
+    });
+    return this;
+  }
+
+  /**
+   * @param {ConcentrationMeasurement.LevelValue} levelValue - The level value of the measurement (default to ConcentrationMeasurement.LevelValue.Unknown).
+   * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The measurement medium (default to ConcentrationMeasurement.MeasurementMedium.Air).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createLevelTvocMeasurementClusterServer(levelValue = ConcentrationMeasurement.LevelValue.Unknown, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+    this.behaviors.require(TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.LevelIndication, ConcentrationMeasurement.Feature.MediumLevel, ConcentrationMeasurement.Feature.CriticalLevel), {
+      levelValue,
       measurementMedium,
     });
     return this;
