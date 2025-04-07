@@ -100,6 +100,9 @@ import { ElectricalPowerMeasurement } from '@matter/main/clusters/electrical-pow
 import { ElectricalEnergyMeasurement } from '@matter/main/clusters/electrical-energy-measurement';
 import { AirQuality } from '@matter/main/clusters/air-quality';
 import { ConcentrationMeasurement } from '@matter/main/clusters/concentration-measurement';
+import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
+import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
+import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
 
 // @matter behaviors
 import { DescriptorServer } from '@matter/main/behaviors/descriptor';
@@ -130,6 +133,9 @@ import { Pm25ConcentrationMeasurementServer } from '@matter/main/behaviors/pm25-
 import { Pm10ConcentrationMeasurementServer } from '@matter/main/behaviors/pm10-concentration-measurement';
 import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/radon-concentration-measurement';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
+import { RvcRunModeServer } from '@matter/main/behaviors/rvc-run-mode';
+import { RvcOperationalStateServer } from '@matter/main/behaviors/rvc-operational-state';
+import { RvcCleanModeServer } from '@matter/main/behaviors/rvc-clean-mode';
 
 export interface MatterbridgeEndpointCommands {
   // Identify
@@ -1472,11 +1478,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultDoorLockClusterServer(lockState = DoorLock.LockState.Locked, lockType = DoorLock.LockType.DeadBolt) {
     this.behaviors.require(MatterbridgeDoorLockServer.enable({ events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true } }), {
-      operatingMode: DoorLock.OperatingMode.Normal,
       lockState,
       lockType,
       actuatorEnabled: false,
-      supportedOperatingModes: { normal: false, vacation: true, privacy: true, noRemoteLockUnlock: true, passage: true },
+      operatingMode: DoorLock.OperatingMode.Normal,
+      // Special case of inverted bitmap: add also alwaysSet = 2047
+      supportedOperatingModes: { normal: false, vacation: true, privacy: true, noRemoteLockUnlock: true, passage: true, alwaysSet: 2047 },
+      alarmMask: { lockJammed: false, lockFactoryReset: false, lockRadioPowerCycled: false, wrongCodeEntryLimit: false, frontEscutcheonRemoved: false, doorForcedOpen: false },
     });
     return this;
   }
@@ -1566,8 +1574,6 @@ export class MatterbridgeEndpoint extends Endpoint {
         testInProgress: false,
         hardwareFaultAlert: false,
         endOfServiceAlert: SmokeCoAlarm.EndOfService.Normal,
-        // interconnectSmokeAlarm: SmokeCoAlarm.AlarmState.Normal,
-        // interconnectCoAlarm: SmokeCoAlarm.AlarmState.Normal,
       },
     );
     return this;
@@ -1862,59 +1868,76 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default TemperatureMeasurement cluster server.
    *
-   * @param {number} measuredValue - The measured value of the temperature x 100.
+   * @param {number | null} measuredValue - The measured value of the temperature x 100.
+   * @param {number | null} minMeasuredValue - The minimum measured value of the temperature x 100.
+   * @param {number | null} maxMeasuredValue - The maximum measured value of the temperature x 100.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultTemperatureMeasurementClusterServer(measuredValue = 0) {
-    this.behaviors.require(TemperatureMeasurementServer, getDefaultTemperatureMeasurementClusterServer(measuredValue));
+  createDefaultTemperatureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+    this.behaviors.require(TemperatureMeasurementServer, getDefaultTemperatureMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
     return this;
   }
 
   /**
    * Creates a default RelativeHumidityMeasurement cluster server.
    *
-   * @param {number} measuredValue - The measured value of the relative humidity x 100.
+   * @param {number | null} measuredValue - The measured value of the relative humidity x 100.
+   * @param {number | null} minMeasuredValue - The minimum measured value of the relative humidity x 100.
+   * @param {number | null} maxMeasuredValue - The maximum measured value of the relative humidity x 100.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultRelativeHumidityMeasurementClusterServer(measuredValue = 0) {
-    this.behaviors.require(RelativeHumidityMeasurementServer, getDefaultRelativeHumidityMeasurementClusterServer(measuredValue));
+  createDefaultRelativeHumidityMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+    this.behaviors.require(RelativeHumidityMeasurementServer, getDefaultRelativeHumidityMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
     return this;
   }
 
   /**
    * Creates a default PressureMeasurement cluster server.
    *
-   * @param {number} measuredValue - The measured value for the pressure.
+   * @param {number | null} measuredValue - The measured value for the pressure.
+   * @param {number | null} minMeasuredValue - The minimum measured value for the pressure.
+   * @param {number | null} maxMeasuredValue - The maximum measured value for the pressure.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultPressureMeasurementClusterServer(measuredValue = 1000) {
-    this.behaviors.require(PressureMeasurementServer, getDefaultPressureMeasurementClusterServer(measuredValue));
+  createDefaultPressureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+    this.behaviors.require(PressureMeasurementServer, getDefaultPressureMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
     return this;
   }
 
   /**
    * Creates a default IlluminanceMeasurement cluster server.
    *
-   * @param {number} measuredValue - The measured value of illuminance.
+   * @param {number | null} measuredValue - The measured value of illuminance.
+   * @param {number | null} minMeasuredValue - The minimum measured value of illuminance.
+   * @param {number | null} maxMeasuredValue - The maximum measured value of illuminance.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remark The default value for the illuminance measurement is null.
+   * This attribute SHALL indicate the illuminance in Lux (symbol lx) as follows:
+   * •  MeasuredValue = 10,000 x log10(illuminance) + 1,
+   *    where 1 lx <= illuminance <= 3.576 Mlx, corresponding to a MeasuredValue in the range 1 to 0xFFFE.
+   * • 0 indicates a value of illuminance that is too low to be measured
+   * • null indicates that the illuminance measurement is invalid.
    *
    * @remarks
    * Lux to matter = Math.round(Math.max(Math.min(10000 * Math.log10(lux), 0xfffe), 0))
    * Matter to Lux = Math.round(Math.max(Math.pow(10, value / 10000), 0))
    */
-  createDefaultIlluminanceMeasurementClusterServer(measuredValue = 0) {
-    this.behaviors.require(IlluminanceMeasurementServer, getDefaultIlluminanceMeasurementClusterServer(measuredValue));
+  createDefaultIlluminanceMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+    this.behaviors.require(IlluminanceMeasurementServer, getDefaultIlluminanceMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
     return this;
   }
 
   /**
    * Creates a default FlowMeasurement cluster server.
    *
-   * @param {number} measuredValue - The measured value of the flow in 10 x m/h.
+   * @param {number | null} measuredValue - The measured value of the flow in 10 x m3/h.
+   * @param {number | null} minMeasuredValue - The minimum measured value of the flow in 10 x m3/h.
+   * @param {number | null} maxMeasuredValue - The maximum measured value of the flow in 10 x m3/h.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultFlowMeasurementClusterServer(measuredValue = 0) {
-    this.behaviors.require(FlowMeasurementServer, getDefaultFlowMeasurementClusterServer(measuredValue));
+  createDefaultFlowMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+    this.behaviors.require(FlowMeasurementServer, getDefaultFlowMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
     return this;
   }
 
@@ -1922,10 +1945,15 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default OccupancySensing cluster server.
    *
    * @param {boolean} occupied - A boolean indicating whether the occupancy is occupied or not. Default is false.
+   * @param {number} holdTime - The hold time in seconds. Default is 30.
+   * @param {number} holdTimeMin - The minimum hold time in seconds. Default is 1.
+   * @param {number} holdTimeMax - The maximum hold time in seconds. Default is 300.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remark The default value for the occupancy sensor type is PIR.
    */
-  createDefaultOccupancySensingClusterServer(occupied = false) {
-    this.behaviors.require(OccupancySensingServer, getDefaultOccupancySensingClusterServer(occupied));
+  createDefaultOccupancySensingClusterServer(occupied = false, holdTime = 30, holdTimeMin = 1, holdTimeMax = 300) {
+    this.behaviors.require(OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared), getDefaultOccupancySensingClusterServer(occupied, holdTime, holdTimeMin, holdTimeMax));
     return this;
   }
 
@@ -1945,13 +1973,13 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default TotalVolatileOrganicCompoundsConcentrationMeasurement cluster server.
    *
-   * @param {number} measuredValue - The measured value of the concentration (default to 0).
+   * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @param {number} [uncertainty] - The uncertainty value (optional).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultTvocMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air, uncertainty?: number) {
+  createDefaultTvocMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air, uncertainty?: number) {
     this.behaviors.require(TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -1962,7 +1990,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     });
     return this;
   }
-
+  
   /**
    * @param {ConcentrationMeasurement.LevelValue} levelValue - The level value of the measurement (default to ConcentrationMeasurement.LevelValue.Unknown).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The measurement medium (default to ConcentrationMeasurement.MeasurementMedium.Air).
@@ -1979,11 +2007,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Create a default CarbonMonoxideConcentrationMeasurement cluster server.
    *
-   * @param {number} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    */
-  createDefaultCarbonMonoxideConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultCarbonMonoxideConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(CarbonMonoxideConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -1998,11 +2026,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Create a default CarbonDioxideConcentrationMeasurement cluster server.
    *
-   * @param {number} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    */
-  createDefaultCarbonDioxideConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultCarbonDioxideConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(CarbonDioxideConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -2017,11 +2045,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Create a default FormaldehydeConcentrationMeasurement cluster server.
    *
-   * @param {number} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    */
-  createDefaultFormaldehydeConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultFormaldehydeConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(FormaldehydeConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -2036,11 +2064,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Create a default Pm1ConcentrationMeasurement cluster server.
    *
-   * @param {number} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    */
-  createDefaultPm1ConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultPm1ConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(Pm1ConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -2055,11 +2083,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Create a default Pm25ConcentrationMeasurement cluster server.
    *
-   * @param {number} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    */
-  createDefaultPm25ConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultPm25ConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(Pm25ConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -2074,11 +2102,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Create a default Pm10ConcentrationMeasurement cluster server.
    *
-   * @param {number} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    */
-  createDefaultPm10ConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultPm10ConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(Pm10ConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -2093,11 +2121,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Create a default OzoneConcentrationMeasurement cluster server.
    *
-   * @param {number} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ugm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    */
-  createDefaultOzoneConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultOzoneConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(OzoneConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -2112,11 +2140,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Create a default RadonConcentrationMeasurement cluster server.
    *
-   * @param {number} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    */
-  createDefaultRadonConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultRadonConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(RadonConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -2131,11 +2159,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Create a default NitrogenDioxideConcentrationMeasurement cluster server.
    *
-   * @param {number} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ugm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    */
-  createDefaultNitrogenDioxideConcentrationMeasurementClusterServer(measuredValue = 0, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
+  createDefaultNitrogenDioxideConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(NitrogenDioxideConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
       minMeasuredValue: null,
@@ -2143,6 +2171,64 @@ export class MatterbridgeEndpoint extends Endpoint {
       uncertainty: 0,
       measurementUnit,
       measurementMedium,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default RvcRunMode Cluster Server.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultRvcRunModeClusterServer(): this {
+    this.behaviors.require(RvcRunModeServer, {
+      supportedModes: [
+        { label: 'Idle', mode: 1, modeTags: [{ value: RvcRunMode.ModeTag.Idle }] },
+        { label: 'Cleaning', mode: 2, modeTags: [{ value: RvcRunMode.ModeTag.Cleaning }] },
+        // { label: 'SpotCleaning', mode: 3, modeTags: [{ value: RvcRunMode.ModeTag.Cleaning }] },
+      ],
+      currentMode: 1,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default RvcOperationalState Cluster Server.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultRvcOperationalStateClusterServer(): this {
+    this.behaviors.require(RvcOperationalStateServer, {
+      phaseList: [],
+      currentPhase: null,
+      operationalStateList: [
+        { operationalStateId: RvcOperationalState.OperationalState.Stopped, operationalStateLabel: 'Stopped' },
+        { operationalStateId: RvcOperationalState.OperationalState.Running, operationalStateLabel: 'Running' },
+        { operationalStateId: RvcOperationalState.OperationalState.Paused, operationalStateLabel: 'Paused' },
+        { operationalStateId: RvcOperationalState.OperationalState.Error, operationalStateLabel: 'Error' },
+        { operationalStateId: RvcOperationalState.OperationalState.SeekingCharger, operationalStateLabel: 'SeekingCharger' },
+        { operationalStateId: RvcOperationalState.OperationalState.Charging, operationalStateLabel: 'Charging' },
+        { operationalStateId: RvcOperationalState.OperationalState.Docked, operationalStateLabel: 'Docked' },
+      ],
+      operationalState: RvcOperationalState.OperationalState.Stopped,
+      operationalError: { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error' },
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default RvcCleanMode Cluster Server.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultRvcCleanModeClusterServer(): this {
+    this.behaviors.require(RvcCleanModeServer, {
+      supportedModes: [
+        { label: 'Idle', mode: 1, modeTags: [] },
+        { label: 'Cleaning', mode: 2, modeTags: [] },
+        { label: 'SpotCleaning', mode: 3, modeTags: [] },
+      ],
+      currentMode: 1,
     });
     return this;
   }

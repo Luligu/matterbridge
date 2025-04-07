@@ -24,6 +24,7 @@ import {
   pressureSensor,
   pumpDevice,
   rainSensor,
+  roboticVacuumCleaner,
   smokeCoAlarm,
   temperatureSensor,
   thermostatDevice,
@@ -64,6 +65,9 @@ import {
   Thermostat,
   ValveConfigurationAndControl,
   WindowCovering,
+  RvcRunMode,
+  RvcOperationalState,
+  RvcCleanMode,
 } from '@matter/main/clusters';
 import {
   AirQualityServer,
@@ -601,6 +605,34 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device.getAttribute(SmokeCoAlarm.Cluster.id, 'coState')).toBe(SmokeCoAlarm.AlarmState.Normal);
     });
 
+    test('createDefaultSmokeCOAlarmClusterServer smoke only', async () => {
+      const device = new MatterbridgeEndpoint(smokeCoAlarm, { uniqueStorageKey: 'SmokeAlarmSmokeOnly' });
+      expect(device).toBeDefined();
+      device.createDefaultIdentifyClusterServer();
+      device.createSmokeOnlySmokeCOAlarmClusterServer();
+      expect(device.hasAttributeServer(SmokeCoAlarm.Cluster.id, 'smokeState')).toBe(true);
+      expect(device.hasAttributeServer(SmokeCoAlarm.Cluster.id, 'coState')).toBe(false);
+      expect(device.hasAttributeServer(SmokeCoAlarm.Cluster.id, 'batteryAlert')).toBe(true);
+      expect(device.hasAttributeServer(SmokeCoAlarm.Cluster.id, 'endOfServiceAlert')).toBe(true);
+
+      await add(device);
+      expect(device.getAttribute(SmokeCoAlarm.Cluster.id, 'smokeState')).toBe(SmokeCoAlarm.AlarmState.Normal);
+    });
+
+    test('createDefaultSmokeCOAlarmClusterServer co only', async () => {
+      const device = new MatterbridgeEndpoint(smokeCoAlarm, { uniqueStorageKey: 'SmokeAlarmCoOnly' });
+      expect(device).toBeDefined();
+      device.createDefaultIdentifyClusterServer();
+      device.createCoOnlySmokeCOAlarmClusterServer();
+      expect(device.hasAttributeServer(SmokeCoAlarm.Cluster.id, 'smokeState')).toBe(false);
+      expect(device.hasAttributeServer(SmokeCoAlarm.Cluster.id, 'coState')).toBe(true);
+      expect(device.hasAttributeServer(SmokeCoAlarm.Cluster.id, 'batteryAlert')).toBe(true);
+      expect(device.hasAttributeServer(SmokeCoAlarm.Cluster.id, 'endOfServiceAlert')).toBe(true);
+
+      await add(device);
+      expect(device.getAttribute(SmokeCoAlarm.Cluster.id, 'coState')).toBe(SmokeCoAlarm.AlarmState.Normal);
+    });
+
     test('createDefaultSwitchClusterServer', async () => {
       const device = new MatterbridgeEndpoint(genericSwitch, { uniqueStorageKey: 'SwitchMomentary' });
       expect(device).toBeDefined();
@@ -928,6 +960,22 @@ describe('MatterbridgeEndpoint class', () => {
       await add(device);
 
       expect(device.getAttribute(AirQuality.Cluster.id, 'airQuality')).toBe(AirQuality.AirQualityEnum.Unknown);
+    });
+
+    test('createDefaultRvc Cluster Servers', async () => {
+      const device = new MatterbridgeEndpoint(roboticVacuumCleaner, { uniqueStorageKey: 'RoboticVacuumCleaner' });
+      expect(device).toBeDefined();
+      device.createDefaultIdentifyClusterServer();
+      device.createDefaultRvcRunModeClusterServer();
+      device.createDefaultRvcOperationalStateClusterServer();
+      device.createDefaultRvcCleanModeClusterServer();
+      expect(device.hasClusterServer(RvcRunMode.Cluster.id)).toBe(true);
+
+      await add(device);
+
+      expect(device.getAttribute(RvcRunMode.Cluster.id, 'currentMode')).toBe(1);
+      expect(device.getAttribute(RvcOperationalState.Cluster.id, 'operationalState')).toBe(RvcOperationalState.OperationalState.Stopped);
+      expect(device.getAttribute(RvcCleanMode.Cluster.id, 'currentMode')).toBe(1);
     });
 
     // eslint-disable-next-line jest/expect-expect
