@@ -2210,11 +2210,11 @@ export class MatterbridgeEndpoint extends Endpoint {
         { operationalStateId: RvcOperationalState.OperationalState.Running, operationalStateLabel: 'Running' },
         { operationalStateId: RvcOperationalState.OperationalState.Paused, operationalStateLabel: 'Paused' },
         { operationalStateId: RvcOperationalState.OperationalState.Error, operationalStateLabel: 'Error' },
-        { operationalStateId: RvcOperationalState.OperationalState.SeekingCharger, operationalStateLabel: 'SeekingCharger' },
-        { operationalStateId: RvcOperationalState.OperationalState.Charging, operationalStateLabel: 'Charging' },
-        { operationalStateId: RvcOperationalState.OperationalState.Docked, operationalStateLabel: 'Docked' },
+        { operationalStateId: RvcOperationalState.OperationalState.SeekingCharger, operationalStateLabel: 'SeekingCharger' }, // Y RVC Pause Compatibility N RVC Resume Compatibility
+        { operationalStateId: RvcOperationalState.OperationalState.Charging, operationalStateLabel: 'Charging' }, // N RVC Pause Compatibility Y RVC Resume Compatibility
+        { operationalStateId: RvcOperationalState.OperationalState.Docked, operationalStateLabel: 'Docked' }, // N RVC Pause Compatibility Y RVC Resume Compatibility
       ],
-      operationalState: RvcOperationalState.OperationalState.Stopped,
+      operationalState: RvcOperationalState.OperationalState.Docked,
       operationalError: { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error' },
     });
     return this;

@@ -26,7 +26,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // @matter
-import { Behavior, ClusterBehavior, MaybePromise, NamedHandler } from '@matter/main';
+import { Behavior, ClusterBehavior, ClusterInterface, MaybePromise, NamedHandler } from '@matter/main';
 
 // @matter clusters
 import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
@@ -66,7 +66,7 @@ import { ModeBase } from '@matter/main/clusters/mode-base';
 
 import { ModeBaseInterface } from '@matter/main/behaviors/mode-base';
 import { RvcCleanMode } from '@matter/main/clusters/rvc-clean-mode';
-import { Status } from '@matter/main/types';
+import { OptionalCommand, Status, TypeFromFields } from '@matter/main/types';
 import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
 import { OperationalStateInterface } from './matter/behaviors.js';
 import { OperationalState } from '@matter/main/clusters';
@@ -454,7 +454,7 @@ export namespace RvcRunModeBehavior {
 export class MatterbridgeRvcRunModeServer extends RvcRunModeBehavior {
   override initialize() {
     // this.state.currentMode = 1; // RvcRunMode.ModeTag.Idle
-    this.state.currentMode = 2; // RvcRunMode.ModeTag.Cleaning
+    // this.state.currentMode = 2; // RvcRunMode.ModeTag.Cleaning
   }
 
   override changeToMode({ newMode }: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
@@ -479,7 +479,7 @@ export namespace RvcCleanModeBehavior {
 
 export class MatterbridgeRvcCleanModeServer extends RvcCleanModeBehavior {
   override initialize() {
-    this.state.currentMode = 1; // RvcCleanMode.ModeTag.Vacuum
+    // this.state.currentMode = 1; // RvcCleanMode.ModeTag.Vacuum
   }
 
   override changeToMode({ newMode }: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
@@ -490,8 +490,23 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeBehavior {
   }
 }
 
+// RvcOperationalStateInterface
+export namespace RvcOperationalStateInterface {
+  export interface Base {
+    pause(): MaybePromise<RvcOperationalState.OperationalCommandResponse>;
+    stop(): MaybePromise<RvcOperationalState.OperationalCommandResponse>;
+    start(): MaybePromise<RvcOperationalState.OperationalCommandResponse>;
+    resume(): MaybePromise<RvcOperationalState.OperationalCommandResponse>;
+    goHome(): MaybePromise<RvcOperationalState.OperationalCommandResponse>;
+  }
+}
+export interface RvcOperationalStateInterface {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  components: [{ flags: {}; methods: RvcOperationalStateInterface.Base }];
+}
+
 // RvcOperationalStateBehavior
-export const RvcOperationalStateBehavior = ClusterBehavior.withInterface<OperationalStateInterface>().for(RvcOperationalState.Cluster);
+export const RvcOperationalStateBehavior = ClusterBehavior.withInterface<RvcOperationalStateInterface>().for(RvcOperationalState.Cluster);
 
 type RvcOperationalStateBehaviorType = InstanceType<typeof RvcOperationalStateBehavior>;
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -505,20 +520,45 @@ export namespace RvcOperationalStateBehavior {
 export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateBehavior {
   override initialize() {
     // this.state.operationalState = RvcOperationalState.OperationalState.Docked;
-    this.state.operationalState = RvcOperationalState.OperationalState.Running;
+    this.state.operationalState = RvcOperationalState.OperationalState.Docked;
     this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error' };
   }
 
   override pause(): MaybePromise<OperationalState.OperationalCommandResponse> {
     // const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     // device.changeToMode({ newMode });
+    console.log('Pause called');
     this.state.operationalState = RvcOperationalState.OperationalState.Paused;
     return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error' } } as OperationalState.OperationalCommandResponse;
   }
+  /*
+  override stop(): MaybePromise<OperationalState.OperationalCommandResponse> {
+    // const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
+    // device.changeToMode({ newMode });
+    console.log('Stop called');
+    this.state.operationalState = RvcOperationalState.OperationalState.Stopped;
+    return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error' } } as OperationalState.OperationalCommandResponse;
+  }
+  override start(): MaybePromise<OperationalState.OperationalCommandResponse> {
+    // const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
+    // device.changeToMode({ newMode });
+    console.log('Start called');
+    this.state.operationalState = RvcOperationalState.OperationalState.Running;
+    return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error' } } as OperationalState.OperationalCommandResponse;
+  }
+  */
   override resume(): MaybePromise<OperationalState.OperationalCommandResponse> {
     // const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     // device.changeToMode({ newMode });
+    console.log('Resume called');
     this.state.operationalState = RvcOperationalState.OperationalState.Running;
+    return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error' } } as OperationalState.OperationalCommandResponse;
+  }
+  override goHome(): MaybePromise<OperationalState.OperationalCommandResponse> {
+    // const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
+    // device.changeToMode({ newMode });
+    console.log('Go home called');
+    this.state.operationalState = RvcOperationalState.OperationalState.Docked;
     return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error' } } as OperationalState.OperationalCommandResponse;
   }
 }
