@@ -339,7 +339,7 @@ export class PluginManager {
       if (!packageJson.version) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no version in package.json`);
       if (!packageJson.description) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no description in package.json`);
       if (!packageJson.author) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no author in package.json`);
-      if (!packageJson.homepage) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no homepage in package.json`);
+      if (!packageJson.homepage) this.log.info(`Plugin ${plg}${plugin.name}${nf} has no homepage in package.json`);
       if (!packageJson.type || packageJson.type !== 'module') this.log.error(`Plugin ${plg}${plugin.name}${er} is not a module`);
       if (!packageJson.main) this.log.error(`Plugin ${plg}${plugin.name}${er} has no main entrypoint in package.json`);
       plugin.name = packageJson.name || 'Unknown name';
@@ -1002,7 +1002,12 @@ export class PluginManager {
       // this.log.debug(`Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.\nSchema:${rs}\n`, schema);
       return schema;
     } catch (err) {
-      this.log.debug(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema. Error: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
+      const nodeErr = err as NodeJS.ErrnoException;
+      if (nodeErr.code === 'ENOENT') {
+        this.log.debug(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema.`);
+      } else {
+        this.log.debug(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema. Error: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
+      }
       return this.getDefaultSchema(plugin);
     }
   }
