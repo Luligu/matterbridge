@@ -1744,6 +1744,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {boolean} contact - The state of the cluster. Defaults to true (true = contact).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * Water Leak Detector: true = leak, false = no leak
+   * Water Freeze Detector: true = freeze, false = no freeze
+   * Rain Sensor: true = rain, false = no rain
+   * Contact Sensor: true = closed or contact, false = open or no contact
    */
   createDefaultBooleanStateClusterServer(contact?: boolean) {
     this.behaviors.require(
@@ -1751,7 +1757,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         events: { stateChange: true },
       }),
       {
-        stateValue: contact ?? true, // true=contact false=no_contact
+        stateValue: contact ?? true,
       },
     );
     return this;
@@ -1767,6 +1773,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [supportedSensitivityLevels=2] - The number of supported sensitivity levels. Defaults to `2` if not provided (min 2, max 10).
    * @param {number} [defaultSensitivityLevel=0] - The default sensitivity level. Defaults to `0` if not provided.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
    */
   createDefaultBooleanStateConfigurationClusterServer(sensorFault = false, currentSensitivityLevel = 0, supportedSensitivityLevels = 2, defaultSensitivityLevel = 0) {
     this.behaviors.require(
@@ -2185,13 +2192,34 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultRvcRunModeClusterServer(): this {
-    this.behaviors.require(MatterbridgeRvcRunModeServer, {
+    this.behaviors.require(MatterbridgeRvcRunModeServer.with(RvcRunMode.Feature.OnOff), {
       supportedModes: [
         { label: 'Idle', mode: 1, modeTags: [{ value: RvcRunMode.ModeTag.Idle }] },
         { label: 'Cleaning', mode: 2, modeTags: [{ value: RvcRunMode.ModeTag.Cleaning }] },
         { label: 'SpotCleaning', mode: 3, modeTags: [{ value: RvcRunMode.ModeTag.Cleaning }] },
       ],
       currentMode: 1,
+      startUpMode: null,
+      onMode: null,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default RvcCleanMode Cluster Server.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultRvcCleanModeClusterServer(): this {
+    this.behaviors.require(MatterbridgeRvcCleanModeServer.with(RvcCleanMode.Feature.OnOff), {
+      supportedModes: [
+        { label: 'Vacuum', mode: 1, modeTags: [{ value: RvcCleanMode.ModeTag.Vacuum }] },
+        { label: 'Mop', mode: 2, modeTags: [{ value: RvcCleanMode.ModeTag.Mop }] },
+        { label: 'Clean', mode: 3, modeTags: [{ value: RvcCleanMode.ModeTag.DeepClean }] },
+      ],
+      currentMode: 1,
+      startUpMode: null,
+      onMode: null,
     });
     return this;
   }
@@ -2215,24 +2243,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         { operationalStateId: RvcOperationalState.OperationalState.Docked, operationalStateLabel: 'Docked' }, // N RVC Pause Compatibility Y RVC Resume Compatibility
       ],
       operationalState: RvcOperationalState.OperationalState.Docked,
-      operationalError: { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error' },
-    });
-    return this;
-  }
-
-  /**
-   * Creates a default RvcCleanMode Cluster Server.
-   *
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createDefaultRvcCleanModeClusterServer(): this {
-    this.behaviors.require(MatterbridgeRvcCleanModeServer, {
-      supportedModes: [
-        { label: 'Vacuum', mode: 1, modeTags: [{ value: RvcCleanMode.ModeTag.Vacuum }] },
-        { label: 'Mop', mode: 2, modeTags: [{ value: RvcCleanMode.ModeTag.Mop }] },
-        { label: 'Clean', mode: 3, modeTags: [{ value: RvcCleanMode.ModeTag.DeepClean }] },
-      ],
-      currentMode: 1,
+      operationalError: { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error', errorStateDetails: 'Fully operative' },
     });
     return this;
   }

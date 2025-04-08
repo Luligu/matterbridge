@@ -21,7 +21,7 @@ export function QRDiv({ matterbridgeInfo, plugin }) {
               <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
               {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Label: {fabric.label}</p>}
               <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>
-                Active sessions: {matterbridgeInfo.matterbridgeSessionInformations ? 
+                Sessions: {matterbridgeInfo.matterbridgeSessionInformations ? 
                   matterbridgeInfo.matterbridgeSessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex && session.isPeerActive === true).length :
                   '0'}
                 {' '}
@@ -48,7 +48,7 @@ export function QRDiv({ matterbridgeInfo, plugin }) {
               <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
               {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Label: {fabric.label}</p>}
               <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>
-                Active sessions: {plugin.sessionInformations ?
+                Sessions: {plugin.sessionInformations ?
                   plugin.sessionInformations.filter(session => session.fabric.fabricIndex === fabric.fabricIndex && session.isPeerActive === true).length :
                   '0'}
                 {' '}

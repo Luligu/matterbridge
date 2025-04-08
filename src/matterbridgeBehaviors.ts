@@ -27,6 +27,7 @@
 
 // @matter
 import { Behavior, ClusterBehavior, ClusterInterface, MaybePromise, NamedHandler } from '@matter/main';
+import { OptionalCommand, Status, TypeFromFields } from '@matter/main/types';
 
 // @matter clusters
 import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
@@ -61,15 +62,19 @@ import { AnsiLogger } from './logger/export.js';
 // MatterbridgeEndpoint
 import { MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
 
-import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
-import { ModeBase } from '@matter/main/clusters/mode-base';
+// Rvc
+import { RvcCleanMode } from 'matterbridge/cluster';
+import { RvcRunMode } from 'matterbridge/cluster';
+import { RvcOperationalState } from 'matterbridge/cluster';
 
+// ModeBase
+import { ModeBase } from '@matter/main/clusters/mode-base';
 import { ModeBaseInterface } from '@matter/main/behaviors/mode-base';
-import { RvcCleanMode } from '@matter/main/clusters/rvc-clean-mode';
-import { OptionalCommand, Status, TypeFromFields } from '@matter/main/types';
-import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
-import { OperationalStateInterface } from './matter/behaviors.js';
-import { OperationalState } from '@matter/main/clusters';
+
+// OperationalState
+import { OperationalState } from '@matter/main/clusters/operational-state';
+import { OperationalStateInterface } from '@matter/main/behaviors/operational-state';
+import { RvcRunModeServer } from './matter/behaviors.js';
 
 export class MatterbridgeBehaviorDevice {
   log: AnsiLogger;
@@ -439,8 +444,19 @@ export class MatterbridgeSwitchServer extends SwitchServer {
   }
 }
 
+// RvcRunModeInterface
+export namespace RvcRunModeInterface {
+  export interface Base {
+    changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse>;
+  }
+}
+export interface RvcRunModeInterface {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  components: [{ flags: {}; methods: RvcRunModeInterface.Base }];
+}
+
 // RvcRunModeBehavior
-export const RvcRunModeBehavior = ClusterBehavior.withInterface<ModeBaseInterface>().for(RvcRunMode.Cluster);
+export const RvcRunModeBehavior = ClusterBehavior.withInterface<RvcRunModeInterface>().for(RvcRunMode.Cluster);
 
 type RvcRunModeBehaviorType = InstanceType<typeof RvcRunModeBehavior>;
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -451,7 +467,8 @@ export namespace RvcRunModeBehavior {
   export interface State extends RvcRunModeStateType {}
 }
 
-export class MatterbridgeRvcRunModeServer extends RvcRunModeBehavior {
+// RvcRunModeServer
+export class MatterbridgeRvcRunModeServer extends RvcRunModeBehavior.with(RvcRunMode.Feature.OnOff) {
   override initialize() {
     // this.state.currentMode = 1; // RvcRunMode.ModeTag.Idle
     // this.state.currentMode = 2; // RvcRunMode.ModeTag.Cleaning
@@ -461,12 +478,24 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeBehavior {
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     device.changeToMode({ newMode });
     this.state.currentMode = newMode;
+    console.log('MatterbridgeRvcRunModeServer changeToMode called with newMode:', newMode);
     return { status: Status.Success, statusText: 'Success' } as ModeBase.ChangeToModeResponse;
   }
 }
 
+// RvcCleanModeInterface
+export namespace RvcCleanModeInterface {
+  export interface Base {
+    changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse>;
+  }
+}
+export interface RvcCleanModeInterface {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  components: [{ flags: {}; methods: RvcCleanModeInterface.Base }];
+}
+
 // RvcCleanModeBehavior
-export const RvcCleanModeBehavior = ClusterBehavior.withInterface<ModeBaseInterface>().for(RvcCleanMode.Cluster);
+export const RvcCleanModeBehavior = ClusterBehavior.withInterface<RvcCleanModeInterface>().for(RvcCleanMode.Cluster);
 
 type RvcCleanModeBehaviorType = InstanceType<typeof RvcCleanModeBehavior>;
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -477,7 +506,8 @@ export namespace RvcCleanModeBehavior {
   export interface State extends RvcCleanModeStateType {}
 }
 
-export class MatterbridgeRvcCleanModeServer extends RvcCleanModeBehavior {
+// RvcCleanModeServer
+export class MatterbridgeRvcCleanModeServer extends RvcCleanModeBehavior.with(RvcRunMode.Feature.OnOff) {
   override initialize() {
     // this.state.currentMode = 1; // RvcCleanMode.ModeTag.Vacuum
   }
@@ -486,6 +516,7 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeBehavior {
     const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     device.changeToMode({ newMode });
     this.state.currentMode = newMode;
+    console.log('MatterbridgeRvcCleanModeServer changeToMode called with newMode:', newMode);
     return { status: Status.Success, statusText: 'Success' } as ModeBase.ChangeToModeResponse;
   }
 }
@@ -494,8 +525,6 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeBehavior {
 export namespace RvcOperationalStateInterface {
   export interface Base {
     pause(): MaybePromise<RvcOperationalState.OperationalCommandResponse>;
-    stop(): MaybePromise<RvcOperationalState.OperationalCommandResponse>;
-    start(): MaybePromise<RvcOperationalState.OperationalCommandResponse>;
     resume(): MaybePromise<RvcOperationalState.OperationalCommandResponse>;
     goHome(): MaybePromise<RvcOperationalState.OperationalCommandResponse>;
   }
@@ -519,46 +548,53 @@ export namespace RvcOperationalStateBehavior {
 
 export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateBehavior {
   override initialize() {
-    // this.state.operationalState = RvcOperationalState.OperationalState.Docked;
+    console.log('MatterbridgeRvcOperationalStateServer initialized: setting operational state to Docked');
     this.state.operationalState = RvcOperationalState.OperationalState.Docked;
     this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error' };
+    this.reactTo(this.agent.get(OnOffServer).events.onOff$Changed, this.handleOnOffChange);
+  }
+
+  protected handleOnOffChange(onOff: boolean) {
+    if (onOff) {
+      console.log('OnOffServer changed to ON: setting operational state to Running');
+      this.agent.get(MatterbridgeRvcRunModeServer).state.currentMode = 2; // RvcRunMode.ModeTag.Cleaning
+      this.state.operationalState = RvcOperationalState.OperationalState.Running;
+      this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error' };
+    } else {
+      console.log('OnOffServer changed to OFF: setting operational state to Docked');
+      this.agent.get(MatterbridgeRvcRunModeServer).state.currentMode = 1; // RvcRunMode.ModeTag.Idle
+      this.state.operationalState = RvcOperationalState.OperationalState.Docked;
+      this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error' };
+    }
   }
 
   override pause(): MaybePromise<OperationalState.OperationalCommandResponse> {
     // const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     // device.changeToMode({ newMode });
-    console.log('Pause called');
+    console.log('MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused and currentMode to Idle');
+    this.agent.get(MatterbridgeRvcRunModeServer).state.currentMode = 1; // RvcRunMode.ModeTag.Idle
     this.state.operationalState = RvcOperationalState.OperationalState.Paused;
+    this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error' };
     return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error' } } as OperationalState.OperationalCommandResponse;
   }
-  /*
-  override stop(): MaybePromise<OperationalState.OperationalCommandResponse> {
-    // const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
-    // device.changeToMode({ newMode });
-    console.log('Stop called');
-    this.state.operationalState = RvcOperationalState.OperationalState.Stopped;
-    return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error' } } as OperationalState.OperationalCommandResponse;
-  }
-  override start(): MaybePromise<OperationalState.OperationalCommandResponse> {
-    // const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
-    // device.changeToMode({ newMode });
-    console.log('Start called');
-    this.state.operationalState = RvcOperationalState.OperationalState.Running;
-    return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error' } } as OperationalState.OperationalCommandResponse;
-  }
-  */
+
   override resume(): MaybePromise<OperationalState.OperationalCommandResponse> {
     // const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     // device.changeToMode({ newMode });
-    console.log('Resume called');
+    console.log('MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning');
+    this.agent.get(MatterbridgeRvcRunModeServer).state.currentMode = 2; // RvcRunMode.ModeTag.Cleaning
     this.state.operationalState = RvcOperationalState.OperationalState.Running;
+    this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error' };
     return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error' } } as OperationalState.OperationalCommandResponse;
   }
+
   override goHome(): MaybePromise<OperationalState.OperationalCommandResponse> {
     // const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
     // device.changeToMode({ newMode });
-    console.log('Go home called');
+    console.log('MatterbridgeRvcOperationalStateServer: go home called setting operational state to Docked and currentMode to Idle');
+    this.agent.get(MatterbridgeRvcRunModeServer).state.currentMode = 1; // RvcRunMode.ModeTag.Idle
     this.state.operationalState = RvcOperationalState.OperationalState.Docked;
+    this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error' };
     return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error' } } as OperationalState.OperationalCommandResponse;
   }
 }

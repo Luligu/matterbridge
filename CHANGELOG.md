@@ -68,6 +68,11 @@ Modified clusters:
 ### Changed
 
 - [package]: Update dependencies.
+- [package]: Use node:https.
+
+### Fixed
+
+- [homepage]: Fixed warning log for homepage property in package.json.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
