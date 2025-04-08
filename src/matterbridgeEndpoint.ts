@@ -43,6 +43,9 @@ import {
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeBooleanStateConfigurationServer,
   MatterbridgeSwitchServer,
+  MatterbridgeRvcRunModeServer,
+  MatterbridgeRvcCleanModeServer,
+  MatterbridgeRvcOperationalStateServer,
 } from './matterbridgeBehaviors.js';
 import {
   addClusterServers,
@@ -133,9 +136,7 @@ import { Pm25ConcentrationMeasurementServer } from '@matter/main/behaviors/pm25-
 import { Pm10ConcentrationMeasurementServer } from '@matter/main/behaviors/pm10-concentration-measurement';
 import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/radon-concentration-measurement';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
-import { RvcRunModeServer } from '@matter/main/behaviors/rvc-run-mode';
-import { RvcOperationalStateServer } from '@matter/main/behaviors/rvc-operational-state';
-import { RvcCleanModeServer } from '@matter/main/behaviors/rvc-clean-mode';
+import { RvcCleanMode } from '@matter/main/clusters/rvc-clean-mode';
 
 export interface MatterbridgeEndpointCommands {
   // Identify
@@ -2184,11 +2185,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultRvcRunModeClusterServer(): this {
-    this.behaviors.require(RvcRunModeServer, {
+    this.behaviors.require(MatterbridgeRvcRunModeServer, {
       supportedModes: [
         { label: 'Idle', mode: 1, modeTags: [{ value: RvcRunMode.ModeTag.Idle }] },
         { label: 'Cleaning', mode: 2, modeTags: [{ value: RvcRunMode.ModeTag.Cleaning }] },
-        // { label: 'SpotCleaning', mode: 3, modeTags: [{ value: RvcRunMode.ModeTag.Cleaning }] },
+        { label: 'SpotCleaning', mode: 3, modeTags: [{ value: RvcRunMode.ModeTag.Cleaning }] },
       ],
       currentMode: 1,
     });
@@ -2201,7 +2202,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultRvcOperationalStateClusterServer(): this {
-    this.behaviors.require(RvcOperationalStateServer, {
+    this.behaviors.require(MatterbridgeRvcOperationalStateServer, {
       phaseList: [],
       currentPhase: null,
       operationalStateList: [
@@ -2225,11 +2226,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultRvcCleanModeClusterServer(): this {
-    this.behaviors.require(RvcCleanModeServer, {
+    this.behaviors.require(MatterbridgeRvcCleanModeServer, {
       supportedModes: [
-        { label: 'Idle', mode: 1, modeTags: [] },
-        { label: 'Cleaning', mode: 2, modeTags: [] },
-        { label: 'SpotCleaning', mode: 3, modeTags: [] },
+        { label: 'Vacuum', mode: 1, modeTags: [{ value: RvcCleanMode.ModeTag.Vacuum }] },
+        { label: 'Mop', mode: 2, modeTags: [{ value: RvcCleanMode.ModeTag.Mop }] },
+        { label: 'Clean', mode: 3, modeTags: [{ value: RvcCleanMode.ModeTag.DeepClean }] },
       ],
       currentMode: 1,
     });

@@ -26,7 +26,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // @matter
-import { Behavior, MaybePromise, NamedHandler } from '@matter/main';
+import { Behavior, ClusterBehavior, MaybePromise, NamedHandler } from '@matter/main';
 
 // @matter clusters
 import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
@@ -60,6 +60,16 @@ import { AnsiLogger } from './logger/export.js';
 
 // MatterbridgeEndpoint
 import { MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
+
+import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
+import { ModeBase } from '@matter/main/clusters/mode-base';
+
+import { ModeBaseInterface } from '@matter/main/behaviors/mode-base';
+import { RvcCleanMode } from '@matter/main/clusters/rvc-clean-mode';
+import { Status } from '@matter/main/types';
+import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
+import { OperationalStateInterface } from './matter/behaviors.js';
+import { OperationalState } from '@matter/main/clusters';
 
 export class MatterbridgeBehaviorDevice {
   log: AnsiLogger;
@@ -426,5 +436,89 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
 export class MatterbridgeSwitchServer extends SwitchServer {
   override initialize() {
     // Do nothing here, as the device will handle the switch logic
+  }
+}
+
+// RvcRunModeBehavior
+export const RvcRunModeBehavior = ClusterBehavior.withInterface<ModeBaseInterface>().for(RvcRunMode.Cluster);
+
+type RvcRunModeBehaviorType = InstanceType<typeof RvcRunModeBehavior>;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface RvcRunModeBehavior extends RvcRunModeBehaviorType {}
+type RvcRunModeStateType = InstanceType<typeof RvcRunModeBehavior.State>;
+export namespace RvcRunModeBehavior {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  export interface State extends RvcRunModeStateType {}
+}
+
+export class MatterbridgeRvcRunModeServer extends RvcRunModeBehavior {
+  override initialize() {
+    // this.state.currentMode = 1; // RvcRunMode.ModeTag.Idle
+    this.state.currentMode = 2; // RvcRunMode.ModeTag.Cleaning
+  }
+
+  override changeToMode({ newMode }: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+    const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
+    device.changeToMode({ newMode });
+    this.state.currentMode = newMode;
+    return { status: Status.Success, statusText: 'Success' } as ModeBase.ChangeToModeResponse;
+  }
+}
+
+// RvcCleanModeBehavior
+export const RvcCleanModeBehavior = ClusterBehavior.withInterface<ModeBaseInterface>().for(RvcCleanMode.Cluster);
+
+type RvcCleanModeBehaviorType = InstanceType<typeof RvcCleanModeBehavior>;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface RvcCleanModeBehavior extends RvcCleanModeBehaviorType {}
+type RvcCleanModeStateType = InstanceType<typeof RvcCleanModeBehavior.State>;
+export namespace RvcCleanModeBehavior {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  export interface State extends RvcCleanModeStateType {}
+}
+
+export class MatterbridgeRvcCleanModeServer extends RvcCleanModeBehavior {
+  override initialize() {
+    this.state.currentMode = 1; // RvcCleanMode.ModeTag.Vacuum
+  }
+
+  override changeToMode({ newMode }: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+    const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
+    device.changeToMode({ newMode });
+    this.state.currentMode = newMode;
+    return { status: Status.Success, statusText: 'Success' } as ModeBase.ChangeToModeResponse;
+  }
+}
+
+// RvcOperationalStateBehavior
+export const RvcOperationalStateBehavior = ClusterBehavior.withInterface<OperationalStateInterface>().for(RvcOperationalState.Cluster);
+
+type RvcOperationalStateBehaviorType = InstanceType<typeof RvcOperationalStateBehavior>;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface RvcOperationalStateBehavior extends RvcOperationalStateBehaviorType {}
+type RvcOperationalStateStateType = InstanceType<typeof RvcOperationalStateBehavior.State>;
+export namespace RvcOperationalStateBehavior {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  export interface State extends RvcOperationalStateStateType {}
+}
+
+export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateBehavior {
+  override initialize() {
+    // this.state.operationalState = RvcOperationalState.OperationalState.Docked;
+    this.state.operationalState = RvcOperationalState.OperationalState.Running;
+    this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error' };
+  }
+
+  override pause(): MaybePromise<OperationalState.OperationalCommandResponse> {
+    // const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
+    // device.changeToMode({ newMode });
+    this.state.operationalState = RvcOperationalState.OperationalState.Paused;
+    return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error' } } as OperationalState.OperationalCommandResponse;
+  }
+  override resume(): MaybePromise<OperationalState.OperationalCommandResponse> {
+    // const device = this.agent.get(MatterbridgeBehavior).state.deviceCommand;
+    // device.changeToMode({ newMode });
+    this.state.operationalState = RvcOperationalState.OperationalState.Running;
+    return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error' } } as OperationalState.OperationalCommandResponse;
   }
 }

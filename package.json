@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "3.0.0-edge.1",
+  "version": "3.0.0-edge.2",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -145,18 +145,17 @@
     "updateMatter:latest": "npm install @matter/main@latest && npm install && npm run deepCleanBuild",
     "updateMatter:dev": "npm install @matter/main@dev && npm install && npm run deepCleanBuild",
     "updateMatter:loc": "npm install ../matter.js/packages/matter.js && npm install && npm run deepCleanBuild",
-    "install:dependencies": "npm install @matter/main @matter/nodejs @project-chip/matter.js archiver express glob https node-ansi-logger node-persist-manager ws",
+    "install:dependencies": "npm install @matter/main archiver express@4.21.2 glob https multer node-ansi-logger node-persist-manager ws",
     "install:typescript": "npm install --save-dev @types/express @types/node @types/ws typescript && npm run build",
     "install:eslint": "npm uninstall eslint @types/eslint__js && npm install --save-dev @eslint/js typescript-eslint && npm run lint",
     "install:prettier": "npm install --save-dev prettier eslint-config-prettier eslint-plugin-prettier && npm run format",
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest && npm run test"
   },
   "dependencies": {
-    "@matter/main": "^0.13.0-alpha.0-20250405-7fc7db48",
+    "@matter/main": "0.13.0-alpha.0-20250408-c916c7e8",
     "archiver": "7.0.1",
     "express": "4.21.2",
     "glob": "11.0.1",
-    "https": "1.0.0",
     "multer": "1.4.5-lts.2",
     "node-ansi-logger": "3.0.1",
     "node-persist-manager": "1.0.8",
@@ -180,6 +179,6 @@
     "prettier": "3.5.3",
     "ts-jest": "29.3.1",
     "typescript": "5.8.3",
-    "typescript-eslint": "8.29.0"
+    "typescript-eslint": "8.29.1"
   }
 }
