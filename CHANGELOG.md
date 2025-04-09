@@ -57,6 +57,7 @@ Modified clusters:
 ### Fixed
 
 - [doorLock]: Fixed supportedOperatingModes inverted bitmap (Thanks Apollon).
+- [DevicesIcon]: Fixed rendering of leak freeze and rain sensors.
 
 ## [2.2.8] - 2025-04-08
 
