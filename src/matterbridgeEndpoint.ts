@@ -104,6 +104,7 @@ import { ElectricalEnergyMeasurement } from '@matter/main/clusters/electrical-en
 import { AirQuality } from '@matter/main/clusters/air-quality';
 import { ConcentrationMeasurement } from '@matter/main/clusters/concentration-measurement';
 import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
+import { RvcCleanMode } from '@matter/main/clusters/rvc-clean-mode';
 import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
 import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
 
@@ -136,7 +137,6 @@ import { Pm25ConcentrationMeasurementServer } from '@matter/main/behaviors/pm25-
 import { Pm10ConcentrationMeasurementServer } from '@matter/main/behaviors/pm10-concentration-measurement';
 import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/radon-concentration-measurement';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
-import { RvcCleanMode } from '@matter/main/clusters/rvc-clean-mode';
 
 export interface MatterbridgeEndpointCommands {
   // Identify
@@ -1059,7 +1059,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createOnOffClusterServer(onOff = false) {
-    this.behaviors.require(MatterbridgeOnOffServer.for(ClusterType(OnOff.Base)), {
+    this.behaviors.require(MatterbridgeOnOffServer, {
       onOff,
     });
     return this;
@@ -1096,6 +1096,25 @@ export class MatterbridgeEndpoint extends Endpoint {
       onLevel,
       remainingTime: 0,
       startUpCurrentLevel,
+      options: {
+        executeIfOff: false,
+        coupleColorTempToLevel: false,
+      },
+    });
+    return this;
+  }
+
+  /**
+   * Creates a level control cluster server without features.
+   *
+   * @param {number} [currentLevel=254] - The current level (default: 254).
+   * @param {number | null} [onLevel=null] - The on level (default: null).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createLevelControlClusterServer(currentLevel = 254, onLevel: number | null = null) {
+    this.behaviors.require(MatterbridgeLevelControlServer, {
+      currentLevel,
+      onLevel,
       options: {
         executeIfOff: false,
         coupleColorTempToLevel: false,
