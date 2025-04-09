@@ -1,11 +1,31 @@
 /* eslint-disable no-console */
+
+// React
+import React, { useContext } from 'react';
+
 // Frontend
 import { debug } from '../App';
+import { WebSocketContext } from './WebSocketProvider';
 
 // QRCode
 import { QRCodeSVG } from 'qrcode.react';
 
+// @mui
+import Button from '@mui/material/Button';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+
 export function QRDiv({ matterbridgeInfo, plugin }) {
+  const { sendMessage } = useContext(WebSocketContext);
+  
+  const handleRestartClick = () => {
+    if (matterbridgeInfo.restartMode === '') {
+      sendMessage({ method: "/api/restart", src: "Frontend", dst: "Matterbridge", params: {} });
+    }
+    else {
+      sendMessage({ method: "/api/shutdown", src: "Frontend", dst: "Matterbridge", params: {} });
+    }
+  };
+
   if(debug) console.log('QRDiv:', matterbridgeInfo, plugin);
   if (matterbridgeInfo.bridgeMode === 'bridge' && matterbridgeInfo.matterbridgePaired === true && matterbridgeInfo.matterbridgeAdvertise === false && matterbridgeInfo.matterbridgeFabricInformations) {
     if (debug) console.log(`QRDiv: paired ${matterbridgeInfo.matterbridgePaired}, got ${matterbridgeInfo.matterbridgeFabricInformations?.length} fabrics, got ${matterbridgeInfo.matterbridgeSessionInformations?.length} sessions`);
@@ -94,7 +114,8 @@ export function QRDiv({ matterbridgeInfo, plugin }) {
         <div className="MbfWindowHeader">
           <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>QR pairing code</p>
         </div>
-        <div className="MbfWindowFooter" style={{ padding: 0, marginTop: '-5px', height: '30px' }}>
+        <Button onClick={handleRestartClick} endIcon={<RestartAltIcon />} style={{ margin: '20px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}> Restart</Button>
+        <div className="MbfWindowFooter" style={{ padding: 0, margin: 0, height: '30px' }}>
           <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Restart to generate a new QRCode.</p>
         </div>
       </div>
@@ -106,7 +127,8 @@ export function QRDiv({ matterbridgeInfo, plugin }) {
         <div className="MbfWindowHeader">
           <p className="MbfWindowHeaderText" style={{ textAlign: 'left' }}>QR pairing code</p>
         </div>
-        <div className="MbfWindowFooter" style={{ padding: 0, marginTop: '-5px', height: '30px' }}>
+        <Button onClick={handleRestartClick} endIcon={<RestartAltIcon />} style={{ margin: '20px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}> Restart</Button>
+        <div className="MbfWindowFooter" style={{ padding: 0, margin: 0, height: '30px' }}>
           <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--div-text-color)' }}>Restart to generate a new QRCode.</p>
         </div>
       </div>

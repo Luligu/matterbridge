@@ -29,7 +29,7 @@ Features:
 - It is possible to choose the method: GET or POST.
 - The webhook can be tested directly in the frontend.
 
-## [2.2.8] - 2025-04-08
+## [2.2.8] - 2025-04-09
 
 ### Added
 
@@ -44,6 +44,7 @@ Features:
 ### Fixed
 
 - [homepage]: Fixed warning log for homepage property in package.json.
+- [DevicesIcon]: Fixed rendering of rain, freeze and leak sensors.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
