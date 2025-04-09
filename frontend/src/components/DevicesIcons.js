@@ -176,15 +176,15 @@ function Device({ device, endpoint, id, deviceType, clusters }) {
       ))}
       {/* Water leak detector */}
       {deviceType===0x0043 && clusters.filter(cluster => cluster.clusterName === 'BooleanState' && cluster.attributeName === 'stateValue').map(cluster => (
-        <Render icon={<WaterIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ?'No leak':'Leak'}/>
+        <Render icon={<WaterIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ?'Leak':'No leak'}/>
       ))}
       {/* Water freeze detector */}
       {deviceType===0x0041 && clusters.filter(cluster => cluster.clusterName === 'BooleanState' && cluster.attributeName === 'stateValue').map(cluster => (
-        <Render icon={<AcUnitIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ?'No freeze':'Freeze'}/>
+        <Render icon={<AcUnitIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ?'Freeze':'No freeze'}/>
       ))}
       {/* Rain sensor */}
       {deviceType===0x0044 && clusters.filter(cluster => cluster.clusterName === 'BooleanState' && cluster.attributeName === 'stateValue').map(cluster => (
-        <Render icon={<ThunderstormIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ?'No rain':'Rain'}/>
+        <Render icon={<ThunderstormIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ?'Rain':'No rain'}/>
       ))}
       {/* SmokeCoAlarm */}
       {deviceType===0x0076 && clusters.filter(cluster => cluster.clusterName === 'SmokeCoAlarm' && cluster.attributeName === 'smokeState').map(cluster => (
