@@ -59,17 +59,20 @@ Modified clusters:
 - [doorLock]: Fixed supportedOperatingModes inverted bitmap (Thanks Apollon).
 - [DevicesIcon]: Fixed rendering of leak freeze and rain sensors.
 
-## [2.2.8] - 2025-04-09
+## [2.2.8] - 2025-04-10
 
 ### Added
 
-- [platform]: Added stack to errors messages.
+- [platform]: Added stack to error messages.
+- [endpoint]: Added createLevelControlClusterServer()
 - [endpoint]: Added createLevelTvocMeasurementClusterServer()
+- [frontend]: Added a restart button on the QRCode panel when the advertising for a not paired node is expired.
 
 ### Changed
 
 - [package]: Update dependencies.
 - [package]: Use node:https.
+- [endpoint]: Modified createOnOffClusterServer().
 
 ### Fixed
 

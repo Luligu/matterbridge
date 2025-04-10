@@ -86,16 +86,16 @@ export enum DeviceClasses {
   Node = 'Node',
 
   /**
-   * Utility device type.
-   * A Utility device type supports configuration and settings.
-   */
-  Utility = 'Utility',
-
-  /**
    * Application device type.
    * Application devices types are typically the most datatype endpoints on a node and in the network.
    */
   App = 'App',
+
+  /**
+   * Utility device type.
+   * A Utility device type supports configuration and settings.
+   */
+  Utility = 'Utility',
 
   /**
    * Simple device type.
@@ -120,14 +120,8 @@ export enum DeviceClasses {
   /** The device type is composed of 2 or more device types. */
   Composed = 'Composed',
 
-  /** Composed device type that is composed of 2 or more endpoints with the same device type. */
-  Multiple = 'Multiple',
-
-  /** The endpoint is an Initiator for Zigbee EZ-Mode Finding & Binding. */
-  'EZInitiator' = 'EZ-Initiator',
-
-  /** The endpoint is a Target for Zigbee EZ-Mode Finding & Binding. */
-  'EZTarget' = 'EZ-Target',
+  /** The endpoint and at least one of its sibling endpoints have an overlap in application device type(s). */
+  Duplicate = 'Duplicate',
 
   /**
    * The endpoint represents a Bridged Device, for which information about the state of
@@ -140,48 +134,40 @@ export interface DeviceTypeDefinition {
   name: string;
   code: DeviceTypeId;
   deviceClass: DeviceClasses;
-  superSet?: string;
   revision: number;
   requiredServerClusters: ClusterId[];
   optionalServerClusters: ClusterId[];
   requiredClientClusters: ClusterId[];
   optionalClientClusters: ClusterId[];
-  unknown: boolean;
 }
 
 export const DeviceTypeDefinition = ({
   name,
   code,
   deviceClass,
-  superSet,
   revision,
   requiredServerClusters = [],
   optionalServerClusters = [],
   requiredClientClusters = [],
   optionalClientClusters = [],
-  unknown = false,
 }: {
   name: string;
   code: number;
   deviceClass: DeviceClasses;
-  superSet?: string;
   revision: number;
   requiredServerClusters?: ClusterId[];
   optionalServerClusters?: ClusterId[];
   requiredClientClusters?: ClusterId[];
   optionalClientClusters?: ClusterId[];
-  unknown?: boolean;
 }): DeviceTypeDefinition => ({
   name,
   code: DeviceTypeId(code),
   deviceClass,
-  superSet,
   revision,
   requiredServerClusters,
   optionalServerClusters,
   requiredClientClusters,
   optionalClientClusters,
-  unknown,
 });
 
 export interface MatterbridgeEndpointOptions extends EndpointOptions {
