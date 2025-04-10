@@ -43,9 +43,6 @@ import {
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeBooleanStateConfigurationServer,
   MatterbridgeSwitchServer,
-  MatterbridgeRvcRunModeServer,
-  MatterbridgeRvcCleanModeServer,
-  MatterbridgeRvcOperationalStateServer,
 } from './matterbridgeBehaviors.js';
 import {
   addClusterServers,
@@ -103,9 +100,6 @@ import { ElectricalPowerMeasurement } from '@matter/main/clusters/electrical-pow
 import { ElectricalEnergyMeasurement } from '@matter/main/clusters/electrical-energy-measurement';
 import { AirQuality } from '@matter/main/clusters/air-quality';
 import { ConcentrationMeasurement } from '@matter/main/clusters/concentration-measurement';
-import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
-import { RvcCleanMode } from '@matter/main/clusters/rvc-clean-mode';
-import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
 import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
 
 // @matter behaviors
@@ -2201,68 +2195,6 @@ export class MatterbridgeEndpoint extends Endpoint {
       uncertainty: 0,
       measurementUnit,
       measurementMedium,
-    });
-    return this;
-  }
-
-  /**
-   * Creates a default RvcRunMode Cluster Server.
-   *
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createDefaultRvcRunModeClusterServer(): this {
-    this.behaviors.require(MatterbridgeRvcRunModeServer.with(RvcRunMode.Feature.OnOff), {
-      supportedModes: [
-        { label: 'Idle', mode: 1, modeTags: [{ value: RvcRunMode.ModeTag.Idle }] },
-        { label: 'Cleaning', mode: 2, modeTags: [{ value: RvcRunMode.ModeTag.Cleaning }] },
-        { label: 'SpotCleaning', mode: 3, modeTags: [{ value: RvcRunMode.ModeTag.Cleaning }] },
-      ],
-      currentMode: 1,
-      startUpMode: null,
-      onMode: null,
-    });
-    return this;
-  }
-
-  /**
-   * Creates a default RvcCleanMode Cluster Server.
-   *
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createDefaultRvcCleanModeClusterServer(): this {
-    this.behaviors.require(MatterbridgeRvcCleanModeServer.with(RvcCleanMode.Feature.OnOff), {
-      supportedModes: [
-        { label: 'Vacuum', mode: 1, modeTags: [{ value: RvcCleanMode.ModeTag.Vacuum }] },
-        { label: 'Mop', mode: 2, modeTags: [{ value: RvcCleanMode.ModeTag.Mop }] },
-        { label: 'Clean', mode: 3, modeTags: [{ value: RvcCleanMode.ModeTag.DeepClean }] },
-      ],
-      currentMode: 1,
-      startUpMode: null,
-      onMode: null,
-    });
-    return this;
-  }
-
-  /**
-   * Creates a default RvcOperationalState Cluster Server.
-   *
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createDefaultRvcOperationalStateClusterServer(): this {
-    this.behaviors.require(MatterbridgeRvcOperationalStateServer, {
-      phaseList: [],
-      currentPhase: null,
-      operationalStateList: [
-        { operationalStateId: RvcOperationalState.OperationalState.Stopped, operationalStateLabel: 'Stopped' },
-        { operationalStateId: RvcOperationalState.OperationalState.Running, operationalStateLabel: 'Running' },
-        { operationalStateId: RvcOperationalState.OperationalState.Paused, operationalStateLabel: 'Paused' },
-        { operationalStateId: RvcOperationalState.OperationalState.Error, operationalStateLabel: 'Error' },
-        { operationalStateId: RvcOperationalState.OperationalState.SeekingCharger, operationalStateLabel: 'SeekingCharger' }, // Y RVC Pause Compatibility N RVC Resume Compatibility
-        { operationalStateId: RvcOperationalState.OperationalState.Charging, operationalStateLabel: 'Charging' }, // N RVC Pause Compatibility Y RVC Resume Compatibility
-        { operationalStateId: RvcOperationalState.OperationalState.Docked, operationalStateLabel: 'Docked' }, // N RVC Pause Compatibility Y RVC Resume Compatibility
-      ],
-      operationalState: RvcOperationalState.OperationalState.Docked,
-      operationalError: { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error', errorStateDetails: 'Fully operative' },
     });
     return this;
   }
