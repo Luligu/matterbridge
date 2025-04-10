@@ -1052,7 +1052,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createOnOffClusterServer(onOff = false) {
-    this.behaviors.require(MatterbridgeOnOffServer.for(ClusterType(OnOff.Base)), {
+    this.behaviors.require(MatterbridgeOnOffServer, {
       onOff,
     });
     return this;
@@ -1089,6 +1089,25 @@ export class MatterbridgeEndpoint extends Endpoint {
       onLevel,
       remainingTime: 0,
       startUpCurrentLevel,
+      options: {
+        executeIfOff: false,
+        coupleColorTempToLevel: false,
+      },
+    });
+    return this;
+  }
+
+  /**
+   * Creates a level control cluster server without features.
+   *
+   * @param {number} [currentLevel=254] - The current level (default: 254).
+   * @param {number | null} [onLevel=null] - The on level (default: null).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createLevelControlClusterServer(currentLevel = 254, onLevel: number | null = null) {
+    this.behaviors.require(MatterbridgeLevelControlServer, {
+      currentLevel,
+      onLevel,
       options: {
         executeIfOff: false,
         coupleColorTempToLevel: false,

@@ -26,10 +26,12 @@ import { EndpointServer, Logger, LogLevel as MatterLogLevel, LogFormat as Matter
 
 // Node modules
 import { Server as HttpServer, createServer, IncomingMessage } from 'node:http';
+import https from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
-import https from 'https';
+
+// Third-party modules
 import express from 'express';
 import WebSocket, { WebSocketServer } from 'ws';
 import multer from 'multer';
