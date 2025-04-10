@@ -29,12 +29,13 @@ Features:
 - It is possible to choose the method: GET or POST.
 - The webhook can be tested directly in the frontend.
 
-## [2.2.8] - 2025-04-09
+## [2.2.8] - 2025-04-10
 
 ### Added
 
 - [platform]: Added stack to errors messages.
 - [endpoint]: Added createLevelTvocMeasurementClusterServer()
+- [frontend]: Added a restart button on the QRCode panel when the advertising for a not paired node is expired.
 
 ### Changed
 
