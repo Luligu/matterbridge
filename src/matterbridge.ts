@@ -2460,13 +2460,19 @@ export class Matterbridge extends EventEmitter {
    * @param {string} pluginName - The name of the plugin.
    * @param {number} [delay=0] - The delay in milliseconds between removing each bridged endpoint (default: 0).
    * @returns {Promise<void>} A promise that resolves when all bridged endpoints have been removed.
+   *
+   * @remarks
+   * This method iterates through all devices in the DeviceManager and removes each bridged endpoint associated with the specified plugin.
+   * It also applies a delay between each removal if specified.
+   * The delay is useful to allow the controllers to receive a single subscription for each device removed.
    */
   async removeAllBridgedEndpoints(pluginName: string, delay = 0): Promise<void> {
-    this.log.debug(`Removing all bridged endpoints for plugin ${plg}${pluginName}${db}`);
+    this.log.debug(`Removing all bridged endpoints for plugin ${plg}${pluginName}${db}${delay > 0 ? ` with delay ${delay} ms` : ''}`);
     for (const device of this.devices.array().filter((device) => device.plugin === pluginName)) {
       await this.removeBridgedEndpoint(pluginName, device);
       if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
     }
+    if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay * 2));
   }
 
   /**

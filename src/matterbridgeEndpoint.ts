@@ -28,8 +28,8 @@ import { AnsiLogger, BLUE, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStr
 import { bridgedNode, DeviceTypeDefinition, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
 import { isValidNumber, isValidObject } from './utils/export.js';
 import {
-  MatterbridgeBehavior,
-  MatterbridgeBehaviorDevice,
+  MatterbridgeServer,
+  MatterbridgeServerDevice,
   MatterbridgeIdentifyServer,
   MatterbridgeOnOffServer,
   MatterbridgeLevelControlServer,
@@ -330,7 +330,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     );
 
     // Add MatterbridgeBehavior with MatterbridgeBehaviorDevice
-    this.behaviors.require(MatterbridgeBehavior, { deviceCommand: new MatterbridgeBehaviorDevice(this.log, this.commandHandler, undefined) });
+    this.behaviors.require(MatterbridgeServer, { deviceCommand: new MatterbridgeServerDevice(this.log, this.commandHandler, undefined) });
   }
 
   /**

@@ -251,7 +251,7 @@ export const onOffLight = DeviceTypeDefinition({
   code: 0x0100,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* Scenes.Cluster.id,*/ OnOff.Cluster.id],
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id,*/ OnOff.Cluster.id],
   optionalServerClusters: [LevelControl.Cluster.id],
 });
 
@@ -271,7 +271,7 @@ export const dimmableLight = DeviceTypeDefinition({
   code: 0x0101,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* Scenes.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id],
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id],
   optionalServerClusters: [],
 });
 
@@ -293,7 +293,7 @@ export const colorTemperatureLight = DeviceTypeDefinition({
   code: 0x010c,
   deviceClass: DeviceClasses.Simple,
   revision: 4,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* Scenes.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
   optionalServerClusters: [],
 });
 
@@ -316,7 +316,7 @@ export const extendedColorLight = DeviceTypeDefinition({
   code: 0x010d,
   deviceClass: DeviceClasses.Simple,
   revision: 4,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* Scenes.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
   optionalServerClusters: [],
 });
 
@@ -338,7 +338,7 @@ export const onOffOutlet = DeviceTypeDefinition({
   code: 0x010a,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* Scenes.Cluster.id,*/ OnOff.Cluster.id],
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id,*/ OnOff.Cluster.id],
   optionalServerClusters: [LevelControl.Cluster.id],
 });
 
@@ -358,7 +358,7 @@ export const dimmableOutlet = DeviceTypeDefinition({
   code: 0x010b,
   deviceClass: DeviceClasses.Simple,
   revision: 4,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* Scenes.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id],
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id],
   optionalServerClusters: [],
 });
 
@@ -381,7 +381,7 @@ export const onOffMountedSwitch = DeviceTypeDefinition({
   code: 0x010f,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* Scenes.Cluster.id,*/ OnOff.Cluster.id],
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id,*/ OnOff.Cluster.id],
   optionalServerClusters: [LevelControl.Cluster.id],
 });
 
@@ -406,7 +406,7 @@ export const dimmableMountedSwitch = DeviceTypeDefinition({
   code: 0x0110,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* Scenes.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id],
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id],
   optionalServerClusters: [],
 });
 
@@ -430,7 +430,7 @@ export const pumpDevice = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [OnOff.Cluster.id, PumpConfigurationAndControl.Cluster.id, Identify.Cluster.id],
-  optionalServerClusters: [LevelControl.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, TemperatureMeasurement.Cluster.id, PressureMeasurement.Cluster.id, FlowMeasurement.Cluster.id],
+  optionalServerClusters: [LevelControl.Cluster.id, Groups.Cluster.id, /*ScenesManagement.Cluster.id, */ TemperatureMeasurement.Cluster.id, PressureMeasurement.Cluster.id, FlowMeasurement.Cluster.id],
 });
 
 export const waterValve = DeviceTypeDefinition({
@@ -451,7 +451,7 @@ export const onOffSwitch = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id, ScenesManagement.Cluster.id],
+  optionalServerClusters: [Groups.Cluster.id/*, ScenesManagement.Cluster.id*/],
 });
 
 // Custom device types without client clusters (not working in Alexa)
@@ -461,7 +461,7 @@ export const dimmableSwitch = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id, ScenesManagement.Cluster.id],
+  optionalServerClusters: [Groups.Cluster.id/*, ScenesManagement.Cluster.id*/],
 });
 
 // Custom device types without client clusters (not working in Alexa)
@@ -471,7 +471,7 @@ export const colorTemperatureSwitch = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id, ScenesManagement.Cluster.id],
+  optionalServerClusters: [Groups.Cluster.id/*, ScenesManagement.Cluster.id*/],
 });
 
 export const genericSwitch = DeviceTypeDefinition({
@@ -620,7 +620,7 @@ export const doorLockDevice = DeviceTypeDefinition({
   code: 0xa,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
-  requiredServerClusters: [Identify.Cluster.id, DoorLock.Cluster.id, AccessControl.Cluster.id],
+  requiredServerClusters: [Identify.Cluster.id, DoorLock.Cluster.id],
   optionalServerClusters: [],
 });
 
@@ -764,5 +764,5 @@ export const airConditioner = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, Thermostat.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id, ScenesManagement.Cluster.id, FanControl.Cluster.id, ThermostatUserInterfaceConfiguration.Cluster.id, TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id],
+  optionalServerClusters: [Groups.Cluster.id, /*ScenesManagement.Cluster.id,*/ FanControl.Cluster.id, ThermostatUserInterfaceConfiguration.Cluster.id, TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id],
 });
