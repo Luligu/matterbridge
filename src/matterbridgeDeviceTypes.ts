@@ -77,7 +77,20 @@ import { DeviceEnergyManagementMode } from '@matter/main/clusters/device-energy-
 import { AdministratorCommissioning } from '@matter/main/clusters/administrator-commissioning';
 import { EcosystemInformation } from '@matter/main/clusters/ecosystem-information';
 import { CommissionerControl } from '@matter/main/clusters/commissioner-control';
-import { ServiceArea } from '@matter/main/clusters';
+import { DishwasherAlarm } from '@matter/main/clusters/dishwasher-alarm';
+import { DishwasherMode } from '@matter/main/clusters/dishwasher-mode';
+import { LaundryDryerControls } from '@matter/main/clusters/laundry-dryer-controls';
+import { LaundryWasherControls } from '@matter/main/clusters/laundry-washer-controls';
+import { LaundryWasherMode } from '@matter/main/clusters/laundry-washer-mode';
+import { MicrowaveOvenControl } from '@matter/main/clusters/microwave-oven-control';
+import { MicrowaveOvenMode } from '@matter/main/clusters/microwave-oven-mode';
+import { OperationalState } from '@matter/main/clusters/operational-state';
+import { OvenCavityOperationalState } from '@matter/main/clusters/oven-cavity-operational-state';
+import { OvenMode } from '@matter/main/clusters/oven-mode';
+import { RefrigeratorAlarm } from '@matter/main/clusters/refrigerator-alarm';
+import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/main/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
+import { ServiceArea } from '@matter/main/clusters/service-area';
+import { TemperatureControl } from '@matter/main/clusters/temperature-control';
 
 export enum DeviceClasses {
   /** Node device type. */
@@ -766,3 +779,215 @@ export const roboticVacuumCleaner = DeviceTypeDefinition({
   optionalServerClusters: [RvcCleanMode.Cluster.id, ServiceArea.Cluster.id],
 });
 
+// Appliances device types
+
+/**
+ * Cluster Restrictions:
+ * On/Off Cluster: the DF (Dead Front) feature is required
+ */
+export const laundryWasher = DeviceTypeDefinition({
+  name: 'MA-laundrywasher',
+  code: 0x73,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [OperationalState.Cluster.id],
+  optionalServerClusters: [Identify.Cluster.id, LaundryWasherMode.Cluster.id, OnOff.Cluster.id, LaundryWasherControls.Cluster.id, TemperatureControl.Cluster.id],
+});
+
+/**
+ * A refrigerator represents a device that contains one or more cabinets that are capable of chilling or freezing food.
+ * A Refrigerator SHALL be composed of at least one endpoint with the Temperature Controlled Cabinet device type.
+ *
+ * Device Type Requirements:
+ * 0x0071 Temperature Controlled Cabinet
+ */
+export const refrigerator = DeviceTypeDefinition({
+  name: 'MA-refrigerator',
+  code: 0x70,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id, RefrigeratorAlarm.Cluster.id],
+  optionalServerClusters: [],
+});
+
+/**
+ * A Room Air Conditioner is a device with the primary function of controlling the air temperature in a single room.
+ *
+ * A Room Air Conditioner MAY have zero or more of each device type listed in this table subject to
+ * the conformance column of the table. All devices used in compositions SHALL adhere to the disambiguation
+ * requirements of the System Model. Additional device types not listed in this table MAY also be included in device compositions.
+ *  0x0302 Temperature Sensor O
+ *  0x0307 Humidity Sensor O
+ *
+ *  Remark:
+ *  The DF (Dead Front) feature is required for the On/Off cluster in this device type:
+ *  - Thermostat                      LocalTemperature    null
+ *  - Temperature Measurement         MeasuredValue       null
+ *  - Relative Humidity Measurement   MeasuredValue       null
+ *  - Fan Control                     SpeedSetting        null
+ *  - Fan Control                     PercentSetting      null
+ */
+export const airConditioner = DeviceTypeDefinition({
+  name: 'MA-airConditioner',
+  code: 0x72,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, Thermostat.Cluster.id],
+  optionalServerClusters: [
+    Groups.Cluster.id,
+    /* ScenesManagement.Cluster.id,*/
+    FanControl.Cluster.id,
+    ThermostatUserInterfaceConfiguration.Cluster.id,
+    TemperatureMeasurement.Cluster.id,
+    RelativeHumidityMeasurement.Cluster.id,
+  ],
+});
+
+/**
+ * A Temperature Controlled Cabinet only exists composed as part of another device type. It represents
+ * a single cabinet that is capable of having its temperature controlled. Such a cabinet may be
+ * chilling or freezing food, for example as part of a refrigerator, freezer, wine chiller, or other similar
+ * device. Equally, such a cabinet may be warming or heating food, for example as part of an oven,
+ * range, or similar device.
+ * Conditions:
+ * Cooler The device has cooling functionality.
+ */
+export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
+  name: 'MA-temperaturecontrolledcabinetcooler',
+  code: 0x71,
+  deviceClass: DeviceClasses.Simple,
+  revision: 3,
+  requiredServerClusters: [TemperatureControl.Cluster.id, RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id],
+  optionalServerClusters: [TemperatureMeasurement.Cluster.id],
+});
+
+/**
+ * A Temperature Controlled Cabinet only exists composed as part of another device type. It represents
+ * a single cabinet that is capable of having its temperature controlled. Such a cabinet may be
+ * chilling or freezing food, for example as part of a refrigerator, freezer, wine chiller, or other similar
+ * device. Equally, such a cabinet may be warming or heating food, for example as part of an oven,
+ * range, or similar device.
+ * Conditions:
+ * Heater The device has heating functionality.
+ */
+export const temperatureControlledCabinetHeater = DeviceTypeDefinition({
+  name: 'MA-temperaturecontrolledcabinetheater',
+  code: 0x71,
+  deviceClass: DeviceClasses.Simple,
+  revision: 3,
+  requiredServerClusters: [TemperatureControl.Cluster.id, OvenMode.Cluster.id, OvenCavityOperationalState.Cluster.id],
+  optionalServerClusters: [TemperatureMeasurement.Cluster.id],
+});
+
+/**
+ * Cluster Restrictions:
+ * On/Off Cluster: the DF (Dead Front) feature is required
+ */
+export const dishwasher = DeviceTypeDefinition({
+  name: 'MA-dishwasher',
+  code: 0x75,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [OperationalState.Cluster.id],
+  optionalServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, TemperatureControl.Cluster.id, DishwasherMode.Cluster.id, DishwasherAlarm.Cluster.id],
+});
+
+/**
+ * Cluster Restrictions:
+ * On/Off Cluster: the DF (Dead Front) feature is required
+ */
+export const laundryDryer = DeviceTypeDefinition({
+  name: 'MA-laundrydryer',
+  code: 0x7c,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [OperationalState.Cluster.id],
+  optionalServerClusters: [Identify.Cluster.id, LaundryWasherMode.Cluster.id, OnOff.Cluster.id, LaundryDryerControls.Cluster.id, TemperatureControl.Cluster.id],
+});
+
+/**
+ * A Cook Surface device type represents a heating object on a cooktop or other similar device. It
+ * SHALL only be used when composed as part of another device type (cooktop).
+ *
+ * Cluster Restrictions:
+ * The OffOnly feature is required for the On/Off cluster in this device type due to safety requirements.
+ */
+export const cookSurface = DeviceTypeDefinition({
+  name: 'MA-cooksurface',
+  code: 0x77,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [TemperatureControl.Cluster.id, TemperatureMeasurement.Cluster.id],
+  optionalServerClusters: [OnOff.Cluster.id],
+});
+
+/**
+ * A cooktop is a cooking surface that heats food either by transferring currents from an electromagnetic
+ * field located below the glass surface directly to the magnetic induction cookware placed
+ * above or through traditional gas or electric burners.
+ *
+ * Device Type Requirements:
+ * A Cooktop SHALL be composed of zero or more endpoints with the Cook Surface device type as defined by the conformance below.
+ *  0x0077 Cook Surface min 1 O
+ *
+ * Cluster Restrictions:
+ * The OffOnly feature is required for the On/Off cluster in this device type due to safety requirements.
+ */
+export const cooktop = DeviceTypeDefinition({
+  name: 'MA-cooktop',
+  code: 0x78,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [OnOff.Cluster.id],
+  optionalServerClusters: [Identify.Cluster.id],
+});
+
+/**
+ * An oven represents a device that contains one or more cabinets, and optionally a single cooktop, that are all capable of heating food.
+ * An oven is always defined via endpoint composition.
+ * Conditions:
+ * An Oven SHALL have the Heater condition applied to at least one endpoint containing the Temperature Control Cluster.
+ * Device Type Requirements:
+ * 0x0071 Temperature Controlled Cabinet
+ * 0x0078 Cooktop
+ */
+export const oven = DeviceTypeDefinition({
+  name: 'MA-oven',
+  code: 0x7b,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.Cluster.id],
+  optionalServerClusters: [],
+});
+
+/**
+ * An Extractor Hood is a device that is generally installed above a cooking surface in residential kitchens.
+ *
+ * Element Requirements:
+ * 0x0202 Fan Control Feature Rocking X
+ * 0x0202 Fan Control Feature Wind X
+ * 0x0202 Fan Control Feature AirflowDirection X
+ */
+export const extractorHood = DeviceTypeDefinition({
+  name: 'MA-extractorhood',
+  code: 0x7a,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [FanControl.Cluster.id],
+  optionalServerClusters: [Identify.Cluster.id, HepaFilterMonitoring.Cluster.id, ActivatedCarbonFilterMonitoring.Cluster.id],
+});
+
+/**
+ * A Microwave Oven is a device with the primary function of heating foods and beverages using a magnetron.
+ * A Microwave Oven is a device which at a minimum is capable of being started and stopped and of setting a power level.
+ * A Microwave Oven MAY also support additional capabilities via endpoint composition.
+ *
+ */
+export const microwaveOven = DeviceTypeDefinition({
+  name: 'MA-microwaveoven',
+  code: 0x79,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [OperationalState.Cluster.id, MicrowaveOvenMode.Cluster.id, MicrowaveOvenControl.Cluster.id],
+  optionalServerClusters: [Identify.Cluster.id, FanControl.Cluster.id],
+});

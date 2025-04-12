@@ -51,6 +51,8 @@ Modified clusters:
 - [endpoint]: Added createBaseFanControlClusterServer().
 - [endpoint]: Added createDefaultHepaFilterMonitoringClusterServer().
 - [endpoint]: Added createDefaultActivatedCarbonFilterMonitoringClusterServer().
+- [deviceTypes]: Added Robotic device type.
+- [deviceTypes]: Added Appliances device types.
 
 ### Changed
 

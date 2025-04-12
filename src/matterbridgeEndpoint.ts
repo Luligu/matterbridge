@@ -1077,7 +1077,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a OffOnly OnOff cluster server.
+   * Creates an OffOnly OnOff cluster server.
    *
    * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -1498,7 +1498,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default fan control cluster server.
+   * Creates a base fan control cluster server.
    *
    * @param fanMode The fan mode to set. Defaults to `FanControl.FanMode.Off`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
