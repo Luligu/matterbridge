@@ -71,13 +71,11 @@ import { EnergyPreference } from '@matter/main/clusters/energy-preference';
 import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
 import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
 import { RvcCleanMode } from '@matter/main/clusters/rvc-clean-mode';
-import { ScenesManagement } from '@matter/main/clusters/scenes-management';
 import { HepaFilterMonitoring } from '@matter/main/clusters/hepa-filter-monitoring';
 import { ActivatedCarbonFilterMonitoring } from '@matter/main/clusters/activated-carbon-filter-monitoring';
 import { DeviceEnergyManagementMode } from '@matter/main/clusters/device-energy-management-mode';
 import { AdministratorCommissioning } from '@matter/main/clusters/administrator-commissioning';
 import { EcosystemInformation } from '@matter/main/clusters/ecosystem-information';
-import { AccessControl } from '@matter/main/clusters/access-control';
 import { CommissionerControl } from '@matter/main/clusters/commissioner-control';
 import { ServiceArea } from '@matter/main/clusters';
 
@@ -430,7 +428,7 @@ export const pumpDevice = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [OnOff.Cluster.id, PumpConfigurationAndControl.Cluster.id, Identify.Cluster.id],
-  optionalServerClusters: [LevelControl.Cluster.id, Groups.Cluster.id, /*ScenesManagement.Cluster.id, */ TemperatureMeasurement.Cluster.id, PressureMeasurement.Cluster.id, FlowMeasurement.Cluster.id],
+  optionalServerClusters: [LevelControl.Cluster.id, Groups.Cluster.id, /* ScenesManagement.Cluster.id, */ TemperatureMeasurement.Cluster.id, PressureMeasurement.Cluster.id, FlowMeasurement.Cluster.id],
 });
 
 export const waterValve = DeviceTypeDefinition({
@@ -451,7 +449,7 @@ export const onOffSwitch = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id/*, ScenesManagement.Cluster.id*/],
+  optionalServerClusters: [Groups.Cluster.id /* , ScenesManagement.Cluster.id*/],
 });
 
 // Custom device types without client clusters (not working in Alexa)
@@ -461,7 +459,7 @@ export const dimmableSwitch = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id/*, ScenesManagement.Cluster.id*/],
+  optionalServerClusters: [Groups.Cluster.id /* , ScenesManagement.Cluster.id*/],
 });
 
 // Custom device types without client clusters (not working in Alexa)
@@ -471,7 +469,7 @@ export const colorTemperatureSwitch = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id/*, ScenesManagement.Cluster.id*/],
+  optionalServerClusters: [Groups.Cluster.id /* , ScenesManagement.Cluster.id*/],
 });
 
 export const genericSwitch = DeviceTypeDefinition({
@@ -681,10 +679,19 @@ export const fanDevice = DeviceTypeDefinition({
 });
 
 /**
+ * An Air Purifier is a standalone device that is designed to clean the air in a room.
+ * It is a device that has a fan to control the air speed while it is operating. Optionally, it can report on
+ * the condition of its filters.
+ *
  * Remark:
  * An Air Purifier MAY expose elements of its functionality through one or more additional device
  * types on different endpoints. All devices used in compositions SHALL adhere to the disambiguation
- * requirements of the System Model. Additional device types MAY also be included in device compositions.
+ * requirements of the System Model. Other device types, not explicitly listed in the table, MAY also be
+ * included in device compositions but are not considered part of the core functionality of the device.
+ * 0x0301 Thermostat O
+ * 0x0302 Temperature Sensor O
+ * 0x0307 Humidity Sensor O
+ * 0x002C Air Quality Sensor O
  *
  * Cluster Restrictions:
  * The On/Off cluster is independent from the Fan Control Cluster’s FanMode attribute, which also
@@ -720,11 +727,24 @@ export const modeSelect = DeviceTypeDefinition({
 });
 
 /**
+ * This device type aggregates endpoints as a collection. Clusters on the endpoint indicating this
+ * device type provide functionality for the collection of descendant endpoints present in the PartsList
+ * of the endpoint’s descriptor, for example the Actions cluster.
+ *
+ * Endpoint Composition:
  * An Aggregator endpoint’s Descriptor cluster PartsList attribute SHALL list the collection of all endpoints
  * aggregated by the Aggregator device type, i.e. the full-family pattern defined in the System Model specification.
  *
+ * Disambiguation:
+ * If the Duplicate condition applies to child endpoints of an Aggregator endpoint that represent multiple
+ * independent bridged devices, the endpoints SHOULD make available metadata to allow a
+ * client to disambiguate distinct bridged devices with an overlap in application device types.
+ *
+ * Typically this is done using the NodeLabel attribute of the Bridged Device Basic Information cluster
+ * - thus reusing the naming information which the bridge already has to allow disambiguation to the
+ * user when using a direct user interface to the bridge.
  */
-export const bridge = DeviceTypeDefinition({
+export const aggregator = DeviceTypeDefinition({
   name: 'MA-aggregator',
   code: 0x000e,
   deviceClass: DeviceClasses.Dynamic,
@@ -733,7 +753,7 @@ export const bridge = DeviceTypeDefinition({
   optionalServerClusters: [Actions.Cluster.id, Identify.Cluster.id, CommissionerControl.Cluster.id],
 });
 
-export const aggregator = bridge;
+export const bridge = aggregator;
 
 // Robotic device types
 
@@ -746,23 +766,3 @@ export const roboticVacuumCleaner = DeviceTypeDefinition({
   optionalServerClusters: [RvcCleanMode.Cluster.id, ServiceArea.Cluster.id],
 });
 
-// Appliances device types
-
-/**
- *  Remark: it may have a temperature sensor and a humidity sensor device.
- *  Additional device types MAY also be included in device compositions.
- *  The DF (Dead Front) feature is required for the On/Off cluster in this device type:
- *  - Thermostat                      LocalTemperature    null
- *  - Temperature Measurement         MeasuredValue       null
- *  - Relative Humidity Measurement   MeasuredValue       null
- *  - Fan Control                     SpeedSetting        null
- *  - Fan Control                     PercentSetting      null
- */
-export const airConditioner = DeviceTypeDefinition({
-  name: 'MA-airConditioner',
-  code: 0x72,
-  deviceClass: DeviceClasses.Simple,
-  revision: 2,
-  requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, Thermostat.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id, /*ScenesManagement.Cluster.id,*/ FanControl.Cluster.id, ThermostatUserInterfaceConfiguration.Cluster.id, TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id],
-});

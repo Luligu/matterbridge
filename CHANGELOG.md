@@ -47,6 +47,10 @@ Modified clusters:
 ### Added
 
 - [addEndpoint]: Added an error handler with deep stack on aggregatorNode.add() and serverNode.add() calls.
+- [endpoint]: Added createOffOnlyOnOffClusterServer().
+- [endpoint]: Added createBaseFanControlClusterServer().
+- [endpoint]: Added createDefaultHepaFilterMonitoringClusterServer().
+- [endpoint]: Added createDefaultActivatedCarbonFilterMonitoringClusterServer().
 
 ### Changed
 

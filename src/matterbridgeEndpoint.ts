@@ -131,6 +131,10 @@ import { Pm25ConcentrationMeasurementServer } from '@matter/main/behaviors/pm25-
 import { Pm10ConcentrationMeasurementServer } from '@matter/main/behaviors/pm10-concentration-measurement';
 import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/radon-concentration-measurement';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
+import { FanControlServer } from '@matter/main/behaviors/fan-control';
+import { ResourceMonitoring } from '@matter/main/clusters/resource-monitoring';
+import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
+import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
 
 export interface MatterbridgeEndpointCommands {
   // Identify
@@ -1073,6 +1077,19 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Creates a OffOnly OnOff cluster server.
+   *
+   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createOffOnlyOnOffClusterServer(onOff = false) {
+    this.behaviors.require(MatterbridgeOnOffServer.with(OnOff.Feature.OffOnly), {
+      onOff,
+    });
+    return this;
+  }
+
+  /**
    * Creates a default level control cluster server for light devices.
    *
    * @param {number} [currentLevel=254] - The current level (default: 254).
@@ -1476,6 +1493,66 @@ export class MatterbridgeEndpoint extends Endpoint {
       speedMax: 100,
       speedSetting: 0,
       speedCurrent: 0,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default fan control cluster server.
+   *
+   * @param fanMode The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createBaseFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
+    this.behaviors.require(FanControlServer, {
+      fanMode,
+      fanModeSequence: FanControl.FanModeSequence.OffLowMedHigh,
+      percentSetting: 0,
+      percentCurrent: 0,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default HEPA Filter Monitoring Cluster Server.
+   *
+   * @param {ResourceMonitoring.ChangeIndication} changeIndication - The initial change indication. Default is ResourceMonitoring.ChangeIndication.Ok.
+   * @param {boolean | undefined} inPlaceIndicator - The in-place indicator. Default is undefined.
+   * @param {number | undefined} lastChangedTime - The last changed time (EpochS). Default is undefined.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultHepaFilterMonitoringClusterServer(
+    changeIndication: ResourceMonitoring.ChangeIndication = ResourceMonitoring.ChangeIndication.Ok,
+    inPlaceIndicator: boolean | undefined = undefined,
+    lastChangedTime: number | undefined = undefined,
+  ): this {
+    this.behaviors.require(HepaFilterMonitoringServer, {
+      changeIndication,
+      inPlaceIndicator,
+      lastChangedTime,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default Activated Carbon Filter Monitoring Cluster Server.
+   *
+   * @param {ResourceMonitoring.ChangeIndication} changeIndication - The initial change indication. Default is ResourceMonitoring.ChangeIndication.Ok.
+   * @param {boolean | undefined} inPlaceIndicator - The in-place indicator. Default is undefined.
+   * @param {number | undefined} lastChangedTime - The last changed time (EpochS). Default is undefined.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultActivatedCarbonFilterMonitoringClusterServer(
+    changeIndication: ResourceMonitoring.ChangeIndication = ResourceMonitoring.ChangeIndication.Ok,
+    inPlaceIndicator: boolean | undefined = undefined,
+    lastChangedTime: number | undefined = undefined,
+  ): this {
+    this.behaviors.require(ActivatedCarbonFilterMonitoringServer, {
+      changeIndication,
+      inPlaceIndicator,
+      lastChangedTime,
     });
     return this;
   }
