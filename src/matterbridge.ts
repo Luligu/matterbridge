@@ -2472,7 +2472,7 @@ export class Matterbridge extends EventEmitter {
       await this.removeBridgedEndpoint(pluginName, device);
       if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
     }
-    if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay * 2));
+    if (delay > 0) await new Promise((resolve) => setTimeout(resolve, 2000));
   }
 
   /**

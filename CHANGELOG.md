@@ -53,6 +53,7 @@ Modified clusters:
 - [deviceTypes]: Updated device types to Matter 1.4
 - [matter.js]: Update to 0.13.0-alpha.0-20250405-7fc7db48.
 - [matter.js]: Update to 0.13.0-alpha.0-20250408-c916c7e8.
+- [matter.js]: Update to 0.13.0-alpha.0-20250412-5fad64e7b.
 
 ### Fixed
 

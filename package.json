@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "3.0.0-edge.4",
+  "version": "3.0.0-edge.5",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -152,7 +152,7 @@
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest && npm run test"
   },
   "dependencies": {
-    "@matter/main": "^0.13.0-alpha.0-20250408-c916c7e8",
+    "@matter/main": "0.13.0-alpha.0-20250412-5fad64e7b",
     "archiver": "7.0.1",
     "express": "4.21.2",
     "glob": "11.0.1",
