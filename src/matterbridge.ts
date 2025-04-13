@@ -48,8 +48,8 @@ import { Frontend } from './frontend.js';
 import { DeviceTypeId, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, StorageService, Environment, ServerNode, FabricIndex, SessionsBehavior } from '@matter/main';
 import { DeviceCommissioner, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
-import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
 import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
+import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
 
 // Default colors
 const plg = '\u001B[38;5;33m';
@@ -183,7 +183,7 @@ export class Matterbridge extends EventEmitter {
   matterStorageService: StorageService | undefined;
   matterStorageManager: StorageManager | undefined;
   matterbridgeContext: StorageContext | undefined;
-  mattercontrollerContext: StorageContext | undefined;
+  controllerContext: StorageContext | undefined;
 
   // Matter parameters
   mdnsInterface: string | undefined; // matter server node mdnsInterface: e.g. 'eth0' or 'wlan0' or 'WiFi'
@@ -1714,21 +1714,21 @@ export class Matterbridge extends EventEmitter {
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
   protected async startController(): Promise<void> {
-    /*
-    if (!this.storageManager) {
+    if (!this.matterStorageManager) {
       this.log.error('No storage manager initialized');
       await this.cleanup('No storage manager initialized');
       return;
     }
     this.log.info('Creating context: mattercontrollerContext');
-    this.mattercontrollerContext = this.storageManager.createContext('mattercontrollerContext');
-    if (!this.mattercontrollerContext) {
+    this.controllerContext = this.matterStorageManager.createContext('mattercontrollerContext');
+    if (!this.controllerContext) {
       this.log.error('No storage context mattercontrollerContext initialized');
       await this.cleanup('No storage context mattercontrollerContext initialized');
       return;
     }
 
     this.log.debug('Starting matterbridge in mode', this.bridgeMode);
+    /*
     this.matterServer = await this.createMatterServer(this.storageManager);
     this.log.info('Creating matter commissioning controller');
     this.commissioningController = new CommissioningController({
@@ -1740,12 +1740,24 @@ export class Matterbridge extends EventEmitter {
     this.log.info('Starting matter server');
     await this.matterServer.start();
     this.log.info('Matter server started');
+  const commissioningOptions: ControllerCommissioningFlowOptions = {
+      regulatoryLocation: GeneralCommissioning.RegulatoryLocationType.IndoorOutdoor,
+      regulatoryCountryCode: 'XX',
+    };
+const commissioningController = new CommissioningController({
+  environment: {
+      environment,
+      id: uniqueId,
+  },
+  autoConnect: false, // Do not auto connect to the commissioned nodes
+  adminFabricLabel,
+});
 
     if (hasParameter('pairingcode')) {
       this.log.info('Pairing device with pairingcode:', getParameter('pairingcode'));
       const pairingCode = getParameter('pairingcode');
-      const ip = this.mattercontrollerContext.has('ip') ? this.mattercontrollerContext.get<string>('ip') : undefined;
-      const port = this.mattercontrollerContext.has('port') ? this.mattercontrollerContext.get<number>('port') : undefined;
+      const ip = this.controllerContext.has('ip') ? this.controllerContext.get<string>('ip') : undefined;
+      const port = this.controllerContext.has('port') ? this.controllerContext.get<number>('port') : undefined;
 
       let longDiscriminator, setupPin, shortDiscriminator;
       if (pairingCode !== undefined) {
@@ -1755,18 +1767,14 @@ export class Matterbridge extends EventEmitter {
         setupPin = pairingCodeCodec.passcode;
         this.log.info(`Data extracted from pairing code: ${Logger.toJSON(pairingCodeCodec)}`);
       } else {
-        longDiscriminator = await this.mattercontrollerContext.get('longDiscriminator', 3840);
+        longDiscriminator = await this.controllerContext.get('longDiscriminator', 3840);
         if (longDiscriminator > 4095) throw new Error('Discriminator value must be less than 4096');
-        setupPin = this.mattercontrollerContext.get('pin', 20202021);
+        setupPin = this.controllerContext.get('pin', 20202021);
       }
       if ((shortDiscriminator === undefined && longDiscriminator === undefined) || setupPin === undefined) {
         throw new Error('Please specify the longDiscriminator of the device to commission with -longDiscriminator or provide a valid passcode with -passcode');
       }
 
-      const commissioningOptions: ControllerCommissioningFlowOptions = {
-        regulatoryLocation: GeneralCommissioning.RegulatoryLocationType.IndoorOutdoor,
-        regulatoryCountryCode: 'XX',
-      };
       const options = {
         commissioning: commissioningOptions,
         discovery: {

@@ -388,7 +388,7 @@ export const dimmableOutlet = DeviceTypeDefinition({
  * - Level Control Attribute MaxLevel 254
  */
 export const onOffMountedSwitch = DeviceTypeDefinition({
-  name: 'MA-onoffswitch',
+  name: 'MA-onoffmountedswitch',
   code: 0x010f,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
@@ -413,7 +413,7 @@ export const onOffMountedSwitch = DeviceTypeDefinition({
  * - Level Control Attribute MaxLevel 254
  */
 export const dimmableMountedSwitch = DeviceTypeDefinition({
-  name: 'MA-dimmableswitch',
+  name: 'MA-dimmablemountedswitch',
   code: 0x0110,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
@@ -756,6 +756,19 @@ export const modeSelect = DeviceTypeDefinition({
  * Typically this is done using the NodeLabel attribute of the Bridged Device Basic Information cluster
  * - thus reusing the naming information which the bridge already has to allow disambiguation to the
  * user when using a direct user interface to the bridge.
+ *
+ * Actions cluster (9.14 Matter specification):
+ * If a Bridge has (such) information on topology or logical grouping, it SHOULD expose such information
+ * in the EndpointLists attribute of an Actions cluster (the ActionLists of which MAY be empty if
+ * no actions are exposed). 9.12 Matter specification
+ *
+ * 9.12.5. New features for Bridged Devices
+ * Bridged Devices can have their software updated independently of the Bridge, through Bridge Manufacturer-
+ * specific means. These updates MAY result in one or more changes to their capabilities,
+ * such as supported clusters and/or attributes, for an endpoint. Like every Matter Node, every endpoint
+ * on the Bridge’s Node contains a Descriptor cluster that contains attributes for the device types
+ * (DeviceTypeList), endpoints (PartsList) and supported clusters (ServerList and ClientList). Nodes
+ * that wish to be notified of such changes SHOULD monitor changes of these attributes.
  */
 export const aggregator = DeviceTypeDefinition({
   name: 'MA-aggregator',
@@ -770,6 +783,28 @@ export const bridge = aggregator;
 
 // Robotic device types
 
+/**
+ * A Robotic Vacuum Cleaner is a device that is capable of cleaning floors and other surfaces
+ * in a home or office environment. It is typically a mobile device that can navigate around
+ * obstacles and can be controlled remotely.
+ *
+ * Cluster Usage:
+ * The RVC Operational State cluster’s OperationalState attribute SHALL be updated according to the
+ * state of the device, and therefore it SHOULD be used for monitoring purposes.
+ *
+ * To attempt starting a cleaning operation, the RVC Run Mode cluster can be sent a ChangeToMode
+ * command with the NewMode field set to a mode that has the Cleaning mode tag associated with it.
+ *
+ * To attempt stopping a cleaning operation, the RVC Run Mode cluster can be sent a ChangeToMode
+ * command with the NewMode field set to a mode that has the Idle mode tag associated with it.
+ *
+ * To attempt pausing a cleaning operation, the RVC Operational State cluster can be sent a Pause command.
+ *
+ * To attempt resuming a cleaning operation, the RVC Operational State cluster can be sent a Resume
+ * command.
+ *
+ *
+ */
 export const roboticVacuumCleaner = DeviceTypeDefinition({
   name: 'MA-roboticvacuumcleaner',
   code: 0x74,
@@ -948,7 +983,7 @@ export const cooktop = DeviceTypeDefinition({
  * Conditions:
  * An Oven SHALL have the Heater condition applied to at least one endpoint containing the Temperature Control Cluster.
  * Device Type Requirements:
- * 0x0071 Temperature Controlled Cabinet
+ * 0x0071 Temperature Controlled Cabinet min 1
  * 0x0078 Cooktop
  */
 export const oven = DeviceTypeDefinition({
@@ -962,6 +997,10 @@ export const oven = DeviceTypeDefinition({
 
 /**
  * An Extractor Hood is a device that is generally installed above a cooking surface in residential kitchens.
+ * Additional device types not listed in this table MAY also be included in device compositions.
+ * Device Type Requirements:
+ * 0x0100+ On/Off Light+ O
+ *
  *
  * Element Requirements:
  * 0x0202 Fan Control Feature Rocking X
