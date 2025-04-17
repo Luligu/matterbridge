@@ -2171,10 +2171,12 @@ const commissioningController = new CommissioningController({
               if (plugin) {
                 plugin.qrPairingCode = undefined;
                 plugin.manualPairingCode = undefined;
-                this.frontend.wssSendRefreshRequired('plugins');
               }
             }
+            this.frontend.wssSendRefreshRequired('plugins');
             this.frontend.wssSendRefreshRequired('settings');
+            this.frontend.wssSendRefreshRequired('fabrics');
+            this.frontend.wssSendRefreshRequired('sessions');
             this.frontend.wssSendSnackbarMessage(`Advertising on server node for ${storeId} stopped. Restart to commission.`, 0);
             this.log.notice(`Advertising on server node for ${storeId} stopped. Restart to commission.`);
           },

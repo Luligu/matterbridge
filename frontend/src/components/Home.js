@@ -58,6 +58,7 @@ function Home() {
           if (debug) console.log('Home received settings:', msg.response);
           setSystemInfo(msg.response.systemInformation);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
+          setSelectPlugin(undefined);
           if(localStorage.getItem('matterbridgeVersion') && msg.response.matterbridgeInformation.matterbridgeVersion !== localStorage.getItem('matterbridgeVersion')) {
             localStorage.setItem('matterbridgeVersion', msg.response.matterbridgeInformation.matterbridgeVersion);
             setBrowserRefresh(true);

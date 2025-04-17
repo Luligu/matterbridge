@@ -67,6 +67,8 @@ Modified clusters:
 
 - [doorLock]: Fixed supportedOperatingModes inverted bitmap (Thanks Apollon).
 - [DevicesIcon]: Fixed rendering of leak freeze and rain sensors.
+- [QRCode]: Fixed rendering of QRCode panel when advertising stops.
+- [matterbridge]: Fixed wrong message when advertising stops and the node has been paired.
 
 ## [2.2.8] - 2025-04-10
 
