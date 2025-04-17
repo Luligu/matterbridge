@@ -29,6 +29,23 @@ Features:
 - It is possible to choose the method: GET or POST.
 - The webhook can be tested directly in the frontend.
 
+## [2.2.9] - 2025-04-17
+
+### Added
+
+### Changed
+
+- [package]: Update dependencies.
+
+### Fixed
+
+- [QRCode]: Fixed update when the server node is no more advertising.
+- [frontend]: Fixed wrong notification when the server node has been paired.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [2.2.8] - 2025-04-10
 
 ### Added

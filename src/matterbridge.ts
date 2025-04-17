@@ -2150,6 +2150,7 @@ export class Matterbridge extends EventEmitter {
         }
         setTimeout(
           () => {
+            if (serverNode.lifecycle.isCommissioned) return;
             if (this.bridgeMode === 'bridge') {
               this.matterbridgeQrPairingCode = undefined;
               this.matterbridgeManualPairingCode = undefined;
@@ -2163,6 +2164,9 @@ export class Matterbridge extends EventEmitter {
               }
             }
             this.frontend.wssSendRefreshRequired('settings');
+            this.frontend.wssSendRefreshRequired('plugins');
+            this.frontend.wssSendRefreshRequired('fabrics');
+            this.frontend.wssSendRefreshRequired('sessions');
             this.frontend.wssSendSnackbarMessage(`Advertising on server node for ${storeId} stopped. Restart to commission.`, 0);
             this.log.notice(`Advertising on server node for ${storeId} stopped. Restart to commission.`);
           },
