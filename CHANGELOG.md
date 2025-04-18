@@ -29,11 +29,31 @@ Features:
 - It is possible to choose the method: GET or POST.
 - The webhook can be tested directly in the frontend.
 
+## [2.2.9] - 2025-04-18
+
+### Added
+
+- [deviceTypes]: Added extendedColorLight device type.
+
+### Changed
+
+- [package]: Update dependencies.
+
+### Fixed
+
+- [QRCode]: Fixed update when the server node is no more advertising.
+- [frontend]: Fixed wrong notification when the server node has been paired.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [2.2.8] - 2025-04-10
 
 ### Added
 
-- [platform]: Added stack to errors messages.
+- [platform]: Added stack to error messages.
+- [endpoint]: Added createLevelControlClusterServer()
 - [endpoint]: Added createLevelTvocMeasurementClusterServer()
 - [frontend]: Added a restart button on the QRCode panel when the advertising for a not paired node is expired.
 
@@ -41,6 +61,7 @@ Features:
 
 - [package]: Update dependencies.
 - [package]: Use node:https.
+- [endpoint]: Modified createOnOffClusterServer().
 
 ### Fixed
 
