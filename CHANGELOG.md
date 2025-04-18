@@ -56,12 +56,15 @@ Modified clusters:
 
 ### Changed
 
+- [package]: Update express to 5.1.0.
+- [package]: Update dependencies.
 - [deviceTypes]: Updated device types to Matter 1.4
 - [matter.js]: Update to 0.13.0-alpha.0-20250405-7fc7db48.
 - [matter.js]: Update to 0.13.0-alpha.0-20250408-c916c7e8.
 - [matter.js]: Update to 0.13.0-alpha.0-20250412-5fad64e7b.
 - [matter.js]: Update to 0.13.0-alpha.0-20250413-d5a27700d.
 - [matter.js]: Update to 0.13.0-alpha.0-20250415-475996bb5.
+- [matter.js]: Update to 0.13.0-alpha.0-20250418-8cfc0b832.
 
 ### Fixed
 
@@ -69,6 +72,25 @@ Modified clusters:
 - [DevicesIcon]: Fixed rendering of leak freeze and rain sensors.
 - [QRCode]: Fixed rendering of QRCode panel when advertising stops.
 - [matterbridge]: Fixed wrong message when advertising stops and the node has been paired.
+
+## [2.2.9] - 2025-04-18
+
+### Added
+
+- [deviceTypes]: Added extendedColorLight device type.
+
+### Changed
+
+- [package]: Update dependencies.
+
+### Fixed
+
+- [QRCode]: Fixed update when the server node is no more advertising.
+- [frontend]: Fixed wrong notification when the server node has been paired.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
 
 ## [2.2.8] - 2025-04-10
 

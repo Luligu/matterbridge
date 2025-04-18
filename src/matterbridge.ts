@@ -2161,7 +2161,7 @@ const commissioningController = new CommissioningController({
         }
         setTimeout(
           () => {
-            if(serverNode.lifecycle.isCommissioned) return;
+            if (serverNode.lifecycle.isCommissioned) return;
             if (this.bridgeMode === 'bridge') {
               this.matterbridgeQrPairingCode = undefined;
               this.matterbridgeManualPairingCode = undefined;

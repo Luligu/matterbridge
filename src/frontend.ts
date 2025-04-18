@@ -159,10 +159,29 @@ export class Frontend {
     // Create the express app that serves the frontend
     this.expressApp = express();
 
+    // Inject logging/debug wrapper for route/middleware registration
+    /*
+    const methods = ['get', 'post', 'put', 'delete', 'use'];
+    for (const method of methods) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const original = (this.expressApp as any)[method].bind(this.expressApp);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (this.expressApp as any)[method] = (path: any, ...rest: any) => {
+        try {
+          console.log(`[DEBUG] Registering ${method.toUpperCase()} route:`, path);
+          return original(path, ...rest);
+        } catch (err) {
+          console.error(`[ERROR] Failed to register route: ${path}`);
+          throw err;
+        }
+      };
+    }
+    */
+
     // Log all requests to the server for debugging
     /*
     this.expressApp.use((req, res, next) => {
-      this.log.debug(`Received request on expressApp: ${req.method} ${req.url}`);
+      this.log.debug(`***Received request on expressApp: ${req.method} ${req.url}`);
       next();
     });
     */
@@ -1027,11 +1046,17 @@ export class Frontend {
     });
 
     // Fallback for routing (must be the last route)
+    this.expressApp.use((req, res) => {
+      this.log.debug('The frontend sent:', req.url);
+      res.sendFile(path.join(this.matterbridge.rootDirectory, 'frontend/build/index.html'));
+    });
+    /* Not working in express v5!
     this.expressApp.get('*', (req, res) => {
       this.log.debug('The frontend sent:', req.url);
       this.log.debug('Response send file:', path.join(this.matterbridge.rootDirectory, 'frontend/build/index.html'));
       res.sendFile(path.join(this.matterbridge.rootDirectory, 'frontend/build/index.html'));
     });
+    */
 
     this.log.debug(`Frontend initialized on port ${YELLOW}${this.port}${db} static ${UNDERLINE}${path.join(this.matterbridge.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
   }
