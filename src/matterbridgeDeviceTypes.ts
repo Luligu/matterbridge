@@ -278,6 +278,15 @@ export const colorTemperatureLight = DeviceTypeDefinition({
   optionalServerClusters: [],
 });
 
+export const extendedColorLight = DeviceTypeDefinition({
+  name: 'MA-extendedcolorlight',
+  code: 0x010d,
+  deviceClass: DeviceClasses.Simple,
+  revision: 4,
+  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, /* Scenes.Cluster.id,*/ OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
+  optionalServerClusters: [],
+});
+
 export const onOffOutlet = DeviceTypeDefinition({
   name: 'MA-onoffpluginunit',
   code: 0x010a,

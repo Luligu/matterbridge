@@ -29,9 +29,11 @@ Features:
 - It is possible to choose the method: GET or POST.
 - The webhook can be tested directly in the frontend.
 
-## [2.2.9] - 2025-04-17
+## [2.2.9] - 2025-04-18
 
 ### Added
+
+- [deviceTypes]: Added extendedColorLight device type.
 
 ### Changed
 
