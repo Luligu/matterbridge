@@ -659,6 +659,13 @@ export class Matterbridge extends EventEmitter {
       - nosudo:                force not to use sudo to install or update packages if the internal logic fails
       - norestore:             force not to automatically restore the matterbridge node storage and the matter storage from backup if it is corrupted
       - ssl:                   enable SSL for the frontend and WebSockerServer (certificates in .matterbridge/certs directory cert.pem, key.pem and ca.pem (optional))
+      - vendorId:              override the default vendorId 0xfff1
+      - vendorName:            override the default vendorName "Matterbridge"
+      - productId:             override the default productId 0x8000
+      - productName:           override the default productName "Matterbridge aggregator"
+      - service:               enable the service mode (used in the systemctl configuration file)
+      - docker:                enable the docker mode (used in the Dockerfile to build the docker image)
+      - homedir:               override the home directory (default: os.homedir())
       - add [plugin path]:     register the plugin from the given absolute or relative path
       - add [plugin name]:     register the globally installed plugin with the given name
       - remove [plugin path]:  remove the plugin from the given absolute or relative path

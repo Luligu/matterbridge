@@ -1737,6 +1737,8 @@ export class Frontend {
     message = message.replace(/[\x00-\x1F\x7F]/g, '');
     // Replace all occurrences of \" with "
     message = message.replace(/\\"/g, '"');
+    // Replace all occurrences of angle-brackets with &lt; and &gt;"
+    message = message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
     // Define the maximum allowed length for continuous characters without a space
     const maxContinuousLength = 100;
