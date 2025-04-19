@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "3.0.0-edge.10",
+  "version": "3.0.0-edge.11",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -130,7 +130,7 @@
     "cleanBuild": "npm run clean && npm run build",
     "cleanBuildProduction": "npm run clean && npm run buildProduction",
     "deepClean": "npx rimraf tsconfig.tsbuildinfo package-lock.json npm-shrinkwrap.json ./dist ./node_modules",
-    "deepCleanBuild": "npm run deepClean && npm install && npm run build && npm link",
+    "deepCleanBuild": "npm run deepClean && npm install && npm run build && npm link && npx jest --clearCache",
     "runMeBeforePublish": "npm run lint && npm run format && npm run build && npm run test",
     "git:status": "git status && git branch -vv && git diff dev origin/dev",
     "git:hardreset": "git fetch origin && git checkout dev && git reset --hard origin/dev",

@@ -1966,7 +1966,7 @@ const commissioningController = new CommissioningController({
    */
   private async stopMatterStorage(): Promise<void> {
     this.log.info('Closing matter node storage...');
-    this.matterStorageManager?.close();
+    await this.matterStorageManager?.close();
     this.matterStorageService = undefined;
     this.matterStorageManager = undefined;
     this.matterbridgeContext = undefined;
