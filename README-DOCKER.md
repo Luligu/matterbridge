@@ -141,6 +141,15 @@ docker restart matterbridge
 docker logs matterbridge
 ```
 
+### Shows the logs for a time interval
+
+```
+docker logs \
+  --since "2025-04-19T00:00:00" \
+  --until "2025-04-19T00:02:00" \
+  matterbridge
+```
+
 ### Shows the logs real time (tail)
 
 ```
