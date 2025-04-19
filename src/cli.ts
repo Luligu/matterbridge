@@ -257,5 +257,5 @@ process.title = 'matterbridge';
 main().catch((error) => {
   const errorMessage = error instanceof Error ? error.message : error;
   const errorInspect = inspect(error, { depth: 10 });
-  log.error(`Matterbridge.loadInstance() failed with error: ${errorMessage}\n${errorInspect}`);
+  log.error(`Matterbridge.loadInstance() failed with error: ${errorMessage}\nstack: ${errorInspect}`);
 });

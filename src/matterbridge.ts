@@ -903,14 +903,16 @@ export class Matterbridge extends EventEmitter {
     process.removeAllListeners('unhandledRejection');
 
     this.exceptionHandler = async (error: Error) => {
-      this.log.error('Unhandled Exception detected at:', error.stack || error, rs);
-      // await this.cleanup('Unhandled Exception detected, cleaning up...');
+      const errorMessage = error instanceof Error ? error.message : error;
+      const errorInspect = inspect(error, { depth: 10 });
+      this.log.error(`Unhandled Exception detected: ${errorMessage}\nstack: ${errorInspect}}`);
     };
     process.on('uncaughtException', this.exceptionHandler);
 
     this.rejectionHandler = async (reason, promise) => {
-      this.log.error('Unhandled Rejection detected at:', promise, 'reason:', reason instanceof Error ? reason.stack : reason, rs);
-      // await this.cleanup('Unhandled Rejection detected, cleaning up...');
+      const errorMessage = reason instanceof Error ? reason.message : reason;
+      const errorInspect = inspect(reason, { depth: 10 });
+      this.log.error(`Unhandled Rejection detected: ${promise}\nreason: ${errorMessage}\nstack: ${errorInspect}`);
     };
     process.on('unhandledRejection', this.rejectionHandler);
 
@@ -2385,10 +2387,9 @@ const commissioningController = new CommissioningController({
       try {
         await this.aggregatorNode?.add(device);
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : '';
-        const errorStack = error instanceof Error ? error.stack : '';
-        const errorDebug = inspect(error, { depth: 10 });
-        this.log.error(`Error adding bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for plugin ${plg}${pluginName}${er}: ${error} ${errorMessage} ${errorStack} ${errorDebug}`);
+        const errorMessage = error instanceof Error ? error.message : error;
+        const errorInspect = inspect(error, { depth: 10 });
+        this.log.error(`Error adding bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for plugin ${plg}${pluginName}${er}: ${errorMessage}\nstack: ${errorInspect}`);
         return;
       }
     } else if (this.bridgeMode === 'childbridge') {
@@ -2397,10 +2398,9 @@ const commissioningController = new CommissioningController({
           this.log.debug(`Creating endpoint ${dev}${device.deviceName}${db} for AccessoryPlatform plugin ${plg}${plugin.name}${db} server node`);
           await this.createAccessoryPlugin(plugin, device);
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : '';
-          const errorStack = error instanceof Error ? error.stack : '';
-          const errorDebug = inspect(error, { depth: 10 });
-          this.log.error(`Error creating endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for AccessoryPlatform plugin ${plg}${pluginName}${er} server node: ${error} ${errorMessage} ${errorStack} ${errorDebug}`);
+          const errorMessage = error instanceof Error ? error.message : error;
+          const errorInspect = inspect(error, { depth: 10 });
+          this.log.error(`Error creating endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for AccessoryPlatform plugin ${plg}${pluginName}${er} server node: ${errorMessage}\nstack: ${errorInspect}`);
           return;
         }
       }
@@ -2411,10 +2411,9 @@ const commissioningController = new CommissioningController({
         try {
           await plugin.aggregatorNode?.add(device);
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : '';
-          const errorStack = error instanceof Error ? error.stack : '';
-          const errorDebug = inspect(error, { depth: 10 });
-          this.log.error(`Error adding bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for DynamicPlatform plugin ${plg}${pluginName}${er} aggregator node: ${error} ${errorMessage} ${errorStack} ${errorDebug}`);
+          const errorMessage = error instanceof Error ? error.message : error;
+          const errorInspect = inspect(error, { depth: 10 });
+          this.log.error(`Error adding bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) for DynamicPlatform plugin ${plg}${pluginName}${er} aggregator node: ${errorMessage}\nstack: ${errorInspect}`);
           return;
         }
       }

@@ -56,15 +56,19 @@ Modified clusters:
 
 ### Changed
 
-- [package]: Update express to 5.1.0.
-- [package]: Update dependencies.
-- [deviceTypes]: Updated device types to Matter 1.4
+- [package]: Updated package.
+- [package]: Updated express to v5.1.0.
+- [package]: Updated dependencies.
+- [deviceTypes]: Updated device types to Matter 1.4.
+- [clusters]: Updated cluster helpers to Matter 1.4.
 - [matter.js]: Update to 0.13.0-alpha.0-20250405-7fc7db48.
 - [matter.js]: Update to 0.13.0-alpha.0-20250408-c916c7e8.
 - [matter.js]: Update to 0.13.0-alpha.0-20250412-5fad64e7b.
 - [matter.js]: Update to 0.13.0-alpha.0-20250413-d5a27700d.
 - [matter.js]: Update to 0.13.0-alpha.0-20250415-475996bb5.
 - [matter.js]: Update to 0.13.0-alpha.0-20250418-8cfc0b832.
+- [help]: Updated cli help screen.
+- [logger]: Improved frontend logger cleaning.
 
 ### Fixed
 
