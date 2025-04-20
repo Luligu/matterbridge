@@ -51,6 +51,7 @@ Modified clusters:
 - [endpoint]: Added createBaseFanControlClusterServer().
 - [endpoint]: Added createDefaultHepaFilterMonitoringClusterServer().
 - [endpoint]: Added createDefaultActivatedCarbonFilterMonitoringClusterServer().
+- [endpoint]: Added createDefaultThermostatUserInterfaceConfigurationClusterServer().
 - [deviceTypes]: Added Robotic device type.
 - [deviceTypes]: Added Appliances device types.
 - [frontend]: Added the matterbridge aggregator serialNumber in the QRDiv.
