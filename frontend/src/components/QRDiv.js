@@ -52,6 +52,9 @@ export function QRDiv({ matterbridgeInfo, plugin }) {
             </div>
           ))}
         </div>
+        <div className="MbfWindowFooter" style={{ padding: 0, margin: 0, height: '30px' }}>
+          <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>Serial number: {matterbridgeInfo.matterbridgeSerialNumber}</p>
+        </div>
       </div>
     );
   } else if (matterbridgeInfo.bridgeMode === 'childbridge' && plugin && plugin.paired === true && plugin.fabricInformations) {
@@ -78,6 +81,9 @@ export function QRDiv({ matterbridgeInfo, plugin }) {
               </p>
             </div>
           ))}
+        </div>
+        <div className="MbfWindowFooter" style={{ padding: 0, margin: 0, height: '30px' }}>
+          <p className="MbfWindowFooterText" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>Serial number: {plugin.serialNumber}</p>
         </div>
       </div>
     );

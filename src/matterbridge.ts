@@ -102,6 +102,7 @@ export class Matterbridge extends EventEmitter {
     globalModulesDirectory: '',
     matterbridgeVersion: '',
     matterbridgeLatestVersion: '',
+    matterbridgeSerialNumber: '',
     matterbridgeQrPairingCode: undefined,
     matterbridgeManualPairingCode: undefined,
     matterbridgeFabricInformations: [],
@@ -1522,6 +1523,7 @@ export class Matterbridge extends EventEmitter {
       plugin.device = device;
       plugin.storageContext = await this.createServerNodeContext(plugin.name, device.deviceName, DeviceTypeId(device.deviceType), device.vendorId, device.vendorName, device.productId, device.productName);
       plugin.serverNode = await this.createServerNode(plugin.storageContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
+      plugin.serialNumber = await plugin.storageContext.get('serialNumber', '');
       this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to ${plg}${plugin.name}${db} server node`);
       await plugin.serverNode.add(device);
       if (start) await this.startServerNode(plugin.serverNode);
@@ -1541,6 +1543,7 @@ export class Matterbridge extends EventEmitter {
       plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', bridge.code, this.aggregatorVendorId, 'Matterbridge', this.aggregatorProductId, plugin.description);
       plugin.serverNode = await this.createServerNode(plugin.storageContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
       plugin.aggregatorNode = await this.createAggregatorNode(plugin.storageContext);
+      plugin.serialNumber = await plugin.storageContext.get('serialNumber', '');
       await plugin.serverNode.add(plugin.aggregatorNode);
       if (start) await this.startServerNode(plugin.serverNode);
     }
@@ -1949,6 +1952,7 @@ const commissioningController = new CommissioningController({
     this.log.info('Matter node storage manager "Matterbridge" created');
 
     this.matterbridgeContext = await this.createServerNodeContext('Matterbridge', 'Matterbridge', bridge.code, this.aggregatorVendorId, this.aggregatorVendorName, this.aggregatorProductId, this.aggregatorProductName);
+    this.matterbridgeInformation.matterbridgeSerialNumber = await this.matterbridgeContext.get('serialNumber', '');
 
     this.log.info('Matter node storage started');
 

@@ -53,6 +53,7 @@ Modified clusters:
 - [endpoint]: Added createDefaultActivatedCarbonFilterMonitoringClusterServer().
 - [deviceTypes]: Added Robotic device type.
 - [deviceTypes]: Added Appliances device types.
+- [frontend]: Added the matterbridge aggregator serialNumber in the QRDiv.
 
 ### Changed
 

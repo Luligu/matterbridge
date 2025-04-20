@@ -59,6 +59,7 @@ export interface BaseRegisteredPlugin {
   path: string;
   type: string;
   latestVersion?: string;
+  serialNumber?: string;
   homepage?: string;
   help?: string;
   changelog?: string;
@@ -116,6 +117,7 @@ export interface MatterbridgeInformation {
   globalModulesDirectory: string;
   matterbridgeVersion: string;
   matterbridgeLatestVersion: string;
+  matterbridgeSerialNumber: string;
   matterbridgeQrPairingCode: string | undefined;
   matterbridgeManualPairingCode: string | undefined;
   matterbridgeFabricInformations: SanitizedExposedFabricInformation[] | undefined;
