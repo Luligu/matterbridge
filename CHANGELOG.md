@@ -59,6 +59,7 @@ Modified clusters:
 - [package]: Updated package.
 - [package]: Updated express to v5.1.0.
 - [package]: Updated dependencies.
+- [package]: Added tsconfig.jest.json with "isolatedModules": true for ts-jest.
 - [deviceTypes]: Updated device types to Matter 1.4.
 - [clusters]: Updated cluster helpers to Matter 1.4.
 - [matter.js]: Update to 0.13.0-alpha.0-20250405-7fc7db48.
