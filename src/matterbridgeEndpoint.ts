@@ -101,6 +101,7 @@ import { ElectricalEnergyMeasurement } from '@matter/main/clusters/electrical-en
 import { AirQuality } from '@matter/main/clusters/air-quality';
 import { ConcentrationMeasurement } from '@matter/main/clusters/concentration-measurement';
 import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
+import { ThermostatUserInterfaceConfiguration } from '@matter/main/clusters/thermostat-user-interface-configuration';
 
 // @matter behaviors
 import { DescriptorServer } from '@matter/main/behaviors/descriptor';
@@ -135,6 +136,7 @@ import { FanControlServer } from '@matter/main/behaviors/fan-control';
 import { ResourceMonitoring } from '@matter/main/clusters/resource-monitoring';
 import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
+import { ThermostatUserInterfaceConfigurationServer } from '@matter/main/behaviors/thermostat-user-interface-configuration';
 
 export interface MatterbridgeEndpointCommands {
   // Identify
@@ -1474,6 +1476,24 @@ export class MatterbridgeEndpoint extends Endpoint {
       maxCoolSetpointLimit: maxCoolSetpointLimit * 100,
       absMinCoolSetpointLimit: minCoolSetpointLimit * 100,
       absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default thermostat user interface configuration cluster server.
+   *
+   * @remarks
+   * The default values are:
+   * - temperatureDisplayMode: ThermostatUserInterfaceConfiguration.TemperatureDisplayMode.Celsius (writeble).
+   * - keypadLockout: ThermostatUserInterfaceConfiguration.KeypadLockout.NoLockout (writeble).
+   * - scheduleProgrammingVisibility: ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility.ScheduleProgrammingPermitted (writeble).
+   */
+  createDefaultThermostatUserInterfaceConfigurationClusterServer() {
+    this.behaviors.require(ThermostatUserInterfaceConfigurationServer, {
+      temperatureDisplayMode: ThermostatUserInterfaceConfiguration.TemperatureDisplayMode.Celsius,
+      keypadLockout: ThermostatUserInterfaceConfiguration.KeypadLockout.NoLockout,
+      scheduleProgrammingVisibility: ThermostatUserInterfaceConfiguration.ScheduleProgrammingVisibility.ScheduleProgrammingPermitted,
     });
     return this;
   }
