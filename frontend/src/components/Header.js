@@ -337,6 +337,11 @@ function Header() {
             <span className="status-information" style={{ cursor: 'default' }}>{settings.matterbridgeInformation.restartMode}</span>
           </Tooltip>
         ) : null}
+        {settings.matterbridgeInformation.profile !== '' && settings.matterbridgeInformation.readOnly === false ? (
+          <Tooltip title="Current profile">
+            <span className="status-information" style={{ cursor: 'default' }}>{settings.matterbridgeInformation.profile}</span>
+          </Tooltip>
+        ) : null}
       </div>
       <div className="sub-header" style={{ gap: '5px' }}>
         <Tooltip title="Matterbridge help">
