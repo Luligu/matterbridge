@@ -53,6 +53,10 @@ function Header() {
     window.open(`https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md`, '_blank');
   };
 
+  const handleDiscordLogoClick = () => {
+    window.open(`https://discord.gg/QX58CDe6hd`, '_blank');
+  };
+
   const handleUpdateClick = () => {
     sendMessage({ id: uniqueId.current, method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: 'matterbridge', restart: true } });
   };
@@ -221,6 +225,11 @@ function Header() {
     setResetMenuAnchorEl(null);
   };
 
+  const handleLogoClick = () => {
+    toggleDebug();
+    if (debug) console.log('Matterbridge logo clicked: debug is now', debug);
+  };
+
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
       /* Header listener */
@@ -275,11 +284,6 @@ function Header() {
       sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   }, [online, sendMessage]);
-
-  const handleLogoClick = () => {
-    toggleDebug();
-    if (debug) console.log('Matterbridge logo clicked: debug is now', debug);
-  };
 
   if(debug) console.log('Header rendering...');
   if (!online || !settings) {
@@ -344,6 +348,7 @@ function Header() {
         ) : null}
       </div>
       <div className="sub-header" style={{ gap: '5px' }}>
+        <img src="discord.svg" alt="Discord Logo" style={{ height: '25px' }} onClick={handleDiscordLogoClick}/>
         <Tooltip title="Matterbridge help">
           <IconButton onClick={handleHelpClick}>
             <HelpOutlineIcon style={{ color: 'var(--main-icon-color)' }} />
