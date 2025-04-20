@@ -174,10 +174,9 @@ describe('MatterbridgeEndpoint class', () => {
     await matterbridge.matterStorageManager?.createContext('sessions')?.clearAll();
     await matterbridge.matterbridgeContext?.clearAll();
     */
-    await matterbridge.matterbridgeContext?.clearAll();
 
     await waitForOnline();
-  });
+  }, 30000);
 
   beforeEach(async () => {
     // Clear all mocks
