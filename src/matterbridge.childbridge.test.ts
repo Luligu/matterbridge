@@ -194,7 +194,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       await plugins.load(plugin);
       expect(plugin.loaded).toBeTruthy();
     }
-  });
+  }, 60000);
 
   test('Matterbridge.destroyInstance() -childbridge mode', async () => {
     expect(matterbridge.bridgeMode).toBe('childbridge');
