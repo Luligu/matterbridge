@@ -1515,6 +1515,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default HEPA Filter Monitoring Cluster Server.
+   * It supports ResourceMonitoring.Feature.Condition and ResourceMonitoring.Feature.ReplacementProductList.
    *
    * @param {ResourceMonitoring.ChangeIndication} changeIndication - The initial change indication. Default is ResourceMonitoring.ChangeIndication.Ok.
    * @param {boolean | undefined} inPlaceIndicator - The in-place indicator. Default is undefined.
@@ -1527,16 +1528,20 @@ export class MatterbridgeEndpoint extends Endpoint {
     inPlaceIndicator: boolean | undefined = undefined,
     lastChangedTime: number | undefined = undefined,
   ): this {
-    this.behaviors.require(HepaFilterMonitoringServer, {
+    this.behaviors.require(HepaFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.ReplacementProductList), {
+      condition: 100, // Feature.Condition
+      degradationDirection: ResourceMonitoring.DegradationDirection.Down, // Feature.Condition
       changeIndication,
       inPlaceIndicator,
       lastChangedTime,
+      replacementProductList: [], // Feature.ReplacementProductList
     });
     return this;
   }
 
   /**
    * Creates a default Activated Carbon Filter Monitoring Cluster Server.
+   * It supports ResourceMonitoring.Feature.Condition and ResourceMonitoring.Feature.ReplacementProductList.
    *
    * @param {ResourceMonitoring.ChangeIndication} changeIndication - The initial change indication. Default is ResourceMonitoring.ChangeIndication.Ok.
    * @param {boolean | undefined} inPlaceIndicator - The in-place indicator. Default is undefined.
@@ -1549,10 +1554,13 @@ export class MatterbridgeEndpoint extends Endpoint {
     inPlaceIndicator: boolean | undefined = undefined,
     lastChangedTime: number | undefined = undefined,
   ): this {
-    this.behaviors.require(ActivatedCarbonFilterMonitoringServer, {
+    this.behaviors.require(ActivatedCarbonFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.ReplacementProductList), {
+      condition: 100, // Feature.Condition
+      degradationDirection: ResourceMonitoring.DegradationDirection.Down, // Feature.Condition
       changeIndication,
       inPlaceIndicator,
       lastChangedTime,
+      replacementProductList: [], // Feature.ReplacementProductList
     });
     return this;
   }
