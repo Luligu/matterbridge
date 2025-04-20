@@ -102,6 +102,7 @@ export class Matterbridge extends EventEmitter {
     globalModulesDirectory: '',
     matterbridgeVersion: '',
     matterbridgeLatestVersion: '',
+    matterbridgeDevVersion: '',
     matterbridgeSerialNumber: '',
     matterbridgeQrPairingCode: undefined,
     matterbridgeManualPairingCode: undefined,
@@ -138,6 +139,7 @@ export class Matterbridge extends EventEmitter {
   public globalModulesDirectory = '';
   public matterbridgeVersion = '';
   public matterbridgeLatestVersion = '';
+  public matterbridgeDevVersion = '';
   public matterbridgeQrPairingCode: string | undefined = undefined;
   public matterbridgeManualPairingCode: string | undefined = undefined;
   public matterbridgeFabricInformations: SanitizedExposedFabricInformation[] | undefined = undefined;
@@ -814,7 +816,7 @@ export class Matterbridge extends EventEmitter {
         const { checkUpdates } = await import('./update.js');
         checkUpdates(this);
       },
-      24 * 60 * 60 * 1000,
+      12 * 60 * 60 * 1000, // 12 hours
     ).unref();
 
     // Start the matterbridge in mode test

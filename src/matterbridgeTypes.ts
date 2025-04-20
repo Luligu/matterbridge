@@ -117,6 +117,7 @@ export interface MatterbridgeInformation {
   globalModulesDirectory: string;
   matterbridgeVersion: string;
   matterbridgeLatestVersion: string;
+  matterbridgeDevVersion: string;
   matterbridgeSerialNumber: string;
   matterbridgeQrPairingCode: string | undefined;
   matterbridgeManualPairingCode: string | undefined;
