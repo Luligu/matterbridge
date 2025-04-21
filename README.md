@@ -12,7 +12,7 @@
 
 ---
 
-Matterbridge is a matter.js plugin manager.
+Matterbridge is a Matter plugin manager.
 
 It allows you to have all your Matter devices up and running in a couple of minutes without
 having to deal with the pairing process of each single device.
@@ -56,6 +56,8 @@ Node 23 is not supported.
 Nvm is not a good choice and should not be used for production.
 
 If you don't have Docker already install, please use this method to install it on a debian device: https://docs.docker.com/desktop/setup/install/linux/debian/.
+
+Ipv4 and ipv6 should be both enabled in the network.
 
 ## Installation
 
@@ -406,9 +408,18 @@ All issues have been solved from the version 17.5 of the HomePod/AppleTV. Now th
 
 If you have more then one Apple TV or Home Pod, you can herve better results setting to disabled "Automatic Selection" in "Home Setting", "Home Hubs & Bridges". When "Automatic selection" is disabled, select your Apple Tv if you have one or any of your Home Pod. In this way you should not have anymore more then one session for fabric.
 
+### Appliances and Robot
+
+As of version 18.4.x, all Appliances device types are not supported by the Home app. They don't even appear like unsupported accessories.
+
+### Robot
+
+As of version 18.4.x, the Robot is supported by the Home app only as a single, non-bridged device or if it is the only device in the bridge.
+If a Robot is present alongside other devices in the bridge, the entire bridge becomes unstable and unusable in the Home app.
+
 ## Home Assistant
 
-So far is the only controller supporting some Matter 1.2 and 1.3 device type:
+So far is the only controller supporting some Matter 1.2, 1.3 and 1.4 device type:
 
 - airQualitySensor code 0x002c (Matter 1.2)
 - smokesmokeCoAlarm code 0x0076 (Matter 1.2)
