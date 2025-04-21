@@ -66,10 +66,10 @@ const endpointBoxSx = { display: 'flex', gap: '4px', justifyContent: 'center', w
 // const endpointSx = { margin: '0', padding: '0px 4px', borderRadius: '5px', textAlign: 'center', fontSize: '10px', fontWeight: 'normal', color: 'white', backgroundColor: 'var(--secondary-color)' };
 const endpointSx = { margin: '0', padding: '0px 4px', borderRadius: '5px', textAlign: 'center', fontSize: '12px', fontWeight: 'normal', color: 'var(--secondary-color)' };
 
-const lightDeviceTypes = [0x0100, 0x0101, 0x010c];
+const lightDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d];
 const outletDeviceTypes = [0x010a, 0x010b];
-const switchDeviceTypes = [0x0103, 0x0104, 0x0105];
-const onOffDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010a, 0x010b, 0x0103, 0x0104, 0x0105];
+const switchDeviceTypes = [0x0103, 0x0104, 0x0105, 0x010f, 0x0110];
+const onOffDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d, 0x010a, 0x010b, 0x0103, 0x0104, 0x0105];
 
 function Render({ icon, iconColor, cluster, value, unit }) {
   if(debug) console.log(`Render cluster "${cluster.clusterName}.${cluster.attributeName}" value(${typeof(value)}-${isNaN(value)}) "${value}" unit "${unit}"`);

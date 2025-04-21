@@ -348,7 +348,11 @@ function Header() {
         ) : null}
       </div>
       <div className="sub-header" style={{ gap: '5px' }}>
-        <img src="discord.svg" alt="Discord Logo" style={{ height: '25px' }} onClick={handleDiscordLogoClick}/>
+        {settings.matterbridgeInformation.readOnly === false ? (
+          <Tooltip title="Matterbridge discord group">
+            <img src="discord.svg" alt="Discord Logo" style={{ height: '25px' }} onClick={handleDiscordLogoClick}/>
+          </Tooltip>
+        ) : null}
         <Tooltip title="Matterbridge help">
           <IconButton onClick={handleHelpClick}>
             <HelpOutlineIcon style={{ color: 'var(--main-icon-color)' }} />
