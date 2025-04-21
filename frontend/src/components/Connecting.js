@@ -2,7 +2,7 @@
 import { useContext } from 'react';
 
 // @mui
-import { CircularProgress, Box } from '@mui/material';
+import { CircularProgress, Box, Button } from '@mui/material';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
@@ -10,6 +10,10 @@ import { WebSocketContext } from './WebSocketProvider';
 export function Connecting() {
   // Contexts
   const { retry } = useContext(WebSocketContext);
+
+  const handleRefresh = () => {
+    window.location.reload(); // Refresh the page
+  };
 
   return (
     <div style={{
@@ -23,8 +27,27 @@ export function Connecting() {
       backgroundColor: 'var(--main-bg-color)',
     }}>
       <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
-        <CircularProgress style={{ color: 'var(--primary-color)' }}/>
-        <div style={{ marginTop: '20px', color: 'var(--primary-color)' }}>Reconnecting to Matterbridge {"(retry "+retry}...</div>
+        {retry < 100 ? (
+          <>
+            <CircularProgress style={{ color: 'var(--primary-color)' }} />
+            <div style={{ marginTop: '20px', color: 'var(--primary-color)' }}>
+              Reconnecting to Matterbridge {"(attempt " + retry + ")"}...
+            </div>
+          </>
+        ) : (
+          <div style={{ marginTop: '20px', color: 'var(--primary-color)', textAlign: 'center' }}>
+            Unable to connect to Matterbridge after multiple attempts.<br />
+            Please check your network connection.<br /> 
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleRefresh}
+              style={{ marginTop: '20px' }}
+            >
+              Refresh the Page
+            </Button>
+          </div>
+        )}      
       </Box>
     </div>
   );
