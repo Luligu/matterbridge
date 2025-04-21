@@ -97,16 +97,17 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {
     // Reset matterstorage Jest
     const environment = Environment.default;
-    environment.vars.set('path.root', path.join(os.homedir(), '.matterbridge', 'matterstorage.Jest'));
+    environment.vars.set('path.root', path.join(os.homedir(), '.matterbridge', 'matterstorage.JestBridge'));
     const matterStorageService = environment.get(StorageService);
     expect(matterStorageService).toBeDefined();
     const matterStorageManager = await matterStorageService.open('Matterbridge');
     expect(matterStorageManager).toBeDefined();
     await matterStorageManager?.createContext('persist').clearAll();
-    await matterStorageManager?.createContext('events')?.clearAll();
-    await matterStorageManager?.createContext('fabrics')?.clearAll();
-    await matterStorageManager?.createContext('root')?.clearAll();
-    await matterStorageManager?.createContext('sessions')?.clearAll();
+    await matterStorageManager?.createContext('events').clearAll();
+    await matterStorageManager?.createContext('fabrics').clearAll();
+    await matterStorageManager?.createContext('root').clearAll();
+    await matterStorageManager?.createContext('sessions').clearAll();
+    await matterStorageManager?.close();
 
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeDefined();
@@ -192,11 +193,14 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   });
 
   test('load plugins', async () => {
-    plugins = (matterbridge as any).plugins;
-    for (const plugin of plugins) {
-      await plugins.load(plugin);
+    expect(matterbridge.plugins.size).toBe(3);
+    expect(matterbridge.devices.size).toBe(0);
+    for (const plugin of matterbridge.plugins) {
+      await matterbridge.plugins.load(plugin);
       expect(plugin.loaded).toBeTruthy();
     }
+    expect(matterbridge.plugins.size).toBe(3);
+    expect(matterbridge.devices.size).toBe(0);
   });
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
@@ -229,6 +233,17 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
       true,
     );
 
+    await waiter(
+      'Matter plugins started online',
+      () => {
+        return plugins.array()[0].started === true && plugins.array()[1].started === true && plugins.array()[2].started === true;
+      },
+      false,
+      60000,
+      1000,
+      true,
+    );
+
     for (const plugin of plugins) {
       expect(plugin.serverNode).toBeUndefined();
       expect(plugin.aggregatorNode).toBeUndefined();
@@ -236,6 +251,8 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(matterbridge.serverNode?.lifecycle.isReady).toBeTruthy();
     expect(matterbridge.serverNode?.lifecycle.isOnline).toBeTruthy();
     expect(matterbridge.serverNode?.lifecycle.isCommissioned).toBeFalsy();
+    expect(matterbridge.plugins.size).toBe(3);
+    expect(matterbridge.devices.size).toBe(3);
   }, 60000);
 
   test('stop advertise node 2', async () => {
@@ -263,12 +280,12 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
 
   test('remove all devices', async () => {
     expect(plugins.length).toBe(3);
-    expect(matterbridge.devices.size).toBe(3);
+    expect(matterbridge.devices.size).toBe(6);
     let i = 1;
     for (const plugin of plugins) {
       expect(plugin.type).toBe('DynamicPlatform');
-      expect(plugin.addedDevices).toBe(1);
-      expect(plugin.registeredDevices).toBe(1);
+      expect(plugin.addedDevices).toBe(2);
+      expect(plugin.registeredDevices).toBe(2);
       await matterbridge.removeAllBridgedEndpoints('matterbridge-mock' + i);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Removing all bridged endpoints for plugin ${plg}${'matterbridge-mock' + i}${db}`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Removing bridged endpoint ${plg}${'matterbridge-mock' + i++}${db}`));

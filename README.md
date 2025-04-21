@@ -46,6 +46,18 @@ The project is build on top of https://github.com/project-chip/matter.js.
 
 A special thank to Apollon77 for his incredible work.
 
+## Discord
+
+Join us in the Matterbridge Discord group https://discord.gg/QX58CDe6hd created by Tamer (https://github.com/tammeryousef1006).
+
+## Videos
+
+https://www.youtube.com/watch?v=goNB9Cgh_Fk
+
+## Reviews
+
+https://www.matteralpha.com/how-to/how-to-configure-an-open-source-matter-bridge-at-home
+
 ## Prerequisites
 
 To run Matterbridge, you need either a [Node.js](https://nodejs.org/en) environment or [Docker](https://docs.docker.com/get-started/get-docker/) installed on your system.
@@ -57,7 +69,9 @@ Nvm is not a good choice and should not be used for production.
 
 If you don't have Docker already install, please use this method to install it on a debian device: https://docs.docker.com/desktop/setup/install/linux/debian/.
 
-Ipv4 and ipv6 should be both enabled in the network.
+Since as stated in the Matter specifications "Matter aims to build a universal IPv6-based communication protocol for smart home devices", ipv6 should be enabled in the network.
+
+Avoid using VLAN and firewall blocking the communications between the controller and Matterbridge.
 
 ## Installation
 
@@ -217,6 +231,24 @@ No hub or dedicated hardware needed.
 </a>
 
 Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose the Somfy Tahoma screen devices to Matter.
+
+### Home Assistant
+
+<a href="https://github.com/Luligu/matterbridge-hass">
+  <img src="screenshot/HomeAssistant.svg" alt="Hass logo" width="100" />
+</a>
+
+Matterbridge Home Assistant plugin allows you to expose the Home Assistant devices and entities to Matter.
+
+It is the ideal companion of the official [Matterbridge Home Assistant Add-on](https://github.com/Luligu/matterbridge-home-assistant-addon/blob/main/README.md).
+
+### Webhooks
+
+<a href="https://github.com/Luligu/matterbridge-webhooks">
+  <img src="frontend/public/matterbridge.svg" alt="Matterbridge logo" width="100" />
+</a>
+
+Matterbridge Webhooks plugin allows you to expose any webhooks to Matter..
 
 ### Accessory platform example
 

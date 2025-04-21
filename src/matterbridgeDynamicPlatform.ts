@@ -31,6 +31,7 @@ import { AnsiLogger } from './logger/export.js';
 /**
  * Represents a dynamic platform for Matterbridge.
  *
+ * This class extends the MatterbridgePlatform class.
  */
 export class MatterbridgeDynamicPlatform extends MatterbridgePlatform {
   /**

@@ -1542,7 +1542,7 @@ export class Matterbridge extends EventEmitter {
   private async createDynamicPlugin(plugin: RegisteredPlugin, start = false): Promise<void> {
     if (!plugin.locked) {
       plugin.locked = true;
-      plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', bridge.code, this.aggregatorVendorId, 'Matterbridge', this.aggregatorProductId, plugin.description);
+      plugin.storageContext = await this.createServerNodeContext(plugin.name, 'Matterbridge', bridge.code, this.aggregatorVendorId, this.aggregatorVendorName, this.aggregatorProductId, plugin.description);
       plugin.serverNode = await this.createServerNode(plugin.storageContext, this.port ? this.port++ : undefined, this.passcode ? this.passcode++ : undefined, this.discriminator ? this.discriminator++ : undefined);
       plugin.aggregatorNode = await this.createAggregatorNode(plugin.storageContext);
       plugin.serialNumber = await plugin.storageContext.get('serialNumber', '');
@@ -1632,13 +1632,6 @@ export class Matterbridge extends EventEmitter {
    */
   private async startChildbridge(): Promise<void> {
     if (!this.matterStorageManager) throw new Error('No storage manager initialized');
-
-    for (const plugin of this.plugins) {
-      if (!plugin.enabled) continue;
-      if (plugin.type === 'DynamicPlatform') {
-        await this.createDynamicPlugin(plugin);
-      }
-    }
 
     await this.startPlugins();
 
@@ -2386,12 +2379,15 @@ const commissioningController = new CommissioningController({
       this.log.error(`Error adding bridged endpoint ${dev}${device.deviceName}${er} (${zb}${device.id}${er}) plugin ${plg}${pluginName}${er} not found`);
       return;
     }
-    // Register and add the device to the matterbridge aggregator node
     if (this.bridgeMode === 'bridge') {
+      // Register and add the device to the matterbridge aggregator node
       this.log.debug(`Adding bridged endpoint ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} to Matterbridge aggregator node`);
-      if (!this.aggregatorNode) this.log.error('Aggregator node not found for Matterbridge');
+      if (!this.aggregatorNode) {
+        this.log.error('Aggregator node not found for Matterbridge');
+        return;
+      }
       try {
-        await this.aggregatorNode?.add(device);
+        await this.aggregatorNode.add(device);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : error;
         const errorInspect = inspect(error, { depth: 10 });
@@ -2399,9 +2395,14 @@ const commissioningController = new CommissioningController({
         return;
       }
     } else if (this.bridgeMode === 'childbridge') {
+      // Register and add the device to the plugin server node
       if (plugin.type === 'AccessoryPlatform') {
         try {
           this.log.debug(`Creating endpoint ${dev}${device.deviceName}${db} for AccessoryPlatform plugin ${plg}${plugin.name}${db} server node`);
+          if (plugin.serverNode) {
+            this.log.error(`The plugin ${plg}${plugin.name}${er} has already added a device. Only one device is allowed per AccessoryPlatform plugin.`);
+            return;
+          }
           await this.createAccessoryPlugin(plugin, device);
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : error;
@@ -2410,12 +2411,16 @@ const commissioningController = new CommissioningController({
           return;
         }
       }
+      // Register and add the device to the plugin aggregator node
       if (plugin.type === 'DynamicPlatform') {
-        plugin.locked = true;
-        this.log.debug(`Adding bridged endpoint ${dev}${device.deviceName}${db} for DynamicPlatform plugin ${plg}${plugin.name}${db} aggregator node`);
-        if (!plugin.aggregatorNode) this.log.error(`Aggregator node not found for plugin ${plg}${plugin.name}${db}`);
         try {
-          await plugin.aggregatorNode?.add(device);
+          this.log.debug(`Adding bridged endpoint ${dev}${device.deviceName}${db} for DynamicPlatform plugin ${plg}${plugin.name}${db} aggregator node`);
+          await this.createDynamicPlugin(plugin);
+          if (!plugin.aggregatorNode) {
+            this.log.error(`Aggregator node not found for plugin ${plg}${plugin.name}${er}`);
+            return;
+          }
+          await plugin.aggregatorNode.add(device);
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : error;
           const errorInspect = inspect(error, { depth: 10 });

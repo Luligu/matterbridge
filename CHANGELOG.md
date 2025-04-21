@@ -13,10 +13,6 @@ If you like this project and find it useful, please consider giving it a star on
 If you want to run Matterbridge in Home Assistant please use the official add-on https://github.com/Luligu/matterbridge-home-assistant-addon that also has Ingress and side panel.
 It is also available the official Matterbridge Home Assistant plugin https://github.com/Luligu/matterbridge-hass.
 
-### Discord
-
-Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
-
 ## New plugin matterbridge-webhooks
 
 A new plugin has been added: https://github.com/Luligu/matterbridge-webhooks
@@ -31,7 +27,7 @@ Features:
 
 ## Breaking changes
 
-Matter 1.4
+This release brings Matter 1.4.
 
 New device types:
 

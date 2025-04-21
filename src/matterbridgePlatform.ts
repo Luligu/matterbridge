@@ -4,7 +4,7 @@
  * @file matterbridgePlatform.ts
  * @author Luca Liguori
  * @date 2024-03-21
- * @version 1.1.0
+ * @version 1.2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -92,7 +92,10 @@ export class MatterbridgePlatform {
   private readonly _storedDevices = new Map<string, { pluginName: string; serial: string; name: string; configUrl?: string }>(); // serial, { serial, name }
 
   /**
-   * Creates an instance of the base MatterbridgePlatform. It is extended by the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
+   * Creates an instance of the base MatterbridgePlatform.
+   * It is extended by the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
+   * Each plugin must extend the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
+   *
    * @param {Matterbridge} matterbridge - The Matterbridge instance.
    * @param {AnsiLogger} log - The logger instance.
    * @param {PlatformConfig} config - The platform configuration.
@@ -158,7 +161,8 @@ export class MatterbridgePlatform {
   /**
    * This method can be overridden in the extended class. Call super.onConfigure() to run checkEndpointNumbers().
    * It is called after the platform has started.
-   * Use this method to perform any configuration of your devices.
+   * Use this method to perform any configuration of your devices and to override the value of the attributes that are stored in the
+   * matter storage (i.e. the onOff attribute of the OnOff cluster).
    */
   async onConfigure() {
     this.log.debug(`Configuring platform ${this.name}`);
