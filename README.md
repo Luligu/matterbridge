@@ -452,7 +452,13 @@ As of version 18.4.x, all Appliances device types are not supported by the Home 
 
 As of version 18.4.x, the Robot is supported by the Home app only as a single, non-bridged device or if it is the only device in the bridge.
 
-If a Robot is present alongside other devices in the bridge, the entire bridge becomes unstable and unusable in the Home app.
+If a Robot is present alongside other devices in the bridge, the entire bridge becomes unstable in the Home app.
+
+### Concentration measurements clusters
+
+As of version 18.4.x, all cluster derived from the concentration measurement cluster hang the Home app while pairing and the entire bridge becomes unstable in the Home app.
+
+For example: air quality sensors with TVOC measurement or co sensors with CarbonMonoxide measurement.
 
 ## Home Assistant
 
