@@ -117,8 +117,8 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
 
     // Clear all plugins
     plugins = matterbridge.plugins;
-    matterbridge.plugins.clear();
-    await matterbridge.plugins.saveToStorage();
+    plugins.clear();
+    await plugins.saveToStorage();
 
     expect((matterbridge as any).initialized).toBeTruthy();
     expect((matterbridge as any).log).toBeDefined();

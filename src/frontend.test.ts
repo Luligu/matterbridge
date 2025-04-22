@@ -490,14 +490,14 @@ describe('Matterbridge frontend', () => {
       const received = new Promise((resolve) => {
         const onMessage = (event: WebSocket.MessageEvent) => {
           const data = JSON.parse(event.data.toString());
-          if (data.id === 1 && data.src === 'Matterbridge' && data.dst === 'Jest test' && data.method === '/api/settings' && data.error === 'Invalid message') {
+          if (data.id === 10001 && data.src === 'Matterbridge' && data.dst === 'Jest test' && data.method === '/api/settings' && data.error === 'Invalid message') {
             ws.removeEventListener('message', onMessage);
             resolve(event.data);
           }
         };
         ws.addEventListener('message', onMessage);
       });
-      const message = JSON.stringify({ id: 1, dst: 'Matter', src: 'Jest test', method: '/api/settings', params: {} });
+      const message = JSON.stringify({ id: 10001, dst: 'Matter', src: 'Jest test', method: '/api/settings', params: {} });
       ws.send(message);
       await received;
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^Invalid message from websocket client/));
@@ -509,14 +509,14 @@ describe('Matterbridge frontend', () => {
       const received = new Promise((resolve) => {
         const onMessage = (event: WebSocket.MessageEvent) => {
           const data = JSON.parse(event.data.toString());
-          if (data.id === 1 && data.src === 'Matterbridge' && data.dst === 'Jest test' && data.method === '/api' && data.error === 'Invalid method') {
+          if (data.id === 10001 && data.src === 'Matterbridge' && data.dst === 'Jest test' && data.method === '/api' && data.error === 'Invalid method') {
             ws.removeEventListener('message', onMessage);
             resolve(event.data);
           }
         };
         ws.addEventListener('message', onMessage);
       });
-      const message = JSON.stringify({ id: 1, dst: 'Matterbridge', src: 'Jest test', method: '/api', params: {} });
+      const message = JSON.stringify({ id: 10001, dst: 'Matterbridge', src: 'Jest test', method: '/api', params: {} });
       ws.send(message);
       await received;
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^Invalid method from websocket client/));
@@ -529,12 +529,15 @@ describe('Matterbridge frontend', () => {
       expect(ws.readyState).toBe(WebSocket.OPEN);
       const received = new Promise((resolve) => {
         const onMessage = (event: WebSocket.MessageEvent) => {
-          ws.removeEventListener('message', onMessage);
-          resolve(event.data);
+          const data = JSON.parse(event.data.toString());
+          if (data.id === 10001 && data.src === 'Matterbridge' && data.dst === 'Jest test' && data.method === '/api/login' && data.error === 'Internal error: nodeContext not found') {
+            ws.removeEventListener('message', onMessage);
+            resolve(event.data);
+          }
         };
         ws.addEventListener('message', onMessage);
       });
-      const message = JSON.stringify({ id: 1, dst: 'Matterbridge', src: 'Jest test', method: '/api/login', params: { password: '' } });
+      const message = JSON.stringify({ id: 10001, dst: 'Matterbridge', src: 'Jest test', method: '/api/login', params: { password: '' } });
       ws.send(message);
       await received;
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^Login nodeContext not found/));

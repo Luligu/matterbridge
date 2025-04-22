@@ -39,7 +39,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
   let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
   let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-  const debug = true;
+  const debug = false;
 
   if (!debug) {
     // Spy on and mock AnsiLogger.log
@@ -239,11 +239,6 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect((matterbridge as any).initialized).toBeTruthy();
     plugins = matterbridge.plugins;
     expect(plugins.length).toBe(6);
-    const i = 1;
-    for (const plugin of plugins) {
-      if (i < 4) expect(plugin.type).toBe('DynamicPlatform');
-      else expect(plugin.type).toBe('AccessoryPlatform');
-    }
 
     await waiter(
       'Matter server started',
@@ -267,9 +262,13 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
       true,
     );
 
+    let i = 1;
     for (const plugin of plugins) {
+      if (i < 4) expect(plugin.type).toBe('DynamicPlatform');
+      else expect(plugin.type).toBe('AccessoryPlatform');
       expect(plugin.serverNode).toBeUndefined();
       expect(plugin.aggregatorNode).toBeUndefined();
+      i++;
     }
     expect(matterbridge.serverNode?.lifecycle.isReady).toBeTruthy();
     expect(matterbridge.serverNode?.lifecycle.isOnline).toBeTruthy();
@@ -307,7 +306,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(matterbridge.devices.size).toBe(9);
     let i = 1;
     for (const plugin of plugins) {
-      expect(plugin.type).toBe('DynamicPlatform');
+      expect(plugin.type).toBe(i < 4 ? 'DynamicPlatform' : 'AccessoryPlatform');
       expect(plugin.addedDevices).toBe(i < 4 ? 2 : 1);
       expect(plugin.registeredDevices).toBe(i < 4 ? 2 : 1);
       await matterbridge.removeAllBridgedEndpoints('matterbridge-mock' + i);
@@ -320,7 +319,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(matterbridge.devices.size).toBe(0);
   }, 60000);
 
-  test('Again Matterbridge.destroyInstance() -bridge mode', async () => {
+  test('Finally Matterbridge.destroyInstance() -bridge mode', async () => {
     // Close the Matterbridge instance
     await matterbridge.destroyInstance();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Destroy instance...`);
