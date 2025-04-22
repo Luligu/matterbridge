@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-conditional-expect */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -7,7 +8,7 @@ import { jest } from '@jest/globals';
 
 // jest.mock('@project-chip/matter-node.js/util');
 
-import { AnsiLogger, db, LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+import { AnsiLogger, db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { waiter } from './utils/export.js';
 import { Environment, StorageService } from '@matter/main';
@@ -38,7 +39,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
   let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
   let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-  const debug = false;
+  const debug = true;
 
   if (!debug) {
     // Spy on and mock AnsiLogger.log
@@ -95,6 +96,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   }, 30000);
 
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {
+    /*
     // Reset matterstorage Jest
     const environment = Environment.default;
     environment.vars.set('path.root', path.join(os.homedir(), '.matterbridge', 'matterstorage.JestBridge'));
@@ -108,14 +110,17 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     await matterStorageManager?.createContext('root').clearAll();
     await matterStorageManager?.createContext('sessions').clearAll();
     await matterStorageManager?.close();
+    */
 
+    // Load Matterbridge instance and initialize it
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeDefined();
-    matterbridge.log.warn('***Matterbridge instance loaded');
     expect(matterbridge.profile).toBe('JestBridge');
     expect(matterbridge.bridgeMode).toBe('bridge');
+    expect(Environment.default.vars.get('path.root')).toBe(path.join(matterbridge.matterbridgeDirectory, 'matterstorage.JestBridge'));
 
     // Clear all plugins
+    plugins = matterbridge.plugins;
     matterbridge.plugins.clear();
     await matterbridge.plugins.saveToStorage();
 
@@ -182,7 +187,6 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   });
 
   test('add plugin', async () => {
-    plugins = (matterbridge as any).plugins;
     expect(plugins.length).toBe(0);
     expect(await plugins.add('./src/mock/plugin1')).not.toBeNull();
     expect(plugins.length).toBe(1);
@@ -190,17 +194,35 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(plugins.length).toBe(2);
     expect(await plugins.add('./src/mock/plugin3')).not.toBeNull();
     expect(plugins.length).toBe(3);
+    expect(await plugins.add('./src/mock/plugin4')).not.toBeNull();
+    expect(plugins.length).toBe(4);
+    expect(await plugins.add('./src/mock/plugin5')).not.toBeNull();
+    expect(plugins.length).toBe(5);
+    expect(await plugins.add('./src/mock/plugin6')).not.toBeNull();
+    expect(plugins.length).toBe(6);
+    expect(plugins.get('matterbridge-mock1')?.type).toBe('AnyPlatform');
+    expect(plugins.get('matterbridge-mock2')?.type).toBe('AnyPlatform');
+    expect(plugins.get('matterbridge-mock3')?.type).toBe('AnyPlatform');
+    expect(plugins.get('matterbridge-mock4')?.type).toBe('AnyPlatform');
+    expect(plugins.get('matterbridge-mock5')?.type).toBe('AnyPlatform');
+    expect(plugins.get('matterbridge-mock6')?.type).toBe('AnyPlatform');
   });
 
   test('load plugins', async () => {
-    expect(matterbridge.plugins.size).toBe(3);
+    expect(matterbridge.plugins.size).toBe(6);
     expect(matterbridge.devices.size).toBe(0);
     for (const plugin of matterbridge.plugins) {
       await matterbridge.plugins.load(plugin);
       expect(plugin.loaded).toBeTruthy();
     }
-    expect(matterbridge.plugins.size).toBe(3);
+    expect(matterbridge.plugins.size).toBe(6);
     expect(matterbridge.devices.size).toBe(0);
+    expect(plugins.get('matterbridge-mock1')?.type).toBe('DynamicPlatform');
+    expect(plugins.get('matterbridge-mock2')?.type).toBe('DynamicPlatform');
+    expect(plugins.get('matterbridge-mock3')?.type).toBe('DynamicPlatform');
+    expect(plugins.get('matterbridge-mock4')?.type).toBe('AccessoryPlatform');
+    expect(plugins.get('matterbridge-mock5')?.type).toBe('AccessoryPlatform');
+    expect(plugins.get('matterbridge-mock6')?.type).toBe('AccessoryPlatform');
   });
 
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
@@ -215,11 +237,12 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect((matterbridge as any).initialized).toBeFalsy();
     await matterbridge.initialize();
     expect((matterbridge as any).initialized).toBeTruthy();
-
-    plugins = (matterbridge as any).plugins;
-    expect(plugins.length).toBe(3);
+    plugins = matterbridge.plugins;
+    expect(plugins.length).toBe(6);
+    const i = 1;
     for (const plugin of plugins) {
-      expect(plugin.type).toBe('DynamicPlatform');
+      if (i < 4) expect(plugin.type).toBe('DynamicPlatform');
+      else expect(plugin.type).toBe('AccessoryPlatform');
     }
 
     await waiter(
@@ -234,9 +257,9 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     );
 
     await waiter(
-      'Matter plugins started online',
+      'Matterbridge plugins started',
       () => {
-        return plugins.array()[0].started === true && plugins.array()[1].started === true && plugins.array()[2].started === true;
+        return plugins.array()[0].started === true && plugins.array()[1].started === true && plugins.array()[2].started === true && plugins.array()[3].started === true && plugins.array()[4].started === true && plugins.array()[5].started === true;
       },
       false,
       60000,
@@ -251,8 +274,8 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(matterbridge.serverNode?.lifecycle.isReady).toBeTruthy();
     expect(matterbridge.serverNode?.lifecycle.isOnline).toBeTruthy();
     expect(matterbridge.serverNode?.lifecycle.isCommissioned).toBeFalsy();
-    expect(matterbridge.plugins.size).toBe(3);
-    expect(matterbridge.devices.size).toBe(3);
+    expect(matterbridge.plugins.size).toBe(6);
+    expect(matterbridge.devices.size).toBe(6);
   }, 60000);
 
   test('stop advertise node 2', async () => {
@@ -269,6 +292,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   test('add device -bridge mode', async () => {
     let i = 1;
     for (const plugin of plugins) {
+      if (i >= 4) break;
       const device = new MatterbridgeEndpoint(pressureSensor, { uniqueStorageKey: 'pressureSensor' + i })
         .createDefaultBridgedDeviceBasicInformationClusterServer('Pressure sensor ' + i, '0x123456789', 0xfff1, 'Matterbridge', 'PressureSensor')
         .addRequiredClusterServers();
@@ -279,20 +303,20 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   }, 60000);
 
   test('remove all devices', async () => {
-    expect(plugins.length).toBe(3);
-    expect(matterbridge.devices.size).toBe(6);
+    expect(plugins.length).toBe(6);
+    expect(matterbridge.devices.size).toBe(9);
     let i = 1;
     for (const plugin of plugins) {
       expect(plugin.type).toBe('DynamicPlatform');
-      expect(plugin.addedDevices).toBe(2);
-      expect(plugin.registeredDevices).toBe(2);
+      expect(plugin.addedDevices).toBe(i < 4 ? 2 : 1);
+      expect(plugin.registeredDevices).toBe(i < 4 ? 2 : 1);
       await matterbridge.removeAllBridgedEndpoints('matterbridge-mock' + i);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Removing all bridged endpoints for plugin ${plg}${'matterbridge-mock' + i}${db}`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Removing bridged endpoint ${plg}${'matterbridge-mock' + i++}${db}`));
       expect(plugin.addedDevices).toBe(0);
       expect(plugin.registeredDevices).toBe(0);
     }
-    expect(plugins.length).toBe(3);
+    expect(plugins.length).toBe(6);
     expect(matterbridge.devices.size).toBe(0);
   }, 60000);
 

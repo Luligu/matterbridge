@@ -80,11 +80,11 @@ Matterbridge must be linked to the plugin in development only.
     "dev:link": "npm link matterbridge",
     '''
 }
+```
 
 On the machine you use for development you should also have matterbridge installed globally or built locally and linked (npm link from the package root).
 
- Dev and edge branches of matterbridge are not suitable for developemnt cause they are published for production without types. If you want to develop a plugin using the dev or edge branch of matterbridge, you have to clone the dev or edge branch, build locally and link (npm run deepCleanBuild).
-```
+Dev and edge branches of matterbridge are not suitable for developemnt cause they are published for production without types. If you want to develop a plugin using the dev or edge branch of matterbridge, you have to clone the dev or edge branch, build locally and link (npm run deepCleanBuild).
 
 # \***\*\*\*\*\***
 

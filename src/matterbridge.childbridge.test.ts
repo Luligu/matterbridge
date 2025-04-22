@@ -92,9 +92,10 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   });
 
   test('Matterbridge.loadInstance(true) -childbridge mode', async () => {
+    /*
+    // Reset matterstorage Jest
     const environment = Environment.default;
     environment.vars.set('path.root', path.join(os.homedir(), '.matterbridge', 'matterstorage.JestChildbridge'));
-    /*
     const matterStorageService = environment.get(StorageService);
     expect(matterStorageService).toBeDefined();
     const matterStorageManager = await matterStorageService.open('Matterbridge');
@@ -107,14 +108,15 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     await matterStorageManager?.close();
     */
 
+    // Load Matterbridge instance and initialize it
     matterbridge = await Matterbridge.loadInstance(true);
-    plugins = (matterbridge as any).plugins;
-
     expect(matterbridge).toBeDefined();
     expect(matterbridge.profile).toBe('JestChildbridge');
     expect(matterbridge.bridgeMode).toBe('childbridge');
+    expect(Environment.default.vars.get('path.root')).toBe(path.join(matterbridge.matterbridgeDirectory, 'matterstorage.JestChildbridge'));
 
     // Clear all plugins
+    plugins = matterbridge.plugins;
     matterbridge.plugins.clear();
     await matterbridge.plugins.saveToStorage();
 
@@ -171,7 +173,6 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   }, 60000);
 
   test('add plugin', async () => {
-    plugins = (matterbridge as any).plugins;
     expect(plugins.length).toBe(0);
     expect(await plugins.add('./src/mock/plugin1')).not.toBeNull();
     expect(plugins.length).toBe(1);
@@ -181,6 +182,10 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(plugins.length).toBe(3);
     expect(await plugins.add('./src/mock/plugin4')).not.toBeNull();
     expect(plugins.length).toBe(4);
+    expect(plugins.get('matterbridge-mock1')?.type).toBe('AnyPlatform');
+    expect(plugins.get('matterbridge-mock2')?.type).toBe('AnyPlatform');
+    expect(plugins.get('matterbridge-mock3')?.type).toBe('AnyPlatform');
+    expect(plugins.get('matterbridge-mock4')?.type).toBe('AnyPlatform');
   });
 
   test('create and start server node for each plugin', async () => {
@@ -214,6 +219,10 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     for (const plugin of plugins.array()) {
       console.log(`${pl}${plugin.name}${rs} ${dev}${plugin.type}${rs}`);
     }
+    expect(plugins.get('matterbridge-mock1')?.type).toBe('DynamicPlatform');
+    expect(plugins.get('matterbridge-mock2')?.type).toBe('DynamicPlatform');
+    expect(plugins.get('matterbridge-mock3')?.type).toBe('DynamicPlatform');
+    expect(plugins.get('matterbridge-mock4')?.type).toBe('AccessoryPlatform');
   }, 60000);
 
   test('Matterbridge.destroyInstance() -childbridge mode', async () => {
@@ -222,8 +231,13 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     for (const plugin of plugins) {
       console.log(`Verify ${pl}${plugin.name}${rs} ${dev}${plugin.type}${rs}`);
       expect(plugin.serverNode).toBeDefined();
-      if (i < 4) expect(plugin.aggregatorNode).toBeDefined();
-      else expect(plugin.device).toBeDefined();
+      if (plugin.type === 'DynamicPlatform') {
+        expect(plugin.aggregatorNode).toBeDefined();
+        expect(plugin.device).toBeUndefined();
+      } else {
+        expect(plugin.aggregatorNode).toBeUndefined();
+        expect(plugin.device).toBeDefined();
+      }
       console.log(`Verified ${pl}${plugin.name}${rs} ${dev}${plugin.type}${rs}`);
       await matterbridge.removeAllBridgedEndpoints('matterbridge-mock' + i);
       i++;
@@ -241,30 +255,12 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect((matterbridge as any).initialized).toBeFalsy();
     await matterbridge.initialize();
     expect((matterbridge as any).initialized).toBeTruthy();
-
     plugins = (matterbridge as any).plugins;
     expect(matterbridge.plugins.size).toBe(4);
     expect(matterbridge.devices.size).toBe(0);
 
-    /*
-    let i = 1;
-    for (const plugin of plugins) {
-      expect(plugin.type).toBe(i < 4 ? 'DynamicPlatform' : 'AccessoryPlatform');
-      plugin.platform = undefined;
-      plugin.serverNode = undefined;
-      plugin.aggregatorNode = undefined;
-      plugin.device = undefined;
-      plugin.locked = undefined;
-      plugin.loaded = undefined;
-      plugin.started = undefined;
-      plugin.configured = undefined;
-      await plugins.load(plugin);
-      await plugins.start(plugin);
-      i++;
-    }
-    */
     await waiter(
-      'Matterbridge restarted ',
+      'Matterbridge restarted',
       () => {
         return (
           (matterbridge as any).configureTimeout !== undefined &&
@@ -298,7 +294,13 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
 
     for (const plugin of plugins) {
       expect(plugin.serverNode).toBeDefined();
-      // if (plugin.type === 'DynamicPlatform') expect(plugin.aggregatorNode).toBeDefined();
+      if (plugin.type === 'DynamicPlatform') {
+        expect(plugin.aggregatorNode).toBeDefined();
+        expect(plugin.device).toBeUndefined();
+      } else {
+        expect(plugin.aggregatorNode).toBeUndefined();
+        expect(plugin.device).toBeDefined();
+      }
       expect(plugin.serverNode?.lifecycle.isReady).toBeTruthy();
       expect(plugin.serverNode?.lifecycle.isOnline).toBeTruthy();
       expect(plugin.serverNode?.lifecycle.isCommissioned).toBeFalsy();
@@ -334,8 +336,8 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       await matterbridge.removeAllBridgedEndpoints('matterbridge-mock' + i);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Removing all bridged endpoints for plugin ${plg}${'matterbridge-mock' + i}${db}`);
       if (plugin.type === 'DynamicPlatform') expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Removing bridged endpoint ${plg}${'matterbridge-mock' + i++}${db}`));
-      if (plugin.type === 'DynamicPlatform') expect(plugin.addedDevices).toBe(0);
-      if (plugin.type === 'DynamicPlatform') expect(plugin.registeredDevices).toBe(0);
+      expect(plugin.addedDevices).toBe(0);
+      expect(plugin.registeredDevices).toBe(0);
     }
     expect(plugins.length).toBe(4);
     expect(matterbridge.devices.size).toBe(0);
@@ -352,6 +354,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock1 MdnsService`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock2 MdnsService`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock3 MdnsService`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock4 MdnsService`);
   }, 60000);
 
   test('Cleanup storage', async () => {
@@ -360,5 +363,6 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     (matterbridge as any).initialized = true;
     await (matterbridge as any).parseCommandLine();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
+    console.log('Cleanup storage finished');
   }, 60000);
 });

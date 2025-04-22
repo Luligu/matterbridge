@@ -1,4 +1,5 @@
 import { MatterbridgeDynamicPlatform, MatterbridgeEndpoint, onOffSwitch } from 'matterbridge';
+import { onOffLight } from '../../matterbridgeDeviceTypes';
 
 export default function initializePlugin(matterbridge, log, config) {
   return new MockPlatform(matterbridge, log, config);
@@ -11,8 +12,8 @@ export class MockPlatform extends MatterbridgeDynamicPlatform {
   }
   async onStart(reason) {
     this.log.info(`Starting platform ${this.config.name}: ${reason ?? ''}`);
-    const device = new MatterbridgeEndpoint(onOffSwitch, { uniqueStorageKey: 'onOffSwitchPlugin3' })
-      .createDefaultBasicInformationClusterServer('Switch plugin 3', '0x123456789', 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge OnOffSwitch')
+    const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLightPlugin3' })
+      .createDefaultBridgedDeviceBasicInformationClusterServer('Light plugin 3', '0x123456789', 0xfff1, 'Matterbridge', 'Matterbridge OnOffLight')
       .addRequiredClusterServers();
     await this.registerDevice(device);
   }

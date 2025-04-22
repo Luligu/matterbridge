@@ -440,13 +440,18 @@ All issues have been solved from the version 17.5 of the HomePod/AppleTV. Now th
 
 If you have more then one Apple TV or Home Pod, you can herve better results setting to disabled "Automatic Selection" in "Home Setting", "Home Hubs & Bridges". When "Automatic selection" is disabled, select your Apple Tv if you have one or any of your Home Pod. In this way you should not have anymore more then one session for fabric.
 
-### Appliances and Robot
+### Manufacturer Serial Number and Model
+
+The Home app forgets about them when you restart the node.
+
+### Appliances
 
 As of version 18.4.x, all Appliances device types are not supported by the Home app. They don't even appear like unsupported accessories.
 
 ### Robot
 
 As of version 18.4.x, the Robot is supported by the Home app only as a single, non-bridged device or if it is the only device in the bridge.
+
 If a Robot is present alongside other devices in the bridge, the entire bridge becomes unstable and unusable in the Home app.
 
 ## Home Assistant
