@@ -46,6 +46,7 @@ import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { hasParameter } from './utils/export.js';
 import { BridgedDeviceBasicInformation } from '@matter/main/clusters';
+import { PlatformConfig } from './matterbridgePlatform.js';
 
 /**
  * Websocket message ID for logging.
@@ -1622,7 +1623,7 @@ export class Frontend {
           return;
         }
         this.log.notice(`Action ${CYAN}${data.params.action}${nt}${data.params.value ? ' with ' + CYAN + data.params.value + nt : ''} for plugin ${CYAN}${plugin.name}${nt}`);
-        plugin.platform?.onAction(data.params.action, data.params.value as string | undefined, data.params.id as string | undefined).catch((error) => {
+        plugin.platform?.onAction(data.params.action, data.params.value as string | undefined, data.params.id as string | undefined, data.params.formData as unknown as PlatformConfig).catch((error) => {
           this.log.error(`Error in plugin ${plugin.name} action ${data.params.action}: ${error}`);
         });
       } else if (data.method === '/api/command') {

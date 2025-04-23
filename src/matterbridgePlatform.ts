@@ -215,24 +215,27 @@ export class MatterbridgePlatform {
    * @param {string} action The action triggered by the button in plugin config.
    * @param {string} value The value of the field of the action button.
    * @param {string} id The id of the schema associated with the action.
+   * @param {PlatformConfig} formData The changed form data of the plugin.
    *
    * @remarks
    * This method can be overridden in the extended class.
    *
    * Use this method to handle the action defined in the plugin schema:
+   * ```json
    *  "addDevice": {
    *      "description": "Manually add a device that has not been discovered with mdns:",
    *      "type": "boolean",
-   *      "buttonText": "ADD",      // The text on the button.
+   *      "buttonText": "ADD",      // The text on the button. This is used when the action doesn't include a text field.
    *      "buttonField": "ADD",     // The text on the button. This is used when the action includes a text field.
    *      "buttonClose": false,     // optional, default is false. When true, the dialog will close after the action is sent.
    *      "buttonSave": false,      // optional, default is false. When true, the dialog will close and trigger the restart required after the action is sent.
    *      "textPlaceholder": "Enter the device IP address",   // optional: the placeholder text for the text field.
    *      "default": false
    *  },
+   * ```
    */
-  async onAction(action: string, value?: string, id?: string) {
-    this.log.debug(`The plugin ${CYAN}${this.name}${db} doesn't override onAction. Received action ${CYAN}${action}${db}${value ? ' with ' + CYAN + value + db : ''} ${id ? ' for schema ' + CYAN + id + db : ''}`);
+  async onAction(action: string, value?: string, id?: string, formData?: PlatformConfig) {
+    this.log.debug(`The plugin ${CYAN}${this.name}${db} doesn't override onAction. Received action ${CYAN}${action}${db}${value ? ' with ' + CYAN + value + db : ''} ${id ? ' for schema ' + CYAN + id + db : ''}`, formData);
   }
 
   /**
