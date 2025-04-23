@@ -573,7 +573,7 @@ describe('Matterbridge platform', () => {
 
   test('onAction should log a message', async () => {
     await platform.onAction('Test', 'value', 'id');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`doesn't override onAction.`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`doesn't override onAction.`), undefined);
   });
 
   test('onConfigChanged should log a message', async () => {

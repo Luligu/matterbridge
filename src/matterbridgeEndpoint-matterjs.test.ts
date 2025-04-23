@@ -97,12 +97,6 @@ describe('MatterbridgeEndpoint class', () => {
     matterbridge.environment.vars.set('runtime.signals', false);
     matterbridge.environment.vars.set('runtime.exitcode', false);
     await (matterbridge as any).startMatterStorage();
-    await matterbridge.matterStorageManager?.createContext('events')?.clearAll();
-    await matterbridge.matterStorageManager?.createContext('fabrics')?.clearAll();
-    await matterbridge.matterStorageManager?.createContext('root')?.clearAll();
-    await matterbridge.matterStorageManager?.createContext('sessions')?.clearAll();
-    await matterbridge.matterbridgeContext?.clearAll();
-    await wait(1000);
   });
 
   beforeEach(async () => {
@@ -115,17 +109,6 @@ describe('MatterbridgeEndpoint class', () => {
   });
 
   afterAll(async () => {
-    // Clear all storage contexts
-    await matterbridge.matterStorageManager?.createContext('events')?.clearAll();
-    await matterbridge.matterStorageManager?.createContext('fabrics')?.clearAll();
-    await matterbridge.matterStorageManager?.createContext('root')?.clearAll();
-    await matterbridge.matterStorageManager?.createContext('sessions')?.clearAll();
-    await matterbridge.matterbridgeContext?.clearAll();
-    await wait(1000);
-
-    // Close the Matterbridge instance
-    await matterbridge.destroyInstance();
-
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -134,7 +117,8 @@ describe('MatterbridgeEndpoint class', () => {
     const deviceType = onOffLight;
 
     test('create a context for server node', async () => {
-      context = await (matterbridge as any).createServerNodeContext('Jest', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
+      expect(matterbridge.environment.vars.get('path.root')).toBe('matterstorage');
+      context = await (matterbridge as any).createServerNodeContext('Matterbridge', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
       expect(context).toBeDefined();
     });
 
@@ -369,6 +353,24 @@ describe('MatterbridgeEndpoint class', () => {
       expect(server).toBeDefined();
       await server.close();
       await server.env.get(MdnsService)[Symbol.asyncDispose](); // loadInstance(false) so destroyInstance() does not stop the mDNS service
+    });
+
+    test('reset storage', async () => {
+      expect(matterbridge.environment.vars.get('path.root')).toBe('matterstorage');
+      expect(matterbridge.matterStorageManager).toBeDefined();
+      expect(matterbridge.matterbridgeContext).toBeDefined();
+      if (!matterbridge.matterStorageManager) throw new Error('matterStorageManager is not defined');
+      if (!matterbridge.matterbridgeContext) throw new Error('matterbridgeContext is not defined');
+
+      // Clear all storage contexts
+      await matterbridge.matterStorageManager.createContext('events').clearAll();
+      await matterbridge.matterStorageManager.createContext('fabrics').clearAll();
+      await matterbridge.matterStorageManager.createContext('root').clearAll();
+      await matterbridge.matterStorageManager.createContext('sessions').clearAll();
+      await matterbridge.matterbridgeContext.clearAll();
+
+      // Close the Matterbridge instance
+      await matterbridge.destroyInstance();
     });
   });
 });

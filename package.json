@@ -152,7 +152,7 @@
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest && npm run test"
   },
   "dependencies": {
-    "@matter/main": "^0.13.0-alpha.0-20250423-8917d1d1d",
+    "@matter/main": "0.13.0-alpha.0-20250423-8917d1d1d",
     "archiver": "7.0.1",
     "express": "5.1.0",
     "glob": "11.0.1",
