@@ -63,3 +63,20 @@ export function getIntParameter(name: string): number | undefined {
   if (!isValidNumber(intValue)) return undefined;
   return intValue;
 }
+
+/**
+ * Retrieves the value of a command-line parameter as a string array.
+ *
+ * @param {string} name - The name of the parameter to retrieve.
+ * @returns {string[]} An array of string values for the parameter, or an empty array if not found.
+ */
+export function getStringArrayParameter(name: string): string[] {
+  const args = process.argv.slice(2);
+  const idx = args.indexOf(`--${name}`) || args.indexOf(`-${name}`);
+  if (idx < 0) return [];
+  const values: string[] = [];
+  for (let i = idx + 1; i < args.length && !args[i].startsWith('-'); i++) {
+    values.push(args[i]);
+  }
+  return values;
+}

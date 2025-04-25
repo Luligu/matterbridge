@@ -38,7 +38,7 @@ docker exec -it matterbridge curl -v http://localhost:8283/health
 
 This will create the required directories in your home directory if they don't exist
 
-```
+```bash
 cd ~
 mkdir -p ./Matterbridge
 mkdir -p ./.matterbridge
@@ -51,7 +51,7 @@ You may need to adapt the script to your setup.
 
 If you don't want to use sudo with docker commands, run this command:
 
-```
+```bash
 sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
@@ -62,7 +62,7 @@ After adding your user to the docker group, you need to log out and log back in 
 
 The container must have full access to the host network (needed for mdns).
 
-```
+```bash
 sudo docker run --name matterbridge \
   -v /home/<USER>/Matterbridge:/root/Matterbridge \
   -v /home/<USER>/.matterbridge:/root/.matterbridge \
@@ -95,55 +95,55 @@ copy it in the home directory or edit the existing one to add the matterbridge s
 
 Then start docker compose with:
 
-```
+```bash
 docker compose up -d
 ```
 
 ### Stop with docker compose
 
-```
+```bash
 docker compose down
 ```
 
 ### Update with docker compose
 
-```
+```bash
 docker compose pull
 ```
 
 ### Inspect the container
 
-```
+```bash
 docker container inspect matterbridge
 ```
 
 ### Start the Docker container
 
-```
+```bash
 docker start matterbridge
 ```
 
 ### Stop the Docker container
 
-```
+```bash
 docker stop matterbridge
 ```
 
 ### Restart the Docker container
 
-```
+```bash
 docker restart matterbridge
 ```
 
 ### Shows the logs
 
-```
+```bash
 docker logs matterbridge
 ```
 
 ### Shows the logs for a time interval
 
-```
+```bash
 docker logs \
   --since "2025-04-19T00:00:00" \
   --until "2025-04-19T00:02:00" \
@@ -152,6 +152,6 @@ docker logs \
 
 ### Shows the logs real time (tail)
 
-```
+```bash
 docker logs --tail 1000 -f matterbridge
 ```
