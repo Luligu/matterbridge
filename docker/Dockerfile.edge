@@ -15,7 +15,7 @@ RUN npm ci && \
 FROM scratch AS release
 
 # Import minimal Ubuntu Jammy core ARM64 rootfs
-ADD docker/ubuntu-jammy-core-cloudimg-arm64-root.tar.gz /
+ADD ./docker/ubuntu-jammy-core-cloudimg-arm64-root.tar.gz /
 
 ENV DEBIAN_FRONTEND=noninteractive
 

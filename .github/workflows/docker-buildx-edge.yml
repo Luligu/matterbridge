@@ -46,12 +46,12 @@ jobs:
         run: |
           echo "Extracted version is: $VERSION ${{ env.VERSION }}"
 
-      - name: Run Docker Buildx on alpine
+      - name: Run Docker Buildx on edge
         run: |
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
             -f docker/Dockerfile.edge \
             -t luligu/matterbridge:edge \
             --push .
-          docker manifest inspect luligu/matterbridge:alpine
+          docker manifest inspect luligu/matterbridge:edge
         timeout-minutes: 60
