@@ -22,7 +22,7 @@ RUN apt-get update \
 # install Node.js 23.x from NodeSource
 RUN curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
  && apt-get install -y --no-install-recommends nodejs \
- && apt-get purge -y apt-transport-https ca-certificates curl gnupg \
+ && apt-get purge -y apt-transport-https curl gnupg \
  && apt-get autoremove -y \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
