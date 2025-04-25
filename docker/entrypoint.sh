@@ -1,12 +1,9 @@
 #!/bin/sh
 
-FLAG_FILE="/app/.initialized"
+FLAG_FILE="/matterbridge/.initialized"
 
 if [ ! -f "$FLAG_FILE" ]; then
   echo "Welcome to the Matterbridge edge docker image."
-
-  echo "Updating the image:"
-  apt-get update && apt-get upgrade -y
 
   echo "Installing bluetooth essentials:"
   apt-get install -y --no-install-recommends \
