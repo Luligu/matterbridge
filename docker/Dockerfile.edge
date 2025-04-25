@@ -12,13 +12,7 @@ RUN npm ci && \
     npm pack
 
 # ─────────────── RUNTIME STAGE ───────────────
-FROM scratch AS release
-
-# Import minimal Ubuntu Jammy core ARM64 rootfs
-ADD ./docker/ubuntu-jammy-core-cloudimg-arm64-root.tar.gz /
-
-# Set the environment variable to noninteractive
-ENV DEBIAN_FRONTEND=noninteractive
+FROM ubuntu:jammy AS release
 
 # Install node from NodeSource
 RUN apt-get update \
