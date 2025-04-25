@@ -6,6 +6,7 @@ if [ ! -f "$FLAG_FILE" ]; then
   echo "Welcome to the Matterbridge edge docker image."
 
   echo "Installing bluetooth essentials:"
+  apt-get update
   apt-get install -y --no-install-recommends \
     bluetooth bluez libbluetooth-dev libudev-dev build-essential libcap2-bin \
     python3
