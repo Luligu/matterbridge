@@ -1,3 +1,4 @@
+# ─────────────── BUILD STAGE ───────────────
 FROM node:23-bookworm-slim AS base
 
 # Build Matterbridge
@@ -10,9 +11,20 @@ RUN npm ci && \
     npm shrinkwrap --omit=dev && \
     npm pack
 
-FROM node:23-bookworm-slim AS release
-WORKDIR /app    
+# ─────────────── RUNTIME STAGE ───────────────
+FROM ubuntu:jammy-slim AS release
 
+# install ca-certs, curl
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates curl \
+ && rm -rf /var/lib/apt/lists/*
+
+# install Node.js 23.x from NodeSource
+RUN curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
+ && apt-get install -y --no-install-recommends nodejs \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app    
 COPY --from=base /matterbridge/*.tgz .
 RUN npm install npm@latest *.tgz --global --verbose --omit=dev && rm *.tgz
 
