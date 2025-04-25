@@ -3,7 +3,7 @@
 FLAG_FILE="/app/.initialized"
 
 if [ ! -f "$FLAG_FILE" ]; then
-  echo "Welcome to the Matterbridge alpine docker image."
+  echo "Welcome to the Matterbridge edge docker image."
   echo "Node.Js version:"
   node -v
   echo "Npm version:"

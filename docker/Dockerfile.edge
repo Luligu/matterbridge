@@ -1,0 +1,23 @@
+FROM node:23-bookworm-slim AS base
+
+# Build Matterbridge
+WORKDIR /matterbridge
+COPY ./package.json ./package-lock.json ./tsconfig.json ./tsconfig.production.json ./.npmignore ./
+COPY ./src ./src
+COPY ./frontend/build ./frontend/build
+RUN npm ci && \
+    npm run build && \
+    npm shrinkwrap --omit=dev && \
+    npm pack
+
+FROM node:23-bookworm-slim AS release
+WORKDIR /app    
+
+COPY --from=base /matterbridge/*.tgz .
+RUN npm install npm@latest *.tgz --global --verbose --omit=dev && rm *.tgz
+
+# Copy and execute the entrypoint script
+COPY ./docker/entrypoint.sh ./
+RUN chmod +x ./entrypoint.sh
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["matterbridge", "-docker"]

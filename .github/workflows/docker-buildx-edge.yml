@@ -50,8 +50,8 @@ jobs:
         run: |
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
-            -f docker/Dockerfile.alpine \
-            -t luligu/matterbridge:alpine \
+            -f docker/Dockerfile.edge \
+            -t luligu/matterbridge:edge \
             --push .
           docker manifest inspect luligu/matterbridge:alpine
         timeout-minutes: 60

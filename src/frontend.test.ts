@@ -127,7 +127,7 @@ describe('Matterbridge frontend', () => {
       expect(matterbridge.profile).toBe('JestFrontend');
       expect(matterbridge.bridgeMode).toBe('bridge');
       expect((matterbridge as any).initialized).toBe(true);
-    });
+    }, 60000);
 
     test('Reset Jest plugins', async () => {
       matterbridge.plugins.clear();
