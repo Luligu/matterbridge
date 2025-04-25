@@ -1,5 +1,5 @@
 # ─────────────── BUILD STAGE ───────────────
-FROM node:23-bookworm-slim AS base
+FROM ubuntu:jammy AS base
 
 # Build Matterbridge
 WORKDIR /matterbridge
@@ -12,7 +12,7 @@ RUN npm ci && \
     npm pack
 
 # ─────────────── RUNTIME STAGE ───────────────
-FROM ubuntu:jammy-slim AS release
+FROM ubuntu:jammy AS release
 
 # install ca-certs, curl
 RUN apt-get update \
