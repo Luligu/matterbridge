@@ -12,11 +12,11 @@ if [ ! -f "$FLAG_FILE" ]; then
   apt-get install -y --no-install-recommends \
     bluetooth bluez libbluetooth-dev libudev-dev build-essential libcap2-bin \
     python3
-  setcap 'cap_net_raw' "$(which node)"
+  setcap 'cap_net_raw+eip' "$(which node)"
 
   echo "Node.Js version:"
   node -v
-  
+
   echo "Npm version:"
   npm -v
 

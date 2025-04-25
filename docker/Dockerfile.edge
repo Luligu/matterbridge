@@ -1,5 +1,5 @@
 # ─────────────── BUILD STAGE ───────────────
-FROM node:23-bookworm-slim AS base
+FROM node:23-ubuntu AS base
 
 # Build Matterbridge
 WORKDIR /matterbridge
@@ -14,9 +14,9 @@ RUN npm ci && \
 # ─────────────── RUNTIME STAGE ───────────────
 FROM ubuntu:jammy AS release
 
-# install ca-certs, curl
+# install curl
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates curl \
+ && apt-get install -y --no-install-recommends curl \
  && rm -rf /var/lib/apt/lists/*
 
 # install Node.js 23.x from NodeSource
