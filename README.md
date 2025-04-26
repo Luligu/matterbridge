@@ -250,6 +250,20 @@ It is the ideal companion of the official [Matterbridge Home Assistant Add-on](h
 
 Matterbridge Webhooks plugin allows you to expose any webhooks to Matter..
 
+### BTHome
+
+<a href="https://github.com/Luligu/matterbridge-webhooks">
+  <img src="frontend/public/matterbridge.svg" alt="Matterbridge logo" width="100" />
+</a>
+
+Matterbridge BTHome allows you to expose any BTHome device to Matter using the native bluetooth of the host machine.
+
+Features:
+
+- The bluetooth works correctly on all platforms and is based on the @stoprocent fork of noble.
+- The discovered BTHome devices are stored with all attributes to easily restart the plugin.
+- The plugin has also a command line to test and verify the bluetooth adapter and the ble network.
+
 ### Accessory platform example
 
 This is an example of an accessory platform plugin.
@@ -309,6 +323,12 @@ A Dynamic platform plugin exposes as many devices as you need (the limit for the
 The history works in both bridge and childbridge mode.
 
 The Eve app only shows the history when the plugins run like an AccessoryPlatform in childbridge mode (this means the plugin is paired directly).
+
+## Third-party plugins
+
+### [Loxone](https://github.com/andrasg/matterbridge-loxone)
+
+A matterbridge plugin allows connecting Loxone devices to Matter.
 
 ## How to install and add a plugin with the frontend (best option)
 
