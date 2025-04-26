@@ -67,8 +67,10 @@ Modified clusters:
 - [matter.js]: Update to 0.13.0-alpha.0-20250415-475996bb5.
 - [matter.js]: Update to 0.13.0-alpha.0-20250418-8cfc0b832.
 - [matter.js]: Update to 0.13.0-alpha.0-20250420-9f45e4f77.
-- [matter.js]: Update to 0.13.0-alpha.0-20250420-9f45e4f77.
+- [matter.js]: Update to 0.13.0-alpha.0-20250422-0d27f26be.
 - [matter.js]: Update to 0.13.0-alpha.0-20250423-8917d1d1d.
+- [matter.js]: Update to 0.13.0-alpha.0-20250424-4760af1f3.
+- [matter.js]: Update to 0.13.0-alpha.0-20250425-94b33ff98.
 - [help]: Updated cli help screen.
 - [logger]: Improved frontend logger cleaning.
 - [parameter]: Added getIntArrayParameter and getStringArrayParameter.
