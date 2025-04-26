@@ -21,6 +21,19 @@
  * limitations under the License. *
  */
 
+/**
+ * Checks if a command-line parameter is present.
+ *
+ * @param {string} name - The name of the parameter to check.
+ * @returns {boolean} True if the parameter is present, otherwise false.
+ */
+export function hasParameter(name: string): boolean {
+  const commandArguments = process.argv.slice(2);
+  let markerIncluded = commandArguments.includes(`-${name}`);
+  if (!markerIncluded) markerIncluded = commandArguments.includes(`--${name}`);
+  return markerIncluded;
+}
+
 import { isValidNumber } from './export.js';
 
 /**
@@ -38,19 +51,6 @@ export function getParameter(name: string): string | undefined {
 }
 
 /**
- * Checks if a command-line parameter is present.
- *
- * @param {string} name - The name of the parameter to check.
- * @returns {boolean} True if the parameter is present, otherwise false.
- */
-export function hasParameter(name: string): boolean {
-  const commandArguments = process.argv.slice(2);
-  let markerIncluded = commandArguments.includes(`-${name}`);
-  if (!markerIncluded) markerIncluded = commandArguments.includes(`--${name}`);
-  return markerIncluded;
-}
-
-/**
  * Retrieves the value of a command-line parameter as an integer.
  *
  * @param {string} name - The name of the parameter to retrieve.
@@ -65,18 +65,40 @@ export function getIntParameter(name: string): number | undefined {
 }
 
 /**
+ * Retrieves the value of a command-line parameter as a number array.
+ *
+ * @param {string} name - The name of the parameter to retrieve.
+ * @returns {number[] | undefined} An array of string values for the parameter, or undefined if not found.
+ */
+export function getIntArrayParameter(name: string): number[] | undefined {
+  const commandArguments = process.argv.slice(2);
+  let markerIndex = commandArguments.indexOf(`--${name}`);
+  if (markerIndex < 0) markerIndex = commandArguments.indexOf(`-${name}`);
+  if (markerIndex < 0) return undefined;
+  const intValues: number[] = [];
+  for (let i = markerIndex + 1; i < commandArguments.length && !commandArguments[i].startsWith('-'); i++) {
+    const intValue = parseInt(commandArguments[i], 10);
+    if (isValidNumber(intValue)) intValues.push(intValue);
+  }
+  if (intValues.length === 0) return undefined;
+  return intValues;
+}
+
+/**
  * Retrieves the value of a command-line parameter as a string array.
  *
  * @param {string} name - The name of the parameter to retrieve.
- * @returns {string[]} An array of string values for the parameter, or an empty array if not found.
+ * @returns {string[] | undefined} An array of string values for the parameter, or undefined if not found.
  */
-export function getStringArrayParameter(name: string): string[] {
-  const args = process.argv.slice(2);
-  const idx = args.indexOf(`--${name}`) || args.indexOf(`-${name}`);
-  if (idx < 0) return [];
+export function getStringArrayParameter(name: string): string[] | undefined {
+  const commandArguments = process.argv.slice(2);
+  let markerIndex = commandArguments.indexOf(`--${name}`);
+  if (markerIndex < 0) markerIndex = commandArguments.indexOf(`-${name}`);
+  if (markerIndex < 0) return undefined;
   const values: string[] = [];
-  for (let i = idx + 1; i < args.length && !args[i].startsWith('-'); i++) {
-    values.push(args[i]);
+  for (let i = markerIndex + 1; i < commandArguments.length && !commandArguments[i].startsWith('-'); i++) {
+    values.push(commandArguments[i]);
   }
+  if (values.length === 0) return undefined;
   return values;
 }

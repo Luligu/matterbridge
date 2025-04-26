@@ -1,6 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { deepEqual, deepCopy, getIpv4InterfaceAddress, getIpv6InterfaceAddress, logInterfaces, waiter, wait, getMacAddress, createZip, getNpmPackageVersion, copyDirectory, resolveHostname } from './export';
+import {
+  deepEqual,
+  deepCopy,
+  getIpv4InterfaceAddress,
+  getIpv6InterfaceAddress,
+  logInterfaces,
+  waiter,
+  wait,
+  getMacAddress,
+  createZip,
+  getNpmPackageVersion,
+  copyDirectory,
+  resolveHostname,
+  getStringArrayParameter,
+  getIntArrayParameter,
+} from './export';
 import { hasParameter, getParameter, getIntParameter, isValidIpv4Address, isValidNumber, isValidBoolean, isValidString, isValidObject, isValidArray, isValidNull, isValidUndefined } from './export';
 import { promises as fs } from 'node:fs';
 import { AnsiLogger } from 'node-ansi-logger';
@@ -432,6 +447,40 @@ describe('Utils test', () => {
     process.argv = ['node', 'index.js', '-experimental-vm-modules', '-debug', '-logger', '5'];
     expect(getIntParameter('debug')).toBe(undefined);
     expect(getIntParameter('logger')).toBe(5);
+    process.argv = argv;
+  });
+
+  it('getIntArrayParameter should retrive the parameter', () => {
+    const argv = process.argv;
+    process.argv = ['node', 'index.js', '--experimental-vm-modules', '--debug', '--filter', '111', 'abc', '222', '--logger', 'debug'];
+    expect(getIntArrayParameter('test')).toBe(undefined);
+    expect(getIntArrayParameter('filter')).toEqual([111, 222]);
+    process.argv = ['node', 'index.js', '--experimental-vm-modules', '--debug', '--filter', '111', 'abc', '222'];
+    expect(getIntArrayParameter('test')).toBe(undefined);
+    expect(getIntArrayParameter('filter')).toEqual([111, 222]);
+    process.argv = ['node', 'index.js', '--experimental-vm-modules', '-debug', '-filter', '111', 'abc', '222', '-logger', 'debug'];
+    expect(getIntArrayParameter('debug')).toBe(undefined);
+    expect(getIntArrayParameter('filter')).toEqual([111, 222]);
+    process.argv = ['node', 'index.js', '--experimental-vm-modules', '-debug', '-filter', '111', 'abc', '222'];
+    expect(getIntArrayParameter('debug')).toBe(undefined);
+    expect(getIntArrayParameter('filter')).toEqual([111, 222]);
+    process.argv = argv;
+  });
+
+  it('getStringArrayParameter should retrive the parameter', () => {
+    const argv = process.argv;
+    process.argv = ['node', 'index.js', '--experimental-vm-modules', '--debug', '--filter', '111', '222', '--logger', 'debug'];
+    expect(getStringArrayParameter('test')).toBe(undefined);
+    expect(getStringArrayParameter('filter')).toEqual(['111', '222']);
+    process.argv = ['node', 'index.js', '--experimental-vm-modules', '--debug', '--filter', '111', '222'];
+    expect(getStringArrayParameter('test')).toBe(undefined);
+    expect(getStringArrayParameter('filter')).toEqual(['111', '222']);
+    process.argv = ['node', 'index.js', '--experimental-vm-modules', '-debug', '-filter', '111', '222', '-logger', 'debug'];
+    expect(getStringArrayParameter('debug')).toBe(undefined);
+    expect(getStringArrayParameter('filter')).toEqual(['111', '222']);
+    process.argv = ['node', 'index.js', '--experimental-vm-modules', '-debug', '-filter', '111', '222'];
+    expect(getStringArrayParameter('debug')).toBe(undefined);
+    expect(getStringArrayParameter('filter')).toEqual(['111', '222']);
     process.argv = argv;
   });
 
