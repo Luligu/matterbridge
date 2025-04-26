@@ -328,7 +328,7 @@ The Eve app only shows the history when the plugins run like an AccessoryPlatfor
 
 ### [Loxone](https://github.com/andrasg/matterbridge-loxone)
 
-A matterbridge plugin allows connecting Loxone devices to Matter.
+A matterbridge plugin that allows connecting Loxone devices to Matter.
 
 ## How to install and add a plugin with the frontend (best option)
 
