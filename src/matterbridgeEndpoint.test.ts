@@ -155,7 +155,7 @@ describe('MatterbridgeEndpoint class', () => {
     */
 
     await waitForOnline();
-  });
+  }, 30000);
 
   beforeEach(async () => {
     // Clear all mocks

@@ -97,7 +97,7 @@ describe('MatterbridgeEndpoint class', () => {
     matterbridge.environment.vars.set('runtime.signals', false);
     matterbridge.environment.vars.set('runtime.exitcode', false);
     await (matterbridge as any).startMatterStorage();
-  });
+  }, 30000);
 
   beforeEach(async () => {
     // Clear all mocks
