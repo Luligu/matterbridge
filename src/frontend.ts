@@ -45,7 +45,7 @@ import { ApiClusters, ApiDevices, BaseRegisteredPlugin, plg, RegisteredPlugin } 
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { hasParameter } from './utils/export.js';
-import { BridgedDeviceBasicInformation } from '@matter/main/clusters';
+import { BridgedDeviceBasicInformation, PowerSource } from '@matter/main/clusters';
 import { PlatformConfig } from './matterbridgePlatform.js';
 
 /**
@@ -1186,6 +1186,29 @@ export class Frontend {
     return false;
   }
 
+  private getPowerSource(device: MatterbridgeEndpoint): 'ac' | 'dc' | 'ok' | 'warning' | 'critical' | undefined {
+    if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return undefined;
+
+    const powerSource = (device: MatterbridgeEndpoint) => {
+      const featureMap = device.getAttribute(PowerSource.Cluster.id, 'featureMap') as Record<string, boolean>;
+      if (featureMap.wired) {
+        const wiredCurrentType = device.getAttribute(PowerSource.Cluster.id, 'wiredCurrentType') as PowerSource.WiredCurrentType;
+        return ['ac', 'dc'][wiredCurrentType] as 'ac' | 'dc' | undefined;
+      }
+      if (featureMap.battery) {
+        const batChargeLevel = device.getAttribute(PowerSource.Cluster.id, 'batChargeLevel') as PowerSource.BatChargeLevel;
+        return ['ok', 'warning', 'critical'][batChargeLevel] as 'ok' | 'warning' | 'critical' | undefined;
+      }
+      return;
+    };
+    // Root endpoint
+    if (device.hasClusterServer(PowerSource.Cluster.id)) return powerSource(device);
+    // Child endpoints
+    for (const child of device.getChildEndpoints()) {
+      if (child.hasClusterServer(PowerSource.Cluster.id)) return powerSource(child);
+    }
+  }
+
   /**
    * Retrieves the cluster text description from a given device.
    * @param {MatterbridgeDevice} device - The MatterbridgeDevice object.
@@ -1478,6 +1501,7 @@ export class Frontend {
             configUrl: device.configUrl,
             uniqueId: device.uniqueId,
             reachable: this.getReachability(device),
+            powerSource: this.getPowerSource(device),
             cluster: cluster,
           });
         });

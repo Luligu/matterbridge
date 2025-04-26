@@ -190,6 +190,7 @@ export interface ApiDevices {
   configUrl?: string;
   uniqueId: string;
   reachable: boolean;
+  powerSource?: 'ac' | 'dc' | 'ok' | 'warning' | 'critical';
   cluster: string;
 }
 
