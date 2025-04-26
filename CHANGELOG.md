@@ -51,6 +51,8 @@ Modified clusters:
 - [deviceTypes]: Added Robotic device type.
 - [deviceTypes]: Added Appliances device types.
 - [frontend]: Added the matterbridge aggregator serialNumber in the QRDiv.
+- [frontend]: Added Power column in the Devices panel of the Home page.
+- [parameter]: Added getIntArrayParameter and getStringArrayParameter.
 
 ### Changed
 
@@ -73,7 +75,6 @@ Modified clusters:
 - [matter.js]: Update to 0.13.0-alpha.0-20250425-94b33ff98.
 - [help]: Updated cli help screen.
 - [logger]: Improved frontend logger cleaning.
-- [parameter]: Added getIntArrayParameter and getStringArrayParameter.
 
 ### Fixed
 
