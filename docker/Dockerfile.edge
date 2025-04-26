@@ -39,6 +39,10 @@ WORKDIR /matterbridge
 COPY --from=base /matterbridge/*.tgz .
 RUN npm install npm@latest *.tgz --global --omit=dev && rm *.tgz
 
+# Add Docker HEALTHCHECK
+HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
+  CMD curl --fail http://localhost:8283/health || exit 1
+
 # Copy and execute the entrypoint script
 COPY ./docker/entrypoint.sh ./
 RUN chmod +x ./entrypoint.sh
