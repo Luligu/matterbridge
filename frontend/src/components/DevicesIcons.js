@@ -46,6 +46,14 @@ import OpacityIcon from '@mui/icons-material/Opacity'; // WaterValve
 import MasksIcon from '@mui/icons-material/Masks'; // AirQualitySensor
 import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked'; // Momentary or latching switch
 import ChecklistIcon from '@mui/icons-material/Checklist'; // ModeSelect
+import LocalLaundryServiceIcon from '@mui/icons-material/LocalLaundryService'; // Laundry
+import MicrowaveIcon from '@mui/icons-material/Microwave';
+import KitchenIcon from '@mui/icons-material/Kitchen';
+import CalendarViewMonthIcon from '@mui/icons-material/CalendarViewMonth';
+
+// @mdi/js use: <Icon path={mdiSortDescending} size='15px'/>
+import Icon from '@mdi/react';
+import { mdiAirFilter, mdiWashingMachine, mdiTumbleDryer, mdiDishwasher, mdiStove, mdiThermostatBox } from '@mdi/js';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
@@ -70,20 +78,28 @@ const lightDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d];
 const outletDeviceTypes = [0x010a, 0x010b];
 const switchDeviceTypes = [0x0103, 0x0104, 0x0105, 0x010f, 0x0110];
 const onOffDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d, 0x010a, 0x010b, 0x0103, 0x0104, 0x0105];
+const laundryDeviceTypes = [0x73, 0x75, 0x7c];
+const ovenDeviceTypes = [0x7b, 0x71, 0x70];
+const appliancesDeviceTypes = [0x72, 0x77, 0x78, 0x7a];
 
-function Render({ icon, iconColor, cluster, value, unit }) {
+function Render({ icon, iconColor, cluster, value, unit, prefix }) {
   if(debug) console.log(`Render cluster "${cluster.clusterName}.${cluster.attributeName}" value(${typeof(value)}-${isNaN(value)}) "${value}" unit "${unit}"`);
-
+  prefix = prefix ?? false;
   return (
     <Box key={`${cluster.clusterId}-${cluster.attributeId}-box`} sx={valueBoxSx}>
       {icon && React.cloneElement(icon, { key: `${cluster.clusterId}-${cluster.attributeId}-icon`, sx: {...iconSx, color: iconColor ?? 'var(--primary-color)'} })}
       <Box key={`${cluster.clusterId}-${cluster.attributeId}-valueunitbox`} sx={{...valueBoxSx, gap: '4px', alignContent: 'center', alignItems: 'end', justifyContent: 'center'}}>
+        {unit && prefix===true &&
+          <Typography key={`${cluster.clusterId}-${cluster.attributeId}-unit`} sx={unitSx}>
+            {unit}
+          </Typography>
+        }
         <Typography key={`${cluster.clusterId}-${cluster.attributeId}-value`} sx={valueSx}>
           {(value===null || value===undefined || (typeof(value)==='number' && isNaN(value)) ||  value==='NaN') ?
             '---' : value
           }
         </Typography> 
-        {unit && 
+        {unit && prefix===false &&
           <Typography key={`${cluster.clusterId}-${cluster.attributeId}-unit`} sx={unitSx}>
             {unit}
           </Typography>
@@ -142,6 +158,31 @@ function Device({ device, endpoint, id, deviceType, clusters }) {
         <Render icon={<ToggleOnIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ? 'On' : 'Off'} />
       ))}
 
+      {laundryDeviceTypes.includes(deviceType) && clusters.filter(cluster => cluster.clusterName === 'OperationalState' && cluster.attributeName === 'operationalState').map(cluster => (
+        <Render icon={<LocalLaundryServiceIcon/>} cluster={cluster} value={cluster.attributeLocalValue===0 ? 'Normal' : 'Error'} />
+      ))}
+      {deviceType===0x7b && clusters.filter(cluster => cluster.clusterName === 'BridgedDeviceBasicInformation' && cluster.attributeName === 'reachable').map(cluster => (
+        <Render icon={<MicrowaveIcon/>} cluster={cluster} value='Oven' />
+      ))}
+      {deviceType===0x70 && clusters.filter(cluster => cluster.clusterName === 'BridgedDeviceBasicInformation' && cluster.attributeName === 'reachable').map(cluster => (
+        <Render icon={<KitchenIcon/>} cluster={cluster} value='Fridge' />
+      ))}
+      {deviceType===0x71 && clusters.filter(cluster => cluster.clusterName === 'TemperatureControl' && cluster.attributeName === 'selectedTemperatureLevel').map(cluster => (
+        <Render icon={<Icon path={mdiThermostatBox} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue} unit='mode' prefix={true} />
+      ))}
+      {deviceType===0x79 && clusters.filter(cluster => cluster.clusterName === 'OperationalState' && cluster.attributeName === 'operationalState').map(cluster => (
+        <Render icon={<MicrowaveIcon/>} cluster={cluster} value={cluster.attributeLocalValue===0 ? 'Normal' : 'Error'} />
+      ))}
+      {deviceType===0x7a && clusters.filter(cluster => cluster.clusterName === 'FanControl' && cluster.attributeName === 'fanMode').map(cluster => (
+        <Render icon={<Icon path={mdiAirFilter} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue} unit='mode' prefix={true} />
+      ))}
+      {deviceType===0x78 && clusters.filter(cluster => cluster.clusterName === 'BridgedDeviceBasicInformation' && cluster.attributeName === 'reachable').map(cluster => (
+        <Render icon={<Icon path={mdiStove} size='40px' color='var(--primary-color)' />} cluster={cluster} value='Cooktop' />
+      ))}
+      {deviceType===0x77 && clusters.filter(cluster => cluster.clusterName === 'TemperatureControl' && cluster.attributeName === 'selectedTemperatureLevel').map(cluster => (
+        <Render icon={<Icon path={mdiStove} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue} unit='mode' prefix={true} />
+      ))}
+
       {deviceType===0x0202 && clusters.filter(cluster => cluster.clusterName === 'WindowCovering' && cluster.attributeName === 'currentPositionLiftPercent100ths').map(cluster => (
         <Render icon={<BlindsIcon/>} cluster={cluster} value={cluster.attributeLocalValue/100} unit='%' />
       ))}
@@ -156,11 +197,11 @@ function Device({ device, endpoint, id, deviceType, clusters }) {
       ))}
       {/* GenericSwitch */}
       {deviceType===0x000f && clusters.filter(cluster => cluster.clusterName === 'Switch' && cluster.attributeName === 'currentPosition').map(cluster => (
-        <Render icon={<RadioButtonCheckedIcon/>} cluster={cluster} value={cluster.attributeValue} unit='pos'/>
+        <Render icon={<RadioButtonCheckedIcon/>} cluster={cluster} value={cluster.attributeValue} unit='pos' prefix={true}/>
       ))}
       {/* ModeSelect */}
       {deviceType===0x0027 && clusters.filter(cluster => cluster.clusterName === 'ModeSelect' && cluster.attributeName === 'currentMode').map(cluster => (
-        <Render icon={<ChecklistIcon/>} cluster={cluster} value={cluster.attributeValue} unit='mode'/>
+        <Render icon={<ChecklistIcon/>} cluster={cluster} value={cluster.attributeValue} unit='mode' prefix={true}/>
       ))}
       {/* Pump */}
       {deviceType===0x0303 && clusters.filter(cluster => cluster.clusterName === 'OnOff' && cluster.attributeName === 'onOff').map(cluster => (

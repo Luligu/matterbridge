@@ -61,6 +61,10 @@ function Header() {
     sendMessage({ id: uniqueId.current, method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: 'matterbridge', restart: true } });
   };
 
+  const handleUpdateDevClick = () => {
+    sendMessage({ id: uniqueId.current, method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: 'matterbridge@dev', restart: true } });
+  };
+
   const handleShellySystemUpdateClick = () => {
     if(debug) console.log('Header: handleShellySystemUpdateClick');
     logMessage('Matterbridge', `Installing system updates...`);
@@ -155,6 +159,8 @@ function Header() {
       window.location.href = './api/download-backup';
     } else if (value === 'update') {
       handleUpdateClick();
+    } else if (value === 'updatedev') {
+      handleUpdateDevClick();
     } else if (value === 'shelly-sys-update') {
       handleShellySystemUpdateClick();
     } else if (value === 'shelly-main-update') {
@@ -402,10 +408,16 @@ function Header() {
           </IconButton>
         </Tooltip>
         <Menu id="command-menu" anchorEl={menuAnchorEl} keepMounted open={Boolean(menuAnchorEl)} onClose={() => handleMenuCloseConfirm('')} >
-        {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
+          {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
             <MenuItem onClick={() => handleMenuCloseConfirm('update')}>
               <ListItemIcon><SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
-              <ListItemText primary="Update" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }}/>
+              <ListItemText primary="Install latest" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }}/>
+            </MenuItem>
+          }
+          {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
+            <MenuItem onClick={() => handleMenuCloseConfirm('updatedev')}>
+              <ListItemIcon><SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+              <ListItemText primary="Install latest dev" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }}/>
             </MenuItem>
           }
           {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellySysUpdate &&

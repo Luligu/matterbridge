@@ -36,12 +36,8 @@ describe('DeviceManager with mocked devices', () => {
   });
 
   afterAll(async () => {
-    // Close the Matterbridge instance
-    await matterbridge.destroyInstance();
-    // Restore the mocked AnsiLogger.log method
-    loggerLogSpy.mockRestore();
-    // Restore the mocked console.log
-    consoleLogSpy.mockRestore();
+    // Restore all mocks
+    jest.restoreAllMocks();
   });
 
   test('constructor initializes correctly', () => {
@@ -165,6 +161,14 @@ describe('DeviceManager with mocked devices', () => {
       //
     });
   });
+
+  test('Matterbridge.destroyInstance()', async () => {
+    // Close the Matterbridge instance
+    await matterbridge.destroyInstance();
+
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }, 60000);
 });
 
 describe('DeviceManager with real devices', () => {
@@ -189,13 +193,8 @@ describe('DeviceManager with real devices', () => {
   });
 
   afterAll(async () => {
-    // Close the Matterbridge instance
-    const server = matterbridge.serverNode;
-    await matterbridge.destroyInstance();
-    // Restore the mocked AnsiLogger.log method
-    loggerLogSpy.mockRestore();
-    // Restore the mocked console.log
-    consoleLogSpy.mockRestore();
+    // Restore all mocks
+    jest.restoreAllMocks();
   });
 
   test('constructor initializes correctly', () => {
@@ -231,6 +230,14 @@ describe('DeviceManager with real devices', () => {
     await matterbridge.removeBridgedEndpoint('matterbridge-mock2', device2);
     expect(devices.size).toBe(0);
   });
+
+  test('Matterbridge.destroyInstance()', async () => {
+    // Close the Matterbridge instance
+    await matterbridge.destroyInstance();
+
+    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }, 60000);
 
   test('Cleanup storage', async () => {
     process.argv.push('-factoryreset');
