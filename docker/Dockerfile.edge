@@ -1,5 +1,5 @@
 # ─────────────── BUILD STAGE ───────────────
-FROM ubuntu:jammy AS base
+FROM ubuntu:noble AS base
 
 # Install node from NodeSource
 RUN apt-get update \
@@ -21,7 +21,7 @@ RUN npm ci && \
     npm pack
 
 # ─────────────── RUNTIME STAGE ───────────────
-FROM ubuntu:jammy AS release
+FROM ubuntu:noble AS release
 
 # Install node from NodeSource
 RUN apt-get update \
