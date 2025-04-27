@@ -52,6 +52,7 @@ Modified clusters:
 - [deviceTypes]: Added Appliances device types.
 - [frontend]: Added the matterbridge aggregator serialNumber in the QRDiv.
 - [frontend]: Added Power column in the Devices panel of the Home page.
+- [frontend]: Added support for appliances and robot in IconView.
 - [parameter]: Added getIntArrayParameter and getStringArrayParameter.
 
 ### Changed
@@ -60,6 +61,7 @@ Modified clusters:
 - [package]: Updated express to v5.1.0.
 - [package]: Updated dependencies.
 - [frontend]: Frontend v.2.6.3.
+- [frontend]: Changed icons with mdiIcons in IconView.
 - [package]: Added tsconfig.jest.json with "isolatedModules": true for ts-jest.
 - [deviceTypes]: Updated device types to Matter 1.4.
 - [clusters]: Updated cluster helpers to Matter 1.4.
@@ -74,6 +76,7 @@ Modified clusters:
 - [matter.js]: Update to 0.13.0-alpha.0-20250423-8917d1d1d.
 - [matter.js]: Update to 0.13.0-alpha.0-20250424-4760af1f3.
 - [matter.js]: Update to 0.13.0-alpha.0-20250425-94b33ff98.
+- [matter.js]: Update to 0.13.0-alpha.0-20250427-e7df8aa45.
 - [help]: Updated cli help screen.
 - [logger]: Improved frontend logger cleaning.
 

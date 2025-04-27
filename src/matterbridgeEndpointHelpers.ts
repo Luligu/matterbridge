@@ -374,6 +374,14 @@ export function getAttributeId(endpoint: Endpoint, cluster: string, attribute: s
       else if (attribute === 'measurementMedium') return 0x9;
       else if (attribute === 'levelValue') return 0xa;
     }
+    if (endpoint.behaviors.supported[lowercaseFirstLetter(cluster)]?.schema?.type === 'OperationalState') {
+      if (attribute === 'phaseList') return 0x0;
+      else if (attribute === 'currentPhase') return 0x1;
+      else if (attribute === 'countdownTime') return 0x2;
+      else if (attribute === 'operationalStateList') return 0x3;
+      else if (attribute === 'operationalState') return 0x4;
+      else if (attribute === 'operationalError') return 0x5;
+    }
     return endpoint.behaviors.supported[lowercaseFirstLetter(cluster)]?.schema?.children?.find((child) => child.name === capitalizeFirstLetter(attribute))?.id;
   }
 }

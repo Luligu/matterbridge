@@ -257,7 +257,7 @@ export function WebSocketProvider({ children }) {
     };
 
     wsRef.current.onclose = () => {
-      if (debug) console.error(`WebSocket: Disconnected from WebSocket: ${wssHost}`);
+      if (debug) console.error(`WebSocket: Disconnected from WebSocket ${isIngress?'with Ingress':''}: ${wssHost}`);
       logMessage('WebSocket', `Disconnected from WebSocket: ${wssHost}`);
       setOnline(false);
       closeSnackbar();
@@ -265,7 +265,7 @@ export function WebSocketProvider({ children }) {
       clearTimeout(offlineTimeoutRef.current);
       clearInterval(pingIntervalRef.current);
       logMessage('WebSocket', `Reconnecting (attempt ${retryCountRef.current} of ${maxRetries}) to WebSocket${isIngress ? ' (Ingress)' : ''}: ${wssHost}`);
-      if (retryCountRef.current === 1) attemptReconnect();
+      if (retryCountRef.current === 1 && !isIngress) attemptReconnect();
       else if (retryCountRef.current < maxRetries) setTimeout(attemptReconnect, (isIngress ? 10000 : 1000) * retryCountRef.current);
       else logMessage('WebSocket', `Reconnect attempts exceeded limit of ${maxRetries} retries, refresh the page to reconnect to: ${wssHost}`);
       retryCountRef.current = retryCountRef.current + 1;

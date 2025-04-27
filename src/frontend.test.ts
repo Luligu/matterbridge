@@ -914,18 +914,21 @@ describe('Matterbridge frontend', () => {
       expect(ws.readyState).toBe(WebSocket.OPEN);
       const received = new Promise((resolve) => {
         const onMessage = (event: WebSocket.MessageEvent) => {
-          ws.removeEventListener('message', onMessage);
-          resolve(event.data);
+          const data = JSON.parse(event.data.toString());
+          if (data.id === 10018 && data.src === 'Matterbridge' && data.dst === 'Jest test' && data.method === '/api/select/entities') {
+            ws.removeEventListener('message', onMessage);
+            resolve(event.data);
+          }
         };
         ws.addEventListener('message', onMessage);
       });
-      const message = JSON.stringify({ id: 1, dst: 'Matterbridge', src: 'Jest test', method: '/api/select/entities', params: {} });
+      const message = JSON.stringify({ id: 10018, dst: 'Matterbridge', src: 'Jest test', method: '/api/select/entities', params: {} });
       ws.send(message);
       const response = await received;
       expect(response).toBeDefined();
       const data = JSON.parse(response as string);
       expect(data).toBeDefined();
-      expect(data.id).toBe(1);
+      expect(data.id).toBe(10018);
       expect(data.src).toBe('Matterbridge');
       expect(data.dst).toBe('Jest test');
       expect(data.method).toBe('/api/select/entities');
@@ -940,18 +943,21 @@ describe('Matterbridge frontend', () => {
       expect(ws.readyState).toBe(WebSocket.OPEN);
       const received = new Promise((resolve) => {
         const onMessage = (event: WebSocket.MessageEvent) => {
-          ws.removeEventListener('message', onMessage);
-          resolve(event.data);
+          const data = JSON.parse(event.data.toString());
+          if (data.id === 10019 && data.src === 'Matterbridge' && data.dst === 'Jest test' && data.method === '/api/select/entities') {
+            ws.removeEventListener('message', onMessage);
+            resolve(event.data);
+          }
         };
         ws.addEventListener('message', onMessage);
       });
-      const message = JSON.stringify({ id: 1, dst: 'Matterbridge', src: 'Jest test', method: '/api/select/entities', params: { plugin: 'matterbridge_unknown' } });
+      const message = JSON.stringify({ id: 10019, dst: 'Matterbridge', src: 'Jest test', method: '/api/select/entities', params: { plugin: 'matterbridge_unknown' } });
       ws.send(message);
       const response = await received;
       expect(response).toBeDefined();
       const data = JSON.parse(response as string);
       expect(data).toBeDefined();
-      expect(data.id).toBe(1);
+      expect(data.id).toBe(10019);
       expect(data.src).toBe('Matterbridge');
       expect(data.dst).toBe('Jest test');
       expect(data.method).toBe('/api/select/entities');
@@ -966,18 +972,21 @@ describe('Matterbridge frontend', () => {
       expect(ws.readyState).toBe(WebSocket.OPEN);
       const received = new Promise((resolve) => {
         const onMessage = (event: WebSocket.MessageEvent) => {
-          ws.removeEventListener('message', onMessage);
-          resolve(event.data);
+          const data = JSON.parse(event.data.toString());
+          if (data.id === 10020 && data.src === 'Matterbridge' && data.dst === 'Jest test' && data.method === '/api/select/entities') {
+            ws.removeEventListener('message', onMessage);
+            resolve(event.data);
+          }
         };
         ws.addEventListener('message', onMessage);
       });
-      const message = JSON.stringify({ id: 1, dst: 'Matterbridge', src: 'Jest test', method: '/api/select/entities', params: { plugin: 'matterbridge-mock1' } });
+      const message = JSON.stringify({ id: 10020, dst: 'Matterbridge', src: 'Jest test', method: '/api/select/entities', params: { plugin: 'matterbridge-mock1' } });
       ws.send(message);
       const response = await received;
       expect(response).toBeDefined();
       const data = JSON.parse(response as string);
       expect(data).toBeDefined();
-      expect(data.id).toBe(1);
+      expect(data.id).toBe(10020);
       expect(data.src).toBe('Matterbridge');
       expect(data.dst).toBe('Jest test');
       expect(data.method).toBe('/api/select/entities');
@@ -993,20 +1002,20 @@ describe('Matterbridge frontend', () => {
       const received = new Promise((resolve) => {
         const onMessage = (event: WebSocket.MessageEvent) => {
           const data = JSON.parse(event.data as string);
-          if (data.id === 10) {
+          if (data.id === 10021) {
             ws.removeEventListener('message', onMessage);
             resolve(event.data);
           }
         };
         ws.addEventListener('message', onMessage);
       });
-      const message = JSON.stringify({ id: 10, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: {} });
+      const message = JSON.stringify({ id: 10021, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: {} });
       ws.send(message);
       const response = await received;
       expect(response).toBeDefined();
       const data = JSON.parse(response as string);
       expect(data).toBeDefined();
-      expect(data.id).toBe(10);
+      expect(data.id).toBe(10021);
       expect(data.src).toBe('Matterbridge');
       expect(data.dst).toBe('Jest test');
       expect(data.response).not.toBeDefined();
@@ -1020,20 +1029,20 @@ describe('Matterbridge frontend', () => {
       const received = new Promise((resolve) => {
         const onMessage = (event: WebSocket.MessageEvent) => {
           const data = JSON.parse(event.data as string);
-          if (data.id === 10) {
+          if (data.id === 10022) {
             ws.removeEventListener('message', onMessage);
             resolve(event.data);
           }
         };
         ws.addEventListener('message', onMessage);
       });
-      const message = JSON.stringify({ id: 10, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbri' } });
+      const message = JSON.stringify({ id: 10022, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbri' } });
       ws.send(message);
       const response = await received;
       expect(response).toBeDefined();
       const data = JSON.parse(response as string);
       expect(data).toBeDefined();
-      expect(data.id).toBe(10);
+      expect(data.id).toBe(10022);
       expect(data.src).toBe('Matterbridge');
       expect(data.dst).toBe('Jest test');
       expect(data.response).not.toBeDefined();
@@ -1047,20 +1056,20 @@ describe('Matterbridge frontend', () => {
       const received = new Promise((resolve) => {
         const onMessage = (event: WebSocket.MessageEvent) => {
           const data = JSON.parse(event.data as string);
-          if (data.id === 10) {
+          if (data.id === 10023) {
             ws.removeEventListener('message', onMessage);
             resolve(event.data);
           }
         };
         ws.addEventListener('message', onMessage);
       });
-      const message = JSON.stringify({ id: 10, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-test' } });
+      const message = JSON.stringify({ id: 10023, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-test' } });
       ws.send(message);
       const response = await received;
       expect(response).toBeDefined();
       const data = JSON.parse(response as string);
       expect(data).toBeDefined();
-      expect(data.id).toBe(10);
+      expect(data.id).toBe(10023);
       expect(data.src).toBe('Matterbridge');
       expect(data.dst).toBe('Jest test');
       expect(data.response).toBe(true);
@@ -1075,20 +1084,20 @@ describe('Matterbridge frontend', () => {
       const received = new Promise((resolve) => {
         const onMessage = (event: WebSocket.MessageEvent) => {
           const data = JSON.parse(event.data as string);
-          if (data.id === 10) {
+          if (data.id === 10024) {
             ws.removeEventListener('message', onMessage);
             resolve(event.data);
           }
         };
         ws.addEventListener('message', onMessage);
       });
-      const message = JSON.stringify({ id: 10, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-xxxtest' } });
+      const message = JSON.stringify({ id: 10024, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-xxxtest' } });
       ws.send(message);
       const response = await received;
       expect(response).toBeDefined();
       const data = JSON.parse(response as string);
       expect(data).toBeDefined();
-      expect(data.id).toBe(10);
+      expect(data.id).toBe(10024);
       expect(data.src).toBe('Matterbridge');
       expect(data.dst).toBe('Jest test');
       expect(data.response).toBeUndefined();
@@ -1102,20 +1111,20 @@ describe('Matterbridge frontend', () => {
       const received = new Promise((resolve) => {
         const onMessage = (event: WebSocket.MessageEvent) => {
           const data = JSON.parse(event.data as string);
-          if (data.id === 10) {
+          if (data.id === 10025) {
             ws.removeEventListener('message', onMessage);
             resolve(event.data);
           }
         };
         ws.addEventListener('message', onMessage);
       });
-      const message = JSON.stringify({ id: 10, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbri' } });
+      const message = JSON.stringify({ id: 10025, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbri' } });
       ws.send(message);
       const response = await received;
       expect(response).toBeDefined();
       const data = JSON.parse(response as string);
       expect(data).toBeDefined();
-      expect(data.id).toBe(10);
+      expect(data.id).toBe(10025);
       expect(data.src).toBe('Matterbridge');
       expect(data.dst).toBe('Jest test');
       expect(data.response).not.toBeDefined();
@@ -1129,20 +1138,20 @@ describe('Matterbridge frontend', () => {
       const received = new Promise((resolve) => {
         const onMessage = (event: WebSocket.MessageEvent) => {
           const data = JSON.parse(event.data as string);
-          if (data.id === 10) {
+          if (data.id === 10026) {
             ws.removeEventListener('message', onMessage);
             resolve(event.data);
           }
         };
         ws.addEventListener('message', onMessage);
       });
-      const message = JSON.stringify({ id: 10, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbridge-test' } });
+      const message = JSON.stringify({ id: 10026, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbridge-test' } });
       ws.send(message);
       const response = await received;
       expect(response).toBeDefined();
       const data = JSON.parse(response as string);
       expect(data).toBeDefined();
-      expect(data.id).toBe(10);
+      expect(data.id).toBe(10026);
       expect(data.src).toBe('Matterbridge');
       expect(data.dst).toBe('Jest test');
       expect(data.response).toBe(true);
@@ -1157,20 +1166,20 @@ describe('Matterbridge frontend', () => {
       const received = new Promise((resolve) => {
         const onMessage = (event: WebSocket.MessageEvent) => {
           const data = JSON.parse(event.data as string);
-          if (data.id === 10) {
+          if (data.id === 10027) {
             ws.removeEventListener('message', onMessage);
             resolve(event.data);
           }
         };
         ws.addEventListener('message', onMessage);
       });
-      const message = JSON.stringify({ id: 10, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbridge-st' } });
+      const message = JSON.stringify({ id: 10027, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbridge-st' } });
       ws.send(message);
       const response = await received;
       expect(response).toBeDefined();
       const data = JSON.parse(response as string);
       expect(data).toBeDefined();
-      expect(data.id).toBe(10);
+      expect(data.id).toBe(10027);
       expect(data.src).toBe('Matterbridge');
       expect(data.dst).toBe('Jest test');
       expect(data.response).toBeDefined();
@@ -1188,20 +1197,20 @@ describe('Matterbridge frontend', () => {
       const received = new Promise((resolve) => {
         const onMessage = (event: WebSocket.MessageEvent) => {
           const data = JSON.parse(event.data as string);
-          if (data.id === 10) {
+          if (data.id === 10028) {
             ws.removeEventListener('message', onMessage);
             resolve(event.data);
           }
         };
         ws.addEventListener('message', onMessage);
       });
-      const message = JSON.stringify({ id: 10, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbridge-st' } });
+      const message = JSON.stringify({ id: 10028, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbridge-st' } });
       ws.send(message);
       const response = await received;
       expect(response).toBeDefined();
       const data = JSON.parse(response as string);
       expect(data).toBeDefined();
-      expect(data.id).toBe(10);
+      expect(data.id).toBe(10028);
       expect(data.src).toBe('Matterbridge');
       expect(data.dst).toBe('Jest test');
       expect(data.response).toBeUndefined();

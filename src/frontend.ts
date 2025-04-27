@@ -1249,6 +1249,7 @@ export class Frontend {
     };
 
     let attributes = '';
+    let supportedModes: { label: string; mode: number }[] = [];
 
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       // console.log(`${device.deviceName} => Cluster: ${clusterName}-${clusterId} Attribute: ${attributeName}-${attributeId} Value(${typeof attributeValue}): ${attributeValue}`);
@@ -1260,6 +1261,18 @@ export class Frontend {
       if (clusterName === 'thermostat' && attributeName === 'localTemperature' && isValidNumber(attributeValue)) attributes += `Temperature: ${attributeValue / 100}°C `;
       if (clusterName === 'thermostat' && attributeName === 'occupiedHeatingSetpoint' && isValidNumber(attributeValue)) attributes += `Heat to: ${attributeValue / 100}°C `;
       if (clusterName === 'thermostat' && attributeName === 'occupiedCoolingSetpoint' && isValidNumber(attributeValue)) attributes += `Cool to: ${attributeValue / 100}°C `;
+
+      const modeClusters = ['modeSelect', 'rvcRunMode', 'rvcCleanMode', 'laundryWasherMode', 'ovenMode', 'microwaveOvenMode'];
+      if (modeClusters.includes(clusterName) && attributeName === 'supportedModes') {
+        supportedModes = attributeValue as { label: string; mode: number }[];
+      }
+      if (modeClusters.includes(clusterName) && attributeName === 'currentMode') {
+        const supportedMode = supportedModes.find((mode) => mode.mode === attributeValue);
+        if (supportedMode) attributes += `Mode: ${supportedMode.label} `;
+        else attributes += `Mode: ${attributeValue} `;
+      }
+      const operationalStateClusters = ['operationalState', 'rvcOperationalState'];
+      if (operationalStateClusters.includes(clusterName) && attributeName === 'operationalState') attributes += `OpState: ${attributeValue} `;
 
       if (clusterName === 'pumpConfigurationAndControl' && attributeName === 'operationMode') attributes += `Mode: ${attributeValue} `;
 

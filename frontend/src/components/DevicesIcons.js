@@ -25,13 +25,9 @@ import SensorsOffIcon from '@mui/icons-material/SensorsOff';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import FilterDramaIcon from '@mui/icons-material/FilterDrama'; // Cloud for weather
 import ThermostatIcon from '@mui/icons-material/Thermostat'; // Temperature
-import WaterDropIcon from '@mui/icons-material/WaterDrop'; // Humidity
 import GasMeterIcon from '@mui/icons-material/GasMeter'; // Flow
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
-import OutletIcon from '@mui/icons-material/Outlet';
-import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import BlindsIcon from '@mui/icons-material/Blinds'; // WindowCovering
-import ThermostatAutoIcon from '@mui/icons-material/ThermostatAuto'; // Thermostat
 import PowerIcon from '@mui/icons-material/Power';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
@@ -41,19 +37,15 @@ import HvacIcon from '@mui/icons-material/Hvac'; // AirConditioner AirPurifier
 import AcUnitIcon from '@mui/icons-material/AcUnit'; // Freeze detector
 import ThunderstormIcon from '@mui/icons-material/Thunderstorm'; // Rain sensor
 import WaterIcon from '@mui/icons-material/Water'; // Water leak detector
-import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment'; // SmokeCoAlarm
 import OpacityIcon from '@mui/icons-material/Opacity'; // WaterValve
 import MasksIcon from '@mui/icons-material/Masks'; // AirQualitySensor
-import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked'; // Momentary or latching switch
 import ChecklistIcon from '@mui/icons-material/Checklist'; // ModeSelect
-import LocalLaundryServiceIcon from '@mui/icons-material/LocalLaundryService'; // Laundry
 import MicrowaveIcon from '@mui/icons-material/Microwave';
 import KitchenIcon from '@mui/icons-material/Kitchen';
-import CalendarViewMonthIcon from '@mui/icons-material/CalendarViewMonth';
 
 // @mdi/js use: <Icon path={mdiSortDescending} size='15px'/>
 import Icon from '@mdi/react';
-import { mdiAirFilter, mdiWashingMachine, mdiTumbleDryer, mdiDishwasher, mdiStove, mdiThermostatBox } from '@mdi/js';
+import { mdiPowerSocketEu, mdiLightSwitch, mdiThermostat, mdiGestureTapButton, mdiWaterPercent, mdiSmokeDetectorVariant, mdiAirPurifier, mdiAirFilter, mdiWashingMachine, mdiTumbleDryer, mdiDishwasher, mdiStove, mdiThermostatBox, mdiRobotVacuum } from '@mdi/js';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
@@ -62,7 +54,7 @@ import { debug } from '../App';
 const valueBoxSx = { display: 'flex', gap: '2px', justifyContent: 'space-evenly', width: '100%', height: '40px' };
 const iconSx = { margin: '0', padding: '0', fontSize: '36px', fontWeight: 'medium', color: 'var(--primary-color)' };
 const valueSx = { margin: '0', padding: '0', fontSize: '20px', fontWeight: 'medium', color: 'var(--div-text-color)', textAlign: 'center' };
-const unitSx = { margin: '0', padding: '0', fontSize: '16px', fontWeight: 'medium', color: 'var(--div-text-color)', textAlign: 'center' };
+const unitSx = { margin: '0', padding: '0', paddingBottom: '2px', fontSize: '16px', fontWeight: 'medium', color: 'var(--div-text-color)', textAlign: 'center' };
 
 const detailsBoxSx = { display: 'flex', gap: '2px', justifyContent: 'center', width: '100%', height: '18px', margin: '0', padding: '0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' }
 const detailsSx = { margin: '0', padding: '0', fontSize: '12px', fontWeight: 'normal', color: 'var(--div-text-color)' };
@@ -79,8 +71,6 @@ const outletDeviceTypes = [0x010a, 0x010b];
 const switchDeviceTypes = [0x0103, 0x0104, 0x0105, 0x010f, 0x0110];
 const onOffDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d, 0x010a, 0x010b, 0x0103, 0x0104, 0x0105];
 const laundryDeviceTypes = [0x73, 0x75, 0x7c];
-const ovenDeviceTypes = [0x7b, 0x71, 0x70];
-const appliancesDeviceTypes = [0x72, 0x77, 0x78, 0x7a];
 
 function Render({ icon, iconColor, cluster, value, unit, prefix }) {
   if(debug) console.log(`Render cluster "${cluster.clusterName}.${cluster.attributeName}" value(${typeof(value)}-${isNaN(value)}) "${value}" unit "${unit}"`);
@@ -152,14 +142,20 @@ function Device({ device, endpoint, id, deviceType, clusters }) {
         <Render icon={<LightbulbIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ? 'On' : 'Off'} />
       ))}
       {outletDeviceTypes.includes(deviceType) && clusters.filter(cluster => cluster.clusterName === 'OnOff' && cluster.attributeName === 'onOff').map(cluster => (
-        <Render icon={<OutletIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ? 'On' : 'Off'} />
+        <Render icon={<Icon path={mdiPowerSocketEu} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue===true ? 'On' : 'Off'} />
       ))}
       {switchDeviceTypes.includes(deviceType) && clusters.filter(cluster => cluster.clusterName === 'OnOff' && cluster.attributeName === 'onOff').map(cluster => (
-        <Render icon={<ToggleOnIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ? 'On' : 'Off'} />
+        <Render icon={<Icon path={mdiLightSwitch} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue===true ? 'On' : 'Off'} />
       ))}
 
-      {laundryDeviceTypes.includes(deviceType) && clusters.filter(cluster => cluster.clusterName === 'OperationalState' && cluster.attributeName === 'operationalState').map(cluster => (
-        <Render icon={<LocalLaundryServiceIcon/>} cluster={cluster} value={cluster.attributeLocalValue===0 ? 'Normal' : 'Error'} />
+      {deviceType===0x73 && clusters.filter(cluster => cluster.clusterName === 'OperationalState' && cluster.attributeName === 'operationalState').map(cluster => (
+        <Render icon={<Icon path={mdiWashingMachine} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue===0 ? 'Normal' : 'Error'} />
+      ))}
+      {deviceType===0x7c && clusters.filter(cluster => cluster.clusterName === 'OperationalState' && cluster.attributeName === 'operationalState').map(cluster => (
+        <Render icon={<Icon path={mdiTumbleDryer} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue===0 ? 'Normal' : 'Error'} />
+      ))}
+      {deviceType===0x75 && clusters.filter(cluster => cluster.clusterName === 'OperationalState' && cluster.attributeName === 'operationalState').map(cluster => (
+        <Render icon={<Icon path={mdiDishwasher} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue===0 ? 'Normal' : 'Error'} />
       ))}
       {deviceType===0x7b && clusters.filter(cluster => cluster.clusterName === 'BridgedDeviceBasicInformation' && cluster.attributeName === 'reachable').map(cluster => (
         <Render icon={<MicrowaveIcon/>} cluster={cluster} value='Oven' />
@@ -182,12 +178,15 @@ function Device({ device, endpoint, id, deviceType, clusters }) {
       {deviceType===0x77 && clusters.filter(cluster => cluster.clusterName === 'TemperatureControl' && cluster.attributeName === 'selectedTemperatureLevel').map(cluster => (
         <Render icon={<Icon path={mdiStove} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue} unit='mode' prefix={true} />
       ))}
+      {deviceType===0x74 && clusters.filter(cluster => cluster.clusterName === 'BridgedDeviceBasicInformation' && cluster.attributeName === 'reachable').map(cluster => (
+        <Render icon={<Icon path={mdiRobotVacuum} size='40px' color='var(--primary-color)' />} cluster={cluster} value='Robot' />
+      ))}
 
       {deviceType===0x0202 && clusters.filter(cluster => cluster.clusterName === 'WindowCovering' && cluster.attributeName === 'currentPositionLiftPercent100ths').map(cluster => (
         <Render icon={<BlindsIcon/>} cluster={cluster} value={cluster.attributeLocalValue/100} unit='%' />
       ))}
       {deviceType===0x0301 && clusters.filter(cluster => cluster.clusterName === 'Thermostat' && cluster.attributeName === 'localTemperature').map(cluster => (
-        <Render icon={<ThermostatAutoIcon/>} cluster={cluster} value={(cluster.attributeLocalValue ?? 0)/100} unit='°C' />
+        <Render icon={<Icon path={mdiThermostat} size='40px' color='var(--primary-color)' />} cluster={cluster} value={(cluster.attributeLocalValue ?? 0)/100} unit='°C' />
       ))}
       {deviceType===0x000a && clusters.filter(cluster => cluster.clusterName === 'DoorLock' && cluster.attributeName === 'lockState').map(cluster => (
         <Render icon={cluster.attributeValue==='1' ? <LockIcon/> : <LockOpenIcon/>} cluster={cluster} value={cluster.attributeValue==='1' ? 'Locked' : 'Unlocked'} />
@@ -197,7 +196,7 @@ function Device({ device, endpoint, id, deviceType, clusters }) {
       ))}
       {/* GenericSwitch */}
       {deviceType===0x000f && clusters.filter(cluster => cluster.clusterName === 'Switch' && cluster.attributeName === 'currentPosition').map(cluster => (
-        <Render icon={<RadioButtonCheckedIcon/>} cluster={cluster} value={cluster.attributeValue} unit='pos' prefix={true}/>
+        <Render icon={<Icon path={mdiGestureTapButton} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeValue} unit='pos' prefix={true}/>
       ))}
       {/* ModeSelect */}
       {deviceType===0x0027 && clusters.filter(cluster => cluster.clusterName === 'ModeSelect' && cluster.attributeName === 'currentMode').map(cluster => (
@@ -227,23 +226,32 @@ function Device({ device, endpoint, id, deviceType, clusters }) {
       {deviceType===0x0044 && clusters.filter(cluster => cluster.clusterName === 'BooleanState' && cluster.attributeName === 'stateValue').map(cluster => (
         <Render icon={<ThunderstormIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ?'Rain':'No rain'}/>
       ))}
+
       {/* SmokeCoAlarm */}
-      {deviceType===0x0076 && clusters.filter(cluster => cluster.clusterName === 'SmokeCoAlarm' && cluster.attributeName === 'smokeState').map(cluster => (
-        <Render icon={<LocalFireDepartmentIcon/>} cluster={cluster} value={cluster.attributeLocalValue===0 ?'No smoke':'Smoke'}/>
+      {deviceType===0x0076 && 
+        clusters.find(cluster => cluster.clusterName === 'SmokeCoAlarm' && cluster.attributeName === 'featureMap' && cluster.attributeLocalValue.smokeAlarm===true) &&
+        clusters.filter(cluster => cluster.clusterName === 'SmokeCoAlarm' && cluster.attributeName === 'smokeState').map(cluster => (
+          <Render icon={<Icon path={mdiSmokeDetectorVariant} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue===0 ?'No smoke':'Smoke!'}/>
       ))}
+      {deviceType===0x0076 && 
+        clusters.find(cluster => cluster.clusterName === 'SmokeCoAlarm' && cluster.attributeName === 'featureMap' && cluster.attributeLocalValue.smokeAlarm===false) &&
+        clusters.filter(cluster => cluster.clusterName === 'SmokeCoAlarm' && cluster.attributeName === 'coState').map(cluster => (
+          <Render icon={<Icon path={mdiSmokeDetectorVariant} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue===0 ?'No Co':'Co!'}/>
+      ))}
+
       {/* WaterValve */}
       {deviceType===0x0042 && clusters.filter(cluster => cluster.clusterName === 'ValveConfigurationAndControl' && cluster.attributeName === 'currentState').map(cluster => (
         <Render icon={<OpacityIcon/>} cluster={cluster} value={cluster.attributeLocalValue===0 ?'Closed':'Opened'}/>
       ))}
       {/* AirQuality */}
       {deviceType===0x002c && clusters.filter(cluster => cluster.clusterName === 'AirQuality' && cluster.attributeName === 'airQuality').map(cluster => (
-        <Render icon={<MasksIcon/>} cluster={cluster} value={airQualityLookup[cluster.attributeLocalValue ?? 0]}/>
+        <Render icon={<Icon path={mdiAirPurifier} size='40px' color='var(--primary-color)' />} cluster={cluster} value={airQualityLookup[cluster.attributeLocalValue ?? 0]}/>
       ))}
       {deviceType===0x0302 && clusters.filter(cluster => cluster.clusterName === 'TemperatureMeasurement' && cluster.attributeName === 'measuredValue').map(cluster => (
         <Render icon={<ThermostatIcon/>} cluster={cluster} value={cluster.attributeLocalValue/100} unit='°C' />
       ))}
       {deviceType===0x0307 && clusters.filter(cluster => cluster.clusterName === 'RelativeHumidityMeasurement' && cluster.attributeName === 'measuredValue').map(cluster => (
-        <Render icon={<WaterDropIcon/>} cluster={cluster} value={cluster.attributeLocalValue/100} unit='%' />
+        <Render icon={<Icon path={mdiWaterPercent} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue/100} unit='%' />
       ))}
       {deviceType===0x0306 && clusters.filter(cluster => cluster.clusterName === 'FlowMeasurement' && cluster.attributeName === 'measuredValue').map(cluster => (
         <Render icon={<GasMeterIcon/>} cluster={cluster} value={cluster.attributeLocalValue} unit='l/h' />
@@ -277,7 +285,12 @@ function Device({ device, endpoint, id, deviceType, clusters }) {
       </div>
   );
 }
+/*
+      {deviceType===0x0076 && clusters.filter(cluster => cluster.clusterName === 'SmokeCoAlarm' && cluster.attributeName === 'smokeState').map(cluster => (
+        <Render icon={<Icon path={mdiSmokeDetectorVariant} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue===0 ?'No smoke':'Smoke'}/>
+      ))}
 
+*/
 export function DevicesIcons({filter}) {
   // WebSocket context
   const { online, sendMessage, addListener, removeListener } = useContext(WebSocketContext);
