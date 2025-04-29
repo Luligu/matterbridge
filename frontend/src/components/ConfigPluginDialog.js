@@ -63,10 +63,11 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
       "ui:globalOptions": { orderable: true },
     }
   );
-  
+
   // const [selectDevices, setSelectDevices] = useState([]);
   // const [selectEntities, setSelectEntities] = useState([]);
   const [newkey, setNewkey] = useState(''); // For ObjectFieldTemplate select from device list 
+  let currentFormData = {}
 
   // WebSocket message handler effect
   useEffect(() => {
@@ -129,6 +130,11 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
       if(debug) console.log('ConfigPluginDialog removed WebSocket listener');
     };
   }, [addListener, formData, plugin, removeListener, schema, sendMessage, uiSchema]);
+  
+  const handleFormChange = ({ formData }) => {
+    currentFormData = formData;
+    if(rjsfDebug) console.log('handleFormChange formData:', formData);
+  };
 
   const handleSaveChanges = ({ formData }) => {
     if(debug) console.log('ConfigPluginDialog handleSaveChanges:', formData);
@@ -749,6 +755,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
   function CheckboxWidget(props) {
     const { id, name, value, schema, readonly, onChange } = props;
     if(rjsfDebug) console.log(`CheckboxWidget ${name}:`, props); 
+    if(rjsfDebug) console.log(`CheckboxWidget formData:`, currentFormData); 
 
     const [fieldValue, setFieldValue] = useState(undefined);
 
@@ -759,7 +766,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
 
     const onClick = () => {
       if(debug) console.log(`CheckboxWidget onClick plugin="${plugin.name}" action="${name}" value="${fieldValue}"`);
-      sendMessage({ id: uniqueId.current, method: "/api/action", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name, action: name, value: fieldValue, id } });
+      sendMessage({ id: uniqueId.current, method: "/api/action", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name, action: name, value: fieldValue, formData: currentFormData, id } });
       if(schema.buttonClose===true) onClose();
       else if(schema.buttonSave===true) handleSaveChanges({formData});
     };
@@ -897,6 +904,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
           templates={{ FieldTemplate, BaseInputTemplate, TitleFieldTemplate, DescriptionFieldTemplate, FieldHelpTemplate, FieldErrorTemplate, ErrorListTemplate, WrapIfAdditionalTemplate,
             ArrayFieldTitleTemplate, ArrayFieldDescriptionTemplate, ArrayFieldItemTemplate, ArrayFieldTemplate, ObjectFieldTemplate, ButtonTemplates: { SubmitButton, RemoveButton, AddButton, MoveUpButton, MoveDownButton } }}
           widgets={{ CheckboxWidget, SelectWidget }}
+          onChange={handleFormChange}
           onSubmit={handleSaveChanges} 
         />
       </DialogContent>

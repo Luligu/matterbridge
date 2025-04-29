@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-console */
-
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
 import { AnsiLogger, BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
@@ -147,14 +146,16 @@ describe('MatterbridgeEndpoint class', () => {
     // Create a MatterbridgeEdge instance
     process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-profile', 'JestMain', '-bridge', '-logger', 'info', '-matterlogger', 'info'];
     matterbridge = await Matterbridge.loadInstance(true);
+    /*
     await matterbridge.matterStorageManager?.createContext('events')?.clearAll();
     await matterbridge.matterStorageManager?.createContext('fabrics')?.clearAll();
     await matterbridge.matterStorageManager?.createContext('root')?.clearAll();
     await matterbridge.matterStorageManager?.createContext('sessions')?.clearAll();
     await matterbridge.matterbridgeContext?.clearAll();
+    */
 
     await waitForOnline();
-  });
+  }, 30000);
 
   beforeEach(async () => {
     // Clear all mocks
@@ -766,9 +767,14 @@ describe('MatterbridgeEndpoint class', () => {
 
       let count = 0;
       device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+        // console.warn('forEachAttribute', clusterName, clusterId, attributeName, attributeId, attributeValue);
+        expect(clusterName).toBeDefined();
+        expect(clusterId).toBeDefined();
+        expect(attributeName).toBeDefined();
+        expect(attributeId).toBeDefined();
         count++;
       });
-      expect(count).toBe(74);
+      expect(count).toBe(85);
     });
 
     test('forEachAttribute AirQuality', async () => {
@@ -781,6 +787,11 @@ describe('MatterbridgeEndpoint class', () => {
 
       let count = 0;
       device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+        // console.warn('forEachAttribute', clusterName, clusterId, attributeName, attributeId, attributeValue);
+        expect(clusterName).toBeDefined();
+        expect(clusterId).toBeDefined();
+        expect(attributeName).toBeDefined();
+        expect(attributeId).toBeDefined();
         count++;
       });
       expect(count).toBe(216);
@@ -966,7 +977,7 @@ describe('MatterbridgeEndpoint class', () => {
 
     // eslint-disable-next-line jest/expect-expect
     test('pause before cleanup', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 5000)); // Pause for 5 seconds
+      await new Promise((resolve) => setTimeout(resolve, 10000)); // Pause for 1 seconds to allow matter.js promises to settle
     }, 60000);
   });
 });

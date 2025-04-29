@@ -17,6 +17,7 @@ import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import BlockIcon from '@mui/icons-material/Block';
+import ViewHeadlineIcon from '@mui/icons-material/ViewHeadline';
 
 // Frontend
 import { sendCommandToMatterbridge } from './sendApiCommand';
@@ -38,6 +39,7 @@ function Header() {
   // Menu states
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [backupMenuAnchorEl, setBackupMenuAnchorEl] = useState(null);
+  const [viewMenuAnchorEl, setViewMenuAnchorEl] = useState(null);
   const [downloadMenuAnchorEl, setDownloadMenuAnchorEl] = useState(null);
   const [resetMenuAnchorEl, setResetMenuAnchorEl] = useState(null);
 
@@ -53,8 +55,16 @@ function Header() {
     window.open(`https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md`, '_blank');
   };
 
+  const handleDiscordLogoClick = () => {
+    window.open(`https://discord.gg/QX58CDe6hd`, '_blank');
+  };
+
   const handleUpdateClick = () => {
     sendMessage({ id: uniqueId.current, method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: 'matterbridge', restart: true } });
+  };
+
+  const handleUpdateDevClick = () => {
+    sendMessage({ id: uniqueId.current, method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: 'matterbridge@dev', restart: true } });
   };
 
   const handleShellySystemUpdateClick = () => {
@@ -129,6 +139,18 @@ function Header() {
       logMessage('Matterbridge', `Downloading matter log...`);
       showSnackbarMessage('Downloading matter log...', 5);
       window.location.href = './api/download-mjlog';
+    } else if (value === 'view-mblog') {
+      logMessage('Matterbridge', `Loading matterbridge log...`);
+      showSnackbarMessage('Loading matterbridge log...', 5);
+      window.location.href = './api/view-mblog';
+    } else if (value === 'view-mjlog') {
+      logMessage('Matterbridge', `Loading matter log...`);
+      showSnackbarMessage('Loading matter log...', 5);
+      window.location.href = './api/view-mjlog';
+    } else if (value === 'view-shellylog') {
+      logMessage('Matterbridge', `Loading matter log...`);
+      showSnackbarMessage('Loading matter log...', 5);
+      window.location.href = './api/shellyviewsystemlog';
     } else if (value === 'download-mbstorage') {
       logMessage('Matterbridge', `Downloading matterbridge storage...`);
       showSnackbarMessage('Downloading matterbridge storage...', 5);
@@ -151,6 +173,8 @@ function Header() {
       window.location.href = './api/download-backup';
     } else if (value === 'update') {
       handleUpdateClick();
+    } else if (value === 'updatedev') {
+      handleUpdateDevClick();
     } else if (value === 'shelly-sys-update') {
       handleShellySystemUpdateClick();
     } else if (value === 'shelly-main-update') {
@@ -205,6 +229,14 @@ function Header() {
     setBackupMenuAnchorEl(null);
   };
 
+  const handleViewMenuOpen = (event) => {
+    setViewMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleViewMenuClose = () => {
+    setViewMenuAnchorEl(null);
+  };
+
   const handleDownloadMenuOpen = (event) => {
     setDownloadMenuAnchorEl(event.currentTarget);
   };
@@ -219,6 +251,11 @@ function Header() {
 
   const handleResetMenuClose = () => {
     setResetMenuAnchorEl(null);
+  };
+
+  const handleLogoClick = () => {
+    toggleDebug();
+    if (debug) console.log('Matterbridge logo clicked: debug is now', debug);
   };
 
   useEffect(() => {
@@ -276,11 +313,6 @@ function Header() {
     }
   }, [online, sendMessage]);
 
-  const handleLogoClick = () => {
-    toggleDebug();
-    if (debug) console.log('Matterbridge logo clicked: debug is now', debug);
-  };
-
   if(debug) console.log('Header rendering...');
   if (!online || !settings) {
     return null;
@@ -337,8 +369,18 @@ function Header() {
             <span className="status-information" style={{ cursor: 'default' }}>{settings.matterbridgeInformation.restartMode}</span>
           </Tooltip>
         ) : null}
+        {settings.matterbridgeInformation.profile && settings.matterbridgeInformation.profile !== '' && settings.matterbridgeInformation.readOnly === false ? (
+          <Tooltip title="Current profile">
+            <span className="status-information" style={{ cursor: 'default' }}>{settings.matterbridgeInformation.profile}</span>
+          </Tooltip>
+        ) : null}
       </div>
       <div className="sub-header" style={{ gap: '5px' }}>
+        {settings.matterbridgeInformation.readOnly === false ? (
+          <Tooltip title="Matterbridge discord group">
+            <img src="discord.svg" alt="Discord Logo" style={{ height: '25px' }} onClick={handleDiscordLogoClick}/>
+          </Tooltip>
+        ) : null}
         <Tooltip title="Matterbridge help">
           <IconButton onClick={handleHelpClick}>
             <HelpOutlineIcon style={{ color: 'var(--main-icon-color)' }} />
@@ -388,10 +430,16 @@ function Header() {
           </IconButton>
         </Tooltip>
         <Menu id="command-menu" anchorEl={menuAnchorEl} keepMounted open={Boolean(menuAnchorEl)} onClose={() => handleMenuCloseConfirm('')} >
-        {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
+          {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
             <MenuItem onClick={() => handleMenuCloseConfirm('update')}>
               <ListItemIcon><SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
-              <ListItemText primary="Update" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }}/>
+              <ListItemText primary="Install latest" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }}/>
+            </MenuItem>
+          }
+          {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly &&
+            <MenuItem onClick={() => handleMenuCloseConfirm('updatedev')}>
+              <ListItemIcon><SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+              <ListItemText primary="Install latest dev" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }}/>
             </MenuItem>
           }
           {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellySysUpdate &&
@@ -434,6 +482,29 @@ function Header() {
               <ListItemText primary="Stop sharing" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             : null}
+          <Divider />
+
+          <MenuItem onClick={handleViewMenuOpen}>
+            <ListItemIcon><ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+            <ListItemText primary="View" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+          </MenuItem>
+            <Menu id="sub-menu-view" anchorEl={viewMenuAnchorEl} keepMounted open={Boolean(viewMenuAnchorEl)} onClose={handleViewMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+            <MenuItem onClick={() => { handleMenuCloseConfirm('view-mblog'); handleViewMenuClose(); }}>
+                <ListItemIcon><ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+                <ListItemText primary="Matterbridge log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              </MenuItem>
+              <MenuItem onClick={() => { handleMenuCloseConfirm('view-mjlog'); handleViewMenuClose(); }}>
+                <ListItemIcon><ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+                <ListItemText primary="Matter log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              </MenuItem>
+              {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard &&
+                <MenuItem onClick={() => { handleMenuCloseConfirm('view-shellylog'); handleViewMenuClose(); }}>
+                  <ListItemIcon><ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+                  <ListItemText primary="Shelly system log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+                </MenuItem>
+              }
+            </Menu>
+
           <Divider />
           <MenuItem onClick={handleDownloadMenuOpen}>
             <ListItemIcon><DownloadIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>

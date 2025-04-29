@@ -20,7 +20,7 @@
 
 This will create the required directories if they don't exist
 
-```
+```bash
 cd ~
 mkdir -p ./Matterbridge
 mkdir -p ./.matterbridge
@@ -31,7 +31,7 @@ sudo chown -R $USER:$USER ./Matterbridge ./.matterbridge
 
 Create a systemctl configuration file for Matterbridge
 
-```
+```bash
 sudo nano /etc/systemd/system/matterbridge.service
 ```
 
@@ -53,8 +53,6 @@ WorkingDirectory=/home/<USER>/Matterbridge
 StandardOutput=inherit
 StandardError=inherit
 Restart=always
-RestartSec=10s
-TimeoutStopSec=30s
 User=<USER>
 Group=<USER>
 
@@ -70,45 +68,53 @@ add this:
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 ```
 
-If you modify it after, then run:
+If you use the matterbridge-bthome plugin add this:
 
 ```
+[Service]
+AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_NET_ADMIN
+```
+
+If you modify it after, then run:
+
+```bash
 sudo systemctl daemon-reload
+sudo systemctl restart matterbridge.service
 ```
 
 ### Start Matterbridge
 
-```
+```bash
 sudo systemctl start matterbridge
 ```
 
 ### Stop Matterbridge
 
-```
+```bash
 sudo systemctl stop matterbridge
 ```
 
 ### Show Matterbridge status
 
-```
+```bash
 sudo systemctl status matterbridge.service
 ```
 
 ### Enable Matterbridge to start automatically on boot
 
-```
+```bash
 sudo systemctl enable matterbridge.service
 ```
 
 ### Disable Matterbridge from starting automatically on boot
 
-```
+```bash
 sudo systemctl disable matterbridge.service
 ```
 
 ### View the log of Matterbridge in real time (this will show the log with colors)
 
-```
+```bash
 sudo journalctl -u matterbridge.service -n 1000 -f --output cat
 ```
 
@@ -116,13 +122,13 @@ sudo journalctl -u matterbridge.service -n 1000 -f --output cat
 
 Check the space used
 
-```
+```bash
 sudo journalctl --disk-usage
 ```
 
 remove all log older then 3 days
 
-```
+```bash
 sudo journalctl --rotate
 sudo journalctl --vacuum-time=3d
 ```
@@ -131,13 +137,13 @@ sudo journalctl --vacuum-time=3d
 
 If you want to make the setting permanent to prevent the journal logs to grow too much, run
 
-```
+```bash
 sudo nano /etc/systemd/journald.conf
 ```
 
 add
 
-```
+```bash
 Compress=yes            # Compress logs
 MaxRetentionSec=3days   # Keep logs for a maximum of 3 days.
 MaxFileSec=1day         # Rotate logs daily within the 3-day retention period.
@@ -148,7 +154,7 @@ RuntimeMaxUse=100M      # Limit runtime logs in /run/log/journal to 100 MB.
 
 save it and run
 
-```
+```bash
 sudo systemctl restart systemd-journald
 ```
 
@@ -156,7 +162,7 @@ sudo systemctl restart systemd-journald
 
 Run the following command to verify if you can install Matterbridge globally without being prompted for a password:
 
-```
+```bash
 sudo npm install -g matterbridge
 ```
 
@@ -164,7 +170,7 @@ If you are not prompted for a password, no further action is required.
 
 If that is not the case, open the sudoers file for editing using visudo
 
-```
+```bash
 sudo visudo
 ```
 
@@ -176,8 +182,8 @@ verify the presence of of a line
 
 exit and create a configuration file for sudoers
 
-```
-sudo nano  /etc/sudoers.d/matterbridge
+```bash
+sudo nano /etc/sudoers.d/matterbridge
 ```
 
 add this line replacing USER with your user name (e.g. radxa ALL=(ALL) NOPASSWD: ALL)
@@ -194,6 +200,6 @@ or if you prefers to only give access to npm without password try with (e.g. rad
 
 save the file and reload the settings with:
 
-```
+```bash
 sudo visudo -c
 ```

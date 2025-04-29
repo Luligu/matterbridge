@@ -12,7 +12,7 @@
 
 ---
 
-Matterbridge is a matter.js plugin manager.
+Matterbridge is a Matter plugin manager.
 
 It allows you to have all your Matter devices up and running in a couple of minutes without
 having to deal with the pairing process of each single device.
@@ -46,6 +46,22 @@ The project is build on top of https://github.com/project-chip/matter.js.
 
 A special thank to Apollon77 for his incredible work.
 
+## Discord
+
+Join us in the Matterbridge Discord group https://discord.gg/QX58CDe6hd created by Tamer (https://github.com/tammeryousef1006).
+
+## Videos
+
+https://www.youtube.com/watch?v=goNB9Cgh_Fk
+
+## Reviews
+
+https://www.matteralpha.com/how-to/how-to-configure-an-open-source-matter-bridge-at-home
+
+## Press
+
+https://matter-smarthome.de/en/interview/an-alternative-to-the-official-matter-sdk/
+
 ## Prerequisites
 
 To run Matterbridge, you need either a [Node.js](https://nodejs.org/en) environment or [Docker](https://docs.docker.com/get-started/get-docker/) installed on your system.
@@ -56,6 +72,10 @@ Node 23 is not supported.
 Nvm is not a good choice and should not be used for production.
 
 If you don't have Docker already install, please use this method to install it on a debian device: https://docs.docker.com/desktop/setup/install/linux/debian/.
+
+Since as stated in the Matter specifications "Matter aims to build a universal IPv6-based communication protocol for smart home devices", ipv6 should be enabled in the network.
+
+Avoid using VLAN and firewall blocking the communications between the controller and Matterbridge.
 
 ## Installation
 
@@ -216,6 +236,38 @@ No hub or dedicated hardware needed.
 
 Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose the Somfy Tahoma screen devices to Matter.
 
+### Home Assistant
+
+<a href="https://github.com/Luligu/matterbridge-hass">
+  <img src="screenshot/HomeAssistant.svg" alt="Hass logo" width="100" />
+</a>
+
+Matterbridge Home Assistant plugin allows you to expose the Home Assistant devices and entities to Matter.
+
+It is the ideal companion of the official [Matterbridge Home Assistant Add-on](https://github.com/Luligu/matterbridge-home-assistant-addon/blob/main/README.md).
+
+### Webhooks
+
+<a href="https://github.com/Luligu/matterbridge-webhooks">
+  <img src="frontend/public/matterbridge.svg" alt="Matterbridge logo" width="100" />
+</a>
+
+Matterbridge Webhooks plugin allows you to expose any webhooks to Matter..
+
+### BTHome
+
+<a href="https://github.com/Luligu/matterbridge-webhooks">
+  <img src="frontend/public/matterbridge.svg" alt="Matterbridge logo" width="100" />
+</a>
+
+Matterbridge BTHome allows you to expose any BTHome device to Matter using the native bluetooth of the host machine.
+
+Features:
+
+- The bluetooth works correctly on all platforms and is based on the @stoprocent fork of noble.
+- The discovered BTHome devices are stored with all attributes to easily restart the plugin.
+- The plugin has also a command line to test and verify the bluetooth adapter and the ble network.
+
 ### Accessory platform example
 
 This is an example of an accessory platform plugin.
@@ -275,6 +327,12 @@ A Dynamic platform plugin exposes as many devices as you need (the limit for the
 The history works in both bridge and childbridge mode.
 
 The Eve app only shows the history when the plugins run like an AccessoryPlatform in childbridge mode (this means the plugin is paired directly).
+
+## Third-party plugins
+
+### [Loxone](https://github.com/andrasg/matterbridge-loxone)
+
+A matterbridge plugin that allows connecting Loxone devices to Matter.
 
 ## How to install and add a plugin with the frontend (best option)
 
@@ -406,9 +464,29 @@ All issues have been solved from the version 17.5 of the HomePod/AppleTV. Now th
 
 If you have more then one Apple TV or Home Pod, you can herve better results setting to disabled "Automatic Selection" in "Home Setting", "Home Hubs & Bridges". When "Automatic selection" is disabled, select your Apple Tv if you have one or any of your Home Pod. In this way you should not have anymore more then one session for fabric.
 
+### Manufacturer Serial Number and Model
+
+The Home app forgets about them when you restart the node.
+
+### Appliances
+
+As of version 18.4.x, all Appliances device types are not supported by the Home app. They don't even appear like unsupported accessories.
+
+### Robot
+
+As of version 18.4.x, the Robot is supported by the Home app only as a single, non-bridged device or if it is the only device in the bridge.
+
+If a Robot is present alongside other devices in the bridge, the entire bridge becomes unstable in the Home app.
+
+### Concentration measurements clusters
+
+As of version 18.4.x, all cluster derived from the concentration measurement cluster hang the Home app while pairing and the entire bridge becomes unstable in the Home app.
+
+For example: air quality sensors with TVOC measurement or co sensors with CarbonMonoxide measurement.
+
 ## Home Assistant
 
-So far is the only controller supporting some Matter 1.2 and 1.3 device type:
+So far is the only controller supporting some Matter 1.2, 1.3 and 1.4 device type:
 
 - airQualitySensor code 0x002c (Matter 1.2)
 - smokesmokeCoAlarm code 0x0076 (Matter 1.2)

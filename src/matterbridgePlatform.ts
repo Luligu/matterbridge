@@ -4,7 +4,7 @@
  * @file matterbridgePlatform.ts
  * @author Luca Liguori
  * @date 2024-03-21
- * @version 1.1.0
+ * @version 1.2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -92,7 +92,10 @@ export class MatterbridgePlatform {
   private readonly _storedDevices = new Map<string, { pluginName: string; serial: string; name: string; configUrl?: string }>(); // serial, { serial, name }
 
   /**
-   * Creates an instance of the base MatterbridgePlatform. It is extended by the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
+   * Creates an instance of the base MatterbridgePlatform.
+   * It is extended by the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
+   * Each plugin must extend the MatterbridgeAccessoryPlatform and MatterbridgeServicePlatform classes.
+   *
    * @param {Matterbridge} matterbridge - The Matterbridge instance.
    * @param {AnsiLogger} log - The logger instance.
    * @param {PlatformConfig} config - The platform configuration.
@@ -158,7 +161,8 @@ export class MatterbridgePlatform {
   /**
    * This method can be overridden in the extended class. Call super.onConfigure() to run checkEndpointNumbers().
    * It is called after the platform has started.
-   * Use this method to perform any configuration of your devices.
+   * Use this method to perform any configuration of your devices and to override the value of the attributes that are stored in the
+   * matter storage (i.e. the onOff attribute of the OnOff cluster).
    */
   async onConfigure() {
     this.log.debug(`Configuring platform ${this.name}`);
@@ -211,24 +215,27 @@ export class MatterbridgePlatform {
    * @param {string} action The action triggered by the button in plugin config.
    * @param {string} value The value of the field of the action button.
    * @param {string} id The id of the schema associated with the action.
+   * @param {PlatformConfig} formData The changed form data of the plugin.
    *
    * @remarks
    * This method can be overridden in the extended class.
    *
    * Use this method to handle the action defined in the plugin schema:
+   * ```json
    *  "addDevice": {
    *      "description": "Manually add a device that has not been discovered with mdns:",
    *      "type": "boolean",
-   *      "buttonText": "ADD",      // The text on the button.
+   *      "buttonText": "ADD",      // The text on the button. This is used when the action doesn't include a text field.
    *      "buttonField": "ADD",     // The text on the button. This is used when the action includes a text field.
    *      "buttonClose": false,     // optional, default is false. When true, the dialog will close after the action is sent.
    *      "buttonSave": false,      // optional, default is false. When true, the dialog will close and trigger the restart required after the action is sent.
    *      "textPlaceholder": "Enter the device IP address",   // optional: the placeholder text for the text field.
    *      "default": false
    *  },
+   * ```
    */
-  async onAction(action: string, value?: string, id?: string) {
-    this.log.debug(`The plugin ${CYAN}${this.name}${db} doesn't override onAction. Received action ${CYAN}${action}${db}${value ? ' with ' + CYAN + value + db : ''} ${id ? ' for schema ' + CYAN + id + db : ''}`);
+  async onAction(action: string, value?: string, id?: string, formData?: PlatformConfig) {
+    this.log.debug(`The plugin ${CYAN}${this.name}${db} doesn't override onAction. Received action ${CYAN}${action}${db}${value ? ' with ' + CYAN + value + db : ''} ${id ? ' for schema ' + CYAN + id + db : ''}`, formData);
   }
 
   /**
@@ -278,9 +285,11 @@ export class MatterbridgePlatform {
 
   /**
    * Unregisters all devices registered with the Matterbridge platform.
+   *
+   * @param {number} [delay=0] - The delay in milliseconds between removing each bridged endpoint (default: 0).
    */
-  async unregisterAllDevices() {
-    await this.matterbridge.removeAllBridgedEndpoints(this.name);
+  async unregisterAllDevices(delay = 0) {
+    await this.matterbridge.removeAllBridgedEndpoints(this.name, delay);
     this._registeredEndpoints.clear();
     this._registeredEndpointsByName.clear();
   }

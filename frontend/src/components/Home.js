@@ -14,7 +14,6 @@ import { WebSocketLogs } from './WebSocketLogs';
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
 import { SystemInfoTable } from './SystemInfoTable';
-// import { MatterbridgeInfoTable } from './MatterbridgeInfoTable';
 import { QRDiv } from './QRDiv';
 import { InstallAddPlugins } from './InstallAddPlugins';
 import { HomePlugins } from './HomePlugins';

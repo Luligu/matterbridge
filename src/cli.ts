@@ -33,6 +33,7 @@ import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, TimestampFormat, YELLOW } from 
 import type { Session } from 'node:inspector';
 import type os from 'node:os';
 import { EventEmitter } from 'node:events';
+import { inspect } from 'node:util';
 
 export const cliEmitter = new EventEmitter();
 
@@ -254,5 +255,7 @@ async function main() {
 // Run the main function
 process.title = 'matterbridge';
 main().catch((error) => {
-  log.error(`Matterbridge.loadInstance() failed with error: ${error instanceof Error ? error.message : error}`);
+  const errorMessage = error instanceof Error ? error.message : error;
+  const errorInspect = inspect(error, { depth: 10 });
+  log.error(`Matterbridge.loadInstance() failed with error: ${errorMessage}\nstack: ${errorInspect}`);
 });

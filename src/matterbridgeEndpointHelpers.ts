@@ -374,6 +374,14 @@ export function getAttributeId(endpoint: Endpoint, cluster: string, attribute: s
       else if (attribute === 'measurementMedium') return 0x9;
       else if (attribute === 'levelValue') return 0xa;
     }
+    if (endpoint.behaviors.supported[lowercaseFirstLetter(cluster)]?.schema?.type === 'OperationalState') {
+      if (attribute === 'phaseList') return 0x0;
+      else if (attribute === 'currentPhase') return 0x1;
+      else if (attribute === 'countdownTime') return 0x2;
+      else if (attribute === 'operationalStateList') return 0x3;
+      else if (attribute === 'operationalState') return 0x4;
+      else if (attribute === 'operationalError') return 0x5;
+    }
     return endpoint.behaviors.supported[lowercaseFirstLetter(cluster)]?.schema?.children?.find((child) => child.name === capitalizeFirstLetter(attribute))?.id;
   }
 }
@@ -542,13 +550,15 @@ export async function subscribeAttribute(endpoint: MatterbridgeEndpoint, cluster
 /**
  * Get the default TemperatureMeasurement cluster server options.
  *
- * @param {number} measuredValue - The measured value of the temperature x 100.
+ * @param {number | null} measuredValue - The measured value of the temperature x 100.
+ * @param {number | null} minMeasuredValue - The minimum measured value of the temperature x 100.
+ * @param {number | null} maxMeasuredValue - The maximum measured value of the temperature x 100.
  */
-export function getDefaultTemperatureMeasurementClusterServer(measuredValue = 0) {
+export function getDefaultTemperatureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
   return optionsFor(TemperatureMeasurementServer, {
     measuredValue,
-    minMeasuredValue: null,
-    maxMeasuredValue: null,
+    minMeasuredValue,
+    maxMeasuredValue,
     tolerance: 0,
   });
 }
@@ -556,13 +566,15 @@ export function getDefaultTemperatureMeasurementClusterServer(measuredValue = 0)
 /**
  * Get the default RelativeHumidityMeasurement cluster server options.
  *
- * @param {number} measuredValue - The measured value of the relative humidity x 100.
+ * @param {number | null} measuredValue - The measured value of the relative humidity x 100.
+ * @param {number | null} minMeasuredValue - The minimum measured value of the relative humidity x 100.
+ * @param {number | null} maxMeasuredValue - The maximum measured value of the relative humidity x 100.
  */
-export function getDefaultRelativeHumidityMeasurementClusterServer(measuredValue = 0) {
+export function getDefaultRelativeHumidityMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
   return optionsFor(RelativeHumidityMeasurementServer, {
     measuredValue,
-    minMeasuredValue: null,
-    maxMeasuredValue: null,
+    minMeasuredValue,
+    maxMeasuredValue,
     tolerance: 0,
   });
 }
@@ -570,13 +582,15 @@ export function getDefaultRelativeHumidityMeasurementClusterServer(measuredValue
 /**
  * Get the default PressureMeasurement cluster server options.
  *
- * @param {number} measuredValue - The measured value for the pressure.
+ * @param {number | null} measuredValue - The measured value for the pressure.
+ * @param {number | null} minMeasuredValue - The minimum measured value for the pressure.
+ * @param {number | null} maxMeasuredValue - The maximum measured value for the pressure.
  */
-export function getDefaultPressureMeasurementClusterServer(measuredValue = 1000) {
+export function getDefaultPressureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
   return optionsFor(PressureMeasurementServer, {
     measuredValue,
-    minMeasuredValue: null,
-    maxMeasuredValue: null,
+    minMeasuredValue,
+    maxMeasuredValue,
     tolerance: 0,
   });
 }
@@ -584,13 +598,21 @@ export function getDefaultPressureMeasurementClusterServer(measuredValue = 1000)
 /**
  * Get the default IlluminanceMeasurement cluster server options.
  *
- * @param {number} measuredValue - The measured value of illuminance.
+ * @param {number | null} measuredValue - The measured value of illuminance.
+ * @param {number | null} minMeasuredValue - The minimum measured value of illuminance.
+ * @param {number | null} maxMeasuredValue - The maximum measured value of illuminance.
+ * @remark The default value for the illuminance measurement is null.
+ * This attribute SHALL indicate the illuminance in Lux (symbol lx) as follows:
+ * •  MeasuredValue = 10,000 x log10(illuminance) + 1,
+ *    where 1 lx <= illuminance <= 3.576 Mlx, corresponding to a MeasuredValue in the range 1 to 0xFFFE.
+ * • 0 indicates a value of illuminance that is too low to be measured
+ * • null indicates that the illuminance measurement is invalid.
  */
-export function getDefaultIlluminanceMeasurementClusterServer(measuredValue = 0) {
+export function getDefaultIlluminanceMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
   return optionsFor(IlluminanceMeasurementServer, {
     measuredValue,
-    minMeasuredValue: null,
-    maxMeasuredValue: null,
+    minMeasuredValue,
+    maxMeasuredValue,
     tolerance: 0,
   });
 }
@@ -598,13 +620,15 @@ export function getDefaultIlluminanceMeasurementClusterServer(measuredValue = 0)
 /**
  * Get the default FlowMeasurement cluster server options.
  *
- * @param {number} measuredValue - The measured value of the flow in 10 x m3/h.
+ * @param {number | null} measuredValue - The measured value of the flow in 10 x m3/h.
+ * @param {number | null} minMeasuredValue - The minimum measured value of the flow in 10 x m3/h.
+ * @param {number | null} maxMeasuredValue - The maximum measured value of the flow in 10 x m3/h.
  */
-export function getDefaultFlowMeasurementClusterServer(measuredValue = 0) {
+export function getDefaultFlowMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
   return optionsFor(FlowMeasurementServer, {
     measuredValue,
-    minMeasuredValue: null,
-    maxMeasuredValue: null,
+    minMeasuredValue,
+    maxMeasuredValue,
     tolerance: 0,
   });
 }
@@ -613,12 +637,23 @@ export function getDefaultFlowMeasurementClusterServer(measuredValue = 0) {
  * Get the default OccupancySensing cluster server options.
  *
  * @param {boolean} occupied - A boolean indicating whether the occupancy is occupied or not. Default is false.
+ * @param {number} holdTime - The hold time in seconds. Default is 30.
+ * @param {number} holdTimeMin - The minimum hold time in seconds. Default is 1.
+ * @param {number} holdTimeMax - The maximum hold time in seconds. Default is 300.
+ *
+ * @remark The default value for the occupancy sensor type is PIR.
+ * Servers SHALL set these attributes for backward compatibility with clients implementing a cluster revision <= 4 as
+ * described in OccupancySensorType and OccupancySensorTypeBitmap Attributes.
+ * This replaces the 9 legacy attributes PIROccupiedToUnoccupiedDelay through PhysicalContactUnoccupiedToOccupiedThreshold.
  */
-export function getDefaultOccupancySensingClusterServer(occupied = false) {
-  return optionsFor(OccupancySensingServer, {
+export function getDefaultOccupancySensingClusterServer(occupied = false, holdTime = 30, holdTimeMin = 1, holdTimeMax = 300) {
+  return optionsFor(OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared), {
     occupancy: { occupied },
     occupancySensorType: OccupancySensing.OccupancySensorType.Pir,
     occupancySensorTypeBitmap: { pir: true, ultrasonic: false, physicalContact: false },
-    pirOccupiedToUnoccupiedDelay: 30,
+    pirOccupiedToUnoccupiedDelay: holdTime,
+    pirUnoccupiedToOccupiedDelay: holdTime,
+    holdTime,
+    holdTimeLimits: { holdTimeMin, holdTimeMax, holdTimeDefault: holdTime },
   });
 }

@@ -1,3 +1,6 @@
+// @mui/material
+import Tooltip from '@mui/material/Tooltip';
+
 export function StatusIndicator({ status, enabledText = 'Enabled', disabledText = undefined, tooltipText = undefined, onClick }) {
   if (status === undefined) {
     return (
@@ -8,20 +11,18 @@ export function StatusIndicator({ status, enabledText = 'Enabled', disabledText 
   } else {
     if(tooltipText !== undefined) {
       return (
-      <div className="tooltip-container">
-        <div className={status ? 'status-enabled' : 'status-disabled'} style={{ cursor: 'default' }} onClick={onClick}>
-          {status ? enabledText : disabledText ?? enabledText}
-        </div>
-        <span 
-          className="tooltip-text">{tooltipText}
-        </span>
-      </div>);
+        <Tooltip title={tooltipText}>
+          <div className={status ? 'status-enabled' : 'status-disabled'} style={{ cursor: 'default' }} onClick={onClick}>
+            {status ? enabledText : disabledText ?? enabledText}
+          </div>
+        </Tooltip>
+      );
     }
     else {
       return(
-      <div className={status ? 'status-enabled' : 'status-disabled'} style={{ cursor: 'default' }}>
-        {status ? enabledText : disabledText ?? enabledText}
-      </div>
+        <div className={status ? 'status-enabled' : 'status-disabled'} style={{ cursor: 'default' }}>
+          {status ? enabledText : disabledText ?? enabledText}
+        </div>
       );
     }
   }

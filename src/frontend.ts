@@ -45,7 +45,8 @@ import { ApiClusters, ApiDevices, BaseRegisteredPlugin, plg, RegisteredPlugin } 
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { hasParameter } from './utils/export.js';
-import { BridgedDeviceBasicInformation } from '@matter/main/clusters';
+import { BridgedDeviceBasicInformation, PowerSource } from '@matter/main/clusters';
+import { PlatformConfig } from './matterbridgePlatform.js';
 
 /**
  * Websocket message ID for logging.
@@ -159,10 +160,29 @@ export class Frontend {
     // Create the express app that serves the frontend
     this.expressApp = express();
 
+    // Inject logging/debug wrapper for route/middleware registration
+    /*
+    const methods = ['get', 'post', 'put', 'delete', 'use'];
+    for (const method of methods) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const original = (this.expressApp as any)[method].bind(this.expressApp);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (this.expressApp as any)[method] = (path: any, ...rest: any) => {
+        try {
+          console.log(`[DEBUG] Registering ${method.toUpperCase()} route:`, path);
+          return original(path, ...rest);
+        } catch (err) {
+          console.error(`[ERROR] Failed to register route: ${path}`);
+          throw err;
+        }
+      };
+    }
+    */
+
     // Log all requests to the server for debugging
     /*
     this.expressApp.use((req, res, next) => {
-      this.log.debug(`Received request on expressApp: ${req.method} ${req.url}`);
+      this.log.debug(`***Received request on expressApp: ${req.method} ${req.url}`);
       next();
     });
     */
@@ -526,29 +546,59 @@ export class Frontend {
       res.json(data);
     });
 
-    // Endpoint to view the log
-    this.expressApp.get('/api/view-log', async (req, res) => {
-      this.log.debug('The frontend sent /api/log');
+    // Endpoint to view the matterbridge log
+    this.expressApp.get('/api/view-mblog', async (req, res) => {
+      this.log.debug('The frontend sent /api/view-mblog');
       try {
         const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), 'utf8');
         res.type('text/plain');
         res.send(data);
       } catch (error) {
-        this.log.error(`Error reading log file ${this.matterbridge.matterbrideLoggerFile}: ${error instanceof Error ? error.message : error}`);
-        res.status(500).send('Error reading log file');
+        this.log.error(`Error reading matterbridge log file ${this.matterbridge.matterbrideLoggerFile}: ${error instanceof Error ? error.message : error}`);
+        res.status(500).send('Error reading matterbridge log file. Please enable the matterbridge log on file in the settings.');
+      }
+    });
+
+    // Endpoint to view the matter.js log
+    this.expressApp.get('/api/view-mjlog', async (req, res) => {
+      this.log.debug('The frontend sent /api/view-mjlog');
+      try {
+        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), 'utf8');
+        res.type('text/plain');
+        res.send(data);
+      } catch (error) {
+        this.log.error(`Error reading matter log file ${this.matterbridge.matterLoggerFile}: ${error instanceof Error ? error.message : error}`);
+        res.status(500).send('Error reading matter log file. Please enable the matter log on file in the settings.');
+      }
+    });
+
+    // Endpoint to view the shelly log
+    this.expressApp.get('/api/shellyviewsystemlog', async (req, res) => {
+      this.log.debug('The frontend sent /api/shellyviewsystemlog');
+      try {
+        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'utf8');
+        res.type('text/plain');
+        res.send(data);
+      } catch (error) {
+        this.log.error(`Error reading shelly log file ${this.matterbridge.matterbrideLoggerFile}: ${error instanceof Error ? error.message : error}`);
+        res.status(500).send('Error reading shelly log file. Please create the shelly system log before loading it.');
       }
     });
 
     // Endpoint to download the matterbridge log
     this.expressApp.get('/api/download-mblog', async (req, res) => {
-      this.log.debug('The frontend sent /api/download-mblog');
+      this.log.debug(`The frontend sent /api/download-mblog ${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile)}`);
       try {
         await fs.access(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), fs.constants.F_OK);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), 'utf8');
+        await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterbrideLoggerFile), data, 'utf-8');
       } catch (error) {
-        fs.appendFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), 'Enable the log on file in the settings to enable the file logger');
+        await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterbrideLoggerFile), 'Enable the matterbridge log on file in the settings to download the matterbridge log.', 'utf-8');
+        this.log.debug(`Error in /api/download-mblog: ${error instanceof Error ? error.message : error}`);
       }
-      res.download(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), 'matterbridge.log', (error) => {
+      res.type('text/plain');
+      // res.download(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), 'matterbridge.log', (error) => {
+      res.download(path.join(os.tmpdir(), this.matterbridge.matterbrideLoggerFile), 'matterbridge.log', (error) => {
         if (error) {
           this.log.error(`Error downloading log file ${this.matterbridge.matterbrideLoggerFile}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge log file');
@@ -558,14 +608,17 @@ export class Frontend {
 
     // Endpoint to download the matter log
     this.expressApp.get('/api/download-mjlog', async (req, res) => {
-      this.log.debug('The frontend sent /api/download-mjlog');
+      this.log.debug(`The frontend sent /api/download-mjlog ${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile)}`);
       try {
         await fs.access(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), fs.constants.F_OK);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), 'utf8');
+        await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterLoggerFile), data, 'utf-8');
       } catch (error) {
-        fs.appendFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), 'Enable the log on file in the settings to enable the file logger');
+        await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterLoggerFile), 'Enable the matter log on file in the settings to download the matter log.', 'utf-8');
+        this.log.debug(`Error in /api/download-mblog: ${error instanceof Error ? error.message : error}`);
       }
-      res.download(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), 'matter.log', (error) => {
+      res.type('text/plain');
+      res.download(path.join(os.tmpdir(), this.matterbridge.matterLoggerFile), 'matter.log', (error) => {
         if (error) {
           this.log.error(`Error downloading log file ${this.matterbridge.matterLoggerFile}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matter log file');
@@ -573,16 +626,19 @@ export class Frontend {
       });
     });
 
-    // Endpoint to download the matter log
+    // Endpoint to download the shelly log
     this.expressApp.get('/api/shellydownloadsystemlog', async (req, res) => {
       this.log.debug('The frontend sent /api/shellydownloadsystemlog');
       try {
         await fs.access(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), fs.constants.F_OK);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'utf8');
+        await fs.writeFile(path.join(os.tmpdir(), 'shelly.log'), data, 'utf-8');
       } catch (error) {
-        fs.appendFile(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'Create the Shelly system log before downloading it.');
+        await fs.writeFile(path.join(os.tmpdir(), 'shelly.log'), 'Create the Shelly system log before downloading it.', 'utf-8');
+        this.log.debug(`Error in /api/shellydownloadsystemlog: ${error instanceof Error ? error.message : error}`);
       }
-      res.download(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'shelly.log', (error) => {
+      res.type('text/plain');
+      res.download(path.join(os.tmpdir(), 'shelly.log'), 'shelly.log', (error) => {
         if (error) {
           this.log.error(`Error downloading Shelly system log file: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading Shelly system log file');
@@ -1027,11 +1083,17 @@ export class Frontend {
     });
 
     // Fallback for routing (must be the last route)
+    this.expressApp.use((req, res) => {
+      this.log.debug('The frontend sent:', req.url);
+      res.sendFile(path.join(this.matterbridge.rootDirectory, 'frontend/build/index.html'));
+    });
+    /* Not working in express v5!
     this.expressApp.get('*', (req, res) => {
       this.log.debug('The frontend sent:', req.url);
       this.log.debug('Response send file:', path.join(this.matterbridge.rootDirectory, 'frontend/build/index.html'));
       res.sendFile(path.join(this.matterbridge.rootDirectory, 'frontend/build/index.html'));
     });
+    */
 
     this.log.debug(`Frontend initialized on port ${YELLOW}${this.port}${db} static ${UNDERLINE}${path.join(this.matterbridge.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
   }
@@ -1160,6 +1222,29 @@ export class Frontend {
     return false;
   }
 
+  private getPowerSource(device: MatterbridgeEndpoint): 'ac' | 'dc' | 'ok' | 'warning' | 'critical' | undefined {
+    if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return undefined;
+
+    const powerSource = (device: MatterbridgeEndpoint) => {
+      const featureMap = device.getAttribute(PowerSource.Cluster.id, 'featureMap') as Record<string, boolean>;
+      if (featureMap.wired) {
+        const wiredCurrentType = device.getAttribute(PowerSource.Cluster.id, 'wiredCurrentType') as PowerSource.WiredCurrentType;
+        return ['ac', 'dc'][wiredCurrentType] as 'ac' | 'dc' | undefined;
+      }
+      if (featureMap.battery) {
+        const batChargeLevel = device.getAttribute(PowerSource.Cluster.id, 'batChargeLevel') as PowerSource.BatChargeLevel;
+        return ['ok', 'warning', 'critical'][batChargeLevel] as 'ok' | 'warning' | 'critical' | undefined;
+      }
+      return;
+    };
+    // Root endpoint
+    if (device.hasClusterServer(PowerSource.Cluster.id)) return powerSource(device);
+    // Child endpoints
+    for (const child of device.getChildEndpoints()) {
+      if (child.hasClusterServer(PowerSource.Cluster.id)) return powerSource(child);
+    }
+  }
+
   /**
    * Retrieves the cluster text description from a given device.
    * @param {MatterbridgeDevice} device - The MatterbridgeDevice object.
@@ -1200,6 +1285,7 @@ export class Frontend {
     };
 
     let attributes = '';
+    let supportedModes: { label: string; mode: number }[] = [];
 
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       // console.log(`${device.deviceName} => Cluster: ${clusterName}-${clusterId} Attribute: ${attributeName}-${attributeId} Value(${typeof attributeValue}): ${attributeValue}`);
@@ -1211,6 +1297,18 @@ export class Frontend {
       if (clusterName === 'thermostat' && attributeName === 'localTemperature' && isValidNumber(attributeValue)) attributes += `Temperature: ${attributeValue / 100}°C `;
       if (clusterName === 'thermostat' && attributeName === 'occupiedHeatingSetpoint' && isValidNumber(attributeValue)) attributes += `Heat to: ${attributeValue / 100}°C `;
       if (clusterName === 'thermostat' && attributeName === 'occupiedCoolingSetpoint' && isValidNumber(attributeValue)) attributes += `Cool to: ${attributeValue / 100}°C `;
+
+      const modeClusters = ['modeSelect', 'rvcRunMode', 'rvcCleanMode', 'laundryWasherMode', 'ovenMode', 'microwaveOvenMode'];
+      if (modeClusters.includes(clusterName) && attributeName === 'supportedModes') {
+        supportedModes = attributeValue as { label: string; mode: number }[];
+      }
+      if (modeClusters.includes(clusterName) && attributeName === 'currentMode') {
+        const supportedMode = supportedModes.find((mode) => mode.mode === attributeValue);
+        if (supportedMode) attributes += `Mode: ${supportedMode.label} `;
+        else attributes += `Mode: ${attributeValue} `;
+      }
+      const operationalStateClusters = ['operationalState', 'rvcOperationalState'];
+      if (operationalStateClusters.includes(clusterName) && attributeName === 'operationalState') attributes += `OpState: ${attributeValue} `;
 
       if (clusterName === 'pumpConfigurationAndControl' && attributeName === 'operationMode') attributes += `Mode: ${attributeValue} `;
 
@@ -1273,6 +1371,7 @@ export class Frontend {
         changelog: plugin.changelog,
         funding: plugin.funding,
         latestVersion: plugin.latestVersion,
+        serialNumber: plugin.serialNumber,
         locked: plugin.locked,
         error: plugin.error,
         enabled: plugin.enabled,
@@ -1452,6 +1551,7 @@ export class Frontend {
             configUrl: device.configUrl,
             uniqueId: device.uniqueId,
             reachable: this.getReachability(device),
+            powerSource: this.getPowerSource(device),
             cluster: cluster,
           });
         });
@@ -1568,7 +1668,6 @@ export class Frontend {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select' }));
           return;
         }
-        // const selectDeviceValues = plugin.platform?.selectDevice ? Array.from(plugin.platform.selectDevice.values()).sort((keyA, keyB) => keyA.name.localeCompare(keyB.name)) : [];
         const selectDeviceValues = plugin.platform?.getSelectDevices().sort((keyA, keyB) => keyA.name.localeCompare(keyB.name));
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: selectDeviceValues }));
         return;
@@ -1582,7 +1681,6 @@ export class Frontend {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select/entities' }));
           return;
         }
-        // const selectEntityValues = plugin.platform?.selectDevice ? Array.from(plugin.platform.selectEntity.values()).sort((keyA, keyB) => keyA.name.localeCompare(keyB.name)) : [];
         const selectEntityValues = plugin.platform?.getSelectEntities().sort((keyA, keyB) => keyA.name.localeCompare(keyB.name));
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: selectEntityValues }));
         return;
@@ -1597,7 +1695,7 @@ export class Frontend {
           return;
         }
         this.log.notice(`Action ${CYAN}${data.params.action}${nt}${data.params.value ? ' with ' + CYAN + data.params.value + nt : ''} for plugin ${CYAN}${plugin.name}${nt}`);
-        plugin.platform?.onAction(data.params.action, data.params.value as string | undefined, data.params.id as string | undefined).catch((error) => {
+        plugin.platform?.onAction(data.params.action, data.params.value as string | undefined, data.params.id as string | undefined, data.params.formData as unknown as PlatformConfig).catch((error) => {
           this.log.error(`Error in plugin ${plugin.name} action ${data.params.action}: ${error}`);
         });
       } else if (data.method === '/api/command') {
@@ -1712,6 +1810,8 @@ export class Frontend {
     message = message.replace(/[\x00-\x1F\x7F]/g, '');
     // Replace all occurrences of \" with "
     message = message.replace(/\\"/g, '"');
+    // Replace all occurrences of angle-brackets with &lt; and &gt;"
+    message = message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
     // Define the maximum allowed length for continuous characters without a space
     const maxContinuousLength = 100;

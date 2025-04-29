@@ -17,6 +17,8 @@ import Tooltip from '@mui/material/Tooltip';
 
 // @mui/icons-material
 import SettingsIcon from '@mui/icons-material/Settings';
+import Battery4BarIcon from '@mui/icons-material/Battery4Bar';
+import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices';
 
 // @mdi/js
 import Icon from '@mdi/react';
@@ -121,6 +123,7 @@ export function HomeDevices() {
     name: true,
     serial: true,
     reachable: true,
+    powerSource: true,
     configUrl: false,
     actions: true,
   });
@@ -150,6 +153,21 @@ export function HomeDevices() {
         const a = rowA.original.reachable===true ? 1 : rowA.original.reachable===false ? 0 : -1;
         const b = rowB.original.reachable===true ? 1 : rowB.original.reachable===false ? 0 : -1;
         return a - b;
+      },
+    },
+    {
+      Header: 'Power',
+      accessor: 'powerSource',
+      Cell: ({ row }) => {
+        if (row.original.powerSource === 'ac' || row.original.powerSource === 'dc') {
+          return <ElectricalServicesIcon fontSize="small" sx={{ color: 'var(--primary-color)' }} />;
+        } else if (row.original.powerSource === 'ok') {
+          return <Battery4BarIcon fontSize="small" sx={{ color: 'green' }} />;
+        } else if (row.original.powerSource === 'warning') {
+          return <Battery4BarIcon fontSize="small" sx={{ color: 'yellow' }} />;
+        } else if (row.original.powerSource === 'critical') {
+          return <Battery4BarIcon fontSize="small" sx={{ color: 'red' }} />;
+        } else return <span></span>;
       },
     },
     {
@@ -351,7 +369,9 @@ export function HomeDevices() {
   useEffect(() => {
     const storedVisibility = localStorage.getItem('homeDevicesColumnVisibility');
     if (storedVisibility) {
-      setDevicesColumnVisibility(JSON.parse(storedVisibility));
+      const visibility = JSON.parse(storedVisibility);
+      if(visibility.powerSource === undefined) visibility['powerSource'] = true; // Fix for old versions
+      setDevicesColumnVisibility(visibility);
       if(debug) console.log(`HomeDevices effect: loaded column visibility from localStorage`);
     }
   }, []);

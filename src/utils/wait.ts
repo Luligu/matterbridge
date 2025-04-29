@@ -36,7 +36,8 @@ const log = new AnsiLogger({ logName: 'MatterbridgeUtils', logTimestampFormat: T
  * @param {boolean} [debug=false] - Optional. If true, debug messages will be logged to the console. Default is false.
  * @returns {Promise<boolean>} A promise that resolves to true when the condition is met, or false if the timeout occurs.
  */
-export async function waiter(name: string, check: () => boolean, exitWithReject = false, resolveTimeout = 5000, resolveInterval = 500, debug = false) {
+export async function waiter(name: string, check: () => boolean, exitWithReject = false, resolveTimeout = 5000, resolveInterval = 500, debug = false): Promise<boolean> {
+  if (check()) return true;
   log.logLevel = LogLevel.DEBUG;
   log.logName = 'Waiter';
   if (debug) log.debug(`Waiter "${name}" started...`);

@@ -13,10 +13,6 @@ If you like this project and find it useful, please consider giving it a star on
 If you want to run Matterbridge in Home Assistant please use the official add-on https://github.com/Luligu/matterbridge-home-assistant-addon that also has Ingress and side panel.
 It is also available the official Matterbridge Home Assistant plugin https://github.com/Luligu/matterbridge-hass.
 
-### Discord
-
-Tamer (https://github.com/tammeryousef1006) has created the Matterbridge Discord group: https://discord.gg/QX58CDe6hd.
-
 ## New plugin matterbridge-webhooks
 
 A new plugin has been added: https://github.com/Luligu/matterbridge-webhooks
@@ -28,6 +24,71 @@ Features:
 - The webhooks parameters can easily be entered in the frontend.
 - It is possible to choose the method: GET or POST.
 - The webhook can be tested directly in the frontend.
+
+## Breaking changes
+
+This release brings Matter 1.4.
+
+New device types:
+
+- onOffMountedSwitch: Mounted On/Off Control (an onOff switch without client cluster!).
+- dimmableMountedSwitch: Mounted Dimmable Load Control (a dimmer switch without client cluster!).
+
+Modified clusters:
+
+- OccupancySensing cluster.
+
+## [3.0.0] - 2025-04-29
+
+### Added
+
+- [addEndpoint]: Added an error handler with deep stack on aggregatorNode.add() and serverNode.add() calls.
+- [endpoint]: Added createOffOnlyOnOffClusterServer().
+- [endpoint]: Added createBaseFanControlClusterServer().
+- [endpoint]: Added createDefaultHepaFilterMonitoringClusterServer().
+- [endpoint]: Added createDefaultActivatedCarbonFilterMonitoringClusterServer().
+- [endpoint]: Added createDefaultThermostatUserInterfaceConfigurationClusterServer().
+- [deviceTypes]: Added Robotic device type (please read https://github.com/Luligu/matterbridge/discussions/264).
+- [deviceTypes]: Added Appliances device types (please read https://github.com/Luligu/matterbridge/discussions/264).
+- [frontend]: Added the matterbridge aggregator serialNumber in the QRDiv.
+- [frontend]: Added Power column in the Devices panel of the Home page.
+- [frontend]: Added support for appliances and robot in IconView.
+- [parameter]: Added getIntArrayParameter and getStringArrayParameter.
+- [frontend]: Added the view menu to load the logs directly in the browser.
+
+### Changed
+
+- [package]: Updated package.
+- [package]: Updated express to v5.1.0.
+- [package]: Updated dependencies.
+- [frontend]: Frontend v.2.6.3.
+- [frontend]: Changed icons with mdiIcons in IconView.
+- [package]: Added tsconfig.jest.json with "isolatedModules": true for ts-jest.
+- [deviceTypes]: Updated device types to Matter 1.4.
+- [clusters]: Updated cluster helpers to Matter 1.4.
+- [matter.js]: Update to 0.13.0-alpha.0-20250405-7fc7db48.
+- [matter.js]: Update to 0.13.0-alpha.0-20250408-c916c7e8.
+- [matter.js]: Update to 0.13.0-alpha.0-20250412-5fad64e7b.
+- [matter.js]: Update to 0.13.0-alpha.0-20250413-d5a27700d.
+- [matter.js]: Update to 0.13.0-alpha.0-20250415-475996bb5.
+- [matter.js]: Update to 0.13.0-alpha.0-20250418-8cfc0b832.
+- [matter.js]: Update to 0.13.0-alpha.0-20250420-9f45e4f77.
+- [matter.js]: Update to 0.13.0-alpha.0-20250422-0d27f26be.
+- [matter.js]: Update to 0.13.0-alpha.0-20250423-8917d1d1d.
+- [matter.js]: Update to 0.13.0-alpha.0-20250424-4760af1f3.
+- [matter.js]: Update to 0.13.0-alpha.0-20250425-94b33ff98.
+- [matter.js]: Update to 0.13.0-alpha.0-20250427-e7df8aa45.
+- [matter.js]: Update to 0.13.0.
+- [help]: Updated cli help screen.
+- [logger]: Improved frontend logger cleaning.
+
+### Fixed
+
+- [doorLock]: Fixed supportedOperatingModes inverted bitmap (Thanks Apollon).
+- [DevicesIcon]: Fixed rendering of leak freeze and rain sensors.
+- [QRCode]: Fixed rendering of QRCode panel when advertising stops.
+- [matterbridge]: Fixed wrong message when advertising stops and the node has been paired.
+- [frontend]: Fixed download logs that broke with express v5.1.0.
 
 ## [2.2.9] - 2025-04-18
 
