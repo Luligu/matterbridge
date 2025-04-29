@@ -77,6 +77,7 @@ Modified clusters:
 - [matter.js]: Update to 0.13.0-alpha.0-20250424-4760af1f3.
 - [matter.js]: Update to 0.13.0-alpha.0-20250425-94b33ff98.
 - [matter.js]: Update to 0.13.0-alpha.0-20250427-e7df8aa45.
+- [matter.js]: Update to 0.13.0.
 - [help]: Updated cli help screen.
 - [logger]: Improved frontend logger cleaning.
 

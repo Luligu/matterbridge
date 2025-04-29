@@ -58,6 +58,10 @@ https://www.youtube.com/watch?v=goNB9Cgh_Fk
 
 https://www.matteralpha.com/how-to/how-to-configure-an-open-source-matter-bridge-at-home
 
+## Press
+
+https://matter-smarthome.de/en/interview/an-alternative-to-the-official-matter-sdk/
+
 ## Prerequisites
 
 To run Matterbridge, you need either a [Node.js](https://nodejs.org/en) environment or [Docker](https://docs.docker.com/get-started/get-docker/) installed on your system.
