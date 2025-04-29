@@ -38,7 +38,7 @@ Modified clusters:
 
 - OccupancySensing cluster.
 
-## [3.0.0] - 2025-04-??
+## [3.0.0] - 2025-04-29
 
 ### Added
 
@@ -48,12 +48,13 @@ Modified clusters:
 - [endpoint]: Added createDefaultHepaFilterMonitoringClusterServer().
 - [endpoint]: Added createDefaultActivatedCarbonFilterMonitoringClusterServer().
 - [endpoint]: Added createDefaultThermostatUserInterfaceConfigurationClusterServer().
-- [deviceTypes]: Added Robotic device type.
-- [deviceTypes]: Added Appliances device types.
+- [deviceTypes]: Added Robotic device type (please read https://github.com/Luligu/matterbridge/discussions/264).
+- [deviceTypes]: Added Appliances device types (please read https://github.com/Luligu/matterbridge/discussions/264).
 - [frontend]: Added the matterbridge aggregator serialNumber in the QRDiv.
 - [frontend]: Added Power column in the Devices panel of the Home page.
 - [frontend]: Added support for appliances and robot in IconView.
 - [parameter]: Added getIntArrayParameter and getStringArrayParameter.
+- [frontend]: Added the view menu to load the logs directly in the browser.
 
 ### Changed
 
@@ -87,6 +88,7 @@ Modified clusters:
 - [DevicesIcon]: Fixed rendering of leak freeze and rain sensors.
 - [QRCode]: Fixed rendering of QRCode panel when advertising stops.
 - [matterbridge]: Fixed wrong message when advertising stops and the node has been paired.
+- [frontend]: Fixed download logs that broke with express v5.1.0.
 
 ## [2.2.9] - 2025-04-18
 

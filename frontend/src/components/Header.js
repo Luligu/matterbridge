@@ -17,6 +17,7 @@ import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import BlockIcon from '@mui/icons-material/Block';
+import ViewHeadlineIcon from '@mui/icons-material/ViewHeadline';
 
 // Frontend
 import { sendCommandToMatterbridge } from './sendApiCommand';
@@ -38,6 +39,7 @@ function Header() {
   // Menu states
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [backupMenuAnchorEl, setBackupMenuAnchorEl] = useState(null);
+  const [viewMenuAnchorEl, setViewMenuAnchorEl] = useState(null);
   const [downloadMenuAnchorEl, setDownloadMenuAnchorEl] = useState(null);
   const [resetMenuAnchorEl, setResetMenuAnchorEl] = useState(null);
 
@@ -137,6 +139,18 @@ function Header() {
       logMessage('Matterbridge', `Downloading matter log...`);
       showSnackbarMessage('Downloading matter log...', 5);
       window.location.href = './api/download-mjlog';
+    } else if (value === 'view-mblog') {
+      logMessage('Matterbridge', `Loading matterbridge log...`);
+      showSnackbarMessage('Loading matterbridge log...', 5);
+      window.location.href = './api/view-mblog';
+    } else if (value === 'view-mjlog') {
+      logMessage('Matterbridge', `Loading matter log...`);
+      showSnackbarMessage('Loading matter log...', 5);
+      window.location.href = './api/view-mjlog';
+    } else if (value === 'view-shellylog') {
+      logMessage('Matterbridge', `Loading matter log...`);
+      showSnackbarMessage('Loading matter log...', 5);
+      window.location.href = './api/shellyviewsystemlog';
     } else if (value === 'download-mbstorage') {
       logMessage('Matterbridge', `Downloading matterbridge storage...`);
       showSnackbarMessage('Downloading matterbridge storage...', 5);
@@ -213,6 +227,14 @@ function Header() {
 
   const handleBackupMenuClose = () => {
     setBackupMenuAnchorEl(null);
+  };
+
+  const handleViewMenuOpen = (event) => {
+    setViewMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleViewMenuClose = () => {
+    setViewMenuAnchorEl(null);
   };
 
   const handleDownloadMenuOpen = (event) => {
@@ -460,6 +482,29 @@ function Header() {
               <ListItemText primary="Stop sharing" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             : null}
+          <Divider />
+
+          <MenuItem onClick={handleViewMenuOpen}>
+            <ListItemIcon><ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+            <ListItemText primary="View" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+          </MenuItem>
+            <Menu id="sub-menu-view" anchorEl={viewMenuAnchorEl} keepMounted open={Boolean(viewMenuAnchorEl)} onClose={handleViewMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+            <MenuItem onClick={() => { handleMenuCloseConfirm('view-mblog'); handleViewMenuClose(); }}>
+                <ListItemIcon><ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+                <ListItemText primary="Matterbridge log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              </MenuItem>
+              <MenuItem onClick={() => { handleMenuCloseConfirm('view-mjlog'); handleViewMenuClose(); }}>
+                <ListItemIcon><ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+                <ListItemText primary="Matter log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              </MenuItem>
+              {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard &&
+                <MenuItem onClick={() => { handleMenuCloseConfirm('view-shellylog'); handleViewMenuClose(); }}>
+                  <ListItemIcon><ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>
+                  <ListItemText primary="Shelly system log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+                </MenuItem>
+              }
+            </Menu>
+
           <Divider />
           <MenuItem onClick={handleDownloadMenuOpen}>
             <ListItemIcon><DownloadIcon style={{ color: 'var(--main-icon-color)' }} /></ListItemIcon>

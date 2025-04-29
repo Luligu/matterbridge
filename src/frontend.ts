@@ -546,29 +546,59 @@ export class Frontend {
       res.json(data);
     });
 
-    // Endpoint to view the log
-    this.expressApp.get('/api/view-log', async (req, res) => {
-      this.log.debug('The frontend sent /api/log');
+    // Endpoint to view the matterbridge log
+    this.expressApp.get('/api/view-mblog', async (req, res) => {
+      this.log.debug('The frontend sent /api/view-mblog');
       try {
         const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), 'utf8');
         res.type('text/plain');
         res.send(data);
       } catch (error) {
-        this.log.error(`Error reading log file ${this.matterbridge.matterbrideLoggerFile}: ${error instanceof Error ? error.message : error}`);
-        res.status(500).send('Error reading log file');
+        this.log.error(`Error reading matterbridge log file ${this.matterbridge.matterbrideLoggerFile}: ${error instanceof Error ? error.message : error}`);
+        res.status(500).send('Error reading matterbridge log file. Please enable the matterbridge log on file in the settings.');
+      }
+    });
+
+    // Endpoint to view the matter.js log
+    this.expressApp.get('/api/view-mjlog', async (req, res) => {
+      this.log.debug('The frontend sent /api/view-mjlog');
+      try {
+        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), 'utf8');
+        res.type('text/plain');
+        res.send(data);
+      } catch (error) {
+        this.log.error(`Error reading matter log file ${this.matterbridge.matterLoggerFile}: ${error instanceof Error ? error.message : error}`);
+        res.status(500).send('Error reading matter log file. Please enable the matter log on file in the settings.');
+      }
+    });
+
+    // Endpoint to view the shelly log
+    this.expressApp.get('/api/shellyviewsystemlog', async (req, res) => {
+      this.log.debug('The frontend sent /api/shellyviewsystemlog');
+      try {
+        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'utf8');
+        res.type('text/plain');
+        res.send(data);
+      } catch (error) {
+        this.log.error(`Error reading shelly log file ${this.matterbridge.matterbrideLoggerFile}: ${error instanceof Error ? error.message : error}`);
+        res.status(500).send('Error reading shelly log file. Please create the shelly system log before loading it.');
       }
     });
 
     // Endpoint to download the matterbridge log
     this.expressApp.get('/api/download-mblog', async (req, res) => {
-      this.log.debug('The frontend sent /api/download-mblog');
+      this.log.debug(`The frontend sent /api/download-mblog ${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile)}`);
       try {
         await fs.access(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), fs.constants.F_OK);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), 'utf8');
+        await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterbrideLoggerFile), data, 'utf-8');
       } catch (error) {
-        fs.appendFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), 'Enable the log on file in the settings to enable the file logger');
+        await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterbrideLoggerFile), 'Enable the matterbridge log on file in the settings to download the matterbridge log.', 'utf-8');
+        this.log.debug(`Error in /api/download-mblog: ${error instanceof Error ? error.message : error}`);
       }
-      res.download(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), 'matterbridge.log', (error) => {
+      res.type('text/plain');
+      // res.download(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), 'matterbridge.log', (error) => {
+      res.download(path.join(os.tmpdir(), this.matterbridge.matterbrideLoggerFile), 'matterbridge.log', (error) => {
         if (error) {
           this.log.error(`Error downloading log file ${this.matterbridge.matterbrideLoggerFile}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge log file');
@@ -578,14 +608,17 @@ export class Frontend {
 
     // Endpoint to download the matter log
     this.expressApp.get('/api/download-mjlog', async (req, res) => {
-      this.log.debug('The frontend sent /api/download-mjlog');
+      this.log.debug(`The frontend sent /api/download-mjlog ${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile)}`);
       try {
         await fs.access(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), fs.constants.F_OK);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), 'utf8');
+        await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterLoggerFile), data, 'utf-8');
       } catch (error) {
-        fs.appendFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), 'Enable the log on file in the settings to enable the file logger');
+        await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterLoggerFile), 'Enable the matter log on file in the settings to download the matter log.', 'utf-8');
+        this.log.debug(`Error in /api/download-mblog: ${error instanceof Error ? error.message : error}`);
       }
-      res.download(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), 'matter.log', (error) => {
+      res.type('text/plain');
+      res.download(path.join(os.tmpdir(), this.matterbridge.matterLoggerFile), 'matter.log', (error) => {
         if (error) {
           this.log.error(`Error downloading log file ${this.matterbridge.matterLoggerFile}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matter log file');
@@ -593,16 +626,19 @@ export class Frontend {
       });
     });
 
-    // Endpoint to download the matter log
+    // Endpoint to download the shelly log
     this.expressApp.get('/api/shellydownloadsystemlog', async (req, res) => {
       this.log.debug('The frontend sent /api/shellydownloadsystemlog');
       try {
         await fs.access(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), fs.constants.F_OK);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'utf8');
+        await fs.writeFile(path.join(os.tmpdir(), 'shelly.log'), data, 'utf-8');
       } catch (error) {
-        fs.appendFile(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'Create the Shelly system log before downloading it.');
+        await fs.writeFile(path.join(os.tmpdir(), 'shelly.log'), 'Create the Shelly system log before downloading it.', 'utf-8');
+        this.log.debug(`Error in /api/shellydownloadsystemlog: ${error instanceof Error ? error.message : error}`);
       }
-      res.download(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'shelly.log', (error) => {
+      res.type('text/plain');
+      res.download(path.join(os.tmpdir(), 'shelly.log'), 'shelly.log', (error) => {
         if (error) {
           this.log.error(`Error downloading Shelly system log file: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading Shelly system log file');
@@ -1335,6 +1371,7 @@ export class Frontend {
         changelog: plugin.changelog,
         funding: plugin.funding,
         latestVersion: plugin.latestVersion,
+        serialNumber: plugin.serialNumber,
         locked: plugin.locked,
         error: plugin.error,
         enabled: plugin.enabled,

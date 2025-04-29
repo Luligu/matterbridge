@@ -265,9 +265,13 @@ export function WebSocketProvider({ children }) {
       clearTimeout(offlineTimeoutRef.current);
       clearInterval(pingIntervalRef.current);
       logMessage('WebSocket', `Reconnecting (attempt ${retryCountRef.current} of ${maxRetries}) to WebSocket${isIngress ? ' (Ingress)' : ''}: ${wssHost}`);
-      if (retryCountRef.current === 1 && !isIngress) attemptReconnect();
-      else if (retryCountRef.current < maxRetries) setTimeout(attemptReconnect, (isIngress ? 10000 : 1000) * retryCountRef.current);
-      else logMessage('WebSocket', `Reconnect attempts exceeded limit of ${maxRetries} retries, refresh the page to reconnect to: ${wssHost}`);
+      if(isIngress) {
+        setTimeout(attemptReconnect, 5000);
+      } else {
+        if (retryCountRef.current === 1) attemptReconnect();
+        else if (retryCountRef.current < maxRetries) setTimeout(attemptReconnect, 1000 * retryCountRef.current);
+        else logMessage('WebSocket', `Reconnect attempts exceeded limit of ${maxRetries} retries, refresh the page to reconnect to: ${wssHost}`);
+      }
       retryCountRef.current = retryCountRef.current + 1;
     };
 
