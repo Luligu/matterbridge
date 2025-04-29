@@ -1,11 +1,14 @@
 # ─────────────── BUILD STAGE ───────────────
-FROM ubuntu:noble AS base
+FROM ubuntu:latest AS base
+
+# 🛠️ Set noninteractive frontend
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Install node from NodeSource
-RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates curl \
- && curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
- && apt-get install -y --no-install-recommends nodejs
+RUN apt update && \
+    apt install -y --no-install-recommends ca-certificates curl && \
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt install -y --no-install-recommends nodejs
 
 # Build Matterbridge for production
 WORKDIR /matterbridge
@@ -21,18 +24,18 @@ RUN npm ci && \
     npm pack
 
 # ─────────────── RUNTIME STAGE ───────────────
-FROM ubuntu:noble AS release
+FROM ubuntu:latest AS release
 
 # Install node from NodeSource
-RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates curl \
- && curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
- && apt-get install -y --no-install-recommends nodejs \
- && apt-get update && apt-get upgrade -y \
- && apt-get purge -y apt-transport-https curl gnupg \
- && apt-get autoremove -y \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
+RUN apt update && \
+    apt install -y --no-install-recommends ca-certificates curl && \
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt install -y --no-install-recommends nodejs && \
+    apt update && apt upgrade -y && \
+    apt purge -y apt-transport-https gnupg && \
+    apt autoremove -y && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install Matterbridge
 WORKDIR /matterbridge    
