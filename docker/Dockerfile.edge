@@ -26,6 +26,9 @@ RUN npm ci && \
 # ─────────────── RUNTIME STAGE ───────────────
 FROM ubuntu:latest AS release
 
+# 🛠️ Set noninteractive frontend
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Install node from NodeSource
 RUN apt update && \
     apt install -y --no-install-recommends ca-certificates curl && \
@@ -37,7 +40,7 @@ RUN apt update && \
     apt clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Matterbridge
+# Install matterbridge and npm@latest
 WORKDIR /matterbridge    
 COPY --from=base /matterbridge/*.tgz .
 RUN npm install npm@latest *.tgz --global --omit=dev && rm *.tgz
