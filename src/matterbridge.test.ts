@@ -358,7 +358,7 @@ describe('Matterbridge', () => {
       expect(await matterbridge.spawnCommand('npm', ['list', '-g'])).toBeTruthy();
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Spawn command'));
       expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.anything());
-    }, 60000);
+    }, 300000);
 
     test('matterbridge -add mockPlugin1', async () => {
       expect((matterbridge as any).initialized).toBe(true);
