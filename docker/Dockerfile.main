@@ -1,17 +1,25 @@
-FROM node:22-bookworm-slim AS base
-WORKDIR /app
+# ─────────────── BUILD STAGE ───────────────
+FROM node:22-bookworm-slim AS builder
 
-FROM base AS builder
+# 🛠️ Set noninteractive frontend
+ENV DEBIAN_FRONTEND=noninteractive
+
 WORKDIR /app
-COPY ./package.json ./
-COPY ./package-lock.json ./
-COPY ./tsconfig.json ./
-COPY ./tsconfig.production.json ./
+COPY ./package.json ./package-lock.json ./tsconfig.json ./tsconfig.production.json ./
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
-RUN npm ci && npm run build && npm link
+RUN npm ci && \
+    npm run buildProduction && \
+    npm pkg delete devDependencies scripts types && \
+    npx rimraf ./node_modules && \
+    npm install --omit=dev
 
-FROM base AS release
+# ─────────────── RUNTIME STAGE ───────────────
+FROM node:22-bookworm-slim AS release
+
+# 🛠️ Set noninteractive frontend
+ENV DEBIAN_FRONTEND=noninteractive
+
 WORKDIR /app
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/dist ./dist
@@ -21,28 +29,32 @@ RUN npm link
 
 # Install curl for docker health
 RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends curl && \
+    apt-get install -y --no-install-recommends curl && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install Matterbridge plugins
-RUN npm install -g --omit=dev matterbridge-zigbee2mqtt
-RUN npm install -g --omit=dev matterbridge-somfy-tahoma
-RUN npm install -g --omit=dev matterbridge-shelly
-RUN npm install -g --omit=dev matterbridge-hass
-RUN npm install -g --omit=dev matterbridge-webhooks
-RUN npm install -g --omit=dev matterbridge-test
-RUN npm install -g --omit=dev matterbridge-example-accessory-platform
-RUN npm install -g --omit=dev matterbridge-example-dynamic-platform
-RUN npm install -g --omit=dev matterbridge-eve-door
-RUN npm install -g --omit=dev matterbridge-eve-motion
-RUN npm install -g --omit=dev matterbridge-eve-energy
-RUN npm install -g --omit=dev matterbridge-eve-room
-RUN npm install -g --omit=dev matterbridge-eve-weather
+    npm install --global --omit=dev matterbridge-zigbee2mqtt \
+        matterbridge-somfy-tahoma \
+        matterbridge-shelly \
+        matterbridge-hass \
+        matterbridge-webhooks \
+        matterbridge-test \
+        matterbridge-example-accessory-platform \
+        matterbridge-example-dynamic-platform \
+        matterbridge-eve-door \
+        matterbridge-eve-motion \
+        matterbridge-eve-energy \
+        matterbridge-eve-room \
+        matterbridge-eve-weather && \
+    rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /var/lib/apt/lists/* && \
+    find /usr/local/lib/node_modules -type d -name ".github" -exec rm -rf {} + && \
+    find /usr/local/lib/node_modules -type d -name ".vscode" -exec rm -rf {} + && \
+    find /usr/local/lib/node_modules -type f \( -name "*.ts" -o -name "*.js.map" -o -name "*.d.ts" -o -name "*.d.ts.map" -o -name "LICENSE" -o -name "LICENSE.txt" -o -name "*.md" \) -delete && \
+    find /usr/local/lib/node_modules/matterbridge/node_modules/@matter -type d -name "src" -exec rm -rf {} + && \
+    find /usr/local/lib/node_modules/matterbridge/node_modules/@matter -type d -name "cjs" -exec rm -rf {} +
 
 # Add Docker HEALTHCHECK
 HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
-  CMD curl --fail http://localhost:8283/health || exit 1
+    CMD curl --fail http://localhost:8283/health || exit 1
   
 WORKDIR /app
 CMD ["matterbridge", "-docker"]
+# ─────────────── END ───────────────
