@@ -1,0 +1,52 @@
+# .github/workflows/publish-dev-daily.yml
+name: Daily Dev Publish to npm
+
+on:
+  # Daily at midnight UTC
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  publish-dev:
+    runs-on: ubuntu-latest
+    steps:
+      # Always check out the dev branch, even for scheduled runs
+      - name: Checkout dev
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+
+      - name: Set up Node.js & registry
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Clean npm cache
+        run: npm cache clean --force
+
+      - name: Extract base version and date
+        id: vars
+        run: |
+          BASE=$(jq -r '.version' package.json)
+          DATE=$(date -u +'%Y%m%d')
+          # e.g. 3.0.0-dev-20250430
+          DEV_VER="${BASE}-dev-${DATE}"
+          echo "DEV_VER=$DEV_VER" >> $GITHUB_ENV
+
+      - name: Bump to date-stamped dev version (no git tag)
+        run: npm version "${{ env.DEV_VER }}" --no-git-tag-version
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint & build & test
+        run: |
+          npm run lint
+          npm run build
+          npm test
+
+      - name: Publish to npm under ‘dev’ tag
+        run: npm publish --tag dev
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
