@@ -56,7 +56,7 @@ Modified clusters:
 - [parameter]: Added getIntArrayParameter and getStringArrayParameter.
 - [frontend]: Added the view menu to load the logs directly in the browser.
 - [docker]: Optimized the dockerfiles and reduced the image size by 30%.
-- [docker]: The builder for the docker image with tag latest will run each day at 00:00 UTC. Inside the image all plugins with latest release are already loaded. You can just pull the new image without issues.
+- [docker]: The builder for the docker image with tag latest will run each day at 00:00 UTC. Inside the image all plugins with the latest release (as published on npm) are already loaded. You can just pull the new image and matterbridge with all plugins will be the latest.
 
 ### Changed
 
