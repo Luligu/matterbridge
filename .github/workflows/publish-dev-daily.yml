@@ -3,8 +3,10 @@ name: Daily Dev Publish to npm
 
 on:
   # Daily at midnight UTC
-  schedule:
-    - cron: '0 0 * * *'
+  # schedule:
+  #  - cron: '0 0 * * *'
+  # Allow manual dispatch
+  workflow_dispatch:
 
 jobs:
   publish-dev:
@@ -30,9 +32,9 @@ jobs:
         run: |
           BASE=$(jq -r '.version' package.json)
           DATE=$(date -u +'%Y%m%d')
-          # e.g. 3.0.0-dev-20250430
-          DEV_VER="${BASE}-dev-${DATE}"
-          echo "DEV_VER=$DEV_VER" >> $GITHUB_ENV
+          SHA=${GITHUB_SHA::7}
+          DEV_TAG="${BASE}-dev-${DATE}-${SHA}"
+          echo "DEV_TAG=$DEV_TAG" >> $GITHUB_ENV
 
       - name: Bump to date-stamped dev version (no git tag)
         run: npm version "${{ env.DEV_VER }}" --no-git-tag-version
@@ -43,7 +45,11 @@ jobs:
       - name: Lint & build & test
         run: |
           npm run lint
-          npm run build
+          npm run buildProduction
+          npm pkg delete devDependencies scripts types
+          npx rimraf ./node_modules
+          npm install --omit=dev
+          npm shrinkwrap
           npm run test
 
       - name: Publish to npm under ‘dev’ tag
