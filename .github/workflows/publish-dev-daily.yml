@@ -37,7 +37,7 @@ jobs:
           echo "DEV_TAG=$DEV_TAG" >> $GITHUB_ENV
 
       - name: Bump to date-stamped dev version (no git tag)
-        run: npm version "${{ env.DEV_VER }}" --no-git-tag-version
+        run: npm version "${{ env.DEV_TAG }}" --no-git-tag-version
 
       - name: Install dependencies
         run: npm ci
