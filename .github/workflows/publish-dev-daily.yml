@@ -45,12 +45,12 @@ jobs:
       - name: Lint & build & test
         run: |
           npm run lint
+          npm run test
           npm run buildProduction
           npm pkg delete devDependencies scripts types
           npx rimraf ./node_modules
           npm install --omit=dev
           npm shrinkwrap
-          npm run test
 
       - name: Publish to npm under ‘dev’ tag
         run: npm publish --tag dev
