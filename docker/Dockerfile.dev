@@ -107,7 +107,7 @@ RUN apt-get update && \
     rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /var/lib/apt/lists/* && \
     find /usr/local/lib/node_modules -type d -name ".github" -exec rm -rf {} + && \
     find /usr/local/lib/node_modules -type d -name ".vscode" -exec rm -rf {} + && \
-    find /usr/local/lib/node_modules -type f \( -name "*.ts" -o -name "*.map" -o -name "*.d.ts" -o -name "LICENSE" -o -name "LICENSE.txt" -o -name "*.md" \) -delete && \
+    find /usr/local/lib/node_modules -type f \( -name "*.ts" -o -name "*.js.map" -o -name "*.d.ts" -o -name "*.d.ts.map" -o -name "LICENSE" -o -name "LICENSE.txt" -o -name "*.md" \) -delete && \
     find /usr/local/lib/node_modules/matterbridge/node_modules/@matter -type d -name "src" -exec rm -rf {} + && \
     find /usr/local/lib/node_modules/matterbridge/node_modules/@matter -type d -name "cjs" -exec rm -rf {} +
 
