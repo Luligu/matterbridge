@@ -55,6 +55,7 @@ Modified clusters:
 - [frontend]: Added support for appliances and robot in IconView.
 - [parameter]: Added getIntArrayParameter and getStringArrayParameter.
 - [frontend]: Added the view menu to load the logs directly in the browser.
+- [docker]: Optimized the dockerfiles and reduced the image size by 30%.
 
 ### Changed
 
