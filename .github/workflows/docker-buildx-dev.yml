@@ -59,5 +59,7 @@ jobs:
             -f docker/Dockerfile.dev \
             -t luligu/matterbridge:dev \
             --push .
-          docker manifest inspect luligu/matterbridge:dev
         timeout-minutes: 60
+
+      - name: Inspect pushed manifest
+        run: docker manifest inspect luligu/matterbridge:dev

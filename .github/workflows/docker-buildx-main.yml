@@ -58,5 +58,7 @@ jobs:
             -t luligu/matterbridge:latest \
             -t luligu/matterbridge:${{ env.VERSION }} \
             --push .
-          docker manifest inspect luligu/matterbridge:latest
         timeout-minutes: 60
+
+      - name: Inspect pushed manifest
+        run: docker manifest inspect luligu/matterbridge:latest
