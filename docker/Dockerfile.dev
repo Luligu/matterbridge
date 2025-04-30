@@ -4,7 +4,7 @@ FROM node:22-bookworm-slim AS builder
 # 🛠️ Set noninteractive frontend
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install git
+# Install git to clone the repositories
 RUN apt-get update && \
     apt-get install -y --no-install-recommends git
 
@@ -73,45 +73,42 @@ RUN npm run cleanBuildProduction && npm pkg delete devDependencies scripts types
 # ─────────────── RUNTIME STAGE ───────────────
 FROM node:22-bookworm-slim AS release
 
+WORKDIR /app
+
 # 🛠️ Set noninteractive frontend
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install curl for healthcheck
+COPY --from=builder \
+    /app/*.tgz \
+    /matterbridge-zigbee2mqtt/*.tgz \
+    /matterbridge-somfy-tahoma/*.tgz \
+    /matterbridge-shelly/*.tgz \
+    /matterbridge-hass/*.tgz \
+    /matterbridge-webhooks/*.tgz \
+    /matterbridge-test/*.tgz \
+    /matterbridge-example-accessory-platform/*.tgz \
+    /matterbridge-example-dynamic-platform/*.tgz \
+    /matterbridge-eve-door/*.tgz \
+    /matterbridge-eve-motion/*.tgz \
+    /matterbridge-eve-energy/*.tgz \
+    /matterbridge-eve-room/*.tgz \
+    /matterbridge-eve-weather/*.tgz \
+    .
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-COPY --from=builder /app/*.tgz .
-RUN npm install -g npm@latest && npm install -g --omit=dev *.tgz && rm *.tgz
-
-COPY --from=builder /matterbridge-zigbee2mqtt/*.tgz .
-COPY --from=builder /matterbridge-somfy-tahoma/*.tgz .
-COPY --from=builder /matterbridge-shelly/*.tgz .
-COPY --from=builder /matterbridge-hass/*.tgz .
-COPY --from=builder /matterbridge-webhooks/*.tgz .
-COPY --from=builder /matterbridge-test/*.tgz .
-COPY --from=builder /matterbridge-example-accessory-platform/*.tgz .
-COPY --from=builder /matterbridge-example-dynamic-platform/*.tgz .
-COPY --from=builder /matterbridge-eve-door/*.tgz .
-COPY --from=builder /matterbridge-eve-motion/*.tgz .
-COPY --from=builder /matterbridge-eve-energy/*.tgz .
-COPY --from=builder /matterbridge-eve-room/*.tgz .
-COPY --from=builder /matterbridge-eve-weather/*.tgz .
-RUN npm install -g --omit=dev *.tgz && \
-  rm *.tgz && \
-  node -v && \
-  npm -v && \
-  npm list -g && \
-  npm cache clean --force && \
-  apt-get clean && \
-  rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /var/lib/apt/lists/*
+    npm install -g --omit=dev *.tgz && \
+    npm cache clean --force && \
+    rm *.tgz && \
+    node -v && \
+    npm -v && \
+    npm list -g && \
+    rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /var/lib/apt/lists/*
 
 # Add Docker HEALTHCHECK
 HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
-  CMD curl --fail http://localhost:8283/health || exit 1
+    CMD curl --fail http://localhost:8283/health || exit 1
 
 CMD ["matterbridge", "-docker"]
 # ─────────────── END ───────────────
