@@ -3,8 +3,8 @@ name: Daily Dev Publish to npm
 
 on:
   # Daily at midnight UTC
-  # schedule:
-  #  - cron: '0 0 * * *'
+  schedule:
+    - cron: '0 0 * * *'
   # Allow manual dispatch
   workflow_dispatch:
 
@@ -45,16 +45,48 @@ jobs:
       - name: Lint & test & build
         run: |
           npm run lint
-          npm run build
+          npm run buildProduction
           npm install -g .
           npm run test
-          npm run cleanBuildProduction
           npm pkg delete devDependencies scripts types
           npx rimraf ./node_modules
           npm install --omit=dev
           npm shrinkwrap
 
+      - name: Check if a new dev-publish is needed
+        id: check_new
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          # ensure npm can read the private or public registry
+          npm config set //registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN
+
+          # 1) grab the package name
+          PKG=$(node -p "require('./package.json').name")
+
+          # 2) fetch the currently-published 'dev' dist-tag (e.g. "3.0.0-dev-20250430-1a2b3c4")
+          PUBLISHED=$(npm view "$PKG" dist-tags.dev 2>/dev/null || echo "")
+
+          # 3) extract the SHA suffix (after the last dash)
+          PUBLISHED_SHA=${PUBLISHED##*-}
+
+          # 4) get the current commit short-SHA
+          CURRENT_SHA=${GITHUB_SHA::7}
+
+          echo "Published dev tag: $PUBLISHED"
+          echo "Published SHA: $PUBLISHED_SHA"
+          echo "Current  SHA: $CURRENT_SHA"
+
+          if [ "$PUBLISHED_SHA" = "$CURRENT_SHA" ]; then
+            # nothing new → skip
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+          else
+            # new commit → proceed
+            echo "should_publish=true"  >> $GITHUB_OUTPUT
+          fi
+
       - name: Publish to npm under ‘dev’ tag
+        if: steps.check_new.outputs.should_publish  == 'true'
         run: npm publish --tag dev
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
