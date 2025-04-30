@@ -26,7 +26,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/frontend/build ./frontend/build
 
-RUN npm link && 
+RUN npm link && \
     apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     apt-get clean && \
