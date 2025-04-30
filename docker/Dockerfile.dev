@@ -99,6 +99,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     apt-get clean && \
     npm install -g --omit=dev *.tgz && \
+    npm uninstall -g corepack && \
     npm cache clean --force && \
     rm *.tgz && \
     node -v && \
@@ -109,7 +110,8 @@ RUN apt-get update && \
     find /usr/local/lib/node_modules -type d -name ".vscode" -exec rm -rf {} + && \
     find /usr/local/lib/node_modules -type f \( -name "*.ts" -o -name "*.js.map" -o -name "*.d.ts" -o -name "*.d.ts.map" -o -name "LICENSE" -o -name "LICENSE.txt" -o -name "*.md" \) -delete && \
     find /usr/local/lib/node_modules/matterbridge/node_modules/@matter -type d -name "src" -exec rm -rf {} + && \
-    find /usr/local/lib/node_modules/matterbridge/node_modules/@matter -type d -name "cjs" -exec rm -rf {} +
+    find /usr/local/lib/node_modules/matterbridge/node_modules/@matter -type d -name "cjs" -exec rm -rf {} + && \
+    find /usr/local/lib/node_modules -type d -name "docs" -exec rm -rf {} +
 
 # Add Docker HEALTHCHECK
 HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
