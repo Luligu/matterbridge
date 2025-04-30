@@ -44,7 +44,7 @@ jobs:
         run: |
           npm run lint
           npm run build
-          npm test
+          npm run test
 
       - name: Publish to npm under ‘dev’ tag
         run: npm publish --tag dev
