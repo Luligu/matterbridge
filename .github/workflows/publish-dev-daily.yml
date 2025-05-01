@@ -75,7 +75,7 @@ jobs:
 
           echo "Published dev tag: $PUBLISHED"
           echo "Published SHA: $PUBLISHED_SHA"
-          echo "Current  SHA: $CURRENT_SHA"
+          echo "Current SHA: $CURRENT_SHA"
 
           if [ "$PUBLISHED_SHA" = "$CURRENT_SHA" ]; then
             # nothing new → skip

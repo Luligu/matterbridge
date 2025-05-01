@@ -1,15 +1,17 @@
 name: Build Docker Image dev with buildx
 
 on:
+  # Push on dev branch
   push:
     branches:
       - dev
     paths-ignore:
       - '/screenshot/*'
       - '/*.md'
+  # Runs daily at 00:00 UTC
   schedule:
-    # Runs daily at 00:00 UTC
     - cron: '0 0 * * *'
+  # Allow manual dispatch
   workflow_dispatch:
 
 jobs:
