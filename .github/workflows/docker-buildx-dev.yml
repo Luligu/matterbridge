@@ -6,8 +6,8 @@ on:
     branches:
       - dev
     paths-ignore:
-      - '/screenshot/*'
-      - '/*.md'
+      - 'screenshot/**' # any file under screenshot/
+      - '**/*.md' # any .md anywhere
   # Runs daily at 00:00 UTC
   schedule:
     - cron: '0 0 * * *'

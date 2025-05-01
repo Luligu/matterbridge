@@ -5,8 +5,10 @@ on:
     branches:
       - edge
     paths-ignore:
-      - '/screenshot/*'
-      - '/*.md'
+      - 'screenshot/**' # any file under screenshot/
+      - '**/*.md' # any .md anywhere
+  # Allow manual dispatch
+  workflow_dispatch:
 
 jobs:
   build-and-push:
@@ -15,6 +17,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: edge
 
       - uses: actions/setup-node@v4
         with:
