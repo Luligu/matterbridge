@@ -21,6 +21,7 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 - [docker]: The builder for the **docker** image with tag **dev** will run each day at 00:00 UTC. Inside the image matterbridge and all plugins with the dev release (as pushed on GitHub) are already loaded. You can just pull the new image and matterbridge with all plugins will be the latest dev (it is possible that the devs are outdated by published latests).
 - [npm]: The dev of matterbridge is published with tag **dev** on **npm** each day at 00:00 UTC if there is a new commit. It is possible that the dev is outdated by published latest.
 - [frontend]: Added closeSnackbarMessage() to remove the notification with timeout = 0.
+- [frontend]: Moved plugin actions from express to web socket.
 
 ### Changed
 

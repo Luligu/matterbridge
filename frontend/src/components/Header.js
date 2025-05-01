@@ -20,7 +20,7 @@ import BlockIcon from '@mui/icons-material/Block';
 import ViewHeadlineIcon from '@mui/icons-material/ViewHeadline';
 
 // Frontend
-import { sendCommandToMatterbridge } from './sendApiCommand';
+// import { sendCommandToMatterbridge } from './sendApiCommand';
 import { UiContext } from './UiProvider';
 import { WebSocketContext, WS_ID_SHELLY_SYS_UPDATE, WS_ID_SHELLY_MAIN_UPDATE } from './WebSocketProvider';
 import { debug, toggleDebug } from '../App';
@@ -198,21 +198,25 @@ function Header() {
     } else if (value === 'stopshare') {
       handleStopAdvertiseClick();
     } else if (value === 'create-backup') {
-      logMessage('Matterbridge', `Creating backup...`);
-      showSnackbarMessage('Creating backup...', 10);
-      sendCommandToMatterbridge('backup', 'create');
+      // logMessage('Matterbridge', `Creating backup...`);
+      // showSnackbarMessage('Creating backup...', 10);
+      // sendCommandToMatterbridge('backup', 'create');
+      sendMessage({ id: uniqueId.current, method: "/api/create-backup", src: "Frontend", dst: "Matterbridge", params: {} });
     } else if (value === 'unregister') {
-      logMessage('Matterbridge', `Uregistering all bridged devices...`);
-      showSnackbarMessage('Uregistering all bridged devices...', 10);
-      sendCommandToMatterbridge('unregister', 'now');
+      // logMessage('Matterbridge', `Uregistering all bridged devices...`);
+      // showSnackbarMessage('Uregistering all bridged devices...', 10);
+      // sendCommandToMatterbridge('unregister', 'now');
+      sendMessage({ id: uniqueId.current, method: "/api/unregister", src: "Frontend", dst: "Matterbridge", params: {} });
     } else if (value === 'reset') {
-      logMessage('Matterbridge', `Resetting matterbridge commissioning...`);
-      showSnackbarMessage('Resetting matterbridge commissioning...', 10);
-      sendCommandToMatterbridge('reset', 'now');
+      // logMessage('Matterbridge', `Resetting matterbridge commissioning...`);
+      // showSnackbarMessage('Resetting matterbridge commissioning...', 10);
+      // sendCommandToMatterbridge('reset', 'now');
+      sendMessage({ id: uniqueId.current, method: "/api/reset", src: "Frontend", dst: "Matterbridge", params: {} });
     } else if (value === 'factoryreset') {
-      logMessage('Matterbridge', `Factory reset of matterbridge...`);
-      showSnackbarMessage('Factory reset of matterbridge...', 10);
-      sendCommandToMatterbridge('factoryreset', 'now');
+      // logMessage('Matterbridge', `Factory reset of matterbridge...`);
+      // showSnackbarMessage('Factory reset of matterbridge...', 10);
+      // sendCommandToMatterbridge('factoryreset', 'now');
+      sendMessage({ id: uniqueId.current, method: "/api/factoryreset", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   };
 

@@ -536,7 +536,7 @@ export class PluginManager {
   /**
    * Adds a plugin by its name or path.
    *
-   * This method adds a plugin to the `_plugins` map and saves the updated plugin information to storage.
+   * This method adds a plugin to the plugins map and saves the updated plugin information to storage.
    * It first resolves the plugin's `package.json` file to retrieve its details. If the plugin is already
    * registered, it logs an info message and returns null. Otherwise, it registers the plugin, enables it,
    * and saves the updated plugin information to storage.

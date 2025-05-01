@@ -316,14 +316,12 @@ export function HomePlugins({selectPlugin}) {
 
   const handleUpdatePlugin = (plugin) => {
     if (debug) console.log('handleUpdatePlugin plugin:', plugin.name);
-    logMessage('Plugins', `Updating plugin: ${plugin.name}`);
-    sendCommandToMatterbridge('installplugin', plugin.name);
+    sendMessage({ id: uniqueId.current, method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: plugin.name, restart: false } });
   };
 
   const handleRemovePlugin = (plugin) => {
     if (debug) console.log('handleRemovePlugin plugin:', plugin.name);
-    logMessage('Plugins', `Removing plugin: ${plugin.name}`);
-    sendCommandToMatterbridge('removeplugin', plugin.name);
+    sendMessage({ id: uniqueId.current, method: "/api/removeplugin", src: "Frontend", dst: "Matterbridge", params: { pluginNameOrPath: plugin.name } });
   };
 
   const handleEnableDisablePlugin = (plugin) => {

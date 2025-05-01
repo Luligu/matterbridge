@@ -55,7 +55,7 @@ export function UiProvider({ children }) {
               fontWeight: 'normal',
               width: '100%',
               cursor: 'pointer', 
-              padding: '2px 10px',
+              padding: '0px 10px',
             }}
             onClick={() => closeSnackbar(key)}
             action={

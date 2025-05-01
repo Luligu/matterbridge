@@ -40,7 +40,7 @@ import multer from 'multer';
 import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, wr, YELLOW, nt } from './logger/export.js';
 
 // Matterbridge
-import { createZip, deepCopy, isValidArray, isValidNumber, isValidObject, isValidString } from './utils/export.js';
+import { createZip, deepCopy, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean } from './utils/export.js';
 import { ApiClusters, ApiDevices, BaseRegisteredPlugin, plg, RegisteredPlugin } from './matterbridgeTypes.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -378,7 +378,7 @@ export class Frontend {
       }
     });
 
-    // Endpoint to provide health check
+    // Endpoint to provide health check for docker
     this.expressApp.get('/health', (req, res) => {
       this.log.debug('Express received /health');
 
@@ -437,17 +437,6 @@ export class Frontend {
       };
 
       res.status(200).json(memoryReport);
-    });
-
-    // Endpoint to start advertising the server node
-    this.expressApp.get('/api/advertise', express.json(), async (req, res) => {
-      const pairingCodes = await this.matterbridge.advertiseServerNode(this.matterbridge.serverNode);
-      if (pairingCodes) {
-        const { manualPairingCode, qrPairingCode } = pairingCodes;
-        res.json({ manualPairingCode, qrPairingCode: 'https://project-chip.github.io/connectedhomeip/qrcode.html?data=' + qrPairingCode });
-      } else {
-        res.status(500).json({ error: 'Failed to generate pairing codes' });
-      }
     });
 
     // Endpoint to provide settings
@@ -897,43 +886,6 @@ export class Frontend {
         return;
       }
 
-      // Handle the command unregister from Settings
-      if (command === 'unregister') {
-        await this.matterbridge.unregisterAndShutdownProcess();
-        res.json({ message: 'Command received' });
-        return;
-      }
-      // Handle the command reset from Settings
-      if (command === 'reset') {
-        await this.matterbridge.shutdownProcessAndReset();
-        res.json({ message: 'Command received' });
-        return;
-      }
-      // Handle the command factoryreset from Settings
-      if (command === 'factoryreset') {
-        await this.matterbridge.shutdownProcessAndFactoryReset();
-        res.json({ message: 'Command received' });
-        return;
-      }
-      // Handle the command shutdown from Header
-      if (command === 'shutdown') {
-        await this.matterbridge.shutdownProcess();
-        res.json({ message: 'Command received' });
-        return;
-      }
-      // Handle the command restart from Header
-      if (command === 'restart') {
-        await this.matterbridge.restartProcess();
-        res.json({ message: 'Command received' });
-        return;
-      }
-      // Handle the command update from Header
-      if (command === 'update') {
-        await this.matterbridge.updateProcess();
-        this.wssSendRestartRequired();
-        res.json({ message: 'Command received' });
-        return;
-      }
       // Handle the command saveconfig from Home
       if (command === 'saveconfig') {
         param = param.replace(/\*/g, '\\');
@@ -952,58 +904,7 @@ export class Frontend {
         res.json({ message: 'Command received' });
         return;
       }
-      // Handle the command installplugin from Home
-      if (command === 'installplugin') {
-        param = param.replace(/\*/g, '\\');
-        this.log.info(`Installing plugin ${plg}${param}${nf}...`);
-        this.wssSendSnackbarMessage(`Installing package ${param}. Please wait...`, 0);
-        try {
-          await this.matterbridge.spawnCommand('npm', ['install', '-g', param, '--omit=dev', '--verbose']);
-          this.log.info(`Plugin ${plg}${param}${nf} installed. Full restart required.`);
-          this.wssSendCloseSnackbarMessage(`Installing package ${param}. Please wait...`);
-          this.wssSendSnackbarMessage(`Installed package ${param}`, 10, 'success');
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (error) {
-          this.log.error(`Error installing plugin ${plg}${param}${er}`);
-          this.wssSendCloseSnackbarMessage(`Installing package ${param}. Please wait...`);
-          this.wssSendSnackbarMessage(`Package ${param} not installed`, 10, 'error');
-        }
-        this.wssSendRestartRequired();
-        param = param.split('@')[0];
-        // Also add the plugin to matterbridge so no return!
-        if (param === 'matterbridge') {
-          // If we used the command installplugin to install a dev or a specific version of matterbridge we don't want to add it to matterbridge
-          res.json({ message: 'Command received' });
-          return;
-        }
-      }
-      // Handle the command addplugin from Home
-      if (command === 'addplugin' || command === 'installplugin') {
-        param = param.replace(/\*/g, '\\');
-        const plugin = await this.matterbridge.plugins.add(param);
-        if (plugin) {
-          this.wssSendSnackbarMessage(`Added plugin ${param}`);
-          this.matterbridge.plugins.load(plugin, true, 'The plugin has been added', true).then(() => {
-            this.wssSendRefreshRequired('plugins');
-          });
-        }
-        res.json({ message: 'Command received' });
-        return;
-      }
-      // Handle the command removeplugin from Home
-      if (command === 'removeplugin') {
-        if (!this.matterbridge.plugins.has(param)) {
-          this.log.warn(`Plugin ${plg}${param}${wr} not found in matterbridge`);
-        } else {
-          const plugin = this.matterbridge.plugins.get(param) as RegisteredPlugin;
-          await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been removed.', true); // This will also close the server node in childbridge mode
-          await this.matterbridge.plugins.remove(param);
-          this.wssSendSnackbarMessage(`Removed plugin ${param}`);
-          this.wssSendRefreshRequired('plugins');
-        }
-        res.json({ message: 'Command received' });
-        return;
-      }
+
       // Handle the command enableplugin from Home
       if (command === 'enableplugin') {
         if (!this.matterbridge.plugins.has(param)) {
@@ -1090,21 +991,11 @@ export class Frontend {
       this.log.debug('The frontend sent:', req.url);
       res.sendFile(path.join(this.matterbridge.rootDirectory, 'frontend/build/index.html'));
     });
-    /* Not working in express v5!
-    this.expressApp.get('*', (req, res) => {
-      this.log.debug('The frontend sent:', req.url);
-      this.log.debug('Response send file:', path.join(this.matterbridge.rootDirectory, 'frontend/build/index.html'));
-      res.sendFile(path.join(this.matterbridge.rootDirectory, 'frontend/build/index.html'));
-    });
-    */
 
     this.log.debug(`Frontend initialized on port ${YELLOW}${this.port}${db} static ${UNDERLINE}${path.join(this.matterbridge.rootDirectory, 'frontend/build')}${UNDERLINEOFF}${rs}`);
   }
 
   async stop() {
-    // Remove all listeners from the cliEmitter
-    // cliEmitter.removeAllListeners();
-
     // Close the http server
     if (this.httpServer) {
       this.httpServer.close();
@@ -1435,8 +1326,8 @@ export class Frontend {
           return;
         }
       } else if (data.method === '/api/install') {
-        if (!isValidString(data.params.packageName, 10)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/install' }));
+        if (!isValidString(data.params.packageName, 10) || !isValidBoolean(data.params.restart)) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter in /api/install' }));
           return;
         }
         this.wssSendSnackbarMessage(`Installing package ${data.params.packageName}...`, 0);
@@ -1446,13 +1337,33 @@ export class Frontend {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
             this.wssSendCloseSnackbarMessage(`Installing package ${data.params.packageName}...`);
             this.wssSendSnackbarMessage(`Installed package ${data.params.packageName}`, 5, 'success');
-            if (data.params.restart !== true) {
-              this.wssSendSnackbarMessage(`Restart required`, 0);
+            if (data.params.restart === false) {
+              // The package is a plugin
+              data.params.packageName = (data.params.packageName as string).replace(/@.*$/, '');
+              this.matterbridge.plugins.add(data.params.packageName as string).then((plugin) => {
+                if (plugin) {
+                  // The plugin is not registered
+                  this.wssSendSnackbarMessage(`Added plugin ${data.params.pluginNameOrPath}`, 5, 'success');
+                  this.matterbridge.plugins.load(plugin, true, 'The plugin has been added', true).then(() => {
+                    this.wssSendSnackbarMessage(`Started plugin ${data.params.pluginNameOrPath}`, 5, 'success');
+                    this.wssSendRefreshRequired('plugins');
+                  });
+                } else {
+                  // The plugin is already registered
+                  this.wssSendSnackbarMessage(`Restart required`, 0);
+                  this.wssSendRefreshRequired('plugins');
+                  this.wssSendRestartRequired();
+                }
+              });
             } else {
+              // The package is matterbridge
               if (this.matterbridge.restartMode !== '') {
                 this.wssSendSnackbarMessage(`Restarting matterbridge...`, 0);
                 this.matterbridge.shutdownProcess();
-              } else this.wssSendSnackbarMessage(`Restart required`, 0);
+              } else {
+                this.wssSendSnackbarMessage(`Restart required`, 0);
+                this.wssSendRestartRequired();
+              }
             }
           })
           .catch((error) => {
@@ -1481,6 +1392,39 @@ export class Frontend {
             this.wssSendSnackbarMessage(`Restart required`, 0);
           });
         return;
+      } else if (data.method === '/api/addplugin') {
+        if (!isValidString(data.params.pluginNameOrPath, 10)) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginNameOrPath in /api/addplugin' }));
+          return;
+        }
+        data.params.pluginNameOrPath = (data.params.pluginNameOrPath as string).replace(/@.*$/, '');
+        if (this.matterbridge.plugins.has(data.params.pluginNameOrPath)) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Plugin ${data.params.pluginNameOrPath} already added` }));
+          this.wssSendSnackbarMessage(`Plugin ${data.params.pluginNameOrPath} already added`, 10, 'warning');
+          return;
+        }
+        const plugin = await this.matterbridge.plugins.add(data.params.pluginNameOrPath);
+        if (plugin) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: plugin.name }));
+          this.wssSendSnackbarMessage(`Added plugin ${data.params.pluginNameOrPath}`, 5, 'success');
+          this.matterbridge.plugins.load(plugin, true, 'The plugin has been added', true).then(() => {
+            this.wssSendRefreshRequired('plugins');
+            this.wssSendSnackbarMessage(`Started plugin ${data.params.pluginNameOrPath}`, 5, 'success');
+          });
+        } else {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Plugin ${data.params.pluginNameOrPath} not added` }));
+          this.wssSendSnackbarMessage(`Plugin ${data.params.pluginNameOrPath} not added`, 10, 'error');
+        }
+      } else if (data.method === '/api/removeplugin') {
+        if (!isValidString(data.params.pluginNameOrPath, 10) || !this.matterbridge.plugins.has(data.params.pluginNameOrPath)) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginNameOrPath in /api/removeplugin' }));
+          return;
+        }
+        const plugin = this.matterbridge.plugins.get(data.params.pluginNameOrPath) as RegisteredPlugin;
+        await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been removed.', true);
+        await this.matterbridge.plugins.remove(data.params.pluginNameOrPath);
+        this.wssSendSnackbarMessage(`Removed plugin ${data.params.pluginNameOrPath}`, 5, 'success');
+        this.wssSendRefreshRequired('plugins');
       } else if (data.method === '/api/shellysysupdate') {
         const { triggerShellySysUpdate } = await import('./shelly.js');
         triggerShellySysUpdate(this.matterbridge);
@@ -1518,6 +1462,22 @@ export class Frontend {
         this.wssSendSnackbarMessage(`Shutting down matterbridge...`, 0);
         await this.matterbridge.shutdownProcess();
         return;
+      } else if (data.method === '/api/create-backup') {
+        this.wssSendSnackbarMessage('Creating backup...', 0);
+        this.log.notice(`Creating the backup...`);
+        await createZip(path.join(os.tmpdir(), `matterbridge.backup.zip`), path.join(this.matterbridge.matterbridgeDirectory), path.join(this.matterbridge.matterbridgePluginDirectory));
+        this.log.notice(`Backup ready to be downloaded.`);
+        this.wssSendCloseSnackbarMessage('Creating backup...');
+        this.wssSendSnackbarMessage('Backup ready to be downloaded', 10);
+      } else if (data.method === '/api/unregister') {
+        this.wssSendSnackbarMessage('Uregistering all bridged devices...', 10);
+        await this.matterbridge.unregisterAndShutdownProcess();
+      } else if (data.method === '/api/reset') {
+        this.wssSendSnackbarMessage('Resetting matterbridge commissioning...', 10);
+        await this.matterbridge.shutdownProcessAndReset();
+      } else if (data.method === '/api/factoryreset') {
+        this.wssSendSnackbarMessage('Factory reset of matterbridge...', 10);
+        await this.matterbridge.shutdownProcessAndFactoryReset();
       } else if (data.method === '/api/advertise') {
         const pairingCodes = await this.matterbridge.advertiseServerNode(this.matterbridge.serverNode);
         this.matterbridge.matterbridgeInformation.matterbridgeAdvertise = true;
