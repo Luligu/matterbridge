@@ -38,6 +38,15 @@ Modified clusters:
 
 - OccupancySensing cluster.
 
+## [3.0.1] - 2025-05-03
+
+### Added
+
+- [docker]: The builder for the docker image with tag latest will run each day at 00:00 UTC. Inside the image matterbridge and all plugins with the latest release (as published on npm) are already loaded. You can just pull the new image and matterbridge with all plugins will be the latest.
+- [docker]: The builder for the docker image with tag dev will run each day at 00:00 UTC. Inside the image matterbridge and all plugins with the dev release (as pushed on GitHub) are already loaded. You can just pull the new image and matterbridge with all plugins will be the latest dev (it is possible that the devs are outdated by published latests).
+- [npm]: The dev of matterbridge is published on npm each day at 00:00 UTC. It is possible that the dev is outdated by published latest.
+- [frontend]: Added closeSnackbarMessage() to remove the notification with timeout = 0.
+
 ## [3.0.0] - 2025-04-29
 
 ### Added

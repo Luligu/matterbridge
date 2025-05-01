@@ -148,8 +148,8 @@ function Header() {
       showSnackbarMessage('Loading matter log...', 5);
       window.location.href = './api/view-mjlog';
     } else if (value === 'view-shellylog') {
-      logMessage('Matterbridge', `Loading matter log...`);
-      showSnackbarMessage('Loading matter log...', 5);
+      logMessage('Matterbridge', `Loading shelly system log...`);
+      showSnackbarMessage('Loading shelly system log...', 5);
       window.location.href = './api/shellyviewsystemlog';
     } else if (value === 'download-mbstorage') {
       logMessage('Matterbridge', `Downloading matterbridge storage...`);

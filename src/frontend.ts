@@ -103,6 +103,12 @@ export const WS_ID_UPDATE_NEEDED = 7;
 export const WS_ID_STATEUPDATE = 8;
 
 /**
+ * Websocket message ID indicating to close a permanent snackbar message.
+ * @constant {number}
+ */
+export const WS_ID_CLOSE_SNACKBAR = 9;
+
+/**
  * Websocket message ID indicating a shelly system update.
  * check:
  * curl -k http://127.0.0.1:8101/api/updates/sys/check
@@ -950,14 +956,16 @@ export class Frontend {
       if (command === 'installplugin') {
         param = param.replace(/\*/g, '\\');
         this.log.info(`Installing plugin ${plg}${param}${nf}...`);
-        this.wssSendSnackbarMessage(`Installing package ${param}. Please wait...`);
+        this.wssSendSnackbarMessage(`Installing package ${param}. Please wait...`, 0);
         try {
           await this.matterbridge.spawnCommand('npm', ['install', '-g', param, '--omit=dev', '--verbose']);
           this.log.info(`Plugin ${plg}${param}${nf} installed. Full restart required.`);
+          this.wssSendCloseSnackbarMessage(`Installing package ${param}. Please wait...`);
           this.wssSendSnackbarMessage(`Installed package ${param}`, 10, 'success');
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           this.log.error(`Error installing plugin ${plg}${param}${er}`);
+          this.wssSendCloseSnackbarMessage(`Installing package ${param}. Please wait...`);
           this.wssSendSnackbarMessage(`Package ${param} not installed`, 10, 'error');
         }
         this.wssSendRestartRequired();
@@ -975,11 +983,6 @@ export class Frontend {
         const plugin = await this.matterbridge.plugins.add(param);
         if (plugin) {
           this.wssSendSnackbarMessage(`Added plugin ${param}`);
-          if (this.matterbridge.bridgeMode === 'childbridge') {
-            // We don't know now if the plugin is a dynamic platform or an accessory platform so we create the server node and the aggregator node
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (this.matterbridge as any).createDynamicPlugin(plugin, true);
-          }
           this.matterbridge.plugins.load(plugin, true, 'The plugin has been added', true).then(() => {
             this.wssSendRefreshRequired('plugins');
           });
@@ -1436,12 +1439,13 @@ export class Frontend {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/install' }));
           return;
         }
-        this.wssSendSnackbarMessage(`Installing package ${data.params.packageName}`);
+        this.wssSendSnackbarMessage(`Installing package ${data.params.packageName}...`, 0);
         this.matterbridge
           .spawnCommand('npm', ['install', '-g', data.params.packageName, '--omit=dev', '--verbose'])
           .then((response) => {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
-            this.wssSendSnackbarMessage(`Installed package ${data.params.packageName}`);
+            this.wssSendCloseSnackbarMessage(`Installing package ${data.params.packageName}...`);
+            this.wssSendSnackbarMessage(`Installed package ${data.params.packageName}`, 5, 'success');
             if (data.params.restart !== true) {
               this.wssSendSnackbarMessage(`Restart required`, 0);
             } else {
@@ -1453,7 +1457,8 @@ export class Frontend {
           })
           .catch((error) => {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error }));
-            this.wssSendSnackbarMessage(`Package ${data.params.packageName} not installed`);
+            this.wssSendCloseSnackbarMessage(`Installing package ${data.params.packageName}...`);
+            this.wssSendSnackbarMessage(`Package ${data.params.packageName} not installed`, 10, 'error');
           });
         return;
       } else if (data.method === '/api/uninstall') {
@@ -1461,15 +1466,18 @@ export class Frontend {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/uninstall' }));
           return;
         }
-        this.wssSendSnackbarMessage(`Uninstalling package ${data.params.packageName}`);
+        this.wssSendSnackbarMessage(`Uninstalling package ${data.params.packageName}...`, 0);
         this.matterbridge
           .spawnCommand('npm', ['uninstall', '-g', data.params.packageName, '--verbose'])
           .then((response) => {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
+            this.wssSendCloseSnackbarMessage(`Uninstalling package ${data.params.packageName}...`);
+            this.wssSendSnackbarMessage(`Uninstalled package ${data.params.packageName}`, 5, 'success');
           })
           .catch((error) => {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error }));
-            this.wssSendSnackbarMessage(`Uninstalled package ${data.params.packageName}`);
+            this.wssSendCloseSnackbarMessage(`Uninstalling package ${data.params.packageName}...`);
+            this.wssSendSnackbarMessage(`Package ${data.params.packageName} not uninstalled`, 10, 'error');
             this.wssSendSnackbarMessage(`Restart required`, 0);
           });
         return;
@@ -1895,7 +1903,7 @@ export class Frontend {
   }
 
   /**
-   * Sends a memory update message to all connected clients.
+   * Sends a cpu update message to all connected clients.
    *
    */
   wssSendCpuUpdate(cpuUsage: number) {
@@ -1909,7 +1917,7 @@ export class Frontend {
   }
 
   /**
-   * Sends a cpu update message to all connected clients.
+   * Sends a memory update message to all connected clients.
    *
    */
   wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string) {
@@ -1923,7 +1931,7 @@ export class Frontend {
   }
 
   /**
-   * Sends a memory update message to all connected clients.
+   * Sends an uptime update message to all connected clients.
    *
    */
   wssSendUptimeUpdate(systemUptime: string, processUptime: string) {
@@ -1937,7 +1945,7 @@ export class Frontend {
   }
 
   /**
-   * Sends a cpu update message to all connected clients.
+   * Sends an open snackbar message to all connected clients.
    * @param {string} message - The message to send.
    * @param {number} timeout - The timeout in seconds for the snackbar message.
    * @param {'info' | 'warning' | 'error' | 'success'} severity - The severity of the snackbar message (default info).
@@ -1948,7 +1956,22 @@ export class Frontend {
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ id: WS_ID_SNACKBAR, src: 'Matterbridge', dst: 'Frontend', method: 'memory_update', params: { message, timeout, severity } }));
+        client.send(JSON.stringify({ id: WS_ID_SNACKBAR, src: 'Matterbridge', dst: 'Frontend', params: { message, timeout, severity } }));
+      }
+    });
+  }
+
+  /**
+   * Sends a close snackbar message to all connected clients.
+   * @param {string} message - The message to send.
+   *
+   */
+  wssSendCloseSnackbarMessage(message: string) {
+    this.log.debug('Sending a close snackbar message to all connected clients');
+    // Send the message to all connected clients
+    this.webSocketServer?.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ id: WS_ID_CLOSE_SNACKBAR, src: 'Matterbridge', dst: 'Frontend', params: { message } }));
       }
     });
   }

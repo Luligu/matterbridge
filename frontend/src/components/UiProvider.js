@@ -14,16 +14,32 @@ import { ConfirmCancelForm } from './ConfirmCancelForm';
 import { debug } from '../App';
 // const debug = true;
 
+// { message, key }[]
+const persistMessages = [];
+
 export const UiContext = createContext();
 
 export function UiProvider({ children }) {
   // Snackbar
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
+  const closeSnackbarMessage = useCallback((message) => {
+    if(debug) console.log(`UiProvider closeSnackbarMessage: message ${message}`);
+    // Find the message in the persistMessages array
+    const messageIndex = persistMessages.findIndex((msg) => msg.message === message);
+    if (messageIndex !== -1) {
+      // Close the snackbar
+      closeSnackbar(persistMessages[messageIndex].key);
+      // Remove the message from the array
+      persistMessages.splice(messageIndex, 1);
+      if(debug) console.log(`UiProvider closeSnackbarMessage: message ${message} removed from persistMessages`);
+    }
+  }, []);
+
   const showSnackbarMessage = useCallback((message, timeout, severity) => {
     // default | error | success | warning | info
     if(debug) console.log(`UiProvider showSnackbarMessage: message ${message} timeout ${timeout}`);
-    enqueueSnackbar(message, { 
+    const key = enqueueSnackbar(message, { 
       variant: 'default', 
       autoHideDuration: timeout === null || timeout === undefined || timeout > 0 ? (timeout ?? 5) * 1000 : null, 
       persist: timeout === 0,
@@ -53,6 +69,11 @@ export function UiProvider({ children }) {
         </Box>
       ),
     });
+    // Save the persist message
+    if(timeout === 0) {
+      if(debug) console.log(`UiProvider showSnackbarMessage: message ${message} timeout ${timeout} - persist key ${key}`);
+      persistMessages.push({message, key});
+    }
   }, []);
 
   // ConfirmCancelForm
@@ -93,6 +114,7 @@ export function UiProvider({ children }) {
   // Create the context value for the provider
   const contextValue = useMemo(() => ({
     showSnackbarMessage,
+    closeSnackbarMessage,
     closeSnackbar,
     showConfirmCancelDialog,
   }), [showSnackbarMessage]);
