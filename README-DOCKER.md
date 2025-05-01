@@ -16,7 +16,11 @@
 
 ## Run matterbridge with docker and docker compose
 
-The Matterbridge Docker image, which includes a manifest list for the linux/amd64, linux/arm64 and linux/arm/v7 architectures, is published on Docker Hub.
+The Matterbridge Docker image, which includes a manifest list for the linux/amd64, linux/arm64 and linux/arm/v7 architectures, is published on **Docker Hub**.
+
+The image (tag **latest**) includes matterbridge and all plugins with the latest release (as published on npm). You can just pull the new image and matterbridge with all plugins will be the latest release published on npm.
+
+The image (tag **dev**) includes matterbridge and all plugins with the dev release (as pushed on GitHub). You can just pull the new image and matterbridge with all plugins will be the latest release pushed on GitHub. It is possible that the devs are outdated by published latests.
 
 It is based on node:22-bookworm-slim and integrates the health check.
 
@@ -30,9 +34,12 @@ With docker run
 
 The health check still runs in the background, but:
 The container doesn’t restart automatically if it becomes unhealthy.
-You must manually check the health status:
 
+You can manually check the health status:
+
+```bash
 docker exec -it matterbridge curl -v http://localhost:8283/health
+```
 
 ### First create the Matterbridge directories
 
@@ -40,9 +47,9 @@ This will create the required directories in your home directory if they don't e
 
 ```bash
 cd ~
-mkdir -p ./Matterbridge
-mkdir -p ./.matterbridge
-sudo chown -R $USER:$USER ./Matterbridge ./.matterbridge
+mkdir -p ~/Matterbridge
+mkdir -p ~/.matterbridge
+sudo chown -R $USER:$USER ~/Matterbridge ~/.matterbridge
 ```
 
 You may need to adapt the script to your setup.
@@ -64,12 +71,10 @@ The container must have full access to the host network (needed for mdns).
 
 ```bash
 sudo docker run --name matterbridge \
-  -v /home/<USER>/Matterbridge:/root/Matterbridge \
-  -v /home/<USER>/.matterbridge:/root/.matterbridge \
+  -v ~/Matterbridge:/root/Matterbridge \
+  -v ~/.matterbridge:/root/.matterbridge \
   --network host --restart always -d luligu/matterbridge:latest
 ```
-
-Replace USER with your user name (i.e. ubuntu or pi).
 
 You may need to adapt the script to your setup.
 
@@ -85,18 +90,22 @@ services:
     network_mode: host                                        # Ensures the Matter mdns works
     restart: always                                           # Ensures the container always restarts automatically
     volumes:
-      - "/home/<USER>/Matterbridge:/root/Matterbridge"        # Mounts the Matterbridge plugin directory
-      - "/home/<USER>/.matterbridge:/root/.matterbridge"      # Mounts the Matterbridge storage directory
+      - "${HOME}/Matterbridge:/root/Matterbridge"             # Mounts the Matterbridge plugin directory
+      - "${HOME}/.matterbridge:/root/.matterbridge"           # Mounts the Matterbridge storage directory
 ```
 
-Replace USER with your user name (i.e. ubuntu or pi: "/home/ubuntu/Matterbridge:/root/Matterbridge").
-
-copy it in the home directory or edit the existing one to add the matterbridge service.
+Copy it in the home directory or edit the existing one to add the matterbridge service.
 
 Then start docker compose with:
 
 ```bash
 docker compose up -d
+```
+
+or start only the matterbridge container with:
+
+```bash
+docker compose up -d matterbridge
 ```
 
 ### Stop with docker compose
@@ -107,8 +116,11 @@ docker compose down
 
 ### Update with docker compose
 
+This will pull the new matterbridge image and restart the matterbridge container.
+
 ```bash
-docker compose pull
+docker compose pull matterbridge
+docker compose up -d --no-deps matterbridge
 ```
 
 ### Inspect the container
