@@ -19,14 +19,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout code to dev branch
         uses: actions/checkout@v4
         with:
           ref: dev
 
-      - uses: actions/setup-node@v4
+      - name: Set up Node.js & registry
+        uses: actions/setup-node@v4
         with:
           node-version: '22.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Extract base version, date and commit
+        id: vars
+        run: |
+          BASE=$(jq -r '.version' package.json)
+          DATE=$(date -u +'%Y%m%d')
+          SHA=${GITHUB_SHA::7}
+          DEV_TAG="${BASE}-dev-${DATE}-${SHA}"
+          echo "DEV_TAG=$DEV_TAG" >> $GITHUB_ENV
+
+      - name: Bump to date-commit-stamped version
+        run: npm version "${{ env.DEV_TAG }}" --no-git-tag-version
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
