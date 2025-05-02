@@ -35,7 +35,7 @@ import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW,
 import { NodeStorageManager, NodeStorage } from './storage/export.js';
 
 // Matterbridge
-import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter } from './utils/export.js';
+import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString } from './utils/export.js';
 import { logInterfaces, getGlobalNodeModules } from './utils/network.js';
 import { MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
@@ -515,6 +515,7 @@ export class Matterbridge extends EventEmitter {
       if (!availableInterfaces.includes(this.mdnsInterface)) {
         this.log.error(`Invalid mdnsInterface: ${this.mdnsInterface}. Available interfaces are: ${availableInterfaces.join(', ')}. Using all available interfaces.`);
         this.mdnsInterface = undefined;
+        await this.nodeContext.remove('mattermdnsinterface');
       } else {
         this.log.info(`Using mdnsInterface ${CYAN}${this.mdnsInterface}${nf} for the Matter MdnsBroadcaster.`);
       }
@@ -541,6 +542,7 @@ export class Matterbridge extends EventEmitter {
       if (!isValid) {
         this.log.error(`Invalid ipv4address: ${this.ipv4address}. Using all available addresses.`);
         this.ipv4address = undefined;
+        await this.nodeContext.remove('matteripv4address');
       }
     }
 
@@ -569,6 +571,7 @@ export class Matterbridge extends EventEmitter {
       if (!isValid) {
         this.log.error(`Invalid ipv6address: ${this.ipv6address}. Using all available addresses.`);
         this.ipv6address = undefined;
+        await this.nodeContext.remove('matteripv6address');
       }
     }
 
@@ -2013,10 +2016,10 @@ const commissioningController = new CommissioningController({
     await storageContext.set('productLabel', productName.slice(0, 32));
     await storageContext.set('serialNumber', await storageContext.get('serialNumber', serialNumber ? serialNumber.slice(0, 32) : 'SN' + random));
     await storageContext.set('uniqueId', await storageContext.get('uniqueId', 'UI' + random));
-    await storageContext.set('softwareVersion', this.matterbridgeVersion !== '' && this.matterbridgeVersion.includes('.') ? parseInt(this.matterbridgeVersion.split('.')[0], 10) : 1);
-    await storageContext.set('softwareVersionString', this.matterbridgeVersion !== '' ? this.matterbridgeVersion : '1.0.0');
-    await storageContext.set('hardwareVersion', this.systemInformation.osRelease !== '' && this.systemInformation.osRelease.includes('.') ? parseInt(this.systemInformation.osRelease.split('.')[0], 10) : 1);
-    await storageContext.set('hardwareVersionString', this.systemInformation.osRelease !== '' ? this.systemInformation.osRelease : '1.0.0');
+    await storageContext.set('softwareVersion', this.matterbridgeVersion !== '' && this.matterbridgeVersion.includes('.') ? parseInt(this.matterbridgeVersion.split('.')[0]) : 1);
+    await storageContext.set('softwareVersionString', isValidString(this.matterbridgeVersion, 5) ? this.matterbridgeVersion : '1.0.0');
+    await storageContext.set('hardwareVersion', this.systemInformation.osRelease !== '' && this.systemInformation.osRelease.includes('.') ? parseInt(this.systemInformation.osRelease.split('.')[0]) : 1);
+    await storageContext.set('hardwareVersionString', isValidString(this.systemInformation.osRelease, 5) ? this.systemInformation.osRelease : '1.0.0');
 
     this.log.debug(`Created server node storage context "${pluginName}.persist" for ${pluginName}:`);
     this.log.debug(`- storeId: ${await storageContext.get('storeId')}`);

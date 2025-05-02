@@ -628,7 +628,7 @@ export class Frontend {
         res.status(400).send('Invalid request: file and filename are required');
         return;
       }
-      this.wssSendSnackbarMessage(`Installing package ${filename}. Please wait...`);
+      this.wssSendSnackbarMessage(`Installing package ${filename}. Please wait...`, 0);
 
       // Define the path where the plugin file will be saved
       const filePath = path.join(this.matterbridge.matterbridgeDirectory, 'uploads', filename);
@@ -642,12 +642,14 @@ export class Frontend {
         if (filename.endsWith('.tgz')) {
           await this.matterbridge.spawnCommand('npm', ['install', '-g', filePath, '--omit=dev', '--verbose']);
           this.log.info(`Plugin package ${plg}${filename}${nf} installed successfully. Full restart required.`);
+          this.wssSendCloseSnackbarMessage(`Installing package ${filename}. Please wait...`);
           this.wssSendSnackbarMessage(`Installed package ${filename}`, 10, 'success');
           this.wssSendRestartRequired();
           res.send(`Plugin package ${filename} uploaded and installed successfully`);
         } else res.send(`File ${filename} uploaded successfully`);
       } catch (err) {
         this.log.error(`Error uploading or installing plugin package file ${plg}${filename}${er}:`, err);
+        this.wssSendCloseSnackbarMessage(`Installing package ${filename}. Please wait...`);
         this.wssSendSnackbarMessage(`Error uploading or installing plugin package ${filename}`, 10, 'error');
         res.status(500).send(`Error uploading or installing plugin package ${filename}`);
       }

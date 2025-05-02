@@ -22,6 +22,8 @@ The image (tag **latest**) includes matterbridge and all plugins with the latest
 
 The image (tag **dev**) includes matterbridge and all plugins with the dev release (as pushed on GitHub). You can just pull the new image and matterbridge with all plugins will be the latest release pushed on GitHub. It is possible that the devs are outdated by published latests.
 
+You can directly select and add a plugin without installing it.
+
 It is based on node:22-bookworm-slim and integrates the health check.
 
 How Health Checks Work in Different Scenarios
