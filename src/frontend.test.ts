@@ -471,16 +471,9 @@ describe('Matterbridge frontend', () => {
     test('Websocket API send bad json message', async () => {
       expect(ws).toBeDefined();
       expect(ws.readyState).toBe(WebSocket.OPEN);
-      const received = new Promise((resolve) => {
-        const onMessage = (event: WebSocket.MessageEvent) => {
-          ws.removeEventListener('message', onMessage);
-          resolve(event.data);
-        };
-        ws.addEventListener('message', onMessage);
-      });
       const message = 'This is not a JSON message';
       ws.send(message);
-      await received;
+      await wait(1000);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^Error parsing message/), expect.stringMatching(/^Unexpected token/));
     }, 60000);
 
@@ -1020,7 +1013,7 @@ describe('Matterbridge frontend', () => {
       expect(data.dst).toBe('Jest test');
       expect(data.response).not.toBeDefined();
       expect(data.error).toBeDefined();
-      expect(data.error).toBe('Wrong parameter packageName in /api/install');
+      expect(data.error).toBe('Wrong parameter in /api/install');
     }, 60000);
 
     test('Websocket API install with wrong params', async () => {
@@ -1047,7 +1040,7 @@ describe('Matterbridge frontend', () => {
       expect(data.dst).toBe('Jest test');
       expect(data.response).not.toBeDefined();
       expect(data.error).toBeDefined();
-      expect(data.error).toBe('Wrong parameter packageName in /api/install');
+      expect(data.error).toBe('Wrong parameter in /api/install');
     }, 60000);
 
     test('Websocket API install', async () => {
@@ -1063,7 +1056,7 @@ describe('Matterbridge frontend', () => {
         };
         ws.addEventListener('message', onMessage);
       });
-      const message = JSON.stringify({ id: 10023, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-test' } });
+      const message = JSON.stringify({ id: 10023, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-test', restart: false } });
       ws.send(message);
       const response = await received;
       expect(response).toBeDefined();
@@ -1091,7 +1084,7 @@ describe('Matterbridge frontend', () => {
         };
         ws.addEventListener('message', onMessage);
       });
-      const message = JSON.stringify({ id: 10024, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-xxxtest' } });
+      const message = JSON.stringify({ id: 10024, dst: 'Matterbridge', src: 'Jest test', method: '/api/install', params: { packageName: 'matterbridge-xxxtest', restart: false } });
       ws.send(message);
       const response = await received;
       expect(response).toBeDefined();
@@ -1156,11 +1149,13 @@ describe('Matterbridge frontend', () => {
       expect(data.dst).toBe('Jest test');
       expect(data.response).toBe(true);
       expect(data.error).not.toBeDefined();
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Shutting down plugin/));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Removed plugin/));
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('closed with code 0'));
     }, 60000);
 
-    test('Websocket API uninstall wrong package name', async () => {
+    test('Websocket API uninstall with wrong package name', async () => {
       expect(ws).toBeDefined();
       expect(ws.readyState).toBe(WebSocket.OPEN);
       const received = new Promise((resolve) => {

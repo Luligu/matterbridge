@@ -1377,6 +1377,15 @@ export class Frontend {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/uninstall' }));
           return;
         }
+        // The package is a plugin
+        const plugin = this.matterbridge.plugins.get(data.params.packageName) as RegisteredPlugin;
+        if (plugin) {
+          await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been removed.', true);
+          await this.matterbridge.plugins.remove(data.params.packageName);
+          this.wssSendSnackbarMessage(`Removed plugin ${data.params.packageName}`, 5, 'success');
+          this.wssSendRefreshRequired('plugins');
+        }
+        // Uninstall the package
         this.wssSendSnackbarMessage(`Uninstalling package ${data.params.packageName}...`, 0);
         this.matterbridge
           .spawnCommand('npm', ['uninstall', '-g', data.params.packageName, '--verbose'])
