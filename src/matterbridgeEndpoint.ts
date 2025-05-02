@@ -26,7 +26,7 @@ import { AnsiLogger, BLUE, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStr
 
 // Matterbridge
 import { bridgedNode, DeviceTypeDefinition, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
-import { isValidNumber, isValidObject } from './utils/export.js';
+import { isValidNumber, isValidObject, isValidString } from './utils/export.js';
 import {
   MatterbridgeServer,
   MatterbridgeServerDevice,
@@ -73,7 +73,7 @@ import {
 } from './matterbridgeEndpointHelpers.js';
 
 // @matter
-import { AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointType, HandlerFunction, Lifecycle, MutableEndpoint, NamedHandler, SupportedBehaviors, VendorId } from '@matter/main';
+import { AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointType, HandlerFunction, Lifecycle, MutableEndpoint, NamedHandler, SupportedBehaviors, UINT16_MAX, UINT32_MAX, VendorId } from '@matter/main';
 import { DeviceClassification } from '@matter/main/model';
 import { ClusterType, getClusterNameById, MeasurementType, Semtag } from '@matter/main/types';
 
@@ -983,15 +983,15 @@ export class MatterbridgeEndpoint extends Endpoint {
         vendorId: vendorId !== undefined ? VendorId(vendorId) : undefined, // 4874
         vendorName: vendorName.slice(0, 32),
         productName: productName.slice(0, 32),
-        productUrl: this.productUrl,
+        productUrl: this.productUrl.slice(0, 256),
         productLabel: deviceName.slice(0, 64),
         nodeLabel: deviceName.slice(0, 32),
         serialNumber: serialNumber.slice(0, 32),
-        uniqueId: this.uniqueId,
-        softwareVersion,
-        softwareVersionString: softwareVersionString.slice(0, 64),
-        hardwareVersion,
-        hardwareVersionString: hardwareVersionString.slice(0, 64),
+        uniqueId: this.uniqueId.slice(0, 32),
+        softwareVersion: isValidNumber(softwareVersion, 0, UINT32_MAX) ? softwareVersion : undefined,
+        softwareVersionString: isValidString(softwareVersionString) ? softwareVersionString.slice(0, 64) : undefined,
+        hardwareVersion: isValidNumber(hardwareVersion, 0, UINT16_MAX) ? hardwareVersion : undefined,
+        hardwareVersionString: isValidString(hardwareVersionString) ? hardwareVersionString.slice(0, 64) : undefined,
         reachable: true,
       },
     );

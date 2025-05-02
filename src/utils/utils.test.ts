@@ -305,6 +305,8 @@ describe('Utils test', () => {
     expect(isValidNumber('string')).toBe(false);
     expect(isValidNumber(null)).toBe(false);
     expect(isValidNumber(undefined)).toBe(false);
+    expect(isValidNumber(Infinity)).toBe(false);
+    expect(isValidNumber(-Infinity)).toBe(false);
     expect(isValidNumber({ x: 1, y: 4 })).toBe(false);
     expect(isValidNumber([1, 4, 'string'])).toBe(false);
   });

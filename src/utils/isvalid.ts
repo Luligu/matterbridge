@@ -42,7 +42,7 @@ export function isValidIpv4Address(ipv4Address: string): boolean {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isValidNumber(value: any, min?: number, max?: number): value is number {
-  if (value === undefined || value === null || typeof value !== 'number' || Number.isNaN(value)) return false;
+  if (value === undefined || value === null || typeof value !== 'number' || Number.isNaN(value) || !Number.isFinite(value)) return false;
   if (min !== undefined && value < min) return false;
   if (max !== undefined && value > max) return false;
   return true;
