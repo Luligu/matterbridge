@@ -35,7 +35,7 @@ import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW,
 import { NodeStorageManager, NodeStorage } from './storage/export.js';
 
 // Matterbridge
-import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString } from './utils/export.js';
+import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString, isValidNumber } from './utils/export.js';
 import { logInterfaces, getGlobalNodeModules } from './utils/network.js';
 import { MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
@@ -45,7 +45,23 @@ import { bridge } from './matterbridgeDeviceTypes.js';
 import { Frontend } from './frontend.js';
 
 // @matter
-import { DeviceTypeId, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, StorageService, Environment, ServerNode, FabricIndex, SessionsBehavior } from '@matter/main';
+import {
+  DeviceTypeId,
+  Endpoint as EndpointNode,
+  Logger,
+  LogLevel as MatterLogLevel,
+  LogFormat as MatterLogFormat,
+  VendorId,
+  StorageContext,
+  StorageManager,
+  StorageService,
+  Environment,
+  ServerNode,
+  FabricIndex,
+  SessionsBehavior,
+  UINT32_MAX,
+  UINT16_MAX,
+} from '@matter/main';
 import { DeviceCommissioner, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
@@ -2016,10 +2032,10 @@ const commissioningController = new CommissioningController({
     await storageContext.set('productLabel', productName.slice(0, 32));
     await storageContext.set('serialNumber', await storageContext.get('serialNumber', serialNumber ? serialNumber.slice(0, 32) : 'SN' + random));
     await storageContext.set('uniqueId', await storageContext.get('uniqueId', 'UI' + random));
-    await storageContext.set('softwareVersion', parseVersionString(this.matterbridgeVersion) || 1);
-    await storageContext.set('softwareVersionString', isValidString(this.matterbridgeVersion, 5) ? this.matterbridgeVersion : '1.0.0');
-    await storageContext.set('hardwareVersion', parseVersionString(this.systemInformation.osRelease) || 1);
-    await storageContext.set('hardwareVersionString', isValidString(this.systemInformation.osRelease, 5) ? this.systemInformation.osRelease : '1.0.0');
+    await storageContext.set('softwareVersion', isValidNumber(parseVersionString(this.matterbridgeVersion), 0, UINT32_MAX) ? parseVersionString(this.matterbridgeVersion) : 1);
+    await storageContext.set('softwareVersionString', isValidString(this.matterbridgeVersion, 5, 64) ? this.matterbridgeVersion : '1.0.0');
+    await storageContext.set('hardwareVersion', isValidNumber(parseVersionString(this.systemInformation.osRelease), 0, UINT16_MAX) ? parseVersionString(this.systemInformation.osRelease) : 1);
+    await storageContext.set('hardwareVersionString', isValidString(this.systemInformation.osRelease, 5, 64) ? this.systemInformation.osRelease : '1.0.0');
 
     this.log.debug(`Created server node storage context "${pluginName}.persist" for ${pluginName}:`);
     this.log.debug(`- storeId: ${await storageContext.get('storeId')}`);
