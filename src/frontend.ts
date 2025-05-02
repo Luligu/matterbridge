@@ -1224,8 +1224,9 @@ export class Frontend {
         this.wssSendCloseSnackbarMessage('Creating backup...');
         this.wssSendSnackbarMessage('Backup ready to be downloaded', 10);
       } else if (data.method === '/api/unregister') {
-        this.wssSendSnackbarMessage('Uregistering all bridged devices...', 10);
+        this.wssSendSnackbarMessage('Unregistering all bridged devices...', 0);
         await this.matterbridge.unregisterAndShutdownProcess();
+        this.wssSendCloseSnackbarMessage('Unregistering all bridged devices...');
       } else if (data.method === '/api/reset') {
         this.wssSendSnackbarMessage('Resetting matterbridge commissioning...', 10);
         await this.matterbridge.shutdownProcessAndReset();
