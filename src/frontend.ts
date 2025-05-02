@@ -653,192 +653,6 @@ export class Frontend {
       }
     });
 
-    // Endpoint to receive commands
-    this.expressApp.post('/api/command/:command/:param', express.json(), async (req, res): Promise<void> => {
-      const command = req.params.command;
-      const param = req.params.param;
-      this.log.debug(`The frontend sent /api/command/${command}/${param}`);
-
-      if (!command) {
-        res.status(400).json({ error: 'No command provided' });
-        return;
-      }
-
-      this.log.debug(`Received frontend command: ${command}:${param}`);
-
-      // Handle the command setpassword from Settings
-      if (command === 'setpassword') {
-        const password = param.slice(1, -1); // Remove the first and last characters
-        this.log.debug('setpassword', param, password);
-        await this.matterbridge.nodeContext?.set('password', password);
-        res.json({ message: 'Command received' });
-        return;
-      }
-
-      // Handle the command setbridgemode from Settings
-      if (command === 'setbridgemode') {
-        this.log.debug(`setbridgemode: ${param}`);
-        this.wssSendRestartRequired();
-        await this.matterbridge.nodeContext?.set('bridgeMode', param);
-        res.json({ message: 'Command received' });
-        return;
-      }
-
-      // Handle the command backup from Settings
-      if (command === 'backup') {
-        this.log.notice(`Prepairing the backup...`);
-        await createZip(path.join(os.tmpdir(), `matterbridge.backup.zip`), path.join(this.matterbridge.matterbridgeDirectory), path.join(this.matterbridge.matterbridgePluginDirectory));
-        this.log.notice(`Backup ready to be downloaded.`);
-        this.wssSendSnackbarMessage('Backup ready to be downloaded', 10);
-        res.json({ message: 'Command received' });
-        return;
-      }
-
-      // Handle the command setmbloglevel from Settings
-      if (command === 'setmbloglevel') {
-        this.log.debug('Matterbridge log level:', param);
-        if (param === 'Debug') {
-          this.log.logLevel = LogLevel.DEBUG;
-        } else if (param === 'Info') {
-          this.log.logLevel = LogLevel.INFO;
-        } else if (param === 'Notice') {
-          this.log.logLevel = LogLevel.NOTICE;
-        } else if (param === 'Warn') {
-          this.log.logLevel = LogLevel.WARN;
-        } else if (param === 'Error') {
-          this.log.logLevel = LogLevel.ERROR;
-        } else if (param === 'Fatal') {
-          this.log.logLevel = LogLevel.FATAL;
-        }
-        await this.matterbridge.nodeContext?.set('matterbridgeLogLevel', this.log.logLevel);
-        await this.matterbridge.setLogLevel(this.log.logLevel);
-        res.json({ message: 'Command received' });
-        return;
-      }
-
-      // Handle the command setmbloglevel from Settings
-      if (command === 'setmjloglevel') {
-        this.log.debug('Matter.js log level:', param);
-        if (param === 'Debug') {
-          Logger.defaultLogLevel = MatterLogLevel.DEBUG;
-        } else if (param === 'Info') {
-          Logger.defaultLogLevel = MatterLogLevel.INFO;
-        } else if (param === 'Notice') {
-          Logger.defaultLogLevel = MatterLogLevel.NOTICE;
-        } else if (param === 'Warn') {
-          Logger.defaultLogLevel = MatterLogLevel.WARN;
-        } else if (param === 'Error') {
-          Logger.defaultLogLevel = MatterLogLevel.ERROR;
-        } else if (param === 'Fatal') {
-          Logger.defaultLogLevel = MatterLogLevel.FATAL;
-        }
-        await this.matterbridge.nodeContext?.set('matterLogLevel', Logger.defaultLogLevel);
-        res.json({ message: 'Command received' });
-        return;
-      }
-
-      // Handle the command setmdnsinterface from Settings
-      if (command === 'setmdnsinterface') {
-        if (param === 'json' && isValidString(req.body.value)) {
-          this.matterbridge.matterbridgeInformation.mattermdnsinterface = req.body.value;
-          this.log.debug(`Matter.js mdns interface: ${req.body.value === '' ? 'all interfaces' : req.body.value}`);
-          await this.matterbridge.nodeContext?.set('mattermdnsinterface', req.body.value);
-        }
-        res.json({ message: 'Command received' });
-        return;
-      }
-
-      // Handle the command setipv4address from Settings
-      if (command === 'setipv4address') {
-        if (param === 'json' && isValidString(req.body.value)) {
-          this.log.debug(`Matter.js ipv4 address: ${req.body.value === '' ? 'all ipv4 addresses' : req.body.value}`);
-          this.matterbridge.matterbridgeInformation.matteripv4address = req.body.value;
-          await this.matterbridge.nodeContext?.set('matteripv4address', req.body.value);
-        }
-        res.json({ message: 'Command received' });
-        return;
-      }
-
-      // Handle the command setipv6address from Settings
-      if (command === 'setipv6address') {
-        if (param === 'json' && isValidString(req.body.value)) {
-          this.log.debug(`Matter.js ipv6 address: ${req.body.value === '' ? 'all ipv6 addresses' : req.body.value}`);
-          this.matterbridge.matterbridgeInformation.matteripv6address = req.body.value;
-          await this.matterbridge.nodeContext?.set('matteripv6address', req.body.value);
-        }
-        res.json({ message: 'Command received' });
-        return;
-      }
-
-      // Handle the command setmatterport from Settings
-      if (command === 'setmatterport') {
-        const port = Math.min(Math.max(parseInt(req.body.value), 5540), 5560);
-        this.matterbridge.matterbridgeInformation.matterPort = port;
-        this.log.debug(`Set matter commissioning port to ${CYAN}${port}${db}`);
-        await this.matterbridge.nodeContext?.set<number>('matterport', port);
-        res.json({ message: 'Command received' });
-        return;
-      }
-
-      // Handle the command setmatterdiscriminator from Settings
-      if (command === 'setmatterdiscriminator') {
-        const discriminator = Math.min(Math.max(parseInt(req.body.value), 1000), 4095);
-        this.matterbridge.matterbridgeInformation.matterDiscriminator = discriminator;
-        this.log.debug(`Set matter commissioning discriminator to ${CYAN}${discriminator}${db}`);
-        await this.matterbridge.nodeContext?.set<number>('matterdiscriminator', discriminator);
-        res.json({ message: 'Command received' });
-        return;
-      }
-
-      // Handle the command setmatterpasscode from Settings
-      if (command === 'setmatterpasscode') {
-        const passcode = Math.min(Math.max(parseInt(req.body.value), 10000000), 90000000);
-        this.matterbridge.matterbridgeInformation.matterPasscode = passcode;
-        this.log.debug(`Set matter commissioning passcode to ${CYAN}${passcode}${db}`);
-        await this.matterbridge.nodeContext?.set<number>('matterpasscode', passcode);
-        res.json({ message: 'Command received' });
-        return;
-      }
-
-      // Handle the command setmbloglevel from Settings
-      if (command === 'setmblogfile') {
-        this.log.debug('Matterbridge file log:', param);
-        this.matterbridge.matterbridgeInformation.fileLogger = param === 'true';
-        await this.matterbridge.nodeContext?.set('matterbridgeFileLog', param === 'true');
-        // Create the file logger for matterbridge
-        if (param === 'true') AnsiLogger.setGlobalLogfile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), LogLevel.DEBUG, true);
-        else AnsiLogger.setGlobalLogfile(undefined);
-        res.json({ message: 'Command received' });
-        return;
-      }
-
-      // Handle the command setmbloglevel from Settings
-      if (command === 'setmjlogfile') {
-        this.log.debug('Matter file log:', param);
-        this.matterbridge.matterbridgeInformation.matterFileLogger = param === 'true';
-        await this.matterbridge.nodeContext?.set('matterFileLog', param === 'true');
-        if (param === 'true') {
-          try {
-            Logger.addLogger('matterfilelogger', await this.matterbridge.createMatterFileLogger(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), true), {
-              defaultLogLevel: MatterLogLevel.DEBUG,
-              logFormat: MatterLogFormat.PLAIN,
-            });
-          } catch (error) {
-            this.log.debug(`Error adding the matterfilelogger for file ${CYAN}${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
-          }
-        } else {
-          try {
-            Logger.removeLogger('matterfilelogger');
-          } catch (error) {
-            this.log.debug(`Error removing the matterfilelogger for file ${CYAN}${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
-          }
-        }
-
-        res.json({ message: 'Command received' });
-        return;
-      }
-    });
-
     // Fallback for routing (must be the last route)
     this.expressApp.use((req, res) => {
       this.log.debug('The frontend sent:', req.url);
@@ -1576,6 +1390,167 @@ export class Frontend {
         plugin.platform?.onAction(data.params.action, data.params.value as string | undefined, data.params.id as string | undefined, data.params.formData as unknown as PlatformConfig).catch((error) => {
           this.log.error(`Error in plugin ${plugin.name} action ${data.params.action}: ${error}`);
         });
+      } else if (data.method === '/api/config') {
+        if (!isValidString(data.params.name, 5) || data.params.value === undefined) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter in /api/config' }));
+          return;
+        }
+        this.log.debug(`Received /api/config name ${CYAN}${data.params.name}${db} value ${CYAN}${data.params.value}${db}`);
+        this.log.fatal(`Received /api/config name ${CYAN}${data.params.name}${db} value(${typeof data.params.value}) ${CYAN}${data.params.value}${db}`);
+        switch (data.params.name) {
+          case 'setpassword':
+            if (isValidString(data.params.value)) {
+              await this.matterbridge.nodeContext?.set('password', data.params.value);
+            }
+            break;
+          case 'setbridgemode':
+            if (isValidString(data.params.value, 5)) {
+              await this.matterbridge.nodeContext?.set('bridgeMode', data.params.value);
+              this.wssSendRestartRequired();
+            }
+            break;
+          case 'setmbloglevel':
+            if (isValidString(data.params.value, 4)) {
+              this.log.debug('Matterbridge logger level:', data.params.value);
+              if (data.params.value === 'Debug') {
+                await this.matterbridge.setLogLevel(LogLevel.DEBUG);
+              } else if (data.params.value === 'Info') {
+                await this.matterbridge.setLogLevel(LogLevel.INFO);
+              } else if (data.params.value === 'Notice') {
+                await this.matterbridge.setLogLevel(LogLevel.NOTICE);
+              } else if (data.params.value === 'Warn') {
+                await this.matterbridge.setLogLevel(LogLevel.WARN);
+              } else if (data.params.value === 'Error') {
+                await this.matterbridge.setLogLevel(LogLevel.ERROR);
+              } else if (data.params.value === 'Fatal') {
+                await this.matterbridge.setLogLevel(LogLevel.FATAL);
+              }
+              await this.matterbridge.nodeContext?.set('matterbridgeLogLevel', this.log.logLevel);
+            }
+            break;
+          case 'setmblogfile':
+            if (isValidBoolean(data.params.value)) {
+              this.log.debug('Matterbridge file log:', data.params.value);
+              this.matterbridge.matterbridgeInformation.fileLogger = data.params.value;
+              await this.matterbridge.nodeContext?.set('matterbridgeFileLog', data.params.value);
+              // Create the file logger for matterbridge
+              if (data.params.value) AnsiLogger.setGlobalLogfile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), this.matterbridge.matterbridgeInformation.loggerLevel, true);
+              else AnsiLogger.setGlobalLogfile(undefined);
+            }
+            break;
+          case 'setmjloglevel':
+            if (isValidString(data.params.value, 4)) {
+              this.log.debug('Matter logger level:', data.params.value);
+              if (data.params.value === 'Debug') {
+                Logger.level = MatterLogLevel.DEBUG;
+              } else if (data.params.value === 'Info') {
+                Logger.level = MatterLogLevel.INFO;
+              } else if (data.params.value === 'Notice') {
+                Logger.level = MatterLogLevel.NOTICE;
+              } else if (data.params.value === 'Warn') {
+                Logger.level = MatterLogLevel.WARN;
+              } else if (data.params.value === 'Error') {
+                Logger.level = MatterLogLevel.ERROR;
+              } else if (data.params.value === 'Fatal') {
+                Logger.level = MatterLogLevel.FATAL;
+              }
+              this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.level as MatterLogLevel;
+              await this.matterbridge.nodeContext?.set('matterLogLevel', Logger.level);
+            }
+            break;
+          case 'setmjlogfile':
+            if (isValidBoolean(data.params.value)) {
+              this.log.debug('Matter file log:', data.params.value);
+              this.matterbridge.matterbridgeInformation.matterFileLogger = data.params.value;
+              await this.matterbridge.nodeContext?.set('matterFileLog', data.params.value);
+              if (data.params.value) {
+                try {
+                  Logger.addLogger('matterfilelogger', await this.matterbridge.createMatterFileLogger(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), true), {
+                    defaultLogLevel: this.matterbridge.matterbridgeInformation.matterLoggerLevel as MatterLogLevel,
+                    logFormat: MatterLogFormat.PLAIN,
+                  });
+                } catch (error) {
+                  this.log.debug(`Error adding the matterfilelogger for file ${CYAN}${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
+                }
+              } else {
+                try {
+                  Logger.removeLogger('matterfilelogger');
+                } catch (error) {
+                  this.log.debug(`Error removing the matterfilelogger for file ${CYAN}${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
+                }
+              }
+            }
+            break;
+          case 'setmdnsinterface':
+            if (isValidString(data.params.value)) {
+              this.log.debug(`Matter.js mdns interface: ${data.params.value === '' ? 'all interfaces' : data.params.value}`);
+              this.matterbridge.mdnsInterface = data.params.value === '' ? undefined : data.params.value;
+              this.matterbridge.matterbridgeInformation.mattermdnsinterface = this.matterbridge.mdnsInterface;
+              await this.matterbridge.nodeContext?.set('mattermdnsinterface', data.params.value);
+              this.wssSendRestartRequired();
+            }
+            break;
+          case 'setipv4address':
+            if (isValidString(data.params.value)) {
+              this.log.debug(`Matter.js ipv4 address: ${data.params.value === '' ? 'all ipv4 addresses' : data.params.value}`);
+              this.matterbridge.ipv4address = data.params.value === '' ? undefined : data.params.value;
+              this.matterbridge.matterbridgeInformation.matteripv4address = this.matterbridge.ipv4address;
+              await this.matterbridge.nodeContext?.set('matteripv4address', data.params.value);
+              this.wssSendRestartRequired();
+            }
+            break;
+          case 'setipv6address':
+            if (isValidString(data.params.value)) {
+              this.log.debug(`Matter.js ipv6 address: ${data.params.value === '' ? 'all ipv6 addresses' : data.params.value}`);
+              this.matterbridge.ipv6address = data.params.value === '' ? undefined : data.params.value;
+              this.matterbridge.matterbridgeInformation.matteripv6address = this.matterbridge.ipv6address;
+              await this.matterbridge.nodeContext?.set('matteripv6address', data.params.value);
+              this.wssSendRestartRequired();
+            }
+            break;
+          case 'setmatterport':
+            data.params.value = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
+            if (isValidNumber(data.params.value, 5540, 5580)) {
+              this.log.debug(`Set matter commissioning port to ${CYAN}${data.params.value}${db}`);
+              this.matterbridge.matterbridgeInformation.matterPort = data.params.value;
+              await this.matterbridge.nodeContext?.set<number>('matterport', data.params.value);
+              this.wssSendRestartRequired();
+            } else {
+              this.log.debug(`Reset matter commissioning port to ${CYAN}5040${db}`);
+              this.matterbridge.matterbridgeInformation.matterPort = 5040;
+              await this.matterbridge.nodeContext?.set<number>('matterport', 5040);
+              this.wssSendRestartRequired();
+            }
+            break;
+          case 'setmatterdiscriminator':
+            data.params.value = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
+            if (isValidNumber(data.params.value, 1000, 4095)) {
+              this.log.debug(`Set matter commissioning discriminator to ${CYAN}${data.params.value}${db}`);
+              this.matterbridge.matterbridgeInformation.matterDiscriminator = data.params.value;
+              await this.matterbridge.nodeContext?.set<number>('matterdiscriminator', data.params.value);
+              this.wssSendRestartRequired();
+            } else {
+              this.log.debug(`Reset matter commissioning discriminator to ${CYAN}undefined${db}`);
+              this.matterbridge.matterbridgeInformation.matterDiscriminator = undefined;
+              await this.matterbridge.nodeContext?.remove('matterdiscriminator');
+              this.wssSendRestartRequired();
+            }
+            break;
+          case 'setmatterpasscode':
+            data.params.value = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
+            if (isValidNumber(data.params.value, 10000000, 90000000)) {
+              this.matterbridge.matterbridgeInformation.matterPasscode = data.params.value;
+              this.log.debug(`Set matter commissioning passcode to ${CYAN}${data.params.value}${db}`);
+              await this.matterbridge.nodeContext?.set<number>('matterpasscode', data.params.value);
+              this.wssSendRestartRequired();
+            } else {
+              this.log.debug(`Reset matter commissioning passcode to ${CYAN}undefined${db}`);
+              this.matterbridge.matterbridgeInformation.matterPasscode = undefined;
+              await this.matterbridge.nodeContext?.remove('matterpasscode');
+              this.wssSendRestartRequired();
+            }
+            break;
+        }
       } else if (data.method === '/api/command') {
         if (!isValidString(data.params.command, 5)) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter command in /api/command' }));
