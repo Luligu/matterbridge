@@ -73,10 +73,10 @@ RUN npm run cleanBuildProduction && npm pkg delete devDependencies scripts types
 # ─────────────── RUNTIME STAGE ───────────────
 FROM node:22-bookworm-slim AS release
 
-WORKDIR /app
-
 # 🛠️ Set noninteractive frontend
 ENV DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /app
 
 COPY --from=builder \
     /app/*.tgz \
@@ -108,10 +108,10 @@ RUN apt-get update && \
     rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /var/lib/apt/lists/* && \
     find /usr/local/lib/node_modules -type d -name ".github" -exec rm -rf {} + && \
     find /usr/local/lib/node_modules -type d -name ".vscode" -exec rm -rf {} + && \
+    find /usr/local/lib/node_modules -type d -name "docs" -exec rm -rf {} + && \
     find /usr/local/lib/node_modules -type f \( -name "*.ts" -o -name "*.js.map" -o -name "*.d.ts" -o -name "*.d.ts.map" -o -name "LICENSE" -o -name "LICENSE.txt" -o -name "*.md" \) -delete && \
     find /usr/local/lib/node_modules/matterbridge/node_modules/@matter -type d -name "src" -exec rm -rf {} + && \
-    find /usr/local/lib/node_modules/matterbridge/node_modules/@matter -type d -name "cjs" -exec rm -rf {} + && \
-    find /usr/local/lib/node_modules -type d -name "docs" -exec rm -rf {} +
+    find /usr/local/lib/node_modules/matterbridge/node_modules/@matter -type d -name "cjs" -exec rm -rf {} +
 
 # Add Docker HEALTHCHECK
 HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
