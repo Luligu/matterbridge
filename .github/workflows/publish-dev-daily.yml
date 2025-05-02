@@ -32,7 +32,7 @@ jobs:
         run: |
           BASE=$(jq -r '.version' package.json)
           DATE=$(date -u +'%Y%m%d')
-          SHA=${GITHUB_SHA::7}
+          SHA=$(git rev-parse --short=7 HEAD)
           DEV_TAG="${BASE}-dev-${DATE}-${SHA}"
           echo "DEV_TAG=$DEV_TAG" >> $GITHUB_ENV
 
