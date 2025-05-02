@@ -814,8 +814,9 @@ export class Frontend {
         } else {
           const plugin = this.matterbridge.plugins.get(param);
           if (!plugin) return;
-          this.matterbridge.plugins.saveConfigFromJson(plugin, req.body);
+          this.matterbridge.plugins.saveConfigFromJson(plugin, req.body); // Set also plugin.restartRequired = true;
           this.wssSendSnackbarMessage(`Saved config for plugin ${param}`);
+          this.wssSendRefreshRequired('plugins');
           this.wssSendRestartRequired();
         }
         res.json({ message: 'Command received' });
@@ -1144,6 +1145,7 @@ export class Frontend {
         started: plugin.started,
         configured: plugin.configured,
         paired: plugin.paired,
+        restartRequired: plugin.restartRequired,
         fabricInformations: plugin.fabricInformations,
         sessionInformations: plugin.sessionInformations,
         registeredDevices: plugin.registeredDevices,

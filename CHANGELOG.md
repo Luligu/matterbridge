@@ -26,6 +26,7 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 ### Changed
 
 - [docker]: Updated the [Docker configurations](README-DOCKER.md).
+- [frontend]: Changing configuration for a plugin now only lock configuration on that plugin.
 
 ## [3.0.0] - 2025-04-29
 
