@@ -618,10 +618,45 @@ export class Frontend {
       });
     });
 
+    // Endpoint to upload a package
+    this.expressApp.post('/api/uploadpackage', upload.single('file'), async (req, res) => {
+      const { filename } = req.body;
+      const file = req.file;
+
+      if (!file || !filename) {
+        this.log.error(`uploadpackage: invalid request: file and filename are required`);
+        res.status(400).send('Invalid request: file and filename are required');
+        return;
+      }
+      this.wssSendSnackbarMessage(`Installing package ${filename}. Please wait...`);
+
+      // Define the path where the plugin file will be saved
+      const filePath = path.join(this.matterbridge.matterbridgeDirectory, 'uploads', filename);
+
+      try {
+        // Move the uploaded file to the specified path
+        await fs.rename(file.path, filePath);
+        this.log.info(`File ${plg}${filename}${nf} uploaded successfully`);
+
+        // Install the plugin package
+        if (filename.endsWith('.tgz')) {
+          await this.matterbridge.spawnCommand('npm', ['install', '-g', filePath, '--omit=dev', '--verbose']);
+          this.log.info(`Plugin package ${plg}${filename}${nf} installed successfully. Full restart required.`);
+          this.wssSendSnackbarMessage(`Installed package ${filename}`, 10, 'success');
+          this.wssSendRestartRequired();
+          res.send(`Plugin package ${filename} uploaded and installed successfully`);
+        } else res.send(`File ${filename} uploaded successfully`);
+      } catch (err) {
+        this.log.error(`Error uploading or installing plugin package file ${plg}${filename}${er}:`, err);
+        this.wssSendSnackbarMessage(`Error uploading or installing plugin package ${filename}`, 10, 'error');
+        res.status(500).send(`Error uploading or installing plugin package ${filename}`);
+      }
+    });
+
     // Endpoint to receive commands
     this.expressApp.post('/api/command/:command/:param', express.json(), async (req, res): Promise<void> => {
       const command = req.params.command;
-      let param = req.params.param;
+      const param = req.params.param;
       this.log.debug(`The frontend sent /api/command/${command}/${param}`);
 
       if (!command) {
@@ -801,60 +836,6 @@ export class Frontend {
 
         res.json({ message: 'Command received' });
         return;
-      }
-
-      // Handle the command saveconfig from Home
-      if (command === 'saveconfig') {
-        param = param.replace(/\*/g, '\\');
-        this.log.info(`Saving config for plugin ${plg}${param}${nf}...`);
-        // console.log('Req.body:', JSON.stringify(req.body, null, 2));
-
-        if (!this.matterbridge.plugins.has(param)) {
-          this.log.warn(`Plugin ${plg}${param}${wr} not found in matterbridge`);
-        } else {
-          const plugin = this.matterbridge.plugins.get(param);
-          if (!plugin) return;
-          this.matterbridge.plugins.saveConfigFromJson(plugin, req.body); // Set also plugin.restartRequired = true;
-          this.wssSendSnackbarMessage(`Saved config for plugin ${param}`);
-          this.wssSendRefreshRequired('plugins');
-          this.wssSendRestartRequired();
-        }
-        res.json({ message: 'Command received' });
-        return;
-      }
-    });
-
-    this.expressApp.post('/api/uploadpackage', upload.single('file'), async (req, res) => {
-      const { filename } = req.body;
-      const file = req.file;
-
-      if (!file || !filename) {
-        this.log.error(`uploadpackage: invalid request: file and filename are required`);
-        res.status(400).send('Invalid request: file and filename are required');
-        return;
-      }
-      this.wssSendSnackbarMessage(`Installing package ${filename}. Please wait...`);
-
-      // Define the path where the plugin file will be saved
-      const filePath = path.join(this.matterbridge.matterbridgeDirectory, 'uploads', filename);
-
-      try {
-        // Move the uploaded file to the specified path
-        await fs.rename(file.path, filePath);
-        this.log.info(`File ${plg}${filename}${nf} uploaded successfully`);
-
-        // Install the plugin package
-        if (filename.endsWith('.tgz')) {
-          await this.matterbridge.spawnCommand('npm', ['install', '-g', filePath, '--omit=dev', '--verbose']);
-          this.log.info(`Plugin package ${plg}${filename}${nf} installed successfully. Full restart required.`);
-          this.wssSendSnackbarMessage(`Installed package ${filename}`, 10, 'success');
-          this.wssSendRestartRequired();
-          res.send(`Plugin package ${filename} uploaded and installed successfully`);
-        } else res.send(`File ${filename} uploaded successfully`);
-      } catch (err) {
-        this.log.error(`Error uploading or installing plugin package file ${plg}${filename}${er}:`, err);
-        this.wssSendSnackbarMessage(`Error uploading or installing plugin package ${filename}`, 10, 'error');
-        res.status(500).send(`Error uploading or installing plugin package ${filename}`);
       }
     });
 
@@ -1274,7 +1255,6 @@ export class Frontend {
             this.wssSendCloseSnackbarMessage(`Installing package ${data.params.packageName}...`);
             this.wssSendSnackbarMessage(`Package ${data.params.packageName} not installed`, 10, 'error');
           });
-        return;
       } else if (data.method === '/api/uninstall') {
         if (!isValidString(data.params.packageName, 10)) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/uninstall' }));
@@ -1373,43 +1353,53 @@ export class Frontend {
         this.wssSendSnackbarMessage(`Disabled plugin ${data.params.pluginName}`, 5, 'success');
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');
+      } else if (data.method === '/api/savepluginconfig') {
+        if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/savepluginconfig' }));
+          return;
+        }
+        if (!isValidObject(data.params.formData, 5)) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter formData in /api/savepluginconfig' }));
+          return;
+        }
+        this.log.info(`Saving config for plugin ${plg}${data.params.pluginName}${nf}...`);
+        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as RegisteredPlugin;
+        if (!plugin) {
+          this.log.warn(`Plugin ${plg}${data.params.pluginName}${wr} not found in matterbridge`);
+        } else {
+          this.matterbridge.plugins.saveConfigFromJson(plugin, data.params.formData); // Set also plugin.restartRequired = true;
+          this.wssSendSnackbarMessage(`Saved config for plugin ${data.params.pluginName}`);
+          this.wssSendRefreshRequired('plugins');
+          this.wssSendRestartRequired();
+        }
       } else if (data.method === '/api/shellysysupdate') {
         const { triggerShellySysUpdate } = await import('./shelly.js');
         triggerShellySysUpdate(this.matterbridge);
-        return;
       } else if (data.method === '/api/shellymainupdate') {
         const { triggerShellyMainUpdate } = await import('./shelly.js');
         triggerShellyMainUpdate(this.matterbridge);
-        return;
       } else if (data.method === '/api/shellycreatesystemlog') {
         const { createShellySystemLog } = await import('./shelly.js');
         createShellySystemLog(this.matterbridge);
-        return;
       } else if (data.method === '/api/shellynetconfig') {
         this.log.debug('/api/shellynetconfig:', data.params);
         const { triggerShellyChangeIp: triggerShellyChangeNet } = await import('./shelly.js');
         triggerShellyChangeNet(this.matterbridge, data.params as { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string });
-        return;
       } else if (data.method === '/api/softreset') {
         const { triggerShellySoftReset } = await import('./shelly.js');
         triggerShellySoftReset(this.matterbridge);
-        return;
       } else if (data.method === '/api/hardreset') {
         const { triggerShellyHardReset } = await import('./shelly.js');
         triggerShellyHardReset(this.matterbridge);
-        return;
       } else if (data.method === '/api/reboot') {
         const { triggerShellyReboot } = await import('./shelly.js');
         triggerShellyReboot(this.matterbridge);
-        return;
       } else if (data.method === '/api/restart') {
         this.wssSendSnackbarMessage(`Restarting matterbridge...`, 0);
         await this.matterbridge.restartProcess();
-        return;
       } else if (data.method === '/api/shutdown') {
         this.wssSendSnackbarMessage(`Shutting down matterbridge...`, 0);
         await this.matterbridge.shutdownProcess();
-        return;
       } else if (data.method === '/api/create-backup') {
         this.wssSendSnackbarMessage('Creating backup...', 0);
         this.log.notice(`Creating the backup...`);
@@ -1434,25 +1424,20 @@ export class Frontend {
         this.wssSendRefreshRequired('matterbridgeAdvertise');
         this.wssSendSnackbarMessage(`Started fabrics share`, 0);
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: pairingCodes }));
-        return;
       } else if (data.method === '/api/stopadvertise') {
         await this.matterbridge.stopAdvertiseServerNode(this.matterbridge.serverNode);
         this.matterbridge.matterbridgeInformation.matterbridgeAdvertise = false;
         this.wssSendRefreshRequired('matterbridgeAdvertise');
         this.wssSendSnackbarMessage(`Stopped fabrics share`, 0);
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src }));
-        return;
       } else if (data.method === '/api/settings') {
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: await this.getApiSettings() }));
-        return;
       } else if (data.method === '/api/plugins') {
         const response = this.getBaseRegisteredPlugins();
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
-        return;
       } else if (data.method === '/api/devices') {
         const devices = await this.getDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: devices }));
-        return;
       } else if (data.method === '/api/clusters') {
         if (!isValidString(data.params.plugin, 10)) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/clusters' }));
@@ -1553,7 +1538,6 @@ export class Frontend {
           });
         });
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, deviceName, serialNumber, endpoint: data.params.endpoint, deviceTypes, response: clusters }));
-        return;
       } else if (data.method === '/api/select' || data.method === '/api/select/devices') {
         if (!isValidString(data.params.plugin, 10)) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select' }));
@@ -1566,7 +1550,6 @@ export class Frontend {
         }
         const selectDeviceValues = plugin.platform?.getSelectDevices().sort((keyA, keyB) => keyA.name.localeCompare(keyB.name));
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: selectDeviceValues }));
-        return;
       } else if (data.method === '/api/select/entities') {
         if (!isValidString(data.params.plugin, 10)) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select/entities' }));
@@ -1579,7 +1562,6 @@ export class Frontend {
         }
         const selectEntityValues = plugin.platform?.getSelectEntities().sort((keyA, keyB) => keyA.name.localeCompare(keyB.name));
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: selectEntityValues }));
-        return;
       } else if (data.method === '/api/action') {
         if (!isValidString(data.params.plugin, 5) || !isValidString(data.params.action, 1)) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter command in /api/action' }));
@@ -1676,11 +1658,9 @@ export class Frontend {
       } else {
         this.log.error(`Invalid method from websocket client: ${debugStringify(data)}`);
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid method' }));
-        return;
       }
     } catch (error) {
       this.log.error(`Error parsing message "${message}" from websocket client:`, error instanceof Error ? error.message : error);
-      return;
     }
   }
 

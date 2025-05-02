@@ -142,8 +142,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     setFormData(formData);
     plugin.configJson = formData;
     plugin.restartRequired = true;
-    const config = JSON.stringify(formData, null, 2)
-    sendCommandToMatterbridge('saveconfig', formData.name, config);
+    sendMessage({ id: uniqueId.current, method: "/api/savepluginconfig", src: "Frontend", dst: "Matterbridge", params: { pluginName: formData.name, formData } });
     // Close the dialog
     onClose();
   };
