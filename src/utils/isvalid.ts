@@ -138,6 +138,8 @@ export function isValidUndefined(value: any): value is undefined {
  * @returns {number | undefined} A numeric version code or undefined if parsing fails
  */
 export function parseVersionString(versionString: string): number | undefined {
+  if (!isValidString(versionString)) return undefined;
+  versionString = versionString.trim();
   const match = versionString.match(/^(\d+)\.(\d+)\.(\d+)/);
   if (!match) return undefined;
 

@@ -15,6 +15,7 @@ import {
   resolveHostname,
   getStringArrayParameter,
   getIntArrayParameter,
+  parseVersionString,
 } from './export';
 import { hasParameter, getParameter, getIntParameter, isValidIpv4Address, isValidNumber, isValidBoolean, isValidString, isValidObject, isValidArray, isValidNull, isValidUndefined } from './export';
 import { promises as fs } from 'node:fs';
@@ -413,6 +414,48 @@ describe('Utils test', () => {
     expect(isValidUndefined(undefined)).toBe(true);
     expect(isValidUndefined({ x: 1, y: 4 })).toBe(false);
     expect(isValidUndefined([1, 4, 'string'])).toBe(false);
+  });
+
+  test.each([
+    ['6.11.0-1011-raspi', 61100],
+    ['6.1.1', 60101],
+    ['0.0.0', 0],
+    ['99.99.99', 999999],
+    ['6.11.0\n', 61100],
+    ['6.11.0.1', 61100], // extra dot section ignored
+    ['6.11.0-some-extra-info-even-more-weirdness', 61100],
+    ['06.011.000', 61100],
+  ])('parses "%s" to %d', (input, expected) => {
+    expect(parseVersionString(input)).toBe(expected);
+  });
+
+  test.each(['foo.bar.baz', '', '6..0', '6.11', '6.11.', '6.11.A', '🐸.🦄.🌈', '6.11.💩', 'undefined', 'null', null, undefined, NaN, {}, { version: '6.11.0' }, [], Symbol('6.11.0')])('returns undefined for garbage input: %s', (input) => {
+    // Coerce everything to string unless it's null/undefined
+    const coerced = typeof input === 'string' ? input : String(input);
+    expect(parseVersionString(coerced)).toBeUndefined();
+  });
+
+  test('rejects numeric overflow > 99 for major/minor/patch', () => {
+    expect(parseVersionString('100.0.0')).toBeUndefined();
+    expect(parseVersionString('0.100.0')).toBeUndefined();
+    expect(parseVersionString('0.0.100')).toBeUndefined();
+  });
+
+  test('does not accidentally parse prototype pollution-like strings', () => {
+    expect(parseVersionString('__proto__.toString')).toBeUndefined();
+    expect(parseVersionString('[object Object]')).toBeUndefined();
+    expect(parseVersionString('constructor.prototype')).toBeUndefined();
+  });
+
+  test('handles trailing control characters and whitespace', () => {
+    expect(parseVersionString('6.11.0\t')).toBe(61100);
+    expect(parseVersionString('6.11.0\r\n')).toBe(61100);
+    expect(parseVersionString('   6.11.0-raspi   ')).toBe(61100);
+  });
+
+  test('rejects numeric inputs because they don’t match regex', () => {
+    expect(parseVersionString(6.11 as any)).toBeUndefined();
+    expect(parseVersionString(61100 as any)).toBeUndefined();
   });
 
   it('hasParameter should retrive the parameter', () => {
