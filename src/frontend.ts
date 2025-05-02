@@ -1285,6 +1285,7 @@ export class Frontend {
           await this.matterbridge.plugins.remove(data.params.packageName);
           this.wssSendSnackbarMessage(`Removed plugin ${data.params.packageName}`, 5, 'success');
           this.wssSendRefreshRequired('plugins');
+          this.wssSendRefreshRequired('devices');
         }
         // Uninstall the package
         this.wssSendSnackbarMessage(`Uninstalling package ${data.params.packageName}...`, 0);
@@ -1301,7 +1302,6 @@ export class Frontend {
             this.wssSendSnackbarMessage(`Package ${data.params.packageName} not uninstalled`, 10, 'error');
             this.wssSendSnackbarMessage(`Restart required`, 0);
           });
-        return;
       } else if (data.method === '/api/addplugin') {
         if (!isValidString(data.params.pluginNameOrPath, 10)) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginNameOrPath in /api/addplugin' }));
