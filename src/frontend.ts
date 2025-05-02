@@ -452,93 +452,10 @@ export class Frontend {
     });
 
     // Endpoint to provide devices
-    this.expressApp.get('/api/devices', (req, res) => {
+    this.expressApp.get('/api/devices', async (req, res) => {
       this.log.debug('The frontend sent /api/devices');
-      const devices: ApiDevices[] = [];
-      this.matterbridge.devices.forEach(async (device) => {
-        // Check if the device has the required properties
-        if (!device.plugin || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) return;
-        const cluster = this.getClusterTextFromDevice(device);
-        devices.push({
-          pluginName: device.plugin,
-          type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
-          endpoint: device.number,
-          name: device.deviceName,
-          serial: device.serialNumber,
-          productUrl: device.productUrl,
-          configUrl: device.configUrl,
-          uniqueId: device.uniqueId,
-          reachable: this.getReachability(device),
-          cluster: cluster,
-        });
-      });
+      const devices = await this.getDevices();
       res.json(devices);
-    });
-
-    // Endpoint to provide the cluster servers of the devices
-    this.expressApp.get('/api/devices_clusters/:selectedPluginName/:selectedDeviceEndpoint', (req, res) => {
-      const selectedPluginName = req.params.selectedPluginName;
-      const selectedDeviceEndpoint: number = parseInt(req.params.selectedDeviceEndpoint, 10);
-      this.log.debug(`The frontend sent /api/devices_clusters plugin:${selectedPluginName} endpoint:${selectedDeviceEndpoint}`);
-      if (selectedPluginName === 'none') {
-        res.json([]);
-        return;
-      }
-      const data: { endpoint: string; clusterName: string; clusterId: string; attributeName: string; attributeId: string; attributeValue: string }[] = [];
-      this.matterbridge.devices.forEach(async (device) => {
-        const pluginName = device.plugin;
-        if (pluginName === selectedPluginName && device.number === selectedDeviceEndpoint) {
-          const endpointServer = EndpointServer.forEndpoint(device);
-          const clusterServers = endpointServer.getAllClusterServers();
-          clusterServers.forEach((clusterServer) => {
-            Object.entries(clusterServer.attributes).forEach(([key, value]) => {
-              if (clusterServer.name === 'EveHistory') return;
-              let attributeValue;
-              try {
-                if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
-                else attributeValue = value.getLocal().toString();
-              } catch (error) {
-                attributeValue = 'Fabric-Scoped';
-                this.log.debug(`GetLocal value ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
-              }
-              data.push({
-                endpoint: device.number ? device.number.toString() : '...',
-                clusterName: clusterServer.name,
-                clusterId: '0x' + clusterServer.id.toString(16).padStart(2, '0'),
-                attributeName: key,
-                attributeId: '0x' + value.id.toString(16).padStart(2, '0'),
-                attributeValue,
-              });
-            });
-          });
-          endpointServer.getChildEndpoints().forEach((childEndpoint) => {
-            const name = childEndpoint.name;
-            const clusterServers = childEndpoint.getAllClusterServers();
-            clusterServers.forEach((clusterServer) => {
-              Object.entries(clusterServer.attributes).forEach(([key, value]) => {
-                if (clusterServer.name === 'EveHistory') return;
-                let attributeValue;
-                try {
-                  if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
-                  else attributeValue = value.getLocal().toString();
-                } catch (error) {
-                  attributeValue = 'Fabric-Scoped';
-                  this.log.debug(`GetLocal error ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
-                }
-                data.push({
-                  endpoint: (childEndpoint.number ? childEndpoint.number.toString() : '...') + (name ? ' (' + name + ')' : ''),
-                  clusterName: clusterServer.name,
-                  clusterId: '0x' + clusterServer.id.toString(16).padStart(2, '0'),
-                  attributeName: key,
-                  attributeId: '0x' + value.id.toString(16).padStart(2, '0'),
-                  attributeValue,
-                });
-              });
-            });
-          });
-        }
-      });
-      res.json(data);
     });
 
     // Endpoint to view the matterbridge log
@@ -904,52 +821,6 @@ export class Frontend {
         res.json({ message: 'Command received' });
         return;
       }
-
-      // Handle the command enableplugin from Home
-      if (command === 'enableplugin') {
-        if (!this.matterbridge.plugins.has(param)) {
-          this.log.warn(`Plugin ${plg}${param}${wr} not found in matterbridge`);
-        } else {
-          const plugin = this.matterbridge.plugins.get(param);
-          if (plugin && !plugin.enabled) {
-            plugin.locked = undefined;
-            plugin.error = undefined;
-            plugin.loaded = undefined;
-            plugin.started = undefined;
-            plugin.configured = undefined;
-            plugin.platform = undefined;
-            plugin.registeredDevices = undefined;
-            plugin.addedDevices = undefined;
-            await this.matterbridge.plugins.enable(param);
-            this.wssSendSnackbarMessage(`Enabled plugin ${param}`);
-            if (this.matterbridge.bridgeMode === 'childbridge' && plugin.type === 'DynamicPlatform') {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (this.matterbridge as any).createDynamicPlugin(plugin, true);
-            }
-            this.matterbridge.plugins.load(plugin, true, 'The plugin has been enabled', true).then(() => {
-              this.wssSendRefreshRequired('plugins');
-            });
-          }
-        }
-        res.json({ message: 'Command received' });
-        return;
-      }
-      // Handle the command disableplugin from Home
-      if (command === 'disableplugin') {
-        if (!this.matterbridge.plugins.has(param)) {
-          this.log.warn(`Plugin ${plg}${param}${wr} not found in matterbridge`);
-        } else {
-          const plugin = this.matterbridge.plugins.get(param);
-          if (plugin && plugin.enabled) {
-            await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been disabled.', true); // This will also close the server node in childbridge mode
-            await this.matterbridge.plugins.disable(param);
-            this.wssSendSnackbarMessage(`Disabled plugin ${param}`);
-            this.wssSendRefreshRequired('plugins');
-          }
-        }
-        res.json({ message: 'Command received' });
-        return;
-      }
     });
 
     this.expressApp.post('/api/uploadpackage', upload.single('file'), async (req, res) => {
@@ -1289,6 +1160,36 @@ export class Frontend {
   }
 
   /**
+   * Retrieves the devices from Matterbridge.
+   * @param {string} [pluginName] - The name of the plugin to filter devices by.
+   * @returns {Promise<ApiDevices[]>} A promise that resolves to an array of ApiDevices.
+   */
+  private async getDevices(pluginName?: string): Promise<ApiDevices[]> {
+    const devices: ApiDevices[] = [];
+    this.matterbridge.devices.forEach(async (device) => {
+      // Filter by pluginName if provided
+      if (pluginName && pluginName !== device.plugin) return;
+      // Check if the device has the required properties
+      if (!device.plugin || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) return;
+      const cluster = this.getClusterTextFromDevice(device);
+      devices.push({
+        pluginName: device.plugin,
+        type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
+        endpoint: device.number,
+        name: device.deviceName,
+        serial: device.serialNumber,
+        productUrl: device.productUrl,
+        configUrl: device.configUrl,
+        uniqueId: device.uniqueId,
+        reachable: this.getReachability(device),
+        powerSource: this.getPowerSource(device),
+        cluster: cluster,
+      });
+    });
+    return devices;
+  }
+
+  /**
    * Handles incoming websocket messages for the Matterbridge frontend.
    *
    * @param {WebSocket} client - The websocket client that sent the message.
@@ -1418,6 +1319,7 @@ export class Frontend {
           this.wssSendSnackbarMessage(`Added plugin ${data.params.pluginNameOrPath}`, 5, 'success');
           this.matterbridge.plugins.load(plugin, true, 'The plugin has been added', true).then(() => {
             this.wssSendRefreshRequired('plugins');
+            this.wssSendRefreshRequired('devices');
             this.wssSendSnackbarMessage(`Started plugin ${data.params.pluginNameOrPath}`, 5, 'success');
           });
         } else {
@@ -1425,15 +1327,50 @@ export class Frontend {
           this.wssSendSnackbarMessage(`Plugin ${data.params.pluginNameOrPath} not added`, 10, 'error');
         }
       } else if (data.method === '/api/removeplugin') {
-        if (!isValidString(data.params.pluginNameOrPath, 10) || !this.matterbridge.plugins.has(data.params.pluginNameOrPath)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginNameOrPath in /api/removeplugin' }));
+        if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/removeplugin' }));
           return;
         }
-        const plugin = this.matterbridge.plugins.get(data.params.pluginNameOrPath) as RegisteredPlugin;
+        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as RegisteredPlugin;
         await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been removed.', true);
-        await this.matterbridge.plugins.remove(data.params.pluginNameOrPath);
-        this.wssSendSnackbarMessage(`Removed plugin ${data.params.pluginNameOrPath}`, 5, 'success');
+        await this.matterbridge.plugins.remove(data.params.pluginName);
+        this.wssSendSnackbarMessage(`Removed plugin ${data.params.pluginName}`, 5, 'success');
         this.wssSendRefreshRequired('plugins');
+        this.wssSendRefreshRequired('devices');
+      } else if (data.method === '/api/enableplugin') {
+        if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/enableplugin' }));
+          return;
+        }
+        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as RegisteredPlugin;
+        if (plugin && !plugin.enabled) {
+          plugin.locked = undefined;
+          plugin.error = undefined;
+          plugin.loaded = undefined;
+          plugin.started = undefined;
+          plugin.configured = undefined;
+          plugin.platform = undefined;
+          plugin.registeredDevices = undefined;
+          plugin.addedDevices = undefined;
+          await this.matterbridge.plugins.enable(data.params.pluginName);
+          this.wssSendSnackbarMessage(`Enabled plugin ${data.params.pluginName}`, 5, 'success');
+          this.matterbridge.plugins.load(plugin, true, 'The plugin has been enabled', true).then(() => {
+            this.wssSendRefreshRequired('plugins');
+            this.wssSendRefreshRequired('devices');
+            this.wssSendSnackbarMessage(`Started plugin ${data.params.pluginName}`, 5, 'success');
+          });
+        }
+      } else if (data.method === '/api/disableplugin') {
+        if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/disableplugin' }));
+          return;
+        }
+        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as RegisteredPlugin;
+        await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been disabled.', true);
+        await this.matterbridge.plugins.disable(data.params.pluginName);
+        this.wssSendSnackbarMessage(`Disabled plugin ${data.params.pluginName}`, 5, 'success');
+        this.wssSendRefreshRequired('plugins');
+        this.wssSendRefreshRequired('devices');
       } else if (data.method === '/api/shellysysupdate') {
         const { triggerShellySysUpdate } = await import('./shelly.js');
         triggerShellySysUpdate(this.matterbridge);
@@ -1511,27 +1448,7 @@ export class Frontend {
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
         return;
       } else if (data.method === '/api/devices') {
-        const devices: ApiDevices[] = [];
-        this.matterbridge.devices.forEach(async (device) => {
-          // Filter by pluginName if provided
-          if (data.params.pluginName && data.params.pluginName !== device.plugin) return;
-          // Check if the device has the required properties
-          if (!device.plugin || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) return;
-          const cluster = this.getClusterTextFromDevice(device);
-          devices.push({
-            pluginName: device.plugin,
-            type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
-            endpoint: device.number,
-            name: device.deviceName,
-            serial: device.serialNumber,
-            productUrl: device.productUrl,
-            configUrl: device.configUrl,
-            uniqueId: device.uniqueId,
-            reachable: this.getReachability(device),
-            powerSource: this.getPowerSource(device),
-            cluster: cluster,
-          });
-        });
+        const devices = await this.getDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: devices }));
         return;
       } else if (data.method === '/api/clusters') {

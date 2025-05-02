@@ -31,7 +31,6 @@ import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
 import { Connecting } from './Connecting';
 import { StatusIndicator } from './StatusIndicator';
-import { sendCommandToMatterbridge } from './sendApiCommand';
 import { ConfigPluginDialog } from './ConfigPluginDialog';
 import { debug } from '../App';
 // const debug = true;
@@ -87,7 +86,7 @@ function HomePluginsTable({ data, columns, columnVisibility }) {
 
 export function HomePlugins({selectPlugin}) {
   // Contexts
-  const { online, logMessage, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
+  const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
   const { showConfirmCancelDialog } = useContext(UiContext);
   // Refs
   const uniqueId = useRef(getUniqueId());
@@ -321,20 +320,18 @@ export function HomePlugins({selectPlugin}) {
 
   const handleRemovePlugin = (plugin) => {
     if (debug) console.log('handleRemovePlugin plugin:', plugin.name);
-    sendMessage({ id: uniqueId.current, method: "/api/removeplugin", src: "Frontend", dst: "Matterbridge", params: { pluginNameOrPath: plugin.name } });
+    sendMessage({ id: uniqueId.current, method: "/api/removeplugin", src: "Frontend", dst: "Matterbridge", params: { pluginName: plugin.name } });
   };
 
   const handleEnableDisablePlugin = (plugin) => {
     if (debug) console.log('handleEnableDisablePlugin plugin:', plugin.name, 'enabled:', plugin.enabled);
     if (plugin.enabled === true) {
       plugin.enabled = false;
-      logMessage('Plugins', `Disabling plugin: ${plugin.name}`);
-      sendCommandToMatterbridge('disableplugin', plugin.name);
+      sendMessage({ id: uniqueId.current, method: "/api/disableplugin", src: "Frontend", dst: "Matterbridge", params: { pluginName: plugin.name } });
     }
     else {
       plugin.enabled = true;
-      logMessage('Plugins', `Enabling plugin: ${plugin.name}`);
-      sendCommandToMatterbridge('enableplugin', plugin.name);
+      sendMessage({ id: uniqueId.current, method: "/api/enableplugin", src: "Frontend", dst: "Matterbridge", params: { pluginName: plugin.name } });
     }
   };
 
