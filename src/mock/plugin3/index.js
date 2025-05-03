@@ -11,11 +11,14 @@ export class MockPlatform extends MatterbridgeDynamicPlatform {
     super(matterbridge, log, config);
   }
   async onStart(reason) {
+    await this.ready;
     this.log.info(`Starting platform ${this.config.name}: ${reason ?? ''}`);
     const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLightPlugin3' })
       .createDefaultBridgedDeviceBasicInformationClusterServer('Light plugin 3', '0x123456789', 0xfff1, 'Matterbridge', 'Matterbridge OnOffLight')
       .addRequiredClusterServers();
     await this.registerDevice(device);
+    this.setSelectDevice('0x123456789', 'Light plugin 3', '192.168.0.0', 'hub', [{ name: 'Light', description: 'Light', icon: 'matter' }]);
+    this.setSelectEntity('Light', 'Light', 'matter');
   }
   async onConfigure() {
     this.log.info(`Configuring platform ${this.config.name}`);
