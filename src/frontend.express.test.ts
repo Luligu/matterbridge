@@ -328,7 +328,7 @@ describe('Matterbridge frontend express', () => {
     try {
       await fs.access(path.join(os.tmpdir(), `matterbridge.backup.zip`), fs.constants.F_OK);
     } catch (error) {
-      await fs.copyFile('./src/mock/test.zip', path.join(os.tmpdir(), `matterbridge.backup.zip`));
+      await fs.copyFile('./src/mock/test.zip.txt', path.join(os.tmpdir(), `matterbridge.backup.zip`));
       // await createZip(path.join(os.tmpdir(), `matterbridge.backup.zip`), path.join(matterbridge.matterbridgeDirectory), path.join(matterbridge.matterbridgePluginDirectory));
     }
 
