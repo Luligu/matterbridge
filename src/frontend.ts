@@ -1135,6 +1135,7 @@ export class Frontend {
         this.wssSendSnackbarMessage(`Removed plugin ${data.params.pluginName}`, 5, 'success');
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/enableplugin') {
         if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/enableplugin' }));
@@ -1158,6 +1159,7 @@ export class Frontend {
             this.wssSendSnackbarMessage(`Started plugin ${data.params.pluginName}`, 5, 'success');
           });
         }
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/disableplugin') {
         if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/disableplugin' }));
@@ -1169,6 +1171,7 @@ export class Frontend {
         this.wssSendSnackbarMessage(`Disabled plugin ${data.params.pluginName}`, 5, 'success');
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/savepluginconfig') {
         if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/savepluginconfig' }));
@@ -1404,9 +1407,15 @@ export class Frontend {
           return;
         }
         this.log.notice(`Action ${CYAN}${data.params.action}${nt}${data.params.value ? ' with ' + CYAN + data.params.value + nt : ''} for plugin ${CYAN}${plugin.name}${nt}`);
-        plugin.platform?.onAction(data.params.action, data.params.value as string | undefined, data.params.id as string | undefined, data.params.formData as unknown as PlatformConfig).catch((error) => {
-          this.log.error(`Error in plugin ${plugin.name} action ${data.params.action}: ${error}`);
-        });
+        plugin.platform
+          ?.onAction(data.params.action, data.params.value as string | undefined, data.params.id as string | undefined, data.params.formData as unknown as PlatformConfig)
+          .then(() => {
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+          })
+          .catch((error) => {
+            this.log.error(`Error in plugin ${plugin.name} action ${data.params.action}: ${error}`);
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Error in plugin ${plugin.name} action ${data.params.action}: ${error}` }));
+          });
       } else if (data.method === '/api/config') {
         if (!isValidString(data.params.name, 5) || data.params.value === undefined) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter in /api/config' }));

@@ -14,6 +14,7 @@ import { LogLevel as MatterLogLevel } from '@matter/main';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { WS_ID_CLOSE_SNACKBAR, WS_ID_CPU_UPDATE, WS_ID_LOG, WS_ID_MEMORY_UPDATE, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, WS_ID_SNACKBAR, WS_ID_STATEUPDATE, WS_ID_UPDATE_NEEDED, WS_ID_UPTIME_UPDATE } from './frontend.js';
+import path from 'node:path';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   return undefined as never;
@@ -785,7 +786,7 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   }, 60000);
 
-  test('Websocket API install without params', async () => {
+  test('Websocket API /api/install without params', async () => {
     expect(ws).toBeDefined();
     expect(ws.readyState).toBe(WebSocket.OPEN);
     const received = new Promise((resolve) => {
@@ -812,7 +813,7 @@ describe('Matterbridge frontend', () => {
     expect(data.error).toBe('Wrong parameter in /api/install');
   }, 60000);
 
-  test('Websocket API install with wrong params', async () => {
+  test('Websocket API /api/install with wrong params', async () => {
     expect(ws).toBeDefined();
     expect(ws.readyState).toBe(WebSocket.OPEN);
     const received = new Promise((resolve) => {
@@ -839,7 +840,7 @@ describe('Matterbridge frontend', () => {
     expect(data.error).toBe('Wrong parameter in /api/install');
   }, 60000);
 
-  test('Websocket API install', async () => {
+  test('Websocket API /api/install', async () => {
     expect(ws).toBeDefined();
     expect(ws.readyState).toBe(WebSocket.OPEN);
     const received = new Promise((resolve) => {
@@ -867,7 +868,7 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('installed correctly'));
   }, 60000);
 
-  test('Websocket API install with wrong package name', async () => {
+  test('Websocket API /api/install with wrong package name', async () => {
     expect(ws).toBeDefined();
     expect(ws.readyState).toBe(WebSocket.OPEN);
     const received = new Promise((resolve) => {
@@ -894,7 +895,7 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
   }, 60000);
 
-  test('Websocket API uninstall with wrong params', async () => {
+  test('Websocket API /api/uninstall with wrong params', async () => {
     expect(ws).toBeDefined();
     expect(ws.readyState).toBe(WebSocket.OPEN);
     const received = new Promise((resolve) => {
@@ -921,7 +922,7 @@ describe('Matterbridge frontend', () => {
     expect(data.error).toBe('Wrong parameter packageName in /api/uninstall');
   }, 60000);
 
-  test('Websocket API uninstall', async () => {
+  test('Websocket API /api/uninstall', async () => {
     expect(ws).toBeDefined();
     expect(ws.readyState).toBe(WebSocket.OPEN);
     const received = new Promise((resolve) => {
@@ -951,7 +952,7 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('closed with code 0'));
   }, 60000);
 
-  test('Websocket API uninstall with wrong package name', async () => {
+  test('Websocket API /api/uninstall with wrong package name', async () => {
     expect(ws).toBeDefined();
     expect(ws.readyState).toBe(WebSocket.OPEN);
     const received = new Promise((resolve) => {
@@ -979,7 +980,7 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Spawn command/));
   }, 60000);
 
-  test('Websocket API uninstall wrong package name with mock', async () => {
+  test('Websocket API /api/uninstall wrong package name with mock', async () => {
     // Mock `spawnCommand` to reject with an error
     jest.spyOn(matterbridge as any, 'spawnCommand').mockRejectedValue(new Error('Package not found'));
 
@@ -1004,6 +1005,70 @@ describe('Matterbridge frontend', () => {
     expect(data.id).toBe(10028);
     expect(data.src).toBe('Matterbridge');
     expect(data.dst).toBe('Jest test');
+    expect(data.response).toBeUndefined();
+    expect(data.error).toBeDefined();
+  }, 60000);
+
+  test('Websocket API /api/addplugin', async () => {
+    const pluginNameOrPath = path.join('.', 'src', 'mock', 'plugin4');
+    const data = await waitMessageId(++WS_ID, '/api/addplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/addplugin', params: { pluginNameOrPath } });
+    expect(data.error).toBeUndefined();
+    expect(data.response).toBe('matterbridge-mock4');
+    await waiter('matterbridge-mock4 loaded', () => {
+      return matterbridge.plugins.get('matterbridge-mock4')?.loaded === true;
+    });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Added plugin/));
+  }, 60000);
+
+  test('Websocket API /api/disableplugin', async () => {
+    const pluginName = 'matterbridge-mock4';
+    const data = await waitMessageId(++WS_ID, '/api/disableplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/disableplugin', params: { pluginName } });
+    expect(data.error).toBeUndefined();
+    expect(data.response).toBeUndefined();
+    expect(data.success).toBe(true);
+    await waiter('matterbridge-mock4 disabled', () => {
+      return matterbridge.plugins.get('matterbridge-mock4')?.enabled === false;
+    });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Disabled plugin/));
+  }, 60000);
+
+  test('Websocket API /api/enableplugin', async () => {
+    const pluginName = 'matterbridge-mock4';
+    const data = await waitMessageId(++WS_ID, '/api/enableplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/enableplugin', params: { pluginName } });
+    expect(data.error).toBeUndefined();
+    expect(data.response).toBeUndefined();
+    expect(data.success).toBe(true);
+    await waiter('matterbridge-mock4 enabled', () => {
+      return matterbridge.plugins.get('matterbridge-mock4')?.enabled === true;
+    });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Enabled plugin/));
+  }, 60000);
+
+  test('Websocket API /api/savepluginconfig', async () => {
+    const pluginName = 'matterbridge-mock4';
+    const formData = { name: 'matterbridge-mock4', type: 'AccessoryPlatform', debug: false, unregisterOnShutdown: false, version: '1.2.2' };
+    const data = await waitMessageId(++WS_ID, '/api/savepluginconfig', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/savepluginconfig', params: { pluginName, formData } });
+    expect(data.error).toBeUndefined();
+    expect(data.response).toBeUndefined();
+    expect(data.success).toBe(true);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Saving config for plugin/));
+  }, 60000);
+
+  test('Websocket API /api/removeplugin', async () => {
+    const pluginName = 'matterbridge-mock4';
+    const data = await waitMessageId(++WS_ID, '/api/removeplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/removeplugin', params: { pluginName } });
+    expect(data.error).toBeUndefined();
+    expect(data.response).toBeUndefined();
+    expect(data.success).toBe(true);
+    await waiter('matterbridge-mock4 removed', () => {
+      return matterbridge.plugins.get('matterbridge-mock4') === undefined;
+    });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Removed plugin/));
+  }, 60000);
+
+  test('Websocket API /api/action with wrong plugin', async () => {
+    const data = await waitMessageId(++WS_ID, '/api/action', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/action', params: { plugin: 'xyz', action: 'test' } });
+    expect(data.success).toBeUndefined();
     expect(data.response).toBeUndefined();
     expect(data.error).toBeDefined();
   }, 60000);

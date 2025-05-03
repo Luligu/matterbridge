@@ -325,18 +325,17 @@ describe('Matterbridge frontend express', () => {
 
   test('GET /api/download-backup', async () => {
     try {
-      await fs.unlink(path.join(os.tmpdir(), `matterbridge.backup.zip`));
+      await fs.access(path.join(os.tmpdir(), `matterbridge.backup.zip`), fs.constants.F_OK);
     } catch (error) {
-      // File does not exist, ignore
+      await createZip(path.join(os.tmpdir(), `matterbridge.backup.zip`), path.join(matterbridge.matterbridgeDirectory), path.join(matterbridge.matterbridgePluginDirectory));
     }
-    await createZip(path.join(os.tmpdir(), `matterbridge.backup.zip`), path.join(matterbridge.matterbridgeDirectory), path.join(matterbridge.matterbridgePluginDirectory));
 
     const response = await makeRequest('/api/download-backup', 'GET');
 
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
     expect(response.body.startsWith('PK')).toBe(true);
-  });
+  }, 60000);
 
   test('GET Fallback for routing', async () => {
     const response = await makeRequest('/whatever', 'GET');
