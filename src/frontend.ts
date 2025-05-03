@@ -558,18 +558,6 @@ export class Frontend {
       });
     });
 
-    // Endpoint to download the matter storage file
-    this.expressApp.get('/api/download-mjstorage', async (req, res) => {
-      this.log.debug('The frontend sent /api/download-mjstorage');
-      await createZip(path.join(os.tmpdir(), `matterbridge.${this.matterbridge.matterStorageName}.zip`), path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterStorageName));
-      res.download(path.join(os.tmpdir(), `matterbridge.${this.matterbridge.matterStorageName}.zip`), `matterbridge.${this.matterbridge.matterStorageName}.zip`, (error) => {
-        if (error) {
-          this.log.error(`Error downloading the matter storage matterbridge.${this.matterbridge.matterStorageName}.zip: ${error instanceof Error ? error.message : error}`);
-          res.status(500).send('Error downloading the matter storage zip file');
-        }
-      });
-    });
-
     // Endpoint to download the matterbridge storage directory
     this.expressApp.get('/api/download-mbstorage', async (req, res) => {
       this.log.debug('The frontend sent /api/download-mbstorage');
@@ -578,6 +566,18 @@ export class Frontend {
         if (error) {
           this.log.error(`Error downloading file ${`matterbridge.${this.matterbridge.nodeStorageName}.zip`}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge storage file');
+        }
+      });
+    });
+
+    // Endpoint to download the matter storage file
+    this.expressApp.get('/api/download-mjstorage', async (req, res) => {
+      this.log.debug('The frontend sent /api/download-mjstorage');
+      await createZip(path.join(os.tmpdir(), `matterbridge.${this.matterbridge.matterStorageName}.zip`), path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterStorageName));
+      res.download(path.join(os.tmpdir(), `matterbridge.${this.matterbridge.matterStorageName}.zip`), `matterbridge.${this.matterbridge.matterStorageName}.zip`, (error) => {
+        if (error) {
+          this.log.error(`Error downloading the matter storage matterbridge.${this.matterbridge.matterStorageName}.zip: ${error instanceof Error ? error.message : error}`);
+          res.status(500).send('Error downloading the matter storage zip file');
         }
       });
     });
@@ -1187,35 +1187,45 @@ export class Frontend {
           this.wssSendSnackbarMessage(`Saved config for plugin ${data.params.pluginName}`);
           this.wssSendRefreshRequired('plugins');
           this.wssSendRestartRequired();
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
         }
       } else if (data.method === '/api/shellysysupdate') {
         const { triggerShellySysUpdate } = await import('./shelly.js');
         triggerShellySysUpdate(this.matterbridge);
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/shellymainupdate') {
         const { triggerShellyMainUpdate } = await import('./shelly.js');
         triggerShellyMainUpdate(this.matterbridge);
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/shellycreatesystemlog') {
         const { createShellySystemLog } = await import('./shelly.js');
         createShellySystemLog(this.matterbridge);
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/shellynetconfig') {
         this.log.debug('/api/shellynetconfig:', data.params);
         const { triggerShellyChangeIp: triggerShellyChangeNet } = await import('./shelly.js');
         triggerShellyChangeNet(this.matterbridge, data.params as { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string });
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/softreset') {
         const { triggerShellySoftReset } = await import('./shelly.js');
         triggerShellySoftReset(this.matterbridge);
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/hardreset') {
         const { triggerShellyHardReset } = await import('./shelly.js');
         triggerShellyHardReset(this.matterbridge);
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/reboot') {
         const { triggerShellyReboot } = await import('./shelly.js');
         triggerShellyReboot(this.matterbridge);
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/restart') {
         this.wssSendSnackbarMessage(`Restarting matterbridge...`, 0);
         await this.matterbridge.restartProcess();
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/shutdown') {
         this.wssSendSnackbarMessage(`Shutting down matterbridge...`, 0);
         await this.matterbridge.shutdownProcess();
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/create-backup') {
         this.wssSendSnackbarMessage('Creating backup...', 0);
         this.log.notice(`Creating the backup...`);
@@ -1223,16 +1233,20 @@ export class Frontend {
         this.log.notice(`Backup ready to be downloaded.`);
         this.wssSendCloseSnackbarMessage('Creating backup...');
         this.wssSendSnackbarMessage('Backup ready to be downloaded', 10);
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/unregister') {
         this.wssSendSnackbarMessage('Unregistering all bridged devices...', 0);
         await this.matterbridge.unregisterAndShutdownProcess();
         this.wssSendCloseSnackbarMessage('Unregistering all bridged devices...');
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/reset') {
         this.wssSendSnackbarMessage('Resetting matterbridge commissioning...', 10);
         await this.matterbridge.shutdownProcessAndReset();
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/factoryreset') {
         this.wssSendSnackbarMessage('Factory reset of matterbridge...', 10);
         await this.matterbridge.shutdownProcessAndFactoryReset();
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/advertise') {
         const pairingCodes = await this.matterbridge.advertiseServerNode(this.matterbridge.serverNode);
         this.matterbridge.matterbridgeInformation.matterbridgeAdvertise = true;
@@ -1246,7 +1260,7 @@ export class Frontend {
         this.matterbridge.matterbridgeInformation.matterbridgeAdvertise = false;
         this.wssSendRefreshRequired('matterbridgeAdvertise');
         this.wssSendSnackbarMessage(`Stopped fabrics share`, 0);
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src }));
+        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/settings') {
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: await this.getApiSettings() }));
       } else if (data.method === '/api/plugins') {
@@ -1399,17 +1413,18 @@ export class Frontend {
           return;
         }
         this.log.debug(`Received /api/config name ${CYAN}${data.params.name}${db} value ${CYAN}${data.params.value}${db}`);
-        this.log.fatal(`Received /api/config name ${CYAN}${data.params.name}${db} value(${typeof data.params.value}) ${CYAN}${data.params.value}${db}`);
         switch (data.params.name) {
           case 'setpassword':
             if (isValidString(data.params.value)) {
               await this.matterbridge.nodeContext?.set('password', data.params.value);
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             }
             break;
           case 'setbridgemode':
-            if (isValidString(data.params.value, 5)) {
+            if (isValidString(data.params.value) && ['bridge', 'childbridge'].includes(data.params.value)) {
               await this.matterbridge.nodeContext?.set('bridgeMode', data.params.value);
               this.wssSendRestartRequired();
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             }
             break;
           case 'setmbloglevel':
@@ -1429,6 +1444,7 @@ export class Frontend {
                 await this.matterbridge.setLogLevel(LogLevel.FATAL);
               }
               await this.matterbridge.nodeContext?.set('matterbridgeLogLevel', this.log.logLevel);
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             }
             break;
           case 'setmblogfile':
@@ -1439,6 +1455,7 @@ export class Frontend {
               // Create the file logger for matterbridge
               if (data.params.value) AnsiLogger.setGlobalLogfile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), this.matterbridge.matterbridgeInformation.loggerLevel, true);
               else AnsiLogger.setGlobalLogfile(undefined);
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             }
             break;
           case 'setmjloglevel':
@@ -1459,6 +1476,7 @@ export class Frontend {
               }
               this.matterbridge.matterbridgeInformation.matterLoggerLevel = Logger.level as MatterLogLevel;
               await this.matterbridge.nodeContext?.set('matterLogLevel', Logger.level);
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             }
             break;
           case 'setmjlogfile':
@@ -1482,6 +1500,7 @@ export class Frontend {
                   this.log.debug(`Error removing the matterfilelogger for file ${CYAN}${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
                 }
               }
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             }
             break;
           case 'setmdnsinterface':
@@ -1491,6 +1510,7 @@ export class Frontend {
               this.matterbridge.matterbridgeInformation.mattermdnsinterface = this.matterbridge.mdnsInterface;
               await this.matterbridge.nodeContext?.set('mattermdnsinterface', data.params.value);
               this.wssSendRestartRequired();
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             }
             break;
           case 'setipv4address':
@@ -1500,6 +1520,7 @@ export class Frontend {
               this.matterbridge.matterbridgeInformation.matteripv4address = this.matterbridge.ipv4address;
               await this.matterbridge.nodeContext?.set('matteripv4address', data.params.value);
               this.wssSendRestartRequired();
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             }
             break;
           case 'setipv6address':
@@ -1509,6 +1530,7 @@ export class Frontend {
               this.matterbridge.matterbridgeInformation.matteripv6address = this.matterbridge.ipv6address;
               await this.matterbridge.nodeContext?.set('matteripv6address', data.params.value);
               this.wssSendRestartRequired();
+              client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             }
             break;
           case 'setmatterport':
@@ -1519,11 +1541,12 @@ export class Frontend {
               await this.matterbridge.nodeContext?.set<number>('matterport', data.params.value);
               this.wssSendRestartRequired();
             } else {
-              this.log.debug(`Reset matter commissioning port to ${CYAN}5040${db}`);
-              this.matterbridge.matterbridgeInformation.matterPort = 5040;
-              await this.matterbridge.nodeContext?.set<number>('matterport', 5040);
+              this.log.debug(`Reset matter commissioning port to ${CYAN}5540${db}`);
+              this.matterbridge.matterbridgeInformation.matterPort = 5540;
+              await this.matterbridge.nodeContext?.set<number>('matterport', 5540);
               this.wssSendRestartRequired();
             }
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             break;
           case 'setmatterdiscriminator':
             data.params.value = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
@@ -1538,6 +1561,7 @@ export class Frontend {
               await this.matterbridge.nodeContext?.remove('matterdiscriminator');
               this.wssSendRestartRequired();
             }
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             break;
           case 'setmatterpasscode':
             data.params.value = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
@@ -1552,7 +1576,11 @@ export class Frontend {
               await this.matterbridge.nodeContext?.remove('matterpasscode');
               this.wssSendRestartRequired();
             }
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             break;
+          default:
+            this.log.warn(`Unknown parameter ${data.params.name} in /api/config`);
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Unknown parameter ${data.params.name} in /api/config` }));
         }
       } else if (data.method === '/api/command') {
         if (!isValidString(data.params.command, 5)) {

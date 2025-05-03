@@ -79,6 +79,8 @@ interface MatterbridgeEvent {
   shutdown: [];
   restart: [];
   update: [];
+  cleanup_started: [];
+  cleanup_completed: [];
   startmemorycheck: [];
   stopmemorycheck: [];
 }
@@ -1331,6 +1333,7 @@ export class Matterbridge extends EventEmitter {
    */
   protected async cleanup(message: string, restart = false) {
     if (this.initialized && !this.hasCleanupStarted) {
+      this.emit('cleanup_started');
       this.hasCleanupStarted = true;
       this.log.info(message);
 
@@ -1380,7 +1383,7 @@ export class Matterbridge extends EventEmitter {
         }
       }
 
-      // Stopping matter server nodes
+      // Stop matter server nodes
       this.log.notice(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
       this.log.debug('Waiting for the MessageExchange to finish...');
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second for MessageExchange to finish
@@ -1525,6 +1528,7 @@ export class Matterbridge extends EventEmitter {
       }
       this.hasCleanupStarted = false;
       this.initialized = false;
+      this.emit('cleanup_completed');
     } else {
       this.log.debug('Cleanup already started...');
     }
