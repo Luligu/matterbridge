@@ -4,29 +4,17 @@
 process.argv = ['node', 'frontend.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-profile', 'JestFrontendExpress', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
 
 import { expect, jest } from '@jest/globals';
-import { AnsiLogger, CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
-import { wait, waiter } from './utils/export.js';
-import WebSocket from 'ws';
-import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
-import { Identify } from '@matter/main/clusters';
-import { LogLevel as MatterLogLevel } from '@matter/main';
-import { RegisteredPlugin } from './matterbridgeTypes.js';
-import { MdnsService } from '@matter/main/protocol';
+import { createZip, waiter } from './utils/export.js';
 import http from 'node:http';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { WS_ID_CLOSE_SNACKBAR, WS_ID_CPU_UPDATE, WS_ID_LOG, WS_ID_MEMORY_UPDATE, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, WS_ID_SNACKBAR, WS_ID_STATEUPDATE, WS_ID_UPDATE_NEEDED, WS_ID_UPTIME_UPDATE } from './frontend.js';
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import os from 'node:os';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   return undefined as never;
 });
-
-// Default colors
-const plg = '\u001B[38;5;33m';
-const dev = '\u001B[38;5;79m';
-const typ = '\u001B[38;5;207m';
-
-const WS_ID = 10050;
 
 describe('Matterbridge frontend express', () => {
   let matterbridge: Matterbridge;
@@ -308,7 +296,7 @@ describe('Matterbridge frontend express', () => {
 
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
-    expect(response.body).toContain('PK\x03\x04');
+    expect(response.body.startsWith('PK')).toBe(true);
   });
 
   test('GET /api/download-mjstorage', async () => {
@@ -316,7 +304,7 @@ describe('Matterbridge frontend express', () => {
 
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
-    expect(response.body).toContain('PK\x03\x04');
+    expect(response.body.startsWith('PK')).toBe(true);
   });
 
   test('GET /api/download-pluginstorage', async () => {
@@ -324,7 +312,7 @@ describe('Matterbridge frontend express', () => {
 
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
-    expect(response.body).toContain('PK\x03\x04');
+    expect(response.body.startsWith('PK')).toBe(true);
   });
 
   test('GET /api/download-pluginconfig', async () => {
@@ -332,15 +320,22 @@ describe('Matterbridge frontend express', () => {
 
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
-    expect(response.body).toContain('PK\x03\x04');
+    expect(response.body.startsWith('PK')).toBe(true);
   });
 
   test('GET /api/download-backup', async () => {
+    try {
+      await fs.unlink(path.join(os.tmpdir(), `matterbridge.backup.zip`));
+    } catch (error) {
+      // File does not exist, ignore
+    }
+    await createZip(path.join(os.tmpdir(), `matterbridge.backup.zip`), path.join(matterbridge.matterbridgeDirectory), path.join(matterbridge.matterbridgePluginDirectory));
+
     const response = await makeRequest('/api/download-backup', 'GET');
 
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
-    expect(response.body).toContain('PK\x03\x04');
+    expect(response.body.startsWith('PK')).toBe(true);
   });
 
   test('GET Fallback for routing', async () => {
