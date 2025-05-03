@@ -11,6 +11,7 @@ import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import os from 'node:os';
+import { copyFile } from 'node:fs';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   return undefined as never;
@@ -327,7 +328,8 @@ describe('Matterbridge frontend express', () => {
     try {
       await fs.access(path.join(os.tmpdir(), `matterbridge.backup.zip`), fs.constants.F_OK);
     } catch (error) {
-      await createZip(path.join(os.tmpdir(), `matterbridge.backup.zip`), path.join(matterbridge.matterbridgeDirectory), path.join(matterbridge.matterbridgePluginDirectory));
+      await fs.copyFile('./src/mock/test.zip', path.join(os.tmpdir(), `matterbridge.backup.zip`));
+      // await createZip(path.join(os.tmpdir(), `matterbridge.backup.zip`), path.join(matterbridge.matterbridgeDirectory), path.join(matterbridge.matterbridgePluginDirectory));
     }
 
     const response = await makeRequest('/api/download-backup', 'GET');
