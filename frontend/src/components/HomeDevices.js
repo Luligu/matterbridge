@@ -210,6 +210,28 @@ export function HomeDevices() {
     },
   ];
   
+  const isSelected = React.useCallback((device) => {
+    // if(debug) console.log(`HomeDevices isSelected: plugin ${device.pluginName} name ${device.name} serial ${device.serial}`);
+    device.selected = undefined;
+    const plugin = plugins.find((p) => p.name === device.pluginName);
+    if(!plugin) {
+      console.error(`HomeDevices isSelected: plugin ${device.pluginName} not found for device ${device.deviceName} `);
+      return device.selected;
+    }
+    const selectMode = plugin.schemaJson?.properties?.whiteList?.selectFrom;
+    if(plugin.hasWhiteList===true && plugin.hasBlackList===true && selectMode) {
+      device.selected = true;
+      if(selectMode==='serial' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(device.serial)) device.selected = true;
+      if(selectMode==='serial' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(device.serial)) device.selected = false;
+      if(selectMode==='serial' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(device.serial)) device.selected = false;
+      if(selectMode==='name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(device.name)) device.selected = true;
+      if(selectMode==='name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(device.name)) device.selected = false;
+      if(selectMode==='name' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(device.name)) device.selected = false;
+    }
+    // if(debug) console.log(`HomeDevices isSelected: plugin ${device.pluginName} name ${device.name} serial ${device.serial} select ${device.selected}`);
+    return device.selected;
+  }, [plugins]);
+
   // WebSocket message handler effect
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
@@ -276,27 +298,7 @@ export function HomeDevices() {
           if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} devices:`, msg.response);
           if(msg.response) {
             for (const device of msg.response) {
-              if(plugins.length===0) {
-                console.error(`HomeDevices: /api/devices with plugins lenght 0`);
-                return;
-              }
-              const plugin = plugins.find((p) => p.name === device.pluginName);
-              if(!plugin) {
-                console.error(`HomeDevices: device ${device.deviceName} has no plugin ${device.pluginName}`);
-                return;
-              }
-              if(plugin.hasWhiteList===true && plugin.hasBlackList===true) {
-                const selectMode = plugin.schemaJson.properties?.whiteList?.selectFrom;
-                device.selected = true;
-                if(selectMode==='serial' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(device.serial)) device.selected = true;
-                if(selectMode==='serial' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(device.serial)) device.selected = false;
-                if(selectMode==='serial' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(device.serial)) device.selected = false;
-                if(selectMode==='name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(device.name)) device.selected = true;
-                if(selectMode==='name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(device.name)) device.selected = false;
-                if(selectMode==='name' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(device.name)) device.selected = false;
-              } else {
-                device.selected = undefined;
-              }
+              device.selected = isSelected(device);
             }
             setDevices(msg.response);
           }
@@ -305,10 +307,10 @@ export function HomeDevices() {
           if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} selectDevices for plugin ${msg.plugin}:`, msg.response);
           if(msg.response) {
             setSelectDevices((prevSelectDevices) => {
-              // Filter out devices from the current plugin
+              // Filter out devices not from the current plugin
               const filteredDevices = prevSelectDevices.filter(device => device.pluginName !== msg.plugin);
               // Add the new devices from the current plugin
-              const updatedDevices = msg.response.map(device => ({ ...device, selected: false }));
+              const updatedDevices = msg.response.map(device => ({ ...device, selected: isSelected(device) }));
               return [...filteredDevices, ...updatedDevices];
             });
           }
@@ -323,7 +325,7 @@ export function HomeDevices() {
       removeListener(handleWebSocketMessage);
       if(debug) console.log('HomeDevices removed WebSocket listener');
     };
-  }, [plugins, addListener, removeListener, sendMessage]);
+  }, [plugins, addListener, removeListener, sendMessage, isSelected]);
   
   // Mix devices and selectDevices
   useEffect(() => {
