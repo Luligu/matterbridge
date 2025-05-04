@@ -11,6 +11,7 @@ import {
   bridgedNode,
   colorTemperatureLight,
   contactSensor,
+  dishwasher,
   flowSensor,
   humiditySensor,
   lightSensor,
@@ -65,7 +66,6 @@ import {
   TimeSynchronizationServer,
 } from '@matter/node/behaviors';
 import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
-import { log } from 'node:console';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
@@ -775,6 +775,26 @@ describe('MatterbridgeEndpoint class', () => {
         count++;
       });
       expect(count).toBe(85);
+    });
+
+    test('forEachAttribute DishWasher', async () => {
+      const device = new MatterbridgeEndpoint(dishwasher, { uniqueStorageKey: 'EachDishWasher' });
+      device.addRequiredClusterServers();
+      expect(device).toBeDefined();
+
+      await add(device);
+
+      let count = 0;
+      // consoleWarnSpy.mockRestore();
+      device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+        // console.warn('forEachAttribute', clusterName, clusterId, attributeName, attributeId, attributeValue);
+        expect(clusterName).toBeDefined();
+        expect(clusterId).toBeDefined();
+        expect(attributeName).toBeDefined();
+        expect(attributeId).toBeDefined();
+        count++;
+      });
+      expect(count).toBe(23);
     });
 
     test('forEachAttribute AirQuality', async () => {

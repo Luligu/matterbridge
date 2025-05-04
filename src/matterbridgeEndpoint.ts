@@ -43,6 +43,7 @@ import {
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeBooleanStateConfigurationServer,
   MatterbridgeSwitchServer,
+  MatterbridgeOperationalStateServer,
 } from './matterbridgeBehaviors.js';
 import {
   addClusterServers,
@@ -102,6 +103,7 @@ import { AirQuality } from '@matter/main/clusters/air-quality';
 import { ConcentrationMeasurement } from '@matter/main/clusters/concentration-measurement';
 import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
 import { ThermostatUserInterfaceConfiguration } from '@matter/main/clusters/thermostat-user-interface-configuration';
+import { OperationalState } from '@matter/main/clusters/operational-state';
 
 // @matter behaviors
 import { DescriptorServer } from '@matter/main/behaviors/descriptor';
@@ -207,6 +209,12 @@ export interface MatterbridgeEndpointCommands {
   // Device Energy Management
   pauseRequest: HandlerFunction;
   resumeRequest: HandlerFunction;
+
+  // Operational State
+  pause: HandlerFunction;
+  stop: HandlerFunction;
+  start: HandlerFunction;
+  resume: HandlerFunction;
 }
 
 export interface SerializedMatterbridgeEndpoint {
@@ -1855,6 +1863,29 @@ export class MatterbridgeEndpoint extends Endpoint {
       }
     }
     return true;
+  }
+
+  /**
+   * Creates a default OperationalState Cluster Server.
+   *
+   * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultOperationalStateClusterServer(operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped): this {
+    this.behaviors.require(MatterbridgeOperationalStateServer, {
+      phaseList: [],
+      currentPhase: null,
+      operationalStateList: [
+        { operationalStateId: OperationalState.OperationalStateEnum.Stopped, operationalStateLabel: 'Stopped' },
+        { operationalStateId: OperationalState.OperationalStateEnum.Running, operationalStateLabel: 'Running' },
+        { operationalStateId: OperationalState.OperationalStateEnum.Paused, operationalStateLabel: 'Paused' },
+        { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
+      ],
+      operationalState,
+      operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+    });
+    return this;
   }
 
   /**

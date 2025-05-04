@@ -1037,15 +1037,15 @@ export class Frontend {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
             this.wssSendCloseSnackbarMessage(`Installing package ${data.params.packageName}...`);
             this.wssSendSnackbarMessage(`Installed package ${data.params.packageName}`, 5, 'success');
-            if (data.params.restart === false) {
-              // The package is a plugin
-              data.params.packageName = (data.params.packageName as string).replace(/@.*$/, '');
-              this.matterbridge.plugins.add(data.params.packageName as string).then((plugin) => {
+            const packageName = (data.params.packageName as string).replace(/@.*$/, '');
+            if (data.params.restart === false && packageName !== 'matterbridge') {
+              // The install comes from InstallPlugins
+              this.matterbridge.plugins.add(packageName).then((plugin) => {
                 if (plugin) {
                   // The plugin is not registered
-                  this.wssSendSnackbarMessage(`Added plugin ${data.params.pluginNameOrPath}`, 5, 'success');
+                  this.wssSendSnackbarMessage(`Added plugin ${packageName}`, 5, 'success');
                   this.matterbridge.plugins.load(plugin, true, 'The plugin has been added', true).then(() => {
-                    this.wssSendSnackbarMessage(`Started plugin ${data.params.pluginNameOrPath}`, 5, 'success');
+                    this.wssSendSnackbarMessage(`Started plugin ${packageName}`, 5, 'success');
                     this.wssSendRefreshRequired('plugins');
                   });
                 } else {
@@ -1630,8 +1630,10 @@ export class Frontend {
               }
             }
             if (plugin.platform) plugin.platform.config = config;
-            if (!plugin.restartRequired) this.wssSendRefreshRequired('plugins');
+            plugin.configJson = config;
+            const restartRequired = plugin.restartRequired;
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
+            if (!restartRequired) this.wssSendRefreshRequired('plugins');
             this.wssSendRestartRequired(false);
           } else {
             this.log.error(`SelectDevice: select ${select} not supported`);
@@ -1670,8 +1672,10 @@ export class Frontend {
               }
             }
             if (plugin.platform) plugin.platform.config = config;
-            if (!plugin.restartRequired) this.wssSendRefreshRequired('plugins');
+            plugin.configJson = config;
+            const restartRequired = plugin.restartRequired;
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
+            if (!restartRequired) this.wssSendRefreshRequired('plugins');
             this.wssSendRestartRequired(false);
           } else {
             this.log.error(`SelectDevice: select ${select} not supported`);

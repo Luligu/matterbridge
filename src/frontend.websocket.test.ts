@@ -16,6 +16,17 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { WS_ID_CLOSE_SNACKBAR, WS_ID_CPU_UPDATE, WS_ID_LOG, WS_ID_MEMORY_UPDATE, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, WS_ID_SNACKBAR, WS_ID_STATEUPDATE, WS_ID_UPDATE_NEEDED, WS_ID_UPTIME_UPDATE } from './frontend.js';
 import path from 'node:path';
 
+jest.unstable_mockModule('./shelly.ts', () => ({
+  triggerShellySysUpdate: jest.fn(() => Promise.resolve()),
+  triggerShellyMainUpdate: jest.fn(() => Promise.resolve()),
+  createShellySystemLog: jest.fn(() => Promise.resolve()),
+  triggerShellySoftReset: jest.fn(() => Promise.resolve()),
+  triggerShellyHardReset: jest.fn(() => Promise.resolve()),
+  triggerShellyReboot: jest.fn(() => Promise.resolve()),
+  triggerShellyChangeIp: jest.fn(() => Promise.resolve()),
+}));
+const { triggerShellySysUpdate, triggerShellyMainUpdate, createShellySystemLog, triggerShellySoftReset, triggerShellyHardReset, triggerShellyReboot, triggerShellyChangeIp } = await import('./shelly.ts');
+
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   return undefined as never;
 });
@@ -346,6 +357,48 @@ describe('Matterbridge frontend', () => {
     const msg = await waitMessageId(++WS_ID, '/api/reset', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/reset', params: {} });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
     expect(reset).toHaveBeenCalled();
+  }, 60000);
+
+  test('Websocket API send /api/shellysysupdate', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/shellysysupdate', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/shellysysupdate', params: {} });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(triggerShellySysUpdate).toHaveBeenCalled();
+  }, 60000);
+
+  test('Websocket API send /api/shellymainupdate', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/shellymainupdate', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/shellymainupdate', params: {} });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(triggerShellyMainUpdate).toHaveBeenCalled();
+  }, 60000);
+
+  test('Websocket API send /api/shellycreatesystemlog', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/shellycreatesystemlog', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/shellycreatesystemlog', params: {} });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(createShellySystemLog).toHaveBeenCalled();
+  }, 60000);
+
+  test('Websocket API send /api/shellynetconfig', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/shellynetconfig', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/shellynetconfig', params: {} });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(triggerShellyChangeIp).toHaveBeenCalled();
+  }, 60000);
+
+  test('Websocket API send /api/softreset', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/softreset', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/softreset', params: {} });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(triggerShellySoftReset).toHaveBeenCalled();
+  }, 60000);
+
+  test('Websocket API send /api/hardreset', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/hardreset', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/hardreset', params: {} });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(triggerShellyHardReset).toHaveBeenCalled();
+  }, 60000);
+
+  test('Websocket API send /api/reboot', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/reboot', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/reboot', params: {} });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(triggerShellyReboot).toHaveBeenCalled();
   }, 60000);
 
   test('Websocket API send /api/settings', async () => {

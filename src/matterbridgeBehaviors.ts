@@ -41,6 +41,7 @@ import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-config
 import { ModeSelect } from '@matter/main/clusters/mode-select';
 import { SmokeCoAlarm } from '@matter/main/clusters/smoke-co-alarm';
 import { BooleanStateConfigurationServer } from '@matter/main/behaviors/boolean-state-configuration';
+import { OperationalState } from '@matter/main/clusters/operational-state';
 
 // @matter behaviors
 import { IdentifyServer } from '@matter/main/behaviors/identify';
@@ -55,6 +56,7 @@ import { ValveConfigurationAndControlBehavior } from '@matter/main/behaviors/val
 import { ModeSelectServer } from '@matter/main/behaviors/mode-select';
 import { SmokeCoAlarmServer } from '@matter/main/behaviors/smoke-co-alarm';
 import { SwitchServer } from '@matter/main/behaviors/switch';
+import { OperationalStateBehavior } from '@matter/main/behaviors/operational-state';
 
 // AnsiLogger module
 import { AnsiLogger } from './logger/export.js';
@@ -197,6 +199,26 @@ export class MatterbridgeServerDevice {
   enableDisableAlarm({ alarmsToEnableDisable }: BooleanStateConfiguration.EnableDisableAlarmRequest) {
     this.log.info(`Enabling/disabling alarm ${alarmsToEnableDisable}`);
     this.commandHandler.executeHandler('enableDisableAlarm', { request: { alarmsToEnableDisable }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  pause() {
+    this.log.info(`Pause (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.commandHandler.executeHandler('pause', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  stop() {
+    this.log.info(`Stop (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.commandHandler.executeHandler('stop', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  start() {
+    this.log.info(`Start (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.commandHandler.executeHandler('start', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  resume() {
+    this.log.info(`Resume (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.commandHandler.executeHandler('resume', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
 }
 
@@ -427,5 +449,58 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
 export class MatterbridgeSwitchServer extends SwitchServer {
   override initialize() {
     // Do nothing here, as the device will handle the switch logic
+  }
+}
+
+export class MatterbridgeOperationalStateServer extends OperationalStateBehavior {
+  override initialize() {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.log.debug('MatterbridgeOperationalStateServer initialized: setting operational state to Stopped');
+    this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
+    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
+  }
+
+  override pause(): MaybePromise<OperationalState.OperationalCommandResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.log.debug('MatterbridgeOperationalStateServer: pause called setting operational state to Paused');
+    device.pause();
+    this.state.operationalState = OperationalState.OperationalStateEnum.Paused;
+    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
+    return {
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+    };
+  }
+
+  override stop(): MaybePromise<OperationalState.OperationalCommandResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.log.debug('MatterbridgeOperationalStateServer: stop called setting operational state to Stopped');
+    device.stop();
+    this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
+    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
+    return {
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+    };
+  }
+
+  override start(): MaybePromise<OperationalState.OperationalCommandResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.log.debug('MatterbridgeOperationalStateServer: start called setting operational state to Running');
+    device.start();
+    this.state.operationalState = OperationalState.OperationalStateEnum.Running;
+    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
+    return {
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+    };
+  }
+
+  override resume(): MaybePromise<OperationalState.OperationalCommandResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.log.debug('MatterbridgeOperationalStateServer: resume called setting operational state to Running');
+    device.resume();
+    this.state.operationalState = OperationalState.OperationalStateEnum.Running;
+    this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
+    return {
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+    };
   }
 }

@@ -29,10 +29,11 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 - [package]: Updated dependencies.
 - [docker]: Updated the [Docker configurations](README-DOCKER.md).
 - [frontend]: Changing configuration for a plugin now only lock configuration on that plugin.
+- [frontend]: Frontend v.2.6.4.
 
 ### Fixed
 
-- [BasicInformation]: Fixed vulnerability to BasicInformation and BridgedDeviceBasicInformation cluster initialization attributes.
+- [BasicInformation]: Fixed vulnerability in BasicInformation and BridgedDeviceBasicInformation cluster initialization attributes.
 
 ## [3.0.0] - 2025-04-29
 
