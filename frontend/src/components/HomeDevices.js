@@ -181,7 +181,7 @@ export function HomeDevices() {
       Cell: ({ row }) => (
         <div style={{ display: 'flex', flexDirection: 'row' }}>
           {row.original.configUrl ?
-            <Tooltip title="Open the configuration page">
+            <Tooltip title="Open the configuration page" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}>
               <IconButton
                 onClick={() => window.open(row.original.configUrl, '_blank')}
                 aria-label="Open config url"
@@ -194,7 +194,7 @@ export function HomeDevices() {
             <div style={{ width: '20px', height: '20px' }}></div>
           }
           {row.original.selected!==undefined ?
-            <Tooltip title="Select/unselect the device">
+            <Tooltip title="Select/unselect the device" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}>
               <Checkbox
                 checked={row.original.selected} 
                 onChange={(event) => handleCheckboxChange(event, row.original)} 
