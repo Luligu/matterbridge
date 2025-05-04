@@ -27,8 +27,8 @@ import { mdiSortAscending, mdiSortDescending } from '@mdi/js';
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
-import { debug } from '../App';
-// const debug = true;
+// import { debug } from '../App';
+const debug = true;
 
 
 export function HomeDevicesTable({ data, columns, columnVisibility }) {
@@ -240,7 +240,7 @@ export function HomeDevices() {
           if (debug) console.log(`HomeDevices (id: ${msg.id}) received settings:`, msg.response);
           setSystemInfo(msg.response.systemInformation);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
-          setRestart(msg.response.matterbridgeInformation.restartRequired);
+          setRestart(msg.response.matterbridgeInformation.restartRequired); // Set the restart state based on the response. Used in the footer.
         }
         if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
           if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} plugins:`, msg.response);
@@ -255,7 +255,8 @@ export function HomeDevices() {
             }
             if(!running) return;
 
-            setLoading(false);
+            if(debug) console.log(`HomeDevices reset plugins, devices and selectDevices`);
+            setLoading(false); // Set loading to false only when all plugins are loaded. Used in the footer.
             setPlugins(msg.response);
             setDevices([]);
             setSelectDevices([]);
@@ -275,11 +276,24 @@ export function HomeDevices() {
           if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} devices:`, msg.response);
           if(msg.response) {
             for (const device of msg.response) {
-              if(plugins.length===0) console.error(`HomeDevices: /api/devices with plugins lenght 0`);
+              if(plugins.length===0) {
+                console.error(`HomeDevices: /api/devices with plugins lenght 0`);
+                return;
+              }
               const plugin = plugins.find((p) => p.name === device.pluginName);
-              if(!plugin) console.error(`HomeDevices: device ${device.deviceName} has no plugin ${device.pluginName}`);
-              if(plugin?.hasBlackList===true) {
+              if(!plugin) {
+                console.error(`HomeDevices: device ${device.deviceName} has no plugin ${device.pluginName}`);
+                return;
+              }
+              if(plugin.hasWhiteList===true && plugin.hasBlackList===true) {
+                const selectMode = plugin.schemaJson.properties?.whiteList?.selectFrom;
                 device.selected = true;
+                if(selectMode==='serial' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(device.serial)) device.selected = true;
+                if(selectMode==='serial' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(device.serial)) device.selected = false;
+                if(selectMode==='serial' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(device.serial)) device.selected = false;
+                if(selectMode==='name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(device.name)) device.selected = true;
+                if(selectMode==='name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(device.name)) device.selected = false;
+                if(selectMode==='name' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(device.name)) device.selected = false;
               } else {
                 device.selected = undefined;
               }
@@ -313,7 +327,7 @@ export function HomeDevices() {
   
   // Mix devices and selectDevices
   useEffect(() => {
-    if(debug) console.log('HomeDevices mixing devices and selectDevices');
+    if(debug) console.log(`HomeDevices mixing devices (${devices.length}) and selectDevices (${selectDevices.length})`);
     const mixed = [];
     for (const device of devices) {
       mixed.push(device);
@@ -325,12 +339,13 @@ export function HomeDevices() {
       }
     }
     setMixedDevices(mixed);
+    if(debug) console.log(`HomeDevices mixed ${mixed.length} devices and selectDevices`);
   }, [plugins, devices, selectDevices, setMixedDevices]);
   
   // Send API requests when online
   useEffect(() => {
     if (online) {
-      if(debug) console.log('HomeDevices sending api requests');
+      if(debug) console.log('HomeDevices sending /api/settings and /api/plugins requests');
       sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
       sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
     }
@@ -347,7 +362,7 @@ export function HomeDevices() {
         [accessor]: !prev[accessor],
       };
       localStorage.setItem('homeDevicesColumnVisibility', JSON.stringify(newVisibility));
-      if(debug) console.log(`HomeDevices effect: saved column visibility to localStorage`);
+      if(debug) console.log(`HomeDevices saved column visibility to localStorage`);
       return newVisibility;
     });
   };
@@ -372,7 +387,7 @@ export function HomeDevices() {
       const visibility = JSON.parse(storedVisibility);
       if(visibility.powerSource === undefined) visibility['powerSource'] = true; // Fix for old versions
       setDevicesColumnVisibility(visibility);
-      if(debug) console.log(`HomeDevices effect: loaded column visibility from localStorage`);
+      if(debug) console.log(`HomeDevices loaded column visibility from localStorage`);
     }
   }, []);
 

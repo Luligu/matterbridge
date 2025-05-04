@@ -23,6 +23,7 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 - [frontend]: Added closeSnackbarMessage() to remove the notification with timeout = 0.
 - [frontend]: Moved all plugin actions from express to web socket.
 - [frontend]: Moved all config from express to web socket.
+- [endpoint]: Added OperationalState cluster helper and behavior.
 
 ### Changed
 
@@ -34,6 +35,7 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 ### Fixed
 
 - [BasicInformation]: Fixed vulnerability in BasicInformation and BridgedDeviceBasicInformation cluster initialization attributes.
+- [frontend]: Fixed refresh for select in HomeDevices.
 
 ## [3.0.0] - 2025-04-29
 
