@@ -60,28 +60,28 @@ function Header() {
   };
 
   const handleUpdateClick = () => {
-    sendMessage({ id: uniqueId.current, method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: 'matterbridge', restart: true } });
+    sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: 'matterbridge', restart: true } });
   };
 
   const handleUpdateDevClick = () => {
-    sendMessage({ id: uniqueId.current, method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: 'matterbridge@dev', restart: true } });
+    sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: 'matterbridge@dev', restart: true } });
   };
 
   const handleShellySystemUpdateClick = () => {
     if(debug) console.log('Header: handleShellySystemUpdateClick');
     logMessage('Matterbridge', `Installing system updates...`);
-    sendMessage({ id: uniqueId.current, method: "/api/shellysysupdate", src: "Frontend", dst: "Matterbridge", params: { } });
+    sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/shellysysupdate", src: "Frontend", dst: "Matterbridge", params: { } });
   };
 
   const handleShellyMainUpdateClick = () => {
     if(debug) console.log('Header: handleShellyMainUpdateClick');
     logMessage('Matterbridge', `Installing software updates...`);
-    sendMessage({ id: uniqueId.current, method: "/api/shellymainupdate", src: "Frontend", dst: "Matterbridge", params: { } });
+    sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/shellymainupdate", src: "Frontend", dst: "Matterbridge", params: { } });
   };
 
   const handleShellyCreateSystemLog = () => {
     if(debug) console.log('Header: handleShellyCreateSystemLog');
-    sendMessage({ id: uniqueId.current, method: "/api/shellycreatesystemlog", src: "Frontend", dst: "Matterbridge", params: { } });
+    sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/shellycreatesystemlog", src: "Frontend", dst: "Matterbridge", params: { } });
   };
 
   const handleShellyDownloadSystemLog = () => {
@@ -93,35 +93,35 @@ function Header() {
 
   const handleRestartClick = () => {
     if (settings.matterbridgeInformation.restartMode === '') {
-      sendMessage({ id: uniqueId.current, method: "/api/restart", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/restart", src: "Frontend", dst: "Matterbridge", params: {} });
     }
     else {
-      sendMessage({ id: uniqueId.current, method: "/api/shutdown", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/shutdown", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   };
 
   const handleShutdownClick = () => {
-    sendMessage({ id: uniqueId.current, method: "/api/shutdown", src: "Frontend", dst: "Matterbridge", params: {} });
+    sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/shutdown", src: "Frontend", dst: "Matterbridge", params: {} });
   };
 
   const handleRebootClick = () => {
-    sendMessage({ id: uniqueId.current, method: "/api/reboot", src: "Frontend", dst: "Matterbridge", params: {} });
+    sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/reboot", src: "Frontend", dst: "Matterbridge", params: {} });
   };
 
   const handleSoftResetClick = () => {
-    sendMessage({ id: uniqueId.current, method: "/api/softreset", src: "Frontend", dst: "Matterbridge", params: {} });
+    sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/softreset", src: "Frontend", dst: "Matterbridge", params: {} });
   };
 
   const handleHardResetClick = () => {
-    sendMessage({ id: uniqueId.current, method: "/api/hardreset", src: "Frontend", dst: "Matterbridge", params: {} });
+    sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/hardreset", src: "Frontend", dst: "Matterbridge", params: {} });
   };
 
   const handleStartAdvertiseClick = () => {
-    sendMessage({ id: uniqueId.current, method: "/api/advertise", src: "Frontend", dst: "Matterbridge", params: {} });
+    sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/advertise", src: "Frontend", dst: "Matterbridge", params: {} });
   };
 
   const handleStopAdvertiseClick = () => {
-    sendMessage({ id: uniqueId.current, method: "/api/stopadvertise", src: "Frontend", dst: "Matterbridge", params: {} });
+    sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/stopadvertise", src: "Frontend", dst: "Matterbridge", params: {} });
   };
 
   const handleMenuOpen = (event) => {
@@ -198,25 +198,13 @@ function Header() {
     } else if (value === 'stopshare') {
       handleStopAdvertiseClick();
     } else if (value === 'create-backup') {
-      // logMessage('Matterbridge', `Creating backup...`);
-      // showSnackbarMessage('Creating backup...', 10);
-      // sendCommandToMatterbridge('backup', 'create');
-      sendMessage({ id: uniqueId.current, method: "/api/create-backup", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/create-backup", src: "Frontend", dst: "Matterbridge", params: {} });
     } else if (value === 'unregister') {
-      // logMessage('Matterbridge', `Uregistering all bridged devices...`);
-      // showSnackbarMessage('Uregistering all bridged devices...', 10);
-      // sendCommandToMatterbridge('unregister', 'now');
-      sendMessage({ id: uniqueId.current, method: "/api/unregister", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/unregister", src: "Frontend", dst: "Matterbridge", params: {} });
     } else if (value === 'reset') {
-      // logMessage('Matterbridge', `Resetting matterbridge commissioning...`);
-      // showSnackbarMessage('Resetting matterbridge commissioning...', 10);
-      // sendCommandToMatterbridge('reset', 'now');
-      sendMessage({ id: uniqueId.current, method: "/api/reset", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/reset", src: "Frontend", dst: "Matterbridge", params: {} });
     } else if (value === 'factoryreset') {
-      // logMessage('Matterbridge', `Factory reset of matterbridge...`);
-      // showSnackbarMessage('Factory reset of matterbridge...', 10);
-      // sendCommandToMatterbridge('factoryreset', 'now');
-      sendMessage({ id: uniqueId.current, method: "/api/factoryreset", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/factoryreset", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   };
 
@@ -278,7 +266,7 @@ function Header() {
         if (msg.method === 'refresh_required') {
           if (msg.params.changed === null || msg.params.changed === 'matterbridgeLatestVersion' || msg.params.changed === 'fabrics') {
             if (debug) console.log(`Header received refresh_required: changed=${msg.params.changed}`);
-            sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+            sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
           }
         }
         if (msg.method === 'restart_required') {
@@ -313,7 +301,7 @@ function Header() {
   useEffect(() => {
     if (online) {
       if (debug) console.log('Header sending /api/settings requests');
-      sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   }, [online, sendMessage]);
 

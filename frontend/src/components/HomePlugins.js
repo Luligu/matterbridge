@@ -228,12 +228,12 @@ export function HomePlugins({selectPlugin}) {
         // Broadcast messages
         if (msg.method === 'refresh_required' && msg.params.changed === 'plugins') {
           if(debug) console.log('HomePlugins received refresh_required for', msg.params.changed);
-          // sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-          sendMessage({ id: uniqueId.current, method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+          // sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+          sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === 'restart_required') {
           if(debug) console.log('HomePlugins received restart_required');
-          sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+          sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         // Local messages
         if (msg.id === uniqueId.current && msg.method === '/api/settings') {
@@ -261,8 +261,8 @@ export function HomePlugins({selectPlugin}) {
   useEffect(() => {
     if (online) {
       if(debug) console.log('HomePlugins sending api requests');
-      sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ id: uniqueId.current, method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   }, [online, sendMessage]);
 
@@ -315,23 +315,23 @@ export function HomePlugins({selectPlugin}) {
 
   const handleUpdatePlugin = (plugin) => {
     if (debug) console.log('handleUpdatePlugin plugin:', plugin.name);
-    sendMessage({ id: uniqueId.current, method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: plugin.name, restart: false } });
+    sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: plugin.name, restart: false } });
   };
 
   const handleRemovePlugin = (plugin) => {
     if (debug) console.log('handleRemovePlugin plugin:', plugin.name);
-    sendMessage({ id: uniqueId.current, method: "/api/removeplugin", src: "Frontend", dst: "Matterbridge", params: { pluginName: plugin.name } });
+    sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/removeplugin", src: "Frontend", dst: "Matterbridge", params: { pluginName: plugin.name } });
   };
 
   const handleEnableDisablePlugin = (plugin) => {
     if (debug) console.log('handleEnableDisablePlugin plugin:', plugin.name, 'enabled:', plugin.enabled);
     if (plugin.enabled === true) {
       plugin.enabled = false;
-      sendMessage({ id: uniqueId.current, method: "/api/disableplugin", src: "Frontend", dst: "Matterbridge", params: { pluginName: plugin.name } });
+      sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/disableplugin", src: "Frontend", dst: "Matterbridge", params: { pluginName: plugin.name } });
     }
     else {
       plugin.enabled = true;
-      sendMessage({ id: uniqueId.current, method: "/api/enableplugin", src: "Frontend", dst: "Matterbridge", params: { pluginName: plugin.name } });
+      sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/enableplugin", src: "Frontend", dst: "Matterbridge", params: { pluginName: plugin.name } });
     }
   };
 
@@ -361,8 +361,8 @@ export function HomePlugins({selectPlugin}) {
 
   const handleConfigPlugin = (plugin) => {
     if (debug) console.log('handleConfigPlugin plugin:', plugin.name);
-    sendMessage({ id: uniqueId.current, method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
-    sendMessage({ id: uniqueId.current, method: "/api/select/entities", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
+    sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
+    sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/select/entities", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
     setSelectedPlugin(plugin);
     handleOpenConfig();
   };

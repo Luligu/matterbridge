@@ -1186,7 +1186,7 @@ export class Frontend {
         if (!plugin) {
           this.log.warn(`Plugin ${plg}${data.params.pluginName}${wr} not found in matterbridge`);
         } else {
-          this.matterbridge.plugins.saveConfigFromJson(plugin, data.params.formData); // Set also plugin.restartRequired = true;
+          this.matterbridge.plugins.saveConfigFromJson(plugin, data.params.formData, true);
           this.wssSendSnackbarMessage(`Saved config for plugin ${data.params.pluginName}`);
           this.wssSendRefreshRequired('plugins');
           this.wssSendRestartRequired();
@@ -1605,7 +1605,7 @@ export class Frontend {
           const config = plugin.configJson;
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const select = (plugin.schemaJson?.properties as any)?.blackList?.selectFrom;
-          this.log.debug(`SelectDevice(selectMode ${select}) data ${debugStringify(data)}`);
+          // this.log.debug(`SelectDevice(selectMode ${select}) data ${debugStringify(data)}`);
           if (select === 'serial') this.log.info(`Selected device serial ${data.params.serial}`);
           if (select === 'name') this.log.info(`Selected device name ${data.params.name}`);
           if (config && select && (select === 'serial' || select === 'name')) {
@@ -1630,8 +1630,12 @@ export class Frontend {
               }
             }
             if (plugin.platform) plugin.platform.config = config;
-            await this.matterbridge.plugins.saveConfigFromPlugin(plugin);
+            if (!plugin.restartRequired) this.wssSendRefreshRequired('plugins');
+            await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
             this.wssSendRestartRequired(false);
+          } else {
+            this.log.error(`SelectDevice: select ${select} not supported`);
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `SelectDevice: select ${select} not supported` }));
           }
         } else if (data.params.command === 'unselectdevice' && isValidString(data.params.plugin, 10) && isValidString(data.params.serial, 1) && isValidString(data.params.name, 1)) {
           const plugin = this.matterbridge.plugins.get(data.params.plugin);
@@ -1642,7 +1646,7 @@ export class Frontend {
           const config = plugin.configJson;
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const select = (plugin.schemaJson?.properties as any)?.blackList?.selectFrom;
-          this.log.debug(`UnselectDevice(selectMode ${select}) data ${debugStringify(data)}`);
+          // this.log.debug(`UnselectDevice(selectMode ${select}) data ${debugStringify(data)}`);
           if (select === 'serial') this.log.info(`Unselected device serial ${data.params.serial}`);
           if (select === 'name') this.log.info(`Unselected device name ${data.params.name}`);
           if (config && select && (select === 'serial' || select === 'name')) {
@@ -1666,8 +1670,12 @@ export class Frontend {
               }
             }
             if (plugin.platform) plugin.platform.config = config;
-            await this.matterbridge.plugins.saveConfigFromPlugin(plugin);
+            if (!plugin.restartRequired) this.wssSendRefreshRequired('plugins');
+            await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
             this.wssSendRestartRequired(false);
+          } else {
+            this.log.error(`SelectDevice: select ${select} not supported`);
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `SelectDevice: select ${select} not supported` }));
           }
         }
       } else {
@@ -1790,7 +1798,7 @@ export class Frontend {
    *
    */
   wssSendCpuUpdate(cpuUsage: number) {
-    this.log.debug('Sending a cpu update message to all connected clients');
+    if (hasParameter('debug')) this.log.debug('Sending a cpu update message to all connected clients');
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
@@ -1804,7 +1812,7 @@ export class Frontend {
    *
    */
   wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string) {
-    this.log.debug('Sending a memory update message to all connected clients');
+    if (hasParameter('debug')) this.log.debug('Sending a memory update message to all connected clients');
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
@@ -1818,7 +1826,7 @@ export class Frontend {
    *
    */
   wssSendUptimeUpdate(systemUptime: string, processUptime: string) {
-    this.log.debug('Sending a uptime update message to all connected clients');
+    if (hasParameter('debug')) this.log.debug('Sending a uptime update message to all connected clients');
     // Send the message to all connected clients
     this.webSocketServer?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {

@@ -95,7 +95,7 @@ export function InstallAddPlugins() {
   };
 
   const handleInstallPluginClick = () => {
-    sendMessage({ id: uniqueId.current, method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: pluginName, restart: false } });
+    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: pluginName, restart: false } });
   };
 
   const handleUploadClick = () => {
@@ -103,7 +103,7 @@ export function InstallAddPlugins() {
   };
 
   const handleAddPluginClick = () => {
-    sendMessage({ id: uniqueId.current, method: "/api/addplugin", src: "Frontend", dst: "Matterbridge", params: { pluginNameOrPath: pluginName } });
+    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: "/api/addplugin", src: "Frontend", dst: "Matterbridge", params: { pluginNameOrPath: pluginName } });
   };
 
   const handleClickVertical = (event) => {

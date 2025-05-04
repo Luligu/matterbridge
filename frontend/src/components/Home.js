@@ -50,7 +50,7 @@ function Home() {
         // Broadcast messages
         if (msg.method === 'refresh_required' && msg.params.changed !== 'matterbridgeLatestVersion' && msg.params.changed !== 'reachability') {
           if (debug) console.log(`Home received refresh_required: changed=${msg.params.changed}`);
-          sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+          sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         // Local messages
         if (msg.id === uniqueId.current && msg.method === '/api/settings') {
@@ -84,7 +84,7 @@ function Home() {
   useEffect(() => {
     if (online) {
       if (debug) console.log('Home received online');
-      sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Home', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   }, [online, sendMessage]);
 

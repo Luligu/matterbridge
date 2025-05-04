@@ -919,10 +919,11 @@ export class PluginManager {
    * the error and rejects the promise.
    *
    * @param {RegisteredPlugin} plugin - The plugin whose configuration is to be saved.
+   * @param {boolean} [restartRequired=false] - Indicates whether a restart is required after saving the configuration.
    * @returns {Promise<void>} A promise that resolves when the configuration is successfully saved, or rejects if an error occurs.
    * @throws {Error} If the plugin's configuration is not found.
    */
-  async saveConfigFromPlugin(plugin: RegisteredPlugin): Promise<void> {
+  async saveConfigFromPlugin(plugin: RegisteredPlugin, restartRequired = false): Promise<void> {
     const { default: path } = await import('node:path');
     const { promises } = await import('node:fs');
     if (!plugin.platform?.config) {
@@ -933,6 +934,7 @@ export class PluginManager {
     try {
       await promises.writeFile(configFile, JSON.stringify(plugin.platform.config, null, 2), 'utf8');
       plugin.configJson = plugin.platform.config;
+      if (restartRequired) plugin.restartRequired = true;
       this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
       // this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, plugin.platform.config);
       return Promise.resolve();
@@ -953,9 +955,10 @@ export class PluginManager {
    *
    * @param {RegisteredPlugin} plugin - The plugin whose configuration is to be saved.
    * @param {PlatformConfig} config - The configuration data to be saved.
+   * @param {boolean} [restartRequired=false] - Indicates whether a restart is required after saving the configuration.
    * @returns {Promise<void>} A promise that resolves when the configuration is successfully saved, or returns if an error occurs.
    */
-  async saveConfigFromJson(plugin: RegisteredPlugin, config: PlatformConfig): Promise<void> {
+  async saveConfigFromJson(plugin: RegisteredPlugin, config: PlatformConfig, restartRequired = false): Promise<void> {
     const { default: path } = await import('node:path');
     const { promises } = await import('node:fs');
     if (!config.name || !config.type || config.name !== plugin.name) {
@@ -966,7 +969,7 @@ export class PluginManager {
     try {
       await promises.writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
       plugin.configJson = config;
-      plugin.restartRequired = true;
+      if (restartRequired) plugin.restartRequired = true;
       if (plugin.platform) {
         plugin.platform.config = config;
         plugin.platform.onConfigChanged(config).catch((err) => this.log.error(`Error calling onConfigChanged for plugin ${plg}${plugin.name}${er}: ${err}`));

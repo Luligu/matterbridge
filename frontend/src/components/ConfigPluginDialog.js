@@ -120,8 +120,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     if(plugin.name !== undefined && plugin.configJson !== undefined && plugin.schemaJson !== undefined) {
       setFormData(plugin.configJson);
       setSchema(plugin.schemaJson);
-      sendMessage({ id: uniqueId.current, method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
-      sendMessage({ id: uniqueId.current, method: "/api/select/entities", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
+      sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
+      sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: "/api/select/entities", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
       if(debug) console.log('HomePlugins sent "/api/select/devices" and "/api/select/entities" for plugin:', plugin.name);
     }
 
@@ -142,7 +142,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
     setFormData(formData);
     plugin.configJson = formData;
     plugin.restartRequired = true;
-    sendMessage({ id: uniqueId.current, method: "/api/savepluginconfig", src: "Frontend", dst: "Matterbridge", params: { pluginName: formData.name, formData } });
+    sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: "/api/savepluginconfig", src: "Frontend", dst: "Matterbridge", params: { pluginName: formData.name, formData } });
     // Close the dialog
     onClose();
   };
@@ -765,7 +765,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }) => {
 
     const onClick = () => {
       if(debug) console.log(`CheckboxWidget onClick plugin="${plugin.name}" action="${name}" value="${fieldValue}"`);
-      sendMessage({ id: uniqueId.current, method: "/api/action", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name, action: name, value: fieldValue, formData: currentFormData, id } });
+      sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: "/api/action", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name, action: name, value: fieldValue, formData: currentFormData, id } });
       if(schema.buttonClose===true) onClose();
       else if(schema.buttonSave===true) handleSaveChanges({formData});
     };

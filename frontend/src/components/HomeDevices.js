@@ -217,7 +217,7 @@ export function HomeDevices() {
         // Broadcast messages
         if (msg.method === 'refresh_required' && msg.params.changed !== 'sessions' && msg.params.changed !== 'matterbridgeLatestVersion' && msg.params.changed !== 'reachability') {
           if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.params.changed}`);
-          sendMessage({ id: uniqueId.current, method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+          sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === 'restart_required') {
           if(debug) console.log('HomeDevices received restart_required');
@@ -260,12 +260,12 @@ export function HomeDevices() {
             setDevices([]);
             setSelectDevices([]);
 
-            sendMessage({ id: uniqueId.current, method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+            sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
             if(debug) console.log(`HomeDevices sent /api/devices`);
 
             for (const plugin of msg.response) {
               if(plugin.enabled===true && plugin.loaded===true && plugin.started===true /* && plugin.configured===true */ && plugin.error!==true) {
-                sendMessage({ id: uniqueId.current, method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name} });
+                sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name} });
                 if(debug) console.log(`HomeDevices sent /api/select/devices for plugin: ${plugin.name}`);
               } 
             }
@@ -331,8 +331,8 @@ export function HomeDevices() {
   useEffect(() => {
     if (online) {
       if(debug) console.log('HomeDevices sending api requests');
-      sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ id: uniqueId.current, method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   }, [online, sendMessage]);
 
@@ -360,9 +360,9 @@ export function HomeDevices() {
       )
     );
     if(event.target.checked ) {
-      sendMessage({ id: uniqueId.current, method: "/api/command", src: "Frontend", dst: "Matterbridge", params: { command: 'selectdevice', plugin: device.pluginName, serial: device.serial, name: device.name } });
+      sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/command", src: "Frontend", dst: "Matterbridge", params: { command: 'selectdevice', plugin: device.pluginName, serial: device.serial, name: device.name } });
     } else {
-      sendMessage({ id: uniqueId.current, method: "/api/command", src: "Frontend", dst: "Matterbridge", params: { command: 'unselectdevice', plugin: device.pluginName, serial: device.serial, name: device.name } });
+      sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/command", src: "Frontend", dst: "Matterbridge", params: { command: 'unselectdevice', plugin: device.pluginName, serial: device.serial, name: device.name } });
     }
   };
 
