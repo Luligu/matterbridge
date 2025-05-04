@@ -1188,7 +1188,7 @@ export class Frontend {
         } else {
           this.matterbridge.plugins.saveConfigFromJson(plugin, data.params.formData, true);
           this.wssSendSnackbarMessage(`Saved config for plugin ${data.params.pluginName}`);
-          this.wssSendRefreshRequired('plugins');
+          this.wssSendRefreshRequired('pluginsRestart');
           this.wssSendRestartRequired();
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
         }
@@ -1633,7 +1633,7 @@ export class Frontend {
             plugin.configJson = config;
             const restartRequired = plugin.restartRequired;
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
-            if (!restartRequired) this.wssSendRefreshRequired('plugins');
+            if (!restartRequired) this.wssSendRefreshRequired('pluginsRestart');
             this.wssSendRestartRequired(false);
           } else {
             this.log.error(`SelectDevice: select ${select} not supported`);
@@ -1675,7 +1675,7 @@ export class Frontend {
             plugin.configJson = config;
             const restartRequired = plugin.restartRequired;
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
-            if (!restartRequired) this.wssSendRefreshRequired('plugins');
+            if (!restartRequired) this.wssSendRefreshRequired('pluginsRestart');
             this.wssSendRestartRequired(false);
           } else {
             this.log.error(`SelectDevice: select ${select} not supported`);
@@ -1752,6 +1752,7 @@ export class Frontend {
    * - 'reachability'
    * - 'settings'
    * - 'plugins'
+   * - 'pluginsRestart'
    * - 'devices'
    * - 'fabrics'
    * - 'sessions'

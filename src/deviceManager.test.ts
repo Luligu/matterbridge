@@ -31,8 +31,6 @@ describe('DeviceManager with mocked devices', () => {
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
       // Mock implementation or empty function
     });
-    matterbridge = await Matterbridge.loadInstance(true);
-    devices = new DeviceManager(matterbridge, (matterbridge as any).nodeContext);
   });
 
   afterAll(async () => {
@@ -40,7 +38,13 @@ describe('DeviceManager with mocked devices', () => {
     jest.restoreAllMocks();
   });
 
+  test('Load matterbridge', async () => {
+    matterbridge = await Matterbridge.loadInstance(true);
+    expect(matterbridge).toBeInstanceOf(Matterbridge);
+  }, 60000);
+
   test('constructor initializes correctly', () => {
+    devices = new DeviceManager(matterbridge, (matterbridge as any).nodeContext);
     expect(devices).toBeInstanceOf(DeviceManager);
   });
 
@@ -157,17 +161,16 @@ describe('DeviceManager with mocked devices', () => {
 
   test('async forEach to return immediately if no devices', async () => {
     expect(devices.length).toBe(0);
+    let count = 0;
     await devices.forEach(async (device: MatterbridgeEndpoint) => {
-      //
+      count++;
     });
+    expect(count).toBe(0);
   });
 
-  test('Matterbridge.destroyInstance()', async () => {
-    // Close the Matterbridge instance
+  test('Destroy matterbridge', async () => {
     await matterbridge.destroyInstance();
-
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
   }, 60000);
 });
 
@@ -187,9 +190,6 @@ describe('DeviceManager with real devices', () => {
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
       // console.error(`Mocked console:`, ...args);
     });
-    matterbridge = await Matterbridge.loadInstance(true);
-    plugins = (matterbridge as any).plugins;
-    devices = (matterbridge as any).devices;
   });
 
   afterAll(async () => {
@@ -197,8 +197,19 @@ describe('DeviceManager with real devices', () => {
     jest.restoreAllMocks();
   });
 
-  test('constructor initializes correctly', () => {
+  test('Load matterbridge', async () => {
+    matterbridge = await Matterbridge.loadInstance(true);
+    expect(matterbridge).toBeInstanceOf(Matterbridge);
+  }, 60000);
+
+  test('devices initializes correctly', () => {
+    devices = (matterbridge as any).devices;
     expect(devices).toBeInstanceOf(DeviceManager);
+  });
+
+  test('plugins initializes correctly', () => {
+    plugins = (matterbridge as any).plugins;
+    expect(plugins).toBeInstanceOf(PluginManager);
   });
 
   test('add contactSensor and occupancySensor device', async () => {
@@ -232,11 +243,8 @@ describe('DeviceManager with real devices', () => {
   });
 
   test('Matterbridge.destroyInstance()', async () => {
-    // Close the Matterbridge instance
     await matterbridge.destroyInstance();
-
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
   }, 60000);
 
   test('Cleanup storage', async () => {

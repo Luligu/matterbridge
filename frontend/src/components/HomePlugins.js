@@ -226,13 +226,12 @@ export function HomePlugins({selectPlugin}) {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Broadcast messages
-        if (msg.method === 'refresh_required' && msg.params.changed === 'plugins') {
+        if (msg.method === 'refresh_required' && (msg.params.changed === 'plugins' || msg.params.changed === 'pluginsRestart')) {
           if(debug) console.log('HomePlugins received refresh_required for', msg.params.changed);
-          // sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
           sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
-        if (msg.method === 'restart_required') {
-          if(debug) console.log('HomePlugins received restart_required');
+        if (msg.method === 'refresh_required' && msg.params.changed === 'settings') {
+          if(debug) console.log('HomePlugins received refresh_required for', msg.params.changed);
           sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         // Local messages

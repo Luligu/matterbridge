@@ -30,6 +30,7 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 - [package]: Updated dependencies.
 - [docker]: Updated the [Docker configurations](README-DOCKER.md).
 - [frontend]: Changing configuration for a plugin now only lock configuration on that plugin.
+- [frontend]: Optimized rendering of Devices and Plugins panels.
 - [frontend]: Frontend v.2.6.4.
 
 ### Fixed
