@@ -178,7 +178,7 @@ export class MatterbridgeServerDevice {
   }
 
   open({ openDuration, targetLevel }: ValveConfigurationAndControl.OpenRequest) {
-    this.log.info(`Opening valve (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.log.info(`Opening valve to ${targetLevel}% (endpoint ${this.endpointId}.${this.endpointNumber})`);
     this.commandHandler.executeHandler('open', { request: { openDuration, targetLevel }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
   close() {
@@ -187,7 +187,7 @@ export class MatterbridgeServerDevice {
   }
 
   changeToMode({ newMode }: ModeSelect.ChangeToModeRequest) {
-    this.log.info(`Changing mode to ${newMode}`);
+    this.log.info(`Changing mode to ${newMode} (endpoint ${this.endpointId}.${this.endpointNumber})`);
     this.commandHandler.executeHandler('changeToMode', { request: { newMode }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
 
@@ -197,7 +197,7 @@ export class MatterbridgeServerDevice {
   }
 
   enableDisableAlarm({ alarmsToEnableDisable }: BooleanStateConfiguration.EnableDisableAlarmRequest) {
-    this.log.info(`Enabling/disabling alarm ${alarmsToEnableDisable}`);
+    this.log.info(`Enabling/disabling alarm ${alarmsToEnableDisable} (endpoint ${this.endpointId}.${this.endpointNumber})`);
     this.commandHandler.executeHandler('enableDisableAlarm', { request: { alarmsToEnableDisable }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
 
