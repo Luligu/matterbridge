@@ -7,10 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install git to clone the repositories
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    git \
-    python3 \
-    python3-dev \
-    build-essential
+    git 
 
 WORKDIR /app
 COPY ./package.json ./package-lock.json ./tsconfig.json ./tsconfig.production.json ./.npmignore ./
@@ -36,10 +33,6 @@ RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete
 
 WORKDIR /matterbridge-webhooks
 RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-webhooks.git .
-RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts types && npx rimraf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack
-
-WORKDIR /matterbridge-bthome
-RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-bthome.git .
 RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts types && npx rimraf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-test
@@ -93,7 +86,6 @@ COPY --from=builder \
     /matterbridge-shelly/*.tgz \
     /matterbridge-hass/*.tgz \
     /matterbridge-webhooks/*.tgz \
-    /matterbridge-bthome/*.tgz \
     /matterbridge-test/*.tgz \
     /matterbridge-example-accessory-platform/*.tgz \
     /matterbridge-example-dynamic-platform/*.tgz \

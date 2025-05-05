@@ -39,7 +39,6 @@ RUN npm install -g --omit=dev *.tgz && \
     matterbridge-shelly \
     matterbridge-hass \
     matterbridge-webhooks \
-    matterbridge-bthome \
     matterbridge-test \
     matterbridge-example-accessory-platform \
     matterbridge-example-dynamic-platform \
