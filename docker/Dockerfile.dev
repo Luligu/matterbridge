@@ -34,6 +34,10 @@ WORKDIR /matterbridge-webhooks
 RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-webhooks.git .
 RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts types && npx rimraf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack
 
+WORKDIR /matterbridge-bthome
+RUN GIT_SSL_NO_VERIFY=true git clone -b dev https://github.com/Luligu/matterbridge-bthome.git .
+RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts types && npx rimraf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack
+
 WORKDIR /matterbridge-test
 RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/Luligu/matterbridge-test.git .
 RUN npm ci && npm link matterbridge && npm run buildProduction && npm pkg delete devDependencies scripts types && npx rimraf ./node_modules && npm install --omit=dev && npm shrinkwrap && npm pack
@@ -85,6 +89,7 @@ COPY --from=builder \
     /matterbridge-shelly/*.tgz \
     /matterbridge-hass/*.tgz \
     /matterbridge-webhooks/*.tgz \
+    /matterbridge-bthome/*.tgz \
     /matterbridge-test/*.tgz \
     /matterbridge-example-accessory-platform/*.tgz \
     /matterbridge-example-dynamic-platform/*.tgz \
@@ -93,7 +98,7 @@ COPY --from=builder \
     /matterbridge-eve-energy/*.tgz \
     /matterbridge-eve-room/*.tgz \
     /matterbridge-eve-weather/*.tgz \
-    .
+    ./
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \

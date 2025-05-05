@@ -35,18 +35,19 @@ RUN npm install -g --omit=dev *.tgz && \
     apt-get install -y --no-install-recommends curl && \
     apt-get clean && \
     npm install --global --omit=dev matterbridge-zigbee2mqtt \
-        matterbridge-somfy-tahoma \
-        matterbridge-shelly \
-        matterbridge-hass \
-        matterbridge-webhooks \
-        matterbridge-test \
-        matterbridge-example-accessory-platform \
-        matterbridge-example-dynamic-platform \
-        matterbridge-eve-door \
-        matterbridge-eve-motion \
-        matterbridge-eve-energy \
-        matterbridge-eve-room \
-        matterbridge-eve-weather && \
+    matterbridge-somfy-tahoma \
+    matterbridge-shelly \
+    matterbridge-hass \
+    matterbridge-webhooks \
+    matterbridge-bthome \
+    matterbridge-test \
+    matterbridge-example-accessory-platform \
+    matterbridge-example-dynamic-platform \
+    matterbridge-eve-door \
+    matterbridge-eve-motion \
+    matterbridge-eve-energy \
+    matterbridge-eve-room \
+    matterbridge-eve-weather && \
     npm uninstall -g corepack && \
     npm cache clean --force && \
     node -v && \
@@ -63,7 +64,7 @@ RUN npm install -g --omit=dev *.tgz && \
 # Add Docker HEALTHCHECK
 HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
     CMD curl --fail http://localhost:8283/health || exit 1
-  
+
 WORKDIR /app
 CMD ["matterbridge", "-docker"]
 # ─────────────── END ───────────────
