@@ -1147,13 +1147,13 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default color control cluster server with Xy, HueSaturation and ColorTemperature.
    *
-   * @param currentX - The current X value.
-   * @param currentY - The current Y value.
-   * @param currentHue - The current hue value.
-   * @param currentSaturation - The current saturation value.
-   * @param colorTemperatureMireds - The color temperature in mireds.
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   * @param currentX - The current X value (range 0-65279).
+   * @param currentY - The current Y value (range 0-65279).
+   * @param currentHue - The current hue value (range: 0-254).
+   * @param currentSaturation - The current saturation value (range: 0-254).
+   * @param colorTemperatureMireds - The color temperature in mireds (default range 147-500).
+   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default range 147).
+   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default range 500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {

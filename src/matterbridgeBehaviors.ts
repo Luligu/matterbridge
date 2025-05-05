@@ -51,12 +51,12 @@ import { ColorControlServer } from '@matter/main/behaviors/color-control';
 import { MovementDirection, MovementType, WindowCoveringServer } from '@matter/main/behaviors/window-covering';
 import { DoorLockServer } from '@matter/main/behaviors/door-lock';
 import { FanControlServer } from '@matter/main/behaviors/fan-control';
-import { ThermostatBehavior } from '@matter/main/behaviors/thermostat';
-import { ValveConfigurationAndControlBehavior } from '@matter/main/behaviors/valve-configuration-and-control';
+import { ThermostatServer } from '@matter/main/behaviors/thermostat';
+import { ValveConfigurationAndControlServer } from '@matter/main/behaviors/valve-configuration-and-control';
 import { ModeSelectServer } from '@matter/main/behaviors/mode-select';
 import { SmokeCoAlarmServer } from '@matter/main/behaviors/smoke-co-alarm';
 import { SwitchServer } from '@matter/main/behaviors/switch';
-import { OperationalStateBehavior } from '@matter/main/behaviors/operational-state';
+import { OperationalStateServer } from '@matter/main/behaviors/operational-state';
 
 // AnsiLogger module
 import { AnsiLogger } from './logger/export.js';
@@ -225,6 +225,13 @@ export class MatterbridgeServerDevice {
 export class MatterbridgeServer extends Behavior {
   static override readonly id = 'matterbridge';
   declare state: MatterbridgeServer.State;
+
+  override initialize() {
+    const device = this.state.deviceCommand;
+    device?.setEndpointId(this.endpoint.maybeId);
+    device?.setEndpointNumber(this.endpoint.maybeNumber);
+    super.initialize();
+  }
 }
 
 export namespace MatterbridgeServer {
@@ -234,104 +241,113 @@ export namespace MatterbridgeServer {
 }
 
 export class MatterbridgeIdentifyServer extends IdentifyServer {
-  override initialize() {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.setEndpointId(this.endpoint.maybeId);
-    device.setEndpointNumber(this.endpoint.maybeNumber);
-    super.initialize();
-  }
-
-  override identify({ identifyTime }: Identify.IdentifyRequest) {
+  override identify({ identifyTime }: Identify.IdentifyRequest): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.identify({ identifyTime });
+    device.log.debug(`MatterbridgeIdentifyServer: identify called`);
     super.identify({ identifyTime });
   }
 
-  override triggerEffect({ effectIdentifier, effectVariant }: Identify.TriggerEffectRequest) {
+  override triggerEffect({ effectIdentifier, effectVariant }: Identify.TriggerEffectRequest): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.triggerEffect({ effectIdentifier, effectVariant });
+    device.log.debug(`MatterbridgeIdentifyServer: triggerEffect called`);
     super.triggerEffect({ effectIdentifier, effectVariant });
   }
 }
 
 export class MatterbridgeOnOffServer extends OnOffServer {
-  override async on() {
+  override on(): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.on();
+    device.log.debug(`MatterbridgeOnOffServer: on called`);
     super.on();
   }
-  override async off() {
+  override off(): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.off();
+    device.log.debug(`MatterbridgeOnOffServer: off called`);
     super.off();
   }
-  override async toggle() {
+  override toggle(): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.toggle();
+    device.log.debug(`MatterbridgeOnOffServer: toggle called`);
     super.toggle();
   }
 }
 
 export class MatterbridgeLevelControlServer extends LevelControlServer {
-  override async moveToLevel({ level, transitionTime, optionsMask, optionsOverride }: LevelControl.MoveToLevelRequest) {
+  override moveToLevel({ level, transitionTime, optionsMask, optionsOverride }: LevelControl.MoveToLevelRequest): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.moveToLevel({ level, transitionTime, optionsMask, optionsOverride });
+    device.log.debug(`MatterbridgeLevelControlServer: moveToLevel called`);
     super.moveToLevel({ level, transitionTime, optionsMask, optionsOverride });
   }
-  override async moveToLevelWithOnOff({ level, transitionTime, optionsMask, optionsOverride }: LevelControl.MoveToLevelRequest) {
+  override moveToLevelWithOnOff({ level, transitionTime, optionsMask, optionsOverride }: LevelControl.MoveToLevelRequest): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.moveToLevelWithOnOff({ level, transitionTime, optionsMask, optionsOverride });
+    device.log.debug(`MatterbridgeLevelControlServer: moveToLevelWithOnOff called`);
     super.moveToLevelWithOnOff({ level, transitionTime, optionsMask, optionsOverride });
   }
 }
 
 export class MatterbridgeColorControlServer extends ColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.Xy, ColorControl.Feature.ColorTemperature) {
-  override async moveToHue({ optionsMask, optionsOverride, hue, direction, transitionTime }: ColorControl.MoveToHueRequest) {
+  override moveToHue({ optionsMask, optionsOverride, hue, direction, transitionTime }: ColorControl.MoveToHueRequest): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.moveToHue({ optionsMask, optionsOverride, hue, direction, transitionTime });
+    device.log.debug(`MatterbridgeColorControlServer: moveToHue called`);
     super.moveToHue({ optionsMask, optionsOverride, hue, direction, transitionTime });
   }
-  override async moveToSaturation({ optionsMask, optionsOverride, saturation, transitionTime }: ColorControl.MoveToSaturationRequest) {
+  override moveToSaturation({ optionsMask, optionsOverride, saturation, transitionTime }: ColorControl.MoveToSaturationRequest): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.moveToSaturation({ optionsMask, optionsOverride, saturation, transitionTime });
+    device.log.debug(`MatterbridgeColorControlServer: moveToSaturation called`);
     super.moveToSaturation({ optionsMask, optionsOverride, saturation, transitionTime });
   }
-  override async moveToHueAndSaturation({ optionsOverride, optionsMask, saturation, hue, transitionTime }: ColorControl.MoveToHueAndSaturationRequest) {
+  override moveToHueAndSaturation({ optionsOverride, optionsMask, saturation, hue, transitionTime }: ColorControl.MoveToHueAndSaturationRequest): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.moveToHueAndSaturation({ optionsOverride, optionsMask, saturation, hue, transitionTime });
+    device.log.debug(`MatterbridgeColorControlServer: moveToHueAndSaturation called`);
     super.moveToHueAndSaturation({ optionsOverride, optionsMask, saturation, hue, transitionTime });
   }
-  override async moveToColor({ optionsMask, optionsOverride, colorX, colorY, transitionTime }: ColorControl.MoveToColorRequest) {
+  override moveToColor({ optionsMask, optionsOverride, colorX, colorY, transitionTime }: ColorControl.MoveToColorRequest): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.moveToColor({ optionsMask, optionsOverride, colorX, colorY, transitionTime });
+    device.log.debug(`MatterbridgeColorControlServer: moveToColor called`);
     super.moveToColor({ optionsMask, optionsOverride, colorX, colorY, transitionTime });
   }
-  override async moveToColorTemperature({ optionsOverride, optionsMask, colorTemperatureMireds, transitionTime }: ColorControl.MoveToColorTemperatureRequest) {
+  override moveToColorTemperature({ optionsOverride, optionsMask, colorTemperatureMireds, transitionTime }: ColorControl.MoveToColorTemperatureRequest): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.moveToColorTemperature({ optionsOverride, optionsMask, colorTemperatureMireds, transitionTime });
+    device.log.debug(`MatterbridgeColorControlServer: moveToColorTemperature called`);
     super.moveToColorTemperature({ optionsOverride, optionsMask, colorTemperatureMireds, transitionTime });
   }
 }
 
 export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift) {
-  override async upOrOpen() {
+  override upOrOpen(): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.upOrOpen();
+    device.log.debug(`MatterbridgeWindowCoveringServer: upOrOpen called`);
     super.upOrOpen();
   }
-  override async downOrClose() {
+  override downOrClose(): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.downOrClose();
+    device.log.debug(`MatterbridgeWindowCoveringServer: downOrClose called`);
     super.downOrClose();
   }
-  override stopMotion() {
+  override stopMotion(): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.stopMotion();
+    device.log.debug(`MatterbridgeWindowCoveringServer: stopMotion called`);
     super.stopMotion();
   }
-  override goToLiftPercentage({ liftPercent100thsValue }: WindowCovering.GoToLiftPercentageRequest) {
+  override goToLiftPercentage({ liftPercent100thsValue }: WindowCovering.GoToLiftPercentageRequest): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.goToLiftPercentage({ liftPercent100thsValue });
+    device.log.debug(`MatterbridgeWindowCoveringServer: goToLiftPercentage with ${liftPercent100thsValue}`);
     super.goToLiftPercentage({ liftPercent100thsValue });
   }
   override async handleMovement(type: MovementType, reversed: boolean, direction: MovementDirection, targetPercent100ths?: number) {
@@ -340,33 +356,36 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
 }
 
 export class MatterbridgeDoorLockServer extends DoorLockServer {
-  override async lockDoor() {
+  override lockDoor(): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.lockDoor();
+    device.log.debug(`MatterbridgeDoorLockServer: lockDoor called`);
     super.lockDoor();
   }
-  override async unlockDoor() {
+  override unlockDoor(): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.unlockDoor();
+    device.log.debug(`MatterbridgeDoorLockServer: unlockDoor called`);
     super.unlockDoor();
   }
 }
 
 export class MatterbridgeModeSelectServer extends ModeSelectServer {
-  override async changeToMode({ newMode }: ModeSelect.ChangeToModeRequest) {
+  override changeToMode({ newMode }: ModeSelect.ChangeToModeRequest): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.changeToMode({ newMode });
+    device.log.debug(`MatterbridgeModeSelectServer: changeToMode called with mode: ${newMode}`);
     super.changeToMode({ newMode });
   }
 }
 
 export class MatterbridgeFanControlServer extends FanControlServer.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step) {
-  override async step({ direction, wrap, lowestOff }: FanControl.StepRequest) {
+  override step({ direction, wrap, lowestOff }: FanControl.StepRequest): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.step({ direction, wrap, lowestOff });
 
     const lookupStepDirection = ['Increase', 'Decrease'];
-    device.log.debug(`Command step called with direction: ${lookupStepDirection[direction]} wrap: ${wrap} lowestOff: ${lowestOff}`);
+    device.log.debug(`MatterbridgeFanControlServer: step called with direction: ${lookupStepDirection[direction]} wrap: ${wrap} lowestOff: ${lowestOff}`);
     device.log.debug(`- current percentCurrent: ${this.state.percentCurrent}`);
 
     if (direction === FanControl.StepDirection.Increase) {
@@ -380,17 +399,18 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
     }
     device.log.debug('Set percentCurrent to:', this.state.percentCurrent);
 
-    super.step({ direction, wrap, lowestOff });
+    // step is not implemented in matter.js
+    // super.step();
   }
 }
 
-export class MatterbridgeThermostatServer extends ThermostatBehavior.with(Thermostat.Feature.Cooling, Thermostat.Feature.Heating, Thermostat.Feature.AutoMode) {
-  override async setpointRaiseLower({ mode, amount }: Thermostat.SetpointRaiseLowerRequest) {
+export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermostat.Feature.Cooling, Thermostat.Feature.Heating, Thermostat.Feature.AutoMode) {
+  override setpointRaiseLower({ mode, amount }: Thermostat.SetpointRaiseLowerRequest): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.setpointRaiseLower({ mode, amount });
 
     const lookupSetpointAdjustMode = ['Heat', 'Cool', 'Both'];
-    device.log.debug(`Command setpointRaiseLower called with mode: ${lookupSetpointAdjustMode[mode]} amount: ${amount / 10}`);
+    device.log.debug(`MatterbridgeThermostatServer: setpointRaiseLower called with mode: ${lookupSetpointAdjustMode[mode]} amount: ${amount / 10}`);
     device.log.debug(`- current occupiedHeatingSetpoint: ${this.state.occupiedHeatingSetpoint / 100}`);
     device.log.debug(`- current occupiedCoolingSetpoint: ${this.state.occupiedCoolingSetpoint / 100}`);
 
@@ -405,55 +425,61 @@ export class MatterbridgeThermostatServer extends ThermostatBehavior.with(Thermo
       this.state.occupiedCoolingSetpoint = setpoint * 100;
       device.log.debug('Set occupiedCoolingSetpoint to:', setpoint);
     }
+    // setpointRaiseLower is not implemented in matter.js
+    // super.setpointRaiseLower();
   }
 }
 
-export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigurationAndControlBehavior.with(ValveConfigurationAndControl.Feature.Level) {
-  override initialize() {
-    // console.log('MatterbridgeValveConfigurationAndControlServer initialize');
-  }
-
+export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigurationAndControlServer.with(ValveConfigurationAndControl.Feature.Level) {
   override open({ openDuration, targetLevel }: ValveConfigurationAndControl.OpenRequest): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.log.debug(`Command open called with openDuration: ${openDuration} targetLevel: ${targetLevel}`);
+    device.log.debug(`MatterbridgeValveConfigurationAndControlServer: open called with openDuration: ${openDuration} targetLevel: ${targetLevel}`);
     device.open({ openDuration, targetLevel });
     this.state.targetLevel = targetLevel ?? 100;
     this.state.currentLevel = targetLevel ?? 100;
+    // open is not implemented in matter.js
+    // super.open();
   }
 
   override close(): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.log.debug(`Command close called`);
+    device.log.debug(`MatterbridgeValveConfigurationAndControlServer: close called`);
     device.close();
     this.state.targetLevel = 0;
     this.state.currentLevel = 0;
+    // close is not implemented in matter.js
+    // super.close();
   }
 }
 
 export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm) {
-  override async selfTestRequest() {
+  override selfTestRequest(): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
+    device.log.debug(`MatterbridgeSmokeCoAlarmServer: selfTestRequest called`);
     device.selfTestRequest();
-    super.selfTestRequest();
+    // selfTestRequest is not implemented in matter.js
+    // super.selfTestRequest();
   }
 }
 
 export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateConfigurationServer.with(BooleanStateConfiguration.Feature.Visual, BooleanStateConfiguration.Feature.Audible, BooleanStateConfiguration.Feature.SensitivityLevel) {
-  override async enableDisableAlarm({ alarmsToEnableDisable }: BooleanStateConfiguration.EnableDisableAlarmRequest) {
+  override enableDisableAlarm({ alarmsToEnableDisable }: BooleanStateConfiguration.EnableDisableAlarmRequest): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
+    device.log.debug(`MatterbridgeBooleanStateConfigurationServer: enableDisableAlarm called`);
     device.enableDisableAlarm({ alarmsToEnableDisable });
-    super.enableDisableAlarm({ alarmsToEnableDisable });
+    // enableDisableAlarm is not implemented in matter.js
+    // super.enableDisableAlarm({ alarmsToEnableDisable });
   }
 }
 
 export class MatterbridgeSwitchServer extends SwitchServer {
   override initialize() {
-    // Do nothing here, as the device will handle the switch logic
+    // Do nothing here, as the device will handle the switch logic: we need to convert something like "single" into the oppropriate states and events sequences
   }
 }
 
-export class MatterbridgeOperationalStateServer extends OperationalStateBehavior {
-  override initialize() {
+export class MatterbridgeOperationalStateServer extends OperationalStateServer {
+  override initialize(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
     device.log.debug('MatterbridgeOperationalStateServer initialized: setting operational state to Stopped');
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
@@ -466,6 +492,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateBehavior
     device.pause();
     this.state.operationalState = OperationalState.OperationalStateEnum.Paused;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
+    // pause is not implemented in matter.js
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
     };
@@ -477,6 +504,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateBehavior
     device.stop();
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
+    // stop is not implemented in matter.js
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
     };
@@ -488,6 +516,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateBehavior
     device.start();
     this.state.operationalState = OperationalState.OperationalStateEnum.Running;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
+    // start is not implemented in matter.js
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
     };
@@ -499,6 +528,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateBehavior
     device.resume();
     this.state.operationalState = OperationalState.OperationalStateEnum.Running;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
+    // resume is not implemented in matter.js
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
     };

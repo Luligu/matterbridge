@@ -13,7 +13,7 @@ If you like this project and find it useful, please consider giving it a star on
 If you want to run Matterbridge in Home Assistant please use the official add-on https://github.com/Luligu/matterbridge-home-assistant-addon that also has Ingress and side panel.
 It is also available the official Matterbridge Home Assistant plugin https://github.com/Luligu/matterbridge-hass.
 
-## [3.0.1] - 2025-05-??
+## [3.0.1] - 2025-05-05
 
 ### Added
 
@@ -24,6 +24,7 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 - [frontend]: Moved all plugin actions from express to web socket.
 - [frontend]: Moved all config from express to web socket.
 - [endpoint]: Added OperationalState cluster helper and behavior.
+- [behaviors]: Added Jest test on MatterbridgeBehaviors.
 
 ### Changed
 
