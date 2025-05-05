@@ -547,6 +547,8 @@ describe('MatterbridgeEndpoint class', () => {
       expect(light.behaviors.has(MatterbridgeIdentifyServer)).toBeTruthy();
       expect(light.behaviors.elementsOf(MatterbridgeIdentifyServer).commands.has('identify')).toBeTruthy();
       expect(light.behaviors.elementsOf(MatterbridgeIdentifyServer).commands.has('triggerEffect')).toBeTruthy();
+      expect((light.stateOf(IdentifyServer) as any).acceptedCommandList).toEqual([0, 64]);
+      expect((light.stateOf(IdentifyServer) as any).generatedCommandList).toEqual([]);
       await invokeBehavior(light, 'identify', 'identify', { identifyTime: 5 });
       await invokeBehavior(light, 'identify', 'triggerEffect', { effectIdentifier: Identify.EffectIdentifier.Okay, effectVariant: Identify.EffectVariant.Default });
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Identifying device for 5 seconds`);
@@ -556,6 +558,11 @@ describe('MatterbridgeEndpoint class', () => {
     test('invoke MatterbridgeOnOffServer commands', async () => {
       expect(light.behaviors.has(OnOffServer)).toBeTruthy();
       expect(light.behaviors.has(MatterbridgeOnOffServer)).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeOnOffServer).commands.has('on')).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeOnOffServer).commands.has('off')).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeOnOffServer).commands.has('toggle')).toBeTruthy();
+      expect((light.stateOf(MatterbridgeOnOffServer) as any).acceptedCommandList).toEqual([0, 64, 65, 66, 1, 2]);
+      expect((light.stateOf(MatterbridgeOnOffServer) as any).generatedCommandList).toEqual([]);
       await invokeBehavior(light, 'onOff', 'on');
       await invokeBehavior(light, 'onOff', 'off');
       await invokeBehavior(light, 'onOff', 'toggle');
@@ -567,6 +574,10 @@ describe('MatterbridgeEndpoint class', () => {
     test('invoke MatterbridgeLevelControlServer commands', async () => {
       expect(light.behaviors.has(LevelControlServer)).toBeTruthy();
       expect(light.behaviors.has(MatterbridgeLevelControlServer)).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeLevelControlServer).commands.has('moveToLevel')).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeLevelControlServer).commands.has('moveToLevelWithOnOff')).toBeTruthy();
+      expect((light.stateOf(MatterbridgeLevelControlServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+      expect((light.stateOf(MatterbridgeLevelControlServer) as any).generatedCommandList).toEqual([]);
       await invokeBehavior(light, 'levelControl', 'moveToLevel', { level: 100, transitionTime: 5, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
       await invokeBehavior(light, 'levelControl', 'moveToLevelWithOnOff', { level: 100, transitionTime: 5, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting level to 100 with transitionTime 5 (endpoint ${light.id}.${light.number})`);
@@ -576,6 +587,13 @@ describe('MatterbridgeEndpoint class', () => {
     test('invoke MatterbridgeColorControlServer commands', async () => {
       expect(light.behaviors.has(ColorControlServer)).toBeTruthy();
       expect(light.behaviors.has(MatterbridgeColorControlServer)).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToHue')).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToSaturation')).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToHueAndSaturation')).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColor')).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
+      expect((light.stateOf(MatterbridgeColorControlServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 71]);
+      expect((light.stateOf(MatterbridgeColorControlServer) as any).generatedCommandList).toEqual([]);
       await invokeBehavior(light, 'colorControl', 'moveToHue', { hue: 180, direction: ColorControl.Direction.Shortest, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
       await invokeBehavior(light, 'colorControl', 'moveToSaturation', { saturation: 100, direction: ColorControl.Direction.Shortest, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
       await invokeBehavior(light, 'colorControl', 'moveToHueAndSaturation', { hue: 180, saturation: 100, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
@@ -591,6 +609,12 @@ describe('MatterbridgeEndpoint class', () => {
     test('invoke MatterbridgeWindowCoveringServer commands', async () => {
       expect(cover.behaviors.has(WindowCoveringServer)).toBeTruthy();
       expect(cover.behaviors.has(MatterbridgeWindowCoveringServer)).toBeTruthy();
+      expect(cover.behaviors.elementsOf(MatterbridgeWindowCoveringServer).commands.has('upOrOpen')).toBeTruthy();
+      expect(cover.behaviors.elementsOf(MatterbridgeWindowCoveringServer).commands.has('downOrClose')).toBeTruthy();
+      expect(cover.behaviors.elementsOf(MatterbridgeWindowCoveringServer).commands.has('stopMotion')).toBeTruthy();
+      expect(cover.behaviors.elementsOf(MatterbridgeWindowCoveringServer).commands.has('goToLiftPercentage')).toBeTruthy();
+      expect((cover.stateOf(MatterbridgeWindowCoveringServer) as any).acceptedCommandList).toEqual([0, 1, 2, 5]);
+      expect((cover.stateOf(MatterbridgeWindowCoveringServer) as any).generatedCommandList).toEqual([]);
       await invokeBehavior(cover, 'windowCovering', 'upOrOpen');
       await invokeBehavior(cover, 'windowCovering', 'downOrClose');
       await invokeBehavior(cover, 'windowCovering', 'stopMotion');
@@ -604,6 +628,10 @@ describe('MatterbridgeEndpoint class', () => {
     test('invoke MatterbridgeDoorLockServer commands', async () => {
       expect(lock.behaviors.has(DoorLockServer)).toBeTruthy();
       expect(lock.behaviors.has(MatterbridgeDoorLockServer)).toBeTruthy();
+      expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('lockDoor')).toBeTruthy();
+      expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('unlockDoor')).toBeTruthy();
+      expect((lock.stateOf(MatterbridgeDoorLockServer) as any).acceptedCommandList).toEqual([0, 1]);
+      expect((lock.stateOf(MatterbridgeDoorLockServer) as any).generatedCommandList).toEqual([]);
       await invokeBehavior(lock, 'doorLock', 'lockDoor');
       await invokeBehavior(lock, 'doorLock', 'unlockDoor');
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Locking door (endpoint ${lock.id}.${lock.number})`);
@@ -613,6 +641,9 @@ describe('MatterbridgeEndpoint class', () => {
     test('invoke MatterbridgeModeSelectServer commands', async () => {
       expect(mode.behaviors.has(ModeSelectServer)).toBeTruthy();
       expect(mode.behaviors.has(MatterbridgeModeSelectServer)).toBeTruthy();
+      expect(mode.behaviors.elementsOf(MatterbridgeModeSelectServer).commands.has('changeToMode')).toBeTruthy();
+      expect((mode.stateOf(MatterbridgeModeSelectServer) as any).acceptedCommandList).toEqual([0]);
+      expect((mode.stateOf(MatterbridgeModeSelectServer) as any).generatedCommandList).toEqual([]);
       await invokeBehavior(mode, 'modeSelect', 'changeToMode', { newMode: 1 });
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${mode.id}.${mode.number})`);
     });
@@ -620,6 +651,9 @@ describe('MatterbridgeEndpoint class', () => {
     test('invoke MatterbridgeFanControlServer commands', async () => {
       expect(fan.behaviors.has(FanControlServer)).toBeTruthy();
       expect(fan.behaviors.has(MatterbridgeFanControlServer)).toBeTruthy();
+      expect(fan.behaviors.elementsOf(MatterbridgeFanControlServer).commands.has('step')).toBeTruthy();
+      expect((fan.stateOf(MatterbridgeFanControlServer) as any).acceptedCommandList).toEqual([0]);
+      expect((fan.stateOf(MatterbridgeFanControlServer) as any).generatedCommandList).toEqual([]);
       await fan.setStateOf(FanControlServer, { percentCurrent: 100 });
       await invokeBehavior(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: false });
       await invokeBehavior(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: false });
@@ -635,6 +669,9 @@ describe('MatterbridgeEndpoint class', () => {
     test('invoke MatterbridgeThermostatServer commands', async () => {
       expect(thermostat.behaviors.has(ThermostatServer)).toBeTruthy();
       expect(thermostat.behaviors.has(MatterbridgeThermostatServer)).toBeTruthy();
+      expect(thermostat.behaviors.elementsOf(MatterbridgeThermostatServer).commands.has('setpointRaiseLower')).toBeTruthy();
+      expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).acceptedCommandList).toEqual([0]);
+      expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).generatedCommandList).toEqual([]);
       await invokeBehavior(thermostat, 'thermostat', 'setpointRaiseLower', { mode: Thermostat.SetpointRaiseLowerMode.Both, amount: 5 });
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting setpoint to 5 in mode ${Thermostat.SetpointRaiseLowerMode.Both} (endpoint ${thermostat.id}.${thermostat.number})`);
     });
@@ -642,6 +679,10 @@ describe('MatterbridgeEndpoint class', () => {
     test('invoke MatterbridgeValveConfigurationAndControlServer commands', async () => {
       expect(valve.behaviors.has(ValveConfigurationAndControlServer)).toBeTruthy();
       expect(valve.behaviors.has(MatterbridgeValveConfigurationAndControlServer)).toBeTruthy();
+      expect(valve.behaviors.elementsOf(MatterbridgeValveConfigurationAndControlServer).commands.has('open')).toBeTruthy();
+      expect(valve.behaviors.elementsOf(MatterbridgeValveConfigurationAndControlServer).commands.has('close')).toBeTruthy();
+      expect((valve.stateOf(MatterbridgeValveConfigurationAndControlServer) as any).acceptedCommandList).toEqual([0, 1]);
+      expect((valve.stateOf(MatterbridgeValveConfigurationAndControlServer) as any).generatedCommandList).toEqual([]);
       await invokeBehavior(valve, 'valveConfigurationAndControl', 'open', { openDuration: null, targetLevel: 50 });
       await invokeBehavior(valve, 'valveConfigurationAndControl', 'close');
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening valve to 50% (endpoint ${valve.id}.${valve.number})`);
@@ -651,6 +692,9 @@ describe('MatterbridgeEndpoint class', () => {
     test('invoke MatterbridgeSmokeCoAlarmServer commands', async () => {
       expect(smoke.behaviors.has(SmokeCoAlarmServer)).toBeTruthy();
       expect(smoke.behaviors.has(MatterbridgeSmokeCoAlarmServer)).toBeTruthy();
+      expect(smoke.behaviors.elementsOf(MatterbridgeSmokeCoAlarmServer).commands.has('selfTestRequest')).toBeTruthy();
+      expect((smoke.stateOf(MatterbridgeSmokeCoAlarmServer) as any).acceptedCommandList).toEqual([0]);
+      expect((smoke.stateOf(MatterbridgeSmokeCoAlarmServer) as any).generatedCommandList).toEqual([]);
       await invokeBehavior(smoke, 'smokeCoAlarm', 'selfTestRequest');
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Testing SmokeCOAlarm (endpoint ${smoke.id}.${smoke.number})`);
     });
@@ -658,6 +702,9 @@ describe('MatterbridgeEndpoint class', () => {
     test('invoke MatterbridgeBooleanStateConfigurationServer commands', async () => {
       expect(leak.behaviors.has(BooleanStateConfigurationServer)).toBeTruthy();
       expect(leak.behaviors.has(MatterbridgeBooleanStateConfigurationServer)).toBeTruthy();
+      expect(leak.behaviors.elementsOf(MatterbridgeBooleanStateConfigurationServer).commands.has('enableDisableAlarm')).toBeTruthy();
+      expect((leak.stateOf(MatterbridgeBooleanStateConfigurationServer) as any).acceptedCommandList).toEqual([1]);
+      expect((leak.stateOf(MatterbridgeBooleanStateConfigurationServer) as any).generatedCommandList).toEqual([]);
       await invokeBehavior(leak, 'booleanStateConfiguration', 'enableDisableAlarm', { alarmsToEnableDisable: { audible: true, visual: true } });
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Enabling/disabling alarm ${{ audible: true, visual: true }} (endpoint ${leak.id}.${leak.number})`);
     });
@@ -665,6 +712,12 @@ describe('MatterbridgeEndpoint class', () => {
     test('invoke MatterbridgeOperationalStateServer commands', async () => {
       expect(laundry.behaviors.has(OperationalStateServer)).toBeTruthy();
       expect(laundry.behaviors.has(MatterbridgeOperationalStateServer)).toBeTruthy();
+      expect(laundry.behaviors.elementsOf(MatterbridgeOperationalStateServer).commands.has('start')).toBeTruthy();
+      expect(laundry.behaviors.elementsOf(MatterbridgeOperationalStateServer).commands.has('stop')).toBeTruthy();
+      expect(laundry.behaviors.elementsOf(MatterbridgeOperationalStateServer).commands.has('pause')).toBeTruthy();
+      expect(laundry.behaviors.elementsOf(MatterbridgeOperationalStateServer).commands.has('resume')).toBeTruthy();
+      expect((laundry.stateOf(MatterbridgeOperationalStateServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3]);
+      expect((laundry.stateOf(MatterbridgeOperationalStateServer) as any).generatedCommandList).toEqual([4]);
       await invokeBehavior(laundry, 'operationalState', 'start');
       await invokeBehavior(laundry, 'operationalState', 'stop');
       await invokeBehavior(laundry, 'operationalState', 'pause');

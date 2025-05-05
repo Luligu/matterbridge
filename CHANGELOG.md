@@ -22,7 +22,7 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 - [npm]: The dev of matterbridge is published with tag **dev** on **npm** each day at 00:00 UTC if there is a new commit. It is possible that the dev is outdated by a published latest.
 - [frontend]: Added closeSnackbarMessage() to remove the notification with timeout = 0.
 - [frontend]: Moved all plugin actions from express to web socket.
-- [frontend]: Moved all config from express to web socket.
+- [frontend]: Moved all settings from express to web socket.
 - [endpoint]: Added OperationalState cluster helper and behavior.
 - [behaviors]: Added Jest test on MatterbridgeBehaviors.
 
