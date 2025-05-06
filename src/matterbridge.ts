@@ -438,7 +438,7 @@ export class Matterbridge extends EventEmitter {
     try {
       await fs.access(pairingFilePath, fs.constants.R_OK);
       const pairingFileContent = await fs.readFile(pairingFilePath, 'utf8');
-      const pairingFileJson = JSON.parse(pairingFileContent) as { passcode?: number; discriminator?: number; remoteUrl?: string; privateKey?: Uint8Array; certificate?: Uint8Array; intermediateCertificate?: Uint8Array; declaration?: Uint8Array };
+      const pairingFileJson = JSON.parse(pairingFileContent) as { passcode?: number; discriminator?: number; remoteUrl?: string; privateKey?: string; certificate?: string; intermediateCertificate?: string; declaration?: string };
       // Override the passcode and discriminator if they are present in the pairing file
       if (pairingFileJson.passcode && pairingFileJson.discriminator) {
         this.passcode = pairingFileJson.passcode;
