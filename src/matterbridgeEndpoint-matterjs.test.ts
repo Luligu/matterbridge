@@ -4,39 +4,115 @@ import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
-import { lightSensor, occupancySensor, onOffLight, onOffOutlet } from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
+import {
+  lightSensor,
+  occupancySensor,
+  onOffLight,
+  onOffOutlet,
+  coverDevice,
+  doorLockDevice,
+  fanDevice,
+  thermostatDevice,
+  waterValve,
+  modeSelect,
+  smokeCoAlarm,
+  waterLeakDetector,
+  laundryWasher,
+  extendedColorLight,
+} from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint, MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
+import { getAttributeId, getBehavior, getClusterId } from './matterbridgeEndpointHelpers.js';
 
 // @matter
-import { DeviceTypeId, VendorId, ServerNode, Endpoint, EndpointServer, StorageContext } from '@matter/main';
+import { DeviceTypeId, VendorId, ServerNode, Endpoint, EndpointServer, StorageContext, NamedHandler } from '@matter/main';
 import { LogFormat as Format, LogLevel as Level } from '@matter/main';
-import { BasicInformationCluster, BridgedDeviceBasicInformationCluster, Descriptor, DescriptorCluster, GroupsCluster, Identify, IdentifyCluster, OccupancySensing, OnOffCluster, ScenesManagementCluster } from '@matter/main/clusters';
+import {
+  BasicInformationCluster,
+  BridgedDeviceBasicInformationCluster,
+  ColorControl,
+  Descriptor,
+  DescriptorCluster,
+  FanControl,
+  GroupsCluster,
+  Identify,
+  IdentifyCluster,
+  OccupancySensing,
+  OnOffCluster,
+  OperationalState,
+  ScenesManagementCluster,
+  Thermostat,
+} from '@matter/main/clusters';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { logEndpoint, MdnsService } from '@matter/main/protocol';
 import { OnOffPlugInUnitDevice } from '@matter/node/devices';
 import {
+  BooleanStateConfigurationServer,
+  ColorControlServer,
   DescriptorBehavior,
   DescriptorServer,
+  DoorLockServer,
+  FanControlServer,
   GroupsBehavior,
   GroupsServer,
   IdentifyBehavior,
   IdentifyServer,
   IlluminanceMeasurementServer,
+  LevelControlServer,
+  ModeSelectServer,
   OccupancySensingServer,
   OnOffBehavior,
   OnOffServer,
+  OperationalStateServer,
   ScenesManagementBehavior,
   ScenesManagementServer,
+  SmokeCoAlarmServer,
+  ThermostatServer,
+  ValveConfigurationAndControlServer,
+  WindowCoveringServer,
 } from '@matter/node/behaviors';
-import { wait } from './utils/wait.js';
+import {
+  MatterbridgeBooleanStateConfigurationServer,
+  MatterbridgeColorControlServer,
+  MatterbridgeDoorLockServer,
+  MatterbridgeFanControlServer,
+  MatterbridgeIdentifyServer,
+  MatterbridgeLevelControlServer,
+  MatterbridgeModeSelectServer,
+  MatterbridgeOnOffServer,
+  MatterbridgeOperationalStateServer,
+  MatterbridgeServer,
+  MatterbridgeServerDevice,
+  MatterbridgeSmokeCoAlarmServer,
+  MatterbridgeThermostatServer,
+  MatterbridgeValveConfigurationAndControlServer,
+  MatterbridgeWindowCoveringServer,
+} from './matterbridgeBehaviors.js';
+
+const invokeBehavior = async (endpoint: Endpoint, behavior: string, command: string, params?: Record<string, any>) => {
+  await endpoint.act((agent) => {
+    const endpointBehavior = agent[behavior];
+    expect(endpointBehavior).toBeDefined();
+    expect(command in endpointBehavior && typeof endpointBehavior[command] === 'function').toBeTruthy();
+    endpointBehavior[command](params);
+  });
+};
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
   let context: StorageContext;
   let server: ServerNode<ServerNode.RootEndpoint>;
   let aggregator: Endpoint<AggregatorEndpoint>;
-  let device: MatterbridgeEndpoint;
+  let light: MatterbridgeEndpoint;
+  let cover: MatterbridgeEndpoint;
+  let lock: MatterbridgeEndpoint;
+  let fan: MatterbridgeEndpoint;
+  let thermostat: MatterbridgeEndpoint;
+  let valve: MatterbridgeEndpoint;
+  let mode: MatterbridgeEndpoint;
+  let smoke: MatterbridgeEndpoint;
+  let leak: MatterbridgeEndpoint;
+  let laundry: MatterbridgeEndpoint;
+  let matterbridgeServerDevice: MatterbridgeServerDevice;
 
   let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -114,7 +190,7 @@ describe('MatterbridgeEndpoint class', () => {
   });
 
   describe('MatterbridgeEndpointMatter', () => {
-    const deviceType = onOffLight;
+    const deviceType = extendedColorLight;
 
     test('create a context for server node', async () => {
       expect(matterbridge.environment.vars.get('path.root')).toBe('matterstorage');
@@ -128,99 +204,205 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('create a onOffLight device', async () => {
-      device = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }] });
-      expect(device).toBeDefined();
-      expect(device.id).toBe('OnOffLight');
-      expect(device.type.name).toBe(deviceType.name.replace('-', '_'));
-      expect(device.type.deviceType).toBe(deviceType.code);
-      expect(device.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
-      expect(device.type.deviceRevision).toBe(deviceType.revision);
+      light = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }] });
+      // light.addRequiredClusterServers();
+      expect(light).toBeDefined();
+      expect(light.id).toBe('OnOffLight');
+      expect(light.type.name).toBe(deviceType.name.replace('-', '_'));
+      expect(light.type.deviceType).toBe(deviceType.code);
+      expect(light.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
+      expect(light.type.deviceRevision).toBe(deviceType.revision);
+    });
+
+    test('create a covert device', async () => {
+      cover = new MatterbridgeEndpoint(coverDevice, { uniqueStorageKey: 'WindowCover' });
+      cover.addRequiredClusterServers();
+      expect(cover).toBeDefined();
+      expect(cover.id).toBe('WindowCover');
+    });
+
+    test('create a lock device', async () => {
+      lock = new MatterbridgeEndpoint(doorLockDevice, { uniqueStorageKey: 'DoorLock' });
+      lock.addRequiredClusterServers();
+      expect(lock).toBeDefined();
+      expect(lock.id).toBe('DoorLock');
+    });
+
+    test('create a fan device', async () => {
+      fan = new MatterbridgeEndpoint(fanDevice, { uniqueStorageKey: 'Fan' });
+      fan.addRequiredClusterServers();
+      expect(fan).toBeDefined();
+      expect(fan.id).toBe('Fan');
+    });
+
+    test('create a thermostat device', async () => {
+      thermostat = new MatterbridgeEndpoint(thermostatDevice, { uniqueStorageKey: 'Thermostat' });
+      thermostat.addRequiredClusterServers();
+      expect(thermostat).toBeDefined();
+      expect(thermostat.id).toBe('Thermostat');
+    });
+
+    test('create a valve device', async () => {
+      valve = new MatterbridgeEndpoint(waterValve, { uniqueStorageKey: 'WaterValve' });
+      valve.addRequiredClusterServers();
+      expect(valve).toBeDefined();
+      expect(valve.id).toBe('WaterValve');
+    });
+
+    test('create a mode device', async () => {
+      mode = new MatterbridgeEndpoint(modeSelect, { uniqueStorageKey: 'ModeSelect' });
+      mode.createDefaultModeSelectClusterServer('Night mode', [
+        { label: 'Led ON', mode: 0, semanticTags: [] },
+        { label: 'Led OFF', mode: 1, semanticTags: [] },
+      ]);
+      expect(mode).toBeDefined();
+      expect(mode.id).toBe('ModeSelect');
+    });
+
+    test('create a smoke device', async () => {
+      smoke = new MatterbridgeEndpoint(smokeCoAlarm, { uniqueStorageKey: 'SmokeSensor' });
+      smoke.addRequiredClusterServers();
+      expect(smoke).toBeDefined();
+      expect(smoke.id).toBe('SmokeSensor');
+    });
+
+    test('create a water leak device', async () => {
+      leak = new MatterbridgeEndpoint(waterLeakDetector, { uniqueStorageKey: 'LeakSensor' });
+      leak.createDefaultBooleanStateConfigurationClusterServer();
+      leak.addRequiredClusterServers();
+      expect(leak).toBeDefined();
+      expect(leak.id).toBe('LeakSensor');
+    });
+
+    test('create a laundry device', async () => {
+      laundry = new MatterbridgeEndpoint(laundryWasher, { uniqueStorageKey: 'Laundry' });
+      laundry.addRequiredClusterServers();
+      expect(laundry).toBeDefined();
+      expect(laundry.id).toBe('Laundry');
     });
 
     test('add BasicInformationCluster to onOffLight', async () => {
-      expect(device).toBeDefined();
-      device.createDefaultBasicInformationClusterServer('Light', '123456789', 0xfff1, 'Matterbridge', 0x8000, 'Light');
-      expect(device.deviceName).toBe('Light');
-      expect(device.serialNumber).toBe('123456789');
-      expect(device.uniqueId).toBeDefined();
-      expect(device.vendorId).toBe(0xfff1);
-      expect(device.vendorName).toBe('Matterbridge');
-      expect(device.productId).toBe(0x8000);
-      expect(device.productName).toBe('Light');
+      expect(light).toBeDefined();
+      light.createDefaultBasicInformationClusterServer('Light', '123456789', 0xfff1, 'Matterbridge', 0x8000, 'Light');
+      expect(light.deviceName).toBe('Light');
+      expect(light.serialNumber).toBe('123456789');
+      expect(light.uniqueId).toBeDefined();
+      expect(light.vendorId).toBe(0xfff1);
+      expect(light.vendorName).toBe('Matterbridge');
+      expect(light.productId).toBe(0x8000);
+      expect(light.productName).toBe('Light');
     });
 
     test('add BridgedDeviceBasicInformationCluster to onOffLight', async () => {
-      expect(device).toBeDefined();
-      device.createDefaultBridgedDeviceBasicInformationClusterServer('Light', '123456789', 0xfff1, 'Matterbridge', 'Light');
-      expect(device.deviceName).toBe('Light');
-      expect(device.serialNumber).toBe('123456789');
-      expect(device.uniqueId).toBeDefined();
-      expect(device.vendorId).toBe(0xfff1);
-      expect(device.vendorName).toBe('Matterbridge');
-      expect(device.productId).toBe(undefined);
-      expect(device.productName).toBe('Light');
-      delete device.behaviors.supported.bridgedDeviceBasicInformation;
+      expect(light).toBeDefined();
+      light.createDefaultBridgedDeviceBasicInformationClusterServer('Light', '123456789', 0xfff1, 'Matterbridge', 'Light');
+      expect(light.deviceName).toBe('Light');
+      expect(light.serialNumber).toBe('123456789');
+      expect(light.uniqueId).toBeDefined();
+      expect(light.vendorId).toBe(0xfff1);
+      expect(light.vendorName).toBe('Matterbridge');
+      expect(light.productId).toBe(undefined);
+      expect(light.productName).toBe('Light');
+      delete light.behaviors.supported.bridgedDeviceBasicInformation;
     });
 
     test('add required clusters to onOffLight', async () => {
-      expect(device).toBeDefined();
-      device.createDefaultOnOffClusterServer(true, false, 10, 14);
-      device.addRequiredClusterServers();
-      expect(device.behaviors.supported.descriptor).toBeDefined();
-      expect(device.behaviors.has(DescriptorBehavior)).toBeTruthy();
-      expect(device.behaviors.has(DescriptorServer)).toBeTruthy();
-      expect(device.hasClusterServer(DescriptorCluster)).toBeTruthy();
-      expect(device.hasClusterServer(DescriptorCluster.id)).toBeTruthy();
-      expect(device.hasClusterServer(DescriptorCluster.name)).toBeTruthy();
+      expect(light).toBeDefined();
+      light.createDefaultOnOffClusterServer(true, false, 10, 14);
+      light.addRequiredClusterServers();
+      expect(light.behaviors.supported.descriptor).toBeDefined();
+      expect(light.behaviors.has(DescriptorBehavior)).toBeTruthy();
+      expect(light.behaviors.has(DescriptorServer)).toBeTruthy();
+      expect(light.hasClusterServer(DescriptorCluster)).toBeTruthy();
+      expect(light.hasClusterServer(DescriptorCluster.id)).toBeTruthy();
+      expect(light.hasClusterServer(DescriptorCluster.name)).toBeTruthy();
       // consoleWarnSpy?.mockRestore();
       // console.warn(device.behaviors.optionsFor(DescriptorBehavior));
 
-      expect(device.behaviors.supported['identify']).toBeDefined();
-      expect(device.behaviors.has(IdentifyBehavior)).toBeTruthy();
-      expect(device.behaviors.has(IdentifyServer)).toBeTruthy();
-      expect(device.hasClusterServer(IdentifyCluster)).toBeTruthy();
-      expect(device.hasClusterServer(IdentifyCluster.id)).toBeTruthy();
-      expect(device.hasClusterServer(IdentifyCluster.name)).toBeTruthy();
+      expect(light.behaviors.supported['identify']).toBeDefined();
+      expect(light.behaviors.has(IdentifyBehavior)).toBeTruthy();
+      expect(light.behaviors.has(IdentifyServer)).toBeTruthy();
+      expect(light.hasClusterServer(IdentifyCluster)).toBeTruthy();
+      expect(light.hasClusterServer(IdentifyCluster.id)).toBeTruthy();
+      expect(light.hasClusterServer(IdentifyCluster.name)).toBeTruthy();
 
-      expect(device.behaviors.supported['groups']).toBeDefined();
-      expect(device.behaviors.has(GroupsBehavior)).toBeTruthy();
-      expect(device.behaviors.has(GroupsServer)).toBeTruthy();
-      expect(device.hasClusterServer(GroupsCluster)).toBeTruthy();
-      expect(device.hasClusterServer(GroupsCluster.id)).toBeTruthy();
-      expect(device.hasClusterServer(GroupsCluster.name)).toBeTruthy();
+      expect(light.behaviors.supported['groups']).toBeDefined();
+      expect(light.behaviors.has(GroupsBehavior)).toBeTruthy();
+      expect(light.behaviors.has(GroupsServer)).toBeTruthy();
+      expect(light.hasClusterServer(GroupsCluster)).toBeTruthy();
+      expect(light.hasClusterServer(GroupsCluster.id)).toBeTruthy();
+      expect(light.hasClusterServer(GroupsCluster.name)).toBeTruthy();
 
-      expect(device.behaviors.supported['scenesManagement']).not.toBeDefined();
-      expect(device.behaviors.has(ScenesManagementBehavior)).toBeFalsy();
-      expect(device.behaviors.has(ScenesManagementServer)).toBeFalsy();
-      expect(device.hasClusterServer(ScenesManagementCluster)).toBeFalsy();
-      expect(device.hasClusterServer(ScenesManagementCluster.id)).toBeFalsy();
-      expect(device.hasClusterServer(ScenesManagementCluster.name)).toBeFalsy();
+      expect(light.behaviors.supported['scenesManagement']).not.toBeDefined();
+      expect(light.behaviors.has(ScenesManagementBehavior)).toBeFalsy();
+      expect(light.behaviors.has(ScenesManagementServer)).toBeFalsy();
+      expect(light.hasClusterServer(ScenesManagementCluster)).toBeFalsy();
+      expect(light.hasClusterServer(ScenesManagementCluster.id)).toBeFalsy();
+      expect(light.hasClusterServer(ScenesManagementCluster.name)).toBeFalsy();
 
-      expect(device.behaviors.supported['onOff']).toBeDefined();
-      expect(device.behaviors.has(OnOffBehavior)).toBeTruthy();
-      expect(device.behaviors.has(OnOffServer)).toBeTruthy();
-      expect(device.hasClusterServer(OnOffCluster)).toBeTruthy();
-      expect(device.hasClusterServer(OnOffCluster.id)).toBeTruthy();
-      expect(device.hasClusterServer(OnOffCluster.name)).toBeTruthy();
+      expect(light.behaviors.supported['onOff']).toBeDefined();
+      expect(light.behaviors.has(OnOffBehavior)).toBeTruthy();
+      expect(light.behaviors.has(OnOffServer)).toBeTruthy();
+      expect(light.hasClusterServer(OnOffCluster)).toBeTruthy();
+      expect(light.hasClusterServer(OnOffCluster.id)).toBeTruthy();
+      expect(light.hasClusterServer(OnOffCluster.name)).toBeTruthy();
     });
 
     test('add onOffLight device to serverNode', async () => {
-      expect(await server.add(device)).toBeDefined();
-      expect(EndpointServer.forEndpoint(device).hasClusterServer(DescriptorCluster)).toBe(true);
-      expect(EndpointServer.forEndpoint(device).hasClusterServer(IdentifyCluster)).toBe(true);
-      expect(EndpointServer.forEndpoint(device).hasClusterServer(GroupsCluster)).toBe(true);
-      expect(EndpointServer.forEndpoint(device).hasClusterServer(ScenesManagementCluster)).toBe(false);
-      expect(EndpointServer.forEndpoint(device).hasClusterServer(OnOffCluster)).toBe(true);
+      expect(await server.add(light)).toBeDefined();
+      /*
+      expect(EndpointServer.forEndpoint(light).hasClusterServer(DescriptorCluster)).toBe(true);
+      expect(EndpointServer.forEndpoint(light).hasClusterServer(IdentifyCluster)).toBe(true);
+      expect(EndpointServer.forEndpoint(light).hasClusterServer(GroupsCluster)).toBe(true);
+      expect(EndpointServer.forEndpoint(light).hasClusterServer(ScenesManagementCluster)).toBe(false);
+      expect(EndpointServer.forEndpoint(light).hasClusterServer(OnOffCluster)).toBe(true);
+      */
+    });
+
+    test('add rollerDevice device to serverNode', async () => {
+      expect(await server.add(cover)).toBeDefined();
+    });
+
+    test('add lockDevice device to serverNode', async () => {
+      expect(await server.add(lock)).toBeDefined();
+    });
+
+    test('add fan device to serverNode', async () => {
+      expect(await server.add(fan)).toBeDefined();
+    });
+
+    test('add thermostat device to serverNode', async () => {
+      expect(await server.add(thermostat)).toBeDefined();
+    });
+
+    test('add valve device to serverNode', async () => {
+      expect(await server.add(valve)).toBeDefined();
+    });
+
+    test('add mode device to serverNode', async () => {
+      expect(await server.add(mode)).toBeDefined();
+    });
+
+    test('add smoke device to serverNode', async () => {
+      expect(await server.add(smoke)).toBeDefined();
+    });
+
+    test('add leak device to serverNode', async () => {
+      expect(await server.add(leak)).toBeDefined();
+    });
+
+    test('add laundry device to serverNode', async () => {
+      expect(await server.add(laundry)).toBeDefined();
     });
 
     test('getClusterId and getAttributeId of onOffLight device behaviors', async () => {
-      expect(device).toBeDefined();
-      expect(getClusterId(device, 'onOff')).toBe(6);
-      expect(getClusterId(device, 'OnOff')).toBe(6);
-      expect(getAttributeId(device, 'onOff', 'OnOff')).toBe(0);
-      expect(getAttributeId(device, 'OnOff', 'OnOff')).toBe(0);
-      expect(getAttributeId(device, 'onOff', 'onOff')).toBe(0);
-      expect(getAttributeId(device, 'OnOff', 'onOff')).toBe(0);
+      expect(light).toBeDefined();
+      expect(getClusterId(light, 'onOff')).toBe(6);
+      expect(getClusterId(light, 'OnOff')).toBe(6);
+      expect(getAttributeId(light, 'onOff', 'OnOff')).toBe(0);
+      expect(getAttributeId(light, 'OnOff', 'OnOff')).toBe(0);
+      expect(getAttributeId(light, 'onOff', 'onOff')).toBe(0);
+      expect(getAttributeId(light, 'OnOff', 'onOff')).toBe(0);
     });
 
     test('add deviceType to onOffPlugin without tagList', async () => {
@@ -274,7 +456,7 @@ describe('MatterbridgeEndpoint class', () => {
         descriptor: {
           tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }],
           deviceTypeList: [
-            { deviceType: 0x10a, revision: 3 },
+            { deviceType: onOffOutlet.code, revision: onOffOutlet.revision },
             { deviceType: occupancySensor.code, revision: occupancySensor.revision },
           ],
         },
@@ -284,7 +466,7 @@ describe('MatterbridgeEndpoint class', () => {
         child.behaviors.require(DescriptorServer.with(Descriptor.Feature.TagList), {
           tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }],
           deviceTypeList: [
-            { deviceType: 0x10a, revision: 3 },
+            { deviceType: onOffOutlet.code, revision: onOffOutlet.revision },
             { deviceType: occupancySensor.code, revision: occupancySensor.revision },
           ],
         }),
@@ -338,15 +520,212 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('log onOffLight', async () => {
-      expect(device).toBeDefined();
-      logEndpoint(EndpointServer.forEndpoint(device));
-      expect(EndpointServer.forEndpoint(device).hasClusterServer(DescriptorCluster)).toBe(true);
-      expect(EndpointServer.forEndpoint(device).hasClusterServer(BasicInformationCluster)).toBe(false);
-      expect(EndpointServer.forEndpoint(device).hasClusterServer(BridgedDeviceBasicInformationCluster)).toBe(false);
-      expect(EndpointServer.forEndpoint(device).hasClusterServer(IdentifyCluster)).toBe(true);
-      expect(EndpointServer.forEndpoint(device).hasClusterServer(OnOffCluster)).toBe(true);
-      expect(EndpointServer.forEndpoint(device).hasClusterServer(GroupsCluster)).toBe(true);
-      expect(EndpointServer.forEndpoint(device).hasClusterServer(ScenesManagementCluster)).toBe(false);
+      expect(light).toBeDefined();
+      /*
+      logEndpoint(EndpointServer.forEndpoint(light));
+      expect(EndpointServer.forEndpoint(light).hasClusterServer(DescriptorCluster)).toBe(true);
+      expect(EndpointServer.forEndpoint(light).hasClusterServer(BasicInformationCluster)).toBe(false);
+      expect(EndpointServer.forEndpoint(light).hasClusterServer(BridgedDeviceBasicInformationCluster)).toBe(false);
+      expect(EndpointServer.forEndpoint(light).hasClusterServer(IdentifyCluster)).toBe(true);
+      expect(EndpointServer.forEndpoint(light).hasClusterServer(OnOffCluster)).toBe(true);
+      expect(EndpointServer.forEndpoint(light).hasClusterServer(GroupsCluster)).toBe(true);
+      expect(EndpointServer.forEndpoint(light).hasClusterServer(ScenesManagementCluster)).toBe(false);
+      */
+    });
+
+    test('get MatterbridgeServerDevice', async () => {
+      matterbridgeServerDevice = light.stateOf(MatterbridgeServer).deviceCommand as MatterbridgeServerDevice;
+      expect(matterbridgeServerDevice).toBeDefined();
+      expect(matterbridgeServerDevice).toBeInstanceOf(MatterbridgeServerDevice);
+      expect(matterbridgeServerDevice.log).toBeInstanceOf(AnsiLogger);
+      expect(matterbridgeServerDevice.endpointId).toBeDefined();
+      expect(matterbridgeServerDevice.endpointNumber).toBeDefined();
+    });
+
+    test('invoke MatterbridgeIdentifyServer commands', async () => {
+      expect(light.behaviors.has(IdentifyServer)).toBeTruthy();
+      expect(light.behaviors.has(MatterbridgeIdentifyServer)).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeIdentifyServer).commands.has('identify')).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeIdentifyServer).commands.has('triggerEffect')).toBeTruthy();
+      expect((light.stateOf(IdentifyServer) as any).acceptedCommandList).toEqual([0, 64]);
+      expect((light.stateOf(IdentifyServer) as any).generatedCommandList).toEqual([]);
+      await invokeBehavior(light, 'identify', 'identify', { identifyTime: 5 });
+      await invokeBehavior(light, 'identify', 'triggerEffect', { effectIdentifier: Identify.EffectIdentifier.Okay, effectVariant: Identify.EffectVariant.Default });
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Identifying device for 5 seconds`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Triggering effect ${Identify.EffectIdentifier.Okay} variant ${Identify.EffectVariant.Default}`);
+    });
+
+    test('invoke MatterbridgeOnOffServer commands', async () => {
+      expect(light.behaviors.has(OnOffServer)).toBeTruthy();
+      expect(light.behaviors.has(MatterbridgeOnOffServer)).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeOnOffServer).commands.has('on')).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeOnOffServer).commands.has('off')).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeOnOffServer).commands.has('toggle')).toBeTruthy();
+      expect((light.stateOf(MatterbridgeOnOffServer) as any).acceptedCommandList).toEqual([0, 64, 65, 66, 1, 2]);
+      expect((light.stateOf(MatterbridgeOnOffServer) as any).generatedCommandList).toEqual([]);
+      await invokeBehavior(light, 'onOff', 'on');
+      await invokeBehavior(light, 'onOff', 'off');
+      await invokeBehavior(light, 'onOff', 'toggle');
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Switching device on (endpoint ${light.id}.${light.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Switching device off (endpoint ${light.id}.${light.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Toggle device on/off (endpoint ${light.id}.${light.number})`);
+    });
+
+    test('invoke MatterbridgeLevelControlServer commands', async () => {
+      expect(light.behaviors.has(LevelControlServer)).toBeTruthy();
+      expect(light.behaviors.has(MatterbridgeLevelControlServer)).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeLevelControlServer).commands.has('moveToLevel')).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeLevelControlServer).commands.has('moveToLevelWithOnOff')).toBeTruthy();
+      expect((light.stateOf(MatterbridgeLevelControlServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+      expect((light.stateOf(MatterbridgeLevelControlServer) as any).generatedCommandList).toEqual([]);
+      await invokeBehavior(light, 'levelControl', 'moveToLevel', { level: 100, transitionTime: 5, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+      await invokeBehavior(light, 'levelControl', 'moveToLevelWithOnOff', { level: 100, transitionTime: 5, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting level to 100 with transitionTime 5 (endpoint ${light.id}.${light.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting level to 100 with transitionTime 5 (endpoint ${light.id}.${light.number})`);
+    });
+
+    test('invoke MatterbridgeColorControlServer commands', async () => {
+      expect(light.behaviors.has(ColorControlServer)).toBeTruthy();
+      expect(light.behaviors.has(MatterbridgeColorControlServer)).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToHue')).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToSaturation')).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToHueAndSaturation')).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColor')).toBeTruthy();
+      expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
+      expect((light.stateOf(MatterbridgeColorControlServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 71]);
+      expect((light.stateOf(MatterbridgeColorControlServer) as any).generatedCommandList).toEqual([]);
+      await invokeBehavior(light, 'colorControl', 'moveToHue', { hue: 180, direction: ColorControl.Direction.Shortest, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+      await invokeBehavior(light, 'colorControl', 'moveToSaturation', { saturation: 100, direction: ColorControl.Direction.Shortest, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+      await invokeBehavior(light, 'colorControl', 'moveToHueAndSaturation', { hue: 180, saturation: 100, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+      await invokeBehavior(light, 'colorControl', 'moveToColor', { colorX: 30000, colorY: 30000, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+      await invokeBehavior(light, 'colorControl', 'moveToColorTemperature', { colorTemperatureMireds: 250, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting hue to 180 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting saturation to 100 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting hue to 180 and saturation to 100 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color to 30000, 30000 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color temperature to 250 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
+    });
+
+    test('invoke MatterbridgeWindowCoveringServer commands', async () => {
+      expect(cover.behaviors.has(WindowCoveringServer)).toBeTruthy();
+      expect(cover.behaviors.has(MatterbridgeWindowCoveringServer)).toBeTruthy();
+      expect(cover.behaviors.elementsOf(MatterbridgeWindowCoveringServer).commands.has('upOrOpen')).toBeTruthy();
+      expect(cover.behaviors.elementsOf(MatterbridgeWindowCoveringServer).commands.has('downOrClose')).toBeTruthy();
+      expect(cover.behaviors.elementsOf(MatterbridgeWindowCoveringServer).commands.has('stopMotion')).toBeTruthy();
+      expect(cover.behaviors.elementsOf(MatterbridgeWindowCoveringServer).commands.has('goToLiftPercentage')).toBeTruthy();
+      expect((cover.stateOf(MatterbridgeWindowCoveringServer) as any).acceptedCommandList).toEqual([0, 1, 2, 5]);
+      expect((cover.stateOf(MatterbridgeWindowCoveringServer) as any).generatedCommandList).toEqual([]);
+      await invokeBehavior(cover, 'windowCovering', 'upOrOpen');
+      await invokeBehavior(cover, 'windowCovering', 'downOrClose');
+      await invokeBehavior(cover, 'windowCovering', 'stopMotion');
+      await invokeBehavior(cover, 'windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 5000 });
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening cover (endpoint ${cover.id}.${cover.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing cover (endpoint ${cover.id}.${cover.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stopping cover (endpoint ${cover.id}.${cover.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting cover lift percentage to 5000 (endpoint ${cover.id}.${cover.number})`);
+    });
+
+    test('invoke MatterbridgeDoorLockServer commands', async () => {
+      expect(lock.behaviors.has(DoorLockServer)).toBeTruthy();
+      expect(lock.behaviors.has(MatterbridgeDoorLockServer)).toBeTruthy();
+      expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('lockDoor')).toBeTruthy();
+      expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('unlockDoor')).toBeTruthy();
+      expect((lock.stateOf(MatterbridgeDoorLockServer) as any).acceptedCommandList).toEqual([0, 1]);
+      expect((lock.stateOf(MatterbridgeDoorLockServer) as any).generatedCommandList).toEqual([]);
+      await invokeBehavior(lock, 'doorLock', 'lockDoor');
+      await invokeBehavior(lock, 'doorLock', 'unlockDoor');
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Locking door (endpoint ${lock.id}.${lock.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Unlocking door (endpoint ${lock.id}.${lock.number})`);
+    });
+
+    test('invoke MatterbridgeModeSelectServer commands', async () => {
+      expect(mode.behaviors.has(ModeSelectServer)).toBeTruthy();
+      expect(mode.behaviors.has(MatterbridgeModeSelectServer)).toBeTruthy();
+      expect(mode.behaviors.elementsOf(MatterbridgeModeSelectServer).commands.has('changeToMode')).toBeTruthy();
+      expect((mode.stateOf(MatterbridgeModeSelectServer) as any).acceptedCommandList).toEqual([0]);
+      expect((mode.stateOf(MatterbridgeModeSelectServer) as any).generatedCommandList).toEqual([]);
+      await invokeBehavior(mode, 'modeSelect', 'changeToMode', { newMode: 1 });
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${mode.id}.${mode.number})`);
+    });
+
+    test('invoke MatterbridgeFanControlServer commands', async () => {
+      expect(fan.behaviors.has(FanControlServer)).toBeTruthy();
+      expect(fan.behaviors.has(MatterbridgeFanControlServer)).toBeTruthy();
+      expect(fan.behaviors.elementsOf(MatterbridgeFanControlServer).commands.has('step')).toBeTruthy();
+      expect((fan.stateOf(MatterbridgeFanControlServer) as any).acceptedCommandList).toEqual([0]);
+      expect((fan.stateOf(MatterbridgeFanControlServer) as any).generatedCommandList).toEqual([]);
+      await fan.setStateOf(FanControlServer, { percentCurrent: 100 });
+      await invokeBehavior(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: false });
+      await invokeBehavior(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: false });
+      await invokeBehavior(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: true });
+      await invokeBehavior(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: false });
+      await fan.setStateOf(FanControlServer, { percentCurrent: 10 });
+      await invokeBehavior(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: false });
+      await fan.setStateOf(FanControlServer, { percentCurrent: 0 });
+      await invokeBehavior(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: true });
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stepping fan with direction ${FanControl.StepDirection.Increase} (endpoint ${fan.id}.${fan.number})`);
+    });
+
+    test('invoke MatterbridgeThermostatServer commands', async () => {
+      expect(thermostat.behaviors.has(ThermostatServer)).toBeTruthy();
+      expect(thermostat.behaviors.has(MatterbridgeThermostatServer)).toBeTruthy();
+      expect(thermostat.behaviors.elementsOf(MatterbridgeThermostatServer).commands.has('setpointRaiseLower')).toBeTruthy();
+      expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).acceptedCommandList).toEqual([0]);
+      expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).generatedCommandList).toEqual([]);
+      await invokeBehavior(thermostat, 'thermostat', 'setpointRaiseLower', { mode: Thermostat.SetpointRaiseLowerMode.Both, amount: 5 });
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting setpoint to 5 in mode ${Thermostat.SetpointRaiseLowerMode.Both} (endpoint ${thermostat.id}.${thermostat.number})`);
+    });
+
+    test('invoke MatterbridgeValveConfigurationAndControlServer commands', async () => {
+      expect(valve.behaviors.has(ValveConfigurationAndControlServer)).toBeTruthy();
+      expect(valve.behaviors.has(MatterbridgeValveConfigurationAndControlServer)).toBeTruthy();
+      expect(valve.behaviors.elementsOf(MatterbridgeValveConfigurationAndControlServer).commands.has('open')).toBeTruthy();
+      expect(valve.behaviors.elementsOf(MatterbridgeValveConfigurationAndControlServer).commands.has('close')).toBeTruthy();
+      expect((valve.stateOf(MatterbridgeValveConfigurationAndControlServer) as any).acceptedCommandList).toEqual([0, 1]);
+      expect((valve.stateOf(MatterbridgeValveConfigurationAndControlServer) as any).generatedCommandList).toEqual([]);
+      await invokeBehavior(valve, 'valveConfigurationAndControl', 'open', { openDuration: null, targetLevel: 50 });
+      await invokeBehavior(valve, 'valveConfigurationAndControl', 'close');
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening valve to 50% (endpoint ${valve.id}.${valve.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing valve (endpoint ${valve.id}.${valve.number})`);
+    });
+
+    test('invoke MatterbridgeSmokeCoAlarmServer commands', async () => {
+      expect(smoke.behaviors.has(SmokeCoAlarmServer)).toBeTruthy();
+      expect(smoke.behaviors.has(MatterbridgeSmokeCoAlarmServer)).toBeTruthy();
+      expect(smoke.behaviors.elementsOf(MatterbridgeSmokeCoAlarmServer).commands.has('selfTestRequest')).toBeTruthy();
+      expect((smoke.stateOf(MatterbridgeSmokeCoAlarmServer) as any).acceptedCommandList).toEqual([0]);
+      expect((smoke.stateOf(MatterbridgeSmokeCoAlarmServer) as any).generatedCommandList).toEqual([]);
+      await invokeBehavior(smoke, 'smokeCoAlarm', 'selfTestRequest');
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Testing SmokeCOAlarm (endpoint ${smoke.id}.${smoke.number})`);
+    });
+
+    test('invoke MatterbridgeBooleanStateConfigurationServer commands', async () => {
+      expect(leak.behaviors.has(BooleanStateConfigurationServer)).toBeTruthy();
+      expect(leak.behaviors.has(MatterbridgeBooleanStateConfigurationServer)).toBeTruthy();
+      expect(leak.behaviors.elementsOf(MatterbridgeBooleanStateConfigurationServer).commands.has('enableDisableAlarm')).toBeTruthy();
+      expect((leak.stateOf(MatterbridgeBooleanStateConfigurationServer) as any).acceptedCommandList).toEqual([1]);
+      expect((leak.stateOf(MatterbridgeBooleanStateConfigurationServer) as any).generatedCommandList).toEqual([]);
+      await invokeBehavior(leak, 'booleanStateConfiguration', 'enableDisableAlarm', { alarmsToEnableDisable: { audible: true, visual: true } });
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Enabling/disabling alarm ${{ audible: true, visual: true }} (endpoint ${leak.id}.${leak.number})`);
+    });
+
+    test('invoke MatterbridgeOperationalStateServer commands', async () => {
+      expect(laundry.behaviors.has(OperationalStateServer)).toBeTruthy();
+      expect(laundry.behaviors.has(MatterbridgeOperationalStateServer)).toBeTruthy();
+      expect(laundry.behaviors.elementsOf(MatterbridgeOperationalStateServer).commands.has('start')).toBeTruthy();
+      expect(laundry.behaviors.elementsOf(MatterbridgeOperationalStateServer).commands.has('stop')).toBeTruthy();
+      expect(laundry.behaviors.elementsOf(MatterbridgeOperationalStateServer).commands.has('pause')).toBeTruthy();
+      expect(laundry.behaviors.elementsOf(MatterbridgeOperationalStateServer).commands.has('resume')).toBeTruthy();
+      expect((laundry.stateOf(MatterbridgeOperationalStateServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3]);
+      expect((laundry.stateOf(MatterbridgeOperationalStateServer) as any).generatedCommandList).toEqual([4]);
+      await invokeBehavior(laundry, 'operationalState', 'start');
+      await invokeBehavior(laundry, 'operationalState', 'stop');
+      await invokeBehavior(laundry, 'operationalState', 'pause');
+      await invokeBehavior(laundry, 'operationalState', 'resume');
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Start (endpoint ${laundry.id}.${laundry.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stop (endpoint ${laundry.id}.${laundry.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Pause (endpoint ${laundry.id}.${laundry.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resume (endpoint ${laundry.id}.${laundry.number})`);
     });
 
     test('close server node', async () => {

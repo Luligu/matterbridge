@@ -26,7 +26,7 @@ import { AnsiLogger, BLUE, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStr
 
 // Matterbridge
 import { bridgedNode, DeviceTypeDefinition, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
-import { isValidNumber, isValidObject } from './utils/export.js';
+import { isValidNumber, isValidObject, isValidString } from './utils/export.js';
 import {
   MatterbridgeServer,
   MatterbridgeServerDevice,
@@ -43,6 +43,7 @@ import {
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeBooleanStateConfigurationServer,
   MatterbridgeSwitchServer,
+  MatterbridgeOperationalStateServer,
 } from './matterbridgeBehaviors.js';
 import {
   addClusterServers,
@@ -73,7 +74,7 @@ import {
 } from './matterbridgeEndpointHelpers.js';
 
 // @matter
-import { AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointType, HandlerFunction, Lifecycle, MutableEndpoint, NamedHandler, SupportedBehaviors, VendorId } from '@matter/main';
+import { AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointType, HandlerFunction, Lifecycle, MutableEndpoint, NamedHandler, SupportedBehaviors, UINT16_MAX, UINT32_MAX, VendorId } from '@matter/main';
 import { DeviceClassification } from '@matter/main/model';
 import { ClusterType, getClusterNameById, MeasurementType, Semtag } from '@matter/main/types';
 
@@ -102,6 +103,7 @@ import { AirQuality } from '@matter/main/clusters/air-quality';
 import { ConcentrationMeasurement } from '@matter/main/clusters/concentration-measurement';
 import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
 import { ThermostatUserInterfaceConfiguration } from '@matter/main/clusters/thermostat-user-interface-configuration';
+import { OperationalState } from '@matter/main/clusters/operational-state';
 
 // @matter behaviors
 import { DescriptorServer } from '@matter/main/behaviors/descriptor';
@@ -207,6 +209,12 @@ export interface MatterbridgeEndpointCommands {
   // Device Energy Management
   pauseRequest: HandlerFunction;
   resumeRequest: HandlerFunction;
+
+  // Operational State
+  pause: HandlerFunction;
+  stop: HandlerFunction;
+  start: HandlerFunction;
+  resume: HandlerFunction;
 }
 
 export interface SerializedMatterbridgeEndpoint {
@@ -983,15 +991,15 @@ export class MatterbridgeEndpoint extends Endpoint {
         vendorId: vendorId !== undefined ? VendorId(vendorId) : undefined, // 4874
         vendorName: vendorName.slice(0, 32),
         productName: productName.slice(0, 32),
-        productUrl: this.productUrl,
+        productUrl: this.productUrl.slice(0, 256),
         productLabel: deviceName.slice(0, 64),
         nodeLabel: deviceName.slice(0, 32),
         serialNumber: serialNumber.slice(0, 32),
-        uniqueId: this.uniqueId,
-        softwareVersion,
-        softwareVersionString: softwareVersionString.slice(0, 64),
-        hardwareVersion,
-        hardwareVersionString: hardwareVersionString.slice(0, 64),
+        uniqueId: this.uniqueId.slice(0, 32),
+        softwareVersion: isValidNumber(softwareVersion, 0, UINT32_MAX) ? softwareVersion : undefined,
+        softwareVersionString: isValidString(softwareVersionString) ? softwareVersionString.slice(0, 64) : undefined,
+        hardwareVersion: isValidNumber(hardwareVersion, 0, UINT16_MAX) ? hardwareVersion : undefined,
+        hardwareVersionString: isValidString(hardwareVersionString) ? hardwareVersionString.slice(0, 64) : undefined,
         reachable: true,
       },
     );
@@ -1139,13 +1147,13 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default color control cluster server with Xy, HueSaturation and ColorTemperature.
    *
-   * @param currentX - The current X value.
-   * @param currentY - The current Y value.
-   * @param currentHue - The current hue value.
-   * @param currentSaturation - The current saturation value.
-   * @param colorTemperatureMireds - The color temperature in mireds.
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   * @param currentX - The current X value (range 0-65279).
+   * @param currentY - The current Y value (range 0-65279).
+   * @param currentHue - The current hue value (range: 0-254).
+   * @param currentSaturation - The current saturation value (range: 0-254).
+   * @param colorTemperatureMireds - The color temperature in mireds (default range 147-500).
+   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default range 147).
+   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default range 500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
@@ -1855,6 +1863,29 @@ export class MatterbridgeEndpoint extends Endpoint {
       }
     }
     return true;
+  }
+
+  /**
+   * Creates a default OperationalState Cluster Server.
+   *
+   * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultOperationalStateClusterServer(operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped): this {
+    this.behaviors.require(MatterbridgeOperationalStateServer, {
+      phaseList: [],
+      currentPhase: null,
+      operationalStateList: [
+        { operationalStateId: OperationalState.OperationalStateEnum.Stopped, operationalStateLabel: 'Stopped' },
+        { operationalStateId: OperationalState.OperationalStateEnum.Running, operationalStateLabel: 'Running' },
+        { operationalStateId: OperationalState.OperationalStateEnum.Paused, operationalStateLabel: 'Paused' },
+        { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
+      ],
+      operationalState,
+      operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+    });
+    return this;
   }
 
   /**

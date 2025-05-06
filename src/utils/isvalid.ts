@@ -42,7 +42,7 @@ export function isValidIpv4Address(ipv4Address: string): boolean {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isValidNumber(value: any, min?: number, max?: number): value is number {
-  if (value === undefined || value === null || typeof value !== 'number' || Number.isNaN(value)) return false;
+  if (value === undefined || value === null || typeof value !== 'number' || Number.isNaN(value) || !Number.isFinite(value)) return false;
   if (min !== undefined && value < min) return false;
   if (max !== undefined && value > max) return false;
   return true;
@@ -128,4 +128,29 @@ export function isValidNull(value: any): value is null {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isValidUndefined(value: any): value is undefined {
   return value === undefined;
+}
+
+/**
+ * Converts a semantic version string like "6.11.0-1011-raspi" to a numeric version code.
+ * Format: major * 10000 + minor * 100 + patch
+ *
+ * @param {string} versionString The version string to parse
+ * @returns {number | undefined} A numeric version code or undefined if parsing fails
+ */
+export function parseVersionString(versionString: string): number | undefined {
+  if (!isValidString(versionString)) return undefined;
+  versionString = versionString.trim();
+  const match = versionString.match(/^(\d+)\.(\d+)\.(\d+)/);
+  if (!match) return undefined;
+
+  const [, majorStr, minorStr, patchStr] = match;
+  const major = parseInt(majorStr, 10);
+  const minor = parseInt(minorStr, 10);
+  const patch = parseInt(patchStr, 10);
+
+  if ([major, minor, patch].some((n) => !Number.isFinite(n)) || major > 99 || minor > 99 || patch > 99) {
+    return undefined;
+  }
+
+  return major * 10000 + minor * 100 + patch;
 }

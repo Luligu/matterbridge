@@ -31,7 +31,6 @@ import { WebSocketContext } from './WebSocketProvider';
 import { UiContext } from './UiProvider';
 import { Connecting } from './Connecting';
 import { StatusIndicator } from './StatusIndicator';
-import { sendCommandToMatterbridge } from './sendApiCommand';
 import { ConfigPluginDialog } from './ConfigPluginDialog';
 import { debug } from '../App';
 // const debug = true;
@@ -87,7 +86,7 @@ function HomePluginsTable({ data, columns, columnVisibility }) {
 
 export function HomePlugins({selectPlugin}) {
   // Contexts
-  const { online, logMessage, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
+  const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
   const { showConfirmCancelDialog } = useContext(UiContext);
   // Refs
   const uniqueId = useRef(getUniqueId());
@@ -166,18 +165,18 @@ export function HomePlugins({selectPlugin}) {
       Cell: ({ row: plugin }) => (
         <div style={{ margin: '0px', padding: '0px', gap: '4px', display: 'flex', flexDirection: 'row' }}>
           {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.original.error && plugin.original.enabled && 
-            <Tooltip title="Shows the QRCode or the fabrics"><IconButton style={{ margin: '0', padding: '0' }} onClick={() => selectPlugin(plugin.original)} size="small"><QrCode2/></IconButton></Tooltip>
+            <Tooltip title="Shows the QRCode or the fabrics" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0' }} onClick={() => selectPlugin(plugin.original)} size="small"><QrCode2/></IconButton></Tooltip>
           }
-          <Tooltip title="Plugin config"><IconButton disabled={plugin.original.restartRequired === true || matterbridgeInfo?.restartRequired === true} style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleConfigPlugin(plugin.original)} size="small"><Settings/></IconButton></Tooltip>
+          <Tooltip title="Plugin config" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton disabled={plugin.original.restartRequired === true} style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleConfigPlugin(plugin.original)} size="small"><Settings/></IconButton></Tooltip>
           {matterbridgeInfo && !matterbridgeInfo.readOnly &&
-            <Tooltip title="Remove the plugin"><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => { handleActionWithConfirmCancel('Remove plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'remove', plugin.original); }} size="small"><DeleteForever/></IconButton></Tooltip>
+            <Tooltip title="Remove the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => { handleActionWithConfirmCancel('Remove plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'remove', plugin.original); }} size="small"><DeleteForever/></IconButton></Tooltip>
           }
-          {plugin.original.enabled ? <Tooltip title="Disable the plugin"><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => { handleActionWithConfirmCancel('Disable plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'disable', plugin.original); }} size="small"><Unpublished/></IconButton></Tooltip> : <></>}
-          {!plugin.original.enabled ? <Tooltip title="Enable the plugin"><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleEnableDisablePlugin(plugin.original)} size="small"><PublishedWithChanges/></IconButton></Tooltip> : <></>}
-          <Tooltip title="Open the plugin help"><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleHelpPlugin(plugin.original)} size="small"><Help/></IconButton></Tooltip>
-          <Tooltip title="Open the plugin version history"><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleChangelogPlugin(plugin.original)} size="small"><Announcement/></IconButton></Tooltip>
+          {plugin.original.enabled ? <Tooltip title="Disable the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => { handleActionWithConfirmCancel('Disable plugin', 'Are you sure? This will remove also all the devices and configuration in the controller.', 'disable', plugin.original); }} size="small"><Unpublished/></IconButton></Tooltip> : <></>}
+          {!plugin.original.enabled ? <Tooltip title="Enable the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleEnableDisablePlugin(plugin.original)} size="small"><PublishedWithChanges/></IconButton></Tooltip> : <></>}
+          <Tooltip title="Open the plugin help" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleHelpPlugin(plugin.original)} size="small"><Help/></IconButton></Tooltip>
+          <Tooltip title="Open the plugin version history" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{margin: '0px', padding: '0px', width: '19px', height: '19px'}} onClick={() => handleChangelogPlugin(plugin.original)} size="small"><Announcement/></IconButton></Tooltip>
           {matterbridgeInfo && !matterbridgeInfo.readOnly &&
-            <Tooltip title="Sponsor the plugin"><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: '#b6409c' }} onClick={() => handleSponsorPlugin(plugin.original)} size="small"><Favorite/></IconButton></Tooltip>
+            <Tooltip title="Sponsor the plugin" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}><IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: '#b6409c' }} onClick={() => handleSponsorPlugin(plugin.original)} size="small"><Favorite/></IconButton></Tooltip>
           }
         </div>
       ),
@@ -227,14 +226,13 @@ export function HomePlugins({selectPlugin}) {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Broadcast messages
-        if (msg.method === 'refresh_required' && msg.params.changed === 'plugins') {
+        if (msg.method === 'refresh_required' && (msg.params.changed === 'plugins' || msg.params.changed === 'pluginsRestart')) {
           if(debug) console.log('HomePlugins received refresh_required for', msg.params.changed);
-          // sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-          sendMessage({ id: uniqueId.current, method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+          sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
-        if (msg.method === 'restart_required') {
-          if(debug) console.log('HomePlugins received restart_required');
-          sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+        if (msg.method === 'refresh_required' && msg.params.changed === 'settings') {
+          if(debug) console.log('HomePlugins received refresh_required for', msg.params.changed);
+          sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         // Local messages
         if (msg.id === uniqueId.current && msg.method === '/api/settings') {
@@ -262,8 +260,8 @@ export function HomePlugins({selectPlugin}) {
   useEffect(() => {
     if (online) {
       if(debug) console.log('HomePlugins sending api requests');
-      sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ id: uniqueId.current, method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   }, [online, sendMessage]);
 
@@ -316,27 +314,23 @@ export function HomePlugins({selectPlugin}) {
 
   const handleUpdatePlugin = (plugin) => {
     if (debug) console.log('handleUpdatePlugin plugin:', plugin.name);
-    logMessage('Plugins', `Updating plugin: ${plugin.name}`);
-    sendCommandToMatterbridge('installplugin', plugin.name);
+    sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: plugin.name, restart: false } });
   };
 
   const handleRemovePlugin = (plugin) => {
     if (debug) console.log('handleRemovePlugin plugin:', plugin.name);
-    logMessage('Plugins', `Removing plugin: ${plugin.name}`);
-    sendCommandToMatterbridge('removeplugin', plugin.name);
+    sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/removeplugin", src: "Frontend", dst: "Matterbridge", params: { pluginName: plugin.name } });
   };
 
   const handleEnableDisablePlugin = (plugin) => {
     if (debug) console.log('handleEnableDisablePlugin plugin:', plugin.name, 'enabled:', plugin.enabled);
     if (plugin.enabled === true) {
       plugin.enabled = false;
-      logMessage('Plugins', `Disabling plugin: ${plugin.name}`);
-      sendCommandToMatterbridge('disableplugin', plugin.name);
+      sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/disableplugin", src: "Frontend", dst: "Matterbridge", params: { pluginName: plugin.name } });
     }
     else {
       plugin.enabled = true;
-      logMessage('Plugins', `Enabling plugin: ${plugin.name}`);
-      sendCommandToMatterbridge('enableplugin', plugin.name);
+      sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/enableplugin", src: "Frontend", dst: "Matterbridge", params: { pluginName: plugin.name } });
     }
   };
 
@@ -366,8 +360,8 @@ export function HomePlugins({selectPlugin}) {
 
   const handleConfigPlugin = (plugin) => {
     if (debug) console.log('handleConfigPlugin plugin:', plugin.name);
-    sendMessage({ id: uniqueId.current, method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
-    sendMessage({ id: uniqueId.current, method: "/api/select/entities", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
+    sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
+    sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: "/api/select/entities", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name } });
     setSelectedPlugin(plugin);
     handleOpenConfig();
   };

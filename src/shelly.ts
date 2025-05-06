@@ -245,8 +245,8 @@ export async function triggerShellySoftReset(matterbridge: Matterbridge): Promis
     });
 }
 /**
- * Triggers Shelly soft reset.
- * It will do a soft reset and will remove both directories .matterbridge Matterbridge.
+ * Triggers Shelly hard reset.
+ * It will do a hard reset and will remove both directories .matterbridge Matterbridge.
  * @param {Matterbridge} matterbridge - The Matterbridge instance.
  * @returns {Promise<void>} A promise that resolves when the operation is complete.
  */

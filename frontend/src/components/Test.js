@@ -4,6 +4,7 @@
 import React, { useContext, useEffect, useState, useRef } from 'react';
 
 // @mui/material
+import { Button } from '@mui/material';
 
 // @mui/icons-material
 
@@ -20,7 +21,7 @@ function Test() {
   // WebSocket context
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
   // Ui context
-  const { showSnackbarMessage } = useContext(UiContext);
+  const { showSnackbarMessage, closeSnackbarMessage } = useContext(UiContext);
 
   // Local states
   const [_settings, setSettings] = useState(null);
@@ -114,6 +115,7 @@ function Test() {
       sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
       sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
       sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+      showSnackbarMessage('Test permanent message removal', 0);
       showSnackbarMessage('Test useEffect online received online (info)', 30, 'info');
       showSnackbarMessage('Test useEffect online received online (warning)', 30, 'warning');
       showSnackbarMessage('Test useEffect online received online (error)', 30, 'error');
@@ -165,6 +167,14 @@ function Test() {
 
         <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '256px', width: '256px', margin: '10px' }}/>
         <p>Welcome to the Test page of the Matterbridge frontend</p>
+
+        <Button variant="contained" color="primary" onClick={() => {
+          if(debug) console.log('Test button clicked');
+          showSnackbarMessage('Test button clicked');
+          closeSnackbarMessage('Refresh required');
+          closeSnackbarMessage('Restart required');
+          closeSnackbarMessage('Test permanent message removal');
+        }}>Test</Button>  
 
       </div>  
     </div>

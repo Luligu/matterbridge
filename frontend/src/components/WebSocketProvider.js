@@ -20,6 +20,8 @@ export const WS_ID_UPTIME_UPDATE = 5;
 export const WS_ID_SNACKBAR = 6;
 export const WS_ID_UPDATE_NEEDED = 7;
 export const WS_ID_STATEUPDATE = 8;
+export const WS_ID_CLOSE_SNACKBAR = 9;
+
 export const WS_ID_SHELLY_SYS_UPDATE = 100;
 export const WS_ID_SHELLY_MAIN_UPDATE = 101;
 
@@ -36,7 +38,7 @@ export function WebSocketProvider({ children }) {
   const [online, setOnline] = useState(false);
 
   // Contexts
-  const { showSnackbarMessage, closeSnackbar } = useContext(UiContext);
+  const { showSnackbarMessage, closeSnackbarMessage, closeSnackbar } = useContext(UiContext);
 
   // Refs
   const listenersRef = useRef([]);
@@ -150,6 +152,10 @@ export function WebSocketProvider({ children }) {
         } else if (msg.id === WS_ID_SNACKBAR) {
           if (debug) console.log(`WebSocket WS_ID_SNACKBAR message:`, msg, 'listeners:', listenersRef.current.length);
           showSnackbarMessage(msg.params.message, msg.params.timeout, msg.params.severity);
+          return;
+        } else if (msg.id === WS_ID_CLOSE_SNACKBAR) {
+          if (debug) console.log(`WebSocket WS_ID_CLOSE_SNACKBAR message:`, msg, 'listeners:', listenersRef.current.length);
+          closeSnackbarMessage(msg.params.message);
           return;
         } else if (msg.id === WS_ID_SHELLY_SYS_UPDATE) {
           if (debug) console.log(`WebSocket WS_ID_SHELLY_SYS_UPDATE message:`, msg, 'listeners:', listenersRef.current.length);

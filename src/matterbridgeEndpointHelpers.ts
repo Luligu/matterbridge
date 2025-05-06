@@ -21,6 +21,7 @@ import {
   MatterbridgeValveConfigurationAndControlServer,
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeBooleanStateConfigurationServer,
+  MatterbridgeOperationalStateServer,
 } from './matterbridgeBehaviors.js';
 
 // @matter
@@ -69,6 +70,7 @@ import { Pm25ConcentrationMeasurement } from '@matter/main/clusters/pm25-concent
 import { Pm10ConcentrationMeasurement } from '@matter/main/clusters/pm10-concentration-measurement';
 import { RadonConcentrationMeasurement } from '@matter/main/clusters/radon-concentration-measurement';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/main/clusters/total-volatile-organic-compounds-concentration-measurement';
+import { OperationalState } from '@matter/main/clusters/operational-state';
 
 // @matter behaviors
 import { PowerSourceServer } from '@matter/main/behaviors/power-source';
@@ -174,6 +176,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId) {
   if (clusterId === PumpConfigurationAndControl.Cluster.id) return PumpConfigurationAndControlServer.with('ConstantSpeed');
   if (clusterId === SmokeCoAlarm.Cluster.id) return MatterbridgeSmokeCoAlarmServer.with('SmokeAlarm', 'CoAlarm');
   if (clusterId === Switch.Cluster.id) return SwitchServer.with('MomentarySwitch', 'MomentarySwitchRelease', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress');
+  if (clusterId === OperationalState.Cluster.id) return MatterbridgeOperationalStateServer;
   if (clusterId === BooleanState.Cluster.id) return BooleanStateServer.enable({ events: { stateChange: true } });
   if (clusterId === BooleanStateConfiguration.Cluster.id) return MatterbridgeBooleanStateConfigurationServer;
   if (clusterId === PowerTopology.Cluster.id) return PowerTopologyServer.with('TreeTopology');
@@ -271,6 +274,7 @@ export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: Cl
   if (serverList.includes(PumpConfigurationAndControl.Cluster.id)) endpoint.createDefaultPumpConfigurationAndControlClusterServer();
   if (serverList.includes(SmokeCoAlarm.Cluster.id)) endpoint.createDefaultSmokeCOAlarmClusterServer();
   if (serverList.includes(Switch.Cluster.id)) endpoint.createDefaultSwitchClusterServer();
+  if (serverList.includes(OperationalState.Cluster.id)) endpoint.createDefaultOperationalStateClusterServer();
   if (serverList.includes(BooleanState.Cluster.id)) endpoint.createDefaultBooleanStateClusterServer();
   if (serverList.includes(BooleanStateConfiguration.Cluster.id)) endpoint.createDefaultBooleanStateConfigurationClusterServer();
   if (serverList.includes(PowerTopology.Cluster.id)) endpoint.createDefaultPowerTopologyClusterServer();

@@ -7,6 +7,7 @@ import { AnsiLogger, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
+  airPurifier,
   airQualitySensor,
   contactSensor,
   coverDevice,
@@ -68,6 +69,10 @@ import {
   RvcRunMode,
   RvcOperationalState,
   RvcCleanMode,
+  ThermostatUserInterfaceConfiguration,
+  HepaFilterMonitoring,
+  ActivatedCarbonFilterMonitoring,
+  ResourceMonitoring,
 } from '@matter/main/clusters';
 import {
   AirQualityServer,
@@ -479,10 +484,12 @@ describe('MatterbridgeEndpoint class', () => {
       expect(device).toBeDefined();
       device.createDefaultIdentifyClusterServer();
       device.createDefaultThermostatClusterServer();
+      device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
       expect(device.hasAttributeServer(Thermostat.Cluster.id, 'localTemperature')).toBe(true);
       expect(device.hasAttributeServer(Thermostat.Cluster.id, 'systemMode')).toBe(true);
       expect(device.hasAttributeServer(Thermostat.Cluster.id, 'occupiedHeatingSetpoint')).toBe(true);
       expect(device.hasAttributeServer(Thermostat.Cluster.id, 'occupiedCoolingSetpoint')).toBe(true);
+      expect(device.hasAttributeServer(ThermostatUserInterfaceConfiguration.Cluster.id, 'temperatureDisplayMode')).toBe(true);
 
       await add(device);
       expect(device.getAttribute(Thermostat.Cluster.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
@@ -528,6 +535,23 @@ describe('MatterbridgeEndpoint class', () => {
 
       await add(device);
       expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
+    });
+
+    test('createDefaultHepaFilterMonitoringClusterServer', async () => {
+      const device = new MatterbridgeEndpoint(airPurifier, { uniqueStorageKey: 'AirPurifier' });
+      expect(device).toBeDefined();
+      device.createDefaultIdentifyClusterServer();
+      device.createBaseFanControlClusterServer();
+      device.createDefaultHepaFilterMonitoringClusterServer();
+      device.createDefaultActivatedCarbonFilterMonitoringClusterServer();
+      expect(device.hasAttributeServer(FanControl.Cluster, 'fanMode')).toBe(true);
+      expect(device.hasAttributeServer(HepaFilterMonitoring.Cluster, 'changeIndication')).toBe(true);
+      expect(device.hasAttributeServer(ActivatedCarbonFilterMonitoring.Cluster, 'changeIndication')).toBe(true);
+
+      await add(device);
+      expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
+      expect(device.getAttribute(HepaFilterMonitoring.Cluster.id, 'changeIndication')).toBe(ResourceMonitoring.ChangeIndication.Ok);
+      expect(device.getAttribute(ActivatedCarbonFilterMonitoring.Cluster.id, 'changeIndication')).toBe(ResourceMonitoring.ChangeIndication.Ok);
     });
 
     test('createDefaultDoorLockClusterServer', async () => {

@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-console */
 // React
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 
 // @mui/material
 import Dialog from '@mui/material/Dialog';
@@ -293,7 +293,7 @@ function Device({ device, endpoint, id, deviceType, clusters }) {
 */
 export function DevicesIcons({filter}) {
   // WebSocket context
-  const { online, sendMessage, addListener, removeListener } = useContext(WebSocketContext);
+  const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
 
   // Local states
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -305,6 +305,9 @@ export function DevicesIcons({filter}) {
   const [clusters, setClusters] = useState({}); // { serial: [ { endpoint, id, clusterName, clusterId, attributeName, attributeId, attributeValue } ] }
   const [filteredDevices, setFilteredDevices] = useState(devices);
 
+  // Refs
+  const uniqueId = useRef(getUniqueId());
+  
   const handleDialogToggle = () => {
     setDialogOpen(!dialogOpen);
   };
@@ -314,9 +317,9 @@ export function DevicesIcons({filter}) {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'refresh_required') {
           if(debug) console.log('DevicesIcons received refresh_required and sending api requests');
-          sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-          sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
-          sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+          sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+          sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+          sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === '/api/settings' && msg.response) {
           if(debug) console.log('DevicesIcons received settings:', msg.response);
@@ -331,7 +334,7 @@ export function DevicesIcons({filter}) {
           setDevices(msg.response);
           for(let device of msg.response) {
             if(debug) console.log('DevicesIcons sending /api/clusters');
-            sendMessage({ method: "/api/clusters", src: "Frontend", dst: "Matterbridge", params: { plugin: device.pluginName, endpoint: device.endpoint } });
+            sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/clusters", src: "Frontend", dst: "Matterbridge", params: { plugin: device.pluginName, endpoint: device.endpoint } });
           }
         }
         if (msg.method === '/api/clusters' && msg.response) {
@@ -371,9 +374,9 @@ export function DevicesIcons({filter}) {
     if(debug) console.log('DevicesIcons useEffect online mounting');
     if(online) {
       if(debug) console.log('DevicesIcons useEffect online sending api requests');
-      sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Icons', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
     }
     if(debug) console.log('DevicesIcons useEffect online mounted');
 

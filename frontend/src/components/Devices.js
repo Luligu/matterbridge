@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 // React
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import { useTable, useSortBy } from 'react-table';
 
 // @mui/material
@@ -260,8 +260,10 @@ function ClustersTable({ data, columnVisibility }) {
 }
 
 function Devices() {
-  const { online, sendMessage, addListener, removeListener } = useContext(WebSocketContext);
+  // WebSocket context
+  const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
 
+  // Local states
   const [devices, setDevices] = useState([]);
   const [clusters, setClusters] = useState([]);
   const [plugin, setPlugin] = useState(null);
@@ -299,6 +301,9 @@ function Devices() {
   // View mode
   const [viewMode, setViewMode] = useState('table');
 
+  // Refs
+  const uniqueId = useRef(getUniqueId());
+
   // WebSocket message handler effect
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
@@ -306,7 +311,7 @@ function Devices() {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         if (msg.method === 'refresh_required') {
           if(debug) console.log('Devices received refresh_required');
-          sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+          sendMessage({ id: uniqueId.current, sender: 'Devices', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === '/api/devices') {
           if(debug) console.log(`Devices received ${msg.response.length} devices:`, msg.response);
@@ -343,9 +348,9 @@ function Devices() {
   useEffect(() => {
     if (online) {
       if(debug) console.log('Devices sending api requests');
-      sendMessage({ method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Devices', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Devices', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Devices', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   }, [online, sendMessage]);
 
@@ -353,7 +358,7 @@ function Devices() {
   useEffect(() => {
     if (plugin && endpoint) {
       if(debug) console.log('Devices sending /api/clusters');
-      sendMessage({ method: "/api/clusters", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin, endpoint: endpoint } });
+      sendMessage({ id: uniqueId.current, sender: 'Devices', method: "/api/clusters", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin, endpoint: endpoint } });
     }
   }, [plugin, endpoint, sendMessage]);
 

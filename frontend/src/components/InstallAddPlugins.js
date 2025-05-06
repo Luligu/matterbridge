@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 // React
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef } from 'react';
 
 // @mui/material
 import TextField from '@mui/material/TextField';
@@ -18,14 +18,19 @@ import MoreVert from '@mui/icons-material/MoreVert';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
-import { sendCommandToMatterbridge } from './sendApiCommand';
 import { debug } from '../App';
 
 export function InstallAddPlugins() {
+  // Contexts
+  const { logMessage, sendMessage, getUniqueId } = useContext(WebSocketContext);
+
+  // States
   const [pluginName, setPluginName] = useState('matterbridge-');
   const [_dragging, setDragging] = useState(false);  
   const [anchorEl, setAnchorEl] = React.useState(null);
-  const { logMessage } = useContext(WebSocketContext);
+
+  // Refs
+  const uniqueId = useRef(getUniqueId());
 
   // Handle drag events
   const handleDragOver = (event) => {
@@ -90,12 +95,7 @@ export function InstallAddPlugins() {
   };
 
   const handleInstallPluginClick = () => {
-    const plugin = pluginName.split('@')[0];
-    if (plugin === 'matterbridge')
-      logMessage('Matterbridge', `Installing matterbridge package: ${pluginName}`);
-    else
-      logMessage('Plugins', `Installing plugin: ${pluginName}`);
-    sendCommandToMatterbridge('installplugin', pluginName);
+    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: "/api/install", src: "Frontend", dst: "Matterbridge", params: { packageName: pluginName, restart: false } });
   };
 
   const handleUploadClick = () => {
@@ -103,8 +103,7 @@ export function InstallAddPlugins() {
   };
 
   const handleAddPluginClick = () => {
-    logMessage('Plugins', `Adding plugin: ${pluginName}`);
-    sendCommandToMatterbridge('addplugin', pluginName);
+    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: "/api/addplugin", src: "Frontend", dst: "Matterbridge", params: { pluginNameOrPath: pluginName } });
   };
 
   const handleClickVertical = (event) => {

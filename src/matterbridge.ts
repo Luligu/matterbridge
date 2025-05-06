@@ -35,7 +35,7 @@ import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW,
 import { NodeStorageManager, NodeStorage } from './storage/export.js';
 
 // Matterbridge
-import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter } from './utils/export.js';
+import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString, isValidNumber } from './utils/export.js';
 import { logInterfaces, getGlobalNodeModules } from './utils/network.js';
 import { MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
@@ -45,7 +45,23 @@ import { bridge } from './matterbridgeDeviceTypes.js';
 import { Frontend } from './frontend.js';
 
 // @matter
-import { DeviceTypeId, Endpoint as EndpointNode, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, VendorId, StorageContext, StorageManager, StorageService, Environment, ServerNode, FabricIndex, SessionsBehavior } from '@matter/main';
+import {
+  DeviceTypeId,
+  Endpoint as EndpointNode,
+  Logger,
+  LogLevel as MatterLogLevel,
+  LogFormat as MatterLogFormat,
+  VendorId,
+  StorageContext,
+  StorageManager,
+  StorageService,
+  Environment,
+  ServerNode,
+  FabricIndex,
+  SessionsBehavior,
+  UINT32_MAX,
+  UINT16_MAX,
+} from '@matter/main';
 import { DeviceCommissioner, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
@@ -63,6 +79,8 @@ interface MatterbridgeEvent {
   shutdown: [];
   restart: [];
   update: [];
+  cleanup_started: [];
+  cleanup_completed: [];
   startmemorycheck: [];
   stopmemorycheck: [];
 }
@@ -515,6 +533,7 @@ export class Matterbridge extends EventEmitter {
       if (!availableInterfaces.includes(this.mdnsInterface)) {
         this.log.error(`Invalid mdnsInterface: ${this.mdnsInterface}. Available interfaces are: ${availableInterfaces.join(', ')}. Using all available interfaces.`);
         this.mdnsInterface = undefined;
+        await this.nodeContext.remove('mattermdnsinterface');
       } else {
         this.log.info(`Using mdnsInterface ${CYAN}${this.mdnsInterface}${nf} for the Matter MdnsBroadcaster.`);
       }
@@ -541,6 +560,7 @@ export class Matterbridge extends EventEmitter {
       if (!isValid) {
         this.log.error(`Invalid ipv4address: ${this.ipv4address}. Using all available addresses.`);
         this.ipv4address = undefined;
+        await this.nodeContext.remove('matteripv4address');
       }
     }
 
@@ -569,6 +589,7 @@ export class Matterbridge extends EventEmitter {
       if (!isValid) {
         this.log.error(`Invalid ipv6address: ${this.ipv6address}. Using all available addresses.`);
         this.ipv6address = undefined;
+        await this.nodeContext.remove('matteripv6address');
       }
     }
 
@@ -1312,6 +1333,7 @@ export class Matterbridge extends EventEmitter {
    */
   protected async cleanup(message: string, restart = false) {
     if (this.initialized && !this.hasCleanupStarted) {
+      this.emit('cleanup_started');
       this.hasCleanupStarted = true;
       this.log.info(message);
 
@@ -1361,7 +1383,7 @@ export class Matterbridge extends EventEmitter {
         }
       }
 
-      // Stopping matter server nodes
+      // Stop matter server nodes
       this.log.notice(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
       this.log.debug('Waiting for the MessageExchange to finish...');
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second for MessageExchange to finish
@@ -1506,6 +1528,7 @@ export class Matterbridge extends EventEmitter {
       }
       this.hasCleanupStarted = false;
       this.initialized = false;
+      this.emit('cleanup_completed');
     } else {
       this.log.debug('Cleanup already started...');
     }
@@ -2013,10 +2036,10 @@ const commissioningController = new CommissioningController({
     await storageContext.set('productLabel', productName.slice(0, 32));
     await storageContext.set('serialNumber', await storageContext.get('serialNumber', serialNumber ? serialNumber.slice(0, 32) : 'SN' + random));
     await storageContext.set('uniqueId', await storageContext.get('uniqueId', 'UI' + random));
-    await storageContext.set('softwareVersion', this.matterbridgeVersion !== '' && this.matterbridgeVersion.includes('.') ? parseInt(this.matterbridgeVersion.split('.')[0], 10) : 1);
-    await storageContext.set('softwareVersionString', this.matterbridgeVersion !== '' ? this.matterbridgeVersion : '1.0.0');
-    await storageContext.set('hardwareVersion', this.systemInformation.osRelease !== '' && this.systemInformation.osRelease.includes('.') ? parseInt(this.systemInformation.osRelease.split('.')[0], 10) : 1);
-    await storageContext.set('hardwareVersionString', this.systemInformation.osRelease !== '' ? this.systemInformation.osRelease : '1.0.0');
+    await storageContext.set('softwareVersion', isValidNumber(parseVersionString(this.matterbridgeVersion), 0, UINT32_MAX) ? parseVersionString(this.matterbridgeVersion) : 1);
+    await storageContext.set('softwareVersionString', isValidString(this.matterbridgeVersion, 5, 64) ? this.matterbridgeVersion : '1.0.0');
+    await storageContext.set('hardwareVersion', isValidNumber(parseVersionString(this.systemInformation.osRelease), 0, UINT16_MAX) ? parseVersionString(this.systemInformation.osRelease) : 1);
+    await storageContext.set('hardwareVersionString', isValidString(this.systemInformation.osRelease, 5, 64) ? this.systemInformation.osRelease : '1.0.0');
 
     this.log.debug(`Created server node storage context "${pluginName}.persist" for ${pluginName}:`);
     this.log.debug(`- storeId: ${await storageContext.get('storeId')}`);

@@ -181,7 +181,7 @@ export function HomeDevices() {
       Cell: ({ row }) => (
         <div style={{ display: 'flex', flexDirection: 'row' }}>
           {row.original.configUrl ?
-            <Tooltip title="Open the configuration page">
+            <Tooltip title="Open the configuration page" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}>
               <IconButton
                 onClick={() => window.open(row.original.configUrl, '_blank')}
                 aria-label="Open config url"
@@ -194,7 +194,7 @@ export function HomeDevices() {
             <div style={{ width: '20px', height: '20px' }}></div>
           }
           {row.original.selected!==undefined ?
-            <Tooltip title="Select/unselect the device">
+            <Tooltip title="Select/unselect the device" slotProps={{popper:{modifiers:[{name:'offset',options:{offset: [30, 15]}}]}}}>
               <Checkbox
                 checked={row.original.selected} 
                 onChange={(event) => handleCheckboxChange(event, row.original)} 
@@ -210,14 +210,38 @@ export function HomeDevices() {
     },
   ];
   
+  const isSelected = React.useCallback((device) => {
+    // if(debug) console.log(`HomeDevices isSelected: plugin ${device.pluginName} name ${device.name} serial ${device.serial}`);
+    device.selected = undefined;
+    const plugin = plugins.find((p) => p.name === device.pluginName);
+    if(!plugin) {
+      console.error(`HomeDevices isSelected: plugin ${device.pluginName} not found for device ${device.deviceName} `);
+      return device.selected;
+    }
+    const selectMode = plugin.schemaJson?.properties?.whiteList?.selectFrom;
+    let postfix = plugin.configJson?.postfix;
+    if(postfix === '') postfix = undefined;
+    if(plugin.hasWhiteList===true && plugin.hasBlackList===true && selectMode) {
+      device.selected = true;
+      if(selectMode==='serial' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(postfix ? device.serial.replace('-'+postfix, '') : device.serial)) device.selected = true;
+      if(selectMode==='serial' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(postfix ? device.serial.replace('-'+postfix, '') : device.serial)) device.selected = false;
+      if(selectMode==='serial' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(postfix ? device.serial.replace('-'+postfix, '') : device.serial)) device.selected = false;
+      if(selectMode==='name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(device.name)) device.selected = true;
+      if(selectMode==='name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(device.name)) device.selected = false;
+      if(selectMode==='name' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(device.name)) device.selected = false;
+    }
+    // if(debug) console.log(`HomeDevices isSelected: plugin ${device.pluginName} selectMode ${selectMode} postfix ${postfix} name ${device.name} serial ${device.serial} select ${device.selected}`);
+    return device.selected;
+  }, [plugins]);
+
   // WebSocket message handler effect
   useEffect(() => {
     const handleWebSocketMessage = (msg) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Broadcast messages
-        if (msg.method === 'refresh_required' && msg.params.changed !== 'sessions' && msg.params.changed !== 'matterbridgeLatestVersion' && msg.params.changed !== 'reachability') {
+        if (msg.method === 'refresh_required' && msg.params.changed !== 'pluginsRestart' && msg.params.changed !== 'sessions' && msg.params.changed !== 'matterbridgeLatestVersion' && msg.params.changed !== 'reachability') {
           if (debug) console.log(`HomeDevices received refresh_required: changed=${msg.params.changed}`);
-          sendMessage({ id: uniqueId.current, method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+          sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
         }
         if (msg.method === 'restart_required') {
           if(debug) console.log('HomeDevices received restart_required');
@@ -240,7 +264,7 @@ export function HomeDevices() {
           if (debug) console.log(`HomeDevices (id: ${msg.id}) received settings:`, msg.response);
           setSystemInfo(msg.response.systemInformation);
           setMatterbridgeInfo(msg.response.matterbridgeInformation);
-          setRestart(msg.response.matterbridgeInformation.restartRequired);
+          setRestart(msg.response.matterbridgeInformation.restartRequired); // Set the restart state based on the response. Used in the footer.
         }
         if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
           if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} plugins:`, msg.response);
@@ -255,17 +279,18 @@ export function HomeDevices() {
             }
             if(!running) return;
 
-            setLoading(false);
+            if(debug) console.log(`HomeDevices reset plugins, devices and selectDevices`);
+            setLoading(false); // Set loading to false only when all plugins are loaded. Used in the footer.
             setPlugins(msg.response);
             setDevices([]);
             setSelectDevices([]);
 
-            sendMessage({ id: uniqueId.current, method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
+            sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/devices", src: "Frontend", dst: "Matterbridge", params: {} });
             if(debug) console.log(`HomeDevices sent /api/devices`);
 
             for (const plugin of msg.response) {
               if(plugin.enabled===true && plugin.loaded===true && plugin.started===true /* && plugin.configured===true */ && plugin.error!==true) {
-                sendMessage({ id: uniqueId.current, method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name} });
+                sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/select/devices", src: "Frontend", dst: "Matterbridge", params: { plugin: plugin.name} });
                 if(debug) console.log(`HomeDevices sent /api/select/devices for plugin: ${plugin.name}`);
               } 
             }
@@ -275,14 +300,7 @@ export function HomeDevices() {
           if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} devices:`, msg.response);
           if(msg.response) {
             for (const device of msg.response) {
-              if(plugins.length===0) console.error(`HomeDevices: /api/devices with plugins lenght 0`);
-              const plugin = plugins.find((p) => p.name === device.pluginName);
-              if(!plugin) console.error(`HomeDevices: device ${device.deviceName} has no plugin ${device.pluginName}`);
-              if(plugin?.hasBlackList===true) {
-                device.selected = true;
-              } else {
-                device.selected = undefined;
-              }
+              device.selected = isSelected(device);
             }
             setDevices(msg.response);
           }
@@ -291,10 +309,10 @@ export function HomeDevices() {
           if(debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} selectDevices for plugin ${msg.plugin}:`, msg.response);
           if(msg.response) {
             setSelectDevices((prevSelectDevices) => {
-              // Filter out devices from the current plugin
+              // Filter out devices not from the current plugin
               const filteredDevices = prevSelectDevices.filter(device => device.pluginName !== msg.plugin);
               // Add the new devices from the current plugin
-              const updatedDevices = msg.response.map(device => ({ ...device, selected: false }));
+              const updatedDevices = msg.response.map(device => ({ ...device, selected: isSelected(device) }));
               return [...filteredDevices, ...updatedDevices];
             });
           }
@@ -309,11 +327,11 @@ export function HomeDevices() {
       removeListener(handleWebSocketMessage);
       if(debug) console.log('HomeDevices removed WebSocket listener');
     };
-  }, [plugins, addListener, removeListener, sendMessage]);
+  }, [plugins, addListener, removeListener, sendMessage, isSelected]);
   
   // Mix devices and selectDevices
   useEffect(() => {
-    if(debug) console.log('HomeDevices mixing devices and selectDevices');
+    if(debug) console.log(`HomeDevices mixing devices (${devices.length}) and selectDevices (${selectDevices.length})`);
     const mixed = [];
     for (const device of devices) {
       mixed.push(device);
@@ -325,14 +343,15 @@ export function HomeDevices() {
       }
     }
     setMixedDevices(mixed);
+    if(debug) console.log(`HomeDevices mixed ${mixed.length} devices and selectDevices`);
   }, [plugins, devices, selectDevices, setMixedDevices]);
   
   // Send API requests when online
   useEffect(() => {
     if (online) {
-      if(debug) console.log('HomeDevices sending api requests');
-      sendMessage({ id: uniqueId.current, method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
-      sendMessage({ id: uniqueId.current, method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
+      if(debug) console.log('HomeDevices sending /api/settings and /api/plugins requests');
+      sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/plugins", src: "Frontend", dst: "Matterbridge", params: {} });
     }
   }, [online, sendMessage]);
 
@@ -347,7 +366,7 @@ export function HomeDevices() {
         [accessor]: !prev[accessor],
       };
       localStorage.setItem('homeDevicesColumnVisibility', JSON.stringify(newVisibility));
-      if(debug) console.log(`HomeDevices effect: saved column visibility to localStorage`);
+      if(debug) console.log(`HomeDevices saved column visibility to localStorage`);
       return newVisibility;
     });
   };
@@ -360,9 +379,9 @@ export function HomeDevices() {
       )
     );
     if(event.target.checked ) {
-      sendMessage({ id: uniqueId.current, method: "/api/command", src: "Frontend", dst: "Matterbridge", params: { command: 'selectdevice', plugin: device.pluginName, serial: device.serial, name: device.name } });
+      sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/command", src: "Frontend", dst: "Matterbridge", params: { command: 'selectdevice', plugin: device.pluginName, serial: device.serial, name: device.name } });
     } else {
-      sendMessage({ id: uniqueId.current, method: "/api/command", src: "Frontend", dst: "Matterbridge", params: { command: 'unselectdevice', plugin: device.pluginName, serial: device.serial, name: device.name } });
+      sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: "/api/command", src: "Frontend", dst: "Matterbridge", params: { command: 'unselectdevice', plugin: device.pluginName, serial: device.serial, name: device.name } });
     }
   };
 
@@ -372,7 +391,7 @@ export function HomeDevices() {
       const visibility = JSON.parse(storedVisibility);
       if(visibility.powerSource === undefined) visibility['powerSource'] = true; // Fix for old versions
       setDevicesColumnVisibility(visibility);
-      if(debug) console.log(`HomeDevices effect: loaded column visibility from localStorage`);
+      if(debug) console.log(`HomeDevices loaded column visibility from localStorage`);
     }
   }, []);
 

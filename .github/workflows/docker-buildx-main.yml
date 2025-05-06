@@ -1,15 +1,17 @@
 name: Build Docker Image latest with buildx
 
 on:
+  # Push on main branch
   push:
     branches:
       - main
     paths-ignore:
-      - '/screenshot/*'
-      - '/*.md'
+      - 'screenshot/**' # any file under screenshot/
+      - '**/*.md' # any .md anywhere
+  # Runs daily at 00:00 UTC
   schedule:
-    # Runs daily at 00:00 UTC
     - cron: '0 0 * * *'
+  # Allow manual dispatch
   workflow_dispatch:
 
 jobs:
@@ -17,12 +19,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout code to main branch
         uses: actions/checkout@v4
+        with:
+          ref: main
 
-      - uses: actions/setup-node@v4
+      - name: Set up Node.js & registry
+        uses: actions/setup-node@v4
         with:
           node-version: '22.x'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
