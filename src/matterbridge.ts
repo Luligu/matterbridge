@@ -62,7 +62,7 @@ import {
   UINT32_MAX,
   UINT16_MAX,
 } from '@matter/main';
-import { DeviceCommissioner, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
+import { DeviceCertification, DeviceCommissioner, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
@@ -213,6 +213,7 @@ export class Matterbridge extends EventEmitter {
   port: number | undefined; // first server node port
   passcode: number | undefined; // first server node passcode
   discriminator: number | undefined; // first server node discriminator
+  certification: DeviceCertification.Definition | undefined; // device certification
 
   serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
   aggregatorNode: EndpointNode<AggregatorEndpoint> | undefined;
@@ -432,6 +433,43 @@ export class Matterbridge extends EventEmitter {
     // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode)
     this.discriminator = getIntParameter('discriminator') ?? (await this.nodeContext.get<number>('matterdiscriminator')) ?? PaseClient.generateRandomDiscriminator();
 
+    // Certificate management
+    const pairingFilePath = path.join(this.homeDirectory, '.mattercert', 'pairing.json');
+    try {
+      await fs.access(pairingFilePath, fs.constants.R_OK);
+      const pairingFileContent = await fs.readFile(pairingFilePath, 'utf8');
+      const pairingFileJson = JSON.parse(pairingFileContent) as { passcode?: number; discriminator?: number; remoteUrl?: string; privateKey?: Uint8Array; certificate?: Uint8Array; intermediateCertificate?: Uint8Array; declaration?: Uint8Array };
+      // Override the passcode and discriminator if they are present in the pairing file
+      if (pairingFileJson.passcode && pairingFileJson.discriminator) {
+        this.passcode = pairingFileJson.passcode;
+        this.discriminator = pairingFileJson.discriminator;
+        this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using passcode ${CYAN}${this.passcode}${nf} and discriminator ${CYAN}${this.discriminator}${nf}`);
+      }
+      // Set the certification if it is present in the pairing file
+      if (pairingFileJson.privateKey && pairingFileJson.certificate && pairingFileJson.intermediateCertificate && pairingFileJson.declaration) {
+        const hexStringToUint8Array = (hexString: string) => {
+          const matches = hexString.match(/.{1,2}/g);
+          return matches ? new Uint8Array(matches.map((byte) => parseInt(byte, 16))) : new Uint8Array();
+        };
+        // const hexString = Buffer.from('Test string', 'utf-8').toString('hex');
+        // console.log(hexString, Buffer.from(hexStringToUint8Array(hexString)).toString('utf-8'));
+
+        this.certification = {
+          privateKey: hexStringToUint8Array(pairingFileJson.privateKey),
+          certificate: hexStringToUint8Array(pairingFileJson.certificate),
+          intermediateCertificate: hexStringToUint8Array(pairingFileJson.intermediateCertificate),
+          declaration: hexStringToUint8Array(pairingFileJson.declaration),
+        };
+        this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using privateKey, certificate, intermediateCertificate and declaration from pairing file.`);
+      }
+    } catch (error) {
+      this.log.debug(`Pairing file ${CYAN}${pairingFilePath}${db} not found: ${error instanceof Error ? error.message : error}`);
+    }
+
+    // Store the passcode, discriminator and port in the node context
+    await this.nodeContext.set<number>('matterport', this.port);
+    await this.nodeContext.set<number>('matterpasscode', this.passcode);
+    await this.nodeContext.set<number>('matterdiscriminator', this.discriminator);
     this.log.debug(`Initializing server node for Matterbridge... on port ${this.port} with passcode ${this.passcode} and discriminator ${this.discriminator}`);
 
     // Set matterbridge logger level (context: matterbridgeLogLevel)
@@ -2084,6 +2122,11 @@ const commissioningController = new CommissioningController({
         listeningAddressIpv4: this.ipv4address,
         listeningAddressIpv6: this.ipv6address,
         port,
+      },
+
+      // Provide the certificate for the device
+      operationalCredentials: {
+        certification: this.certification,
       },
 
       // Provide Commissioning relevant settings
