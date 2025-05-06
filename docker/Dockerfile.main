@@ -29,12 +29,12 @@ COPY --from=builder /app/*.tgz .
 # COPY --from=builder /app/node_modules ./node_modules
 # COPY --from=builder /app/frontend/build ./frontend/build
 
-RUN npm install -g --omit=dev *.tgz && \
-    rm *.tgz && \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     apt-get clean && \
-    npm install --global --omit=dev matterbridge-zigbee2mqtt \
+    npm install --global --omit=dev \
+    *.tgz \
+    matterbridge-zigbee2mqtt \
     matterbridge-somfy-tahoma \
     matterbridge-shelly \
     matterbridge-hass \
@@ -52,6 +52,7 @@ RUN npm install -g --omit=dev *.tgz && \
     node -v && \
     npm -v && \
     npm list -g && \
+    rm *.tgz && \
     rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /var/lib/apt/lists/* && \
     find /usr/local/lib/node_modules -type d -name ".github" -exec rm -rf {} + && \
     find /usr/local/lib/node_modules -type d -name ".vscode" -exec rm -rf {} + && \
