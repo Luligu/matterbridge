@@ -27,8 +27,8 @@ import { mdiSortAscending, mdiSortDescending } from '@mdi/js';
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
 import { Connecting } from './Connecting';
-// import { debug } from '../App';
-const debug = true;
+import { debug } from '../App';
+// const debug = true;
 
 
 export function HomeDevicesTable({ data, columns, columnVisibility }) {
@@ -219,16 +219,18 @@ export function HomeDevices() {
       return device.selected;
     }
     const selectMode = plugin.schemaJson?.properties?.whiteList?.selectFrom;
+    let postfix = plugin.configJson?.postfix;
+    if(postfix === '') postfix = undefined;
     if(plugin.hasWhiteList===true && plugin.hasBlackList===true && selectMode) {
       device.selected = true;
-      if(selectMode==='serial' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(device.serial)) device.selected = true;
-      if(selectMode==='serial' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(device.serial)) device.selected = false;
-      if(selectMode==='serial' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(device.serial)) device.selected = false;
+      if(selectMode==='serial' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(postfix ? device.serial.replace('-'+postfix, '') : device.serial)) device.selected = true;
+      if(selectMode==='serial' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(postfix ? device.serial.replace('-'+postfix, '') : device.serial)) device.selected = false;
+      if(selectMode==='serial' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(postfix ? device.serial.replace('-'+postfix, '') : device.serial)) device.selected = false;
       if(selectMode==='name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(device.name)) device.selected = true;
       if(selectMode==='name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(device.name)) device.selected = false;
       if(selectMode==='name' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(device.name)) device.selected = false;
     }
-    // if(debug) console.log(`HomeDevices isSelected: plugin ${device.pluginName} name ${device.name} serial ${device.serial} select ${device.selected}`);
+    // if(debug) console.log(`HomeDevices isSelected: plugin ${device.pluginName} selectMode ${selectMode} postfix ${postfix} name ${device.name} serial ${device.serial} select ${device.selected}`);
     return device.selected;
   }, [plugins]);
 

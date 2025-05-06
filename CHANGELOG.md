@@ -13,12 +13,12 @@ If you like this project and find it useful, please consider giving it a star on
 If you want to run Matterbridge in Home Assistant please use the official add-on https://github.com/Luligu/matterbridge-home-assistant-addon that also has Ingress and side panel.
 It is also available the official Matterbridge Home Assistant plugin https://github.com/Luligu/matterbridge-hass.
 
-## [3.0.1] - 2025-05-05
+## [3.0.1] - 2025-05-06
 
 ### Added
 
-- [docker]: The builder for the **docker** image with tag **latest** will run each day at 00:00 UTC if there are new releases. Inside the image matterbridge and all plugins with the latest release (as published on npm) are already loaded. You can just pull the new image and matterbridge with all plugins will be the latest.
-- [docker]: The builder for the **docker** image with tag **dev** will run each day at 00:00 UTC if there are new commits. Inside the image matterbridge and all plugins with the dev release (as pushed on GitHub) are already loaded. You can just pull the new image and matterbridge with all plugins will be the latest dev. It is possible that the devs are outdated by some published latests.
+- [docker]: The builder for the **docker** image with tag **latest** will run each day at 00:00 UTC if there are new releases. Inside the image matterbridge and all plugins with the latest release (as published on npm) are already loaded. You can just pull the new image and matterbridge with all plugins will be updated to the latest.
+- [docker]: The builder for the **docker** image with tag **dev** will run each day at 00:00 UTC if there are new commits. Inside the image matterbridge and all plugins with the dev release (as pushed on GitHub) are already loaded. You can just pull the new image and matterbridge with all plugins will be updated to the latest dev. It is possible that the devs are outdated by some published latests.
 - [npm]: The dev of matterbridge is published with tag **dev** on **npm** each day at 00:00 UTC if there is a new commit. It is possible that the dev is outdated by a published latest.
 - [frontend]: Added closeSnackbarMessage() to remove the notification with timeout = 0.
 - [frontend]: Moved all plugin actions from express to web socket.
@@ -37,7 +37,7 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 ### Fixed
 
 - [BasicInformation]: Fixed vulnerability in BasicInformation and BridgedDeviceBasicInformation cluster initialization attributes.
-- [frontend]: Fixed refresh for select in HomeDevices.
+- [frontend]: Fixed refresh and postfix for select in HomeDevices.
 
 ## [3.0.0] - 2025-04-29
 
