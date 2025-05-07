@@ -42,6 +42,9 @@ import { ModeSelect } from '@matter/main/clusters/mode-select';
 import { SmokeCoAlarm } from '@matter/main/clusters/smoke-co-alarm';
 import { BooleanStateConfigurationServer } from '@matter/main/behaviors/boolean-state-configuration';
 import { OperationalState } from '@matter/main/clusters/operational-state';
+import { ModeBase } from '@matter/main/clusters/mode-base';
+import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
+import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
 
 // @matter behaviors
 import { IdentifyServer } from '@matter/main/behaviors/identify';
@@ -57,12 +60,17 @@ import { ModeSelectServer } from '@matter/main/behaviors/mode-select';
 import { SmokeCoAlarmServer } from '@matter/main/behaviors/smoke-co-alarm';
 import { SwitchServer } from '@matter/main/behaviors/switch';
 import { OperationalStateServer } from '@matter/main/behaviors/operational-state';
+import { RvcRunModeServer } from '@matter/main/behaviors/rvc-run-mode';
 
 // AnsiLogger module
 import { AnsiLogger } from './logger/export.js';
 
 // MatterbridgeEndpoint
 import { MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
+import { RvcCleanModeServer } from '@matter/main/behaviors/rvc-clean-mode';
+import { RvcOperationalStateServer } from '@matter/main/behaviors/rvc-operational-state';
+import { ServiceAreaServer } from '@matter/main/behaviors/service-area';
+import { ServiceArea } from '@matter/main/clusters/service-area';
 
 export class MatterbridgeServerDevice {
   log: AnsiLogger;
@@ -219,6 +227,16 @@ export class MatterbridgeServerDevice {
   resume() {
     this.log.info(`Resume (endpoint ${this.endpointId}.${this.endpointNumber})`);
     this.commandHandler.executeHandler('resume', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  goHome() {
+    this.log.info(`GoHome (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.commandHandler.executeHandler('goHome', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  selectAreas({ newAreas }: ServiceArea.SelectAreasRequest) {
+    this.log.info(`Selecting areas ${newAreas} (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.commandHandler.executeHandler('selectAreas', { request: { newAreas }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
 }
 
@@ -532,5 +550,105 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
     };
+  }
+}
+
+/** ********************************************* RVC  **********************************************************/
+
+export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
+  override changeToMode({ newMode }: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const supported = this.state.supportedModes.find((mode) => mode.mode === newMode);
+    if (!supported) {
+      device.log.error(`MatterbridgeRvcRunModeServer changeToMode called with unsupported newMode: ${newMode}`);
+      return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
+    }
+    device.changeToMode({ newMode });
+    this.state.currentMode = newMode;
+    if (supported.modeTags.find((tag) => tag.value === RvcRunMode.ModeTag.Cleaning)) {
+      device.log.info('MatterbridgeRvcRunModeServer changeToMode called with newMode Cleaning => Running');
+      this.agent.get(MatterbridgeRvcOperationalStateServer).state.operationalState = RvcOperationalState.OperationalState.Running;
+      return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Running' };
+    } else if (supported.modeTags.find((tag) => tag.value === RvcRunMode.ModeTag.Idle)) {
+      device.log.info('MatterbridgeRvcRunModeServer changeToMode called with newMode Idle => Docked');
+      this.agent.get(MatterbridgeRvcOperationalStateServer).state.operationalState = RvcOperationalState.OperationalState.Docked;
+      return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Docked' };
+    }
+    device.log.info(`MatterbridgeRvcRunModeServer changeToMode called with newMode ${newMode} => ${supported.label}`);
+    this.agent.get(MatterbridgeRvcOperationalStateServer).state.operationalState = RvcOperationalState.OperationalState.Running;
+    return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
+  }
+}
+
+export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
+  override changeToMode({ newMode }: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const supported = this.state.supportedModes.find((mode) => mode.mode === newMode);
+    if (!supported) {
+      device.log.error(`MatterbridgeRvcCleanModeServer changeToMode called with unsupported newMode: ${newMode}`);
+      return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
+    }
+    device.changeToMode({ newMode });
+    this.state.currentMode = newMode;
+    device.log.info(`MatterbridgeRvcCleanModeServer changeToMode called with newMode ${newMode} => ${supported.label}`);
+    return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
+  }
+}
+
+export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateServer {
+  override pause(): MaybePromise<OperationalState.OperationalCommandResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.log.info('MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused and currentMode to Idle');
+    device.pause();
+    this.agent.get(MatterbridgeRvcRunModeServer).state.currentMode = 1; // RvcRunMode.ModeTag.Idle
+    this.state.operationalState = RvcOperationalState.OperationalState.Paused;
+    this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error', errorStateDetails: 'Fully operational' };
+    return {
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+    } as OperationalState.OperationalCommandResponse;
+  }
+
+  override resume(): MaybePromise<OperationalState.OperationalCommandResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.log.info('MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning');
+    device.resume();
+    this.agent.get(MatterbridgeRvcRunModeServer).state.currentMode = 2; // RvcRunMode.ModeTag.Cleaning
+    this.state.operationalState = RvcOperationalState.OperationalState.Running;
+    this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error', errorStateDetails: 'Fully operational' };
+    return {
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+    } as OperationalState.OperationalCommandResponse;
+  }
+
+  override goHome(): MaybePromise<OperationalState.OperationalCommandResponse> {
+    // const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.log.info('MatterbridgeRvcOperationalStateServer: goHome called setting operational state to Docked and currentMode to Idle');
+    device.goHome();
+    this.agent.get(MatterbridgeRvcRunModeServer).state.currentMode = 1; // RvcRunMode.ModeTag.Idle
+    this.state.operationalState = RvcOperationalState.OperationalState.Docked;
+    this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error', errorStateDetails: 'Fully operational' };
+    return {
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+    } as OperationalState.OperationalCommandResponse;
+  }
+}
+
+export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
+  override selectAreas({ newAreas }: ServiceArea.SelectAreasRequest): MaybePromise<ServiceArea.SelectAreasResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    for (const area of newAreas) {
+      const supportedArea = this.state.supportedAreas.find((supportedArea) => supportedArea.areaId === area);
+      if (!supportedArea) {
+        device.log.error(`MatterbridgeServiceAreaServer selectAreas called with unsupported area: ${area}`);
+        return { status: ServiceArea.SelectAreasStatus.UnsupportedArea, statusText: 'Unsupported areas' };
+      }
+    }
+    device.selectAreas({ newAreas });
+    this.state.selectedAreas = newAreas;
+    this.state.currentArea = newAreas[0];
+    device.log.info(`MatterbridgeServiceAreaServer selectAreas called with: ${newAreas.map((area) => area.toString()).join(', ')}`);
+    device.selectAreas({ newAreas });
+    return { status: ServiceArea.SelectAreasStatus.Success, statusText: 'Succesfully selected new areas' };
   }
 }

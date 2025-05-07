@@ -61,6 +61,7 @@ export * from './matterbridgeDeviceTypes.js';
 export * from './matterbridgePlatform.js';
 export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
+export * from './roboticVacuumCleaner.js';
 
 const log = new AnsiLogger({ logName: 'Main', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 

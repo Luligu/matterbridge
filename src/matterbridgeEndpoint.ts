@@ -56,6 +56,7 @@ import {
   getBehavior,
   getBehaviourTypesFromClusterClientIds,
   getBehaviourTypesFromClusterServerIds,
+  getDefaultOperationalStateClusterServer,
   getDefaultFlowMeasurementClusterServer,
   getDefaultIlluminanceMeasurementClusterServer,
   getDefaultPressureMeasurementClusterServer,
@@ -215,6 +216,12 @@ export interface MatterbridgeEndpointCommands {
   stop: HandlerFunction;
   start: HandlerFunction;
   resume: HandlerFunction;
+
+  // Rvc Operational State
+  goHome: HandlerFunction;
+
+  // Rvc Service Area
+  selectAreas: HandlerFunction;
 }
 
 export interface SerializedMatterbridgeEndpoint {
@@ -1873,18 +1880,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultOperationalStateClusterServer(operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped): this {
-    this.behaviors.require(MatterbridgeOperationalStateServer, {
-      phaseList: [],
-      currentPhase: null,
-      operationalStateList: [
-        { operationalStateId: OperationalState.OperationalStateEnum.Stopped, operationalStateLabel: 'Stopped' },
-        { operationalStateId: OperationalState.OperationalStateEnum.Running, operationalStateLabel: 'Running' },
-        { operationalStateId: OperationalState.OperationalStateEnum.Paused, operationalStateLabel: 'Paused' },
-        { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
-      ],
-      operationalState,
-      operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
-    });
+    this.behaviors.require(MatterbridgeOperationalStateServer, getDefaultOperationalStateClusterServer(operationalState));
     return this;
   }
 
