@@ -1,14 +1,11 @@
+// src\utils\wait.test.ts
 /* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/**
- * Jest tests for the waiter, wait and withTimeout helper function.
- *
- * @module wait.test.ts
- */
-import { waiter, wait, withTimeout, log } from './wait';
-import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import { jest } from '@jest/globals';
+import { AnsiLogger, LogLevel } from 'node-ansi-logger';
+
+import { waiter, wait, withTimeout, log } from './wait.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

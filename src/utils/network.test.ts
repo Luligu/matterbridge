@@ -1,12 +1,8 @@
+// src\utils\network.test.ts
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/**
- * Jest tests for the `network` module.
- *
- * @module network.test.ts
- */
 import { jest } from '@jest/globals';
 
 // ESM mock for https get
@@ -47,14 +43,13 @@ jest.unstable_mockModule('node:child_process', () => {
 
 import os from 'node:os';
 import dns from 'node:dns';
-import https, { get, RequestOptions } from 'node:https';
+import { get, RequestOptions } from 'node:https';
 import { exec, ChildProcess, ExecException } from 'node:child_process';
 import { PassThrough } from 'node:stream';
-
+import { ClientRequest, IncomingMessage } from 'node:http';
 import { AnsiLogger, idn, rs, LogLevel } from 'node-ansi-logger';
 
-import { getIpv4InterfaceAddress, getIpv6InterfaceAddress, getMacAddress, logInterfaces, resolveHostname, getNpmPackageVersion, getGlobalNodeModules } from './network';
-import { ClientRequest, IncomingMessage } from 'node:http';
+import { getIpv4InterfaceAddress, getIpv6InterfaceAddress, getMacAddress, logInterfaces, resolveHostname, getNpmPackageVersion, getGlobalNodeModules } from './network.js';
 
 jest.useFakeTimers();
 

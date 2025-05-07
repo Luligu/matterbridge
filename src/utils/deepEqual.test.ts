@@ -1,6 +1,6 @@
+// src\utils\deepEqual.test.ts
 /* eslint-disable @typescript-eslint/no-empty-function */
-// deepEqual.test.ts
-import { deepEqual } from './deepEqual';
+import { deepEqual } from './deepEqual.js';
 
 describe('deepEqual', () => {
   // Primitives and same references

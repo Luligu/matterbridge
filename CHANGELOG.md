@@ -22,6 +22,7 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 - [package]: Updated dependencies.
 - [utils]: Refactor utils functions.
 - [utils]: Updated Jest tests on utils functions.
+- [devices]: Added RoboticVacuumCleaner class to create the Robotic Vacuum Cleaner device type.
 
 ### Fixed
 

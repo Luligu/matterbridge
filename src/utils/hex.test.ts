@@ -1,9 +1,5 @@
-/**
- * Jest tests for bufferToHex and hexToBuffer functions.
- *
- * @module hex.test.ts
- */
-import { bufferToHex, hexToBuffer } from './hex';
+// src\utils\hex.test.ts
+import { bufferToHex, hexToBuffer } from './hex.js';
 
 describe('bufferToHex()', () => {
   it('throws error for non-ArrayBufferLike input', () => {

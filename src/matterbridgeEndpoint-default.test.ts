@@ -1,39 +1,7 @@
+// src\matterbridgeEndpoint-default.test.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
-import { AnsiLogger, db, er, hk, LogLevel, or } from 'node-ansi-logger';
-
-import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import {
-  airPurifier,
-  airQualitySensor,
-  contactSensor,
-  coverDevice,
-  doorLockDevice,
-  electricalSensor,
-  fanDevice,
-  flowSensor,
-  genericSwitch,
-  humiditySensor,
-  lightSensor,
-  modeSelect,
-  occupancySensor,
-  onOffLight,
-  powerSource,
-  pressureSensor,
-  pumpDevice,
-  rainSensor,
-  roboticVacuumCleaner,
-  smokeCoAlarm,
-  temperatureSensor,
-  thermostatDevice,
-  waterFreezeDetector,
-  waterLeakDetector,
-  waterValve,
-} from './matterbridgeDeviceTypes.js';
-
-// @matter
 import { Lifecycle } from '@matter/main';
 import {
   AirQuality,
@@ -65,9 +33,6 @@ import {
   Thermostat,
   ValveConfigurationAndControl,
   WindowCovering,
-  RvcRunMode,
-  RvcOperationalState,
-  RvcCleanMode,
   ThermostatUserInterfaceConfiguration,
   HepaFilterMonitoring,
   ActivatedCarbonFilterMonitoring,
@@ -90,6 +55,36 @@ import {
   RadonConcentrationMeasurementServer,
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/node/behaviors';
+import { AnsiLogger, db, er, hk, LogLevel, or } from 'node-ansi-logger';
+
+import { Matterbridge } from './matterbridge.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import {
+  airPurifier,
+  airQualitySensor,
+  contactSensor,
+  coverDevice,
+  doorLockDevice,
+  electricalSensor,
+  fanDevice,
+  flowSensor,
+  genericSwitch,
+  humiditySensor,
+  lightSensor,
+  modeSelect,
+  occupancySensor,
+  onOffLight,
+  powerSource,
+  pressureSensor,
+  pumpDevice,
+  rainSensor,
+  smokeCoAlarm,
+  temperatureSensor,
+  thermostatDevice,
+  waterFreezeDetector,
+  waterLeakDetector,
+  waterValve,
+} from './matterbridgeDeviceTypes.js';
 import { updateAttribute } from './matterbridgeEndpointHelpers.js';
 
 describe('MatterbridgeEndpoint class', () => {

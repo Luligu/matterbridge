@@ -1,17 +1,19 @@
+// src\pluginManager.test.ts
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-profile', 'JestPluginManager'];
 
 import { jest } from '@jest/globals';
+import { execSync } from 'node:child_process';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import { AnsiLogger, db, er, LogLevel, nf, nt, pl, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+
 import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
-import { execSync } from 'node:child_process';
 import { waiter } from './utils/export.js';
-import { promises as fs } from 'node:fs';
-import path from 'node:path';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
 
@@ -622,7 +624,7 @@ describe('PluginManager', () => {
     expect(plugins.length).toBe(0);
 
     execSync('npm uninstall -g matterbridge-eve-door');
-  }, 60000);
+  }, 300000); // Fails randomly on windows workflows that are really slow
 
   test('save to storage', async () => {
     (plugins as any)._plugins.set('matterbridge-mock1', { name: 'matterbridge-mock1', path: './src/mock/plugin1/package.json', type: 'Unknown', version: '1.0.0', description: 'To update', author: 'To update' });

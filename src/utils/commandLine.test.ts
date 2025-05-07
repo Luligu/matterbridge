@@ -1,6 +1,7 @@
-// parameter.test.ts
+// src\utils\commandLine.test.ts
 import { jest } from '@jest/globals';
-import { hasParameter, getParameter, getIntParameter, getIntArrayParameter, getStringArrayParameter } from './commandLine';
+
+import { hasParameter, getParameter, getIntParameter, getIntArrayParameter, getStringArrayParameter } from './commandLine.js';
 
 describe('Parameter Functions', () => {
   const ORIGINAL_ARGV = process.argv;

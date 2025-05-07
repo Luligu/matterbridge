@@ -1,17 +1,18 @@
+// src\frontend.express.test.ts
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 process.argv = ['node', 'frontend.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-profile', 'JestFrontendExpress', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
 
 import { expect, jest } from '@jest/globals';
-import { AnsiLogger, LogLevel } from 'node-ansi-logger';
-import { Matterbridge } from './matterbridge.js';
-import { createZip, waiter } from './utils/export.js';
 import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import os from 'node:os';
-import { copyFile } from 'node:fs';
+import { AnsiLogger, LogLevel } from 'node-ansi-logger';
+
+import { Matterbridge } from './matterbridge.js';
+import { waiter } from './utils/export.js';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   return undefined as never;

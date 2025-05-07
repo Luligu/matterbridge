@@ -1,28 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// Node.js modules
-import { createHash } from 'node:crypto';
-
-// AnsiLogger module
-import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, or, YELLOW, zb } from './logger/export.js';
-
-// Matterbridge
-import { deepCopy, deepEqual, isValidArray } from './utils/export.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import {
-  MatterbridgeIdentifyServer,
-  MatterbridgeOnOffServer,
-  MatterbridgeLevelControlServer,
-  MatterbridgeColorControlServer,
-  MatterbridgeWindowCoveringServer,
-  MatterbridgeThermostatServer,
-  MatterbridgeFanControlServer,
-  MatterbridgeDoorLockServer,
-  MatterbridgeModeSelectServer,
-  MatterbridgeValveConfigurationAndControlServer,
-  MatterbridgeSmokeCoAlarmServer,
-  MatterbridgeBooleanStateConfigurationServer,
-  MatterbridgeOperationalStateServer,
-} from './matterbridgeBehaviors.js';
+// src\matterbridgeEndpointHelpers.ts
 
 // @matter
 import { Behavior, ClusterId, Endpoint, Lifecycle } from '@matter/main';
@@ -103,6 +79,29 @@ import { Pm10ConcentrationMeasurementServer } from '@matter/main/behaviors/pm10-
 import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/radon-concentration-measurement';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
 
+// Other modules
+import { createHash } from 'node:crypto';
+import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, or, YELLOW, zb } from 'node-ansi-logger';
+
+// Matterbridge
+import { deepCopy, deepEqual, isValidArray } from './utils/export.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import {
+  MatterbridgeIdentifyServer,
+  MatterbridgeOnOffServer,
+  MatterbridgeLevelControlServer,
+  MatterbridgeColorControlServer,
+  MatterbridgeWindowCoveringServer,
+  MatterbridgeThermostatServer,
+  MatterbridgeFanControlServer,
+  MatterbridgeDoorLockServer,
+  MatterbridgeModeSelectServer,
+  MatterbridgeValveConfigurationAndControlServer,
+  MatterbridgeSmokeCoAlarmServer,
+  MatterbridgeBooleanStateConfigurationServer,
+  MatterbridgeOperationalStateServer,
+} from './matterbridgeBehaviors.js';
+
 export function capitalizeFirstLetter(name: string): string {
   if (!name) return name;
   return name.charAt(0).toUpperCase() + name.slice(1);
@@ -149,7 +148,7 @@ export function getBehaviourTypesFromClusterServerIds(clusterServerList: Cluster
 export function getBehaviourTypesFromClusterClientIds(clusterClientList: ClusterId[]) {
   // Map Client ClusterId to Behavior.Type
   const behaviorTypes: Behavior.Type[] = [];
-  clusterClientList.forEach((clusterId) => {
+  clusterClientList.forEach((_clusterId) => {
     // behaviorTypes.push(getBehaviourTypeFromClusterClientId(clusterId));
   });
   return behaviorTypes;
@@ -203,7 +202,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId) {
   return MatterbridgeIdentifyServer;
 }
 
-export function getBehaviourTypeFromClusterClientId(clusterId: ClusterId) {
+export function getBehaviourTypeFromClusterClientId(_clusterId: ClusterId) {
   // Map ClusterId to Client Behavior.Type
   // return IdentifyClient;
 }
@@ -549,6 +548,26 @@ export async function subscribeAttribute(endpoint: MatterbridgeEndpoint, cluster
   events[clusterName][attribute].on(listener);
   log?.info(`${db}Subscribed endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db}`);
   return true;
+}
+
+/**
+ * Get the default OperationalState Cluster Server.
+ *
+ * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state.
+ */
+export function getDefaultOperationalStateClusterServer(operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped) {
+  return optionsFor(MatterbridgeOperationalStateServer, {
+    phaseList: [],
+    currentPhase: null,
+    operationalStateList: [
+      { operationalStateId: OperationalState.OperationalStateEnum.Stopped, operationalStateLabel: 'Stopped' },
+      { operationalStateId: OperationalState.OperationalStateEnum.Running, operationalStateLabel: 'Running' },
+      { operationalStateId: OperationalState.OperationalStateEnum.Paused, operationalStateLabel: 'Paused' },
+      { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
+    ],
+    operationalState,
+    operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
+  });
 }
 
 /**

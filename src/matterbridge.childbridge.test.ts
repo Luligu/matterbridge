@@ -1,3 +1,4 @@
+// src\matterbridge.childbridge.test.ts
 /* eslint-disable no-console */
 /* eslint-disable jest/no-conditional-expect */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -6,13 +7,12 @@
 process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-childbridge', '-frontend', '8802', '-profile', 'JestChildbridge', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
 
 import { jest } from '@jest/globals';
-
+import path from 'node:path';
+import { Environment } from '@matter/main';
 import { AnsiLogger, db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+
 import { Matterbridge } from './matterbridge.js';
 import { waiter } from './utils/export.js';
-import { Environment } from '@matter/main';
-import path from 'node:path';
-import os from 'node:os';
 import { PluginManager } from './pluginManager.js';
 
 // Default colors

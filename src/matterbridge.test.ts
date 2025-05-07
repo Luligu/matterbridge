@@ -1,18 +1,17 @@
+// src\matterbridge.test.ts
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug'];
 
 import { jest } from '@jest/globals';
-
-// jest.mock('@project-chip/matter-node.js/util');
-
+import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/main';
+import { ExposedFabricInformation } from '@matter/main/protocol';
 import { AnsiLogger, db, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
+
 import { hasParameter, waiter } from './utils/export.js';
 import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin, SessionInformation } from './matterbridgeTypes.js';
-import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/main';
-import { ExposedFabricInformation } from '@matter/main/protocol';
 
 // Default colors
 const plg = '\u001B[38;5;33m';

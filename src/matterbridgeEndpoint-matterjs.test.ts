@@ -1,34 +1,9 @@
+// src\matterbridgeEndpoint.test.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
-
-import { Matterbridge } from './matterbridge.js';
+import { DeviceTypeId, VendorId, ServerNode, Endpoint, EndpointServer, StorageContext, LogFormat as Format, LogLevel as Level } from '@matter/main';
 import {
-  lightSensor,
-  occupancySensor,
-  onOffLight,
-  onOffOutlet,
-  coverDevice,
-  doorLockDevice,
-  fanDevice,
-  thermostatDevice,
-  waterValve,
-  modeSelect,
-  smokeCoAlarm,
-  waterLeakDetector,
-  laundryWasher,
-  extendedColorLight,
-} from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint, MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
-import { getAttributeId, getBehavior, getClusterId } from './matterbridgeEndpointHelpers.js';
-
-// @matter
-import { DeviceTypeId, VendorId, ServerNode, Endpoint, EndpointServer, StorageContext, NamedHandler } from '@matter/main';
-import { LogFormat as Format, LogLevel as Level } from '@matter/main';
-import {
-  BasicInformationCluster,
-  BridgedDeviceBasicInformationCluster,
   ColorControl,
   Descriptor,
   DescriptorCluster,
@@ -38,8 +13,12 @@ import {
   IdentifyCluster,
   OccupancySensing,
   OnOffCluster,
-  OperationalState,
+  PowerSource,
+  RvcCleanMode,
+  RvcOperationalState,
+  RvcRunMode,
   ScenesManagementCluster,
+  ServiceArea,
   Thermostat,
 } from '@matter/main/clusters';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
@@ -63,13 +42,19 @@ import {
   OnOffBehavior,
   OnOffServer,
   OperationalStateServer,
+  RvcCleanModeServer,
+  RvcOperationalStateServer,
+  RvcRunModeServer,
   ScenesManagementBehavior,
   ScenesManagementServer,
+  ServiceAreaServer,
   SmokeCoAlarmServer,
   ThermostatServer,
   ValveConfigurationAndControlServer,
   WindowCoveringServer,
 } from '@matter/node/behaviors';
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+
 import {
   MatterbridgeBooleanStateConfigurationServer,
   MatterbridgeColorControlServer,
@@ -87,6 +72,11 @@ import {
   MatterbridgeValveConfigurationAndControlServer,
   MatterbridgeWindowCoveringServer,
 } from './matterbridgeBehaviors.js';
+import { Matterbridge } from './matterbridge.js';
+import { lightSensor, occupancySensor, onOffOutlet, coverDevice, doorLockDevice, fanDevice, thermostatDevice, waterValve, modeSelect, smokeCoAlarm, waterLeakDetector, laundryWasher, extendedColorLight } from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
+import { RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
 
 const invokeBehavior = async (endpoint: Endpoint, behavior: string, command: string, params?: Record<string, any>) => {
   await endpoint.act((agent) => {
@@ -112,6 +102,8 @@ describe('MatterbridgeEndpoint class', () => {
   let smoke: MatterbridgeEndpoint;
   let leak: MatterbridgeEndpoint;
   let laundry: MatterbridgeEndpoint;
+  let rvc: RoboticVacuumCleaner;
+
   let matterbridgeServerDevice: MatterbridgeServerDevice;
 
   let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
@@ -512,6 +504,23 @@ describe('MatterbridgeEndpoint class', () => {
       expect(deviceTypeList[2].revision).toBe(lightSensor.revision);
     });
 
+    test('create an Rvc device', async () => {
+      rvc = new RoboticVacuumCleaner('Robot Vacuum Cleaner', '0xABC123456789');
+      expect(rvc).toBeDefined();
+      expect(rvc.id).toBe('RobotVacuumCleaner-0xABC123456789');
+      expect(rvc.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
+      expect(rvc.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
+      expect(rvc.hasClusterServer(RvcRunMode.Cluster.id)).toBeTruthy();
+      expect(rvc.hasClusterServer(RvcCleanMode.Cluster.id)).toBeTruthy();
+      expect(rvc.hasClusterServer(RvcOperationalState.Cluster.id)).toBeTruthy();
+      expect(rvc.hasClusterServer(ServiceArea.Cluster.id)).toBeTruthy();
+    });
+
+    test('add the Rvc device', async () => {
+      expect(await server.add(rvc)).toBeDefined();
+      expect(rvc.lifecycle.isReady).toBe(true);
+    });
+
     test('start server node', async () => {
       expect(server).toBeDefined();
       await (matterbridge as any).startServerNode(server);
@@ -726,6 +735,96 @@ describe('MatterbridgeEndpoint class', () => {
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stop (endpoint ${laundry.id}.${laundry.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Pause (endpoint ${laundry.id}.${laundry.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resume (endpoint ${laundry.id}.${laundry.number})`);
+    });
+
+    test('rvc forEachAttribute', async () => {
+      let count = 0;
+      // consoleWarnSpy.mockRestore();
+      rvc.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+        // console.warn('forEachAttribute', clusterName, clusterId, attributeName, attributeId, attributeValue);
+        expect(clusterName).toBeDefined();
+        expect(clusterId).toBeDefined();
+        expect(attributeName).toBeDefined();
+        expect(attributeId).toBeDefined();
+        count++;
+      });
+      expect(count).toBe(101);
+    });
+
+    test('invoke MatterbridgeRvcRunModeServer commands', async () => {
+      // consoleLogSpy?.mockRestore();
+      // console.log('rvc:', rvc.state, rvc.state['rvcRunMode']);
+      expect(rvc.behaviors.has(RvcRunModeServer)).toBeTruthy();
+      expect(rvc.behaviors.elementsOf(RvcRunModeServer).commands.has('changeToMode')).toBeTruthy();
+      expect((rvc.state['rvcRunMode'] as any).acceptedCommandList).toEqual([0]);
+      expect((rvc.state['rvcRunMode'] as any).generatedCommandList).toEqual([1]);
+      jest.clearAllMocks();
+      await invokeBehavior(rvc, 'rvcRunMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeRvcRunModeServer changeToMode called with unsupported newMode: 0`);
+      jest.clearAllMocks();
+      await invokeBehavior(rvc, 'rvcRunMode', 'changeToMode', { newMode: 1 }); // 1 has Idle
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${rvc.id}.${rvc.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcRunModeServer changeToMode called with newMode Idle => Docked`);
+      await invokeBehavior(rvc, 'rvcRunMode', 'changeToMode', { newMode: 2 }); // 2 has Cleaning
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 2 (endpoint ${rvc.id}.${rvc.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcRunModeServer changeToMode called with newMode Cleaning => Running`);
+      jest.clearAllMocks();
+      await invokeBehavior(rvc, 'rvcRunMode', 'changeToMode', { newMode: 3 }); // 3 has Mapping
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 3 (endpoint ${rvc.id}.${rvc.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcRunModeServer changeToMode called with newMode 3 => Mapping`);
+      jest.clearAllMocks();
+      await invokeBehavior(rvc, 'rvcRunMode', 'changeToMode', { newMode: 4 }); // 4 has Cleaning and Max
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 4 (endpoint ${rvc.id}.${rvc.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcRunModeServer changeToMode called with newMode Cleaning => Running`);
+    });
+
+    test('invoke MatterbridgeRvcCleanModeServer commands', async () => {
+      // consoleLogSpy?.mockRestore();
+      // console.log('rvc:', rvc.state, rvc.state['rvcCleanMode']);
+      expect(rvc.behaviors.has(RvcCleanModeServer)).toBeTruthy();
+      expect(rvc.behaviors.elementsOf(RvcCleanModeServer).commands.has('changeToMode')).toBeTruthy();
+      expect((rvc.state['rvcCleanMode'] as any).acceptedCommandList).toEqual([0]);
+      expect((rvc.state['rvcCleanMode'] as any).generatedCommandList).toEqual([1]);
+      jest.clearAllMocks();
+      await invokeBehavior(rvc, 'rvcCleanMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeRvcCleanModeServer changeToMode called with unsupported newMode: 0`);
+      jest.clearAllMocks();
+      await invokeBehavior(rvc, 'rvcCleanMode', 'changeToMode', { newMode: 1 });
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${rvc.id}.${rvc.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcCleanModeServer changeToMode called with newMode 1 => Vacuum`);
+    });
+
+    test('invoke MatterbridgeRvcOperationalStateServer commands', async () => {
+      expect(rvc.behaviors.has(RvcOperationalStateServer)).toBeTruthy();
+      // expect(rvc.behaviors.has(MatterbridgeRvcOperationalStateServer)).toBeTruthy();
+      expect(rvc.behaviors.elementsOf(RvcOperationalStateServer).commands.has('pause')).toBeTruthy();
+      expect(rvc.behaviors.elementsOf(RvcOperationalStateServer).commands.has('resume')).toBeTruthy();
+      expect(rvc.behaviors.elementsOf(RvcOperationalStateServer).commands.has('goHome')).toBeTruthy();
+      expect((rvc.stateOf(RvcOperationalStateServer) as any).acceptedCommandList).toEqual([0, 3, 128]);
+      expect((rvc.stateOf(RvcOperationalStateServer) as any).generatedCommandList).toEqual([4]);
+      await invokeBehavior(rvc, 'rvcOperationalState', 'pause');
+      await invokeBehavior(rvc, 'rvcOperationalState', 'resume');
+      await invokeBehavior(rvc, 'rvcOperationalState', 'goHome');
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Pause (endpoint ${rvc.id}.${rvc.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused and currentMode to Idle`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resume (endpoint ${rvc.id}.${rvc.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `GoHome (endpoint ${rvc.id}.${rvc.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcOperationalStateServer: goHome called setting operational state to Docked and currentMode to Idle`);
+    });
+
+    test('invoke MatterbridgeServiceAreaServer commands', async () => {
+      expect(rvc.behaviors.has(ServiceAreaServer)).toBeTruthy();
+      // expect(rvc.behaviors.has(MatterbridgeRvcOperationalStateServer)).toBeTruthy();
+      expect(rvc.behaviors.elementsOf(ServiceAreaServer).commands.has('selectAreas')).toBeTruthy();
+      expect((rvc.stateOf(ServiceAreaServer) as any).acceptedCommandList).toEqual([0]);
+      expect((rvc.stateOf(ServiceAreaServer) as any).generatedCommandList).toEqual([1]);
+      await invokeBehavior(rvc, 'serviceArea', 'selectAreas', { newAreas: [1, 2, 3, 4] });
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Selecting areas 1,2,3,4 (endpoint ${rvc.id}.${rvc.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeServiceAreaServer selectAreas called with: 1, 2, 3, 4`);
+      jest.clearAllMocks();
+      await invokeBehavior(rvc, 'serviceArea', 'selectAreas', { newAreas: [0, 5] });
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeServiceAreaServer selectAreas called with unsupported area: 0`);
     });
 
     test('close server node', async () => {
