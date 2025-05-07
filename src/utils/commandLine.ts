@@ -1,5 +1,5 @@
 /**
- * This file contains the deepEqual function.
+ * This file contains the parameters functions.
  *
  * @file parameter.ts
  * @author Luca Liguori
@@ -21,6 +21,8 @@
  * limitations under the License. *
  */
 
+import { isValidNumber } from './export.js';
+
 /**
  * Checks if a command-line parameter is present.
  *
@@ -34,10 +36,8 @@ export function hasParameter(name: string): boolean {
   return markerIncluded;
 }
 
-import { isValidNumber } from './export.js';
-
 /**
- * Retrieves the value of a command-line parameter.
+ * Retrieves the value of a command-line parameter as a string.
  *
  * @param {string} name - The name of the parameter to retrieve.
  * @returns {string | undefined} The value of the parameter, or undefined if not found.

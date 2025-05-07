@@ -1,5 +1,5 @@
 export * from './network.js';
-export * from './parameter.js';
+export * from './commandLine.js';
 export * from './isvalid.js';
 export * from './colorUtils.js';
 export * from './deepCopy.js';
@@ -7,3 +7,4 @@ export * from './deepEqual.js';
 export * from './copyDirectory.js';
 export * from './createZip.js';
 export * from './wait.js';
+export * from './hex.js';

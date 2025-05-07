@@ -33,7 +33,7 @@ import { db, nt, wr } from './logger/export.js';
  * @returns {Promise<void>} A promise that resolves when the update checks are complete.
  */
 export async function checkUpdates(matterbridge: Matterbridge): Promise<void> {
-  const { hasParameter } = await import('./utils/parameter.js');
+  const { hasParameter } = await import('./utils/commandLine.js');
 
   getMatterbridgeLatestVersion(matterbridge);
   getMatterbridgeDevVersion(matterbridge);

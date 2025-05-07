@@ -24,7 +24,7 @@
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat } from '../logger/export.js';
 
-const log = new AnsiLogger({ logName: 'MatterbridgeUtils', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
+export const log = new AnsiLogger({ logName: 'MatterbridgeUtils', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
 
 /**
  * Asynchronous waiter function that resolves when the provided condition is met or rejects on timeout.
@@ -82,7 +82,12 @@ export async function wait(timeout = 1000, name?: string, debug = false): Promis
   });
 }
 
-// Helper function to add a timeout to a promise
+/**
+ * Wraps a promise with a timeout. If the promise does not resolve or reject within the specified time, it will be rejected.
+ * @param {Promise<T>} promise - The promise to wrap.
+ * @param {number} ms - The timeout duration in milliseconds.
+ * @returns {Promise<T>} A new promise that resolves or rejects based on the original promise and the timeout.
+ */
 export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('Operation timed out')), ms);
