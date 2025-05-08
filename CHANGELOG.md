@@ -12,6 +12,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [virtual] Added virtual devices Restart Matterbridge and Update Matterbridge.
+
 ### Changed
 
 - [package]: Updated dependencies.

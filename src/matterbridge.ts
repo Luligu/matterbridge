@@ -2203,7 +2203,7 @@ const commissioningController = new CommissioningController({
 
       if (!hasParameter('novirtual') && this.bridgeMode === 'bridge') {
         this.log.notice(`Creating virtual devices for server node ${storeId}`);
-        const virtualRestart = new Endpoint(OnOffPlugInUnitDevice.with(BridgedDeviceBasicInformationServer), { id: 'Restart', bridgedDeviceBasicInformation: { nodeLabel: 'Restart' } });
+        const virtualRestart = new Endpoint(OnOffPlugInUnitDevice.with(BridgedDeviceBasicInformationServer), { id: 'Restart Matterbridge', bridgedDeviceBasicInformation: { nodeLabel: 'Restart' } });
         virtualRestart.events.onOff.onOff$Changed.on(async (value) => {
           if (value) {
             await virtualRestart.setStateOf(OnOffBaseServer, { onOff: false });
@@ -2213,7 +2213,7 @@ const commissioningController = new CommissioningController({
         });
         await this.aggregatorNode?.add(virtualRestart);
         await virtualRestart.setStateOf(OnOffBaseServer, { onOff: false });
-        const virtualUpdate = new Endpoint(OnOffPlugInUnitDevice.with(BridgedDeviceBasicInformationServer), { id: 'Update', bridgedDeviceBasicInformation: { nodeLabel: 'Update' } });
+        const virtualUpdate = new Endpoint(OnOffPlugInUnitDevice.with(BridgedDeviceBasicInformationServer), { id: 'Update Matterbridge', bridgedDeviceBasicInformation: { nodeLabel: 'Update' } });
         virtualUpdate.events.onOff.onOff$Changed.on(async (value) => {
           if (value) {
             await virtualUpdate.setStateOf(OnOffBaseServer, { onOff: false });
