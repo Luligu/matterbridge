@@ -8,11 +8,6 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-### Home Assistant
-
-If you want to run Matterbridge in Home Assistant please use the official add-on https://github.com/Luligu/matterbridge-home-assistant-addon that also has Ingress and side panel.
-It is also available the official Matterbridge Home Assistant plugin https://github.com/Luligu/matterbridge-hass.
-
 ## [3.0.2] - 2025-05-??
 
 ### Added
@@ -42,6 +37,7 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 - [frontend]: Moved all settings from express to web socket.
 - [endpoint]: Added OperationalState cluster helper and behavior.
 - [behaviors]: Added Jest test on MatterbridgeBehaviors.
+- [docker]: Further optimized the dockerfile for the image with tag latest.
 
 ### Changed
 

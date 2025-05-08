@@ -33,7 +33,7 @@ No complex setup just copy paste the installation scripts.
 
 Matterbridge is light weight and run also on slow Linux machine with 512MB of memory.
 
-It runs perfectly on Windows too.
+It runs perfectly on macOS and Windows too.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 

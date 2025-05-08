@@ -225,6 +225,7 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).devices.size).toBe(0);
 
       // -frontend 8081
+      expect((matterbridge as any).frontend.port).toBe(8081);
       expect((matterbridge as any).frontend.httpServer).toBeDefined();
       expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
       expect((matterbridge as any).frontend.expressApp).toBeDefined();

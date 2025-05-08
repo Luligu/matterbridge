@@ -94,22 +94,6 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   }, 30000);
 
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {
-    /*
-    // Reset matterstorage Jest
-    const environment = Environment.default;
-    environment.vars.set('path.root', path.join(os.homedir(), '.matterbridge', 'matterstorage.JestBridge'));
-    const matterStorageService = environment.get(StorageService);
-    expect(matterStorageService).toBeDefined();
-    const matterStorageManager = await matterStorageService.open('Matterbridge');
-    expect(matterStorageManager).toBeDefined();
-    await matterStorageManager?.createContext('persist').clearAll();
-    await matterStorageManager?.createContext('events').clearAll();
-    await matterStorageManager?.createContext('fabrics').clearAll();
-    await matterStorageManager?.createContext('root').clearAll();
-    await matterStorageManager?.createContext('sessions').clearAll();
-    await matterStorageManager?.close();
-    */
-
     // Load Matterbridge instance and initialize it
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeDefined();
@@ -165,8 +149,8 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
       true,
     );
 
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `The frontend http server is listening on ${UNDERLINE}http://${matterbridge.systemInformation.ipv4Address}:8801${UNDERLINEOFF}${rs}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in bridge mode`);
@@ -239,7 +223,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect(plugins.length).toBe(6);
 
     await waiter(
-      'Matter server started',
+      'Matter server node restarted',
       () => {
         return (matterbridge as any).configureTimeout !== undefined && (matterbridge as any).reachabilityTimeout !== undefined && matterbridge.serverNode?.lifecycle.isOnline === true;
       },

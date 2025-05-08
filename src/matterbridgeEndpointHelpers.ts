@@ -85,7 +85,7 @@ import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, or, YELLOW, zb } fr
 
 // Matterbridge
 import { deepCopy, deepEqual, isValidArray } from './utils/export.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { MatterbridgeEndpoint, MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
 import {
   MatterbridgeIdentifyServer,
   MatterbridgeOnOffServer,
@@ -207,7 +207,7 @@ export function getBehaviourTypeFromClusterClientId(_clusterId: ClusterId) {
   // return IdentifyClient;
 }
 
-export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string) {
+export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string): Behavior.Type | undefined {
   let behavior: Behavior.Type | undefined;
   if (typeof cluster === 'string') {
     behavior = endpoint.behaviors.supported[lowercaseFirstLetter(cluster)];
@@ -219,6 +219,29 @@ export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
     behavior = cluster;
   }
   return behavior;
+}
+
+export async function invokeBehaviorCommand(
+  endpoint: MatterbridgeEndpoint,
+  cluster: Behavior.Type | ClusterType | ClusterId | string,
+  command: keyof MatterbridgeEndpointCommands,
+  params?: Record<string, boolean | number | bigint | string | object | null>,
+) {
+  const behaviorId = getBehavior(endpoint, cluster)?.id;
+  if (!behaviorId) {
+    endpoint.log.error(`invokeBehaviorCommand error: command ${hk}${command}${er} not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+    return;
+  }
+
+  await endpoint.act((agent) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+    const behavior = (agent as unknown as Record<string, Record<string, Function>>)[behaviorId];
+    if (!(command in behavior) || typeof behavior[command] !== 'function') {
+      endpoint.log.error(`invokeBehaviorCommand error: command ${hk}${command}${er} not found on agent for endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+      return;
+    }
+    behavior[command](params);
+  });
 }
 
 export function addRequiredClusterServers(endpoint: MatterbridgeEndpoint) {
