@@ -61,10 +61,13 @@ import {
   SessionsBehavior,
   UINT32_MAX,
   UINT16_MAX,
+  Endpoint,
 } from '@matter/main';
 import { DeviceCertification, DeviceCommissioner, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
+import { OnOffPlugInUnitDevice } from '@matter/main/devices/on-off-plug-in-unit';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
+import { OnOffBaseServer } from '@matter/main/behaviors/on-off';
 import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
 
 // Default colors
@@ -2197,6 +2200,30 @@ const commissioningController = new CommissioningController({
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */
     serverNode.lifecycle.online.on(async () => {
       this.log.notice(`Server node for ${storeId} is online`);
+
+      if (!hasParameter('novirtual') && this.bridgeMode === 'bridge') {
+        this.log.notice(`Creating virtual devices for server node ${storeId}`);
+        const virtualRestart = new Endpoint(OnOffPlugInUnitDevice.with(BridgedDeviceBasicInformationServer), { id: 'Restart', bridgedDeviceBasicInformation: { nodeLabel: 'Restart' } });
+        virtualRestart.events.onOff.onOff$Changed.on(async (value) => {
+          if (value) {
+            await virtualRestart.setStateOf(OnOffBaseServer, { onOff: false });
+            if (this.restartMode === '') this.restartProcess();
+            else this.shutdownProcess();
+          }
+        });
+        await this.aggregatorNode?.add(virtualRestart);
+        await virtualRestart.setStateOf(OnOffBaseServer, { onOff: false });
+        const virtualUpdate = new Endpoint(OnOffPlugInUnitDevice.with(BridgedDeviceBasicInformationServer), { id: 'Update', bridgedDeviceBasicInformation: { nodeLabel: 'Update' } });
+        virtualUpdate.events.onOff.onOff$Changed.on(async (value) => {
+          if (value) {
+            await virtualUpdate.setStateOf(OnOffBaseServer, { onOff: false });
+            this.updateProcess();
+          }
+        });
+        await this.aggregatorNode?.add(virtualUpdate);
+        await virtualUpdate.setStateOf(OnOffBaseServer, { onOff: false });
+      }
+
       if (!serverNode.lifecycle.isCommissioned) {
         this.log.notice(`Server node for ${storeId} is not commissioned. Pair to commission ...`);
         const { qrPairingCode, manualPairingCode } = serverNode.state.commissioning.pairingCodes;
