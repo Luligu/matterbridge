@@ -26,8 +26,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // @matter
-import { Behavior, ClusterBehavior, ClusterInterface, MaybePromise, NamedHandler } from '@matter/main';
-import { OptionalCommand, Status, TypeFromFields } from '@matter/main/types';
+import { Behavior, MaybePromise, NamedHandler } from '@matter/main';
 
 // @matter clusters
 import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
@@ -45,6 +44,7 @@ import { OperationalState } from '@matter/main/clusters/operational-state';
 import { ModeBase } from '@matter/main/clusters/mode-base';
 import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
 import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
+import { ServiceArea } from '@matter/main/clusters/service-area';
 
 // @matter behaviors
 import { IdentifyServer } from '@matter/main/behaviors/identify';
@@ -61,16 +61,15 @@ import { SmokeCoAlarmServer } from '@matter/main/behaviors/smoke-co-alarm';
 import { SwitchServer } from '@matter/main/behaviors/switch';
 import { OperationalStateServer } from '@matter/main/behaviors/operational-state';
 import { RvcRunModeServer } from '@matter/main/behaviors/rvc-run-mode';
+import { RvcCleanModeServer } from '@matter/main/behaviors/rvc-clean-mode';
+import { RvcOperationalStateServer } from '@matter/main/behaviors/rvc-operational-state';
+import { ServiceAreaServer } from '@matter/main/behaviors/service-area';
 
 // AnsiLogger module
 import { AnsiLogger } from './logger/export.js';
 
 // MatterbridgeEndpoint
 import { MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
-import { RvcCleanModeServer } from '@matter/main/behaviors/rvc-clean-mode';
-import { RvcOperationalStateServer } from '@matter/main/behaviors/rvc-operational-state';
-import { ServiceAreaServer } from '@matter/main/behaviors/service-area';
-import { ServiceArea } from '@matter/main/clusters/service-area';
 
 export class MatterbridgeServerDevice {
   log: AnsiLogger;

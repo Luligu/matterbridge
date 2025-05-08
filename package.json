@@ -107,7 +107,7 @@
     "start:help": "node ./dist/cli.js -help",
     "test": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --maxWorkers=100%",
     "test:coverage": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --maxWorkers=100%",
-    "test:verbose": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --verbose",
+    "test:verbose": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --verbose --maxWorkers=100%",
     "test:watch": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "test:cli": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --verbose --coverage cli.test.ts",
     "test:matterbridge": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js --verbose --coverage matterbridge.test.ts",

@@ -23,9 +23,10 @@ import {
 } from '@matter/main/clusters';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { logEndpoint, MdnsService } from '@matter/main/protocol';
-import { OnOffPlugInUnitDevice } from '@matter/node/devices';
+import { ContactSensorDevice, OnOffPlugInUnitDevice } from '@matter/node/devices';
 import {
   BooleanStateConfigurationServer,
+  BooleanStateServer,
   ColorControlServer,
   DescriptorBehavior,
   DescriptorServer,
@@ -53,7 +54,7 @@ import {
   ValveConfigurationAndControlServer,
   WindowCoveringServer,
 } from '@matter/node/behaviors';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, er, hk, LogLevel, or, TimestampFormat } from 'node-ansi-logger';
 
 import {
   MatterbridgeBooleanStateConfigurationServer,
@@ -337,13 +338,11 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('add onOffLight device to serverNode', async () => {
       expect(await server.add(light)).toBeDefined();
-      /*
       expect(EndpointServer.forEndpoint(light).hasClusterServer(DescriptorCluster)).toBe(true);
       expect(EndpointServer.forEndpoint(light).hasClusterServer(IdentifyCluster)).toBe(true);
       expect(EndpointServer.forEndpoint(light).hasClusterServer(GroupsCluster)).toBe(true);
       expect(EndpointServer.forEndpoint(light).hasClusterServer(ScenesManagementCluster)).toBe(false);
       expect(EndpointServer.forEndpoint(light).hasClusterServer(OnOffCluster)).toBe(true);
-      */
     });
 
     test('add rollerDevice device to serverNode', async () => {
@@ -393,7 +392,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('add deviceType to onOffPlugin without tagList', async () => {
-      const child = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer, OccupancySensingServer), {
+      const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer, OccupancySensingServer), {
         id: 'OnOffPlugin1',
         identify: {
           identifyTime: 0,
@@ -414,19 +413,19 @@ describe('MatterbridgeEndpoint class', () => {
           ],
         },
       });
-      expect(child).toBeDefined();
-      child.behaviors.require(DescriptorServer, {
+      expect(endpoint).toBeDefined();
+      endpoint.behaviors.require(DescriptorServer, {
         deviceTypeList: [
           { deviceType: 0x10a, revision: 3 },
           { deviceType: occupancySensor.code, revision: occupancySensor.revision },
         ],
       });
-      expect(await server.add(child)).toBeDefined();
-      logEndpoint(EndpointServer.forEndpoint(child));
+      expect(await server.add(endpoint)).toBeDefined();
+      logEndpoint(EndpointServer.forEndpoint(endpoint));
     });
 
     test('add deviceType to onOffPlugin with tagList', async () => {
-      const child = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer), {
+      const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer), {
         id: 'OnOffPlugin2',
         identify: {
           identifyTime: 0,
@@ -448,9 +447,9 @@ describe('MatterbridgeEndpoint class', () => {
           ],
         },
       });
-      expect(child).toBeDefined();
+      expect(endpoint).toBeDefined();
       expect(() =>
-        child.behaviors.require(DescriptorServer.with(Descriptor.Feature.TagList), {
+        endpoint.behaviors.require(DescriptorServer.with(Descriptor.Feature.TagList), {
           tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }],
           deviceTypeList: [
             { deviceType: onOffOutlet.code, revision: onOffOutlet.revision },
@@ -458,12 +457,12 @@ describe('MatterbridgeEndpoint class', () => {
           ],
         }),
       ).not.toThrow();
-      await expect(server.add(child)).resolves.toBeDefined();
-      logEndpoint(EndpointServer.forEndpoint(child));
+      await expect(server.add(endpoint)).resolves.toBeDefined();
+      logEndpoint(EndpointServer.forEndpoint(endpoint));
     });
 
     test('add deviceType to onOffPlugin in the costructor', async () => {
-      const child = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer, IlluminanceMeasurementServer), {
+      const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer, IlluminanceMeasurementServer), {
         id: 'OnOffPlugin3',
         identify: {
           identifyTime: 0,
@@ -486,10 +485,10 @@ describe('MatterbridgeEndpoint class', () => {
           ],
         },
       });
-      expect(child).toBeDefined();
-      await expect(server.add(child)).resolves.toBeDefined();
-      logEndpoint(EndpointServer.forEndpoint(child));
-      const deviceTypeList = child.state.descriptor.deviceTypeList;
+      expect(endpoint).toBeDefined();
+      await expect(server.add(endpoint)).resolves.toBeDefined();
+      logEndpoint(EndpointServer.forEndpoint(endpoint));
+      const deviceTypeList = endpoint.state.descriptor.deviceTypeList;
       expect(deviceTypeList).toHaveLength(3);
       expect(deviceTypeList[0].deviceType).toBe(onOffOutlet.code);
       expect(deviceTypeList[0].revision).toBe(onOffOutlet.revision);
@@ -497,6 +496,25 @@ describe('MatterbridgeEndpoint class', () => {
       expect(deviceTypeList[1].revision).toBe(occupancySensor.revision);
       expect(deviceTypeList[2].deviceType).toBe(lightSensor.code);
       expect(deviceTypeList[2].revision).toBe(lightSensor.revision);
+    });
+
+    test('add a booleanState', async () => {
+      const endpoint = new Endpoint(ContactSensorDevice.with(BooleanStateServer.enable({ events: { stateChange: true } })), {
+        id: 'ContactSensor1',
+        identify: {
+          identifyTime: 0,
+          identifyType: Identify.IdentifyType.None,
+        },
+        booleanState: {
+          stateValue: false,
+        },
+      });
+      expect(endpoint).toBeDefined();
+      await expect(server.add(endpoint)).resolves.toBeDefined();
+      // consoleLogSpy?.mockRestore();
+      // consoleInfoSpy?.mockRestore();
+      // logEndpoint(EndpointServer.forEndpoint(endpoint));
+      // console.log('ContactSensor1 descriptor state:', endpoint.state.descriptor);
     });
 
     test('create an Rvc device', async () => {
@@ -757,6 +775,15 @@ describe('MatterbridgeEndpoint class', () => {
       expect((rvc.state['rvcRunMode'] as any).generatedCommandList).toEqual([1]);
       expect((rvc.stateOf(MatterbridgeRvcRunModeServer) as any).acceptedCommandList).toEqual([0]);
       expect((rvc.stateOf(MatterbridgeRvcRunModeServer) as any).generatedCommandList).toEqual([1]);
+      jest.clearAllMocks();
+      await rvc.invokeBehaviorCommand('noCluster', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`invokeBehaviorCommand error: command ${hk}changeToMode${er} not found on endpoint`));
+      jest.clearAllMocks();
+      await rvc.invokeBehaviorCommand('rvcRunMode', 'noCommand' as any, { newMode: 0 }); // 0 is not a valid mode
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`invokeBehaviorCommand error: command ${hk}noCommand${er} not found on agent for endpoint`));
+      jest.clearAllMocks();
+      await rvc.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeRvcRunModeServer changeToMode called with unsupported newMode: 0`);
       jest.clearAllMocks();
       await invokeBehaviorCommand(rvc, 'rvcRunMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeRvcRunModeServer changeToMode called with unsupported newMode: 0`);
