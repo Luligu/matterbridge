@@ -186,10 +186,6 @@ export async function triggerShellyChangeIp(matterbridge: Matterbridge, config: 
       matterbridge.log.debug(`****Error triggering Shelly network configuration change: ${error instanceof Error ? error.message : error}`);
       matterbridge.log.error(`Error changing Shelly network configuration: ${error instanceof Error ? error.message : error}`);
       matterbridge.frontend.wssSendSnackbarMessage('Error changing Shelly network configuration', 10, 'error');
-    })
-    .finally(() => {
-      // matterbridge.log.notice(`Changed Shelly network configuration`);
-      // matterbridge.frontend.wssSendSnackbarMessage('Changed Shelly network configuration');
     });
 }
 
@@ -211,10 +207,6 @@ export async function triggerShellyReboot(matterbridge: Matterbridge): Promise<v
       matterbridge.log.debug(`****Error triggering Shelly system reboot: ${error instanceof Error ? error.message : error}`);
       matterbridge.log.error(`Error rebooting Shelly board: ${error instanceof Error ? error.message : error}`);
       matterbridge.frontend.wssSendSnackbarMessage('Error rebooting Shelly board', 10, 'error');
-    })
-    .finally(() => {
-      // matterbridge.log.notice(`Rebooting Shelly board...`);
-      // matterbridge.frontend.wssSendSnackbarMessage('Rebooting Shelly board...');
     });
 }
 

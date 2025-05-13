@@ -4,7 +4,7 @@
  * @file matterbridge.ts
  * @author Luca Liguori
  * @date 2023-12-29
- * @version 1.5.2
+ * @version 1.5.3
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
  *
@@ -37,17 +37,18 @@ import { NodeStorageManager, NodeStorage } from './storage/export.js';
 // Matterbridge
 import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString, isValidNumber } from './utils/export.js';
 import { logInterfaces, getGlobalNodeModules } from './utils/network.js';
-import { MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
+import { dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint, SerializedMatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { Frontend } from './frontend.js';
+import { addVirtualDevices } from './helpers.js';
 
 // @matter
 import {
   DeviceTypeId,
-  Endpoint as EndpointNode,
+  Endpoint,
   Logger,
   LogLevel as MatterLogLevel,
   LogFormat as MatterLogFormat,
@@ -61,19 +62,11 @@ import {
   SessionsBehavior,
   UINT32_MAX,
   UINT16_MAX,
-  Endpoint,
 } from '@matter/main';
 import { DeviceCertification, DeviceCommissioner, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
-import { OnOffPlugInUnitDevice } from '@matter/main/devices/on-off-plug-in-unit';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
-import { OnOffBaseServer } from '@matter/main/behaviors/on-off';
 import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
-
-// Default colors
-const plg = '\u001B[38;5;33m';
-const dev = '\u001B[38;5;79m';
-const typ = '\u001B[38;5;207m';
 
 /**
  * Represents the Matterbridge events.
@@ -219,7 +212,7 @@ export class Matterbridge extends EventEmitter {
   certification: DeviceCertification.Definition | undefined; // device certification
 
   serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
-  aggregatorNode: EndpointNode<AggregatorEndpoint> | undefined;
+  aggregatorNode: Endpoint<AggregatorEndpoint> | undefined;
   aggregatorVendorId = VendorId(getIntParameter('vendorId') ?? 0xfff1);
   aggregatorVendorName = getParameter('vendorName') ?? 'Matterbridge';
   aggregatorProductId = getIntParameter('productId') ?? 0x8000;
@@ -1629,6 +1622,8 @@ export class Matterbridge extends EventEmitter {
     this.aggregatorNode = await this.createAggregatorNode(this.matterbridgeContext);
     await this.serverNode.add(this.aggregatorNode);
 
+    await addVirtualDevices(this, this.aggregatorNode);
+
     await this.startPlugins();
 
     this.log.debug('Starting start matter interval in bridge mode');
@@ -2201,29 +2196,6 @@ const commissioningController = new CommissioningController({
     serverNode.lifecycle.online.on(async () => {
       this.log.notice(`Server node for ${storeId} is online`);
 
-      if (!hasParameter('novirtual') && this.bridgeMode === 'bridge') {
-        this.log.notice(`Creating virtual devices for server node ${storeId}`);
-        const virtualRestart = new Endpoint(OnOffPlugInUnitDevice.with(BridgedDeviceBasicInformationServer), { id: 'Restart Matterbridge', bridgedDeviceBasicInformation: { nodeLabel: 'Restart' } });
-        virtualRestart.events.onOff.onOff$Changed.on(async (value) => {
-          if (value) {
-            await virtualRestart.setStateOf(OnOffBaseServer, { onOff: false });
-            if (this.restartMode === '') this.restartProcess();
-            else this.shutdownProcess();
-          }
-        });
-        await this.aggregatorNode?.add(virtualRestart);
-        await virtualRestart.setStateOf(OnOffBaseServer, { onOff: false });
-        const virtualUpdate = new Endpoint(OnOffPlugInUnitDevice.with(BridgedDeviceBasicInformationServer), { id: 'Update Matterbridge', bridgedDeviceBasicInformation: { nodeLabel: 'Update' } });
-        virtualUpdate.events.onOff.onOff$Changed.on(async (value) => {
-          if (value) {
-            await virtualUpdate.setStateOf(OnOffBaseServer, { onOff: false });
-            this.updateProcess();
-          }
-        });
-        await this.aggregatorNode?.add(virtualUpdate);
-        await virtualUpdate.setStateOf(OnOffBaseServer, { onOff: false });
-      }
-
       if (!serverNode.lifecycle.isCommissioned) {
         this.log.notice(`Server node for ${storeId} is not commissioned. Pair to commission ...`);
         const { qrPairingCode, manualPairingCode } = serverNode.state.commissioning.pairingCodes;
@@ -2450,11 +2422,11 @@ const commissioningController = new CommissioningController({
    * Creates an aggregator node with the specified storage context.
    *
    * @param {StorageContext} storageContext - The storage context for the aggregator node.
-   * @returns {Promise<EndpointNode<AggregatorEndpoint>>} A promise that resolves to the created aggregator node.
+   * @returns {Promise<Endpoint<AggregatorEndpoint>>} A promise that resolves to the created aggregator node.
    */
-  private async createAggregatorNode(storageContext: StorageContext): Promise<EndpointNode<AggregatorEndpoint>> {
+  private async createAggregatorNode(storageContext: StorageContext): Promise<Endpoint<AggregatorEndpoint>> {
     this.log.notice(`Creating ${await storageContext.get<string>('storeId')} aggregator `);
-    const aggregatorNode = new EndpointNode(AggregatorEndpoint, { id: `${await storageContext.get<string>('storeId')}` });
+    const aggregatorNode = new Endpoint(AggregatorEndpoint, { id: `${await storageContext.get<string>('storeId')}` });
     return aggregatorNode;
   }
 
@@ -2686,11 +2658,11 @@ const commissioningController = new CommissioningController({
 
   /**
    * Sets the reachability of the specified aggregator node bridged devices and trigger.
-   * @param {EndpointNode<AggregatorEndpoint>} aggregatorNode - The aggregator node to set the reachability for.
+   * @param {Endpoint<AggregatorEndpoint>} aggregatorNode - The aggregator node to set the reachability for.
    * @param {boolean} reachable - A boolean indicating the reachability status to set.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private async setAggregatorReachability(aggregatorNode: EndpointNode<AggregatorEndpoint>, reachable: boolean) {
+  private async setAggregatorReachability(aggregatorNode: Endpoint<AggregatorEndpoint>, reachable: boolean) {
     /*
     for (const child of aggregatorNode.parts) {
       this.log.debug(`Setting reachability of ${(child as unknown as MatterbridgeEndpoint)?.deviceName} to ${reachable}`);
@@ -2754,14 +2726,6 @@ const commissioningController = new CommissioningController({
     npm > npm.cmd on windows
     cmd.exe ['dir'] on windows
     await this.spawnCommand('npm', ['install', '-g', 'matterbridge']);
-    process.on('unhandledRejection', (reason, promise) => {
-      this.log.error('Unhandled Rejection at:', promise, 'reason:', reason);
-    });
-
-    spawn - [14:27:21.125] [Matterbridge:spawn]: changed 38 packages in 4s
-    spawn - [14:27:21.125] [Matterbridge:spawn]: 10 packages are looking for funding run `npm fund` for details
-    debug - [14:27:21.131] [Matterbridge]: Child process exited with code 0 and signal null
-    debug - [14:27:21.131] [Matterbridge]: Child process stdio streams have closed with code 0
     */
     const cmdLine = command + ' ' + args.join(' ');
     if (process.platform === 'win32' && command === 'npm') {

@@ -226,22 +226,23 @@ export async function invokeBehaviorCommand(
   cluster: Behavior.Type | ClusterType | ClusterId | string,
   command: keyof MatterbridgeEndpointCommands,
   params?: Record<string, boolean | number | bigint | string | object | null>,
-) {
+): Promise<boolean> {
   const behaviorId = getBehavior(endpoint, cluster)?.id;
   if (!behaviorId) {
-    endpoint.log.error(`invokeBehaviorCommand error: command ${hk}${command}${er} not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
-    return;
+    endpoint.log?.error(`invokeBehaviorCommand error: command ${hk}${command}${er} not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+    return false;
   }
 
   await endpoint.act((agent) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     const behavior = (agent as unknown as Record<string, Record<string, Function>>)[behaviorId];
     if (!(command in behavior) || typeof behavior[command] !== 'function') {
-      endpoint.log.error(`invokeBehaviorCommand error: command ${hk}${command}${er} not found on agent for endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
-      return;
+      endpoint.log?.error(`invokeBehaviorCommand error: command ${hk}${command}${er} not found on agent for endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+      return false;
     }
     behavior[command](params);
   });
+  return true;
 }
 
 export function addRequiredClusterServers(endpoint: MatterbridgeEndpoint) {
