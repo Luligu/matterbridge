@@ -4,7 +4,7 @@
  * @file shelly.ts
  * @author Luca Liguori
  * @date 2025-02-19
- * @version 1.0.3
+ * @version 1.0.4
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -238,10 +238,6 @@ export async function triggerShellySoftReset(matterbridge: Matterbridge): Promis
       matterbridge.log.debug(`****Error triggering Shelly soft reset: ${error instanceof Error ? error.message : error}`);
       matterbridge.log.error(`Error resetting the network parameters on Shelly board: ${error instanceof Error ? error.message : error}`);
       matterbridge.frontend.wssSendSnackbarMessage('Error resetting the network parameters on Shelly board', 10, 'error');
-    })
-    .finally(() => {
-      // matterbridge.log.notice(`Resetting the network parameters on Shelly board...`);
-      // matterbridge.frontend.wssSendSnackbarMessage('Resetting the network parameters on Shelly board...');
     });
 }
 /**
@@ -263,10 +259,6 @@ export async function triggerShellyHardReset(matterbridge: Matterbridge): Promis
       matterbridge.log.debug(`****Error triggering Shelly hard reset: ${error instanceof Error ? error.message : error}`);
       matterbridge.log.error(`Error while factory resetting the Shelly board: ${error instanceof Error ? error.message : error}`);
       matterbridge.frontend.wssSendSnackbarMessage('Error while factory resetting the Shelly board', 10, 'error');
-    })
-    .finally(() => {
-      // matterbridge.log.notice(`Factory resetting Shelly board...`);
-      // matterbridge.frontend.wssSendSnackbarMessage('Factory resetting Shelly board...');
     });
 }
 
@@ -315,11 +307,11 @@ export async function createShellySystemLog(matterbridge: Matterbridge): Promise
  *      /api/reset/hard => reboot on success    Hard reset makes soft reset + removing both directories .matterbridge Matterbridge + reboot
  *
  *
- * @param {number} [timeout=5000] - The timeout duration in milliseconds (default is 60000ms).
+ * @param {number} [timeout=60000] - The timeout duration in milliseconds (default is 60000ms).
  * @returns {Promise<any>} A promise that resolves to the response.
  * @throws {Error} If the request fails.
  */
-async function getShelly(api: string, timeout = 60000): Promise<any> {
+export async function getShelly(api: string, timeout = 60000): Promise<any> {
   const http = await import('node:http');
   return new Promise((resolve, reject) => {
     const url = `http://127.0.0.1:8101${api}`;
@@ -387,11 +379,11 @@ async function getShelly(api: string, timeout = 60000): Promise<any> {
  *     curl -H "Content-Type: application/json" -X POST http://127.0.0.1:8101/api/network/connection/static
  *        -d '{"interface": "end0", "addr": "192.168.1.64", "mask": "255.255.255.0", "gw": "192.168.1.1", "dns": "192.168.1.1"}'
  *
- * @param {number} [timeout=5000] - The timeout duration in milliseconds (default is 60000ms).
+ * @param {number} [timeout=60000] - The timeout duration in milliseconds (default is 60000ms).
  * @returns {Promise<any>} A promise that resolves to the response.
  * @throws {Error} If the request fails.
  */
-async function postShelly(api: string, data: any, timeout = 60000): Promise<any> {
+export async function postShelly(api: string, data: any, timeout = 60000): Promise<any> {
   const http = await import('node:http');
   return new Promise((resolve, reject) => {
     const url = `http://127.0.0.1:8101${api}`;
