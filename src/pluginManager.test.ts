@@ -8,7 +8,7 @@ import { jest } from '@jest/globals';
 import { execSync } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { AnsiLogger, db, er, LogLevel, nf, nt, pl, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+import { AnsiLogger, db, er, LogLevel, nf, nt } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
@@ -85,6 +85,8 @@ describe('PluginManager', () => {
   beforeEach(async () => {
     // Spy on JSON.parse
     parseSpy = jest.spyOn(JSON, 'parse');
+    // Spy on child_process.exec
+    // execSpy = jest.spyOn(child_process, 'exec');
     // Clear all mocks
     jest.clearAllMocks();
   });
@@ -285,11 +287,16 @@ describe('PluginManager', () => {
     const plugin = plugins.get('matterbridge-test');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
+
+    loggerLogSpy.mockClear();
     expect(await plugins.parse(plugin)).not.toBeNull();
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.anything());
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
     expect(await plugins.parse(plugin)).not.toBeNull();
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.WARN, expect.anything());
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.anything());
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ notname: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }), 'utf8');
@@ -440,6 +447,8 @@ describe('PluginManager', () => {
     expect(plugins.getFunding({ funding: 'https://www.buymeacoffee.com/luligugithub' })).toBe('https://www.buymeacoffee.com/luligugithub');
     expect(plugins.getFunding({ funding: { type: 'whatever', url: 'https://www.buymeacoffee.com/luligugithub' } })).toBe('https://www.buymeacoffee.com/luligugithub');
     expect(plugins.getFunding({ funding: { url: 'https://www.buymeacoffee.com/luligugithub' } })).toBe('https://www.buymeacoffee.com/luligugithub');
+    expect(plugins.getFunding({ funding: ['https://www.buymeacoffee.com/luligugithub'] })).toBe('https://www.buymeacoffee.com/luligugithub');
+    expect(plugins.getFunding({ funding: [{ url: 'https://www.buymeacoffee.com/luligugithub' }] })).toBe('https://www.buymeacoffee.com/luligugithub');
   });
 
   test('parse registered plugin', async () => {
@@ -636,16 +645,12 @@ describe('PluginManager', () => {
   });
 
   test('install plugin matterbridge-xyz', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     expect(await plugins.install('matterbridge-xyz')).toBeUndefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Installing plugin ${plg}matterbridge-xyz${nf}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to install plugin ${plg}matterbridge-xyz${er}:`));
   }, 300000);
 
   test('install plugin matterbridge-example-accessory-platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     const version = await plugins.install('matterbridge-example-accessory-platform');
     expect(version).not.toBeUndefined();
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Installing plugin ${plg}matterbridge-example-accessory-platform${nf}`);
@@ -653,8 +658,6 @@ describe('PluginManager', () => {
   }, 300000);
 
   test('install plugin matterbridge-example-dynamic-platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     const version = await plugins.install('matterbridge-example-dynamic-platform');
     expect(version).not.toBeUndefined();
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Installing plugin ${plg}matterbridge-example-dynamic-platform${nf}`);
@@ -662,8 +665,6 @@ describe('PluginManager', () => {
   }, 300000);
 
   test('add plugin matterbridge-xyz', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     expect(plugins.length).toBe(0);
     const plugin = await plugins.add('matterbridge-xyz');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to add plugin ${plg}matterbridge-xyz${er}: package.json not found`);
@@ -672,8 +673,6 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('add plugin matterbridge-example-accessory-platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     expect(plugins.length).toBe(0);
     const plugin = await plugins.add('matterbridge-example-accessory-platform');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-example-accessory-platform${nf}`);
@@ -689,22 +688,6 @@ describe('PluginManager', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Plugin ${plg}matterbridge-example-accessory-platform${nf} already registered`);
     expect(plugins.length).toBe(1);
 
-    /*
-    loggerLogSpy.mockClear();
-    let count = 0;
-    const parseSpy = jest.spyOn(JSON, 'parse').mockImplementation(() => {
-      count++;
-      if (count === 1) {
-        return {};
-      }
-      throw new Error('Test error');
-    });
-    expect(await plugins.add('matterbridge-example-accessory-platform')).toBe(null);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to parse package.json of plugin ${plg}matterbridge-example-accessory-platform${er}: Test error`);
-    expect(plugins.length).toBe(1);
-    jest.spyOn(JSON, 'parse');
-    */
-
     const newPlugin = plugins.get('matterbridge-example-accessory-platform');
     expect(newPlugin).not.toBeUndefined();
     if (!newPlugin) return;
@@ -713,8 +696,6 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('add plugin matterbridge-example-dynamic-platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     expect(plugins.length).toBe(1);
     const plugin = await plugins.add('matterbridge-example-dynamic-platform');
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Added plugin ${plg}matterbridge-example-dynamic-platform${nf}`);
@@ -729,8 +710,6 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('load default config plugin matterbridge-example-accessory-platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     const configFileName = path.join(matterbridge.matterbridgeDirectory, `matterbridge-example-accessory-platform.config.json`);
     const deleteConfig = async () => {
       try {
@@ -778,8 +757,6 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('save config from plugin matterbridge-example-accessory-platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     expect(plugins.length).toBe(2);
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
@@ -814,8 +791,6 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('save config from json matterbridge-example-accessory-platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     expect(plugins.length).toBe(2);
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
@@ -849,8 +824,6 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('load schema plugin matterbridge-example-accessory-platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     expect(plugins.length).toBe(2);
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
@@ -879,8 +852,6 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('load default schema plugin matterbridge-example-accessory-platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     expect(plugins.length).toBe(2);
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
@@ -909,8 +880,6 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('should not load plugin matterbridge-example-accessory-platform if parse error', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -939,8 +908,6 @@ describe('PluginManager', () => {
   });
 
   test('load plugin matterbridge-example-accessory-platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -969,8 +936,6 @@ describe('PluginManager', () => {
   });
 
   test('load, start and configure in parallel plugin matterbridge-example-dynamic-platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     const plugin = plugins.get('matterbridge-example-dynamic-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -994,8 +959,6 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('should not start plugin matterbridge-example-accessory-platform if not loaded', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -1013,8 +976,6 @@ describe('PluginManager', () => {
   });
 
   test('should not start plugin matterbridge-example-accessory-platform if no platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -1033,8 +994,6 @@ describe('PluginManager', () => {
   });
 
   test('should not start plugin matterbridge-example-accessory-platform if already started', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -1052,8 +1011,6 @@ describe('PluginManager', () => {
   });
 
   test('should log start plugin matterbridge-example-accessory-platform if it throws', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -1076,8 +1033,6 @@ describe('PluginManager', () => {
   });
 
   test('start plugin matterbridge-example-accessory-platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     let plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -1116,8 +1071,6 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('configure plugin matterbridge-example-accessory-platform should log errors', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -1148,11 +1101,6 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('configure plugin matterbridge-example-accessory-platform should log if it throws', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
-    // loggerLogSpy.mockRestore();
-    // consoleLogSpy.mockRestore();
-
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -1171,8 +1119,6 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('configure plugin matterbridge-example-accessory-platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     let plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -1189,8 +1135,6 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('should not shutdown plugin matterbridge-example-accessory-platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -1234,8 +1178,6 @@ describe('PluginManager', () => {
   });
 
   test('shutdown plugin matterbridge-example-accessory-platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     let plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
     if (!plugin) return;
@@ -1271,8 +1213,6 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('shutdown plugin matterbridge-example-dynamic-platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     let plugin = plugins.get('matterbridge-example-dynamic-platform');
     expect(plugin).not.toBeUndefined();
     expect(plugin?.loaded).toBeTruthy();
@@ -1285,8 +1225,6 @@ describe('PluginManager', () => {
   }, 60000);
 
   test('uninstall not existing plugin matterbridge-xyz', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     expect(await plugins.uninstall('matterbridge-xyz')).toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalling plugin ${plg}matterbridge-xyz${nf}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalled plugin ${plg}matterbridge-xyz${nf}`);
@@ -1294,24 +1232,18 @@ describe('PluginManager', () => {
   }, 300000);
 
   test('uninstall plugin matterbridge-example-accessory-platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     expect(await plugins.uninstall('matterbridge-example-accessory-platform')).toBeDefined();
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalling plugin ${plg}matterbridge-example-accessory-platform${nf}`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalled plugin ${plg}matterbridge-example-accessory-platform${nf}`);
   }, 300000);
 
   test('uninstall plugin matterbridge-example-dynamic-platform', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     expect(await plugins.uninstall('matterbridge-example-dynamic-platform')).toBeDefined();
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalling plugin ${plg}matterbridge-example-dynamic-platform${nf}`);
     expect((plugins as any).log.log).toHaveBeenCalledWith(LogLevel.INFO, `Uninstalled plugin ${plg}matterbridge-example-dynamic-platform${nf}`);
   }, 300000);
 
   test('install not existing plugin matterbridge-xyz with mock', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     jest.unstable_mockModule('node:child_process', () => ({
       exec: jest.fn((cmd, callback: (error: Error | null, stdout: string, stderr: string) => void) => {
         callback(new Error('Test error'), '', '');
@@ -1324,8 +1256,6 @@ describe('PluginManager', () => {
   }, 300000);
 
   test('uninstall not existing plugin matterbridge-xyz with mock', async () => {
-    // if (matterbridge.systemInformation.osPlatform === 'darwin') return; // MacOS fails
-
     jest.unstable_mockModule('node:child_process', () => ({
       exec: jest.fn((cmd, callback: (error: Error | null, stdout: string, stderr: string) => void) => {
         callback(new Error('Test error'), '', '');
