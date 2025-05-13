@@ -82,11 +82,11 @@ describe('Matterbridge Helpers', () => {
 
   beforeAll(async () => {
     // Cleanup the matter environment
-    rmSync('matterstorage/helpers', { recursive: true, force: true });
+    rmSync('matterstorage/Helpers', { recursive: true, force: true });
     // Setup the matter environment
     environment.vars.set('log.level', MatterLogLevel.DEBUG);
     environment.vars.set('log.format', MatterLogFormat.ANSI);
-    environment.vars.set('path.root', 'matterstorage/helpers');
+    environment.vars.set('path.root', 'matterstorage/Helpers');
     environment.vars.set('runtime.signals', false);
     environment.vars.set('runtime.exitcode', false);
   }, 30000);
