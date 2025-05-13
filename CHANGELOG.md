@@ -12,14 +12,15 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
-- [virtual] Added virtual devices Restart Matterbridge and Update Matterbridge.
+- [virtual] Added virtual devices Restart Matterbridge and Update Matterbridge and full Jest tests.
+- [virtual] Added virtual devices Reboot Matterbridge for Shelly board and full Jest tests.
 
 ### Changed
 
 - [package]: Updated dependencies.
 - [utils]: Refactor utils functions.
 - [utils]: Updated Jest tests on utils functions.
-- [devices]: Added RoboticVacuumCleaner class to create the Robotic Vacuum Cleaner device type.
+- [devices]: Added RoboticVacuumCleaner class to create the Robotic Vacuum Cleaner device type in one line of code.
 
 ### Fixed
 

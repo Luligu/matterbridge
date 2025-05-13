@@ -44,8 +44,6 @@ matterstorage.backup
 coverage
 TODO.md
 test
-eveHistory.test.ts
-eveHistoryBehavior.ts
-eveHistoryCluster.ts
 *.heapsnapshot
 *.heapprofile
+crypto
