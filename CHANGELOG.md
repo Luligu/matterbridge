@@ -8,7 +8,21 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-## [3.0.2] - 2025-05-??
+## [3.0.3] - 2025-05-??
+
+### Added
+
+### Changed
+
+- [package]: Updated dependencies.
+
+### Fixed
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
+## [3.0.2] - 2025-05-14
 
 ### Added
 
