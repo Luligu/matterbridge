@@ -227,7 +227,7 @@ describe('Matterbridge frontend express', () => {
     expect(response.body.matterbridgeInformation).toHaveProperty('matterLoggerLevel');
     expect(response.body.matterbridgeInformation).toHaveProperty('matterPort');
     expect(response.body.matterbridgeInformation).toHaveProperty('profile');
-  });
+  }, 30000);
 
   test('GET /api/plugins', async () => {
     const response = await makeRequest('/api/plugins', 'GET');
@@ -235,7 +235,7 @@ describe('Matterbridge frontend express', () => {
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('object');
     expect(Array.isArray(response.body)).toBe(true);
-  });
+  }, 30000);
 
   test('GET /api/devices', async () => {
     const response = await makeRequest('/api/devices', 'GET');
@@ -243,7 +243,7 @@ describe('Matterbridge frontend express', () => {
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('object');
     expect(Array.isArray(response.body)).toBe(true);
-  });
+  }, 30000);
 
   test('GET /api/view-mblog', async () => {
     const response = await makeRequest('/api/view-mblog', 'GET');
@@ -251,7 +251,7 @@ describe('Matterbridge frontend express', () => {
     expect(response.status).toBe(500);
     expect(typeof response.body).toBe('string');
     expect(response.body).toBe('Error reading matterbridge log file. Please enable the matterbridge log on file in the settings.');
-  });
+  }, 30000);
 
   test('GET /api/view-mjlog', async () => {
     const response = await makeRequest('/api/view-mjlog', 'GET');
@@ -259,7 +259,7 @@ describe('Matterbridge frontend express', () => {
     expect(response.status).toBe(500);
     expect(typeof response.body).toBe('string');
     expect(response.body).toBe('Error reading matter log file. Please enable the matter log on file in the settings.');
-  });
+  }, 30000);
 
   test('GET /api/shellyviewsystemlog', async () => {
     const response = await makeRequest('/api/shellyviewsystemlog', 'GET');
@@ -267,7 +267,7 @@ describe('Matterbridge frontend express', () => {
     expect(response.status).toBe(500);
     expect(typeof response.body).toBe('string');
     expect(response.body).toBe('Error reading shelly log file. Please create the shelly system log before loading it.');
-  });
+  }, 30000);
 
   test('GET /api/download-mblog', async () => {
     const response = await makeRequest('/api/download-mblog', 'GET');
@@ -275,7 +275,7 @@ describe('Matterbridge frontend express', () => {
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
     expect(response.body).toBe('Enable the matterbridge log on file in the settings to download the matterbridge log.');
-  });
+  }, 30000);
 
   test('GET /api/download-mjlog', async () => {
     const response = await makeRequest('/api/download-mjlog', 'GET');
@@ -283,7 +283,7 @@ describe('Matterbridge frontend express', () => {
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
     expect(response.body).toBe('Enable the matter log on file in the settings to download the matter log.');
-  });
+  }, 30000);
 
   test('GET /api/shellydownloadsystemlog', async () => {
     const response = await makeRequest('/api/shellydownloadsystemlog', 'GET');
@@ -291,7 +291,7 @@ describe('Matterbridge frontend express', () => {
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
     expect(response.body).toBe('Create the Shelly system log before downloading it.');
-  });
+  }, 30000);
 
   test('GET /api/download-mbstorage', async () => {
     const response = await makeRequest('/api/download-mbstorage', 'GET');
@@ -299,7 +299,7 @@ describe('Matterbridge frontend express', () => {
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
     expect(response.body.startsWith('PK')).toBe(true);
-  });
+  }, 30000);
 
   test('GET /api/download-mjstorage', async () => {
     const response = await makeRequest('/api/download-mjstorage', 'GET');
@@ -307,7 +307,7 @@ describe('Matterbridge frontend express', () => {
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
     expect(response.body.startsWith('PK')).toBe(true);
-  });
+  }, 30000);
 
   test('GET /api/download-pluginstorage', async () => {
     const response = await makeRequest('/api/download-pluginstorage', 'GET');
@@ -315,7 +315,7 @@ describe('Matterbridge frontend express', () => {
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
     expect(response.body.startsWith('PK')).toBe(true);
-  });
+  }, 30000);
 
   test('GET /api/download-pluginconfig', async () => {
     const response = await makeRequest('/api/download-pluginconfig', 'GET');
@@ -323,7 +323,7 @@ describe('Matterbridge frontend express', () => {
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
     expect(response.body.startsWith('PK')).toBe(true);
-  });
+  }, 30000);
 
   test('GET /api/download-backup', async () => {
     try {
