@@ -4,7 +4,7 @@
  * @file shelly.ts
  * @author Luca Liguori
  * @date 2025-02-19
- * @version 1.0.3
+ * @version 1.1.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -28,6 +28,29 @@ import { WS_ID_SHELLY_MAIN_UPDATE, WS_ID_SHELLY_SYS_UPDATE } from './frontend.js
 import { debugStringify } from './logger/export.js';
 import { Matterbridge } from './matterbridge.js';
 
+let verifyIntervalSecs = 15;
+let verifyTimeoutSecs = 600;
+
+/**
+ * Sets the interval for verification in seconds.
+ *
+ * @param {number} seconds - The interval in seconds.
+ * @returns {void}
+ */
+export function setVerifyIntervalSecs(seconds: number): void {
+  verifyIntervalSecs = seconds;
+}
+
+/**
+ * Sets the timeout for verification in seconds.
+ *
+ * @param {number} seconds - The timeout in seconds.
+ * @returns {void}
+ */
+export function setVerifyTimeoutSecs(seconds: number): void {
+  verifyTimeoutSecs = seconds;
+}
+
 /**
  * Fetches Shelly system updates. If available: logs the result, sends a snackbar message, and broadcasts the message.
  *
@@ -35,20 +58,20 @@ import { Matterbridge } from './matterbridge.js';
  * @returns {Promise<void>} A promise that resolves when the operation is complete.
  */
 export async function getShellySysUpdate(matterbridge: Matterbridge): Promise<void> {
-  getShelly('/api/updates/sys/check', 60 * 1000)
-    .then(async (data: { name: string }[]) => {
-      if (data.length > 0) {
-        matterbridge.matterbridgeInformation.shellySysUpdate = true;
-        matterbridge.frontend.wssBroadcastMessage(WS_ID_SHELLY_SYS_UPDATE, 'shelly-sys-update', { available: true });
-        for (const update of data) {
-          if (update.name) matterbridge.log.notice(`Shelly system update available: ${update.name}`);
-          if (update.name) matterbridge.frontend.wssSendSnackbarMessage(`Shelly system update available: ${update.name}`, 10);
-        }
-      }
-    })
-    .catch((error) => {
-      matterbridge.log.warn(`Error getting Shelly system updates: ${error instanceof Error ? error.message : error}`);
-    });
+  try {
+    const updates = (await getShelly('/api/updates/sys/check')) as { name: string }[];
+    if (updates.length === 0) return;
+
+    matterbridge.matterbridgeInformation.shellySysUpdate = true;
+    matterbridge.frontend.wssBroadcastMessage(WS_ID_SHELLY_SYS_UPDATE, 'shelly-sys-update', { available: true });
+    for (const { name } of updates) {
+      if (!name) continue;
+      matterbridge.log.notice(`Shelly system update available: ${name}`);
+      matterbridge.frontend.wssSendSnackbarMessage(`Shelly system update available: ${name}`, 10);
+    }
+  } catch (err) {
+    matterbridge.log.error(`Error getting Shelly system updates: ${err instanceof Error ? err.message : String(err)}`);
+  }
 }
 
 /**
@@ -58,20 +81,19 @@ export async function getShellySysUpdate(matterbridge: Matterbridge): Promise<vo
  * @returns {Promise<void>} A promise that resolves when the operation is complete.
  */
 export async function triggerShellySysUpdate(matterbridge: Matterbridge): Promise<void> {
-  getShelly('/api/updates/sys/perform', 10 * 1000)
-    .then(async () => {
-      matterbridge.log.debug(`Triggered Shelly system updates`);
-    })
-    .catch((error) => {
-      matterbridge.log.debug(`****Error triggering Shelly system updates: ${error instanceof Error ? error.message : error}`);
-    })
-    .finally(() => {
-      matterbridge.matterbridgeInformation.shellySysUpdate = false;
-      matterbridge.log.notice(`Installing Shelly system update...`);
-      matterbridge.frontend.wssSendSnackbarMessage('Installing Shelly system update...', 15);
-      matterbridge.frontend.wssBroadcastMessage(WS_ID_SHELLY_SYS_UPDATE, 'shelly-sys-update', { available: false });
-      verifyShellyUpdate(matterbridge, '/api/updates/sys/status', 'Shelly system update');
-    });
+  try {
+    // Trigger the update request
+    await getShelly('/api/updates/sys/perform');
+    matterbridge.log.notice('Installing Shelly system update...');
+    matterbridge.matterbridgeInformation.shellySysUpdate = false;
+    matterbridge.frontend.wssSendSnackbarMessage('Installing Shelly system update...', 15);
+    matterbridge.frontend.wssBroadcastMessage(WS_ID_SHELLY_SYS_UPDATE, 'shelly-sys-update', { available: false });
+
+    // Begin polling update status
+    await verifyShellyUpdate(matterbridge, '/api/updates/sys/status', 'Shelly system update');
+  } catch (err) {
+    matterbridge.log.error(`Error triggering Shelly system update: ${err instanceof Error ? err.message : String(err)}`);
+  }
 }
 
 /**
@@ -81,20 +103,20 @@ export async function triggerShellySysUpdate(matterbridge: Matterbridge): Promis
  * @returns {Promise<void>} A promise that resolves when the operation is complete.
  */
 export async function getShellyMainUpdate(matterbridge: Matterbridge): Promise<void> {
-  getShelly('/api/updates/main/check', 60 * 1000)
-    .then(async (data: { name: string }[]) => {
-      if (data.length > 0) {
-        matterbridge.matterbridgeInformation.shellyMainUpdate = true;
-        matterbridge.frontend.wssBroadcastMessage(WS_ID_SHELLY_MAIN_UPDATE, 'shelly-main-update', { available: true });
-        for (const update of data) {
-          if (update.name) matterbridge.log.notice(`Shelly software update available: ${update.name}`);
-          if (update.name) matterbridge.frontend.wssSendSnackbarMessage(`Shelly software update available: ${update.name}`, 10);
-        }
-      }
-    })
-    .catch((error) => {
-      matterbridge.log.warn(`Error getting Shelly main updates: ${error instanceof Error ? error.message : error}`);
-    });
+  try {
+    const updates = (await getShelly('/api/updates/main/check')) as { name: string }[];
+    if (updates.length === 0) return;
+
+    matterbridge.matterbridgeInformation.shellyMainUpdate = true;
+    matterbridge.frontend.wssBroadcastMessage(WS_ID_SHELLY_MAIN_UPDATE, 'shelly-main-update', { available: true });
+    for (const { name } of updates) {
+      if (!name) continue;
+      matterbridge.log.notice(`Shelly software update available: ${name}`);
+      matterbridge.frontend.wssSendSnackbarMessage(`Shelly software update available: ${name}`, 10);
+    }
+  } catch (err) {
+    matterbridge.log.error(`Error getting Shelly main updates: ${err instanceof Error ? err.message : String(err)}`);
+  }
 }
 
 /**
@@ -103,21 +125,19 @@ export async function getShellyMainUpdate(matterbridge: Matterbridge): Promise<v
  * @returns {Promise<void>} A promise that resolves when the operation is complete.
  */
 export async function triggerShellyMainUpdate(matterbridge: Matterbridge): Promise<void> {
-  getShelly('/api/updates/main/perform', 10 * 1000)
-    .then(async () => {
-      // {"updatingInProgress":true} or {"updatingInProgress":false}
-      matterbridge.log.debug(`Triggered Shelly main updates`);
-    })
-    .catch((error) => {
-      matterbridge.log.debug(`****Error triggering Shelly main updates: ${error instanceof Error ? error.message : error}`);
-    })
-    .finally(() => {
-      matterbridge.matterbridgeInformation.shellyMainUpdate = false;
-      matterbridge.log.notice(`Installing Shelly software update...`);
-      matterbridge.frontend.wssSendSnackbarMessage('Installing Shelly software update...', 15);
-      matterbridge.frontend.wssBroadcastMessage(WS_ID_SHELLY_MAIN_UPDATE, 'shelly-main-update', { available: false });
-      verifyShellyUpdate(matterbridge, '/api/updates/main/status', 'Shelly software update');
-    });
+  try {
+    // Trigger the perform-update request
+    await getShelly('/api/updates/main/perform');
+    matterbridge.log.notice('Installing Shelly software update...');
+    matterbridge.matterbridgeInformation.shellyMainUpdate = false;
+    matterbridge.frontend.wssSendSnackbarMessage('Installing Shelly software update...', 15);
+    matterbridge.frontend.wssBroadcastMessage(WS_ID_SHELLY_MAIN_UPDATE, 'shelly-main-update', { available: false });
+
+    // Begin polling the update status
+    await verifyShellyUpdate(matterbridge, '/api/updates/main/status', 'Shelly software update');
+  } catch (err) {
+    matterbridge.log.error(`Error triggering Shelly main update: ${err instanceof Error ? err.message : String(err)}`);
+  }
 }
 
 /**
@@ -130,18 +150,20 @@ export async function triggerShellyMainUpdate(matterbridge: Matterbridge): Promi
 async function verifyShellyUpdate(matterbridge: Matterbridge, api: string, name: string): Promise<void> {
   return new Promise<void>((resolve) => {
     const timeout = setTimeout(() => {
-      matterbridge.log.warn(`${name} check timed out`);
+      matterbridge.log.error(`${name} check timed out`);
+      matterbridge.frontend.wssSendCloseSnackbarMessage(`${name} in progress...`);
       clearInterval(interval);
       resolve();
-    }, 600 * 1000); // 10 minutes
+    }, verifyTimeoutSecs * 1000); // 10 minutes
     const interval = setInterval(() => {
-      getShelly(api, 10 * 1000)
+      getShelly(api, 10 * 1000) // 10 seconds
         .then(async (data: { updatingInProgress: boolean }) => {
           if (data.updatingInProgress) {
             matterbridge.log.debug(`${name} in progress...`);
-            matterbridge.frontend.wssSendSnackbarMessage(`${name} in progress...`, 20);
+            matterbridge.frontend.wssSendSnackbarMessage(`${name} in progress...`, 0);
           } else {
             matterbridge.log.notice(`${name} installed`);
+            matterbridge.frontend.wssSendCloseSnackbarMessage(`${name} in progress...`);
             matterbridge.frontend.wssSendSnackbarMessage(`${name} installed`, 20);
             clearInterval(interval);
             clearTimeout(timeout);
@@ -149,12 +171,13 @@ async function verifyShellyUpdate(matterbridge: Matterbridge, api: string, name:
           }
         })
         .catch((error) => {
-          matterbridge.log.warn(`Error getting status of ${name}: ${error instanceof Error ? error.message : error}`);
+          matterbridge.log.error(`Error getting status of ${name}: ${error instanceof Error ? error.message : String(error)}`);
+          matterbridge.frontend.wssSendCloseSnackbarMessage(`${name} in progress...`);
           clearInterval(interval);
           clearTimeout(timeout);
           resolve();
         });
-    }, 15 * 1000); // 15 seconds
+    }, verifyIntervalSecs * 1000); // 15 seconds
   });
 }
 
@@ -175,22 +198,16 @@ export async function triggerShellyChangeIp(matterbridge: Matterbridge, config: 
   }
 
   matterbridge.log.debug(`Triggering Shelly network configuration change: ${debugStringify(config)}`);
-
-  postShelly(api, data, 60 * 1000)
-    .then(async () => {
-      matterbridge.log.debug(`Triggered Shelly network configuration change: ${debugStringify(config)}`);
-      matterbridge.log.notice(`Changed Shelly network configuration`);
-      matterbridge.frontend.wssSendSnackbarMessage('Changed Shelly network configuration');
-    })
-    .catch((error) => {
-      matterbridge.log.debug(`****Error triggering Shelly network configuration change: ${error instanceof Error ? error.message : error}`);
-      matterbridge.log.error(`Error changing Shelly network configuration: ${error instanceof Error ? error.message : error}`);
-      matterbridge.frontend.wssSendSnackbarMessage('Error changing Shelly network configuration', 10, 'error');
-    })
-    .finally(() => {
-      // matterbridge.log.notice(`Changed Shelly network configuration`);
-      // matterbridge.frontend.wssSendSnackbarMessage('Changed Shelly network configuration');
-    });
+  try {
+    await postShelly(api, data);
+    matterbridge.log.debug(`Triggered Shelly network configuration change: ${debugStringify(config)}`);
+    matterbridge.log.notice(`Changed Shelly network configuration`);
+    matterbridge.frontend.wssSendSnackbarMessage('Changed Shelly network configuration');
+  } catch (error) {
+    matterbridge.log.debug(`****Error triggering Shelly network configuration change ${debugStringify(config)}: ${error instanceof Error ? error.message : String(error)}`);
+    matterbridge.log.error(`Error changing Shelly network configuration: ${error instanceof Error ? error.message : String(error)}`);
+    matterbridge.frontend.wssSendSnackbarMessage('Error changing Shelly network configuration', 10, 'error');
+  }
 }
 
 /**
@@ -200,74 +217,66 @@ export async function triggerShellyChangeIp(matterbridge: Matterbridge, config: 
  */
 export async function triggerShellyReboot(matterbridge: Matterbridge): Promise<void> {
   matterbridge.log.debug(`Triggering Shelly system reboot`);
-
-  postShelly('/api/system/reboot', {}, 60 * 1000)
-    .then(async () => {
-      matterbridge.log.debug(`Triggered Shelly system reboot`);
-      matterbridge.log.notice(`Rebooting Shelly board...`);
-      matterbridge.frontend.wssSendSnackbarMessage('Rebooting Shelly board...');
-    })
-    .catch((error) => {
-      matterbridge.log.debug(`****Error triggering Shelly system reboot: ${error instanceof Error ? error.message : error}`);
-      matterbridge.log.error(`Error rebooting Shelly board: ${error instanceof Error ? error.message : error}`);
-      matterbridge.frontend.wssSendSnackbarMessage('Error rebooting Shelly board', 10, 'error');
-    })
-    .finally(() => {
-      // matterbridge.log.notice(`Rebooting Shelly board...`);
-      // matterbridge.frontend.wssSendSnackbarMessage('Rebooting Shelly board...');
-    });
+  try {
+    matterbridge.frontend.wssSendSnackbarMessage('Rebooting Shelly board...', 0);
+    await postShelly('/api/system/reboot', {});
+    matterbridge.log.debug(`Triggered Shelly system reboot`);
+    matterbridge.log.notice(`Rebooting Shelly board...`);
+    matterbridge.frontend.wssSendCloseSnackbarMessage('Rebooting Shelly board...');
+    matterbridge.frontend.wssSendSnackbarMessage('Reboot of Shelly board started!', 5, 'success');
+  } catch (error) {
+    matterbridge.log.debug(`****Error triggering Shelly system reboot: ${error instanceof Error ? error.message : String(error)}`);
+    matterbridge.log.error(`Error rebooting Shelly board: ${error instanceof Error ? error.message : String(error)}`);
+    matterbridge.frontend.wssSendCloseSnackbarMessage('Rebooting Shelly board...');
+    matterbridge.frontend.wssSendSnackbarMessage('Error rebooting Shelly board', 10, 'error');
+  }
 }
 
 /**
  * Triggers Shelly soft reset.
- * It will replaces network config with default one (edn0 on dhcp).
+ * It will replaces network config with the default one (edn0 on dhcp).
  *
  * @param {Matterbridge} matterbridge - The Matterbridge instance.
  * @returns {Promise<void>} A promise that resolves when the operation is complete.
  */
 export async function triggerShellySoftReset(matterbridge: Matterbridge): Promise<void> {
   matterbridge.log.debug(`Triggering Shelly soft reset`);
-
-  getShelly('/api/reset/soft', 60 * 1000)
-    .then(async () => {
-      matterbridge.log.debug(`Triggered Shelly soft reset`);
-      matterbridge.log.notice(`Resetting the network parameters on Shelly board...`);
-      matterbridge.frontend.wssSendSnackbarMessage('Resetting the network parameters on Shelly board...');
-    })
-    .catch((error) => {
-      matterbridge.log.debug(`****Error triggering Shelly soft reset: ${error instanceof Error ? error.message : error}`);
-      matterbridge.log.error(`Error resetting the network parameters on Shelly board: ${error instanceof Error ? error.message : error}`);
-      matterbridge.frontend.wssSendSnackbarMessage('Error resetting the network parameters on Shelly board', 10, 'error');
-    })
-    .finally(() => {
-      // matterbridge.log.notice(`Resetting the network parameters on Shelly board...`);
-      // matterbridge.frontend.wssSendSnackbarMessage('Resetting the network parameters on Shelly board...');
-    });
+  try {
+    matterbridge.frontend.wssSendSnackbarMessage('Resetting the network parameters on Shelly board...', 0);
+    await getShelly('/api/reset/soft');
+    matterbridge.log.debug(`Triggered Shelly soft reset`);
+    matterbridge.log.notice(`Resetting the network parameters on Shelly board...`);
+    matterbridge.frontend.wssSendCloseSnackbarMessage('Resetting the network parameters on Shelly board...');
+    matterbridge.frontend.wssSendSnackbarMessage('Reset of the network parameters on Shelly board done!', 5, 'success');
+  } catch (error) {
+    matterbridge.log.debug(`****Error triggering Shelly soft reset: ${error instanceof Error ? error.message : String(error)}`);
+    matterbridge.log.error(`Error resetting the network parameters on Shelly board: ${error instanceof Error ? error.message : String(error)}`);
+    matterbridge.frontend.wssSendCloseSnackbarMessage('Resetting the network parameters on Shelly board...');
+    matterbridge.frontend.wssSendSnackbarMessage('Error resetting the network parameters on Shelly board', 10, 'error');
+  }
 }
 /**
  * Triggers Shelly hard reset.
  * It will do a hard reset and will remove both directories .matterbridge Matterbridge.
+ *
  * @param {Matterbridge} matterbridge - The Matterbridge instance.
  * @returns {Promise<void>} A promise that resolves when the operation is complete.
  */
 export async function triggerShellyHardReset(matterbridge: Matterbridge): Promise<void> {
   matterbridge.log.debug(`Triggering Shelly hard reset`);
-
-  getShelly('/api/reset/hard', 60 * 1000)
-    .then(async () => {
-      matterbridge.log.debug(`Triggered Shelly hard reset`);
-      matterbridge.log.notice(`Factory resetting Shelly board...`);
-      matterbridge.frontend.wssSendSnackbarMessage('Factory resetting Shelly board...');
-    })
-    .catch((error) => {
-      matterbridge.log.debug(`****Error triggering Shelly hard reset: ${error instanceof Error ? error.message : error}`);
-      matterbridge.log.error(`Error while factory resetting the Shelly board: ${error instanceof Error ? error.message : error}`);
-      matterbridge.frontend.wssSendSnackbarMessage('Error while factory resetting the Shelly board', 10, 'error');
-    })
-    .finally(() => {
-      // matterbridge.log.notice(`Factory resetting Shelly board...`);
-      // matterbridge.frontend.wssSendSnackbarMessage('Factory resetting Shelly board...');
-    });
+  try {
+    matterbridge.frontend.wssSendSnackbarMessage('Factory resetting Shelly board...', 0);
+    await getShelly('/api/reset/hard');
+    matterbridge.log.debug(`Triggered Shelly hard reset`);
+    matterbridge.log.notice(`Factory resetting Shelly board...`);
+    matterbridge.frontend.wssSendCloseSnackbarMessage('Factory resetting Shelly board...');
+    matterbridge.frontend.wssSendSnackbarMessage('Factory reset of Shelly board done!', 5, 'success');
+  } catch (error) {
+    matterbridge.log.debug(`****Error triggering Shelly hard reset: ${error instanceof Error ? error.message : String(error)}`);
+    matterbridge.log.error(`Error while factory resetting the Shelly board: ${error instanceof Error ? error.message : String(error)}`);
+    matterbridge.frontend.wssSendCloseSnackbarMessage('Factory resetting Shelly board...');
+    matterbridge.frontend.wssSendSnackbarMessage('Error while factory resetting the Shelly board', 10, 'error');
+  }
 }
 
 /**
@@ -281,21 +290,14 @@ export async function createShellySystemLog(matterbridge: Matterbridge): Promise
   const path = await import('node:path');
 
   matterbridge.log.debug(`Downloading Shelly system log...`);
-
-  getShelly('/api/logs/system', 60 * 1000)
-    .then(async (data) => {
-      fs.writeFile(path.join(matterbridge.matterbridgeDirectory, 'shelly.log'), data)
-        .then(() => {
-          matterbridge.log.notice(`Shelly system log ready for download`);
-          matterbridge.frontend.wssSendSnackbarMessage('Shelly system log ready for download');
-        })
-        .catch((error) => {
-          matterbridge.log.warn(`Error writing Shelly system log to file: ${error instanceof Error ? error.message : error}`);
-        });
-    })
-    .catch((error) => {
-      matterbridge.log.warn(`Error getting Shelly system log: ${error instanceof Error ? error.message : error}`);
-    });
+  try {
+    const data = await getShelly('/api/logs/system');
+    await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, 'shelly.log'), data);
+    matterbridge.log.notice(`Shelly system log ready for download`);
+    matterbridge.frontend.wssSendSnackbarMessage('Shelly system log ready for download');
+  } catch (error) {
+    matterbridge.log.error(`Error getting Shelly system log: ${error instanceof Error ? error.message : error}`);
+  }
 }
 
 /**
@@ -315,11 +317,11 @@ export async function createShellySystemLog(matterbridge: Matterbridge): Promise
  *      /api/reset/hard => reboot on success    Hard reset makes soft reset + removing both directories .matterbridge Matterbridge + reboot
  *
  *
- * @param {number} [timeout=5000] - The timeout duration in milliseconds (default is 60000ms).
+ * @param {number} [timeout=60000] - The timeout duration in milliseconds (default is 60000ms).
  * @returns {Promise<any>} A promise that resolves to the response.
  * @throws {Error} If the request fails.
  */
-async function getShelly(api: string, timeout = 60000): Promise<any> {
+export async function getShelly(api: string, timeout = 60000): Promise<any> {
   const http = await import('node:http');
   return new Promise((resolve, reject) => {
     const url = `http://127.0.0.1:8101${api}`;
@@ -387,11 +389,11 @@ async function getShelly(api: string, timeout = 60000): Promise<any> {
  *     curl -H "Content-Type: application/json" -X POST http://127.0.0.1:8101/api/network/connection/static
  *        -d '{"interface": "end0", "addr": "192.168.1.64", "mask": "255.255.255.0", "gw": "192.168.1.1", "dns": "192.168.1.1"}'
  *
- * @param {number} [timeout=5000] - The timeout duration in milliseconds (default is 60000ms).
+ * @param {number} [timeout=60000] - The timeout duration in milliseconds (default is 60000ms).
  * @returns {Promise<any>} A promise that resolves to the response.
  * @throws {Error} If the request fails.
  */
-async function postShelly(api: string, data: any, timeout = 60000): Promise<any> {
+export async function postShelly(api: string, data: any, timeout = 60000): Promise<any> {
   const http = await import('node:http');
   return new Promise((resolve, reject) => {
     const url = `http://127.0.0.1:8101${api}`;

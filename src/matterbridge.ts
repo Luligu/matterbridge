@@ -4,7 +4,7 @@
  * @file matterbridge.ts
  * @author Luca Liguori
  * @date 2023-12-29
- * @version 1.5.2
+ * @version 1.5.3
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
  *
@@ -37,17 +37,18 @@ import { NodeStorageManager, NodeStorage } from './storage/export.js';
 // Matterbridge
 import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString, isValidNumber } from './utils/export.js';
 import { logInterfaces, getGlobalNodeModules } from './utils/network.js';
-import { MatterbridgeInformation, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation } from './matterbridgeTypes.js';
+import { dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgeEndpoint, SerializedMatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { Frontend } from './frontend.js';
+import { addVirtualDevices } from './helpers.js';
 
 // @matter
 import {
   DeviceTypeId,
-  Endpoint as EndpointNode,
+  Endpoint,
   Logger,
   LogLevel as MatterLogLevel,
   LogFormat as MatterLogFormat,
@@ -62,15 +63,10 @@ import {
   UINT32_MAX,
   UINT16_MAX,
 } from '@matter/main';
-import { DeviceCommissioner, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
+import { DeviceCertification, DeviceCommissioner, ExposedFabricInformation, FabricAction, MdnsService, PaseClient } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
-
-// Default colors
-const plg = '\u001B[38;5;33m';
-const dev = '\u001B[38;5;79m';
-const typ = '\u001B[38;5;207m';
 
 /**
  * Represents the Matterbridge events.
@@ -213,9 +209,10 @@ export class Matterbridge extends EventEmitter {
   port: number | undefined; // first server node port
   passcode: number | undefined; // first server node passcode
   discriminator: number | undefined; // first server node discriminator
+  certification: DeviceCertification.Definition | undefined; // device certification
 
   serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
-  aggregatorNode: EndpointNode<AggregatorEndpoint> | undefined;
+  aggregatorNode: Endpoint<AggregatorEndpoint> | undefined;
   aggregatorVendorId = VendorId(getIntParameter('vendorId') ?? 0xfff1);
   aggregatorVendorName = getParameter('vendorName') ?? 'Matterbridge';
   aggregatorProductId = getIntParameter('productId') ?? 0x8000;
@@ -432,6 +429,43 @@ export class Matterbridge extends EventEmitter {
     // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode)
     this.discriminator = getIntParameter('discriminator') ?? (await this.nodeContext.get<number>('matterdiscriminator')) ?? PaseClient.generateRandomDiscriminator();
 
+    // Certificate management
+    const pairingFilePath = path.join(this.homeDirectory, '.mattercert', 'pairing.json');
+    try {
+      await fs.access(pairingFilePath, fs.constants.R_OK);
+      const pairingFileContent = await fs.readFile(pairingFilePath, 'utf8');
+      const pairingFileJson = JSON.parse(pairingFileContent) as { passcode?: number; discriminator?: number; remoteUrl?: string; privateKey?: string; certificate?: string; intermediateCertificate?: string; declaration?: string };
+      // Override the passcode and discriminator if they are present in the pairing file
+      if (pairingFileJson.passcode && pairingFileJson.discriminator) {
+        this.passcode = pairingFileJson.passcode;
+        this.discriminator = pairingFileJson.discriminator;
+        this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using passcode ${CYAN}${this.passcode}${nf} and discriminator ${CYAN}${this.discriminator}${nf}`);
+      }
+      // Set the certification if it is present in the pairing file
+      if (pairingFileJson.privateKey && pairingFileJson.certificate && pairingFileJson.intermediateCertificate && pairingFileJson.declaration) {
+        const hexStringToUint8Array = (hexString: string) => {
+          const matches = hexString.match(/.{1,2}/g);
+          return matches ? new Uint8Array(matches.map((byte) => parseInt(byte, 16))) : new Uint8Array();
+        };
+        // const hexString = Buffer.from('Test string', 'utf-8').toString('hex');
+        // console.log(hexString, Buffer.from(hexStringToUint8Array(hexString)).toString('utf-8'));
+
+        this.certification = {
+          privateKey: hexStringToUint8Array(pairingFileJson.privateKey),
+          certificate: hexStringToUint8Array(pairingFileJson.certificate),
+          intermediateCertificate: hexStringToUint8Array(pairingFileJson.intermediateCertificate),
+          declaration: hexStringToUint8Array(pairingFileJson.declaration),
+        };
+        this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using privateKey, certificate, intermediateCertificate and declaration from pairing file.`);
+      }
+    } catch (error) {
+      this.log.debug(`Pairing file ${CYAN}${pairingFilePath}${db} not found: ${error instanceof Error ? error.message : error}`);
+    }
+
+    // Store the passcode, discriminator and port in the node context
+    await this.nodeContext.set<number>('matterport', this.port);
+    await this.nodeContext.set<number>('matterpasscode', this.passcode);
+    await this.nodeContext.set<number>('matterdiscriminator', this.discriminator);
     this.log.debug(`Initializing server node for Matterbridge... on port ${this.port} with passcode ${this.passcode} and discriminator ${this.discriminator}`);
 
     // Set matterbridge logger level (context: matterbridgeLogLevel)
@@ -1588,6 +1622,8 @@ export class Matterbridge extends EventEmitter {
     this.aggregatorNode = await this.createAggregatorNode(this.matterbridgeContext);
     await this.serverNode.add(this.aggregatorNode);
 
+    await addVirtualDevices(this, this.aggregatorNode);
+
     await this.startPlugins();
 
     this.log.debug('Starting start matter interval in bridge mode');
@@ -2086,6 +2122,11 @@ const commissioningController = new CommissioningController({
         port,
       },
 
+      // Provide the certificate for the device
+      operationalCredentials: {
+        certification: this.certification,
+      },
+
       // Provide Commissioning relevant settings
       // Optional for development/testing purposes
       commissioning: {
@@ -2154,6 +2195,7 @@ const commissioningController = new CommissioningController({
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */
     serverNode.lifecycle.online.on(async () => {
       this.log.notice(`Server node for ${storeId} is online`);
+
       if (!serverNode.lifecycle.isCommissioned) {
         this.log.notice(`Server node for ${storeId} is not commissioned. Pair to commission ...`);
         const { qrPairingCode, manualPairingCode } = serverNode.state.commissioning.pairingCodes;
@@ -2380,11 +2422,11 @@ const commissioningController = new CommissioningController({
    * Creates an aggregator node with the specified storage context.
    *
    * @param {StorageContext} storageContext - The storage context for the aggregator node.
-   * @returns {Promise<EndpointNode<AggregatorEndpoint>>} A promise that resolves to the created aggregator node.
+   * @returns {Promise<Endpoint<AggregatorEndpoint>>} A promise that resolves to the created aggregator node.
    */
-  private async createAggregatorNode(storageContext: StorageContext): Promise<EndpointNode<AggregatorEndpoint>> {
+  private async createAggregatorNode(storageContext: StorageContext): Promise<Endpoint<AggregatorEndpoint>> {
     this.log.notice(`Creating ${await storageContext.get<string>('storeId')} aggregator `);
-    const aggregatorNode = new EndpointNode(AggregatorEndpoint, { id: `${await storageContext.get<string>('storeId')}` });
+    const aggregatorNode = new Endpoint(AggregatorEndpoint, { id: `${await storageContext.get<string>('storeId')}` });
     return aggregatorNode;
   }
 
@@ -2616,11 +2658,11 @@ const commissioningController = new CommissioningController({
 
   /**
    * Sets the reachability of the specified aggregator node bridged devices and trigger.
-   * @param {EndpointNode<AggregatorEndpoint>} aggregatorNode - The aggregator node to set the reachability for.
+   * @param {Endpoint<AggregatorEndpoint>} aggregatorNode - The aggregator node to set the reachability for.
    * @param {boolean} reachable - A boolean indicating the reachability status to set.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private async setAggregatorReachability(aggregatorNode: EndpointNode<AggregatorEndpoint>, reachable: boolean) {
+  private async setAggregatorReachability(aggregatorNode: Endpoint<AggregatorEndpoint>, reachable: boolean) {
     /*
     for (const child of aggregatorNode.parts) {
       this.log.debug(`Setting reachability of ${(child as unknown as MatterbridgeEndpoint)?.deviceName} to ${reachable}`);
@@ -2684,14 +2726,6 @@ const commissioningController = new CommissioningController({
     npm > npm.cmd on windows
     cmd.exe ['dir'] on windows
     await this.spawnCommand('npm', ['install', '-g', 'matterbridge']);
-    process.on('unhandledRejection', (reason, promise) => {
-      this.log.error('Unhandled Rejection at:', promise, 'reason:', reason);
-    });
-
-    spawn - [14:27:21.125] [Matterbridge:spawn]: changed 38 packages in 4s
-    spawn - [14:27:21.125] [Matterbridge:spawn]: 10 packages are looking for funding run `npm fund` for details
-    debug - [14:27:21.131] [Matterbridge]: Child process exited with code 0 and signal null
-    debug - [14:27:21.131] [Matterbridge]: Child process stdio streams have closed with code 0
     */
     const cmdLine = command + ' ' + args.join(' ');
     if (process.platform === 'win32' && command === 'npm') {

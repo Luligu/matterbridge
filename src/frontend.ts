@@ -40,8 +40,8 @@ import multer from 'multer';
 import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, wr, YELLOW, nt } from './logger/export.js';
 
 // Matterbridge
-import { createZip, deepCopy, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean } from './utils/export.js';
-import { ApiClusters, ApiDevices, BaseRegisteredPlugin, plg, RegisteredPlugin } from './matterbridgeTypes.js';
+import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean } from './utils/export.js';
+import { ApiClusters, ApiDevices, BaseRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { hasParameter } from './utils/export.js';
@@ -138,12 +138,6 @@ export class Frontend {
   private httpServer: HttpServer | undefined;
   private httpsServer: https.Server | undefined;
   private webSocketServer: WebSocketServer | undefined;
-
-  private prevCpus: os.CpuInfo[] = deepCopy(os.cpus());
-  private lastCpuUsage = 0;
-  private memoryData: (NodeJS.MemoryUsage & { cpu: string })[] = [];
-  private memoryInterval?: NodeJS.Timeout;
-  private memoryTimeout?: NodeJS.Timeout;
 
   constructor(matterbridge: Matterbridge) {
     this.matterbridge = matterbridge;
@@ -598,7 +592,6 @@ export class Frontend {
     this.expressApp.get('/api/download-pluginconfig', async (req, res) => {
       this.log.debug('The frontend sent /api/download-pluginconfig');
       await createZip(path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), path.relative(process.cwd(), path.join(this.matterbridge.matterbridgeDirectory, '*.config.json')));
-      // await createZip(path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), path.relative(process.cwd(), path.join(this.matterbridge.matterbridgeDirectory, 'certs', '*.*')), path.relative(process.cwd(), path.join(this.matterbridge.matterbridgeDirectory, '*.config.json')));
       res.download(path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), `matterbridge.pluginconfig.zip`, (error) => {
         if (error) {
           this.log.error(`Error downloading file matterbridge.pluginstorage.zip: ${error instanceof Error ? error.message : error}`);
@@ -607,7 +600,7 @@ export class Frontend {
       });
     });
 
-    // Endpoint to download the matterbridge plugin config files
+    // Endpoint to download the matterbridge backup (created with the backup command)
     this.expressApp.get('/api/download-backup', async (req, res) => {
       this.log.debug('The frontend sent /api/download-backup');
       res.download(path.join(os.tmpdir(), `matterbridge.backup.zip`), `matterbridge.backup.zip`, (error) => {
@@ -667,7 +660,13 @@ export class Frontend {
   async stop() {
     // Close the http server
     if (this.httpServer) {
-      this.httpServer.close();
+      this.httpServer.close((error) => {
+        if (error) {
+          this.log.error(`Error closing http server: ${error}`);
+        } else {
+          this.log.debug('Http server closed successfully');
+        }
+      });
       this.httpServer.removeAllListeners();
       this.httpServer = undefined;
       this.log.debug('Frontend http server closed successfully');
@@ -675,7 +674,13 @@ export class Frontend {
 
     // Close the https server
     if (this.httpsServer) {
-      this.httpsServer.close();
+      this.httpsServer.close((error) => {
+        if (error) {
+          this.log.error(`Error closing https server: ${error}`);
+        } else {
+          this.log.debug('Https server closed successfully');
+        }
+      });
       this.httpsServer.removeAllListeners();
       this.httpsServer = undefined;
       this.log.debug('Frontend https server closed successfully');
@@ -703,6 +708,7 @@ export class Frontend {
           this.log.debug('WebSocket server closed successfully');
         }
       });
+      // this.webSocketServer.removeAllListeners();
       this.webSocketServer = undefined;
     }
   }
@@ -737,9 +743,13 @@ export class Frontend {
 
   /**
    * Retrieves the api settings data.
-   * @returns {Promise<object>} A promise that resolve in the api settings object.
+   *
+   * @returns {Promise<{ matterbridgeInformation: MatterbridgeInformation, systemInformation: SystemInformation }>} A promise that resolve in the api settings object.
    */
-  private async getApiSettings() {
+  private async getApiSettings(): Promise<{
+    matterbridgeInformation: MatterbridgeInformation;
+    systemInformation: SystemInformation;
+  }> {
     const { lastCpuUsage } = await import('./cli.js');
 
     // Update the system information
@@ -800,6 +810,7 @@ export class Frontend {
       }
       return;
     };
+
     // Root endpoint
     if (device.hasClusterServer(PowerSource.Cluster.id)) return powerSource(device);
     // Child endpoints
@@ -1398,7 +1409,7 @@ export class Frontend {
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, response: selectEntityValues }));
       } else if (data.method === '/api/action') {
         if (!isValidString(data.params.plugin, 5) || !isValidString(data.params.action, 1)) {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter command in /api/action' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter in /api/action' }));
           return;
         }
         const plugin = this.matterbridge.plugins.get(data.params.plugin);
@@ -1624,9 +1635,9 @@ export class Frontend {
             // Remove the serial from the blackList if the blackList exists and the serial or name is in it
             if (isValidArray(config.blackList, 1)) {
               if (select === 'serial' && config.blackList.includes(data.params.serial)) {
-                config.blackList = config.blackList.filter((serial) => serial !== data.params.serial);
+                config.blackList = config.blackList.filter((item) => item !== data.params.serial);
               } else if (select === 'name' && config.blackList.includes(data.params.name)) {
-                config.blackList = config.blackList.filter((name) => name !== data.params.name);
+                config.blackList = config.blackList.filter((item) => item !== data.params.name);
               }
             }
             if (plugin.platform) plugin.platform.config = config;
@@ -1658,9 +1669,9 @@ export class Frontend {
             // Remove the serial from the whiteList if the whiteList exists and the serial is in it
             if (isValidArray(config.whiteList, 1)) {
               if (select === 'serial' && config.whiteList.includes(data.params.serial)) {
-                config.whiteList = config.whiteList.filter((serial) => serial !== data.params.serial);
+                config.whiteList = config.whiteList.filter((item) => item !== data.params.serial);
               } else if (select === 'name' && config.whiteList.includes(data.params.name)) {
-                config.whiteList = config.whiteList.filter((name) => name !== data.params.name);
+                config.whiteList = config.whiteList.filter((item) => item !== data.params.name);
               }
             }
             // Add the serial to the blackList
@@ -1692,12 +1703,17 @@ export class Frontend {
   }
 
   /**
-   * Sends a WebSocket message to all connected clients. The function is called by AnsiLogger.setGlobalCallback.
+   * Sends a WebSocket log message to all connected clients. The function is called by AnsiLogger.setGlobalCallback.
    *
    * @param {string} level - The logger level of the message: debug info notice warn error fatal...
    * @param {string} time - The time string of the message
    * @param {string} name - The logger name of the message
    * @param {string} message - The content of the message.
+   *
+   * @remark
+   * The function removes ANSI escape codes, leading asterisks, non-printable characters, and replaces all occurrences of \t and \n.
+   * It also replaces all occurrences of \" with " and angle-brackets with &lt; and &gt;.
+   * The function sends the message to all connected clients.
    */
   wssSendMessage(level: string, time: string, name: string, message: string) {
     if (!level || !time || !name || !message) return;

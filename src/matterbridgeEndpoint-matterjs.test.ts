@@ -1,34 +1,9 @@
+// src\matterbridgeEndpoint.test.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
-
-import { Matterbridge } from './matterbridge.js';
+import { DeviceTypeId, VendorId, ServerNode, Endpoint, EndpointServer, StorageContext, LogFormat as Format, LogLevel as Level, ClusterId, Behavior } from '@matter/main';
 import {
-  lightSensor,
-  occupancySensor,
-  onOffLight,
-  onOffOutlet,
-  coverDevice,
-  doorLockDevice,
-  fanDevice,
-  thermostatDevice,
-  waterValve,
-  modeSelect,
-  smokeCoAlarm,
-  waterLeakDetector,
-  laundryWasher,
-  extendedColorLight,
-} from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint, MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
-import { getAttributeId, getBehavior, getClusterId } from './matterbridgeEndpointHelpers.js';
-
-// @matter
-import { DeviceTypeId, VendorId, ServerNode, Endpoint, EndpointServer, StorageContext, NamedHandler } from '@matter/main';
-import { LogFormat as Format, LogLevel as Level } from '@matter/main';
-import {
-  BasicInformationCluster,
-  BridgedDeviceBasicInformationCluster,
   ColorControl,
   Descriptor,
   DescriptorCluster,
@@ -38,15 +13,20 @@ import {
   IdentifyCluster,
   OccupancySensing,
   OnOffCluster,
-  OperationalState,
+  PowerSource,
+  RvcCleanMode,
+  RvcOperationalState,
+  RvcRunMode,
   ScenesManagementCluster,
+  ServiceArea,
   Thermostat,
 } from '@matter/main/clusters';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { logEndpoint, MdnsService } from '@matter/main/protocol';
-import { OnOffPlugInUnitDevice } from '@matter/node/devices';
+import { ContactSensorDevice, OnOffPlugInUnitDevice } from '@matter/node/devices';
 import {
   BooleanStateConfigurationServer,
+  BooleanStateServer,
   ColorControlServer,
   DescriptorBehavior,
   DescriptorServer,
@@ -63,13 +43,19 @@ import {
   OnOffBehavior,
   OnOffServer,
   OperationalStateServer,
+  RvcCleanModeServer,
+  RvcOperationalStateServer,
+  RvcRunModeServer,
   ScenesManagementBehavior,
   ScenesManagementServer,
+  ServiceAreaServer,
   SmokeCoAlarmServer,
   ThermostatServer,
   ValveConfigurationAndControlServer,
   WindowCoveringServer,
 } from '@matter/node/behaviors';
+import { AnsiLogger, er, hk, LogLevel, or, TimestampFormat } from 'node-ansi-logger';
+
 import {
   MatterbridgeBooleanStateConfigurationServer,
   MatterbridgeColorControlServer,
@@ -80,6 +66,9 @@ import {
   MatterbridgeModeSelectServer,
   MatterbridgeOnOffServer,
   MatterbridgeOperationalStateServer,
+  MatterbridgeRvcCleanModeServer,
+  MatterbridgeRvcOperationalStateServer,
+  MatterbridgeRvcRunModeServer,
   MatterbridgeServer,
   MatterbridgeServerDevice,
   MatterbridgeSmokeCoAlarmServer,
@@ -87,15 +76,12 @@ import {
   MatterbridgeValveConfigurationAndControlServer,
   MatterbridgeWindowCoveringServer,
 } from './matterbridgeBehaviors.js';
-
-const invokeBehavior = async (endpoint: Endpoint, behavior: string, command: string, params?: Record<string, any>) => {
-  await endpoint.act((agent) => {
-    const endpointBehavior = agent[behavior];
-    expect(endpointBehavior).toBeDefined();
-    expect(command in endpointBehavior && typeof endpointBehavior[command] === 'function').toBeTruthy();
-    endpointBehavior[command](params);
-  });
-};
+import { Matterbridge } from './matterbridge.js';
+import { lightSensor, occupancySensor, onOffOutlet, coverDevice, doorLockDevice, fanDevice, thermostatDevice, waterValve, modeSelect, smokeCoAlarm, waterLeakDetector, laundryWasher, extendedColorLight } from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { getAttributeId, getBehavior, getClusterId, invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
+import { RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
+import { ClusterType } from '@matter/main/types';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
@@ -112,6 +98,8 @@ describe('MatterbridgeEndpoint class', () => {
   let smoke: MatterbridgeEndpoint;
   let leak: MatterbridgeEndpoint;
   let laundry: MatterbridgeEndpoint;
+  let rvc: RoboticVacuumCleaner;
+
   let matterbridgeServerDevice: MatterbridgeServerDevice;
 
   let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
@@ -350,13 +338,11 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('add onOffLight device to serverNode', async () => {
       expect(await server.add(light)).toBeDefined();
-      /*
       expect(EndpointServer.forEndpoint(light).hasClusterServer(DescriptorCluster)).toBe(true);
       expect(EndpointServer.forEndpoint(light).hasClusterServer(IdentifyCluster)).toBe(true);
       expect(EndpointServer.forEndpoint(light).hasClusterServer(GroupsCluster)).toBe(true);
       expect(EndpointServer.forEndpoint(light).hasClusterServer(ScenesManagementCluster)).toBe(false);
       expect(EndpointServer.forEndpoint(light).hasClusterServer(OnOffCluster)).toBe(true);
-      */
     });
 
     test('add rollerDevice device to serverNode', async () => {
@@ -406,7 +392,7 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('add deviceType to onOffPlugin without tagList', async () => {
-      const child = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer, OccupancySensingServer), {
+      const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer, OccupancySensingServer), {
         id: 'OnOffPlugin1',
         identify: {
           identifyTime: 0,
@@ -427,19 +413,19 @@ describe('MatterbridgeEndpoint class', () => {
           ],
         },
       });
-      expect(child).toBeDefined();
-      child.behaviors.require(DescriptorServer, {
+      expect(endpoint).toBeDefined();
+      endpoint.behaviors.require(DescriptorServer, {
         deviceTypeList: [
           { deviceType: 0x10a, revision: 3 },
           { deviceType: occupancySensor.code, revision: occupancySensor.revision },
         ],
       });
-      expect(await server.add(child)).toBeDefined();
-      logEndpoint(EndpointServer.forEndpoint(child));
+      expect(await server.add(endpoint)).toBeDefined();
+      logEndpoint(EndpointServer.forEndpoint(endpoint));
     });
 
     test('add deviceType to onOffPlugin with tagList', async () => {
-      const child = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer), {
+      const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer), {
         id: 'OnOffPlugin2',
         identify: {
           identifyTime: 0,
@@ -461,9 +447,9 @@ describe('MatterbridgeEndpoint class', () => {
           ],
         },
       });
-      expect(child).toBeDefined();
+      expect(endpoint).toBeDefined();
       expect(() =>
-        child.behaviors.require(DescriptorServer.with(Descriptor.Feature.TagList), {
+        endpoint.behaviors.require(DescriptorServer.with(Descriptor.Feature.TagList), {
           tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }],
           deviceTypeList: [
             { deviceType: onOffOutlet.code, revision: onOffOutlet.revision },
@@ -471,12 +457,12 @@ describe('MatterbridgeEndpoint class', () => {
           ],
         }),
       ).not.toThrow();
-      await expect(server.add(child)).resolves.toBeDefined();
-      logEndpoint(EndpointServer.forEndpoint(child));
+      await expect(server.add(endpoint)).resolves.toBeDefined();
+      logEndpoint(EndpointServer.forEndpoint(endpoint));
     });
 
     test('add deviceType to onOffPlugin in the costructor', async () => {
-      const child = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer, IlluminanceMeasurementServer), {
+      const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer, IlluminanceMeasurementServer), {
         id: 'OnOffPlugin3',
         identify: {
           identifyTime: 0,
@@ -499,10 +485,10 @@ describe('MatterbridgeEndpoint class', () => {
           ],
         },
       });
-      expect(child).toBeDefined();
-      await expect(server.add(child)).resolves.toBeDefined();
-      logEndpoint(EndpointServer.forEndpoint(child));
-      const deviceTypeList = child.state.descriptor.deviceTypeList;
+      expect(endpoint).toBeDefined();
+      await expect(server.add(endpoint)).resolves.toBeDefined();
+      logEndpoint(EndpointServer.forEndpoint(endpoint));
+      const deviceTypeList = endpoint.state.descriptor.deviceTypeList;
       expect(deviceTypeList).toHaveLength(3);
       expect(deviceTypeList[0].deviceType).toBe(onOffOutlet.code);
       expect(deviceTypeList[0].revision).toBe(onOffOutlet.revision);
@@ -510,6 +496,42 @@ describe('MatterbridgeEndpoint class', () => {
       expect(deviceTypeList[1].revision).toBe(occupancySensor.revision);
       expect(deviceTypeList[2].deviceType).toBe(lightSensor.code);
       expect(deviceTypeList[2].revision).toBe(lightSensor.revision);
+    });
+
+    test('add a booleanState', async () => {
+      const endpoint = new Endpoint(ContactSensorDevice.with(BooleanStateServer.enable({ events: { stateChange: true } })), {
+        id: 'ContactSensor1',
+        identify: {
+          identifyTime: 0,
+          identifyType: Identify.IdentifyType.None,
+        },
+        booleanState: {
+          stateValue: false,
+        },
+      });
+      expect(endpoint).toBeDefined();
+      await expect(server.add(endpoint)).resolves.toBeDefined();
+      // consoleLogSpy?.mockRestore();
+      // consoleInfoSpy?.mockRestore();
+      // logEndpoint(EndpointServer.forEndpoint(endpoint));
+      // console.log('ContactSensor1 descriptor state:', endpoint.state.descriptor);
+    });
+
+    test('create an Rvc device', async () => {
+      rvc = new RoboticVacuumCleaner('Robot Vacuum Cleaner', '0xABC123456789');
+      expect(rvc).toBeDefined();
+      expect(rvc.id).toBe('RobotVacuumCleaner-0xABC123456789');
+      expect(rvc.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
+      expect(rvc.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
+      expect(rvc.hasClusterServer(RvcRunMode.Cluster.id)).toBeTruthy();
+      expect(rvc.hasClusterServer(RvcCleanMode.Cluster.id)).toBeTruthy();
+      expect(rvc.hasClusterServer(RvcOperationalState.Cluster.id)).toBeTruthy();
+      expect(rvc.hasClusterServer(ServiceArea.Cluster.id)).toBeTruthy();
+    });
+
+    test('add the Rvc device', async () => {
+      expect(await server.add(rvc)).toBeDefined();
+      expect(rvc.lifecycle.isReady).toBe(true);
     });
 
     test('start server node', async () => {
@@ -549,8 +571,8 @@ describe('MatterbridgeEndpoint class', () => {
       expect(light.behaviors.elementsOf(MatterbridgeIdentifyServer).commands.has('triggerEffect')).toBeTruthy();
       expect((light.stateOf(IdentifyServer) as any).acceptedCommandList).toEqual([0, 64]);
       expect((light.stateOf(IdentifyServer) as any).generatedCommandList).toEqual([]);
-      await invokeBehavior(light, 'identify', 'identify', { identifyTime: 5 });
-      await invokeBehavior(light, 'identify', 'triggerEffect', { effectIdentifier: Identify.EffectIdentifier.Okay, effectVariant: Identify.EffectVariant.Default });
+      await invokeBehaviorCommand(light, 'identify', 'identify', { identifyTime: 5 });
+      await invokeBehaviorCommand(light, 'identify', 'triggerEffect', { effectIdentifier: Identify.EffectIdentifier.Okay, effectVariant: Identify.EffectVariant.Default });
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Identifying device for 5 seconds`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Triggering effect ${Identify.EffectIdentifier.Okay} variant ${Identify.EffectVariant.Default}`);
     });
@@ -563,9 +585,9 @@ describe('MatterbridgeEndpoint class', () => {
       expect(light.behaviors.elementsOf(MatterbridgeOnOffServer).commands.has('toggle')).toBeTruthy();
       expect((light.stateOf(MatterbridgeOnOffServer) as any).acceptedCommandList).toEqual([0, 64, 65, 66, 1, 2]);
       expect((light.stateOf(MatterbridgeOnOffServer) as any).generatedCommandList).toEqual([]);
-      await invokeBehavior(light, 'onOff', 'on');
-      await invokeBehavior(light, 'onOff', 'off');
-      await invokeBehavior(light, 'onOff', 'toggle');
+      await invokeBehaviorCommand(light, 'onOff', 'on');
+      await invokeBehaviorCommand(light, 'onOff', 'off');
+      await invokeBehaviorCommand(light, 'onOff', 'toggle');
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Switching device on (endpoint ${light.id}.${light.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Switching device off (endpoint ${light.id}.${light.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Toggle device on/off (endpoint ${light.id}.${light.number})`);
@@ -578,8 +600,8 @@ describe('MatterbridgeEndpoint class', () => {
       expect(light.behaviors.elementsOf(MatterbridgeLevelControlServer).commands.has('moveToLevelWithOnOff')).toBeTruthy();
       expect((light.stateOf(MatterbridgeLevelControlServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
       expect((light.stateOf(MatterbridgeLevelControlServer) as any).generatedCommandList).toEqual([]);
-      await invokeBehavior(light, 'levelControl', 'moveToLevel', { level: 100, transitionTime: 5, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
-      await invokeBehavior(light, 'levelControl', 'moveToLevelWithOnOff', { level: 100, transitionTime: 5, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+      await invokeBehaviorCommand(light, 'levelControl', 'moveToLevel', { level: 100, transitionTime: 5, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+      await invokeBehaviorCommand(light, 'levelControl', 'moveToLevelWithOnOff', { level: 100, transitionTime: 5, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting level to 100 with transitionTime 5 (endpoint ${light.id}.${light.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting level to 100 with transitionTime 5 (endpoint ${light.id}.${light.number})`);
     });
@@ -594,11 +616,11 @@ describe('MatterbridgeEndpoint class', () => {
       expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
       expect((light.stateOf(MatterbridgeColorControlServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 71]);
       expect((light.stateOf(MatterbridgeColorControlServer) as any).generatedCommandList).toEqual([]);
-      await invokeBehavior(light, 'colorControl', 'moveToHue', { hue: 180, direction: ColorControl.Direction.Shortest, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
-      await invokeBehavior(light, 'colorControl', 'moveToSaturation', { saturation: 100, direction: ColorControl.Direction.Shortest, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
-      await invokeBehavior(light, 'colorControl', 'moveToHueAndSaturation', { hue: 180, saturation: 100, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
-      await invokeBehavior(light, 'colorControl', 'moveToColor', { colorX: 30000, colorY: 30000, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
-      await invokeBehavior(light, 'colorControl', 'moveToColorTemperature', { colorTemperatureMireds: 250, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+      await invokeBehaviorCommand(light, 'colorControl', 'moveToHue', { hue: 180, direction: ColorControl.Direction.Shortest, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+      await invokeBehaviorCommand(light, 'colorControl', 'moveToSaturation', { saturation: 100, direction: ColorControl.Direction.Shortest, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+      await invokeBehaviorCommand(light, 'colorControl', 'moveToHueAndSaturation', { hue: 180, saturation: 100, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+      await invokeBehaviorCommand(light, 'colorControl', 'moveToColor', { colorX: 30000, colorY: 30000, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
+      await invokeBehaviorCommand(light, 'colorControl', 'moveToColorTemperature', { colorTemperatureMireds: 250, transitionTime: 0, optionsMask: { executeIfOff: false }, optionsOverride: { executeIfOff: false } });
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting hue to 180 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting saturation to 100 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting hue to 180 and saturation to 100 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
@@ -615,10 +637,10 @@ describe('MatterbridgeEndpoint class', () => {
       expect(cover.behaviors.elementsOf(MatterbridgeWindowCoveringServer).commands.has('goToLiftPercentage')).toBeTruthy();
       expect((cover.stateOf(MatterbridgeWindowCoveringServer) as any).acceptedCommandList).toEqual([0, 1, 2, 5]);
       expect((cover.stateOf(MatterbridgeWindowCoveringServer) as any).generatedCommandList).toEqual([]);
-      await invokeBehavior(cover, 'windowCovering', 'upOrOpen');
-      await invokeBehavior(cover, 'windowCovering', 'downOrClose');
-      await invokeBehavior(cover, 'windowCovering', 'stopMotion');
-      await invokeBehavior(cover, 'windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 5000 });
+      await invokeBehaviorCommand(cover, 'windowCovering', 'upOrOpen');
+      await invokeBehaviorCommand(cover, 'windowCovering', 'downOrClose');
+      await invokeBehaviorCommand(cover, 'windowCovering', 'stopMotion');
+      await invokeBehaviorCommand(cover, 'windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 5000 });
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening cover (endpoint ${cover.id}.${cover.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing cover (endpoint ${cover.id}.${cover.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stopping cover (endpoint ${cover.id}.${cover.number})`);
@@ -632,8 +654,8 @@ describe('MatterbridgeEndpoint class', () => {
       expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('unlockDoor')).toBeTruthy();
       expect((lock.stateOf(MatterbridgeDoorLockServer) as any).acceptedCommandList).toEqual([0, 1]);
       expect((lock.stateOf(MatterbridgeDoorLockServer) as any).generatedCommandList).toEqual([]);
-      await invokeBehavior(lock, 'doorLock', 'lockDoor');
-      await invokeBehavior(lock, 'doorLock', 'unlockDoor');
+      await invokeBehaviorCommand(lock, 'doorLock', 'lockDoor');
+      await invokeBehaviorCommand(lock, 'doorLock', 'unlockDoor');
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Locking door (endpoint ${lock.id}.${lock.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Unlocking door (endpoint ${lock.id}.${lock.number})`);
     });
@@ -644,7 +666,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(mode.behaviors.elementsOf(MatterbridgeModeSelectServer).commands.has('changeToMode')).toBeTruthy();
       expect((mode.stateOf(MatterbridgeModeSelectServer) as any).acceptedCommandList).toEqual([0]);
       expect((mode.stateOf(MatterbridgeModeSelectServer) as any).generatedCommandList).toEqual([]);
-      await invokeBehavior(mode, 'modeSelect', 'changeToMode', { newMode: 1 });
+      await invokeBehaviorCommand(mode, 'modeSelect', 'changeToMode', { newMode: 1 });
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${mode.id}.${mode.number})`);
     });
 
@@ -655,14 +677,14 @@ describe('MatterbridgeEndpoint class', () => {
       expect((fan.stateOf(MatterbridgeFanControlServer) as any).acceptedCommandList).toEqual([0]);
       expect((fan.stateOf(MatterbridgeFanControlServer) as any).generatedCommandList).toEqual([]);
       await fan.setStateOf(FanControlServer, { percentCurrent: 100 });
-      await invokeBehavior(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: false });
-      await invokeBehavior(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: false });
-      await invokeBehavior(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: true });
-      await invokeBehavior(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: false });
+      await invokeBehaviorCommand(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: false });
+      await invokeBehaviorCommand(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: false });
+      await invokeBehaviorCommand(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: true });
+      await invokeBehaviorCommand(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: false });
       await fan.setStateOf(FanControlServer, { percentCurrent: 10 });
-      await invokeBehavior(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: false });
+      await invokeBehaviorCommand(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: false });
       await fan.setStateOf(FanControlServer, { percentCurrent: 0 });
-      await invokeBehavior(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: true });
+      await invokeBehaviorCommand(fan, 'fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: true });
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stepping fan with direction ${FanControl.StepDirection.Increase} (endpoint ${fan.id}.${fan.number})`);
     });
 
@@ -672,7 +694,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(thermostat.behaviors.elementsOf(MatterbridgeThermostatServer).commands.has('setpointRaiseLower')).toBeTruthy();
       expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).acceptedCommandList).toEqual([0]);
       expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).generatedCommandList).toEqual([]);
-      await invokeBehavior(thermostat, 'thermostat', 'setpointRaiseLower', { mode: Thermostat.SetpointRaiseLowerMode.Both, amount: 5 });
+      await invokeBehaviorCommand(thermostat, 'thermostat', 'setpointRaiseLower', { mode: Thermostat.SetpointRaiseLowerMode.Both, amount: 5 });
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting setpoint to 5 in mode ${Thermostat.SetpointRaiseLowerMode.Both} (endpoint ${thermostat.id}.${thermostat.number})`);
     });
 
@@ -683,8 +705,8 @@ describe('MatterbridgeEndpoint class', () => {
       expect(valve.behaviors.elementsOf(MatterbridgeValveConfigurationAndControlServer).commands.has('close')).toBeTruthy();
       expect((valve.stateOf(MatterbridgeValveConfigurationAndControlServer) as any).acceptedCommandList).toEqual([0, 1]);
       expect((valve.stateOf(MatterbridgeValveConfigurationAndControlServer) as any).generatedCommandList).toEqual([]);
-      await invokeBehavior(valve, 'valveConfigurationAndControl', 'open', { openDuration: null, targetLevel: 50 });
-      await invokeBehavior(valve, 'valveConfigurationAndControl', 'close');
+      await invokeBehaviorCommand(valve, 'valveConfigurationAndControl', 'open', { openDuration: null, targetLevel: 50 });
+      await invokeBehaviorCommand(valve, 'valveConfigurationAndControl', 'close');
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening valve to 50% (endpoint ${valve.id}.${valve.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing valve (endpoint ${valve.id}.${valve.number})`);
     });
@@ -695,7 +717,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(smoke.behaviors.elementsOf(MatterbridgeSmokeCoAlarmServer).commands.has('selfTestRequest')).toBeTruthy();
       expect((smoke.stateOf(MatterbridgeSmokeCoAlarmServer) as any).acceptedCommandList).toEqual([0]);
       expect((smoke.stateOf(MatterbridgeSmokeCoAlarmServer) as any).generatedCommandList).toEqual([]);
-      await invokeBehavior(smoke, 'smokeCoAlarm', 'selfTestRequest');
+      await invokeBehaviorCommand(smoke, 'smokeCoAlarm', 'selfTestRequest');
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Testing SmokeCOAlarm (endpoint ${smoke.id}.${smoke.number})`);
     });
 
@@ -705,7 +727,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(leak.behaviors.elementsOf(MatterbridgeBooleanStateConfigurationServer).commands.has('enableDisableAlarm')).toBeTruthy();
       expect((leak.stateOf(MatterbridgeBooleanStateConfigurationServer) as any).acceptedCommandList).toEqual([1]);
       expect((leak.stateOf(MatterbridgeBooleanStateConfigurationServer) as any).generatedCommandList).toEqual([]);
-      await invokeBehavior(leak, 'booleanStateConfiguration', 'enableDisableAlarm', { alarmsToEnableDisable: { audible: true, visual: true } });
+      await invokeBehaviorCommand(leak, 'booleanStateConfiguration', 'enableDisableAlarm', { alarmsToEnableDisable: { audible: true, visual: true } });
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Enabling/disabling alarm ${{ audible: true, visual: true }} (endpoint ${leak.id}.${leak.number})`);
     });
 
@@ -718,14 +740,119 @@ describe('MatterbridgeEndpoint class', () => {
       expect(laundry.behaviors.elementsOf(MatterbridgeOperationalStateServer).commands.has('resume')).toBeTruthy();
       expect((laundry.stateOf(MatterbridgeOperationalStateServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3]);
       expect((laundry.stateOf(MatterbridgeOperationalStateServer) as any).generatedCommandList).toEqual([4]);
-      await invokeBehavior(laundry, 'operationalState', 'start');
-      await invokeBehavior(laundry, 'operationalState', 'stop');
-      await invokeBehavior(laundry, 'operationalState', 'pause');
-      await invokeBehavior(laundry, 'operationalState', 'resume');
+      await invokeBehaviorCommand(laundry, 'operationalState', 'start');
+      await invokeBehaviorCommand(laundry, 'operationalState', 'stop');
+      await invokeBehaviorCommand(laundry, 'operationalState', 'pause');
+      await invokeBehaviorCommand(laundry, 'operationalState', 'resume');
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Start (endpoint ${laundry.id}.${laundry.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stop (endpoint ${laundry.id}.${laundry.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Pause (endpoint ${laundry.id}.${laundry.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resume (endpoint ${laundry.id}.${laundry.number})`);
+    });
+
+    test('rvc forEachAttribute', async () => {
+      let count = 0;
+      // consoleWarnSpy.mockRestore();
+      rvc.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+        // console.warn('forEachAttribute', clusterName, clusterId, attributeName, attributeId, attributeValue);
+        expect(clusterName).toBeDefined();
+        expect(clusterId).toBeDefined();
+        expect(attributeName).toBeDefined();
+        expect(attributeId).toBeDefined();
+        count++;
+      });
+      expect(count).toBe(101);
+    });
+
+    test('invoke MatterbridgeRvcRunModeServer commands', async () => {
+      // consoleLogSpy?.mockRestore();
+      // console.log('rvc:', rvc.state, rvc.state['rvcRunMode']);
+      expect(rvc.behaviors.has(RvcRunModeServer)).toBeTruthy();
+      expect(rvc.behaviors.has(MatterbridgeRvcRunModeServer)).toBeTruthy();
+      expect(rvc.behaviors.elementsOf(RvcRunModeServer).commands.has('changeToMode')).toBeTruthy();
+      expect(rvc.behaviors.elementsOf(MatterbridgeRvcRunModeServer).commands.has('changeToMode')).toBeTruthy();
+      expect((rvc.state['rvcRunMode'] as any).acceptedCommandList).toEqual([0]);
+      expect((rvc.state['rvcRunMode'] as any).generatedCommandList).toEqual([1]);
+      expect((rvc.stateOf(MatterbridgeRvcRunModeServer) as any).acceptedCommandList).toEqual([0]);
+      expect((rvc.stateOf(MatterbridgeRvcRunModeServer) as any).generatedCommandList).toEqual([1]);
+      jest.clearAllMocks();
+      await rvc.invokeBehaviorCommand('noCluster', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`invokeBehaviorCommand error: command ${hk}changeToMode${er} not found on endpoint`));
+      jest.clearAllMocks();
+      await rvc.invokeBehaviorCommand('rvcRunMode', 'noCommand' as any, { newMode: 0 }); // 0 is not a valid mode
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`invokeBehaviorCommand error: command ${hk}noCommand${er} not found on agent for endpoint`));
+      jest.clearAllMocks();
+      await rvc.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeRvcRunModeServer changeToMode called with unsupported newMode: 0`);
+      jest.clearAllMocks();
+      await invokeBehaviorCommand(rvc, 'rvcRunMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeRvcRunModeServer changeToMode called with unsupported newMode: 0`);
+      jest.clearAllMocks();
+      await invokeBehaviorCommand(rvc, 'rvcRunMode', 'changeToMode', { newMode: 1 }); // 1 has Idle
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${rvc.id}.${rvc.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcRunModeServer changeToMode called with newMode Idle => Docked`);
+      await invokeBehaviorCommand(rvc, 'rvcRunMode', 'changeToMode', { newMode: 2 }); // 2 has Cleaning
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 2 (endpoint ${rvc.id}.${rvc.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcRunModeServer changeToMode called with newMode Cleaning => Running`);
+      jest.clearAllMocks();
+      await invokeBehaviorCommand(rvc, 'rvcRunMode', 'changeToMode', { newMode: 3 }); // 3 has Mapping
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 3 (endpoint ${rvc.id}.${rvc.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcRunModeServer changeToMode called with newMode 3 => Mapping`);
+      jest.clearAllMocks();
+      await invokeBehaviorCommand(rvc, 'rvcRunMode', 'changeToMode', { newMode: 4 }); // 4 has Cleaning and Max
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 4 (endpoint ${rvc.id}.${rvc.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcRunModeServer changeToMode called with newMode Cleaning => Running`);
+    });
+
+    test('invoke MatterbridgeRvcCleanModeServer commands', async () => {
+      // consoleLogSpy?.mockRestore();
+      // console.log('rvc:', rvc.state, rvc.state['rvcCleanMode']);
+      expect(rvc.behaviors.has(RvcCleanModeServer)).toBeTruthy();
+      expect(rvc.behaviors.has(MatterbridgeRvcCleanModeServer)).toBeTruthy();
+      expect(rvc.behaviors.elementsOf(RvcCleanModeServer).commands.has('changeToMode')).toBeTruthy();
+      expect(rvc.behaviors.elementsOf(MatterbridgeRvcCleanModeServer).commands.has('changeToMode')).toBeTruthy();
+      expect((rvc.state['rvcCleanMode'] as any).acceptedCommandList).toEqual([0]);
+      expect((rvc.state['rvcCleanMode'] as any).generatedCommandList).toEqual([1]);
+      jest.clearAllMocks();
+      await invokeBehaviorCommand(rvc, 'rvcCleanMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeRvcCleanModeServer changeToMode called with unsupported newMode: 0`);
+      jest.clearAllMocks();
+      await invokeBehaviorCommand(rvc, 'rvcCleanMode', 'changeToMode', { newMode: 1 });
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${rvc.id}.${rvc.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcCleanModeServer changeToMode called with newMode 1 => Vacuum`);
+    });
+
+    test('invoke MatterbridgeRvcOperationalStateServer commands', async () => {
+      expect(rvc.behaviors.has(RvcOperationalStateServer)).toBeTruthy();
+      expect(rvc.behaviors.has(MatterbridgeRvcOperationalStateServer)).toBeTruthy();
+      expect(rvc.behaviors.elementsOf(RvcOperationalStateServer).commands.has('pause')).toBeTruthy();
+      expect(rvc.behaviors.elementsOf(RvcOperationalStateServer).commands.has('resume')).toBeTruthy();
+      expect(rvc.behaviors.elementsOf(RvcOperationalStateServer).commands.has('goHome')).toBeTruthy();
+      expect((rvc.stateOf(RvcOperationalStateServer) as any).acceptedCommandList).toEqual([0, 3, 128]);
+      expect((rvc.stateOf(RvcOperationalStateServer) as any).generatedCommandList).toEqual([4]);
+      await invokeBehaviorCommand(rvc, 'rvcOperationalState', 'pause');
+      await invokeBehaviorCommand(rvc, 'rvcOperationalState', 'resume');
+      await invokeBehaviorCommand(rvc, 'rvcOperationalState', 'goHome');
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Pause (endpoint ${rvc.id}.${rvc.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused and currentMode to Idle`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resume (endpoint ${rvc.id}.${rvc.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `GoHome (endpoint ${rvc.id}.${rvc.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcOperationalStateServer: goHome called setting operational state to Docked and currentMode to Idle`);
+    });
+
+    test('invoke MatterbridgeServiceAreaServer commands', async () => {
+      expect(rvc.behaviors.has(ServiceAreaServer)).toBeTruthy();
+      expect(rvc.behaviors.has(MatterbridgeRvcOperationalStateServer)).toBeTruthy();
+      expect(rvc.behaviors.elementsOf(ServiceAreaServer).commands.has('selectAreas')).toBeTruthy();
+      expect((rvc.stateOf(ServiceAreaServer) as any).acceptedCommandList).toEqual([0]);
+      expect((rvc.stateOf(ServiceAreaServer) as any).generatedCommandList).toEqual([1]);
+      await invokeBehaviorCommand(rvc, 'serviceArea', 'selectAreas', { newAreas: [1, 2, 3, 4] });
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Selecting areas 1,2,3,4 (endpoint ${rvc.id}.${rvc.number})`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeServiceAreaServer selectAreas called with: 1, 2, 3, 4`);
+      jest.clearAllMocks();
+      await invokeBehaviorCommand(rvc, 'serviceArea', 'selectAreas', { newAreas: [0, 5] });
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeServiceAreaServer selectAreas called with unsupported area: 0`);
     });
 
     test('close server node', async () => {

@@ -5,7 +5,7 @@
 [![Docker Version](https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver)](https://hub.docker.com/r/luligu/matterbridge)
 [![Docker Pulls](https://img.shields.io/docker/pulls/luligu/matterbridge.svg)](https://hub.docker.com/r/luligu/matterbridge)
 ![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
-![Coverage](https://img.shields.io/badge/Jest%20coverage-84%25-brightgreen)
+![Coverage](https://img.shields.io/badge/Jest%20coverage-85%25-brightgreen)
 
 [![power by](https://img.shields.io/badge/powered%20by-matter--history-blue)](https://www.npmjs.com/package/matter-history)
 [![power by](https://img.shields.io/badge/powered%20by-node--ansi--logger-blue)](https://www.npmjs.com/package/node-ansi-logger)
@@ -33,7 +33,7 @@ No complex setup just copy paste the installation scripts.
 
 Matterbridge is light weight and run also on slow Linux machine with 512MB of memory.
 
-It runs perfectly on Windows too.
+It runs perfectly on macOS and Windows too.
 
 If you like this project and find it useful, please consider giving it a star on GitHub at https://github.com/Luligu/matterbridge and sponsoring it.
 

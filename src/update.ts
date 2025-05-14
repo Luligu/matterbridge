@@ -21,9 +21,12 @@
  * limitations under the License. *
  */
 
+// AnsiLogger module
+import { db, nt, wr } from 'node-ansi-logger';
+
+// Matterbridge module
 import { Matterbridge } from './matterbridge.js';
 import { plg, RegisteredPlugin } from './matterbridgeTypes.js';
-import { db, nt, wr } from './logger/export.js';
 
 /**
  * Checks for updates for Matterbridge and its plugins.
@@ -33,18 +36,26 @@ import { db, nt, wr } from './logger/export.js';
  * @returns {Promise<void>} A promise that resolves when the update checks are complete.
  */
 export async function checkUpdates(matterbridge: Matterbridge): Promise<void> {
-  const { hasParameter } = await import('./utils/parameter.js');
+  const { hasParameter } = await import('./utils/commandLine.js');
 
-  getMatterbridgeLatestVersion(matterbridge);
-  getMatterbridgeDevVersion(matterbridge);
+  const latestVersion = getMatterbridgeLatestVersion(matterbridge);
+  const devVersion = getMatterbridgeDevVersion(matterbridge);
+  const pluginsVersions = [];
+  const shellyUpdates = [];
   for (const plugin of matterbridge.plugins) {
-    getPluginLatestVersion(matterbridge, plugin);
+    const pluginVersion = getPluginLatestVersion(matterbridge, plugin);
+    pluginsVersions.push(pluginVersion);
   }
+
   if (hasParameter('shelly')) {
     const { getShellySysUpdate, getShellyMainUpdate } = await import('./shelly.js');
-    getShellySysUpdate(matterbridge);
-    getShellyMainUpdate(matterbridge);
+
+    const systemUpdate = getShellySysUpdate(matterbridge);
+    shellyUpdates.push(systemUpdate);
+    const mainUpdate = getShellyMainUpdate(matterbridge);
+    shellyUpdates.push(mainUpdate);
   }
+  await Promise.all([latestVersion, devVersion, ...pluginsVersions, ...shellyUpdates]);
 }
 
 /**
@@ -52,27 +63,27 @@ export async function checkUpdates(matterbridge: Matterbridge): Promise<void> {
  * If there is an error retrieving the latest version, logs an error message.
  *
  * @param {Matterbridge} matterbridge - The Matterbridge instance.
- * @returns {Promise<void>} A promise that resolves when the latest version is retrieved.
+ * @returns {Promise<String | undefined>} A promise that resolves when the latest version is retrieved.
  */
-async function getMatterbridgeLatestVersion(matterbridge: Matterbridge): Promise<void> {
+export async function getMatterbridgeLatestVersion(matterbridge: Matterbridge): Promise<string | undefined> {
   const { getNpmPackageVersion } = await import('./utils/network.js');
 
-  getNpmPackageVersion('matterbridge')
-    .then(async (version) => {
-      matterbridge.matterbridgeLatestVersion = version;
-      matterbridge.matterbridgeInformation.matterbridgeLatestVersion = version;
-      await matterbridge.nodeContext?.set<string>('matterbridgeLatestVersion', matterbridge.matterbridgeLatestVersion);
-      if (matterbridge.matterbridgeVersion !== matterbridge.matterbridgeLatestVersion) {
-        matterbridge.log.notice(`Matterbridge is out of date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${matterbridge.matterbridgeLatestVersion}.`);
-        matterbridge.frontend.wssSendRefreshRequired('matterbridgeLatestVersion');
-        matterbridge.frontend.wssSendUpdateRequired();
-      } else {
-        matterbridge.log.debug(`Matterbridge is up to date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${matterbridge.matterbridgeLatestVersion}.`);
-      }
-    })
-    .catch((error) => {
-      matterbridge.log.warn(`Error getting Matterbridge latest version: ${error.message}`);
-    });
+  try {
+    const version = await getNpmPackageVersion('matterbridge');
+    matterbridge.matterbridgeLatestVersion = version;
+    matterbridge.matterbridgeInformation.matterbridgeLatestVersion = version;
+    await matterbridge.nodeContext?.set<string>('matterbridgeLatestVersion', matterbridge.matterbridgeLatestVersion);
+    if (matterbridge.matterbridgeVersion !== matterbridge.matterbridgeLatestVersion) {
+      matterbridge.log.notice(`Matterbridge is out of date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${matterbridge.matterbridgeLatestVersion}.`);
+      matterbridge.frontend.wssSendRefreshRequired('matterbridgeLatestVersion');
+      matterbridge.frontend.wssSendUpdateRequired();
+    } else {
+      matterbridge.log.debug(`Matterbridge is up to date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${matterbridge.matterbridgeLatestVersion}.`);
+    }
+    return version;
+  } catch (error) {
+    matterbridge.log.warn(`Error getting Matterbridge latest version: ${error instanceof Error ? error.message : error}`);
+  }
 }
 
 /**
@@ -80,25 +91,27 @@ async function getMatterbridgeLatestVersion(matterbridge: Matterbridge): Promise
  * If there is an error retrieving the latest version, logs an error message.
  *
  * @param {Matterbridge} matterbridge - The Matterbridge instance.
- * @returns {Promise<void>} A promise that resolves when the latest dev version is retrieved.
+ * @returns {Promise<string | undefined>} A promise that resolves when the latest dev version is retrieved.
  */
-async function getMatterbridgeDevVersion(matterbridge: Matterbridge): Promise<void> {
+export async function getMatterbridgeDevVersion(matterbridge: Matterbridge): Promise<string | undefined> {
   const { getNpmPackageVersion } = await import('./utils/network.js');
 
-  getNpmPackageVersion('matterbridge', 'dev')
-    .then(async (version) => {
-      matterbridge.matterbridgeDevVersion = version;
-      matterbridge.matterbridgeInformation.matterbridgeDevVersion = version;
-      await matterbridge.nodeContext?.set<string>('matterbridgeDevVersion', version);
-      if (matterbridge.matterbridgeVersion.includes('-dev.') && matterbridge.matterbridgeVersion !== version) {
-        matterbridge.log.notice(`Matterbridge@dev is out of date. Current version: ${matterbridge.matterbridgeVersion}. Latest dev version: ${matterbridge.matterbridgeDevVersion}.`);
-        matterbridge.frontend.wssSendRefreshRequired('matterbridgeDevVersion');
-        matterbridge.frontend.wssSendUpdateRequired();
-      }
-    })
-    .catch((error) => {
-      matterbridge.log.warn(`Error getting Matterbridge latest dev version: ${error.message}`);
-    });
+  try {
+    const version = await getNpmPackageVersion('matterbridge', 'dev');
+    matterbridge.matterbridgeDevVersion = version;
+    matterbridge.matterbridgeInformation.matterbridgeDevVersion = version;
+    await matterbridge.nodeContext?.set<string>('matterbridgeDevVersion', version);
+    if (matterbridge.matterbridgeVersion.includes('-dev.') && matterbridge.matterbridgeVersion !== version) {
+      matterbridge.log.notice(`Matterbridge@dev is out of date. Current version: ${matterbridge.matterbridgeVersion}. Latest dev version: ${matterbridge.matterbridgeDevVersion}.`);
+      matterbridge.frontend.wssSendRefreshRequired('matterbridgeDevVersion');
+      matterbridge.frontend.wssSendUpdateRequired();
+    } else {
+      matterbridge.log.debug(`Matterbridge@dev is up to date. Current version: ${matterbridge.matterbridgeVersion}. Latest dev version: ${matterbridge.matterbridgeDevVersion}.`);
+    }
+    return version;
+  } catch (error) {
+    matterbridge.log.warn(`Error getting Matterbridge latest dev version: ${error instanceof Error ? error.message : error}`);
+  }
 }
 
 /**
@@ -107,22 +120,22 @@ async function getMatterbridgeDevVersion(matterbridge: Matterbridge): Promise<vo
  *
  * @param {Matterbridge} matterbridge - The Matterbridge instance.
  * @param {RegisteredPlugin} plugin - The plugin for which to retrieve the latest version.
- * @returns {Promise<void>} A promise that resolves when the latest version is retrieved.
+ * @returns {Promise<string | undefined>} A promise that resolves when the latest version is retrieved.
  */
-async function getPluginLatestVersion(matterbridge: Matterbridge, plugin: RegisteredPlugin): Promise<void> {
+export async function getPluginLatestVersion(matterbridge: Matterbridge, plugin: RegisteredPlugin): Promise<string | undefined> {
   const { getNpmPackageVersion } = await import('./utils/network.js');
 
-  getNpmPackageVersion(plugin.name)
-    .then((version) => {
-      plugin.latestVersion = version;
-      if (plugin.version !== plugin.latestVersion) {
-        matterbridge.log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
-        matterbridge.frontend.wssSendRefreshRequired('plugins');
-      } else {
-        matterbridge.log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
-      }
-    })
-    .catch((error) => {
-      matterbridge.log.warn(`Error getting ${plg}${plugin.name}${wr} latest version: ${error.message}`);
-    });
+  try {
+    const version = await getNpmPackageVersion(plugin.name);
+    plugin.latestVersion = version;
+    if (plugin.version !== plugin.latestVersion) {
+      matterbridge.log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
+      matterbridge.frontend.wssSendRefreshRequired('plugins');
+    } else {
+      matterbridge.log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
+    }
+    return version;
+  } catch (error) {
+    matterbridge.log.warn(`Error getting plugin ${plg}${plugin.name}${wr} latest version: ${error instanceof Error ? error.message : error}`);
+  }
 }

@@ -1,4 +1,5 @@
-import { hslColorToRgbColor, kelvinToRGB, miredToKelvin, rgbColorToHslColor, rgbColorToXYColor, xyColorToRgbColor } from './colorUtils';
+// src\utils\colorUtils.test.ts
+import { hslColorToRgbColor, kelvinToRGB, miredToKelvin, rgbColorToHslColor, rgbColorToXYColor, xyColorToRgbColor } from './colorUtils.js';
 
 /* prettier-ignore */
 const colors = [

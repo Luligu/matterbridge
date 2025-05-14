@@ -1,5 +1,5 @@
 /**
- * This file contains the deepEqual function.
+ * This file contains the validation functions.
  *
  * @file isvalid.ts
  * @author Luca Liguori
@@ -38,7 +38,7 @@ export function isValidIpv4Address(ipv4Address: string): boolean {
  * @param {any} value - The value to be checked.
  * @param {number} min - The minimum value allowed (optional).
  * @param {number} max - The maximum value allowed (optional).
- * @returns {boolean} Returns true if the value is a valid number within the specified range, otherwise false.
+ * @returns {value is number} Returns true if the value is a valid number within the specified range, otherwise false.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isValidNumber(value: any, min?: number, max?: number): value is number {
@@ -52,7 +52,7 @@ export function isValidNumber(value: any, min?: number, max?: number): value is 
  * Checks if a value is a valid boolean.
  *
  * @param {any} value - The value to be checked.
- * @returns {boolean} `true` if the value is a valid boolean, `false` otherwise.
+ * @returns {value is boolean} `true` if the value is a valid boolean, `false` otherwise.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isValidBoolean(value: any): value is boolean {
@@ -65,7 +65,7 @@ export function isValidBoolean(value: any): value is boolean {
  * @param {any} value - The value to be checked.
  * @param {number} minLength - The min string length (optional).
  * @param {number} maxLength - The max string length (optional).
- * @returns {boolean} A boolean indicating whether the value is a valid string.
+ * @returns {value is string} A boolean indicating whether the value is a valid string.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isValidString(value: any, minLength?: number, maxLength?: number): value is string {
@@ -76,12 +76,23 @@ export function isValidString(value: any, minLength?: number, maxLength?: number
 }
 
 /**
+ * Checks if a value is a valid RegExp.
+ *
+ * @param {any} value - The value to be checked.
+ * @returns {value is RegExp} A boolean indicating whether the value is a valid RegExp.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function isValidRegExp(value: any): value is RegExp {
+  return value !== undefined && value !== null && value instanceof RegExp;
+}
+
+/**
  * Checks if a value is a valid object.
  *
  * @param {any} value - The value to be checked.
  * @param {number} minLength - The min number of keys (optional).
  * @param {number} maxLength - The max number of keys (optional).
- * @returns {boolean} A boolean indicating whether the value is a valid object.
+ * @returns {value is object} A boolean indicating whether the value is a valid object.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isValidObject(value: any, minLength?: number, maxLength?: number): value is object {
@@ -98,7 +109,7 @@ export function isValidObject(value: any, minLength?: number, maxLength?: number
  * @param {any} value - The value to be checked.
  * @param {number} minLength - The min number of elements (optional).
  * @param {number} maxLength - The max number of elements (optional).
- * @returns {boolean} A boolean indicating whether the value is a valid array.
+ * @returns {value is unknown[]} A boolean indicating whether the value is a valid array.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isValidArray(value: any, minLength?: number, maxLength?: number): value is unknown[] {
@@ -112,7 +123,7 @@ export function isValidArray(value: any, minLength?: number, maxLength?: number)
  * Checks if the given value is null.
  *
  * @param {any} value - The value to check.
- * @returns {boolean} `true` if the value is null, `false` otherwise.
+ * @returns {value is null} `true` if the value is null, `false` otherwise.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isValidNull(value: any): value is null {
@@ -123,7 +134,7 @@ export function isValidNull(value: any): value is null {
  * Checks if a value is undefined.
  *
  * @param {any} value - The value to check.
- * @returns {boolean} `true` if the value is undefined, `false` otherwise.
+ * @returns {value is undefined} `true` if the value is undefined, `false` otherwise.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isValidUndefined(value: any): value is undefined {
@@ -131,7 +142,7 @@ export function isValidUndefined(value: any): value is undefined {
 }
 
 /**
- * Converts a semantic version string like "6.11.0-1011-raspi" to a numeric version code.
+ * Converts a semantic version string like "6.11.0-1011-raspi" to a numeric version code like 61100.
  * Format: major * 10000 + minor * 100 + patch
  *
  * @param {string} versionString The version string to parse

@@ -5,16 +5,16 @@
 process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'JestPlatform'];
 
 import { jest } from '@jest/globals';
-
+import path from 'node:path';
+import os from 'node:os';
 import { AnsiLogger, CYAN, db, er, LogLevel, pl, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
+
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Environment, StorageService } from '@matter/main';
-import path from 'node:path';
-import os from 'node:os';
 import { waiter } from './utils/export.js';
 
 describe('Matterbridge platform', () => {

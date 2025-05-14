@@ -1,5 +1,5 @@
 /**
- * This file contains the network function.
+ * This file contains the network functions.
  *
  * @file network.ts
  * @author Luca Liguori
@@ -82,7 +82,7 @@ export function getIpv6InterfaceAddress(): string | undefined {
 
 /**
  * Retrieves the mac address of the first non-internal network interface.
- * @returns {string | undefined} The IPv4 address of the selected network interface, or undefined if not found.
+ * @returns {string | undefined} The mac address, or undefined if not found.
  */
 export function getMacAddress(): string | undefined {
   let macAddress: string | undefined;
@@ -93,7 +93,7 @@ export function getMacAddress(): string | undefined {
       break;
     }
     for (const detail of interfaceDetails) {
-      if (detail.family === 'IPv6' && !detail.internal && macAddress === undefined) {
+      if (!detail.internal && macAddress === undefined) {
         macAddress = detail.mac;
       }
     }
@@ -106,7 +106,7 @@ export function getMacAddress(): string | undefined {
 
 /**
  * Logs the available network interfaces and their details.
- * @param {boolean} log - Whether to enable logging of network interface details.
+ * @param {boolean} log - Whether to enable logging of network interface details (default is true).
  */
 export function logInterfaces(debug = true): void {
   const log = new AnsiLogger({ logName: 'MatterbridgeUtils', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
@@ -151,12 +151,12 @@ export async function resolveHostname(hostname: string, family: 0 | 4 | 6 = 4): 
  *
  * @param {string} packageName - The name of the npm package.
  * @param {string} [tag='latest'] - The tag of the package version to retrieve (default is 'latest').
- * @param {number} [timeout=5000] - The timeout duration in milliseconds (default is 5000ms).
+ * @param {number} [timeout=10000] - The timeout duration in milliseconds (default is 10000ms).
  * @returns {Promise<string>} A promise that resolves to the version string of the package.
  * @throws {Error} If the request fails or the tag is not found.
  */
 export async function getNpmPackageVersion(packageName: string, tag = 'latest', timeout = 10000): Promise<string> {
-  const https = await import('https');
+  const https = await import('node:https');
   return new Promise((resolve, reject) => {
     const url = `https://registry.npmjs.org/${packageName}`;
     const controller = new AbortController();

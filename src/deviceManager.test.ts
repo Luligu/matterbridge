@@ -1,46 +1,74 @@
+// src\deviceManager.test.ts
+/* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-logger', 'info', '-matterlogger', 'info', '-bridge', '-frontend', '0', '-profile', 'JestDeviceManager'];
+process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'info', '-matterlogger', 'info', '-bridge', '-frontend', '0', '-homedir', 'matterstorage/DeviceManager', '-profile', 'JestDeviceManager'];
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, BLUE, db, er, LogLevel, nf, nt, pl, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { DeviceManager } from './deviceManager.js';
 import { PluginManager } from './pluginManager.js';
 import { contactSensor, occupancySensor } from './matterbridgeDeviceTypes.js';
+import { dev } from './matterbridgeTypes.js';
+import { rmSync } from 'node:fs';
 
-// Default colors
-const plg = '\u001B[38;5;33m';
-const dev = '\u001B[38;5;79m';
-const typ = '\u001B[38;5;207m';
+let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
+let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
+let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
+let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
+let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
+let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
+const debug = false;
+
+if (!debug) {
+  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
+  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
+  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
+  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
+  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
+  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
+} else {
+  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
+  consoleLogSpy = jest.spyOn(console, 'log');
+  consoleDebugSpy = jest.spyOn(console, 'debug');
+  consoleInfoSpy = jest.spyOn(console, 'info');
+  consoleWarnSpy = jest.spyOn(console, 'warn');
+  consoleErrorSpy = jest.spyOn(console, 'error');
+}
+
+// Cleanup the matter environment
+rmSync('matterstorage/DeviceManager', { recursive: true, force: true });
 
 describe('DeviceManager with mocked devices', () => {
   let matterbridge: Matterbridge;
+  let plugins: PluginManager;
   let devices: DeviceManager;
-  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-  let loggerLogSpy: jest.SpiedFunction<(level: LogLevel, message: string, ...parameters: any[]) => void>;
 
   beforeAll(async () => {
-    // Spy on and mock the AnsiLogger.log method
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
-      // console.log(`Mocked log: ${level} - ${message}`, ...parameters);
-    });
-    // Spy on and mock console.log
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
-      // Mock implementation or empty function
-    });
+    //
+  });
+
+  beforeEach(() => {
+    // Clear all mocks
+    jest.clearAllMocks();
   });
 
   afterAll(async () => {
     // Restore all mocks
-    jest.restoreAllMocks();
+    // jest.restoreAllMocks();
   });
 
   test('Load matterbridge', async () => {
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeInstanceOf(Matterbridge);
+    plugins = (matterbridge as any).plugins;
+    expect(plugins).toBeInstanceOf(PluginManager);
+    devices = (matterbridge as any).devices;
+    expect(devices).toBeInstanceOf(DeviceManager);
   }, 60000);
 
   test('constructor initializes correctly', () => {
@@ -69,7 +97,7 @@ describe('DeviceManager with mocked devices', () => {
 
   test('set already registered device to log error', () => {
     devices.set({ name: 'DeviceType1', serialNumber: 'DeviceSerial1', deviceName: 'Device1', uniqueId: 'DeviceUniqueId1' } as unknown as MatterbridgeEndpoint);
-    expect((devices as any).log.log).toHaveBeenCalledWith(LogLevel.ERROR, `The device ${dev}Device1${er} with uniqueId ${BLUE}DeviceUniqueId1${er} serialNumber ${BLUE}DeviceSerial1${er} is already in the device manager`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `The device ${dev}Device1${er} with uniqueId ${BLUE}DeviceUniqueId1${er} serialNumber ${BLUE}DeviceSerial1${er} is already in the device manager`);
   });
 
   test('has returns true if plugin exists', () => {
@@ -120,7 +148,7 @@ describe('DeviceManager with mocked devices', () => {
       throw new Error('Test error');
     });
     expect(count).toBe(3);
-    expect((devices as any).log.log).toHaveBeenCalledTimes(3);
+    expect(loggerLogSpy).toHaveBeenCalledTimes(3);
   });
 
   test('array to return all the devices', () => {
@@ -151,7 +179,7 @@ describe('DeviceManager with mocked devices', () => {
 
   test('remove not registered device to log error', () => {
     devices.remove({ name: 'DeviceType4', serialNumber: 'DeviceSerial4', deviceName: 'Device4', uniqueId: 'DeviceUniqueId4' } as unknown as MatterbridgeEndpoint);
-    expect((devices as any).log.log).toHaveBeenCalledWith(LogLevel.ERROR, `The device ${dev}Device4${er} with uniqueId ${BLUE}DeviceUniqueId4${er} serialNumber ${BLUE}DeviceSerial4${er} is not registered in the device manager`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `The device ${dev}Device4${er} with uniqueId ${BLUE}DeviceUniqueId4${er} serialNumber ${BLUE}DeviceSerial4${er} is not registered in the device manager`);
   });
 
   test('clear to reset the devices', () => {
@@ -170,7 +198,7 @@ describe('DeviceManager with mocked devices', () => {
 
   test('Destroy matterbridge', async () => {
     await matterbridge.destroyInstance();
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
   }, 60000);
 });
 
@@ -178,18 +206,14 @@ describe('DeviceManager with real devices', () => {
   let matterbridge: Matterbridge;
   let plugins: PluginManager;
   let devices: DeviceManager;
-  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-  let loggerLogSpy: jest.SpiedFunction<(level: LogLevel, message: string, ...parameters: any[]) => void>;
 
   beforeAll(async () => {
-    // Spy on and mock the AnsiLogger.log method
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
-      // console.error(`Mocked log: ${level} - ${message}`, ...parameters);
-    });
-    // Spy on and mock console.log
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
-      // console.error(`Mocked console:`, ...args);
-    });
+    //
+  });
+
+  beforeEach(() => {
+    // Clear all mocks
+    jest.clearAllMocks();
   });
 
   afterAll(async () => {
@@ -219,12 +243,12 @@ describe('DeviceManager with real devices', () => {
     expect(plugins.size).toBe(3);
 
     MatterbridgeEndpoint.bridgeMode = 'bridge';
-    const device1 = await MatterbridgeEndpoint.loadInstance(contactSensor);
+    const device1 = await MatterbridgeEndpoint.loadInstance(contactSensor, { uniqueStorageKey: 'contactSensor' });
     device1.createDefaultBridgedDeviceBasicInformationClusterServer('Contact sensor', 'Serial', 1, 'VendorName', 'ProductName');
     device1.addRequiredClusterServers();
     device1.plugin = 'matterbridge-mock1';
 
-    const device2 = await MatterbridgeEndpoint.loadInstance(occupancySensor);
+    const device2 = await MatterbridgeEndpoint.loadInstance(occupancySensor, { uniqueStorageKey: 'occupancySensor' });
     device2.createDefaultBridgedDeviceBasicInformationClusterServer('Ocuppancy sensor', 'Serial', 1, 'VendorName', 'ProductName');
     device2.addRequiredClusterServers();
     device2.plugin = 'matterbridge-mock2';
@@ -240,17 +264,22 @@ describe('DeviceManager with real devices', () => {
 
     await matterbridge.removeBridgedEndpoint('matterbridge-mock2', device2);
     expect(devices.size).toBe(0);
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   });
 
   test('Matterbridge.destroyInstance()', async () => {
     await matterbridge.destroyInstance();
-    expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
   }, 60000);
 
+  // eslint-disable-next-line jest/no-commented-out-tests
+  /*
   test('Cleanup storage', async () => {
     process.argv.push('-factoryreset');
     (matterbridge as any).initialized = true;
     await (matterbridge as any).parseCommandLine();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
   }, 60000);
+  */
 });

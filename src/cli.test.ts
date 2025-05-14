@@ -1,11 +1,12 @@
+// src\cli.test.ts
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 process.argv = ['node', './cli.js', '-memorycheck', '-inspect', '-frontend', '0', '-profile', 'JestCli', '-debug', '-logger', 'debug', '-matterlogger', 'debug'];
 
 import { jest } from '@jest/globals';
-
 import { AnsiLogger, BRIGHT, LogLevel, YELLOW } from 'node-ansi-logger';
+
 import { Matterbridge } from './matterbridge.js';
 import { MockMatterbridge } from './mock/mockMatterbridge.js';
 

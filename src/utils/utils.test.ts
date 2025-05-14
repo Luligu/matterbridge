@@ -1,5 +1,12 @@
+// src\utils\utils.test.ts
+/* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { jest } from '@jest/globals';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { AnsiLogger } from 'node-ansi-logger';
+
 import {
   deepEqual,
   deepCopy,
@@ -9,19 +16,24 @@ import {
   waiter,
   wait,
   getMacAddress,
-  createZip,
   getNpmPackageVersion,
   copyDirectory,
   resolveHostname,
   getStringArrayParameter,
   getIntArrayParameter,
   parseVersionString,
-} from './export';
-import { hasParameter, getParameter, getIntParameter, isValidIpv4Address, isValidNumber, isValidBoolean, isValidString, isValidObject, isValidArray, isValidNull, isValidUndefined } from './export';
-import { promises as fs } from 'node:fs';
-import { AnsiLogger } from 'node-ansi-logger';
-import path from 'node:path';
-import { jest } from '@jest/globals';
+  hasParameter,
+  getParameter,
+  getIntParameter,
+  isValidIpv4Address,
+  isValidNumber,
+  isValidBoolean,
+  isValidString,
+  isValidObject,
+  isValidArray,
+  isValidNull,
+  isValidUndefined,
+} from './export.js';
 
 describe('Utils test', () => {
   let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
@@ -33,42 +45,18 @@ describe('Utils test', () => {
   const debug = false;
 
   if (!debug) {
-    // Spy on and mock AnsiLogger.log
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
-      //
-    });
-    // Spy on and mock console.log
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.debug
-    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.info
-    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.warn
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.error
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
-      //
-    });
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
+    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
+    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
   } else {
-    // Spy on AnsiLogger.log
     loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-    // Spy on console.log
     consoleLogSpy = jest.spyOn(console, 'log');
-    // Spy on console.debug
     consoleDebugSpy = jest.spyOn(console, 'debug');
-    // Spy on console.info
     consoleInfoSpy = jest.spyOn(console, 'info');
-    // Spy on console.warn
     consoleWarnSpy = jest.spyOn(console, 'warn');
-    // Spy on console.error
     consoleErrorSpy = jest.spyOn(console, 'error');
   }
 
@@ -570,61 +558,6 @@ describe('Utils test', () => {
     expect(result).toBeTruthy();
   });
 
-  it('should zip a file', async () => {
-    await fs.mkdir('test', { recursive: true });
-    const size = await createZip(path.join('test', 'tsconfig.zip'), 'tsconfig.json');
-    expect(size).toBeGreaterThan(0);
-  });
-
-  it('should zip a fullpath file', async () => {
-    const size = await createZip(path.join('test', 'fulltsconfig.zip'), path.resolve('tsconfig.json'));
-    expect(size).toBeGreaterThan(0);
-  });
-
-  it('should zip a directory', async () => {
-    const size = await createZip(path.join('test', 'docker.zip'), 'docker');
-    expect(size).toBeGreaterThan(0);
-  });
-
-  it('should zip a fullpath directory', async () => {
-    const size = await createZip(path.join('test', 'fulldocker.zip'), path.resolve('docker'));
-    expect(size).toBeGreaterThan(0);
-  });
-  it('should zip a sub directory', async () => {
-    const size = await createZip(path.join('test', 'utils.zip'), path.join('src', 'utils'));
-    expect(size).toBeGreaterThan(0);
-  });
-
-  it('should zip a fullpath sub directory', async () => {
-    const size = await createZip(path.join('test', 'fullutils.zip'), path.resolve('src', 'utils'));
-    expect(size).toBeGreaterThan(0);
-  });
-
-  it('should zip a glob', async () => {
-    const size = await createZip(path.join('test', 'glob.zip'), path.join('*.js'));
-    expect(size).toBeGreaterThan(0);
-  }, 60000);
-
-  it('should zip a full glob path', async () => {
-    const size = await createZip(path.join('test', 'fullglob.zip'), path.resolve('*.js'));
-    expect(size).toBeGreaterThan(0);
-  }, 60000);
-
-  it('should zip a glob with **', async () => {
-    const size = await createZip(path.join('test', 'globstars.zip'), path.join('docker', '**', 'Dockerfile.*'));
-    expect(size).toBeGreaterThan(0);
-  }, 60000);
-
-  it('should zip a full glob path with **', async () => {
-    const size = await createZip(path.join('test', 'fullglobstars.zip'), path.resolve('docker', '**', 'Dockerfile.*'));
-    expect(size).toBeGreaterThan(0);
-  }, 60000);
-
-  it('should zip with an array', async () => {
-    const size = await createZip(path.join('test', 'array.zip'), 'package.json', '*.js', path.join('src', 'utils'));
-    expect(size).toBeGreaterThan(0);
-  }, 60000);
-
   it('should get the latest version', async () => {
     const version = await getNpmPackageVersion('matterbridge');
     expect(version).toBeDefined();
@@ -655,5 +588,9 @@ describe('Utils test', () => {
 
   it('should not get the latest version of a non existing package', async () => {
     await expect(getNpmPackageVersion('matterbridge1234567')).rejects.toThrow('Failed to fetch data. Status code: 404');
+  }, 60000);
+
+  it('should not get the latest version for timeout', async () => {
+    await expect(getNpmPackageVersion('matterbridge', 'latest', 1)).rejects.toThrow('Request timed out after 0.001 seconds');
   }, 60000);
 });

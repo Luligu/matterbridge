@@ -8,10 +8,28 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-### Home Assistant
+## [3.0.2] - 2025-05-??
 
-If you want to run Matterbridge in Home Assistant please use the official add-on https://github.com/Luligu/matterbridge-home-assistant-addon that also has Ingress and side panel.
-It is also available the official Matterbridge Home Assistant plugin https://github.com/Luligu/matterbridge-hass.
+### Added
+
+- [virtual] Added virtual devices Restart Matterbridge and Update Matterbridge and full Jest tests.
+- [virtual] Added virtual devices Reboot Matterbridge for Shelly board and full Jest tests.
+- [shelly] Refactor shelly api and added full Jest test.
+
+### Changed
+
+- [package]: Updated dependencies.
+- [utils]: Refactor utils functions.
+- [utils]: Updated Jest tests on utils functions.
+- [devices]: Added RoboticVacuumCleaner class to create the Robotic Vacuum Cleaner device type in one line of code.
+
+### Fixed
+
+- [frontend]: Fixed refresh of start/stop sharing.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
 
 ## [3.0.1] - 2025-05-06
 
@@ -25,6 +43,7 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 - [frontend]: Moved all settings from express to web socket.
 - [endpoint]: Added OperationalState cluster helper and behavior.
 - [behaviors]: Added Jest test on MatterbridgeBehaviors.
+- [docker]: Further optimized the dockerfile for the image with tag latest.
 
 ### Changed
 
@@ -38,6 +57,10 @@ It is also available the official Matterbridge Home Assistant plugin https://git
 
 - [BasicInformation]: Fixed vulnerability in BasicInformation and BridgedDeviceBasicInformation cluster initialization attributes.
 - [frontend]: Fixed refresh and postfix for select in HomeDevices.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
 
 ## [3.0.0] - 2025-04-29
 
@@ -104,6 +127,10 @@ Modified clusters:
 - [QRCode]: Fixed rendering of QRCode panel when advertising stops.
 - [matterbridge]: Fixed wrong message when advertising stops and the node has been paired.
 - [frontend]: Fixed download logs that broke with express v5.1.0.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
 
 ## [2.2.9] - 2025-04-18
 

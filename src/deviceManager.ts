@@ -4,7 +4,7 @@
  * @file devices.ts
  * @author Luca Liguori
  * @date 2024-07-26
- * @version 1.0.9
+ * @version 1.0.10
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -147,7 +147,7 @@ export class DeviceManager {
   /**
    * Asynchronously iterates over each device and calls the provided callback function.
    *
-   * @param {Function} callback - The callback function to call with each device.
+   * @param {(device: MatterbridgeEndpoint) => Promise<void>} callback - The callback function to call with each device.
    * @returns {Promise<void>} A promise that resolves when all callbacks have been called.
    */
   async forEach(callback: (device: MatterbridgeEndpoint) => Promise<void>): Promise<void> {

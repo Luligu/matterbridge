@@ -1,33 +1,8 @@
+// src\matterbridgeEndpoint.test.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
-import { AnsiLogger, BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
-
-import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import {
-  airQualitySensor,
-  bridgedNode,
-  colorTemperatureLight,
-  contactSensor,
-  dishwasher,
-  extractorHood,
-  flowSensor,
-  humiditySensor,
-  laundryWasher,
-  lightSensor,
-  occupancySensor,
-  onOffLight,
-  onOffOutlet,
-  powerSource,
-  pressureSensor,
-  rainSensor,
-  temperatureSensor,
-  thermostatDevice,
-} from './matterbridgeDeviceTypes.js';
-
-// @matter
 import { Lifecycle, EndpointNumber } from '@matter/main';
 import {
   BooleanState,
@@ -67,6 +42,30 @@ import {
   ThermostatUserInterfaceConfigurationServer,
   TimeSynchronizationServer,
 } from '@matter/node/behaviors';
+import { AnsiLogger, BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
+
+import { Matterbridge } from './matterbridge.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import {
+  airQualitySensor,
+  bridgedNode,
+  colorTemperatureLight,
+  contactSensor,
+  dishwasher,
+  extractorHood,
+  flowSensor,
+  humiditySensor,
+  laundryWasher,
+  lightSensor,
+  occupancySensor,
+  onOffLight,
+  onOffOutlet,
+  powerSource,
+  pressureSensor,
+  rainSensor,
+  temperatureSensor,
+  thermostatDevice,
+} from './matterbridgeDeviceTypes.js';
 import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
 
 describe('MatterbridgeEndpoint class', () => {

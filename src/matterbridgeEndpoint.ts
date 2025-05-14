@@ -56,6 +56,7 @@ import {
   getBehavior,
   getBehaviourTypesFromClusterClientIds,
   getBehaviourTypesFromClusterServerIds,
+  getDefaultOperationalStateClusterServer,
   getDefaultFlowMeasurementClusterServer,
   getDefaultIlluminanceMeasurementClusterServer,
   getDefaultPressureMeasurementClusterServer,
@@ -71,6 +72,7 @@ import {
   checkNotLatinCharacters,
   generateUniqueId,
   subscribeAttribute,
+  invokeBehaviorCommand,
 } from './matterbridgeEndpointHelpers.js';
 
 // @matter
@@ -215,6 +217,12 @@ export interface MatterbridgeEndpointCommands {
   stop: HandlerFunction;
   start: HandlerFunction;
   resume: HandlerFunction;
+
+  // Rvc Operational State
+  goHome: HandlerFunction;
+
+  // Rvc Service Area
+  selectAreas: HandlerFunction;
 }
 
 export interface SerializedMatterbridgeEndpoint {
@@ -533,7 +541,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {HandlerFunction} handler - The handler function to execute when the command is received.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  addCommandHandler(command: keyof MatterbridgeEndpointCommands, handler: HandlerFunction) {
+  addCommandHandler(command: keyof MatterbridgeEndpointCommands, handler: HandlerFunction): this {
     this.commandHandler.addHandler(command, handler);
     return this;
   }
@@ -542,11 +550,21 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Execute the command handler for the specified command. Mainly used in Jest tests.
    *
    * @param {keyof MatterbridgeEndpointCommands} command - The command to execute.
-   * @param {Record<string, boolean | number | bigint | string | object | null>} request - The optional request to pass to the handler function.
-   * @returns {Promise<void>} A promise that resolves when the command handler has been executed
+   * @param {Record<string, boolean | number | bigint | string | object | null>} [request] - The optional request to pass to the handler function.
    */
   async executeCommandHandler(command: keyof MatterbridgeEndpointCommands, request?: Record<string, boolean | number | bigint | string | object | null>) {
     await this.commandHandler.executeHandler(command, { request });
+  }
+
+  /**
+   * Invokes a behavior command on the specified cluster. Mainly used in Jest tests.
+   *
+   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
+   * @param {string} command - The command to invoke.
+   * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   */
+  async invokeBehaviorCommand(cluster: Behavior.Type | ClusterType | ClusterId | string, command: keyof MatterbridgeEndpointCommands, params?: Record<string, boolean | number | bigint | string | object | null>) {
+    await invokeBehaviorCommand(this, cluster, command, params);
   }
 
   /**
@@ -1873,18 +1891,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultOperationalStateClusterServer(operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped): this {
-    this.behaviors.require(MatterbridgeOperationalStateServer, {
-      phaseList: [],
-      currentPhase: null,
-      operationalStateList: [
-        { operationalStateId: OperationalState.OperationalStateEnum.Stopped, operationalStateLabel: 'Stopped' },
-        { operationalStateId: OperationalState.OperationalStateEnum.Running, operationalStateLabel: 'Running' },
-        { operationalStateId: OperationalState.OperationalStateEnum.Paused, operationalStateLabel: 'Paused' },
-        { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
-      ],
-      operationalState,
-      operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
-    });
+    this.behaviors.require(MatterbridgeOperationalStateServer, getDefaultOperationalStateClusterServer(operationalState));
     return this;
   }
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * This file contains the deepCopy function.
  *
@@ -34,19 +35,21 @@ export function deepCopy<T>(value: T): T {
     return value;
   } else if (Array.isArray(value)) {
     // Array: Recursively copy each element
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return value.map((item) => deepCopy(item)) as any;
   } else if (value instanceof Date) {
     // Date objects
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return new Date(value.getTime()) as any;
+  } else if (value instanceof RegExp) {
+    // RegExp objects
+    return new RegExp(value.source, value.flags) as any;
   } else if (value instanceof Map) {
     // Maps
     const mapCopy = new Map();
-    value.forEach((val, key) => {
-      mapCopy.set(key, deepCopy(val));
-    });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const [origKey, origVal] of value.entries()) {
+      const clonedKey = deepCopy(origKey);
+      const clonedVal = deepCopy(origVal);
+      mapCopy.set(clonedKey, clonedVal);
+    }
     return mapCopy as any;
   } else if (value instanceof Set) {
     // Sets
@@ -54,7 +57,6 @@ export function deepCopy<T>(value: T): T {
     value.forEach((item) => {
       setCopy.add(deepCopy(item));
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return setCopy as any;
   } else {
     // Objects: Create a copy with the same prototype as the original

@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [18.x, 20.x, 22.x, 23.x]
+        node-version: [18.x, 20.x, 22.x, 24.x]
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
@@ -55,8 +55,8 @@ jobs:
 
       - name: List, audit, fix outdated dependencies and build again
         run: |
-          npm list --outdated
-          npm audit || true  # ignore failures
+          npm outdated || true
+          npm audit || true
           npm audit fix || true
-          npm list --outdated
+          npm outdated || true
           npm run build

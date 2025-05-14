@@ -1,40 +1,7 @@
+// src\matterbridgeEndpoint-default.test.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
-import { AnsiLogger, db, er, hk, LogLevel, or } from 'node-ansi-logger';
-
-import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import {
-  airPurifier,
-  airQualitySensor,
-  contactSensor,
-  coverDevice,
-  doorLockDevice,
-  electricalSensor,
-  fanDevice,
-  flowSensor,
-  genericSwitch,
-  humiditySensor,
-  lightSensor,
-  modeSelect,
-  occupancySensor,
-  onOffLight,
-  powerSource,
-  pressureSensor,
-  pumpDevice,
-  rainSensor,
-  roboticVacuumCleaner,
-  smokeCoAlarm,
-  temperatureSensor,
-  thermostatDevice,
-  waterFreezeDetector,
-  waterLeakDetector,
-  waterValve,
-} from './matterbridgeDeviceTypes.js';
-
-// @matter
 import { Lifecycle } from '@matter/main';
 import {
   AirQuality,
@@ -66,9 +33,6 @@ import {
   Thermostat,
   ValveConfigurationAndControl,
   WindowCovering,
-  RvcRunMode,
-  RvcOperationalState,
-  RvcCleanMode,
   ThermostatUserInterfaceConfiguration,
   HepaFilterMonitoring,
   ActivatedCarbonFilterMonitoring,
@@ -91,6 +55,36 @@ import {
   RadonConcentrationMeasurementServer,
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/node/behaviors';
+import { AnsiLogger, db, er, hk, LogLevel, or } from 'node-ansi-logger';
+
+import { Matterbridge } from './matterbridge.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import {
+  airPurifier,
+  airQualitySensor,
+  contactSensor,
+  coverDevice,
+  doorLockDevice,
+  electricalSensor,
+  fanDevice,
+  flowSensor,
+  genericSwitch,
+  humiditySensor,
+  lightSensor,
+  modeSelect,
+  occupancySensor,
+  onOffLight,
+  powerSource,
+  pressureSensor,
+  pumpDevice,
+  rainSensor,
+  smokeCoAlarm,
+  temperatureSensor,
+  thermostatDevice,
+  waterFreezeDetector,
+  waterLeakDetector,
+  waterValve,
+} from './matterbridgeDeviceTypes.js';
 import { updateAttribute } from './matterbridgeEndpointHelpers.js';
 
 describe('MatterbridgeEndpoint class', () => {
@@ -112,10 +106,9 @@ describe('MatterbridgeEndpoint class', () => {
         } else if (Date.now() - start >= timeout) {
           reject(new Error('Timeout waiting for matterbridge.serverNode.lifecycle.isOnline to become true'));
         } else {
-          setTimeout(checkOnline, 100); // Check every 100ms
+          setTimeout(checkOnline, 100).unref(); // Check every 100ms
         }
       };
-
       checkOnline();
     });
   }
@@ -129,42 +122,30 @@ describe('MatterbridgeEndpoint class', () => {
   const debug = false;
 
   if (!debug) {
-    // Spy on and mock AnsiLogger.log
     loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
       //
     });
-    // Spy on and mock console.log
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
       //
     });
-    // Spy on and mock console.debug
     consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {
       //
     });
-    // Spy on and mock console.info
     consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {
       //
     });
-    // Spy on and mock console.warn
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
       //
     });
-    // Spy on and mock console.error
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
       //
     });
   } else {
-    // Spy on AnsiLogger.log
     loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-    // Spy on console.log
     consoleLogSpy = jest.spyOn(console, 'log');
-    // Spy on console.debug
     consoleDebugSpy = jest.spyOn(console, 'debug');
-    // Spy on console.info
     consoleInfoSpy = jest.spyOn(console, 'info');
-    // Spy on console.warn
     consoleWarnSpy = jest.spyOn(console, 'warn');
-    // Spy on console.error
     consoleErrorSpy = jest.spyOn(console, 'error');
   }
 
@@ -172,13 +153,6 @@ describe('MatterbridgeEndpoint class', () => {
     // Create a MatterbridgeEdge instance
     process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-profile', 'JestDefault', '-bridge', '-logger', 'info', '-matterlogger', 'info'];
     matterbridge = await Matterbridge.loadInstance(true);
-    /*
-    await matterbridge.matterStorageManager?.createContext('events')?.clearAll();
-    await matterbridge.matterStorageManager?.createContext('fabrics')?.clearAll();
-    await matterbridge.matterStorageManager?.createContext('root')?.clearAll();
-    await matterbridge.matterStorageManager?.createContext('sessions')?.clearAll();
-    await matterbridge.matterbridgeContext?.clearAll();
-    */
 
     await waitForOnline();
   }, 30000);

@@ -4,7 +4,7 @@
  * @file plugins.ts
  * @author Luca Liguori
  * @date 2024-07-14
- * @version 1.1.1
+ * @version 1.1.2
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -147,7 +147,7 @@ export class PluginManager {
 
   /**
    * Resolves the name of a plugin by loading and parsing its package.json file.
-   * @param pluginPath - The path to the plugin or the path to the plugin's package.json file.
+   * @param {string} pluginPath - The path to the plugin or the path to the plugin's package.json file.
    * @returns The path to the resolved package.json file, or null if the package.json file is not found or does not contain a name.
    */
   async resolve(pluginPath: string): Promise<string | null> {
@@ -327,8 +327,8 @@ export class PluginManager {
 
   /**
    * Loads and parse the plugin package.json and returns it.
-   * @param plugin - The plugin to load the package from.
-   * @returns A Promise that resolves to the package.json object or undefined if the package.json could not be loaded.
+   * @param {RegisteredPlugin} plugin - The plugin to load the package from.
+   * @returns A Promise that resolves to the package.json object or null if the package.json could not be loaded.
    */
   async parse(plugin: RegisteredPlugin): Promise<Record<string, string | number | object> | null> {
     const { promises } = await import('node:fs');
@@ -652,11 +652,11 @@ export class PluginManager {
 
   /**
    * Loads a plugin and returns the corresponding MatterbridgePlatform instance.
-   * @param plugin - The plugin to load.
-   * @param start - Optional flag indicating whether to start the plugin after loading. Default is false.
-   * @param message - Optional message to pass to the plugin when starting.
-   * @returns A Promise that resolves to the loaded MatterbridgePlatform instance.
-   * @throws An error if the plugin is not enabled, already loaded, or fails to load.
+   * @param {RegisteredPlugin} plugin - The plugin to load.
+   * @param {boolean} start - Optional flag indicating whether to start the plugin after loading. Default is false.
+   * @param {string} message - Optional message to pass to the plugin when starting.
+   * @param {boolean} configure - Optional flag indicating whether to configure the plugin after loading. Default is false.
+   * @returns {Promise<MatterbridgePlatform | undefined>} A Promise that resolves to the loaded MatterbridgePlatform instance or undefined.
    */
   async load(plugin: RegisteredPlugin, start = false, message = '', configure = false): Promise<MatterbridgePlatform | undefined> {
     const { promises } = await import('node:fs');
@@ -776,7 +776,7 @@ export class PluginManager {
    * Configures a plugin.
    *
    * @param {RegisteredPlugin} plugin - The plugin to configure.
-   * @returns {Promise<void>} A promise that resolves when the plugin is configured successfully, or rejects with an error if configuration fails.
+   * @returns {Promise<RegisteredPlugin | undefined>} A promise that resolves when the plugin is configured successfully, or rejects with an error if configuration fails.
    */
   async configure(plugin: RegisteredPlugin): Promise<RegisteredPlugin | undefined> {
     if (!plugin.loaded) {
@@ -866,8 +866,8 @@ export class PluginManager {
    * If the configuration file does not exist, it creates a new file with default configuration and returns it.
    * If any error occurs during file access or creation, it logs an error and return un empty config.
    *
-   * @param plugin - The plugin for which to load the configuration.
-   * @returns A promise that resolves to the loaded or created configuration.
+   * @param {RegisteredPlugin} plugin - The plugin for which to load the configuration.
+   * @returns {Promise<PlatformConfig>} A promise that resolves to the loaded or created configuration.
    */
   async loadConfig(plugin: RegisteredPlugin): Promise<PlatformConfig> {
     const { default: path } = await import('node:path');

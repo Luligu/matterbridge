@@ -57,6 +57,18 @@ export default [
     plugins: {
       '@typescript-eslint': tseslint.plugin,
     },
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          vars: 'all',
+          args: 'after-used',
+          ignoreRestSiblings: true,
+          varsIgnorePattern: '^_', // Ignore unused variables starting with _
+          argsIgnorePattern: '^_', // Ignore unused arguments starting with _
+        },
+      ],
+    },
   },
   {
     name: 'jest',

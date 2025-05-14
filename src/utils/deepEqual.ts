@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * This file contains the deepEqual function.
  *
@@ -54,15 +55,14 @@
  */
 export function deepEqual(a: any, b: any, excludeProperties: string[] = []): boolean {
   // Toggle debugging on or off easily
-  const debug = false;
+  // const debug = false;
 
   // Helper function for conditional logging
 
   const debugLog = (...messages: any[]) => {
-    if (debug) {
-      // eslint-disable-next-line no-console
-      console.log(...messages);
-    }
+    // if (debug) {
+    // console.log(...messages);
+    // }
   };
 
   // If both are the same instance, return true (handles primitives and same object references)
@@ -80,6 +80,16 @@ export function deepEqual(a: any, b: any, excludeProperties: string[] = []): boo
   if (a == null || b == null) {
     debugLog('deepEqual false for == null');
     return false;
+  }
+
+  // Handle Dates compare by timestamp
+  if (a instanceof Date && b instanceof Date) {
+    return a.getTime() === b.getTime();
+  }
+
+  // Handle Regexps compare by their source & flags
+  if (a instanceof RegExp && b instanceof RegExp) {
+    return a.source === b.source && a.flags === b.flags;
   }
 
   // Handle Arrays

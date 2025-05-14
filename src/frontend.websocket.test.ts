@@ -1,20 +1,22 @@
+// src\frontend.websocket.test.ts
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 process.argv = ['node', 'frontend.test.js', '-frontend', '8284', '-logger', 'info', '-matterlogger', 'info', '-bridge', '-profile', 'JestFrontendWebsocket', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
 
 import { expect, jest } from '@jest/globals';
+import path from 'node:path';
+import { LogLevel as MatterLogLevel } from '@matter/main';
 import { AnsiLogger, CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+import WebSocket from 'ws';
+
 import { Matterbridge } from './matterbridge.js';
 import { wait, waiter } from './utils/export.js';
-import WebSocket from 'ws';
 import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { Identify } from '@matter/main/clusters';
-import { LogLevel as MatterLogLevel } from '@matter/main';
 import { RegisteredPlugin } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { WS_ID_CLOSE_SNACKBAR, WS_ID_CPU_UPDATE, WS_ID_LOG, WS_ID_MEMORY_UPDATE, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, WS_ID_SNACKBAR, WS_ID_STATEUPDATE, WS_ID_UPDATE_NEEDED, WS_ID_UPTIME_UPDATE } from './frontend.js';
-import path from 'node:path';
 
 jest.unstable_mockModule('./shelly.ts', () => ({
   triggerShellySysUpdate: jest.fn(() => Promise.resolve()),
