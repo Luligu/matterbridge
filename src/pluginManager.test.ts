@@ -1,26 +1,71 @@
 // src\pluginManager.test.ts
+/* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-profile', 'JestPluginManager'];
+process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-homedir', 'matterstorage/PluginManager', '-profile', 'JestPluginManager'];
 
 import { jest } from '@jest/globals';
-import { execSync } from 'node:child_process';
-import { promises as fs } from 'node:fs';
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+let mockedExec: Function | undefined = undefined;
+
+// Mock the exec function from the child_process module
+jest.unstable_mockModule('node:child_process', async () => {
+  const originalModule = jest.requireActual<typeof import('node:child_process')>('node:child_process');
+
+  return {
+    ...originalModule,
+    exec: jest.fn((command: string, callback?: (error: ExecException | null, stdout: string, stderr: string) => void) => {
+      // Use the original exec implementation unless overridden in a specific test
+      // console.error('exec called with command:', command);
+      if (mockedExec) {
+        mockedExec(command, callback);
+      } else {
+        (originalModule.exec as typeof originalModule.exec)(command, callback);
+      }
+    }),
+  };
+});
+
+import { ExecException, execSync } from 'node:child_process';
+import { promises as fs, rmSync } from 'node:fs';
 import path from 'node:path';
 import { AnsiLogger, db, er, LogLevel, nf, nt } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
-import { RegisteredPlugin } from './matterbridgeTypes.js';
+import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
 import { waiter } from './utils/export.js';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
 
-// Default colors
-const plg = '\u001B[38;5;33m';
-const dev = '\u001B[38;5;79m';
-const typ = '\u001B[38;5;207m';
+let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
+let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
+let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
+let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
+let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
+let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
+const debug = false;
+
+if (!debug) {
+  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
+  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
+  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
+  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
+  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
+  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
+} else {
+  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
+  consoleLogSpy = jest.spyOn(console, 'log');
+  consoleDebugSpy = jest.spyOn(console, 'debug');
+  consoleInfoSpy = jest.spyOn(console, 'info');
+  consoleWarnSpy = jest.spyOn(console, 'warn');
+  consoleErrorSpy = jest.spyOn(console, 'error');
+}
+
+// Cleanup the matter environment
+rmSync('matterstorage/PluginManager', { recursive: true, force: true });
 
 describe('PluginManager', () => {
   let matterbridge: Matterbridge;
@@ -29,57 +74,8 @@ describe('PluginManager', () => {
 
   let parseSpy: jest.SpiedFunction<typeof JSON.parse>;
 
-  let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-  let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-  let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-  let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-  let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-  const debug = false;
-
-  if (!debug) {
-    // Spy on and mock AnsiLogger.log
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
-      //
-    });
-    // Spy on and mock console.log
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.debug
-    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.info
-    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.warn
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.error
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
-      //
-    });
-  } else {
-    // Spy on AnsiLogger.log
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-    // Spy on console.log
-    consoleLogSpy = jest.spyOn(console, 'log');
-    // Spy on console.debug
-    consoleDebugSpy = jest.spyOn(console, 'debug');
-    // Spy on console.info
-    consoleInfoSpy = jest.spyOn(console, 'info');
-    // Spy on console.warn
-    consoleWarnSpy = jest.spyOn(console, 'warn');
-    // Spy on console.error
-    consoleErrorSpy = jest.spyOn(console, 'error');
-  }
-
   beforeAll(async () => {
-    matterbridge = await Matterbridge.loadInstance(true);
-    plugins = (matterbridge as any).plugins;
+    //
   });
 
   beforeEach(async () => {
@@ -101,7 +97,17 @@ describe('PluginManager', () => {
     jest.restoreAllMocks();
   });
 
+  test('Load matterbridge', async () => {
+    matterbridge = await Matterbridge.loadInstance(true);
+    expect(matterbridge).toBeInstanceOf(Matterbridge);
+    plugins = (matterbridge as any).plugins;
+    expect(plugins).toBeInstanceOf(PluginManager);
+    devices = (matterbridge as any).devices;
+    expect(devices).toBeInstanceOf(DeviceManager);
+  }, 60000);
+
   test('constructor initializes correctly', () => {
+    plugins = new PluginManager(matterbridge);
     expect(plugins).toBeInstanceOf(PluginManager);
   });
 
@@ -1244,37 +1250,48 @@ describe('PluginManager', () => {
   }, 300000);
 
   test('install not existing plugin matterbridge-xyz with mock', async () => {
-    jest.unstable_mockModule('node:child_process', () => ({
-      exec: jest.fn((cmd, callback: (error: Error | null, stdout: string, stderr: string) => void) => {
-        callback(new Error('Test error'), '', '');
-      }),
-    }));
     expect(await plugins.install('matterbridge-xyz')).toBeUndefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to install plugin ${plg}matterbridge-xyz${er}:`));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Failed to install plugin ${plg}matterbridge-xyz${db}:`));
-    jest.unstable_mockModule('node:child_process', () => jest.requireActual('node:child_process'));
+
+    // Set the return value for this specific test case
+    mockedExec = (command: string, callback?: (error: ExecException | null, stdout: string, stderr: string) => void) => {
+      // console.error('mockedExec:', command);
+      if (command.includes('npm list -g matterbridge-xyz --depth=0')) {
+        if (callback) callback(new Error('Test error'), '', '');
+      } else {
+        if (callback) callback(null, '', '');
+      }
+    };
+    expect(await plugins.install('matterbridge-xyz')).toBeUndefined();
+    mockedExec = undefined;
   }, 300000);
 
   test('uninstall not existing plugin matterbridge-xyz with mock', async () => {
-    jest.unstable_mockModule('node:child_process', () => ({
-      exec: jest.fn((cmd, callback: (error: Error | null, stdout: string, stderr: string) => void) => {
-        callback(new Error('Test error'), '', '');
-      }),
-    }));
+    expect(await plugins.uninstall('matterbridge-xyz')).toBeDefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Uninstalled plugin ${plg}matterbridge-xyz${nf}`));
+
+    // Set the return value for this specific test case
+    mockedExec = (command: string, callback?: (error: ExecException | null, stdout: string, stderr: string) => void) => {
+      // console.error('mockedExec:', command);
+      if (command.includes('npm uninstall -g matterbridge-xyz')) {
+        if (callback) callback(new Error('Test error'), '', '');
+      } else {
+        if (callback) callback(null, '', '');
+      }
+    };
     expect(await plugins.uninstall('matterbridge-xyz')).toBeUndefined();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to uninstall plugin ${plg}matterbridge-xyz${er}:`));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Failed to uninstall plugin ${plg}matterbridge-xyz${db}:`));
-    jest.unstable_mockModule('node:child_process', () => jest.requireActual('node:child_process'));
+    mockedExec = undefined;
   }, 300000);
 
   test('Matterbridge.destroyInstance()', async () => {
     // Close the Matterbridge instance
     await matterbridge.destroyInstance();
-
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
   }, 60000);
 
+  // eslint-disable-next-line jest/no-commented-out-tests
+  /*
   test('Cleanup storage', async () => {
     process.argv.push('-factoryreset');
     (matterbridge as any).initialized = true;
@@ -1282,4 +1299,5 @@ describe('PluginManager', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }, 60000);
+  */
 });

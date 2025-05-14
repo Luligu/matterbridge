@@ -14,6 +14,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [virtual] Added virtual devices Restart Matterbridge and Update Matterbridge and full Jest tests.
 - [virtual] Added virtual devices Reboot Matterbridge for Shelly board and full Jest tests.
+- [shelly] Refactor shelly api and added full Jest test.
 
 ### Changed
 
@@ -23,6 +24,8 @@ If you like this project and find it useful, please consider giving it a star on
 - [devices]: Added RoboticVacuumCleaner class to create the Robotic Vacuum Cleaner device type in one line of code.
 
 ### Fixed
+
+- [frontend]: Fixed refresh of start/stop sharing.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

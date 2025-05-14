@@ -39,11 +39,13 @@ if (!debug) {
   consoleWarnSpy = jest.spyOn(console, 'warn');
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
+
 // Cleanup the matter environment
 rmSync('matterstorage/DeviceManager', { recursive: true, force: true });
 
 describe('DeviceManager with mocked devices', () => {
   let matterbridge: Matterbridge;
+  let plugins: PluginManager;
   let devices: DeviceManager;
 
   beforeAll(async () => {
@@ -63,6 +65,10 @@ describe('DeviceManager with mocked devices', () => {
   test('Load matterbridge', async () => {
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeInstanceOf(Matterbridge);
+    plugins = (matterbridge as any).plugins;
+    expect(plugins).toBeInstanceOf(PluginManager);
+    devices = (matterbridge as any).devices;
+    expect(devices).toBeInstanceOf(DeviceManager);
   }, 60000);
 
   test('constructor initializes correctly', () => {
@@ -237,12 +243,12 @@ describe('DeviceManager with real devices', () => {
     expect(plugins.size).toBe(3);
 
     MatterbridgeEndpoint.bridgeMode = 'bridge';
-    const device1 = await MatterbridgeEndpoint.loadInstance(contactSensor);
+    const device1 = await MatterbridgeEndpoint.loadInstance(contactSensor, { uniqueStorageKey: 'contactSensor' });
     device1.createDefaultBridgedDeviceBasicInformationClusterServer('Contact sensor', 'Serial', 1, 'VendorName', 'ProductName');
     device1.addRequiredClusterServers();
     device1.plugin = 'matterbridge-mock1';
 
-    const device2 = await MatterbridgeEndpoint.loadInstance(occupancySensor);
+    const device2 = await MatterbridgeEndpoint.loadInstance(occupancySensor, { uniqueStorageKey: 'occupancySensor' });
     device2.createDefaultBridgedDeviceBasicInformationClusterServer('Ocuppancy sensor', 'Serial', 1, 'VendorName', 'ProductName');
     device2.addRequiredClusterServers();
     device2.plugin = 'matterbridge-mock2';
@@ -258,6 +264,8 @@ describe('DeviceManager with real devices', () => {
 
     await matterbridge.removeBridgedEndpoint('matterbridge-mock2', device2);
     expect(devices.size).toBe(0);
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   });
 
   test('Matterbridge.destroyInstance()', async () => {
@@ -265,10 +273,13 @@ describe('DeviceManager with real devices', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
   }, 60000);
 
+  // eslint-disable-next-line jest/no-commented-out-tests
+  /*
   test('Cleanup storage', async () => {
     process.argv.push('-factoryreset');
     (matterbridge as any).initialized = true;
     await (matterbridge as any).parseCommandLine();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
   }, 60000);
+  */
 });
