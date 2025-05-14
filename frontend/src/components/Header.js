@@ -264,7 +264,7 @@ function Header() {
         }
         // Broadcast messages
         if (msg.method === 'refresh_required') {
-          if (msg.params.changed === null || msg.params.changed === 'matterbridgeLatestVersion' || msg.params.changed === 'fabrics') {
+          if (msg.params.changed === null || msg.params.changed === 'matterbridgeLatestVersion' || msg.params.changed === 'matterbridgeAdvertise' || msg.params.changed === 'fabrics') {
             if (debug) console.log(`Header received refresh_required: changed=${msg.params.changed}`);
             sendMessage({ id: uniqueId.current, sender: 'Header', method: "/api/settings", src: "Frontend", dst: "Matterbridge", params: {} });
           }
