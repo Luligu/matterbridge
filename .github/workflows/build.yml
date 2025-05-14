@@ -55,8 +55,8 @@ jobs:
 
       - name: List, audit, fix outdated dependencies and build again
         run: |
-          npm list --outdated
-          npm audit || true  # ignore failures
+          npm outdated
+          npm audit || true
           npm audit fix || true
-          npm list --outdated
+          npm outdated
           npm run build
