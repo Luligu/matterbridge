@@ -113,6 +113,7 @@ describe('getMatterbridgeLatestVersion', () => {
         wssSendUpdateRequired: jest.fn(),
         wssBroadcastMessage: jest.fn(),
         wssSendSnackbarMessage: jest.fn(),
+        wssSendCloseSnackbarMessage: jest.fn(),
       },
     } as unknown as Matterbridge;
   });
