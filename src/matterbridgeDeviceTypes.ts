@@ -91,6 +91,7 @@ import { RefrigeratorAlarm } from '@matter/main/clusters/refrigerator-alarm';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/main/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
 import { ServiceArea } from '@matter/main/clusters/service-area';
 import { TemperatureControl } from '@matter/main/clusters/temperature-control';
+import { WaterHeater } from '@matter/main/clusters/water-heater';
 
 export enum DeviceClasses {
   /** Node device type. */
