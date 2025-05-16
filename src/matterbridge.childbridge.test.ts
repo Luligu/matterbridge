@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-childbridge', '-frontend', '8802', '-profile', 'JestChildbridge', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
+process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-childbridge', '-frontend', '8802', '-profile', 'JestChildbridge', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
 
 import { jest } from '@jest/globals';
 import path from 'node:path';
@@ -92,22 +92,6 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   });
 
   test('Matterbridge.loadInstance(true) -childbridge mode', async () => {
-    /*
-    // Reset matterstorage Jest
-    const environment = Environment.default;
-    environment.vars.set('path.root', path.join(os.homedir(), '.matterbridge', 'matterstorage.JestChildbridge'));
-    const matterStorageService = environment.get(StorageService);
-    expect(matterStorageService).toBeDefined();
-    const matterStorageManager = await matterStorageService.open('Matterbridge');
-    expect(matterStorageManager).toBeDefined();
-    await matterStorageManager?.createContext('persist').clearAll();
-    await matterStorageManager?.createContext('events').clearAll();
-    await matterStorageManager?.createContext('fabrics').clearAll();
-    await matterStorageManager?.createContext('root').clearAll();
-    await matterStorageManager?.createContext('sessions').clearAll();
-    await matterStorageManager?.close();
-    */
-
     // Load Matterbridge instance and initialize it
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeDefined();
@@ -163,7 +147,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       },
       false,
       60000,
-      1000,
+      100,
       true,
     );
 
@@ -272,7 +256,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       },
       false,
       10000,
-      1000,
+      100,
       true,
     );
 
@@ -288,7 +272,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       },
       false,
       10000,
-      1000,
+      100,
       true,
     );
 

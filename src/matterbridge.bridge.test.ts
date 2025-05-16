@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-frontend', '8801', '-profile', 'JestBridge', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
+process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-frontend', '8801', '-profile', 'JestBridge', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
 
 import { jest } from '@jest/globals';
 import path from 'node:path';
@@ -145,7 +145,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
       },
       false,
       60000,
-      1000,
+      100,
       true,
     );
 
@@ -229,7 +229,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
       },
       false,
       60000,
-      1000,
+      100,
       true,
     );
 
@@ -240,7 +240,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
       },
       false,
       60000,
-      1000,
+      100,
       true,
     );
 

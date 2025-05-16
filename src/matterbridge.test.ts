@@ -8,11 +8,13 @@ process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', 
 import { jest } from '@jest/globals';
 import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/main';
 import { ExposedFabricInformation } from '@matter/main/protocol';
-import { AnsiLogger, db, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
+import os from 'node:os';
 
-import { hasParameter, waiter } from './utils/export.js';
+import { getParameter, hasParameter, waiter } from './utils/export.js';
 import { Matterbridge } from './matterbridge.js';
 import { plg, RegisteredPlugin, SessionInformation } from './matterbridgeTypes.js';
+import path from 'node:path';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   // eslint-disable-next-line no-console
@@ -128,7 +130,7 @@ describe('Matterbridge', () => {
         },
         false,
         60000,
-        1000,
+        100,
         true,
       );
 
@@ -140,10 +142,22 @@ describe('Matterbridge', () => {
       expect(matterbridge.matterLoggerFile).toBe('matter.Jest.log');
       expect((matterbridge as any).initialized).toBeTruthy();
       expect((matterbridge as any).log).toBeDefined();
-      expect((matterbridge as any).homeDirectory).not.toBe('');
-      expect((matterbridge as any).matterbridgeDirectory).not.toBe('');
-      expect((matterbridge as any).globalModulesDirectory).not.toBe('');
-      expect((matterbridge as any).matterbridgeLatestVersion).not.toBe('');
+      expect(matterbridge.homeDirectory).toBe(getParameter('homedir') ?? os.homedir());
+      expect(matterbridge.matterbridgeInformation.homeDirectory).toBe(matterbridge.homeDirectory);
+      expect(matterbridge.matterbridgeDirectory).toBe(path.join(matterbridge.homeDirectory, '.matterbridge'));
+      expect(matterbridge.matterbridgeInformation.matterbridgeDirectory).toBe(matterbridge.matterbridgeDirectory);
+      expect(matterbridge.matterbridgePluginDirectory).toBe(path.join(matterbridge.homeDirectory, 'Matterbridge'));
+      expect(matterbridge.matterbridgeInformation.matterbridgePluginDirectory).toBe(matterbridge.matterbridgePluginDirectory);
+      expect(matterbridge.matterbridgeCertDirectory).toBe(path.join(matterbridge.homeDirectory, '.mattercert'));
+      expect(matterbridge.matterbridgeInformation.matterbridgeCertDirectory).toBe(matterbridge.matterbridgeCertDirectory);
+      expect(matterbridge.globalModulesDirectory).not.toBe('');
+      expect(matterbridge.matterbridgeInformation.globalModulesDirectory).toBe(matterbridge.globalModulesDirectory);
+      expect(matterbridge.matterbridgeVersion).not.toBe('');
+      expect(matterbridge.matterbridgeInformation.matterbridgeVersion).toBe(matterbridge.matterbridgeVersion);
+      expect(matterbridge.matterbridgeLatestVersion).toBe(matterbridge.matterbridgeVersion);
+      expect(matterbridge.matterbridgeInformation.matterbridgeLatestVersion).toBe(matterbridge.matterbridgeLatestVersion);
+      expect(matterbridge.matterbridgeDevVersion).toBe(matterbridge.matterbridgeVersion);
+      expect(matterbridge.matterbridgeInformation.matterbridgeDevVersion).toBe(matterbridge.matterbridgeDevVersion);
       expect((matterbridge as any).nodeStorage).toBeDefined();
       expect((matterbridge as any).nodeContext).toBeDefined();
       expect((matterbridge as any).plugins).toBeDefined();
@@ -167,7 +181,7 @@ describe('Matterbridge', () => {
     }, 60000);
 
     test('Matterbridge.loadInstance(true) with frontend', async () => {
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '8081', '-profile', 'Jest'];
+      process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '8081', '-profile', 'Jest'];
 
       expect((Matterbridge as any).instance).toBeUndefined();
       matterbridge = await Matterbridge.loadInstance(true);
@@ -181,7 +195,7 @@ describe('Matterbridge', () => {
         },
         false,
         60000,
-        1000,
+        100,
         true,
       );
 
@@ -220,7 +234,7 @@ describe('Matterbridge', () => {
     });
 
     test('Matterbridge profile', async () => {
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug'];
+      process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug'];
       matterbridge = await Matterbridge.loadInstance(true);
       if (!(matterbridge as any).initialized) await matterbridge.initialize();
       expect(matterbridge).toBeDefined();
@@ -236,7 +250,7 @@ describe('Matterbridge', () => {
         },
         false,
         60000,
-        1000,
+        100,
         true,
       );
     }, 60000);
