@@ -1031,3 +1031,15 @@ export const microwaveOven = DeviceTypeDefinition({
   requiredServerClusters: [OperationalState.Cluster.id, MicrowaveOvenMode.Cluster.id, MicrowaveOvenControl.Cluster.id],
   optionalServerClusters: [Identify.Cluster.id, FanControl.Cluster.id],
 });
+
+/**
+
+*/
+export const waterHeater = DeviceTypeDefinition({
+  name: 'MA-waterheater',
+  code: 0x050F,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [Thermostat.Cluster.id, WaterHeaterManagement.Cluster.id, WaterHeaterMode.Cluster.id],
+  optionalServerClusters: [Identify.Cluster.id],
+});
