@@ -44,8 +44,8 @@ import {
   MatterbridgeBooleanStateConfigurationServer,
   MatterbridgeSwitchServer,
   MatterbridgeOperationalStateServer,
-  MatterbridgeWaterHeaterManagementBehavior,
-  MatterbridgeWaterHeaterModeBehavior,
+  MatterbridgeWaterHeaterManagementServer,
+  MatterbridgeWaterHeaterModeServer,
 } from './matterbridgeBehaviors.js';
 import {
   addClusterServers,
@@ -107,8 +107,8 @@ import { AirQuality } from '@matter/main/clusters/air-quality';
 import { ConcentrationMeasurement } from '@matter/main/clusters/concentration-measurement';
 import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
 import { ThermostatUserInterfaceConfiguration } from '@matter/main/clusters/thermostat-user-interface-configuration';
-import { WaterHeaterManagement } from '@matter/main/clusters/operational-state';
-import { WaterHeaterMode } from '@matter/main/clusters/operational-state';
+import { WaterHeaterManagement } from '@matter/main/clusters/water-heater-management';
+import { WaterHeaterMode } from '@matter/main/clusters/water-heater-mode';
 
 
 // @matter behaviors
