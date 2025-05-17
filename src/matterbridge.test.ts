@@ -1,9 +1,10 @@
 // src\matterbridge.test.ts
+
 /* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug'];
+process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', 'matterstorage/MatterbridgeGlobal', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug'];
 
 import { jest } from '@jest/globals';
 import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/main';
@@ -15,6 +16,7 @@ import { getParameter, hasParameter, waiter } from './utils/export.js';
 import { Matterbridge } from './matterbridge.js';
 import { plg, RegisteredPlugin, SessionInformation } from './matterbridgeTypes.js';
 import path from 'node:path';
+import { rmSync } from 'node:fs';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   // eslint-disable-next-line no-console
@@ -45,6 +47,9 @@ if (!debug) {
   consoleWarnSpy = jest.spyOn(console, 'warn');
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
+
+// Cleanup the matter environment
+rmSync('matterstorage/MatterbridgeGlobal', { recursive: true, force: true });
 
 describe('Matterbridge', () => {
   beforeEach(async () => {

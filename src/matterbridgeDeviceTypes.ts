@@ -92,7 +92,7 @@ import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/main/cl
 import { ServiceArea } from '@matter/main/clusters/service-area';
 import { TemperatureControl } from '@matter/main/clusters/temperature-control';
 import { OtaSoftwareUpdateRequestor } from '@matter/main/clusters/ota-software-update-requestor';
-import { OtaSoftwareUpdateProvider } from '@matter/main/clusters';
+import { OtaSoftwareUpdateProvider, WaterHeaterManagement, WaterHeaterMode } from '@matter/main/clusters';
 
 export enum DeviceClasses {
   /** Node device type. */
@@ -849,7 +849,7 @@ export const roboticVacuumCleaner = DeviceTypeDefinition({
   optionalServerClusters: [RvcCleanMode.Cluster.id, ServiceArea.Cluster.id],
 });
 
-// Appliances device types
+// Chapter 13. Appliances device types
 
 /**
  * Cluster Restrictions:
@@ -1064,4 +1064,39 @@ export const microwaveOven = DeviceTypeDefinition({
   revision: 1,
   requiredServerClusters: [OperationalState.Cluster.id, MicrowaveOvenMode.Cluster.id, MicrowaveOvenControl.Cluster.id],
   optionalServerClusters: [Identify.Cluster.id, FanControl.Cluster.id],
+});
+
+// Chapter 14. Energy Device Types
+
+/**
+ * A water heater is a device that is generally installed in properties to heat water for showers, baths etc.
+ * A Water Heater is always defined via endpoint composition.
+ *
+ * 14.2.5. Device Type Requirements
+ * A Water Heater SHALL be composed of at least one endpoint with device types as defined by the
+ * conformance below. There MAY be more endpoints with other device types existing in the Water Heater.
+ * ID     Name                        Constraint    Conformance
+ * 0x0011 Power Source                              O
+ * 0x0302 Temperature Sensor                        O
+ * 0x0510 Electrical Sensor                         desc
+ * 0x050D Device Energy Management                  O
+ *
+ * 14.2.7. Element Requirements
+ * 0x0201 Thermostat Feature Heating M
+ *
+ * The Energy Management feature of the Water Heater cluster SHALL be supported if the Device
+ * Energy Management device type is included.
+ * If Off is a supported SystemMode in the Thermostat cluster, setting the SystemMode of the Thermostat
+ * cluster to Off SHALL set the CurrentMode attribute of the Water Heater Mode cluster to a mode
+ * having the Off mode tag value and vice versa.
+ * At least one entry in the SupportedModes attribute of the Water Heater Mode cluster SHALL
+ * include the Timed mode tag in the ModeTags field list.
+ */
+export const waterHeater = DeviceTypeDefinition({
+  name: 'MA-waterheater',
+  code: 0x050f,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [Thermostat.Cluster.id, WaterHeaterManagement.Cluster.id, WaterHeaterMode.Cluster.id],
+  optionalServerClusters: [Identify.Cluster.id],
 });

@@ -81,8 +81,6 @@ describe('PluginManager', () => {
   beforeEach(async () => {
     // Spy on JSON.parse
     parseSpy = jest.spyOn(JSON, 'parse');
-    // Spy on child_process.exec
-    // execSpy = jest.spyOn(child_process, 'exec');
     // Clear all mocks
     jest.clearAllMocks();
   });
