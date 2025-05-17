@@ -1101,6 +1101,22 @@ export const waterHeater = DeviceTypeDefinition({
   optionalServerClusters: [Identify.Cluster.id],
 });
 
+/**
+ * A Solar Power device is a device that allows a solar panel array, which can optionally be comprised of a set parallel
+ * strings of solar panels, and its associated controller and, if appropriate, inverter, to be monitored and controlled
+ * by an Energy Management System.
+ *
+ * 14.3.5. Device Type Requirements
+ A Solar Power device SHALL be composed of at least one endpoint with device types as defined by
+ the conformance below. There MAY be more endpoints with additional instances of these device
+ types or additional device types existing in the Solar Power device.
+ *  
+ * ID     Name                        Constraint    Conformance
+ * 0x0011 Power Source                min 1         M
+ * 0x0510 Electrical Sensor           min 1         M
+ * 0x050D Device Energy Management                  O
+ * 0x0302 Temperature Sensor                        O
+ */
 export const solarPower = DeviceTypeDefinition({
   name: 'MA-solarpower',
   code: 0x17,
