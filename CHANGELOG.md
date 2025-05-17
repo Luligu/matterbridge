@@ -15,6 +15,9 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [package]: Updated dependencies.
+- [export]: Removed long deprecated Matter exports from matterbridge. Use matterbridge/matter.
+- [matterbridge]: Refactored initialize() and cleanup() methods.
+- [matterbridge]: Updated -help informations.
 
 ### Fixed
 
@@ -26,8 +29,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
-- [virtual] Added virtual devices Restart Matterbridge and Update Matterbridge and full Jest tests.
-- [virtual] Added virtual devices Reboot Matterbridge for Shelly board and full Jest tests.
+- [virtual] Added virtual devices Restart Matterbridge and Update Matterbridge and full Jest tests (can be disabled adding -novirtual to the command line).
+- [virtual] Added virtual devices Reboot Matterbridge for Shelly board and full Jest tests (can be disabled adding -novirtual to the command line).
 - [shelly] Refactor shelly api and added full Jest test.
 
 ### Changed

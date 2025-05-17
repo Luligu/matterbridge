@@ -1023,7 +1023,7 @@ export class Matterbridge extends EventEmitter {
   /**
    * Deregisters the process uncaughtException, unhandledRejection, SIGINT and SIGTERM signal handlers.
    */
-  private deregisterProcesslHandlers() {
+  private deregisterProcessHandlers() {
     this.log.debug(`Deregistering uncaughtException and unhandledRejection handlers...`);
 
     if (this.exceptionHandler) process.off('uncaughtException', this.exceptionHandler);
@@ -1325,11 +1325,11 @@ export class Matterbridge extends EventEmitter {
 
   /**
    * Cleans up the Matterbridge instance.
-   * @param message - The cleanup message.
-   * @param restart - Indicates whether to restart the instance after cleanup. Default is `false`.
+   * @param {string} message - The cleanup message.
+   * @param {boolean} [restart=false] - Indicates whether to restart the instance after cleanup. Default is `false`.
    * @returns A promise that resolves when the cleanup is completed.
    */
-  protected async cleanup(message: string, restart = false) {
+  protected async cleanup(message: string, restart = false): Promise<void> {
     if (this.initialized && !this.hasCleanupStarted) {
       this.emit('cleanup_started');
       this.hasCleanupStarted = true;
@@ -1413,20 +1413,19 @@ export class Matterbridge extends EventEmitter {
       }
 
       // Stop matter storage
-      await this.stopMatterStorage();
+      await withTimeout(this.stopMatterStorage(), 10000, false);
 
       // Stop the frontend
-      await this.frontend.stop();
+      await withTimeout(this.frontend.stop(), 10000, false);
 
       // Remove the matterfilelogger
       try {
         Logger.removeLogger('matterfilelogger');
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
-        // this.log.debug(`Error removing the matterfilelogger for file ${CYAN}${path.join(this.matterbridgeDirectory, this.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
+        this.log.debug(`Error removing the matterfilelogger for file ${CYAN}${path.join(this.matterbridgeDirectory, this.matterLoggerFile)}${db}: ${error instanceof Error ? error.message : String(error)}`);
       }
 
-      // Serialize registeredDevices
+      // Close the matterbridge node storage and context
       if (this.nodeStorage && this.nodeContext) {
         /*
         TODO: Implement serialization of registered devices in edge mode
@@ -1457,7 +1456,7 @@ export class Matterbridge extends EventEmitter {
         await this.nodeStorage.close();
         this.nodeStorage = undefined;
       } else {
-        this.log.error('Error saving registered devices: nodeContext not found!');
+        this.log.error('Error close the matterbridge node storage and context: nodeStorage or nodeContext not found!');
       }
       this.plugins.clear();
       this.devices.clear();
@@ -1465,49 +1464,36 @@ export class Matterbridge extends EventEmitter {
       // Factory reset
       if (message === 'shutting down with factory reset...') {
         try {
-          // Delete old matter storage file and backup
-          const file = path.join(this.matterbridgeDirectory, 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.json');
-          this.log.info(`Unlinking old matter storage file: ${file}`);
-          await fs.unlink(file);
-          const backup = path.join(this.matterbridgeDirectory, 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.backup.json');
-          this.log.info(`Unlinking old matter storage backup file: ${backup}`);
-          await fs.unlink(backup);
-        } catch (err) {
-          if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
-            this.log.error(`Error unlinking old matter storage file: ${err}`);
+          // Delete matter storage directory with its subdirectories and backup
+          const dir = path.join(this.matterbridgeDirectory, this.matterStorageName);
+          this.log.info(`Removing matter storage directory: ${dir}`);
+          await fs.rm(dir, { recursive: true });
+          const backup = path.join(this.matterbridgeDirectory, this.matterStorageName + '.backup');
+          this.log.info(`Removing matter storage backup directory: ${backup}`);
+          await fs.rm(backup, { recursive: true });
+        } catch (error) {
+          if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
+            this.log.error(`Error removing matter storage directory: ${error}`);
           }
         }
         try {
-          // Delete matter node storage directory with its subdirectories and backup
-          const dir = path.join(this.matterbridgeDirectory, 'matterstorage' + (getParameter('profile') ? '.' + getParameter('profile') : ''));
-          this.log.info(`Removing matter node storage directory: ${dir}`);
+          // Delete matterbridge storage directory with its subdirectories and backup
+          const dir = path.join(this.matterbridgeDirectory, this.nodeStorageName);
+          this.log.info(`Removing matterbridge storage directory: ${dir}`);
           await fs.rm(dir, { recursive: true });
-          const backup = path.join(this.matterbridgeDirectory, 'matterstorage' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.backup');
-          this.log.info(`Removing matter node storage backup directory: ${backup}`);
+          const backup = path.join(this.matterbridgeDirectory, this.nodeStorageName + '.backup');
+          this.log.info(`Removing matterbridge storage backup directory: ${backup}`);
           await fs.rm(backup, { recursive: true });
-        } catch (err) {
-          if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
-            this.log.error(`Error removing matter storage directory: ${err}`);
-          }
-        }
-        try {
-          // Delete node storage directory with its subdirectories and backup
-          const dir = path.join(this.matterbridgeDirectory, 'storage' + (getParameter('profile') ? '.' + getParameter('profile') : ''));
-          this.log.info(`Removing storage directory: ${dir}`);
-          await fs.rm(dir, { recursive: true });
-          const backup = path.join(this.matterbridgeDirectory, 'storage' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.backup');
-          this.log.info(`Removing storage backup directory: ${backup}`);
-          await fs.rm(backup, { recursive: true });
-        } catch (err) {
-          if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
-            this.log.error(`Error removing storage directory: ${err}`);
+        } catch (error) {
+          if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
+            this.log.error(`Error removing matterbridge storage directory: ${error}`);
           }
         }
         this.log.info('Factory reset done! Remove all paired fabrics from the controllers.');
       }
 
       // Deregisters the process handlers
-      this.deregisterProcesslHandlers();
+      this.deregisterProcessHandlers();
 
       if (restart) {
         if (message === 'updating...') {
