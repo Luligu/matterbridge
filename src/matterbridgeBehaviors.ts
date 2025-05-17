@@ -67,8 +67,8 @@ import { RvcRunModeServer } from '@matter/main/behaviors/rvc-run-mode';
 import { RvcCleanModeServer } from '@matter/main/behaviors/rvc-clean-mode';
 import { RvcOperationalStateServer } from '@matter/main/behaviors/rvc-operational-state';
 import { ServiceAreaServer } from '@matter/main/behaviors/service-area';
-import { WaterHeaterManagementBehavior } from '@matter/main/behaviors/water-heater-management;
-import { WaterHeaterModeBehavior } from '@matter/main/behaviors/water-heater-mode;
+import { WaterHeaterManagementBehavior } from '@matter/main/behaviors/water-heater-management';
+import { WaterHeaterModeBehavior } from '@matter/main/behaviors/water-heater-mode';
 
 // AnsiLogger module
 import { AnsiLogger } from './logger/export.js';
