@@ -92,6 +92,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
   const [frontendTheme, setFrontendTheme] = useState('dark');
   const [homePagePlugins, setHomePagePlugins] = useState(localStorage.getItem('homePagePlugins')==='false' ? false : true);
   const [homePageMode, setHomePageMode] = useState(localStorage.getItem('homePageMode')??'logs');
+  const [virtualMode, setVirtualMode] = useState(localStorage.getItem('virtualMode')??'outlet');
 
   // Refs
   const uniqueId = useRef(getUniqueId());
@@ -114,13 +115,10 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
 
   useEffect(() => {
     if (matterbridgeInfo.bridgeMode === undefined) return;
-    
     setSelectedBridgeMode(matterbridgeInfo.bridgeMode==='bridge'?'bridge':'childbridge'); 
-
     setSelectedMbLoggerLevel(matterbridgeInfo.loggerLevel.charAt(0).toUpperCase() + matterbridgeInfo.loggerLevel.slice(1));
-
     setLogOnFileMb(matterbridgeInfo.fileLogger);
-
+    setVirtualMode(matterbridgeInfo.virtualMode);
   }, [matterbridgeInfo]);
 
   // Retrieve the saved theme value from localStorage
@@ -177,6 +175,15 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
     localStorage.setItem('homePageMode', newValue);
   };
 
+  // Define a function to handle change virtual mode
+  const handleChangeVirtualMode = (event) => {
+    const newValue = event.target.value;
+    if(debug) console.log('handleChangeVirtualMode called with value:', newValue);
+    setVirtualMode(newValue);
+    localStorage.setItem('virtualMode', newValue);
+    sendMessage({ id: uniqueId.current, sender: 'Settings', method: "/api/config", src: "Frontend", dst: "Matterbridge", params: { name: 'setvirtualmode', value: newValue } });
+  };
+
   return (
     <div className="MbfWindowDiv" style={{ flex: '0 0 auto' }}>
       <div className="MbfWindowHeader">
@@ -222,6 +229,16 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }) {
             <Select style={{ height: '30px' }} labelId="frontend-home-label" id="frontend-home" value={homePageMode} onChange={handleChangeHomePageMode}>
               <MenuItem value='logs'>Logs</MenuItem>
               <MenuItem value='devices'>Devices</MenuItem>
+            </Select>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '10px' }}>
+            <FormLabel style={{padding: '0px', margin: '0px'}} id="frontend-virtual-label">Virtual devices:</FormLabel>
+            <Select style={{ height: '30px' }} labelId="frontend-virtual-label" id="frontend-virtual" value={virtualMode} onChange={handleChangeVirtualMode}>
+              <MenuItem value='disabled'>Disabled</MenuItem>
+              <MenuItem value='outlet'>Outlet</MenuItem>
+              <MenuItem value='light'>Light</MenuItem>
+              <MenuItem value='switch'>Switch</MenuItem>
+              <MenuItem value='mounted_switch'>Mounted Switch</MenuItem>
             </Select>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '20px' }}>

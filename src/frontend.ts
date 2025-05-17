@@ -40,7 +40,7 @@ import multer from 'multer';
 import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, wr, YELLOW, nt } from './logger/export.js';
 
 // Matterbridge
-import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean } from './utils/export.js';
+import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout } from './utils/export.js';
 import { ApiClusters, ApiDevices, BaseRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -658,33 +658,7 @@ export class Frontend {
   }
 
   async stop() {
-    // Close the http server
-    if (this.httpServer) {
-      this.httpServer.close((error) => {
-        if (error) {
-          this.log.error(`Error closing http server: ${error}`);
-        } else {
-          this.log.debug('Http server closed successfully');
-        }
-      });
-      this.httpServer.removeAllListeners();
-      this.httpServer = undefined;
-      this.log.debug('Frontend http server closed successfully');
-    }
-
-    // Close the https server
-    if (this.httpsServer) {
-      this.httpsServer.close((error) => {
-        if (error) {
-          this.log.error(`Error closing https server: ${error}`);
-        } else {
-          this.log.debug('Https server closed successfully');
-        }
-      });
-      this.httpsServer.removeAllListeners();
-      this.httpsServer = undefined;
-      this.log.debug('Frontend https server closed successfully');
-    }
+    this.log.debug('Stopping the frontend...');
 
     // Remove listeners from the express app
     if (this.expressApp) {
@@ -701,16 +675,66 @@ export class Frontend {
           client.close();
         }
       });
-      this.webSocketServer.close((error) => {
-        if (error) {
-          this.log.error(`Error closing WebSocket server: ${error}`);
-        } else {
-          this.log.debug('WebSocket server closed successfully');
-        }
-      });
-      // this.webSocketServer.removeAllListeners();
+      await withTimeout(
+        new Promise<void>((resolve) => {
+          this.webSocketServer?.close((error) => {
+            if (error) {
+              this.log.error(`Error closing WebSocket server: ${error}`);
+            } else {
+              this.log.debug('WebSocket server closed successfully');
+            }
+            resolve();
+          });
+        }),
+        10000,
+        false,
+      );
+      this.webSocketServer.removeAllListeners();
       this.webSocketServer = undefined;
     }
+
+    // Close the http server
+    if (this.httpServer) {
+      await withTimeout(
+        new Promise<void>((resolve) => {
+          this.httpServer?.close((error) => {
+            if (error) {
+              this.log.error(`Error closing http server: ${error}`);
+            } else {
+              this.log.debug('Http server closed successfully');
+            }
+            resolve();
+          });
+        }),
+        10000,
+        false,
+      );
+      this.httpServer.removeAllListeners();
+      this.httpServer = undefined;
+      this.log.debug('Frontend http server closed successfully');
+    }
+
+    // Close the https server
+    if (this.httpsServer) {
+      await withTimeout(
+        new Promise<void>((resolve) => {
+          this.httpsServer?.close((error) => {
+            if (error) {
+              this.log.error(`Error closing https server: ${error}`);
+            } else {
+              this.log.debug('Https server closed successfully');
+            }
+            resolve();
+          });
+        }),
+        10000,
+        false,
+      );
+      this.httpsServer.removeAllListeners();
+      this.httpsServer = undefined;
+      this.log.debug('Frontend https server closed successfully');
+    }
+    this.log.debug('Frontend stopped successfully');
   }
 
   // Function to format bytes to KB, MB, or GB
@@ -1594,6 +1618,15 @@ export class Frontend {
               this.log.debug(`Reset matter commissioning passcode to ${CYAN}undefined${db}`);
               this.matterbridge.matterbridgeInformation.matterPasscode = undefined;
               await this.matterbridge.nodeContext?.remove('matterpasscode');
+              this.wssSendRestartRequired();
+            }
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+            break;
+          case 'setvirtualmode':
+            if (isValidString(data.params.value, 1) && ['disabled', 'light', 'outlet', 'switch', 'mounted_switch'].includes(data.params.value)) {
+              this.matterbridge.matterbridgeInformation.virtualMode = data.params.value as 'disabled' | 'light' | 'outlet' | 'switch' | 'mounted_switch';
+              this.log.debug(`Set matterbridge virtual mode to ${CYAN}${data.params.value}${db}`);
+              await this.matterbridge.nodeContext?.set<string>('virtualmode', data.params.value);
               this.wssSendRestartRequired();
             }
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));

@@ -1,18 +1,22 @@
 // src\matterbridge.test.ts
+
 /* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug'];
+process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', 'matterstorage/MatterbridgeGlobal', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug'];
 
 import { jest } from '@jest/globals';
 import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/main';
 import { ExposedFabricInformation } from '@matter/main/protocol';
-import { AnsiLogger, db, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
+import os from 'node:os';
 
-import { hasParameter, waiter } from './utils/export.js';
+import { getParameter, hasParameter, waiter } from './utils/export.js';
 import { Matterbridge } from './matterbridge.js';
 import { plg, RegisteredPlugin, SessionInformation } from './matterbridgeTypes.js';
+import path from 'node:path';
+import { rmSync } from 'node:fs';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   // eslint-disable-next-line no-console
@@ -43,6 +47,9 @@ if (!debug) {
   consoleWarnSpy = jest.spyOn(console, 'warn');
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
+
+// Cleanup the matter environment
+rmSync('matterstorage/MatterbridgeGlobal', { recursive: true, force: true });
 
 describe('Matterbridge', () => {
   beforeEach(async () => {
@@ -128,7 +135,7 @@ describe('Matterbridge', () => {
         },
         false,
         60000,
-        1000,
+        100,
         true,
       );
 
@@ -140,10 +147,22 @@ describe('Matterbridge', () => {
       expect(matterbridge.matterLoggerFile).toBe('matter.Jest.log');
       expect((matterbridge as any).initialized).toBeTruthy();
       expect((matterbridge as any).log).toBeDefined();
-      expect((matterbridge as any).homeDirectory).not.toBe('');
-      expect((matterbridge as any).matterbridgeDirectory).not.toBe('');
-      expect((matterbridge as any).globalModulesDirectory).not.toBe('');
-      expect((matterbridge as any).matterbridgeLatestVersion).not.toBe('');
+      expect(matterbridge.homeDirectory).toBe(getParameter('homedir') ?? os.homedir());
+      expect(matterbridge.matterbridgeInformation.homeDirectory).toBe(matterbridge.homeDirectory);
+      expect(matterbridge.matterbridgeDirectory).toBe(path.join(matterbridge.homeDirectory, '.matterbridge'));
+      expect(matterbridge.matterbridgeInformation.matterbridgeDirectory).toBe(matterbridge.matterbridgeDirectory);
+      expect(matterbridge.matterbridgePluginDirectory).toBe(path.join(matterbridge.homeDirectory, 'Matterbridge'));
+      expect(matterbridge.matterbridgeInformation.matterbridgePluginDirectory).toBe(matterbridge.matterbridgePluginDirectory);
+      expect(matterbridge.matterbridgeCertDirectory).toBe(path.join(matterbridge.homeDirectory, '.mattercert'));
+      expect(matterbridge.matterbridgeInformation.matterbridgeCertDirectory).toBe(matterbridge.matterbridgeCertDirectory);
+      expect(matterbridge.globalModulesDirectory).not.toBe('');
+      expect(matterbridge.matterbridgeInformation.globalModulesDirectory).toBe(matterbridge.globalModulesDirectory);
+      expect(matterbridge.matterbridgeVersion).not.toBe('');
+      expect(matterbridge.matterbridgeInformation.matterbridgeVersion).toBe(matterbridge.matterbridgeVersion);
+      expect(matterbridge.matterbridgeLatestVersion).toBe(matterbridge.matterbridgeVersion);
+      expect(matterbridge.matterbridgeInformation.matterbridgeLatestVersion).toBe(matterbridge.matterbridgeLatestVersion);
+      expect(matterbridge.matterbridgeDevVersion).toBe(matterbridge.matterbridgeVersion);
+      expect(matterbridge.matterbridgeInformation.matterbridgeDevVersion).toBe(matterbridge.matterbridgeDevVersion);
       expect((matterbridge as any).nodeStorage).toBeDefined();
       expect((matterbridge as any).nodeContext).toBeDefined();
       expect((matterbridge as any).plugins).toBeDefined();
@@ -167,7 +186,7 @@ describe('Matterbridge', () => {
     }, 60000);
 
     test('Matterbridge.loadInstance(true) with frontend', async () => {
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '8081', '-profile', 'Jest'];
+      process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '8081', '-profile', 'Jest'];
 
       expect((Matterbridge as any).instance).toBeUndefined();
       matterbridge = await Matterbridge.loadInstance(true);
@@ -181,7 +200,7 @@ describe('Matterbridge', () => {
         },
         false,
         60000,
-        1000,
+        100,
         true,
       );
 
@@ -220,7 +239,7 @@ describe('Matterbridge', () => {
     });
 
     test('Matterbridge profile', async () => {
-      process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug'];
+      process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug'];
       matterbridge = await Matterbridge.loadInstance(true);
       if (!(matterbridge as any).initialized) await matterbridge.initialize();
       expect(matterbridge).toBeDefined();
@@ -236,7 +255,7 @@ describe('Matterbridge', () => {
         },
         false,
         60000,
-        1000,
+        100,
         true,
       );
     }, 60000);
@@ -753,11 +772,10 @@ describe('Matterbridge', () => {
         }, 250);
       });
 
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Unlinking old matter storage file'));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Removing matter node storage directory'));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Removing matter node storage backup directory'));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Removing storage directory'));
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Removing storage backup directory'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Removing matter storage directory'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Removing matter storage backup directory'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Removing matterbridge storage directory'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Removing matterbridge storage backup directory'));
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
       expect((matterbridge as any).plugins).toHaveLength(0);
       expect((matterbridge as any).devices).toHaveLength(0);

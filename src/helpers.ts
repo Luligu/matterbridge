@@ -31,6 +31,9 @@ import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 
 import { hasParameter } from './utils/commandLine.js';
 import { Matterbridge } from './matterbridge.js';
+import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-control';
+import { OnOffLightDevice } from '@matter/node/devices/on-off-light';
+import { OnOffLightSwitchDevice } from '@matter/node/devices/on-off-light-switch';
 
 /**
  * Adds a virtual device to the provided endpoint, sets up an event listener for device state changes,
@@ -38,17 +41,33 @@ import { Matterbridge } from './matterbridge.js';
  *
  * @param {Endpoint<AggregatorEndpoint>} aggregatorEndpoint - The aggragator endpoint to which the virtual device will be added.
  * @param {string} name - The name of the virtual device. Spaces in the name are removed to form the device ID.
+ * @param {'light' | 'outlet' | 'switch' | 'mounted_switch'} type - The type of the virtual device. Can be 'light', 'outlet', 'switch', or 'mounted_switch'.
  * @param {() => Promise<void>} callback - A callback function that gets executed when the device's on/off state changes to true.
  * @returns {Promise<Endpoint>} A promise that resolves with the created virtual device.
  * @remark The virtual device is created as an instance of `Endpoint` with the `OnOffPlugInUnitDevice` device type.
  * The onOff state always reverts to false when the device is turned on.
  */
-export async function addVirtualDevice(aggregatorEndpoint: Endpoint<AggregatorEndpoint>, name: string, callback: () => Promise<void>): Promise<Endpoint> {
+export async function addVirtualDevice(aggregatorEndpoint: Endpoint<AggregatorEndpoint>, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>): Promise<Endpoint> {
   // Create a new virtual device by instantiating `Endpoint` with device information.
   // The device ID is created by replacing all spaces in the name with an empty string.
   // The node label of the bridged device basic information is set to the given name.
-  const device = new Endpoint(OnOffPlugInUnitDevice.with(BridgedDeviceBasicInformationServer), {
-    id: name.replaceAll(' ', ''),
+  let deviceType;
+  switch (type) {
+    case 'light':
+      deviceType = OnOffLightDevice.with(BridgedDeviceBasicInformationServer);
+      break;
+    case 'outlet':
+      deviceType = OnOffPlugInUnitDevice.with(BridgedDeviceBasicInformationServer);
+      break;
+    case 'switch':
+      deviceType = OnOffLightSwitchDevice.with(BridgedDeviceBasicInformationServer, OnOffBaseServer);
+      break;
+    case 'mounted_switch':
+      deviceType = MountedOnOffControlDevice.with(BridgedDeviceBasicInformationServer);
+      break;
+  }
+  const device = new Endpoint(deviceType, {
+    id: name.replaceAll(' ', '') + ':' + type,
     bridgedDeviceBasicInformation: { nodeLabel: name },
     onOff: { onOff: false, startUpOnOff: OnOff.StartUpOnOff.Off },
   });
@@ -79,13 +98,13 @@ export async function addVirtualDevice(aggregatorEndpoint: Endpoint<AggregatorEn
  * @returns {Promise<void>} A promise that resolves when the virtual devices are added.
  */
 export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEndpoint: Endpoint<AggregatorEndpoint>): Promise<void> {
-  if (!hasParameter('novirtual') && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
+  if (matterbridge.matterbridgeInformation.virtualMode !== 'disabled' && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
     matterbridge.log.notice(`Creating virtual devices for Matterbridge server node...`);
-    await addVirtualDevice(aggregatorEndpoint, 'Restart Matterbridge', async () => {
+    await addVirtualDevice(aggregatorEndpoint, 'Restart Matterbridge', matterbridge.matterbridgeInformation.virtualMode, async () => {
       if (matterbridge.restartMode === '') await matterbridge.restartProcess();
       else await matterbridge.shutdownProcess();
     });
-    await addVirtualDevice(aggregatorEndpoint, 'Update Matterbridge', async () => {
+    await addVirtualDevice(aggregatorEndpoint, 'Update Matterbridge', matterbridge.matterbridgeInformation.virtualMode, async () => {
       if (hasParameter('shelly')) {
         const { getShelly } = await import('./shelly.js');
         getShelly('/api/updates/sys/perform', 10 * 1000)
@@ -107,7 +126,7 @@ export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEn
       }
     });
     if (hasParameter('shelly')) {
-      await addVirtualDevice(aggregatorEndpoint, 'Reboot Matterbridge', async () => {
+      await addVirtualDevice(aggregatorEndpoint, 'Reboot Matterbridge', matterbridge.matterbridgeInformation.virtualMode, async () => {
         const { postShelly } = await import('./shelly.js');
         postShelly('/api/system/reboot', {}, 60 * 1000)
           .then(() => {

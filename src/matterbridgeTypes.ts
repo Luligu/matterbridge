@@ -127,6 +127,7 @@ export interface MatterbridgeInformation {
   matterbridgeAdvertise: boolean | undefined;
   bridgeMode: string;
   restartMode: string;
+  virtualMode: 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch';
   readOnly: boolean;
   shellyBoard: boolean;
   shellySysUpdate: boolean;

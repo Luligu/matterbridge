@@ -709,6 +709,31 @@ describe('Matterbridge frontend', () => {
     data = await waitMessageId(WS_ID);
     expect(data.success).toBe(true);
     expect(await matterbridge.nodeContext?.get('matterpasscode')).toBe(20202026);
+
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setvirtualmode', value: 'disabled' } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(true);
+    expect(await matterbridge.nodeContext?.get('virtualmode')).toBe('disabled');
+
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setvirtualmode', value: 'light' } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(true);
+    expect(await matterbridge.nodeContext?.get('virtualmode')).toBe('light');
+
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setvirtualmode', value: 'outlet' } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(true);
+    expect(await matterbridge.nodeContext?.get('virtualmode')).toBe('outlet');
+
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setvirtualmode', value: 'switch' } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(true);
+    expect(await matterbridge.nodeContext?.get('virtualmode')).toBe('switch');
+
+    ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'setvirtualmode', value: 'mounted_switch' } }));
+    data = await waitMessageId(WS_ID);
+    expect(data.success).toBe(true);
+    expect(await matterbridge.nodeContext?.get('virtualmode')).toBe('mounted_switch');
   }, 60000);
 
   test('Websocket API /api/command with no params', async () => {

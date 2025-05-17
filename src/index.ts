@@ -28,29 +28,6 @@ import { hasParameter } from './utils/export.js';
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat } from './logger/export.js';
 
-// @matter
-export {
-  Identity,
-  AtLeastOne,
-  SemanticNamespace,
-  ClosureTag,
-  CompassDirectionTag,
-  CompassLocationTag,
-  DirectionTag,
-  ElectricalMeasurementTag,
-  LaundryTag,
-  LevelTag,
-  LocationTag,
-  NumberTag,
-  PositionTag,
-  PowerSourceTag,
-  RefrigeratorTag,
-  RoomAirConditionerTag,
-  SwitchesTag,
-} from '@matter/main';
-export * from '@matter/main/clusters';
-export * from '@matter/main/types';
-
 // Matterbridge
 export * from './matterbridge.js';
 export * from './matterbridgeTypes.js';
@@ -62,6 +39,7 @@ export * from './matterbridgePlatform.js';
 export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
 export * from './roboticVacuumCleaner.js';
+export { addVirtualDevice } from './helpers.js';
 
 const log = new AnsiLogger({ logName: 'Main', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 
