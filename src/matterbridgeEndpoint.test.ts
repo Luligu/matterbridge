@@ -41,6 +41,8 @@ import {
   ThermostatServer,
   ThermostatUserInterfaceConfigurationServer,
   TimeSynchronizationServer,
+  WaterHeaterManagementServer,
+  WaterHeaterModeServer,
 } from '@matter/node/behaviors';
 import { AnsiLogger, BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
@@ -65,6 +67,7 @@ import {
   rainSensor,
   temperatureSensor,
   thermostatDevice,
+  waterHeater,
 } from './matterbridgeDeviceTypes.js';
 import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
 

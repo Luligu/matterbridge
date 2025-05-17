@@ -1066,6 +1066,7 @@ export const microwaveOven = DeviceTypeDefinition({
   optionalServerClusters: [Identify.Cluster.id, FanControl.Cluster.id],
 });
 
+
 // Chapter 14. Energy Device Types
 
 /**
