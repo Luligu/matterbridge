@@ -1622,6 +1622,15 @@ export class Frontend {
             }
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
             break;
+          case 'setvirtualmode':
+            if (isValidString(data.params.value, 1) && ['disabled', 'light', 'outlet', 'switch', 'mounted_switch'].includes(data.params.value)) {
+              this.matterbridge.matterbridgeInformation.virtualMode = data.params.value as 'disabled' | 'light' | 'outlet' | 'switch' | 'mounted_switch';
+              this.log.debug(`Set matterbridge virtual mode to ${CYAN}${data.params.value}${db}`);
+              await this.matterbridge.nodeContext?.set<string>('virtualmode', data.params.value);
+              this.wssSendRestartRequired();
+            }
+            client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+            break;
           default:
             this.log.warn(`Unknown parameter ${data.params.name} in /api/config`);
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Unknown parameter ${data.params.name} in /api/config` }));

@@ -64,7 +64,7 @@ describe('Matterbridge Helpers', () => {
 
   const mockMatterbridge = {
     matterbridgeVersion: '1.0.0',
-    matterbridgeInformation: {},
+    matterbridgeInformation: { virtualMode: 'disabled' },
     bridgeMode: 'bridge',
     restartMode: '',
     restartProcess: jest.fn(),
@@ -158,18 +158,18 @@ describe('Matterbridge Helpers', () => {
     // logEndpoint(EndpointServer.forEndpoint(server));
   });
 
-  test('add a virtual device', async () => {
+  test('add a light virtual device', async () => {
     expect(aggregator).toBeDefined();
-    device = await addVirtualDevice(aggregator, 'Test Device', async () => {
+    device = await addVirtualDevice(aggregator, 'Test Device', 'light', async () => {
       // Callback function when the device is turned on
       console.log('Device turned on');
     });
     expect(device).toBeDefined();
     expect(device.lifecycle.isReady).toBeTruthy();
-    expect(device.id).toBe('TestDevice');
+    expect(device.id).toBe('TestDevice:light');
     expect(device.stateOf(BridgedDeviceBasicInformationServer).nodeLabel).toBe('Test Device');
     expect(device.stateOf(OnOffServer).onOff).toBe(false);
-    expect(aggregator.parts.has('TestDevice')).toBeTruthy();
+    expect(aggregator.parts.has('TestDevice:light')).toBeTruthy();
     // logEndpoint(EndpointServer.forEndpoint(device));
   });
 
@@ -182,17 +182,56 @@ describe('Matterbridge Helpers', () => {
     expect(device.stateOf(OnOffServer).onOff).toBe(false);
   });
 
-  test('add all the virtual devices', async () => {
+  test('should not add the virtual devices', async () => {
+    mockMatterbridge.matterbridgeInformation.virtualMode = 'disabled';
     expect(aggregator).toBeDefined();
     await addVirtualDevices(mockMatterbridge, aggregator);
-    expect(aggregator.parts.has('TestDevice')).toBeTruthy();
-    expect(aggregator.parts.has('UpdateMatterbridge')).toBeTruthy();
-    expect(aggregator.parts.has('RestartMatterbridge')).toBeTruthy();
-    expect(aggregator.parts.has('RebootMatterbridge')).toBeFalsy();
+    expect(aggregator.parts.size).toBe(1);
+  });
+
+  test('add all the light virtual devices', async () => {
+    mockMatterbridge.matterbridgeInformation.virtualMode = 'light';
+    expect(aggregator).toBeDefined();
+    await addVirtualDevices(mockMatterbridge, aggregator);
+    expect(aggregator.parts.has('TestDevice:light')).toBeTruthy();
+    expect(aggregator.parts.has('UpdateMatterbridge:light')).toBeTruthy();
+    expect(aggregator.parts.has('RestartMatterbridge:light')).toBeTruthy();
+    expect(aggregator.parts.has('RebootMatterbridge:light')).toBeFalsy();
+    expect(aggregator.parts.size).toBe(3);
+  });
+
+  test('add all the outlet virtual devices', async () => {
+    mockMatterbridge.matterbridgeInformation.virtualMode = 'outlet';
+    expect(aggregator).toBeDefined();
+    await addVirtualDevices(mockMatterbridge, aggregator);
+    expect(aggregator.parts.has('UpdateMatterbridge:outlet')).toBeTruthy();
+    expect(aggregator.parts.has('RestartMatterbridge:outlet')).toBeTruthy();
+    expect(aggregator.parts.has('RebootMatterbridge:outlet')).toBeFalsy();
+    expect(aggregator.parts.size).toBe(5);
+  });
+
+  test('add all the switch virtual devices', async () => {
+    mockMatterbridge.matterbridgeInformation.virtualMode = 'switch';
+    expect(aggregator).toBeDefined();
+    await addVirtualDevices(mockMatterbridge, aggregator);
+    expect(aggregator.parts.has('UpdateMatterbridge:switch')).toBeTruthy();
+    expect(aggregator.parts.has('RestartMatterbridge:switch')).toBeTruthy();
+    expect(aggregator.parts.has('RebootMatterbridge:switch')).toBeFalsy();
+    expect(aggregator.parts.size).toBe(7);
+  });
+
+  test('add all the mounted-switch virtual devices', async () => {
+    mockMatterbridge.matterbridgeInformation.virtualMode = 'mounted_switch';
+    expect(aggregator).toBeDefined();
+    await addVirtualDevices(mockMatterbridge, aggregator);
+    expect(aggregator.parts.has('UpdateMatterbridge:mounted_switch')).toBeTruthy();
+    expect(aggregator.parts.has('RestartMatterbridge:mounted_switch')).toBeTruthy();
+    expect(aggregator.parts.has('RebootMatterbridge:mounted_switch')).toBeFalsy();
+    expect(aggregator.parts.size).toBe(9);
   });
 
   test('send command restart to the virtual device', async () => {
-    const restartDevice = aggregator.parts.get('RestartMatterbridge');
+    const restartDevice = aggregator.parts.get('RestartMatterbridge:light');
     expect(restartDevice).toBeDefined();
     if (!restartDevice) return;
     expect(restartDevice.stateOf(OnOffServer).onOff).toBe(false);
@@ -207,7 +246,7 @@ describe('Matterbridge Helpers', () => {
   });
 
   test('send command update to the virtual device', async () => {
-    const updateDevice = aggregator.parts.get('UpdateMatterbridge');
+    const updateDevice = aggregator.parts.get('UpdateMatterbridge:light');
     expect(updateDevice).toBeDefined();
     if (!updateDevice) return;
     expect(updateDevice.stateOf(OnOffServer).onOff).toBe(false);
@@ -217,22 +256,24 @@ describe('Matterbridge Helpers', () => {
   });
 
   test('add all the virtual devices with shelly parameter', async () => {
-    const restartDevice = aggregator.parts.get('RestartMatterbridge');
+    mockMatterbridge.matterbridgeInformation.virtualMode = 'light';
+    const restartDevice = aggregator.parts.get('RestartMatterbridge:light');
     await restartDevice?.delete();
-    const updateDevice = aggregator.parts.get('UpdateMatterbridge');
+    const updateDevice = aggregator.parts.get('UpdateMatterbridge:light');
     await updateDevice?.delete();
 
     process.argv.push('-shelly');
     expect(aggregator).toBeDefined();
     await addVirtualDevices(mockMatterbridge, aggregator);
-    expect(aggregator.parts.has('TestDevice')).toBeTruthy();
-    expect(aggregator.parts.has('UpdateMatterbridge')).toBeTruthy();
-    expect(aggregator.parts.has('RestartMatterbridge')).toBeTruthy();
-    expect(aggregator.parts.has('RebootMatterbridge')).toBeTruthy();
+    expect(aggregator.parts.has('TestDevice:light')).toBeTruthy();
+    expect(aggregator.parts.has('UpdateMatterbridge:light')).toBeTruthy();
+    expect(aggregator.parts.has('RestartMatterbridge:light')).toBeTruthy();
+    expect(aggregator.parts.has('RebootMatterbridge:light')).toBeTruthy();
+    expect(aggregator.parts.size).toBe(10);
   });
 
   test('send command update to the shelly device', async () => {
-    const updateDevice = aggregator.parts.get('UpdateMatterbridge');
+    const updateDevice = aggregator.parts.get('UpdateMatterbridge:light');
     expect(updateDevice).toBeDefined();
     if (!updateDevice) return;
     expect(updateDevice.stateOf(OnOffServer).onOff).toBe(false);
@@ -251,7 +292,7 @@ describe('Matterbridge Helpers', () => {
   });
 
   test('send command reboot to the shelly device', async () => {
-    const rebootDevice = aggregator.parts.get('RebootMatterbridge');
+    const rebootDevice = aggregator.parts.get('RebootMatterbridge:light');
     expect(rebootDevice).toBeDefined();
     if (!rebootDevice) return;
     expect(rebootDevice.stateOf(OnOffServer).onOff).toBe(false);

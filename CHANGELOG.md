@@ -12,6 +12,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [virtual] Added virtual devices configuration mode in the Matterbridge Settings: 'Disabled', 'Light', 'Outlet', 'Switch', 'Mounted_switch'. Switch is not supported by Alexa. Mounted Switch is not supported by Apple.
+
 ### Changed
 
 - [package]: Updated dependencies.

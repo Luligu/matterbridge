@@ -91,6 +91,8 @@ import { RefrigeratorAlarm } from '@matter/main/clusters/refrigerator-alarm';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/main/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
 import { ServiceArea } from '@matter/main/clusters/service-area';
 import { TemperatureControl } from '@matter/main/clusters/temperature-control';
+import { OtaSoftwareUpdateRequestor } from '@matter/main/clusters/ota-software-update-requestor';
+import { OtaSoftwareUpdateProvider } from '@matter/main/clusters';
 
 export enum DeviceClasses {
   /** Node device type. */
@@ -190,7 +192,7 @@ export interface EndpointOptions {
   uniqueStorageKey?: string;
 }
 
-// Utility device types
+// Chapter 2. Utility device types
 
 export const powerSource = DeviceTypeDefinition({
   name: 'MA-powerSource',
@@ -201,11 +203,38 @@ export const powerSource = DeviceTypeDefinition({
   optionalServerClusters: [],
 });
 
+export const OTARequestor = DeviceTypeDefinition({
+  name: 'MA-OTARequestor',
+  code: 0x0012,
+  deviceClass: DeviceClasses.Utility,
+  revision: 1,
+  requiredServerClusters: [OtaSoftwareUpdateRequestor.Cluster.id],
+  optionalServerClusters: [],
+  requiredClientClusters: [OtaSoftwareUpdateProvider.Cluster.id],
+  optionalClientClusters: [],
+});
+
+export const OTAProvider = DeviceTypeDefinition({
+  name: 'MA-OTAProvider',
+  code: 0x0014,
+  deviceClass: DeviceClasses.Utility,
+  revision: 1,
+  requiredServerClusters: [OtaSoftwareUpdateProvider.Cluster.id],
+  optionalServerClusters: [],
+  requiredClientClusters: [OtaSoftwareUpdateRequestor.Cluster.id],
+  optionalClientClusters: [],
+});
+
 /**
     2.5.3. Conditions
     Please see the Base Device Type definition for conformance tags.
     This device type SHALL only be used for Nodes which have a device type of Bridge.
   
+    2.5.5. Cluster Requirements
+    Each endpoint supporting this device type SHALL include these clusters based on the conformance
+    defined below.
+    -  0x0039 Bridged Device Basic Information Server
+
     2.5.6. Endpoint Composition
     • A Bridged Node endpoint SHALL support one of the following composition patterns:
       ◦ Separate Endpoints: All application device types are supported on separate endpoints, and
@@ -226,6 +255,12 @@ export const bridgedNode = DeviceTypeDefinition({
   optionalServerClusters: [PowerSource.Cluster.id, EcosystemInformation.Cluster.id, AdministratorCommissioning.Cluster.id],
 });
 
+/**
+  2.6.3. Device Type Requirements
+  Electrical measurements made by either the Electrical Power Measurement cluster, the Electrical
+  Energy Measurement cluster, or both SHALL apply to the endpoints indicated by the Power Topology
+  cluster.
+*/
 export const electricalSensor = DeviceTypeDefinition({
   name: 'MA-electricalSensor',
   code: 0x0510,
@@ -244,7 +279,7 @@ export const deviceEnergyManagement = DeviceTypeDefinition({
   optionalServerClusters: [],
 });
 
-// Lightning device types
+// Chapter 4. Lightning device types
 
 /**
  * Element Requirements:
@@ -331,7 +366,7 @@ export const extendedColorLight = DeviceTypeDefinition({
   optionalServerClusters: [],
 });
 
-// Smart plugs/Outlets and other Actuators device types
+// Chapter 5. Smart plugs/Outlets and other Actuators device types
 
 /**
  * Element Requirements:
@@ -453,7 +488,7 @@ export const waterValve = DeviceTypeDefinition({
   optionalServerClusters: [FlowMeasurement.Cluster.id],
 });
 
-// Switches and Controls device types
+// Chapter 6. Switches and Controls device types
 
 // Custom device types without client clusters (not working in Alexa)
 export const onOffSwitch = DeviceTypeDefinition({
@@ -494,7 +529,7 @@ export const genericSwitch = DeviceTypeDefinition({
   optionalServerClusters: [],
 });
 
-// Sensor device types
+// Chapter 7. Sensor device types
 
 /**
  * Closed or contact: state true

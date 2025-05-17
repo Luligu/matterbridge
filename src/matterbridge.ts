@@ -128,6 +128,7 @@ export class Matterbridge extends EventEmitter {
     matterbridgeAdvertise: false,
     bridgeMode: '',
     restartMode: '',
+    virtualMode: 'outlet',
     readOnly: hasParameter('readonly') || hasParameter('shelly'),
     shellyBoard: hasParameter('shelly'),
     shellySysUpdate: false,
@@ -654,6 +655,15 @@ export class Matterbridge extends EventEmitter {
         await this.nodeContext.remove('matteripv6address');
       }
     }
+
+    // Initialize the virtual mode
+    if (hasParameter('novirtual')) {
+      this.matterbridgeInformation.virtualMode = 'disabled';
+      await this.nodeContext.set<string>('virtualmode', 'disabled');
+    } else {
+      this.matterbridgeInformation.virtualMode = (await this.nodeContext.get<string>('virtualmode', 'outlet')) as 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch';
+    }
+    this.log.debug(`Virtual mode ${this.matterbridgeInformation.virtualMode}.`);
 
     // Initialize PluginManager
     this.plugins = new PluginManager(this);
