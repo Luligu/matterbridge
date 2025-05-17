@@ -1100,3 +1100,12 @@ export const waterHeater = DeviceTypeDefinition({
   requiredServerClusters: [Thermostat.Cluster.id, WaterHeaterManagement.Cluster.id, WaterHeaterMode.Cluster.id],
   optionalServerClusters: [Identify.Cluster.id],
 });
+
+export const solarPower = DeviceTypeDefinition({
+  name: 'MA-solarpower',
+  code: 0x17,
+  deviceClass: DeviceClasses.Composed,
+  revision: 1,
+  requiredServerClusters: [ElectricalEnergyMeasurement.Cluster.id, ElectricalPowerMeasurement.Cluster.id, PowerSource.Cluster.id],
+  optionalServerClusters: [Identify.Cluster.id],
+});
