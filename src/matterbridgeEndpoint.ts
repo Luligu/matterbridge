@@ -44,6 +44,8 @@ import {
   MatterbridgeBooleanStateConfigurationServer,
   MatterbridgeSwitchServer,
   MatterbridgeOperationalStateServer,
+  MatterbridgeWaterHeaterManagementBehavior,
+  MatterbridgeWaterHeaterModeBehavior,
 } from './matterbridgeBehaviors.js';
 import {
   addClusterServers,
@@ -105,7 +107,9 @@ import { AirQuality } from '@matter/main/clusters/air-quality';
 import { ConcentrationMeasurement } from '@matter/main/clusters/concentration-measurement';
 import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
 import { ThermostatUserInterfaceConfiguration } from '@matter/main/clusters/thermostat-user-interface-configuration';
-import { OperationalState } from '@matter/main/clusters/operational-state';
+import { WaterHeaterManagement } from '@matter/main/clusters/operational-state';
+import { WaterHeaterMode } from '@matter/main/clusters/operational-state';
+
 
 // @matter behaviors
 import { DescriptorServer } from '@matter/main/behaviors/descriptor';
@@ -141,6 +145,8 @@ import { ResourceMonitoring } from '@matter/main/clusters/resource-monitoring';
 import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/main/behaviors/thermostat-user-interface-configuration';
+import { WaterHeaterManagementBehavior } from '@matter/main/behaviors/water-heater-management;
+import { WaterHeaterModeBehavior } from '@matter/main/behaviors/water-heater-mode;
 
 export interface MatterbridgeEndpointCommands {
   // Identify
