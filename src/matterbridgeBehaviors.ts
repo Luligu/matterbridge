@@ -45,6 +45,9 @@ import { ModeBase } from '@matter/main/clusters/mode-base';
 import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
 import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
 import { ServiceArea } from '@matter/main/clusters/service-area';
+import { WaterHeaterManagement } from '@matter/main/clusters/water-heater-management';
+import { WaterHeaterMode } from '@matter/main/clusters/water-heater-mode';
+
 
 // @matter behaviors
 import { IdentifyServer } from '@matter/main/behaviors/identify';
@@ -64,6 +67,8 @@ import { RvcRunModeServer } from '@matter/main/behaviors/rvc-run-mode';
 import { RvcCleanModeServer } from '@matter/main/behaviors/rvc-clean-mode';
 import { RvcOperationalStateServer } from '@matter/main/behaviors/rvc-operational-state';
 import { ServiceAreaServer } from '@matter/main/behaviors/service-area';
+import { WaterHeaterManagementBehavior } from '@matter/main/behaviors/water-heater-management;
+import { WaterHeaterModeBehavior } from '@matter/main/behaviors/water-heater-mode;
 
 // AnsiLogger module
 import { AnsiLogger } from './logger/export.js';
