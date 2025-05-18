@@ -463,9 +463,28 @@ export class Matterbridge extends EventEmitter {
     try {
       await fs.access(pairingFilePath, fs.constants.R_OK);
       const pairingFileContent = await fs.readFile(pairingFilePath, 'utf8');
-      const pairingFileJson = JSON.parse(pairingFileContent) as { passcode?: number; discriminator?: number; remoteUrl?: string; privateKey?: string; certificate?: string; intermediateCertificate?: string; declaration?: string };
+      const pairingFileJson = JSON.parse(pairingFileContent) as {
+        vendorId?: number;
+        vendorName?: string;
+        productId?: number;
+        productName?: string;
+        passcode?: number;
+        discriminator?: number;
+        remoteUrl?: string;
+        privateKey?: string;
+        certificate?: string;
+        intermediateCertificate?: string;
+        declaration?: string;
+      };
+
+      // Set the vendorId, vendorName, productId and productName if they are present in the pairing file
+      if (isValidNumber(pairingFileJson.vendorId)) this.aggregatorVendorId = VendorId(pairingFileJson.vendorId);
+      if (isValidString(pairingFileJson.vendorName, 3)) this.aggregatorVendorName = pairingFileJson.vendorName;
+      if (isValidNumber(pairingFileJson.productId)) this.aggregatorProductId = VendorId(pairingFileJson.productId);
+      if (isValidString(pairingFileJson.productName, 3)) this.aggregatorProductName = pairingFileJson.productName;
+
       // Override the passcode and discriminator if they are present in the pairing file
-      if (pairingFileJson.passcode && pairingFileJson.discriminator) {
+      if (isValidNumber(pairingFileJson.passcode) && isValidNumber(pairingFileJson.discriminator)) {
         this.passcode = pairingFileJson.passcode;
         this.discriminator = pairingFileJson.discriminator;
         this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using passcode ${CYAN}${this.passcode}${nf} and discriminator ${CYAN}${this.discriminator}${nf} from pairing file.`);
@@ -1423,10 +1442,10 @@ export class Matterbridge extends EventEmitter {
       }
 
       // Stop matter storage
-      await withTimeout(this.stopMatterStorage(), 10000, false);
+      await this.stopMatterStorage();
 
       // Stop the frontend
-      await withTimeout(this.frontend.stop(), 10000, false);
+      await this.frontend.stop();
 
       // Remove the matterfilelogger
       try {

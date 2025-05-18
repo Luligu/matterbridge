@@ -1186,7 +1186,7 @@ export const batteryStorage = DeviceTypeDefinition({
   code: 0x0018,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [],
+  requiredServerClusters: [], // See 14.4.5.1. Cluster Requirements on Composing Device Types
   optionalServerClusters: [Identify.Cluster.id],
 });
 

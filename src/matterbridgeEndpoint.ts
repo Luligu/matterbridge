@@ -229,6 +229,10 @@ export interface MatterbridgeEndpointCommands {
 
   // Rvc Service Area
   selectAreas: HandlerFunction;
+
+  // Water Heater Management
+  boost: HandlerFunction;
+  cancelBoost: HandlerFunction;
 }
 
 export interface SerializedMatterbridgeEndpoint {
