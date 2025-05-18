@@ -23,9 +23,13 @@ export class WaterHeater extends MatterbridgeEndpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultWaterHeaterManagementClusterServer(
+    heaterTypes?: typeof WaterHeaterManagement.WaterHeaterHeatSource,
+    heatDemand?: typeof WaterHeaterManagement.WaterHeaterHeatSource,
     boostState?: WaterHeaterManagement.BoostState,
   ): this {
     this.behaviors.require(MatterbridgeWaterHeaterManagementServer, {
+      heaterTypes: { immersionElement1: true },
+      heatDemand: { heatPump: false },
       boostState: WaterHeaterManagement.BoostState.Inactive,
     });
     return this;
