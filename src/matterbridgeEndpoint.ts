@@ -2352,22 +2352,4 @@ export class MatterbridgeEndpoint extends Endpoint {
     });
     return this;
   }
-
-  /**
-   * Creates a default WaterHeaterManagement Cluster Server.
-   *
-   * @param {typeof WaterHeaterManagement.WaterHeaterHeatSource} [heaterTypes] - Indicates the heat sources that the water heater can call on for heating.
-   * @param {typeof WaterHeaterManagement.WaterHeaterHeatSource} [heatDemand] - Indicates if the water heater is heating water.
-   * @param {WaterHeaterManagement.BoostState} [boostState] - The current boost state of the WaterHeaterManagement cluster. Defaults to Inactive.
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createDefaultWaterHeaterManagementClusterServer() {
-    this.behaviors.require(MatterbridgeWaterHeaterManagementServer.with(WaterHeaterManagement.Feature.TankPercent), {
-      heaterTypes: { immersionElement1: true },
-      heatDemand: { heatPump: false },
-      tankPercentage: 100,
-      boostState: WaterHeaterManagement.BoostState.Inactive,
-    });
-    return this;
-  }
 }
