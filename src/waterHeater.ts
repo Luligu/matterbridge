@@ -19,6 +19,8 @@ export class WaterHeater extends MatterbridgeEndpoint {
   /**
    * Creates a default WaterHeaterManagement Cluster Server.
    *
+   * @param {typeof WaterHeaterManagement.WaterHeaterHeatSource} [heaterTypes] - Indicates the heat sources that the water heater can call on for heating.
+   * @param {typeof WaterHeaterManagement.WaterHeaterHeatSource} [heatDemand] - Indicates if the water heater is heating water.
    * @param {WaterHeaterManagement.BoostState} [boostState] - The current boost state of the WaterHeaterManagement cluster. Defaults to Inactive.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
