@@ -92,6 +92,7 @@ import { LevelControl } from '@matter/main/clusters/level-control';
 import { ColorControl } from '@matter/main/clusters/color-control';
 import { WindowCovering } from '@matter/main/clusters/window-covering';
 import { Thermostat } from '@matter/main/clusters/thermostat';
+import { ThermostatUserInterfaceConfiguration } from '@matter/main/clusters/thermostat-user-interface-configuration';
 import { FanControl } from '@matter/main/clusters/fan-control';
 import { DoorLock } from '@matter/main/clusters/door-lock';
 import { ModeSelect } from '@matter/main/clusters/mode-select';
@@ -107,7 +108,6 @@ import { AirQuality } from '@matter/main/clusters/air-quality';
 import { ConcentrationMeasurement } from '@matter/main/clusters/concentration-measurement';
 import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
 import { OperationalState } from '@matter/main/clusters/operational-state';
-import { ThermostatUserInterfaceConfiguration } from '@matter/main/clusters/thermostat-user-interface-configuration';
 import { WaterHeaterManagement } from '@matter/main/clusters/water-heater-management';
 import { WaterHeaterMode } from '@matter/main/clusters/water-heater-mode';
 
