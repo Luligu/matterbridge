@@ -59,9 +59,9 @@ export class WaterHeater extends MatterbridgeEndpoint {
         { label: 'Day', mode: 9, modeTags: [{ value: WaterHeaterMode.ModeTag.Day }] },
         { label: 'Off', mode: 0x4000, modeTags: [{ value: WaterHeaterMode.ModeTag.Off }] },
         { label: 'Manual', mode: 0x4001, modeTags: [{ value: WaterHeaterMode.ModeTag.Manual }] },
-        { label: 'Timed', mode: 0x4002, modeTags: [{ value: WaterHeaterMode.ModeTag.Manual }] },
+        { label: 'Timed', mode: 0x4002, modeTags: [{ value: WaterHeaterMode.ModeTag.Timed }] },
       ],
-      currentMode: currentMode ?? 0,
+      currentMode: currentMode ?? 1,
     });
     return this;
   }
