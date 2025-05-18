@@ -20,6 +20,8 @@ import {
   ScenesManagementCluster,
   ServiceArea,
   Thermostat,
+  WaterHeaterManagement,
+  WaterHeaterMode,
 } from '@matter/main/clusters';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { logEndpoint, MdnsService } from '@matter/main/protocol';
@@ -53,6 +55,8 @@ import {
   ThermostatServer,
   ValveConfigurationAndControlServer,
   WindowCoveringServer,
+  WaterHeaterManagementServer,
+  WaterHeaterModeServer,
 } from '@matter/node/behaviors';
 import { AnsiLogger, er, hk, LogLevel, or, TimestampFormat } from 'node-ansi-logger';
 
@@ -75,6 +79,8 @@ import {
   MatterbridgeThermostatServer,
   MatterbridgeValveConfigurationAndControlServer,
   MatterbridgeWindowCoveringServer,
+  MatterbridgeWaterHeaterManagementServer,
+  MatterbridgeWaterHeaterModeServer,
 } from './matterbridgeBehaviors.js';
 import { Matterbridge } from './matterbridge.js';
 import {
@@ -92,7 +98,6 @@ import {
   laundryWasher,
   extendedColorLight,
   waterHeater as heater,
-  waterHeater,
 } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { getAttributeId, getBehavior, getClusterId, invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';

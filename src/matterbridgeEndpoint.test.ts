@@ -21,6 +21,8 @@ import {
   TemperatureMeasurement,
   Thermostat,
   UserLabel,
+  WaterHeaterManagement,
+  WaterHeaterMode,
 } from '@matter/main/clusters';
 import {
   BooleanStateBehavior,
