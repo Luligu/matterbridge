@@ -1113,6 +1113,15 @@ export const evse = DeviceTypeDefinition({
  * having the Off mode tag value and vice versa.
  * At least one entry in the SupportedModes attribute of the Water Heater Mode cluster SHALL
  * include the Timed mode tag in the ModeTags field list.
+ *
+ * WaterHeaterMode Cluster
+ * 9.6.6.1. SupportedModes Attribute
+ * At least one entry in the SupportedModes attribute SHALL include the Manual mode tag in the
+ * ModeTags field list.
+ * At least one entry in the SupportedModes attribute SHALL include the Off mode tag in the ModeTags
+ * field list.
+ * An entry in the SupportedModes attribute that includes one of an Off, Manual, or Timed tag SHALL
+ * NOT also include an additional instance of any one of these tag types.
  */
 export const waterHeater = DeviceTypeDefinition({
   name: 'MA-waterheater',
