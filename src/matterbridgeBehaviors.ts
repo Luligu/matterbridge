@@ -656,3 +656,18 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
     return { status: ServiceArea.SelectAreasStatus.Success, statusText: 'Succesfully selected new areas' };
   }
 }
+
+export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
+  override changeToMode({ newMode }: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const supported = this.state.supportedModes.find((mode) => mode.mode === newMode);
+    if (!supported) {
+      device.log.error(`MatterbridgeWaterHeaterModeServer changeToMode called with unsupported newMode: ${newMode}`);
+      return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
+    }
+    device.changeToMode({ newMode });
+    this.state.currentMode = newMode;
+    device.log.info(`MatterbridgeWaterHeaterModeServer changeToMode called with newMode ${newMode} => ${supported.label}`);
+    return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
+  }
+}
