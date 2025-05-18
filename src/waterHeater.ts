@@ -30,7 +30,7 @@ export class WaterHeater extends MatterbridgeEndpoint {
     heatDemand?: typeof WaterHeaterManagement.WaterHeaterHeatSource,
     boostState?: WaterHeaterManagement.BoostState,
   ): this {
-    this.behaviors.require(MatterbridgeWaterHeaterManagementServer, {
+    this.behaviors.require(MatterbridgeWaterHeaterManagementServer.with(WaterHeaterManagement.Feature.EnergyManagement, WaterHeaterManagement.Feature.TankPercent), {
       heaterTypes: { immersionElement1: true },
       heatDemand: { heatPump: false },
       boostState: WaterHeaterManagement.BoostState.Inactive,
