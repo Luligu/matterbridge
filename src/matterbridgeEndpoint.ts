@@ -2352,7 +2352,6 @@ export class MatterbridgeEndpoint extends Endpoint {
     });
     return this;
   }
-}
 
   /**
    * Creates a default WaterHeaterManagement Cluster Server.
