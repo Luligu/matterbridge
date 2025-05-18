@@ -353,6 +353,15 @@ The Eve app only shows the history when the plugins run like an AccessoryPlatfor
 
 A matterbridge plugin that allows connecting Loxone devices to Matter.
 
+### [Dyson robot](https://github.com/thoukydides/matterbridge-dyson-robot)
+
+A Matterbridge plugin that connects Dyson robot vacuums and air treatment devices
+to the Matter smart home ecosystem via their local MQTT APIs.
+
+### [Aeg robot](https://github.com/thoukydides/matterbridge-aeg-robot)
+
+AEG RX 9 / Electrolux Pure i9 robot vacuum plugin for Matterbridge.
+
 ## How to install and add a plugin with the frontend (best option)
 
 Just open the frontend on the link provided in the log, select a plugin and click install.
