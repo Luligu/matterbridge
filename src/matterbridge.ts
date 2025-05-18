@@ -358,6 +358,9 @@ export class Matterbridge extends EventEmitter {
     // Emit the initialize_started event
     this.emit('initialize_started');
 
+    // Create the matterbridge logger
+    this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
+
     // Set the restart mode
     if (hasParameter('service')) this.restartMode = 'service';
     if (hasParameter('docker')) this.restartMode = 'docker';
@@ -395,9 +398,6 @@ export class Matterbridge extends EventEmitter {
     this.environment.vars.set('path.root', path.join(this.matterbridgeDirectory, this.matterStorageName));
     this.environment.vars.set('runtime.signals', false);
     this.environment.vars.set('runtime.exitcode', false);
-
-    // Create the matterbridge logger
-    this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 
     // Register process handlers
     this.registerProcessHandlers();
@@ -2387,6 +2387,7 @@ const commissioningController = new CommissioningController({
   private async createAggregatorNode(storageContext: StorageContext): Promise<Endpoint<AggregatorEndpoint>> {
     this.log.notice(`Creating ${await storageContext.get<string>('storeId')} aggregator...`);
     const aggregatorNode = new Endpoint(AggregatorEndpoint, { id: `${await storageContext.get<string>('storeId')}` });
+    this.log.info(`Created ${await storageContext.get<string>('storeId')} aggregator`);
     return aggregatorNode;
   }
 
@@ -2769,10 +2770,10 @@ const commissioningController = new CommissioningController({
             await fs.mkdir(path, { recursive: true });
             this.log.info(`Created ${name}: ${path}`);
           } catch (err) {
-            this.log.error(`Error creating ${name}: ${err}`);
+            this.log.error(`Error creating dir ${name} path ${path}: ${err}`);
           }
         } else {
-          this.log.error(`Error accessing ${name}: ${err}`);
+          this.log.error(`Error accessing dir ${name} path ${path}: ${err}`);
         }
       }
     }

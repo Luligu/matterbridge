@@ -8,13 +8,12 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-
-## [3.0.3] - 2025-05-??
+## [3.0.3] - 2025-05-18
 
 ### Added
 
 - [virtual] Added virtual devices configuration mode in the Matterbridge Settings: 'Disabled', 'Light', 'Outlet', 'Switch', 'Mounted_switch'. Switch is not supported by Alexa. Mounted Switch is not supported by Apple.
-- [deviceTypes] Add waterHeater device type.
+- [deviceTypes] Added evse, waterHeater, solarPower, batteryStorage and heatPump device type.
 
 ### Changed
 
