@@ -61,3 +61,5 @@ export class WaterHeater extends MatterbridgeEndpoint {
     });
     return this;
   }
+}
+

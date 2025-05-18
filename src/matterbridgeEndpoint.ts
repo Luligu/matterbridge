@@ -145,8 +145,8 @@ import { ResourceMonitoring } from '@matter/main/clusters/resource-monitoring';
 import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/main/behaviors/thermostat-user-interface-configuration';
-import { WaterHeaterManagementBehavior } from '@matter/main/behaviors/water-heater-management;
-import { WaterHeaterModeBehavior } from '@matter/main/behaviors/water-heater-mode;
+import { WaterHeaterManagementBehavior } from '@matter/main/behaviors/water-heater-management';
+import { WaterHeaterModeBehavior } from '@matter/main/behaviors/water-heater-mode';
 
 export interface MatterbridgeEndpointCommands {
   // Identify
