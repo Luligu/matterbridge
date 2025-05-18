@@ -11,9 +11,26 @@ export class WaterHeater extends MatterbridgeEndpoint {
     super(waterHeater, { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Water Heater')
+      .createDefaultWaterHeaterManagementStateClusterServer()
       .createDefaultWaterHeaterModeClusterServer()
   }
 
+
+  /**
+   * Creates a default WaterHeaterManagement Cluster Server.
+   *
+   * @param {WaterHeaterManagement.BoostState} [boostState] - The current boost state of the WaterHeaterManagement cluster. Defaults to Inactive.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultWaterHeaterManagementStateClusterServer(
+    boostState?: WaterHeaterManagement.BoostStateEnum,
+  ): this {
+    this.behaviors.require(WaterHeaterManagementStateServer, {
+      boostState: BoostStateEnum,
+    });
+    return this;
+  }
+ 
 
   /**
    * Creates a default WaterHeaterMode Cluster Server.
