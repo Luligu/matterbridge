@@ -25,7 +25,7 @@ export class WaterHeater extends MatterbridgeEndpoint {
    * @param {WaterHeaterManagement.BoostState} [boostState] - The current boost state of the WaterHeaterManagement cluster. Defaults to Inactive.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  override createDefaultWaterHeaterManagementClusterServer(
+  createDefaultWaterHeaterManagementClusterServer(
     heaterTypes?: typeof WaterHeaterManagement.WaterHeaterHeatSource,
     heatDemand?: typeof WaterHeaterManagement.WaterHeaterHeatSource,
     boostState?: WaterHeaterManagement.BoostState,
