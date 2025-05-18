@@ -781,6 +781,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resume (endpoint ${laundry.id}.${laundry.number})`);
     });
 
+    // eslint-disable-next-line jest/expect-expect
     test('invoke MatterbridgeWaterHeaterManagementServer commands', async () => {
       // TODO: add tests for water heater management after PR 304 is finished
       await invokeBehaviorCommand(heater, 'waterHeaterManagement', 'boost', { boostInfo: { duration: 60 } });
