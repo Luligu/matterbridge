@@ -11,7 +11,7 @@ export class WaterHeater extends MatterbridgeEndpoint {
     super(waterHeater, { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Water Heater')
-      .createDefaultWaterHeaterManagementStateClusterServer()
+      .createDefaultWaterHeaterManagementClusterServer()
       .createDefaultWaterHeaterModeClusterServer()
   }
 
@@ -22,11 +22,11 @@ export class WaterHeater extends MatterbridgeEndpoint {
    * @param {WaterHeaterManagement.BoostState} [boostState] - The current boost state of the WaterHeaterManagement cluster. Defaults to Inactive.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultWaterHeaterManagementStateClusterServer(
-    boostState?: WaterHeaterManagement.BoostStateEnum,
+  createDefaultWaterHeaterManagementClusterServer(
+    boostState?: WaterHeaterManagement.BoostState,
   ): this {
-    this.behaviors.require(WaterHeaterManagementStateServer, {
-      boostState: BoostStateEnum,
+    this.behaviors.require(MatterbridgeWaterHeaterManagementServer, {
+      boostState: WaterHeaterManagement.BoostState.Inactive,
     });
     return this;
   }
@@ -41,7 +41,7 @@ export class WaterHeater extends MatterbridgeEndpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultWaterHeaterModeClusterServer(currentMode?: number, supportedModes?: WaterHeaterMode.ModeOption[]): this {
-    this.behaviors.require(MatterbridgeRvcRunModeServer, {
+    this.behaviors.require(MatterbridgeWaterHeaterModeServer, {
       supportedModes: supportedModes ?? [
         { label: 'Auto', mode: 0, modeTags: [{ value: WaterHeaterMode.ModeTag.Auto }] },
         { label: 'Quick', mode: 1, modeTags: [{ value: WaterHeaterMode.ModeTag.Quick }] },
