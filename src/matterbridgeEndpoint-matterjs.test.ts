@@ -77,7 +77,23 @@ import {
   MatterbridgeWindowCoveringServer,
 } from './matterbridgeBehaviors.js';
 import { Matterbridge } from './matterbridge.js';
-import { lightSensor, occupancySensor, onOffOutlet, coverDevice, doorLockDevice, fanDevice, thermostatDevice, waterValve, modeSelect, smokeCoAlarm, waterLeakDetector, laundryWasher, extendedColorLight } from './matterbridgeDeviceTypes.js';
+import {
+  lightSensor,
+  occupancySensor,
+  onOffOutlet,
+  coverDevice,
+  doorLockDevice,
+  fanDevice,
+  thermostatDevice,
+  waterValve,
+  modeSelect,
+  smokeCoAlarm,
+  waterLeakDetector,
+  laundryWasher,
+  extendedColorLight,
+  waterHeater as heater,
+  waterHeater,
+} from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { getAttributeId, getBehavior, getClusterId, invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
 import { RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
@@ -99,6 +115,7 @@ describe('MatterbridgeEndpoint class', () => {
   let leak: MatterbridgeEndpoint;
   let laundry: MatterbridgeEndpoint;
   let rvc: RoboticVacuumCleaner;
+  let heater: MatterbridgeEndpoint;
 
   let matterbridgeServerDevice: MatterbridgeServerDevice;
 
@@ -269,6 +286,15 @@ describe('MatterbridgeEndpoint class', () => {
       expect(laundry.id).toBe('Laundry');
     });
 
+    test('create a waterHeater device', async () => {
+      heater = new MatterbridgeEndpoint(waterHeater, { uniqueStorageKey: 'WaterHeater' });
+      heater.createDefaultIdentifyClusterServer();
+      heater.createDefaultHeatingThermostatClusterServer();
+      // heater.addRequiredClusterServers(); // Wait for the PR 304 to finish with the cluster helpers
+      expect(heater).toBeDefined();
+      expect(heater.id).toBe('WaterHeater');
+    });
+
     test('add BasicInformationCluster to onOffLight', async () => {
       expect(light).toBeDefined();
       light.createDefaultBasicInformationClusterServer('Light', '123456789', 0xfff1, 'Matterbridge', 0x8000, 'Light');
@@ -379,6 +405,11 @@ describe('MatterbridgeEndpoint class', () => {
 
     test('add laundry device to serverNode', async () => {
       expect(await server.add(laundry)).toBeDefined();
+    });
+
+    test('add heater device to serverNode', async () => {
+      expect(await server.add(heater)).toBeDefined();
+      expect(heater.lifecycle.isReady).toBe(true);
     });
 
     test('getClusterId and getAttributeId of onOffLight device behaviors', async () => {
@@ -748,6 +779,14 @@ describe('MatterbridgeEndpoint class', () => {
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stop (endpoint ${laundry.id}.${laundry.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Pause (endpoint ${laundry.id}.${laundry.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resume (endpoint ${laundry.id}.${laundry.number})`);
+    });
+
+    test('invoke MatterbridgeWaterHeaterManagementServer commands', async () => {
+      // TODO: add tests for water heater management after PR 304 is finished
+      await invokeBehaviorCommand(heater, 'waterHeaterManagement', 'boost', { boostInfo: { duration: 60 } });
+      // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Boost (endpoint ${heater.id}.${heater.number})`);
+      await invokeBehaviorCommand(heater, 'waterHeaterManagement', 'cancelBoost', {});
+      // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Cancel boost (endpoint ${heater.id}.${heater.number})`);
     });
 
     test('rvc forEachAttribute', async () => {

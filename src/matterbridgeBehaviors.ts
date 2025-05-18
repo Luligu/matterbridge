@@ -45,6 +45,7 @@ import { ModeBase } from '@matter/main/clusters/mode-base';
 import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
 import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
 import { ServiceArea } from '@matter/main/clusters/service-area';
+import { WaterHeaterManagement } from '@matter/main/clusters/water-heater-management';
 
 // @matter behaviors
 import { IdentifyServer } from '@matter/main/behaviors/identify';
@@ -64,6 +65,8 @@ import { RvcRunModeServer } from '@matter/main/behaviors/rvc-run-mode';
 import { RvcCleanModeServer } from '@matter/main/behaviors/rvc-clean-mode';
 import { RvcOperationalStateServer } from '@matter/main/behaviors/rvc-operational-state';
 import { ServiceAreaServer } from '@matter/main/behaviors/service-area';
+import { WaterHeaterModeServer } from '@matter/main/behaviors/water-heater-mode';
+import { WaterHeaterManagementServer } from '@matter/main/behaviors/water-heater-management';
 
 // AnsiLogger module
 import { AnsiLogger } from './logger/export.js';
@@ -236,6 +239,16 @@ export class MatterbridgeServerDevice {
   selectAreas({ newAreas }: ServiceArea.SelectAreasRequest) {
     this.log.info(`Selecting areas ${newAreas} (endpoint ${this.endpointId}.${this.endpointNumber})`);
     this.commandHandler.executeHandler('selectAreas', { request: { newAreas }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  boost({ boostInfo }: WaterHeaterManagement.BoostRequest) {
+    this.log.info(`Boost (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.commandHandler.executeHandler('boost', { request: { boostInfo }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  cancelBoost() {
+    this.log.info(`Cancel boost (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.commandHandler.executeHandler('cancelBoost', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
 }
 
@@ -552,7 +565,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
   }
 }
 
-/** ********************************************* RVC  **********************************************************/
+/** ********************************************* roboticVacuumCleaner  **********************************************************/
 
 export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
   override changeToMode({ newMode }: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
@@ -649,5 +662,40 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
     device.log.info(`MatterbridgeServiceAreaServer selectAreas called with: ${newAreas.map((area) => area.toString()).join(', ')}`);
     device.selectAreas({ newAreas });
     return { status: ServiceArea.SelectAreasStatus.Success, statusText: 'Succesfully selected new areas' };
+  }
+}
+
+/** ********************************************* waterHeater  **********************************************************/
+
+export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManagementServer {
+  override boost({ boostInfo }: WaterHeaterManagement.BoostRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.boost({ boostInfo });
+    device.log.debug(`MatterbridgeWaterHeaterManagementServer boost called with: ${JSON.stringify(boostInfo)}`);
+    // super.boost({ boostInfo });
+    // boost is not implemented in matter.js
+  }
+
+  override cancelBoost(): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.cancelBoost();
+    device.log.debug(`MatterbridgeWaterHeaterManagementServer cancelBoost called`);
+    // super.cancelBoost();
+    // cancelBoost is not implemented in matter.js
+  }
+}
+
+export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
+  override changeToMode({ newMode }: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const supported = this.state.supportedModes.find((mode) => mode.mode === newMode);
+    if (!supported) {
+      device.log.error(`MatterbridgeWaterHeaterModeServer changeToMode called with unsupported newMode: ${newMode}`);
+      return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
+    }
+    device.changeToMode({ newMode });
+    this.state.currentMode = newMode;
+    device.log.info(`MatterbridgeWaterHeaterModeServer changeToMode called with newMode ${newMode} => ${supported.label}`);
+    return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }
