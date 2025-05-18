@@ -104,6 +104,7 @@ import { ElectricalEnergyMeasurement } from '@matter/main/clusters/electrical-en
 import { AirQuality } from '@matter/main/clusters/air-quality';
 import { ConcentrationMeasurement } from '@matter/main/clusters/concentration-measurement';
 import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
+import { OperationalState } from '@matter/main/clusters/operational-state';
 import { ThermostatUserInterfaceConfiguration } from '@matter/main/clusters/thermostat-user-interface-configuration';
 import { OperationalState } from '@matter/main/clusters/operational-state';
 
