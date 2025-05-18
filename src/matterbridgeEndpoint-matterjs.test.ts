@@ -295,7 +295,7 @@ describe('MatterbridgeEndpoint class', () => {
       heater = new MatterbridgeEndpoint(waterHeater, { uniqueStorageKey: 'WaterHeater' });
       heater.createDefaultIdentifyClusterServer();
       heater.createDefaultHeatingThermostatClusterServer();
-      // heater.addRequiredClusterServers(); // Wait for the PR 304 to finish with the cluster helpers
+      heater.addRequiredClusterServers();
       expect(heater).toBeDefined();
       expect(heater.id).toBe('WaterHeater');
     });
