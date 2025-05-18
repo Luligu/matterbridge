@@ -30,6 +30,23 @@ import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, 
 import { PowerSource, RvcRunMode, RvcCleanMode, RvcOperationalState, ServiceArea } from '@matter/main/clusters';
 
 export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
+  /**
+   * Creates an instance of the RoboticVacuumCleaner class.
+   *
+   * @param {string} name - The name of the robotic vacuum cleaner.
+   * @param {string} serial - The serial number of the robotic vacuum cleaner.
+   * @param {number} [currentRunMode] - The current run mode of the robotic vacuum cleaner. Defaults to 1 (Idle).
+   * @param {RvcRunMode.ModeOption[]} [supportedRunModes] - The supported run modes for the robotic vacuum cleaner. Defaults to a predefined set of modes.
+   * @param {number} [currentCleanMode] - The current clean mode of the robotic vacuum cleaner. Defaults to 1 (Vacuum).
+   * @param {RvcCleanMode.ModeOption[]} [supportedCleanModes] - The supported clean modes for the robotic vacuum cleaner. Defaults to a predefined set of modes.
+   * @param {number | null} [currentPhase] - The current phase of the robotic vacuum cleaner. Defaults to null.
+   * @param {string[] | null} [phaseList] - The list of phases for the robotic vacuum cleaner. Defaults to null.
+   * @param {RvcOperationalState.OperationalState} [operationalState] - The current operational state of the robotic vacuum cleaner. Defaults to Docked.
+   * @param {RvcOperationalState.OperationalStateStruct[]} [operationalStateList] - The list of operational states for the robotic vacuum cleaner. Defaults to a predefined set of states.
+   * @param {ServiceArea.Area[]} [supportedAreas] - The supported areas for the robotic vacuum cleaner. Defaults to a predefined set of areas.
+   * @param {number[]} [selectedAreas] - The selected areas for the robotic vacuum cleaner. Defaults to an empty array (all areas allowed).
+   * @param {number} [currentArea] - The current area of the robotic vacuum cleaner. Defaults to 1 (Living).
+   */
   constructor(
     name: string,
     serial: string,

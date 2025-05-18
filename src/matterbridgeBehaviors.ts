@@ -671,7 +671,9 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
   override boost({ boostInfo }: WaterHeaterManagement.BoostRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
     device.boost({ boostInfo });
-    device.log.debug(`MatterbridgeWaterHeaterManagementServer boost called with: ${JSON.stringify(boostInfo)}`);
+    device.log.info(`MatterbridgeWaterHeaterManagementServer boost called with: ${JSON.stringify(boostInfo)}`);
+    this.state.boostState = WaterHeaterManagement.BoostState.Active;
+    // The plugin is responsible for setting the device accordingly with the boostInfo of the boost command
     // super.boost({ boostInfo });
     // boost is not implemented in matter.js
   }
@@ -679,7 +681,9 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
   override cancelBoost(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
     device.cancelBoost();
-    device.log.debug(`MatterbridgeWaterHeaterManagementServer cancelBoost called`);
+    device.log.info(`MatterbridgeWaterHeaterManagementServer cancelBoost called`);
+    this.state.boostState = WaterHeaterManagement.BoostState.Inactive;
+    // The plugin is responsible for setting the device accordingly with the cancelBoost command
     // super.cancelBoost();
     // cancelBoost is not implemented in matter.js
   }

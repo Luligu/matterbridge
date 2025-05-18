@@ -1,4 +1,5 @@
 // src\matterbridgeEndpoint.test.ts
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
@@ -20,6 +21,8 @@ import {
   ScenesManagementCluster,
   ServiceArea,
   Thermostat,
+  WaterHeaterManagement,
+  WaterHeaterMode,
 } from '@matter/main/clusters';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { logEndpoint, MdnsService } from '@matter/main/protocol';
@@ -52,9 +55,11 @@ import {
   SmokeCoAlarmServer,
   ThermostatServer,
   ValveConfigurationAndControlServer,
+  WaterHeaterManagementServer,
+  WaterHeaterModeServer,
   WindowCoveringServer,
 } from '@matter/node/behaviors';
-import { AnsiLogger, er, hk, LogLevel, or, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, er, hk, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import {
   MatterbridgeBooleanStateConfigurationServer,
@@ -91,13 +96,12 @@ import {
   waterLeakDetector,
   laundryWasher,
   extendedColorLight,
-  waterHeater as heater,
   waterHeater,
 } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { getAttributeId, getBehavior, getClusterId, invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
+import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
 import { RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
-import { ClusterType } from '@matter/main/types';
+import { WaterHeater } from './waterHeater.js';
 
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
@@ -407,11 +411,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(await server.add(laundry)).toBeDefined();
     });
 
-    test('add heater device to serverNode', async () => {
-      expect(await server.add(heater)).toBeDefined();
-      expect(heater.lifecycle.isReady).toBe(true);
-    });
-
     test('getClusterId and getAttributeId of onOffLight device behaviors', async () => {
       expect(light).toBeDefined();
       expect(getClusterId(light, 'onOff')).toBe(6);
@@ -563,6 +562,21 @@ describe('MatterbridgeEndpoint class', () => {
     test('add the Rvc device', async () => {
       expect(await server.add(rvc)).toBeDefined();
       expect(rvc.lifecycle.isReady).toBe(true);
+    });
+
+    test('create a Water Heater device', async () => {
+      heater = new WaterHeater('Water Heater', '0xABC123456789');
+      expect(heater).toBeDefined();
+      expect(heater.id).toBe('WaterHeater-0xABC123456789');
+      expect(heater.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
+      expect(heater.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
+      expect(heater.hasClusterServer(WaterHeaterManagement.Cluster.id)).toBeTruthy();
+      expect(heater.hasClusterServer(WaterHeaterMode.Cluster.id)).toBeTruthy();
+    });
+
+    test('add the Water Heater device', async () => {
+      expect(await server.add(heater)).toBeDefined();
+      expect(heater.lifecycle.isReady).toBe(true);
     });
 
     test('start server node', async () => {
@@ -781,15 +795,6 @@ describe('MatterbridgeEndpoint class', () => {
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resume (endpoint ${laundry.id}.${laundry.number})`);
     });
 
-    // eslint-disable-next-line jest/expect-expect
-    test('invoke MatterbridgeWaterHeaterManagementServer commands', async () => {
-      // TODO: add tests for water heater management after PR 304 is finished
-      await invokeBehaviorCommand(heater, 'waterHeaterManagement', 'boost', { boostInfo: { duration: 60 } });
-      // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Boost (endpoint ${heater.id}.${heater.number})`);
-      await invokeBehaviorCommand(heater, 'waterHeaterManagement', 'cancelBoost', {});
-      // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Cancel boost (endpoint ${heater.id}.${heater.number})`);
-    });
-
     test('rvc forEachAttribute', async () => {
       let count = 0;
       // consoleWarnSpy.mockRestore();
@@ -893,6 +898,26 @@ describe('MatterbridgeEndpoint class', () => {
       jest.clearAllMocks();
       await invokeBehaviorCommand(rvc, 'serviceArea', 'selectAreas', { newAreas: [0, 5] });
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeServiceAreaServer selectAreas called with unsupported area: 0`);
+    });
+
+    test('invoke MatterbridgeWaterHeaterManagementServer commands', async () => {
+      await invokeBehaviorCommand(heater, 'waterHeaterManagement', 'boost', { boostInfo: { duration: 60 } });
+      expect(heater.stateOf(WaterHeaterManagementServer).boostState).toBe(WaterHeaterManagement.BoostState.Active);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Boost (endpoint ${heater.id}.${heater.number})`);
+
+      await invokeBehaviorCommand(heater, 'waterHeaterManagement', 'cancelBoost', {});
+      expect(heater.stateOf(WaterHeaterManagementServer).boostState).toBe(WaterHeaterManagement.BoostState.Inactive);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Cancel boost (endpoint ${heater.id}.${heater.number})`);
+    });
+
+    test('invoke MatterbridgeWaterHeaterModeServer commands', async () => {
+      await invokeBehaviorCommand(heater, 'waterHeaterMode', 'changeToMode', { newMode: 1 });
+      expect(heater.stateOf(WaterHeaterModeServer).currentMode).toBe(1);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${heater.id}.${heater.number})`);
+
+      await invokeBehaviorCommand(heater, 'waterHeaterMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+      expect(heater.stateOf(WaterHeaterModeServer).currentMode).toBe(1);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeWaterHeaterModeServer changeToMode called with unsupported newMode: 0`);
     });
 
     test('close server node', async () => {

@@ -355,7 +355,7 @@ A matterbridge plugin that allows connecting Loxone devices to Matter.
 
 ### [Dyson robot](https://github.com/thoukydides/matterbridge-dyson-robot)
 
-A Matterbridge plugin that connects Dyson robot vacuums and air treatment devices
+A Matterbridge plugin that connects Dyson robot vacuums and air treatment devices.
 to the Matter smart home ecosystem via their local MQTT APIs.
 
 ### [Aeg robot](https://github.com/thoukydides/matterbridge-aeg-robot)
