@@ -10,6 +10,7 @@ import { RootEndpoint } from '@matter/main/endpoints';
 import { MdnsService } from '@matter/main/protocol';
 import { AnsiLogger, er, hk, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { rmSync } from 'node:fs';
+import path from 'node:path';
 
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -25,7 +26,7 @@ let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
 let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
 let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
 let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false;
+const debug = false; // Set to true to enable debug logging
 
 if (!debug) {
   loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
@@ -44,7 +45,7 @@ if (!debug) {
 }
 
 describe('Matterbridge Robotic Vacuum Cleaner', () => {
-  const name = 'SingleDevice';
+  const name = 'Rvc';
 
   const log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
@@ -72,11 +73,11 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
 
   beforeAll(async () => {
     // Cleanup the matter environment
-    rmSync('matterstorage/' + name, { recursive: true, force: true });
+    rmSync(path.join('test', name), { recursive: true, force: true });
     // Setup the matter environment
     environment.vars.set('log.level', MatterLogLevel.DEBUG);
     environment.vars.set('log.format', MatterLogFormat.ANSI);
-    environment.vars.set('path.root', 'matterstorage/' + name);
+    environment.vars.set('path.root', path.join('test', name));
     environment.vars.set('runtime.signals', false);
     environment.vars.set('runtime.exitcode', false);
   }, 30000);
@@ -111,7 +112,6 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
         vendorName: 'Matterbridge',
         productId: 0x8001,
         productName: 'Matterbridge ' + name,
-        // productLabel: name + 'ServerNode',
         nodeLabel: name + 'ServerNode',
         hardwareVersion: 1,
         softwareVersion: 1,

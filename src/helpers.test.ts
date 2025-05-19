@@ -24,6 +24,7 @@ import { BridgedDeviceBasicInformationServer, OnOffServer } from '@matter/main/b
 import { logEndpoint, MdnsService } from '@matter/main/protocol';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { rmSync } from 'node:fs';
+import path from 'node:path';
 
 import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
 import { addVirtualDevice, addVirtualDevices } from './helpers.js';
@@ -82,11 +83,11 @@ describe('Matterbridge Helpers', () => {
 
   beforeAll(async () => {
     // Cleanup the matter environment
-    rmSync('matterstorage/Helpers', { recursive: true, force: true });
+    rmSync(path.join('test', 'Helpers'), { recursive: true, force: true });
     // Setup the matter environment
     environment.vars.set('log.level', MatterLogLevel.DEBUG);
     environment.vars.set('log.format', MatterLogFormat.ANSI);
-    environment.vars.set('path.root', 'matterstorage/Helpers');
+    environment.vars.set('path.root', path.join('test', 'Helpers'));
     environment.vars.set('runtime.signals', false);
     environment.vars.set('runtime.exitcode', false);
   }, 30000);

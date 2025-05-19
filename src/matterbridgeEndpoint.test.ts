@@ -130,14 +130,6 @@ describe('MatterbridgeEndpoint', () => {
     // Create a MatterbridgeEdge instance
     process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-homedir', path.join('test', 'Endpoint'), '-bridge', '-logger', 'info', '-matterlogger', 'info'];
     matterbridge = await Matterbridge.loadInstance(true);
-    /*
-    await matterbridge.matterStorageManager?.createContext('events')?.clearAll();
-    await matterbridge.matterStorageManager?.createContext('fabrics')?.clearAll();
-    await matterbridge.matterStorageManager?.createContext('root')?.clearAll();
-    await matterbridge.matterStorageManager?.createContext('sessions')?.clearAll();
-    await matterbridge.matterbridgeContext?.clearAll();
-    */
-
     await waitForOnline();
   }, 30000);
 
@@ -151,9 +143,6 @@ describe('MatterbridgeEndpoint', () => {
   });
 
   afterAll(async () => {
-    // Close the Matterbridge instance
-    await matterbridge.destroyInstance();
-
     // Restore all mocks
     jest.restoreAllMocks();
   }, 30000);
@@ -1020,8 +1009,10 @@ describe('MatterbridgeEndpoint', () => {
       ]);
     });
 
-    // eslint-disable-next-line jest/expect-expect
-    test('pause before cleanup', async () => {
+    test('destroy instance', async () => {
+      expect(matterbridge).toBeDefined();
+      // Close the Matterbridge instance
+      await matterbridge.destroyInstance();
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Pause for 1 seconds to allow matter.js promises to settle
     }, 60000);
   });
