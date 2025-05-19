@@ -340,7 +340,7 @@ export class Matterbridge extends EventEmitter {
     }
     // Wait for the cleanup to finish
     await new Promise((resolve) => {
-      setTimeout(resolve, 1000);
+      setTimeout(resolve, 500);
     });
   }
 
