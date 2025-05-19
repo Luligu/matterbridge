@@ -375,6 +375,7 @@ export class Matterbridge extends EventEmitter {
     this.matterbridgeInformation.matterbridgeDirectory = this.matterbridgeDirectory;
     await this.createDirectory(this.matterbridgeDirectory, 'Matterbridge Directory');
     await this.createDirectory(path.join(this.matterbridgeDirectory, 'certs'), 'Matterbridge Frontend Certificate Directory');
+    await this.createDirectory(path.join(this.matterbridgeDirectory, 'uploads'), 'Matterbridge Frontend Uploads Directory');
 
     // Set the matterbridge plugin directory
     this.matterbridgePluginDirectory = path.join(this.homeDirectory, 'Matterbridge');

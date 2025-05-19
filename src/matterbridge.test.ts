@@ -176,11 +176,13 @@ describe('Matterbridge', () => {
       expect(createDirectorySpy).toHaveBeenCalledWith(path.join('test', 'MatterbridgeGlobal'), 'Matterbridge Home Directory');
       expect(createDirectorySpy).toHaveBeenCalledWith(path.join('test', 'MatterbridgeGlobal', '.matterbridge'), 'Matterbridge Directory');
       expect(createDirectorySpy).toHaveBeenCalledWith(path.join('test', 'MatterbridgeGlobal', '.matterbridge', 'certs'), 'Matterbridge Frontend Certificate Directory');
+      expect(createDirectorySpy).toHaveBeenCalledWith(path.join('test', 'MatterbridgeGlobal', '.matterbridge', 'uploads'), 'Matterbridge Frontend Uploads Directory');
       expect(createDirectorySpy).toHaveBeenCalledWith(path.join('test', 'MatterbridgeGlobal', 'Matterbridge'), 'Matterbridge Plugin Directory');
       expect(createDirectorySpy).toHaveBeenCalledWith(path.join('test', 'MatterbridgeGlobal', '.mattercert'), 'Matterbridge Matter Certificate Directory');
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Home Directory: ${path.join('test', 'MatterbridgeGlobal')}`));
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Directory: ${path.join('test', 'MatterbridgeGlobal', '.matterbridge')}`));
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Frontend Certificate Directory: ${path.join('test', 'MatterbridgeGlobal', '.matterbridge', 'certs')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Frontend Uploads Directory: ${path.join('test', 'MatterbridgeGlobal', '.matterbridge', 'uploads')}`));
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Plugin Directory: ${path.join('test', 'MatterbridgeGlobal', 'Matterbridge')}`));
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Matter Certificate Directory: ${path.join('test', 'MatterbridgeGlobal', '.mattercert')}`));
 
@@ -232,6 +234,7 @@ describe('Matterbridge', () => {
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Home Directory already exists at path: ${path.join('test', 'MatterbridgeGlobal')}`));
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Directory already exists at path: ${path.join('test', 'MatterbridgeGlobal', '.matterbridge')}`));
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Frontend Certificate Directory already exists at path: ${path.join('test', 'MatterbridgeGlobal', '.matterbridge', 'certs')}`));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Frontend Uploads Directory already exists at path: ${path.join('test', 'MatterbridgeGlobal', '.matterbridge', 'uploads')}`));
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Plugin Directory already exists at path: ${path.join('test', 'MatterbridgeGlobal', 'Matterbridge')}`));
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Matter Certificate Directory already exists at path: ${path.join('test', 'MatterbridgeGlobal', '.mattercert')}`));
 
