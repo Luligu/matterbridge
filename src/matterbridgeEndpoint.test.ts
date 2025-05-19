@@ -1044,7 +1044,7 @@ describe('MatterbridgeEndpoint class', () => {
 
     // eslint-disable-next-line jest/expect-expect
     test('pause before cleanup', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 10000)); // Pause for 1 seconds to allow matter.js promises to settle
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Pause for 1 seconds to allow matter.js promises to settle
     }, 60000);
   });
 });

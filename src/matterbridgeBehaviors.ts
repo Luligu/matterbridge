@@ -183,7 +183,7 @@ export class MatterbridgeServerDevice {
   }
 
   setpointRaiseLower({ mode, amount }: Thermostat.SetpointRaiseLowerRequest) {
-    this.log.info(`Setting setpoint to ${amount} in mode ${mode} (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.log.info(`Setting setpoint by ${amount} in mode ${mode} (endpoint ${this.endpointId}.${this.endpointNumber})`);
     this.commandHandler.executeHandler('setpointRaiseLower', { request: { mode, amount }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
 
@@ -447,13 +447,13 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
     if ((mode === Thermostat.SetpointRaiseLowerMode.Heat || mode === Thermostat.SetpointRaiseLowerMode.Both) && this.state.occupiedHeatingSetpoint !== undefined) {
       const setpoint = this.state.occupiedHeatingSetpoint / 100 + amount / 10;
       this.state.occupiedHeatingSetpoint = setpoint * 100;
-      device.log.debug('Set occupiedHeatingSetpoint to:', setpoint);
+      device.log.debug(`Set occupiedHeatingSetpoint to ${setpoint}`);
     }
 
     if ((mode === Thermostat.SetpointRaiseLowerMode.Cool || mode === Thermostat.SetpointRaiseLowerMode.Both) && this.state.occupiedCoolingSetpoint !== undefined) {
       const setpoint = this.state.occupiedCoolingSetpoint / 100 + amount / 10;
       this.state.occupiedCoolingSetpoint = setpoint * 100;
-      device.log.debug('Set occupiedCoolingSetpoint to:', setpoint);
+      device.log.debug(`Set occupiedCoolingSetpoint to ${setpoint}`);
     }
     // setpointRaiseLower is not implemented in matter.js
     // super.setpointRaiseLower();

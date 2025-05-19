@@ -43,7 +43,7 @@ if (!debug) {
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
 
-describe('Matterbridge Single Device', () => {
+describe('Matterbridge Robotic Vacuum Cleaner', () => {
   const name = 'SingleDevice';
 
   const log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
