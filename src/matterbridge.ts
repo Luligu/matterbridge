@@ -2781,19 +2781,17 @@ const commissioningController = new CommissioningController({
   async createDirectory(path: string, name: string): Promise<void> {
     try {
       await fs.access(path);
+      this.log.debug(`Directory ${name} already exists at path: ${path}`);
     } catch (err) {
-      if (err instanceof Error) {
-        const nodeErr = err as NodeJS.ErrnoException;
-        if (nodeErr.code === 'ENOENT') {
-          try {
-            await fs.mkdir(path, { recursive: true });
-            this.log.info(`Created ${name}: ${path}`);
-          } catch (err) {
-            this.log.error(`Error creating dir ${name} path ${path}: ${err}`);
-          }
-        } else {
-          this.log.error(`Error accessing dir ${name} path ${path}: ${err}`);
+      if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+        try {
+          await fs.mkdir(path, { recursive: true });
+          this.log.info(`Created ${name}: ${path}`);
+        } catch (err) {
+          this.log.error(`Error creating dir ${name} path ${path}: ${err}`);
         }
+      } else {
+        this.log.error(`Error accessing dir ${name} path ${path}: ${err}`);
       }
     }
   }

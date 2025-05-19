@@ -3,10 +3,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'info', '-matterlogger', 'info', '-bridge', '-frontend', '0', '-homedir', 'matterstorage/DeviceManager', '-profile', 'JestDeviceManager'];
+process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'info', '-matterlogger', 'info', '-bridge', '-frontend', '0', '-homedir', path.join('test', 'DeviceManager'), '-profile', 'JestDeviceManager'];
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, BLUE, db, er, LogLevel, nf, nt, pl, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+import { rmSync } from 'node:fs';
+import path from 'node:path';
 
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -14,7 +16,6 @@ import { DeviceManager } from './deviceManager.js';
 import { PluginManager } from './pluginManager.js';
 import { contactSensor, occupancySensor } from './matterbridgeDeviceTypes.js';
 import { dev } from './matterbridgeTypes.js';
-import { rmSync } from 'node:fs';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -41,7 +42,7 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync('matterstorage/DeviceManager', { recursive: true, force: true });
+rmSync(path.join('test', 'DeviceManager'), { recursive: true, force: true });
 
 describe('DeviceManager with mocked devices', () => {
   let matterbridge: Matterbridge;

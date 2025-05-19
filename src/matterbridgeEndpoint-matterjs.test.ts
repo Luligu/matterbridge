@@ -1,5 +1,6 @@
 // src\matterbridgeEndpoint.test.ts
 
+/* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
@@ -103,6 +104,30 @@ import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbri
 import { RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
 import { WaterHeater } from './waterHeater.js';
 
+let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
+let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
+let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
+let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
+let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
+let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
+const debug = false;
+
+if (!debug) {
+  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
+  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
+  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
+  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
+  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
+  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
+} else {
+  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
+  consoleLogSpy = jest.spyOn(console, 'log');
+  consoleDebugSpy = jest.spyOn(console, 'debug');
+  consoleInfoSpy = jest.spyOn(console, 'info');
+  consoleWarnSpy = jest.spyOn(console, 'warn');
+  consoleErrorSpy = jest.spyOn(console, 'error');
+}
+
 describe('MatterbridgeEndpoint class', () => {
   let matterbridge: Matterbridge;
   let context: StorageContext;
@@ -122,54 +147,6 @@ describe('MatterbridgeEndpoint class', () => {
   let heater: MatterbridgeEndpoint;
 
   let matterbridgeServerDevice: MatterbridgeServerDevice;
-
-  let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-  let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-  let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-  let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-  let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-  const debug = false;
-
-  if (!debug) {
-    // Spy on and mock AnsiLogger.log
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
-      //
-    });
-    // Spy on and mock console.log
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.debug
-    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.info
-    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.warn
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.error
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
-      //
-    });
-  } else {
-    // Spy on AnsiLogger.log
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-    // Spy on console.log
-    consoleLogSpy = jest.spyOn(console, 'log');
-    // Spy on console.debug
-    consoleDebugSpy = jest.spyOn(console, 'debug');
-    // Spy on console.info
-    consoleInfoSpy = jest.spyOn(console, 'info');
-    // Spy on console.warn
-    consoleWarnSpy = jest.spyOn(console, 'warn');
-    // Spy on console.error
-    consoleErrorSpy = jest.spyOn(console, 'error');
-  }
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
@@ -821,10 +798,10 @@ describe('MatterbridgeEndpoint class', () => {
       expect((rvc.stateOf(MatterbridgeRvcRunModeServer) as any).acceptedCommandList).toEqual([0]);
       expect((rvc.stateOf(MatterbridgeRvcRunModeServer) as any).generatedCommandList).toEqual([1]);
       jest.clearAllMocks();
-      await rvc.invokeBehaviorCommand('noCluster', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+      await rvc.invokeBehaviorCommand('noCluster', 'changeToMode', { newMode: 0 }); // noCluster is invalid
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`invokeBehaviorCommand error: command ${hk}changeToMode${er} not found on endpoint`));
       jest.clearAllMocks();
-      await rvc.invokeBehaviorCommand('rvcRunMode', 'noCommand' as any, { newMode: 0 }); // 0 is not a valid mode
+      await rvc.invokeBehaviorCommand('rvcRunMode', 'noCommand' as any, { newMode: 0 }); // noCommand is invalid
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`invokeBehaviorCommand error: command ${hk}noCommand${er} not found on agent for endpoint`));
       jest.clearAllMocks();
       await rvc.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
@@ -875,13 +852,16 @@ describe('MatterbridgeEndpoint class', () => {
       expect(rvc.behaviors.elementsOf(RvcOperationalStateServer).commands.has('goHome')).toBeTruthy();
       expect((rvc.stateOf(RvcOperationalStateServer) as any).acceptedCommandList).toEqual([0, 3, 128]);
       expect((rvc.stateOf(RvcOperationalStateServer) as any).generatedCommandList).toEqual([4]);
+      jest.clearAllMocks();
       await invokeBehaviorCommand(rvc, 'rvcOperationalState', 'pause');
-      await invokeBehaviorCommand(rvc, 'rvcOperationalState', 'resume');
-      await invokeBehaviorCommand(rvc, 'rvcOperationalState', 'goHome');
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Pause (endpoint ${rvc.id}.${rvc.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused and currentMode to Idle`);
+      jest.clearAllMocks();
+      await invokeBehaviorCommand(rvc, 'rvcOperationalState', 'resume');
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resume (endpoint ${rvc.id}.${rvc.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning`);
+      jest.clearAllMocks();
+      await invokeBehaviorCommand(rvc, 'rvcOperationalState', 'goHome');
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `GoHome (endpoint ${rvc.id}.${rvc.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcOperationalStateServer: goHome called setting operational state to Docked and currentMode to Idle`);
     });
@@ -892,6 +872,7 @@ describe('MatterbridgeEndpoint class', () => {
       expect(rvc.behaviors.elementsOf(ServiceAreaServer).commands.has('selectAreas')).toBeTruthy();
       expect((rvc.stateOf(ServiceAreaServer) as any).acceptedCommandList).toEqual([0]);
       expect((rvc.stateOf(ServiceAreaServer) as any).generatedCommandList).toEqual([1]);
+      jest.clearAllMocks();
       await invokeBehaviorCommand(rvc, 'serviceArea', 'selectAreas', { newAreas: [1, 2, 3, 4] });
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Selecting areas 1,2,3,4 (endpoint ${rvc.id}.${rvc.number})`);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeServiceAreaServer selectAreas called with: 1, 2, 3, 4`);
@@ -901,20 +882,24 @@ describe('MatterbridgeEndpoint class', () => {
     });
 
     test('invoke MatterbridgeWaterHeaterManagementServer commands', async () => {
+      jest.clearAllMocks();
       await invokeBehaviorCommand(heater, 'waterHeaterManagement', 'boost', { boostInfo: { duration: 60 } });
       expect(heater.stateOf(WaterHeaterManagementServer).boostState).toBe(WaterHeaterManagement.BoostState.Active);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Boost (endpoint ${heater.id}.${heater.number})`);
 
+      jest.clearAllMocks();
       await invokeBehaviorCommand(heater, 'waterHeaterManagement', 'cancelBoost', {});
       expect(heater.stateOf(WaterHeaterManagementServer).boostState).toBe(WaterHeaterManagement.BoostState.Inactive);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Cancel boost (endpoint ${heater.id}.${heater.number})`);
     });
 
     test('invoke MatterbridgeWaterHeaterModeServer commands', async () => {
+      jest.clearAllMocks();
       await invokeBehaviorCommand(heater, 'waterHeaterMode', 'changeToMode', { newMode: 1 });
       expect(heater.stateOf(WaterHeaterModeServer).currentMode).toBe(1);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${heater.id}.${heater.number})`);
 
+      jest.clearAllMocks();
       await invokeBehaviorCommand(heater, 'waterHeaterMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
       expect(heater.stateOf(WaterHeaterModeServer).currentMode).toBe(1);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeWaterHeaterModeServer changeToMode called with unsupported newMode: 0`);

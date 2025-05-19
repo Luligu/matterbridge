@@ -18,7 +18,7 @@ process.argv = [
   '-frontend',
   '8802',
   '-homedir',
-  'matterstorage/MatterbridgeChildBridge',
+  path.join('test', 'MatterbridgeChildBridge'),
   '-profile',
   'JestChildbridge',
   '-port',
@@ -38,11 +38,7 @@ import { Matterbridge } from './matterbridge.js';
 import { waiter } from './utils/export.js';
 import { PluginManager } from './pluginManager.js';
 import { rmSync } from 'node:fs';
-
-// Default colors
-const plg = '\u001B[38;5;33m';
-const dev = '\u001B[38;5;79m';
-const typ = '\u001B[38;5;207m';
+import { dev, plg } from './matterbridgeTypes.js';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   console.log('mockImplementation of process.exit() called');
@@ -74,7 +70,7 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync('matterstorage/MatterbridgeChildBridge', { recursive: true, force: true });
+rmSync(path.join('test', 'MatterbridgeChildBridge'), { recursive: true, force: true });
 
 describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   let matterbridge: Matterbridge;
@@ -342,14 +338,5 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock2 MdnsService`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock3 MdnsService`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock4 MdnsService`);
-  }, 60000);
-
-  test('Cleanup storage', async () => {
-    console.log('Cleanup storage started');
-    process.argv.push('-factoryreset');
-    (matterbridge as any).initialized = true;
-    await (matterbridge as any).parseCommandLine();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
-    console.log('Cleanup storage finished');
   }, 60000);
 });

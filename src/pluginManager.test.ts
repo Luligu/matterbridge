@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-homedir', 'matterstorage/PluginManager', '-profile', 'JestPluginManager'];
+process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-homedir', path.join('test', 'PluginManager'), '-profile', 'JestPluginManager'];
 
 import { jest } from '@jest/globals';
 
@@ -65,7 +65,7 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync('matterstorage/PluginManager', { recursive: true, force: true });
+rmSync(path.join('test', 'PluginManager'), { recursive: true, force: true });
 
 describe('PluginManager', () => {
   let matterbridge: Matterbridge;
