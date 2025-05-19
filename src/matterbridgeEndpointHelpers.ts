@@ -543,12 +543,18 @@ export async function updateAttribute(endpoint: MatterbridgeEndpoint, cluster: B
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to subscribe the attribute to.
  * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to subscribe the attribute to.
  * @param {string} attribute - The name of the attribute to subscribe to.
- * @param {(newValue: any, oldValue: any) => void} listener - A callback function that will be called when the attribute value changes.
+ * @param {(newValue: any, oldValue: any, context?: any) => void} listener - A callback function that will be called when the attribute value changes.
  * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
  * @returns {boolean} - A boolean indicating whether the subscription was successful.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function subscribeAttribute(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, listener: (newValue: any, oldValue: any) => void, log?: AnsiLogger): Promise<boolean> {
+export async function subscribeAttribute(
+  endpoint: MatterbridgeEndpoint,
+  cluster: Behavior.Type | ClusterType | ClusterId | string,
+  attribute: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  listener: (newValue: any, oldValue: any, context?: any) => void,
+  log?: AnsiLogger,
+): Promise<boolean> {
   const clusterName = getBehavior(endpoint, cluster)?.id;
   if (!clusterName) {
     endpoint.log.error(`subscribeAttribute ${hk}${attribute}${er} error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
