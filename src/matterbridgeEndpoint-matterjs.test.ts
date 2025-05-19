@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
-import { DeviceTypeId, VendorId, ServerNode, Endpoint, EndpointServer, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, ClusterId } from '@matter/main';
+import { DeviceTypeId, VendorId, ServerNode, Endpoint, EndpointServer, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel } from '@matter/main';
 import {
   ColorControl,
   Descriptor,
@@ -157,6 +157,7 @@ describe('MatterbridgeEndpointMatterJs', () => {
     // Create a MatterbridgeEdge instance
     matterbridge = await Matterbridge.loadInstance(false);
     matterbridge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+    matterbridge.matterbridgeDirectory = path.join('test', 'EndpointMatterJs');
     // Setup matter environment
     matterbridge.environment.vars.set('log.level', MatterLogLevel.INFO);
     matterbridge.environment.vars.set('log.format', MatterLogFormat.ANSI);
