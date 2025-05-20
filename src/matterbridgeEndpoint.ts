@@ -223,6 +223,10 @@ export interface MatterbridgeEndpointCommands {
 
   // Rvc Service Area
   selectAreas: HandlerFunction;
+
+  // Water Heater Management
+  boost: HandlerFunction;
+  cancelBoost: HandlerFunction;
 }
 
 export interface SerializedMatterbridgeEndpoint {
@@ -459,12 +463,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to subscribe the attribute to.
    * @param {string} attribute - The name of the attribute to subscribe to.
-   * @param {(newValue: any, oldValue: any) => void} listener - A callback function that will be called when the attribute value changes.
+   * @param {(newValue: any, oldValue: any, context?: any) => void} listener - A callback function that will be called when the attribute value changes.
    * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
    * @returns {Promise<boolean>} - A boolean indicating whether the subscription was successful.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async subscribeAttribute(cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, listener: (newValue: any, oldValue: any) => void, log?: AnsiLogger): Promise<boolean> {
+  async subscribeAttribute(cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, listener: (newValue: any, oldValue: any, context?: any) => void, log?: AnsiLogger): Promise<boolean> {
     return await subscribeAttribute(this, cluster, attribute, listener, log);
   }
 

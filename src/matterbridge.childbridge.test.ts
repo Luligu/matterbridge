@@ -1,10 +1,33 @@
 // src\matterbridge.childbridge.test.ts
+
+/* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable no-console */
 /* eslint-disable jest/no-conditional-expect */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-process.argv = ['node', 'matterbridge.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-childbridge', '-frontend', '8802', '-profile', 'JestChildbridge', '-port', '5555', '-passcode', '123456', '-discriminator', '3860'];
+process.argv = [
+  'node',
+  'matterbridge.test.js',
+  '-novirtual',
+  '-logger',
+  'debug',
+  '-matterlogger',
+  'debug',
+  '-childbridge',
+  '-frontend',
+  '8802',
+  '-homedir',
+  path.join('test', 'MatterbridgeChildBridge'),
+  '-profile',
+  'JestChildbridge',
+  '-port',
+  '5555',
+  '-passcode',
+  '123456',
+  '-discriminator',
+  '3860',
+];
 
 import { jest } from '@jest/globals';
 import path from 'node:path';
@@ -14,68 +37,44 @@ import { AnsiLogger, db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-
 import { Matterbridge } from './matterbridge.js';
 import { waiter } from './utils/export.js';
 import { PluginManager } from './pluginManager.js';
-
-// Default colors
-const plg = '\u001B[38;5;33m';
-const dev = '\u001B[38;5;79m';
-const typ = '\u001B[38;5;207m';
+import { rmSync } from 'node:fs';
+import { dev, plg } from './matterbridgeTypes.js';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   console.log('mockImplementation of process.exit() called');
   return undefined as never;
 });
 
+let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
+let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
+let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
+let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
+let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
+let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
+const debug = false;
+
+if (!debug) {
+  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
+  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
+  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
+  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
+  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
+  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
+} else {
+  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
+  consoleLogSpy = jest.spyOn(console, 'log');
+  consoleDebugSpy = jest.spyOn(console, 'debug');
+  consoleInfoSpy = jest.spyOn(console, 'info');
+  consoleWarnSpy = jest.spyOn(console, 'warn');
+  consoleErrorSpy = jest.spyOn(console, 'error');
+}
+
+// Cleanup the matter environment
+rmSync(path.join('test', 'MatterbridgeChildBridge'), { recursive: true, force: true });
+
 describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   let matterbridge: Matterbridge;
   let plugins: PluginManager;
-
-  let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
-  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-  let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-  let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-  let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-  let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-  const debug = false;
-
-  if (!debug) {
-    // Spy on and mock AnsiLogger.log
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
-      //
-    });
-    // Spy on and mock console.log
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.debug
-    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.info
-    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.warn
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
-      //
-    });
-    // Spy on and mock console.error
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
-      //
-    });
-  } else {
-    // Spy on AnsiLogger.log
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-    // Spy on console.log
-    consoleLogSpy = jest.spyOn(console, 'log');
-    // Spy on console.debug
-    consoleDebugSpy = jest.spyOn(console, 'debug');
-    // Spy on console.info
-    consoleInfoSpy = jest.spyOn(console, 'info');
-    // Spy on console.warn
-    consoleWarnSpy = jest.spyOn(console, 'warn');
-    // Spy on console.error
-    consoleErrorSpy = jest.spyOn(console, 'error');
-  }
 
   beforeAll(async () => {
     //
@@ -92,22 +91,6 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   });
 
   test('Matterbridge.loadInstance(true) -childbridge mode', async () => {
-    /*
-    // Reset matterstorage Jest
-    const environment = Environment.default;
-    environment.vars.set('path.root', path.join(os.homedir(), '.matterbridge', 'matterstorage.JestChildbridge'));
-    const matterStorageService = environment.get(StorageService);
-    expect(matterStorageService).toBeDefined();
-    const matterStorageManager = await matterStorageService.open('Matterbridge');
-    expect(matterStorageManager).toBeDefined();
-    await matterStorageManager?.createContext('persist').clearAll();
-    await matterStorageManager?.createContext('events').clearAll();
-    await matterStorageManager?.createContext('fabrics').clearAll();
-    await matterStorageManager?.createContext('root').clearAll();
-    await matterStorageManager?.createContext('sessions').clearAll();
-    await matterStorageManager?.close();
-    */
-
     // Load Matterbridge instance and initialize it
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeDefined();
@@ -163,7 +146,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       },
       false,
       60000,
-      1000,
+      100,
       true,
     );
 
@@ -272,7 +255,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       },
       false,
       10000,
-      1000,
+      100,
       true,
     );
 
@@ -288,7 +271,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       },
       false,
       10000,
-      1000,
+      100,
       true,
     );
 
@@ -355,14 +338,5 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock2 MdnsService`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock3 MdnsService`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closed matterbridge-mock4 MdnsService`);
-  }, 60000);
-
-  test('Cleanup storage', async () => {
-    console.log('Cleanup storage started');
-    process.argv.push('-factoryreset');
-    (matterbridge as any).initialized = true;
-    await (matterbridge as any).parseCommandLine();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
-    console.log('Cleanup storage finished');
   }, 60000);
 });

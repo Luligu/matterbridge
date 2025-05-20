@@ -91,6 +91,8 @@ import { RefrigeratorAlarm } from '@matter/main/clusters/refrigerator-alarm';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/main/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
 import { ServiceArea } from '@matter/main/clusters/service-area';
 import { TemperatureControl } from '@matter/main/clusters/temperature-control';
+import { OtaSoftwareUpdateRequestor } from '@matter/main/clusters/ota-software-update-requestor';
+import { EnergyEvse, EnergyEvseMode, OtaSoftwareUpdateProvider, WaterHeaterManagement, WaterHeaterMode } from '@matter/main/clusters';
 
 export enum DeviceClasses {
   /** Node device type. */
@@ -190,7 +192,7 @@ export interface EndpointOptions {
   uniqueStorageKey?: string;
 }
 
-// Utility device types
+// Chapter 2. Utility device types
 
 export const powerSource = DeviceTypeDefinition({
   name: 'MA-powerSource',
@@ -201,11 +203,38 @@ export const powerSource = DeviceTypeDefinition({
   optionalServerClusters: [],
 });
 
+export const OTARequestor = DeviceTypeDefinition({
+  name: 'MA-OTARequestor',
+  code: 0x0012,
+  deviceClass: DeviceClasses.Utility,
+  revision: 1,
+  requiredServerClusters: [OtaSoftwareUpdateRequestor.Cluster.id],
+  optionalServerClusters: [],
+  requiredClientClusters: [OtaSoftwareUpdateProvider.Cluster.id],
+  optionalClientClusters: [],
+});
+
+export const OTAProvider = DeviceTypeDefinition({
+  name: 'MA-OTAProvider',
+  code: 0x0014,
+  deviceClass: DeviceClasses.Utility,
+  revision: 1,
+  requiredServerClusters: [OtaSoftwareUpdateProvider.Cluster.id],
+  optionalServerClusters: [],
+  requiredClientClusters: [OtaSoftwareUpdateRequestor.Cluster.id],
+  optionalClientClusters: [],
+});
+
 /**
     2.5.3. Conditions
     Please see the Base Device Type definition for conformance tags.
     This device type SHALL only be used for Nodes which have a device type of Bridge.
   
+    2.5.5. Cluster Requirements
+    Each endpoint supporting this device type SHALL include these clusters based on the conformance
+    defined below.
+    -  0x0039 Bridged Device Basic Information Server
+
     2.5.6. Endpoint Composition
     • A Bridged Node endpoint SHALL support one of the following composition patterns:
       ◦ Separate Endpoints: All application device types are supported on separate endpoints, and
@@ -226,6 +255,12 @@ export const bridgedNode = DeviceTypeDefinition({
   optionalServerClusters: [PowerSource.Cluster.id, EcosystemInformation.Cluster.id, AdministratorCommissioning.Cluster.id],
 });
 
+/**
+  2.6.3. Device Type Requirements
+  Electrical measurements made by either the Electrical Power Measurement cluster, the Electrical
+  Energy Measurement cluster, or both SHALL apply to the endpoints indicated by the Power Topology
+  cluster.
+*/
 export const electricalSensor = DeviceTypeDefinition({
   name: 'MA-electricalSensor',
   code: 0x0510,
@@ -240,11 +275,11 @@ export const deviceEnergyManagement = DeviceTypeDefinition({
   code: 0x050d,
   deviceClass: DeviceClasses.Utility,
   revision: 2,
-  requiredServerClusters: [DeviceEnergyManagement.Cluster.id, DeviceEnergyManagementMode.Cluster.id],
-  optionalServerClusters: [],
+  requiredServerClusters: [DeviceEnergyManagement.Cluster.id],
+  optionalServerClusters: [DeviceEnergyManagementMode.Cluster.id],
 });
 
-// Lightning device types
+// Chapter 4. Lightning device types
 
 /**
  * Element Requirements:
@@ -331,7 +366,7 @@ export const extendedColorLight = DeviceTypeDefinition({
   optionalServerClusters: [],
 });
 
-// Smart plugs/Outlets and other Actuators device types
+// Chapter 5. Smart plugs/Outlets and other Actuators device types
 
 /**
  * Element Requirements:
@@ -453,7 +488,7 @@ export const waterValve = DeviceTypeDefinition({
   optionalServerClusters: [FlowMeasurement.Cluster.id],
 });
 
-// Switches and Controls device types
+// Chapter 6. Switches and Controls device types
 
 // Custom device types without client clusters (not working in Alexa)
 export const onOffSwitch = DeviceTypeDefinition({
@@ -494,7 +529,7 @@ export const genericSwitch = DeviceTypeDefinition({
   optionalServerClusters: [],
 });
 
-// Sensor device types
+// Chapter 7. Sensor device types
 
 /**
  * Closed or contact: state true
@@ -814,7 +849,7 @@ export const roboticVacuumCleaner = DeviceTypeDefinition({
   optionalServerClusters: [RvcCleanMode.Cluster.id, ServiceArea.Cluster.id],
 });
 
-// Appliances device types
+// Chapter 13. Appliances device types
 
 /**
  * Cluster Restrictions:
@@ -1029,4 +1064,168 @@ export const microwaveOven = DeviceTypeDefinition({
   revision: 1,
   requiredServerClusters: [OperationalState.Cluster.id, MicrowaveOvenMode.Cluster.id, MicrowaveOvenControl.Cluster.id],
   optionalServerClusters: [Identify.Cluster.id, FanControl.Cluster.id],
+});
+
+// Chapter 14. Energy Device Types
+
+/**
+ * An EVSE (Electric Vehicle Supply Equipment) is a device that allows an EV (Electric Vehicle) to be
+ * connected to the mains electricity supply to allow it to be charged (or discharged in case of Vehicle
+ * to Grid / Vehicle to Home applications).
+ *
+ * 14.1.5. Device Type Requirements
+ * An EVSE SHALL be composed of at least one endpoint with device types as defined by the conformance
+ * below. There MAY be more endpoints with other device types existing in the EVSE.
+ * ID     Name                        Constraint    Conformance
+ * 0x0011 Power Source                min 1         M
+ * 0x0510 Electrical Sensor           min 1         M
+ * 0x050D Device Energy Management    min 1         M
+ */
+export const evse = DeviceTypeDefinition({
+  name: 'MA-evse',
+  code: 0x050c,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [EnergyEvse.Cluster.id, EnergyEvseMode.Cluster.id],
+  optionalServerClusters: [Identify.Cluster.id, TemperatureMeasurement.Cluster.id],
+});
+
+/**
+ * A water heater is a device that is generally installed in properties to heat water for showers, baths etc.
+ * A Water Heater is always defined via endpoint composition.
+ *
+ * 14.2.5. Device Type Requirements
+ * A Water Heater SHALL be composed of at least one endpoint with device types as defined by the
+ * conformance below. There MAY be more endpoints with other device types existing in the Water Heater.
+ * ID     Name                        Constraint    Conformance
+ * 0x0011 Power Source                              O
+ * 0x0302 Temperature Sensor                        O
+ * 0x0510 Electrical Sensor                         desc
+ * 0x050D Device Energy Management                  O
+ *
+ * 14.2.7. Element Requirements
+ * 0x0201 Thermostat Feature Heating M
+ *
+ * The Energy Management feature of the Water Heater cluster SHALL be supported if the Device
+ * Energy Management device type is included.
+ * If Off is a supported SystemMode in the Thermostat cluster, setting the SystemMode of the Thermostat
+ * cluster to Off SHALL set the CurrentMode attribute of the Water Heater Mode cluster to a mode
+ * having the Off mode tag value and vice versa.
+ * At least one entry in the SupportedModes attribute of the Water Heater Mode cluster SHALL
+ * include the Timed mode tag in the ModeTags field list.
+ *
+ * WaterHeaterMode Cluster
+ * 9.6.6.1. SupportedModes Attribute
+ * At least one entry in the SupportedModes attribute SHALL include the Manual mode tag in the
+ * ModeTags field list.
+ * At least one entry in the SupportedModes attribute SHALL include the Off mode tag in the ModeTags
+ * field list.
+ * An entry in the SupportedModes attribute that includes one of an Off, Manual, or Timed tag SHALL
+ * NOT also include an additional instance of any one of these tag types.
+ */
+export const waterHeater = DeviceTypeDefinition({
+  name: 'MA-waterheater',
+  code: 0x050f,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [Thermostat.Cluster.id, WaterHeaterManagement.Cluster.id, WaterHeaterMode.Cluster.id],
+  optionalServerClusters: [Identify.Cluster.id],
+});
+
+/**
+ * A Solar Power device is a device that allows a solar panel array, which can optionally be comprised
+ * of a set parallel strings of solar panels, and its associated controller and, if appropriate, inverter, to
+ * be monitored and controlled by an Energy Management System.
+ *
+ * 14.3.5. Device Type Requirements
+ * A Solar Power device SHALL be composed of at least one endpoint with device types as defined by
+ * the conformance below. There MAY be more endpoints with additional instances of these device
+ * types or additional device types existing in the Solar Power device.
+ *
+ * ID     Name                        Constraint    Conformance
+ * 0x0011 Power Source                min 1         M
+ * 0x0510 Electrical Sensor           min 1         M
+ * 0x050D Device Energy Management                  O
+ * 0x0302 Temperature Sensor                        O
+ *
+ * 14.3.5.1. Cluster Requirements on Composing Device Types
+ *
+ * 0x0011 Power Source 0x002F Power Source Feature Wired M
+ * 0x0011 Power Source 0x001D Descriptor Feature TagList M
+ * 0x0510 Electrical Sensor 0x0090 Electrical Power Measurement M
+ * 0x0510 Electrical Sensor 0x0090 Electrical Power Measurement Attribute Voltage M
+ * 0x0510 Electrical Sensor 0x0090 Electrical Power Measurement Attribute ActiveCurrent M
+ * 0x0510 Electrical Sensor 0x0091 Electrical Energy Measurement M
+ * 0x0510 Electrical Sensor 0x0091 Electrical Energy Measurement Feature ExportedEnergy M
+ * 0x050D Device Energy Management 0x0098 Device Energy Management Feature PowerAdjustment M
+ * 0x0302 Temperature Sensor 0x001D Descriptor Feature TagList M
+ */
+export const solarPower = DeviceTypeDefinition({
+  name: 'MA-solarpower',
+  code: 0x0017,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [], // See 14.3.5.1. Cluster Requirements on Composing Device Types
+  optionalServerClusters: [Identify.Cluster.id],
+});
+
+/**
+ * A Battery Storage device is a device that allows a DC battery, which can optionally be comprised of
+ * a set parallel strings of battery packs and associated controller, and an AC inverter, to be monitored
+ * and controlled by an Energy Management System in order to manage the peaks and troughs of supply
+ * and demand, and/or to optimize cost of the energy consumed in premises. It is not intended to
+ * be used for a UPS directly supplying a set of appliances, nor for portable battery storage devices.
+ *
+ * 14.4.5. Device Type Requirements
+ * A Battery Storage device SHALL be composed of at least one endpoint with device types as defined by
+ * the conformance below. There MAY be more endpoints with additional instances of these device
+ * types or additional device types existing in the Battery Storage device.
+ * ID     Name                        Constraint    Conformance
+ * 0x0011 Power Source                min 1         M
+ * 0x0510 Electrical Sensor           min 1         M
+ * 0x050D Device Energy Management                  M
+ * 0x0302 Temperature Sensor                        O
+ * 0x0017 Solar Power                               O
+ *
+ * See 14.4.5.1. Cluster Requirements on Composing Device Types
+ */
+export const batteryStorage = DeviceTypeDefinition({
+  name: 'MA-batterystorage',
+  code: 0x0018,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [], // See 14.4.5.1. Cluster Requirements on Composing Device Types
+  optionalServerClusters: [Identify.Cluster.id],
+});
+
+/**
+ * A Heat Pump device is a device that uses electrical energy to heat either spaces or water tanks using
+ * ground, water or air as the heat source. These typically can heat the air or can pump water via central
+ * heating radiators or underfloor heating systems. It is typical to also heat hot water and store
+ * the heat in a hot water tank.
+ *
+ * 14.5.1. Heat Pump Architecture
+ * A Heat Pump device is always defined via endpoint composition.
+ *
+ * 14.5.5. Device Type Requirements
+ * A Heat Pump device SHALL be composed of at least one endpoint with device types as defined by
+ * the conformance below. There MAY be more endpoints with additional instances of these device
+ * types or additional device types existing in the Heat Pump device.
+ * ID     Name                        Constraint    Conformance
+ * 0x0011 Power Source                              M
+ * 0x0510 Electrical Sensor           min 1         M
+ * 0x050D Device Energy Management                  M
+ * 0x0301 Thermostat                                O
+ * 0x050f Water Heater                              O
+ * 0x0302 Temperature Sensor                        O
+ *
+ * See 14.5.5.1. Cluster Requirements on Composing Device Types
+ */
+export const heatPump = DeviceTypeDefinition({
+  name: 'MA-heatpump',
+  code: 0x0309,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [], // See 14.5.5.1. Cluster Requirements on Composing Device Types
+  optionalServerClusters: [Identify.Cluster.id, Thermostat.Cluster.id],
 });

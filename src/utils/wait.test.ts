@@ -199,7 +199,7 @@ describe('withTimeout()', () => {
     jest.useRealTimers();
   });
 
-  it('resolves if the original promise fulfills before timeout', async () => {
+  it('should resolves if the original promise fulfills before timeout', async () => {
     const promise = new Promise<string>((resolve) => {
       setTimeout(() => resolve('done'), 50);
     });
@@ -210,7 +210,7 @@ describe('withTimeout()', () => {
     await expect(wrapped).resolves.toBe('done');
   });
 
-  it('rejects with timeout error if promise takes too long', async () => {
+  it('should rejects with timeout error if promise takes too long', async () => {
     const promise = new Promise<string>((resolve) => {
       setTimeout(() => resolve('late'), 200);
     });
@@ -221,7 +221,18 @@ describe('withTimeout()', () => {
     await expect(wrapped).rejects.toThrow('Operation timed out');
   });
 
-  it('rejects with the original error if promise rejects before timeout', async () => {
+  it('should not rejects with timeout error if promise takes too long', async () => {
+    const promise = new Promise<string>((resolve) => {
+      setTimeout(() => resolve('late'), 200);
+    });
+    const wrapped = withTimeout(promise, 100, false);
+
+    // Advance time past the timeout
+    jest.advanceTimersByTime(100);
+    await expect(wrapped).resolves.toBe(undefined);
+  });
+
+  it('should rejects with the original error if promise rejects before timeout', async () => {
     const originalError = new Error('failure');
     const promise = new Promise<string>((_, reject) => {
       setTimeout(() => reject(originalError), 50);
@@ -230,6 +241,17 @@ describe('withTimeout()', () => {
 
     jest.advanceTimersByTime(50);
     await expect(wrapped).rejects.toBe(originalError);
+  });
+
+  it('should not rejects with the original error if promise rejects before timeout', async () => {
+    const originalError = new Error('failure');
+    const promise = new Promise<string>((_, reject) => {
+      setTimeout(() => reject(originalError), 50);
+    });
+    const wrapped = withTimeout(promise, 100, false);
+
+    jest.advanceTimersByTime(50);
+    await expect(wrapped).resolves.toBe(undefined);
   });
 
   it('clears timer upon resolution to avoid leaks', async () => {

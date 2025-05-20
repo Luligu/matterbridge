@@ -75,6 +75,8 @@ interface MatterbridgeEvent {
   shutdown: [];
   restart: [];
   update: [];
+  initialize_started: [];
+  initialize_completed: [];
   cleanup_started: [];
   cleanup_completed: [];
   startmemorycheck: [];
@@ -126,6 +128,7 @@ export class Matterbridge extends EventEmitter {
     matterbridgeAdvertise: false,
     bridgeMode: '',
     restartMode: '',
+    virtualMode: 'outlet',
     readOnly: hasParameter('readonly') || hasParameter('shelly'),
     shellyBoard: hasParameter('shelly'),
     shellySysUpdate: false,
@@ -266,7 +269,7 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Set the logger logLevel for the Matterbridge classes.
+   * Set the logger logLevel for the Matterbridge classes and call onChangeLoggerLevel() for each plugin.
    * @param {LogLevel} logLevel The logger logLevel to set.
    */
   async setLogLevel(logLevel: LogLevel) {
@@ -297,7 +300,7 @@ export class Matterbridge extends EventEmitter {
    * Loads an instance of the Matterbridge class.
    * If an instance already exists, return that instance.
    *
-   * @param initialize - Whether to initialize the Matterbridge instance after loading.
+   * @param {boolean} initialize - Whether to initialize the Matterbridge instance after loading. Defaults to false.
    * @returns The loaded Matterbridge instance.
    */
   static async loadInstance(initialize = false) {
@@ -337,7 +340,7 @@ export class Matterbridge extends EventEmitter {
     }
     // Wait for the cleanup to finish
     await new Promise((resolve) => {
-      setTimeout(resolve, 1000);
+      setTimeout(resolve, 500);
     });
   }
 
@@ -352,13 +355,43 @@ export class Matterbridge extends EventEmitter {
    * @returns A Promise that resolves when the initialization is complete.
    */
   public async initialize() {
+    // Emit the initialize_started event
+    this.emit('initialize_started');
+
+    // Create the matterbridge logger
+    this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
+
     // Set the restart mode
     if (hasParameter('service')) this.restartMode = 'service';
     if (hasParameter('docker')) this.restartMode = 'docker';
 
-    // Set the matterbridge directory
+    // Set the matterbridge home directory
     this.homeDirectory = getParameter('homedir') ?? os.homedir();
+    this.matterbridgeInformation.homeDirectory = this.homeDirectory;
+    await this.createDirectory(this.homeDirectory, 'Matterbridge Home Directory');
+
+    // Set the matterbridge directory
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
+    this.matterbridgeInformation.matterbridgeDirectory = this.matterbridgeDirectory;
+    await this.createDirectory(this.matterbridgeDirectory, 'Matterbridge Directory');
+    await this.createDirectory(path.join(this.matterbridgeDirectory, 'certs'), 'Matterbridge Frontend Certificate Directory');
+    await this.createDirectory(path.join(this.matterbridgeDirectory, 'uploads'), 'Matterbridge Frontend Uploads Directory');
+
+    // Set the matterbridge plugin directory
+    this.matterbridgePluginDirectory = path.join(this.homeDirectory, 'Matterbridge');
+    this.matterbridgeInformation.matterbridgePluginDirectory = this.matterbridgePluginDirectory;
+    await this.createDirectory(this.matterbridgePluginDirectory, 'Matterbridge Plugin Directory');
+
+    // Set the matterbridge cert directory
+    this.matterbridgeCertDirectory = path.join(this.homeDirectory, '.mattercert');
+    this.matterbridgeInformation.matterbridgeCertDirectory = this.matterbridgeCertDirectory;
+    await this.createDirectory(this.matterbridgeCertDirectory, 'Matterbridge Matter Certificate Directory');
+
+    // Set the matterbridge root directory
+    const { fileURLToPath } = await import('node:url');
+    const currentFileDirectory = path.dirname(fileURLToPath(import.meta.url));
+    this.rootDirectory = path.resolve(currentFileDirectory, '../');
+    this.matterbridgeInformation.rootDirectory = this.rootDirectory;
 
     // Setup the matter environment
     this.environment.vars.set('log.level', MatterLogLevel.INFO);
@@ -366,9 +399,6 @@ export class Matterbridge extends EventEmitter {
     this.environment.vars.set('path.root', path.join(this.matterbridgeDirectory, this.matterStorageName));
     this.environment.vars.set('runtime.signals', false);
     this.environment.vars.set('runtime.exitcode', false);
-
-    // Create the matterbridge logger
-    this.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 
     // Register process handlers
     this.registerProcessHandlers();
@@ -430,16 +460,35 @@ export class Matterbridge extends EventEmitter {
     this.discriminator = getIntParameter('discriminator') ?? (await this.nodeContext.get<number>('matterdiscriminator')) ?? PaseClient.generateRandomDiscriminator();
 
     // Certificate management
-    const pairingFilePath = path.join(this.homeDirectory, '.mattercert', 'pairing.json');
+    const pairingFilePath = path.join(this.matterbridgeCertDirectory, 'pairing.json');
     try {
       await fs.access(pairingFilePath, fs.constants.R_OK);
       const pairingFileContent = await fs.readFile(pairingFilePath, 'utf8');
-      const pairingFileJson = JSON.parse(pairingFileContent) as { passcode?: number; discriminator?: number; remoteUrl?: string; privateKey?: string; certificate?: string; intermediateCertificate?: string; declaration?: string };
+      const pairingFileJson = JSON.parse(pairingFileContent) as {
+        vendorId?: number;
+        vendorName?: string;
+        productId?: number;
+        productName?: string;
+        passcode?: number;
+        discriminator?: number;
+        remoteUrl?: string;
+        privateKey?: string;
+        certificate?: string;
+        intermediateCertificate?: string;
+        declaration?: string;
+      };
+
+      // Set the vendorId, vendorName, productId and productName if they are present in the pairing file
+      if (isValidNumber(pairingFileJson.vendorId)) this.aggregatorVendorId = VendorId(pairingFileJson.vendorId);
+      if (isValidString(pairingFileJson.vendorName, 3)) this.aggregatorVendorName = pairingFileJson.vendorName;
+      if (isValidNumber(pairingFileJson.productId)) this.aggregatorProductId = VendorId(pairingFileJson.productId);
+      if (isValidString(pairingFileJson.productName, 3)) this.aggregatorProductName = pairingFileJson.productName;
+
       // Override the passcode and discriminator if they are present in the pairing file
-      if (pairingFileJson.passcode && pairingFileJson.discriminator) {
+      if (isValidNumber(pairingFileJson.passcode) && isValidNumber(pairingFileJson.discriminator)) {
         this.passcode = pairingFileJson.passcode;
         this.discriminator = pairingFileJson.discriminator;
-        this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using passcode ${CYAN}${this.passcode}${nf} and discriminator ${CYAN}${this.discriminator}${nf}`);
+        this.log.info(`Pairing file ${CYAN}${pairingFilePath}${nf} found. Using passcode ${CYAN}${this.passcode}${nf} and discriminator ${CYAN}${this.discriminator}${nf} from pairing file.`);
       }
       // Set the certification if it is present in the pairing file
       if (pairingFileJson.privateKey && pairingFileJson.certificate && pairingFileJson.intermediateCertificate && pairingFileJson.declaration) {
@@ -466,7 +515,7 @@ export class Matterbridge extends EventEmitter {
     await this.nodeContext.set<number>('matterport', this.port);
     await this.nodeContext.set<number>('matterpasscode', this.passcode);
     await this.nodeContext.set<number>('matterdiscriminator', this.discriminator);
-    this.log.debug(`Initializing server node for Matterbridge... on port ${this.port} with passcode ${this.passcode} and discriminator ${this.discriminator}`);
+    this.log.debug(`Initializing server node for Matterbridge on port ${this.port} with passcode ${this.passcode} and discriminator ${this.discriminator}`);
 
     // Set matterbridge logger level (context: matterbridgeLogLevel)
     if (hasParameter('logger')) {
@@ -627,6 +676,15 @@ export class Matterbridge extends EventEmitter {
       }
     }
 
+    // Initialize the virtual mode
+    if (hasParameter('novirtual')) {
+      this.matterbridgeInformation.virtualMode = 'disabled';
+      await this.nodeContext.set<string>('virtualmode', 'disabled');
+    } else {
+      this.matterbridgeInformation.virtualMode = (await this.nodeContext.get<string>('virtualmode', 'outlet')) as 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch';
+    }
+    this.log.debug(`Virtual mode ${this.matterbridgeInformation.virtualMode}.`);
+
     // Initialize PluginManager
     this.plugins = new PluginManager(this);
     await this.plugins.loadFromStorage();
@@ -686,6 +744,8 @@ export class Matterbridge extends EventEmitter {
     // Parse command line
     await this.parseCommandLine();
 
+    // Emit the initialize_completed event
+    this.emit('initialize_completed');
     this.initialized = true;
   }
 
@@ -707,7 +767,9 @@ export class Matterbridge extends EventEmitter {
       - ipv6address [address]: set the ipv6 interface address to use for the matter listener (default all interfaces)
       - frontend [port]:       start the frontend on the given port (default 8283)
       - logger:                set the matterbridge logger level: debug | info | notice | warn | error | fatal (default info)
+      - filelogger             enable the matterbridge file logger (matterbridge.log)
       - matterlogger:          set the matter.js logger level: debug | info | notice | warn | error | fatal (default info)
+      - matterfilelogger       enable the matter.js file logger (matter.log)
       - reset:                 remove the commissioning for Matterbridge (bridge mode). Shutdown Matterbridge before using it!
       - factoryreset:          remove all commissioning information and reset all internal storages. Shutdown Matterbridge before using it!
       - list:                  list the registered plugins
@@ -716,13 +778,14 @@ export class Matterbridge extends EventEmitter {
       - sudo:                  force the use of sudo to install or update packages if the internal logic fails
       - nosudo:                force not to use sudo to install or update packages if the internal logic fails
       - norestore:             force not to automatically restore the matterbridge node storage and the matter storage from backup if it is corrupted
+      - novirtual:             disable the creation of the virtual devices Restart, Update and Reboot Matterbridge
       - ssl:                   enable SSL for the frontend and WebSockerServer (certificates in .matterbridge/certs directory cert.pem, key.pem and ca.pem (optional))
       - vendorId:              override the default vendorId 0xfff1
       - vendorName:            override the default vendorName "Matterbridge"
       - productId:             override the default productId 0x8000
       - productName:           override the default productName "Matterbridge aggregator"
       - service:               enable the service mode (used in the systemctl configuration file)
-      - docker:                enable the docker mode (used in the Dockerfile to build the docker image)
+      - docker:                enable the docker mode (used in the docker image)
       - homedir:               override the home directory (default: os.homedir())
       - add [plugin path]:     register the plugin from the given absolute or relative path
       - add [plugin name]:     register the globally installed plugin with the given name
@@ -841,11 +904,11 @@ export class Matterbridge extends EventEmitter {
         if (!matterStorageManager) {
           this.log.error(`Plugin ${plg}${plugin.name}${er} storageManager not found`);
         } else {
-          await matterStorageManager?.createContext('events')?.clearAll();
-          await matterStorageManager?.createContext('fabrics')?.clearAll();
-          await matterStorageManager?.createContext('root')?.clearAll();
-          await matterStorageManager?.createContext('sessions')?.clearAll();
-          await matterStorageManager?.createContext('persist')?.clearAll();
+          await matterStorageManager.createContext('events')?.clearAll();
+          await matterStorageManager.createContext('fabrics')?.clearAll();
+          await matterStorageManager.createContext('root')?.clearAll();
+          await matterStorageManager.createContext('sessions')?.clearAll();
+          await matterStorageManager.createContext('persist')?.clearAll();
           this.log.info(`Reset commissionig for plugin ${plg}${plugin.name}${nf} done! Remove the device from the controller.`);
         }
       } else {
@@ -859,13 +922,13 @@ export class Matterbridge extends EventEmitter {
     // Initialize frontend
     if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.frontend.start(getIntParameter('frontend'));
 
-    // Check in 30 seconds the latest versions
+    // Check in 30 seconds the latest and dev versions of matterbridge and the plugins
     this.checkUpdateTimeout = setTimeout(async () => {
       const { checkUpdates } = await import('./update.js');
       checkUpdates(this);
     }, 30 * 1000).unref();
 
-    // Check each 24 hours the latest versions
+    // Check each 12 hours the latest and dev versions of matterbridge and the plugins
     this.checkUpdateInterval = setInterval(
       async () => {
         const { checkUpdates } = await import('./update.js');
@@ -990,7 +1053,7 @@ export class Matterbridge extends EventEmitter {
   /**
    * Deregisters the process uncaughtException, unhandledRejection, SIGINT and SIGTERM signal handlers.
    */
-  private deregisterProcesslHandlers() {
+  private deregisterProcessHandlers() {
     this.log.debug(`Deregistering uncaughtException and unhandledRejection handlers...`);
 
     if (this.exceptionHandler) process.off('uncaughtException', this.exceptionHandler);
@@ -1077,34 +1140,28 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`- Free Memory: ${this.systemInformation.freeMemory}`);
     this.log.debug(`- System Uptime: ${this.systemInformation.systemUptime}`);
 
-    // Home directory
-    this.homeDirectory = getParameter('homedir') ?? os.homedir();
-    this.matterbridgeInformation.homeDirectory = this.homeDirectory;
-    this.log.debug(`Home Directory: ${this.homeDirectory}`);
-
-    // Package root directory
-    const { fileURLToPath } = await import('node:url');
-    const currentFileDirectory = path.dirname(fileURLToPath(import.meta.url));
-    this.rootDirectory = path.resolve(currentFileDirectory, '../');
-    this.matterbridgeInformation.rootDirectory = this.rootDirectory;
+    // Log directories
     this.log.debug(`Root Directory: ${this.rootDirectory}`);
+    this.log.debug(`Home Directory: ${this.homeDirectory}`);
+    this.log.debug(`Matterbridge Directory: ${this.matterbridgeDirectory}`);
+    this.log.debug(`Matterbridge Plugin Directory: ${this.matterbridgePluginDirectory}`);
+    this.log.debug(`Matterbridge Matter Certificate Directory: ${this.matterbridgeCertDirectory}`);
 
     // Global node_modules directory
     if (this.nodeContext) this.globalModulesDirectory = this.matterbridgeInformation.globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
-    // First run of Matterbridge so the node storage is empty
     if (this.globalModulesDirectory === '') {
+      // First run of Matterbridge so the node storage is empty
       try {
         this.execRunningCount++;
-        this.globalModulesDirectory = await getGlobalNodeModules();
+        this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory = await getGlobalNodeModules();
         this.execRunningCount--;
-        this.matterbridgeInformation.globalModulesDirectory = this.globalModulesDirectory;
         this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
         await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
       } catch (error) {
         this.log.error(`Error getting global node_modules directory: ${error}`);
       }
     } else this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
-    /* removed cause is too expensive for the shelly board and not really needed. Why should it change the globalModulesDirectory?
+    /* removed cause is too expensive for the shelly board and not really needed. Why should the globalModulesDirectory change?
     else {
       this.getGlobalNodeModules()
         .then(async (globalModulesDirectory) => {
@@ -1118,82 +1175,19 @@ export class Matterbridge extends EventEmitter {
         });
     }*/
 
-    // Create the data directory .matterbridge in the home directory
-    this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
-    this.matterbridgeInformation.matterbridgeDirectory = this.matterbridgeDirectory;
-    try {
-      await fs.access(this.matterbridgeDirectory);
-    } catch (err) {
-      if (err instanceof Error) {
-        const nodeErr = err as NodeJS.ErrnoException;
-        if (nodeErr.code === 'ENOENT') {
-          try {
-            await fs.mkdir(this.matterbridgeDirectory, { recursive: true });
-            this.log.info(`Created Matterbridge Directory: ${this.matterbridgeDirectory}`);
-          } catch (err) {
-            this.log.error(`Error creating directory: ${err}`);
-          }
-        } else {
-          this.log.error(`Error accessing directory: ${err}`);
-        }
-      }
-    }
-    this.log.debug(`Matterbridge Directory: ${this.matterbridgeDirectory}`);
-
-    // Create the plugin directory Matterbridge in the home directory
-    this.matterbridgePluginDirectory = path.join(this.homeDirectory, 'Matterbridge');
-    this.matterbridgeInformation.matterbridgePluginDirectory = this.matterbridgePluginDirectory;
-    try {
-      await fs.access(this.matterbridgePluginDirectory);
-    } catch (err) {
-      if (err instanceof Error) {
-        const nodeErr = err as NodeJS.ErrnoException;
-        if (nodeErr.code === 'ENOENT') {
-          try {
-            await fs.mkdir(this.matterbridgePluginDirectory, { recursive: true });
-            this.log.info(`Created Matterbridge Plugin Directory: ${this.matterbridgePluginDirectory}`);
-          } catch (err) {
-            this.log.error(`Error creating directory: ${err}`);
-          }
-        } else {
-          this.log.error(`Error accessing directory: ${err}`);
-        }
-      }
-    }
-    this.log.debug(`Matterbridge Plugin Directory: ${this.matterbridgePluginDirectory}`);
-
-    // Create the matter cert directory in the home directory
-    this.matterbridgeCertDirectory = path.join(this.homeDirectory, '.mattercert');
-    this.matterbridgeInformation.matterbridgeCertDirectory = this.matterbridgeCertDirectory;
-    try {
-      await fs.access(this.matterbridgeCertDirectory);
-    } catch (err) {
-      if (err instanceof Error) {
-        const nodeErr = err as NodeJS.ErrnoException;
-        if (nodeErr.code === 'ENOENT') {
-          try {
-            await fs.mkdir(this.matterbridgeCertDirectory, { recursive: true });
-            this.log.info(`Created .mattercert directory: ${this.matterbridgeCertDirectory}`);
-          } catch (err) {
-            this.log.error(`Error creating .mattercert directory: ${err}`);
-          }
-        } else {
-          this.log.error(`Error accessing .mattercert directory: ${err}`);
-        }
-      }
-    }
-    this.log.debug(`Matterbridge Matter Cert Directory: ${this.matterbridgeCertDirectory}`);
-
     // Matterbridge version
     const packageJson = JSON.parse(await fs.readFile(path.join(this.rootDirectory, 'package.json'), 'utf-8'));
-    this.matterbridgeVersion = this.matterbridgeLatestVersion = packageJson.version;
-    this.matterbridgeInformation.matterbridgeVersion = this.matterbridgeInformation.matterbridgeLatestVersion = this.matterbridgeVersion;
+    this.matterbridgeVersion = this.matterbridgeLatestVersion = this.matterbridgeDevVersion = packageJson.version;
+    this.matterbridgeInformation.matterbridgeVersion = this.matterbridgeInformation.matterbridgeLatestVersion = this.matterbridgeInformation.matterbridgeDevVersion = packageJson.version;
     this.log.debug(`Matterbridge Version: ${this.matterbridgeVersion}`);
 
-    // Matterbridge latest version
-    if (this.nodeContext) this.matterbridgeLatestVersion = await this.nodeContext.get<string>('matterbridgeLatestVersion', this.matterbridgeVersion);
+    // Matterbridge latest version (will be set in the checkUpdate function)
+    if (this.nodeContext) this.matterbridgeLatestVersion = this.matterbridgeInformation.matterbridgeLatestVersion = await this.nodeContext.get<string>('matterbridgeLatestVersion', this.matterbridgeVersion);
     this.log.debug(`Matterbridge Latest Version: ${this.matterbridgeLatestVersion}`);
-    // this.getMatterbridgeLatestVersion();
+
+    // Matterbridge dev version (will be set in the checkUpdate function)
+    if (this.nodeContext) this.matterbridgeDevVersion = this.matterbridgeInformation.matterbridgeDevVersion = await this.nodeContext.get<string>('matterbridgeDevVersion', this.matterbridgeVersion);
+    this.log.debug(`Matterbridge Dev Version: ${this.matterbridgeDevVersion}`);
 
     // Current working directory
     const currentDir = process.cwd();
@@ -1209,14 +1203,14 @@ export class Matterbridge extends EventEmitter {
    *
    * @returns {Function} The MatterLogger function.
    */
-  private createMatterLogger() {
+  private createMatterLogger(): (level: MatterLogLevel, formattedLog: string) => void {
     const matterLogger = new AnsiLogger({ logName: 'Matter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
-    return (_level: MatterLogLevel, formattedLog: string) => {
+    return (level: MatterLogLevel, formattedLog: string) => {
       const logger = formattedLog.slice(44, 44 + 20).trim();
       const message = formattedLog.slice(65);
       matterLogger.logName = logger;
-      switch (_level) {
+      switch (level) {
         case MatterLogLevel.DEBUG:
           matterLogger.log(LogLevel.DEBUG, message);
           break;
@@ -1260,7 +1254,7 @@ export class Matterbridge extends EventEmitter {
       }
     }
 
-    return async (_level: MatterLogLevel, formattedLog: string) => {
+    return async (level: MatterLogLevel, formattedLog: string) => {
       if (fileSize > 100000000) return;
       fileSize += formattedLog.length;
       if (fileSize > 100000000) {
@@ -1276,7 +1270,7 @@ export class Matterbridge extends EventEmitter {
       const logger = parts[1];
       const finalMessage = parts.slice(2).join(' ') + os.EOL;
 
-      switch (_level) {
+      switch (level) {
         case MatterLogLevel.DEBUG:
           await fs.appendFile(filePath, `[${timestamp}] [${logger}] [debug] ${finalMessage}`);
           break;
@@ -1361,11 +1355,11 @@ export class Matterbridge extends EventEmitter {
 
   /**
    * Cleans up the Matterbridge instance.
-   * @param message - The cleanup message.
-   * @param restart - Indicates whether to restart the instance after cleanup. Default is `false`.
+   * @param {string} message - The cleanup message.
+   * @param {boolean} [restart=false] - Indicates whether to restart the instance after cleanup. Default is `false`.
    * @returns A promise that resolves when the cleanup is completed.
    */
-  protected async cleanup(message: string, restart = false) {
+  protected async cleanup(message: string, restart = false): Promise<void> {
     if (this.initialized && !this.hasCleanupStarted) {
       this.emit('cleanup_started');
       this.hasCleanupStarted = true;
@@ -1457,12 +1451,11 @@ export class Matterbridge extends EventEmitter {
       // Remove the matterfilelogger
       try {
         Logger.removeLogger('matterfilelogger');
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
-        // this.log.debug(`Error removing the matterfilelogger for file ${CYAN}${path.join(this.matterbridgeDirectory, this.matterLoggerFile)}${er}: ${error instanceof Error ? error.message : error}`);
+        this.log.debug(`Error removing the matterfilelogger for file ${CYAN}${path.join(this.matterbridgeDirectory, this.matterLoggerFile)}${db}: ${error instanceof Error ? error.message : String(error)}`);
       }
 
-      // Serialize registeredDevices
+      // Close the matterbridge node storage and context
       if (this.nodeStorage && this.nodeContext) {
         /*
         TODO: Implement serialization of registered devices in edge mode
@@ -1493,7 +1486,7 @@ export class Matterbridge extends EventEmitter {
         await this.nodeStorage.close();
         this.nodeStorage = undefined;
       } else {
-        this.log.error('Error saving registered devices: nodeContext not found!');
+        this.log.error('Error close the matterbridge node storage and context: nodeStorage or nodeContext not found!');
       }
       this.plugins.clear();
       this.devices.clear();
@@ -1501,49 +1494,36 @@ export class Matterbridge extends EventEmitter {
       // Factory reset
       if (message === 'shutting down with factory reset...') {
         try {
-          // Delete old matter storage file and backup
-          const file = path.join(this.matterbridgeDirectory, 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.json');
-          this.log.info(`Unlinking old matter storage file: ${file}`);
-          await fs.unlink(file);
-          const backup = path.join(this.matterbridgeDirectory, 'matterbridge' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.backup.json');
-          this.log.info(`Unlinking old matter storage backup file: ${backup}`);
-          await fs.unlink(backup);
-        } catch (err) {
-          if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
-            this.log.error(`Error unlinking old matter storage file: ${err}`);
+          // Delete matter storage directory with its subdirectories and backup
+          const dir = path.join(this.matterbridgeDirectory, this.matterStorageName);
+          this.log.info(`Removing matter storage directory: ${dir}`);
+          await fs.rm(dir, { recursive: true });
+          const backup = path.join(this.matterbridgeDirectory, this.matterStorageName + '.backup');
+          this.log.info(`Removing matter storage backup directory: ${backup}`);
+          await fs.rm(backup, { recursive: true });
+        } catch (error) {
+          if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
+            this.log.error(`Error removing matter storage directory: ${error}`);
           }
         }
         try {
-          // Delete matter node storage directory with its subdirectories and backup
-          const dir = path.join(this.matterbridgeDirectory, 'matterstorage' + (getParameter('profile') ? '.' + getParameter('profile') : ''));
-          this.log.info(`Removing matter node storage directory: ${dir}`);
+          // Delete matterbridge storage directory with its subdirectories and backup
+          const dir = path.join(this.matterbridgeDirectory, this.nodeStorageName);
+          this.log.info(`Removing matterbridge storage directory: ${dir}`);
           await fs.rm(dir, { recursive: true });
-          const backup = path.join(this.matterbridgeDirectory, 'matterstorage' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.backup');
-          this.log.info(`Removing matter node storage backup directory: ${backup}`);
+          const backup = path.join(this.matterbridgeDirectory, this.nodeStorageName + '.backup');
+          this.log.info(`Removing matterbridge storage backup directory: ${backup}`);
           await fs.rm(backup, { recursive: true });
-        } catch (err) {
-          if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
-            this.log.error(`Error removing matter storage directory: ${err}`);
-          }
-        }
-        try {
-          // Delete node storage directory with its subdirectories and backup
-          const dir = path.join(this.matterbridgeDirectory, 'storage' + (getParameter('profile') ? '.' + getParameter('profile') : ''));
-          this.log.info(`Removing storage directory: ${dir}`);
-          await fs.rm(dir, { recursive: true });
-          const backup = path.join(this.matterbridgeDirectory, 'storage' + (getParameter('profile') ? '.' + getParameter('profile') : '') + '.backup');
-          this.log.info(`Removing storage backup directory: ${backup}`);
-          await fs.rm(backup, { recursive: true });
-        } catch (err) {
-          if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
-            this.log.error(`Error removing storage directory: ${err}`);
+        } catch (error) {
+          if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
+            this.log.error(`Error removing matterbridge storage directory: ${error}`);
           }
         }
         this.log.info('Factory reset done! Remove all paired fabrics from the controllers.');
       }
 
       // Deregisters the process handlers
-      this.deregisterProcesslHandlers();
+      this.deregisterProcessHandlers();
 
       if (restart) {
         if (message === 'updating...') {
@@ -2425,8 +2405,9 @@ const commissioningController = new CommissioningController({
    * @returns {Promise<Endpoint<AggregatorEndpoint>>} A promise that resolves to the created aggregator node.
    */
   private async createAggregatorNode(storageContext: StorageContext): Promise<Endpoint<AggregatorEndpoint>> {
-    this.log.notice(`Creating ${await storageContext.get<string>('storeId')} aggregator `);
+    this.log.notice(`Creating ${await storageContext.get<string>('storeId')} aggregator...`);
     const aggregatorNode = new Endpoint(AggregatorEndpoint, { id: `${await storageContext.get<string>('storeId')}` });
+    this.log.info(`Created ${await storageContext.get<string>('storeId')} aggregator`);
     return aggregatorNode;
   }
 
@@ -2582,13 +2563,6 @@ const commissioningController = new CommissioningController({
   private async subscribeAttributeChanged(plugin: RegisteredPlugin, device: MatterbridgeEndpoint): Promise<void> {
     this.log.info(`Subscribing attributes for endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) plugin ${plg}${plugin.name}${nf}`);
     if (this.bridgeMode === 'childbridge' && plugin.type === 'AccessoryPlatform' && plugin.serverNode) {
-      /*
-      this.log.info(`Accessory endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) subscribed to reachable$Changed`);
-      setTimeout(async () => {
-        this.log.info(`Accessory endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) changed to reachable false`);
-        await plugin.serverNode?.setStateOf(BasicInformationServer, { reachable: false });
-      }, 60000).unref();
-      */
       plugin.serverNode.eventsOf(BasicInformationServer).reachable$Changed?.on((reachable: boolean) => {
         this.log.info(`Accessory endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) is ${reachable ? 'reachable' : 'unreachable'}`);
         this.frontend.wssSendAttributeChangedMessage(device.plugin, device.serialNumber, device.uniqueId, 'BasicInformationServer', 'reachable', reachable);
@@ -2796,5 +2770,30 @@ const commissioningController = new CommissioningController({
         });
       }
     });
+  }
+
+  /**
+   * Creates a directory at the specified path if it doesn't already exist.
+   *
+   * @param {string} path - The path to the directory to create.
+   * @param {string} name - The name of the directory.
+   * @returns {Promise<void>} A promise that resolves when the directory has been created or already exists.
+   */
+  async createDirectory(path: string, name: string): Promise<void> {
+    try {
+      await fs.access(path);
+      this.log.debug(`Directory ${name} already exists at path: ${path}`);
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+        try {
+          await fs.mkdir(path, { recursive: true });
+          this.log.info(`Created ${name}: ${path}`);
+        } catch (err) {
+          this.log.error(`Error creating dir ${name} path ${path}: ${err}`);
+        }
+      } else {
+        this.log.error(`Error accessing dir ${name} path ${path}: ${err}`);
+      }
+    }
   }
 }

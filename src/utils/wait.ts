@@ -85,12 +85,19 @@ export async function wait(timeout = 1000, name?: string, debug = false): Promis
 /**
  * Wraps a promise with a timeout. If the promise does not resolve or reject within the specified time, it will be rejected.
  * @param {Promise<T>} promise - The promise to wrap.
- * @param {number} ms - The timeout duration in milliseconds.
+ * @param {number} [timeoutMillisecs=10000] - The timeout duration in milliseconds. Default is 10000ms.
+ * @param {boolean} [reThrow=true] - Optional. If true, the promise will rethrow the original promise and will reject on timeout. Default is true.
  * @returns {Promise<T>} A new promise that resolves or rejects based on the original promise and the timeout.
  */
-export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+export function withTimeout<T>(promise: Promise<T>, timeoutMillisecs = 10000, reThrow = true): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('Operation timed out')), ms);
+    const timer = setTimeout(() => {
+      if (reThrow) {
+        reject(new Error('Operation timed out'));
+      } else {
+        resolve(undefined as unknown as T); // Resolve with undefined if reThrow is false
+      }
+    }, timeoutMillisecs).unref(); // Unref the timer to prevent it from keeping the event loop alive
     promise
       .then((result) => {
         clearTimeout(timer); // Prevent memory leak
@@ -98,7 +105,11 @@ export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
       })
       .catch((error) => {
         clearTimeout(timer); // Ensure timeout does not fire if promise rejects first
-        reject(error);
+        if (reThrow) {
+          reject(error); // Reject with the original error
+        } else {
+          resolve(undefined as unknown as T); // Resolve with undefined if reThrow is false
+        }
       });
   });
 }
