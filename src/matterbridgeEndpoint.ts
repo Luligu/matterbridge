@@ -1529,10 +1529,15 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default fan control cluster server.
+   * Creates a default fan control cluster server with features MultiSpeed, Auto, and Step.
    *
-   * @param fanMode The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @param {FanControl.FanMode} [fanMode=FanControl.FanMode.Off] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * fanmode is writable and persists across reboots.
+   * percentSetting is writable.
+   * speedSetting is writable.
    */
   createDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
     this.behaviors.require(MatterbridgeFanControlServer.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step), {
@@ -1548,10 +1553,14 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a base fan control cluster server.
+   * Creates a base fan control cluster server without features.
    *
-   * @param fanMode The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @param {FanControl.FanMode} [fanMode=FanControl.FanMode.Off] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * fanmode is writable and persists across reboots.
+   * percentSetting is writable.
    */
   createBaseFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
     this.behaviors.require(FanControlServer, {
