@@ -618,15 +618,19 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (!this.lifecycle.isReady || this.construction.status !== Lifecycle.Status.Active) return;
 
     for (const [clusterName, clusterAttributes] of Object.entries(this.state as unknown as Record<string, Record<string, boolean | number | bigint | string | object | undefined | null>>)) {
+      // Skip if the key / cluster name is a number, cause they are double indexed.
+      if (!isNaN(Number(clusterName))) continue;
       for (const [attributeName, attributeValue] of Object.entries(clusterAttributes)) {
+        // Skip if the behavior has no associated cluster (i.e. matterbridge server)
         const clusterId = getClusterId(this, clusterName);
         if (clusterId === undefined) {
-          // this.log.error(`forEachAttribute error: cluster ${clusterName} not found`);
+          // this.log.debug(`***forEachAttribute: cluster ${clusterName} not found`);
           continue;
         }
+        // Skip if the attribute is not present in the ClusterBehavior.Type
         const attributeId = getAttributeId(this, clusterName, attributeName);
         if (attributeId === undefined) {
-          // this.log.error(`forEachAttribute error: attribute ${clusterName}.${attributeName} not found`);
+          // this.log.debug(`***forEachAttribute: attribute ${clusterName}.${attributeName} not found`);
           continue;
         }
         callback(clusterName, clusterId, attributeName, attributeId, attributeValue);

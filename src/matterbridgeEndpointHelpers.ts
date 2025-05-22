@@ -1,7 +1,7 @@
 // src\matterbridgeEndpointHelpers.ts
 
 // @matter
-import { Behavior, ClusterId, Endpoint, Lifecycle } from '@matter/main';
+import { Behavior, ClusterBehavior, ClusterId, Endpoint, Lifecycle } from '@matter/main';
 import { ClusterType, getClusterNameById } from '@matter/main/types';
 
 // @matter clusters
@@ -381,36 +381,8 @@ export function getClusterId(endpoint: Endpoint, cluster: string) {
 }
 
 export function getAttributeId(endpoint: Endpoint, cluster: string, attribute: string) {
-  if (attribute === 'attributeList') return 0xfffb;
-  else if (attribute === 'featureMap') return 0xfffc;
-  else if (attribute === 'eventList') return 0xfffa;
-  else if (attribute === 'generatedCommandList') return 0xfff8;
-  else if (attribute === 'acceptedCommandList') return 0xfff9;
-  else if (attribute === 'clusterRevision') return 0xfffd;
-  else {
-    if (endpoint.behaviors.supported[lowercaseFirstLetter(cluster)]?.schema?.type === 'ConcentrationMeasurement') {
-      if (attribute === 'measuredValue') return 0x0;
-      else if (attribute === 'minMeasuredValue') return 0x1;
-      else if (attribute === 'maxMeasuredValue') return 0x2;
-      else if (attribute === 'peakMeasuredValue') return 0x3;
-      else if (attribute === 'peakMeasuredValueWindow') return 0x4;
-      else if (attribute === 'averageMeasuredValue') return 0x5;
-      else if (attribute === 'averageMeasuredValueWindow') return 0x6;
-      else if (attribute === 'uncertainty') return 0x7;
-      else if (attribute === 'measurementUnit') return 0x8;
-      else if (attribute === 'measurementMedium') return 0x9;
-      else if (attribute === 'levelValue') return 0xa;
-    }
-    if (endpoint.behaviors.supported[lowercaseFirstLetter(cluster)]?.schema?.type === 'OperationalState') {
-      if (attribute === 'phaseList') return 0x0;
-      else if (attribute === 'currentPhase') return 0x1;
-      else if (attribute === 'countdownTime') return 0x2;
-      else if (attribute === 'operationalStateList') return 0x3;
-      else if (attribute === 'operationalState') return 0x4;
-      else if (attribute === 'operationalError') return 0x5;
-    }
-    return endpoint.behaviors.supported[lowercaseFirstLetter(cluster)]?.schema?.children?.find((child) => child.name === capitalizeFirstLetter(attribute))?.id;
-  }
+  const clusterBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(cluster)] as ClusterBehavior.Type | undefined;
+  return clusterBehavior?.cluster.attributes[attribute]?.id;
 }
 
 /**

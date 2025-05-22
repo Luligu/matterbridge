@@ -22,7 +22,8 @@
  */
 
 // @matter
-import { EndpointServer, Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle } from '@matter/main';
+import { Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle } from '@matter/main';
+import { BridgedDeviceBasicInformation, PowerSource } from '@matter/main/clusters';
 
 // Node modules
 import { Server as HttpServer, createServer, IncomingMessage } from 'node:http';
@@ -41,12 +42,12 @@ import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN,
 
 // Matterbridge
 import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout } from './utils/export.js';
-import { ApiClusters, ApiDevices, BaseRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
+import { ApiClusters, ApiClustersResponse, ApiDevices, BaseRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { hasParameter } from './utils/export.js';
-import { BridgedDeviceBasicInformation, PowerSource } from '@matter/main/clusters';
 import { PlatformConfig } from './matterbridgePlatform.js';
+import { capitalizeFirstLetter } from './matterbridgeEndpointHelpers.js';
 
 /**
  * Websocket message ID for logging.
@@ -348,6 +349,7 @@ export class Frontend {
     });
 
     // Endpoint to validate login code
+    // curl -X POST "http://localhost:8283/api/login" -H "Content-Type: application/json" -d "{\"password\":\"Here\"}"
     this.expressApp.post('/api/login', express.json(), async (req, res) => {
       const { password } = req.body;
       this.log.debug('The frontend sent /api/login', password);
@@ -819,8 +821,13 @@ export class Frontend {
     return false;
   }
 
-  private getPowerSource(device: MatterbridgeEndpoint): 'ac' | 'dc' | 'ok' | 'warning' | 'critical' | undefined {
-    if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return undefined;
+  /**
+   * Retrieves the power source attribute.
+   * @param {MatterbridgeEndpoint} endpoint - The MatterbridgeDevice object.
+   * @returns {'ac' | 'dc' | 'ok' | 'warning' | 'critical' | undefined} The power source attribute.
+   */
+  private getPowerSource(endpoint: MatterbridgeEndpoint): 'ac' | 'dc' | 'ok' | 'warning' | 'critical' | undefined {
+    if (!endpoint.lifecycle.isReady || endpoint.construction.status !== Lifecycle.Status.Active) return undefined;
 
     const powerSource = (device: MatterbridgeEndpoint) => {
       const featureMap = device.getAttribute(PowerSource.Cluster.id, 'featureMap') as Record<string, boolean>;
@@ -836,9 +843,9 @@ export class Frontend {
     };
 
     // Root endpoint
-    if (device.hasClusterServer(PowerSource.Cluster.id)) return powerSource(device);
+    if (endpoint.hasClusterServer(PowerSource.Cluster.id)) return powerSource(endpoint);
     // Child endpoints
-    for (const child of device.getChildEndpoints()) {
+    for (const child of endpoint.getChildEndpoints()) {
       if (child.hasClusterServer(PowerSource.Cluster.id)) return powerSource(child);
     }
   }
@@ -887,7 +894,7 @@ export class Frontend {
 
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       // console.log(`${device.deviceName} => Cluster: ${clusterName}-${clusterId} Attribute: ${attributeName}-${attributeId} Value(${typeof attributeValue}): ${attributeValue}`);
-      if (typeof attributeValue === 'undefined') return;
+      if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
       if (clusterName === 'onOff' && attributeName === 'onOff') attributes += `OnOff: ${attributeValue} `;
       if (clusterName === 'switch' && attributeName === 'currentPosition') attributes += `Position: ${attributeValue} `;
       if (clusterName === 'windowCovering' && attributeName === 'currentPositionLiftPercent100ths' && isValidNumber(attributeValue, 0, 10000)) attributes += `Cover position: ${attributeValue / 100}% `;
@@ -1021,6 +1028,90 @@ export class Frontend {
       });
     });
     return devices;
+  }
+
+  /**
+   * Retrieves the clusters from a given plugin and endpoint number.
+   *
+   * Response for /api/clusters
+   *
+   * @param {string} pluginName - The name of the plugin.
+   * @param {number} endpointNumber - The endpoint number.
+   * @returns {Promise<ApiClustersResponse | undefined>} A promise that resolves to the clusters or undefined if not found.
+   */
+  private getClusters(pluginName: string, endpointNumber: number): ApiClustersResponse | undefined {
+    const endpoint = this.matterbridge.devices.array().find((d) => d.plugin === pluginName && d.maybeNumber === endpointNumber);
+    if (!endpoint || !endpoint.plugin || !endpoint.maybeNumber || !endpoint.deviceName || !endpoint.serialNumber) {
+      this.log.error(`getClusters: no device found for plugin ${pluginName} and endpoint number ${endpointNumber}`);
+      return;
+    }
+    // this.log.debug(`***getClusters: getting clusters for device ${endpoint.deviceName} plugin ${pluginName} endpoint number ${endpointNumber}`);
+
+    // Get the device types from the main endpoint
+    const deviceTypes: number[] = [];
+    const clusters: ApiClusters[] = [];
+    endpoint.state.descriptor.deviceTypeList.forEach((d) => {
+      deviceTypes.push(d.deviceType);
+    });
+
+    // Get the clusters from the main endpoint
+    endpoint.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
+      if (clusterName === 'EveHistory' && ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName)) return;
+      // console.log(
+      //   `${idn}${endpoint.deviceName}${rs}${nf} => Cluster: ${CYAN}${clusterName} (0x${clusterId.toString(16).padStart(2, '0')})${nf} Attribute: ${CYAN}${attributeName} (0x${attributeId.toString(16).padStart(2, '0')})${nf} Value: ${YELLOW}${typeof attributeValue === 'object' ? stringify(attributeValue as object) : attributeValue}${nf}`,
+      // );
+      clusters.push({
+        endpoint: endpoint.number.toString(),
+        id: 'main',
+        deviceTypes,
+        clusterName: capitalizeFirstLetter(clusterName),
+        clusterId: '0x' + clusterId.toString(16).padStart(2, '0'),
+        attributeName,
+        attributeId: '0x' + attributeId.toString(16).padStart(2, '0'),
+        attributeValue: typeof attributeValue === 'object' ? stringify(attributeValue as object) : attributeValue.toString(),
+        attributeLocalValue: attributeValue,
+      });
+    });
+
+    // Get the child endpoints
+    const childEndpoints = endpoint.getChildEndpoints();
+    // if (childEndpoints.length === 0) {
+    // this.log.debug(`***getClusters: found ${childEndpoints.length} child endpoints for device ${endpoint.deviceName} plugin ${pluginName} and endpoint number ${endpointNumber}`);
+    // }
+    childEndpoints.forEach((childEndpoint) => {
+      if (!childEndpoint.maybeId || !childEndpoint.maybeNumber) {
+        this.log.error(`getClusters: no child endpoint found for plugin ${pluginName} and endpoint number ${endpointNumber}`);
+        return;
+      }
+      // this.log.debug(`***getClusters: getting clusters for child endpoint ${childEndpoint.id} of device ${endpoint.deviceName} plugin ${pluginName} endpoint number ${childEndpoint.number}`);
+
+      // Get the device types of the child endpoint
+      const deviceTypes: number[] = [];
+      childEndpoint.state.descriptor.deviceTypeList.forEach((d) => {
+        deviceTypes.push(d.deviceType);
+      });
+
+      childEndpoint.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+        if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
+        if (clusterName === 'EveHistory' && ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName)) return;
+        // console.log(
+        //   `${idn}${childEndpoint.deviceName}${rs}${nf} => Cluster: ${CYAN}${clusterName} (0x${clusterId.toString(16).padStart(2, '0')})${nf} Attribute: ${CYAN}${attributeName} (0x${attributeId.toString(16).padStart(2, '0')})${nf} Value: ${YELLOW}${typeof attributeValue === 'object' ? stringify(attributeValue as object) : attributeValue}${nf}`,
+        // );
+        clusters.push({
+          endpoint: childEndpoint.number.toString(),
+          id: childEndpoint.maybeId ?? 'null', // Never happens
+          deviceTypes,
+          clusterName: capitalizeFirstLetter(clusterName),
+          clusterId: '0x' + clusterId.toString(16).padStart(2, '0'),
+          attributeName,
+          attributeId: '0x' + attributeId.toString(16).padStart(2, '0'),
+          attributeValue: typeof attributeValue === 'object' ? stringify(attributeValue as object) : attributeValue.toString(),
+          attributeLocalValue: attributeValue,
+        });
+      });
+    });
+    return { plugin: endpoint.plugin, deviceName: endpoint.deviceName, serialNumber: endpoint.serialNumber, endpoint: endpoint.maybeNumber, deviceTypes, clusters };
   }
 
   /**
@@ -1316,97 +1407,25 @@ export class Frontend {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter endpoint in /api/clusters' }));
           return;
         }
-
-        const clusters: ApiClusters[] = [];
-        let deviceName = '';
-        let serialNumber = '';
-        let deviceTypes: number[] = [];
-
-        this.matterbridge.devices.forEach(async (device) => {
-          if (data.params.plugin !== device.plugin) return;
-          if (data.params.endpoint !== device.number) return;
-          deviceName = device.deviceName ?? 'Unknown';
-          serialNumber = device.serialNumber ?? 'Unknown';
-          deviceTypes = [];
-
-          const endpointServer = EndpointServer.forEndpoint(device);
-          const clusterServers = endpointServer.getAllClusterServers();
-          clusterServers.forEach((clusterServer) => {
-            Object.entries(clusterServer.attributes).forEach(([key, value]) => {
-              if (clusterServer.name === 'EveHistory') {
-                if (['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(key)) {
-                  return;
-                }
-              }
-              if (clusterServer.name === 'Descriptor' && key === 'deviceTypeList') {
-                (value.getLocal() as { deviceType: number; revision: number }[]).forEach((deviceType) => {
-                  deviceTypes.push(deviceType.deviceType);
-                });
-              }
-              let attributeValue;
-              let attributeLocalValue;
-              try {
-                if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
-                else attributeValue = value.getLocal().toString();
-                attributeLocalValue = value.getLocal();
-              } catch (error) {
-                attributeValue = 'Fabric-Scoped';
-                attributeLocalValue = 'Fabric-Scoped';
-                this.log.debug(`GetLocal value ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
-              }
-              clusters.push({
-                endpoint: device.number ? device.number.toString() : '...',
-                id: 'main',
-                deviceTypes,
-                clusterName: clusterServer.name,
-                clusterId: '0x' + clusterServer.id.toString(16).padStart(2, '0'),
-                attributeName: key,
-                attributeId: '0x' + value.id.toString(16).padStart(2, '0'),
-                attributeValue,
-                attributeLocalValue,
-              });
-            });
-          });
-          endpointServer.getChildEndpoints().forEach((childEndpoint) => {
-            deviceTypes = [];
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const name = (childEndpoint as any).endpoint?.id;
-            const clusterServers = childEndpoint.getAllClusterServers();
-            clusterServers.forEach((clusterServer) => {
-              Object.entries(clusterServer.attributes).forEach(([key, value]) => {
-                if (clusterServer.name === 'EveHistory') return;
-                if (clusterServer.name === 'Descriptor' && key === 'deviceTypeList') {
-                  (value.getLocal() as { deviceType: number; revision: number }[]).forEach((deviceType) => {
-                    deviceTypes.push(deviceType.deviceType);
-                  });
-                }
-                let attributeValue;
-                let attributeLocalValue;
-                try {
-                  if (typeof value.getLocal() === 'object') attributeValue = stringify(value.getLocal());
-                  else attributeValue = value.getLocal().toString();
-                  attributeLocalValue = value.getLocal();
-                } catch (error) {
-                  attributeValue = 'Fabric-Scoped';
-                  attributeLocalValue = 'Fabric-Scoped';
-                  this.log.debug(`GetLocal error ${error} in clusterServer: ${clusterServer.name}(${clusterServer.id}) attribute: ${key}(${value.id})`);
-                }
-                clusters.push({
-                  endpoint: childEndpoint.number ? childEndpoint.number.toString() : '...',
-                  id: name,
-                  deviceTypes,
-                  clusterName: clusterServer.name,
-                  clusterId: '0x' + clusterServer.id.toString(16).padStart(2, '0'),
-                  attributeName: key,
-                  attributeId: '0x' + value.id.toString(16).padStart(2, '0'),
-                  attributeValue,
-                  attributeLocalValue,
-                });
-              });
-            });
-          });
-        });
-        client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, plugin: data.params.plugin, deviceName, serialNumber, endpoint: data.params.endpoint, deviceTypes, response: clusters }));
+        const response = this.getClusters(data.params.plugin, data.params.endpoint);
+        if (response) {
+          client.send(
+            JSON.stringify({
+              id: data.id,
+              method: data.method,
+              src: 'Matterbridge',
+              dst: data.src,
+              plugin: data.params.plugin,
+              deviceName: response.deviceName,
+              serialNumber: response.serialNumber,
+              endpoint: response.endpoint,
+              deviceTypes: response.deviceTypes,
+              response: response.clusters,
+            }),
+          );
+        } else {
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter endpoint in /api/clusters' }));
+        }
       } else if (data.method === '/api/select' || data.method === '/api/select/devices') {
         if (!isValidString(data.params.plugin, 10)) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select' }));

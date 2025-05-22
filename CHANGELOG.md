@@ -8,6 +8,22 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.0.4] - 2025-05-??
+
+### Added
+
+### Changed
+
+- [legacy]: Removed legacy matter.js EndpointServer.
+- [package]: Updated dependencies.
+- [package]: Updated multer package to 2.0.0.
+
+### Fixed
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.0.3] - 2025-05-19
 
 ### New plugins
@@ -23,10 +39,10 @@ AEG RX 9 / Electrolux Pure i9 robot vacuum plugin for Matterbridge.
 
 ### Added
 
-- [virtual] Added virtual devices configuration mode in the Matterbridge Settings: 'Disabled', 'Light', 'Outlet', 'Switch', 'Mounted_switch'. Switch is not supported by Alexa. Mounted Switch is not supported by Apple.
-- [deviceTypes] Added evse, waterHeater, solarPower, batteryStorage and heatPump device type.
-- [waterHeater] Added WaterHeater class to create a Water Heater Device Type in one line of code (thanks https://github.com/lboue).
-- [subscribe] Added a third parameter context (provisional implementation: when "context.offline === true" then this is a change coming from the device).
+- [virtual]: Added virtual devices configuration mode in the Matterbridge Settings: 'Disabled', 'Light', 'Outlet', 'Switch', 'Mounted_switch'. Switch is not supported by Alexa. Mounted Switch is not supported by Apple.
+- [deviceTypes]: Added evse, waterHeater, solarPower, batteryStorage and heatPump device type.
+- [waterHeater]: Added WaterHeater class to create a Water Heater Device Type in one line of code (thanks https://github.com/lboue).
+- [subscribe]: Added a third parameter context (provisional implementation: when "context.offline === true" then this is a change coming from the device).
 
 ### Changed
 
