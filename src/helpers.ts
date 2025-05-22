@@ -68,7 +68,7 @@ export async function addVirtualDevice(aggregatorEndpoint: Endpoint<AggregatorEn
   }
   const device = new Endpoint(deviceType, {
     id: name.replaceAll(' ', '') + ':' + type,
-    bridgedDeviceBasicInformation: { nodeLabel: name },
+    bridgedDeviceBasicInformation: { nodeLabel: name.slice(0, 32) },
     onOff: { onOff: false, startUpOnOff: OnOff.StartUpOnOff.Off },
   });
 
