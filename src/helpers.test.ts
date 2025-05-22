@@ -18,7 +18,7 @@ const { getShelly, postShelly } = await import('./shelly.js');
 (getShelly as jest.MockedFunction<(api: string, timeout?: number) => Promise<void>>).mockResolvedValue();
 (postShelly as jest.MockedFunction<(api: string, data: any, timeout?: number) => Promise<void>>).mockResolvedValue();
 
-import { DeviceTypeId, VendorId, ServerNode, Endpoint, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment, EndpointServer } from '@matter/main';
+import { DeviceTypeId, VendorId, ServerNode, Endpoint, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
 import { AggregatorEndpoint, RootEndpoint } from '@matter/main/endpoints';
 import { BridgedDeviceBasicInformationServer, OnOffServer } from '@matter/main/behaviors';
 import { logEndpoint, MdnsService } from '@matter/main/protocol';
@@ -156,7 +156,6 @@ describe('Matterbridge Helpers', () => {
 
   test('log the server node', async () => {
     expect(server).toBeDefined();
-    // logEndpoint(EndpointServer.forEndpoint(server));
   });
 
   test('add a light virtual device', async () => {
@@ -171,7 +170,6 @@ describe('Matterbridge Helpers', () => {
     expect(device.stateOf(BridgedDeviceBasicInformationServer).nodeLabel).toBe('Test Device');
     expect(device.stateOf(OnOffServer).onOff).toBe(false);
     expect(aggregator.parts.has('TestDevice:light')).toBeTruthy();
-    // logEndpoint(EndpointServer.forEndpoint(device));
   });
 
   test('send command to the virtual device', async () => {

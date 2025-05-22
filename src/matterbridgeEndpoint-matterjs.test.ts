@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
-import { DeviceTypeId, VendorId, ServerNode, Endpoint, EndpointServer, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel } from '@matter/main';
+import { DeviceTypeId, VendorId, ServerNode, Endpoint, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel } from '@matter/main';
 import {
   ColorControl,
   Descriptor,
@@ -350,11 +350,11 @@ describe('MatterbridgeEndpointMatterJs', () => {
 
   test('add onOffLight device to serverNode', async () => {
     expect(await server.add(light)).toBeDefined();
-    expect(EndpointServer.forEndpoint(light).hasClusterServer(DescriptorCluster)).toBe(true);
-    expect(EndpointServer.forEndpoint(light).hasClusterServer(IdentifyCluster)).toBe(true);
-    expect(EndpointServer.forEndpoint(light).hasClusterServer(GroupsCluster)).toBe(true);
-    expect(EndpointServer.forEndpoint(light).hasClusterServer(ScenesManagementCluster)).toBe(false);
-    expect(EndpointServer.forEndpoint(light).hasClusterServer(OnOffCluster)).toBe(true);
+    expect(light.hasClusterServer(DescriptorCluster)).toBe(true);
+    expect(light.hasClusterServer(IdentifyCluster)).toBe(true);
+    expect(light.hasClusterServer(GroupsCluster)).toBe(true);
+    expect(light.hasClusterServer(ScenesManagementCluster)).toBe(false);
+    expect(light.hasClusterServer(OnOffCluster)).toBe(true);
   });
 
   test('add rollerDevice device to serverNode', async () => {
@@ -433,7 +433,6 @@ describe('MatterbridgeEndpointMatterJs', () => {
       ],
     });
     expect(await server.add(endpoint)).toBeDefined();
-    logEndpoint(EndpointServer.forEndpoint(endpoint));
   });
 
   test('add deviceType to onOffPlugin with tagList', async () => {
@@ -470,7 +469,6 @@ describe('MatterbridgeEndpointMatterJs', () => {
       }),
     ).not.toThrow();
     await expect(server.add(endpoint)).resolves.toBeDefined();
-    logEndpoint(EndpointServer.forEndpoint(endpoint));
   });
 
   test('add deviceType to onOffPlugin in the costructor', async () => {
@@ -499,7 +497,6 @@ describe('MatterbridgeEndpointMatterJs', () => {
     });
     expect(endpoint).toBeDefined();
     await expect(server.add(endpoint)).resolves.toBeDefined();
-    logEndpoint(EndpointServer.forEndpoint(endpoint));
     const deviceTypeList = endpoint.state.descriptor.deviceTypeList;
     expect(deviceTypeList).toHaveLength(3);
     expect(deviceTypeList[0].deviceType).toBe(onOffOutlet.code);
@@ -523,10 +520,6 @@ describe('MatterbridgeEndpointMatterJs', () => {
     });
     expect(endpoint).toBeDefined();
     await expect(server.add(endpoint)).resolves.toBeDefined();
-    // consoleLogSpy?.mockRestore();
-    // consoleInfoSpy?.mockRestore();
-    // logEndpoint(EndpointServer.forEndpoint(endpoint));
-    // console.log('ContactSensor1 descriptor state:', endpoint.state.descriptor);
   });
 
   test('create an Rvc device', async () => {
@@ -570,16 +563,6 @@ describe('MatterbridgeEndpointMatterJs', () => {
 
   test('log onOffLight', async () => {
     expect(light).toBeDefined();
-    /*
-      logEndpoint(EndpointServer.forEndpoint(light));
-      expect(EndpointServer.forEndpoint(light).hasClusterServer(DescriptorCluster)).toBe(true);
-      expect(EndpointServer.forEndpoint(light).hasClusterServer(BasicInformationCluster)).toBe(false);
-      expect(EndpointServer.forEndpoint(light).hasClusterServer(BridgedDeviceBasicInformationCluster)).toBe(false);
-      expect(EndpointServer.forEndpoint(light).hasClusterServer(IdentifyCluster)).toBe(true);
-      expect(EndpointServer.forEndpoint(light).hasClusterServer(OnOffCluster)).toBe(true);
-      expect(EndpointServer.forEndpoint(light).hasClusterServer(GroupsCluster)).toBe(true);
-      expect(EndpointServer.forEndpoint(light).hasClusterServer(ScenesManagementCluster)).toBe(false);
-      */
   });
 
   test('get MatterbridgeServerDevice', async () => {
