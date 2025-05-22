@@ -1424,7 +1424,7 @@ export class Frontend {
             }),
           );
         } else {
-          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter endpoint in /api/clusters' }));
+          client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Endpoint not found in /api/clusters' }));
         }
       } else if (data.method === '/api/select' || data.method === '/api/select/devices') {
         if (!isValidString(data.params.plugin, 10)) {

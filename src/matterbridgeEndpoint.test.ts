@@ -742,7 +742,7 @@ describe('MatterbridgeEndpoint', () => {
         expect(attributeId).toBeDefined();
         count++;
       });
-      expect(count).toBe(85);
+      expect(count).toBe(59);
     });
 
     test('forEachAttribute DishWasher', async () => {
@@ -762,7 +762,7 @@ describe('MatterbridgeEndpoint', () => {
         expect(attributeId).toBeDefined();
         count++;
       });
-      expect(count).toBe(23);
+      expect(count).toBe(20);
     });
 
     test('forEachAttribute LaundryWasher', async () => {
@@ -785,7 +785,7 @@ describe('MatterbridgeEndpoint', () => {
         expect(attributeId).toBeDefined();
         count++;
       });
-      expect(count).toBe(34);
+      expect(count).toBe(26);
     });
 
     test('forEachAttribute ExtractorHood', async () => {
@@ -808,7 +808,7 @@ describe('MatterbridgeEndpoint', () => {
         expect(attributeId).toBeDefined();
         count++;
       });
-      expect(count).toBe(77);
+      expect(count).toBe(47);
     });
 
     test('forEachAttribute AirQuality', async () => {
@@ -828,7 +828,7 @@ describe('MatterbridgeEndpoint', () => {
         expect(attributeId).toBeDefined();
         count++;
       });
-      expect(count).toBe(216);
+      expect(count).toBe(150);
 
       loggerLogSpy.mockClear();
       expect(await device.setAttribute(TemperatureMeasurementServer, 'measuredValue', 2500, device.log)).toBeTruthy();

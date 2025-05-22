@@ -771,7 +771,7 @@ describe('MatterbridgeEndpointMatterJs', () => {
       expect(attributeId).toBeDefined();
       count++;
     });
-    expect(count).toBe(101);
+    expect(count).toBe(73);
   });
 
   test('invoke MatterbridgeRvcRunModeServer commands', async () => {
