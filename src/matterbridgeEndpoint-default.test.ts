@@ -39,9 +39,11 @@ import {
   HepaFilterMonitoring,
   ActivatedCarbonFilterMonitoring,
   ResourceMonitoring,
+  ScenesManagement,
 } from '@matter/main/clusters';
 import {
   AirQualityServer,
+  BooleanStateServer,
   CarbonDioxideConcentrationMeasurementServer,
   CarbonMonoxideConcentrationMeasurementServer,
   ColorControlBehavior,
@@ -57,7 +59,7 @@ import {
   RadonConcentrationMeasurementServer,
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/node/behaviors';
-import { AnsiLogger, db, er, hk, LogLevel, or } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 import path from 'node:path';
 import { rmSync } from 'node:fs';
 
@@ -89,7 +91,7 @@ import {
   waterLeakDetector,
   waterValve,
 } from './matterbridgeDeviceTypes.js';
-import { updateAttribute } from './matterbridgeEndpointHelpers.js';
+import { capitalizeFirstLetter, updateAttribute } from './matterbridgeEndpointHelpers.js';
 import { log } from 'node:console';
 
 const MATTER_PORT = 6002;
@@ -239,20 +241,17 @@ describe('Matterbridge ' + HOMEDIR, () => {
     await add(device);
   });
 
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /*
-    test('createDefaultScenesClusterServer', async () => {
-      const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight13', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
-      expect(device).toBeDefined();
-      device.createDefaultScenesClusterServer();
-      expect(device.hasClusterServer(ScenesManagement.Cluster)).toBe(true);
+  test('createDefaultScenesClusterServer', async () => {
+    const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight13', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    expect(device).toBeDefined();
+    device.createDefaultScenesClusterServer();
+    expect(device.hasClusterServer(ScenesManagement.Cluster)).toBe(true);
 
-      device.addRequiredClusterServers();
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
-    });
-    */
+    device.addRequiredClusterServers();
+    expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
+    expect(device.lifecycle.isReady).toBeTruthy();
+    expect(device.construction.status).toBe(Lifecycle.Status.Active);
+  });
 
   test('createDefaultOnOffClusterServer', async () => {
     const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight14', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
@@ -733,29 +732,38 @@ describe('Matterbridge ' + HOMEDIR, () => {
       device.log,
     );
 
-    await device.triggerEvent(BooleanState.Cluster.id, 'stateChange', { stateValue: true });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`triggerEvent ${hk}booleanState.stateChange${er} error`));
+    jest.clearAllMocks();
+    await device.triggerEvent(BooleanStateConfiguration.Cluster.id, 'stateChange', { stateValue: true });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`triggerEvent ${hk}stateChange${er} error: cluster not found on endpoint ${or}ContactSensor${er}:${or}undefined${er}`));
 
+    jest.clearAllMocks();
+    await device.triggerEvent(BooleanState.Cluster.id, 'stateChange', { stateValue: true });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`triggerEvent ${hk}booleanState.stateChange${er} error: Endpoint ${or}ContactSensor${er}:${or}undefined${er} is in the ${BLUE}inactive${er} state`));
+
+    jest.clearAllMocks();
     await device.setAttribute(BooleanState.Cluster.id, 'stateValue', true);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`setAttribute ${hk}booleanState.stateValue${er} error: Endpoint`));
 
     await add(device);
 
     expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue')).toBe(false);
-
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Subscribed endpoint`));
     await device.setAttribute(BooleanState.Cluster.id, 'stateValue', true);
     expect(called).toBe(true);
 
+    jest.clearAllMocks();
     await device.setAttribute(BooleanStateConfiguration.Cluster.id, 'stateValue', true, device.log);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`setAttribute ${hk}stateValue${er} error`));
 
+    jest.clearAllMocks();
     await device.setAttribute(BooleanState.Cluster.id, 'state', true, device.log);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`setAttribute error: Attribute ${hk}state${er} not found`));
 
+    jest.clearAllMocks();
     device.getAttribute(BooleanStateConfiguration.Cluster.id, 'state', device.log);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`getAttribute ${hk}state${er} error: cluster not found on endpoint`));
 
+    jest.clearAllMocks();
     device.getAttribute(BooleanState.Cluster.id, 'state', device.log);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`getAttribute error: Attribute ${hk}state${er} not found`));
 
@@ -779,11 +787,33 @@ describe('Matterbridge ' + HOMEDIR, () => {
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`subscribeAttribute error: Attribute ${hk}state${er} not found`));
 
-    await device.triggerEvent(BooleanState.Cluster.id, 'stateChange', { stateValue: true }, device.log);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Trigger event`));
+    jest.clearAllMocks();
+    await device.triggerEvent(BooleanState.Cluster, 'stateChange', { stateValue: true }, device.log);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Trigger event ${hk}BooleanState${db}.${hk}stateChange${db} with`));
 
+    jest.clearAllMocks();
+    await device.triggerEvent(BooleanState.Cluster.id, 'stateChange', { stateValue: true }, device.log);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Trigger event ${hk}BooleanState${db}.${hk}stateChange${db} with`));
+
+    jest.clearAllMocks();
+    await device.triggerEvent(BooleanStateServer, 'stateChange', { stateValue: true }, device.log);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Trigger event ${hk}BooleanState${db}.${hk}stateChange${db} with`));
+
+    jest.clearAllMocks();
+    await device.triggerEvent('BooleanState', 'stateChange', { stateValue: true }, device.log);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Trigger event ${hk}BooleanState${db}.${hk}stateChange${db} with`));
+
+    jest.clearAllMocks();
+    await device.triggerEvent('booleanState', 'stateChange', { stateValue: true }, device.log);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Trigger event ${hk}BooleanState${db}.${hk}stateChange${db} with`));
+
+    jest.clearAllMocks();
     await device.triggerEvent(BooleanStateConfiguration.Cluster.id, 'stateChange', { stateValue: true });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`triggerEvent ${hk}stateChange${er} error`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`triggerEvent ${hk}stateChange${er} error: cluster not found on endpoint`));
+
+    jest.clearAllMocks();
+    await device.triggerEvent(BooleanState.Cluster.id, 'state', { stateValue: true });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`triggerEvent ${hk}state${er} error: cluster booleanState not found on endpoint`));
   });
 
   test('createDefaultBooleanStateConfigurationClusterServer for waterFreezeDetector', async () => {

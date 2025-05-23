@@ -558,6 +558,48 @@ export async function subscribeAttribute(
 }
 
 /**
+ * Triggers an event on the specified cluster.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to trigger the event on.
+ * @param {ClusterId} clusterId - The ID of the cluster.
+ * @param {string} event - The name of the event to trigger.
+ * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} payload - The payload to pass to the event.
+ * @param {AnsiLogger} [log] - Optional logger for logging information.
+ * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the event was successfully triggered.
+ */
+export async function triggerEvent(
+  endpoint: MatterbridgeEndpoint,
+  cluster: Behavior.Type | ClusterType | ClusterId | string,
+  event: string,
+  payload: Record<string, boolean | number | bigint | string | object | undefined | null>,
+  log?: AnsiLogger,
+): Promise<boolean> {
+  const clusterName = getBehavior(endpoint, cluster)?.id;
+  if (!clusterName) {
+    endpoint.log.error(`triggerEvent ${hk}${event}${er} error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+    return false;
+  }
+
+  if (endpoint.construction.status !== Lifecycle.Status.Active) {
+    endpoint.log.error(`triggerEvent ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+    return false;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const events = endpoint.events as Record<string, Record<string, any>>;
+  if (!(clusterName in events) || !(event in events[clusterName])) {
+    endpoint.log.error(`triggerEvent ${hk}${event}${er} error: cluster ${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+    return false;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  await endpoint.act((agent) => agent[clusterName].events[event].emit(payload, agent.context));
+  log?.info(`${db}Trigger event ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${event}${db} with ${debugStringify(payload)}${db} on endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} `);
+  return true;
+}
+
+/**
  * Get the default OperationalState Cluster Server.
  *
  * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state.

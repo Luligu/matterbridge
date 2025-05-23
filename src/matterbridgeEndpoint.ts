@@ -22,7 +22,7 @@
  */
 
 // AnsiLogger module
-import { AnsiLogger, BLUE, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, er, hk, or, zb } from './logger/export.js';
+import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from './logger/export.js';
 
 // Matterbridge
 import { bridgedNode, DeviceTypeDefinition, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
@@ -51,7 +51,6 @@ import {
   addOptionalClusterServers,
   addRequiredClusterServers,
   addUserLabel,
-  capitalizeFirstLetter,
   createUniqueId,
   getBehavior,
   getBehaviourTypesFromClusterClientIds,
@@ -73,6 +72,7 @@ import {
   generateUniqueId,
   subscribeAttribute,
   invokeBehaviorCommand,
+  triggerEvent,
 } from './matterbridgeEndpointHelpers.js';
 
 // @matter
@@ -474,33 +474,14 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Triggers an event on the specified cluster.
-   *
-   * @param {ClusterId} clusterId - The ID of the cluster.
+   * @param {ClusterId} cluster - The ID of the cluster.
    * @param {string} event - The name of the event to trigger.
    * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} payload - The payload to pass to the event.
    * @param {AnsiLogger} [log] - Optional logger for logging information.
    * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the event was successfully triggered.
    */
-  async triggerEvent(clusterId: ClusterId, event: string, payload: Record<string, boolean | number | bigint | string | object | undefined | null>, log?: AnsiLogger): Promise<boolean> {
-    const clusterName = lowercaseFirstLetter(getClusterNameById(clusterId));
-
-    if (this.construction.status !== Lifecycle.Status.Active) {
-      this.log.error(`triggerEvent ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${this.maybeId}${er}:${or}${this.maybeNumber}${er} is in the ${BLUE}${this.construction.status}${er} state`);
-      return false;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const events = this.events as Record<string, Record<string, any>>;
-    if (!(clusterName in events) || !(event in events[clusterName])) {
-      this.log.error(`triggerEvent ${hk}${event}${er} error: Cluster ${'0x' + clusterId.toString(16).padStart(4, '0')}:${clusterName} not found on endpoint ${or}${this.id}${er}:${or}${this.number}${er}`);
-      return false;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    await this.act((agent) => agent[clusterName].events[event].emit(payload, agent.context));
-    log?.info(`${db}Trigger event ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${event}${db} with ${debugStringify(payload)}${db} on endpoint ${or}${this.id}${db}:${or}${this.number}${db} `);
-    return true;
+  async triggerEvent(cluster: Behavior.Type | ClusterType | ClusterId | string, event: string, payload: Record<string, boolean | number | bigint | string | object | undefined | null>, log?: AnsiLogger): Promise<boolean> {
+    return await triggerEvent(this, cluster, event, payload, log);
   }
 
   /**

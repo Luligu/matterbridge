@@ -12,7 +12,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
-- [jsdoc]: Improved explanation on jsdoc cluster helpers.
+- [jsdoc]: Improved jsdoc for cluster helpers.
 - [cover]: Added createDefaultTiltWindowCoveringClusterServer().
 
 ### Changed
