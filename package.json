@@ -120,7 +120,9 @@
     "deepCleanBuild": "npm run deepClean && npm install && npm run build && npm link && npx jest --clearCache",
     "runMeBeforePublish": "npm run lint && npm run format && npm run build && npm run test",
     "git:status": "git status && git branch -vv && git diff dev origin/dev",
-    "git:hardreset": "git fetch origin && git checkout dev && git reset --hard origin/dev",
+    "git:hardreset:main": "git fetch origin && git checkout main && git reset --hard origin/main",
+    "git:hardreset:dev": "git fetch origin && git checkout dev && git reset --hard origin/dev",
+    "git:hardreset:edge": "git fetch origin && git checkout edge && git reset --hard origin/edge",
     "prepublishOnly": "npm pkg delete devDependencies scripts && npm install --omit=dev && npm shrinkwrap",
     "prepublishOnlyProduction": "npm run cleanBuildProduction && npm pkg delete devDependencies scripts types && npx rimraf ./node_modules && npm install --omit=dev && npm shrinkwrap",
     "npmPack": "copy package.json package.log && npm run prepublishOnlyProduction && npm pack && copy package.log package.json && npm run deepCleanBuild",
@@ -139,7 +141,7 @@
     "install:jest": "npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest && npm run test"
   },
   "dependencies": {
-    "@matter/main": "0.13.0",
+    "@matter/main": "^0.14.0-alpha.0-20250521-979eda05d",
     "archiver": "7.0.1",
     "express": "5.1.0",
     "glob": "11.0.2",
