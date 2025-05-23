@@ -1,7 +1,7 @@
 // src\matterbridgeEndpointHelpers.ts
 
 // @matter
-import { Behavior, ClusterBehavior, ClusterId, Endpoint, Lifecycle } from '@matter/main';
+import { ActionContext, Behavior, ClusterBehavior, ClusterId, Endpoint, Lifecycle } from '@matter/main';
 import { ClusterType, getClusterNameById } from '@matter/main/types';
 
 // @matter clusters
@@ -221,6 +221,10 @@ export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
   return behavior;
 }
 
+/**
+ * Invokes a command on the specified behavior of the endpoint.
+ * @deprecated Used ONLY in Jest tests.
+ */
 export async function invokeBehaviorCommand(
   endpoint: MatterbridgeEndpoint,
   cluster: Behavior.Type | ClusterType | ClusterId | string,
@@ -524,7 +528,7 @@ export async function subscribeAttribute(
   cluster: Behavior.Type | ClusterType | ClusterId | string,
   attribute: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  listener: (newValue: any, oldValue: any, context?: any) => void,
+  listener: (newValue: any, oldValue: any, context: ActionContext) => void,
   log?: AnsiLogger,
 ): Promise<boolean> {
   const clusterName = getBehavior(endpoint, cluster)?.id;
