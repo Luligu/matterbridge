@@ -91,6 +91,9 @@ import {
 } from './matterbridgeDeviceTypes.js';
 import { updateAttribute } from './matterbridgeEndpointHelpers.js';
 
+const MATTER_PORT = 6002;
+const HOMEDIR = 'EndpointDefault';
+
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
 let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
@@ -116,9 +119,9 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync(path.join('test', 'EndpointDefault'), { recursive: true, force: true });
+rmSync(path.join('test', HOMEDIR), { recursive: true, force: true });
 
-describe('MatterbridgeEndpointDefault', () => {
+describe('Matterbridge ' + HOMEDIR, () => {
   let matterbridge: Matterbridge;
   let device: MatterbridgeEndpoint;
 
@@ -146,7 +149,7 @@ describe('MatterbridgeEndpointDefault', () => {
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
-    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-homedir', path.join('test', 'EndpointDefault'), '-bridge', '-logger', 'info', '-matterlogger', 'info'];
+    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', path.join('test', HOMEDIR), '-bridge', '-logger', 'info', '-matterlogger', 'info'];
     matterbridge = await Matterbridge.loadInstance(true);
     await waitForOnline();
   }, 30000);
