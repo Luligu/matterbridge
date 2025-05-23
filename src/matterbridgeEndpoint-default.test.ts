@@ -149,7 +149,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
-    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', path.join('test', HOMEDIR), '-bridge', '-logger', 'info', '-matterlogger', 'info'];
+    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', path.join('test', HOMEDIR), '-bridge', '-logger', 'debug', '-matterlogger', 'debug'];
     matterbridge = await Matterbridge.loadInstance(true);
     await waitForOnline();
   }, 30000);
@@ -415,7 +415,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
   });
 
   test('createDefaultWindowCoveringClusterServer', async () => {
-    const device = new MatterbridgeEndpoint(coverDevice, { uniqueStorageKey: 'Screen' });
+    const device = new MatterbridgeEndpoint(coverDevice, { uniqueStorageKey: 'LiftScreen' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.createDefaultWindowCoveringClusterServer();
@@ -439,6 +439,33 @@ describe('Matterbridge ' + HOMEDIR, () => {
     await device.setWindowCoveringTargetAndCurrentPosition(50);
     expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')).toBe(50);
     expect(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths')).toBe(50);
+  });
+
+  test('createDefaultTiltWindowCoveringClusterServer', async () => {
+    const device = new MatterbridgeEndpoint(coverDevice, { uniqueStorageKey: 'TiltScreen' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultTiltWindowCoveringClusterServer();
+    expect(device.hasAttributeServer('WindowCovering', 'type')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'operationalStatus')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'mode')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'targetPositionLiftPercent100ths')).toBe(false);
+    expect(device.hasAttributeServer('WindowCovering', 'currentPositionLiftPercent100ths')).toBe(false);
+    expect(device.hasAttributeServer('WindowCovering', 'targetPositionTiltPercent100ths')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'currentPositionTiltPercent100ths')).toBe(true);
+
+    await add(device);
+
+    await device.setWindowCoveringTargetAsCurrentAndStopped();
+    expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths')).toBe(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths'));
+    expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Stopped);
+    await device.setWindowCoveringCurrentTargetStatus(50, 50, WindowCovering.MovementStatus.Closing);
+    expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Closing);
+    await device.setWindowCoveringStatus(WindowCovering.MovementStatus.Opening);
+    expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Opening);
+    await device.setWindowCoveringTargetAndCurrentPosition(50);
+    expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths')).toBe(50);
+    expect(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths')).toBe(50);
   });
 
   test('createDefaultThermostatClusterServer', async () => {

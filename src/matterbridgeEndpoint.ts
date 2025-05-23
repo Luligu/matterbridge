@@ -1328,12 +1328,12 @@ export class MatterbridgeEndpoint extends Endpoint {
       type: WindowCovering.WindowCoveringType.Rollershade,
       configStatus: {
         operational: true,
-        onlineReserved: true,
+        onlineReserved: false,
         liftMovementReversed: false,
         liftPositionAware: true,
         tiltPositionAware: false,
-        liftEncoderControlled: false,
-        tiltEncoderControlled: false,
+        liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
+        tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
       },
       operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
       endProductType: WindowCovering.EndProductType.RollerShade,
@@ -1352,18 +1352,18 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultTiltWindowCoveringClusterServer(positionPercent100ths?: number) {
     this.behaviors.require(MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt), {
-      type: WindowCovering.WindowCoveringType.Rollershade,
+      type: WindowCovering.WindowCoveringType.Shutter,
       configStatus: {
         operational: true,
-        onlineReserved: true,
+        onlineReserved: false,
         liftMovementReversed: false,
-        liftPositionAware: true,
-        tiltPositionAware: false,
-        liftEncoderControlled: false,
-        tiltEncoderControlled: false,
+        liftPositionAware: false,
+        tiltPositionAware: true,
+        liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
+        tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
       },
       operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
-      endProductType: WindowCovering.EndProductType.RollerShade,
+      endProductType: WindowCovering.EndProductType.TiltOnlyPergola,
       mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false },
       targetPositionTiltPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
       currentPositionTiltPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
