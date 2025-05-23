@@ -90,6 +90,7 @@ import {
   waterValve,
 } from './matterbridgeDeviceTypes.js';
 import { updateAttribute } from './matterbridgeEndpointHelpers.js';
+import { log } from 'node:console';
 
 const MATTER_PORT = 6002;
 const HOMEDIR = 'EndpointDefault';
@@ -430,13 +431,18 @@ describe('Matterbridge ' + HOMEDIR, () => {
     await add(device);
 
     await device.setWindowCoveringTargetAsCurrentAndStopped();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to 0 and operationalStatus to Stopped.`));
     expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')).toBe(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths'));
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Stopped);
     await device.setWindowCoveringCurrentTargetStatus(50, 50, WindowCovering.MovementStatus.Closing);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths: 50, targetPositionLiftPercent100ths: 50 and operationalStatus: 2.`));
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Closing);
     await device.setWindowCoveringStatus(WindowCovering.MovementStatus.Opening);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering operationalStatus: 1`));
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Opening);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Get WindowCovering operationalStatus: 1`));
     await device.setWindowCoveringTargetAndCurrentPosition(50);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths: 50 and targetPositionLiftPercent100ths: 50.`));
     expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')).toBe(50);
     expect(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths')).toBe(50);
   });
@@ -457,13 +463,18 @@ describe('Matterbridge ' + HOMEDIR, () => {
     await add(device);
 
     await device.setWindowCoveringTargetAsCurrentAndStopped();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionTiltPercent100ths and targetPositionTiltPercent100ths to 0 and operationalStatus to Stopped.`));
     expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths')).toBe(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths'));
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Stopped);
     await device.setWindowCoveringCurrentTargetStatus(50, 50, WindowCovering.MovementStatus.Closing);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionTiltPercent100ths: 50, targetPositionTiltPercent100ths: 50 and operationalStatus: 2.`));
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Closing);
     await device.setWindowCoveringStatus(WindowCovering.MovementStatus.Opening);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering operationalStatus: 1`));
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Opening);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Get WindowCovering operationalStatus: 1`));
     await device.setWindowCoveringTargetAndCurrentPosition(50);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionTiltPercent100ths: 50 and targetPositionTiltPercent100ths: 50.`));
     expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths')).toBe(50);
     expect(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths')).toBe(50);
   });
