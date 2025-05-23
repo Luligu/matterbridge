@@ -5,7 +5,7 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
-import { Lifecycle, EndpointNumber } from '@matter/main';
+import { Lifecycle, EndpointNumber, ActionContext } from '@matter/main';
 import {
   BooleanState,
   BooleanStateCluster,
@@ -81,7 +81,7 @@ let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
 let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
 let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
 let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = true; // Set to true to enable debug logs
+const debug = false; // Set to true to enable debug logs
 
 if (!debug) {
   loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
@@ -592,8 +592,6 @@ describe('Matterbridge ' + HOMEDIR, () => {
       ]);
     });
 
-    // eslint-disable-next-line jest/no-commented-out-tests
-    /*
     test('subscribeAttribute without await', async () => {
       const device = new MatterbridgeEndpoint(rainSensor, { uniqueStorageKey: 'RainSensorI' }, true);
       expect(device).toBeDefined();
@@ -602,31 +600,39 @@ describe('Matterbridge ' + HOMEDIR, () => {
       expect(device.hasAttributeServer(IdentifyBehavior, 'identifyTime')).toBe(true);
       expect(device.hasAttributeServer(BooleanStateCluster, 'stateValue')).toBe(true);
 
-      let state = false;
-      const listener = async (value: any) => {
-        state = value;
+      let newState = false;
+      let oldState = false;
+      let offlineState: boolean | undefined = false;
+      const listener = (newValue: boolean, oldValue: boolean, context: ActionContext) => {
+        newState = newValue;
+        oldState = oldValue;
+        offlineState = context.offline;
       };
       device.subscribeAttribute('booleanState', 'stateValue', listener, device.log);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`is in the ${BLUE}inactive${db} state`));
 
       await add(device);
-      console.log('subscribeAttribute without await: add(device)', state);
+      console.log('subscribeAttribute without await: add(device)', newState);
 
       await device.setAttribute(BooleanStateCluster, 'stateValue', false, device.log);
-      expect(state).toBe(false);
+      expect(newState).toBe(false);
+      expect(oldState).toBe(true);
+      expect(offlineState).toBe(true);
       expect(device.getAttribute(BooleanStateServer, 'stateValue', device.log)).toBe(false);
       await device.setAttribute(BooleanStateCluster, 'stateValue', true, device.log);
-      expect(state).toBe(true);
-      console.log('subscribeAttribute without await: state', state);
+      expect(newState).toBe(true);
+      expect(oldState).toBe(false);
+      expect(offlineState).toBe(true);
+      console.log('subscribeAttribute without await: state', newState);
       expect(device.getAttribute(BooleanStateBehavior, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanStateServer, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanState.Cluster, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute('BooleanState', 'stateValue', device.log)).toBe(true);
-      console.log('subscribeAttribute without await: state', state);
+      console.log('subscribeAttribute without await: state', newState);
     });
 
-    test('subscribeAttribute await', async () => {
+    test('subscribeAttribute with await', async () => {
       const device = new MatterbridgeEndpoint(rainSensor, { uniqueStorageKey: 'RainSensorII' }, true);
       expect(device).toBeDefined();
       device.createDefaultIdentifyClusterServer();
@@ -636,9 +642,13 @@ describe('Matterbridge ' + HOMEDIR, () => {
       expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'booleanState']);
       await add(device);
 
-      let state = false;
-      const listener = async (value: any) => {
-        state = value;
+      let newState = false;
+      let oldState = false;
+      let offlineState: boolean | undefined = false;
+      const listener = (newValue: boolean, oldValue: boolean, context: ActionContext) => {
+        newState = newValue;
+        oldState = oldValue;
+        offlineState = context.offline;
       };
 
       expect(await device.subscribeAttribute('booleanStateXX', 'stateValue', listener, device.log)).toBe(false);
@@ -651,7 +661,9 @@ describe('Matterbridge ' + HOMEDIR, () => {
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Subscribed endpoint `));
 
       await device.setAttribute(BooleanStateCluster, 'stateValue', false, device.log);
-      expect(state).toBe(false);
+      expect(newState).toBe(false);
+      expect(oldState).toBe(true);
+      expect(offlineState).toBe(true);
       expect(device.getAttribute(BooleanStateBehavior, 'stateValue', device.log)).toBe(false);
       expect(device.getAttribute(BooleanStateServer, 'stateValue', device.log)).toBe(false);
       expect(device.getAttribute(BooleanState.Cluster, 'stateValue', device.log)).toBe(false);
@@ -659,14 +671,15 @@ describe('Matterbridge ' + HOMEDIR, () => {
       expect(device.getAttribute('BooleanState', 'stateValue', device.log)).toBe(false);
 
       await device.setAttribute(BooleanState.Cluster, 'stateValue', true, device.log);
-      expect(state).toBe(true);
+      expect(newState).toBe(true);
+      expect(oldState).toBe(false);
+      expect(offlineState).toBe(true);
       expect(device.getAttribute(BooleanStateBehavior, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanStateServer, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanState.Cluster, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute('BooleanState', 'stateValue', device.log)).toBe(true);
     });
-    */
 
     test('addCommandHandler', async () => {
       const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight7' });

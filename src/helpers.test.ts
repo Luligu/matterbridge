@@ -18,10 +18,10 @@ const { getShelly, postShelly } = await import('./shelly.js');
 (getShelly as jest.MockedFunction<(api: string, timeout?: number) => Promise<void>>).mockResolvedValue();
 (postShelly as jest.MockedFunction<(api: string, data: any, timeout?: number) => Promise<void>>).mockResolvedValue();
 
-import { DeviceTypeId, VendorId, ServerNode, Endpoint, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
+import { DeviceTypeId, VendorId, ServerNode, Endpoint, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment, Logger } from '@matter/main';
 import { AggregatorEndpoint, RootEndpoint } from '@matter/main/endpoints';
 import { BridgedDeviceBasicInformationServer, OnOffServer } from '@matter/main/behaviors';
-import { logEndpoint, MdnsService } from '@matter/main/protocol';
+import { MdnsService } from '@matter/main/protocol';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
@@ -31,13 +31,16 @@ import { addVirtualDevice, addVirtualDevices } from './helpers.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Matterbridge } from './matterbridge.js';
 
+const MATTER_PORT = 6004;
+const HOMEDIR = 'Helpers';
+
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
 let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
 let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
 let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
 let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false;
+const debug = true;
 
 if (!debug) {
   loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
@@ -55,8 +58,8 @@ if (!debug) {
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
 
-describe('Matterbridge Helpers', () => {
-  const log = new AnsiLogger({ logName: 'Helpers', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+describe('Matterbridge ' + HOMEDIR, () => {
+  const log = new AnsiLogger({ logName: HOMEDIR, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
   const environment = Environment.default;
   let server: ServerNode<ServerNode.RootEndpoint>;
@@ -83,11 +86,12 @@ describe('Matterbridge Helpers', () => {
 
   beforeAll(async () => {
     // Cleanup the matter environment
-    rmSync(path.join('test', 'Helpers'), { recursive: true, force: true });
+    rmSync(path.join('test', HOMEDIR), { recursive: true, force: true });
+
     // Setup the matter environment
     environment.vars.set('log.level', MatterLogLevel.DEBUG);
     environment.vars.set('log.format', MatterLogFormat.ANSI);
-    environment.vars.set('path.root', path.join('test', 'Helpers'));
+    environment.vars.set('path.root', path.join('test', HOMEDIR));
     environment.vars.set('runtime.signals', false);
     environment.vars.set('runtime.exitcode', false);
   }, 30000);
@@ -108,6 +112,10 @@ describe('Matterbridge Helpers', () => {
     // Create the server node
     server = await ServerNode.create({
       id: 'HelpersServerNode',
+
+      network: {
+        port: MATTER_PORT,
+      },
 
       productDescription: {
         name: 'HelpersServerNode',
@@ -156,6 +164,7 @@ describe('Matterbridge Helpers', () => {
 
   test('log the server node', async () => {
     expect(server).toBeDefined();
+    Logger.get('ServerNode').info(server);
   });
 
   test('add a light virtual device', async () => {

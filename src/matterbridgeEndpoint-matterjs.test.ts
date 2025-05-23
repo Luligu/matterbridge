@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
-import { DeviceTypeId, VendorId, ServerNode, Endpoint, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel } from '@matter/main';
+import { DeviceTypeId, VendorId, ServerNode, Endpoint, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Logger } from '@matter/main';
 import {
   ColorControl,
   Descriptor,
@@ -195,6 +195,11 @@ describe('Matterbridge ' + HOMEDIR, () => {
   test('create the server node', async () => {
     server = await (matterbridge as any).createServerNode(context, MATTER_PORT);
     expect(server).toBeDefined();
+  });
+
+  test('log the server node', async () => {
+    expect(server).toBeDefined();
+    Logger.get('ServerNode').info(server);
   });
 
   test('create a onOffLight device', async () => {
@@ -450,6 +455,22 @@ describe('Matterbridge ' + HOMEDIR, () => {
       ],
     });
     expect(await server.add(endpoint)).toBeDefined();
+
+    await new Promise<void>((resolve) => {
+      endpoint.events.occupancySensing.occupancy$Changed.on((newState, oldState, context) => {
+        // console.log(wr + 'occupancySensing.occupancy$Changed', newState, oldState, context);
+        expect(newState).toBeDefined();
+        expect(newState).toEqual({ 'occupied': true });
+        expect(oldState).toBeDefined();
+        expect(oldState).toEqual({ 'occupied': false });
+        expect(context).toBeDefined();
+        expect(context.offline).toBe(true);
+        if (newState.occupied && !oldState.occupied && context.offline) {
+          resolve();
+        }
+      });
+      endpoint.setStateOf(OccupancySensingServer, { occupancy: { occupied: true } });
+    });
   });
 
   test('add deviceType to onOffPlugin with tagList', async () => {
