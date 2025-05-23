@@ -12,13 +12,17 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [jsdoc]: Improved explanation on jsdoc cluster helpers.
+
 ### Changed
 
-- [legacy]: Removed legacy matter.js EndpointServer.
+- [legacy]: Removed legacy matter.js EndpointServer and logEndpoint that will be removed in matter.js 0.14.0. For developers: if you need to log the endpoint the call is Logger.get('LogEndpoint').info(endpoint).
 - [package]: Updated dependencies.
 - [package]: Updated multer package to 2.0.0.
 
 ### Fixed
+
+- [virtualDevice]: Fixed possible vulnerability in the length of the nodeLabel.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">

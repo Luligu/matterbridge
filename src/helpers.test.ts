@@ -40,7 +40,7 @@ let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
 let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
 let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
 let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = true;
+const debug = false; // Set to true to enable debug logging
 
 if (!debug) {
   loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
@@ -185,7 +185,19 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect(device).toBeDefined();
     expect(device.lifecycle.isReady).toBeTruthy();
     expect(device.stateOf(OnOffServer).onOff).toBe(false);
-    expect(await invokeBehaviorCommand(device as unknown as MatterbridgeEndpoint, OnOffServer, 'on')).toBe(true);
+
+    await new Promise<void>((resolve) => {
+      const listener = (value: boolean) => {
+        if (value === true) {
+          (device as any).events.onOff.onOff$Changed.off(listener);
+          resolve();
+        }
+      };
+      (device as any).events.onOff.onOff$Changed.on(listener);
+      device.setStateOf(OnOffServer, { onOff: true });
+    });
+    // expect(await invokeBehaviorCommand(device as unknown as MatterbridgeEndpoint, OnOffServer, 'on')).toBe(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     expect(consoleLogSpy).toHaveBeenCalledWith('Device turned on');
     expect(device.stateOf(OnOffServer).onOff).toBe(false);
   });
@@ -243,12 +255,33 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect(restartDevice).toBeDefined();
     if (!restartDevice) return;
     expect(restartDevice.stateOf(OnOffServer).onOff).toBe(false);
-    expect(await invokeBehaviorCommand(restartDevice as unknown as MatterbridgeEndpoint, OnOffServer, 'on')).toBe(true);
+
+    await new Promise<void>((resolve) => {
+      const listener = (value: boolean) => {
+        if (value === true) {
+          (restartDevice as any).events.onOff.onOff$Changed.off(listener);
+          resolve();
+        }
+      };
+      (restartDevice as any).events.onOff.onOff$Changed.on(listener);
+      restartDevice.setStateOf(OnOffServer, { onOff: true });
+    });
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     expect(mockMatterbridge.restartProcess).toHaveBeenCalled();
     expect(restartDevice.stateOf(OnOffServer).onOff).toBe(false);
 
     mockMatterbridge.restartMode = 'service';
-    expect(await invokeBehaviorCommand(restartDevice as unknown as MatterbridgeEndpoint, OnOffServer, 'on')).toBe(true);
+    await new Promise<void>((resolve) => {
+      const listener = (value: boolean) => {
+        if (value === true) {
+          (restartDevice as any).events.onOff.onOff$Changed.off(listener);
+          resolve();
+        }
+      };
+      (restartDevice as any).events.onOff.onOff$Changed.on(listener);
+      restartDevice.setStateOf(OnOffServer, { onOff: true });
+    });
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     expect(mockMatterbridge.shutdownProcess).toHaveBeenCalled();
     expect(restartDevice.stateOf(OnOffServer).onOff).toBe(false);
   });
@@ -258,9 +291,22 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect(updateDevice).toBeDefined();
     if (!updateDevice) return;
     expect(updateDevice.stateOf(OnOffServer).onOff).toBe(false);
-    expect(await invokeBehaviorCommand(updateDevice as unknown as MatterbridgeEndpoint, OnOffServer, 'on')).toBe(true);
+
+    await new Promise<void>((resolve) => {
+      const listener = (value: boolean) => {
+        if (value === true) {
+          (updateDevice as any).events.onOff.onOff$Changed.off(listener);
+          resolve();
+        }
+      };
+      (updateDevice as any).events.onOff.onOff$Changed.on(listener);
+      updateDevice.setStateOf(OnOffServer, { onOff: true });
+    });
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     expect(mockMatterbridge.updateProcess).toHaveBeenCalled();
     expect(updateDevice.stateOf(OnOffServer).onOff).toBe(false);
+
+    // expect(await invokeBehaviorCommand(updateDevice as unknown as MatterbridgeEndpoint, OnOffServer, 'on')).toBe(true);
   });
 
   test('add all the virtual devices with shelly parameter', async () => {

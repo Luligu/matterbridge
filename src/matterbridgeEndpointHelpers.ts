@@ -222,7 +222,8 @@ export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
 }
 
 /**
- * Invokes a command on the specified behavior of the endpoint.
+ * Invokes a command on the specified behavior of the endpoint. Used ONLY in Jest tests.
+ *
  * @deprecated Used ONLY in Jest tests.
  */
 export async function invokeBehaviorCommand(

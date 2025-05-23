@@ -551,7 +551,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Execute the command handler for the specified command. Mainly used in Jest tests.
+   * Execute the command handler for the specified command. Used ONLY in Jest tests.
    *
    * @param {keyof MatterbridgeEndpointCommands} command - The command to execute.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [request] - The optional request to pass to the handler function.
@@ -563,7 +563,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Invokes a behavior command on the specified cluster. Mainly used in Jest tests.
+   * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
    *
    * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
    * @param {string} command - The command to invoke.
@@ -631,7 +631,7 @@ export class MatterbridgeEndpoint extends Endpoint {
           // this.log.debug(`***forEachAttribute: cluster ${clusterName} not found`);
           continue;
         }
-        // Skip if the attribute is not present in the ClusterBehavior.Type
+        // Skip if the attribute is not present in the ClusterBehavior.Type. Also skip if the attribute it is an internal state.
         const attributeId = getAttributeId(this, clusterName, attributeName);
         if (attributeId === undefined) {
           // this.log.debug(`***forEachAttribute: attribute ${clusterName}.${attributeName} not found`);
@@ -927,7 +927,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default Basic Information Cluster Server for the server node.
+   * Setup the default Basic Information Cluster Server attributes for the server node.
    *
    * @param deviceName - The name of the device.
    * @param serialNumber - The serial number of the device.
@@ -989,6 +989,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param hardwareVersion - The hardware version of the device. Default is 1.
    * @param hardwareVersionString - The hardware version string of the device. Default is 'v.1.0.0'.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks The bridgedNode device type must be added to the deviceTypeList of the Descriptor cluster.
    */
   createDefaultBridgedDeviceBasicInformationClusterServer(
     deviceName: string,
@@ -1063,6 +1065,8 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default scenes management cluster server.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks The scenes management cluster server is still provisional and so not yet implemented.
    */
   createDefaultScenesClusterServer() {
     this.behaviors.require(ScenesManagementServer);
@@ -1070,7 +1074,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default OnOff cluster server for light devices.
+   * Creates a default OnOff cluster server for light devices with feature Lighting.
    *
    * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
    * @param {boolean} [globalSceneControl=false] - The global scene control state.
@@ -1104,7 +1108,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a DeadFront OnOff cluster server.
+   * Creates a DeadFront OnOff cluster server with feature DeadFrontBehavior.
    *
    * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -1117,7 +1121,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates an OffOnly OnOff cluster server.
+   * Creates an OffOnly OnOff cluster server with feature OffOnly.
    *
    * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -1130,7 +1134,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default level control cluster server for light devices.
+   * Creates a default level control cluster server for light devices with feature OnOff and Lighting.
    *
    * @param {number} [currentLevel=254] - The current level (default: 254).
    * @param {number} [minLevel=1] - The minimum level (default: 1).
@@ -1175,7 +1179,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default color control cluster server with Xy, HueSaturation and ColorTemperature.
+   * Creates a default color control cluster server with features Xy, HueSaturation and ColorTemperature.
    *
    * @param currentX - The current X value (range 0-65279).
    * @param currentY - The current Y value (range 0-65279).
@@ -1210,7 +1214,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a Xy color control cluster server with Xy and ColorTemperature.
+   * Creates a Xy color control cluster server with feature Xy and ColorTemperature.
    *
    * @param currentX - The current X value.
    * @param currentY - The current Y value.
@@ -1244,7 +1248,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default hue and saturation control cluster server with HueSaturation and ColorTemperature.
+   * Creates a default hue and saturation control cluster server with feature HueSaturation and ColorTemperature.
    *
    * @param currentHue - The current hue value.
    * @param currentSaturation - The current saturation value.
@@ -1275,7 +1279,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a color temperature color control cluster server.
+   * Creates a color temperature color control cluster server with feature ColorTemperature.
    *
    * @param colorTemperatureMireds - The color temperature in mireds.
    * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
@@ -1341,25 +1345,72 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Creates a default tilt window covering cluster server (Tilt and PositionAwareTilt).
+   *
+   * @param positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultTiltWindowCoveringClusterServer(positionPercent100ths?: number) {
+    this.behaviors.require(MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt), {
+      type: WindowCovering.WindowCoveringType.Rollershade,
+      configStatus: {
+        operational: true,
+        onlineReserved: true,
+        liftMovementReversed: false,
+        liftPositionAware: true,
+        tiltPositionAware: false,
+        liftEncoderControlled: false,
+        tiltEncoderControlled: false,
+      },
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
+      endProductType: WindowCovering.EndProductType.RollerShade,
+      mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false },
+      targetPositionTiltPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+      currentPositionTiltPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+    });
+    return this;
+  }
+
+  /**
    * Sets the window covering target position as the current position and stops the movement.
    *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   async setWindowCoveringTargetAsCurrentAndStopped() {
-    const position = this.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.log);
-    if (isValidNumber(position, 0, 10000)) {
-      await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', position, this.log);
-      await this.setAttribute(
-        WindowCovering.Cluster.id,
-        'operationalStatus',
-        {
-          global: WindowCovering.MovementStatus.Stopped,
-          lift: WindowCovering.MovementStatus.Stopped,
-          tilt: WindowCovering.MovementStatus.Stopped,
-        },
-        this.log,
-      );
+    if (this.hasAttributeServer(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')) {
+      const position = this.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.log);
+      if (isValidNumber(position, 0, 10000)) {
+        await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', position, this.log);
+        await this.setAttribute(
+          WindowCovering.Cluster.id,
+          'operationalStatus',
+          {
+            global: WindowCovering.MovementStatus.Stopped,
+            lift: WindowCovering.MovementStatus.Stopped,
+            tilt: WindowCovering.MovementStatus.Stopped,
+          },
+          this.log,
+        );
+      }
+      this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
+    } else {
+      const position = this.getAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths', this.log);
+      if (isValidNumber(position, 0, 10000)) {
+        await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths', position, this.log);
+        await this.setAttribute(
+          WindowCovering.Cluster.id,
+          'operationalStatus',
+          {
+            global: WindowCovering.MovementStatus.Stopped,
+            lift: WindowCovering.MovementStatus.Stopped,
+            tilt: WindowCovering.MovementStatus.Stopped,
+          },
+          this.log,
+        );
+      }
+      this.log.debug(`Set WindowCovering currentPositionTiltPercent100ths and targetPositionTiltPercent100ths to ${position} and operationalStatus to Stopped.`);
     }
-    this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
+    return this;
   }
 
   /**
@@ -1369,19 +1420,35 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {WindowCovering.MovementStatus} status - The movement status of the window covering.
    */
   async setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus) {
-    await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', current, this.log);
-    await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', target, this.log);
-    await this.setAttribute(
-      WindowCovering.Cluster.id,
-      'operationalStatus',
-      {
-        global: status,
-        lift: status,
-        tilt: status,
-      },
-      this.log,
-    );
-    this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
+    if (this.hasAttributeServer(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')) {
+      await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', current, this.log);
+      await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', target, this.log);
+      await this.setAttribute(
+        WindowCovering.Cluster.id,
+        'operationalStatus',
+        {
+          global: status,
+          lift: status,
+          tilt: status,
+        },
+        this.log,
+      );
+      this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
+    } else {
+      await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths', current, this.log);
+      await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths', target, this.log);
+      await this.setAttribute(
+        WindowCovering.Cluster.id,
+        'operationalStatus',
+        {
+          global: status,
+          lift: status,
+          tilt: status,
+        },
+        this.log,
+      );
+      this.log.debug(`Set WindowCovering currentPositionTiltPercent100ths: ${current}, targetPositionTiltPercent100ths: ${target} and operationalStatus: ${status}.`);
+    }
   }
 
   /**
@@ -1421,13 +1488,19 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param position - The position to set, specified as a number.
    */
   async setWindowCoveringTargetAndCurrentPosition(position: number) {
-    await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', position, this.log);
-    await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', position, this.log);
-    this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
+    if (this.hasAttributeServer(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')) {
+      await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', position, this.log);
+      await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', position, this.log);
+      this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
+    } else {
+      await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths', position, this.log);
+      await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths', position, this.log);
+      this.log.debug(`Set WindowCovering currentPositionTiltPercent100ths: ${position} and targetPositionTiltPercent100ths: ${position}.`);
+    }
   }
 
   /**
-   * Creates a default thermostat cluster server with Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode.
+   * Creates a default thermostat cluster server with features Heating, Cooling and AutoMode.
    *
    * @param {number} [localTemperature=23] - The local temperature value in degrees Celsius. Defaults to 23°.
    * @param {number} [occupiedHeatingSetpoint=21] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
@@ -1473,7 +1546,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default heating thermostat cluster server with Thermostat.Feature.Heating.
+   * Creates a default heating thermostat cluster server with feature Heating.
    * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
    * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
    * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
@@ -1496,7 +1569,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default cooling thermostat cluster server with Thermostat.Feature.Cooling.
+   * Creates a default cooling thermostat cluster server with feature Cooling.
    * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
    * @param {number} [occupiedCoolingSetpoint] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
    * @param {number} [minCoolSetpointLimit] - The minimum cool setpoint limit value. Defaults to 0°.
@@ -1581,7 +1654,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default HEPA Filter Monitoring Cluster Server.
+   * Creates a default HEPA Filter Monitoring Cluster Server with features Condition and ReplacementProductList.
    * It supports ResourceMonitoring.Feature.Condition and ResourceMonitoring.Feature.ReplacementProductList.
    *
    * @param {ResourceMonitoring.ChangeIndication} changeIndication - The initial change indication. Default is ResourceMonitoring.ChangeIndication.Ok.
@@ -1607,8 +1680,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default Activated Carbon Filter Monitoring Cluster Server.
-   * It supports ResourceMonitoring.Feature.Condition and ResourceMonitoring.Feature.ReplacementProductList.
+   * Creates a default Activated Carbon Filter Monitoring Cluster Server with features Condition and ReplacementProductList.
    *
    * @param {ResourceMonitoring.ChangeIndication} changeIndication - The initial change indication. Default is ResourceMonitoring.ChangeIndication.Ok.
    * @param {boolean | undefined} inPlaceIndicator - The in-place indicator. Default is undefined.
@@ -1679,7 +1751,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates the default Valve Configuration And Control cluster server.
+   * Creates the default Valve Configuration And Control cluster server with features Level.
    *
    * @param {ValveConfigurationAndControl.ValveState} [valveState=ValveConfigurationAndControl.ValveState.Closed] - The valve state to set. Defaults to `ValveConfigurationAndControl.ValveState.Closed`.
    * @param {number} [valveLevel=0] - The valve level to set. Defaults to 0.
@@ -1702,7 +1774,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates the default PumpConfigurationAndControl cluster server.
+   * Creates the default PumpConfigurationAndControl cluster server with features ConstantSpeed.
    *
    * @param {PumpConfigurationAndControl.OperationMode} [pumpMode=PumpConfigurationAndControl.OperationMode.Normal] - The pump mode to set. Defaults to `PumpConfigurationAndControl.OperationMode.Normal`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -1723,7 +1795,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates the default SmokeCOAlarm Cluster Server.
+   * Creates the default SmokeCOAlarm Cluster Server with features SmokeAlarm and CoAlarm.
    *
    * @param {SmokeCoAlarm.AlarmState} smokeState - The state of the smoke alarm. Defaults to SmokeCoAlarm.AlarmState.Normal.
    * @param {SmokeCoAlarm.AlarmState} coState - The state of the CO alarm. Defaults to SmokeCoAlarm.AlarmState.Normal.
@@ -1749,7 +1821,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a smoke only SmokeCOAlarm Cluster Server.
+   * Creates a smoke only SmokeCOAlarm Cluster Server with features SmokeAlarm.
    *
    * @param {SmokeCoAlarm.AlarmState} smokeState - The state of the smoke alarm. Defaults to SmokeCoAlarm.AlarmState.Normal.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -1773,7 +1845,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a co only SmokeCOAlarm Cluster Server.
+   * Creates a co only SmokeCOAlarm Cluster Server with features CoAlarm.
    *
    * @param {SmokeCoAlarm.AlarmState} coState - The state of the CO alarm. Defaults to SmokeCoAlarm.AlarmState.Normal.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -1797,7 +1869,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default momentary switch cluster server.
+   * Creates a default momentary switch cluster server with features MomentarySwitch, MomentarySwitchRelease, MomentarySwitchLongPress and MomentarySwitchMultiPress.
    *
    * @remarks
    * This method adds a cluster server with default momentary switch features and configuration suitable for (AppleHome) Single Double Long automations.
@@ -1818,7 +1890,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default latching switch cluster server.
+   * Creates a default latching switch cluster server with features LatchingSwitch.
    *
    * @remarks
    * This method adds a cluster server with default latching switch features and configuration suitable for a latching switch with 2 positions.
@@ -1918,6 +1990,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default boolean state cluster server.
+   * The stateChange event is enabled.
    *
    * @param {boolean} contact - The state of the cluster. Defaults to true (true = contact).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -1942,6 +2015,11 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default boolean state configuration cluster server to be used with the waterFreezeDetector, waterLeakDetector, and rainSensor device types.
+   *
+   * Features:
+   * - Visual
+   * - Audible
+   * - SensitivityLevel
    *
    * @remarks Supports the enableDisableAlarm command.
    *
@@ -1981,7 +2059,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default Electrical Energy Measurement Cluster Server.
+   * Creates a default Electrical Energy Measurement Cluster Server with features ImportedEnergy, ExportedEnergy, and CumulativeEnergy.
    *
    * @param {number} energy - The total consumption value in mW/h.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -2003,7 +2081,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default Electrical Power Measurement Cluster Server.
+   * Creates a default Electrical Power Measurement Cluster Server with features AlternatingCurrent.
    *
    * @param {number} voltage - The voltage value in millivolts.
    * @param {number} current - The current value in milliamperes.
@@ -2159,7 +2237,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default TotalVolatileOrganicCompoundsConcentrationMeasurement cluster server.
+   * Creates a default TotalVolatileOrganicCompoundsConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
    * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
@@ -2180,7 +2258,9 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * @param {ConcentrationMeasurement.LevelValue} levelValue - The level value of the measurement (default to ConcentrationMeasurement.LevelValue.Unknown).
+   * Creates a default TotalVolatileOrganicCompoundsConcentrationMeasurement cluster server with feature LevelIndication.
+
+  * @param {ConcentrationMeasurement.LevelValue} levelValue - The level value of the measurement (default to ConcentrationMeasurement.LevelValue.Unknown).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The measurement medium (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
@@ -2193,11 +2273,12 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Create a default CarbonMonoxideConcentrationMeasurement cluster server.
+   * Create a default CarbonMonoxideConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
    * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultCarbonMonoxideConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(CarbonMonoxideConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -2212,11 +2293,12 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Create a default CarbonDioxideConcentrationMeasurement cluster server.
+   * Create a default CarbonDioxideConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
    * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultCarbonDioxideConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(CarbonDioxideConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -2231,11 +2313,12 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Create a default FormaldehydeConcentrationMeasurement cluster server.
+   * Create a default FormaldehydeConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
    * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultFormaldehydeConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(FormaldehydeConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -2250,11 +2333,12 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Create a default Pm1ConcentrationMeasurement cluster server.
+   * Create a default Pm1ConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
    * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultPm1ConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(Pm1ConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -2269,11 +2353,12 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Create a default Pm25ConcentrationMeasurement cluster server.
+   * Create a default Pm25ConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
    * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultPm25ConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(Pm25ConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -2288,11 +2373,12 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Create a default Pm10ConcentrationMeasurement cluster server.
+   * Create a default Pm10ConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
    * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultPm10ConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(Pm10ConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -2307,11 +2393,12 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Create a default OzoneConcentrationMeasurement cluster server.
+   * Create a default OzoneConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
    * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ugm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultOzoneConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(OzoneConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -2326,11 +2413,12 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Create a default RadonConcentrationMeasurement cluster server.
+   * Create a default RadonConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
    * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultRadonConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ppm, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(RadonConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
@@ -2345,11 +2433,12 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Create a default NitrogenDioxideConcentrationMeasurement cluster server.
+   * Create a default NitrogenDioxideConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
    * @param {number | null} measuredValue - The measured value of the concentration.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ugm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultNitrogenDioxideConcentrationMeasurementClusterServer(measuredValue: number | null = null, measurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3, measurementMedium = ConcentrationMeasurement.MeasurementMedium.Air) {
     this.behaviors.require(NitrogenDioxideConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
