@@ -2126,7 +2126,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default OccupancySensing cluster server.
+   * Creates a default OccupancySensing cluster server with feature PassiveInfrared.
    *
    * @param {boolean} occupied - A boolean indicating whether the occupancy is occupied or not. Default is false.
    * @param {number} holdTime - The hold time in seconds. Default is 30.
