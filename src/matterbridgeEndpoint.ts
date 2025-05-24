@@ -1170,6 +1170,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default range 147).
    * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default range 500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks colorMode and enhancedColorMode persist across restarts.
+   * @remarks currentHue and currentSaturation persist across restarts.
+   * @remarks currentX and currentY persist across restarts.
+   * @remarks colorTemperatureMireds persists across restarts.
+   * @remarks startUpColorTemperatureMireds persists across restarts.
+   * @remarks coupleColorTempToLevelMinMireds persists across restarts.
    */
   createDefaultColorControlClusterServer(currentX = 0, currentY = 0, currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.Xy, ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature), {
@@ -1188,8 +1195,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       colorTempPhysicalMinMireds,
       colorTempPhysicalMaxMireds,
       coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
-      remainingTime: 0,
       startUpColorTemperatureMireds: null,
+      remainingTime: 0,
     });
     return this;
   }
@@ -1206,6 +1213,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @remarks
    * From zigbee to matter = Math.max(Math.min(Math.round(x * 65536), 65279), 0)
+   *
+   * @remarks colorMode and enhancedColorMode persist across restarts.
+   * @remarks currentX and currentY persist across restarts.
+   * @remarks colorTemperatureMireds persists across restarts.
+   * @remarks startUpColorTemperatureMireds persists across restarts.
+   * @remarks coupleColorTempToLevelMinMireds persists across restarts.
    */
   createXyColorControlClusterServer(currentX = 0, currentY = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.Xy, ColorControl.Feature.ColorTemperature), {
@@ -1237,6 +1250,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
    * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks colorMode and enhancedColorMode persist across restarts.
+   * @remarks currentHue and currentSaturation persist across restarts.
+   * @remarks colorTemperatureMireds persists across restarts.
+   * @remarks startUpColorTemperatureMireds persists across restarts.
+   * @remarks coupleColorTempToLevelMinMireds persists across restarts.
    */
   createHsColorControlClusterServer(currentHue = 0, currentSaturation = 0, colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature), {
@@ -1261,13 +1280,19 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a color temperature color control cluster server with feature ColorTemperature.
+   * This cluster server is used for devices that only support color temperature control.
    *
-   * @param colorTemperatureMireds - The color temperature in mireds.
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   * @param colorTemperatureMireds - The color temperature in mireds. Defaults to 250.
+   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds. Defaults to 147.
+   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds. Defaults to 500.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks colorMode and enhancedColorMode persist across restarts.
+   * @remarks colorTemperatureMireds persists across restarts.
+   * @remarks startUpColorTemperatureMireds persists across restarts.
+   * @remarks coupleColorTempToLevelMinMireds persists across restarts.
    */
-  createCtColorControlClusterServer(colorTemperatureMireds = 500, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
+  createCtColorControlClusterServer(colorTemperatureMireds = 250, colorTempPhysicalMinMireds = 147, colorTempPhysicalMaxMireds = 500) {
     this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.ColorTemperature), {
       colorMode: ColorControl.ColorMode.ColorTemperatureMireds,
       enhancedColorMode: ColorControl.EnhancedColorMode.ColorTemperatureMireds,
@@ -1280,8 +1305,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       colorTempPhysicalMinMireds,
       colorTempPhysicalMaxMireds,
       coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
-      remainingTime: 0,
       startUpColorTemperatureMireds: null,
+      remainingTime: 0,
     });
     return this;
   }
@@ -1290,6 +1315,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Configures the color control mode for the device.
    *
    * @param {ColorControl.ColorMode} colorMode - The color mode to set.
+   *
+   * @remarks colorMode and enhancedColorMode persist across restarts.
    */
   async configureColorControlMode(colorMode: ColorControl.ColorMode) {
     if (isValidNumber(colorMode, ColorControl.ColorMode.CurrentHueAndCurrentSaturation, ColorControl.ColorMode.ColorTemperatureMireds)) {

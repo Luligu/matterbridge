@@ -5,7 +5,7 @@
 [![Docker Version](https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver)](https://hub.docker.com/r/luligu/matterbridge)
 [![Docker Pulls](https://img.shields.io/docker/pulls/luligu/matterbridge.svg)](https://hub.docker.com/r/luligu/matterbridge)
 ![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
-![Coverage](https://img.shields.io/badge/Jest%20coverage-85%25-brightgreen)
+![Coverage](https://img.shields.io/badge/Jest%20coverage-86%25-brightgreen)
 
 [![power by](https://img.shields.io/badge/powered%20by-matter--history-blue)](https://www.npmjs.com/package/matter-history)
 [![power by](https://img.shields.io/badge/powered%20by-node--ansi--logger-blue)](https://www.npmjs.com/package/node-ansi-logger)
@@ -86,7 +86,7 @@ Follow these steps to install Matterbridge:
 npm install -g matterbridge --omit=dev
 ```
 
-on Linux you may need the necessary permissions:
+on Linux or macOS you may need the necessary permissions:
 
 ```
 sudo npm install -g matterbridge --omit=dev
@@ -142,7 +142,7 @@ Here's how to specify a different port number:
 matterbridge -frontend [port number]
 ```
 
-To use the frontend with ssl place the certificates in the .matterbridge/certs directory: cert.pem, key.pem and ca.pem (optional).
+To use the frontend with ssl see below.
 
 From the frontend you can do all operations in an easy way.
 
@@ -196,7 +196,7 @@ The other Home Assistant Community Add-ons and plugins are not verified to work 
   <img src="screenshot/Shelly.svg" alt="Shelly plugin logo" width="100" />
 </a>
 
-Matterbridge shelly plugin allows you to expose all Shelly Gen 1, Gen 2, Gen 3 and BLU devices to Matter.
+Matterbridge shelly plugin allows you to expose all Shelly Gen 1, Gen 2, Gen 3 and Gen 4 and BLU devices to Matter.
 
 Features:
 
@@ -253,7 +253,7 @@ It is the ideal companion of the official [Matterbridge Home Assistant Add-on](h
   <img src="frontend/public/matterbridge.svg" alt="Matterbridge logo" width="100" />
 </a>
 
-Matterbridge Webhooks plugin allows you to expose any webhooks to Matter..
+Matterbridge Webhooks plugin allows you to expose any webhooks to Matter.
 
 ### BTHome
 
@@ -506,12 +506,6 @@ As of version 18.4.x, the Robot is supported by the Home app only as a single, n
 
 If a Robot is present alongside other devices in the bridge, the entire bridge becomes unstable in the Home app.
 
-### Concentration measurements clusters
-
-As of version 18.4.x, all cluster derived from the concentration measurement cluster hang the Home app while pairing and the entire bridge becomes unstable in the Home app.
-
-For example: air quality sensors with TVOC measurement or co sensors with CarbonMonoxide measurement.
-
 ## Home Assistant
 
 So far is the only controller supporting some Matter 1.2, 1.3 and 1.4 device type:
@@ -559,7 +553,7 @@ There is no support for these Matter device types:
 
 In the zigbee2mqtt and shelly plugins select the option to expose
 the switch devices like light or outlet cause they don't show up like switch
-(Matterbridge uses a modified switch device type without client cluster).
+(Matterbridge uses a switch device type without client cluster).
 
 ## SmartThings
 
