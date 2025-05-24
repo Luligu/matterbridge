@@ -465,9 +465,14 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to subscribe the attribute to.
    * @param {string} attribute - The name of the attribute to subscribe to.
-   * @param {(newValue: any, oldValue: any, context?: any) => void} listener - A callback function that will be called when the attribute value changes.
+   * @param {(newValue: any, oldValue: any, context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. When context.offline === true then the change is locally generated and not from the controller.
    * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
    * @returns {Promise<boolean>} - A boolean indicating whether the subscription was successful.
+   *
+   * @remarks The listener function (cannot be async) will receive three parameters:
+   * - `newValue`: The new value of the attribute.
+   * - `oldValue`: The old value of the attribute.
+   * - `context`: The action context, which includes information about the action that triggered the change. When context.offline === true then the change is locally generated and not from the controller.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async subscribeAttribute(cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, listener: (newValue: any, oldValue: any, context: ActionContext) => void, log?: AnsiLogger): Promise<boolean> {
