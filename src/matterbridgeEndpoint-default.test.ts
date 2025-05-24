@@ -91,8 +91,7 @@ import {
   waterLeakDetector,
   waterValve,
 } from './matterbridgeDeviceTypes.js';
-import { capitalizeFirstLetter, updateAttribute } from './matterbridgeEndpointHelpers.js';
-import { log } from 'node:console';
+import { updateAttribute } from './matterbridgeEndpointHelpers.js';
 
 const MATTER_PORT = 6002;
 const HOMEDIR = 'EndpointDefault';

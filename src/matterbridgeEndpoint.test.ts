@@ -516,7 +516,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
         },
         options: { executeIfOff: false },
         numberOfPrimaries: null,
-        colorTemperatureMireds: 500,
+        colorTemperatureMireds: 250,
         colorTempPhysicalMinMireds: 147,
         colorTempPhysicalMaxMireds: 500,
         coupleColorTempToLevelMinMireds: 147,

@@ -34,7 +34,8 @@ import {
   MatterbridgeOnOffServer,
   MatterbridgeLevelControlServer,
   MatterbridgeColorControlServer,
-  MatterbridgeWindowCoveringServer,
+  MatterbridgeLiftWindowCoveringServer,
+  MatterbridgeTiltWindowCoveringServer,
   MatterbridgeThermostatServer,
   MatterbridgeFanControlServer,
   MatterbridgeDoorLockServer,
@@ -175,6 +176,7 @@ export interface MatterbridgeEndpointCommands {
   downOrClose: HandlerFunction;
   stopMotion: HandlerFunction;
   goToLiftPercentage: HandlerFunction;
+  goToTiltPercentage: HandlerFunction;
 
   // Door Lock
   lockDoor: HandlerFunction;
@@ -1330,9 +1332,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks mode attributes is writable and persists across restarts.
+   * currentPositionLiftPercent100ths persists across restarts.
+   * configStatus attributes persists across restarts.
    */
   createDefaultWindowCoveringClusterServer(positionPercent100ths?: number) {
-    this.behaviors.require(MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift), {
+    this.behaviors.require(MatterbridgeLiftWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift), {
       type: WindowCovering.WindowCoveringType.Rollershade,
       configStatus: {
         operational: true,
@@ -1357,9 +1363,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks mode attributes is writable and persists across restarts.
+   * currentPositionTiltPercent100ths persists across restarts.
+   * configStatus attributes persists across restarts.
    */
   createDefaultTiltWindowCoveringClusterServer(positionPercent100ths?: number) {
-    this.behaviors.require(MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt), {
+    this.behaviors.require(MatterbridgeTiltWindowCoveringServer.with(WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt), {
       type: WindowCovering.WindowCoveringType.Shutter,
       configStatus: {
         operational: true,
