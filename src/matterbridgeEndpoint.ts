@@ -35,7 +35,7 @@ import {
   MatterbridgeLevelControlServer,
   MatterbridgeColorControlServer,
   MatterbridgeLiftWindowCoveringServer,
-  MatterbridgeTiltWindowCoveringServer,
+  MatterbridgeLiftTiltWindowCoveringServer,
   MatterbridgeThermostatServer,
   MatterbridgeFanControlServer,
   MatterbridgeDoorLockServer,
@@ -1328,18 +1328,25 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default window covering cluster server (Lift and PositionAwareLift).
+   * Creates a default window covering cluster server with feature Lift and PositionAwareLift.
    *
-   * @param positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
+   * @param {number} positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
+   * @param {WindowCovering.WindowCoveringType} type - The type of window covering (default: WindowCovering.WindowCoveringType.Rollershade). Must support feature Lift.
+   * @param {WindowCovering.EndProductType} endProductType - The end product type (default: WindowCovering.EndProductType.RollerShade). Must support feature Lift.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks mode attributes is writable and persists across restarts.
    * currentPositionLiftPercent100ths persists across restarts.
    * configStatus attributes persists across restarts.
    */
-  createDefaultWindowCoveringClusterServer(positionPercent100ths?: number) {
+  createDefaultWindowCoveringClusterServer(
+    positionPercent100ths?: number,
+    type: WindowCovering.WindowCoveringType = WindowCovering.WindowCoveringType.Rollershade,
+    endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.RollerShade,
+  ) {
     this.behaviors.require(MatterbridgeLiftWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift), {
-      type: WindowCovering.WindowCoveringType.Rollershade,
+      type, // Must support feature Lift
+      numberOfActuationsLift: 0,
       configStatus: {
         operational: true,
         onlineReserved: false,
@@ -1350,7 +1357,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
       },
       operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
-      endProductType: WindowCovering.EndProductType.RollerShade,
+      endProductType, // Must support feature Lift
       mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false },
       targetPositionLiftPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
       currentPositionLiftPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
@@ -1359,114 +1366,97 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default tilt window covering cluster server (Tilt and PositionAwareTilt).
+   * Creates a default window covering cluster server with features Lift, PositionAwareLift, Tilt, PositionAwareTilt.
    *
-   * @param positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
+   * @param {number} positionLiftPercent100ths - The lift position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
+   * @param {number} positionTiltPercent100ths - The tilt position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
+   * @param {WindowCovering.WindowCoveringType} type - The type of window covering (default: WindowCovering.WindowCoveringType.TiltBlindLift). Must support features Lift and Tilt.
+   * @param {WindowCovering.EndProductType} endProductType - The end product type (default: WindowCovering.EndProductType.InteriorBlind). Must support features Lift and Tilt.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks mode attributes is writable and persists across restarts.
    * currentPositionTiltPercent100ths persists across restarts.
    * configStatus attributes persists across restarts.
    */
-  createDefaultTiltWindowCoveringClusterServer(positionPercent100ths?: number) {
-    this.behaviors.require(MatterbridgeTiltWindowCoveringServer.with(WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt), {
-      type: WindowCovering.WindowCoveringType.Shutter,
+  createDefaultLiftTiltWindowCoveringClusterServer(
+    positionLiftPercent100ths?: number,
+    positionTiltPercent100ths?: number,
+    type: WindowCovering.WindowCoveringType = WindowCovering.WindowCoveringType.TiltBlindLift,
+    endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.InteriorBlind,
+  ) {
+    this.behaviors.require(MatterbridgeLiftTiltWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt), {
+      type, // Must support features Lift and Tilt
+      numberOfActuationsLift: 0,
+      numberOfActuationsTilt: 0,
       configStatus: {
         operational: true,
         onlineReserved: false,
         liftMovementReversed: false,
-        liftPositionAware: false,
+        liftPositionAware: true,
         tiltPositionAware: true,
         liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
         tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
       },
       operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
-      endProductType: WindowCovering.EndProductType.TiltOnlyPergola,
+      endProductType, // Must support features Lift and Tilt
       mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false },
-      targetPositionTiltPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
-      currentPositionTiltPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+      targetPositionLiftPercent100ths: positionLiftPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+      currentPositionLiftPercent100ths: positionLiftPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+      targetPositionTiltPercent100ths: positionTiltPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+      currentPositionTiltPercent100ths: positionTiltPercent100ths ?? 0, // 0 Fully open 10000 fully closed
     });
     return this;
   }
 
   /**
-   * Sets the window covering target position as the current position and stops the movement.
+   * Sets the window covering lift target position as the current position and stops the movement.
    *
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   async setWindowCoveringTargetAsCurrentAndStopped() {
-    if (this.hasAttributeServer(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')) {
-      const position = this.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.log);
-      if (isValidNumber(position, 0, 10000)) {
-        await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', position, this.log);
-        await this.setAttribute(
-          WindowCovering.Cluster.id,
-          'operationalStatus',
-          {
-            global: WindowCovering.MovementStatus.Stopped,
-            lift: WindowCovering.MovementStatus.Stopped,
-            tilt: WindowCovering.MovementStatus.Stopped,
-          },
-          this.log,
-        );
-      }
-      this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
-    } else {
+    const position = this.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.log);
+    if (isValidNumber(position, 0, 10000)) {
+      await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', position, this.log);
+      await this.setAttribute(
+        WindowCovering.Cluster.id,
+        'operationalStatus',
+        {
+          global: WindowCovering.MovementStatus.Stopped,
+          lift: WindowCovering.MovementStatus.Stopped,
+          tilt: WindowCovering.MovementStatus.Stopped,
+        },
+        this.log,
+      );
+    }
+    this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
+    if (this.hasAttributeServer(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths')) {
       const position = this.getAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths', this.log);
       if (isValidNumber(position, 0, 10000)) {
         await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths', position, this.log);
-        await this.setAttribute(
-          WindowCovering.Cluster.id,
-          'operationalStatus',
-          {
-            global: WindowCovering.MovementStatus.Stopped,
-            lift: WindowCovering.MovementStatus.Stopped,
-            tilt: WindowCovering.MovementStatus.Stopped,
-          },
-          this.log,
-        );
       }
       this.log.debug(`Set WindowCovering currentPositionTiltPercent100ths and targetPositionTiltPercent100ths to ${position} and operationalStatus to Stopped.`);
     }
-    return this;
   }
 
   /**
-   * Sets the current and target status of a window covering.
+   * Sets the lift current and target position and the status of a window covering.
    * @param {number} current - The current position of the window covering.
    * @param {number} target - The target position of the window covering.
    * @param {WindowCovering.MovementStatus} status - The movement status of the window covering.
    */
   async setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus) {
-    if (this.hasAttributeServer(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')) {
-      await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', current, this.log);
-      await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', target, this.log);
-      await this.setAttribute(
-        WindowCovering.Cluster.id,
-        'operationalStatus',
-        {
-          global: status,
-          lift: status,
-          tilt: status,
-        },
-        this.log,
-      );
-      this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
-    } else {
-      await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths', current, this.log);
-      await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths', target, this.log);
-      await this.setAttribute(
-        WindowCovering.Cluster.id,
-        'operationalStatus',
-        {
-          global: status,
-          lift: status,
-          tilt: status,
-        },
-        this.log,
-      );
-      this.log.debug(`Set WindowCovering currentPositionTiltPercent100ths: ${current}, targetPositionTiltPercent100ths: ${target} and operationalStatus: ${status}.`);
-    }
+    await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', current, this.log);
+    await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', target, this.log);
+    await this.setAttribute(
+      WindowCovering.Cluster.id,
+      'operationalStatus',
+      {
+        global: status,
+        lift: status,
+        tilt: status,
+      },
+      this.log,
+    );
+    this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
   }
 
   /**
@@ -1501,19 +1491,19 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Sets the target and current position of the window covering.
+   * Sets the lift target and current position of the window covering.
    *
-   * @param position - The position to set, specified as a number.
+   * @param {number} liftPosition - The position to set, specified as a number.
+   * @param {number} [tiltPosition] - The tilt position to set, specified as a number.
    */
-  async setWindowCoveringTargetAndCurrentPosition(position: number) {
-    if (this.hasAttributeServer(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')) {
-      await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', position, this.log);
-      await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', position, this.log);
-      this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${position} and targetPositionLiftPercent100ths: ${position}.`);
-    } else {
-      await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths', position, this.log);
-      await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths', position, this.log);
-      this.log.debug(`Set WindowCovering currentPositionTiltPercent100ths: ${position} and targetPositionTiltPercent100ths: ${position}.`);
+  async setWindowCoveringTargetAndCurrentPosition(liftPosition: number, tiltPosition?: number) {
+    await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', liftPosition, this.log);
+    await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', liftPosition, this.log);
+    this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${liftPosition} and targetPositionLiftPercent100ths: ${liftPosition}.`);
+    if (tiltPosition && this.hasAttributeServer(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths')) {
+      await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths', tiltPosition, this.log);
+      await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths', tiltPosition, this.log);
+      this.log.debug(`Set WindowCovering currentPositionTiltPercent100ths: ${tiltPosition} and targetPositionTiltPercent100ths: ${tiltPosition}.`);
     }
   }
 

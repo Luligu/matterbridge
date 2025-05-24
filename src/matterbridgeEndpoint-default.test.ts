@@ -445,16 +445,16 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths')).toBe(50);
   });
 
-  test('createDefaultTiltWindowCoveringClusterServer', async () => {
+  test('createDefaultLiftTiltWindowCoveringClusterServer', async () => {
     const device = new MatterbridgeEndpoint(coverDevice, { uniqueStorageKey: 'TiltScreen' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
-    device.createDefaultTiltWindowCoveringClusterServer();
+    device.createDefaultLiftTiltWindowCoveringClusterServer();
     expect(device.hasAttributeServer('WindowCovering', 'type')).toBe(true);
     expect(device.hasAttributeServer('WindowCovering', 'operationalStatus')).toBe(true);
     expect(device.hasAttributeServer('WindowCovering', 'mode')).toBe(true);
-    expect(device.hasAttributeServer('WindowCovering', 'targetPositionLiftPercent100ths')).toBe(false);
-    expect(device.hasAttributeServer('WindowCovering', 'currentPositionLiftPercent100ths')).toBe(false);
+    expect(device.hasAttributeServer('WindowCovering', 'targetPositionLiftPercent100ths')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'currentPositionLiftPercent100ths')).toBe(true);
     expect(device.hasAttributeServer('WindowCovering', 'targetPositionTiltPercent100ths')).toBe(true);
     expect(device.hasAttributeServer('WindowCovering', 'currentPositionTiltPercent100ths')).toBe(true);
 
@@ -465,14 +465,17 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths')).toBe(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths'));
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Stopped);
     await device.setWindowCoveringCurrentTargetStatus(50, 50, WindowCovering.MovementStatus.Closing);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionTiltPercent100ths: 50, targetPositionTiltPercent100ths: 50 and operationalStatus: 2.`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths: 50, targetPositionLiftPercent100ths: 50 and operationalStatus: 2.`));
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Closing);
     await device.setWindowCoveringStatus(WindowCovering.MovementStatus.Opening);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering operationalStatus: 1`));
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Opening);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Get WindowCovering operationalStatus: 1`));
-    await device.setWindowCoveringTargetAndCurrentPosition(50);
+    await device.setWindowCoveringTargetAndCurrentPosition(50, 50);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths: 50 and targetPositionLiftPercent100ths: 50.`));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionTiltPercent100ths: 50 and targetPositionTiltPercent100ths: 50.`));
+    expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')).toBe(50);
+    expect(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths')).toBe(50);
     expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths')).toBe(50);
     expect(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths')).toBe(50);
   });

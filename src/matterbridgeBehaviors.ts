@@ -389,29 +389,35 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
   }
 }
 
-export class MatterbridgeTiltWindowCoveringServer extends WindowCoveringServer.with(WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt) {
+export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt) {
   override upOrOpen(): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.upOrOpen();
-    device.log.debug(`MatterbridgeTiltWindowCoveringServer: upOrOpen called`);
+    device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: upOrOpen called`);
     super.upOrOpen();
   }
   override downOrClose(): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.downOrClose();
-    device.log.debug(`MatterbridgeTiltWindowCoveringServer: downOrClose called`);
+    device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: downOrClose called`);
     super.downOrClose();
   }
   override stopMotion(): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.stopMotion();
-    device.log.debug(`MatterbridgeTiltWindowCoveringServer: stopMotion called`);
+    device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: stopMotion called`);
     super.stopMotion();
+  }
+  override goToLiftPercentage({ liftPercent100thsValue }: WindowCovering.GoToLiftPercentageRequest): MaybePromise {
+    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
+    device.goToLiftPercentage({ liftPercent100thsValue });
+    device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: goToLiftPercentage with ${liftPercent100thsValue}`);
+    super.goToLiftPercentage({ liftPercent100thsValue });
   }
   override goToTiltPercentage({ tiltPercent100thsValue }: WindowCovering.GoToTiltPercentageRequest): MaybePromise {
     const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     device.goToTiltPercentage({ tiltPercent100thsValue });
-    device.log.debug(`MatterbridgeTiltWindowCoveringServer: goToTiltPercentage with ${tiltPercent100thsValue}`);
+    device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: goToTiltPercentage with ${tiltPercent100thsValue}`);
     super.goToTiltPercentage({ tiltPercent100thsValue });
   }
   override async handleMovement(type: MovementType, reversed: boolean, direction: MovementDirection, targetPercent100ths?: number) {

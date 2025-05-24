@@ -83,7 +83,7 @@ import {
   MatterbridgeThermostatServer,
   MatterbridgeValveConfigurationAndControlServer,
   MatterbridgeLiftWindowCoveringServer,
-  MatterbridgeTiltWindowCoveringServer,
+  MatterbridgeLiftTiltWindowCoveringServer,
 } from './matterbridgeBehaviors.js';
 import { Matterbridge } from './matterbridge.js';
 import {
@@ -141,7 +141,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
   let aggregator: Endpoint<AggregatorEndpoint>;
   let light: MatterbridgeEndpoint;
   let coverLift: MatterbridgeEndpoint;
-  let coverTilt: MatterbridgeEndpoint;
+  let coverLiftTilt: MatterbridgeEndpoint;
   let lock: MatterbridgeEndpoint;
   let fan: MatterbridgeEndpoint;
   let thermostat: MatterbridgeEndpoint;
@@ -222,11 +222,11 @@ describe('Matterbridge ' + HOMEDIR, () => {
   });
 
   test('create a cover tilt device', async () => {
-    coverTilt = new MatterbridgeEndpoint(coverDevice, { uniqueStorageKey: 'WindowCoverTilt' });
-    coverTilt.createDefaultTiltWindowCoveringClusterServer();
-    coverTilt.addRequiredClusterServers();
-    expect(coverTilt).toBeDefined();
-    expect(coverTilt.id).toBe('WindowCoverTilt');
+    coverLiftTilt = new MatterbridgeEndpoint(coverDevice, { uniqueStorageKey: 'WindowCoverTilt' });
+    coverLiftTilt.createDefaultLiftTiltWindowCoveringClusterServer();
+    coverLiftTilt.addRequiredClusterServers();
+    expect(coverLiftTilt).toBeDefined();
+    expect(coverLiftTilt.id).toBe('WindowCoverTilt');
   });
 
   test('create a lock device', async () => {
@@ -385,7 +385,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
   });
 
   test('add tilt coverDevice device to serverNode', async () => {
-    expect(await server.add(coverTilt)).toBeDefined();
+    expect(await server.add(coverLiftTilt)).toBeDefined();
   });
 
   test('add lockDevice device to serverNode', async () => {
@@ -710,24 +710,26 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting cover lift percentage to 5000 (endpoint ${coverLift.id}.${coverLift.number})`);
   });
 
-  test('invoke MatterbridgeTiltWindowCoveringServer commands', async () => {
-    expect(coverTilt.behaviors.has(WindowCoveringServer)).toBeTruthy();
-    expect(coverTilt.behaviors.has(MatterbridgeTiltWindowCoveringServer)).toBeTruthy();
-    expect(coverTilt.behaviors.elementsOf(MatterbridgeTiltWindowCoveringServer).commands.has('upOrOpen')).toBeTruthy();
-    expect(coverTilt.behaviors.elementsOf(MatterbridgeTiltWindowCoveringServer).commands.has('downOrClose')).toBeTruthy();
-    expect(coverTilt.behaviors.elementsOf(MatterbridgeTiltWindowCoveringServer).commands.has('stopMotion')).toBeTruthy();
-    expect(coverTilt.behaviors.elementsOf(MatterbridgeTiltWindowCoveringServer).commands.has('goToLiftPercentage')).toBeFalsy();
-    expect(coverTilt.behaviors.elementsOf(MatterbridgeTiltWindowCoveringServer).commands.has('goToTiltPercentage')).toBeTruthy();
-    expect((coverTilt.stateOf(MatterbridgeTiltWindowCoveringServer) as any).acceptedCommandList).toEqual([0, 1, 2, 8]);
-    expect((coverTilt.stateOf(MatterbridgeTiltWindowCoveringServer) as any).generatedCommandList).toEqual([]);
-    await invokeBehaviorCommand(coverTilt, 'windowCovering', 'upOrOpen');
-    await invokeBehaviorCommand(coverTilt, 'windowCovering', 'downOrClose');
-    await invokeBehaviorCommand(coverTilt, 'windowCovering', 'stopMotion');
-    await invokeBehaviorCommand(coverTilt, 'windowCovering', 'goToTiltPercentage', { tiltPercent100thsValue: 5000 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening cover (endpoint ${coverTilt.id}.${coverTilt.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing cover (endpoint ${coverTilt.id}.${coverTilt.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stopping cover (endpoint ${coverTilt.id}.${coverTilt.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting cover tilt percentage to 5000 (endpoint ${coverTilt.id}.${coverTilt.number})`);
+  test('invoke MatterbridgeLiftTiltWindowCoveringServer commands', async () => {
+    expect(coverLiftTilt.behaviors.has(WindowCoveringServer)).toBeTruthy();
+    expect(coverLiftTilt.behaviors.has(MatterbridgeLiftTiltWindowCoveringServer)).toBeTruthy();
+    expect(coverLiftTilt.behaviors.elementsOf(MatterbridgeLiftTiltWindowCoveringServer).commands.has('upOrOpen')).toBeTruthy();
+    expect(coverLiftTilt.behaviors.elementsOf(MatterbridgeLiftTiltWindowCoveringServer).commands.has('downOrClose')).toBeTruthy();
+    expect(coverLiftTilt.behaviors.elementsOf(MatterbridgeLiftTiltWindowCoveringServer).commands.has('stopMotion')).toBeTruthy();
+    expect(coverLiftTilt.behaviors.elementsOf(MatterbridgeLiftTiltWindowCoveringServer).commands.has('goToLiftPercentage')).toBeTruthy();
+    expect(coverLiftTilt.behaviors.elementsOf(MatterbridgeLiftTiltWindowCoveringServer).commands.has('goToTiltPercentage')).toBeTruthy();
+    expect((coverLiftTilt.stateOf(MatterbridgeLiftTiltWindowCoveringServer) as any).acceptedCommandList).toEqual([0, 1, 2, 5, 8]);
+    expect((coverLiftTilt.stateOf(MatterbridgeLiftTiltWindowCoveringServer) as any).generatedCommandList).toEqual([]);
+    await invokeBehaviorCommand(coverLiftTilt, 'windowCovering', 'upOrOpen');
+    await invokeBehaviorCommand(coverLiftTilt, 'windowCovering', 'downOrClose');
+    await invokeBehaviorCommand(coverLiftTilt, 'windowCovering', 'stopMotion');
+    await invokeBehaviorCommand(coverLiftTilt, 'windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 5000 });
+    await invokeBehaviorCommand(coverLiftTilt, 'windowCovering', 'goToTiltPercentage', { tiltPercent100thsValue: 5000 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stopping cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting cover lift percentage to 5000 (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting cover tilt percentage to 5000 (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
   });
 
   test('invoke MatterbridgeDoorLockServer commands', async () => {
