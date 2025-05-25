@@ -46,6 +46,8 @@ import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
 import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
 import { ServiceArea } from '@matter/main/clusters/service-area';
 import { WaterHeaterManagement } from '@matter/main/clusters/water-heater-management';
+import { EnergyEvse } from '@matter/main/clusters/energy-evse';
+import { EnergyEvseMode } from '@matter/main/clusters/energy-evse-mode';
 
 // @matter behaviors
 import { IdentifyServer } from '@matter/main/behaviors/identify';
@@ -67,6 +69,8 @@ import { RvcOperationalStateServer } from '@matter/main/behaviors/rvc-operationa
 import { ServiceAreaServer } from '@matter/main/behaviors/service-area';
 import { WaterHeaterModeServer } from '@matter/main/behaviors/water-heater-mode';
 import { WaterHeaterManagementServer } from '@matter/main/behaviors/water-heater-management';
+import { EnergyEvseServer } from '@matter/main/behaviors/energy-evse';
+import { EnergyEvseModeServer } from '@matter/main/behaviors/energy-evse-mode';
 
 // AnsiLogger module
 import { AnsiLogger } from './logger/export.js';
@@ -700,6 +704,28 @@ export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
     device.changeToMode({ newMode });
     this.state.currentMode = newMode;
     device.log.info(`MatterbridgeWaterHeaterModeServer changeToMode called with newMode ${newMode} => ${supported.label}`);
+    return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
+  }
+}
+
+
+/** ********************************************* evse  **********************************************************/
+
+export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
+
+}
+
+export class MatterbridgeEnergyEvseModeServer extends EnergyEvseModeServer {
+  override changeToMode({ newMode }: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const supported = this.state.supportedModes.find((mode) => mode.mode === newMode);
+    if (!supported) {
+      device.log.error(`MatterbridgeEnergyEvseModeServer changeToMode called with unsupported newMode: ${newMode}`);
+      return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
+    }
+    device.changeToMode({ newMode });
+    this.state.currentMode = newMode;
+    device.log.info(`MatterbridgeEnergyEvseModeServer changeToMode called with newMode ${newMode} => ${supported.label}`);
     return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }
