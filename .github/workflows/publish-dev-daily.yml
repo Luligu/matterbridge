@@ -38,7 +38,8 @@ jobs:
           DATE=$(date -u +'%Y%m%d')
           SHA=$(git rev-parse --short=7 HEAD)
           DEV_TAG="${BASE}-dev-${DATE}-${SHA}"
-          echo "DEV_TAG=$DEV_TAG" >> $GITHUB_ENV
+          echo "DEV_TAG=$DEV_TAG"   >> $GITHUB_ENV
+          echo "ORIG_SHA=$SHA"      >> $GITHUB_ENV
 
       - name: Bump to date-stamped dev version (no git tag)
         run: npm version "${{ env.DEV_TAG }}" --no-git-tag-version
@@ -75,7 +76,7 @@ jobs:
           PUBLISHED_SHA=${PUBLISHED##*-}
 
           # 4) get the current commit short-SHA
-          CURRENT_SHA=$(git rev-parse --short=7 HEAD)
+          CURRENT_SHA=${ORIG_SHA}
 
           echo "Published dev tag: $PUBLISHED"
           echo "Published SHA: $PUBLISHED_SHA"
