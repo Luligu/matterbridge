@@ -713,6 +713,11 @@ export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
 
 export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
 
+  override disable(): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.disable();
+    device.log.info(`MatterbridgeEnergyEvseServer disable called`);
+  }
 }
 
 export class MatterbridgeEnergyEvseModeServer extends EnergyEvseModeServer {
