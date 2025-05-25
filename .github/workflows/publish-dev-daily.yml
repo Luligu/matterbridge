@@ -71,7 +71,8 @@ jobs:
           PUBLISHED_SHA=${PUBLISHED##*-}
 
           # 4) get the current commit short-SHA
-          CURRENT_SHA=${GITHUB_SHA::7}
+          # CURRENT_SHA=${GITHUB_SHA::7}
+          CURRENT_SHA=$(git rev-parse --short=7 HEAD)
 
           echo "Published dev tag: $PUBLISHED"
           echo "Published SHA: $PUBLISHED_SHA"
