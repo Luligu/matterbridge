@@ -59,7 +59,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           # ensure npm can read the private or public registry
-          npm config set //registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN
+          npm config set //registry.npmjs.org/:_authToken=$NPM_TOKEN
 
           # 1) grab the package name
           PKG=$(node -p "require('./package.json').name")
