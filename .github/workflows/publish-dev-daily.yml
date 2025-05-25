@@ -17,6 +17,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: dev
+          fetch-depth: 0
+          # Ensure full history is available for versioning
+          # This is important to ensure that the git SHA is accurate for the versioning
+          # and to allow the script to check if the dev version has changed since the last publish.
 
       - name: Set up Node.js & registry
         uses: actions/setup-node@v4
@@ -71,7 +75,6 @@ jobs:
           PUBLISHED_SHA=${PUBLISHED##*-}
 
           # 4) get the current commit short-SHA
-          # CURRENT_SHA=${GITHUB_SHA::7}
           CURRENT_SHA=$(git rev-parse --short=7 HEAD)
 
           echo "Published dev tag: $PUBLISHED"
