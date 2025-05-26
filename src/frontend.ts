@@ -892,6 +892,18 @@ export class Frontend {
     let attributes = '';
     let supportedModes: { label: string; mode: number }[] = [];
 
+    /*
+    Object.keys(device.behaviors.supported).forEach((clusterName) => {
+      const clusterBehavior = device.behaviors.supported[lowercaseFirstLetter(clusterName)] as ClusterBehavior.Type | undefined;
+      // console.log(`Device: ${device.deviceName} => Cluster: ${clusterName} Behavior: ${clusterBehavior?.id}`, clusterBehavior);
+      if (clusterBehavior && clusterBehavior.cluster && clusterBehavior.cluster.attributes) {
+        Object.entries(clusterBehavior.cluster.attributes).forEach(([attributeName, attribute]) => {
+          // console.log(`${device.deviceName} => Cluster: ${clusterName} Attribute: ${attributeName}`, attribute);
+        });
+      }
+    });
+    */
+
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       // console.log(`${device.deviceName} => Cluster: ${clusterName}-${clusterId} Attribute: ${attributeName}-${attributeId} Value(${typeof attributeValue}): ${attributeValue}`);
       if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;

@@ -44,6 +44,7 @@ matterstorage.backup
 coverage
 TODO.md
 test
+jest
 *.heapsnapshot
 *.heapprofile
 crypto

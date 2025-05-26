@@ -196,6 +196,7 @@ TODO.md
 matterbridge.service
 docker
 test
+jest
 
 /__mocks__
 

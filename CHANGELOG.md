@@ -8,6 +8,20 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.0.5] - 2025-05-??
+
+### Added
+
+### Changed
+
+### Fixed
+
+- [selectAreas]: Fixed MatterbridgeServiceAreaServer.selectAreas.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.0.4] - 2025-05-26
 
 ### Added
