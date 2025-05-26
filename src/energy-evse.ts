@@ -54,7 +54,7 @@ export class Evse extends MatterbridgeEndpoint {
    *
    */
   createDefaultEnergyEvseClusterServer(
-    supplyState?: EnergyEvse.SupplyState,
+    state?: EnergyEvse.State,
     supplyState?: EnergyEvse.SupplyState,
   ): this {
     this.behaviors.require(MatterbridgeEnergyEvseServer, {

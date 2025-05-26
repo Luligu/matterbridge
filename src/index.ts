@@ -40,7 +40,7 @@ export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
 export * from './roboticVacuumCleaner.js';
 export * from './waterHeater.js';
-export * from './energy-evse.ts';
+export * from './energy-evse.js';
 export { addVirtualDevice } from './helpers.js';
 
 const log = new AnsiLogger({ logName: 'Main', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
