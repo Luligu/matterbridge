@@ -2,9 +2,9 @@
 /**
  * This file contains the EVSE class.
  *
- * @file waterHeater.ts
+ * @file energy-evse.ts
  * @author Luca Liguori
- * @date 2025-05-18
+ * @date 2025-05-26
  * @version 1.0.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
