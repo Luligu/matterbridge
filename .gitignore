@@ -6,7 +6,7 @@ dist
 tsconfig.tsbuildinfo
 
 # VSC
-.vscode
+#.vscode
 
 # Output of 'npm pack'
 *.tgz

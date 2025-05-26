@@ -99,7 +99,7 @@
     "buildProduction": "tsc --project tsconfig.production.json",
     "watch": "tsc --watch",
     "start": "node ./dist/cli.js",
-    "start:inspect": "node --inspect ./dist/cli.js",
+    "start:inspect": "node --inspect=0.0.0.0:9229 ./dist/cli.js -debug",
     "start:bridge": "node ./dist/cli.js -bridge",
     "start:childbridge": "node ./dist/cli.js -childbridge",
     "start:controller": "node ./dist/cli.js -controller",

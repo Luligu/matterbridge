@@ -1,0 +1,18 @@
+{
+  "eslint.format.enable": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "eslint.codeActionsOnSave.rules": null,
+  "terminal.integrated.scrollback": 10000,
+  "eslint.useFlatConfig": true,
+  "eslint.trace.server": "off",
+  "eslint.workingDirectories": [
+    {
+      "directory": ".",
+      "changeProcessCWD": true
+    }
+  ],
+  "editor.tabSize": 2
+}

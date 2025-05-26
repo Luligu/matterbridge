@@ -151,13 +151,19 @@ async function startInspector() {
 
   log.debug(`Starting heap sampling...`);
 
-  session = new Session();
-  session.connect();
-  await new Promise<void>((resolve, reject) => {
-    session?.post('HeapProfiler.startSampling', {}, (err) => (err ? reject(err) : resolve()));
-  });
-
-  log.debug(`Started heap sampling`);
+  try {
+    session = new Session();
+    session.connect();
+    await new Promise<void>((resolve, reject) => {
+      session?.post('HeapProfiler.startSampling', (err) => (err ? reject(err) : resolve()));
+    });
+    log.debug(`Started heap sampling`);
+  } catch (err) {
+    log.error(`Failed to start heap sampling: ${err instanceof Error ? err.message : err}`);
+    session?.disconnect();
+    session = undefined;
+    return;
+  }
 }
 
 async function stopInspector() {

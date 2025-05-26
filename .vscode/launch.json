@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Matterbridge",
+      "port": 9229,
+      "restart": true
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch Matterbridge",
+      "program": "${workspaceFolder}/dist/cli.js",
+      "runtimeExecutable": "node",
+      "args": [
+        "-debug",
+        "-ssl",
+        "443"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch Matterbridge with --inspect",
+      "program": "${workspaceFolder}/dist/cli.js",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--inspect=0.0.0.0:9229"
+      ],
+      "args": [
+        "-debug",
+        "-ssl",
+        "443"
+      ],
+      "console": "integratedTerminal"
+    }
+  ]
+}
