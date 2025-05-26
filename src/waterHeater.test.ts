@@ -143,7 +143,6 @@ describe('Matterbridge Water Heater', () => {
     expect(server.parts.has('WaterHeaterTestDevice-WH123456')).toBeTruthy();
     expect(server.parts.has(device)).toBeTruthy();
     expect(device.lifecycle.isReady).toBeTruthy();
-    // logEndpoint(EndpointServer.forEndpoint(device));
   });
 
   test('start the server node', async () => {
@@ -151,7 +150,6 @@ describe('Matterbridge Water Heater', () => {
     await server.start();
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeTruthy();
-    // logEndpoint(EndpointServer.forEndpoint(server));
   });
 
   test('device forEachAttribute', async () => {
@@ -172,7 +170,7 @@ describe('Matterbridge Water Heater', () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(145);
+    expect(attributes.length).toBe(84);
   });
 
   test('invoke MatterbridgeThermostatServer commands', async () => {

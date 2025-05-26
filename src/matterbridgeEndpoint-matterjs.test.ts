@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
-import { DeviceTypeId, VendorId, ServerNode, Endpoint, EndpointServer, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel } from '@matter/main';
+import { DeviceTypeId, VendorId, ServerNode, Endpoint, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Logger } from '@matter/main';
 import {
   ColorControl,
   Descriptor,
@@ -26,7 +26,7 @@ import {
   WaterHeaterMode,
 } from '@matter/main/clusters';
 import { AggregatorEndpoint } from '@matter/main/endpoints';
-import { logEndpoint, MdnsService } from '@matter/main/protocol';
+import { MdnsService } from '@matter/main/protocol';
 import { ContactSensorDevice, OnOffPlugInUnitDevice } from '@matter/node/devices';
 import {
   BooleanStateConfigurationServer,
@@ -82,7 +82,8 @@ import {
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeThermostatServer,
   MatterbridgeValveConfigurationAndControlServer,
-  MatterbridgeWindowCoveringServer,
+  MatterbridgeLiftWindowCoveringServer,
+  MatterbridgeLiftTiltWindowCoveringServer,
 } from './matterbridgeBehaviors.js';
 import { Matterbridge } from './matterbridge.js';
 import {
@@ -106,13 +107,16 @@ import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbri
 import { RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
 import { WaterHeater } from './waterHeater.js';
 
+const MATTER_PORT = 6001;
+const HOMEDIR = 'EndpointMatterJs';
+
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
 let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
 let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
 let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
 let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false;
+const debug = false; // Set to true to enable debug logging
 
 if (!debug) {
   loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
@@ -130,13 +134,14 @@ if (!debug) {
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
 
-describe('MatterbridgeEndpointMatterJs', () => {
+describe('Matterbridge ' + HOMEDIR, () => {
   let matterbridge: Matterbridge;
   let context: StorageContext;
   let server: ServerNode<ServerNode.RootEndpoint>;
   let aggregator: Endpoint<AggregatorEndpoint>;
   let light: MatterbridgeEndpoint;
-  let cover: MatterbridgeEndpoint;
+  let coverLift: MatterbridgeEndpoint;
+  let coverLiftTilt: MatterbridgeEndpoint;
   let lock: MatterbridgeEndpoint;
   let fan: MatterbridgeEndpoint;
   let thermostat: MatterbridgeEndpoint;
@@ -152,16 +157,16 @@ describe('MatterbridgeEndpointMatterJs', () => {
 
   beforeAll(async () => {
     // Cleanup the matter environment
-    rmSync(path.join('test', 'EndpointMatterJs'), { recursive: true, force: true });
+    rmSync(path.join('test', HOMEDIR), { recursive: true, force: true });
 
     // Create a MatterbridgeEdge instance
     matterbridge = await Matterbridge.loadInstance(false);
     matterbridge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
-    matterbridge.matterbridgeDirectory = path.join('test', 'EndpointMatterJs');
+    matterbridge.matterbridgeDirectory = path.join('test', HOMEDIR);
     // Setup matter environment
     matterbridge.environment.vars.set('log.level', MatterLogLevel.INFO);
     matterbridge.environment.vars.set('log.format', MatterLogFormat.ANSI);
-    matterbridge.environment.vars.set('path.root', path.join('test', 'EndpointMatterJs'));
+    matterbridge.environment.vars.set('path.root', path.join('test', HOMEDIR));
     matterbridge.environment.vars.set('runtime.signals', false);
     matterbridge.environment.vars.set('runtime.exitcode', false);
     await (matterbridge as any).startMatterStorage();
@@ -184,19 +189,23 @@ describe('MatterbridgeEndpointMatterJs', () => {
   const deviceType = extendedColorLight;
 
   test('create a context for server node', async () => {
-    expect(matterbridge.environment.vars.get('path.root')).toBe(path.join('test', 'EndpointMatterJs'));
+    expect(matterbridge.environment.vars.get('path.root')).toBe(path.join('test', HOMEDIR));
     context = await (matterbridge as any).createServerNodeContext('Matterbridge', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
     expect(context).toBeDefined();
   });
 
   test('create the server node', async () => {
-    server = await (matterbridge as any).createServerNode(context);
+    server = await (matterbridge as any).createServerNode(context, MATTER_PORT);
     expect(server).toBeDefined();
+  });
+
+  test('log the server node', async () => {
+    expect(server).toBeDefined();
+    Logger.get('ServerNode').info(server);
   });
 
   test('create a onOffLight device', async () => {
     light = new MatterbridgeEndpoint(deviceType, { uniqueStorageKey: 'OnOffLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }] });
-    // light.addRequiredClusterServers();
     expect(light).toBeDefined();
     expect(light.id).toBe('OnOffLight');
     expect(light.type.name).toBe(deviceType.name.replace('-', '_'));
@@ -205,11 +214,19 @@ describe('MatterbridgeEndpointMatterJs', () => {
     expect(light.type.deviceRevision).toBe(deviceType.revision);
   });
 
-  test('create a covert device', async () => {
-    cover = new MatterbridgeEndpoint(coverDevice, { uniqueStorageKey: 'WindowCover' });
-    cover.addRequiredClusterServers();
-    expect(cover).toBeDefined();
-    expect(cover.id).toBe('WindowCover');
+  test('create a cover lift device', async () => {
+    coverLift = new MatterbridgeEndpoint(coverDevice, { uniqueStorageKey: 'WindowCoverLift' });
+    coverLift.addRequiredClusterServers();
+    expect(coverLift).toBeDefined();
+    expect(coverLift.id).toBe('WindowCoverLift');
+  });
+
+  test('create a cover tilt device', async () => {
+    coverLiftTilt = new MatterbridgeEndpoint(coverDevice, { uniqueStorageKey: 'WindowCoverTilt' });
+    coverLiftTilt.createDefaultLiftTiltWindowCoveringClusterServer();
+    coverLiftTilt.addRequiredClusterServers();
+    expect(coverLiftTilt).toBeDefined();
+    expect(coverLiftTilt.id).toBe('WindowCoverTilt');
   });
 
   test('create a lock device', async () => {
@@ -313,9 +330,15 @@ describe('MatterbridgeEndpointMatterJs', () => {
     expect(light.behaviors.supported.descriptor).toBeDefined();
     expect(light.behaviors.has(DescriptorBehavior)).toBeTruthy();
     expect(light.behaviors.has(DescriptorServer)).toBeTruthy();
+    expect(light.hasClusterServer(DescriptorBehavior)).toBeTruthy();
+    expect(light.hasClusterServer(DescriptorServer)).toBeTruthy();
     expect(light.hasClusterServer(DescriptorCluster)).toBeTruthy();
+    expect(light.hasClusterServer(Descriptor.Cluster)).toBeTruthy();
     expect(light.hasClusterServer(DescriptorCluster.id)).toBeTruthy();
+    expect(light.hasClusterServer(Descriptor.Cluster.id)).toBeTruthy();
     expect(light.hasClusterServer(DescriptorCluster.name)).toBeTruthy();
+    expect(light.hasClusterServer('Descriptor')).toBeTruthy();
+    expect(light.hasClusterServer('descriptor')).toBeTruthy();
     // consoleWarnSpy?.mockRestore();
     // console.warn(device.behaviors.optionsFor(DescriptorBehavior));
 
@@ -350,15 +373,19 @@ describe('MatterbridgeEndpointMatterJs', () => {
 
   test('add onOffLight device to serverNode', async () => {
     expect(await server.add(light)).toBeDefined();
-    expect(EndpointServer.forEndpoint(light).hasClusterServer(DescriptorCluster)).toBe(true);
-    expect(EndpointServer.forEndpoint(light).hasClusterServer(IdentifyCluster)).toBe(true);
-    expect(EndpointServer.forEndpoint(light).hasClusterServer(GroupsCluster)).toBe(true);
-    expect(EndpointServer.forEndpoint(light).hasClusterServer(ScenesManagementCluster)).toBe(false);
-    expect(EndpointServer.forEndpoint(light).hasClusterServer(OnOffCluster)).toBe(true);
+    expect(light.hasClusterServer(DescriptorCluster)).toBe(true);
+    expect(light.hasClusterServer(IdentifyCluster)).toBe(true);
+    expect(light.hasClusterServer(GroupsCluster)).toBe(true);
+    expect(light.hasClusterServer(ScenesManagementCluster)).toBe(false);
+    expect(light.hasClusterServer(OnOffCluster)).toBe(true);
   });
 
-  test('add rollerDevice device to serverNode', async () => {
-    expect(await server.add(cover)).toBeDefined();
+  test('add lift coverDevice device to serverNode', async () => {
+    expect(await server.add(coverLift)).toBeDefined();
+  });
+
+  test('add tilt coverDevice device to serverNode', async () => {
+    expect(await server.add(coverLiftTilt)).toBeDefined();
   });
 
   test('add lockDevice device to serverNode', async () => {
@@ -395,16 +422,25 @@ describe('MatterbridgeEndpointMatterJs', () => {
 
   test('getClusterId and getAttributeId of onOffLight device behaviors', async () => {
     expect(light).toBeDefined();
-    expect(getClusterId(light, 'onOff')).toBe(6);
-    expect(getClusterId(light, 'OnOff')).toBe(6);
+    expect(getClusterId(light, 'onOff')).toBe(0x6);
+    expect(getClusterId(light, 'OnOff')).toBe(0x6);
+
+    expect(getClusterId(light, 'levelControl')).toBe(0x8);
+    expect(getClusterId(light, 'LevelControl')).toBe(0x8);
+
     expect(getAttributeId(light, 'onOff', 'OnOff')).toBe(0);
     expect(getAttributeId(light, 'OnOff', 'OnOff')).toBe(0);
     expect(getAttributeId(light, 'onOff', 'onOff')).toBe(0);
     expect(getAttributeId(light, 'OnOff', 'onOff')).toBe(0);
+
+    expect(getAttributeId(light, 'onOff', 'OnTime')).toBe(0x4001);
+    expect(getAttributeId(light, 'OnOff', 'OnTime')).toBe(0x4001);
+    expect(getAttributeId(light, 'onOff', 'onTime')).toBe(0x4001);
+    expect(getAttributeId(light, 'OnOff', 'onTime')).toBe(0x4001);
   });
 
   test('add deviceType to onOffPlugin without tagList', async () => {
-    const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer, OccupancySensingServer), {
+    const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer, OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared)), {
       id: 'OnOffPlugin1',
       identify: {
         identifyTime: 0,
@@ -433,11 +469,26 @@ describe('MatterbridgeEndpointMatterJs', () => {
       ],
     });
     expect(await server.add(endpoint)).toBeDefined();
-    logEndpoint(EndpointServer.forEndpoint(endpoint));
+
+    await new Promise<void>((resolve) => {
+      endpoint.events.occupancySensing.occupancy$Changed.on((newState, oldState, context) => {
+        // console.log(wr + 'occupancySensing.occupancy$Changed', newState, oldState, context);
+        expect(newState).toBeDefined();
+        expect(newState).toEqual({ 'occupied': true });
+        expect(oldState).toBeDefined();
+        expect(oldState).toEqual({ 'occupied': false });
+        expect(context).toBeDefined();
+        expect(context.offline).toBe(true);
+        if (newState.occupied && !oldState.occupied && context.offline) {
+          resolve();
+        }
+      });
+      endpoint.setStateOf(OccupancySensingServer, { occupancy: { occupied: true } });
+    });
   });
 
   test('add deviceType to onOffPlugin with tagList', async () => {
-    const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer), {
+    const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared)), {
       id: 'OnOffPlugin2',
       identify: {
         identifyTime: 0,
@@ -470,11 +521,10 @@ describe('MatterbridgeEndpointMatterJs', () => {
       }),
     ).not.toThrow();
     await expect(server.add(endpoint)).resolves.toBeDefined();
-    logEndpoint(EndpointServer.forEndpoint(endpoint));
   });
 
   test('add deviceType to onOffPlugin in the costructor', async () => {
-    const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer, IlluminanceMeasurementServer), {
+    const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(DescriptorServer.with(Descriptor.Feature.TagList), OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared), IlluminanceMeasurementServer), {
       id: 'OnOffPlugin3',
       identify: {
         identifyTime: 0,
@@ -499,7 +549,6 @@ describe('MatterbridgeEndpointMatterJs', () => {
     });
     expect(endpoint).toBeDefined();
     await expect(server.add(endpoint)).resolves.toBeDefined();
-    logEndpoint(EndpointServer.forEndpoint(endpoint));
     const deviceTypeList = endpoint.state.descriptor.deviceTypeList;
     expect(deviceTypeList).toHaveLength(3);
     expect(deviceTypeList[0].deviceType).toBe(onOffOutlet.code);
@@ -523,10 +572,6 @@ describe('MatterbridgeEndpointMatterJs', () => {
     });
     expect(endpoint).toBeDefined();
     await expect(server.add(endpoint)).resolves.toBeDefined();
-    // consoleLogSpy?.mockRestore();
-    // consoleInfoSpy?.mockRestore();
-    // logEndpoint(EndpointServer.forEndpoint(endpoint));
-    // console.log('ContactSensor1 descriptor state:', endpoint.state.descriptor);
   });
 
   test('create an Rvc device', async () => {
@@ -570,16 +615,6 @@ describe('MatterbridgeEndpointMatterJs', () => {
 
   test('log onOffLight', async () => {
     expect(light).toBeDefined();
-    /*
-      logEndpoint(EndpointServer.forEndpoint(light));
-      expect(EndpointServer.forEndpoint(light).hasClusterServer(DescriptorCluster)).toBe(true);
-      expect(EndpointServer.forEndpoint(light).hasClusterServer(BasicInformationCluster)).toBe(false);
-      expect(EndpointServer.forEndpoint(light).hasClusterServer(BridgedDeviceBasicInformationCluster)).toBe(false);
-      expect(EndpointServer.forEndpoint(light).hasClusterServer(IdentifyCluster)).toBe(true);
-      expect(EndpointServer.forEndpoint(light).hasClusterServer(OnOffCluster)).toBe(true);
-      expect(EndpointServer.forEndpoint(light).hasClusterServer(GroupsCluster)).toBe(true);
-      expect(EndpointServer.forEndpoint(light).hasClusterServer(ScenesManagementCluster)).toBe(false);
-      */
   });
 
   test('get MatterbridgeServerDevice', async () => {
@@ -655,23 +690,46 @@ describe('MatterbridgeEndpointMatterJs', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color temperature to 250 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
   });
 
-  test('invoke MatterbridgeWindowCoveringServer commands', async () => {
-    expect(cover.behaviors.has(WindowCoveringServer)).toBeTruthy();
-    expect(cover.behaviors.has(MatterbridgeWindowCoveringServer)).toBeTruthy();
-    expect(cover.behaviors.elementsOf(MatterbridgeWindowCoveringServer).commands.has('upOrOpen')).toBeTruthy();
-    expect(cover.behaviors.elementsOf(MatterbridgeWindowCoveringServer).commands.has('downOrClose')).toBeTruthy();
-    expect(cover.behaviors.elementsOf(MatterbridgeWindowCoveringServer).commands.has('stopMotion')).toBeTruthy();
-    expect(cover.behaviors.elementsOf(MatterbridgeWindowCoveringServer).commands.has('goToLiftPercentage')).toBeTruthy();
-    expect((cover.stateOf(MatterbridgeWindowCoveringServer) as any).acceptedCommandList).toEqual([0, 1, 2, 5]);
-    expect((cover.stateOf(MatterbridgeWindowCoveringServer) as any).generatedCommandList).toEqual([]);
-    await invokeBehaviorCommand(cover, 'windowCovering', 'upOrOpen');
-    await invokeBehaviorCommand(cover, 'windowCovering', 'downOrClose');
-    await invokeBehaviorCommand(cover, 'windowCovering', 'stopMotion');
-    await invokeBehaviorCommand(cover, 'windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 5000 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening cover (endpoint ${cover.id}.${cover.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing cover (endpoint ${cover.id}.${cover.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stopping cover (endpoint ${cover.id}.${cover.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting cover lift percentage to 5000 (endpoint ${cover.id}.${cover.number})`);
+  test('invoke MatterbridgeLiftWindowCoveringServer commands', async () => {
+    expect(coverLift.behaviors.has(WindowCoveringServer)).toBeTruthy();
+    expect(coverLift.behaviors.has(MatterbridgeLiftWindowCoveringServer)).toBeTruthy();
+    expect(coverLift.behaviors.elementsOf(MatterbridgeLiftWindowCoveringServer).commands.has('upOrOpen')).toBeTruthy();
+    expect(coverLift.behaviors.elementsOf(MatterbridgeLiftWindowCoveringServer).commands.has('downOrClose')).toBeTruthy();
+    expect(coverLift.behaviors.elementsOf(MatterbridgeLiftWindowCoveringServer).commands.has('stopMotion')).toBeTruthy();
+    expect(coverLift.behaviors.elementsOf(MatterbridgeLiftWindowCoveringServer).commands.has('goToLiftPercentage')).toBeTruthy();
+    expect(coverLift.behaviors.elementsOf(MatterbridgeLiftWindowCoveringServer).commands.has('goToTiltPercentage')).toBeFalsy();
+    expect((coverLift.stateOf(MatterbridgeLiftWindowCoveringServer) as any).acceptedCommandList).toEqual([0, 1, 2, 5]);
+    expect((coverLift.stateOf(MatterbridgeLiftWindowCoveringServer) as any).generatedCommandList).toEqual([]);
+    await invokeBehaviorCommand(coverLift, 'windowCovering', 'upOrOpen');
+    await invokeBehaviorCommand(coverLift, 'windowCovering', 'downOrClose');
+    await invokeBehaviorCommand(coverLift, 'windowCovering', 'stopMotion');
+    await invokeBehaviorCommand(coverLift, 'windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 5000 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening cover (endpoint ${coverLift.id}.${coverLift.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing cover (endpoint ${coverLift.id}.${coverLift.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stopping cover (endpoint ${coverLift.id}.${coverLift.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting cover lift percentage to 5000 (endpoint ${coverLift.id}.${coverLift.number})`);
+  });
+
+  test('invoke MatterbridgeLiftTiltWindowCoveringServer commands', async () => {
+    expect(coverLiftTilt.behaviors.has(WindowCoveringServer)).toBeTruthy();
+    expect(coverLiftTilt.behaviors.has(MatterbridgeLiftTiltWindowCoveringServer)).toBeTruthy();
+    expect(coverLiftTilt.behaviors.elementsOf(MatterbridgeLiftTiltWindowCoveringServer).commands.has('upOrOpen')).toBeTruthy();
+    expect(coverLiftTilt.behaviors.elementsOf(MatterbridgeLiftTiltWindowCoveringServer).commands.has('downOrClose')).toBeTruthy();
+    expect(coverLiftTilt.behaviors.elementsOf(MatterbridgeLiftTiltWindowCoveringServer).commands.has('stopMotion')).toBeTruthy();
+    expect(coverLiftTilt.behaviors.elementsOf(MatterbridgeLiftTiltWindowCoveringServer).commands.has('goToLiftPercentage')).toBeTruthy();
+    expect(coverLiftTilt.behaviors.elementsOf(MatterbridgeLiftTiltWindowCoveringServer).commands.has('goToTiltPercentage')).toBeTruthy();
+    expect((coverLiftTilt.stateOf(MatterbridgeLiftTiltWindowCoveringServer) as any).acceptedCommandList).toEqual([0, 1, 2, 5, 8]);
+    expect((coverLiftTilt.stateOf(MatterbridgeLiftTiltWindowCoveringServer) as any).generatedCommandList).toEqual([]);
+    await invokeBehaviorCommand(coverLiftTilt, 'windowCovering', 'upOrOpen');
+    await invokeBehaviorCommand(coverLiftTilt, 'windowCovering', 'downOrClose');
+    await invokeBehaviorCommand(coverLiftTilt, 'windowCovering', 'stopMotion');
+    await invokeBehaviorCommand(coverLiftTilt, 'windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 5000 });
+    await invokeBehaviorCommand(coverLiftTilt, 'windowCovering', 'goToTiltPercentage', { tiltPercent100thsValue: 5000 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stopping cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting cover lift percentage to 5000 (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting cover tilt percentage to 5000 (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
   });
 
   test('invoke MatterbridgeDoorLockServer commands', async () => {
@@ -788,7 +846,7 @@ describe('MatterbridgeEndpointMatterJs', () => {
       expect(attributeId).toBeDefined();
       count++;
     });
-    expect(count).toBe(101);
+    expect(count).toBe(73);
   });
 
   test('invoke MatterbridgeRvcRunModeServer commands', async () => {

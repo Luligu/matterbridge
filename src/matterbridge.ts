@@ -315,8 +315,8 @@ export class Matterbridge extends EventEmitter {
 
   /**
    * Call cleanup().
-   * @deprecated This method is deprecated and is only used for jest tests.
    *
+   * @deprecated This method is deprecated and is ONLY used for jest tests.
    */
   async destroyInstance() {
     this.log.info(`Destroy instance...`);

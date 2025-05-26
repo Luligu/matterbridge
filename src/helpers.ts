@@ -68,16 +68,22 @@ export async function addVirtualDevice(aggregatorEndpoint: Endpoint<AggregatorEn
   }
   const device = new Endpoint(deviceType, {
     id: name.replaceAll(' ', '') + ':' + type,
-    bridgedDeviceBasicInformation: { nodeLabel: name },
+    bridgedDeviceBasicInformation: { nodeLabel: name.slice(0, 32) },
     onOff: { onOff: false, startUpOnOff: OnOff.StartUpOnOff.Off },
   });
 
   // Set up an event listener for when the `onOff` state changes.
-  device.events.onOff.onOff$Changed.on(async (value) => {
+  device.events.onOff.onOff$Changed.on((value) => {
     // If the `onOff` state becomes true, turn off the virtual device and execute the callback.
     if (value) {
-      await device.setStateOf(OnOffBaseServer, { onOff: false });
       callback();
+      process.nextTick(async () => {
+        try {
+          await device.setStateOf(OnOffBaseServer, { onOff: false });
+        } catch (_error) {
+          // Not necessary to handle the error
+        }
+      });
     }
   });
 

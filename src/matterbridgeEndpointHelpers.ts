@@ -1,7 +1,7 @@
 // src\matterbridgeEndpointHelpers.ts
 
 // @matter
-import { Behavior, ClusterId, Endpoint, Lifecycle } from '@matter/main';
+import { ActionContext, Behavior, ClusterBehavior, ClusterId, Endpoint, Lifecycle } from '@matter/main';
 import { ClusterType, getClusterNameById } from '@matter/main/types';
 
 // @matter clusters
@@ -91,7 +91,7 @@ import {
   MatterbridgeOnOffServer,
   MatterbridgeLevelControlServer,
   MatterbridgeColorControlServer,
-  MatterbridgeWindowCoveringServer,
+  MatterbridgeLiftWindowCoveringServer,
   MatterbridgeThermostatServer,
   MatterbridgeFanControlServer,
   MatterbridgeDoorLockServer,
@@ -166,7 +166,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId) {
   if (clusterId === OnOff.Cluster.id) return MatterbridgeOnOffServer.with('Lighting');
   if (clusterId === LevelControl.Cluster.id) return MatterbridgeLevelControlServer.with('OnOff', 'Lighting');
   if (clusterId === ColorControl.Cluster.id) return MatterbridgeColorControlServer;
-  if (clusterId === WindowCovering.Cluster.id) return MatterbridgeWindowCoveringServer.with('Lift', 'PositionAwareLift');
+  if (clusterId === WindowCovering.Cluster.id) return MatterbridgeLiftWindowCoveringServer.with('Lift', 'PositionAwareLift');
   if (clusterId === Thermostat.Cluster.id) return MatterbridgeThermostatServer.with('AutoMode', 'Heating', 'Cooling');
   if (clusterId === FanControl.Cluster.id) return MatterbridgeFanControlServer;
   if (clusterId === DoorLock.Cluster.id) return MatterbridgeDoorLockServer;
@@ -221,6 +221,11 @@ export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
   return behavior;
 }
 
+/**
+ * Invokes a command on the specified behavior of the endpoint. Used ONLY in Jest tests.
+ *
+ * @deprecated Used ONLY in Jest tests.
+ */
 export async function invokeBehaviorCommand(
   endpoint: MatterbridgeEndpoint,
   cluster: Behavior.Type | ClusterType | ClusterId | string,
@@ -381,36 +386,8 @@ export function getClusterId(endpoint: Endpoint, cluster: string) {
 }
 
 export function getAttributeId(endpoint: Endpoint, cluster: string, attribute: string) {
-  if (attribute === 'attributeList') return 0xfffb;
-  else if (attribute === 'featureMap') return 0xfffc;
-  else if (attribute === 'eventList') return 0xfffa;
-  else if (attribute === 'generatedCommandList') return 0xfff8;
-  else if (attribute === 'acceptedCommandList') return 0xfff9;
-  else if (attribute === 'clusterRevision') return 0xfffd;
-  else {
-    if (endpoint.behaviors.supported[lowercaseFirstLetter(cluster)]?.schema?.type === 'ConcentrationMeasurement') {
-      if (attribute === 'measuredValue') return 0x0;
-      else if (attribute === 'minMeasuredValue') return 0x1;
-      else if (attribute === 'maxMeasuredValue') return 0x2;
-      else if (attribute === 'peakMeasuredValue') return 0x3;
-      else if (attribute === 'peakMeasuredValueWindow') return 0x4;
-      else if (attribute === 'averageMeasuredValue') return 0x5;
-      else if (attribute === 'averageMeasuredValueWindow') return 0x6;
-      else if (attribute === 'uncertainty') return 0x7;
-      else if (attribute === 'measurementUnit') return 0x8;
-      else if (attribute === 'measurementMedium') return 0x9;
-      else if (attribute === 'levelValue') return 0xa;
-    }
-    if (endpoint.behaviors.supported[lowercaseFirstLetter(cluster)]?.schema?.type === 'OperationalState') {
-      if (attribute === 'phaseList') return 0x0;
-      else if (attribute === 'currentPhase') return 0x1;
-      else if (attribute === 'countdownTime') return 0x2;
-      else if (attribute === 'operationalStateList') return 0x3;
-      else if (attribute === 'operationalState') return 0x4;
-      else if (attribute === 'operationalError') return 0x5;
-    }
-    return endpoint.behaviors.supported[lowercaseFirstLetter(cluster)]?.schema?.children?.find((child) => child.name === capitalizeFirstLetter(attribute))?.id;
-  }
+  const clusterBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(cluster)] as ClusterBehavior.Type | undefined;
+  return clusterBehavior?.cluster.attributes[lowercaseFirstLetter(attribute)]?.id;
 }
 
 /**
@@ -543,16 +520,21 @@ export async function updateAttribute(endpoint: MatterbridgeEndpoint, cluster: B
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to subscribe the attribute to.
  * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to subscribe the attribute to.
  * @param {string} attribute - The name of the attribute to subscribe to.
- * @param {(newValue: any, oldValue: any, context?: any) => void} listener - A callback function that will be called when the attribute value changes.
+ * @param {(newValue: any, oldValue: any, context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. When context.offline === true then the change is locally generated and not from the controller.
  * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
  * @returns {boolean} - A boolean indicating whether the subscription was successful.
+ *
+ * @remarks The listener function (cannot be async) will receive three parameters:
+ * - `newValue`: The new value of the attribute.
+ * - `oldValue`: The old value of the attribute.
+ * - `context`: The action context, which includes information about the action that triggered the change. When context.offline === true then the change is locally generated and not from the controller.
  */
 export async function subscribeAttribute(
   endpoint: MatterbridgeEndpoint,
   cluster: Behavior.Type | ClusterType | ClusterId | string,
   attribute: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  listener: (newValue: any, oldValue: any, context?: any) => void,
+  listener: (newValue: any, oldValue: any, context: ActionContext) => void,
   log?: AnsiLogger,
 ): Promise<boolean> {
   const clusterName = getBehavior(endpoint, cluster)?.id;
@@ -577,6 +559,48 @@ export async function subscribeAttribute(
   }
   events[clusterName][attribute].on(listener);
   log?.info(`${db}Subscribed endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db}`);
+  return true;
+}
+
+/**
+ * Triggers an event on the specified cluster.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to trigger the event on.
+ * @param {ClusterId} clusterId - The ID of the cluster.
+ * @param {string} event - The name of the event to trigger.
+ * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} payload - The payload to pass to the event.
+ * @param {AnsiLogger} [log] - Optional logger for logging information.
+ * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the event was successfully triggered.
+ */
+export async function triggerEvent(
+  endpoint: MatterbridgeEndpoint,
+  cluster: Behavior.Type | ClusterType | ClusterId | string,
+  event: string,
+  payload: Record<string, boolean | number | bigint | string | object | undefined | null>,
+  log?: AnsiLogger,
+): Promise<boolean> {
+  const clusterName = getBehavior(endpoint, cluster)?.id;
+  if (!clusterName) {
+    endpoint.log.error(`triggerEvent ${hk}${event}${er} error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+    return false;
+  }
+
+  if (endpoint.construction.status !== Lifecycle.Status.Active) {
+    endpoint.log.error(`triggerEvent ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+    return false;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const events = endpoint.events as Record<string, Record<string, any>>;
+  if (!(clusterName in events) || !(event in events[clusterName])) {
+    endpoint.log.error(`triggerEvent ${hk}${event}${er} error: cluster ${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+    return false;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  await endpoint.act((agent) => agent[clusterName].events[event].emit(payload, agent.context));
+  log?.info(`${db}Trigger event ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${event}${db} with ${debugStringify(payload)}${db} on endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} `);
   return true;
 }
 

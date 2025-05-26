@@ -195,6 +195,15 @@ export interface ApiDevices {
   cluster: string;
 }
 
+export interface ApiClustersResponse {
+  plugin: string;
+  deviceName: string;
+  serialNumber: string;
+  endpoint: number;
+  deviceTypes: number[];
+  clusters: ApiClusters[];
+}
+
 export interface ApiClusters {
   endpoint: string;
   id: string;

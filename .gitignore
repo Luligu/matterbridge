@@ -47,3 +47,4 @@ test
 *.heapsnapshot
 *.heapprofile
 crypto
+*.tar

@@ -144,7 +144,6 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     expect(server.parts.has('RVCTestDevice-RVC123456')).toBeTruthy();
     expect(server.parts.has(device)).toBeTruthy();
     expect(device.lifecycle.isReady).toBeTruthy();
-    // logEndpoint(EndpointServer.forEndpoint(device));
   });
 
   test('start the server node', async () => {
@@ -152,7 +151,6 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     await server.start();
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeTruthy();
-    // logEndpoint(EndpointServer.forEndpoint(server));
   });
 
   test('device forEachAttribute', async () => {
@@ -173,7 +171,7 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(101);
+    expect(attributes.length).toBe(73);
   });
 
   test('invoke MatterbridgeRvcRunModeServer commands', async () => {

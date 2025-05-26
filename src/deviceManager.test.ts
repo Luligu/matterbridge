@@ -44,23 +44,37 @@ if (!debug) {
 // Cleanup the matter environment
 rmSync(path.join('test', 'DeviceManager'), { recursive: true, force: true });
 
+/**
+ * Waits for the `isOnline` property to become `true`.
+ * @param {number} timeout - The maximum time to wait in milliseconds.
+ * @returns {Promise<void>} A promise that resolves when `isOnline` becomes `true` or rejects if the timeout is reached.
+ */
+async function waitForOnline(matterbridge: Matterbridge, timeout = 10000): Promise<void> {
+  const start = Date.now();
+
+  return new Promise((resolve, reject) => {
+    const checkOnline = () => {
+      if (matterbridge.serverNode?.lifecycle.isOnline) {
+        resolve();
+      } else if (Date.now() - start >= timeout) {
+        reject(new Error('Timeout waiting for matterbridge.serverNode.lifecycle.isOnline to become true'));
+      } else {
+        setTimeout(checkOnline, 100); // Check every 100ms
+      }
+    };
+
+    checkOnline();
+  });
+}
+
 describe('DeviceManager with mocked devices', () => {
   let matterbridge: Matterbridge;
   let plugins: PluginManager;
   let devices: DeviceManager;
 
-  beforeAll(async () => {
-    //
-  });
-
   beforeEach(() => {
     // Clear all mocks
     jest.clearAllMocks();
-  });
-
-  afterAll(async () => {
-    // Restore all mocks
-    // jest.restoreAllMocks();
   });
 
   test('Load matterbridge', async () => {
@@ -70,6 +84,11 @@ describe('DeviceManager with mocked devices', () => {
     expect(plugins).toBeInstanceOf(PluginManager);
     devices = (matterbridge as any).devices;
     expect(devices).toBeInstanceOf(DeviceManager);
+  }, 60000);
+
+  test('matterbridge loads correctly', async () => {
+    await waitForOnline(matterbridge);
+    expect(matterbridge.serverNode?.lifecycle.isOnline).toBe(true);
   }, 60000);
 
   test('constructor initializes correctly', () => {
@@ -208,10 +227,6 @@ describe('DeviceManager with real devices', () => {
   let plugins: PluginManager;
   let devices: DeviceManager;
 
-  beforeAll(async () => {
-    //
-  });
-
   beforeEach(() => {
     // Clear all mocks
     jest.clearAllMocks();
@@ -225,6 +240,11 @@ describe('DeviceManager with real devices', () => {
   test('Load matterbridge', async () => {
     matterbridge = await Matterbridge.loadInstance(true);
     expect(matterbridge).toBeInstanceOf(Matterbridge);
+  }, 60000);
+
+  test('matterbridge loads correctly', async () => {
+    await waitForOnline(matterbridge);
+    expect(matterbridge.serverNode?.lifecycle.isOnline).toBe(true);
   }, 60000);
 
   test('devices initializes correctly', () => {
@@ -272,15 +292,10 @@ describe('DeviceManager with real devices', () => {
   test('Matterbridge.destroyInstance()', async () => {
     await matterbridge.destroyInstance();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
-  }, 60000);
 
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /*
-  test('Cleanup storage', async () => {
-    process.argv.push('-factoryreset');
-    (matterbridge as any).initialized = true;
-    await (matterbridge as any).parseCommandLine();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Factory reset done! Remove all paired fabrics from the controllers.');
+    // Wait for the promises to settle
+    await new Promise((resolve) => {
+      setTimeout(resolve, 1000);
+    });
   }, 60000);
-  */
 });

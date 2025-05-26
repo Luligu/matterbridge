@@ -39,9 +39,11 @@ import {
   HepaFilterMonitoring,
   ActivatedCarbonFilterMonitoring,
   ResourceMonitoring,
+  ScenesManagement,
 } from '@matter/main/clusters';
 import {
   AirQualityServer,
+  BooleanStateServer,
   CarbonDioxideConcentrationMeasurementServer,
   CarbonMonoxideConcentrationMeasurementServer,
   ColorControlBehavior,
@@ -57,7 +59,7 @@ import {
   RadonConcentrationMeasurementServer,
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/node/behaviors';
-import { AnsiLogger, db, er, hk, LogLevel, or } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 import path from 'node:path';
 import { rmSync } from 'node:fs';
 
@@ -91,6 +93,9 @@ import {
 } from './matterbridgeDeviceTypes.js';
 import { updateAttribute } from './matterbridgeEndpointHelpers.js';
 
+const MATTER_PORT = 6002;
+const HOMEDIR = 'EndpointDefault';
+
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
 let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
@@ -116,9 +121,9 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync(path.join('test', 'EndpointDefault'), { recursive: true, force: true });
+rmSync(path.join('test', HOMEDIR), { recursive: true, force: true });
 
-describe('MatterbridgeEndpointDefault', () => {
+describe('Matterbridge ' + HOMEDIR, () => {
   let matterbridge: Matterbridge;
   let device: MatterbridgeEndpoint;
 
@@ -146,7 +151,7 @@ describe('MatterbridgeEndpointDefault', () => {
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
-    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-homedir', path.join('test', 'EndpointDefault'), '-bridge', '-logger', 'info', '-matterlogger', 'info'];
+    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', path.join('test', HOMEDIR), '-bridge', '-logger', 'debug', '-matterlogger', 'debug'];
     matterbridge = await Matterbridge.loadInstance(true);
     await waitForOnline();
   }, 30000);
@@ -235,20 +240,17 @@ describe('MatterbridgeEndpointDefault', () => {
     await add(device);
   });
 
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /*
-    test('createDefaultScenesClusterServer', async () => {
-      const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight13', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
-      expect(device).toBeDefined();
-      device.createDefaultScenesClusterServer();
-      expect(device.hasClusterServer(ScenesManagement.Cluster)).toBe(true);
+  test('createDefaultScenesClusterServer', async () => {
+    const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight13', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    expect(device).toBeDefined();
+    device.createDefaultScenesClusterServer();
+    expect(device.hasClusterServer(ScenesManagement.Cluster)).toBe(true);
 
-      device.addRequiredClusterServers();
-      expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
-      expect(device.lifecycle.isReady).toBeTruthy();
-      expect(device.construction.status).toBe(Lifecycle.Status.Active);
-    });
-    */
+    device.addRequiredClusterServers();
+    expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
+    expect(device.lifecycle.isReady).toBeTruthy();
+    expect(device.construction.status).toBe(Lifecycle.Status.Active);
+  });
 
   test('createDefaultOnOffClusterServer', async () => {
     const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight14', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
@@ -412,7 +414,7 @@ describe('MatterbridgeEndpointDefault', () => {
   });
 
   test('createDefaultWindowCoveringClusterServer', async () => {
-    const device = new MatterbridgeEndpoint(coverDevice, { uniqueStorageKey: 'Screen' });
+    const device = new MatterbridgeEndpoint(coverDevice, { uniqueStorageKey: 'LiftScreen' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.createDefaultWindowCoveringClusterServer();
@@ -427,15 +429,55 @@ describe('MatterbridgeEndpointDefault', () => {
     await add(device);
 
     await device.setWindowCoveringTargetAsCurrentAndStopped();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to 0 and operationalStatus to Stopped.`));
     expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')).toBe(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths'));
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Stopped);
     await device.setWindowCoveringCurrentTargetStatus(50, 50, WindowCovering.MovementStatus.Closing);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths: 50, targetPositionLiftPercent100ths: 50 and operationalStatus: 2.`));
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Closing);
     await device.setWindowCoveringStatus(WindowCovering.MovementStatus.Opening);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering operationalStatus: 1`));
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Opening);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Get WindowCovering operationalStatus: 1`));
     await device.setWindowCoveringTargetAndCurrentPosition(50);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths: 50 and targetPositionLiftPercent100ths: 50.`));
     expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')).toBe(50);
     expect(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths')).toBe(50);
+  });
+
+  test('createDefaultLiftTiltWindowCoveringClusterServer', async () => {
+    const device = new MatterbridgeEndpoint(coverDevice, { uniqueStorageKey: 'TiltScreen' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultLiftTiltWindowCoveringClusterServer();
+    expect(device.hasAttributeServer('WindowCovering', 'type')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'operationalStatus')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'mode')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'targetPositionLiftPercent100ths')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'currentPositionLiftPercent100ths')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'targetPositionTiltPercent100ths')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'currentPositionTiltPercent100ths')).toBe(true);
+
+    await add(device);
+
+    await device.setWindowCoveringTargetAsCurrentAndStopped();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionTiltPercent100ths and targetPositionTiltPercent100ths to 0 and operationalStatus to Stopped.`));
+    expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths')).toBe(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths'));
+    expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Stopped);
+    await device.setWindowCoveringCurrentTargetStatus(50, 50, WindowCovering.MovementStatus.Closing);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths: 50, targetPositionLiftPercent100ths: 50 and operationalStatus: 2.`));
+    expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Closing);
+    await device.setWindowCoveringStatus(WindowCovering.MovementStatus.Opening);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering operationalStatus: 1`));
+    expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Opening);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Get WindowCovering operationalStatus: 1`));
+    await device.setWindowCoveringTargetAndCurrentPosition(50, 50);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionLiftPercent100ths: 50 and targetPositionLiftPercent100ths: 50.`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering currentPositionTiltPercent100ths: 50 and targetPositionTiltPercent100ths: 50.`));
+    expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')).toBe(50);
+    expect(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths')).toBe(50);
+    expect(device.getAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths')).toBe(50);
+    expect(device.getAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths')).toBe(50);
   });
 
   test('createDefaultThermostatClusterServer', async () => {
@@ -692,29 +734,38 @@ describe('MatterbridgeEndpointDefault', () => {
       device.log,
     );
 
-    await device.triggerEvent(BooleanState.Cluster.id, 'stateChange', { stateValue: true });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`triggerEvent ${hk}booleanState.stateChange${er} error`));
+    jest.clearAllMocks();
+    await device.triggerEvent(BooleanStateConfiguration.Cluster.id, 'stateChange', { stateValue: true });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`triggerEvent ${hk}stateChange${er} error: cluster not found on endpoint ${or}ContactSensor${er}:${or}undefined${er}`));
 
+    jest.clearAllMocks();
+    await device.triggerEvent(BooleanState.Cluster.id, 'stateChange', { stateValue: true });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`triggerEvent ${hk}booleanState.stateChange${er} error: Endpoint ${or}ContactSensor${er}:${or}undefined${er} is in the ${BLUE}inactive${er} state`));
+
+    jest.clearAllMocks();
     await device.setAttribute(BooleanState.Cluster.id, 'stateValue', true);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`setAttribute ${hk}booleanState.stateValue${er} error: Endpoint`));
 
     await add(device);
 
     expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue')).toBe(false);
-
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Subscribed endpoint`));
     await device.setAttribute(BooleanState.Cluster.id, 'stateValue', true);
     expect(called).toBe(true);
 
+    jest.clearAllMocks();
     await device.setAttribute(BooleanStateConfiguration.Cluster.id, 'stateValue', true, device.log);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`setAttribute ${hk}stateValue${er} error`));
 
+    jest.clearAllMocks();
     await device.setAttribute(BooleanState.Cluster.id, 'state', true, device.log);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`setAttribute error: Attribute ${hk}state${er} not found`));
 
+    jest.clearAllMocks();
     device.getAttribute(BooleanStateConfiguration.Cluster.id, 'state', device.log);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`getAttribute ${hk}state${er} error: cluster not found on endpoint`));
 
+    jest.clearAllMocks();
     device.getAttribute(BooleanState.Cluster.id, 'state', device.log);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`getAttribute error: Attribute ${hk}state${er} not found`));
 
@@ -738,11 +789,33 @@ describe('MatterbridgeEndpointDefault', () => {
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`subscribeAttribute error: Attribute ${hk}state${er} not found`));
 
-    await device.triggerEvent(BooleanState.Cluster.id, 'stateChange', { stateValue: true }, device.log);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Trigger event`));
+    jest.clearAllMocks();
+    await device.triggerEvent(BooleanState.Cluster, 'stateChange', { stateValue: true }, device.log);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Trigger event ${hk}BooleanState${db}.${hk}stateChange${db} with`));
 
+    jest.clearAllMocks();
+    await device.triggerEvent(BooleanState.Cluster.id, 'stateChange', { stateValue: true }, device.log);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Trigger event ${hk}BooleanState${db}.${hk}stateChange${db} with`));
+
+    jest.clearAllMocks();
+    await device.triggerEvent(BooleanStateServer, 'stateChange', { stateValue: true }, device.log);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Trigger event ${hk}BooleanState${db}.${hk}stateChange${db} with`));
+
+    jest.clearAllMocks();
+    await device.triggerEvent('BooleanState', 'stateChange', { stateValue: true }, device.log);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Trigger event ${hk}BooleanState${db}.${hk}stateChange${db} with`));
+
+    jest.clearAllMocks();
+    await device.triggerEvent('booleanState', 'stateChange', { stateValue: true }, device.log);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Trigger event ${hk}BooleanState${db}.${hk}stateChange${db} with`));
+
+    jest.clearAllMocks();
     await device.triggerEvent(BooleanStateConfiguration.Cluster.id, 'stateChange', { stateValue: true });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`triggerEvent ${hk}stateChange${er} error`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`triggerEvent ${hk}stateChange${er} error: cluster not found on endpoint`));
+
+    jest.clearAllMocks();
+    await device.triggerEvent(BooleanState.Cluster.id, 'state', { stateValue: true });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`triggerEvent ${hk}state${er} error: cluster booleanState not found on endpoint`));
   });
 
   test('createDefaultBooleanStateConfigurationClusterServer for waterFreezeDetector', async () => {

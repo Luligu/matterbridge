@@ -17,6 +17,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: dev
+          fetch-depth: 0
+          # Ensure full history is available for versioning
+          # This is important to ensure that the git SHA is accurate for the versioning
+          # and to allow the script to check if the dev version has changed since the last publish.
 
       - name: Set up Node.js & registry
         uses: actions/setup-node@v4
@@ -60,7 +64,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           # ensure npm can read the private or public registry
-          npm config set //registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN
+          npm config set //registry.npmjs.org/:_authToken=$NPM_TOKEN
 
           # 1) grab the package name
           PKG=$(node -p "require('./package.json').name")

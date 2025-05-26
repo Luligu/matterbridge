@@ -66,6 +66,7 @@ export default [
           ignoreRestSiblings: true,
           varsIgnorePattern: '^_', // Ignore unused variables starting with _
           argsIgnorePattern: '^_', // Ignore unused arguments starting with _
+          caughtErrorsIgnorePattern: '^_', // Ignore unused caught errors starting with _
         },
       ],
     },

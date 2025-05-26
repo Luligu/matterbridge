@@ -5,7 +5,7 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
-import { Lifecycle, EndpointNumber } from '@matter/main';
+import { Lifecycle, EndpointNumber, ActionContext } from '@matter/main';
 import {
   BooleanState,
   BooleanStateCluster,
@@ -72,6 +72,9 @@ import {
 } from './matterbridgeDeviceTypes.js';
 import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
 
+const MATTER_PORT = 6003;
+const HOMEDIR = 'Endpoint';
+
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
 let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
@@ -97,9 +100,9 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync(path.join('test', 'Endpoint'), { recursive: true, force: true });
+rmSync(path.join('test', HOMEDIR), { recursive: true, force: true });
 
-describe('MatterbridgeEndpoint', () => {
+describe('Matterbridge ' + HOMEDIR, () => {
   let matterbridge: Matterbridge;
   let device: MatterbridgeEndpoint;
 
@@ -128,7 +131,7 @@ describe('MatterbridgeEndpoint', () => {
 
   beforeAll(async () => {
     // Create a MatterbridgeEdge instance
-    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-homedir', path.join('test', 'Endpoint'), '-bridge', '-logger', 'info', '-matterlogger', 'info'];
+    process.argv = ['node', 'matterbridge.js', '-mdnsInterface', 'Wi-Fi', '-frontend', '0', '-port', MATTER_PORT.toString(), '-homedir', path.join('test', HOMEDIR), '-bridge', '-logger', 'info', '-matterlogger', 'info'];
     matterbridge = await Matterbridge.loadInstance(true);
     await waitForOnline();
   }, 30000);
@@ -147,7 +150,7 @@ describe('MatterbridgeEndpoint', () => {
     jest.restoreAllMocks();
   }, 30000);
 
-  describe('MatterbridgeEndpoint', () => {
+  describe('Matterbridge ' + HOMEDIR, () => {
     async function add(device: MatterbridgeEndpoint): Promise<void> {
       expect(device).toBeDefined();
       device.addRequiredClusterServers();
@@ -333,7 +336,7 @@ describe('MatterbridgeEndpoint', () => {
         .createDefaultIdentifyClusterServer()
         .createDefaultBridgedDeviceBasicInformationClusterServer('OnOffLight', '1234', 0xfff1, 'Matterbridge', 'Light')
         .createDefaultGroupsClusterServer()
-        .createDefaultScenesClusterServer()
+        // .createDefaultScenesClusterServer()
         .createDefaultOnOffClusterServer()
         .createDefaultPowerSourceWiredClusterServer();
       const serializedDevice = MatterbridgeEndpoint.serialize(device);
@@ -513,7 +516,7 @@ describe('MatterbridgeEndpoint', () => {
         },
         options: { executeIfOff: false },
         numberOfPrimaries: null,
-        colorTemperatureMireds: 500,
+        colorTemperatureMireds: 250,
         colorTempPhysicalMinMireds: 147,
         colorTempPhysicalMaxMireds: 500,
         coupleColorTempToLevelMinMireds: 147,
@@ -590,36 +593,47 @@ describe('MatterbridgeEndpoint', () => {
     });
 
     test('subscribeAttribute without await', async () => {
-      const device = new MatterbridgeEndpoint(rainSensor, { uniqueStorageKey: 'RainSensorI' });
+      const device = new MatterbridgeEndpoint(rainSensor, { uniqueStorageKey: 'RainSensorI' }, true);
       expect(device).toBeDefined();
       device.createDefaultIdentifyClusterServer();
       device.createDefaultBooleanStateClusterServer(true);
       expect(device.hasAttributeServer(IdentifyBehavior, 'identifyTime')).toBe(true);
       expect(device.hasAttributeServer(BooleanStateCluster, 'stateValue')).toBe(true);
 
-      let state = false;
-      const listener = async (value: any) => {
-        state = value;
+      let newState = false;
+      let oldState = false;
+      let offlineState: boolean | undefined = false;
+      const listener = (newValue: boolean, oldValue: boolean, context: ActionContext) => {
+        newState = newValue;
+        oldState = oldValue;
+        offlineState = context.offline;
       };
       device.subscribeAttribute('booleanState', 'stateValue', listener, device.log);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`is in the ${BLUE}inactive${db} state`));
 
       await add(device);
+      console.log('subscribeAttribute without await: add(device)', newState);
 
       await device.setAttribute(BooleanStateCluster, 'stateValue', false, device.log);
-      expect(state).toBe(false);
+      expect(newState).toBe(false);
+      expect(oldState).toBe(true);
+      expect(offlineState).toBe(true);
       expect(device.getAttribute(BooleanStateServer, 'stateValue', device.log)).toBe(false);
       await device.setAttribute(BooleanStateCluster, 'stateValue', true, device.log);
-      expect(state).toBe(true);
+      expect(newState).toBe(true);
+      expect(oldState).toBe(false);
+      expect(offlineState).toBe(true);
+      console.log('subscribeAttribute without await: state', newState);
       expect(device.getAttribute(BooleanStateBehavior, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanStateServer, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanState.Cluster, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute('BooleanState', 'stateValue', device.log)).toBe(true);
+      console.log('subscribeAttribute without await: state', newState);
     });
 
-    test('subscribeAttribute await', async () => {
-      const device = new MatterbridgeEndpoint(rainSensor, { uniqueStorageKey: 'RainSensorII' });
+    test('subscribeAttribute with await', async () => {
+      const device = new MatterbridgeEndpoint(rainSensor, { uniqueStorageKey: 'RainSensorII' }, true);
       expect(device).toBeDefined();
       device.createDefaultIdentifyClusterServer();
       device.createDefaultBooleanStateClusterServer(true);
@@ -628,9 +642,13 @@ describe('MatterbridgeEndpoint', () => {
       expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'booleanState']);
       await add(device);
 
-      let state = false;
-      const listener = async (value: any) => {
-        state = value;
+      let newState = false;
+      let oldState = false;
+      let offlineState: boolean | undefined = false;
+      const listener = (newValue: boolean, oldValue: boolean, context: ActionContext) => {
+        newState = newValue;
+        oldState = oldValue;
+        offlineState = context.offline;
       };
 
       expect(await device.subscribeAttribute('booleanStateXX', 'stateValue', listener, device.log)).toBe(false);
@@ -643,7 +661,9 @@ describe('MatterbridgeEndpoint', () => {
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Subscribed endpoint `));
 
       await device.setAttribute(BooleanStateCluster, 'stateValue', false, device.log);
-      expect(state).toBe(false);
+      expect(newState).toBe(false);
+      expect(oldState).toBe(true);
+      expect(offlineState).toBe(true);
       expect(device.getAttribute(BooleanStateBehavior, 'stateValue', device.log)).toBe(false);
       expect(device.getAttribute(BooleanStateServer, 'stateValue', device.log)).toBe(false);
       expect(device.getAttribute(BooleanState.Cluster, 'stateValue', device.log)).toBe(false);
@@ -651,7 +671,9 @@ describe('MatterbridgeEndpoint', () => {
       expect(device.getAttribute('BooleanState', 'stateValue', device.log)).toBe(false);
 
       await device.setAttribute(BooleanState.Cluster, 'stateValue', true, device.log);
-      expect(state).toBe(true);
+      expect(newState).toBe(true);
+      expect(oldState).toBe(false);
+      expect(offlineState).toBe(true);
       expect(device.getAttribute(BooleanStateBehavior, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanStateServer, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanState.Cluster, 'stateValue', device.log)).toBe(true);
@@ -742,7 +764,7 @@ describe('MatterbridgeEndpoint', () => {
         expect(attributeId).toBeDefined();
         count++;
       });
-      expect(count).toBe(85);
+      expect(count).toBe(59);
     });
 
     test('forEachAttribute DishWasher', async () => {
@@ -762,7 +784,7 @@ describe('MatterbridgeEndpoint', () => {
         expect(attributeId).toBeDefined();
         count++;
       });
-      expect(count).toBe(23);
+      expect(count).toBe(20);
     });
 
     test('forEachAttribute LaundryWasher', async () => {
@@ -785,7 +807,7 @@ describe('MatterbridgeEndpoint', () => {
         expect(attributeId).toBeDefined();
         count++;
       });
-      expect(count).toBe(34);
+      expect(count).toBe(26);
     });
 
     test('forEachAttribute ExtractorHood', async () => {
@@ -808,7 +830,7 @@ describe('MatterbridgeEndpoint', () => {
         expect(attributeId).toBeDefined();
         count++;
       });
-      expect(count).toBe(77);
+      expect(count).toBe(47);
     });
 
     test('forEachAttribute AirQuality', async () => {
@@ -828,7 +850,7 @@ describe('MatterbridgeEndpoint', () => {
         expect(attributeId).toBeDefined();
         count++;
       });
-      expect(count).toBe(216);
+      expect(count).toBe(150);
 
       loggerLogSpy.mockClear();
       expect(await device.setAttribute(TemperatureMeasurementServer, 'measuredValue', 2500, device.log)).toBeTruthy();
