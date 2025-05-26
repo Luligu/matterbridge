@@ -8,12 +8,12 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-## [3.0.4] - 2025-05-??
+## [3.0.4] - 2025-05-26
 
 ### Added
 
 - [jsdoc]: Improved jsdoc for cluster helpers.
-- [cover]: Added createDefaultTiltWindowCoveringClusterServer().
+- [cover]: Added createDefaultLiftTiltWindowCoveringClusterServer() that create a window covering cluser with both lift and tilt features (supported by Apple Home).
 
 ### Changed
 
