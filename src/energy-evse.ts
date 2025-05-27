@@ -37,6 +37,7 @@ export class Evse extends MatterbridgeEndpoint {
    * @param {string} serial - The serial number of the EVSE.
    * @param {number} [circuitCapacity=0] - The capacity that the circuit that the EVSE is connected to can provide.. Defaults to 0.
    * @param {number} [minimumChargeCurrent=6000] - Minimum current that can be delivered by the EVSE to the EV. Defaults to 6000mA.
+   * @param {number} [maximumChargeCurrent=6000] - Maximum current that can be delivered by the EVSE to the EV. Defaults to 0mA.
    * @param {number} [sessionId=undefined] - Unique identifier for the current or last session. Defaut to null.
    */
   constructor(name: string, serial: string, circuitCapacity = 0, minimumChargeCurrent = 6000, maximumChargeCurrent = 0, sessionId = undefined) {
@@ -60,7 +61,7 @@ export class Evse extends MatterbridgeEndpoint {
     circuitCapacity?: 0,
     minimumChargeCurrent?: 6000,
     maximumChargeCurrent?: 0,
-    sessionId?: null,
+    sessionId?: undefined,
   ): this {
     this.behaviors.require(MatterbridgeEnergyEvseServer, {
       state: state ?? EnergyEvse.State.NotPluggedIn,
@@ -70,7 +71,7 @@ export class Evse extends MatterbridgeEndpoint {
       circuitCapacity: circuitCapacity ?? 0,
       minimumChargeCurrent: minimumChargeCurrent ?? 6000,
       maximumChargeCurrent: maximumChargeCurrent ?? 0,
-      sessionId: null,
+      sessionId: sessionId ?? undefined,
     });
     return this;
   }
