@@ -260,7 +260,7 @@ export class MatterbridgeServerDevice {
 
   enableCharging() {
     this.log.info(`EnableCharging (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('enableCharging', { request: {} , attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+    this.commandHandler.executeHandler('enableCharging', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
 
   disable() {

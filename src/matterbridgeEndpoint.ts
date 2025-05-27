@@ -233,7 +233,6 @@ export interface MatterbridgeEndpointCommands {
   // Energy Evse
   enableCharging: HandlerFunction;
   disable: HandlerFunction;
-
 }
 
 export interface SerializedMatterbridgeEndpoint {
