@@ -14,7 +14,7 @@ import path from 'node:path';
 
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { Evse } from './src/energy-evse.js';
+import { Evse } from './energy-evse.js';
 import { Identify, PowerSource, EnergyEvse } from '@matter/main/clusters';
 import { EnergyEvseServer, EnergyEvseModeServer } from '@matter/node/behaviors';
 import { MatterbridgeEnergyEvseServer, MatterbridgeEnergyEvseModeServer } from './matterbridgeBehaviors.js';
