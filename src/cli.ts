@@ -229,9 +229,9 @@ async function stopInspector() {
 /**
  * Takes a heap snapshot and saves it to the file name Heap-snapshot-<timestamp>.heapsnapshot.
  * This function is called periodically based on the -snapshotinterval parameter.
- * If the parameter is not set, it defaults to 10 minutes.
- * The snapshot is saved in the current working directory.
- * The snapshot can be analyzed using Chrome DevTools or other tools that support heap snapshots.
+ * The -snapshotinterval parameter must at least 30000 ms.
+ * The snapshot is saved in the heap_profile directory that is created in the current working directory.
+ * The snapshot can be analyzed using vscode or Chrome DevTools or other tools that support heap snapshots.
  */
 async function takeHeapSnapshot() {
   const { writeFileSync } = await import('node:fs');
@@ -244,8 +244,8 @@ async function takeHeapSnapshot() {
   }
 
   const chunks: Buffer[] = [];
-  const chunksListener = (m: InspectorNotification<HeapProfiler.AddHeapSnapshotChunkEventDataType>) => {
-    chunks.push(Buffer.from(m.params.chunk));
+  const chunksListener = (notification: InspectorNotification<HeapProfiler.AddHeapSnapshotChunkEventDataType>) => {
+    chunks.push(Buffer.from(notification.params.chunk));
   };
   session.on('HeapProfiler.addHeapSnapshotChunk', chunksListener);
   await new Promise<void>((resolve) => {
@@ -254,11 +254,8 @@ async function takeHeapSnapshot() {
         session?.off('HeapProfiler.addHeapSnapshotChunk', chunksListener);
         writeFileSync(filename, Buffer.concat(chunks));
         log.debug(`***Heap sampling snapshot saved to ${CYAN}${filename}${db}`);
+        triggerGarbageCollection();
         resolve();
-        setTimeout(() => {
-          // Trigger garbage collection after taking a snapshot
-          triggerGarbageCollection();
-        }, 10000).unref(); // Wait 10 seconds before triggering GC
       } else {
         session?.off('HeapProfiler.addHeapSnapshotChunk', chunksListener);
         log.error(`***Failed to take heap snapshot: ${err instanceof Error ? err.message : err}`);
@@ -272,12 +269,12 @@ async function takeHeapSnapshot() {
  * Triggers a manual garbage collection.
  * This function is working if the process is started with --expose-gc.
  */
-async function triggerGarbageCollection() {
+function triggerGarbageCollection() {
   if (typeof global.gc === 'function') {
     global.gc();
     log.debug('***Manual garbage collection triggered via global.gc().');
   } else {
-    log.error('***Garbage collection is not exposed. Start Node.js with --expose-gc to enable manual GC.');
+    log.debug('***Garbage collection is not exposed. Start Node.js with --expose-gc to enable manual GC.');
   }
 }
 

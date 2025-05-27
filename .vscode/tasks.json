@@ -1,180 +1,115 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"label": "Build",
-			"type": "npm",
-			"script": "build",
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
-			"problemMatcher": [],
-			"detail": "tsc"
-		},
-		{
-			"label": "Test: All",
-			"type": "shell",
-			"command": "node",
-			"args": [
-				"--no-warnings",
-				"--experimental-vm-modules",
-				"node_modules/jest/bin/jest.js",
-				"--maxWorkers=100%"
-			],
-			"group": {
-				"kind": "test",
-				"isDefault": true
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "Test: Verbose",
-			"type": "shell",
-			"command": "node",
-			"args": [
-				"--no-warnings",
-				"--experimental-vm-modules",
-				"node_modules/jest/bin/jest.js",
-				"--verbose",
-				"--maxWorkers=100%"
-			],
-			"group": {
-				"kind": "test",
-				"isDefault": false
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "Test: Coverage",
-			"type": "shell",
-			"command": "node",
-			"args": [
-				"--no-warnings",
-				"--experimental-vm-modules",
-				"node_modules/jest/bin/jest.js",
-				"--coverage",
-				"--maxWorkers=100%"
-			],
-			"group": {
-				"kind": "test",
-				"isDefault": false
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "Test: Matterbridge",
-			"type": "shell",
-			"command": "node",
-			"args": [
-				"--no-warnings",
-				"--experimental-vm-modules",
-				"node_modules/jest/bin/jest.js",
-				"--coverage",
-				"--maxWorkers=100%",
-				"matterbridge.test.ts",
-				"matterbridge.bridge.test.ts",
-				"matterbridge.childbridge.test.ts"
-			],
-			"group": {
-				"kind": "test",
-				"isDefault": false
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "Test: Frontend",
-			"type": "shell",
-			"command": "node",
-			"args": [
-				"--no-warnings",
-				"--experimental-vm-modules",
-				"node_modules/jest/bin/jest.js",
-				"--coverage",
-				"--maxWorkers=100%",
-				"frontend.*.test.ts"
-			],
-			"group": {
-				"kind": "test",
-				"isDefault": false
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "Test: Endpoint",
-			"type": "shell",
-			"command": "node",
-			"args": [
-				"--no-warnings",
-				"--experimental-vm-modules",
-				"node_modules/jest/bin/jest.js",
-				"--coverage",
-				"--maxWorkers=100%",
-				"matterbridgeEndpoint.test.ts",
-				"matterbridgeEndpoint-default.test.ts",
-				"matterbridgeEndpoint-matterjs.test.ts"
-			],
-			"group": {
-				"kind": "test",
-				"isDefault": false
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "Test: Platform",
-			"type": "shell",
-			"command": "node",
-			"args": [
-				"--no-warnings",
-				"--experimental-vm-modules",
-				"node_modules/jest/bin/jest.js",
-				"--coverage",
-				"--maxWorkers=100%",
-				"matterbridgePlatform.test.ts",
-				"matterbridgeAccessoryPlatform.test.ts",
-				"matterbridgeDynamicPlatform.test.ts"
-			],
-			"group": {
-				"kind": "test",
-				"isDefault": false
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "Test: Plugins",
-			"type": "shell",
-			"command": "node",
-			"args": [
-				"--no-warnings",
-				"--experimental-vm-modules",
-				"node_modules/jest/bin/jest.js",
-				"--coverage",
-				"--maxWorkers=100%",
-				"pluginManager.test.ts"
-			],
-			"group": {
-				"kind": "test",
-				"isDefault": false
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "Test: Devices",
-			"type": "shell",
-			"command": "node",
-			"args": [
-				"--no-warnings",
-				"--experimental-vm-modules",
-				"node_modules/jest/bin/jest.js",
-				"--coverage",
-				"--maxWorkers=100%",
-				"deviceManager.test.ts"
-			],
-			"group": {
-				"kind": "test",
-				"isDefault": false
-			},
-			"problemMatcher": []
-		},
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build",
+      "type": "npm",
+      "script": "build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "detail": "tsc"
+    },
+    {
+      "label": "Test: All",
+      "type": "shell",
+      "command": "node",
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--maxWorkers=100%"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Verbose",
+      "type": "shell",
+      "command": "node",
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--maxWorkers=100%"],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Coverage",
+      "type": "shell",
+      "command": "node",
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--coverage", "--maxWorkers=100%"],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Matterbridge",
+      "type": "shell",
+      "command": "node",
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--coverage", "--maxWorkers=100%", "matterbridge.test.ts", "matterbridge.bridge.test.ts", "matterbridge.childbridge.test.ts"],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Frontend",
+      "type": "shell",
+      "command": "node",
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--coverage", "--maxWorkers=100%", "frontend.*.test.ts"],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Endpoint",
+      "type": "shell",
+      "command": "node",
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--coverage", "--maxWorkers=100%", "matterbridgeEndpoint.test.ts", "matterbridgeEndpoint-default.test.ts", "matterbridgeEndpoint-matterjs.test.ts"],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Platform",
+      "type": "shell",
+      "command": "node",
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--coverage", "--maxWorkers=100%", "matterbridgePlatform.test.ts", "matterbridgeAccessoryPlatform.test.ts", "matterbridgeDynamicPlatform.test.ts"],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Plugins",
+      "type": "shell",
+      "command": "node",
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--coverage", "--maxWorkers=100%", "pluginManager.test.ts"],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Devices",
+      "type": "shell",
+      "command": "node",
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--coverage", "--maxWorkers=100%", "deviceManager.test.ts"],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    }
+  ]
 }
