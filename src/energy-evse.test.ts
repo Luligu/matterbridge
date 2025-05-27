@@ -17,7 +17,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Evse } from './energy-evse.js';
 import { Identify, PowerSource, EnergyEvse } from '@matter/main/clusters';
 import { EnergyEvseServer, EnergyEvseModeServer } from '@matter/node/behaviors';
-import { MatterbridgeEnergyEvseServer, MatterbridgeEnergyEvseModeServer } from './matterbridgeBehaviors.js';
+import { MatterbridgeEnergyEvseServer, MatterbridgeEnergyEvseModeServer } from './energy-evse.js';
 import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
@@ -175,10 +175,10 @@ describe('Matterbridge EVSE', () => {
   test('invoke MatterbridgeEnergyEvseServer commands', async () => {
     expect(device.behaviors.has(EnergyEvseServer)).toBeTruthy();
     expect(device.behaviors.has(MatterbridgeEnergyEvseServer)).toBeTruthy();
-    expect(device.behaviors.elementsOf(EnergyEvseServer).commands.has('boost')).toBeTruthy();
-    expect(device.behaviors.elementsOf(MatterbridgeEnergyEvseServer).commands.has('boost')).toBeTruthy();
-    expect(device.behaviors.elementsOf(EnergyEvseServer).commands.has('cancelBoost')).toBeTruthy();
-    expect(device.behaviors.elementsOf(MatterbridgeEnergyEvseServer).commands.has('cancelBoost')).toBeTruthy();
+    expect(device.behaviors.elementsOf(EnergyEvseServer).commands.has('disable')).toBeTruthy();
+    expect(device.behaviors.elementsOf(MatterbridgeEnergyEvseServer).commands.has('disable')).toBeTruthy();
+    expect(device.behaviors.elementsOf(EnergyEvseServer).commands.has('enableCharging')).toBeTruthy();
+    expect(device.behaviors.elementsOf(MatterbridgeEnergyEvseServer).commands.has('enableCharging')).toBeTruthy();
     expect((device.state['EnergyEvse'] as any).acceptedCommandList).toEqual([0, 1]);
     expect((device.state['EnergyEvse'] as any).generatedCommandList).toEqual([]);
     expect((device.stateOf(MatterbridgeEnergyEvseServer) as any).acceptedCommandList).toEqual([0, 1]);

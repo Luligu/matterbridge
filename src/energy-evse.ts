@@ -115,15 +115,15 @@ export class Evse extends MatterbridgeEndpoint {
 }
 
 export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
-  override enableCharging(): MaybePromise {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    device.enableCharging();
-    device.log.info(`MatterbridgeEnergyEvseServer enableCharging called`);
-  }
   override disable(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
     device.disable();
     device.log.info(`MatterbridgeEnergyEvseServer disable called`);
+  }
+  override enableCharging(): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.enableCharging();
+    device.log.info(`MatterbridgeEnergyEvseServer enableCharging called`);
   }
 }
 
