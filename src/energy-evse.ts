@@ -21,13 +21,19 @@
  * limitations under the License. *
  */
 
+// @matter
+import { MaybePromise } from '@matter/main';
+
 // Matterbridge
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { MatterbridgeServer } from './matterbridgeBehaviors.js';
 import { evse } from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEnergyEvseServer, MatterbridgeEnergyEvseModeServer } from './matterbridgeBehaviors.js';
+import { EnergyEvseServer } from '@matter/main/behaviors/energy-evse';
+import { EnergyEvseModeServer } from '@matter/main/behaviors/energy-evse-mode';
 
 // Matter.js
 import { EnergyEvse, EnergyEvseMode } from '@matter/main/clusters';
+import { ModeBase } from '@matter/main/clusters/mode-base';
 
 export class Evse extends MatterbridgeEndpoint {
   /**
@@ -105,5 +111,33 @@ export class Evse extends MatterbridgeEndpoint {
       currentMode: currentMode ?? 1,
     });
     return this;
+  }
+}
+
+export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
+  override enableCharging(): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.enableCharging();
+    device.log.info(`MatterbridgeEnergyEvseServer enableCharging called`);
+  }
+  override disable(): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.disable();
+    device.log.info(`MatterbridgeEnergyEvseServer disable called`);
+  }
+}
+
+export class MatterbridgeEnergyEvseModeServer extends EnergyEvseModeServer {
+  override changeToMode({ newMode }: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const supported = this.state.supportedModes.find((mode) => mode.mode === newMode);
+    if (!supported) {
+      device.log.error(`MatterbridgeEnergyEvseModeServer changeToMode called with unsupported newMode: ${newMode}`);
+      return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
+    }
+    device.changeToMode({ newMode });
+    this.state.currentMode = newMode;
+    device.log.info(`MatterbridgeEnergyEvseModeServer changeToMode called with newMode ${newMode} => ${supported.label}`);
+    return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }
