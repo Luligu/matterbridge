@@ -253,10 +253,19 @@ export class MatterbridgeServerDevice {
     this.log.info(`Boost (endpoint ${this.endpointId}.${this.endpointNumber})`);
     this.commandHandler.executeHandler('boost', { request: { boostInfo }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
-
   cancelBoost() {
     this.log.info(`Cancel boost (endpoint ${this.endpointId}.${this.endpointNumber})`);
     this.commandHandler.executeHandler('cancelBoost', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  enableCharging() {
+    this.log.info(`EnableCharging (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.commandHandler.executeHandler('enableCharging', { request: {} , attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  disable() {
+    this.log.info(`Disable charging (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.commandHandler.executeHandler('disable', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
 }
 
@@ -751,16 +760,15 @@ export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
 /** ********************************************* evse  **********************************************************/
 
 export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
-  // override enableCharging({ chargingInfo }: EnergyEvse.EnableChargingRequest): MaybePromise {
   override enableCharging(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    // device.enableCharging({ chargingInfo });
+    device.enableCharging();
+    device.log.info(`MatterbridgeEnergyEvseServer enableCharging called`);
   }
-  // enableCharging(request: EnergyEvse.EnableChargingRequest): MaybePromise;
   override disable(): MaybePromise {
-    // const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    // device.disable();
-    // device.log.info(`MatterbridgeEnergyEvseServer disable called`);
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.disable();
+    device.log.info(`MatterbridgeEnergyEvseServer disable called`);
   }
 }
 

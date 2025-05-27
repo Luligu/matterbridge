@@ -232,7 +232,7 @@ export interface MatterbridgeEndpointCommands {
 
   // Energy Evse
   enableCharging: HandlerFunction;
-  cancel: HandlerFunction;
+  disable: HandlerFunction;
 
 }
 
