@@ -10,13 +10,25 @@
     },
     {
       "type": "node",
+      "request": "attach",
+      "name": "Attach to remote Matterbridge",
+      "address": "192.168.69.3",
+      "port": 9229,
+      "restart": true
+    },
+    {
+      "type": "node",
       "request": "launch",
-      "name": "Launch Matterbridge",
+      "name": "Launch Matterbridge with --expose-gc",
       "program": "${workspaceFolder}/dist/cli.js",
       "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--expose-gc"
+      ],
       "args": [
         "-debug",
         "-ssl",
+        "-frontend",
         "443"
       ],
       "console": "integratedTerminal"
@@ -33,6 +45,7 @@
       "args": [
         "-debug",
         "-ssl",
+        "-frontend",
         "443"
       ],
       "console": "integratedTerminal"
