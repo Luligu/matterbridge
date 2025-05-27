@@ -229,6 +229,9 @@ export interface MatterbridgeEndpointCommands {
   // Water Heater Management
   boost: HandlerFunction;
   cancelBoost: HandlerFunction;
+
+  // Temperature Control
+  setTemperature: HandlerFunction;
 }
 
 export interface SerializedMatterbridgeEndpoint {

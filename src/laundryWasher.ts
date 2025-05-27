@@ -45,24 +45,82 @@ export class LaundryWasher extends MatterbridgeEndpoint {
    *
    * @param {string} name - The name of the laundry washer.
    * @param {string} serial - The serial number of the laundry washer.
+   * @param {number} [currentMode=2] - The current mode of the laundry washer. Defaults to 2 (Normal mode). Dead Front OnOff Cluster will set this to 2 when turned off. Persistent attribute.
+   * @param {LaundryWasherMode.ModeOption[]} [supportedModes] - The supported modes of the laundry washer. Defaults to a set of common modes (which include Delicate, Normal, Heavy, and Whites). Fixed attribute.
+   * @param {number} [spinSpeedCurrent=2] - The current spin speed as index of the spinSpeeds array. Defaults to 2 (which corresponds to '1200').
+   * @param {string[]} [spinSpeeds] - The supported spin speeds. Defaults to ['400', '800', '1200', '1600'].
+   * @param {LaundryWasherControls.NumberOfRinses} [numberOfRinses=LaundryWasherControls.NumberOfRinses.Normal] - The number of rinses. Defaults to LaundryWasherControls.NumberOfRinses.Normal (which corresponds to 1 rinse).
+   * @param {LaundryWasherControls.NumberOfRinses[]} [supportedRinses] - The supported rinses. Defaults to [NumberOfRinses.None, NumberOfRinses.Normal, NumberOfRinses.Max, NumberOfRinses.Extra].
+   * @param {number} [selectedTemperatureLevel=1] - The selected temperature level as an index of the supportedTemperatureLevels array. Defaults to 1 (which corresponds to 'Warm').
+   * @param {string[]} [supportedTemperatureLevels] - The supported temperature levels. Defaults to ['Cold', 'Warm', 'Hot', '30°', '40°', '60°', '80°']. Fixed attribute.
+   * @param {number} [temperatureSetpoint] - The temperature setpoint * 100. Defaults to 40 * 100 (which corresponds to 40°C).
+   * @param {number} [minTemperature=30 * 100] - The minimum temperature * 100. Defaults to 30 * 100 (which corresponds to 30°C). Fixed attribute.
+   * @param {number} [maxTemperature=60 * 100] - The maximum temperature * 100. Defaults to 60 * 100 (which corresponds to 60°C). Fixed attribute.
+   * @param {number} [step=10 * 100] - The step size for temperature changes. Defaults to 10 * 100 (which corresponds to 10°C). Fixed attribute.
+   * @param {OperationalState.OperationalStateEnum} [operationalState=OperationalState.OperationalStateEnum.Off] - The operational state of the laundry washer. Defaults to OperationalState.OperationalStateEnum.Off.
+   *
+   * @remarks
+   * - If `temperatureSetpoint` is provided, the `createNumberTemperatureControlClusterServer` method will be used to create the TemperatureControl Cluster Server with features TemperatureNumber and TemperatureStep.
+   * - If `temperatureSetpoint` is not provided, the `createLevelTemperatureControlClusterServer` method will be used to create the TemperatureControl Cluster Server with feature TemperatureLevel.
+   *
    */
-  constructor(name: string, serial: string) {
+  constructor(
+    name: string,
+    serial: string,
+    currentMode?: number,
+    supportedModes?: LaundryWasherMode.ModeOption[],
+    spinSpeedCurrent?: number,
+    spinSpeeds?: string[],
+    numberOfRinses?: LaundryWasherControls.NumberOfRinses,
+    supportedRinses?: LaundryWasherControls.NumberOfRinses[],
+    selectedTemperatureLevel?: number,
+    supportedTemperatureLevels?: string[],
+    temperatureSetpoint?: number,
+    minTemperature?: number,
+    maxTemperature?: number,
+    step?: number,
+    operationalState?: OperationalState.OperationalStateEnum,
+  ) {
     super(laundryWasher, { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Laundry Washer');
     this.createDefaultPowerSourceWiredClusterServer();
-    this.createDeadFrontOnOffClusterServer();
-    // this.createNumberTemperatureControlClusterServer(4000, 2000, 8000, 1000);
-    this.createLevelTemperatureControlClusterServer(3, ['Cold', '30°', '40°', '60°', '80°']);
-    this.createDefaultLaundryWasherControlsClusterServer();
-    this.createDefaultLaundryWasherModeClusterServer();
-    this.createDefaultOperationalStateClusterServer(OperationalState.OperationalStateEnum.Stopped);
+    this.createDeadFrontOnOffClusterServer(true);
+    this.createDefaultLaundryWasherModeClusterServer(currentMode, supportedModes);
+    this.createDefaultLaundryWasherControlsClusterServer(spinSpeedCurrent, spinSpeeds, numberOfRinses, supportedRinses);
+    if (temperatureSetpoint) this.createNumberTemperatureControlClusterServer(temperatureSetpoint, minTemperature, maxTemperature, step);
+    else this.createLevelTemperatureControlClusterServer(selectedTemperatureLevel, supportedTemperatureLevels);
+    this.createDefaultOperationalStateClusterServer(operationalState);
+  }
+
+  /**
+   * Creates a default Laundry Washer Mode Cluster Server.
+   *
+   * @param {number} currentMode - The current mode of the laundry washer. Defaults to 2 (Normal mode). Dead Front OnOff Cluster will set this to 2 when turned off. Persistent attribute.
+   * @param {LaundryWasherMode.ModeOption[]} supportedModes - The supported modes of the laundry washer. Defaults to a set of common modes (which include Delicate, Normal, Heavy, and Whites). Fixed attribute.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultLaundryWasherModeClusterServer(
+    currentMode = 2,
+    supportedModes: LaundryWasherMode.ModeOption[] = [
+      { label: 'Delicate', mode: 1, modeTags: [{ value: LaundryWasherMode.ModeTag.Delicate }] },
+      { label: 'Normal', mode: 2, modeTags: [{ value: LaundryWasherMode.ModeTag.Normal }] },
+      { label: 'Heavy', mode: 3, modeTags: [{ value: LaundryWasherMode.ModeTag.Heavy }] },
+      { label: 'Whites', mode: 4, modeTags: [{ value: LaundryWasherMode.ModeTag.Whites }] },
+    ],
+  ): this {
+    this.behaviors.require(MatterbridgeLaundryWasherModeServer, {
+      supportedModes, // Fixed attribute.
+      currentMode, // Persistent attribute.
+    });
+    return this;
   }
 
   /**
    * Creates a Laundry Washer Controls Cluster Server with feature Spin for selecting the spin speed and feature Rinse for selecting the number of rinses.
    *
-   * @param {number} spinSpeedCurrent - The current spin speed as index of the spinSpeeds array. Default to 3 (which corresponds to '1200').
+   * @param {number} spinSpeedCurrent - The current spin speed as index of the spinSpeeds array. Default to 2 (which corresponds to '1200').
    * @param {string[]} spinSpeeds - The supported spin speeds. Default to ['400', '800', '1200', '1600'].
    * @param {LaundryWasherControls.NumberOfRinses} numberOfRinses - The number of rinses. Default to LaundryWasherControls.NumberOfRinses.Normal (which corresponds to 1 rinse).
    * @param {LaundryWasherControls.NumberOfRinses[]} supportedRinses - The supported rinses. Default to [NumberOfRinses.None, NumberOfRinses.Normal, NumberOfRinses.Max, NumberOfRinses.Extra].
@@ -70,7 +128,7 @@ export class LaundryWasher extends MatterbridgeEndpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultLaundryWasherControlsClusterServer(
-    spinSpeedCurrent = 3,
+    spinSpeedCurrent = 2,
     spinSpeeds: string[] = ['400', '800', '1200', '1600'],
     numberOfRinses: LaundryWasherControls.NumberOfRinses = LaundryWasherControls.NumberOfRinses.Normal,
     supportedRinses: LaundryWasherControls.NumberOfRinses[] = [LaundryWasherControls.NumberOfRinses.None, LaundryWasherControls.NumberOfRinses.Normal, LaundryWasherControls.NumberOfRinses.Max, LaundryWasherControls.NumberOfRinses.Extra],
@@ -85,38 +143,14 @@ export class LaundryWasher extends MatterbridgeEndpoint {
   }
 
   /**
-   * Creates a default Laundry Washer Mode Cluster Server.
-   *
-   * @param {number} currentMode - The current mode of the laundry washer. Defaults to 2 (Normal mode). Dead Front OnOff Cluster will set this to 2 when turned off.
-   * @param {LaundryWasherMode.ModeOption[]} supportedModes - The supported modes of the laundry washer. Defaults to a set of common modes (which include Delicate, Normal, Heavy, and Whites).
-   *
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createDefaultLaundryWasherModeClusterServer(
-    currentMode = 2,
-    supportedModes: LaundryWasherMode.ModeOption[] = [
-      { label: 'Delicate', mode: 1, modeTags: [{ value: LaundryWasherMode.ModeTag.Delicate }] },
-      { label: 'Normal', mode: 2, modeTags: [{ value: LaundryWasherMode.ModeTag.Normal }] },
-      { label: 'Heavy', mode: 3, modeTags: [{ value: LaundryWasherMode.ModeTag.Heavy }] },
-      { label: 'Whites', mode: 4, modeTags: [{ value: LaundryWasherMode.ModeTag.Whites }] },
-    ],
-  ): this {
-    this.behaviors.require(MatterbridgeLaundryWasherModeServer, {
-      supportedModes,
-      currentMode,
-    });
-    return this;
-  }
-
-  /**
    * Creates a TemperatureControl Cluster Server with feature TemperatureLevel.
    *
    * @param {number} selectedTemperatureLevel - The selected temperature level as an index of the supportedTemperatureLevels array. Defaults to 1 (which corresponds to 'Warm').
-   * @param {string[]} supportedTemperatureLevels - The supported temperature levels.
+   * @param {string[]} supportedTemperatureLevels - The supported temperature levels. Defaults to ['Cold', 'Warm', 'Hot', '30°', '40°', '60°', '80°']. Fixed attribute.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createLevelTemperatureControlClusterServer(selectedTemperatureLevel = 1, supportedTemperatureLevels = ['Cold', 'Warm', 'Hot']): this {
+  createLevelTemperatureControlClusterServer(selectedTemperatureLevel = 1, supportedTemperatureLevels = ['Cold', 'Warm', 'Hot', '30°', '40°', '60°', '80°']): this {
     this.behaviors.require(MatterbridgeLevelTemperatureControlServer.with(TemperatureControl.Feature.TemperatureLevel), {
       selectedTemperatureLevel,
       supportedTemperatureLevels,
@@ -136,19 +170,19 @@ export class LaundryWasher extends MatterbridgeEndpoint {
   createNumberTemperatureControlClusterServer(temperatureSetpoint = 40 * 100, minTemperature = 30 * 100, maxTemperature = 60 * 100, step = 10 * 100): this {
     this.behaviors.require(MatterbridgeNumberTemperatureControlServer.with(TemperatureControl.Feature.TemperatureNumber, TemperatureControl.Feature.TemperatureStep), {
       temperatureSetpoint,
-      minTemperature,
-      maxTemperature,
-      step,
+      minTemperature, // Fixed attribute
+      maxTemperature, // Fixed attribute
+      step, // Fixed attribute
     });
     return this;
   }
 }
 
-class MatterbridgeLevelTemperatureControlServer extends TemperatureControlServer.with(TemperatureControl.Feature.TemperatureLevel) {
+export class MatterbridgeLevelTemperatureControlServer extends TemperatureControlServer.with(TemperatureControl.Feature.TemperatureLevel) {
   override initialize() {
     if (this.state.supportedTemperatureLevels.length >= 2) {
       const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-      device.log.info('MatterbridgeLevelTemperatureControlServer initialized');
+      device.log.info(`MatterbridgeLevelTemperatureControlServer initialized with selectedTemperatureLevel ${this.state.selectedTemperatureLevel} and supportedTemperatureLevels: ${this.state.supportedTemperatureLevels.join(', ')}`);
     }
   }
 
@@ -163,10 +197,10 @@ class MatterbridgeLevelTemperatureControlServer extends TemperatureControlServer
   }
 }
 
-class MatterbridgeNumberTemperatureControlServer extends TemperatureControlServer.with(TemperatureControl.Feature.TemperatureNumber) {
+export class MatterbridgeNumberTemperatureControlServer extends TemperatureControlServer.with(TemperatureControl.Feature.TemperatureNumber, TemperatureControl.Feature.TemperatureStep) {
   override initialize() {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    device.log.info('MatterbridgeNumberTemperatureControlServer initialized');
+    device.log.info(`MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint ${this.state.temperatureSetpoint} minTemperature ${this.state.minTemperature} maxTemperature ${this.state.maxTemperature} step ${this.state.step}`);
   }
 
   override setTemperature(request: TemperatureControl.SetTemperatureRequest): MaybePromise {
@@ -180,10 +214,10 @@ class MatterbridgeNumberTemperatureControlServer extends TemperatureControlServe
   }
 }
 
-class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer {
+export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer {
   override initialize() {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    device.log.info(`LaundryWasherModeServer initialized: currentMode is ${this.state.currentMode}`);
+    device.log.info(`MatterbridgeLaundryWasherModeServer initialized: currentMode is ${this.state.currentMode}`);
     this.reactTo(this.agent.get(MatterbridgeOnOffServer).events.onOff$Changed, this.handleOnOffChange);
   }
 
@@ -200,11 +234,12 @@ class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);
     if (supportedMode) {
-      device.log.info(`LaundryWasherModeServer: changeToMode called with mode ${supportedMode.mode} = ${supportedMode.label}`);
+      device.log.info(`MatterbridgeLaundryWasherModeServer: changeToMode called with mode ${supportedMode.mode} => ${supportedMode.label}`);
+      device.changeToMode({ newMode: request.newMode });
       this.state.currentMode = request.newMode;
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
     } else {
-      device.log.error(`LaundryWasherModeServer: changeToMode called with invalid mode ${request.newMode}`);
+      device.log.error(`MatterbridgeLaundryWasherModeServer: changeToMode called with invalid mode ${request.newMode}`);
       return { status: ModeBase.ModeChangeStatus.InvalidInMode, statusText: 'Invalid mode' };
     }
   }
