@@ -69,8 +69,6 @@ import { RvcOperationalStateServer } from '@matter/main/behaviors/rvc-operationa
 import { ServiceAreaServer } from '@matter/main/behaviors/service-area';
 import { WaterHeaterModeServer } from '@matter/main/behaviors/water-heater-mode';
 import { WaterHeaterManagementServer } from '@matter/main/behaviors/water-heater-management';
-// import { EnergyEvseServer } from '@matter/main/behaviors/energy-evse';
-// import { EnergyEvseModeServer } from '@matter/main/behaviors/energy-evse-mode';
 
 // AnsiLogger module
 import { AnsiLogger } from './logger/export.js';
