@@ -748,7 +748,6 @@ export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
   }
 }
 
-
 /** ********************************************* evse  **********************************************************/
 
 export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
@@ -779,4 +778,3 @@ export class MatterbridgeEnergyEvseModeServer extends EnergyEvseModeServer {
     return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }
-

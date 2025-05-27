@@ -1,10 +1,9 @@
-
 /**
  * This file contains the EVSE class.
  *
  * @file energy-evse.ts
  * @author Luca Liguori
- * @date 2025-05-26
+ * @date 2025-05-27
  * @version 1.0.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -40,14 +39,7 @@ export class Evse extends MatterbridgeEndpoint {
    * @param {number} [minimumChargeCurrent=6000] - Minimum current that can be delivered by the EVSE to the EV. Defaults to 6000mA.
    * @param {number} [maximumChargeCurrent=] - Maximum current that can be delivered by the EVSE to the EV. Defaults to 0mA.
    */
-  constructor(
-    name: string,
-    serial: string,
-    circuitCapacity = 0,
-    minimumChargeCurrent = 6000,
-    maximumChargeCurrent = 0,
-
-  ) {
+  constructor(name: string, serial: string, circuitCapacity = 0, minimumChargeCurrent = 6000, maximumChargeCurrent = 0) {
     super(evse, { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge EVSE')
@@ -68,7 +60,7 @@ export class Evse extends MatterbridgeEndpoint {
     circuitCapacity?: 0,
     minimumChargeCurrent?: 6000,
     maximumChargeCurrent?: 0,
-    sessionId?: null
+    sessionId?: null,
   ): this {
     this.behaviors.require(MatterbridgeEnergyEvseServer, {
       state: state ?? EnergyEvse.State.NotPluggedIn,
@@ -78,7 +70,7 @@ export class Evse extends MatterbridgeEndpoint {
       circuitCapacity: circuitCapacity ?? 0,
       minimumChargeCurrent: minimumChargeCurrent ?? 6000,
       maximumChargeCurrent: maximumChargeCurrent ?? 0,
-      sessionId: null
+      sessionId: null,
     });
     return this;
   }
