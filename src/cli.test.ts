@@ -1,11 +1,13 @@
 // src\cli.test.ts
+
+/* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-process.argv = ['node', './cli.js', '-memorycheck', '-inspect', '-frontend', '0', '-profile', 'JestCli', '-debug', '-logger', 'debug', '-matterlogger', 'debug'];
+process.argv = ['node', './cli.js', '-memorycheck', '-inspect', '-snapshotinterval', '60000', '-frontend', '0', '-profile', 'JestCli', '-debug', '-logger', 'debug', '-matterlogger', 'debug'];
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, BRIGHT, LogLevel, YELLOW } from 'node-ansi-logger';
+import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, YELLOW } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
 import { MockMatterbridge } from './mock/mockMatterbridge.js';
@@ -16,45 +18,21 @@ let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
 let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
 let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
 let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
-const debug = false;
+const debug = false; // Set to true to enable debug logging
 
 if (!debug) {
-  // Spy on and mock AnsiLogger.log
-  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {
-    //
-  });
-  // Spy on and mock console.log
-  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {
-    //
-  });
-  // Spy on and mock console.debug
-  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {
-    //
-  });
-  // Spy on and mock console.info
-  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {
-    //
-  });
-  // Spy on and mock console.warn
-  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {
-    //
-  });
-  // Spy on and mock console.error
-  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
-    //
-  });
+  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
+  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
+  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
+  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
+  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
+  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
 } else {
-  // Spy on AnsiLogger.log
   loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
-  // Spy on console.log
-  loggerLogSpy = jest.spyOn(console, 'log');
-  // Spy on console.debug
+  consoleLogSpy = jest.spyOn(console, 'log');
   consoleDebugSpy = jest.spyOn(console, 'debug');
-  // Spy on console.info
   consoleInfoSpy = jest.spyOn(console, 'info');
-  // Spy on console.warn
   consoleWarnSpy = jest.spyOn(console, 'warn');
-  // Spy on console.error
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
 
@@ -76,7 +54,8 @@ describe('Matterbridge', () => {
   });
 
   beforeEach(async () => {
-    //
+    // Clear all mocks before each test
+    jest.clearAllMocks();
   });
 
   afterAll(async () => {
@@ -90,7 +69,7 @@ describe('Matterbridge', () => {
 
     // Dynamically import the cli module
     const cli = await import('./cli.js');
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     expect(cli.instance).toBeDefined();
     expect(cli.instance).toBeInstanceOf(MockMatterbridge);
     matterbridge = cli.instance as unknown as Matterbridge;
@@ -98,30 +77,29 @@ describe('Matterbridge', () => {
     expect(loadInstance).toHaveBeenCalledTimes(1);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cli main() started');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cpu memory check started');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Starting heap sampling...');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Started heap sampling');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Starting heap sampling...');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Started heap sampling');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `***Started heap snapshot interval of ${CYAN}60000${db} ms`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Matterbridge.loadInstance(true) called');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Matterbridge.loadInstance(true) exited');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***${YELLOW}${BRIGHT}Cpu usage:`));
   }, 10000);
 
   it('should shutdown matterbridge', async () => {
-    jest.clearAllMocks();
-
     matterbridge.emit('shutdown');
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received shutdown event, exiting...');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Stopping heap sampling...');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Heap sampling profile saved to Heap-sampling-profile.heapprofile');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Stopped heap sampling');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Stopping heap sampling...');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Clearing heap snapshot interval...');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('***Heap sampling snapshot saved to'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('***Heap sampling profile saved to'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Stopped heap sampling');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Cpu memory check stopped.'));
     expect(exit).toHaveBeenCalled();
   }, 10000);
 
   it('should start memory check', async () => {
-    jest.clearAllMocks();
-
     matterbridge.emit('startmemorycheck');
     await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -130,8 +108,6 @@ describe('Matterbridge', () => {
   }, 10000);
 
   it('should stop memory check', async () => {
-    jest.clearAllMocks();
-
     matterbridge.emit('stopmemorycheck');
     await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -140,8 +116,6 @@ describe('Matterbridge', () => {
   }, 10000);
 
   it('should restart matterbridge', async () => {
-    jest.clearAllMocks();
-
     matterbridge.emit('restart');
     await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -150,16 +124,27 @@ describe('Matterbridge', () => {
   }, 60000);
 
   it('should update matterbridge', async () => {
-    jest.clearAllMocks();
-
     matterbridge.emit('update');
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received update event, updating...');
     expect(loadInstance).toHaveBeenCalledTimes(1);
+  }, 60000);
 
+  it('should shutdown again matterbridge', async () => {
     matterbridge.emit('shutdown');
     await new Promise((resolve) => setTimeout(resolve, 500));
     expect(exit).toHaveBeenCalled();
   }, 60000);
+
+  it('should not start matterbridge', async () => {
+    loadInstance.mockImplementationOnce(async (_initialize?: boolean) => {
+      throw new Error('Failed to load Matterbridge instance');
+    });
+    // Dynamically import the cli module
+    const cli = await import('./cli.js');
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    expect(cli.instance).toBeDefined();
+    expect(cli.instance).toBeInstanceOf(MockMatterbridge);
+  }, 10000);
 });

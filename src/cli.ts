@@ -172,8 +172,8 @@ async function startInspector() {
     const interval = getIntParameter('snapshotinterval');
     if (interval && interval >= 30000) {
       log.debug(`***Started heap snapshot interval of ${CYAN}${interval}${db} ms`);
-      snapshotInterval = setInterval(() => {
-        takeHeapSnapshot();
+      snapshotInterval = setInterval(async () => {
+        await takeHeapSnapshot();
       }, interval);
     }
   } catch (err) {
@@ -199,7 +199,7 @@ async function stopInspector() {
     // Clear the snapshot interval if it exists
     clearInterval(snapshotInterval);
     // Take a final heap snapshot before stopping
-    takeHeapSnapshot();
+    await takeHeapSnapshot();
   }
 
   if (!session) {
@@ -248,16 +248,23 @@ async function takeHeapSnapshot() {
     chunks.push(Buffer.from(m.params.chunk));
   };
   session.on('HeapProfiler.addHeapSnapshotChunk', chunksListener);
-  session.post('HeapProfiler.takeHeapSnapshot', (err) => {
-    if (!err) {
-      session?.off('HeapProfiler.addHeapSnapshotChunk', chunksListener);
-      writeFileSync(filename, Buffer.concat(chunks));
-      log.debug(`***Heap sampling snapshot saved to ${CYAN}${filename}${db}`);
-      setTimeout(() => {
-        // Trigger garbage collection after taking a snapshot
-        triggerGarbageCollection();
-      }, 10000).unref(); // Wait 10 seconds before triggering GC
-    }
+  await new Promise<void>((resolve) => {
+    session?.post('HeapProfiler.takeHeapSnapshot', (err) => {
+      if (!err) {
+        session?.off('HeapProfiler.addHeapSnapshotChunk', chunksListener);
+        writeFileSync(filename, Buffer.concat(chunks));
+        log.debug(`***Heap sampling snapshot saved to ${CYAN}${filename}${db}`);
+        resolve();
+        setTimeout(() => {
+          // Trigger garbage collection after taking a snapshot
+          triggerGarbageCollection();
+        }, 10000).unref(); // Wait 10 seconds before triggering GC
+      } else {
+        session?.off('HeapProfiler.addHeapSnapshotChunk', chunksListener);
+        log.error(`***Failed to take heap snapshot: ${err instanceof Error ? err.message : err}`);
+        resolve();
+      }
+    });
   });
 }
 
@@ -309,12 +316,12 @@ async function update() {
 
 async function start() {
   log.debug('Received start memory check event');
-  startCpuMemoryCheck();
+  await startCpuMemoryCheck();
 }
 
 async function stop() {
   log.debug('Received stop memory check event');
-  stopCpuMemoryCheck();
+  await stopCpuMemoryCheck();
 }
 
 async function main() {
