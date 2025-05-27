@@ -206,6 +206,7 @@ matterstorage
 matterstorage.backup
 *.heapsnapshot
 *.heapprofile
+/heap_profile
 
 TODO.md
 CODEOWNERS

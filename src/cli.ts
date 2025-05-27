@@ -153,8 +153,12 @@ async function stopCpuMemoryCheck() {
  */
 async function startInspector() {
   const { Session } = await import('node:inspector');
+  const { mkdirSync } = await import('node:fs');
 
-  log.debug(`Starting heap sampling...`);
+  log.debug(`***Starting heap sampling...`);
+
+  // Create the heap snapshots directory if it doesn't exist
+  mkdirSync('heap_profile', { recursive: true });
 
   try {
     session = new Session();
@@ -162,17 +166,18 @@ async function startInspector() {
     await new Promise<void>((resolve, reject) => {
       session?.post('HeapProfiler.startSampling', (err) => (err ? reject(err) : resolve()));
     });
-    log.debug(`Started heap sampling`);
+    log.debug(`***Started heap sampling`);
 
     // Set an interval to take heap snapshots
-    if (hasParameter('snapshotinterval')) {
-      log.debug(`Started heap snapshot interval`);
+    const interval = getIntParameter('snapshotinterval');
+    if (interval && interval >= 30000) {
+      log.debug(`***Started heap snapshot interval of ${CYAN}${interval}${db} ms`);
       snapshotInterval = setInterval(() => {
         takeHeapSnapshot();
-      }, getIntParameter('snapshotinterval'));
+      }, interval);
     }
   } catch (err) {
-    log.error(`Failed to start heap sampling: ${err instanceof Error ? err.message : err}`);
+    log.error(`***Failed to start heap sampling: ${err instanceof Error ? err.message : err}`);
     session?.disconnect();
     session = undefined;
     return;
@@ -185,11 +190,12 @@ async function startInspector() {
  */
 async function stopInspector() {
   const { writeFileSync } = await import('node:fs');
+  const path = await import('node:path');
 
-  log.debug(`Stopping heap sampling...`);
+  log.debug(`***Stopping heap sampling...`);
 
   if (snapshotInterval) {
-    log.debug(`Clearing heap snapshot interval...`);
+    log.debug(`***Clearing heap snapshot interval...`);
     // Clear the snapshot interval if it exists
     clearInterval(snapshotInterval);
     // Take a final heap snapshot before stopping
@@ -197,7 +203,7 @@ async function stopInspector() {
   }
 
   if (!session) {
-    log.error('No active inspector session.');
+    log.error('***No active inspector session.');
     return;
   }
   try {
@@ -207,30 +213,31 @@ async function stopInspector() {
     });
 
     const profile = JSON.stringify(result.profile);
-    const filename = `Heap-profile-${new Date().toISOString().replace(/[:]/g, '-')}.heapprofile`;
+    const filename = path.join('heap_profile', `Heap-profile-${new Date().toISOString().replace(/[:]/g, '-')}.heapprofile`);
     writeFileSync(filename, profile);
 
-    log.debug(`Heap sampling profile saved to ${filename}`);
+    log.debug(`***Heap sampling profile saved to ${CYAN}${filename}${db}`);
   } catch (err) {
-    log.error(`Failed to stop heap sampling: ${err instanceof Error ? err.message : err}`);
+    log.error(`***Failed to stop heap sampling: ${err instanceof Error ? err.message : err}`);
   } finally {
     session.disconnect();
     session = undefined;
-    log.debug(`Stopped heap sampling`);
+    log.debug(`***Stopped heap sampling`);
   }
 }
 
 /**
  * Takes a heap snapshot and saves it to the file name Heap-snapshot-<timestamp>.heapsnapshot.
- * This function is called periodically based on the --snapshotinterval parameter.
+ * This function is called periodically based on the -snapshotinterval parameter.
  * If the parameter is not set, it defaults to 10 minutes.
  * The snapshot is saved in the current working directory.
  * The snapshot can be analyzed using Chrome DevTools or other tools that support heap snapshots.
  */
 async function takeHeapSnapshot() {
   const { writeFileSync } = await import('node:fs');
+  const path = await import('node:path');
 
-  const filename = `Heap-snapshot-${new Date().toISOString().replace(/[:]/g, '-')}.heapsnapshot`;
+  const filename = path.join('heap_profile', `Heap-snapshot-${new Date().toISOString().replace(/[:]/g, '-')}.heapsnapshot`);
   if (!session) {
     log.error('No active inspector session.');
     return;
@@ -245,7 +252,7 @@ async function takeHeapSnapshot() {
     if (!err) {
       session?.off('HeapProfiler.addHeapSnapshotChunk', chunksListener);
       writeFileSync(filename, Buffer.concat(chunks));
-      log.debug(`Heap sampling snapshot saved to ${filename}`);
+      log.debug(`***Heap sampling snapshot saved to ${CYAN}${filename}${db}`);
       setTimeout(() => {
         // Trigger garbage collection after taking a snapshot
         triggerGarbageCollection();
@@ -261,9 +268,9 @@ async function takeHeapSnapshot() {
 async function triggerGarbageCollection() {
   if (typeof global.gc === 'function') {
     global.gc();
-    log.debug('Manual garbage collection triggered via global.gc().');
+    log.debug('***Manual garbage collection triggered via global.gc().');
   } else {
-    log.error('Garbage collection is not exposed. Start Node.js with --expose-gc to enable manual GC.');
+    log.error('***Garbage collection is not exposed. Start Node.js with --expose-gc to enable manual GC.');
   }
 }
 

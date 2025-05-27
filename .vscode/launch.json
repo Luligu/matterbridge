@@ -49,6 +49,23 @@
         "443"
       ],
       "console": "integratedTerminal"
+    },
+        {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch Matterbridge with -inspect -snapshotinterval 60000",
+      "program": "${workspaceFolder}/dist/cli.js",
+      "runtimeExecutable": "node",
+      "args": [
+        "-debug",
+        "-inspect",
+        "-snapshotinterval",
+        "60000",
+        "-ssl",
+        "-frontend",
+        "443"
+      ],
+      "console": "integratedTerminal"
     }
   ]
 }

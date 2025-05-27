@@ -47,5 +47,6 @@ test
 jest
 *.heapsnapshot
 *.heapprofile
+heap_profile
 crypto
 *.tar
