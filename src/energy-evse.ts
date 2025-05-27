@@ -37,14 +37,14 @@ export class Evse extends MatterbridgeEndpoint {
    * @param {string} serial - The serial number of the EVSE.
    * @param {number} [circuitCapacity=0] - The capacity that the circuit that the EVSE is connected to can provide.. Defaults to 0.
    * @param {number} [minimumChargeCurrent=6000] - Minimum current that can be delivered by the EVSE to the EV. Defaults to 6000mA.
-   * @param {number} [maximumChargeCurrent=] - Maximum current that can be delivered by the EVSE to the EV. Defaults to 0mA.
+   * @param {number} [sessionId=undefined] - Unique identifier for the current or last session. Defaut to null.
    */
-  constructor(name: string, serial: string, circuitCapacity = 0, minimumChargeCurrent = 6000, maximumChargeCurrent = 0) {
+  constructor(name: string, serial: string, circuitCapacity = 0, minimumChargeCurrent = 6000, maximumChargeCurrent = 0, sessionId = undefined) {
     super(evse, { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge EVSE')
       .createDefaultPowerSourceWiredClusterServer()
-      .createDefaultEnergyEvseClusterServer(circuitCapacity, minimumChargeCurrent, maximumChargeCurrent)
+      .createDefaultEnergyEvseClusterServer(circuitCapacity, minimumChargeCurrent, maximumChargeCurrent, sessionId)
       .createDefaultEnergyEvseModeClusterServer();
   }
 
