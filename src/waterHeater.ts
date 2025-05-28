@@ -36,7 +36,8 @@ export class WaterHeater extends MatterbridgeEndpoint {
    * @param {string} name - The name of the water heater.
    * @param {string} serial - The serial number of the water heater.
    * @param {number} [waterTemperature=50] - The current water temperature. Defaults to 50.
-   * @param {number} [minHeatSetpointLimit=20] - The minimum heat setpoint limit. Defaults to 20.
+   * @param {number} [targetWaterTemperature=55] - The target water temperature. Defaults to 55.
+   * @param {number} [minHeatSetpointLimit=50] - The minimum heat setpoint limit. Defaults to 50.
    * @param {number} [maxHeatSetpointLimit=80] - The maximum heat setpoint limit. Defaults to 80.
    * @param {{ immersionElement1?: boolean; immersionElement2?: boolean; heatPump?: boolean; boiler?: boolean; other?: boolean }} [heaterTypes] - Indicates the heat sources that the water heater can call on for heating. Defaults to { immersionElement1: true }.
    */
@@ -44,16 +45,18 @@ export class WaterHeater extends MatterbridgeEndpoint {
     name: string,
     serial: string,
     waterTemperature = 50,
-    minHeatSetpointLimit = 20,
+    targetWaterTemperature = 55,
+    minHeatSetpointLimit = 50,
     maxHeatSetpointLimit = 80,
     heaterTypes: { immersionElement1?: boolean; immersionElement2?: boolean; heatPump?: boolean; boiler?: boolean; other?: boolean } = { immersionElement1: true },
+    tankPercentage = 90,
   ) {
     super(waterHeater, { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Water Heater')
       .createDefaultPowerSourceWiredClusterServer()
       .createDefaultHeatingThermostatClusterServer(waterTemperature, waterTemperature, minHeatSetpointLimit, maxHeatSetpointLimit)
-      .createDefaultWaterHeaterManagementClusterServer(heaterTypes)
+      .createDefaultWaterHeaterManagementClusterServer(heaterTypes, tankPercentage)
       .createDefaultWaterHeaterModeClusterServer();
   }
 
