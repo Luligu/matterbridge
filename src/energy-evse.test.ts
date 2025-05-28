@@ -12,11 +12,14 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 
+// matter.js
+import { Identify, PowerSource, EnergyEvse } from '@matter/main/clusters';
+import { EnergyEvseServer, EnergyEvseModeServer } from '@matter/node/behaviors';
+
+// Matterbridge
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Evse } from './energy-evse.js';
-import { Identify, PowerSource, EnergyEvse } from '@matter/main/clusters';
-import { EnergyEvseServer, EnergyEvseModeServer } from '@matter/node/behaviors';
 import { MatterbridgeEnergyEvseServer, MatterbridgeEnergyEvseModeServer } from './energy-evse.js';
 import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
 
