@@ -233,6 +233,9 @@ export interface MatterbridgeEndpointCommands {
   // Energy Evse
   enableCharging: HandlerFunction;
   disable: HandlerFunction;
+
+  // Temperature Control
+  setTemperature: HandlerFunction;
 }
 
 export interface SerializedMatterbridgeEndpoint {

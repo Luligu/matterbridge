@@ -6,7 +6,7 @@ dist
 tsconfig.tsbuildinfo
 
 # VSC
-.vscode
+#.vscode
 
 # Output of 'npm pack'
 *.tgz
@@ -44,7 +44,9 @@ matterstorage.backup
 coverage
 TODO.md
 test
+jest
 *.heapsnapshot
 *.heapprofile
+heap_profile
 crypto
 *.tar

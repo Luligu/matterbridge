@@ -196,6 +196,7 @@ TODO.md
 matterbridge.service
 docker
 test
+jest
 
 /__mocks__
 
@@ -205,6 +206,7 @@ matterstorage
 matterstorage.backup
 *.heapsnapshot
 *.heapprofile
+/heap_profile
 
 TODO.md
 CODEOWNERS

@@ -709,9 +709,7 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
     }
     device.selectAreas({ newAreas });
     this.state.selectedAreas = newAreas;
-    this.state.currentArea = newAreas[0];
     device.log.info(`MatterbridgeServiceAreaServer selectAreas called with: ${newAreas.map((area) => area.toString()).join(', ')}`);
-    device.selectAreas({ newAreas });
     return { status: ServiceArea.SelectAreasStatus.Success, statusText: 'Succesfully selected new areas' };
   }
 }
