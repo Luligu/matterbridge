@@ -267,7 +267,7 @@ async function takeHeapSnapshot() {
 
 /**
  * Triggers a manual garbage collection.
- * This function is working if the process is started with --expose-gc.
+ * This function is working only if the process is started with --expose-gc.
  */
 function triggerGarbageCollection() {
   if (typeof global.gc === 'function') {
