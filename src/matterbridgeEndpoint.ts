@@ -230,6 +230,10 @@ export interface MatterbridgeEndpointCommands {
   boost: HandlerFunction;
   cancelBoost: HandlerFunction;
 
+  // Energy Evse
+  enableCharging: HandlerFunction;
+  disable: HandlerFunction;
+
   // Temperature Control
   setTemperature: HandlerFunction;
 }

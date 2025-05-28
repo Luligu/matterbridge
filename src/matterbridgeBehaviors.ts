@@ -46,6 +46,8 @@ import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
 import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
 import { ServiceArea } from '@matter/main/clusters/service-area';
 import { WaterHeaterManagement } from '@matter/main/clusters/water-heater-management';
+import { EnergyEvse } from '@matter/main/clusters/energy-evse';
+import { EnergyEvseMode } from '@matter/main/clusters/energy-evse-mode';
 
 // @matter behaviors
 import { IdentifyServer } from '@matter/main/behaviors/identify';
@@ -249,10 +251,19 @@ export class MatterbridgeServerDevice {
     this.log.info(`Boost (endpoint ${this.endpointId}.${this.endpointNumber})`);
     this.commandHandler.executeHandler('boost', { request: { boostInfo }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
-
   cancelBoost() {
     this.log.info(`Cancel boost (endpoint ${this.endpointId}.${this.endpointNumber})`);
     this.commandHandler.executeHandler('cancelBoost', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  enableCharging() {
+    this.log.info(`EnableCharging (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.commandHandler.executeHandler('enableCharging', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  disable() {
+    this.log.info(`Disable charging (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.commandHandler.executeHandler('disable', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
 }
 
