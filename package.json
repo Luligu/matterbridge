@@ -156,10 +156,10 @@
     "@types/express": "5.0.2",
     "@types/jest": "29.5.14",
     "@types/multer": "1.4.12",
-    "@types/node": "22.15.21",
+    "@types/node": "22.15.24",
     "@types/ws": "8.18.1",
     "eslint-config-prettier": "10.1.5",
-    "eslint-plugin-jest": "28.11.0",
+    "eslint-plugin-jest": "28.11.1",
     "eslint-plugin-n": "17.18.0",
     "eslint-plugin-prettier": "5.4.0",
     "eslint-plugin-react": "7.37.5",
@@ -168,6 +168,6 @@
     "prettier": "3.5.3",
     "ts-jest": "29.3.4",
     "typescript": "5.8.3",
-    "typescript-eslint": "8.32.1"
+    "typescript-eslint": "8.33.0"
   }
 }
