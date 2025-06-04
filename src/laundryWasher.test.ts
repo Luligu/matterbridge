@@ -48,7 +48,7 @@ if (!debug) {
 }
 
 const MATTER_PORT = 6001;
-const NAME = 'WaterHeater';
+const NAME = 'LaundryWasher';
 
 /**
  * Waits for the `isOnline` property to become `true`.
