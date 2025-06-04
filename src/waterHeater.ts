@@ -73,7 +73,7 @@ export class WaterHeater extends MatterbridgeEndpoint {
     boostState?: WaterHeaterManagement.BoostState,
   ): this {
     this.behaviors.require(MatterbridgeWaterHeaterManagementServer.with(WaterHeaterManagement.Feature.TankPercent), {
-      heaterTypes: heaterTypes ?? { immersionElement1: true },
+      heaterTypes: heaterTypes ?? { immersionElement1: true }, // Fixed attribute
       heatDemand: heatDemand ?? {},
       tankPercentage: tankPercentage ?? 100,
       boostState: boostState ?? WaterHeaterManagement.BoostState.Inactive,
@@ -105,7 +105,7 @@ export class WaterHeater extends MatterbridgeEndpoint {
         { label: 'Off', mode: 11, modeTags: [{ value: WaterHeaterMode.ModeTag.Off }] },
         { label: 'Manual', mode: 12, modeTags: [{ value: WaterHeaterMode.ModeTag.Manual }] },
         { label: 'Timed', mode: 13, modeTags: [{ value: WaterHeaterMode.ModeTag.Timed }] },
-      ],
+      ], // Fixed attribute
       currentMode: currentMode ?? 1,
     });
     return this;
