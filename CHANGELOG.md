@@ -19,6 +19,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [package]: Updated dependencies.
 - [matter.js]: Update to 0.14.0-alpha.0-20250528-d6d12ae65.
+- [matter.js]: Update to 0.14.0. Great job matter.js!
 
 ### Fixed
 
