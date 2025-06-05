@@ -16,7 +16,43 @@
 
 ## Run matterbridge with nginx
 
-### Create a basic nginx configuration file
+### Create a basic nginx configuration file that redirect to http://yourhost:8283
+
+```
+sudo nano /etc/nginx/sites-available/matterbridge
+```
+
+paste this configuration and if desired change the port to listen (here is 80) and the server_name using yours:
+
+```
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+
+    location / {
+        # Redirect to Matterbridge frontend
+        proxy_pass http://localhost:8283/;
+        proxy_set_header Host                 $host;
+        proxy_set_header X-Real-IP            $remote_addr;
+        proxy_set_header X-Forwarded-For      $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto    $scheme;
+
+        # WebSocket support
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade              $http_upgrade;
+        proxy_set_header Connection           $http_connection;
+    }
+}
+```
+
+Add matterbridge to enabled sites
+
+```
+sudo ln -s /etc/nginx/sites-available/matterbridge /etc/nginx/sites-enabled/
+```
+
+### Create a basic nginx configuration file that redirect to http://yourhost:8283/matterbridge
 
 ```
 sudo nano /etc/nginx/sites-available/matterbridge
@@ -33,15 +69,15 @@ server {
     location /matterbridge/ {
         # Redirect to Matterbridge frontend
         proxy_pass http://localhost:8283/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host                     $host;
+        proxy_set_header X-Real-IP                $remote_addr;
+        proxy_set_header X-Forwarded-For          $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto        $scheme;
 
         # WebSocket support
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
+        proxy_set_header Upgrade                  $http_upgrade;
+        proxy_set_header Connection               $http_connection;
     }
 }
 ```
@@ -52,7 +88,65 @@ Add matterbridge to enabled sites
 sudo ln -s /etc/nginx/sites-available/matterbridge /etc/nginx/sites-enabled/
 ```
 
-### Create an advanced nginx configuration file that redirect to ssl
+### Create an advanced nginx configuration file that redirect to http://yourhost:8283 with ssl
+
+```
+sudo nano /etc/nginx/sites-available/matterbridge
+```
+
+paste this configuration adding your certificates:
+
+```
+# Default server configuration
+
+# Redirect all HTTP requests to HTTPS
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+
+    return 301 https://$host$request_uri;
+}
+
+# HTTPS server configuration
+server {
+    listen 443 ssl default_server;
+      listen [::]:443 ssl default_server;
+    http2 on;
+    server_name _;
+
+    # SSL certificate paths
+    ssl_certificate /etc/nginx/certs/cert.pem;
+    ssl_certificate_key /etc/nginx/certs/key.pem;
+
+    # SSL security settings
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    location / {
+      # Redirect to Matterbridge frontend
+      proxy_pass http://localhost:8283/;
+      proxy_set_header Host                 $host;
+      proxy_set_header X-Real-IP            $remote_addr;
+      proxy_set_header X-Forwarded-For      $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto    $scheme;
+
+      # WebSocket support
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade              $http_upgrade;
+      proxy_set_header Connection           $http_connection;
+    }
+}
+```
+
+Add matterbridge to enabled sites
+
+```
+sudo ln -s /etc/nginx/sites-available/matterbridge /etc/nginx/sites-enabled/
+```
+
+### Create an advanced nginx configuration file that redirect to http://yourhost/matterbridge with ssl
 
 ```
 sudo nano /etc/nginx/sites-available/matterbridge
@@ -98,15 +192,15 @@ server {
     location /matterbridge/ {
 	    # Redirect to Matterbridge frontend
         proxy_pass http://localhost:8283/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host                       $host;
+        proxy_set_header X-Real-IP                  $remote_addr;
+        proxy_set_header X-Forwarded-For            $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto          $scheme;
 
 	    # WebSocket support
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
+        proxy_set_header Upgrade                    $http_upgrade;
+        proxy_set_header Connection                 $http_connection;
     }
 }
 ```

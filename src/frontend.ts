@@ -652,7 +652,7 @@ export class Frontend {
 
     // Fallback for routing (must be the last route)
     this.expressApp.use((req, res) => {
-      this.log.debug('The frontend sent:', req.url);
+      this.log.debug(`The frontend sent ${req.url} method ${req.method}: sending index.html as fallback`);
       res.sendFile(path.join(this.matterbridge.rootDirectory, 'frontend/build/index.html'));
     });
 
