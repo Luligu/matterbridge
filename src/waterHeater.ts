@@ -46,7 +46,7 @@ export class WaterHeater extends MatterbridgeEndpoint {
     serial: string,
     waterTemperature = 50,
     targetWaterTemperature = 55,
-    minHeatSetpointLimit = 50,
+    minHeatSetpointLimit = 20,
     maxHeatSetpointLimit = 80,
     heaterTypes: { immersionElement1?: boolean; immersionElement2?: boolean; heatPump?: boolean; boiler?: boolean; other?: boolean } = { immersionElement1: true },
     tankPercentage = 90,
@@ -55,7 +55,7 @@ export class WaterHeater extends MatterbridgeEndpoint {
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Water Heater')
       .createDefaultPowerSourceWiredClusterServer()
-      .createDefaultHeatingThermostatClusterServer(waterTemperature, waterTemperature, minHeatSetpointLimit, maxHeatSetpointLimit)
+      .createDefaultHeatingThermostatClusterServer(waterTemperature, targetWaterTemperature, minHeatSetpointLimit, maxHeatSetpointLimit)
       .createDefaultWaterHeaterManagementClusterServer(heaterTypes, tankPercentage)
       .createDefaultWaterHeaterModeClusterServer();
   }
