@@ -13,7 +13,8 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [cli]: Added takeHeapSnapshot() and triggerGarbageCollection().
-- [LaundryWasher]: Add LaundryWasher class and Jest test.
+- [LaundryWasher]: Added LaundryWasher class and Jest test.
+- [nginx]: Added new example configuration for [nginx](README-NGINX.md).
 
 ### Changed
 
