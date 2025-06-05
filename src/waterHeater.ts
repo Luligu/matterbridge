@@ -37,7 +37,7 @@ export class WaterHeater extends MatterbridgeEndpoint {
    * @param {string} serial - The serial number of the water heater.
    * @param {number} [waterTemperature=50] - The current water temperature. Defaults to 50.
    * @param {number} [targetWaterTemperature=55] - The target water temperature. Defaults to 55.
-   * @param {number} [minHeatSetpointLimit=50] - The minimum heat setpoint limit. Defaults to 50.
+   * @param {number} [minHeatSetpointLimit=20] - The minimum heat setpoint limit. Defaults to 20.
    * @param {number} [maxHeatSetpointLimit=80] - The maximum heat setpoint limit. Defaults to 80.
    * @param {{ immersionElement1?: boolean; immersionElement2?: boolean; heatPump?: boolean; boiler?: boolean; other?: boolean }} [heaterTypes] - Indicates the heat sources that the water heater can call on for heating. Defaults to { immersionElement1: true }.
    */
