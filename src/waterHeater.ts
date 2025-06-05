@@ -40,6 +40,7 @@ export class WaterHeater extends MatterbridgeEndpoint {
    * @param {number} [minHeatSetpointLimit=20] - The minimum heat setpoint limit. Defaults to 20.
    * @param {number} [maxHeatSetpointLimit=80] - The maximum heat setpoint limit. Defaults to 80.
    * @param {{ immersionElement1?: boolean; immersionElement2?: boolean; heatPump?: boolean; boiler?: boolean; other?: boolean }} [heaterTypes] - Indicates the heat sources that the water heater can call on for heating. Defaults to { immersionElement1: true }.
+   * @param {number} [tankPercentage] - The current tank percentage of the WaterHeaterManagement cluster. Defaults to 90.
    */
   constructor(
     name: string,
@@ -56,7 +57,7 @@ export class WaterHeater extends MatterbridgeEndpoint {
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Water Heater')
       .createDefaultPowerSourceWiredClusterServer()
       .createDefaultHeatingThermostatClusterServer(waterTemperature, targetWaterTemperature, minHeatSetpointLimit, maxHeatSetpointLimit)
-      .createDefaultWaterHeaterManagementClusterServer(heaterTypes, , tankPercentage)
+      .createDefaultWaterHeaterManagementClusterServer(heaterTypes, heaterTypes, tankPercentage)
       .createDefaultWaterHeaterModeClusterServer();
   }
 
