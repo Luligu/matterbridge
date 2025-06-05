@@ -56,7 +56,7 @@ export class WaterHeater extends MatterbridgeEndpoint {
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Water Heater')
       .createDefaultPowerSourceWiredClusterServer()
       .createDefaultHeatingThermostatClusterServer(waterTemperature, targetWaterTemperature, minHeatSetpointLimit, maxHeatSetpointLimit)
-      .createDefaultWaterHeaterManagementClusterServer(heaterTypes, tankPercentage)
+      .createDefaultWaterHeaterManagementClusterServer(heaterTypes, , tankPercentage)
       .createDefaultWaterHeaterModeClusterServer();
   }
 
