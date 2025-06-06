@@ -52,7 +52,8 @@ export class Evse extends MatterbridgeEndpoint {
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge EVSE')
       .createDefaultPowerSourceWiredClusterServer()
       .createDefaultEnergyEvseClusterServer(circuitCapacity, minimumChargeCurrent, maximumChargeCurrent, sessionId)
-      .createDefaultEnergyEvseModeClusterServer();
+      .createDefaultEnergyEvseModeClusterServer()
+      .createDefaultDeviceEnergyManagementCluster();
   }
 
   /**
