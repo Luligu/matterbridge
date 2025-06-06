@@ -755,7 +755,6 @@ export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
   }
 }
 
-
 /** ********************************************* deviceEnergyManagement  **********************************************************/
 
 export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyManagementModeServer {

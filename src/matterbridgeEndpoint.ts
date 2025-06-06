@@ -146,7 +146,6 @@ import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-m
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/main/behaviors/thermostat-user-interface-configuration';
 import { DeviceEnergyManagementServer } from '@matter/main/behaviors/device-energy-management';
-import { DeviceEnergyManagementModeServer } from '@matter/main/behaviors/device-energy-management-mode';
 
 export interface MatterbridgeEndpointCommands {
   // Identify
@@ -2085,7 +2084,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default EnergyManagementMode Cluster Server.
-   * 
+   *
    * A few examples of Device Energy Management modes and their mode tags are provided below.
    *  - For the "No Energy Management (Forecast reporting only)" mode, tags: 0x4000 (NoOptimization).
    *  - For the "Device Energy Management" mode, tags: 0x4001 (DeviceOptimization).
@@ -2103,24 +2102,20 @@ export class MatterbridgeEndpoint extends Endpoint {
       supportedModes: supportedModes ?? [
         { label: 'No Energy Management (Forecast reporting only)', mode: 1, modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.NoOptimization }] },
         {
-          label: 'Device Energy Management', mode: 2, modeTags: [
-            { value: DeviceEnergyManagementMode.ModeTag.DeviceOptimization },
-            { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }
-          ]
+          label: 'Device Energy Management',
+          mode: 2,
+          modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.DeviceOptimization }, { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }],
         },
         {
-          label: 'Home Energy Management', mode: 3, modeTags: [
-            { value: DeviceEnergyManagementMode.ModeTag.GridOptimization },
-            { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }
-          ]
+          label: 'Home Energy Management',
+          mode: 3,
+          modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.GridOptimization }, { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }],
         },
         { label: 'Grid Energy Managemen', mode: 4, modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.GridOptimization }] },
         {
-          label: 'Full Energy Management', mode: 5, modeTags: [
-            { value: DeviceEnergyManagementMode.ModeTag.DeviceOptimization },
-            { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization },
-            { value: DeviceEnergyManagementMode.ModeTag.GridOptimization }
-          ]
+          label: 'Full Energy Management',
+          mode: 5,
+          modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.DeviceOptimization }, { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }, { value: DeviceEnergyManagementMode.ModeTag.GridOptimization }],
         },
       ],
       currentMode: currentMode ?? 1,
