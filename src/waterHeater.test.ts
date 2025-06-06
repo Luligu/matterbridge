@@ -125,7 +125,18 @@ describe('Matterbridge Water Heater', () => {
     expect(server).toBeDefined();
   });
 
-  test('create a water heater device', async () => {
+  test('create a water heater device with all parameters', async () => {
+    device = new WaterHeater('Water Heater Test Device', 'WH123456', 50, 55, 20, 80, { immersionElement1: true, immersionElement2: true, heatPump: true, boiler: true, other: true }, 90);
+    expect(device).toBeDefined();
+    expect(device.id).toBe('WaterHeaterTestDevice-WH123456');
+    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(WaterHeaterManagementServer)).toBeTruthy();
+    expect(device.hasClusterServer(WaterHeaterModeServer)).toBeTruthy();
+    expect(device.hasClusterServer(ThermostatServer)).toBeTruthy();
+  });
+
+  test('create a water heater device with no parameter', async () => {
     device = new WaterHeater('Water Heater Test Device', 'WH123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('WaterHeaterTestDevice-WH123456');

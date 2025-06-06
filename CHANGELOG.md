@@ -14,7 +14,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [cli]: Added takeHeapSnapshot() and triggerGarbageCollection().
 - [LaundryWasher]: Added LaundryWasher class and Jest test.
-- [nginx]: Added new example configuration for [nginx](README-NGINX.md).
+- [WaterHeater]: Added WaterHeater class and Jest test. Thanks Ludovic BOUÉ.
+- [nginx]: Added new example configurations for [nginx](README-NGINX.md).
 
 ### Changed
 
