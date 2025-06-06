@@ -69,6 +69,8 @@ import { RvcOperationalStateServer } from '@matter/main/behaviors/rvc-operationa
 import { ServiceAreaServer } from '@matter/main/behaviors/service-area';
 import { WaterHeaterModeServer } from '@matter/main/behaviors/water-heater-mode';
 import { WaterHeaterManagementServer } from '@matter/main/behaviors/water-heater-management';
+import { DeviceEnergyManagementServer } from '@matter/main/behaviors/device-energy-management';
+import { DeviceEnergyManagementModeServer } from '@matter/main/behaviors/device-energy-management-mode';
 
 // AnsiLogger module
 import { AnsiLogger } from './logger/export.js';
@@ -749,6 +751,24 @@ export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
     device.changeToMode({ newMode });
     this.state.currentMode = newMode;
     device.log.info(`MatterbridgeWaterHeaterModeServer changeToMode called with newMode ${newMode} => ${supported.label}`);
+    return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
+  }
+}
+
+
+/** ********************************************* deviceEnergyManagement  **********************************************************/
+
+export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyManagementModeServer {
+  override changeToMode({ newMode }: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const supported = this.state.supportedModes.find((mode) => mode.mode === newMode);
+    if (!supported) {
+      device.log.error(`MatterbridgeDeviceEnergyManagementModeServer changeToMode called with unsupported newMode: ${newMode}`);
+      return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
+    }
+    device.changeToMode({ newMode });
+    this.state.currentMode = newMode;
+    device.log.info(`MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode ${newMode} => ${supported.label}`);
     return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }

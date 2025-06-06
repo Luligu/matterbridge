@@ -45,6 +45,7 @@ import {
   MatterbridgeBooleanStateConfigurationServer,
   MatterbridgeSwitchServer,
   MatterbridgeOperationalStateServer,
+  MatterbridgeDeviceEnergyManagementModeServer,
 } from './matterbridgeBehaviors.js';
 import {
   addClusterServers,
@@ -2079,6 +2080,51 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultDeviceEnergyManagementCluster() {
     this.behaviors.require(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting));
+    return this;
+  }
+
+  /**
+   * Creates a default EnergyManagementMode Cluster Server.
+   * 
+   * A few examples of Device Energy Management modes and their mode tags are provided below.
+   *  - For the "No Energy Management (Forecast reporting only)" mode, tags: 0x4000 (NoOptimization).
+   *  - For the "Device Energy Management" mode, tags: 0x4001 (DeviceOptimization).
+   *  - For the "Home Energy Management" mode, tags: 0x4001 (DeviceOptimization), 0x4002 (LocalOptimization).
+   *  - For the "Grid Energy Management" mode, tags: 0x4003 (GridOptimization).
+   *  - For the "Full Energy Management" mode, tags: 0x4001 (DeviceOptimization), 0x4002 (LocalOptimization), 0x4003 (GridOptimization).
+   *
+   * @param {number} [currentMode] - The current mode of the EnergyManagementMode cluster. Defaults to mode 1 (DeviceEnergyManagementMode.ModeTag.NoOptimization).
+   * @param {EnergyManagementMode.ModeOption[]} [supportedModes] - The supported modes for the DeviceEnergyManagementMode cluster. Defaults all cluster modes.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultDeviceEnergyManagementModeCluster(currentMode?: number, supportedModes?: DeviceEnergyManagementMode.ModeOption[]): this {
+    this.behaviors.require(MatterbridgeDeviceEnergyManagementModeServer, {
+      supportedModes: supportedModes ?? [
+        { label: 'No Energy Management (Forecast reporting only)', mode: 1, modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.NoOptimization }] },
+        {
+          label: 'Device Energy Management', mode: 2, modeTags: [
+            { value: DeviceEnergyManagementMode.ModeTag.DeviceOptimization },
+            { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }
+          ]
+        },
+        {
+          label: 'Home Energy Management', mode: 3, modeTags: [
+            { value: DeviceEnergyManagementMode.ModeTag.GridOptimization },
+            { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }
+          ]
+        },
+        { label: 'Grid Energy Managemen', mode: 4, modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.GridOptimization }] },
+        {
+          label: 'Full Energy Management', mode: 5, modeTags: [
+            { value: DeviceEnergyManagementMode.ModeTag.DeviceOptimization },
+            { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization },
+            { value: DeviceEnergyManagementMode.ModeTag.GridOptimization }
+          ]
+        },
+      ],
+      currentMode: currentMode ?? 1,
+    });
     return this;
   }
 
