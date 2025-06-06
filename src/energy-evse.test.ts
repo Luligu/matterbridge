@@ -129,9 +129,9 @@ describe('Matterbridge EVSE', () => {
   });
 
   test('create a Evse device', async () => {
-    device = new Evse('EVSE Test Device', 'WH123456');
+    device = new Evse('EVSE Test Device', 'EVSE12456');
     expect(device).toBeDefined();
-    expect(device.id).toBe('EVSETestDevice-WH123456');
+    expect(device.id).toBe('EVSETestDevice-EVSE12456');
     expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(EnergyEvseServer)).toBeTruthy();
@@ -142,7 +142,7 @@ describe('Matterbridge EVSE', () => {
     expect(server).toBeDefined();
     expect(device).toBeDefined();
     await server.add(device);
-    expect(server.parts.has('EvseTestDevice-WH123456')).toBeTruthy();
+    expect(server.parts.has('EVSETestDevice-EVSE12456')).toBeTruthy();
     expect(server.parts.has(device)).toBeTruthy();
     expect(device.lifecycle.isReady).toBeTruthy();
   });
