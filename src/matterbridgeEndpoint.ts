@@ -365,7 +365,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.log = new AnsiLogger({ logName: options.uniqueStorageKey ?? 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
     this.log.debug(
       `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} ` +
-        `id: ${CYAN}${options.uniqueStorageKey}${db} number: ${CYAN}${options.endpointId}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
+      `id: ${CYAN}${options.uniqueStorageKey}${db} number: ${CYAN}${options.endpointId}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
     );
 
     // Add MatterbridgeBehavior with MatterbridgeBehaviorDevice
@@ -2069,6 +2069,16 @@ export class MatterbridgeEndpoint extends Endpoint {
         sensorFault: { generalFault: sensorFault },
       },
     );
+    return this;
+  }
+
+  /**
+   * Creates a default Device Energy Management Cluster Server with feature TreeTopology. Only needed for an electricalSensor device type.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultDeviceEnergyManagementCluster() {
+    this.behaviors.require(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting));
     return this;
   }
 
