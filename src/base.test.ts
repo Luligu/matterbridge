@@ -1,4 +1,4 @@
-// src\singledevice.test.ts
+// src\base.test.ts
 
 /* eslint-disable jest/no-commented-out-tests */
 /* eslint-disable @typescript-eslint/no-empty-function */
@@ -45,7 +45,7 @@ if (!debug) {
 }
 
 const MATTER_PORT = 6001;
-const NAME = 'WaterHeater';
+const NAME = 'BaseTest';
 
 /**
  * Waits for the `isOnline` property to become `true`.

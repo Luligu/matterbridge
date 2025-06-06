@@ -3,6 +3,7 @@
  *
  * @file waterHeater.ts
  * @author Luca Liguori
+ * @contributor Ludovic BOUÉ
  * @date 2025-05-18
  * @version 1.0.0
  *
