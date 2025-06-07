@@ -1026,7 +1026,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
     await invokeBehaviorCommand(evse, 'energyEvse', 'disable');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeEnergyEvseServer disable called`);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(evse, 'energyEvse', 'enableCharging');
+    await invokeBehaviorCommand(evse, 'energyEvse', 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6000, maximumChargeCurrent: 0 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeEnergyEvseServer enableCharging called`);
   });
 

@@ -54,7 +54,11 @@ export class Evse extends MatterbridgeEndpoint {
       .createDefaultElectricalEnergyMeasurementClusterServer()
       .createDefaultDeviceEnergyManagementCluster()
       .createDefaultEnergyEvseClusterServer(state, supplyState, faultState)
-      .createDefaultEnergyEvseModeClusterServer()
+      .createDefaultEnergyEvseModeClusterServer(1, [
+        { label: 'Manual', mode: 1, modeTags: [{ value: EnergyEvseMode.ModeTag.Manual }] },
+        { label: 'Scheduled', mode: 2, modeTags: [{ value: EnergyEvseMode.ModeTag.TimeOfUse }] },
+        { label: 'Solar Charging', mode: 3, modeTags: [{ value: EnergyEvseMode.ModeTag.SolarCharging }] },
+      ])
       .addRequiredClusterServers();
   }
 
@@ -115,11 +119,28 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
     device.disable();
     device.log.info(`MatterbridgeEnergyEvseServer disable called`);
+    this.state.supplyState = EnergyEvse.SupplyState.Disabled;
+    if (this.state.state === EnergyEvse.State.PluggedInCharging) {
+      this.state.state = EnergyEvse.State.PluggedInDemand;
+    }
+    this.state.chargingEnabledUntil = 0;
+    // super.disable();
+    // disable is not implemented in matter.js
   }
-  override enableCharging(): MaybePromise {
+  override enableCharging({ chargingEnabledUntil, minimumChargeCurrent, maximumChargeCurrent }: EnergyEvse.EnableChargingRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
     device.enableCharging();
     device.log.info(`MatterbridgeEnergyEvseServer enableCharging called`);
+    this.state.supplyState = EnergyEvse.SupplyState.ChargingEnabled;
+    if (this.state.state === EnergyEvse.State.PluggedInDemand) {
+      this.state.state = EnergyEvse.State.PluggedInCharging;
+    }
+    this.state.chargingEnabledUntil = chargingEnabledUntil;
+    this.state.minimumChargeCurrent = minimumChargeCurrent;
+    this.state.maximumChargeCurrent = maximumChargeCurrent;
+    // The implementation should also stop the charging session at the required time and update the sessionId, sessionDuration, and sessionEnergyCharged attributes if needed.
+    // super.enableCharging();
+    // enableCharging is not implemented in matter.js
   }
 }
 
