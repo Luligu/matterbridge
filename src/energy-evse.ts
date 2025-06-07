@@ -1,8 +1,9 @@
 /**
- * This file contains the EVSE class.
+ * This file contains the Evse class.
  *
  * @file energy-evse.ts
  * @author Luca Liguori
+ * @contributor Ludovic BOUÉ
  * @date 2025-05-27
  * @version 1.0.0
  *
@@ -23,17 +24,15 @@
 
 // @matter
 import { MaybePromise } from '@matter/main';
+import { EnergyEvseServer } from '@matter/main/behaviors/energy-evse';
+import { EnergyEvseModeServer } from '@matter/main/behaviors/energy-evse-mode';
+import { EnergyEvse, EnergyEvseMode } from '@matter/main/clusters';
+import { ModeBase } from '@matter/main/clusters/mode-base';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { MatterbridgeServer } from './matterbridgeBehaviors.js';
-import { evse } from './matterbridgeDeviceTypes.js';
-import { EnergyEvseServer } from '@matter/main/behaviors/energy-evse';
-import { EnergyEvseModeServer } from '@matter/main/behaviors/energy-evse-mode';
-
-// Matter.js
-import { EnergyEvse, EnergyEvseMode } from '@matter/main/clusters';
-import { ModeBase } from '@matter/main/clusters/mode-base';
+import { deviceEnergyManagement, electricalSensor, evse, powerSource } from './matterbridgeDeviceTypes.js';
 
 export class Evse extends MatterbridgeEndpoint {
   /**
@@ -41,44 +40,40 @@ export class Evse extends MatterbridgeEndpoint {
    *
    * @param {string} name - The name of the EVSE.
    * @param {string} serial - The serial number of the EVSE.
-   * @param {number} [circuitCapacity=0] - The capacity that the circuit that the EVSE is connected to can provide.. Defaults to 0.
-   * @param {number} [minimumChargeCurrent=6000] - Minimum current that can be delivered by the EVSE to the EV. Defaults to 6000mA.
-   * @param {number} [maximumChargeCurrent=6000] - Maximum current that can be delivered by the EVSE to the EV. Defaults to 0mA.
-   * @param {number} [sessionId=undefined] - Unique identifier for the current or last session. Defaut to null.
+   * @param {EnergyEvse.State} [state] - The current state of the EVSE. Defaults to NotPluggedIn.
+   * @param {EnergyEvse.SupplyState} [supplyState] - The supply state of the EVSE. Defaults to Disabled.
+   * @param {EnergyEvse.FaultState} [faultState] - The fault state of the EVSE. Defaults to NoError.
    */
-  constructor(name: string, serial: string, circuitCapacity = 0, minimumChargeCurrent = 6000, maximumChargeCurrent = 0, sessionId = undefined) {
-    super(evse, { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
+  constructor(name: string, serial: string, state?: EnergyEvse.State, supplyState?: EnergyEvse.SupplyState, faultState?: EnergyEvse.FaultState) {
+    super([evse, powerSource, electricalSensor, deviceEnergyManagement], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge EVSE')
       .createDefaultPowerSourceWiredClusterServer()
-      .createDefaultEnergyEvseClusterServer(circuitCapacity, minimumChargeCurrent, maximumChargeCurrent, sessionId)
+      .createDefaultPowerTopologyClusterServer()
+      .createDefaultElectricalPowerMeasurementClusterServer()
+      .createDefaultElectricalEnergyMeasurementClusterServer()
+      .createDefaultDeviceEnergyManagementCluster()
+      .createDefaultEnergyEvseClusterServer(state, supplyState, faultState)
       .createDefaultEnergyEvseModeClusterServer()
-      .createDefaultDeviceEnergyManagementCluster();
+      .addRequiredClusterServers();
   }
 
   /**
    * Creates a default EnergyEvseServer Cluster Server.
    *
    */
-  createDefaultEnergyEvseClusterServer(
-    state?: EnergyEvse.State,
-    supplyState?: EnergyEvse.SupplyState,
-    faultState?: EnergyEvse.FaultState.NoError,
-    chargingEnabledUntil?: 0,
-    circuitCapacity?: 0,
-    minimumChargeCurrent?: 6000,
-    maximumChargeCurrent?: 0,
-    sessionId?: undefined,
-  ): this {
+  createDefaultEnergyEvseClusterServer(state?: EnergyEvse.State, supplyState?: EnergyEvse.SupplyState, faultState?: EnergyEvse.FaultState): this {
     this.behaviors.require(MatterbridgeEnergyEvseServer, {
       state: state ?? EnergyEvse.State.NotPluggedIn,
-      supplyState: supplyState ?? EnergyEvse.SupplyState.ChargingEnabled,
+      supplyState: supplyState ?? EnergyEvse.SupplyState.Disabled,
       faultState: faultState ?? EnergyEvse.FaultState.NoError,
-      chargingEnabledUntil: chargingEnabledUntil ?? 0,
-      circuitCapacity: circuitCapacity ?? 0,
-      minimumChargeCurrent: minimumChargeCurrent ?? 6000,
-      maximumChargeCurrent: maximumChargeCurrent ?? 0,
-      sessionId: sessionId ?? undefined,
+      chargingEnabledUntil: 0, // Persistent attribute
+      circuitCapacity: 0, // Persistent attribute
+      minimumChargeCurrent: 6000, // Persistent attribute
+      maximumChargeCurrent: 0, // Persistent attribute
+      sessionId: null, // Persistent attribute
+      sessionDuration: 0, // Persistent attribute
+      sessionEnergyCharged: 0, // Persistent attribute
     });
     return this;
   }
@@ -107,7 +102,7 @@ export class Evse extends MatterbridgeEndpoint {
         { label: 'Manual', mode: 11, modeTags: [{ value: EnergyEvseMode.ModeTag.Manual }] },
         { label: 'TimeOfUse', mode: 12, modeTags: [{ value: EnergyEvseMode.ModeTag.TimeOfUse }] },
         { label: 'SolarCharging', mode: 13, modeTags: [{ value: EnergyEvseMode.ModeTag.SolarCharging }] },
-        { label: 'V2X', mode: 13, modeTags: [{ value: EnergyEvseMode.ModeTag.V2X }] },
+        { label: 'V2X', mode: 14, modeTags: [{ value: EnergyEvseMode.ModeTag.V2X }] },
       ],
       currentMode: currentMode ?? 1,
     });
