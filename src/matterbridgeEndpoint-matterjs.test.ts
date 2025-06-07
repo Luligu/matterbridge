@@ -74,9 +74,6 @@ import {
   MatterbridgeModeSelectServer,
   MatterbridgeOnOffServer,
   MatterbridgeOperationalStateServer,
-  MatterbridgeRvcCleanModeServer,
-  MatterbridgeRvcOperationalStateServer,
-  MatterbridgeRvcRunModeServer,
   MatterbridgeServer,
   MatterbridgeServerDevice,
   MatterbridgeSmokeCoAlarmServer,
@@ -104,7 +101,7 @@ import {
 } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
-import { RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
+import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
 import { WaterHeater } from './waterHeater.js';
 
 const MATTER_PORT = 6001;
