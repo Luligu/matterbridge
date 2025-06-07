@@ -65,8 +65,7 @@ import { RvcRunModeServer } from '@matter/main/behaviors/rvc-run-mode';
 import { RvcCleanModeServer } from '@matter/main/behaviors/rvc-clean-mode';
 import { RvcOperationalStateServer } from '@matter/main/behaviors/rvc-operational-state';
 import { ServiceAreaServer } from '@matter/main/behaviors/service-area';
-import { WaterHeaterModeServer } from '@matter/main/behaviors/water-heater-mode';
-import { WaterHeaterManagementServer } from '@matter/main/behaviors/water-heater-management';
+import { DeviceEnergyManagementModeServer } from '@matter/main/behaviors/device-energy-management-mode';
 
 // AnsiLogger module
 import { AnsiLogger } from './logger/export.js';
@@ -249,10 +248,19 @@ export class MatterbridgeServerDevice {
     this.log.info(`Boost (endpoint ${this.endpointId}.${this.endpointNumber})`);
     this.commandHandler.executeHandler('boost', { request: { boostInfo }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
-
   cancelBoost() {
     this.log.info(`Cancel boost (endpoint ${this.endpointId}.${this.endpointNumber})`);
     this.commandHandler.executeHandler('cancelBoost', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  enableCharging() {
+    this.log.info(`EnableCharging (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.commandHandler.executeHandler('enableCharging', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
+  }
+
+  disable() {
+    this.log.info(`Disable charging (endpoint ${this.endpointId}.${this.endpointNumber})`);
+    this.commandHandler.executeHandler('disable', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
   }
 }
 
@@ -703,41 +711,17 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
   }
 }
 
-/** ********************************************* waterHeater  **********************************************************/
-
-export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManagementServer {
-  override boost({ boostInfo }: WaterHeaterManagement.BoostRequest): MaybePromise {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    device.boost({ boostInfo });
-    device.log.info(`MatterbridgeWaterHeaterManagementServer boost called with: ${JSON.stringify(boostInfo)}`);
-    this.state.boostState = WaterHeaterManagement.BoostState.Active;
-    // The plugin is responsible for setting the device accordingly with the boostInfo of the boost command
-    // super.boost({ boostInfo });
-    // boost is not implemented in matter.js
-  }
-
-  override cancelBoost(): MaybePromise {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    device.cancelBoost();
-    device.log.info(`MatterbridgeWaterHeaterManagementServer cancelBoost called`);
-    this.state.boostState = WaterHeaterManagement.BoostState.Inactive;
-    // The plugin is responsible for setting the device accordingly with the cancelBoost command
-    // super.cancelBoost();
-    // cancelBoost is not implemented in matter.js
-  }
-}
-
-export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
+export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyManagementModeServer {
   override changeToMode({ newMode }: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
     const supported = this.state.supportedModes.find((mode) => mode.mode === newMode);
     if (!supported) {
-      device.log.error(`MatterbridgeWaterHeaterModeServer changeToMode called with unsupported newMode: ${newMode}`);
+      device.log.error(`MatterbridgeDeviceEnergyManagementModeServer changeToMode called with unsupported newMode: ${newMode}`);
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
     }
     device.changeToMode({ newMode });
     this.state.currentMode = newMode;
-    device.log.info(`MatterbridgeWaterHeaterModeServer changeToMode called with newMode ${newMode} => ${supported.label}`);
+    device.log.info(`MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode ${newMode} => ${supported.label}`);
     return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }

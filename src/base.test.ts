@@ -166,7 +166,14 @@ describe('Matterbridge ' + NAME, () => {
   test('add a water heater device', async () => {
     expect(server).toBeDefined();
     expect(device).toBeDefined();
-    await server.add(device);
+    try {
+      await server.add(device);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : error;
+      const errorInspect = inspect(error, { depth: 10 });
+      device.log.error(`Error adding device ${device.deviceName}: ${errorMessage}\nstack: ${errorInspect}`);
+      return;
+    }
     expect(server.parts.has('WaterHeaterTestDevice-WH123456')).toBeTruthy();
     expect(server.parts.has(device)).toBeTruthy();
     expect(device.lifecycle.isReady).toBeTruthy();

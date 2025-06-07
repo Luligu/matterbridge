@@ -8,7 +8,7 @@ import { jest } from '@jest/globals';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 import { inspect } from 'node:util';
-import { AnsiLogger, er, LogLevel, TimestampFormat, zb } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 // matter.js
 import { DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
