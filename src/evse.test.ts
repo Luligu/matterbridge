@@ -14,12 +14,13 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
 import { RootEndpoint } from '@matter/main/endpoints';
 import { MdnsService } from '@matter/main/protocol';
-import { Identify, PowerSource, ElectricalEnergyMeasurement, ElectricalPowerMeasurement, DeviceEnergyManagement } from '@matter/main/clusters';
-import { EnergyEvseServer, EnergyEvseModeServer } from '@matter/node/behaviors';
+import { Identify, PowerSource, ElectricalEnergyMeasurement, ElectricalPowerMeasurement, DeviceEnergyManagement, DeviceEnergyManagementMode } from '@matter/main/clusters';
+import { EnergyEvseServer, EnergyEvseModeServer, DeviceEnergyManagementModeServer } from '@matter/node/behaviors';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
+import { MatterbridgeDeviceEnergyManagementModeServer } from './matterbridgeBehaviors.js';
 
 import { Evse, MatterbridgeEnergyEvseServer, MatterbridgeEnergyEvseModeServer } from './evse.js';
 
@@ -112,6 +113,7 @@ describe('Matterbridge EVSE', () => {
 
   test('create a Evse device', async () => {
     device = new Evse('EVSE Test Device', 'EVSE12456');
+    device.createDefaultDeviceEnergyManagementModeCluster();
     expect(device).toBeDefined();
     expect(device.id).toBe('EVSETestDevice-EVSE12456');
     expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
@@ -119,6 +121,7 @@ describe('Matterbridge EVSE', () => {
     expect(device.hasClusterServer(ElectricalEnergyMeasurement.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(DeviceEnergyManagement.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(DeviceEnergyManagementMode.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(EnergyEvseServer)).toBeTruthy();
     expect(device.hasClusterServer(EnergyEvseModeServer)).toBeTruthy();
   });
@@ -164,7 +167,23 @@ describe('Matterbridge EVSE', () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
       attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
     });
-    expect(attributes.length).toBe(103);
+    expect(attributes.length).toBe(110);
+  });
+
+  test('invoke MatterbridgeDeviceEnergyManagementModeServer commands', async () => {
+    expect(device.behaviors.has(DeviceEnergyManagementModeServer)).toBeTruthy();
+    expect(device.behaviors.has(MatterbridgeDeviceEnergyManagementModeServer)).toBeTruthy();
+    expect(device.behaviors.elementsOf(DeviceEnergyManagementModeServer).commands.has('changeToMode')).toBeTruthy();
+    expect(device.behaviors.elementsOf(MatterbridgeDeviceEnergyManagementModeServer).commands.has('changeToMode')).toBeTruthy();
+    expect((device.state['deviceEnergyManagementMode'] as any).acceptedCommandList).toEqual([0]);
+    expect((device.state['deviceEnergyManagementMode'] as any).generatedCommandList).toEqual([1]);
+    jest.clearAllMocks();
+    await invokeBehaviorCommand(device, 'deviceEnergyManagementMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with unsupported newMode: 0`);
+    jest.clearAllMocks();
+    await invokeBehaviorCommand(device, 'deviceEnergyManagementMode', 'changeToMode', { newMode: 1 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode 1 => No Energy Management (Forecast reporting only)`);
   });
 
   test('invoke MatterbridgeEnergyEvseServer commands', async () => {

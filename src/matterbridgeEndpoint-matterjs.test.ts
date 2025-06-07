@@ -9,6 +9,10 @@ import {
   ColorControl,
   Descriptor,
   DescriptorCluster,
+  DeviceEnergyManagement,
+  DeviceEnergyManagementMode,
+  ElectricalEnergyMeasurement,
+  ElectricalPowerMeasurement,
   FanControl,
   GroupsCluster,
   Identify,
@@ -34,7 +38,10 @@ import {
   ColorControlServer,
   DescriptorBehavior,
   DescriptorServer,
+  DeviceEnergyManagementModeServer,
   DoorLockServer,
+  EnergyEvseModeServer,
+  EnergyEvseServer,
   FanControlServer,
   GroupsBehavior,
   GroupsServer,
@@ -81,6 +88,7 @@ import {
   MatterbridgeValveConfigurationAndControlServer,
   MatterbridgeLiftWindowCoveringServer,
   MatterbridgeLiftTiltWindowCoveringServer,
+  MatterbridgeDeviceEnergyManagementModeServer,
 } from './matterbridgeBehaviors.js';
 import { Matterbridge } from './matterbridge.js';
 import {
@@ -103,6 +111,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
 import { WaterHeater } from './waterHeater.js';
+import { Evse, MatterbridgeEnergyEvseServer } from './evse.js';
 
 const MATTER_PORT = 6001;
 const HOMEDIR = 'EndpointMatterJs';
@@ -149,6 +158,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
   let laundry: MatterbridgeEndpoint;
   let rvc: RoboticVacuumCleaner;
   let heater: MatterbridgeEndpoint;
+  let evse: MatterbridgeEndpoint;
 
   let matterbridgeServerDevice: MatterbridgeServerDevice;
 
@@ -603,6 +613,26 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect(heater.lifecycle.isReady).toBe(true);
   });
 
+  test('create an Evse device', async () => {
+    evse = new Evse('Evse', '0xABC123456789');
+    evse.createDefaultDeviceEnergyManagementModeCluster();
+    expect(evse).toBeDefined();
+    expect(evse.id).toBe('Evse-0xABC123456789');
+    expect(evse.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
+    expect(evse.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
+    expect(evse.hasClusterServer(ElectricalEnergyMeasurement.Cluster.id)).toBeTruthy();
+    expect(evse.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
+    expect(evse.hasClusterServer(DeviceEnergyManagement.Cluster.id)).toBeTruthy();
+    expect(evse.hasClusterServer(DeviceEnergyManagementMode.Cluster.id)).toBeTruthy();
+    expect(evse.hasClusterServer(EnergyEvseServer)).toBeTruthy();
+    expect(evse.hasClusterServer(EnergyEvseModeServer)).toBeTruthy();
+  });
+
+  test('add the Evse device', async () => {
+    expect(await server.add(evse)).toBeDefined();
+    expect(evse.lifecycle.isReady).toBe(true);
+  });
+
   test('start server node', async () => {
     expect(server).toBeDefined();
     await (matterbridge as any).startServerNode(server);
@@ -963,6 +993,41 @@ describe('Matterbridge ' + HOMEDIR, () => {
     await invokeBehaviorCommand(heater, 'waterHeaterMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
     expect(heater.stateOf(WaterHeaterModeServer).currentMode).toBe(1);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeWaterHeaterModeServer changeToMode called with unsupported newMode: 0`);
+  });
+
+  test('invoke MatterbridgeDeviceEnergyManagementModeServer commands', async () => {
+    expect(evse.behaviors.has(DeviceEnergyManagementModeServer)).toBeTruthy();
+    expect(evse.behaviors.has(MatterbridgeDeviceEnergyManagementModeServer)).toBeTruthy();
+    expect(evse.behaviors.elementsOf(DeviceEnergyManagementModeServer).commands.has('changeToMode')).toBeTruthy();
+    expect(evse.behaviors.elementsOf(MatterbridgeDeviceEnergyManagementModeServer).commands.has('changeToMode')).toBeTruthy();
+    expect((evse.state['deviceEnergyManagementMode'] as any).acceptedCommandList).toEqual([0]);
+    expect((evse.state['deviceEnergyManagementMode'] as any).generatedCommandList).toEqual([1]);
+    jest.clearAllMocks();
+    await invokeBehaviorCommand(evse, 'deviceEnergyManagementMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with unsupported newMode: 0`);
+    jest.clearAllMocks();
+    await invokeBehaviorCommand(evse, 'deviceEnergyManagementMode', 'changeToMode', { newMode: 1 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${evse.id}.${evse.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode 1 => No Energy Management (Forecast reporting only)`);
+  });
+
+  test('invoke MatterbridgeEnergyEvseServer commands', async () => {
+    expect(evse.behaviors.has(EnergyEvseServer)).toBeTruthy();
+    expect(evse.behaviors.has(MatterbridgeEnergyEvseServer)).toBeTruthy();
+    expect(evse.behaviors.elementsOf(EnergyEvseServer).commands.has('disable')).toBeTruthy();
+    expect(evse.behaviors.elementsOf(MatterbridgeEnergyEvseServer).commands.has('disable')).toBeTruthy();
+    expect(evse.behaviors.elementsOf(EnergyEvseServer).commands.has('enableCharging')).toBeTruthy();
+    expect(evse.behaviors.elementsOf(MatterbridgeEnergyEvseServer).commands.has('enableCharging')).toBeTruthy();
+    expect((evse.state['energyEvse'] as any).acceptedCommandList).toEqual([1, 2]);
+    expect((evse.state['energyEvse'] as any).generatedCommandList).toEqual([]);
+    expect((evse.stateOf(MatterbridgeEnergyEvseServer) as any).acceptedCommandList).toEqual([1, 2]);
+    expect((evse.stateOf(MatterbridgeEnergyEvseServer) as any).generatedCommandList).toEqual([]);
+    jest.clearAllMocks();
+    await invokeBehaviorCommand(evse, 'energyEvse', 'disable');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeEnergyEvseServer disable called`);
+    jest.clearAllMocks();
+    await invokeBehaviorCommand(evse, 'energyEvse', 'enableCharging');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeEnergyEvseServer enableCharging called`);
   });
 
   test('close server node', async () => {
