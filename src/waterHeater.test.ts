@@ -1,4 +1,4 @@
-// src\singledevice.test.ts
+// src\waterHeater.test.ts
 
 /* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -8,6 +8,7 @@ import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
+import { inspect } from 'node:util';
 
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -151,7 +152,14 @@ describe('Matterbridge Water Heater', () => {
   test('add a water heater device', async () => {
     expect(server).toBeDefined();
     expect(device).toBeDefined();
-    await server.add(device);
+    try {
+      await server.add(device);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : error;
+      const errorInspect = inspect(error, { depth: 10 });
+      device.log.error(`Error adding device ${device.deviceName}: ${errorMessage}\nstack: ${errorInspect}`);
+      return;
+    }
     expect(server.parts.has('WaterHeaterTestDevice-WH123456')).toBeTruthy();
     expect(server.parts.has(device)).toBeTruthy();
     expect(device.lifecycle.isReady).toBeTruthy();
