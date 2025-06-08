@@ -48,7 +48,16 @@ const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | num
   return undefined as never;
 });
 
+const postSpy = jest.spyOn(Session.prototype, 'post').mockImplementation((method, callback?: (err: Error | null, params?: object) => void) => {
+  console.log(`mockImplementation of Session.post() called with method: ${method}`);
+  if (typeof callback === 'function') {
+    console.log(`mockImplementation of Session.post() callback called with null`);
+    callback(null, { profile: '' }); // call callback with no error
+  }
+});
+
 describe('Matterbridge', () => {
+  let cliEmitter;
   let matterbridge: Matterbridge;
 
   beforeAll(async () => {
@@ -65,10 +74,10 @@ describe('Matterbridge', () => {
     jest.restoreAllMocks();
   });
 
-  const nodeMajorVersion = parseInt(process.versions.node.split('.')[0]);
+  // const nodeMajorVersion = parseInt(process.versions.node.split('.')[0]);
 
   it('should start matterbridge', async () => {
-    if (nodeMajorVersion > 20) jest.useFakeTimers();
+    jest.useFakeTimers();
     // Dynamically import the cli module
     const cli = await import('./cli.js');
     await new Promise((resolve) => {
@@ -77,6 +86,7 @@ describe('Matterbridge', () => {
     expect(cli.instance).toBeDefined();
     expect(cli.instance).toBeInstanceOf(MockMatterbridge);
     matterbridge = cli.instance as unknown as Matterbridge;
+    cliEmitter = cli.cliEmitter;
 
     expect(loadInstance).toHaveBeenCalledTimes(1);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cli main() started');
@@ -92,7 +102,6 @@ describe('Matterbridge', () => {
   }, 10000);
 
   it('should call CpuMemoryCheck interval', async () => {
-    if (nodeMajorVersion <= 20) return; // Skip test for Node.js versions <= 20
     jest.spyOn(os, 'totalmem').mockImplementationOnce(() => {
       console.log('mockImplementation of os.totalmem() called');
       return 1024;
@@ -144,7 +153,6 @@ describe('Matterbridge', () => {
   });
 
   it('should call Inspector interval', async () => {
-    if (nodeMajorVersion <= 20) return; // Skip test for Node.js versions <= 20
     console.log('should call Inspector interval');
     jest.clearAllMocks();
     jest.advanceTimersByTime(60 * 1000); // Fast-forward time by 60 seconds
@@ -153,15 +161,15 @@ describe('Matterbridge', () => {
   }, 10000);
 
   it('should use real timers', async () => {
-    if (nodeMajorVersion <= 20) return; // Skip test for Node.js versions <= 20
     jest.useRealTimers();
     expect(matterbridge).toBeDefined();
   }, 10000);
 
   it('should shutdown matterbridge', async () => {
-    if (nodeMajorVersion > 20) jest.useRealTimers();
     matterbridge.emit('shutdown');
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => {
+      cliEmitter.once('shutdown', resolve);
+    });
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received shutdown event, exiting...');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Stopping heap sampling...');
@@ -175,7 +183,7 @@ describe('Matterbridge', () => {
 
   it('should start memory check', async () => {
     matterbridge.emit('startmemorycheck');
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received start memory check event');
     expect(exit).not.toHaveBeenCalled();
@@ -183,26 +191,14 @@ describe('Matterbridge', () => {
 
   it('should stop memory check', async () => {
     matterbridge.emit('stopmemorycheck');
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received stop memory check event');
     expect(exit).not.toHaveBeenCalled();
   }, 60000);
 
-  it('should start inspector', async () => {
-    matterbridge.emit('startinspector');
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Starting heap sampling...');
-  }, 60000);
-
   it('should not start inspector', async () => {
-    /*
-    const clearSpy = jest.spyOn(global, 'clearInterval').mockImplementationOnce(() => {
-      throw new Error('clearInterval throw an error');
-    });
-    */
-    const postSpy = jest.spyOn(Session.prototype, 'connect').mockImplementationOnce(() => {
+    const connectSpy = jest.spyOn(Session.prototype, 'connect').mockImplementationOnce(() => {
       throw new Error('connect throw an error');
     });
     matterbridge.emit('startinspector');
@@ -211,23 +207,50 @@ describe('Matterbridge', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('***Failed to start heap sampling'));
   }, 60000);
 
+  it('should start inspector', async () => {
+    matterbridge.emit('startinspector');
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Starting heap sampling...');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('***Started heap sampling'));
+  }, 60000);
+
   it('should stop inspector', async () => {
     matterbridge.emit('stopinspector');
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Stopping heap sampling...');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('***Heap sampling profile saved to'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Stopped heap sampling');
   }, 60000);
 
   it('should not stop inspector', async () => {
+    matterbridge.emit('startinspector');
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    /*
+    postSpy.mockImplementationOnce((method, callback) => {
+      console.log(`mockImplementation of Session.post() called with method: ${method}`);
+      if (typeof callback === 'function') {
+        console.log(`mockImplementation of Session.post() callback called with error`);
+        callback(new Error('post throw an error')); // call callback with an error
+      }
+    });
+    */
+    jest.spyOn(JSON, 'stringify').mockImplementationOnce(() => {
+      console.log('mockImplementation of JSON.stringify() called');
+      throw new Error('stringify throw an error');
+    });
     matterbridge.emit('stopinspector');
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('***No active inspector session.'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Stopping heap sampling...');
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('***No active inspector session.'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('***Failed to stop heap sampling'));
   }, 60000);
 
   it('should restart matterbridge', async () => {
     matterbridge.emit('restart');
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received restart event, loading...');
     expect(loadInstance).toHaveBeenCalledTimes(1);
@@ -235,7 +258,7 @@ describe('Matterbridge', () => {
 
   it('should update matterbridge', async () => {
     matterbridge.emit('update');
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received update event, updating...');
     expect(loadInstance).toHaveBeenCalledTimes(1);
@@ -243,7 +266,7 @@ describe('Matterbridge', () => {
 
   it('should shutdown again matterbridge', async () => {
     matterbridge.emit('shutdown');
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     expect(exit).toHaveBeenCalled();
   }, 60000);
 });
