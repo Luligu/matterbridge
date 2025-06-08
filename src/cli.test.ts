@@ -156,6 +156,7 @@ describe('Matterbridge', () => {
   }, 10000);
 
   it('should shutdown matterbridge', async () => {
+    jest.useRealTimers();
     matterbridge.emit('shutdown');
     await new Promise((resolve) => setTimeout(resolve, 500));
 
