@@ -35,7 +35,7 @@ import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW,
 import { NodeStorageManager, NodeStorage } from './storage/export.js';
 
 // Matterbridge
-import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString, isValidNumber } from './utils/export.js';
+import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString, isValidNumber, createDirectory } from './utils/export.js';
 import { logInterfaces, getGlobalNodeModules } from './utils/network.js';
 import { dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
@@ -372,24 +372,24 @@ export class Matterbridge extends EventEmitter {
     // Set the matterbridge home directory
     this.homeDirectory = getParameter('homedir') ?? os.homedir();
     this.matterbridgeInformation.homeDirectory = this.homeDirectory;
-    await this.createDirectory(this.homeDirectory, 'Matterbridge Home Directory');
+    await createDirectory(this.homeDirectory, 'Matterbridge Home Directory', this.log);
 
     // Set the matterbridge directory
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
     this.matterbridgeInformation.matterbridgeDirectory = this.matterbridgeDirectory;
-    await this.createDirectory(this.matterbridgeDirectory, 'Matterbridge Directory');
-    await this.createDirectory(path.join(this.matterbridgeDirectory, 'certs'), 'Matterbridge Frontend Certificate Directory');
-    await this.createDirectory(path.join(this.matterbridgeDirectory, 'uploads'), 'Matterbridge Frontend Uploads Directory');
+    await createDirectory(this.matterbridgeDirectory, 'Matterbridge Directory', this.log);
+    await createDirectory(path.join(this.matterbridgeDirectory, 'certs'), 'Matterbridge Frontend Certificate Directory', this.log);
+    await createDirectory(path.join(this.matterbridgeDirectory, 'uploads'), 'Matterbridge Frontend Uploads Directory', this.log);
 
     // Set the matterbridge plugin directory
     this.matterbridgePluginDirectory = path.join(this.homeDirectory, 'Matterbridge');
     this.matterbridgeInformation.matterbridgePluginDirectory = this.matterbridgePluginDirectory;
-    await this.createDirectory(this.matterbridgePluginDirectory, 'Matterbridge Plugin Directory');
+    await createDirectory(this.matterbridgePluginDirectory, 'Matterbridge Plugin Directory', this.log);
 
     // Set the matterbridge cert directory
     this.matterbridgeCertDirectory = path.join(this.homeDirectory, '.mattercert');
     this.matterbridgeInformation.matterbridgeCertDirectory = this.matterbridgeCertDirectory;
-    await this.createDirectory(this.matterbridgeCertDirectory, 'Matterbridge Matter Certificate Directory');
+    await createDirectory(this.matterbridgeCertDirectory, 'Matterbridge Matter Certificate Directory', this.log);
 
     // Set the matterbridge root directory
     const { fileURLToPath } = await import('node:url');
@@ -2774,30 +2774,5 @@ const commissioningController = new CommissioningController({
         });
       }
     });
-  }
-
-  /**
-   * Creates a directory at the specified path if it doesn't already exist.
-   *
-   * @param {string} path - The path to the directory to create.
-   * @param {string} name - The name of the directory.
-   * @returns {Promise<void>} A promise that resolves when the directory has been created or already exists.
-   */
-  async createDirectory(path: string, name: string): Promise<void> {
-    try {
-      await fs.access(path);
-      this.log.debug(`Directory ${name} already exists at path: ${path}`);
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-        try {
-          await fs.mkdir(path, { recursive: true });
-          this.log.info(`Created ${name}: ${path}`);
-        } catch (err) {
-          this.log.error(`Error creating dir ${name} path ${path}: ${err}`);
-        }
-      } else {
-        this.log.error(`Error accessing dir ${name} path ${path}: ${err}`);
-      }
-    }
   }
 }
