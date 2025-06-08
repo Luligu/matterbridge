@@ -68,9 +68,9 @@ export class Evse extends MatterbridgeEndpoint {
       supplyState: supplyState ?? EnergyEvse.SupplyState.Disabled,
       faultState: faultState ?? EnergyEvse.FaultState.NoError,
       chargingEnabledUntil: 0, // Persistent attribute
-      circuitCapacity: 0, // Persistent attribute
-      minimumChargeCurrent: 6000, // Persistent attribute
-      maximumChargeCurrent: 0, // Persistent attribute
+      circuitCapacity: 0, // Persistent attribute in mA
+      minimumChargeCurrent: 6000, // Persistent attribute in mA
+      maximumChargeCurrent: 0, // Persistent attribute in mA
       sessionId: null, // Persistent attribute
       sessionDuration: 0, // Persistent attribute
       sessionEnergyCharged: 0, // Persistent attribute
