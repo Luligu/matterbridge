@@ -1,4 +1,4 @@
-// src\singledevice.test.ts
+// src\roboticVacuumCleaner.test.ts
 
 /* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -14,10 +14,10 @@ import path from 'node:path';
 
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
+import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
 import { Identify, PowerSource, RvcCleanMode, RvcOperationalState, RvcRunMode, ServiceArea } from '@matter/main/clusters';
 import { RvcCleanModeServer, RvcOperationalStateServer, RvcRunModeServer, ServiceAreaServer } from '@matter/node/behaviors';
-import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, MatterbridgeServiceAreaServer } from './matterbridgeBehaviors.js';
+import { MatterbridgeServiceAreaServer } from './matterbridgeBehaviors.js';
 import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;

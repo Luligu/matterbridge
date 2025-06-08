@@ -256,11 +256,16 @@ export const bridgedNode = DeviceTypeDefinition({
 });
 
 /**
-  2.6.3. Device Type Requirements
-  Electrical measurements made by either the Electrical Power Measurement cluster, the Electrical
-  Energy Measurement cluster, or both SHALL apply to the endpoints indicated by the Power Topology
-  cluster.
-*/
+ * An Electrical Sensor device measures the electrical power and/or energy being imported and/or
+ * exported.
+ * It is a utility device type that provides information about the electrical power and/or energy
+ * consumption and generation.
+ *
+ *  2.6.3. Device Type Requirements
+ *  Electrical measurements made by either the Electrical Power Measurement cluster, the Electrical
+ *  Energy Measurement cluster, or both SHALL apply to the endpoints indicated by the Power Topology
+ *  cluster.
+ */
 export const electricalSensor = DeviceTypeDefinition({
   name: 'MA-electricalSensor',
   code: 0x0510,
@@ -270,6 +275,10 @@ export const electricalSensor = DeviceTypeDefinition({
   optionalServerClusters: [ElectricalPowerMeasurement.Cluster.id, ElectricalEnergyMeasurement.Cluster.id],
 });
 
+/**
+ * A Device Energy Management device provides reporting and optionally adjustment of the electrical
+ * power planned on being consumed or produced by the device.
+ */
 export const deviceEnergyManagement = DeviceTypeDefinition({
   name: 'MA-deviceEnergyManagement',
   code: 0x050d,
@@ -1080,6 +1089,12 @@ export const microwaveOven = DeviceTypeDefinition({
  * 0x0011 Power Source                min 1         M
  * 0x0510 Electrical Sensor           min 1         M
  * 0x050D Device Energy Management    min 1         M
+ *
+ * The Electrical Sensor device SHALL include both the Electrical Energy Measurement and Electrical
+ * Power Measurement clusters, measuring the total energy and power of the EVSE.
+ *
+ * The Device Energy Management cluster included in the Device Energy Management device SHALL
+ * support the Power Forecast Reporting (PFR) feature.
  */
 export const evse = DeviceTypeDefinition({
   name: 'MA-evse',

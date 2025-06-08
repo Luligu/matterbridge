@@ -45,6 +45,7 @@ import {
   MatterbridgeBooleanStateConfigurationServer,
   MatterbridgeSwitchServer,
   MatterbridgeOperationalStateServer,
+  MatterbridgeDeviceEnergyManagementModeServer,
 } from './matterbridgeBehaviors.js';
 import {
   addClusterServers,
@@ -107,6 +108,8 @@ import { ConcentrationMeasurement } from '@matter/main/clusters/concentration-me
 import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
 import { ThermostatUserInterfaceConfiguration } from '@matter/main/clusters/thermostat-user-interface-configuration';
 import { OperationalState } from '@matter/main/clusters/operational-state';
+import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
+import { DeviceEnergyManagementMode } from '@matter/main/clusters/device-energy-management-mode';
 
 // @matter behaviors
 import { DescriptorServer } from '@matter/main/behaviors/descriptor';
@@ -142,6 +145,7 @@ import { ResourceMonitoring } from '@matter/main/clusters/resource-monitoring';
 import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/main/behaviors/thermostat-user-interface-configuration';
+import { DeviceEnergyManagementServer } from '@matter/main/behaviors/device-energy-management';
 
 export interface MatterbridgeEndpointCommands {
   // Identify
@@ -229,6 +233,13 @@ export interface MatterbridgeEndpointCommands {
   // Water Heater Management
   boost: HandlerFunction;
   cancelBoost: HandlerFunction;
+
+  // Energy Evse
+  enableCharging: HandlerFunction;
+  disable: HandlerFunction;
+
+  // Temperature Control
+  setTemperature: HandlerFunction;
 }
 
 export interface SerializedMatterbridgeEndpoint {
@@ -353,8 +364,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     // Create the logger
     this.log = new AnsiLogger({ logName: options.uniqueStorageKey ?? 'MatterbridgeEndpoint', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel });
     this.log.debug(
-      `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} ` +
-        `id: ${CYAN}${options.uniqueStorageKey}${db} number: ${CYAN}${options.endpointId}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
+      `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} id: ${CYAN}${options.uniqueStorageKey}${db} number: ${CYAN}${options.endpointId}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
     );
 
     // Add MatterbridgeBehavior with MatterbridgeBehaviorDevice
@@ -2058,6 +2068,64 @@ export class MatterbridgeEndpoint extends Endpoint {
         sensorFault: { generalFault: sensorFault },
       },
     );
+    return this;
+  }
+
+  /**
+   * Creates a default Device Energy Management Cluster Server with feature PowerForecastReporting. Only needed for an evse device type.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultDeviceEnergyManagementCluster() {
+    this.behaviors.require(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting), {
+      forecast: null, // A null value indicates that there is no forecast currently available
+      esaType: DeviceEnergyManagement.EsaType.Other,
+      esaCanGenerate: false,
+      esaState: DeviceEnergyManagement.EsaState.Offline,
+      absMinPower: 0,
+      absMaxPower: 0,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default EnergyManagementMode Cluster Server.
+   *
+   * A few examples of Device Energy Management modes and their mode tags are provided below.
+   *  - For the "No Energy Management (Forecast reporting only)" mode, tags: 0x4000 (NoOptimization).
+   *  - For the "Device Energy Management" mode, tags: 0x4001 (DeviceOptimization).
+   *  - For the "Home Energy Management" mode, tags: 0x4001 (DeviceOptimization), 0x4002 (LocalOptimization).
+   *  - For the "Grid Energy Management" mode, tags: 0x4003 (GridOptimization).
+   *  - For the "Full Energy Management" mode, tags: 0x4001 (DeviceOptimization), 0x4002 (LocalOptimization), 0x4003 (GridOptimization).
+   *
+   * @param {number} [currentMode] - The current mode of the EnergyManagementMode cluster. Defaults to mode 1 (DeviceEnergyManagementMode.ModeTag.NoOptimization).
+   * @param {EnergyManagementMode.ModeOption[]} [supportedModes] - The supported modes for the DeviceEnergyManagementMode cluster. Defaults all cluster modes.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultDeviceEnergyManagementModeCluster(currentMode?: number, supportedModes?: DeviceEnergyManagementMode.ModeOption[]): this {
+    this.behaviors.require(MatterbridgeDeviceEnergyManagementModeServer, {
+      supportedModes: supportedModes ?? [
+        { label: 'No Energy Management (Forecast reporting only)', mode: 1, modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.NoOptimization }] },
+        {
+          label: 'Device Energy Management',
+          mode: 2,
+          modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.DeviceOptimization }, { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }],
+        },
+        {
+          label: 'Home Energy Management',
+          mode: 3,
+          modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.GridOptimization }, { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }],
+        },
+        { label: 'Grid Energy Managemen', mode: 4, modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.GridOptimization }] },
+        {
+          label: 'Full Energy Management',
+          mode: 5,
+          modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.DeviceOptimization }, { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }, { value: DeviceEnergyManagementMode.ModeTag.GridOptimization }],
+        },
+      ],
+      currentMode: currentMode ?? 1,
+    });
     return this;
   }
 

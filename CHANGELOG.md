@@ -8,6 +8,30 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.0.5] - 2025-06-07
+
+### Added
+
+- [cli]: Added takeHeapSnapshot() and triggerGarbageCollection() for internal testing.
+- [LaundryWasher]: Added Evse class and Jest test. Thanks Ludovic BOUÉ.
+- [LaundryWasher]: Added LaundryWasher class and Jest test.
+- [WaterHeater]: Added WaterHeater class and Jest test. Thanks Ludovic BOUÉ.
+- [nginx]: Added new example configurations for [nginx](README-NGINX.md).
+
+### Changed
+
+- [package]: Updated dependencies.
+- [matter.js]: Update to 0.14.0-alpha.0-20250528-d6d12ae65.
+- [matter.js]: Update to 0.14.0. Great job matter.js!
+
+### Fixed
+
+- [selectAreas]: Fixed MatterbridgeServiceAreaServer.selectAreas.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.0.4] - 2025-05-26
 
 ### Added

@@ -1,26 +1,24 @@
-// src\waterHeater.test.ts
+// src\base.test.ts
 
+/* eslint-disable jest/no-commented-out-tests */
 /* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
+// Import necessary modules and types
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
-import { inspect } from 'node:util';
 
-import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { MatterbridgeWaterHeaterManagementServer, MatterbridgeWaterHeaterModeServer, WaterHeater } from './waterHeater.js';
-import { MatterbridgeThermostatServer } from './matterbridgeBehaviors.js';
-import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
-
-import { DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
-import { RootEndpoint } from '@matter/main/endpoints';
+// matter.js
+import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main/';
 import { MdnsService } from '@matter/main/protocol';
-import { Identify, PowerSource, Thermostat, WaterHeaterManagement } from '@matter/main/clusters';
-import { ThermostatServer, WaterHeaterManagementServer, WaterHeaterModeServer } from '@matter/node/behaviors';
+import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
+import { RootEndpoint } from '@matter/main/endpoints/root';
+
+// Matterbridge
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -46,40 +44,51 @@ if (!debug) {
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
 
-describe('Matterbridge Water Heater', () => {
-  const name = 'WaterHeater';
+const MATTER_PORT = 6001;
+const NAME = 'BaseTest';
 
-  const log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+/**
+ * Waits for the `isOnline` property to become `true`.
+ * This function checks the `isOnline` property of the provided server node at regular intervals until it becomes `true` or the specified timeout is reached.
+ * If the timeout is reached before `isOnline` becomes `true`, the promise is rejected with an error.
+ *
+ * @param {ServerNode<ServerNode.RootEndpoint>} server - The server node to check for online status.
+ * @param {number} timeout - The maximum time to wait in milliseconds.
+ * @returns {Promise<void>} A promise that resolves when `isOnline` becomes `true` or rejects if the timeout is reached.
+ */
+async function waitForOnline(server: ServerNode<ServerNode.RootEndpoint>, timeout = 10000): Promise<void> {
+  const start = Date.now();
+
+  return new Promise((resolve, reject) => {
+    const checkOnline = () => {
+      if (server.lifecycle.isOnline) {
+        resolve();
+      } else if (Date.now() - start >= timeout) {
+        reject(new Error('Timeout waiting for server.lifecycle.isOnline to become true'));
+      } else {
+        setTimeout(checkOnline, 100); // Check every 100ms
+      }
+    };
+    // Start checking immediately
+    checkOnline();
+  });
+}
+
+describe('Matterbridge ' + NAME, () => {
+  const log = new AnsiLogger({ logName: NAME, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
   const environment = Environment.default;
   let server: ServerNode<ServerNode.RootEndpoint>;
+  let aggregator: Endpoint<AggregatorEndpoint>;
   let device: MatterbridgeEndpoint;
-
-  const mockMatterbridge = {
-    matterbridgeVersion: '1.0.0',
-    matterbridgeInformation: { virtualMode: 'disabled' },
-    bridgeMode: 'bridge',
-    restartMode: '',
-    restartProcess: jest.fn(),
-    shutdownProcess: jest.fn(),
-    updateProcess: jest.fn(),
-    log,
-    frontend: {
-      wssSendRefreshRequired: jest.fn(),
-      wssSendUpdateRequired: jest.fn(),
-    },
-    nodeContext: {
-      set: jest.fn(),
-    },
-  } as unknown as Matterbridge;
 
   beforeAll(async () => {
     // Cleanup the matter environment
-    rmSync(path.join('test', name), { recursive: true, force: true });
+    rmSync(path.join('jest', NAME), { recursive: true, force: true });
     // Setup the matter environment
     environment.vars.set('log.level', MatterLogLevel.DEBUG);
     environment.vars.set('log.format', MatterLogFormat.ANSI);
-    environment.vars.set('path.root', path.join('test', name));
+    environment.vars.set('path.root', path.join('jest', NAME));
     environment.vars.set('runtime.signals', false);
     environment.vars.set('runtime.exitcode', false);
   }, 30000);
@@ -99,46 +108,51 @@ describe('Matterbridge Water Heater', () => {
   test('create the server node', async () => {
     // Create the server node
     server = await ServerNode.create({
-      id: name + 'ServerNode',
+      id: NAME + 'ServerNode',
 
       productDescription: {
-        name: name + 'ServerNode',
+        name: NAME + 'ServerNode',
         deviceType: DeviceTypeId(RootEndpoint.deviceType),
         vendorId: VendorId(0xfff1),
-        productId: 0x8001,
+        productId: 0x8000,
       },
 
       // Provide defaults for the BasicInformation cluster on the Root endpoint
       basicInformation: {
         vendorId: VendorId(0xfff1),
         vendorName: 'Matterbridge',
-        productId: 0x8001,
-        productName: 'Matterbridge ' + name,
-        nodeLabel: name + 'ServerNode',
+        productId: 0x8000,
+        productName: 'Matterbridge ' + NAME,
+        nodeLabel: NAME + 'ServerNode',
         hardwareVersion: 1,
         softwareVersion: 1,
         reachable: true,
       },
 
       network: {
-        port: 5580,
+        port: MATTER_PORT,
       },
     });
     expect(server).toBeDefined();
+    expect(server.lifecycle.isReady).toBeTruthy();
   });
 
-  test('create a water heater device with all parameters', async () => {
-    device = new WaterHeater('Water Heater Test Device', 'WH123456', 50, 55, 20, 80, { immersionElement1: true, immersionElement2: true, heatPump: true, boiler: true, other: true }, 90);
-    expect(device).toBeDefined();
-    expect(device.id).toBe('WaterHeaterTestDevice-WH123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(WaterHeaterManagementServer)).toBeTruthy();
-    expect(device.hasClusterServer(WaterHeaterModeServer)).toBeTruthy();
-    expect(device.hasClusterServer(ThermostatServer)).toBeTruthy();
+  test('create the aggregator node', async () => {
+    aggregator = new Endpoint(AggregatorEndpoint, { id: NAME + 'AggregatorNode' });
+    expect(aggregator).toBeDefined();
   });
 
-  test('create a water heater device with no parameter', async () => {
+  test('add the aggregator node to the server', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    await server.add(aggregator);
+    expect(server.parts.has(aggregator.id)).toBeTruthy();
+    expect(server.parts.has(aggregator)).toBeTruthy();
+    expect(aggregator.lifecycle.isReady).toBeTruthy();
+  });
+
+  /*
+  test('create a water heater device', async () => {
     device = new WaterHeater('Water Heater Test Device', 'WH123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('WaterHeaterTestDevice-WH123456');
@@ -164,14 +178,18 @@ describe('Matterbridge Water Heater', () => {
     expect(server.parts.has(device)).toBeTruthy();
     expect(device.lifecycle.isReady).toBeTruthy();
   });
+  */
 
   test('start the server node', async () => {
     // Run the server
     await server.start();
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeTruthy();
+    // Wait for the server to be online
+    await waitForOnline(server);
   });
 
+  /*
   test('device forEachAttribute', async () => {
     const attributes: { clusterName: string; clusterId: number; attributeName: string; attributeId: number; attributeValue: any }[] = [];
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
@@ -248,16 +266,19 @@ describe('Matterbridge Water Heater', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWaterHeaterModeServer changeToMode called with newMode 1 => Auto`);
   });
+  */
 
-  test('close server node', async () => {
-    // Close the server
+  test('close the server node', async () => {
     expect(server).toBeDefined();
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeTruthy();
     await server.close();
     expect(server.lifecycle.isReady).toBeTruthy();
     expect(server.lifecycle.isOnline).toBeFalsy();
-    // Stop the mDNS service
+  });
+
+  test('stop the mDNS service', async () => {
+    expect(server).toBeDefined();
     await server.env.get(MdnsService)[Symbol.asyncDispose]();
   });
 });

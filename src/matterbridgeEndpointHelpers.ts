@@ -387,7 +387,7 @@ export function getClusterId(endpoint: Endpoint, cluster: string) {
 
 export function getAttributeId(endpoint: Endpoint, cluster: string, attribute: string) {
   const clusterBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(cluster)] as ClusterBehavior.Type | undefined;
-  return clusterBehavior?.cluster.attributes[lowercaseFirstLetter(attribute)]?.id;
+  return clusterBehavior?.cluster?.attributes[lowercaseFirstLetter(attribute)]?.id;
 }
 
 /**

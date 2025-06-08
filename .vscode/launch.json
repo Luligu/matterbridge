@@ -1,0 +1,59 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Matterbridge",
+      "port": 9229,
+      "restart": true
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to remote Matterbridge",
+      "address": "192.168.69.3",
+      "port": 9229,
+      "restart": true
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch Matterbridge with --expose-gc",
+      "program": "${workspaceFolder}/dist/cli.js",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--expose-gc"],
+      "args": ["-debug", "-ssl", "-frontend", "443"],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch Matterbridge with --inspect",
+      "program": "${workspaceFolder}/dist/cli.js",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--inspect=0.0.0.0:9229"],
+      "args": ["-debug", "-ssl", "-frontend", "443"],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch Matterbridge with --inspect --expose-gc",
+      "program": "${workspaceFolder}/dist/cli.js",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--inspect=0.0.0.0:9229", "--expose-gc"],
+      "args": ["-debug", "-ssl", "-frontend", "443"],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch Matterbridge with -inspect -snapshotinterval 60000",
+      "program": "${workspaceFolder}/dist/cli.js",
+      "runtimeExecutable": "node",
+      "args": ["-debug", "-inspect", "-snapshotinterval", "60000", "-ssl", "-frontend", "443"],
+      "console": "integratedTerminal"
+    }
+  ]
+}
