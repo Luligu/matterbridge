@@ -14,7 +14,7 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
 import { RootEndpoint } from '@matter/main/endpoints';
 import { MdnsService } from '@matter/main/protocol';
-import { Identify, PowerSource, ElectricalEnergyMeasurement, ElectricalPowerMeasurement, DeviceEnergyManagement, DeviceEnergyManagementMode } from '@matter/main/clusters';
+import { Identify, PowerSource, ElectricalEnergyMeasurement, ElectricalPowerMeasurement, DeviceEnergyManagement, DeviceEnergyManagementMode, EnergyEvse } from '@matter/main/clusters';
 import { EnergyEvseServer, EnergyEvseModeServer, DeviceEnergyManagementModeServer } from '@matter/node/behaviors';
 
 // Matterbridge
@@ -201,6 +201,14 @@ describe('Matterbridge EVSE', () => {
     await invokeBehaviorCommand(device, 'energyEvse', 'disable');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeEnergyEvseServer disable called`);
     jest.clearAllMocks();
+    await device.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInCharging);
+    await invokeBehaviorCommand(device, 'energyEvse', 'disable');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeEnergyEvseServer disable called`);
+    jest.clearAllMocks();
+    await invokeBehaviorCommand(device, 'energyEvse', 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6000, maximumChargeCurrent: 0 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeEnergyEvseServer enableCharging called`);
+    jest.clearAllMocks();
+    await device.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDemand);
     await invokeBehaviorCommand(device, 'energyEvse', 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6000, maximumChargeCurrent: 0 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeEnergyEvseServer enableCharging called`);
   });

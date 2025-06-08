@@ -44,7 +44,7 @@ export class Evse extends MatterbridgeEndpoint {
    * @param {EnergyEvse.SupplyState} [supplyState] - The supply state of the EVSE. Defaults to Disabled.
    * @param {EnergyEvse.FaultState} [faultState] - The fault state of the EVSE. Defaults to NoError.
    */
-  constructor(name: string, serial: string, state?: EnergyEvse.State, supplyState?: EnergyEvse.SupplyState, faultState?: EnergyEvse.FaultState) {
+  constructor(name: string, serial: string, currentMode?: number, supportedModes?: EnergyEvseMode.ModeOption[], state?: EnergyEvse.State, supplyState?: EnergyEvse.SupplyState, faultState?: EnergyEvse.FaultState) {
     super([evse, powerSource, electricalSensor, deviceEnergyManagement], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge EVSE')
@@ -54,11 +54,7 @@ export class Evse extends MatterbridgeEndpoint {
       .createDefaultElectricalEnergyMeasurementClusterServer()
       .createDefaultDeviceEnergyManagementCluster()
       .createDefaultEnergyEvseClusterServer(state, supplyState, faultState)
-      .createDefaultEnergyEvseModeClusterServer(1, [
-        { label: 'Manual', mode: 1, modeTags: [{ value: EnergyEvseMode.ModeTag.Manual }] },
-        { label: 'Scheduled', mode: 2, modeTags: [{ value: EnergyEvseMode.ModeTag.TimeOfUse }] },
-        { label: 'Solar Charging', mode: 3, modeTags: [{ value: EnergyEvseMode.ModeTag.SolarCharging }] },
-      ])
+      .createDefaultEnergyEvseModeClusterServer(currentMode, supportedModes)
       .addRequiredClusterServers();
   }
 
@@ -85,30 +81,20 @@ export class Evse extends MatterbridgeEndpoint {
   /**
    * Creates a default EnergyEvseMode Cluster Server.
    *
-   * @param {number} [currentMode] - The current mode of the EnergyEvseMode cluster. Defaults to mode 1 (EnergyEvseMode.ModeTag.Auto).
-   * @param {EnergyEvseMode.ModeOption[]} [supportedModes] - The supported modes for the EnergyEvseMode cluster. Defaults all cluster modes.
+   * @param {number} [currentMode] - The current mode of the EnergyEvseMode cluster. Defaults to mode 1 (EnergyEvseMode.ModeTag.Manual).
+   * @param {EnergyEvseMode.ModeOption[]} [supportedModes] - The supported modes for the EnergyEvseMode cluster. Defaults all EnergyEvseMode cluster modes.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultEnergyEvseModeClusterServer(currentMode?: number, supportedModes?: EnergyEvseMode.ModeOption[]): this {
     this.behaviors.require(MatterbridgeEnergyEvseModeServer, {
       supportedModes: supportedModes ?? [
-        { label: 'Auto', mode: 1, modeTags: [{ value: EnergyEvseMode.ModeTag.Auto }] },
-        { label: 'Quick', mode: 2, modeTags: [{ value: EnergyEvseMode.ModeTag.Quick }] },
-        { label: 'Quiet', mode: 3, modeTags: [{ value: EnergyEvseMode.ModeTag.Quiet }] },
-        { label: 'LowNoise', mode: 4, modeTags: [{ value: EnergyEvseMode.ModeTag.LowNoise }] },
-        { label: 'LowEnergy', mode: 5, modeTags: [{ value: EnergyEvseMode.ModeTag.LowEnergy }] },
-        { label: 'Vacation', mode: 6, modeTags: [{ value: EnergyEvseMode.ModeTag.Vacation }] },
-        { label: 'Min', mode: 7, modeTags: [{ value: EnergyEvseMode.ModeTag.Min }] },
-        { label: 'Max', mode: 8, modeTags: [{ value: EnergyEvseMode.ModeTag.Max }] },
-        { label: 'Night', mode: 9, modeTags: [{ value: EnergyEvseMode.ModeTag.Night }] },
-        { label: 'Day', mode: 10, modeTags: [{ value: EnergyEvseMode.ModeTag.Day }] },
-        { label: 'Manual', mode: 11, modeTags: [{ value: EnergyEvseMode.ModeTag.Manual }] },
-        { label: 'TimeOfUse', mode: 12, modeTags: [{ value: EnergyEvseMode.ModeTag.TimeOfUse }] },
-        { label: 'SolarCharging', mode: 13, modeTags: [{ value: EnergyEvseMode.ModeTag.SolarCharging }] },
-        { label: 'V2X', mode: 14, modeTags: [{ value: EnergyEvseMode.ModeTag.V2X }] },
-      ],
-      currentMode: currentMode ?? 1,
+        { label: 'Manual', mode: 1, modeTags: [{ value: EnergyEvseMode.ModeTag.Manual }] },
+        { label: 'TimeOfUse', mode: 2, modeTags: [{ value: EnergyEvseMode.ModeTag.TimeOfUse }] },
+        { label: 'SolarCharging', mode: 3, modeTags: [{ value: EnergyEvseMode.ModeTag.SolarCharging }] },
+        { label: 'Home-to-vehicle and Vehicle-to-home', mode: 4, modeTags: [{ value: EnergyEvseMode.ModeTag.V2X }] },
+      ], // FixedAttribute
+      currentMode: currentMode ?? 1, // Persistent attribute
     });
     return this;
   }
