@@ -304,6 +304,7 @@ async function shutdown() {
 
   await stopCpuMemoryCheck();
 
+  cliEmitter.emit('shutdown');
   process.exit(0);
 }
 
