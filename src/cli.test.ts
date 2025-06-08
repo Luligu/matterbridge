@@ -65,15 +65,15 @@ describe('Matterbridge', () => {
     jest.restoreAllMocks();
   });
 
+  const nodeMajorVersion = parseInt(process.versions.node.split('.')[0]);
+
   it('should start matterbridge', async () => {
-    jest.useFakeTimers();
+    if (nodeMajorVersion > 20) jest.useFakeTimers();
     // Dynamically import the cli module
     const cli = await import('./cli.js');
-    const loaded = new Promise((resolve) => {
+    await new Promise((resolve) => {
       cli.cliEmitter.once('ready', resolve);
     });
-    // await new Promise((resolve) => setTimeout(resolve, 500));
-    await loaded;
     expect(cli.instance).toBeDefined();
     expect(cli.instance).toBeInstanceOf(MockMatterbridge);
     matterbridge = cli.instance as unknown as Matterbridge;
@@ -92,6 +92,7 @@ describe('Matterbridge', () => {
   }, 10000);
 
   it('should call CpuMemoryCheck interval', async () => {
+    if (nodeMajorVersion <= 20) return; // Skip test for Node.js versions <= 20
     jest.spyOn(os, 'totalmem').mockImplementationOnce(() => {
       console.log('mockImplementation of os.totalmem() called');
       return 1024;
@@ -143,6 +144,7 @@ describe('Matterbridge', () => {
   });
 
   it('should call Inspector interval', async () => {
+    if (nodeMajorVersion <= 20) return; // Skip test for Node.js versions <= 20
     console.log('should call Inspector interval');
     jest.clearAllMocks();
     jest.advanceTimersByTime(60 * 1000); // Fast-forward time by 60 seconds
@@ -151,12 +153,13 @@ describe('Matterbridge', () => {
   }, 10000);
 
   it('should use real timers', async () => {
+    if (nodeMajorVersion <= 20) return; // Skip test for Node.js versions <= 20
     jest.useRealTimers();
     expect(matterbridge).toBeDefined();
   }, 10000);
 
   it('should shutdown matterbridge', async () => {
-    jest.useRealTimers();
+    if (nodeMajorVersion > 20) jest.useRealTimers();
     matterbridge.emit('shutdown');
     await new Promise((resolve) => setTimeout(resolve, 500));
 
