@@ -81,6 +81,8 @@ interface MatterbridgeEvent {
   cleanup_completed: [];
   startmemorycheck: [];
   stopmemorycheck: [];
+  startinspector: [];
+  stopinspector: [];
 }
 
 /**

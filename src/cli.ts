@@ -31,7 +31,7 @@ import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, TimestampFormat, YELLOW } from 
 
 // Node modules
 import type { HeapProfiler, InspectorNotification, Session } from 'node:inspector';
-import type os from 'node:os';
+import os from 'node:os';
 import { EventEmitter } from 'node:events';
 import { inspect } from 'node:util';
 
@@ -79,7 +79,7 @@ const formatOsUpTime = (seconds: number): string => {
 };
 
 async function startCpuMemoryCheck() {
-  const os = await import('node:os');
+  // const os = await import('node:os');
 
   log.debug(`Cpu memory check started`);
   prevCpus = os.cpus();
@@ -105,6 +105,7 @@ async function startCpuMemoryCheck() {
 
     // Get the cpu usage
     const currCpus = os.cpus();
+    // log.debug(`Cpus: ${JSON.stringify(currCpus)}`);
     let cpuUsageLog: string;
     if (currCpus.length !== prevCpus.length) {
       prevCpus = currCpus; // Reset the previous cpus
@@ -139,7 +140,8 @@ async function startCpuMemoryCheck() {
     );
   };
   interval();
-  memoryCheckInterval = setInterval(interval, getIntParameter('memoryinterval') ?? 10 * 1000);
+  clearInterval(memoryCheckInterval);
+  memoryCheckInterval = setInterval(interval, getIntParameter('memoryinterval') ?? 10 * 1000).unref();
 }
 
 async function stopCpuMemoryCheck() {
@@ -172,9 +174,11 @@ async function startInspector() {
     const interval = getIntParameter('snapshotinterval');
     if (interval && interval >= 30000) {
       log.debug(`***Started heap snapshot interval of ${CYAN}${interval}${db} ms`);
+      clearInterval(snapshotInterval);
       snapshotInterval = setInterval(async () => {
+        log.debug(`Run heap snapshot interval`);
         await takeHeapSnapshot();
-      }, interval);
+      }, interval).unref();
     }
   } catch (err) {
     log.error(`***Failed to start heap sampling: ${err instanceof Error ? err.message : err}`);
@@ -206,6 +210,7 @@ async function stopInspector() {
     log.error('***No active inspector session.');
     return;
   }
+
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await new Promise<any>((resolve, reject) => {
@@ -242,6 +247,8 @@ async function takeHeapSnapshot() {
     log.error('No active inspector session.');
     return;
   }
+
+  log.debug(`Taking heap snapshot...`);
 
   const chunks: Buffer[] = [];
   const chunksListener = (notification: InspectorNotification<HeapProfiler.AddHeapSnapshotChunkEventDataType>) => {
@@ -285,6 +292,8 @@ function registerHandlers() {
   if (instance) instance.on('update', async () => update());
   if (instance) instance.on('startmemorycheck', async () => start());
   if (instance) instance.on('stopmemorycheck', async () => stop());
+  if (instance) instance.on('startinspector', async () => startInspector());
+  if (instance) instance.on('stopinspector', async () => stopInspector());
   log.debug('Registered event handlers');
 }
 
@@ -339,6 +348,7 @@ async function main() {
     shutdown();
   } else {
     registerHandlers();
+    cliEmitter.emit('ready');
   }
 }
 
