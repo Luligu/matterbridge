@@ -83,6 +83,8 @@ interface MatterbridgeEvent {
   stopmemorycheck: [];
   startinspector: [];
   stopinspector: [];
+  takeheapsnapshot: [];
+  triggergarbagecollection: [];
 }
 
 /**

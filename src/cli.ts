@@ -294,6 +294,8 @@ function registerHandlers() {
   if (instance) instance.on('stopmemorycheck', async () => stop());
   if (instance) instance.on('startinspector', async () => startInspector());
   if (instance) instance.on('stopinspector', async () => stopInspector());
+  if (instance) instance.on('takeheapsnapshot', async () => takeHeapSnapshot());
+  if (instance) instance.on('triggergarbagecollection', async () => triggerGarbageCollection());
   log.debug('Registered event handlers');
 }
 
