@@ -12,7 +12,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
-- [cli]: Added takeHeapSnapshot() and triggerGarbageCollection().
+- [cli]: Added takeHeapSnapshot() and triggerGarbageCollection() for internal testing.
 - [LaundryWasher]: Added Evse class and Jest test. Thanks Ludovic BOUÉ.
 - [LaundryWasher]: Added LaundryWasher class and Jest test.
 - [WaterHeater]: Added WaterHeater class and Jest test. Thanks Ludovic BOUÉ.

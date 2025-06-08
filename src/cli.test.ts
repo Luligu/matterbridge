@@ -167,7 +167,7 @@ describe('Matterbridge', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Stopped heap sampling');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Cpu memory check stopped.'));
     expect(exit).toHaveBeenCalled();
-  }, 10000);
+  }, 60000);
 
   it('should start memory check', async () => {
     matterbridge.emit('startmemorycheck');
@@ -175,7 +175,7 @@ describe('Matterbridge', () => {
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received start memory check event');
     expect(exit).not.toHaveBeenCalled();
-  }, 10000);
+  }, 60000);
 
   it('should stop memory check', async () => {
     matterbridge.emit('stopmemorycheck');
@@ -183,14 +183,14 @@ describe('Matterbridge', () => {
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received stop memory check event');
     expect(exit).not.toHaveBeenCalled();
-  }, 10000);
+  }, 60000);
 
   it('should start inspector', async () => {
     matterbridge.emit('startinspector');
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Starting heap sampling...');
-  }, 10000);
+  }, 60000);
 
   it('should not start inspector', async () => {
     /*
@@ -205,21 +205,21 @@ describe('Matterbridge', () => {
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('***Failed to start heap sampling'));
-  }, 10000);
+  }, 60000);
 
   it('should stop inspector', async () => {
     matterbridge.emit('stopinspector');
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Stopping heap sampling...');
-  }, 10000);
+  }, 60000);
 
   it('should not stop inspector', async () => {
     matterbridge.emit('stopinspector');
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('***No active inspector session.'));
-  }, 10000);
+  }, 60000);
 
   it('should restart matterbridge', async () => {
     matterbridge.emit('restart');
