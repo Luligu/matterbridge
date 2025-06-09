@@ -1004,13 +1004,13 @@ export class PluginManager {
       this.log.debug(`Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.`);
       // this.log.debug(`Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.\nSchema:${rs}\n`, schema);
       return schema;
-    } catch (err) {
-      const nodeErr = err as NodeJS.ErrnoException;
-      if (nodeErr.code === 'ENOENT') {
-        this.log.debug(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema.`);
-      } else {
-        this.log.debug(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema. Error: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
-      }
+    } catch (_err) {
+      // const nodeErr = err as NodeJS.ErrnoException;
+      // if (nodeErr.code === 'ENOENT') {
+      this.log.debug(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema.`);
+      // } else {
+      // this.log.debug(`Schema file ${schemaFile} for plugin ${plg}${plugin.name}${db} not found. Loading default schema. Error: ${err instanceof Error ? err.message + '\n' + err.stack : err}`);
+      // }
       return this.getDefaultSchema(plugin);
     }
   }

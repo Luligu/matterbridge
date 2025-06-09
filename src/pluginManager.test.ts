@@ -7,28 +7,21 @@ process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'debug'
 
 import { jest } from '@jest/globals';
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-let mockedExec: Function | undefined = undefined;
-
-// Mock the exec function from the child_process module
+// Mock the exec function from the child_process module. We use jest.unstable_mockModule to ensure that the mock is applied correctly and can be used in the tests.
 jest.unstable_mockModule('node:child_process', async () => {
   const originalModule = jest.requireActual<typeof import('node:child_process')>('node:child_process');
 
   return {
     ...originalModule,
     exec: jest.fn((command: string, callback?: (error: ExecException | null, stdout: string, stderr: string) => void) => {
-      // Use the original exec implementation unless overridden in a specific test
       // console.error('exec called with command:', command);
-      if (mockedExec) {
-        mockedExec(command, callback);
-      } else {
-        (originalModule.exec as typeof originalModule.exec)(command, callback);
-      }
+      (originalModule.exec as typeof originalModule.exec)(command, callback);
     }),
   };
 });
 
-import { ExecException, execSync } from 'node:child_process';
+const { exec } = await import('node:child_process');
+import { ChildProcess, ExecException, execSync } from 'node:child_process';
 import { promises as fs, rmSync } from 'node:fs';
 import path from 'node:path';
 import { AnsiLogger, db, er, LogLevel, nf, nt } from 'node-ansi-logger';
@@ -39,6 +32,7 @@ import { PluginManager } from './pluginManager.js';
 import { waiter } from './utils/export.js';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
+import { log } from 'node:console';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -911,6 +905,15 @@ describe('PluginManager', () => {
     plugin.error = false;
   });
 
+  test('should not load plugin test without default export', async () => {
+    const plugin = await plugins.add('./src/mock/plugintest');
+    expect(plugin).toBeDefined();
+    if (!plugin) return;
+    await plugins.load(plugin, false, 'Test with Jest');
+    await plugins.remove(plugin.name);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`does not provide a default export`));
+  });
+
   test('load plugin matterbridge-example-accessory-platform', async () => {
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
@@ -1252,34 +1255,30 @@ describe('PluginManager', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to install plugin ${plg}matterbridge-xyz${er}:`));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Failed to install plugin ${plg}matterbridge-xyz${db}:`));
 
-    // Set the return value for this specific test case
-    mockedExec = (command: string, callback?: (error: ExecException | null, stdout: string, stderr: string) => void) => {
-      // console.error('mockedExec:', command);
+    (exec as any).mockImplementation((command: string, callback?: (error: ExecException | null, stdout: string, stderr: string) => void) => {
       if (command.includes('npm list -g matterbridge-xyz --depth=0')) {
         if (callback) callback(new Error('Test error'), '', '');
       } else {
         if (callback) callback(null, '', '');
       }
-    };
+      // return Promise.resolve() as unknown as ChildProcess;
+    });
     expect(await plugins.install('matterbridge-xyz')).toBeUndefined();
-    mockedExec = undefined;
   }, 300000);
 
   test('uninstall not existing plugin matterbridge-xyz with mock', async () => {
     expect(await plugins.uninstall('matterbridge-xyz')).toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Uninstalled plugin ${plg}matterbridge-xyz${nf}`));
 
-    // Set the return value for this specific test case
-    mockedExec = (command: string, callback?: (error: ExecException | null, stdout: string, stderr: string) => void) => {
-      // console.error('mockedExec:', command);
+    (exec as any).mockImplementation((command: string, callback?: (error: ExecException | null, stdout: string, stderr: string) => void) => {
       if (command.includes('npm uninstall -g matterbridge-xyz')) {
         if (callback) callback(new Error('Test error'), '', '');
       } else {
         if (callback) callback(null, '', '');
       }
-    };
+      // return Promise.resolve() as unknown as ChildProcess;
+    });
     expect(await plugins.uninstall('matterbridge-xyz')).toBeUndefined();
-    mockedExec = undefined;
   }, 300000);
 
   test('Matterbridge.destroyInstance()', async () => {
