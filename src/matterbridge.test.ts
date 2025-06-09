@@ -374,12 +374,6 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).getVendorIdName(1)).toContain('Unknown vendorId');
     });
 
-    test('spawnCommand', async () => {
-      expect(await matterbridge.spawnCommand('npm', ['list', '-g'])).toBeTruthy();
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Spawn command'));
-      expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.anything());
-    }, 300000);
-
     test('matterbridge -add mockPlugin1', async () => {
       expect((matterbridge as any).initialized).toBe(true);
       expect((matterbridge as any).hasCleanupStarted).toBe(false);

@@ -1,0 +1,202 @@
+// src\utils\spawn.test.ts
+/* eslint-disable jest/no-conditional-expect */
+/* eslint-disable @typescript-eslint/no-empty-function */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { jest } from '@jest/globals';
+
+const mockedSpawn: jest.MockedFunction<typeof spawn> | undefined = undefined;
+
+// Mock the spawn function from the child_process module
+jest.unstable_mockModule('node:child_process', async () => {
+  const originalModule = jest.requireActual<typeof import('node:child_process')>('node:child_process');
+
+  return {
+    ...originalModule,
+    spawn: jest.fn((command: string, args: string[], options: SpawnOptionsWithStdioTuple<StdioNull, StdioPipe, StdioPipe>) => {
+      // Use the original spawn implementation unless overridden in a specific test
+      // console.error('spawn called with command:', command);
+      if (mockedSpawn && typeof mockedSpawn === 'function') {
+        // return mockedSpawn(command, args, options);
+      } else {
+        return (originalModule.spawn as typeof originalModule.spawn)(command, args, options);
+      }
+    }),
+  };
+});
+
+const { spawn } = await import('node:child_process');
+import { SpawnOptionsWithStdioTuple, StdioNull, StdioPipe } from 'node:child_process';
+
+import { AnsiLogger, LogLevel, TimestampFormat } from '../logger/export.js';
+import { Matterbridge } from '../matterbridge.js';
+
+import spawnModule from './spawn.js';
+import { stderr } from 'node:process';
+
+let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
+let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
+let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
+let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
+let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
+let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
+const debug = false;
+
+if (!debug) {
+  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
+  consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((...args: any[]) => {});
+  consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation((...args: any[]) => {});
+  consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation((...args: any[]) => {});
+  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation((...args: any[]) => {});
+  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {});
+} else {
+  loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log');
+  consoleLogSpy = jest.spyOn(console, 'log');
+  consoleDebugSpy = jest.spyOn(console, 'debug');
+  consoleInfoSpy = jest.spyOn(console, 'info');
+  consoleWarnSpy = jest.spyOn(console, 'warn');
+  consoleErrorSpy = jest.spyOn(console, 'error');
+}
+
+describe('Spawn', () => {
+  const matterbridge = {
+    log: new AnsiLogger({ logName: 'SpawnCommand', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG }),
+    frontend: {
+      wssSendMessage: jest.fn(),
+    },
+  } as unknown as Matterbridge;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should spawn a command successfully -nosudo', async () => {
+    process.argv = ['node', 'spawn.test.js', '-nosudo'];
+    const command = 'npm';
+    const args = ['list', '--depth=0'];
+
+    const result = await spawnModule.spawnCommand(matterbridge, command, args);
+
+    expect(spawn).toHaveBeenCalled();
+    expect(result).toBe(true);
+    if (process.platform === 'win32') {
+      expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn command cmd.exe with`));
+    } else {
+      expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn command ${command} with`));
+    }
+  });
+
+  it('should mock a spawn command with sudo', async () => {
+    process.argv = ['node', 'spawn.test.js', '-sudo'];
+    const command = 'npm';
+    const args = ['list', '--depth=0'];
+
+    (spawn as jest.MockedFunction<typeof spawn>).mockImplementationOnce(() => {
+      return {
+        on: jest.fn((event: string, callback: (code: number | null, signal: NodeJS.Signals | null) => void) => {
+          if (event === 'disconnect' && callback) {
+            callback(null, null);
+          }
+        }),
+      } as any;
+    });
+    const result = await spawnModule.spawnCommand(matterbridge, command, args);
+
+    expect(result).toBe(true);
+    expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn command sudo with`));
+  });
+
+  it('should mock a spawn command and throw an error', async () => {
+    const command = 'npm';
+    const args = ['list', '--depth=0'];
+
+    (spawn as jest.MockedFunction<typeof spawn>).mockImplementationOnce(() => {
+      return {
+        on: jest.fn((event: string, callback: (err: Error) => void) => {
+          if (event === 'error' && callback) {
+            callback(new Error('Spawn error'));
+          }
+        }),
+      } as any;
+    });
+    await expect(spawnModule.spawnCommand(matterbridge, command, args)).rejects.toThrow('Spawn error');
+
+    expect(matterbridge.log.log).toHaveBeenCalledWith('error', expect.stringContaining(`Failed to start child process`));
+  });
+
+  it('should mock a spawn command and throw an error on close', async () => {
+    const command = 'npm';
+    const args = ['list', '--depth=0'];
+
+    (spawn as jest.MockedFunction<typeof spawn>).mockImplementationOnce(() => {
+      return {
+        on: jest.fn((event: string, callback: (code: number | null, signal: NodeJS.Signals | null) => void) => {
+          if (event === 'close' && callback) {
+            callback(1, null);
+          }
+        }),
+      } as any;
+    });
+    await expect(spawnModule.spawnCommand(matterbridge, command, args)).rejects.toThrow();
+
+    expect(matterbridge.log.log).toHaveBeenCalledWith('error', expect.stringContaining(`closed with code 1 and signal null`));
+  });
+
+  it('should mock a spawn command and throw an error on exit', async () => {
+    const command = 'npm';
+    const args = ['list', '--depth=0'];
+
+    (spawn as jest.MockedFunction<typeof spawn>).mockImplementationOnce(() => {
+      return {
+        on: jest.fn((event: string, callback: (code: number | null, signal: NodeJS.Signals | null) => void) => {
+          if (event === 'exit' && callback) {
+            callback(1, null);
+          }
+        }),
+      } as any;
+    });
+    await expect(spawnModule.spawnCommand(matterbridge, command, args)).rejects.toThrow();
+
+    expect(matterbridge.log.log).toHaveBeenCalledWith('error', expect.stringContaining(`exited with code 1 and signal null`));
+  });
+
+  it('should mock a spawn command and send data on stdout and stderr', async () => {
+    const command = 'npm';
+    const args = ['list', '--depth=0'];
+
+    (spawn as jest.MockedFunction<typeof spawn>).mockImplementationOnce(() => {
+      return {
+        on: jest.fn((event: string, callback: () => void) => {
+          if (event === 'disconnect' && callback) {
+            setTimeout(() => {
+              callback();
+            }, 500);
+          }
+        }),
+
+        stdout: {
+          on: jest.fn((event: string, callback: (data: Buffer) => void) => {
+            if (event === 'data' && callback) {
+              callback(Buffer.from('Hello from stdout'));
+            }
+          }),
+        },
+        stderr: {
+          on: jest.fn((event: string, callback: (data: Buffer) => void) => {
+            if (event === 'data' && callback) {
+              callback(Buffer.from('Hello from stderr'));
+            }
+          }),
+        },
+      } as any;
+    });
+    await spawnModule.spawnCommand(matterbridge, command, args);
+
+    expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn output (stdout): Hello from stdout`));
+    expect(matterbridge.log.log).toHaveBeenCalledWith('debug', expect.stringContaining(`Spawn verbose (stderr): Hello from stderr`));
+  });
+});

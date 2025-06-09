@@ -28,18 +28,20 @@ process.argv = [
 
 import { expect, jest } from '@jest/globals';
 import path from 'node:path';
-import { LogLevel as MatterLogLevel } from '@matter/main';
+import { rmSync } from 'node:fs';
 import { AnsiLogger, CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import WebSocket from 'ws';
+
+import { LogLevel as MatterLogLevel } from '@matter/main';
+import { Identify } from '@matter/main/clusters';
 
 import { Matterbridge } from './matterbridge.js';
 import { wait, waiter } from './utils/export.js';
 import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
-import { Identify } from '@matter/main/clusters';
 import { plg, RegisteredPlugin } from './matterbridgeTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { WS_ID_CLOSE_SNACKBAR, WS_ID_CPU_UPDATE, WS_ID_LOG, WS_ID_MEMORY_UPDATE, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, WS_ID_SNACKBAR, WS_ID_STATEUPDATE, WS_ID_UPDATE_NEEDED, WS_ID_UPTIME_UPDATE } from './frontend.js';
-import { rmSync } from 'node:fs';
+import spawn from './utils/spawn.ts';
 
 jest.unstable_mockModule('./shelly.ts', () => ({
   triggerShellySysUpdate: jest.fn(() => Promise.resolve()),
@@ -564,7 +566,7 @@ describe('Matterbridge frontend', () => {
 
   test('Websocket API /api/uninstall wrong package name with mock', async () => {
     // Mock `spawnCommand` to reject with an error
-    jest.spyOn(matterbridge as any, 'spawnCommand').mockRejectedValueOnce(new Error('Package not found'));
+    jest.spyOn(spawn, 'spawnCommand').mockRejectedValueOnce(new Error('Package not found'));
 
     const msg = await waitMessageId(++WS_ID, '/api/uninstall', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/uninstall', params: { packageName: 'matterbridge-st' } });
     expect(msg.response).toBeUndefined();
