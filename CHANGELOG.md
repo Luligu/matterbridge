@@ -12,11 +12,15 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [tests] Update Jest test coverage on addBridgedEndpoint and removeBridgedEndpoint.
+
 ### Changed
 
 - [package]: Updated dependencies.
 
 ### Fixed
+
+- [evse]: Fixed jsdoc on Evse.
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
