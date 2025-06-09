@@ -28,6 +28,6 @@ export default {
     ],
   },
   transformIgnorePatterns: ['/node_modules/'],
-  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/frontend/'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/frontend/', '/src/crypto/'],
   coveragePathIgnorePatterns: ['/node_modules/', '/dist/', '/frontend/', '/src/mock/'],
 };

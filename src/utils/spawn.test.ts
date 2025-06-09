@@ -5,22 +5,15 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
 
-const mockedSpawn: jest.MockedFunction<typeof spawn> | undefined = undefined;
-
-// Mock the spawn function from the child_process module
+// Mock the spawn function from the child_process module. We use jest.unstable_mockModule to ensure that the mock is applied correctly and can be used in the tests.
 jest.unstable_mockModule('node:child_process', async () => {
   const originalModule = jest.requireActual<typeof import('node:child_process')>('node:child_process');
 
   return {
     ...originalModule,
     spawn: jest.fn((command: string, args: string[], options: SpawnOptionsWithStdioTuple<StdioNull, StdioPipe, StdioPipe>) => {
-      // Use the original spawn implementation unless overridden in a specific test
       // console.error('spawn called with command:', command);
-      if (mockedSpawn && typeof mockedSpawn === 'function') {
-        // return mockedSpawn(command, args, options);
-      } else {
-        return (originalModule.spawn as typeof originalModule.spawn)(command, args, options);
-      }
+      return (originalModule.spawn as typeof originalModule.spawn)(command, args, options);
     }),
   };
 });
@@ -30,9 +23,7 @@ import { SpawnOptionsWithStdioTuple, StdioNull, StdioPipe } from 'node:child_pro
 
 import { AnsiLogger, LogLevel, TimestampFormat } from '../logger/export.js';
 import { Matterbridge } from '../matterbridge.js';
-
 import spawnModule from './spawn.js';
-import { stderr } from 'node:process';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

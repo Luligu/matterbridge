@@ -390,6 +390,19 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     }
   }, 60000);
 
+  test('startEndAdvertiseTimer', async () => {
+    expect((matterbridge as any).endAdvertiseTimeout).toBeDefined();
+
+    jest.useFakeTimers();
+    (matterbridge as any).startEndAdvertiseTimer(plugins.array()[0].serverNode);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***Clear ${plugins.array()[0].serverNode?.id} server node end advertise timer`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***Starting ${plugins.array()[0].serverNode?.id} server node end advertise timer`));
+    jest.advanceTimersByTime(15 * 60 * 1000); // Advance time by 15 minutes
+    jest.useRealTimers();
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Advertising on server node for ${plugins.array()[0].serverNode?.id} stopped. Restart to commission.`));
+  });
+
   test('remove all devices', async () => {
     expect(matterbridge.plugins.size).toBe(4);
     expect(matterbridge.devices.size).toBe(4);
