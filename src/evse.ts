@@ -27,6 +27,7 @@ import { MaybePromise } from '@matter/main';
 import { EnergyEvseServer } from '@matter/main/behaviors/energy-evse';
 import { EnergyEvseModeServer } from '@matter/main/behaviors/energy-evse-mode';
 import { EnergyEvse, EnergyEvseMode } from '@matter/main/clusters';
+import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
 import { ModeBase } from '@matter/main/clusters/mode-base';
 
 // Matterbridge
@@ -40,11 +41,16 @@ export class Evse extends MatterbridgeEndpoint {
    *
    * @param {string} name - The name of the EVSE.
    * @param {string} serial - The serial number of the EVSE.
+   * @param {number} [currentMode] - The current mode of the EnergyEvseMode cluster. Defaults to mode 1 (EnergyEvseMode.ModeTag.Auto).
+   * @param {EnergyEvseMode.ModeOption[]} [supportedModes] - The supported modes for the EnergyEvseMode cluster. Defaults all cluster modes.
    * @param {EnergyEvse.State} [state] - The current state of the EVSE. Defaults to NotPluggedIn.
    * @param {EnergyEvse.SupplyState} [supplyState] - The supply state of the EVSE. Defaults to Disabled.
    * @param {EnergyEvse.FaultState} [faultState] - The fault state of the EVSE. Defaults to NoError.
+   * @param {number} [absMinPower=0] - Indicate the minimum electrical power that the ESA can consume when switched on. Defaults to `0` if not provided.
+   * @param {number} [absMaxPower=0] - Indicate the maximum electrical power that the ESA can consume when switched on. Defaults to `0` if not provided.
+
    */
-  constructor(name: string, serial: string, currentMode?: number, supportedModes?: EnergyEvseMode.ModeOption[], state?: EnergyEvse.State, supplyState?: EnergyEvse.SupplyState, faultState?: EnergyEvse.FaultState) {
+  constructor(name: string, serial: string, currentMode?: number, supportedModes?: EnergyEvseMode.ModeOption[], state?: EnergyEvse.State, supplyState?: EnergyEvse.SupplyState, faultState?: EnergyEvse.FaultState, absMinPower = 0, absMaxPower = 0) {
     super([evse, powerSource, electricalSensor, deviceEnergyManagement], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge EVSE')
@@ -52,7 +58,7 @@ export class Evse extends MatterbridgeEndpoint {
       .createDefaultPowerTopologyClusterServer()
       .createDefaultElectricalPowerMeasurementClusterServer()
       .createDefaultElectricalEnergyMeasurementClusterServer()
-      .createDefaultDeviceEnergyManagementCluster()
+      .createDefaultDeviceEnergyManagementCluster(DeviceEnergyManagement.EsaType.Evse, false, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
       .createDefaultEnergyEvseClusterServer(state, supplyState, faultState)
       .createDefaultEnergyEvseModeClusterServer(currentMode, supportedModes)
       .addRequiredClusterServers();
