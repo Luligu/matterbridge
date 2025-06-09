@@ -2074,16 +2074,21 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default Device Energy Management Cluster Server with feature PowerForecastReporting. Only needed for an evse device type.
    *
+   * @param {esaType} [esaType] - Indicate the type of Energy Smart Appliance (ESA). Defaults to Other.
+   * @param {boolean} [esaCanGenerate] - indicate whether the ESA is classed as a generator or load. Defaults to false.
+   * @param {esaState} [esaState] - Indicate the state of Energy Smart Appliance (ESA). Defaults to Offline.
+   * @param {number} [absMinPower=0] - Indicate the minimum electrical power that the ESA can consume when switched on. Defaults to `0` if not provided.
+   * @param {number} [absMaxPower=0] - Indicate the maximum electrical power that the ESA can consume when switched on. Defaults to `0` if not provided.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultDeviceEnergyManagementCluster() {
+  createDefaultDeviceEnergyManagementCluster(esaType = DeviceEnergyManagement.EsaType.Evse, esaCanGenerate = false, esaState = DeviceEnergyManagement.EsaState.Offline, absMinPower = 0, absMaxPower = 0) {
     this.behaviors.require(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting), {
       forecast: null, // A null value indicates that there is no forecast currently available
-      esaType: DeviceEnergyManagement.EsaType.Other,
-      esaCanGenerate: false,
-      esaState: DeviceEnergyManagement.EsaState.Offline,
-      absMinPower: 0,
-      absMaxPower: 0,
+      esaType,
+      esaCanGenerate,
+      esaState,
+      absMinPower,
+      absMaxPower,
     });
     return this;
   }
