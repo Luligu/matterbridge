@@ -138,16 +138,10 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect((matterbridge as any).passcode).toBe(123456 + 1);
     expect((matterbridge as any).discriminator).toBe(3860 + 1);
 
-    await waiter(
-      'Matter server started and online',
-      () => {
-        return (matterbridge as any).configureTimeout !== undefined && (matterbridge as any).reachabilityTimeout !== undefined && matterbridge.serverNode?.lifecycle.isOnline === true;
-      },
-      false,
-      60000,
-      100,
-      true,
-    );
+    await new Promise((resolve) => {
+      matterbridge.once('online', resolve);
+    });
+    await Promise.resolve();
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);

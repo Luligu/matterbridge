@@ -333,6 +333,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       100,
       true,
     );
+    await Promise.resolve();
 
     await waiter(
       'Matter servers online',
@@ -349,6 +350,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       100,
       true,
     );
+    await Promise.resolve();
 
     for (const plugin of plugins) {
       expect(plugin.serverNode).toBeDefined();

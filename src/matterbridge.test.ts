@@ -132,16 +132,10 @@ describe('Matterbridge', () => {
       matterbridge.plugins.clear();
       await matterbridge.plugins.saveToStorage();
 
-      await waiter(
-        'Matter server node started',
-        () => {
-          return (matterbridge as any).configureTimeout !== undefined && (matterbridge as any).reachabilityTimeout !== undefined && matterbridge.serverNode?.lifecycle.isOnline === true;
-        },
-        false,
-        60000,
-        100,
-        true,
-      );
+      await new Promise((resolve) => {
+        matterbridge.once('online', resolve);
+      });
+      await Promise.resolve();
 
       expect(matterbridge).toBeDefined();
       expect(matterbridge.profile).toBe('Jest');
@@ -215,16 +209,10 @@ describe('Matterbridge', () => {
       expect((Matterbridge as any).instance).toBeDefined();
       expect((matterbridge as any).initialized).toBeTruthy();
 
-      await waiter(
-        'Matter server node started',
-        () => {
-          return (matterbridge as any).configureTimeout !== undefined && (matterbridge as any).reachabilityTimeout !== undefined && matterbridge.serverNode?.lifecycle.isOnline === true;
-        },
-        false,
-        60000,
-        100,
-        true,
-      );
+      await new Promise((resolve) => {
+        matterbridge.once('online', resolve);
+      });
+      await Promise.resolve();
 
       expect(matterbridge).toBeDefined();
       expect(matterbridge.profile).toBe('Jest');
@@ -277,16 +265,10 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).hasCleanupStarted).toBe(false);
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Matterbridge profile: Jest'));
 
-      await waiter(
-        'Matter server node started',
-        () => {
-          return (matterbridge as any).configureTimeout !== undefined && (matterbridge as any).reachabilityTimeout !== undefined && matterbridge.serverNode?.lifecycle.isOnline === true;
-        },
-        false,
-        60000,
-        100,
-        true,
-      );
+      await new Promise((resolve) => {
+        matterbridge.once('online', resolve);
+      });
+      await Promise.resolve();
     }, 60000);
 
     test('hasParameter("debug") should return false', async () => {
@@ -573,12 +555,12 @@ describe('Matterbridge', () => {
       expect((matterbridge as any).hasCleanupStarted).toBe(false);
       expect((matterbridge as any).shutdown).toBe(false);
 
-      const shutdownPromise = new Promise((resolve) => {
-        matterbridge.on('shutdown', resolve as () => void);
+      const shutdownPromise = new Promise<void>((resolve) => {
+        matterbridge.on('shutdown', () => resolve());
         const interval = setInterval(() => {
           if (matterbridge.shutdown) {
             clearInterval(interval);
-            resolve(0);
+            resolve();
           }
         }, 100);
       });
