@@ -4,7 +4,7 @@
  * @file matterbridge.ts
  * @author Luca Liguori
  * @date 2023-12-29
- * @version 1.5.3
+ * @version 1.6.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
  *
@@ -78,6 +78,8 @@ interface MatterbridgeEvent {
   update: [];
   initialize_started: [];
   initialize_completed: [];
+  online: [nodeid: string];
+  offline: [nodeid: string];
   cleanup_started: [];
   cleanup_completed: [];
   startmemorycheck: [];
@@ -195,6 +197,7 @@ export class Matterbridge extends EventEmitter {
   private checkUpdateTimeout: NodeJS.Timeout | undefined;
   private configureTimeout: NodeJS.Timeout | undefined;
   private reachabilityTimeout: NodeJS.Timeout | undefined;
+  private endAdvertiseTimeout: NodeJS.Timeout | undefined;
   private sigintHandler: NodeJS.SignalsListener | undefined;
   private sigtermHandler: NodeJS.SignalsListener | undefined;
   private exceptionHandler: NodeJS.UncaughtExceptionListener | undefined;
@@ -1765,6 +1768,7 @@ export class Matterbridge extends EventEmitter {
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
   protected async startController(): Promise<void> {
+    /*
     if (!this.matterStorageManager) {
       this.log.error('No storage manager initialized');
       await this.cleanup('No storage manager initialized');
@@ -1779,7 +1783,6 @@ export class Matterbridge extends EventEmitter {
     }
 
     this.log.debug('Starting matterbridge in mode', this.bridgeMode);
-    /*
     this.matterServer = await this.createMatterServer(this.storageManager);
     this.log.info('Creating matter commissioning controller');
     this.commissioningController = new CommissioningController({
@@ -1977,8 +1980,8 @@ const commissioningController = new CommissioningController({
   /** ***********************************************************************************************************************************/
 
   /**
-   * Starts the matter storage process with name Matterbridge.
-   * @returns {Promise<void>} - A promise that resolves when the storage process is started.
+   * Starts the matter storage with name Matterbridge, create the matterbridge context and performs a backup.
+   * @returns {Promise<void>} - A promise that resolves when the storage is started.
    */
   private async startMatterStorage(): Promise<void> {
     // Setup Matter storage
@@ -2008,8 +2011,12 @@ const commissioningController = new CommissioningController({
    */
   private async backupMatterStorage(storageName: string, backupName: string): Promise<void> {
     this.log.info('Creating matter node storage backup...');
-    await copyDirectory(storageName, backupName);
-    this.log.info('Created matter node storage backup');
+    try {
+      await copyDirectory(storageName, backupName);
+      this.log.info('Created matter node storage backup');
+    } catch (error) {
+      this.log.error(`Error creating matter node storage backup from ${storageName} to ${backupName}:`, error);
+    }
   }
 
   /**
@@ -2172,7 +2179,10 @@ const commissioningController = new CommissioningController({
      * This event is triggered when the device is initially commissioned successfully.
      * This means: It is added to the first fabric.
      */
-    serverNode.lifecycle.commissioned.on(() => this.log.notice(`Server node for ${storeId} was initially commissioned successfully!`));
+    serverNode.lifecycle.commissioned.on(() => {
+      this.log.notice(`Server node for ${storeId} was initially commissioned successfully!`);
+      clearTimeout(this.endAdvertiseTimeout);
+    });
 
     /** This event is triggered when all fabrics are removed from the device, usually it also does a factory reset then. */
     serverNode.lifecycle.decommissioned.on(() => this.log.notice(`Server node for ${storeId} was fully decommissioned successfully!`));
@@ -2217,29 +2227,8 @@ const commissioningController = new CommissioningController({
             }
           }
         }
-        setTimeout(
-          () => {
-            if (serverNode.lifecycle.isCommissioned) return;
-            if (this.bridgeMode === 'bridge') {
-              this.matterbridgeQrPairingCode = undefined;
-              this.matterbridgeManualPairingCode = undefined;
-            }
-            if (this.bridgeMode === 'childbridge') {
-              const plugin = this.plugins.get(storeId);
-              if (plugin) {
-                plugin.qrPairingCode = undefined;
-                plugin.manualPairingCode = undefined;
-              }
-            }
-            this.frontend.wssSendRefreshRequired('plugins');
-            this.frontend.wssSendRefreshRequired('settings');
-            this.frontend.wssSendRefreshRequired('fabrics');
-            this.frontend.wssSendRefreshRequired('sessions');
-            this.frontend.wssSendSnackbarMessage(`Advertising on server node for ${storeId} stopped. Restart to commission.`, 0);
-            this.log.notice(`Advertising on server node for ${storeId} stopped. Restart to commission.`);
-          },
-          15 * 60 * 1000,
-        ).unref();
+        // Set a timeout to show that advertising stops after 15 minutes if not commissioned
+        this.startEndAdvertiseTimer(serverNode);
       } else {
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
         sanitizeFabrics(serverNode.state.commissioning.fabrics, true);
@@ -2247,6 +2236,7 @@ const commissioningController = new CommissioningController({
       this.frontend.wssSendRefreshRequired('plugins');
       this.frontend.wssSendRefreshRequired('settings');
       this.frontend.wssSendSnackbarMessage(`${storeId} is online`, 5, 'success');
+      this.emit('online', storeId);
     });
 
     /** This event is triggered when the device went offline. it is not longer discoverable or connectable in the network. */
@@ -2272,6 +2262,7 @@ const commissioningController = new CommissioningController({
       this.frontend.wssSendRefreshRequired('plugins');
       this.frontend.wssSendRefreshRequired('settings');
       this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
+      this.emit('offline', storeId);
     });
 
     /**
@@ -2346,6 +2337,43 @@ const commissioningController = new CommissioningController({
   }
 
   /**
+   * Starts the 15 minutes timer to advice that advertising for the specified server node is ended.
+   *
+   * @param {ServerNode} [matterServerNode] - The server node to start.
+   * @param {string} storeId - The store ID of the server node.
+   */
+  private startEndAdvertiseTimer(matterServerNode: ServerNode) {
+    if (this.endAdvertiseTimeout) {
+      this.log.debug(`***Clear ${matterServerNode.id} server node end advertise timer`);
+      clearTimeout(this.endAdvertiseTimeout);
+    }
+    this.log.debug(`***Starting ${matterServerNode.id} server node end advertise timer`);
+    this.endAdvertiseTimeout = setTimeout(
+      () => {
+        if (matterServerNode.lifecycle.isCommissioned) return;
+        if (this.bridgeMode === 'bridge') {
+          this.matterbridgeQrPairingCode = undefined;
+          this.matterbridgeManualPairingCode = undefined;
+        }
+        if (this.bridgeMode === 'childbridge') {
+          const plugin = this.plugins.get(matterServerNode.id);
+          if (plugin) {
+            plugin.qrPairingCode = undefined;
+            plugin.manualPairingCode = undefined;
+          }
+        }
+        this.frontend.wssSendRefreshRequired('plugins');
+        this.frontend.wssSendRefreshRequired('settings');
+        this.frontend.wssSendRefreshRequired('fabrics');
+        this.frontend.wssSendRefreshRequired('sessions');
+        this.frontend.wssSendSnackbarMessage(`Advertising on server node for ${matterServerNode.id} stopped. Restart to commission.`, 0);
+        this.log.notice(`Advertising on server node for ${matterServerNode.id} stopped. Restart to commission.`);
+      },
+      15 * 60 * 1000,
+    ).unref();
+  }
+
+  /**
    * Starts the specified server node.
    *
    * @param {ServerNode} [matterServerNode] - The server node to start.
@@ -2361,14 +2389,15 @@ const commissioningController = new CommissioningController({
    * Stops the specified server node.
    *
    * @param {ServerNode} matterServerNode - The server node to stop.
+   * @param {number} [timeout=30000] - The timeout in milliseconds for stopping the server node. Defaults to 30 seconds.
    * @returns {Promise<void>} A promise that resolves when the server node has stopped.
    */
-  private async stopServerNode(matterServerNode: ServerNode): Promise<void> {
+  private async stopServerNode(matterServerNode: ServerNode, timeout = 30000): Promise<void> {
     if (!matterServerNode) return;
     this.log.notice(`Closing ${matterServerNode.id} server node`);
 
     try {
-      await withTimeout(matterServerNode.close(), 30000); // 30 seconds timeout to allow slow devices to close gracefully
+      await withTimeout(matterServerNode.close(), timeout);
       this.log.info(`Closed ${matterServerNode.id} server node`);
     } catch (error) {
       this.log.error(`Failed to close ${matterServerNode.id} server node: ${error instanceof Error ? error.message : error}`);
