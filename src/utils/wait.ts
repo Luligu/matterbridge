@@ -4,7 +4,7 @@
  * @file wait.ts
  * @author Luca Liguori
  * @date 2025-02-16
- * @version 1.0.0
+ * @version 1.0.1
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -50,13 +50,14 @@ export async function waiter(name: string, check: () => boolean, exitWithReject 
       else resolve(false);
     }, resolveTimeout);
 
-    const intervalId = setInterval(() => {
+    const intervalId = setInterval(async () => {
       if (check()) {
         if (debug) log.debug(`Waiter "${name}" finished for true condition...`);
         clearTimeout(timeoutId);
         clearInterval(intervalId);
         resolve(true);
       }
+      await Promise.resolve();
     }, resolveInterval);
   });
 }
