@@ -40,6 +40,8 @@ export class Evse extends MatterbridgeEndpoint {
    *
    * @param {string} name - The name of the EVSE.
    * @param {string} serial - The serial number of the EVSE.
+   * @param {number} [currentMode] - The current mode of the EnergyEvseMode cluster. Defaults to mode 1 (EnergyEvseMode.ModeTag.Manual).
+   * @param {EnergyEvseMode.ModeOption[]} [supportedModes] - The supported modes for the EnergyEvseMode cluster. Defaults to all EnergyEvseMode cluster modes.
    * @param {EnergyEvse.State} [state] - The current state of the EVSE. Defaults to NotPluggedIn.
    * @param {EnergyEvse.SupplyState} [supplyState] - The supply state of the EVSE. Defaults to Disabled.
    * @param {EnergyEvse.FaultState} [faultState] - The fault state of the EVSE. Defaults to NoError.
