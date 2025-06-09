@@ -171,6 +171,26 @@ describe('getMatterbridgeLatestVersion', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error'));
   }, 30000);
 
+  it('should verifyShellyUpdate', async () => {
+    const { verifyShellyUpdate, setVerifyTimeoutSecs } = await import('./shelly.js');
+    const result = await verifyShellyUpdate(matterbridgeMock, '/api/updates/sys/status', 'Shelly system update');
+    expect(result).toBeUndefined();
+
+    updatingInProgress = true;
+    await verifyShellyUpdate(matterbridgeMock, '/api/updates/sys/status', 'Shelly system update');
+
+    setVerifyTimeoutSecs(1);
+    await verifyShellyUpdate(matterbridgeMock, '/api/updates/sys/status', 'Shelly system update');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('timed out'));
+
+    serverFail = true;
+    setVerifyTimeoutSecs(10);
+    setVerifyIntervalSecs(1);
+    await verifyShellyUpdate(matterbridgeMock, '/api/updates/sys/status', 'Shelly system update');
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // wait for the error to be logged
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error'));
+  }, 30000);
+
   it('should getShellyMainUpdate', async () => {
     const { getShellyMainUpdate } = await import('./shelly.js');
     const result = await getShellyMainUpdate(matterbridgeMock);

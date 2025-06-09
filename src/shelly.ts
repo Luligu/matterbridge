@@ -147,7 +147,7 @@ export async function triggerShellyMainUpdate(matterbridge: Matterbridge): Promi
  * @param {string} name - The name of the update.
  * @returns {Promise<void>} A promise that resolves when the operation is complete.
  */
-async function verifyShellyUpdate(matterbridge: Matterbridge, api: string, name: string): Promise<void> {
+export async function verifyShellyUpdate(matterbridge: Matterbridge, api: string, name: string): Promise<void> {
   return new Promise<void>((resolve) => {
     const timeout = setTimeout(() => {
       matterbridge.log.error(`${name} check timed out`);
