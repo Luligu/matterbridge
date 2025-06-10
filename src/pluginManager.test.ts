@@ -15,13 +15,13 @@ jest.unstable_mockModule('node:child_process', async () => {
     ...originalModule,
     exec: jest.fn((command: string, callback?: (error: ExecException | null, stdout: string, stderr: string) => void) => {
       // console.error('exec called with command:', command);
-      (originalModule.exec as typeof originalModule.exec)(command, callback);
+      return (originalModule.exec as typeof originalModule.exec)(command, callback);
     }),
   };
 });
 
 const { exec } = await import('node:child_process');
-import { ChildProcess, ExecException, execSync } from 'node:child_process';
+import { ExecException, execSync } from 'node:child_process';
 import { promises as fs, rmSync } from 'node:fs';
 import path from 'node:path';
 import { AnsiLogger, db, er, LogLevel, nf, nt } from 'node-ansi-logger';
@@ -32,7 +32,6 @@ import { PluginManager } from './pluginManager.js';
 import { waiter } from './utils/export.js';
 import { DeviceManager } from './deviceManager.js';
 import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
-import { log } from 'node:console';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -942,29 +941,6 @@ describe('PluginManager', () => {
     expect(plugin.schemaJson).toBeDefined();
   });
 
-  test('load, start and configure in parallel plugin matterbridge-example-dynamic-platform', async () => {
-    const plugin = plugins.get('matterbridge-example-dynamic-platform');
-    expect(plugin).not.toBeUndefined();
-    if (!plugin) return;
-
-    plugins.load(plugin, true, 'Test with Jest', true);
-    expect(plugin.loaded).toBe(undefined);
-    expect(plugin.started).toBe(undefined);
-    expect(plugin.configured).toBe(undefined);
-    await waiter(
-      'Plugin to start',
-      () => {
-        return plugin.configured === true;
-      },
-      false,
-      60000,
-      1000,
-    );
-    expect(plugin.loaded).toBe(true);
-    expect(plugin.started).toBe(true);
-    expect(plugin.configured).toBe(true);
-  }, 60000);
-
   test('should not start plugin matterbridge-example-accessory-platform if not loaded', async () => {
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
@@ -1071,7 +1047,7 @@ describe('PluginManager', () => {
       },
       false,
       5000,
-      1000,
+      100,
       true,
     );
     expect(plugin.started).toBe(true);
@@ -1206,7 +1182,7 @@ describe('PluginManager', () => {
       },
       false,
       5000,
-      1000,
+      100,
       true,
     );
     expect(plugin.locked).toBe(undefined);
@@ -1218,6 +1194,36 @@ describe('PluginManager', () => {
 
     expect(await plugins.saveToStorage()).toBe(2);
   }, 60000);
+
+  test('load, start and configure in parallel plugin matterbridge-example-dynamic-platform', async () => {
+    const plugin = plugins.get('matterbridge-example-dynamic-platform');
+
+    expect(plugin).not.toBeUndefined();
+    if (!plugin) return;
+    const config: PlatformConfig = await plugins.loadConfig(plugin);
+    config.whiteList = ['No devices'];
+    await plugins.saveConfigFromJson(plugin, config);
+
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+    plugins.load(plugin, true, 'Test with Jest', true);
+    expect(plugin.loaded).toBe(undefined);
+    expect(plugin.started).toBe(undefined);
+    expect(plugin.configured).toBe(undefined);
+    await waiter(
+      'Plugin to start',
+      () => {
+        return plugin.configured === true && plugin.started === true && plugin.loaded === true;
+      },
+      true,
+      30000,
+      100,
+      true,
+    );
+    expect(plugin.loaded).toBe(true);
+    expect(plugin.started).toBe(true);
+    expect(plugin.configured).toBe(true);
+  }, 30000);
 
   test('shutdown plugin matterbridge-example-dynamic-platform', async () => {
     let plugin = plugins.get('matterbridge-example-dynamic-platform');

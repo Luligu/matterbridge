@@ -322,7 +322,7 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Call cleanup().
+   * Call cleanup() and dispose MdnsService.
    *
    * @deprecated This method is deprecated and is ONLY used for jest tests.
    */
@@ -338,6 +338,8 @@ export class Matterbridge extends EventEmitter {
         if (plugin.serverNode) servers.push(plugin.serverNode);
       }
     }
+    // Let any already‐queued microtasks run first
+    await Promise.resolve();
     // Cleanup
     await this.cleanup('destroying instance...', false);
     // Close servers mdns service
@@ -346,6 +348,8 @@ export class Matterbridge extends EventEmitter {
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       this.log.info(`Closed ${server.id} MdnsService`);
     }
+    // Let any already‐queued microtasks run first
+    await Promise.resolve();
     // Wait for the cleanup to finish
     await new Promise((resolve) => {
       setTimeout(resolve, 500);
@@ -987,7 +991,7 @@ export class Matterbridge extends EventEmitter {
   /**
    * Asynchronously loads and starts the registered plugins.
    *
-   * This method is responsible for initializing and staarting all enabled plugins.
+   * This method is responsible for initializing and starting all enabled plugins.
    * It ensures that each plugin is properly loaded and started before the bridge starts.
    *
    * @returns {Promise<void>} A promise that resolves when all plugins have been loaded and started.
