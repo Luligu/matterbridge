@@ -2101,7 +2101,6 @@ export class MatterbridgeEndpoint extends Endpoint {
     return this;
   }
 
-
   /**
    * Creates a default EnergyManagementMode Cluster Server.
    *
