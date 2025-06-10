@@ -5,7 +5,7 @@
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @date 2025-05-27
- * @version 1.0.1
+ * @version 1.0.2
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -80,7 +80,7 @@ export class Evse extends MatterbridgeEndpoint {
   createDefaultEnergyEvseClusterServer(state?: EnergyEvse.State, supplyState?: EnergyEvse.SupplyState, faultState?: EnergyEvse.FaultState): this {
     this.behaviors.require(MatterbridgeEnergyEvseServer, {
       state: state ?? EnergyEvse.State.NotPluggedIn,
-      supplyState: supplyState ?? EnergyEvse.SupplyState.Disabled,
+      supplyState: supplyState ?? EnergyEvse.SupplyState.ChargingEnabled,
       faultState: faultState ?? EnergyEvse.FaultState.NoError,
       chargingEnabledUntil: 0, // Persistent attribute
       circuitCapacity: 0, // Persistent attribute in mA
