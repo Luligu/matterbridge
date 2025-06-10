@@ -2072,18 +2072,31 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default Device Energy Management Cluster Server with feature PowerForecastReporting. Only needed for an evse device type.
+   * Creates a default Device Energy Management Cluster Server with feature PowerForecastReporting and with the specified ESA type, ESA canGenerate, ESA state, and power limits.
    *
+   * @param {DeviceEnergyManagement.EsaType} [esaType=DeviceEnergyManagement.EsaType.Other] - The ESA type. Defaults to `DeviceEnergyManagement.EsaType.Other`.
+   * @param {boolean} [esaCanGenerate=false] - Indicates if the ESA can generate energy. Defaults to `false`.
+   * @param {DeviceEnergyManagement.EsaState} [esaState=DeviceEnergyManagement.EsaState.Online] - The ESA state. Defaults to `DeviceEnergyManagement.EsaState.Online`.
+   * @param {number} [absMinPower=0] - The absolute minimum power in mW. Defaults to `0`.
+   * @param {number} [absMaxPower=0] - The absolute maximum power in mW. Defaults to `0`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The forecast attribute is set to null, indicating that there is no forecast currently available.
+   * The ESA type and canGenerate attributes are fixed and cannot be changed after creation.
+   * The ESA state is set to Online by default.
+   * The absolute minimum and maximum power attributes are set to 0 by default.
+   * For example, a battery storage inverter that can charge its battery at a maximum power of 2000W and can
+   * discharge the battery at a maximum power of 3000W, would have a absMinPower: -3000W, absMaxPower: 2000W.
    */
-  createDefaultDeviceEnergyManagementCluster() {
+  createDefaultDeviceEnergyManagementCluster(esaType: DeviceEnergyManagement.EsaType = DeviceEnergyManagement.EsaType.Other, esaCanGenerate = false, esaState = DeviceEnergyManagement.EsaState.Online, absMinPower = 0, absMaxPower = 0) {
     this.behaviors.require(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting), {
       forecast: null, // A null value indicates that there is no forecast currently available
-      esaType: DeviceEnergyManagement.EsaType.Other,
-      esaCanGenerate: false,
-      esaState: DeviceEnergyManagement.EsaState.Offline,
-      absMinPower: 0,
-      absMaxPower: 0,
+      esaType, // Fixed attribute
+      esaCanGenerate, // Fixed attribute
+      esaState,
+      absMinPower,
+      absMaxPower,
     });
     return this;
   }
@@ -2091,17 +2104,17 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default EnergyManagementMode Cluster Server.
    *
+   * @param {number} [currentMode] - The current mode of the EnergyManagementMode cluster. Defaults to mode 1 (DeviceEnergyManagementMode.ModeTag.NoOptimization).
+   * @param {EnergyManagementMode.ModeOption[]} [supportedModes] - The supported modes for the DeviceEnergyManagementMode cluster. The attribute is fixed and defaults to a predefined set of cluster modes.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
    * A few examples of Device Energy Management modes and their mode tags are provided below.
    *  - For the "No Energy Management (Forecast reporting only)" mode, tags: 0x4000 (NoOptimization).
    *  - For the "Device Energy Management" mode, tags: 0x4001 (DeviceOptimization).
    *  - For the "Home Energy Management" mode, tags: 0x4001 (DeviceOptimization), 0x4002 (LocalOptimization).
    *  - For the "Grid Energy Management" mode, tags: 0x4003 (GridOptimization).
    *  - For the "Full Energy Management" mode, tags: 0x4001 (DeviceOptimization), 0x4002 (LocalOptimization), 0x4003 (GridOptimization).
-   *
-   * @param {number} [currentMode] - The current mode of the EnergyManagementMode cluster. Defaults to mode 1 (DeviceEnergyManagementMode.ModeTag.NoOptimization).
-   * @param {EnergyManagementMode.ModeOption[]} [supportedModes] - The supported modes for the DeviceEnergyManagementMode cluster. Defaults all cluster modes.
-   *
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultDeviceEnergyManagementModeCluster(currentMode?: number, supportedModes?: DeviceEnergyManagementMode.ModeOption[]): this {
     this.behaviors.require(MatterbridgeDeviceEnergyManagementModeServer, {
@@ -2123,7 +2136,7 @@ export class MatterbridgeEndpoint extends Endpoint {
           mode: 5,
           modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.DeviceOptimization }, { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }, { value: DeviceEnergyManagementMode.ModeTag.GridOptimization }],
         },
-      ],
+      ], // Fixed attribute
       currentMode: currentMode ?? 1,
     });
     return this;

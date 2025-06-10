@@ -49,7 +49,17 @@
       "label": "Test: Matterbridge",
       "type": "shell",
       "command": "node",
-      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--coverage", "--maxWorkers=100%", "matterbridge.test.ts", "matterbridge.matterjs.test.ts", "matterbridge.bridge.test.ts", "matterbridge.childbridge.test.ts"],
+      "args": [
+        "--no-warnings",
+        "--experimental-vm-modules",
+        "node_modules/jest/bin/jest.js",
+        "--coverage",
+        "--maxWorkers=100%",
+        "matterbridge.test.ts",
+        "matterbridge.matterjs.test.ts",
+        "matterbridge.bridge.test.ts",
+        "matterbridge.childbridge.test.ts"
+      ],
       "group": {
         "kind": "test",
         "isDefault": false

@@ -226,7 +226,7 @@ describe('Matterbridge EVSE', () => {
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'energyEvseMode', 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeEnergyEvseModeServer changeToMode called with newMode 1 => Manual`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeEnergyEvseModeServer changeToMode called with newMode 1 => On demand`);
   });
 
   test('close server node', async () => {
