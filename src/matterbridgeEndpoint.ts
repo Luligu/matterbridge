@@ -2072,26 +2072,35 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default Device Energy Management Cluster Server with feature PowerForecastReporting. Only needed for an evse device type.
+   * Creates a default Device Energy Management Cluster Server with feature PowerForecastReporting and with the specified ESA type, ESA canGenerate, ESA state, and power limits.
    *
-   * @param {esaType} [esaType] - Indicate the type of Energy Smart Appliance (ESA). Defaults to Other.
-   * @param {boolean} [esaCanGenerate] - indicate whether the ESA is classed as a generator or load. Defaults to false.
-   * @param {esaState} [esaState] - Indicate the state of Energy Smart Appliance (ESA). Defaults to Offline.
-   * @param {number} [absMinPower=0] - Indicate the minimum electrical power that the ESA can consume when switched on. Defaults to `0` if not provided.
-   * @param {number} [absMaxPower=0] - Indicate the maximum electrical power that the ESA can consume when switched on. Defaults to `0` if not provided.
+   * @param {DeviceEnergyManagement.EsaType} [esaType=DeviceEnergyManagement.EsaType.Other] - The ESA type. Defaults to `DeviceEnergyManagement.EsaType.Other`.
+   * @param {boolean} [esaCanGenerate=false] - Indicates if the ESA can generate energy. Defaults to `false`.
+   * @param {DeviceEnergyManagement.EsaState} [esaState=DeviceEnergyManagement.EsaState.Online] - The ESA state. Defaults to `DeviceEnergyManagement.EsaState.Online`.
+   * @param {number} [absMinPower=0] - The absolute minimum power in mW. Defaults to `0`.
+   * @param {number} [absMaxPower=0] - The absolute maximum power in mW. Defaults to `0`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The forecast attribute is set to null, indicating that there is no forecast currently available.
+   * The ESA type and canGenerate attributes are fixed and cannot be changed after creation.
+   * The ESA state is set to Online by default.
+   * The absolute minimum and maximum power attributes are set to 0 by default.
+   * For example, a battery storage inverter that can charge its battery at a maximum power of 2000W and can
+   * discharge the battery at a maximum power of 3000W, would have a absMinPower: -3000W, absMaxPower: 2000W.
    */
-  createDefaultDeviceEnergyManagementCluster(esaType = DeviceEnergyManagement.EsaType.Evse, esaCanGenerate = false, esaState = DeviceEnergyManagement.EsaState.Offline, absMinPower = 0, absMaxPower = 0) {
+  createDefaultDeviceEnergyManagementCluster(esaType: DeviceEnergyManagement.EsaType = DeviceEnergyManagement.EsaType.Other, esaCanGenerate = false, esaState = DeviceEnergyManagement.EsaState.Online, absMinPower = 0, absMaxPower = 0) {
     this.behaviors.require(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting), {
       forecast: null, // A null value indicates that there is no forecast currently available
-      esaType,
-      esaCanGenerate,
+      esaType, // Fixed attribute
+      esaCanGenerate, // Fixed attribute
       esaState,
       absMinPower,
       absMaxPower,
     });
     return this;
   }
+
 
   /**
    * Creates a default EnergyManagementMode Cluster Server.
