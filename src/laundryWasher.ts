@@ -189,6 +189,7 @@ export class MatterbridgeLevelTemperatureControlServer extends TemperatureContro
   override setTemperature(request: TemperatureControl.SetTemperatureRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('setTemperature', { request, attributes: this.state, endpoint: this.endpoint });
     if (request.targetTemperatureLevel !== undefined && request.targetTemperatureLevel >= 0 && request.targetTemperatureLevel < this.state.supportedTemperatureLevels.length) {
       device.log.debug(`MatterbridgeLevelTemperatureControlServer: setTemperature called setting selectedTemperatureLevel to ${request.targetTemperatureLevel}: ${this.state.supportedTemperatureLevels[request.targetTemperatureLevel]}`);
       this.state.selectedTemperatureLevel = request.targetTemperatureLevel;
@@ -207,6 +208,7 @@ export class MatterbridgeNumberTemperatureControlServer extends TemperatureContr
   override setTemperature(request: TemperatureControl.SetTemperatureRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('setTemperature', { request, attributes: this.state, endpoint: this.endpoint });
     if (request.targetTemperature !== undefined && request.targetTemperature >= this.state.minTemperature && request.targetTemperature <= this.state.maxTemperature) {
       device.log.debug(`MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to ${request.targetTemperature}`);
       this.state.temperatureSetpoint = request.targetTemperature;
@@ -236,6 +238,7 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
   override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`ChangeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('changeToMode', { request, attributes: this.state, endpoint: this.endpoint });
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);
     if (supportedMode) {
       device.commandHandler.executeHandler('changeToMode', { request, attributes: this.state, endpoint: this.endpoint });
