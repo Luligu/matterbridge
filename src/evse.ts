@@ -5,7 +5,7 @@
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @date 2025-05-27
- * @version 1.0.2
+ * @version 1.1.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
