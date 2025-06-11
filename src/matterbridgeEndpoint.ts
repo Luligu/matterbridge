@@ -147,6 +147,10 @@ import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/ac
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/main/behaviors/thermostat-user-interface-configuration';
 import { DeviceEnergyManagementServer } from '@matter/main/behaviors/device-energy-management';
 
+export type PrimitiveTypes = boolean | number | bigint | string | object | undefined | null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type CommandHandlerFunction = (data: { request: Record<string, any>; attributes: Record<string, PrimitiveTypes>; endpoint: MatterbridgeEndpoint }) => void | Promise<void>;
+
 export interface MatterbridgeEndpointCommands {
   // Identify
   identify: HandlerFunction;
@@ -258,7 +262,7 @@ export interface SerializedMatterbridgeEndpoint {
 }
 
 export class MatterbridgeEndpoint extends Endpoint {
-  static bridgeMode = '';
+  static bridgeMode: 'bridge' | 'childbridge' | 'server' | '' = '';
   static logLevel = LogLevel.INFO;
 
   log: AnsiLogger;
@@ -278,17 +282,18 @@ export class MatterbridgeEndpoint extends Endpoint {
   hardwareVersionString: string | undefined = undefined;
   productUrl = 'https://www.npmjs.com/package/matterbridge';
 
-  // The first device type of the endpoint
+  /** The name of the first device type of the endpoint (old api compatibility) */
   name: string | undefined = undefined;
+  /** The code of the first device type of the endpoint (old api compatibility) */
   deviceType: number;
-
+  /** The id of the endpoint (old api compatibility) */
   uniqueStorageKey: string | undefined = undefined;
   tagList?: Semtag[] = undefined;
 
-  // Maps matter deviceTypes
+  /** Maps the DeviceTypeDefinitions with their code */
   readonly deviceTypes = new Map<number, DeviceTypeDefinition>();
 
-  // Command handler
+  /** Command handler for the MatterbridgeEndpoint commands */
   readonly commandHandler = new NamedHandler<MatterbridgeEndpointCommands>();
 
   /**
@@ -540,10 +545,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Adds a command handler for the specified command.
    *
    * @param {keyof MatterbridgeEndpointCommands} command - The command to add the handler for.
-   * @param {HandlerFunction} handler - The handler function to execute when the command is received.
+   * @param {CommandHandlerFunction} handler - The handler function to execute when the command is received.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  addCommandHandler(command: keyof MatterbridgeEndpointCommands, handler: HandlerFunction): this {
+  addCommandHandler(command: keyof MatterbridgeEndpointCommands, handler: CommandHandlerFunction): this {
     this.commandHandler.addHandler(command, handler);
     return this;
   }

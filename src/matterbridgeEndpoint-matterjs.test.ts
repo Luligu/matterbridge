@@ -662,8 +662,8 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect((light.stateOf(IdentifyServer) as any).generatedCommandList).toEqual([]);
     await invokeBehaviorCommand(light, 'identify', 'identify', { identifyTime: 5 });
     await invokeBehaviorCommand(light, 'identify', 'triggerEffect', { effectIdentifier: Identify.EffectIdentifier.Okay, effectVariant: Identify.EffectVariant.Default });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Identifying device for 5 seconds`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Triggering effect ${Identify.EffectIdentifier.Okay} variant ${Identify.EffectVariant.Default}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Identifying device for 5 seconds (endpoint ${light.id}.${light.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Triggering effect ${Identify.EffectIdentifier.Okay} variant ${Identify.EffectVariant.Default} (endpoint ${light.id}.${light.number})`);
   });
 
   test('invoke MatterbridgeOnOffServer commands', async () => {
@@ -902,18 +902,18 @@ describe('Matterbridge ' + HOMEDIR, () => {
     jest.clearAllMocks();
     await invokeBehaviorCommand(rvc, 'rvcRunMode', 'changeToMode', { newMode: 1 }); // 1 has Idle
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcRunModeServer changeToMode called with newMode Idle => Docked`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcRunModeServer changeToMode called with newMode Idle => Docked`);
     await invokeBehaviorCommand(rvc, 'rvcRunMode', 'changeToMode', { newMode: 2 }); // 2 has Cleaning
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 2 (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcRunModeServer changeToMode called with newMode Cleaning => Running`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcRunModeServer changeToMode called with newMode Cleaning => Running`);
     jest.clearAllMocks();
     await invokeBehaviorCommand(rvc, 'rvcRunMode', 'changeToMode', { newMode: 3 }); // 3 has Mapping
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 3 (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcRunModeServer changeToMode called with newMode 3 => Mapping`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcRunModeServer changeToMode called with newMode 3 => Mapping`);
     jest.clearAllMocks();
     await invokeBehaviorCommand(rvc, 'rvcRunMode', 'changeToMode', { newMode: 4 }); // 4 has Cleaning and Max
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 4 (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcRunModeServer changeToMode called with newMode Cleaning => Running`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcRunModeServer changeToMode called with newMode Cleaning => Running`);
   });
 
   test('invoke MatterbridgeRvcCleanModeServer commands', async () => {
@@ -931,7 +931,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
     jest.clearAllMocks();
     await invokeBehaviorCommand(rvc, 'rvcCleanMode', 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcCleanModeServer changeToMode called with newMode 1 => Vacuum`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcCleanModeServer changeToMode called with newMode 1 => Vacuum`);
   });
 
   test('invoke MatterbridgeRvcOperationalStateServer commands', async () => {
@@ -945,15 +945,15 @@ describe('Matterbridge ' + HOMEDIR, () => {
     jest.clearAllMocks();
     await invokeBehaviorCommand(rvc, 'rvcOperationalState', 'pause');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Pause (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused and currentMode to Idle`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused and currentMode to Idle`);
     jest.clearAllMocks();
     await invokeBehaviorCommand(rvc, 'rvcOperationalState', 'resume');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resume (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning`);
     jest.clearAllMocks();
     await invokeBehaviorCommand(rvc, 'rvcOperationalState', 'goHome');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `GoHome (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcOperationalStateServer: goHome called setting operational state to Docked and currentMode to Idle`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcOperationalStateServer: goHome called setting operational state to Docked and currentMode to Idle`);
   });
 
   test('invoke MatterbridgeServiceAreaServer commands', async () => {
@@ -965,7 +965,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
     jest.clearAllMocks();
     await invokeBehaviorCommand(rvc, 'serviceArea', 'selectAreas', { newAreas: [1, 2, 3, 4] });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Selecting areas 1,2,3,4 (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeServiceAreaServer selectAreas called with: 1, 2, 3, 4`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer selectAreas called with: 1, 2, 3, 4`);
     jest.clearAllMocks();
     await invokeBehaviorCommand(rvc, 'serviceArea', 'selectAreas', { newAreas: [0, 5] });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeServiceAreaServer selectAreas called with unsupported area: 0`);
@@ -1008,7 +1008,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
     jest.clearAllMocks();
     await invokeBehaviorCommand(evse, 'deviceEnergyManagementMode', 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${evse.id}.${evse.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode 1 => No Energy Management (Forecast reporting only)`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode 1 => No Energy Management (Forecast reporting only)`);
   });
 
   test('invoke MatterbridgeEnergyEvseServer commands', async () => {
@@ -1024,10 +1024,10 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect((evse.stateOf(MatterbridgeEnergyEvseServer) as any).generatedCommandList).toEqual([]);
     jest.clearAllMocks();
     await invokeBehaviorCommand(evse, 'energyEvse', 'disable');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeEnergyEvseServer disable called`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer disable called`);
     jest.clearAllMocks();
     await invokeBehaviorCommand(evse, 'energyEvse', 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6000, maximumChargeCurrent: 0 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeEnergyEvseServer enableCharging called`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer enableCharging called`);
   });
 
   test('close server node', async () => {

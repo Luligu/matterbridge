@@ -330,11 +330,11 @@ export class MatterbridgePlatform {
   /**
    * Clears the select for a single device.
    *
-   * @param {string} device - The serial of the device to clear.
+   * @param {string} serial - The serial of the device to clear.
    * @returns {void}
    */
-  async clearDeviceSelect(device: string): Promise<void> {
-    this.selectDevice.delete(device);
+  async clearDeviceSelect(serial: string): Promise<void> {
+    this.selectDevice.delete(serial);
     await this.saveSelects();
   }
 
