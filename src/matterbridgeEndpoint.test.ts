@@ -70,7 +70,7 @@ import {
   temperatureSensor,
   thermostatDevice,
 } from './matterbridgeDeviceTypes.js';
-import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
+import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId, invokeSubscribeHandler } from './matterbridgeEndpointHelpers.js';
 
 const MATTER_PORT = 6003;
 const HOMEDIR = 'Endpoint';
@@ -623,13 +623,19 @@ describe('Matterbridge ' + HOMEDIR, () => {
       expect(newState).toBe(true);
       expect(oldState).toBe(false);
       expect(offlineState).toBe(true);
-      console.log('subscribeAttribute without await: state', newState);
+      // console.log('subscribeAttribute without await: state', newState);
       expect(device.getAttribute(BooleanStateBehavior, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanStateServer, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanState.Cluster, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute('BooleanState', 'stateValue', device.log)).toBe(true);
-      console.log('subscribeAttribute without await: state', newState);
+      // console.log('subscribeAttribute without await: state', newState);
+
+      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      expect(await invokeSubscribeHandler(device, 'booleanState', 'stateValue', false, true)).toBe(true);
+      expect(newState).toBe(false);
+      expect(oldState).toBe(true);
+      expect(offlineState).toBe(false);
     });
 
     test('subscribeAttribute with await', async () => {
@@ -679,6 +685,12 @@ describe('Matterbridge ' + HOMEDIR, () => {
       expect(device.getAttribute(BooleanState.Cluster, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute('BooleanState', 'stateValue', device.log)).toBe(true);
+
+      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      expect(await invokeSubscribeHandler(device, 'booleanState', 'stateValue', false, true)).toBe(true);
+      expect(newState).toBe(false);
+      expect(oldState).toBe(true);
+      expect(offlineState).toBe(false);
     });
 
     test('addCommandHandler', async () => {

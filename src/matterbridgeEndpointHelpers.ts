@@ -1,4 +1,25 @@
-// src\matterbridgeEndpointHelpers.ts
+/**
+ * This file contains the helpers for the class MatterbridgeEndpoint.
+ *
+ * @file matterbridgeEndpointHelpers.ts
+ * @author Luca Liguori
+ * @date 2024-10-01
+ * @version 2.1.0
+ *
+ * Copyright 2024, 2025, 2026 Luca Liguori.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License. *
+ */
 
 // @matter
 import { ActionContext, Behavior, ClusterBehavior, ClusterId, Endpoint, Lifecycle } from '@matter/main';
@@ -253,6 +274,42 @@ export async function invokeBehaviorCommand(
     }
     behavior[command](params);
   });
+  return true;
+}
+
+/**
+ * Invokes the subscription handler on the specified cluster and attribute of the endpoint. Used ONLY in Jest tests.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to invoke the subscription handler on.
+ * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the subscription handler on.
+ * @param {string} attribute - The attribute to invoke the subscription handler on.
+ * @param {unknown} newValue - The new value of the attribute.
+ * @param {unknown} oldValue - The old value of the attribute.
+ *
+ * @deprecated Used ONLY in Jest tests.
+ */
+export async function invokeSubscribeHandler(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, newValue: unknown, oldValue: unknown): Promise<boolean> {
+  const event = attribute + '$Changed';
+  const clusterName = getBehavior(endpoint, cluster)?.id;
+  if (!clusterName) {
+    endpoint.log.error(`invokeSubscribeHandler ${hk}${event}${er} error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+    return false;
+  }
+
+  if (endpoint.construction.status !== Lifecycle.Status.Active) {
+    endpoint.log.error(`invokeSubscribeHandler ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+    return false;
+  }
+
+  const events = endpoint.events as Record<string, Record<string, unknown>>;
+  if (!(clusterName in events) || !(event in events[clusterName])) {
+    endpoint.log.error(`invokeSubscribeHandler ${hk}${event}${er} error: cluster ${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+    return false;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  await endpoint.act((agent) => agent[clusterName].events[event].emit(newValue, oldValue, { ...agent.context, offline: false }));
   return true;
 }
 
