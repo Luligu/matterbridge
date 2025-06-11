@@ -107,7 +107,7 @@ export class Evse extends MatterbridgeEndpoint {
         { label: 'On demand', mode: 1, modeTags: [{ value: EnergyEvseMode.ModeTag.Manual }] },
         { label: 'Scheduled', mode: 2, modeTags: [{ value: EnergyEvseMode.ModeTag.TimeOfUse }] },
         { label: 'Solar charging', mode: 3, modeTags: [{ value: EnergyEvseMode.ModeTag.SolarCharging }] },
-        // { label: 'Home to vehicle and Vehicle to home', mode: 4, modeTags: [{ value: EnergyEvseMode.ModeTag.V2X }] },
+        // { label: 'Home to vehicle and Vehicle to home', mode: 4, modeTags: [{ value: EnergyEvseMode.ModeTag.V2X }] }, // This mode is not valid in charging only EVSEs
       ], // FixedAttribute
       currentMode: currentMode ?? 1, // Persistent attribute
     });
@@ -118,8 +118,9 @@ export class Evse extends MatterbridgeEndpoint {
 export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
   override disable(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    device.disable();
-    device.log.info(`MatterbridgeEnergyEvseServer disable called`);
+    device.log.info(`Disable charging (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('disable', { request: {}, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgeEnergyEvseServer disable called`);
     this.state.supplyState = EnergyEvse.SupplyState.Disabled;
     if (this.state.state === EnergyEvse.State.PluggedInCharging) {
       this.state.state = EnergyEvse.State.PluggedInDemand;
@@ -128,17 +129,18 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
     // super.disable();
     // disable is not implemented in matter.js
   }
-  override enableCharging({ chargingEnabledUntil, minimumChargeCurrent, maximumChargeCurrent }: EnergyEvse.EnableChargingRequest): MaybePromise {
+  override enableCharging(request: EnergyEvse.EnableChargingRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    device.enableCharging();
-    device.log.info(`MatterbridgeEnergyEvseServer enableCharging called`);
+    device.log.info(`EnableCharging (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('enableCharging', { request, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgeEnergyEvseServer enableCharging called`);
     this.state.supplyState = EnergyEvse.SupplyState.ChargingEnabled;
     if (this.state.state === EnergyEvse.State.PluggedInDemand) {
       this.state.state = EnergyEvse.State.PluggedInCharging;
     }
-    this.state.chargingEnabledUntil = chargingEnabledUntil;
-    this.state.minimumChargeCurrent = minimumChargeCurrent;
-    this.state.maximumChargeCurrent = maximumChargeCurrent;
+    this.state.chargingEnabledUntil = request.chargingEnabledUntil;
+    this.state.minimumChargeCurrent = request.minimumChargeCurrent;
+    this.state.maximumChargeCurrent = request.maximumChargeCurrent;
     // The implementation should also stop the charging session at the required time and update the sessionId, sessionDuration, and sessionEnergyCharged attributes if needed.
     // super.enableCharging();
     // enableCharging is not implemented in matter.js
@@ -146,16 +148,17 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
 }
 
 export class MatterbridgeEnergyEvseModeServer extends EnergyEvseModeServer {
-  override changeToMode({ newMode }: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+  override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    const supported = this.state.supportedModes.find((mode) => mode.mode === newMode);
+    device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
     if (!supported) {
-      device.log.error(`MatterbridgeEnergyEvseModeServer changeToMode called with unsupported newMode: ${newMode}`);
+      device.log.error(`MatterbridgeEnergyEvseModeServer changeToMode called with unsupported newMode: ${request.newMode}`);
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
     }
-    device.changeToMode({ newMode });
-    this.state.currentMode = newMode;
-    device.log.info(`MatterbridgeEnergyEvseModeServer changeToMode called with newMode ${newMode} => ${supported.label}`);
+    device.commandHandler.executeHandler('changeToMode', { request, attributes: this.state, endpoint: this.endpoint });
+    this.state.currentMode = request.newMode;
+    device.log.debug(`MatterbridgeEnergyEvseModeServer changeToMode called with newMode ${request.newMode} => ${supported.label}`);
     return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }
