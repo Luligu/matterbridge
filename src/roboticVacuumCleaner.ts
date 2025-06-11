@@ -4,7 +4,7 @@
  * @file roboticVacuumCleaner.ts
  * @author Luca Liguori
  * @date 2025-05-01
- * @version 1.0.1
+ * @version 1.1.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -198,41 +198,43 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
 }
 
 export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
-  override changeToMode({ newMode }: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+  override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    const supported = this.state.supportedModes.find((mode) => mode.mode === newMode);
+    const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
     if (!supported) {
-      device.log.error(`MatterbridgeRvcRunModeServer changeToMode called with unsupported newMode: ${newMode}`);
+      device.log.error(`MatterbridgeRvcRunModeServer changeToMode called with unsupported newMode: ${request.newMode}`);
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
     }
-    device.changeToMode({ newMode });
-    this.state.currentMode = newMode;
+    device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('changeToMode', { request, attributes: this.state, endpoint: this.endpoint });
+    this.state.currentMode = request.newMode;
     if (supported.modeTags.find((tag) => tag.value === RvcRunMode.ModeTag.Cleaning)) {
-      device.log.info('MatterbridgeRvcRunModeServer changeToMode called with newMode Cleaning => Running');
+      device.log.debug('MatterbridgeRvcRunModeServer changeToMode called with newMode Cleaning => Running');
       this.agent.get(MatterbridgeRvcOperationalStateServer).state.operationalState = RvcOperationalState.OperationalState.Running;
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Running' };
     } else if (supported.modeTags.find((tag) => tag.value === RvcRunMode.ModeTag.Idle)) {
-      device.log.info('MatterbridgeRvcRunModeServer changeToMode called with newMode Idle => Docked');
+      device.log.debug('MatterbridgeRvcRunModeServer changeToMode called with newMode Idle => Docked');
       this.agent.get(MatterbridgeRvcOperationalStateServer).state.operationalState = RvcOperationalState.OperationalState.Docked;
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Docked' };
     }
-    device.log.info(`MatterbridgeRvcRunModeServer changeToMode called with newMode ${newMode} => ${supported.label}`);
+    device.log.debug(`MatterbridgeRvcRunModeServer changeToMode called with newMode ${request.newMode} => ${supported.label}`);
     this.agent.get(MatterbridgeRvcOperationalStateServer).state.operationalState = RvcOperationalState.OperationalState.Running;
     return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }
 
 export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
-  override changeToMode({ newMode }: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+  override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    const supported = this.state.supportedModes.find((mode) => mode.mode === newMode);
+    const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
     if (!supported) {
-      device.log.error(`MatterbridgeRvcCleanModeServer changeToMode called with unsupported newMode: ${newMode}`);
+      device.log.error(`MatterbridgeRvcCleanModeServer changeToMode called with unsupported newMode: ${request.newMode}`);
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
     }
-    device.changeToMode({ newMode });
-    this.state.currentMode = newMode;
-    device.log.info(`MatterbridgeRvcCleanModeServer changeToMode called with newMode ${newMode} => ${supported.label}`);
+    device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('changeToMode', { request, attributes: this.state, endpoint: this.endpoint });
+    this.state.currentMode = request.newMode;
+    device.log.debug(`MatterbridgeRvcCleanModeServer changeToMode called with newMode ${request.newMode} => ${supported.label}`);
     return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }
@@ -240,8 +242,9 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
 export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateServer {
   override pause(): MaybePromise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    device.log.info('MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused and currentMode to Idle');
-    device.pause();
+    device.log.info(`Pause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('pause', { request: {}, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug('MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused and currentMode to Idle');
     this.agent.get(MatterbridgeRvcRunModeServer).state.currentMode = 1; // RvcRunMode.ModeTag.Idle
     this.state.operationalState = RvcOperationalState.OperationalState.Paused;
     this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error', errorStateDetails: 'Fully operational' };
@@ -252,8 +255,9 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
 
   override resume(): MaybePromise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    device.log.info('MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning');
-    device.resume();
+    device.log.info(`Resume (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('resume', { request: {}, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug('MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning');
     this.agent.get(MatterbridgeRvcRunModeServer).state.currentMode = 2; // RvcRunMode.ModeTag.Cleaning
     this.state.operationalState = RvcOperationalState.OperationalState.Running;
     this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error', errorStateDetails: 'Fully operational' };
@@ -265,8 +269,9 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
   override goHome(): MaybePromise<OperationalState.OperationalCommandResponse> {
     // const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    device.log.info('MatterbridgeRvcOperationalStateServer: goHome called setting operational state to Docked and currentMode to Idle');
-    device.goHome();
+    device.log.info(`GoHome (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('goHome', { request: {}, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug('MatterbridgeRvcOperationalStateServer: goHome called setting operational state to Docked and currentMode to Idle');
     this.agent.get(MatterbridgeRvcRunModeServer).state.currentMode = 1; // RvcRunMode.ModeTag.Idle
     this.state.operationalState = RvcOperationalState.OperationalState.Docked;
     this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateLabel: 'No Error', errorStateDetails: 'Fully operational' };
