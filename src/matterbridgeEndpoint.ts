@@ -4,7 +4,7 @@
  * @file matterbridgeEndpoint.ts
  * @author Luca Liguori
  * @date 2024-10-01
- * @version 2.0.0
+ * @version 2.1.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
