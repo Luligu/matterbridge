@@ -4,7 +4,7 @@
  * @file laundryWasher.ts
  * @author Luca Liguori
  * @date 2025-05-25
- * @version 1.0.0
+ * @version 1.1.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -188,8 +188,9 @@ export class MatterbridgeLevelTemperatureControlServer extends TemperatureContro
 
   override setTemperature(request: TemperatureControl.SetTemperatureRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.log.info(`SetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     if (request.targetTemperatureLevel !== undefined && request.targetTemperatureLevel >= 0 && request.targetTemperatureLevel < this.state.supportedTemperatureLevels.length) {
-      device.log.info(`MatterbridgeLevelTemperatureControlServer: setTemperature called setting selectedTemperatureLevel to ${request.targetTemperatureLevel}: ${this.state.supportedTemperatureLevels[request.targetTemperatureLevel]}`);
+      device.log.debug(`MatterbridgeLevelTemperatureControlServer: setTemperature called setting selectedTemperatureLevel to ${request.targetTemperatureLevel}: ${this.state.supportedTemperatureLevels[request.targetTemperatureLevel]}`);
       this.state.selectedTemperatureLevel = request.targetTemperatureLevel;
     } else {
       device.log.error(`MatterbridgeLevelTemperatureControlServer: setTemperature called with invalid targetTemperatureLevel ${request.targetTemperatureLevel}`);
@@ -205,8 +206,9 @@ export class MatterbridgeNumberTemperatureControlServer extends TemperatureContr
 
   override setTemperature(request: TemperatureControl.SetTemperatureRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.log.info(`SetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     if (request.targetTemperature !== undefined && request.targetTemperature >= this.state.minTemperature && request.targetTemperature <= this.state.maxTemperature) {
-      device.log.info(`MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to ${request.targetTemperature}`);
+      device.log.debug(`MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to ${request.targetTemperature}`);
       this.state.temperatureSetpoint = request.targetTemperature;
     } else {
       device.log.error(`MatterbridgeNumberTemperatureControlServer: setTemperature called with invalid targetTemperature ${request.targetTemperature}`);
@@ -224,6 +226,7 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
   // Dead Front OnOff Cluster
   protected handleOnOffChange(onOff: boolean) {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.log.info(`HandleOnOffChange (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     if (onOff === false) {
       device.log.notice('OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific');
       this.state.currentMode = 2;
@@ -232,10 +235,11 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
 
   override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    device.log.info(`ChangeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);
     if (supportedMode) {
-      device.log.info(`MatterbridgeLaundryWasherModeServer: changeToMode called with mode ${supportedMode.mode} => ${supportedMode.label}`);
-      device.changeToMode({ newMode: request.newMode });
+      device.commandHandler.executeHandler('changeToMode', { request, attributes: this.state, endpoint: this.endpoint });
+      device.log.debug(`MatterbridgeLaundryWasherModeServer: changeToMode called with mode ${supportedMode.mode} => ${supportedMode.label}`);
       this.state.currentMode = request.newMode;
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
     } else {
