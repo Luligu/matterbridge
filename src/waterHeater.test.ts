@@ -246,7 +246,7 @@ describe('Matterbridge Water Heater', () => {
     jest.clearAllMocks();
     await invokeBehaviorCommand(device, 'waterHeaterMode', 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWaterHeaterModeServer changeToMode called with newMode 1 => Auto`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeWaterHeaterModeServer changeToMode called with newMode 1 => Auto`);
   });
 
   test('close server node', async () => {
