@@ -71,8 +71,7 @@ export class MatterbridgeServer extends Behavior {
   declare state: MatterbridgeServer.State;
 
   override initialize() {
-    this.state.log = (this.endpoint as MatterbridgeEndpoint).log;
-    this.state.commandHandler = (this.endpoint as MatterbridgeEndpoint).commandHandler;
+    this.state.log.debug(`MatterbridgeServer initialized (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     super.initialize();
   }
 }
@@ -196,6 +195,7 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
     device.log.debug(`MatterbridgeWindowCoveringServer: upOrOpen called`);
     super.upOrOpen();
   }
+
   override downOrClose(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Closing cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -203,6 +203,7 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
     device.log.debug(`MatterbridgeWindowCoveringServer: downOrClose called`);
     super.downOrClose();
   }
+
   override stopMotion(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stopping cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -210,6 +211,7 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
     device.log.debug(`MatterbridgeWindowCoveringServer: stopMotion called`);
     super.stopMotion();
   }
+
   override goToLiftPercentage(request: WindowCovering.GoToLiftPercentageRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting cover lift percentage to ${request.liftPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -217,6 +219,7 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
     device.log.debug(`MatterbridgeWindowCoveringServer: goToLiftPercentage with ${request.liftPercent100thsValue}`);
     super.goToLiftPercentage(request);
   }
+
   override async handleMovement(type: MovementType, reversed: boolean, direction: MovementDirection, targetPercent100ths?: number) {
     // Do nothing here, as the device will handle the movement
   }
@@ -230,6 +233,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
     device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: upOrOpen called`);
     super.upOrOpen();
   }
+
   override downOrClose(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Closing cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -237,6 +241,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
     device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: downOrClose called`);
     super.downOrClose();
   }
+
   override stopMotion(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stopping cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -244,6 +249,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
     device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: stopMotion called`);
     super.stopMotion();
   }
+
   override goToLiftPercentage(request: WindowCovering.GoToLiftPercentageRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting cover lift percentage to ${request.liftPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -251,6 +257,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
     device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: goToLiftPercentage with ${request.liftPercent100thsValue}`);
     super.goToLiftPercentage(request);
   }
+
   override goToTiltPercentage(request: WindowCovering.GoToTiltPercentageRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting cover tilt percentage to ${request.tiltPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -258,6 +265,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
     device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: goToTiltPercentage with ${request.tiltPercent100thsValue}`);
     super.goToTiltPercentage(request);
   }
+
   override async handleMovement(type: MovementType, reversed: boolean, direction: MovementDirection, targetPercent100ths?: number) {
     // Do nothing here, as the device will handle the movement
   }
@@ -271,6 +279,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer {
     device.log.debug(`MatterbridgeDoorLockServer: lockDoor called`);
     super.lockDoor();
   }
+
   override unlockDoor(): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Unlocking door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);

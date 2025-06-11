@@ -546,6 +546,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {keyof MatterbridgeEndpointCommands} command - The command to add the handler for.
    * @param {CommandHandlerFunction} handler - The handler function to execute when the command is received.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The handler function will receive an object with the following properties:
+   * - `request`: The request object sent with the command.
+   * - `attributes`: The current attributes of the cluster.
+   * - `endpoint`: The MatterbridgeEndpoint instance that received the command.
    */
   addCommandHandler(command: keyof MatterbridgeEndpointCommands, handler: CommandHandlerFunction): this {
     this.commandHandler.addHandler(command, handler);

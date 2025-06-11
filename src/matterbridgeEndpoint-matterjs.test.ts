@@ -641,19 +641,12 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect(light).toBeDefined();
   });
 
-  test('get MatterbridgeServerDevice', async () => {
+  test('get MatterbridgeServer', async () => {
     expect(light.stateOf(MatterbridgeServer)).toBeDefined();
     expect(light.stateOf(MatterbridgeServer).log).toBeDefined();
     expect(light.stateOf(MatterbridgeServer).log).toBeInstanceOf(AnsiLogger);
     expect(light.stateOf(MatterbridgeServer).commandHandler).toBeDefined();
     expect(light.stateOf(MatterbridgeServer).commandHandler).toBeInstanceOf(NamedHandler);
-
-    // matterbridgeServerDevice = light.stateOf(MatterbridgeServer).deviceCommand as MatterbridgeServerDevice;
-    // expect(matterbridgeServerDevice).toBeDefined();
-    // expect(matterbridgeServerDevice).toBeInstanceOf(MatterbridgeServerDevice);
-    // expect(matterbridgeServerDevice.log).toBeInstanceOf(AnsiLogger);
-    // expect(matterbridgeServerDevice.endpointId).toBeDefined();
-    // expect(matterbridgeServerDevice.endpointNumber).toBeDefined();
   });
 
   test('invoke MatterbridgeIdentifyServer commands', async () => {
@@ -663,8 +656,24 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect(light.behaviors.elementsOf(MatterbridgeIdentifyServer).commands.has('triggerEffect')).toBeTruthy();
     expect((light.stateOf(IdentifyServer) as any).acceptedCommandList).toEqual([0, 64]);
     expect((light.stateOf(IdentifyServer) as any).generatedCommandList).toEqual([]);
+
+    let called = false;
+    light.addCommandHandler('identify', async ({ request, attributes, endpoint }) => {
+      expect(request).toBeDefined();
+      expect(request.identifyTime).toBeDefined();
+      expect(request.identifyTime).toBe(5);
+      expect(attributes).toBeDefined();
+      expect(attributes.identifyTime).toBe(0);
+      expect(attributes.identifyType).toBe(Identify.IdentifyType.None);
+      expect(endpoint).toBeDefined();
+      expect(endpoint).toBe(light);
+      expect(endpoint.id).toBe(light.id);
+      called = true;
+    });
+
     await invokeBehaviorCommand(light, 'identify', 'identify', { identifyTime: 5 });
     await invokeBehaviorCommand(light, 'identify', 'triggerEffect', { effectIdentifier: Identify.EffectIdentifier.Okay, effectVariant: Identify.EffectVariant.Default });
+    expect(called).toBeTruthy();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Identifying device for 5 seconds (endpoint ${light.id}.${light.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Triggering effect ${Identify.EffectIdentifier.Okay} variant ${Identify.EffectVariant.Default} (endpoint ${light.id}.${light.number})`);
   });
