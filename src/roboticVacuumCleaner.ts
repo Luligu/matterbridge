@@ -199,7 +199,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
 
 export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
   override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer);
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
     if (!supported) {
       device.log.error(`MatterbridgeRvcRunModeServer changeToMode called with unsupported newMode: ${request.newMode}`);
@@ -225,7 +225,7 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
 
 export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
   override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer);
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
     if (!supported) {
       device.log.error(`MatterbridgeRvcCleanModeServer changeToMode called with unsupported newMode: ${request.newMode}`);
@@ -241,7 +241,7 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
 
 export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateServer {
   override pause(): MaybePromise<OperationalState.OperationalCommandResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Pause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('pause', { request: {}, attributes: this.state, endpoint: this.endpoint });
     device.log.debug('MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused and currentMode to Idle');
@@ -254,7 +254,7 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
   }
 
   override resume(): MaybePromise<OperationalState.OperationalCommandResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Resume (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('resume', { request: {}, attributes: this.state, endpoint: this.endpoint });
     device.log.debug('MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning');
@@ -268,7 +268,7 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
 
   override goHome(): MaybePromise<OperationalState.OperationalCommandResponse> {
     // const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`GoHome (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('goHome', { request: {}, attributes: this.state, endpoint: this.endpoint });
     device.log.debug('MatterbridgeRvcOperationalStateServer: goHome called setting operational state to Docked and currentMode to Idle');

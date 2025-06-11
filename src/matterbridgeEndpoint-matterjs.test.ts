@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
-import { DeviceTypeId, VendorId, ServerNode, Endpoint, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Logger } from '@matter/main';
+import { DeviceTypeId, VendorId, ServerNode, Endpoint, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Logger, NamedHandler } from '@matter/main';
 import {
   ColorControl,
   Descriptor,
@@ -82,7 +82,6 @@ import {
   MatterbridgeOnOffServer,
   MatterbridgeOperationalStateServer,
   MatterbridgeServer,
-  MatterbridgeServerDevice,
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeThermostatServer,
   MatterbridgeValveConfigurationAndControlServer,
@@ -159,8 +158,6 @@ describe('Matterbridge ' + HOMEDIR, () => {
   let rvc: RoboticVacuumCleaner;
   let heater: MatterbridgeEndpoint;
   let evse: MatterbridgeEndpoint;
-
-  let matterbridgeServerDevice: MatterbridgeServerDevice;
 
   beforeAll(async () => {
     // Cleanup the matter environment
@@ -645,12 +642,18 @@ describe('Matterbridge ' + HOMEDIR, () => {
   });
 
   test('get MatterbridgeServerDevice', async () => {
-    matterbridgeServerDevice = light.stateOf(MatterbridgeServer).deviceCommand as MatterbridgeServerDevice;
-    expect(matterbridgeServerDevice).toBeDefined();
-    expect(matterbridgeServerDevice).toBeInstanceOf(MatterbridgeServerDevice);
-    expect(matterbridgeServerDevice.log).toBeInstanceOf(AnsiLogger);
-    expect(matterbridgeServerDevice.endpointId).toBeDefined();
-    expect(matterbridgeServerDevice.endpointNumber).toBeDefined();
+    expect(light.stateOf(MatterbridgeServer)).toBeDefined();
+    expect(light.stateOf(MatterbridgeServer).log).toBeDefined();
+    expect(light.stateOf(MatterbridgeServer).log).toBeInstanceOf(AnsiLogger);
+    expect(light.stateOf(MatterbridgeServer).commandHandler).toBeDefined();
+    expect(light.stateOf(MatterbridgeServer).commandHandler).toBeInstanceOf(NamedHandler);
+
+    // matterbridgeServerDevice = light.stateOf(MatterbridgeServer).deviceCommand as MatterbridgeServerDevice;
+    // expect(matterbridgeServerDevice).toBeDefined();
+    // expect(matterbridgeServerDevice).toBeInstanceOf(MatterbridgeServerDevice);
+    // expect(matterbridgeServerDevice.log).toBeInstanceOf(AnsiLogger);
+    // expect(matterbridgeServerDevice.endpointId).toBeDefined();
+    // expect(matterbridgeServerDevice.endpointNumber).toBeDefined();
   });
 
   test('invoke MatterbridgeIdentifyServer commands', async () => {

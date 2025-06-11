@@ -29,7 +29,6 @@ import { bridgedNode, DeviceTypeDefinition, MatterbridgeEndpointOptions } from '
 import { isValidNumber, isValidObject, isValidString } from './utils/export.js';
 import {
   MatterbridgeServer,
-  MatterbridgeServerDevice,
   MatterbridgeIdentifyServer,
   MatterbridgeOnOffServer,
   MatterbridgeLevelControlServer,
@@ -372,8 +371,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} id: ${CYAN}${options.uniqueStorageKey}${db} number: ${CYAN}${options.endpointId}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
     );
 
-    // Add MatterbridgeBehavior with MatterbridgeBehaviorDevice
-    this.behaviors.require(MatterbridgeServer, { deviceCommand: new MatterbridgeServerDevice(this.log, this.commandHandler, undefined) });
+    // Add MatterbridgeServer
+    this.behaviors.require(MatterbridgeServer, { log: this.log, commandHandler: this.commandHandler });
   }
 
   /**

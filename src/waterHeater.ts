@@ -124,7 +124,7 @@ export class WaterHeater extends MatterbridgeEndpoint {
 
 export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManagementServer {
   override boost(request: WaterHeaterManagement.BoostRequest): MaybePromise {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Boost (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('boost', { request, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeWaterHeaterManagementServer boost called with: ${JSON.stringify(request)}`);
@@ -135,7 +135,7 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
   }
 
   override cancelBoost(): MaybePromise {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Cancel boost (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('cancelBoost', { request: {}, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeWaterHeaterManagementServer cancelBoost called`);
@@ -148,7 +148,7 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
 
 export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
   override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
     if (!supported) {

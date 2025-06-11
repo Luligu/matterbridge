@@ -117,7 +117,7 @@ export class Evse extends MatterbridgeEndpoint {
 
 export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
   override disable(): MaybePromise {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Disable charging (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('disable', { request: {}, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeEnergyEvseServer disable called`);
@@ -130,7 +130,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
     // disable is not implemented in matter.js
   }
   override enableCharging(request: EnergyEvse.EnableChargingRequest): MaybePromise {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`EnableCharging (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('enableCharging', { request, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeEnergyEvseServer enableCharging called`);
@@ -149,7 +149,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
 
 export class MatterbridgeEnergyEvseModeServer extends EnergyEvseModeServer {
   override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
     if (!supported) {
