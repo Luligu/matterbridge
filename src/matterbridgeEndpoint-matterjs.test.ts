@@ -615,7 +615,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
 
   test('create an Evse device', async () => {
     evse = new Evse('Evse', '0xABC123456789');
-    evse.createDefaultDeviceEnergyManagementModeCluster();
+    evse.createDefaultDeviceEnergyManagementModeClusterServer();
     expect(evse).toBeDefined();
     expect(evse.id).toBe('Evse-0xABC123456789');
     expect(evse.hasClusterServer(Identify.Cluster.id)).toBeTruthy();

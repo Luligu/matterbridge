@@ -113,7 +113,7 @@ describe('Matterbridge EVSE', () => {
 
   test('create a Evse device', async () => {
     device = new Evse('EVSE Test Device', 'EVSE12456');
-    device.createDefaultDeviceEnergyManagementModeCluster();
+    device.createDefaultDeviceEnergyManagementModeClusterServer();
     expect(device).toBeDefined();
     expect(device.id).toBe('EVSETestDevice-EVSE12456');
     expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();

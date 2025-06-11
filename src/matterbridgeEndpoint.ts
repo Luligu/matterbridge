@@ -2082,14 +2082,14 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
-   * The forecast attribute is set to null, indicating that there is no forecast currently available.
-   * The ESA type and canGenerate attributes are fixed and cannot be changed after creation.
-   * The ESA state is set to Online by default.
-   * The absolute minimum and maximum power attributes are set to 0 by default.
-   * For example, a battery storage inverter that can charge its battery at a maximum power of 2000W and can
+   * - The forecast attribute is set to null, indicating that there is no forecast currently available.
+   * - The ESA type and canGenerate attributes are fixed and cannot be changed after creation.
+   * - The ESA state is set to Online by default.
+   * - The absolute minimum and maximum power attributes are set to 0 by default.
+   * - For example, a battery storage inverter that can charge its battery at a maximum power of 2000W and can
    * discharge the battery at a maximum power of 3000W, would have a absMinPower: -3000W, absMaxPower: 2000W.
    */
-  createDefaultDeviceEnergyManagementCluster(esaType: DeviceEnergyManagement.EsaType = DeviceEnergyManagement.EsaType.Other, esaCanGenerate = false, esaState = DeviceEnergyManagement.EsaState.Online, absMinPower = 0, absMaxPower = 0) {
+  createDefaultDeviceEnergyManagementClusterServer(esaType: DeviceEnergyManagement.EsaType = DeviceEnergyManagement.EsaType.Other, esaCanGenerate = false, esaState = DeviceEnergyManagement.EsaState.Online, absMinPower = 0, absMaxPower = 0) {
     this.behaviors.require(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting), {
       forecast: null, // A null value indicates that there is no forecast currently available
       esaType, // Fixed attribute
@@ -2116,7 +2116,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *  - For the "Grid Energy Management" mode, tags: 0x4003 (GridOptimization).
    *  - For the "Full Energy Management" mode, tags: 0x4001 (DeviceOptimization), 0x4002 (LocalOptimization), 0x4003 (GridOptimization).
    */
-  createDefaultDeviceEnergyManagementModeCluster(currentMode?: number, supportedModes?: DeviceEnergyManagementMode.ModeOption[]): this {
+  createDefaultDeviceEnergyManagementModeClusterServer(currentMode?: number, supportedModes?: DeviceEnergyManagementMode.ModeOption[]): this {
     this.behaviors.require(MatterbridgeDeviceEnergyManagementModeServer, {
       supportedModes: supportedModes ?? [
         { label: 'No Energy Management (Forecast reporting only)', mode: 1, modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.NoOptimization }] },
@@ -2279,9 +2279,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * • 0 indicates a value of illuminance that is too low to be measured
    * • null indicates that the illuminance measurement is invalid.
    *
-   * @remarks
-   * Lux to matter = Math.round(Math.max(Math.min(10000 * Math.log10(lux), 0xfffe), 0))
-   * Matter to Lux = Math.round(Math.max(Math.pow(10, value / 10000), 0))
+   * - Lux to matter = Math.round(Math.max(Math.min(10000 * Math.log10(lux), 0xfffe), 0))
+   * - Matter to Lux = Math.round(Math.max(Math.pow(10, value / 10000), 0))
    */
   createDefaultIlluminanceMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
     this.behaviors.require(IlluminanceMeasurementServer, getDefaultIlluminanceMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));

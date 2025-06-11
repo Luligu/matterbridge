@@ -47,6 +47,8 @@ import { Pm10ConcentrationMeasurement } from '@matter/main/clusters/pm10-concent
 import { RadonConcentrationMeasurement } from '@matter/main/clusters/radon-concentration-measurement';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/main/clusters/total-volatile-organic-compounds-concentration-measurement';
 import { OperationalState } from '@matter/main/clusters/operational-state';
+import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
+import { DeviceEnergyManagementMode } from '@matter/main/clusters/device-energy-management-mode';
 
 // @matter behaviors
 import { PowerSourceServer } from '@matter/main/behaviors/power-source';
@@ -78,6 +80,7 @@ import { Pm25ConcentrationMeasurementServer } from '@matter/main/behaviors/pm25-
 import { Pm10ConcentrationMeasurementServer } from '@matter/main/behaviors/pm10-concentration-measurement';
 import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/radon-concentration-measurement';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
+import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
 
 // Other modules
 import { createHash } from 'node:crypto';
@@ -100,6 +103,7 @@ import {
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeBooleanStateConfigurationServer,
   MatterbridgeOperationalStateServer,
+  MatterbridgeDeviceEnergyManagementModeServer,
 } from './matterbridgeBehaviors.js';
 
 export function capitalizeFirstLetter(name: string): string {
@@ -198,6 +202,8 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId) {
   if (clusterId === Pm10ConcentrationMeasurement.Cluster.id) return Pm10ConcentrationMeasurementServer.with('NumericMeasurement');
   if (clusterId === RadonConcentrationMeasurement.Cluster.id) return RadonConcentrationMeasurementServer.with('NumericMeasurement');
   if (clusterId === TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id) return TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === DeviceEnergyManagement.Cluster.id) return DeviceEnergyManagementServer.with('PowerForecastReporting');
+  if (clusterId === DeviceEnergyManagementMode.Cluster.id) return MatterbridgeDeviceEnergyManagementModeServer;
 
   return MatterbridgeIdentifyServer;
 }
@@ -325,8 +331,8 @@ export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: Cl
   if (serverList.includes(Pm10ConcentrationMeasurement.Cluster.id)) endpoint.createDefaultPm10ConcentrationMeasurementClusterServer();
   if (serverList.includes(RadonConcentrationMeasurement.Cluster.id)) endpoint.createDefaultRadonConcentrationMeasurementClusterServer();
   if (serverList.includes(TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id)) endpoint.createDefaultTvocMeasurementClusterServer();
-  // if (serverList.includes(DeviceEnergyManagement.Cluster.id)) endpoint.createDefaultDeviceEnergyManagementClusterServer();
-  // if (serverList.includes(DeviceEnergyManagementMode.Cluster.id)) endpoint.createDefaultDeviceEnergyManagementModeClusterServer();
+  if (serverList.includes(DeviceEnergyManagement.Cluster.id)) endpoint.createDefaultDeviceEnergyManagementClusterServer();
+  if (serverList.includes(DeviceEnergyManagementMode.Cluster.id)) endpoint.createDefaultDeviceEnergyManagementModeClusterServer();
 }
 
 /**
