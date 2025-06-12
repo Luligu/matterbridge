@@ -289,7 +289,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer {
   }
 }
 
-export class MatterbridgeFanControlServer extends FanControlServer.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step) {
+export class MatterbridgeFanControlServer extends FanControlServer.with(FanControl.Feature.Auto, FanControl.Feature.Step) {
   override step(request: FanControl.StepRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stepping fan with direction ${request.direction} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);

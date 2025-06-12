@@ -532,6 +532,34 @@ describe('Matterbridge ' + HOMEDIR, () => {
     device.createDefaultFanControlClusterServer();
     expect(device.hasAttributeServer(FanControl.Cluster, 'fanMode')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'percentSetting')).toBe(true);
+    expect(device.hasAttributeServer(FanControl.Cluster, 'speedSetting')).toBe(false);
+
+    await add(device);
+    expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
+  });
+
+  test('createBaseFanControlClusterServer', async () => {
+    const device = new MatterbridgeEndpoint(fanDevice, { uniqueStorageKey: 'Fan2' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultGroupsClusterServer();
+    device.createBaseFanControlClusterServer();
+    expect(device.hasAttributeServer(FanControl.Cluster, 'fanMode')).toBe(true);
+    expect(device.hasAttributeServer(FanControl.Cluster, 'percentSetting')).toBe(true);
+    expect(device.hasAttributeServer(FanControl.Cluster, 'speedSetting')).toBe(false);
+
+    await add(device);
+    expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
+  });
+
+  test('createMultiSpeedFanControlClusterServer', async () => {
+    const device = new MatterbridgeEndpoint(fanDevice, { uniqueStorageKey: 'Fan3' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultGroupsClusterServer();
+    device.createMultiSpeedFanControlClusterServer();
+    expect(device.hasAttributeServer(FanControl.Cluster, 'fanMode')).toBe(true);
+    expect(device.hasAttributeServer(FanControl.Cluster, 'percentSetting')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedSetting')).toBe(true);
 
     await add(device);

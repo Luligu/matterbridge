@@ -1644,26 +1644,65 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default fan control cluster server with features MultiSpeed, Auto, and Step.
+   * Creates a default fan control cluster server with features Auto, and Step.
    *
    * @param {FanControl.FanMode} [fanMode=FanControl.FanMode.Off] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @param {FanControl.FanModeSequence} [fanModeSequence=FanControl.FanModeSequence.OffLowMedHighAuto] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHighAuto`.
+   * @param {number} [percentSetting=0] - The initial percent setting. Defaults to 0.
+   * @param {number} [percentCurrent=0] - The initial percent current. Defaults to 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
-   * fanmode is writable and persists across reboots.
-   * percentSetting is writable.
-   * speedSetting is writable.
+   * - fanmode is writable and persists across reboots.
+   * - fanModeSequence is fixed.
+   * - percentSetting is writable.
    */
-  createDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
+  createDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off, fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHighAuto, percentSetting = 0, percentCurrent = 0) {
+    this.behaviors.require(MatterbridgeFanControlServer.with(FanControl.Feature.Auto, FanControl.Feature.Step), {
+      fanMode, // Writable and persistent attribute
+      fanModeSequence, // Fixed attribute
+      percentSetting, // Writable attribute
+      percentCurrent,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a fan control cluster server with features MultiSpeed, Auto, and Step.
+   *
+   * @param {FanControl.FanMode} [fanMode=FanControl.FanMode.Off] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @param {number} [percentSetting=0] - The initial percent setting. Defaults to 0.
+   * @param {number} [percentCurrent=0] - The initial percent current. Defaults to 0.
+   * @param {number} [speedMax=10] - The maximum speed setting. Defaults to 10.
+   * @param {number} [speedSetting=0] - The initial speed setting. Defaults to 0.
+   * @param {number} [speedCurrent=0] - The initial speed current. Defaults to 0.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * - fanmode is writable and persists across reboots.
+   * - fanModeSequence is fixed.
+   * - percentSetting is writable.
+   * - speedMax is fixed.
+   * - speedSetting is writable.
+   */
+  createMultiSpeedFanControlClusterServer(
+    fanMode = FanControl.FanMode.Off,
+    fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHighAuto,
+    percentSetting = 0,
+    percentCurrent = 0,
+    speedMax = 10,
+    speedSetting = 0,
+    speedCurrent = 0,
+  ) {
     this.behaviors.require(MatterbridgeFanControlServer.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step), {
       fanMode, // Writable and persistent attribute
-      fanModeSequence: FanControl.FanModeSequence.OffLowMedHighAuto, // Fixed attribute
-      percentSetting: 0, // Writable attribute
-      percentCurrent: 0,
+      fanModeSequence, // Fixed attribute
+      percentSetting, // Writable attribute
+      percentCurrent,
       // MultiSpeed feature
-      speedMax: 100, // Fixed attribute
-      speedSetting: 0, // Writable attribute
-      speedCurrent: 0,
+      speedMax, // Fixed attribute
+      speedSetting, // Writable attribute
+      speedCurrent,
     });
     return this;
   }
@@ -1672,18 +1711,22 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a base fan control cluster server without features.
    *
    * @param {FanControl.FanMode} [fanMode=FanControl.FanMode.Off] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @param {FanControl.FanModeSequence} [fanModeSequence=FanControl.FanModeSequence.OffLowMedHigh] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHigh`.
+   * @param {number} [percentSetting=0] - The initial percent setting. Defaults to 0.
+   * @param {number} [percentCurrent=0] - The initial percent current. Defaults to 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
    * fanmode is writable and persists across reboots.
+   * fanModeSequence is fixed.
    * percentSetting is writable.
    */
-  createBaseFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
+  createBaseFanControlClusterServer(fanMode = FanControl.FanMode.Off, fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHigh, percentSetting = 0, percentCurrent = 0) {
     this.behaviors.require(FanControlServer, {
-      fanMode,
-      fanModeSequence: FanControl.FanModeSequence.OffLowMedHigh,
-      percentSetting: 0,
-      percentCurrent: 0,
+      fanMode, // Writable and persistent attribute
+      fanModeSequence, // Fixed attribute
+      percentSetting, // Writable attribute
+      percentCurrent,
     });
     return this;
   }

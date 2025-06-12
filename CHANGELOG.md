@@ -13,10 +13,13 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [tests] Update Jest test coverage on addBridgedEndpoint and removeBridgedEndpoint.
+- [fan]: Added createMultiSpeedFanControlClusterServer claster helper with MultiSpeed feature.
+- [fan]: Added all parameters to the fan cluster helpers.
 
 ### Changed
 
 - [package]: Updated dependencies.
+- [fan]: The default fan has no more the MultiSpeed feature.
 
 ### Fixed
 

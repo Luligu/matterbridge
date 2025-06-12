@@ -646,6 +646,10 @@ describe('Matterbridge ' + HOMEDIR, () => {
       expect(device.hasAttributeServer(IdentifyBehavior, 'identifyTime')).toBe(true);
       expect(device.hasAttributeServer(BooleanStateCluster, 'stateValue')).toBe(true);
       expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'booleanState']);
+
+      expect(await invokeSubscribeHandler(device, 'booleanState', 'stateValue', false, true)).toBe(false);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`is in the ${BLUE}inactive${er} state`));
+
       await add(device);
 
       let newState = false;
@@ -687,6 +691,13 @@ describe('Matterbridge ' + HOMEDIR, () => {
       expect(device.getAttribute('BooleanState', 'stateValue', device.log)).toBe(true);
 
       expect(device.construction.status).toBe(Lifecycle.Status.Active);
+
+      expect(await invokeSubscribeHandler(device, 'notacluster', 'stateValue', false, true)).toBe(false);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`invokeSubscribeHandler ${hk}stateValue$Changed${er} error: cluster not found on endpoint`));
+
+      expect(await invokeSubscribeHandler(device, 'booleanState', 'notanattribute', false, true)).toBe(false);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`invokeSubscribeHandler ${hk}notanattribute$Changed${er} error: cluster booleanState not found on endpoint`));
+
       expect(await invokeSubscribeHandler(device, 'booleanState', 'stateValue', false, true)).toBe(true);
       expect(newState).toBe(false);
       expect(oldState).toBe(true);
@@ -896,7 +907,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
         expect(attributeId).toBeDefined();
         count++;
       });
-      expect(count).toBe(47);
+      expect(count).toBe(44);
     });
 
     test('forEachAttribute AirQuality', async () => {
