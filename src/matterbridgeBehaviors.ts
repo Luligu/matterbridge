@@ -346,11 +346,17 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
 export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigurationAndControlServer.with(ValveConfigurationAndControl.Feature.Level) {
   override open(request: ValveConfigurationAndControl.OpenRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Opening valve to ${request.targetLevel}% (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `Opening valve to ${request.targetLevel ? request.targetLevel + '%' : 'fully opened'} ${request.openDuration ? 'for ' + request.openDuration + 's' : 'until closed'} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     device.commandHandler.executeHandler('open', { request, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeValveConfigurationAndControlServer: open called with openDuration: ${request.openDuration} targetLevel: ${request.targetLevel}`);
+    this.state.targetState = ValveConfigurationAndControl.ValveState.Open;
+    this.state.currentState = ValveConfigurationAndControl.ValveState.Open;
     this.state.targetLevel = request.targetLevel ?? 100;
     this.state.currentLevel = request.targetLevel ?? 100;
+    this.state.openDuration = request.openDuration ?? this.state.defaultOpenDuration;
+    if (this.state.openDuration === null) this.state.remainingDuration = null;
 
     // open is not implemented in matter.js
     // super.open(request);
@@ -361,8 +367,12 @@ export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigu
     device.log.info(`Closing valve (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     device.commandHandler.executeHandler('close', { request: {}, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeValveConfigurationAndControlServer: close called`);
+    this.state.targetState = ValveConfigurationAndControl.ValveState.Closed;
+    this.state.currentState = ValveConfigurationAndControl.ValveState.Closed;
     this.state.targetLevel = 0;
     this.state.currentLevel = 0;
+    this.state.openDuration = null;
+    this.state.remainingDuration = null;
 
     // close is not implemented in matter.js
     // super.close();
@@ -468,6 +478,8 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
 export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
   override selectAreas(request: ServiceArea.SelectAreasRequest): MaybePromise<ServiceArea.SelectAreasResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Selecting areas ${request.newAreas} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('selectAreas', { request, attributes: this.state, endpoint: this.endpoint });
     for (const area of request.newAreas) {
       const supportedArea = this.state.supportedAreas.find((supportedArea) => supportedArea.areaId === area);
       if (!supportedArea) {
@@ -475,8 +487,6 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
         return { status: ServiceArea.SelectAreasStatus.UnsupportedArea, statusText: 'Unsupported areas' };
       }
     }
-    device.log.info(`Selecting areas ${request.newAreas} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('selectAreas', { request, attributes: this.state, endpoint: this.endpoint });
     this.state.selectedAreas = request.newAreas;
     device.log.debug(`MatterbridgeServiceAreaServer selectAreas called with: ${request.newAreas.map((area) => area.toString()).join(', ')}`);
     return super.selectAreas(request);
@@ -497,13 +507,13 @@ export class MatterbridgeModeSelectServer extends ModeSelectServer {
 export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyManagementModeServer {
   override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('changeToMode', { request, attributes: this.state, endpoint: this.endpoint });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
     if (!supported) {
       device.log.error(`MatterbridgeDeviceEnergyManagementModeServer changeToMode called with unsupported newMode: ${request.newMode}`);
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
     }
-    device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('changeToMode', { request, attributes: this.state, endpoint: this.endpoint });
     this.state.currentMode = request.newMode;
     device.log.debug(`MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode ${request.newMode} => ${supported.label}`);
     return super.changeToMode(request);

@@ -1794,14 +1794,15 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.behaviors.require(MatterbridgeValveConfigurationAndControlServer.with(ValveConfigurationAndControl.Feature.Level), {
       currentState: valveState,
       targetState: valveState,
+      openDuration: null,
+      defaultOpenDuration: null, // Writable and persistent across restarts
+      remainingDuration: null,
+      valveFault: { generalFault: false, blocked: false, leaking: false, notConnected: false, shortCircuit: false, currentExceeded: false },
+      // Feature.Level
       currentLevel: valveLevel,
       targetLevel: valveLevel,
-      openDuration: null,
-      defaultOpenDuration: null,
-      remainingDuration: null,
-      defaultOpenLevel: 100,
-      valveFault: { generalFault: false, blocked: false, leaking: false, notConnected: false, shortCircuit: false, currentExceeded: false },
-      levelStep: 1,
+      defaultOpenLevel: 100, // Writable and persistent across restarts
+      levelStep: 1, // Fixed
     });
     return this;
   }

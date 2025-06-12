@@ -830,9 +830,17 @@ describe('Matterbridge ' + HOMEDIR, () => {
     expect((valve.stateOf(MatterbridgeValveConfigurationAndControlServer) as any).acceptedCommandList).toEqual([0, 1]);
     expect((valve.stateOf(MatterbridgeValveConfigurationAndControlServer) as any).generatedCommandList).toEqual([]);
     await invokeBehaviorCommand(valve, 'valveConfigurationAndControl', 'open', { openDuration: null, targetLevel: 50 });
+    await invokeBehaviorCommand(valve, 'valveConfigurationAndControl', 'open', { openDuration: 60, targetLevel: 50 });
+    await invokeBehaviorCommand(valve, 'valveConfigurationAndControl', 'open', { openDuration: null });
+    await invokeBehaviorCommand(valve, 'valveConfigurationAndControl', 'open', { openDuration: 60 });
     await invokeBehaviorCommand(valve, 'valveConfigurationAndControl', 'close');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening valve to 50% (endpoint ${valve.id}.${valve.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening valve to 50% until closed (endpoint ${valve.id}.${valve.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening valve to 50% for 60s (endpoint ${valve.id}.${valve.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening valve to fully opened until closed (endpoint ${valve.id}.${valve.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening valve to fully opened for 60s (endpoint ${valve.id}.${valve.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing valve (endpoint ${valve.id}.${valve.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`MatterbridgeValveConfigurationAndControlServer: open called`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeValveConfigurationAndControlServer: close called`);
   });
 
   test('invoke MatterbridgeSmokeCoAlarmServer commands', async () => {
