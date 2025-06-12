@@ -148,7 +148,7 @@ import { DeviceEnergyManagementServer } from '@matter/main/behaviors/device-ener
 
 export type PrimitiveTypes = boolean | number | bigint | string | object | undefined | null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type CommandHandlerFunction = (data: { request: Record<string, any>; attributes: Record<string, PrimitiveTypes>; endpoint: MatterbridgeEndpoint }) => void | Promise<void>;
+export type CommandHandlerFunction = (data: { request: Record<string, any>; cluster: string; attributes: Record<string, PrimitiveTypes>; endpoint: MatterbridgeEndpoint }) => void | Promise<void>;
 
 export interface MatterbridgeEndpointCommands {
   // Identify
@@ -550,7 +550,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks
    * The handler function will receive an object with the following properties:
    * - `request`: The request object sent with the command.
-   * - `attributes`: The current attributes of the cluster.
+   * - `cluster`: The id of the cluster that received the command (i.e. "onOff").
+   * - `attributes`: The current attributes of the cluster that received the command (i.e. { onOff: true}).
    * - `endpoint`: The MatterbridgeEndpoint instance that received the command.
    */
   addCommandHandler(command: keyof MatterbridgeEndpointCommands, handler: CommandHandlerFunction): this {
@@ -1655,12 +1656,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   createDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
     this.behaviors.require(MatterbridgeFanControlServer.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step), {
-      fanMode,
-      fanModeSequence: FanControl.FanModeSequence.OffLowMedHighAuto,
-      percentSetting: 0,
+      fanMode, // Writable and persistent attribute
+      fanModeSequence: FanControl.FanModeSequence.OffLowMedHighAuto, // Fixed attribute
+      percentSetting: 0, // Writable attribute
       percentCurrent: 0,
-      speedMax: 100,
-      speedSetting: 0,
+      // MultiSpeed feature
+      speedMax: 100, // Fixed attribute
+      speedSetting: 0, // Writable attribute
       speedCurrent: 0,
     });
     return this;
