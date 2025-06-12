@@ -324,6 +324,8 @@ It exposes 38 devices:
 - a microwave Oven device (supported by SmartThings, Alexa and Home Assistant)
 - an extractor Hood device (supported by SmartThings, Alexa and Home Assistant)
 - a cooktop device (supported by SmartThings, Alexa and Home Assistant)
+- a water heater device (supported by SmartThings and Home Assistant)
+- a car charger device (supported by Home Assistant)
 
 All these virtual devices continuously change state and position. The plugin also shows how to use all the command handlers (you can control all the devices).
 
