@@ -15,11 +15,18 @@ If you like this project and find it useful, please consider giving it a star on
 - [tests] Update Jest test coverage on addBridgedEndpoint and removeBridgedEndpoint.
 - [fan]: Added createMultiSpeedFanControlClusterServer claster helper with MultiSpeed feature.
 - [fan]: Added all parameters to the fan cluster helpers.
+- [valve]: Added logic in MatterbridgeValveConfigurationAndControlServer.
+- [command]: Added cluster property to commandHandler data object.
 
 ### Changed
 
 - [package]: Updated dependencies.
 - [fan]: The default fan has no more the MultiSpeed feature.
+- [behaviors]: Bump Matterbridge Behaviors to 1.3.0
+- [evse]: Updated class and behavior to 1.1.0.
+- [waterHeater]: Updated class and behavior to 1.1.0.
+- [rvc]: Updated class and behavior to 1.1.0.
+- [laundryWasher]: Updated class and behavior to 1.1.0.
 
 ### Fixed
 
