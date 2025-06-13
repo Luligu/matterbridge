@@ -266,10 +266,12 @@ export class MatterbridgeEndpoint extends Endpoint {
   /** The default log level of the new MatterbridgeEndpoints */
   static logLevel = LogLevel.INFO;
 
+  /** The logger instance for the MatterbridgeEndpoint */
   log: AnsiLogger;
+  /** The plugin name this MatterbridgeEndpoint belongs to */
   plugin: string | undefined = undefined;
+  /** The configuration URL of the device, if available */
   configUrl: string | undefined = undefined;
-
   deviceName: string | undefined = undefined;
   serialNumber: string | undefined = undefined;
   uniqueId: string | undefined = undefined;
@@ -1033,7 +1035,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         events: { leave: true, reachableChanged: true },
       }),
       {
-        vendorId: vendorId !== undefined ? VendorId(vendorId) : undefined, // 4874
+        vendorId: vendorId !== undefined ? VendorId(vendorId) : undefined,
         vendorName: vendorName.slice(0, 32),
         productName: productName.slice(0, 32),
         productUrl: this.productUrl.slice(0, 256),
