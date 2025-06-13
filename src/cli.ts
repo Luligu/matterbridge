@@ -5,7 +5,7 @@
  * @file cli.ts
  * @author Luca Liguori
  * @date 2023-12-29
- * @version 2.0.0
+ * @version 2.0.1
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
  *
@@ -279,9 +279,9 @@ async function takeHeapSnapshot() {
 function triggerGarbageCollection() {
   if (typeof global.gc === 'function') {
     global.gc();
-    log.debug('***Manual garbage collection triggered via global.gc().');
+    log.debug('Manual garbage collection triggered via global.gc().');
   } else {
-    log.debug('***Garbage collection is not exposed. Start Node.js with --expose-gc to enable manual GC.');
+    log.debug('Garbage collection is not exposed. Start Node.js with --expose-gc to enable manual GC.');
   }
 }
 
