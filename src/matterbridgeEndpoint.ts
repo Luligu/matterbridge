@@ -2218,6 +2218,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default Electrical Energy Measurement Cluster Server with features ImportedEnergy, ExportedEnergy, and CumulativeEnergy.
    *
    * @param {number} energyImported - The total consumption value in mW/h.
+   * @param {number} energyExported - The total production value in mW/h.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null, energyExported: number | bigint | null = null) {
