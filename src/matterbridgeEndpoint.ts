@@ -2218,6 +2218,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default Electrical Energy Measurement Cluster Server with features ImportedEnergy, ExportedEnergy, and CumulativeEnergy.
    *
    * @param {number} energy - The total consumption value in mW/h.
+   * // @param {number} exportedEnergy - The total production value in mW/h.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultElectricalEnergyMeasurementClusterServer(energy: number | bigint | null = null) {
@@ -2230,8 +2231,8 @@ export class MatterbridgeEndpoint extends Endpoint {
         accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
       },
       cumulativeEnergyReset: null,
-      cumulativeEnergyImported: energy ? { energy } : null,
-      cumulativeEnergyExported: null,
+      cumulativeEnergyImported: null,
+      cumulativeEnergyExported: energy ? { energy } : null,
     });
     return this;
   }
