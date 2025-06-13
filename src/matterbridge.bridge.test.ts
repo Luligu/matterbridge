@@ -31,6 +31,7 @@ process.argv = [
 import { jest } from '@jest/globals';
 import path from 'node:path';
 import { Environment } from '@matter/main';
+import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors';
 import { AnsiLogger, db, LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
@@ -137,16 +138,10 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect((matterbridge as any).passcode).toBe(123456 + 1);
     expect((matterbridge as any).discriminator).toBe(3860 + 1);
 
-    await waiter(
-      'Matter server started and online',
-      () => {
-        return (matterbridge as any).configureTimeout !== undefined && (matterbridge as any).reachabilityTimeout !== undefined && matterbridge.serverNode?.lifecycle.isOnline === true;
-      },
-      false,
-      60000,
-      100,
-      true,
-    );
+    await new Promise((resolve) => {
+      matterbridge.once('online', resolve);
+    });
+    await Promise.resolve();
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
@@ -165,6 +160,43 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     const pairing = await matterbridge.advertiseServerNode(matterbridge.serverNode);
     expect(pairing).toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Started advertising for Matterbridge`));
+  });
+
+  test('addBridgedEndpoint with invalid plugin', async () => {
+    await matterbridge.addBridgedEndpoint('invalid-plugin', {} as any);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error adding bridged endpoint`));
+  });
+
+  test('removeBridgedEndpoint with invalid plugin', async () => {
+    await matterbridge.removeBridgedEndpoint('invalid-plugin', {} as any);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error removing bridged endpoint`));
+  });
+
+  test('addBridgedEndpoint with no aggregator', async () => {
+    const aggregator = matterbridge.aggregatorNode;
+    matterbridge.aggregatorNode = undefined;
+    expect(await plugins.add('./src/mock/plugin1')).not.toBeNull();
+    await matterbridge.addBridgedEndpoint('matterbridge-mock1', {} as any);
+    expect(await plugins.remove('./src/mock/plugin1')).not.toBeNull();
+    matterbridge.aggregatorNode = aggregator;
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Aggregator node not found for Matterbridge`));
+  });
+
+  test('removeBridgedEndpoint with no aggregator', async () => {
+    const aggregator = matterbridge.aggregatorNode;
+    matterbridge.aggregatorNode = undefined;
+    expect(await plugins.add('./src/mock/plugin1')).not.toBeNull();
+    await matterbridge.removeBridgedEndpoint('matterbridge-mock1', {} as any);
+    expect(await plugins.remove('./src/mock/plugin1')).not.toBeNull();
+    matterbridge.aggregatorNode = aggregator;
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`aggregator node not found`));
+  });
+
+  test('addBridgedEndpoint fails adding', async () => {
+    expect(await plugins.add('./src/mock/plugin1')).not.toBeNull();
+    await matterbridge.addBridgedEndpoint('matterbridge-mock1', {} as any);
+    expect(await plugins.remove('./src/mock/plugin1')).not.toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error adding bridged endpoint`));
   });
 
   test('add plugin', async () => {
@@ -279,6 +311,13 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
       expect(device).toBeDefined();
       device.plugin = 'matterbridge-mock' + i;
       await matterbridge.addBridgedEndpoint('matterbridge-mock' + i++, device);
+    }
+  }, 60000);
+
+  test('set reachable -bridge mode', async () => {
+    for (const device of matterbridge.devices.array()) {
+      expect(device).toBeDefined();
+      if (device.hasClusterServer(BridgedDeviceBasicInformationServer)) device?.setStateOf(BridgedDeviceBasicInformationServer, { reachable: false });
     }
   }, 60000);
 

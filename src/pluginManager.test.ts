@@ -7,27 +7,20 @@ process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'debug'
 
 import { jest } from '@jest/globals';
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-let mockedExec: Function | undefined = undefined;
-
-// Mock the exec function from the child_process module
+// Mock the exec function from the child_process module. We use jest.unstable_mockModule to ensure that the mock is applied correctly and can be used in the tests.
 jest.unstable_mockModule('node:child_process', async () => {
   const originalModule = jest.requireActual<typeof import('node:child_process')>('node:child_process');
 
   return {
     ...originalModule,
     exec: jest.fn((command: string, callback?: (error: ExecException | null, stdout: string, stderr: string) => void) => {
-      // Use the original exec implementation unless overridden in a specific test
       // console.error('exec called with command:', command);
-      if (mockedExec) {
-        mockedExec(command, callback);
-      } else {
-        (originalModule.exec as typeof originalModule.exec)(command, callback);
-      }
+      return (originalModule.exec as typeof originalModule.exec)(command, callback);
     }),
   };
 });
 
+const { exec } = await import('node:child_process');
 import { ExecException, execSync } from 'node:child_process';
 import { promises as fs, rmSync } from 'node:fs';
 import path from 'node:path';
@@ -911,6 +904,15 @@ describe('PluginManager', () => {
     plugin.error = false;
   });
 
+  test('should not load plugin test without default export', async () => {
+    const plugin = await plugins.add('./src/mock/plugintest');
+    expect(plugin).toBeDefined();
+    if (!plugin) return;
+    await plugins.load(plugin, false, 'Test with Jest');
+    await plugins.remove(plugin.name);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`does not provide a default export`));
+  });
+
   test('load plugin matterbridge-example-accessory-platform', async () => {
     const plugin = plugins.get('matterbridge-example-accessory-platform');
     expect(plugin).not.toBeUndefined();
@@ -938,29 +940,6 @@ describe('PluginManager', () => {
     expect(plugin.configJson).toBeDefined();
     expect(plugin.schemaJson).toBeDefined();
   });
-
-  test('load, start and configure in parallel plugin matterbridge-example-dynamic-platform', async () => {
-    const plugin = plugins.get('matterbridge-example-dynamic-platform');
-    expect(plugin).not.toBeUndefined();
-    if (!plugin) return;
-
-    plugins.load(plugin, true, 'Test with Jest', true);
-    expect(plugin.loaded).toBe(undefined);
-    expect(plugin.started).toBe(undefined);
-    expect(plugin.configured).toBe(undefined);
-    await waiter(
-      'Plugin to start',
-      () => {
-        return plugin.configured === true;
-      },
-      false,
-      60000,
-      1000,
-    );
-    expect(plugin.loaded).toBe(true);
-    expect(plugin.started).toBe(true);
-    expect(plugin.configured).toBe(true);
-  }, 60000);
 
   test('should not start plugin matterbridge-example-accessory-platform if not loaded', async () => {
     const plugin = plugins.get('matterbridge-example-accessory-platform');
@@ -1068,7 +1047,7 @@ describe('PluginManager', () => {
       },
       false,
       5000,
-      1000,
+      100,
       true,
     );
     expect(plugin.started).toBe(true);
@@ -1203,7 +1182,7 @@ describe('PluginManager', () => {
       },
       false,
       5000,
-      1000,
+      100,
       true,
     );
     expect(plugin.locked).toBe(undefined);
@@ -1215,6 +1194,36 @@ describe('PluginManager', () => {
 
     expect(await plugins.saveToStorage()).toBe(2);
   }, 60000);
+
+  test('load, start and configure in parallel plugin matterbridge-example-dynamic-platform', async () => {
+    const plugin = plugins.get('matterbridge-example-dynamic-platform');
+
+    expect(plugin).not.toBeUndefined();
+    if (!plugin) return;
+    const config: PlatformConfig = await plugins.loadConfig(plugin);
+    config.whiteList = ['No devices'];
+    await plugins.saveConfigFromJson(plugin, config);
+
+    // loggerLogSpy.mockRestore();
+    // consoleLogSpy.mockRestore();
+    plugins.load(plugin, true, 'Test with Jest', true);
+    expect(plugin.loaded).toBe(undefined);
+    expect(plugin.started).toBe(undefined);
+    expect(plugin.configured).toBe(undefined);
+    await waiter(
+      'Plugin to start',
+      () => {
+        return plugin.configured === true && plugin.started === true && plugin.loaded === true;
+      },
+      true,
+      30000,
+      100,
+      true,
+    );
+    expect(plugin.loaded).toBe(true);
+    expect(plugin.started).toBe(true);
+    expect(plugin.configured).toBe(true);
+  }, 30000);
 
   test('shutdown plugin matterbridge-example-dynamic-platform', async () => {
     let plugin = plugins.get('matterbridge-example-dynamic-platform');
@@ -1252,34 +1261,30 @@ describe('PluginManager', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to install plugin ${plg}matterbridge-xyz${er}:`));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Failed to install plugin ${plg}matterbridge-xyz${db}:`));
 
-    // Set the return value for this specific test case
-    mockedExec = (command: string, callback?: (error: ExecException | null, stdout: string, stderr: string) => void) => {
-      // console.error('mockedExec:', command);
+    (exec as any).mockImplementation((command: string, callback?: (error: ExecException | null, stdout: string, stderr: string) => void) => {
       if (command.includes('npm list -g matterbridge-xyz --depth=0')) {
         if (callback) callback(new Error('Test error'), '', '');
       } else {
         if (callback) callback(null, '', '');
       }
-    };
+      // return Promise.resolve() as unknown as ChildProcess;
+    });
     expect(await plugins.install('matterbridge-xyz')).toBeUndefined();
-    mockedExec = undefined;
   }, 300000);
 
   test('uninstall not existing plugin matterbridge-xyz with mock', async () => {
     expect(await plugins.uninstall('matterbridge-xyz')).toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Uninstalled plugin ${plg}matterbridge-xyz${nf}`));
 
-    // Set the return value for this specific test case
-    mockedExec = (command: string, callback?: (error: ExecException | null, stdout: string, stderr: string) => void) => {
-      // console.error('mockedExec:', command);
+    (exec as any).mockImplementation((command: string, callback?: (error: ExecException | null, stdout: string, stderr: string) => void) => {
       if (command.includes('npm uninstall -g matterbridge-xyz')) {
         if (callback) callback(new Error('Test error'), '', '');
       } else {
         if (callback) callback(null, '', '');
       }
-    };
+      // return Promise.resolve() as unknown as ChildProcess;
+    });
     expect(await plugins.uninstall('matterbridge-xyz')).toBeUndefined();
-    mockedExec = undefined;
   }, 300000);
 
   test('Matterbridge.destroyInstance()', async () => {

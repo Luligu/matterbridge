@@ -4,7 +4,7 @@
  * @file matterbridgeBehaviors.ts
  * @author Luca Liguori
  * @date 2024-11-07
- * @version 1.0.1
+ * @version 1.3.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -23,7 +23,6 @@
 
 /* eslint-disable @typescript-eslint/no-namespace */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 // @matter
 import { Behavior, MaybePromise, NamedHandler } from '@matter/main';
@@ -42,10 +41,7 @@ import { SmokeCoAlarm } from '@matter/main/clusters/smoke-co-alarm';
 import { BooleanStateConfigurationServer } from '@matter/main/behaviors/boolean-state-configuration';
 import { OperationalState } from '@matter/main/clusters/operational-state';
 import { ModeBase } from '@matter/main/clusters/mode-base';
-import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
-import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state';
 import { ServiceArea } from '@matter/main/clusters/service-area';
-import { WaterHeaterManagement } from '@matter/main/clusters/water-heater-management';
 
 // @matter behaviors
 import { IdentifyServer } from '@matter/main/behaviors/identify';
@@ -61,9 +57,6 @@ import { ModeSelectServer } from '@matter/main/behaviors/mode-select';
 import { SmokeCoAlarmServer } from '@matter/main/behaviors/smoke-co-alarm';
 import { SwitchServer } from '@matter/main/behaviors/switch';
 import { OperationalStateServer } from '@matter/main/behaviors/operational-state';
-import { RvcRunModeServer } from '@matter/main/behaviors/rvc-run-mode';
-import { RvcCleanModeServer } from '@matter/main/behaviors/rvc-clean-mode';
-import { RvcOperationalStateServer } from '@matter/main/behaviors/rvc-operational-state';
 import { ServiceAreaServer } from '@matter/main/behaviors/service-area';
 import { DeviceEnergyManagementModeServer } from '@matter/main/behaviors/device-energy-management-mode';
 
@@ -71,327 +64,162 @@ import { DeviceEnergyManagementModeServer } from '@matter/main/behaviors/device-
 import { AnsiLogger } from './logger/export.js';
 
 // MatterbridgeEndpoint
-import { MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
-
-export class MatterbridgeServerDevice {
-  log: AnsiLogger;
-  commandHandler: NamedHandler<MatterbridgeEndpointCommands>;
-  device: any; // Will be a plugin device
-  endpointId: string | undefined = undefined;
-  endpointNumber: number | undefined = undefined;
-
-  constructor(log: AnsiLogger, commandHandler: NamedHandler<MatterbridgeEndpointCommands>, device: any) {
-    this.log = log;
-    this.commandHandler = commandHandler;
-    this.device = device;
-  }
-
-  setEndpointId(endpointId: string | undefined) {
-    this.endpointId = endpointId;
-  }
-
-  setEndpointNumber(endpointNumber: number | undefined) {
-    this.endpointNumber = endpointNumber;
-  }
-
-  identify({ identifyTime }: Identify.IdentifyRequest) {
-    this.log.info(`Identifying device for ${identifyTime} seconds`);
-    this.commandHandler.executeHandler('identify', { request: { identifyTime }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-  triggerEffect({ effectIdentifier, effectVariant }: Identify.TriggerEffectRequest) {
-    this.log.info(`Triggering effect ${effectIdentifier} variant ${effectVariant}`);
-    this.commandHandler.executeHandler('triggerEffect', { request: { effectIdentifier, effectVariant }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  on() {
-    this.log.info(`Switching device on (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('on', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-  off() {
-    this.log.info(`Switching device off (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('off', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-  toggle() {
-    this.log.info(`Toggle device on/off (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('toggle', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  moveToLevel({ level, transitionTime, optionsMask, optionsOverride }: LevelControl.MoveToLevelRequest) {
-    this.log.info(`Setting level to ${level} with transitionTime ${transitionTime} (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('moveToLevel', { request: { level, transitionTime, optionsMask, optionsOverride }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-  moveToLevelWithOnOff({ level, transitionTime, optionsMask, optionsOverride }: LevelControl.MoveToLevelRequest) {
-    this.log.info(`Setting level to ${level} with transitionTime ${transitionTime} (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('moveToLevelWithOnOff', { request: { level, transitionTime, optionsMask, optionsOverride }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  moveToHue({ optionsMask, optionsOverride, hue, direction, transitionTime }: ColorControl.MoveToHueRequest) {
-    this.log.info(`Setting hue to ${hue} with transitionTime ${transitionTime} (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('moveToHue', { request: { optionsMask, optionsOverride, hue, direction, transitionTime }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-  moveToSaturation({ optionsMask, optionsOverride, saturation, transitionTime }: ColorControl.MoveToSaturationRequest) {
-    this.log.info(`Setting saturation to ${saturation} with transitionTime ${transitionTime} (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('moveToSaturation', { request: { optionsMask, optionsOverride, saturation, transitionTime }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-  moveToHueAndSaturation({ optionsOverride, optionsMask, saturation, hue, transitionTime }: ColorControl.MoveToHueAndSaturationRequest) {
-    this.log.info(`Setting hue to ${hue} and saturation to ${saturation} with transitionTime ${transitionTime} (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('moveToHueAndSaturation', { request: { optionsOverride, optionsMask, saturation, hue, transitionTime }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-  moveToColor({ optionsMask, optionsOverride, colorX, colorY, transitionTime }: ColorControl.MoveToColorRequest) {
-    this.log.info(`Setting color to ${colorX}, ${colorY} with transitionTime ${transitionTime} (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('moveToColor', { request: { optionsMask, optionsOverride, colorX, colorY, transitionTime }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-  moveToColorTemperature({ optionsOverride, optionsMask, colorTemperatureMireds, transitionTime }: ColorControl.MoveToColorTemperatureRequest) {
-    this.log.info(`Setting color temperature to ${colorTemperatureMireds} with transitionTime ${transitionTime} (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('moveToColorTemperature', {
-      request: { optionsOverride, optionsMask, colorTemperatureMireds, transitionTime },
-      attributes: {},
-      endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId },
-    } as any);
-  }
-
-  upOrOpen() {
-    this.log.info(`Opening cover (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler(`upOrOpen`, { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-  downOrClose() {
-    this.log.info(`Closing cover (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler(`downOrClose`, { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-  stopMotion() {
-    this.log.info(`Stopping cover (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('stopMotion', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-  goToLiftPercentage({ liftPercent100thsValue }: WindowCovering.GoToLiftPercentageRequest) {
-    this.log.info(`Setting cover lift percentage to ${liftPercent100thsValue} (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('goToLiftPercentage', { request: { liftPercent100thsValue }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-  goToTiltPercentage({ tiltPercent100thsValue }: WindowCovering.GoToTiltPercentageRequest) {
-    this.log.info(`Setting cover tilt percentage to ${tiltPercent100thsValue} (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('goToTiltPercentage', { request: { tiltPercent100thsValue }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  lockDoor() {
-    this.log.info(`Locking door (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('lockDoor', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-  unlockDoor() {
-    this.log.info(`Unlocking door (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('unlockDoor', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  step({ direction, wrap, lowestOff }: FanControl.StepRequest) {
-    this.log.info(`Stepping fan with direction ${direction} (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('step', { request: { direction, wrap, lowestOff }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  setpointRaiseLower({ mode, amount }: Thermostat.SetpointRaiseLowerRequest) {
-    this.log.info(`Setting setpoint by ${amount} in mode ${mode} (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('setpointRaiseLower', { request: { mode, amount }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  open({ openDuration, targetLevel }: ValveConfigurationAndControl.OpenRequest) {
-    this.log.info(`Opening valve to ${targetLevel}% (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('open', { request: { openDuration, targetLevel }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-  close() {
-    this.log.info(`Closing valve (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('close', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  changeToMode({ newMode }: ModeSelect.ChangeToModeRequest) {
-    this.log.info(`Changing mode to ${newMode} (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('changeToMode', { request: { newMode }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  selfTestRequest() {
-    this.log.info(`Testing SmokeCOAlarm (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('selfTestRequest', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  enableDisableAlarm({ alarmsToEnableDisable }: BooleanStateConfiguration.EnableDisableAlarmRequest) {
-    this.log.info(`Enabling/disabling alarm ${alarmsToEnableDisable} (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('enableDisableAlarm', { request: { alarmsToEnableDisable }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  pause() {
-    this.log.info(`Pause (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('pause', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  stop() {
-    this.log.info(`Stop (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('stop', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  start() {
-    this.log.info(`Start (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('start', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  resume() {
-    this.log.info(`Resume (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('resume', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  goHome() {
-    this.log.info(`GoHome (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('goHome', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  selectAreas({ newAreas }: ServiceArea.SelectAreasRequest) {
-    this.log.info(`Selecting areas ${newAreas} (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('selectAreas', { request: { newAreas }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  boost({ boostInfo }: WaterHeaterManagement.BoostRequest) {
-    this.log.info(`Boost (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('boost', { request: { boostInfo }, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-  cancelBoost() {
-    this.log.info(`Cancel boost (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('cancelBoost', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  enableCharging() {
-    this.log.info(`EnableCharging (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('enableCharging', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-
-  disable() {
-    this.log.info(`Disable charging (endpoint ${this.endpointId}.${this.endpointNumber})`);
-    this.commandHandler.executeHandler('disable', { request: {}, attributes: {}, endpoint: { number: this.endpointNumber, uniqueStorageKey: this.endpointId } } as any);
-  }
-}
+import { MatterbridgeEndpoint, MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
 
 export class MatterbridgeServer extends Behavior {
   static override readonly id = 'matterbridge';
   declare state: MatterbridgeServer.State;
 
   override initialize() {
-    const device = this.state.deviceCommand;
-    device?.setEndpointId(this.endpoint.maybeId);
-    device?.setEndpointNumber(this.endpoint.maybeNumber);
+    this.state.log.debug(`MatterbridgeServer initialized (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     super.initialize();
   }
 }
 
 export namespace MatterbridgeServer {
   export class State {
-    deviceCommand!: MatterbridgeServerDevice;
+    log!: AnsiLogger;
+    commandHandler!: NamedHandler<MatterbridgeEndpointCommands>;
   }
 }
 
 export class MatterbridgeIdentifyServer extends IdentifyServer {
-  override identify({ identifyTime }: Identify.IdentifyRequest): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.identify({ identifyTime });
+  override identify(request: Identify.IdentifyRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Identifying device for ${request.identifyTime} seconds (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('identify', { request, cluster: IdentifyServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeIdentifyServer: identify called`);
-    super.identify({ identifyTime });
+    super.identify(request);
   }
 
-  override triggerEffect({ effectIdentifier, effectVariant }: Identify.TriggerEffectRequest): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.triggerEffect({ effectIdentifier, effectVariant });
+  override triggerEffect(request: Identify.TriggerEffectRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Triggering effect ${request.effectIdentifier} variant ${request.effectVariant} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('triggerEffect', { request, cluster: IdentifyServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeIdentifyServer: triggerEffect called`);
-    super.triggerEffect({ effectIdentifier, effectVariant });
+    super.triggerEffect(request);
   }
 }
 
 export class MatterbridgeOnOffServer extends OnOffServer {
   override on(): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.on();
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Switching device on (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('on', { request: {}, cluster: OnOffServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeOnOffServer: on called`);
     super.on();
   }
+
   override off(): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.off();
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Switching device off (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('off', { request: {}, cluster: OnOffServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeOnOffServer: off called`);
     super.off();
   }
+
   override toggle(): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.toggle();
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Toggle device on/off (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('toggle', { request: {}, cluster: OnOffServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeOnOffServer: toggle called`);
     super.toggle();
   }
 }
 
 export class MatterbridgeLevelControlServer extends LevelControlServer {
-  override moveToLevel({ level, transitionTime, optionsMask, optionsOverride }: LevelControl.MoveToLevelRequest): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.moveToLevel({ level, transitionTime, optionsMask, optionsOverride });
+  override moveToLevel(request: LevelControl.MoveToLevelRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting level to ${request.level} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('moveToLevel', { request, cluster: LevelControlServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeLevelControlServer: moveToLevel called`);
-    super.moveToLevel({ level, transitionTime, optionsMask, optionsOverride });
+    super.moveToLevel(request);
   }
-  override moveToLevelWithOnOff({ level, transitionTime, optionsMask, optionsOverride }: LevelControl.MoveToLevelRequest): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.moveToLevelWithOnOff({ level, transitionTime, optionsMask, optionsOverride });
+
+  override moveToLevelWithOnOff(request: LevelControl.MoveToLevelRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting level to ${request.level} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('moveToLevelWithOnOff', { request, cluster: LevelControlServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeLevelControlServer: moveToLevelWithOnOff called`);
-    super.moveToLevelWithOnOff({ level, transitionTime, optionsMask, optionsOverride });
+    super.moveToLevelWithOnOff(request);
   }
 }
 
 export class MatterbridgeColorControlServer extends ColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.Xy, ColorControl.Feature.ColorTemperature) {
-  override moveToHue({ optionsMask, optionsOverride, hue, direction, transitionTime }: ColorControl.MoveToHueRequest): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.moveToHue({ optionsMask, optionsOverride, hue, direction, transitionTime });
+  override moveToHue(request: ColorControl.MoveToHueRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting hue to ${request.hue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('moveToHue', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeColorControlServer: moveToHue called`);
-    super.moveToHue({ optionsMask, optionsOverride, hue, direction, transitionTime });
+    super.moveToHue(request);
   }
-  override moveToSaturation({ optionsMask, optionsOverride, saturation, transitionTime }: ColorControl.MoveToSaturationRequest): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.moveToSaturation({ optionsMask, optionsOverride, saturation, transitionTime });
+
+  override moveToSaturation(request: ColorControl.MoveToSaturationRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('moveToSaturation', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeColorControlServer: moveToSaturation called`);
-    super.moveToSaturation({ optionsMask, optionsOverride, saturation, transitionTime });
+    super.moveToSaturation(request);
   }
-  override moveToHueAndSaturation({ optionsOverride, optionsMask, saturation, hue, transitionTime }: ColorControl.MoveToHueAndSaturationRequest): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.moveToHueAndSaturation({ optionsOverride, optionsMask, saturation, hue, transitionTime });
+
+  override moveToHueAndSaturation(request: ColorControl.MoveToHueAndSaturationRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting hue to ${request.hue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('moveToHueAndSaturation', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeColorControlServer: moveToHueAndSaturation called`);
-    super.moveToHueAndSaturation({ optionsOverride, optionsMask, saturation, hue, transitionTime });
+    super.moveToHueAndSaturation(request);
   }
-  override moveToColor({ optionsMask, optionsOverride, colorX, colorY, transitionTime }: ColorControl.MoveToColorRequest): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.moveToColor({ optionsMask, optionsOverride, colorX, colorY, transitionTime });
+
+  override moveToColor(request: ColorControl.MoveToColorRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting color to ${request.colorX}, ${request.colorY} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('moveToColor', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeColorControlServer: moveToColor called`);
-    super.moveToColor({ optionsMask, optionsOverride, colorX, colorY, transitionTime });
+    super.moveToColor(request);
   }
-  override moveToColorTemperature({ optionsOverride, optionsMask, colorTemperatureMireds, transitionTime }: ColorControl.MoveToColorTemperatureRequest): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.moveToColorTemperature({ optionsOverride, optionsMask, colorTemperatureMireds, transitionTime });
+
+  override moveToColorTemperature(request: ColorControl.MoveToColorTemperatureRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting color temperature to ${request.colorTemperatureMireds} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('moveToColorTemperature', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeColorControlServer: moveToColorTemperature called`);
-    super.moveToColorTemperature({ optionsOverride, optionsMask, colorTemperatureMireds, transitionTime });
+    super.moveToColorTemperature(request);
   }
 }
 
 export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift) {
   override upOrOpen(): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.upOrOpen();
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Opening cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler(`upOrOpen`, { request: {}, cluster: WindowCoveringServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeWindowCoveringServer: upOrOpen called`);
     super.upOrOpen();
   }
+
   override downOrClose(): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.downOrClose();
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Closing cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler(`downOrClose`, { request: {}, cluster: WindowCoveringServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeWindowCoveringServer: downOrClose called`);
     super.downOrClose();
   }
+
   override stopMotion(): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.stopMotion();
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Stopping cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('stopMotion', { request: {}, cluster: WindowCoveringServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeWindowCoveringServer: stopMotion called`);
     super.stopMotion();
   }
-  override goToLiftPercentage({ liftPercent100thsValue }: WindowCovering.GoToLiftPercentageRequest): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.goToLiftPercentage({ liftPercent100thsValue });
-    device.log.debug(`MatterbridgeWindowCoveringServer: goToLiftPercentage with ${liftPercent100thsValue}`);
-    super.goToLiftPercentage({ liftPercent100thsValue });
+
+  override goToLiftPercentage(request: WindowCovering.GoToLiftPercentageRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting cover lift percentage to ${request.liftPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('goToLiftPercentage', { request, cluster: WindowCoveringServer.id, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgeWindowCoveringServer: goToLiftPercentage with ${request.liftPercent100thsValue}`);
+    super.goToLiftPercentage(request);
   }
+
   override async handleMovement(type: MovementType, reversed: boolean, direction: MovementDirection, targetPercent100ths?: number) {
     // Do nothing here, as the device will handle the movement
   }
@@ -399,35 +227,45 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
 
 export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift, WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt) {
   override upOrOpen(): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.upOrOpen();
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Opening cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler(`upOrOpen`, { request: {}, cluster: WindowCoveringServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: upOrOpen called`);
     super.upOrOpen();
   }
+
   override downOrClose(): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.downOrClose();
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Closing cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler(`downOrClose`, { request: {}, cluster: WindowCoveringServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: downOrClose called`);
     super.downOrClose();
   }
+
   override stopMotion(): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.stopMotion();
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Stopping cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('stopMotion', { request: {}, cluster: WindowCoveringServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: stopMotion called`);
     super.stopMotion();
   }
-  override goToLiftPercentage({ liftPercent100thsValue }: WindowCovering.GoToLiftPercentageRequest): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.goToLiftPercentage({ liftPercent100thsValue });
-    device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: goToLiftPercentage with ${liftPercent100thsValue}`);
-    super.goToLiftPercentage({ liftPercent100thsValue });
+
+  override goToLiftPercentage(request: WindowCovering.GoToLiftPercentageRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting cover lift percentage to ${request.liftPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('goToLiftPercentage', { request, cluster: WindowCoveringServer.id, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: goToLiftPercentage with ${request.liftPercent100thsValue}`);
+    super.goToLiftPercentage(request);
   }
-  override goToTiltPercentage({ tiltPercent100thsValue }: WindowCovering.GoToTiltPercentageRequest): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.goToTiltPercentage({ tiltPercent100thsValue });
-    device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: goToTiltPercentage with ${tiltPercent100thsValue}`);
-    super.goToTiltPercentage({ tiltPercent100thsValue });
+
+  override goToTiltPercentage(request: WindowCovering.GoToTiltPercentageRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting cover tilt percentage to ${request.tiltPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('goToTiltPercentage', { request, cluster: WindowCoveringServer.id, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: goToTiltPercentage with ${request.tiltPercent100thsValue}`);
+    super.goToTiltPercentage(request);
   }
+
   override async handleMovement(type: MovementType, reversed: boolean, direction: MovementDirection, targetPercent100ths?: number) {
     // Do nothing here, as the device will handle the movement
   }
@@ -435,96 +273,107 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
 
 export class MatterbridgeDoorLockServer extends DoorLockServer {
   override lockDoor(): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.lockDoor();
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Locking door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('lockDoor', { request: {}, cluster: DoorLockServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeDoorLockServer: lockDoor called`);
     super.lockDoor();
   }
+
   override unlockDoor(): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.unlockDoor();
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Unlocking door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('unlockDoor', { request: {}, cluster: DoorLockServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeDoorLockServer: unlockDoor called`);
     super.unlockDoor();
   }
 }
 
-export class MatterbridgeModeSelectServer extends ModeSelectServer {
-  override changeToMode({ newMode }: ModeSelect.ChangeToModeRequest): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.changeToMode({ newMode });
-    device.log.debug(`MatterbridgeModeSelectServer: changeToMode called with mode: ${newMode}`);
-    super.changeToMode({ newMode });
-  }
-}
-
-export class MatterbridgeFanControlServer extends FanControlServer.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step) {
-  override step({ direction, wrap, lowestOff }: FanControl.StepRequest): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.step({ direction, wrap, lowestOff });
+export class MatterbridgeFanControlServer extends FanControlServer.with(FanControl.Feature.Auto, FanControl.Feature.Step) {
+  override step(request: FanControl.StepRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Stepping fan with direction ${request.direction} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('step', { request, cluster: FanControlServer.id, attributes: this.state, endpoint: this.endpoint });
 
     const lookupStepDirection = ['Increase', 'Decrease'];
-    device.log.debug(`MatterbridgeFanControlServer: step called with direction: ${lookupStepDirection[direction]} wrap: ${wrap} lowestOff: ${lowestOff}`);
+    device.log.debug(`MatterbridgeFanControlServer: step called with direction: ${lookupStepDirection[request.direction]} wrap: ${request.wrap} lowestOff: ${request.lowestOff}`);
     device.log.debug(`- current percentCurrent: ${this.state.percentCurrent}`);
 
-    if (direction === FanControl.StepDirection.Increase) {
-      if (wrap && this.state.percentCurrent === 100) {
-        this.state.percentCurrent = lowestOff ? 0 : 10;
+    if (request.direction === FanControl.StepDirection.Increase) {
+      if (request.wrap && this.state.percentCurrent === 100) {
+        this.state.percentCurrent = request.lowestOff ? 0 : 10;
       } else this.state.percentCurrent = Math.min(this.state.percentCurrent + 10, 100);
-    } else if (direction === FanControl.StepDirection.Decrease) {
-      if (wrap && this.state.percentCurrent === (lowestOff ? 0 : 10)) {
+    } else if (request.direction === FanControl.StepDirection.Decrease) {
+      if (request.wrap && this.state.percentCurrent === (request.lowestOff ? 0 : 10)) {
         this.state.percentCurrent = 100;
-      } else this.state.percentCurrent = Math.max(this.state.percentCurrent - 10, lowestOff ? 0 : 10);
+      } else this.state.percentCurrent = Math.max(this.state.percentCurrent - 10, request.lowestOff ? 0 : 10);
     }
     device.log.debug('Set percentCurrent to:', this.state.percentCurrent);
 
     // step is not implemented in matter.js
-    // super.step();
+    // super.step(request);
   }
 }
 
 export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermostat.Feature.Cooling, Thermostat.Feature.Heating, Thermostat.Feature.AutoMode) {
-  override setpointRaiseLower({ mode, amount }: Thermostat.SetpointRaiseLowerRequest): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.setpointRaiseLower({ mode, amount });
+  override setpointRaiseLower(request: Thermostat.SetpointRaiseLowerRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Setting setpoint by ${request.amount} in mode ${request.mode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('setpointRaiseLower', { request, cluster: ThermostatServer.id, attributes: this.state, endpoint: this.endpoint });
 
     const lookupSetpointAdjustMode = ['Heat', 'Cool', 'Both'];
-    device.log.debug(`MatterbridgeThermostatServer: setpointRaiseLower called with mode: ${lookupSetpointAdjustMode[mode]} amount: ${amount / 10}`);
-    device.log.debug(`- current occupiedHeatingSetpoint: ${this.state.occupiedHeatingSetpoint / 100}`);
-    device.log.debug(`- current occupiedCoolingSetpoint: ${this.state.occupiedCoolingSetpoint / 100}`);
+    device.log.debug(`MatterbridgeThermostatServer: setpointRaiseLower called with mode: ${lookupSetpointAdjustMode[request.mode]} amount: ${request.amount / 10}`);
+    if (this.state.occupiedHeatingSetpoint !== undefined) device.log.debug(`- current occupiedHeatingSetpoint: ${this.state.occupiedHeatingSetpoint / 100}`);
+    if (this.state.occupiedCoolingSetpoint !== undefined) device.log.debug(`- current occupiedCoolingSetpoint: ${this.state.occupiedCoolingSetpoint / 100}`);
 
-    if ((mode === Thermostat.SetpointRaiseLowerMode.Heat || mode === Thermostat.SetpointRaiseLowerMode.Both) && this.state.occupiedHeatingSetpoint !== undefined) {
-      const setpoint = this.state.occupiedHeatingSetpoint / 100 + amount / 10;
+    if ((request.mode === Thermostat.SetpointRaiseLowerMode.Heat || request.mode === Thermostat.SetpointRaiseLowerMode.Both) && this.state.occupiedHeatingSetpoint !== undefined) {
+      const setpoint = this.state.occupiedHeatingSetpoint / 100 + request.amount / 10;
       this.state.occupiedHeatingSetpoint = setpoint * 100;
       device.log.debug(`Set occupiedHeatingSetpoint to ${setpoint}`);
     }
 
-    if ((mode === Thermostat.SetpointRaiseLowerMode.Cool || mode === Thermostat.SetpointRaiseLowerMode.Both) && this.state.occupiedCoolingSetpoint !== undefined) {
-      const setpoint = this.state.occupiedCoolingSetpoint / 100 + amount / 10;
+    if ((request.mode === Thermostat.SetpointRaiseLowerMode.Cool || request.mode === Thermostat.SetpointRaiseLowerMode.Both) && this.state.occupiedCoolingSetpoint !== undefined) {
+      const setpoint = this.state.occupiedCoolingSetpoint / 100 + request.amount / 10;
       this.state.occupiedCoolingSetpoint = setpoint * 100;
       device.log.debug(`Set occupiedCoolingSetpoint to ${setpoint}`);
     }
+
     // setpointRaiseLower is not implemented in matter.js
-    // super.setpointRaiseLower();
+    // super.setpointRaiseLower(request);
   }
 }
 
 export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigurationAndControlServer.with(ValveConfigurationAndControl.Feature.Level) {
-  override open({ openDuration, targetLevel }: ValveConfigurationAndControl.OpenRequest): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
-    device.log.debug(`MatterbridgeValveConfigurationAndControlServer: open called with openDuration: ${openDuration} targetLevel: ${targetLevel}`);
-    device.open({ openDuration, targetLevel });
-    this.state.targetLevel = targetLevel ?? 100;
-    this.state.currentLevel = targetLevel ?? 100;
+  override open(request: ValveConfigurationAndControl.OpenRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `Opening valve to ${request.targetLevel ? request.targetLevel + '%' : 'fully opened'} ${request.openDuration ? 'for ' + request.openDuration + 's' : 'until closed'} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    device.commandHandler.executeHandler('open', { request, cluster: ValveConfigurationAndControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgeValveConfigurationAndControlServer: open called with openDuration: ${request.openDuration} targetLevel: ${request.targetLevel}`);
+    this.state.targetState = ValveConfigurationAndControl.ValveState.Open;
+    this.state.currentState = ValveConfigurationAndControl.ValveState.Open;
+    this.state.targetLevel = request.targetLevel ?? 100;
+    this.state.currentLevel = request.targetLevel ?? 100;
+    this.state.openDuration = request.openDuration ?? this.state.defaultOpenDuration;
+    if (this.state.openDuration === null) this.state.remainingDuration = null;
+
     // open is not implemented in matter.js
-    // super.open();
+    // super.open(request);
   }
 
   override close(): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Closing valve (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('close', { request: {}, cluster: ValveConfigurationAndControlServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeValveConfigurationAndControlServer: close called`);
-    device.close();
+    this.state.targetState = ValveConfigurationAndControl.ValveState.Closed;
+    this.state.currentState = ValveConfigurationAndControl.ValveState.Closed;
     this.state.targetLevel = 0;
     this.state.currentLevel = 0;
+    this.state.openDuration = null;
+    this.state.remainingDuration = null;
+
     // close is not implemented in matter.js
     // super.close();
   }
@@ -532,81 +381,94 @@ export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigu
 
 export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm) {
   override selfTestRequest(): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Testing SmokeCOAlarm (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('selfTestRequest', { request: {}, cluster: SmokeCoAlarmServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeSmokeCoAlarmServer: selfTestRequest called`);
-    device.selfTestRequest();
+
     // selfTestRequest is not implemented in matter.js
     // super.selfTestRequest();
   }
 }
 
 export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateConfigurationServer.with(BooleanStateConfiguration.Feature.Visual, BooleanStateConfiguration.Feature.Audible, BooleanStateConfiguration.Feature.SensitivityLevel) {
-  override enableDisableAlarm({ alarmsToEnableDisable }: BooleanStateConfiguration.EnableDisableAlarmRequest): MaybePromise {
-    const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
+  override enableDisableAlarm(request: BooleanStateConfiguration.EnableDisableAlarmRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Enabling/disabling alarm ${request.alarmsToEnableDisable} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('enableDisableAlarm', { request, cluster: BooleanStateConfigurationServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeBooleanStateConfigurationServer: enableDisableAlarm called`);
-    device.enableDisableAlarm({ alarmsToEnableDisable });
+
     // enableDisableAlarm is not implemented in matter.js
-    // super.enableDisableAlarm({ alarmsToEnableDisable });
+    // super.enableDisableAlarm(request);
   }
 }
 
 export class MatterbridgeSwitchServer extends SwitchServer {
   override initialize() {
-    // Do nothing here, as the device will handle the switch logic: we need to convert something like "single" into the oppropriate states and events sequences
+    // Do nothing here, as the device will handle the switch logic: we need to convert something like "single" into the appropriate sequence of state changes and events
   }
 }
 
 export class MatterbridgeOperationalStateServer extends OperationalStateServer {
   override initialize(): MaybePromise {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.debug('MatterbridgeOperationalStateServer initialized: setting operational state to Stopped');
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
+    super.initialize(); // Error handling logic is handled in matter.js
   }
 
   override pause(): MaybePromise<OperationalState.OperationalCommandResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Pause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('pause', { request: {}, cluster: OperationalStateServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug('MatterbridgeOperationalStateServer: pause called setting operational state to Paused');
-    device.pause();
     this.state.operationalState = OperationalState.OperationalStateEnum.Paused;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
     // pause is not implemented in matter.js
+    // return super.pause();
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
     };
   }
 
   override stop(): MaybePromise<OperationalState.OperationalCommandResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Stop (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('stop', { request: {}, cluster: OperationalStateServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug('MatterbridgeOperationalStateServer: stop called setting operational state to Stopped');
-    device.stop();
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
     // stop is not implemented in matter.js
+    // return super.stop();
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
     };
   }
 
   override start(): MaybePromise<OperationalState.OperationalCommandResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Start (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('start', { request: {}, cluster: OperationalStateServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug('MatterbridgeOperationalStateServer: start called setting operational state to Running');
-    device.start();
     this.state.operationalState = OperationalState.OperationalStateEnum.Running;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
     // start is not implemented in matter.js
+    // return super.start();
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
     };
   }
 
   override resume(): MaybePromise<OperationalState.OperationalCommandResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Resume (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('resume', { request: {}, cluster: OperationalStateServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug('MatterbridgeOperationalStateServer: resume called setting operational state to Running');
-    device.resume();
     this.state.operationalState = OperationalState.OperationalStateEnum.Running;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' };
     // resume is not implemented in matter.js
+    // return super.resume();
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateLabel: 'No error', errorStateDetails: 'Fully operational' },
     };
@@ -614,33 +476,47 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
 }
 
 export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
-  override selectAreas({ newAreas }: ServiceArea.SelectAreasRequest): MaybePromise<ServiceArea.SelectAreasResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    for (const area of newAreas) {
+  override selectAreas(request: ServiceArea.SelectAreasRequest): MaybePromise<ServiceArea.SelectAreasResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Selecting areas ${request.newAreas} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('selectAreas', { request, cluster: ServiceAreaServer.id, attributes: this.state, endpoint: this.endpoint });
+    for (const area of request.newAreas) {
       const supportedArea = this.state.supportedAreas.find((supportedArea) => supportedArea.areaId === area);
       if (!supportedArea) {
         device.log.error(`MatterbridgeServiceAreaServer selectAreas called with unsupported area: ${area}`);
         return { status: ServiceArea.SelectAreasStatus.UnsupportedArea, statusText: 'Unsupported areas' };
       }
     }
-    device.selectAreas({ newAreas });
-    this.state.selectedAreas = newAreas;
-    device.log.info(`MatterbridgeServiceAreaServer selectAreas called with: ${newAreas.map((area) => area.toString()).join(', ')}`);
-    return { status: ServiceArea.SelectAreasStatus.Success, statusText: 'Succesfully selected new areas' };
+    this.state.selectedAreas = request.newAreas;
+    device.log.debug(`MatterbridgeServiceAreaServer selectAreas called with: ${request.newAreas.map((area) => area.toString()).join(', ')}`);
+    return super.selectAreas(request);
+    // return { status: ServiceArea.SelectAreasStatus.Success, statusText: 'Succesfully selected new areas' };
+  }
+}
+
+export class MatterbridgeModeSelectServer extends ModeSelectServer {
+  override changeToMode(request: ModeSelect.ChangeToModeRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('changeToMode', { request, cluster: ModeSelectServer.id, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgeModeSelectServer: changeToMode called with mode: ${request.newMode}`);
+    super.changeToMode(request);
   }
 }
 
 export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyManagementModeServer {
-  override changeToMode({ newMode }: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    const supported = this.state.supportedModes.find((mode) => mode.mode === newMode);
+  override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('changeToMode', { request, cluster: DeviceEnergyManagementModeServer.id, attributes: this.state, endpoint: this.endpoint });
+    const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
     if (!supported) {
-      device.log.error(`MatterbridgeDeviceEnergyManagementModeServer changeToMode called with unsupported newMode: ${newMode}`);
+      device.log.error(`MatterbridgeDeviceEnergyManagementModeServer changeToMode called with unsupported newMode: ${request.newMode}`);
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
     }
-    device.changeToMode({ newMode });
-    this.state.currentMode = newMode;
-    device.log.info(`MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode ${newMode} => ${supported.label}`);
-    return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
+    this.state.currentMode = request.newMode;
+    device.log.debug(`MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode ${request.newMode} => ${supported.label}`);
+    return super.changeToMode(request);
+    // return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }

@@ -12,7 +12,7 @@ import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, YELLOW } from 'node-ansi-logger
 
 import { Matterbridge } from './matterbridge.js';
 import { MockMatterbridge } from './mock/mockMatterbridge.js';
-import { Session } from 'node:inspector';
+import { HeapProfiler, InspectorNotification, Session } from 'node:inspector';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -40,12 +40,12 @@ if (!debug) {
 
 const loadInstance = jest.spyOn(Matterbridge, 'loadInstance').mockImplementation(async (_initialize?: boolean) => {
   console.log('mockImplementation of Matterbridge.loadInstance() called');
-  return MockMatterbridge.loadInstance() as unknown as Matterbridge;
+  return MockMatterbridge.loadInstance() as unknown as Matterbridge; // Simulate a successful load by returning an instance of MockMatterbridge
 });
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   console.log('mockImplementation of process.exit() called');
-  return undefined as never;
+  return undefined as never; // Prevent actual exit during tests
 });
 
 const postSpy = jest.spyOn(Session.prototype, 'post').mockImplementation((method, callback?: (err: Error | null, params?: object) => void) => {
@@ -60,10 +60,6 @@ describe('Matterbridge', () => {
   let cliEmitter;
   let matterbridge: Matterbridge;
 
-  beforeAll(async () => {
-    //
-  });
-
   beforeEach(async () => {
     // Clear all mocks before each test
     jest.clearAllMocks();
@@ -73,8 +69,6 @@ describe('Matterbridge', () => {
     // Restore all mocks
     jest.restoreAllMocks();
   });
-
-  // const nodeMajorVersion = parseInt(process.versions.node.split('.')[0]);
 
   it('should start matterbridge', async () => {
     jest.useFakeTimers();
@@ -131,6 +125,31 @@ describe('Matterbridge', () => {
     jest.advanceTimersByTime(10 * 1000); // Fast-forward time by 10 seconds
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***${YELLOW}${BRIGHT}Cpu usage:`));
 
+    // Simulate different uptime values
+    jest.clearAllMocks();
+    jest.spyOn(os, 'uptime').mockImplementationOnce(() => {
+      console.log('mockImplementation of os.uptime() called');
+      return 90000;
+    });
+    jest.spyOn(process, 'uptime').mockImplementationOnce(() => {
+      console.log('mockImplementation of process.uptime() called');
+      return 90000;
+    });
+    jest.advanceTimersByTime(10 * 1000); // Fast-forward time by 10 seconds
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***${YELLOW}${BRIGHT}Cpu usage:`));
+
+    jest.clearAllMocks();
+    jest.spyOn(os, 'uptime').mockImplementationOnce(() => {
+      console.log('mockImplementation of os.uptime() called');
+      return 4000;
+    });
+    jest.spyOn(process, 'uptime').mockImplementationOnce(() => {
+      console.log('mockImplementation of process.uptime() called');
+      return 4000;
+    });
+    jest.advanceTimersByTime(10 * 1000); // Fast-forward time by 10 seconds
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***${YELLOW}${BRIGHT}Cpu usage:`));
+
     jest.clearAllMocks();
     jest.spyOn(os, 'uptime').mockImplementationOnce(() => {
       console.log('mockImplementation of os.uptime() called');
@@ -143,6 +162,7 @@ describe('Matterbridge', () => {
     jest.advanceTimersByTime(10 * 1000); // Fast-forward time by 10 seconds
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***${YELLOW}${BRIGHT}Cpu usage:`));
 
+    // Simulate a failure in os.cpus()
     jest.clearAllMocks();
     jest.spyOn(os, 'cpus').mockImplementationOnce(() => {
       console.log('mockImplementation of os.cpus() called');
@@ -215,6 +235,30 @@ describe('Matterbridge', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('***Started heap sampling'));
   }, 60000);
 
+  it('should call takeHeapSnapshot', async () => {
+    const onSpy = jest.spyOn(Session.prototype, 'on').mockImplementationOnce(((event: 'HeapProfiler.addHeapSnapshotChunk', listener?: (message: InspectorNotification<HeapProfiler.AddHeapSnapshotChunkEventDataType>) => void) => {
+      console.log(`mockImplementation of Session.on() called with event: ${event}`);
+      if (typeof listener === 'function') {
+        console.log(`mockImplementation of Session.on() listener called with null`);
+        listener({ params: { chunk: 'chunk' } } as InspectorNotification<HeapProfiler.AddHeapSnapshotChunkEventDataType>); // call listener with no error
+      }
+    }) as any);
+
+    const postSpy = jest.spyOn(Session.prototype, 'post').mockImplementationOnce((method, callback?: (err: Error | null, params?: object) => void) => {
+      console.log(`mockImplementation of Session.post() called with method: ${method}`);
+      if (typeof callback === 'function') {
+        console.log(`mockImplementation of Session.post() callback called with null`);
+        callback(new Error('post throw an error')); // call callback with error
+      }
+    });
+
+    matterbridge.emit('takeheapsnapshot');
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(onSpy).toHaveBeenCalledWith('HeapProfiler.addHeapSnapshotChunk', expect.any(Function));
+    expect(postSpy).toHaveBeenCalledWith('HeapProfiler.takeHeapSnapshot', expect.any(Function));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Taking heap snapshot...'));
+  }, 60000);
+
   it('should stop inspector', async () => {
     matterbridge.emit('stopinspector');
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -227,15 +271,7 @@ describe('Matterbridge', () => {
   it('should not stop inspector', async () => {
     matterbridge.emit('startinspector');
     await new Promise((resolve) => setTimeout(resolve, 100));
-    /*
-    postSpy.mockImplementationOnce((method, callback) => {
-      console.log(`mockImplementation of Session.post() called with method: ${method}`);
-      if (typeof callback === 'function') {
-        console.log(`mockImplementation of Session.post() callback called with error`);
-        callback(new Error('post throw an error')); // call callback with an error
-      }
-    });
-    */
+
     jest.spyOn(JSON, 'stringify').mockImplementationOnce(() => {
       console.log('mockImplementation of JSON.stringify() called');
       throw new Error('stringify throw an error');
@@ -246,6 +282,26 @@ describe('Matterbridge', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Stopping heap sampling...');
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('***No active inspector session.'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('***Failed to stop heap sampling'));
+  }, 60000);
+
+  it('should call global.gc', async () => {
+    const savedGc = global.gc; // Save the original global.gc function
+    global.gc = jest.fn() as any; // Mock global.gc function
+    matterbridge.emit('triggergarbagecollection');
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Manual garbage collection triggered via global.gc().'));
+    expect(global.gc).toHaveBeenCalled();
+    global.gc = savedGc; // Restore the original global.gc function
+  }, 60000);
+
+  it('should not call global.gc', async () => {
+    const savedGc = global.gc; // Save the original global.gc function
+    global.gc = undefined; // Ensure global.gc is not defined
+    matterbridge.emit('triggergarbagecollection');
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Garbage collection is not exposed.'));
+    expect(global.gc).toBeUndefined(); // Ensure global.gc is still undefined
+    global.gc = savedGc; // Restore the original global.gc function
   }, 60000);
 
   it('should restart matterbridge', async () => {

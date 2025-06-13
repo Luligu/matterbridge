@@ -4,7 +4,7 @@
  * @file copyDirectory.ts
  * @author Luca Liguori
  * @date 2025-02-16
- * @version 1.0.0
+ * @version 1.0.1
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -33,6 +33,21 @@ import { AnsiLogger, LogLevel, TimestampFormat } from '../logger/export.js';
  * @throws {Error} - Throws an error if the copy operation fails.
  */
 export async function copyDirectory(srcDir: string, destDir: string): Promise<boolean> {
+  if (srcDir === '') {
+    throw new Error('Source directory must be specified.');
+  }
+  if (destDir === '') {
+    throw new Error('Destination directory must be specified.');
+  }
+  if (!srcDir) {
+    throw new Error('Source directory must be specified.');
+  }
+  if (!destDir) {
+    throw new Error('Destination directory must be specified.');
+  }
+  if (srcDir === destDir) {
+    throw new Error('Source and destination directories must be different.');
+  }
   const log = new AnsiLogger({ logName: 'Archive', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
 
   const fs = await import('node:fs').then((mod) => mod.promises);

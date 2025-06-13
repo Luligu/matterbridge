@@ -32,6 +32,7 @@ process.argv = [
 import { jest } from '@jest/globals';
 import path from 'node:path';
 import { Environment } from '@matter/main';
+import { BasicInformationServer } from '@matter/main/behaviors';
 import { AnsiLogger, db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
@@ -39,6 +40,8 @@ import { waiter } from './utils/export.js';
 import { PluginManager } from './pluginManager.js';
 import { rmSync } from 'node:fs';
 import { dev, plg } from './matterbridgeTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { pressureSensor } from './matterbridgeDeviceTypes.js';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   console.log('mockImplementation of process.exit() called');
@@ -155,6 +158,56 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval in childbridge mode`);
   }, 60000);
 
+  test('addBridgedEndpoint with invalid plugin', async () => {
+    await matterbridge.addBridgedEndpoint('invalid-plugin', {} as any);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error adding bridged endpoint`));
+  });
+
+  test('removeBridgedEndpoint with invalid plugin', async () => {
+    await matterbridge.removeBridgedEndpoint('invalid-plugin', {} as any);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error removing bridged endpoint`));
+  });
+
+  test('addBridgedEndpoint twice for AccessoryPlatform', async () => {
+    expect(await plugins.add('./src/mock/plugin4')).not.toBeNull();
+    const plugin = plugins.get('matterbridge-mock4');
+    expect(plugin).toBeDefined();
+    if (!plugin) return;
+    plugin.type = 'AccessoryPlatform';
+    plugin.serverNode = {} as any;
+    await matterbridge.addBridgedEndpoint('matterbridge-mock4', new MatterbridgeEndpoint(pressureSensor, { uniqueStorageKey: 'invalidDevice' }));
+    expect(await plugins.remove('./src/mock/plugin4')).not.toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Only one device is allowed per AccessoryPlatform plugin.`));
+  });
+
+  test('addBridgedEndpoint fails adding for AccessoryPlatform', async () => {
+    expect(await plugins.add('./src/mock/plugin4')).not.toBeNull();
+    const plugin = plugins.get('matterbridge-mock4');
+    expect(plugin).toBeDefined();
+    if (!plugin) return;
+    plugin.type = 'AccessoryPlatform';
+    jest.spyOn(Matterbridge.prototype, 'createAccessoryPlugin' as any).mockImplementationOnce(async () => {
+      throw new Error('Error creating endpoint');
+    });
+    await matterbridge.addBridgedEndpoint('matterbridge-mock4', {} as any);
+    expect(await plugins.remove('./src/mock/plugin4')).not.toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error creating endpoint`));
+  });
+
+  test('addBridgedEndpoint fails adding for DynamicPlatform', async () => {
+    expect(await plugins.add('./src/mock/plugin1')).not.toBeNull();
+    const plugin = plugins.get('matterbridge-mock1');
+    expect(plugin).toBeDefined();
+    if (!plugin) return;
+    plugin.type = 'DynamicPlatform';
+    jest.spyOn(Matterbridge.prototype, 'createDynamicPlugin' as any).mockImplementationOnce(async () => {
+      throw new Error('Error creating endpoint');
+    });
+    await matterbridge.addBridgedEndpoint('matterbridge-mock1', {} as any);
+    expect(await plugins.remove('./src/mock/plugin1')).not.toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error adding bridged endpoint`));
+  });
+
   test('add plugin', async () => {
     expect(plugins.length).toBe(0);
     expect(await plugins.add('./src/mock/plugin1')).not.toBeNull();
@@ -208,6 +261,28 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(plugins.get('matterbridge-mock4')?.type).toBe('AccessoryPlatform');
   }, 60000);
 
+  test('addBridgedEndpoint fails adding for DynamicPlatform cause aggregatorNode', async () => {
+    const plugin = plugins.get('matterbridge-mock1');
+    expect(plugin).toBeDefined();
+    if (!plugin) return;
+    const aggregatorNode = plugin.aggregatorNode;
+    plugin.aggregatorNode = undefined;
+    await matterbridge.addBridgedEndpoint('matterbridge-mock1', {} as any);
+    plugin.aggregatorNode = aggregatorNode;
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Aggregator node not found for plugin`));
+  });
+
+  test('removeBridgedEndpoint fails removing for DynamicPlatform cause aggregatorNode', async () => {
+    const plugin = plugins.get('matterbridge-mock1');
+    expect(plugin).toBeDefined();
+    if (!plugin) return;
+    const aggregatorNode = plugin.aggregatorNode;
+    plugin.aggregatorNode = undefined;
+    await matterbridge.removeBridgedEndpoint('matterbridge-mock1', {} as any);
+    plugin.aggregatorNode = aggregatorNode;
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`aggregator node not found`));
+  });
+
   test('Matterbridge.destroyInstance() -childbridge mode', async () => {
     expect(matterbridge.bridgeMode).toBe('childbridge');
     let i = 1;
@@ -258,6 +333,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       100,
       true,
     );
+    await Promise.resolve();
 
     await waiter(
       'Matter servers online',
@@ -274,6 +350,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       100,
       true,
     );
+    await Promise.resolve();
 
     for (const plugin of plugins) {
       expect(plugin.serverNode).toBeDefined();
@@ -306,6 +383,26 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       expect(pairing).toBeDefined();
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Started advertising for ${plugin.name}`));
     }
+  });
+
+  test('set reachable -bridge mode', async () => {
+    for (const plugin of matterbridge.plugins.array()) {
+      expect(plugin).toBeDefined();
+      plugin.serverNode?.setStateOf(BasicInformationServer, { reachable: false });
+    }
+  }, 60000);
+
+  test('startEndAdvertiseTimer', async () => {
+    expect((matterbridge as any).endAdvertiseTimeout).toBeDefined();
+
+    jest.useFakeTimers();
+    (matterbridge as any).startEndAdvertiseTimer(plugins.array()[0].serverNode);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***Clear ${plugins.array()[0].serverNode?.id} server node end advertise timer`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***Starting ${plugins.array()[0].serverNode?.id} server node end advertise timer`));
+    jest.advanceTimersByTime(15 * 60 * 1000); // Advance time by 15 minutes
+    jest.useRealTimers();
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Advertising on server node for ${plugins.array()[0].serverNode?.id} stopped. Restart to commission.`));
   });
 
   test('remove all devices', async () => {

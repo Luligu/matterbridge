@@ -5,7 +5,7 @@
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @date 2025-05-27
- * @version 1.0.0
+ * @version 1.1.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -27,6 +27,7 @@ import { MaybePromise } from '@matter/main';
 import { EnergyEvseServer } from '@matter/main/behaviors/energy-evse';
 import { EnergyEvseModeServer } from '@matter/main/behaviors/energy-evse-mode';
 import { EnergyEvse, EnergyEvseMode } from '@matter/main/clusters';
+import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
 import { ModeBase } from '@matter/main/clusters/mode-base';
 
 // Matterbridge
@@ -40,11 +41,25 @@ export class Evse extends MatterbridgeEndpoint {
    *
    * @param {string} name - The name of the EVSE.
    * @param {string} serial - The serial number of the EVSE.
+   * @param {number} [currentMode] - The current mode of the EnergyEvseMode cluster. Defaults to mode 1 (EnergyEvseMode.ModeTag.Manual).
+   * @param {EnergyEvseMode.ModeOption[]} [supportedModes] - The supported modes for the EnergyEvseMode cluster. This is a fixed attribute that defaults to a predefined set of EnergyEvseMode cluster modes.
    * @param {EnergyEvse.State} [state] - The current state of the EVSE. Defaults to NotPluggedIn.
    * @param {EnergyEvse.SupplyState} [supplyState] - The supply state of the EVSE. Defaults to Disabled.
    * @param {EnergyEvse.FaultState} [faultState] - The fault state of the EVSE. Defaults to NoError.
+   * @param {number} [absMinPower=0] - Indicate the minimum electrical power that the ESA can consume when switched on. Defaults to `0` if not provided.
+   * @param {number} [absMaxPower=0] - Indicate the maximum electrical power that the ESA can consume when switched on. Defaults to `0` if not provided.
    */
-  constructor(name: string, serial: string, currentMode?: number, supportedModes?: EnergyEvseMode.ModeOption[], state?: EnergyEvse.State, supplyState?: EnergyEvse.SupplyState, faultState?: EnergyEvse.FaultState) {
+  constructor(
+    name: string,
+    serial: string,
+    currentMode?: number,
+    supportedModes?: EnergyEvseMode.ModeOption[],
+    state?: EnergyEvse.State,
+    supplyState?: EnergyEvse.SupplyState,
+    faultState?: EnergyEvse.FaultState,
+    absMinPower?: number,
+    absMaxPower?: number,
+  ) {
     super([evse, powerSource, electricalSensor, deviceEnergyManagement], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge EVSE')
@@ -52,7 +67,7 @@ export class Evse extends MatterbridgeEndpoint {
       .createDefaultPowerTopologyClusterServer()
       .createDefaultElectricalPowerMeasurementClusterServer()
       .createDefaultElectricalEnergyMeasurementClusterServer()
-      .createDefaultDeviceEnergyManagementCluster()
+      .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.Evse, false, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
       .createDefaultEnergyEvseClusterServer(state, supplyState, faultState)
       .createDefaultEnergyEvseModeClusterServer(currentMode, supportedModes)
       .addRequiredClusterServers();
@@ -65,7 +80,7 @@ export class Evse extends MatterbridgeEndpoint {
   createDefaultEnergyEvseClusterServer(state?: EnergyEvse.State, supplyState?: EnergyEvse.SupplyState, faultState?: EnergyEvse.FaultState): this {
     this.behaviors.require(MatterbridgeEnergyEvseServer, {
       state: state ?? EnergyEvse.State.NotPluggedIn,
-      supplyState: supplyState ?? EnergyEvse.SupplyState.Disabled,
+      supplyState: supplyState ?? EnergyEvse.SupplyState.ChargingEnabled,
       faultState: faultState ?? EnergyEvse.FaultState.NoError,
       chargingEnabledUntil: 0, // Persistent attribute
       circuitCapacity: 0, // Persistent attribute in mA
@@ -89,10 +104,10 @@ export class Evse extends MatterbridgeEndpoint {
   createDefaultEnergyEvseModeClusterServer(currentMode?: number, supportedModes?: EnergyEvseMode.ModeOption[]): this {
     this.behaviors.require(MatterbridgeEnergyEvseModeServer, {
       supportedModes: supportedModes ?? [
-        { label: 'Manual', mode: 1, modeTags: [{ value: EnergyEvseMode.ModeTag.Manual }] },
-        { label: 'TimeOfUse', mode: 2, modeTags: [{ value: EnergyEvseMode.ModeTag.TimeOfUse }] },
-        { label: 'SolarCharging', mode: 3, modeTags: [{ value: EnergyEvseMode.ModeTag.SolarCharging }] },
-        { label: 'Home-to-vehicle and Vehicle-to-home', mode: 4, modeTags: [{ value: EnergyEvseMode.ModeTag.V2X }] },
+        { label: 'On demand', mode: 1, modeTags: [{ value: EnergyEvseMode.ModeTag.Manual }] },
+        { label: 'Scheduled', mode: 2, modeTags: [{ value: EnergyEvseMode.ModeTag.TimeOfUse }] },
+        { label: 'Solar charging', mode: 3, modeTags: [{ value: EnergyEvseMode.ModeTag.SolarCharging }] },
+        // { label: 'Home to vehicle and Vehicle to home', mode: 4, modeTags: [{ value: EnergyEvseMode.ModeTag.V2X }] }, // This mode is not valid in charging only EVSEs
       ], // FixedAttribute
       currentMode: currentMode ?? 1, // Persistent attribute
     });
@@ -102,9 +117,10 @@ export class Evse extends MatterbridgeEndpoint {
 
 export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
   override disable(): MaybePromise {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    device.disable();
-    device.log.info(`MatterbridgeEnergyEvseServer disable called`);
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Disable charging (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('disable', { request: {}, cluster: EnergyEvseServer.id, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgeEnergyEvseServer disable called`);
     this.state.supplyState = EnergyEvse.SupplyState.Disabled;
     if (this.state.state === EnergyEvse.State.PluggedInCharging) {
       this.state.state = EnergyEvse.State.PluggedInDemand;
@@ -113,17 +129,18 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
     // super.disable();
     // disable is not implemented in matter.js
   }
-  override enableCharging({ chargingEnabledUntil, minimumChargeCurrent, maximumChargeCurrent }: EnergyEvse.EnableChargingRequest): MaybePromise {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    device.enableCharging();
-    device.log.info(`MatterbridgeEnergyEvseServer enableCharging called`);
+  override enableCharging(request: EnergyEvse.EnableChargingRequest): MaybePromise {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`EnableCharging (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('enableCharging', { request, cluster: EnergyEvseServer.id, attributes: this.state, endpoint: this.endpoint });
+    device.log.debug(`MatterbridgeEnergyEvseServer enableCharging called`);
     this.state.supplyState = EnergyEvse.SupplyState.ChargingEnabled;
     if (this.state.state === EnergyEvse.State.PluggedInDemand) {
       this.state.state = EnergyEvse.State.PluggedInCharging;
     }
-    this.state.chargingEnabledUntil = chargingEnabledUntil;
-    this.state.minimumChargeCurrent = minimumChargeCurrent;
-    this.state.maximumChargeCurrent = maximumChargeCurrent;
+    this.state.chargingEnabledUntil = request.chargingEnabledUntil;
+    this.state.minimumChargeCurrent = request.minimumChargeCurrent;
+    this.state.maximumChargeCurrent = request.maximumChargeCurrent;
     // The implementation should also stop the charging session at the required time and update the sessionId, sessionDuration, and sessionEnergyCharged attributes if needed.
     // super.enableCharging();
     // enableCharging is not implemented in matter.js
@@ -131,16 +148,17 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer {
 }
 
 export class MatterbridgeEnergyEvseModeServer extends EnergyEvseModeServer {
-  override changeToMode({ newMode }: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer).deviceCommand;
-    const supported = this.state.supportedModes.find((mode) => mode.mode === newMode);
+  override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.commandHandler.executeHandler('changeToMode', { request, cluster: EnergyEvseModeServer.id, attributes: this.state, endpoint: this.endpoint });
+    const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
     if (!supported) {
-      device.log.error(`MatterbridgeEnergyEvseModeServer changeToMode called with unsupported newMode: ${newMode}`);
+      device.log.error(`MatterbridgeEnergyEvseModeServer changeToMode called with unsupported newMode: ${request.newMode}`);
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
     }
-    device.changeToMode({ newMode });
-    this.state.currentMode = newMode;
-    device.log.info(`MatterbridgeEnergyEvseModeServer changeToMode called with newMode ${newMode} => ${supported.label}`);
+    this.state.currentMode = request.newMode;
+    device.log.debug(`MatterbridgeEnergyEvseModeServer changeToMode called with newMode ${request.newMode} => ${supported.label}`);
     return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }

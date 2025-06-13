@@ -69,6 +69,18 @@ describe('copyDirectory', () => {
     jest.clearAllMocks();
   });
 
+  test('throw error if the directories are undefined', async () => {
+    await expect(copyDirectory('', 'dest')).rejects.toThrow('Source directory must be specified.');
+    await expect(copyDirectory('src', '')).rejects.toThrow('Destination directory must be specified.');
+    await expect(copyDirectory('same', 'same')).rejects.toThrow('Source and destination directories must be different.');
+    await expect(copyDirectory('src', undefined as any)).rejects.toThrow('Destination directory must be specified.');
+    await expect(copyDirectory(undefined as any, 'dst')).rejects.toThrow('Source directory must be specified.');
+  });
+
+  test('throw error if the directories are the same', async () => {
+    await expect(copyDirectory('src', 'src')).rejects.toThrow('Source and destination directories must be different.');
+  });
+
   test('successfully copies flat directory', async () => {
     // Setup: one file
     fakeMkdir.mockResolvedValue(undefined);

@@ -8,6 +8,35 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.0.6] - 2025-06-13
+
+### Added
+
+- [tests] Update Jest test coverage on addBridgedEndpoint and removeBridgedEndpoint.
+- [fan]: Added createMultiSpeedFanControlClusterServer cluster helper with MultiSpeed feature.
+- [fan]: Added all parameters to the fan cluster helpers.
+- [valve]: Added logic in MatterbridgeValveConfigurationAndControlServer.
+- [command]: Added cluster property to commandHandler data object.
+- [mb-service]: Added a link to [mb-service](https://github.com/michaelahern/mb-service) package by [Michael Ahern](https://github.com/michaelahern). It runs matterbridge as a service in macOS.
+
+### Changed
+
+- [package]: Updated dependencies.
+- [fan]: The default fan has no more the MultiSpeed feature.
+- [behaviors]: Bump Matterbridge Behaviors to 1.3.0
+- [evse]: Updated class and behavior to 1.1.0.
+- [waterHeater]: Updated class and behavior to 1.1.0.
+- [rvc]: Updated class and behavior to 1.1.0.
+- [laundryWasher]: Updated class and behavior to 1.1.0.
+
+### Fixed
+
+- [evse]: Fixed jsdoc on Evse.
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.0.5] - 2025-06-07
 
 ### Added

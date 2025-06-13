@@ -4,7 +4,7 @@
  * @file matterbridge.ts
  * @author Luca Liguori
  * @date 2023-12-29
- * @version 1.5.3
+ * @version 1.6.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
  *
@@ -35,7 +35,7 @@ import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW,
 import { NodeStorageManager, NodeStorage } from './storage/export.js';
 
 // Matterbridge
-import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString, isValidNumber } from './utils/export.js';
+import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString, isValidNumber, createDirectory } from './utils/export.js';
 import { logInterfaces, getGlobalNodeModules } from './utils/network.js';
 import { dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation, typ } from './matterbridgeTypes.js';
 import { PluginManager } from './pluginManager.js';
@@ -44,6 +44,7 @@ import { MatterbridgeEndpoint, SerializedMatterbridgeEndpoint } from './matterbr
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { Frontend } from './frontend.js';
 import { addVirtualDevices } from './helpers.js';
+import spawn from './utils/spawn.js';
 
 // @matter
 import {
@@ -77,6 +78,8 @@ interface MatterbridgeEvent {
   update: [];
   initialize_started: [];
   initialize_completed: [];
+  online: [nodeid: string];
+  offline: [nodeid: string];
   cleanup_started: [];
   cleanup_completed: [];
   startmemorycheck: [];
@@ -194,6 +197,7 @@ export class Matterbridge extends EventEmitter {
   private checkUpdateTimeout: NodeJS.Timeout | undefined;
   private configureTimeout: NodeJS.Timeout | undefined;
   private reachabilityTimeout: NodeJS.Timeout | undefined;
+  private endAdvertiseTimeout: NodeJS.Timeout | undefined;
   private sigintHandler: NodeJS.SignalsListener | undefined;
   private sigtermHandler: NodeJS.SignalsListener | undefined;
   private exceptionHandler: NodeJS.UncaughtExceptionListener | undefined;
@@ -318,7 +322,7 @@ export class Matterbridge extends EventEmitter {
   }
 
   /**
-   * Call cleanup().
+   * Call cleanup() and dispose MdnsService.
    *
    * @deprecated This method is deprecated and is ONLY used for jest tests.
    */
@@ -334,6 +338,8 @@ export class Matterbridge extends EventEmitter {
         if (plugin.serverNode) servers.push(plugin.serverNode);
       }
     }
+    // Let any already‐queued microtasks run first
+    await Promise.resolve();
     // Cleanup
     await this.cleanup('destroying instance...', false);
     // Close servers mdns service
@@ -342,6 +348,8 @@ export class Matterbridge extends EventEmitter {
       await server.env.get(MdnsService)[Symbol.asyncDispose]();
       this.log.info(`Closed ${server.id} MdnsService`);
     }
+    // Let any already‐queued microtasks run first
+    await Promise.resolve();
     // Wait for the cleanup to finish
     await new Promise((resolve) => {
       setTimeout(resolve, 500);
@@ -372,24 +380,24 @@ export class Matterbridge extends EventEmitter {
     // Set the matterbridge home directory
     this.homeDirectory = getParameter('homedir') ?? os.homedir();
     this.matterbridgeInformation.homeDirectory = this.homeDirectory;
-    await this.createDirectory(this.homeDirectory, 'Matterbridge Home Directory');
+    await createDirectory(this.homeDirectory, 'Matterbridge Home Directory', this.log);
 
     // Set the matterbridge directory
     this.matterbridgeDirectory = path.join(this.homeDirectory, '.matterbridge');
     this.matterbridgeInformation.matterbridgeDirectory = this.matterbridgeDirectory;
-    await this.createDirectory(this.matterbridgeDirectory, 'Matterbridge Directory');
-    await this.createDirectory(path.join(this.matterbridgeDirectory, 'certs'), 'Matterbridge Frontend Certificate Directory');
-    await this.createDirectory(path.join(this.matterbridgeDirectory, 'uploads'), 'Matterbridge Frontend Uploads Directory');
+    await createDirectory(this.matterbridgeDirectory, 'Matterbridge Directory', this.log);
+    await createDirectory(path.join(this.matterbridgeDirectory, 'certs'), 'Matterbridge Frontend Certificate Directory', this.log);
+    await createDirectory(path.join(this.matterbridgeDirectory, 'uploads'), 'Matterbridge Frontend Uploads Directory', this.log);
 
     // Set the matterbridge plugin directory
     this.matterbridgePluginDirectory = path.join(this.homeDirectory, 'Matterbridge');
     this.matterbridgeInformation.matterbridgePluginDirectory = this.matterbridgePluginDirectory;
-    await this.createDirectory(this.matterbridgePluginDirectory, 'Matterbridge Plugin Directory');
+    await createDirectory(this.matterbridgePluginDirectory, 'Matterbridge Plugin Directory', this.log);
 
     // Set the matterbridge cert directory
     this.matterbridgeCertDirectory = path.join(this.homeDirectory, '.mattercert');
     this.matterbridgeInformation.matterbridgeCertDirectory = this.matterbridgeCertDirectory;
-    await this.createDirectory(this.matterbridgeCertDirectory, 'Matterbridge Matter Certificate Directory');
+    await createDirectory(this.matterbridgeCertDirectory, 'Matterbridge Matter Certificate Directory', this.log);
 
     // Set the matterbridge root directory
     const { fileURLToPath } = await import('node:url');
@@ -706,7 +714,7 @@ export class Matterbridge extends EventEmitter {
         // We don't do this when the add and other parameters are set because we shut down the process after adding the plugin
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm.`);
         try {
-          await this.spawnCommand('npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose']);
+          await spawn.spawnCommand(this, 'npm', ['install', '-g', plugin.name, '--omit=dev', '--verbose']);
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
         } catch (error) {
@@ -983,7 +991,7 @@ export class Matterbridge extends EventEmitter {
   /**
    * Asynchronously loads and starts the registered plugins.
    *
-   * This method is responsible for initializing and staarting all enabled plugins.
+   * This method is responsible for initializing and starting all enabled plugins.
    * It ensures that each plugin is properly loaded and started before the bridge starts.
    *
    * @returns {Promise<void>} A promise that resolves when all plugins have been loaded and started.
@@ -1320,7 +1328,7 @@ export class Matterbridge extends EventEmitter {
   async updateProcess() {
     this.log.info('Updating matterbridge...');
     try {
-      await this.spawnCommand('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose']);
+      await spawn.spawnCommand(this, 'npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose']);
       this.log.info('Matterbridge has been updated. Full restart required.');
     } catch (error) {
       this.log.error('Error updating matterbridge:', error instanceof Error ? error.message : error);
@@ -1764,6 +1772,7 @@ export class Matterbridge extends EventEmitter {
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
   protected async startController(): Promise<void> {
+    /*
     if (!this.matterStorageManager) {
       this.log.error('No storage manager initialized');
       await this.cleanup('No storage manager initialized');
@@ -1778,7 +1787,6 @@ export class Matterbridge extends EventEmitter {
     }
 
     this.log.debug('Starting matterbridge in mode', this.bridgeMode);
-    /*
     this.matterServer = await this.createMatterServer(this.storageManager);
     this.log.info('Creating matter commissioning controller');
     this.commissioningController = new CommissioningController({
@@ -1976,8 +1984,8 @@ const commissioningController = new CommissioningController({
   /** ***********************************************************************************************************************************/
 
   /**
-   * Starts the matter storage process with name Matterbridge.
-   * @returns {Promise<void>} - A promise that resolves when the storage process is started.
+   * Starts the matter storage with name Matterbridge, create the matterbridge context and performs a backup.
+   * @returns {Promise<void>} - A promise that resolves when the storage is started.
    */
   private async startMatterStorage(): Promise<void> {
     // Setup Matter storage
@@ -2007,8 +2015,12 @@ const commissioningController = new CommissioningController({
    */
   private async backupMatterStorage(storageName: string, backupName: string): Promise<void> {
     this.log.info('Creating matter node storage backup...');
-    await copyDirectory(storageName, backupName);
-    this.log.info('Created matter node storage backup');
+    try {
+      await copyDirectory(storageName, backupName);
+      this.log.info('Created matter node storage backup');
+    } catch (error) {
+      this.log.error(`Error creating matter node storage backup from ${storageName} to ${backupName}:`, error);
+    }
   }
 
   /**
@@ -2171,7 +2183,10 @@ const commissioningController = new CommissioningController({
      * This event is triggered when the device is initially commissioned successfully.
      * This means: It is added to the first fabric.
      */
-    serverNode.lifecycle.commissioned.on(() => this.log.notice(`Server node for ${storeId} was initially commissioned successfully!`));
+    serverNode.lifecycle.commissioned.on(() => {
+      this.log.notice(`Server node for ${storeId} was initially commissioned successfully!`);
+      clearTimeout(this.endAdvertiseTimeout);
+    });
 
     /** This event is triggered when all fabrics are removed from the device, usually it also does a factory reset then. */
     serverNode.lifecycle.decommissioned.on(() => this.log.notice(`Server node for ${storeId} was fully decommissioned successfully!`));
@@ -2216,29 +2231,8 @@ const commissioningController = new CommissioningController({
             }
           }
         }
-        setTimeout(
-          () => {
-            if (serverNode.lifecycle.isCommissioned) return;
-            if (this.bridgeMode === 'bridge') {
-              this.matterbridgeQrPairingCode = undefined;
-              this.matterbridgeManualPairingCode = undefined;
-            }
-            if (this.bridgeMode === 'childbridge') {
-              const plugin = this.plugins.get(storeId);
-              if (plugin) {
-                plugin.qrPairingCode = undefined;
-                plugin.manualPairingCode = undefined;
-              }
-            }
-            this.frontend.wssSendRefreshRequired('plugins');
-            this.frontend.wssSendRefreshRequired('settings');
-            this.frontend.wssSendRefreshRequired('fabrics');
-            this.frontend.wssSendRefreshRequired('sessions');
-            this.frontend.wssSendSnackbarMessage(`Advertising on server node for ${storeId} stopped. Restart to commission.`, 0);
-            this.log.notice(`Advertising on server node for ${storeId} stopped. Restart to commission.`);
-          },
-          15 * 60 * 1000,
-        ).unref();
+        // Set a timeout to show that advertising stops after 15 minutes if not commissioned
+        this.startEndAdvertiseTimer(serverNode);
       } else {
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
         sanitizeFabrics(serverNode.state.commissioning.fabrics, true);
@@ -2246,6 +2240,7 @@ const commissioningController = new CommissioningController({
       this.frontend.wssSendRefreshRequired('plugins');
       this.frontend.wssSendRefreshRequired('settings');
       this.frontend.wssSendSnackbarMessage(`${storeId} is online`, 5, 'success');
+      this.emit('online', storeId);
     });
 
     /** This event is triggered when the device went offline. it is not longer discoverable or connectable in the network. */
@@ -2271,6 +2266,7 @@ const commissioningController = new CommissioningController({
       this.frontend.wssSendRefreshRequired('plugins');
       this.frontend.wssSendRefreshRequired('settings');
       this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
+      this.emit('offline', storeId);
     });
 
     /**
@@ -2345,6 +2341,43 @@ const commissioningController = new CommissioningController({
   }
 
   /**
+   * Starts the 15 minutes timer to advice that advertising for the specified server node is ended.
+   *
+   * @param {ServerNode} [matterServerNode] - The server node to start.
+   * @param {string} storeId - The store ID of the server node.
+   */
+  private startEndAdvertiseTimer(matterServerNode: ServerNode) {
+    if (this.endAdvertiseTimeout) {
+      this.log.debug(`***Clear ${matterServerNode.id} server node end advertise timer`);
+      clearTimeout(this.endAdvertiseTimeout);
+    }
+    this.log.debug(`***Starting ${matterServerNode.id} server node end advertise timer`);
+    this.endAdvertiseTimeout = setTimeout(
+      () => {
+        if (matterServerNode.lifecycle.isCommissioned) return;
+        if (this.bridgeMode === 'bridge') {
+          this.matterbridgeQrPairingCode = undefined;
+          this.matterbridgeManualPairingCode = undefined;
+        }
+        if (this.bridgeMode === 'childbridge') {
+          const plugin = this.plugins.get(matterServerNode.id);
+          if (plugin) {
+            plugin.qrPairingCode = undefined;
+            plugin.manualPairingCode = undefined;
+          }
+        }
+        this.frontend.wssSendRefreshRequired('plugins');
+        this.frontend.wssSendRefreshRequired('settings');
+        this.frontend.wssSendRefreshRequired('fabrics');
+        this.frontend.wssSendRefreshRequired('sessions');
+        this.frontend.wssSendSnackbarMessage(`Advertising on server node for ${matterServerNode.id} stopped. Restart to commission.`, 0);
+        this.log.notice(`Advertising on server node for ${matterServerNode.id} stopped. Restart to commission.`);
+      },
+      15 * 60 * 1000,
+    ).unref();
+  }
+
+  /**
    * Starts the specified server node.
    *
    * @param {ServerNode} [matterServerNode] - The server node to start.
@@ -2360,14 +2393,15 @@ const commissioningController = new CommissioningController({
    * Stops the specified server node.
    *
    * @param {ServerNode} matterServerNode - The server node to stop.
+   * @param {number} [timeout=30000] - The timeout in milliseconds for stopping the server node. Defaults to 30 seconds.
    * @returns {Promise<void>} A promise that resolves when the server node has stopped.
    */
-  private async stopServerNode(matterServerNode: ServerNode): Promise<void> {
+  private async stopServerNode(matterServerNode: ServerNode, timeout = 30000): Promise<void> {
     if (!matterServerNode) return;
     this.log.notice(`Closing ${matterServerNode.id} server node`);
 
     try {
-      await withTimeout(matterServerNode.close(), 30000); // 30 seconds timeout to allow slow devices to close gracefully
+      await withTimeout(matterServerNode.close(), timeout);
       this.log.info(`Closed ${matterServerNode.id} server node`);
     } catch (error) {
       this.log.error(`Failed to close ${matterServerNode.id} server node: ${error instanceof Error ? error.message : error}`);
@@ -2690,114 +2724,4 @@ const commissioningController = new CommissioningController({
     }
     return vendorName;
   };
-
-  /**
-   * Spawns a child process with the given command and arguments.
-   * @param {string} command - The command to execute.
-   * @param {string[]} args - The arguments to pass to the command (default: []).
-   * @returns {Promise<boolean>} A promise that resolves when the child process exits successfully, or rejects if there is an error.
-   */
-  async spawnCommand(command: string, args: string[] = []): Promise<boolean> {
-    const { spawn } = await import('node:child_process');
-
-    /*
-    npm > npm.cmd on windows
-    cmd.exe ['dir'] on windows
-    await this.spawnCommand('npm', ['install', '-g', 'matterbridge']);
-    */
-    const cmdLine = command + ' ' + args.join(' ');
-    if (process.platform === 'win32' && command === 'npm') {
-      // Must be spawn('cmd.exe', ['/c', 'npm -g install <package>']);
-      const argstring = 'npm ' + args.join(' ');
-      args.splice(0, args.length, '/c', argstring);
-      command = 'cmd.exe';
-    }
-    // Decide when using sudo on linux
-    // When you need sudo: Spawn stderr: npm error Error: EACCES: permission denied
-    // When you don't need sudo: Failed to start child process "npm install -g matterbridge-eve-door": spawn sudo ENOENT
-    if (hasParameter('sudo') || (process.platform === 'linux' && command === 'npm' && !hasParameter('docker') && !hasParameter('nosudo'))) {
-      args.unshift(command);
-      command = 'sudo';
-    }
-    this.log.debug(`Spawn command ${command} with ${debugStringify(args)}`);
-    return new Promise((resolve, reject) => {
-      const childProcess = spawn(command, args, {
-        stdio: ['inherit', 'pipe', 'pipe'],
-      });
-
-      childProcess.on('error', (err) => {
-        this.log.error(`Failed to start child process "${cmdLine}": ${err.message}`);
-        reject(err);
-      });
-
-      childProcess.on('close', (code, signal) => {
-        this.frontend.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', `child process closed with code ${code} and signal ${signal}`);
-        if (code === 0) {
-          if (cmdLine.startsWith('npm install -g')) this.log.notice(`Package ${cmdLine.replace('npm install -g ', '').replace('--verbose', '').replace('--omit=dev', '')} installed correctly`);
-          this.log.debug(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
-          resolve(true);
-        } else {
-          this.log.error(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`);
-          reject(new Error(`Child process "${cmdLine}" closed with code ${code} and signal ${signal}`));
-        }
-      });
-
-      childProcess.on('exit', (code, signal) => {
-        this.frontend.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', `child process exited with code ${code} and signal ${signal}`);
-        if (code === 0) {
-          this.log.debug(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`);
-          resolve(true);
-        } else {
-          this.log.error(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`);
-          reject(new Error(`Child process "${cmdLine}" exited with code ${code} and signal ${signal}`));
-        }
-      });
-
-      childProcess.on('disconnect', () => {
-        this.log.debug(`Child process "${cmdLine}" has been disconnected from the parent`);
-        resolve(true);
-      });
-
-      if (childProcess.stdout) {
-        childProcess.stdout.on('data', (data: Buffer) => {
-          const message = data.toString().trim();
-          this.log.debug(`Spawn output (stdout): ${message}`);
-          this.frontend.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', message);
-        });
-      }
-
-      if (childProcess.stderr) {
-        childProcess.stderr.on('data', (data: Buffer) => {
-          const message = data.toString().trim();
-          this.log.debug(`Spawn verbose (stderr): ${message}`);
-          this.frontend.wssSendMessage('spawn', this.log.now(), 'Matterbridge:spawn', message);
-        });
-      }
-    });
-  }
-
-  /**
-   * Creates a directory at the specified path if it doesn't already exist.
-   *
-   * @param {string} path - The path to the directory to create.
-   * @param {string} name - The name of the directory.
-   * @returns {Promise<void>} A promise that resolves when the directory has been created or already exists.
-   */
-  async createDirectory(path: string, name: string): Promise<void> {
-    try {
-      await fs.access(path);
-      this.log.debug(`Directory ${name} already exists at path: ${path}`);
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-        try {
-          await fs.mkdir(path, { recursive: true });
-          this.log.info(`Created ${name}: ${path}`);
-        } catch (err) {
-          this.log.error(`Error creating dir ${name} path ${path}: ${err}`);
-        }
-      } else {
-        this.log.error(`Error accessing dir ${name} path ${path}: ${err}`);
-      }
-    }
-  }
 }

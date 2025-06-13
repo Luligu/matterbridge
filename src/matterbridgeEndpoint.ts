@@ -4,7 +4,7 @@
  * @file matterbridgeEndpoint.ts
  * @author Luca Liguori
  * @date 2024-10-01
- * @version 2.0.0
+ * @version 2.1.1
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -29,7 +29,6 @@ import { bridgedNode, DeviceTypeDefinition, MatterbridgeEndpointOptions } from '
 import { isValidNumber, isValidObject, isValidString } from './utils/export.js';
 import {
   MatterbridgeServer,
-  MatterbridgeServerDevice,
   MatterbridgeIdentifyServer,
   MatterbridgeOnOffServer,
   MatterbridgeLevelControlServer,
@@ -78,7 +77,7 @@ import {
 } from './matterbridgeEndpointHelpers.js';
 
 // @matter
-import { ActionContext, AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointType, HandlerFunction, Lifecycle, MutableEndpoint, NamedHandler, SupportedBehaviors, UINT16_MAX, UINT32_MAX, VendorId } from '@matter/main';
+import { ActionContext, AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointType, HandlerFunction, Lifecycle, MutableEndpoint, NamedHandler, ServerNode, SupportedBehaviors, UINT16_MAX, UINT32_MAX, VendorId } from '@matter/main';
 import { DeviceClassification } from '@matter/main/model';
 import { ClusterType, getClusterNameById, MeasurementType, Semtag } from '@matter/main/types';
 
@@ -146,6 +145,10 @@ import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-m
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/main/behaviors/thermostat-user-interface-configuration';
 import { DeviceEnergyManagementServer } from '@matter/main/behaviors/device-energy-management';
+
+export type PrimitiveTypes = boolean | number | bigint | string | object | undefined | null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type CommandHandlerFunction = (data: { request: Record<string, any>; cluster: string; attributes: Record<string, PrimitiveTypes>; endpoint: MatterbridgeEndpoint }) => void | Promise<void>;
 
 export interface MatterbridgeEndpointCommands {
   // Identify
@@ -258,13 +261,17 @@ export interface SerializedMatterbridgeEndpoint {
 }
 
 export class MatterbridgeEndpoint extends Endpoint {
-  static bridgeMode = '';
+  /** The bridge mode of Matterbridge */
+  static bridgeMode: 'bridge' | 'childbridge' | '' = '';
+  /** The default log level of the new MatterbridgeEndpoints */
   static logLevel = LogLevel.INFO;
 
+  /** The logger instance for the MatterbridgeEndpoint */
   log: AnsiLogger;
+  /** The plugin name this MatterbridgeEndpoint belongs to */
   plugin: string | undefined = undefined;
+  /** The configuration URL of the device, if available */
   configUrl: string | undefined = undefined;
-
   deviceName: string | undefined = undefined;
   serialNumber: string | undefined = undefined;
   uniqueId: string | undefined = undefined;
@@ -278,17 +285,20 @@ export class MatterbridgeEndpoint extends Endpoint {
   hardwareVersionString: string | undefined = undefined;
   productUrl = 'https://www.npmjs.com/package/matterbridge';
 
-  // The first device type of the endpoint
+  /** The server node of the endpoint, if it is a single not bridged endpoint */
+  serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
+  /** The name of the first device type of the endpoint (old api compatibility) */
   name: string | undefined = undefined;
+  /** The code of the first device type of the endpoint (old api compatibility) */
   deviceType: number;
-
+  /** The id of the endpoint (old api compatibility) */
   uniqueStorageKey: string | undefined = undefined;
   tagList?: Semtag[] = undefined;
 
-  // Maps matter deviceTypes
+  /** Maps the DeviceTypeDefinitions with their code */
   readonly deviceTypes = new Map<number, DeviceTypeDefinition>();
 
-  // Command handler
+  /** Command handler for the MatterbridgeEndpoint commands */
   readonly commandHandler = new NamedHandler<MatterbridgeEndpointCommands>();
 
   /**
@@ -367,8 +377,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} id: ${CYAN}${options.uniqueStorageKey}${db} number: ${CYAN}${options.endpointId}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
     );
 
-    // Add MatterbridgeBehavior with MatterbridgeBehaviorDevice
-    this.behaviors.require(MatterbridgeServer, { deviceCommand: new MatterbridgeServerDevice(this.log, this.commandHandler, undefined) });
+    // Add MatterbridgeServer
+    this.behaviors.require(MatterbridgeServer, { log: this.log, commandHandler: this.commandHandler });
   }
 
   /**
@@ -540,10 +550,17 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Adds a command handler for the specified command.
    *
    * @param {keyof MatterbridgeEndpointCommands} command - The command to add the handler for.
-   * @param {HandlerFunction} handler - The handler function to execute when the command is received.
+   * @param {CommandHandlerFunction} handler - The handler function to execute when the command is received.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The handler function will receive an object with the following properties:
+   * - `request`: The request object sent with the command.
+   * - `cluster`: The id of the cluster that received the command (i.e. "onOff").
+   * - `attributes`: The current attributes of the cluster that received the command (i.e. { onOff: true}).
+   * - `endpoint`: The MatterbridgeEndpoint instance that received the command.
    */
-  addCommandHandler(command: keyof MatterbridgeEndpointCommands, handler: HandlerFunction): this {
+  addCommandHandler(command: keyof MatterbridgeEndpointCommands, handler: CommandHandlerFunction): this {
     this.commandHandler.addHandler(command, handler);
     return this;
   }
@@ -1018,7 +1035,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         events: { leave: true, reachableChanged: true },
       }),
       {
-        vendorId: vendorId !== undefined ? VendorId(vendorId) : undefined, // 4874
+        vendorId: vendorId !== undefined ? VendorId(vendorId) : undefined,
         vendorName: vendorName.slice(0, 32),
         productName: productName.slice(0, 32),
         productUrl: this.productUrl.slice(0, 256),
@@ -1633,25 +1650,65 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default fan control cluster server with features MultiSpeed, Auto, and Step.
+   * Creates a default fan control cluster server with features Auto, and Step.
    *
    * @param {FanControl.FanMode} [fanMode=FanControl.FanMode.Off] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @param {FanControl.FanModeSequence} [fanModeSequence=FanControl.FanModeSequence.OffLowMedHighAuto] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHighAuto`.
+   * @param {number} [percentSetting=0] - The initial percent setting. Defaults to 0.
+   * @param {number} [percentCurrent=0] - The initial percent current. Defaults to 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
-   * fanmode is writable and persists across reboots.
-   * percentSetting is writable.
-   * speedSetting is writable.
+   * - fanmode is writable and persists across reboots.
+   * - fanModeSequence is fixed.
+   * - percentSetting is writable.
    */
-  createDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
+  createDefaultFanControlClusterServer(fanMode = FanControl.FanMode.Off, fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHighAuto, percentSetting = 0, percentCurrent = 0) {
+    this.behaviors.require(MatterbridgeFanControlServer.with(FanControl.Feature.Auto, FanControl.Feature.Step), {
+      fanMode, // Writable and persistent attribute
+      fanModeSequence, // Fixed attribute
+      percentSetting, // Writable attribute
+      percentCurrent,
+    });
+    return this;
+  }
+
+  /**
+   * Creates a fan control cluster server with features MultiSpeed, Auto, and Step.
+   *
+   * @param {FanControl.FanMode} [fanMode=FanControl.FanMode.Off] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @param {number} [percentSetting=0] - The initial percent setting. Defaults to 0.
+   * @param {number} [percentCurrent=0] - The initial percent current. Defaults to 0.
+   * @param {number} [speedMax=10] - The maximum speed setting. Defaults to 10.
+   * @param {number} [speedSetting=0] - The initial speed setting. Defaults to 0.
+   * @param {number} [speedCurrent=0] - The initial speed current. Defaults to 0.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * - fanmode is writable and persists across reboots.
+   * - fanModeSequence is fixed.
+   * - percentSetting is writable.
+   * - speedMax is fixed.
+   * - speedSetting is writable.
+   */
+  createMultiSpeedFanControlClusterServer(
+    fanMode = FanControl.FanMode.Off,
+    fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHighAuto,
+    percentSetting = 0,
+    percentCurrent = 0,
+    speedMax = 10,
+    speedSetting = 0,
+    speedCurrent = 0,
+  ) {
     this.behaviors.require(MatterbridgeFanControlServer.with(FanControl.Feature.MultiSpeed, FanControl.Feature.Auto, FanControl.Feature.Step), {
-      fanMode,
-      fanModeSequence: FanControl.FanModeSequence.OffLowMedHighAuto,
-      percentSetting: 0,
-      percentCurrent: 0,
-      speedMax: 100,
-      speedSetting: 0,
-      speedCurrent: 0,
+      fanMode, // Writable and persistent attribute
+      fanModeSequence, // Fixed attribute
+      percentSetting, // Writable attribute
+      percentCurrent,
+      // MultiSpeed feature
+      speedMax, // Fixed attribute
+      speedSetting, // Writable attribute
+      speedCurrent,
     });
     return this;
   }
@@ -1660,18 +1717,22 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a base fan control cluster server without features.
    *
    * @param {FanControl.FanMode} [fanMode=FanControl.FanMode.Off] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @param {FanControl.FanModeSequence} [fanModeSequence=FanControl.FanModeSequence.OffLowMedHigh] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHigh`.
+   * @param {number} [percentSetting=0] - The initial percent setting. Defaults to 0.
+   * @param {number} [percentCurrent=0] - The initial percent current. Defaults to 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
    * fanmode is writable and persists across reboots.
+   * fanModeSequence is fixed.
    * percentSetting is writable.
    */
-  createBaseFanControlClusterServer(fanMode = FanControl.FanMode.Off) {
+  createBaseFanControlClusterServer(fanMode = FanControl.FanMode.Off, fanModeSequence: FanControl.FanModeSequence = FanControl.FanModeSequence.OffLowMedHigh, percentSetting = 0, percentCurrent = 0) {
     this.behaviors.require(FanControlServer, {
-      fanMode,
-      fanModeSequence: FanControl.FanModeSequence.OffLowMedHigh,
-      percentSetting: 0,
-      percentCurrent: 0,
+      fanMode, // Writable and persistent attribute
+      fanModeSequence, // Fixed attribute
+      percentSetting, // Writable attribute
+      percentCurrent,
     });
     return this;
   }
@@ -1784,14 +1845,15 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.behaviors.require(MatterbridgeValveConfigurationAndControlServer.with(ValveConfigurationAndControl.Feature.Level), {
       currentState: valveState,
       targetState: valveState,
+      openDuration: null,
+      defaultOpenDuration: null, // Writable and persistent across restarts
+      remainingDuration: null,
+      valveFault: { generalFault: false, blocked: false, leaking: false, notConnected: false, shortCircuit: false, currentExceeded: false },
+      // Feature.Level
       currentLevel: valveLevel,
       targetLevel: valveLevel,
-      openDuration: null,
-      defaultOpenDuration: null,
-      remainingDuration: null,
-      defaultOpenLevel: 100,
-      valveFault: { generalFault: false, blocked: false, leaking: false, notConnected: false, shortCircuit: false, currentExceeded: false },
-      levelStep: 1,
+      defaultOpenLevel: 100, // Writable and persistent across restarts
+      levelStep: 1, // Fixed
     });
     return this;
   }
@@ -2072,18 +2134,31 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default Device Energy Management Cluster Server with feature PowerForecastReporting. Only needed for an evse device type.
+   * Creates a default Device Energy Management Cluster Server with feature PowerForecastReporting and with the specified ESA type, ESA canGenerate, ESA state, and power limits.
    *
+   * @param {DeviceEnergyManagement.EsaType} [esaType=DeviceEnergyManagement.EsaType.Other] - The ESA type. Defaults to `DeviceEnergyManagement.EsaType.Other`.
+   * @param {boolean} [esaCanGenerate=false] - Indicates if the ESA can generate energy. Defaults to `false`.
+   * @param {DeviceEnergyManagement.EsaState} [esaState=DeviceEnergyManagement.EsaState.Online] - The ESA state. Defaults to `DeviceEnergyManagement.EsaState.Online`.
+   * @param {number} [absMinPower=0] - The absolute minimum power in mW. Defaults to `0`.
+   * @param {number} [absMaxPower=0] - The absolute maximum power in mW. Defaults to `0`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * - The forecast attribute is set to null, indicating that there is no forecast currently available.
+   * - The ESA type and canGenerate attributes are fixed and cannot be changed after creation.
+   * - The ESA state is set to Online by default.
+   * - The absolute minimum and maximum power attributes are set to 0 by default.
+   * - For example, a battery storage inverter that can charge its battery at a maximum power of 2000W and can
+   * discharge the battery at a maximum power of 3000W, would have a absMinPower: -3000W, absMaxPower: 2000W.
    */
-  createDefaultDeviceEnergyManagementCluster() {
+  createDefaultDeviceEnergyManagementClusterServer(esaType: DeviceEnergyManagement.EsaType = DeviceEnergyManagement.EsaType.Other, esaCanGenerate = false, esaState = DeviceEnergyManagement.EsaState.Online, absMinPower = 0, absMaxPower = 0) {
     this.behaviors.require(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting), {
       forecast: null, // A null value indicates that there is no forecast currently available
-      esaType: DeviceEnergyManagement.EsaType.Other,
-      esaCanGenerate: false,
-      esaState: DeviceEnergyManagement.EsaState.Offline,
-      absMinPower: 0,
-      absMaxPower: 0,
+      esaType, // Fixed attribute
+      esaCanGenerate, // Fixed attribute
+      esaState,
+      absMinPower,
+      absMaxPower,
     });
     return this;
   }
@@ -2091,19 +2166,19 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default EnergyManagementMode Cluster Server.
    *
+   * @param {number} [currentMode] - The current mode of the EnergyManagementMode cluster. Defaults to mode 1 (DeviceEnergyManagementMode.ModeTag.NoOptimization).
+   * @param {EnergyManagementMode.ModeOption[]} [supportedModes] - The supported modes for the DeviceEnergyManagementMode cluster. The attribute is fixed and defaults to a predefined set of cluster modes.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
    * A few examples of Device Energy Management modes and their mode tags are provided below.
    *  - For the "No Energy Management (Forecast reporting only)" mode, tags: 0x4000 (NoOptimization).
    *  - For the "Device Energy Management" mode, tags: 0x4001 (DeviceOptimization).
    *  - For the "Home Energy Management" mode, tags: 0x4001 (DeviceOptimization), 0x4002 (LocalOptimization).
    *  - For the "Grid Energy Management" mode, tags: 0x4003 (GridOptimization).
    *  - For the "Full Energy Management" mode, tags: 0x4001 (DeviceOptimization), 0x4002 (LocalOptimization), 0x4003 (GridOptimization).
-   *
-   * @param {number} [currentMode] - The current mode of the EnergyManagementMode cluster. Defaults to mode 1 (DeviceEnergyManagementMode.ModeTag.NoOptimization).
-   * @param {EnergyManagementMode.ModeOption[]} [supportedModes] - The supported modes for the DeviceEnergyManagementMode cluster. Defaults all cluster modes.
-   *
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultDeviceEnergyManagementModeCluster(currentMode?: number, supportedModes?: DeviceEnergyManagementMode.ModeOption[]): this {
+  createDefaultDeviceEnergyManagementModeClusterServer(currentMode?: number, supportedModes?: DeviceEnergyManagementMode.ModeOption[]): this {
     this.behaviors.require(MatterbridgeDeviceEnergyManagementModeServer, {
       supportedModes: supportedModes ?? [
         { label: 'No Energy Management (Forecast reporting only)', mode: 1, modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.NoOptimization }] },
@@ -2123,7 +2198,7 @@ export class MatterbridgeEndpoint extends Endpoint {
           mode: 5,
           modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.DeviceOptimization }, { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }, { value: DeviceEnergyManagementMode.ModeTag.GridOptimization }],
         },
-      ],
+      ], // Fixed attribute
       currentMode: currentMode ?? 1,
     });
     return this;
@@ -2266,9 +2341,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * • 0 indicates a value of illuminance that is too low to be measured
    * • null indicates that the illuminance measurement is invalid.
    *
-   * @remarks
-   * Lux to matter = Math.round(Math.max(Math.min(10000 * Math.log10(lux), 0xfffe), 0))
-   * Matter to Lux = Math.round(Math.max(Math.pow(10, value / 10000), 0))
+   * - Lux to matter = Math.round(Math.max(Math.min(10000 * Math.log10(lux), 0xfffe), 0))
+   * - Matter to Lux = Math.round(Math.max(Math.pow(10, value / 10000), 0))
    */
   createDefaultIlluminanceMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
     this.behaviors.require(IlluminanceMeasurementServer, getDefaultIlluminanceMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));

@@ -84,11 +84,11 @@ describe('Matterbridge ' + NAME, () => {
 
   beforeAll(async () => {
     // Cleanup the matter environment
-    rmSync(path.join('jest', NAME), { recursive: true, force: true });
+    rmSync(path.join('test', NAME), { recursive: true, force: true });
     // Setup the matter environment
     environment.vars.set('log.level', MatterLogLevel.DEBUG);
     environment.vars.set('log.format', MatterLogFormat.ANSI);
-    environment.vars.set('path.root', path.join('jest', NAME));
+    environment.vars.set('path.root', path.join('test', NAME));
     environment.vars.set('runtime.signals', false);
     environment.vars.set('runtime.exitcode', false);
   }, 30000);

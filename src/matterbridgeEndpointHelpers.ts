@@ -1,4 +1,25 @@
-// src\matterbridgeEndpointHelpers.ts
+/**
+ * This file contains the helpers for the class MatterbridgeEndpoint.
+ *
+ * @file matterbridgeEndpointHelpers.ts
+ * @author Luca Liguori
+ * @date 2024-10-01
+ * @version 2.1.0
+ *
+ * Copyright 2024, 2025, 2026 Luca Liguori.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License. *
+ */
 
 // @matter
 import { ActionContext, Behavior, ClusterBehavior, ClusterId, Endpoint, Lifecycle } from '@matter/main';
@@ -47,6 +68,8 @@ import { Pm10ConcentrationMeasurement } from '@matter/main/clusters/pm10-concent
 import { RadonConcentrationMeasurement } from '@matter/main/clusters/radon-concentration-measurement';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/main/clusters/total-volatile-organic-compounds-concentration-measurement';
 import { OperationalState } from '@matter/main/clusters/operational-state';
+import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
+import { DeviceEnergyManagementMode } from '@matter/main/clusters/device-energy-management-mode';
 
 // @matter behaviors
 import { PowerSourceServer } from '@matter/main/behaviors/power-source';
@@ -78,6 +101,7 @@ import { Pm25ConcentrationMeasurementServer } from '@matter/main/behaviors/pm25-
 import { Pm10ConcentrationMeasurementServer } from '@matter/main/behaviors/pm10-concentration-measurement';
 import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/radon-concentration-measurement';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
+import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
 
 // Other modules
 import { createHash } from 'node:crypto';
@@ -100,6 +124,7 @@ import {
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeBooleanStateConfigurationServer,
   MatterbridgeOperationalStateServer,
+  MatterbridgeDeviceEnergyManagementModeServer,
 } from './matterbridgeBehaviors.js';
 
 export function capitalizeFirstLetter(name: string): string {
@@ -198,6 +223,8 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId) {
   if (clusterId === Pm10ConcentrationMeasurement.Cluster.id) return Pm10ConcentrationMeasurementServer.with('NumericMeasurement');
   if (clusterId === RadonConcentrationMeasurement.Cluster.id) return RadonConcentrationMeasurementServer.with('NumericMeasurement');
   if (clusterId === TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id) return TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === DeviceEnergyManagement.Cluster.id) return DeviceEnergyManagementServer.with('PowerForecastReporting');
+  if (clusterId === DeviceEnergyManagementMode.Cluster.id) return MatterbridgeDeviceEnergyManagementModeServer;
 
   return MatterbridgeIdentifyServer;
 }
@@ -247,6 +274,42 @@ export async function invokeBehaviorCommand(
     }
     behavior[command](params);
   });
+  return true;
+}
+
+/**
+ * Invokes the subscription handler on the specified cluster and attribute of the endpoint. Used ONLY in Jest tests.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to invoke the subscription handler on.
+ * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the subscription handler on.
+ * @param {string} attribute - The attribute to invoke the subscription handler on.
+ * @param {unknown} newValue - The new value of the attribute.
+ * @param {unknown} oldValue - The old value of the attribute.
+ *
+ * @deprecated Used ONLY in Jest tests.
+ */
+export async function invokeSubscribeHandler(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, newValue: unknown, oldValue: unknown): Promise<boolean> {
+  const event = attribute + '$Changed';
+  const clusterName = getBehavior(endpoint, cluster)?.id;
+  if (!clusterName) {
+    endpoint.log.error(`invokeSubscribeHandler ${hk}${event}${er} error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+    return false;
+  }
+
+  if (endpoint.construction.status !== Lifecycle.Status.Active) {
+    endpoint.log.error(`invokeSubscribeHandler ${hk}${clusterName}.${event}${er} error: Endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er} is in the ${BLUE}${endpoint.construction.status}${er} state`);
+    return false;
+  }
+
+  const events = endpoint.events as Record<string, Record<string, unknown>>;
+  if (!(clusterName in events) || !(event in events[clusterName])) {
+    endpoint.log.error(`invokeSubscribeHandler ${hk}${event}${er} error: cluster ${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
+    return false;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  await endpoint.act((agent) => agent[clusterName].events[event].emit(newValue, oldValue, { ...agent.context, offline: false }));
   return true;
 }
 
@@ -325,8 +388,8 @@ export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: Cl
   if (serverList.includes(Pm10ConcentrationMeasurement.Cluster.id)) endpoint.createDefaultPm10ConcentrationMeasurementClusterServer();
   if (serverList.includes(RadonConcentrationMeasurement.Cluster.id)) endpoint.createDefaultRadonConcentrationMeasurementClusterServer();
   if (serverList.includes(TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id)) endpoint.createDefaultTvocMeasurementClusterServer();
-  // if (serverList.includes(DeviceEnergyManagement.Cluster.id)) endpoint.createDefaultDeviceEnergyManagementClusterServer();
-  // if (serverList.includes(DeviceEnergyManagementMode.Cluster.id)) endpoint.createDefaultDeviceEnergyManagementModeClusterServer();
+  if (serverList.includes(DeviceEnergyManagement.Cluster.id)) endpoint.createDefaultDeviceEnergyManagementClusterServer();
+  if (serverList.includes(DeviceEnergyManagementMode.Cluster.id)) endpoint.createDefaultDeviceEnergyManagementModeClusterServer();
 }
 
 /**

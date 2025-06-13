@@ -70,7 +70,7 @@ import {
   temperatureSensor,
   thermostatDevice,
 } from './matterbridgeDeviceTypes.js';
-import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
+import { checkNotLatinCharacters, generateUniqueId, getAttributeId, getClusterId, invokeSubscribeHandler } from './matterbridgeEndpointHelpers.js';
 
 const MATTER_PORT = 6003;
 const HOMEDIR = 'Endpoint';
@@ -623,13 +623,19 @@ describe('Matterbridge ' + HOMEDIR, () => {
       expect(newState).toBe(true);
       expect(oldState).toBe(false);
       expect(offlineState).toBe(true);
-      console.log('subscribeAttribute without await: state', newState);
+      // console.log('subscribeAttribute without await: state', newState);
       expect(device.getAttribute(BooleanStateBehavior, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanStateServer, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanState.Cluster, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute('BooleanState', 'stateValue', device.log)).toBe(true);
-      console.log('subscribeAttribute without await: state', newState);
+      // console.log('subscribeAttribute without await: state', newState);
+
+      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+      expect(await invokeSubscribeHandler(device, 'booleanState', 'stateValue', false, true)).toBe(true);
+      expect(newState).toBe(false);
+      expect(oldState).toBe(true);
+      expect(offlineState).toBe(false);
     });
 
     test('subscribeAttribute with await', async () => {
@@ -640,6 +646,10 @@ describe('Matterbridge ' + HOMEDIR, () => {
       expect(device.hasAttributeServer(IdentifyBehavior, 'identifyTime')).toBe(true);
       expect(device.hasAttributeServer(BooleanStateCluster, 'stateValue')).toBe(true);
       expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'booleanState']);
+
+      expect(await invokeSubscribeHandler(device, 'booleanState', 'stateValue', false, true)).toBe(false);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`is in the ${BLUE}inactive${er} state`));
+
       await add(device);
 
       let newState = false;
@@ -679,6 +689,19 @@ describe('Matterbridge ' + HOMEDIR, () => {
       expect(device.getAttribute(BooleanState.Cluster, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue', device.log)).toBe(true);
       expect(device.getAttribute('BooleanState', 'stateValue', device.log)).toBe(true);
+
+      expect(device.construction.status).toBe(Lifecycle.Status.Active);
+
+      expect(await invokeSubscribeHandler(device, 'notacluster', 'stateValue', false, true)).toBe(false);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`invokeSubscribeHandler ${hk}stateValue$Changed${er} error: cluster not found on endpoint`));
+
+      expect(await invokeSubscribeHandler(device, 'booleanState', 'notanattribute', false, true)).toBe(false);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`invokeSubscribeHandler ${hk}notanattribute$Changed${er} error: cluster booleanState not found on endpoint`));
+
+      expect(await invokeSubscribeHandler(device, 'booleanState', 'stateValue', false, true)).toBe(true);
+      expect(newState).toBe(false);
+      expect(oldState).toBe(true);
+      expect(offlineState).toBe(false);
     });
 
     test('addCommandHandler', async () => {
@@ -690,7 +713,8 @@ describe('Matterbridge ' + HOMEDIR, () => {
 
       let called = false;
 
-      device.addCommandHandler('on', async () => {
+      // consoleLogSpy.mockRestore();
+      device.addCommandHandler('on', async (data) => {
         called = true;
         console.log('OnOff.Cluster.on');
       });
@@ -714,6 +738,59 @@ describe('Matterbridge ' + HOMEDIR, () => {
       expect(called).toBe(true);
 
       await add(device);
+    });
+
+    test('addCommandHandler with data', async () => {
+      const device = new MatterbridgeEndpoint(onOffLight, { uniqueStorageKey: 'OnOffLight8' });
+      expect(device).toBeDefined();
+      device.createDefaultOnOffClusterServer();
+      expect(device.hasAttributeServer(OnOffBehavior, 'onOff')).toBe(true);
+      expect(device.hasAttributeServer(LevelControlBehavior, 'currentLevel')).toBe(false);
+      await add(device);
+
+      let called = false;
+
+      // consoleLogSpy.mockRestore();
+      device.addCommandHandler('on', async (data) => {
+        called = true;
+        console.log('OnOff.Cluster.on', data);
+        expect(data).toBeDefined();
+        expect(data.request).toEqual({});
+        expect(data.cluster).toBe('onOff');
+        expect(data.attributes).toBeDefined();
+        expect(data.attributes.onOff).toBe(false);
+        expect(data.endpoint).toBe(device);
+      });
+      await device.invokeBehaviorCommand('onOff', 'on');
+      expect(called).toBe(true);
+
+      called = false;
+      device.addCommandHandler('off', async (data) => {
+        called = true;
+        console.log('OnOff.Cluster.off', data);
+        expect(data).toBeDefined();
+        expect(data.request).toEqual({});
+        expect(data.cluster).toBe('onOff');
+        expect(data.attributes).toBeDefined();
+        expect(data.attributes.onOff).toBe(true);
+        expect(data.endpoint).toBe(device);
+      });
+      await device.invokeBehaviorCommand('onOff', 'off');
+      expect(called).toBe(true);
+
+      called = false;
+      device.addCommandHandler('toggle', async (data) => {
+        called = true;
+        console.log('OnOff.Cluster.toggle', data);
+        expect(data).toBeDefined();
+        expect(data.request).toEqual({});
+        expect(data.cluster).toBe('onOff');
+        expect(data.attributes).toBeDefined();
+        expect(data.attributes.onOff).toBe(false);
+        expect(data.endpoint).toBe(device);
+      });
+      await device.invokeBehaviorCommand('onOff', 'toggle');
+      expect(called).toBe(true);
     });
 
     test('addRequiredClusterServers', async () => {
@@ -830,7 +907,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
         expect(attributeId).toBeDefined();
         count++;
       });
-      expect(count).toBe(47);
+      expect(count).toBe(44);
     });
 
     test('forEachAttribute AirQuality', async () => {

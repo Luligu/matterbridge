@@ -5,7 +5,7 @@
 [![Docker Version](https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver)](https://hub.docker.com/r/luligu/matterbridge)
 [![Docker Pulls](https://img.shields.io/docker/pulls/luligu/matterbridge.svg)](https://hub.docker.com/r/luligu/matterbridge)
 ![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
-![Coverage](https://img.shields.io/badge/Jest%20coverage-86%25-brightgreen)
+![Coverage](https://img.shields.io/badge/Jest%20coverage-88%25-brightgreen)
 
 [![power by](https://img.shields.io/badge/powered%20by-matter--history-blue)](https://www.npmjs.com/package/matter-history)
 [![power by](https://img.shields.io/badge/powered%20by-node--ansi--logger-blue)](https://www.npmjs.com/package/node-ansi-logger)
@@ -172,6 +172,10 @@ Config editor:
 
 [Podman configurations](README-PODMAN.md)
 
+### Run matterbridge as a service on macOS with mb-service (by [Michael Ahern](https://github.com/michaelahern))
+
+[Matterbridge Service Command for macOS](https://github.com/michaelahern/mb-service)
+
 ### Run matterbridge with nginx
 
 [Nginx configurations](README-NGINX.md)
@@ -324,6 +328,8 @@ It exposes 38 devices:
 - a microwave Oven device (supported by SmartThings, Alexa and Home Assistant)
 - an extractor Hood device (supported by SmartThings, Alexa and Home Assistant)
 - a cooktop device (supported by SmartThings, Alexa and Home Assistant)
+- a water heater device (supported by SmartThings and Home Assistant)
+- a car charger device (supported by Home Assistant)
 
 All these virtual devices continuously change state and position. The plugin also shows how to use all the command handlers (you can control all the devices).
 
