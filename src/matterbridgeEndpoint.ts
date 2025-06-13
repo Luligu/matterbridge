@@ -4,7 +4,7 @@
  * @file matterbridgeEndpoint.ts
  * @author Luca Liguori
  * @date 2024-10-01
- * @version 2.1.0
+ * @version 2.1.1
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -77,7 +77,7 @@ import {
 } from './matterbridgeEndpointHelpers.js';
 
 // @matter
-import { ActionContext, AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointType, HandlerFunction, Lifecycle, MutableEndpoint, NamedHandler, SupportedBehaviors, UINT16_MAX, UINT32_MAX, VendorId } from '@matter/main';
+import { ActionContext, AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointType, HandlerFunction, Lifecycle, MutableEndpoint, NamedHandler, ServerNode, SupportedBehaviors, UINT16_MAX, UINT32_MAX, VendorId } from '@matter/main';
 import { DeviceClassification } from '@matter/main/model';
 import { ClusterType, getClusterNameById, MeasurementType, Semtag } from '@matter/main/types';
 
@@ -261,7 +261,9 @@ export interface SerializedMatterbridgeEndpoint {
 }
 
 export class MatterbridgeEndpoint extends Endpoint {
-  static bridgeMode: 'bridge' | 'childbridge' | 'server' | '' = '';
+  /** The bridge mode of Matterbridge */
+  static bridgeMode: 'bridge' | 'childbridge' | '' = '';
+  /** The default log level of the new MatterbridgeEndpoints */
   static logLevel = LogLevel.INFO;
 
   log: AnsiLogger;
@@ -281,6 +283,8 @@ export class MatterbridgeEndpoint extends Endpoint {
   hardwareVersionString: string | undefined = undefined;
   productUrl = 'https://www.npmjs.com/package/matterbridge';
 
+  /** The server node of the endpoint, if it is a single not bridged endpoint */
+  serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
   /** The name of the first device type of the endpoint (old api compatibility) */
   name: string | undefined = undefined;
   /** The code of the first device type of the endpoint (old api compatibility) */
