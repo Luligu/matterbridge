@@ -8,6 +8,21 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.0.7] - 2025-06-??
+
+### Added
+
+### Changed
+
+- [package]: Updated dependencies.
+- [energy]: Added parameter for cumulativeEnergyExported to the helper. For solar power device.
+
+### Fixed
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.0.6] - 2025-06-13
 
 ### Added
