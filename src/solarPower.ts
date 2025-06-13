@@ -23,7 +23,6 @@
  */
 
 // @matter
-import { MaybePromise } from '@matter/main';
 import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
 
 // Matterbridge
@@ -50,5 +49,4 @@ export class SolarPower extends MatterbridgeEndpoint {
       .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.SolarPv, true, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
       .addRequiredClusterServers();
   }
-
 }
