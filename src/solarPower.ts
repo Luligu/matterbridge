@@ -32,7 +32,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { MatterbridgeServer } from './matterbridgeBehaviors.js';
 import { deviceEnergyManagement, electricalSensor, solarPower, powerSource } from './matterbridgeDeviceTypes.js';
 
-export class SolarPowerDevice extends MatterbridgeEndpoint {
+export class SolarPower extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the SolarPower class.
    *
