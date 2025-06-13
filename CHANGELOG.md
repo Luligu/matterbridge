@@ -17,7 +17,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [fan]: Added all parameters to the fan cluster helpers.
 - [valve]: Added logic in MatterbridgeValveConfigurationAndControlServer.
 - [command]: Added cluster property to commandHandler data object.
-- [mb-service]: Added a link to [mb-service](https://github.com/michaelahern/mb-service) package by [Michael Ahern](https://github.com/michaelahern).
+- [mb-service]: Added a link to [mb-service](https://github.com/michaelahern/mb-service) package by [Michael Ahern](https://github.com/michaelahern). It runs matterbridge as a service in macOS.
 
 ### Changed
 
