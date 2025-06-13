@@ -13,7 +13,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [tests] Update Jest test coverage on addBridgedEndpoint and removeBridgedEndpoint.
-- [fan]: Added createMultiSpeedFanControlClusterServer claster helper with MultiSpeed feature.
+- [fan]: Added createMultiSpeedFanControlClusterServer cluster helper with MultiSpeed feature.
 - [fan]: Added all parameters to the fan cluster helpers.
 - [valve]: Added logic in MatterbridgeValveConfigurationAndControlServer.
 - [command]: Added cluster property to commandHandler data object.
