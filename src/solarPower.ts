@@ -25,11 +25,9 @@
 // @matter
 import { MaybePromise } from '@matter/main';
 import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
-import { ModeBase } from '@matter/main/clusters/mode-base';
 
 // Matterbridge
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { MatterbridgeServer } from './matterbridgeBehaviors.js';
 import { deviceEnergyManagement, electricalSensor, solarPower, powerSource } from './matterbridgeDeviceTypes.js';
 
 export class SolarPower extends MatterbridgeEndpoint {
