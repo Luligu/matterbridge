@@ -172,6 +172,10 @@ Config editor:
 
 [Podman configurations](README-PODMAN.md)
 
+### Run matterbridge as a service on macOS with mb-service (by [Michael Ahern](https://github.com/michaelahern))
+
+[Matterbridge Service Command for macOS](https://github.com/michaelahern/mb-service)
+
 ### Run matterbridge with nginx
 
 [Nginx configurations](README-NGINX.md)
