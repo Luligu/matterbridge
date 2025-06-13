@@ -41,12 +41,7 @@ export class SolarPower extends MatterbridgeEndpoint {
    * @param {number} [absMinPower=0] - Indicate the minimum electrical power that the ESA can consume when switched on. Defaults to `0` if not provided.
    * @param {number} [absMaxPower=0] - Indicate the maximum electrical power that the ESA can consume when switched on. Defaults to `0` if not provided.
    */
-  constructor(
-    name: string,
-    serial: string,
-    absMinPower?: number,
-    absMaxPower?: number,
-  ) {
+  constructor(name: string, serial: string, absMinPower?: number, absMaxPower?: number) {
     super([solarPower, powerSource, electricalSensor, deviceEnergyManagement], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Solar Power')
