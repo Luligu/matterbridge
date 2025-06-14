@@ -15,6 +15,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [package]: Updated dependencies.
+- [package]: Downgrade jest to 29.7.0.
 - [energy]: Added parameter for cumulativeEnergyExported to the helper. For solar power device.
 
 ### Fixed
