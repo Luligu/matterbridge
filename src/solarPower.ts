@@ -43,13 +43,15 @@ export class SolarPower extends MatterbridgeEndpoint {
    * @param {number} [absMinPower=0] - Indicate the minimum electrical power that the ESA can produce when switched on. Defaults to `0` if not provided.
    * @param {number} [absMaxPower=0] - Indicate the maximum electrical power that the ESA can produce when switched on. Defaults to `0` if not provided.
    */
-  constructor(name: string,
+  constructor(
+    name: string,
     serial: string,
     voltage: number | bigint | null = null,
     current: number | bigint | null = null,
     power: number | bigint | null = null,
     energyExported: number | bigint | null = null,
-    absMinPower?: number, absMaxPower?: number
+    absMinPower?: number,
+    absMaxPower?: number,
   ) {
     super(
       [solarPower, powerSource, electricalSensor, deviceEnergyManagement],
@@ -57,7 +59,8 @@ export class SolarPower extends MatterbridgeEndpoint {
         tagList: [{ mfgCode: null, namespaceId: PowerSourceTag.Solar.namespaceId, tag: PowerSourceTag.Solar.tag, label: PowerSourceTag.Solar.label }],
         uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`
       },
-      true);
+      true
+    );
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Solar Power')
       .createDefaultPowerSourceWiredClusterServer()
