@@ -1,3 +1,4 @@
+// src\globalMatterbridge.test.ts
 import { setGlobalMatterbridge, getGlobalMatterbridge, getGlobalFrontend, getGlobalLog } from './globalMatterbridge';
 import type { Matterbridge } from './matterbridge';
 import type { Frontend } from './frontend';
