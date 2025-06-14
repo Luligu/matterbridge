@@ -1,10 +1,10 @@
 /**
- * This file contains the class MatterbridgeAccessoryPlatform.
+ * This file contains the class MatterbridgePlatform.
  *
  * @file matterbridgePlatform.ts
  * @author Luca Liguori
  * @date 2024-03-21
- * @version 1.2.0
+ * @version 1.2.1
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -149,7 +149,7 @@ export class MatterbridgePlatform {
   /**
    * This method must be overridden in the extended class.
    * It is called when the platform is started.
-   * Use this method to create the MatterbridgeDevice and call this.registerDevice().
+   * Use this method to create the MatterbridgeEndpoints and call this.registerDevice().
    * @param {string} [reason] - The reason for starting.
    * @throws {Error} - Throws an error if the method is not overridden.
    */
@@ -159,9 +159,9 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * This method can be overridden in the extended class. Call super.onConfigure() to run checkEndpointNumbers().
+   * This method can be overridden in the extended class. In this case always call super.onConfigure() to save the select and run checkEndpointNumbers().
    * It is called after the platform has started.
-   * Use this method to perform any configuration of your devices and to override the value of the attributes that are stored in the
+   * Use this method to perform any configuration of your devices and to override the value of the attributes that are persistent and stored in the
    * matter storage (i.e. the onOff attribute of the OnOff cluster).
    */
   async onConfigure() {
@@ -177,7 +177,7 @@ export class MatterbridgePlatform {
   /**
    * This method can be overridden in the extended class. In this case always call super.onShutdown() to save the selects, run checkEndpointNumbers() and cleanup memory.
    * It is called when the platform is shutting down.
-   * Use this method to clean up any resources.
+   * Use this method to clean up any resources you used in the constructor or onStart.
    * @param {string} [reason] - The reason for shutting down.
    */
   async onShutdown(reason?: string) {
@@ -203,7 +203,7 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * Sets the logger level and logs a debug message indicating that the plugin doesn't override this method.
+   * Called when the logger level is changed.
    * @param {LogLevel} logLevel The new logger level.
    */
   async onChangeLoggerLevel(logLevel: LogLevel) {
@@ -247,7 +247,7 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * Check if a device with this name is already registered in the platform.
+   * Checks if a device with this name is already registered in the platform.
    * @param {string} deviceName - The device name to check.
    * @returns {boolean} True if the device is already registered, false otherwise.
    */
@@ -317,7 +317,7 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * Clears the select device and entity maps.
+   * Clears all the select device and entity maps.
    *
    * @returns {void}
    */
@@ -525,7 +525,7 @@ export class MatterbridgePlatform {
    *
    * @returns {Promise<number>} The size of the updated endpoint map, or -1 if storage is not available.
    */
-  async checkEndpointNumbers() {
+  async checkEndpointNumbers(): Promise<number> {
     if (!this.storage) return -1;
     this.log.debug('Checking endpoint numbers...');
     const context = await this.storage.createStorage('endpointNumbers');

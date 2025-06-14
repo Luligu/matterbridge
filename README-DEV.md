@@ -18,49 +18,53 @@
 
 Matterbridge exports from:
 
-"matterbridge"
+### "matterbridge"
 
 - Matterbridge and all Matterbridge related classes.
 
-"matterbridge/matter"
+### "matterbridge/devices"
 
-- All relevant matter.js exports.
+- All single device classes like the Rvc, LaundryWasher, etc...
 
-"matterbridge/matter/behaviors"
-
-- All matter.js behaviors.
-
-"matterbridge/matter/clusters"
-
-- All matter.js clusters.
-
-"matterbridge/matter/devices"
-
-- All matter.js devices.
-
-"matterbridge/matter/endpoints"
-
-- All matter.js endpoints.
-
-"matterbridge/matter/types"
-
-- All matter.js types.
-
-"matterbridge/cluster"
+### "matterbridge/clusters"
 
 - All clusters not present in matter.js or modified.
 
-"matterbridge/utils"
+### "matterbridge/utils"
 
 - All general utils and colorUtils functions.
 
-"matterbridge/logger"
+### "matterbridge/logger"
 
 - AnsiLogger class.
 
-"matterbridge/storage"
+### "matterbridge/storage"
 
 - NodeStorageManager and NodeStorage classes.
+
+### "matterbridge/matter"
+
+- All relevant matter.js exports.
+
+### "matterbridge/matter/behaviors"
+
+- All matter.js behaviors.
+
+### "matterbridge/matter/clusters"
+
+- All matter.js clusters.
+
+### "matterbridge/matter/devices"
+
+- All matter.js devices.
+
+### "matterbridge/matter/endpoints"
+
+- All matter.js endpoints.
+
+### "matterbridge/matter/types"
+
+- All matter.js types.
 
 # \***\*\*\*\*\***
 
@@ -72,7 +76,7 @@ Additionally, when Matterbridge updates the `matter.js` version, it should be co
 
 A plugin must never install Matterbridge (neither as a dependency, devDependency, nor peerDependency).
 
-Matterbridge must be linked to the plugin in development only.
+Matterbridge must be linked to the plugin in development only. At runtime the plugin is loaded directly from the running Mattebridge instance.
 
 ```json
 "scripts": {
@@ -82,9 +86,9 @@ Matterbridge must be linked to the plugin in development only.
 }
 ```
 
-On the machine you use for development you should also have matterbridge installed globally or built locally and linked (npm link from the package root).
+On the machine you use for development of your plugin, you need to clone matterbridge, built it locally and link it globally (npm link from the matterbridge package root).
 
-Dev and edge branches of matterbridge are not suitable for developemnt cause they are published for production without types. If you want to develop a plugin using the dev or edge branch of matterbridge, you have to clone the dev or edge branch of matterbridge, build locally and link (npm run deepCleanBuild).
+If you want to develop a plugin using the dev branch of matterbridge, you have to clone the dev branch of matterbridge, build it locally and link it (npm run deepCleanBuild).
 
 # \***\*\*\*\*\***
 
@@ -114,7 +118,7 @@ On windows:
 cd $HOME\Matterbridge
 ```
 
-On linux:
+On linux or macOS:
 
 ```
 cd ~/Matterbridge
@@ -126,6 +130,7 @@ then clone the plugin
 git clone https://github.com/Luligu/matterbridge-example-accessory-platform
 cd matterbridge-example-accessory-platform
 npm install
+npm link matterbridge
 npm run build
 ```
 
@@ -150,37 +155,63 @@ The plugin platform type.
 The plugin config (loaded before the platform constructor is called and saved after onShutdown() is called).
 Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for example)
 
+### constructor(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig)
+
+The contructor is called when is plugin is loaded.
+
 ### async onStart(reason?: string)
 
-The method onStart() is where you have to create your MatterbridgeDevice and add all needed clusters and command handlers.
+The method onStart() is where you have to create your MatterbridgeEndpoint and add all needed clusters.
 
-The MatterbridgeDevice class has the create cluster methods already done and all command handlers needed (see plugin examples).
+After add the command handlers and subscribe to the attributes when needed.
+
+The MatterbridgeEndpoint class has the create cluster methods already done and all command handlers needed (see plugin examples).
 
 The method is called when Matterbridge load the plugin.
 
 ### async onConfigure()
 
-The method onConfigure() is where you can configure or initialize your device.
+The method onConfigure() is where you can configure your matter device.
 
-The method is called when the platform is commissioned.
+The method is called when the server node the platform belongs to is online.
+
+Since the persistent attributes are loaded from the storage when the server node goes online, you may need to set them in onConfigure().
 
 ### async onShutdown(reason?: string)
 
-The method onShutdown() is where you have to eventually cleanup some resources.
+The method onShutdown() is where you have to stop your platform and cleanup all the used resources.
 
-The method is called when Matterbridge is shutting down.
+The method is called when Matterbridge is shutting down or when the plugin is disabled.
 
-### async registerDevice(device: MatterbridgeDevice)
+Since the frontend can enable and disable the plugin many times, you need to clean all resources (i.e. handlers, intervals, timers...) here.
 
-After you created your device, add it to the platform.
+### async onChangeLoggerLevel(logLevel: LogLevel)
 
-### async unregisterDevice(device: MatterbridgeDevice)
+It is called when the user changes the logger level in the frontend.
+
+### async onAction(action: string, value?: string, id?: string, formData?: PlatformConfig)
+
+It is called when a plugin config includes an action button or an action button with text field.
+
+### async onConfigChanged(config: PlatformConfig)
+
+It is called when the plugin config has been updated.
+
+### hasDeviceName(deviceName: string): boolean
+
+Checks if a device with this name is already registered in the platform.
+
+### async registerDevice(device: MatterbridgeEndpoint)
+
+After you have created your device, add it to the platform.
+
+### async unregisterDevice(device: MatterbridgeEndpoint)
 
 You can unregister one or more device.
 
 ### async unregisterAllDevices()
 
-You can unregister all devices you added.
+You can unregister all the devices you added.
 
 It can be useful to call this method from onShutdown() if you don't want to keep all the devices during development.
 
