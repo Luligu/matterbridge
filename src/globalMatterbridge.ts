@@ -1,3 +1,4 @@
+/* eslint-disable no-var */
 import type { Matterbridge } from './matterbridge.js';
 import type { Frontend } from './frontend.js';
 import type { AnsiLogger } from 'node-ansi-logger';
