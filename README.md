@@ -330,6 +330,7 @@ It exposes 38 devices:
 - a cooktop device (supported by SmartThings, Alexa and Home Assistant)
 - a water heater device (supported by SmartThings and Home Assistant)
 - a car charger device (supported by Home Assistant)
+- a solar power inverter device (supported by Home Assistant)
 
 All these virtual devices continuously change state and position. The plugin also shows how to use all the command handlers (you can control all the devices).
 
