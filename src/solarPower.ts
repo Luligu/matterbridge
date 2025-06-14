@@ -35,17 +35,21 @@ export class SolarPower extends MatterbridgeEndpoint {
    *
    * @param {string} name - The name of the SolarPower.
    * @param {string} serial - The serial number of the SolarPower.
+   * @param {number} voltage - The voltage value in millivolts.
+   * @param {number} current - The current value in milliamperes.
+   * @param {number} power - The power value in milliwatts.
+   * @param {number} energyExported - The total production value in mW/h.
    * @param {number} [absMinPower=0] - Indicate the minimum electrical power that the ESA can produce when switched on. Defaults to `0` if not provided.
    * @param {number} [absMaxPower=0] - Indicate the maximum electrical power that the ESA can produce when switched on. Defaults to `0` if not provided.
    */
-  constructor(name: string, serial: string, absMinPower?: number, absMaxPower?: number) {
+  constructor(name: string, serial: string, voltage: number | bigint | null = null, current: number | bigint | null = null, power: number | bigint | null = null, energyExported: number | bigint | null = null, absMinPower?: number, absMaxPower?: number) {
     super([solarPower, powerSource, electricalSensor, deviceEnergyManagement], { uniqueStorageKey: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` }, true);
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Solar Power')
       .createDefaultPowerSourceWiredClusterServer()
       .createDefaultPowerTopologyClusterServer()
-      .createDefaultElectricalPowerMeasurementClusterServer()
-      .createDefaultElectricalEnergyMeasurementClusterServer(0, 0)
+      .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
+      .createDefaultElectricalEnergyMeasurementClusterServer(0, energyExported)
       .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.SolarPv, true, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
       .addRequiredClusterServers();
   }
