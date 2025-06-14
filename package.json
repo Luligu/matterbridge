@@ -53,6 +53,26 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
+    "./devices": {
+      "import": "./dist/devices/export.js",
+      "types": "./dist/devices/export.d.ts"
+    },
+    "./clusters": {
+      "import": "./dist/clusters/export.js",
+      "types": "./dist/clusters/export.d.ts"
+    },
+    "./utils": {
+      "import": "./dist/utils/export.js",
+      "types": "./dist/utils/export.d.ts"
+    },
+    "./logger": {
+      "import": "./dist/logger/export.js",
+      "types": "./dist/logger/export.d.ts"
+    },
+    "./storage": {
+      "import": "./dist/storage/export.js",
+      "types": "./dist/storage/export.d.ts"
+    },
     "./matter": {
       "import": "./dist/matter/export.js",
       "types": "./dist/matter/export.d.ts"
@@ -76,22 +96,6 @@
     "./matter/types": {
       "import": "./dist/matter/types.js",
       "types": "./dist/matter/types.d.ts"
-    },
-    "./cluster": {
-      "import": "./dist/cluster/export.js",
-      "types": "./dist/cluster/export.d.ts"
-    },
-    "./utils": {
-      "import": "./dist/utils/export.js",
-      "types": "./dist/utils/export.d.ts"
-    },
-    "./logger": {
-      "import": "./dist/logger/export.js",
-      "types": "./dist/logger/export.d.ts"
-    },
-    "./storage": {
-      "import": "./dist/storage/export.js",
-      "types": "./dist/storage/export.d.ts"
     }
   },
   "scripts": {

@@ -40,12 +40,6 @@ export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
 export { addVirtualDevice } from './helpers.js';
 
-// Single class device types
-export * from './roboticVacuumCleaner.js';
-export * from './laundryWasher.js';
-export * from './waterHeater.js';
-export * from './evse.js';
-
 const log = new AnsiLogger({ logName: 'Main', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 
 async function main() {
