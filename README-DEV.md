@@ -207,7 +207,7 @@ After you have created your device, add it to the platform.
 
 ### async unregisterDevice(device: MatterbridgeEndpoint)
 
-You can unregister one device.
+You can unregister a device.
 
 ### async unregisterAllDevices()
 
@@ -215,7 +215,7 @@ You can unregister all the devices you added.
 
 It can be useful to call this method from onShutdown() if you don't want to keep all the devices during development.
 
-## MatterbridgeDevice api
+## MatterbridgeEndpoint api
 
 Work in progress...
 
