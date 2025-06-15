@@ -446,13 +446,6 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * @deprecated This method is deprecated and will be removed in future versions. Use validateDevice instead.
-   */
-  validateDeviceWhiteBlackList(device: string | string[], log = true): boolean {
-    return this.validateDevice(device, log);
-  }
-
-  /**
    * Validates if a device is allowed based on the whitelist and blacklist configurations.
    * The blacklist has priority over the whitelist.
    *
@@ -482,13 +475,6 @@ export class MatterbridgePlatform {
     }
     if (log) this.log.info(`Skipping device ${CYAN}${device.join(', ')}${nf} because not in whitelist`);
     return false;
-  }
-
-  /**
-   * @deprecated This method is deprecated and will be removed in future versions. Use validateEntity instead.
-   */
-  validateEntityBlackList(device: string, entity: string, log = true): boolean {
-    return this.validateEntity(device, entity, log);
   }
 
   /**
