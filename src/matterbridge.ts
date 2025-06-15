@@ -2348,10 +2348,10 @@ const commissioningController = new CommissioningController({
    */
   private startEndAdvertiseTimer(matterServerNode: ServerNode) {
     if (this.endAdvertiseTimeout) {
-      this.log.debug(`***Clear ${matterServerNode.id} server node end advertise timer`);
+      this.log.debug(`Clear ${matterServerNode.id} server node end advertise timer`);
       clearTimeout(this.endAdvertiseTimeout);
     }
-    this.log.debug(`***Starting ${matterServerNode.id} server node end advertise timer`);
+    this.log.debug(`Starting ${matterServerNode.id} server node end advertise timer`);
     this.endAdvertiseTimeout = setTimeout(
       () => {
         if (matterServerNode.lifecycle.isCommissioned) return;

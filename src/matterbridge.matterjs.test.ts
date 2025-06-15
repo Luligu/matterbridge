@@ -195,8 +195,8 @@ describe('Matterbridge matterjs', () => {
 
     jest.useFakeTimers();
     (matterbridge as any).startEndAdvertiseTimer(matterbridge.serverNode);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***Clear ${matterbridge.serverNode?.id} server node end advertise timer`));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`***Starting ${matterbridge.serverNode?.id} server node end advertise timer`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Clear ${matterbridge.serverNode?.id} server node end advertise timer`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Starting ${matterbridge.serverNode?.id} server node end advertise timer`));
     jest.advanceTimersByTime(15 * 60 * 1000); // Advance time by 15 minutes
     jest.useRealTimers();
 
