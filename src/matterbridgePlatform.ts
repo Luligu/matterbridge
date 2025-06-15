@@ -74,7 +74,7 @@ export class MatterbridgePlatform {
   storage: NodeStorageManager;
   context?: NodeStorage;
 
-  // Device and entity selection
+  // Device and entity select in the plugin config UI
   readonly selectDevice = new Map<string, { serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }>();
   readonly selectEntity = new Map<string, { name: string; description: string; icon?: string }>();
 
@@ -87,9 +87,6 @@ export class MatterbridgePlatform {
   // Registered devices
   private readonly _registeredEndpoints = new Map<string, MatterbridgeEndpoint>(); // uniqueId, MatterbridgeEndpoint
   private readonly _registeredEndpointsByName = new Map<string, MatterbridgeEndpoint>(); // deviceName, MatterbridgeEndpoint
-
-  // Stored devices
-  private readonly _storedDevices = new Map<string, { pluginName: string; serial: string; name: string; configUrl?: string }>(); // serial, { serial, name }
 
   /**
    * Creates an instance of the base MatterbridgePlatform.
@@ -194,7 +191,6 @@ export class MatterbridgePlatform {
     this.selectEntity.clear();
     this._registeredEndpoints.clear();
     this._registeredEndpointsByName.clear();
-    this._storedDevices.clear();
 
     // Close the storage
     await this.context?.close();
