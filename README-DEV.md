@@ -100,9 +100,11 @@ Matterbridge must be linked to the plugin in development only. At runtime the pl
 }
 ```
 
-On the machine you use for development of your plugin, you need to clone matterbridge, built it locally and link it globally (npm link from the matterbridge package root).
+If you don't use Dev Container from the Matterbridge Plugin Template, on the machine you use for development of your plugin, you need to clone matterbridge, built it locally and link it globally (npm link from the matterbridge package root).
 
-If you want to develop a plugin using the dev branch of matterbridge, you have to clone the dev branch of matterbridge, build it locally and link it (npm run deepCleanBuild).
+If you want to develop a plugin using the dev branch of matterbridge (I suggest you do it), you have to clone the dev branch of matterbridge, build it locally and link it (npm run deepCleanBuild does all necessary steps).
+
+Always keep your local instance of matterbridge up to date.
 
 ### WARNING \***\*\*\*\*\***
 
