@@ -247,6 +247,14 @@ export class MatterbridgePlatform {
   }
 
   /**
+   * Retrieves the devices registered with the platform.
+   * @returns {MatterbridgeEndpoint[]} The registered devices.
+   */
+  getDevices(): MatterbridgeEndpoint[] {
+    return Array.from(this._registeredEndpoints.values());
+  }
+
+  /**
    * Checks if a device with this name is already registered in the platform.
    * @param {string} deviceName - The device name to check.
    * @returns {boolean} True if the device is already registered, false otherwise.

@@ -193,6 +193,10 @@ It is called when a plugin config includes an action button or an action button 
 
 It is called when the plugin config has been updated.
 
+### getDevices(): MatterbridgeEndpoint[]
+
+Retrieves the devices registered with the platform.
+
 ### hasDeviceName(deviceName: string): boolean
 
 Checks if a device with this name is already registered in the platform.
@@ -203,7 +207,7 @@ After you have created your device, add it to the platform.
 
 ### async unregisterDevice(device: MatterbridgeEndpoint)
 
-You can unregister one or more device.
+You can unregister one device.
 
 ### async unregisterAllDevices()
 
