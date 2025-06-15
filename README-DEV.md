@@ -14,6 +14,20 @@
 
 # Development
 
+## How to create your plugin
+
+The easiest way is to clone the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template) that has **Dev Container support for instant development environment** and all tools and extensions (like Node.js, npm, TypeScript, ESLint, Prettier, Jest) already loaded and configured.
+
+Then change the name (keep matterbridge- at the beginning of the name), version, description, author, homepage, repository, bugs and funding in the package.json.
+
+It is possible to add two custom properties to the package.json: **help** and **changelog** with a url that will be used in the frontend instead of the default (/blob/main/README.md and /blob/main/CHANGELOG.md).
+
+Add your plugin logic in module.ts.
+
+The Matterbridge Plugin Template has an already configured Jest test (coverage 100%) that you can expand while you add your own plugin logic.
+
+It also has a workflow configured to run on push and pull request that build, lint and test the plugin on node 18, 20, 22 and 24 with ubuntu, macOS and windows.
+
 ## Guidelines on imports/exports
 
 Matterbridge exports from:
@@ -66,13 +80,13 @@ Matterbridge exports from:
 
 - All matter.js types.
 
-# \***\*\*\*\*\***
+### WARNING \***\*\*\*\*\***
 
 A plugin must never install or import from `@matter` or `@project-chip` directly (neither as a dependency, devDependency, nor peerDependency), as this leads to a second instance of `matter.js`, causing instability and unpredictable errors such as "The only instance is Endpoint".
 
 Additionally, when Matterbridge updates the `matter.js` version, it should be consistent across all plugins.
 
-# \***\*\*\*\*\***
+### WARNING \***\*\*\*\*\***
 
 A plugin must never install Matterbridge (neither as a dependency, devDependency, nor peerDependency).
 
@@ -90,19 +104,9 @@ On the machine you use for development of your plugin, you need to clone matterb
 
 If you want to develop a plugin using the dev branch of matterbridge, you have to clone the dev branch of matterbridge, build it locally and link it (npm run deepCleanBuild).
 
-# \***\*\*\*\*\***
+### WARNING \***\*\*\*\*\***
 
-I added some error messages when a plugin has wrong imports or configurations and the plugin will be disabled to prevent instability and crashes.
-
-## How to create your plugin
-
-The easiest way is to clone the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template) that has **Devcontainer support for instant development environment** and all tools (Node.js, npm, TypeScript, ESLint, Prettier, Jest) already loaded and configured.
-
-Then change the name (keep matterbridge- at the beginning of the name), version, description, author, homepage, repository, bugs and funding in the package.json.
-
-It is possible to add these custom properties to the package.json: **help** and **changelog** with a url that will be used in the frontend instead of the default (/blob/main/README.md and /blob/main/CHANGELOG.md).
-
-Add your plugin logic in module.ts.
+Some error messages are logged on start when a plugin has wrong imports or configurations and the plugin will be disabled to prevent instability and crashes.
 
 ## How to install and register a plugin for development (from github)
 
