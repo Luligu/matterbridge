@@ -16,6 +16,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [template]: Added the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template).
+
 ### Changed
 
 - [package]: Updated dependencies.

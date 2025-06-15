@@ -96,17 +96,13 @@ I added some error messages when a plugin has wrong imports or configurations an
 
 ## How to create your plugin
 
-The easiest way is to clone:
+The easiest way is to clone the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template) that has **Devcontainer support for instant development environment** and all tools (Node.js, npm, TypeScript, ESLint, Prettier, Jest) already loaded and configured.
 
-- https://github.com/Luligu/matterbridge-example-accessory-platform if you want to create an Accessory Platform Plugin.
+Then change the name (keep matterbridge- at the beginning of the name), version, description, author, homepage, repository, bugs and funding in the package.json.
 
-- https://github.com/Luligu/matterbridge-example-dynamic-platform if you want to create a Dynamic Platform Plugin.
+It is possible to add these custom properties to the package.json: **help** and **changelog** with a url that will be used in the frontend instead of the default (/blob/main/README.md and /blob/main/CHANGELOG.md).
 
-Then change the name (keep matterbridge- at the beginning of the name), version, description, author and funding in the package.json.
-
-It is possible to add these custom properties to the package.json: help and changelog with a url that will be used in the frontend instead of the default (/blob/main/README.md and /blob/main/CHANGELOG.md).
-
-Add your plugin logic in platform.ts.
+Add your plugin logic in module.ts.
 
 ## How to install and register a plugin for development (from github)
 
