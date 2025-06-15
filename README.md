@@ -22,10 +22,10 @@ The developer just focuses on the device development extending the provided clas
 
 Just pair Matterbridge once, and it will load all your registered plugins.
 
-This project aims to allow the porting of homebridge plugins to matterbridge plugins without recoding everything.
+This project aims to allow the porting of homebridge plugins to matterbridge plugins without recoding everything ([Development](README-DEV.md)).
 
-It creates a device to pair in any ecosystem like Apple Home, Google Home, Amazon Alexa, or
-any other ecosystem supporting Matter like Home Assistant.
+It creates a device to pair in any ecosystem like Apple Home, Google Home, Amazon Alexa, Home Assistant or
+any other ecosystem supporting Matter.
 
 You don't need a hub or a dedicated new machine.
 
