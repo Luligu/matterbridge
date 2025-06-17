@@ -1839,6 +1839,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {ValveConfigurationAndControl.ValveState} [valveState=ValveConfigurationAndControl.ValveState.Closed] - The valve state to set. Defaults to `ValveConfigurationAndControl.ValveState.Closed`.
    * @param {number} [valveLevel=0] - The valve level to set. Defaults to 0.
+   * @param {number} [targetLevel=null] - The valve target level to set. Defaults to null.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultValveConfigurationAndControlClusterServer(valveState = ValveConfigurationAndControl.ValveState.Closed, valveLevel = 0) {
@@ -1851,7 +1852,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       valveFault: { generalFault: false, blocked: false, leaking: false, notConnected: false, shortCircuit: false, currentExceeded: false },
       // Feature.Level
       currentLevel: valveLevel,
-      targetLevel: valveLevel,
+      targetLevel: null,
       defaultOpenLevel: 100, // Writable and persistent across restarts
       levelStep: 1, // Fixed
     });
