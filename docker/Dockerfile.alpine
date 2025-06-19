@@ -1,4 +1,4 @@
-FROM node:23-alpine AS base
+FROM node:24-alpine AS base
 
 # Build Matterbridge
 WORKDIR /matterbridge
@@ -6,12 +6,12 @@ COPY ./package.json ./package-lock.json ./tsconfig.json ./tsconfig.production.js
 COPY ./src ./src
 COPY ./frontend/build ./frontend/build
 RUN npm ci && \
-    npm run build && \
-    npm shrinkwrap --omit=dev && \
-    npm pack
+  npm run build && \
+  npm shrinkwrap --omit=dev && \
+  npm pack
 
-FROM node:23-alpine AS release
-WORKDIR /app    
+FROM node:24-alpine AS release
+WORKDIR /app
 
 COPY --from=base /matterbridge/*.tgz .
 RUN npm install npm@latest *.tgz --global --verbose --omit=dev && rm *.tgz
