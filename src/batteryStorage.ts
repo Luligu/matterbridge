@@ -58,6 +58,8 @@ export class BatteryStorage extends MatterbridgeEndpoint {
     absMinPower?: number,
     absMaxPower?: number,
     batPercentRemaining?: number,
+    batTimeRemaining?: number,
+    batTimeToFullCharge?: number,
     // batVoltage: number | bigint | null = null,
     // batChargeLevel: number | bigint | null = null,
   ) {
@@ -74,7 +76,7 @@ export class BatteryStorage extends MatterbridgeEndpoint {
     );
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Solar Power')
-      .createDefaultPowerSourceWiredRechargeableBatteryClusterServer(batPercentRemaining, 1, 48000, null, null, undefined)
+      .createDefaultPowerSourceWiredRechargeableBatteryClusterServer(batPercentRemaining, 1, 48000, batTimeRemaining, batTimeToFullCharge, undefined)
       .createDefaultPowerTopologyClusterServer()
       .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
       .createDefaultElectricalEnergyMeasurementClusterServer(energyImpported, energyExported)

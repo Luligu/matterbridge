@@ -959,7 +959,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     batTimeRemaining: number | null = null,
     batTimeToFullCharge: number | null = null,
     activeBatChargeFaults: PowerSource.BatChargeFault[] | undefined = undefined,
-  ) {
+  ): this {
     // this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Wired, PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable), {
     this.behaviors.require(PowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable), {
       status: PowerSource.PowerSourceStatus.Active,
