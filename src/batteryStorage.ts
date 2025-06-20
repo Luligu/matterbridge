@@ -72,7 +72,7 @@ export class BatteryStorage extends MatterbridgeEndpoint {
     );
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Solar Power')
-      .createDefaultPowerSourceRechargeableBatteryClusterServer(180)
+      .createDefaultPowerSourceWiredRechargeableBatteryClusterServer(180)
       .createDefaultPowerTopologyClusterServer()
       .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
       .createDefaultElectricalEnergyMeasurementClusterServer(energyImpported, energyExported)
