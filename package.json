@@ -43,7 +43,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "matterbridge": "dist/cli.js"
+    "matterbridge": "bin/matterbridge"
   },
   "engines": {
     "node": ">=18.0.0 <19.0.0 || >=20.0.0 <21.0.0 || >=22.0.0 <23.0.0 || >=24.0.0 <25.0.0"
@@ -174,7 +174,7 @@
     "eslint-config-prettier": "10.1.5",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-jest": "29.0.1",
-    "eslint-plugin-jsdoc": "51.1.0",
+    "eslint-plugin-jsdoc": "^51.1.0",
     "eslint-plugin-n": "17.20.0",
     "eslint-plugin-prettier": "5.5.0",
     "eslint-plugin-promise": "7.2.1",
