@@ -221,7 +221,7 @@ describe('Matterbridge platform', () => {
   it('should validate with black list', () => {
     platform.config.whiteList = [];
     platform.config.blackList = ['black1', 'black2', 'black3'];
-    expect(platform.validateDeviceWhiteBlackList('whiteDevice')).toBe(true);
+    expect(platform.validateDevice('whiteDevice')).toBe(true);
     expect(platform.validateDevice('whiteDevice')).toBe(true);
     expect(platform.validateDevice('black1')).toBe(false);
     expect(platform.validateDevice('black2')).toBe(false);
@@ -247,7 +247,7 @@ describe('Matterbridge platform', () => {
     platform.config.entityBlackList = undefined;
     platform.config.deviceEntityBlackList = undefined;
 
-    expect(platform.validateEntityBlackList('any', 'whiteEntity')).toBe(true);
+    expect(platform.validateEntity('any', 'whiteEntity')).toBe(true);
     expect(platform.validateEntity('any', 'whiteEntity')).toBe(true);
     expect(platform.validateEntity('any', 'blackEntity')).toBe(true);
     expect(platform.validateEntity('any', '')).toBe(true);

@@ -5,7 +5,7 @@
 [![Docker Version](https://img.shields.io/docker/v/luligu/matterbridge?label=docker%20version&sort=semver)](https://hub.docker.com/r/luligu/matterbridge)
 [![Docker Pulls](https://img.shields.io/docker/pulls/luligu/matterbridge.svg)](https://hub.docker.com/r/luligu/matterbridge)
 ![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
-![Coverage](https://img.shields.io/badge/Jest%20coverage-88%25-brightgreen)
+![Coverage](https://img.shields.io/badge/Jest%20coverage-89%25-brightgreen)
 
 [![power by](https://img.shields.io/badge/powered%20by-matter--history-blue)](https://www.npmjs.com/package/matter-history)
 [![power by](https://img.shields.io/badge/powered%20by-node--ansi--logger-blue)](https://www.npmjs.com/package/node-ansi-logger)
@@ -22,10 +22,10 @@ The developer just focuses on the device development extending the provided clas
 
 Just pair Matterbridge once, and it will load all your registered plugins.
 
-This project aims to allow the porting of homebridge plugins to matterbridge plugins without recoding everything.
+This project aims to allow the porting of homebridge plugins to matterbridge plugins without recoding everything ([Development](README-DEV.md)).
 
-It creates a device to pair in any ecosystem like Apple Home, Google Home, Amazon Alexa, or
-any other ecosystem supporting Matter like Home Assistant.
+It creates a device to pair in any ecosystem like Apple Home, Google Home, Amazon Alexa, Home Assistant or
+any other ecosystem supporting Matter.
 
 You don't need a hub or a dedicated new machine.
 
@@ -367,6 +367,10 @@ to the Matter smart home ecosystem via their local MQTT APIs.
 ### [Aeg robot](https://github.com/thoukydides/matterbridge-aeg-robot)
 
 AEG RX 9 / Electrolux Pure i9 robot vacuum plugin for Matterbridge.
+
+### [Airthings](https://github.com/michaelahern/matterbridge-airthings)
+
+A Matterbridge plugin for Airthings air quality monitors via the Airthings Consumer API.
 
 ## How to install and add a plugin with the frontend (best option)
 

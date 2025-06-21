@@ -40,7 +40,7 @@ export * from './matterbridgeAccessoryPlatform.js';
 export * from './matterbridgeDynamicPlatform.js';
 export { addVirtualDevice } from './helpers.js';
 
-// Single class device types
+// Single class device types (these exports will be removed in the next release)
 export * from './roboticVacuumCleaner.js';
 export * from './laundryWasher.js';
 export * from './waterHeater.js';

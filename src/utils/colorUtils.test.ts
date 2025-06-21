@@ -1,5 +1,8 @@
 // src\utils\colorUtils.test.ts
-import { hslColorToRgbColor, kelvinToRGB, miredToKelvin, rgbColorToHslColor, rgbColorToXYColor, xyColorToRgbColor } from './colorUtils.js';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { jest } from '@jest/globals';
+
+import { hslColorToRgbColor, kelvinToMired, kelvinToRGB, miredToKelvin, rgbColorToHslColor, rgbColorToXYColor, xyColorToRgbColor, xyToHsl } from './colorUtils.js';
 
 /* prettier-ignore */
 const colors = [
@@ -161,6 +164,14 @@ describe('Utils test', () => {
       const color = colors[23];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
+
+    test('Pure Red 360', async () => {
+      expect(hslColorToRgbColor(360, 100, 50)).toStrictEqual({ r: 255, g: 0, b: 0 });
+    });
+
+    test('Pure Red Saturation 0', async () => {
+      expect(hslColorToRgbColor(0, 0, 50)).toStrictEqual({ r: 128, g: 128, b: 128 });
+    });
   });
 
   describe('rgbColorToHslColor', () => {
@@ -284,6 +295,10 @@ describe('Utils test', () => {
     test('Deep Pink 50%', async () => {
       const color = colors[23];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
+    });
+
+    test('Achromatic', async () => {
+      expect(rgbColorToHslColor({ r: 128, g: 128, b: 128 })).toStrictEqual({ h: 0, s: 0, l: 50 });
     });
   });
 
@@ -473,19 +488,6 @@ describe('Utils test', () => {
     });
   });
 
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /*
-  describe('HomeAssistant conversion', () => {
-    //test('Mired to kelvin', async () => {
-      // "hs_color": [0, 50.394],
-      // "rgb_color": [255, 126, 126],
-      // "xy_color": [0.528, 0.313],
-      // expect(rgbColorToHslColor({ r: 255, g: 126, b: 126 })).toStrictEqual({ h: 0, s: 50.394, l: 50 });
-      // expect(rgbColorToXYColor({ r: 255, g: 126, b: 126 })).toStrictEqual({ x: 0, y: 50.394 });
-    });
-  });
-  */
-
   describe('colorTemperature', () => {
     test('Mired to kelvin', async () => {
       expect(miredToKelvin(500)).toBe(2000);
@@ -497,17 +499,18 @@ describe('Utils test', () => {
     });
 
     test('Kelvin to mired', async () => {
-      expect(miredToKelvin(2000)).toBe(500);
-      expect(miredToKelvin(2500)).toBe(400);
-      expect(miredToKelvin(2700)).toBe(370);
-      expect(miredToKelvin(3000)).toBe(333);
-      expect(miredToKelvin(3333)).toBe(300);
-      expect(miredToKelvin(4000)).toBe(250);
-      expect(miredToKelvin(5000)).toBe(200);
-      expect(miredToKelvin(6803)).toBe(147);
+      expect(kelvinToMired(2000)).toBe(500);
+      expect(kelvinToMired(2500)).toBe(400);
+      expect(kelvinToMired(2700)).toBe(370);
+      expect(kelvinToMired(3000)).toBe(333);
+      expect(kelvinToMired(3333)).toBe(300);
+      expect(kelvinToMired(4000)).toBe(250);
+      expect(kelvinToMired(5000)).toBe(200);
+      expect(kelvinToMired(6803)).toBe(147);
     });
 
     test('Kelvin to RGB', async () => {
+      expect(kelvinToRGB(10)).toEqual({ r: 255, g: 68, b: 0 });
       expect(kelvinToRGB(2000)).toEqual({ r: 255, g: 137, b: 14 });
       expect(kelvinToRGB(2500)).toEqual({ r: 255, g: 159, b: 70 });
       expect(kelvinToRGB(2700)).toEqual({ r: 255, g: 167, b: 87 });
@@ -517,17 +520,12 @@ describe('Utils test', () => {
       expect(kelvinToRGB(5000)).toEqual({ r: 255, g: 228, b: 206 });
       expect(kelvinToRGB(6803)).toEqual({ r: 250, g: 246, b: 255 });
     });
+  });
 
-    // eslint-disable-next-line jest/no-commented-out-tests
-    /*
-    test('Kelvin to RGB with console', async () => {
-      for (let i = 2000; i < 7000; i += 100) {
-        const rgb = kelvinToRGB(i);
-        expect(rgb).toEqual(rgb);
-        // eslint-disable-next-line no-console
-        // console.log(`\x1b[48;2;${rgb.r};${rgb.g};${rgb.b}mKelvin ${i} => color ${rgb.r} ${rgb.g} ${rgb.b}\x1b[0m`);
-      }
+  describe('xyToHsl', () => {
+    test('Pure Red', async () => {
+      const color = colors[0];
+      expect(xyToHsl(color.xy.x, color.xy.y)).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
-    */
   });
 });

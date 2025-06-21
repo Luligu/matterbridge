@@ -8,6 +8,30 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
+## [3.0.7] - 2025-06-21
+
+### Breaking Changes
+
+- [devices]: The single devices (i.e. Rvc, Evse etc...) are exported from matterbridge/devices. Please update your imports to use the new export path. Refer to the [documentation](README-DEV.md) for details on imports.
+
+### Added
+
+- [template]: Added the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template). It supports Dev Container and Vitest.
+- [platform]: Add getDevices() method to retrieve the registered devices in MatterbridgePlatform.
+
+### Changed
+
+- [package]: Updated dependencies.
+- [package]: Downgrade jest to 29.7.0.
+- [energy]: Added parameter for cumulativeEnergyExported to the helper. For solar power device.
+- [platform]: Removed long deprecated methods: validateEntityBlackList and validateDeviceWhiteBlackList. Use validateDevice and validateEntity.
+
+### Fixed
+
+<a href="https://www.buymeacoffee.com/luligugithub">
+  <img src="bmc-button.svg" alt="Buy me a coffee" width="80">
+</a>
+
 ## [3.0.6] - 2025-06-13
 
 ### Added

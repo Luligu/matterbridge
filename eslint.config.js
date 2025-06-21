@@ -2,11 +2,11 @@
 
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
-import eslintPluginJest from 'eslint-plugin-jest';
-import eslintPluginPrettier from 'eslint-plugin-prettier/recommended';
-import eslintPluginN from 'eslint-plugin-n';
-import eslintPluginReact from 'eslint-plugin-react';
-import eslintPluginReactHooks from 'eslint-plugin-react-hooks';
+import jestPlugin from 'eslint-plugin-jest';
+import prettierPlugin from 'eslint-plugin-prettier/recommended';
+import nodePlugin from 'eslint-plugin-n';
+import reactPlugin from 'eslint-plugin-react';
+import reactHooksPlugin from 'eslint-plugin-react-hooks';
 
 export default [
   {
@@ -16,8 +16,9 @@ export default [
   eslint.configs.recommended,
   ...tseslint.configs.strict,
   ...tseslint.configs.stylistic,
-  eslintPluginPrettier,
+  prettierPlugin,
   {
+    name: 'global base config',
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
@@ -28,7 +29,19 @@ export default [
     rules: {
       'no-console': 'warn',
       'no-undef': 'off',
+      'no-unused-vars': 'off',
       'spaced-comment': ['error', 'always'],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          vars: 'all',
+          args: 'after-used',
+          ignoreRestSiblings: true,
+          varsIgnorePattern: '^_', // Ignore unused variables starting with _
+          argsIgnorePattern: '^_', // Ignore unused arguments starting with _
+          caughtErrorsIgnorePattern: '^_', // Ignore unused caught errors starting with _
+        },
+      ],
     },
   },
   {
@@ -57,35 +70,22 @@ export default [
     plugins: {
       '@typescript-eslint': tseslint.plugin,
     },
-    rules: {
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        {
-          vars: 'all',
-          args: 'after-used',
-          ignoreRestSiblings: true,
-          varsIgnorePattern: '^_', // Ignore unused variables starting with _
-          argsIgnorePattern: '^_', // Ignore unused arguments starting with _
-          caughtErrorsIgnorePattern: '^_', // Ignore unused caught errors starting with _
-        },
-      ],
-    },
   },
   {
     name: 'jest',
     files: ['**/__test__/*', '**/*.test.ts', '**/*.spec.ts', 'frontend/**'],
     plugins: {
       '@typescript-eslint': tseslint.plugin,
-      jest: eslintPluginJest,
+      jest: jestPlugin,
     },
     ...tseslint.configs.disableTypeChecked,
-    ...eslintPluginJest.configs['flat/recommended'],
+    ...jestPlugin.configs['flat/recommended'],
   },
   {
     name: 'node',
     files: ['**/*.ts'],
     plugins: {
-      n: eslintPluginN,
+      n: nodePlugin,
     },
     rules: {
       'n/prefer-node-protocol': 'error',
@@ -95,8 +95,8 @@ export default [
     name: 'frontend-react',
     files: ['frontend/src/**/*.js'],
     plugins: {
-      react: eslintPluginReact,
-      'react-hooks': eslintPluginReactHooks,
+      react: reactPlugin,
+      'react-hooks': reactHooksPlugin,
     },
     settings: {
       react: {
@@ -116,6 +116,7 @@ export default [
           ignoreRestSiblings: true,
           argsIgnorePattern: '^_', // Ignore unused variables starting with _
           varsIgnorePattern: '^_', // Ignore unused variables starting with _
+          caughtErrorsIgnorePattern: '^_', // Ignore unused caught errors starting with _
         },
       ],
     },
