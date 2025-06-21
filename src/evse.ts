@@ -4,7 +4,7 @@
  * @file energy-evse.ts
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
- * @date 2025-05-27
+ * @created 2025-05-27
  * @version 1.1.0
  * @license Apache-2.0
  *
@@ -77,9 +77,10 @@ export class Evse extends MatterbridgeEndpoint {
   /**
    * Creates a default EnergyEvseServer Cluster Server.
    *
-   * @param state
-   * @param supplyState
-   * @param faultState
+   * @param {EnergyEvse.State} [state] - The initial state of the EnergyEvse cluster. Defaults to EnergyEvse.State.NotPluggedIn.
+   * @param {EnergyEvse.SupplyState} [supplyState] - The initial supply state of the EnergyEvse cluster. Defaults to EnergyEvse.SupplyState.ChargingEnabled.
+   * @param {EnergyEvse.FaultState} [faultState] - The initial fault state of the EnergyEvse cluster. Defaults to EnergyEvse.FaultState.NoError.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultEnergyEvseClusterServer(state?: EnergyEvse.State, supplyState?: EnergyEvse.SupplyState, faultState?: EnergyEvse.FaultState): this {
     this.behaviors.require(MatterbridgeEnergyEvseServer, {

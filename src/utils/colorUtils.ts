@@ -3,7 +3,7 @@
  *
  * @file colorUtils.ts
  * @author Luca Liguori
- * @date 2023-10-05
+ * @created 2023-10-05
  * @version 1.3.0
  * @license Apache-2.0
  *
@@ -41,6 +41,14 @@ export interface HSL {
   l: number;
 }
 
+/**
+ * Converts from HSL to RGB color space
+ *
+ * @param {number} hue - The hue value (0-360).
+ * @param {number} saturation - The saturation value (0-100).
+ * @param {number} luminance - The luminance value (0-100).
+ * @returns {RGB} An object containing the RGB values.
+ */
 export function hslColorToRgbColor(hue: number, saturation: number, luminance: number): RGB {
   if (hue === 360) {
     hue = 0;
@@ -90,7 +98,12 @@ export function hslColorToRgbColor(hue: number, saturation: number, luminance: n
   };
 }
 
-// Converts from RGB to the XY color (CIE 1931 color space)
+/**
+ * Converts RGB color space to CIE 1931 XY color space
+ *
+ * @param {RGB} rgb - The RGB color object.
+ * @returns {XY} An object containing the x and y values in CIE 1931 XY color space.
+ */
 export function rgbColorToXYColor(rgb: RGB): XY {
   let r = rgb.r / 255;
   let g = rgb.g / 255;
@@ -122,6 +135,14 @@ export function rgbColorToXYColor(rgb: RGB): XY {
   return { x, y };
 }
 
+/**
+ * Converts CIE 1931 XY color space to RGB color space
+ *
+ * @param {number} x - The x value in CIE 1931 XY color space.
+ * @param {number} y - The y value in CIE 1931 XY color space.
+ * @param {number} [brightness] - The brightness value (1-254). Defaults to 254.
+ * @returns {RGB} An object containing the RGB values.
+ */
 export function xyColorToRgbColor(x: number, y: number, brightness = 254): RGB {
   const z = 1.0 - x - y;
   const Y = (brightness / 254).toFixed(2);
@@ -172,6 +193,12 @@ export function xyColorToRgbColor(x: number, y: number, brightness = 254): RGB {
   return { r: Math.round(red), g: Math.round(green), b: Math.round(blue) };
 }
 
+/**
+ *  Converts RGB color space to HSL color space
+ *
+ * @param {RGB} rgb - The RGB color object.
+ * @returns {HSL} An object containing the HSL values.
+ */
 export function rgbColorToHslColor(rgb: RGB): HSL {
   const r = rgb.r / 255;
   const g = rgb.g / 255;
@@ -209,19 +236,44 @@ export function rgbColorToHslColor(rgb: RGB): HSL {
   };
 }
 
+/**
+ * Converts CIE 1931 XY color space to HSL color space
+ *
+ * @param {number} x - The x value in CIE 1931 XY color space.
+ * @param {number} y - The y value in CIE 1931 XY color space.
+ * @returns {HSL} An object containing the HSL values.
+ */
 export function xyToHsl(x: number, y: number): HSL {
   const rgb = xyColorToRgbColor(x, y);
   return rgbColorToHslColor(rgb);
 }
 
+/**
+ * Converts mireds to kelvin.
+ *
+ * @param {number} mired - The mired value to convert.
+ * @returns {number} The converted kelvin value.
+ */
 export function miredToKelvin(mired: number): number {
   return Math.round(1000000 / mired);
 }
 
+/**
+ * Converts kelvin to mireds.
+ *
+ * @param {number} kelvin - The kelvin value to convert.
+ * @returns {number} The converted mired value.
+ */
 export function kelvinToMired(kelvin: number): number {
   return Math.round(1000000 / kelvin);
 }
 
+/**
+ * Converts kelvin to RGB color space.
+ *
+ * @param {number} kelvin - The kelvin value to convert (1000K to 40000K).
+ * @returns {RGB} An object containing the RGB values.
+ */
 export function kelvinToRGB(kelvin: number): RGB {
   // Clamp the temperature to the range 1000K to 40000K
   kelvin = Math.max(1000, Math.min(40000, kelvin)) / 100;
@@ -322,7 +374,7 @@ export function testColors(): void {
  * @param {number} x
  * @param {number} y
  * @param {number} brightness - Ranges from 1 to 254
- * @return {Array} Array that contains the color values for red, green and blue
+ * @returns {Array} Array that contains the color values for red, green and blue
  * From: https://github.com/usolved/cie-rgb-converter/blob/master/cie_rgb_converter.js
  */
 /*
@@ -384,7 +436,7 @@ export function cie_to_rgb(x: number, y: number, brightness = 254): RGB {
  * @param {number} red
  * @param {number} green
  * @param {number} blue
- * @return {Array} Array that contains the CIE color values for x and y
+ * @returns {Array} Array that contains the CIE color values for x and y
  * From: https://github.com/usolved/cie-rgb-converter/blob/master/cie_rgb_converter.js
  */
 /*

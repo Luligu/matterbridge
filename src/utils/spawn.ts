@@ -1,11 +1,12 @@
-import { hasParameter } from './commandLine.js';
 import { Matterbridge } from '../matterbridge.js';
+
+import { hasParameter } from './commandLine.js';
 
 export default {
   /**
    * Spawns a child process with the given command and arguments.
    *
-   * @param {Matterbridge} matterbridge
+   * @param {Matterbridge} matterbridge - The Matterbridge instance to use for logging and sending messages.
    * @param {string} command - The command to execute.
    * @param {string[]} args - The arguments to pass to the command (default: []).
    * @returns {Promise<boolean>} A promise that resolves when the child process exits successfully, or rejects if there is an error.

@@ -3,7 +3,7 @@
  *
  * @file matterbridgeBehaviors.ts
  * @author Luca Liguori
- * @date 2024-11-07
+ * @created 2024-11-07
  * @version 1.3.0
  * @license Apache-2.0
  *
@@ -27,7 +27,6 @@
 
 // @matter
 import { Behavior, MaybePromise, NamedHandler } from '@matter/main';
-
 // @matter clusters
 import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
 import { ColorControl } from '@matter/main/clusters/color-control';
@@ -43,7 +42,6 @@ import { BooleanStateConfigurationServer } from '@matter/main/behaviors/boolean-
 import { OperationalState } from '@matter/main/clusters/operational-state';
 import { ModeBase } from '@matter/main/clusters/mode-base';
 import { ServiceArea } from '@matter/main/clusters/service-area';
-
 // @matter behaviors
 import { IdentifyServer } from '@matter/main/behaviors/identify';
 import { OnOffServer } from '@matter/main/behaviors/on-off';
@@ -63,9 +61,8 @@ import { DeviceEnergyManagementModeServer } from '@matter/main/behaviors/device-
 
 // AnsiLogger module
 import { AnsiLogger } from './logger/export.js';
-
 // MatterbridgeEndpoint
-import { MatterbridgeEndpoint, MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
+import { MatterbridgeEndpointCommands } from './matterbridgeEndpoint.js';
 
 export class MatterbridgeServer extends Behavior {
   static override readonly id = 'matterbridge';

@@ -20,6 +20,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [Eslint]: Refactored ESLint configuration for TypeScript and improve plugin integration.
 - [Eslint]: Added plugin eslint-plugin-promise, eslint-plugin-jsdoc and @vitest/eslint-plugin.
 - [Vitest]: Added Vitest for TypeScript project test. It will replace Jest that doesn't work correctly with ESM module mock.
+- [JSDoc]: Added missed JSDoc.
 
 ### Changed
 

@@ -3,7 +3,7 @@
  *
  * @file defaultConfigSchema.ts
  * @author Luca Liguori
- * @date 2024-05-07
+ * @created 2024-05-07
  * @version 1.0.1
  * @license Apache-2.0
  *

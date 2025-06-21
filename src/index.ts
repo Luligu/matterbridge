@@ -3,7 +3,7 @@
  *
  * @file index.ts
  * @author Luca Liguori
- * @date 2023-12-29
+ * @created 2023-12-29
  * @version 1.0.7
  * @license Apache-2.0
  *
@@ -22,12 +22,12 @@
  * limitations under the License.
  */
 
+// AnsiLogger module
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
 import { hasParameter } from './utils/export.js';
-
-// AnsiLogger module
-import { AnsiLogger, LogLevel, TimestampFormat } from './logger/export.js';
 
 // Matterbridge
 export * from './matterbridge.js';
@@ -49,6 +49,9 @@ export * from './evse.js';
 
 const log = new AnsiLogger({ logName: 'Main', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 
+/**
+ * Main function to load the Matterbridge instance.
+ */
 async function main() {
   log.debug('***Matterbridge.loadInstance() called');
   await Matterbridge.loadInstance();

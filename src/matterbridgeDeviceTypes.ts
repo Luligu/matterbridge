@@ -3,7 +3,7 @@
  *
  * @file matterbridgeDeviceTypes.ts
  * @author Luca Liguori
- * @date 2024-11-08
+ * @created 2024-11-08
  * @version 1.0.0
  * @license Apache-2.0
  *
@@ -25,7 +25,6 @@
 // @matter
 import { ClusterId, DeviceTypeId, EndpointNumber } from '@matter/main';
 import { Semtag } from '@matter/main/types';
-
 // @matter clusters
 import { BooleanState } from '@matter/main/clusters/boolean-state';
 import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';

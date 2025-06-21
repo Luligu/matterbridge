@@ -3,7 +3,7 @@
  *
  * @file frontend.ts
  * @author Luca Liguori
- * @date 2025-01-13
+ * @created 2025-01-13
  * @version 1.0.2
  * @license Apache-2.0
  *
@@ -22,10 +22,6 @@
  * limitations under the License.
  */
 
-// @matter
-import { Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle } from '@matter/main';
-import { BridgedDeviceBasicInformation, PowerSource } from '@matter/main/clusters';
-
 // Node modules
 import { Server as HttpServer, createServer, IncomingMessage } from 'node:http';
 import https from 'node:https';
@@ -37,9 +33,11 @@ import { promises as fs } from 'node:fs';
 import express from 'express';
 import WebSocket, { WebSocketServer } from 'ws';
 import multer from 'multer';
-
 // AnsiLogger module
-import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, wr, YELLOW, nt } from './logger/export.js';
+import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, wr, YELLOW, nt } from 'node-ansi-logger';
+// @matter
+import { Logger, LogLevel as MatterLogLevel, LogFormat as MatterLogFormat, Lifecycle } from '@matter/main';
+import { BridgedDeviceBasicInformation, PowerSource } from '@matter/main/clusters';
 
 // Matterbridge
 import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout, hasParameter } from './utils/export.js';
@@ -1199,22 +1197,37 @@ export class Frontend {
             const packageName = (data.params.packageName as string).replace(/@.*$/, '');
             if (data.params.restart === false && packageName !== 'matterbridge') {
               // The install comes from InstallPlugins
-              this.matterbridge.plugins.add(packageName).then((plugin) => {
-                if (plugin) {
-                  // The plugin is not registered
-                  this.wssSendSnackbarMessage(`Added plugin ${packageName}`, 5, 'success');
-                  // eslint-disable-next-line promise/no-nesting
-                  this.matterbridge.plugins.load(plugin, true, 'The plugin has been added', true).then(() => {
-                    this.wssSendSnackbarMessage(`Started plugin ${packageName}`, 5, 'success');
+              this.matterbridge.plugins
+                .add(packageName)
+                .then((plugin) => {
+                  if (plugin) {
+                    // The plugin is not registered
+                    this.wssSendSnackbarMessage(`Added plugin ${packageName}`, 5, 'success');
+
+                    this.matterbridge.plugins
+                      .load(plugin, true, 'The plugin has been added', true)
+                      // eslint-disable-next-line promise/no-nesting
+                      .then(() => {
+                        this.wssSendSnackbarMessage(`Started plugin ${packageName}`, 5, 'success');
+                        this.wssSendRefreshRequired('plugins');
+                        return;
+                      })
+                      // eslint-disable-next-line promise/no-nesting
+                      .catch((_error) => {
+                        //
+                      });
+                  } else {
+                    // The plugin is already registered
+                    this.wssSendSnackbarMessage(`Restart required`, 0);
                     this.wssSendRefreshRequired('plugins');
-                  });
-                } else {
-                  // The plugin is already registered
-                  this.wssSendSnackbarMessage(`Restart required`, 0);
-                  this.wssSendRefreshRequired('plugins');
-                  this.wssSendRestartRequired();
-                }
-              });
+                    this.wssSendRestartRequired();
+                  }
+                  return;
+                })
+                // eslint-disable-next-line promise/no-nesting
+                .catch((_error) => {
+                  //
+                });
             } else {
               // The package is matterbridge
               if (this.matterbridge.restartMode !== '') {
@@ -1225,6 +1238,7 @@ export class Frontend {
                 this.wssSendRestartRequired();
               }
             }
+            return;
           })
           .catch((error) => {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error }));
@@ -1253,6 +1267,7 @@ export class Frontend {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response }));
             this.wssSendCloseSnackbarMessage(`Uninstalling package ${data.params.packageName}...`);
             this.wssSendSnackbarMessage(`Uninstalled package ${data.params.packageName}`, 5, 'success');
+            return;
           })
           .catch((error) => {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: error instanceof Error ? error.message : error }));
@@ -1275,11 +1290,17 @@ export class Frontend {
         if (plugin) {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, response: plugin.name }));
           this.wssSendSnackbarMessage(`Added plugin ${data.params.pluginNameOrPath}`, 5, 'success');
-          this.matterbridge.plugins.load(plugin, true, 'The plugin has been added', true).then(() => {
-            this.wssSendRefreshRequired('plugins');
-            this.wssSendRefreshRequired('devices');
-            this.wssSendSnackbarMessage(`Started plugin ${data.params.pluginNameOrPath}`, 5, 'success');
-          });
+          this.matterbridge.plugins
+            .load(plugin, true, 'The plugin has been added', true)
+            .then(() => {
+              this.wssSendRefreshRequired('plugins');
+              this.wssSendRefreshRequired('devices');
+              this.wssSendSnackbarMessage(`Started plugin ${data.params.pluginNameOrPath}`, 5, 'success');
+              return;
+            })
+            .catch((_error) => {
+              //
+            });
         } else {
           client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Plugin ${data.params.pluginNameOrPath} not added` }));
           this.wssSendSnackbarMessage(`Plugin ${data.params.pluginNameOrPath} not added`, 10, 'error');
@@ -1313,11 +1334,17 @@ export class Frontend {
           plugin.addedDevices = undefined;
           await this.matterbridge.plugins.enable(data.params.pluginName);
           this.wssSendSnackbarMessage(`Enabled plugin ${data.params.pluginName}`, 5, 'success');
-          this.matterbridge.plugins.load(plugin, true, 'The plugin has been enabled', true).then(() => {
-            this.wssSendRefreshRequired('plugins');
-            this.wssSendRefreshRequired('devices');
-            this.wssSendSnackbarMessage(`Started plugin ${data.params.pluginName}`, 5, 'success');
-          });
+          this.matterbridge.plugins
+            .load(plugin, true, 'The plugin has been enabled', true)
+            .then(() => {
+              this.wssSendRefreshRequired('plugins');
+              this.wssSendRefreshRequired('devices');
+              this.wssSendSnackbarMessage(`Started plugin ${data.params.pluginName}`, 5, 'success');
+              return;
+            })
+            .catch((_error) => {
+              //
+            });
         }
         client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
       } else if (data.method === '/api/disableplugin') {
@@ -1499,6 +1526,7 @@ export class Frontend {
           ?.onAction(data.params.action, data.params.value as string | undefined, data.params.id as string | undefined, data.params.formData as unknown as PlatformConfig)
           .then(() => {
             client.send(JSON.stringify({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }));
+            return;
           })
           .catch((error) => {
             this.log.error(`Error in plugin ${plugin.name} action ${data.params.action}: ${error}`);
@@ -1796,7 +1824,7 @@ export class Frontend {
    * @param {string} name - The logger name of the message
    * @param {string} message - The content of the message.
    *
-   * @remark
+   * @remarks
    * The function removes ANSI escape codes, leading asterisks, non-printable characters, and replaces all occurrences of \t and \n.
    * It also replaces all occurrences of \" with " and angle-brackets with &lt; and &gt;.
    * The function sends the message to all connected clients.
@@ -1872,7 +1900,7 @@ export class Frontend {
   /**
    * Sends a need to restart WebSocket message to all connected clients.
    *
-   * @param snackbar
+   * @param {boolean} snackbar - If true, a snackbar message will be sent to all connected clients.
    */
   wssSendRestartRequired(snackbar = true) {
     this.log.debug('Sending a restart required message to all connected clients');
@@ -1904,7 +1932,7 @@ export class Frontend {
   /**
    * Sends a cpu update message to all connected clients.
    *
-   * @param cpuUsage
+   * @param {number} cpuUsage - The CPU usage percentage to send.
    */
   wssSendCpuUpdate(cpuUsage: number) {
     if (hasParameter('debug')) this.log.debug('Sending a cpu update message to all connected clients');
@@ -1919,13 +1947,13 @@ export class Frontend {
   /**
    * Sends a memory update message to all connected clients.
    *
-   * @param totalMemory
-   * @param freeMemory
-   * @param rss
-   * @param heapTotal
-   * @param heapUsed
-   * @param external
-   * @param arrayBuffers
+   * @param {string} totalMemory - The total memory in bytes.
+   * @param {string} freeMemory - The free memory in bytes.
+   * @param {string} rss - The resident set size in bytes.
+   * @param {string} heapTotal - The total heap memory in bytes.
+   * @param {string} heapUsed - The used heap memory in bytes.
+   * @param {string} external - The external memory in bytes.
+   * @param {string} arrayBuffers - The array buffers memory in bytes.
    */
   wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string) {
     if (hasParameter('debug')) this.log.debug('Sending a memory update message to all connected clients');
@@ -1940,8 +1968,8 @@ export class Frontend {
   /**
    * Sends an uptime update message to all connected clients.
    *
-   * @param systemUptime
-   * @param processUptime
+   * @param {string} systemUptime - The system uptime in a human-readable format.
+   * @param {string} processUptime - The process uptime in a human-readable format.
    */
   wssSendUptimeUpdate(systemUptime: string, processUptime: string) {
     if (hasParameter('debug')) this.log.debug('Sending a uptime update message to all connected clients');

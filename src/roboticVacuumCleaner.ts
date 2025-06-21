@@ -3,7 +3,7 @@
  *
  * @file roboticVacuumCleaner.ts
  * @author Luca Liguori
- * @date 2025-05-01
+ * @created 2025-05-01
  * @version 1.1.0
  * @license Apache-2.0
  *
@@ -22,18 +22,11 @@
  * limitations under the License.
  */
 
-// Matterbridge
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { roboticVacuumCleaner } from './matterbridgeDeviceTypes.js';
-import { MatterbridgeServer, MatterbridgeServiceAreaServer } from './matterbridgeBehaviors.js';
-
 // Matter.js
 import { MaybePromise } from '@matter/main';
-
 import { RvcRunModeServer } from '@matter/main/behaviors/rvc-run-mode';
 import { RvcOperationalStateServer } from '@matter/main/behaviors/rvc-operational-state';
 import { RvcCleanModeServer } from '@matter/main/behaviors/rvc-clean-mode';
-
 import { PowerSource } from '@matter/main/clusters/power-source';
 import { RvcRunMode } from '@matter/main/clusters/rvc-run-mode';
 import { RvcCleanMode } from '@matter/main/clusters/rvc-clean-mode';
@@ -41,6 +34,11 @@ import { RvcOperationalState } from '@matter/main/clusters/rvc-operational-state
 import { ServiceArea } from '@matter/main/clusters/service-area';
 import { ModeBase } from '@matter/main/clusters/mode-base';
 import { OperationalState } from '@matter/main/clusters/operational-state';
+
+// Matterbridge
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { roboticVacuumCleaner } from './matterbridgeDeviceTypes.js';
+import { MatterbridgeServer, MatterbridgeServiceAreaServer } from './matterbridgeBehaviors.js';
 
 export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
   /**

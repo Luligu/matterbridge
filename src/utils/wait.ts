@@ -3,7 +3,7 @@
  *
  * @file wait.ts
  * @author Luca Liguori
- * @date 2025-02-16
+ * @created 2025-02-16
  * @version 1.0.1
  * @license Apache-2.0
  *
@@ -107,6 +107,7 @@ export function withTimeout<T>(promise: Promise<T>, timeoutMillisecs = 10000, re
       .then((result) => {
         clearTimeout(timer); // Prevent memory leak
         resolve(result);
+        return result;
       })
       .catch((error) => {
         clearTimeout(timer); // Ensure timeout does not fire if promise rejects first

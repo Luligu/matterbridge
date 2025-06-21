@@ -3,7 +3,7 @@
  *
  * @file plugins.ts
  * @author Luca Liguori
- * @date 2024-07-14
+ * @created 2024-07-14
  * @version 1.1.2
  * @license Apache-2.0
  *
@@ -22,11 +22,13 @@
  * limitations under the License.
  */
 
-// AnsiLogger module
-import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, db, er, nf, nt, rs, wr } from './logger/export.js';
+// Node.js import
+import type { ExecException } from 'node:child_process';
 
+// AnsiLogger module
+import { AnsiLogger, LogLevel, TimestampFormat, UNDERLINE, UNDERLINEOFF, BLUE, db, er, nf, nt, rs, wr } from 'node-ansi-logger';
 // NodeStorage module
-import { NodeStorage } from './storage/export.js';
+import { NodeStorage } from 'node-persist-manager';
 
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
@@ -34,7 +36,6 @@ import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbr
 import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
 
 // Node.js import type
-import type { ExecException } from 'node:child_process';
 
 export class PluginManager {
   private _plugins = new Map<string, RegisteredPlugin>();
@@ -150,7 +151,7 @@ export class PluginManager {
    * Resolves the name of a plugin by loading and parsing its package.json file.
    *
    * @param {string} pluginPath - The path to the plugin or the path to the plugin's package.json file.
-   * @returns The path to the resolved package.json file, or null if the package.json file is not found or does not contain a name.
+   * @returns {Promise<string | null>} A promise that resolves to the path of the plugin's package.json file or null if it could not be resolved.
    */
   async resolve(pluginPath: string): Promise<string | null> {
     const { default: path } = await import('node:path');
@@ -331,7 +332,7 @@ export class PluginManager {
    * Loads and parse the plugin package.json and returns it.
    *
    * @param {RegisteredPlugin} plugin - The plugin to load the package from.
-   * @returns A Promise that resolves to the package.json object or null if the package.json could not be loaded.
+   * @returns {Promise<Record<string, string | number | object> | null>} A promise that resolves to the parsed package.json object or null if it could not be parsed.
    */
   async parse(plugin: RegisteredPlugin): Promise<Record<string, string | number | object> | null> {
     const { promises } = await import('node:fs');

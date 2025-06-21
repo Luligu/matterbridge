@@ -3,7 +3,7 @@
  *
  * @file matterbridge.ts
  * @author Luca Liguori
- * @date 2023-12-29
+ * @created 2023-12-29
  * @version 1.6.0
  * @license Apache-2.0
  *
@@ -30,23 +30,9 @@ import EventEmitter from 'node:events';
 import { inspect } from 'node:util';
 
 // AnsiLogger module
-import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN } from './logger/export.js';
-
+import { AnsiLogger, TimestampFormat, LogLevel, UNDERLINE, UNDERLINEOFF, YELLOW, db, debugStringify, BRIGHT, RESET, er, nf, rs, wr, RED, GREEN, zb, CYAN } from 'node-ansi-logger';
 // NodeStorage module
-import { NodeStorageManager, NodeStorage } from './storage/export.js';
-
-// Matterbridge
-import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString, isValidNumber, createDirectory } from './utils/export.js';
-import { logInterfaces, getGlobalNodeModules } from './utils/network.js';
-import { dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation, typ } from './matterbridgeTypes.js';
-import { PluginManager } from './pluginManager.js';
-import { DeviceManager } from './deviceManager.js';
-import { MatterbridgeEndpoint, SerializedMatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { bridge } from './matterbridgeDeviceTypes.js';
-import { Frontend } from './frontend.js';
-import { addVirtualDevices } from './helpers.js';
-import spawn from './utils/spawn.js';
-
+import { NodeStorageManager, NodeStorage } from 'node-persist-manager';
 // @matter
 import {
   DeviceTypeId,
@@ -69,6 +55,18 @@ import { DeviceCertification, DeviceCommissioner, ExposedFabricInformation, Fabr
 import { AggregatorEndpoint } from '@matter/main/endpoints';
 import { BasicInformationServer } from '@matter/main/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
+
+// Matterbridge
+import { getParameter, getIntParameter, hasParameter, copyDirectory, withTimeout, waiter, isValidString, parseVersionString, isValidNumber, createDirectory } from './utils/export.js';
+import { logInterfaces, getGlobalNodeModules } from './utils/network.js';
+import { dev, MatterbridgeInformation, plg, RegisteredPlugin, SanitizedExposedFabricInformation, SanitizedSessionInformation, SessionInformation, SystemInformation, typ } from './matterbridgeTypes.js';
+import { PluginManager } from './pluginManager.js';
+import { DeviceManager } from './deviceManager.js';
+import { MatterbridgeEndpoint, SerializedMatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { bridge } from './matterbridgeDeviceTypes.js';
+import { Frontend } from './frontend.js';
+import { addVirtualDevices } from './helpers.js';
+import spawn from './utils/spawn.js';
 
 /**
  * Represents the Matterbridge events.
@@ -313,7 +311,7 @@ export class Matterbridge extends EventEmitter {
    * If an instance already exists, return that instance.
    *
    * @param {boolean} initialize - Whether to initialize the Matterbridge instance after loading. Defaults to false.
-   * @returns The loaded Matterbridge instance.
+   * @returns {Matterbridge} A promise that resolves to the Matterbridge instance.
    */
   static async loadInstance(initialize = false) {
     if (!Matterbridge.instance) {
@@ -368,9 +366,9 @@ export class Matterbridge extends EventEmitter {
    * It displays the help information if the 'help' parameter is provided, sets up the logger, checks the
    * node version, registers signal handlers, initializes storage, and parses the command line.
    *
-   * @returns A Promise that resolves when the initialization is complete.
+   * @returns {Promise<void>} A Promise that resolves when the initialization is complete.
    */
-  public async initialize() {
+  public async initialize(): Promise<void> {
     // Emit the initialize_started event
     this.emit('initialize_started');
 
@@ -1376,7 +1374,7 @@ export class Matterbridge extends EventEmitter {
    *
    * @param {string} message - The cleanup message.
    * @param {boolean} [restart] - Indicates whether to restart the instance after cleanup. Default is `false`.
-   * @returns A promise that resolves when the cleanup is completed.
+   * @returns {Promise<void>} A promise that resolves when the cleanup is completed.
    */
   protected async cleanup(message: string, restart = false): Promise<void> {
     if (this.initialized && !this.hasCleanupStarted) {
@@ -2020,8 +2018,9 @@ const commissioningController = new CommissioningController({
   /**
    * Makes a backup copy of the specified matter storage directory.
    *
-   * @param storageName - The name of the storage directory to be backed up.
-   * @param backupName - The name of the backup directory to be created.
+   * @param {string} storageName - The name of the storage directory to be backed up.
+   * @param {string} backupName - The name of the backup directory to be created.
+   * @private
    * @returns {Promise<void>} A promise that resolves when the has been done.
    */
   private async backupMatterStorage(storageName: string, backupName: string): Promise<void> {

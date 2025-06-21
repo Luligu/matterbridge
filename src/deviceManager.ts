@@ -3,7 +3,7 @@
  *
  * @file devices.ts
  * @author Luca Liguori
- * @date 2024-07-26
+ * @created 2024-07-26
  * @version 1.0.10
  * @license Apache-2.0
  *
@@ -23,10 +23,9 @@
  */
 
 // AnsiLogger module
-import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from './logger/export.js';
-
+import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
 // NodeStorage module
-import { NodeStorage } from './storage/export.js';
+import { NodeStorage } from 'node-persist-manager';
 
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';

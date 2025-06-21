@@ -3,7 +3,7 @@
  *
  * @file globalMatterbridge.ts
  * @author Luca Liguori
- * @date 2025-06-01
+ * @created 2025-06-01
  * @version 1.0.0
  * @license Apache-2.0
  *
@@ -22,9 +22,10 @@
  * limitations under the License.
  */
 
+import type { AnsiLogger } from 'node-ansi-logger';
+
 import type { Matterbridge } from './matterbridge.js';
 import type { Frontend } from './frontend.js';
-import type { AnsiLogger } from 'node-ansi-logger';
 
 // Augmenting the globalThis type for typed global variables
 declare global {

@@ -3,7 +3,7 @@
  *
  * @file createDirectory.ts
  * @author Luca Liguori
- * @date 2025-06-08
+ * @created 2025-06-08
  * @version 1.0.0
  * @license Apache-2.0
  *
@@ -22,18 +22,18 @@
  * limitations under the License.
  */
 
-// AnsiLogger module
-import { Logger } from '../logger/export.js';
-
 // Node.js modules
 import { promises as fs } from 'node:fs';
+
+// AnsiLogger module
+import { Logger } from 'node-ansi-logger';
 
 /**
  * Creates a directory at the specified path if it doesn't already exist.
  *
  * @param {string} path - The path to the directory to create.
  * @param {string} name - The name of the directory.
- * @param {Logger} log
+ * @param {Logger} log - The logger instance to use for logging messages.
  * @returns {Promise<void>} A promise that resolves when the directory has been created or already exists.
  */
 export async function createDirectory(path: string, name: string, log: Logger): Promise<void> {

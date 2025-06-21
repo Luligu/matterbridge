@@ -3,7 +3,7 @@
  *
  * @file shelly.ts
  * @author Luca Liguori
- * @date 2025-02-19
+ * @created 2025-02-19
  * @version 1.1.0
  * @license Apache-2.0
  *
@@ -25,9 +25,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { RequestOptions } from 'node:http';
-import { WS_ID_SHELLY_MAIN_UPDATE, WS_ID_SHELLY_SYS_UPDATE } from './frontend.js';
-import { debugStringify } from './logger/export.js';
+
+import { debugStringify } from 'node-ansi-logger';
+
 import { Matterbridge } from './matterbridge.js';
+import { WS_ID_SHELLY_MAIN_UPDATE, WS_ID_SHELLY_SYS_UPDATE } from './frontend.js';
 
 let verifyIntervalSecs = 15;
 let verifyTimeoutSecs = 600;
@@ -172,6 +174,7 @@ export async function verifyShellyUpdate(matterbridge: Matterbridge, api: string
             clearTimeout(timeout);
             resolve();
           }
+          return;
         })
         .catch((error) => {
           matterbridge.log.error(`Error getting status of ${name}: ${error instanceof Error ? error.message : String(error)}`);
@@ -189,11 +192,11 @@ export async function verifyShellyUpdate(matterbridge: Matterbridge, api: string
  *
  * @param {Matterbridge} matterbridge - The Matterbridge instance.
  * @param {object} config - The network configuration.
- * @param config.type
- * @param config.ip
- * @param config.subnet
- * @param config.gateway
- * @param config.dns
+ * @param {string} config.type - The type of network configuration, either 'static' or 'dhcp'.
+ * @param {string} config.ip - The IP address to set (required for static configuration).
+ * @param {string} config.subnet - The subnet mask to set (required for static configuration).
+ * @param {string} config.gateway - The gateway to set (required for static configuration).
+ * @param {string} config.dns - The DNS server to set (required for static configuration).
  * @returns {Promise<void>} A promise that resolves when the operation is complete.
  */
 export async function triggerShellyChangeIp(matterbridge: Matterbridge, config: { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string }): Promise<void> {
@@ -401,7 +404,7 @@ export async function getShelly(api: string, timeout = 60000): Promise<any> {
  *     curl -H "Content-Type: application/json" -X POST http://127.0.0.1:8101/api/network/connection/static
  *        -d '{"interface": "end0", "addr": "192.168.1.64", "mask": "255.255.255.0", "gw": "192.168.1.1", "dns": "192.168.1.1"}'
  *
- * @param data
+ * @param {any} data - The data to send in the POST request, typically a JSON object.
  * @param {number} [timeout] - The timeout duration in milliseconds (default is 60000ms).
  * @returns {Promise<any>} A promise that resolves to the response.
  * @throws {Error} If the request fails.

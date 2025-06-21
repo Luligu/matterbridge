@@ -3,7 +3,7 @@
  *
  * @file network.ts
  * @author Luca Liguori
- * @date 2024-02-17
+ * @created 2024-02-17
  * @version 1.0.0
  * @license Apache-2.0
  *
@@ -24,12 +24,11 @@
 
 // Node.js modules
 import os from 'node:os';
-
 // Node.js modules import types
 import type { ExecException } from 'node:child_process';
 
 // AnsiLogger module
-import { AnsiLogger, idn, LogLevel, rs, TimestampFormat } from '../logger/export.js';
+import { AnsiLogger, idn, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
 
 /**
  * Retrieves the IPv4 address of the first non-internal network interface.
@@ -213,7 +212,7 @@ export async function getNpmPackageVersion(packageName: string, tag = 'latest', 
 /**
  * Retrieves the path to the global Node.js modules directory.
  *
- * @returns A promise that resolves to the path of the global Node.js modules directory.
+ * @returns {Promise<string>} A promise that resolves to the path of the global Node.js modules directory.
  */
 export async function getGlobalNodeModules(): Promise<string> {
   const { exec } = await import('node:child_process');

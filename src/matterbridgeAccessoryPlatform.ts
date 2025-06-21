@@ -3,7 +3,7 @@
  *
  * @file matterbridgeAccessoryPlatform.ts
  * @author Luca Liguori
- * @date 2023-12-29
+ * @created 2023-12-29
  * @version 1.0.5
  * @license Apache-2.0
  *
@@ -25,7 +25,6 @@
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
-
 // AnsiLogger module
 import { AnsiLogger } from './logger/export.js';
 

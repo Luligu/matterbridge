@@ -3,7 +3,7 @@
  *
  * @file hex.ts
  * @author Luca Liguori
- * @date 2025-05-06
+ * @created 2025-05-06
  * @version 1.0.0
  * @license Apache-2.0
  *

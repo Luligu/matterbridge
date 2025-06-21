@@ -3,7 +3,7 @@
  *
  * @file laundryWasher.ts
  * @author Luca Liguori
- * @date 2025-05-25
+ * @created 2025-05-25
  * @version 1.1.0
  * @license Apache-2.0
  *
@@ -24,13 +24,11 @@
 
 // Imports from @matter
 import { MaybePromise } from '@matter/main';
-
 import { OperationalState } from '@matter/main/clusters/operational-state';
 import { LaundryWasherControls } from '@matter/main/clusters/laundry-washer-controls';
 import { LaundryWasherMode } from '@matter/main/clusters/laundry-washer-mode';
 import { TemperatureControl } from '@matter/main/clusters/temperature-control';
 import { ModeBase } from '@matter/main/clusters/mode-base';
-
 import { TemperatureControlServer } from '@matter/main/behaviors/temperature-control';
 import { LaundryWasherModeServer } from '@matter/main/behaviors/laundry-washer-mode';
 import { LaundryWasherControlsServer } from '@matter/main/behaviors/laundry-washer-controls';

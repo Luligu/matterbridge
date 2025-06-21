@@ -85,18 +85,8 @@ export default defineConfig([
           caughtErrorsIgnorePattern: '^_', // Ignore unused caught errors starting with _
         },
       ],
-      'n/no-process-exit': 'off', // Disallow process.exit() in source files
-      'promise/catch-or-return': 'off', // Disable rule for catching or returning promises in source files
-      'promise/always-return': 'off', // Disable rule for always returning a value in promises in source files
-      'import/order': 'off', // Disable import order rule in test files
-      'jsdoc/no-undefined-types': 'off', // Disable JSDoc rule in test files
-      'jsdoc/require-jsdoc': 'off', // Disable JSDoc rule in test files
-      'jsdoc/require-returns': 'off', // Disable JSDoc rule in test files
-      'jsdoc/require-returns-type': 'off', // Disable JSDoc rule in test files
-      'jsdoc/require-returns-description': 'off', // Disable JSDoc rule in test files
-      'jsdoc/require-param-type': 'off', // Disable JSDoc rule in test files
-      'jsdoc/require-param-description': 'off', // Disable JSDoc rule in test files
-      'jsdoc/check-tag-names': 'off', // Disable JSDoc rule in test files
+      'jsdoc/no-undefined-types': 'off',
+      'jsdoc/check-tag-names': ['warn', { definedTags: ['created', 'contributor', 'remarks'] }], // Allow custom tags
     },
   },
   {

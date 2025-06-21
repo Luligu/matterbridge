@@ -3,7 +3,7 @@
  *
  * @file copyDirectory.ts
  * @author Luca Liguori
- * @date 2025-02-16
+ * @created 2025-02-16
  * @version 1.0.1
  * @license Apache-2.0
  *

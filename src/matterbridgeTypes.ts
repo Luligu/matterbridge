@@ -3,7 +3,7 @@
  *
  * @file matterbridgeTypes.ts
  * @author Luca Liguori
- * @date 2024-07-12
+ * @created 2024-07-12
  * @version 1.0.2
  * @license Apache-2.0
  *
@@ -23,17 +23,16 @@
  */
 
 // NodeStorage and AnsiLogger modules
-import { NodeStorage } from './storage/export.js';
-import { LogLevel } from './logger/export.js';
-
-// Matterbridge
-import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-
+import { NodeStorage } from 'node-persist-manager';
+import { LogLevel } from 'node-ansi-logger';
 // @matter
 import { FabricIndex, NodeId, VendorId, StorageContext, ServerNode, EndpointNumber, Endpoint as EndpointNode } from '@matter/main';
 import { ExposedFabricInformation } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
+
+// Matterbridge
+import { MatterbridgePlatform, PlatformConfig, PlatformSchema } from './matterbridgePlatform.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // Default colors
 export const plg = '\u001B[38;5;33m';

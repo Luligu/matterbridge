@@ -3,7 +3,7 @@
  *
  * @file matterbridgeEndpoint.ts
  * @author Luca Liguori
- * @date 2024-10-01
+ * @created 2024-10-01
  * @version 2.1.1
  * @license Apache-2.0
  *
@@ -22,9 +22,76 @@
  * limitations under the License.
  */
 
+// @matter
+import { ActionContext, AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointType, HandlerFunction, Lifecycle, MutableEndpoint, NamedHandler, ServerNode, SupportedBehaviors, UINT16_MAX, UINT32_MAX, VendorId } from '@matter/main';
+import { DeviceClassification } from '@matter/main/model';
+import { ClusterType, getClusterNameById, MeasurementType, Semtag } from '@matter/main/types';
+// @matter clusters
+import { Descriptor } from '@matter/main/clusters/descriptor';
+import { PowerSource } from '@matter/main/clusters/power-source';
+import { BridgedDeviceBasicInformation } from '@matter/main/clusters/bridged-device-basic-information';
+import { Identify } from '@matter/main/clusters/identify';
+import { OnOff } from '@matter/main/clusters/on-off';
+import { LevelControl } from '@matter/main/clusters/level-control';
+import { ColorControl } from '@matter/main/clusters/color-control';
+import { WindowCovering } from '@matter/main/clusters/window-covering';
+import { Thermostat } from '@matter/main/clusters/thermostat';
+import { FanControl } from '@matter/main/clusters/fan-control';
+import { DoorLock } from '@matter/main/clusters/door-lock';
+import { ModeSelect } from '@matter/main/clusters/mode-select';
+import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-configuration-and-control';
+import { PumpConfigurationAndControl } from '@matter/main/clusters/pump-configuration-and-control';
+import { SmokeCoAlarm } from '@matter/main/clusters/smoke-co-alarm';
+import { Switch } from '@matter/main/clusters/switch';
+import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
+import { PowerTopology } from '@matter/main/clusters/power-topology';
+import { ElectricalPowerMeasurement } from '@matter/main/clusters/electrical-power-measurement';
+import { ElectricalEnergyMeasurement } from '@matter/main/clusters/electrical-energy-measurement';
+import { AirQuality } from '@matter/main/clusters/air-quality';
+import { ConcentrationMeasurement } from '@matter/main/clusters/concentration-measurement';
+import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
+import { ThermostatUserInterfaceConfiguration } from '@matter/main/clusters/thermostat-user-interface-configuration';
+import { OperationalState } from '@matter/main/clusters/operational-state';
+import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
+import { DeviceEnergyManagementMode } from '@matter/main/clusters/device-energy-management-mode';
+// @matter behaviors
+import { DescriptorServer } from '@matter/main/behaviors/descriptor';
+import { PowerSourceServer } from '@matter/main/behaviors/power-source';
+import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
+import { GroupsServer } from '@matter/main/behaviors/groups';
+import { ScenesManagementServer } from '@matter/main/behaviors/scenes-management';
+import { PumpConfigurationAndControlServer } from '@matter/main/behaviors/pump-configuration-and-control';
+import { SwitchServer } from '@matter/main/behaviors/switch';
+import { BooleanStateServer } from '@matter/main/behaviors/boolean-state';
+import { PowerTopologyServer } from '@matter/main/behaviors/power-topology';
+import { ElectricalPowerMeasurementServer } from '@matter/main/behaviors/electrical-power-measurement';
+import { ElectricalEnergyMeasurementServer } from '@matter/main/behaviors/electrical-energy-measurement';
+import { TemperatureMeasurementServer } from '@matter/main/behaviors/temperature-measurement';
+import { RelativeHumidityMeasurementServer } from '@matter/main/behaviors/relative-humidity-measurement';
+import { PressureMeasurementServer } from '@matter/main/behaviors/pressure-measurement';
+import { FlowMeasurementServer } from '@matter/main/behaviors/flow-measurement';
+import { IlluminanceMeasurementServer } from '@matter/main/behaviors/illuminance-measurement';
+import { OccupancySensingServer } from '@matter/main/behaviors/occupancy-sensing';
+import { AirQualityServer } from '@matter/main/behaviors/air-quality';
+import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/main/behaviors/carbon-monoxide-concentration-measurement';
+import { CarbonDioxideConcentrationMeasurementServer } from '@matter/main/behaviors/carbon-dioxide-concentration-measurement';
+import { NitrogenDioxideConcentrationMeasurementServer } from '@matter/main/behaviors/nitrogen-dioxide-concentration-measurement';
+import { OzoneConcentrationMeasurementServer } from '@matter/main/behaviors/ozone-concentration-measurement';
+import { FormaldehydeConcentrationMeasurementServer } from '@matter/main/behaviors/formaldehyde-concentration-measurement';
+import { Pm1ConcentrationMeasurementServer } from '@matter/main/behaviors/pm1-concentration-measurement';
+import { Pm25ConcentrationMeasurementServer } from '@matter/main/behaviors/pm25-concentration-measurement';
+import { Pm10ConcentrationMeasurementServer } from '@matter/main/behaviors/pm10-concentration-measurement';
+import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/radon-concentration-measurement';
+import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
+import { FanControlServer } from '@matter/main/behaviors/fan-control';
+import { ResourceMonitoring } from '@matter/main/clusters/resource-monitoring';
+import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
+import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
+import { ThermostatUserInterfaceConfigurationServer } from '@matter/main/behaviors/thermostat-user-interface-configuration';
+import { DeviceEnergyManagementServer } from '@matter/main/behaviors/device-energy-management';
+
 // AnsiLogger module
 import { AnsiLogger, CYAN, LogLevel, TimestampFormat, YELLOW, db, debugStringify, hk, or, zb } from './logger/export.js';
-
 // Matterbridge
 import { bridgedNode, DeviceTypeDefinition, MatterbridgeEndpointOptions } from './matterbridgeDeviceTypes.js';
 import { isValidNumber, isValidObject, isValidString } from './utils/export.js';
@@ -76,76 +143,6 @@ import {
   invokeBehaviorCommand,
   triggerEvent,
 } from './matterbridgeEndpointHelpers.js';
-
-// @matter
-import { ActionContext, AtLeastOne, Behavior, ClusterId, Endpoint, EndpointNumber, EndpointType, HandlerFunction, Lifecycle, MutableEndpoint, NamedHandler, ServerNode, SupportedBehaviors, UINT16_MAX, UINT32_MAX, VendorId } from '@matter/main';
-import { DeviceClassification } from '@matter/main/model';
-import { ClusterType, getClusterNameById, MeasurementType, Semtag } from '@matter/main/types';
-
-// @matter clusters
-import { Descriptor } from '@matter/main/clusters/descriptor';
-import { PowerSource } from '@matter/main/clusters/power-source';
-import { BridgedDeviceBasicInformation } from '@matter/main/clusters/bridged-device-basic-information';
-import { Identify } from '@matter/main/clusters/identify';
-import { OnOff } from '@matter/main/clusters/on-off';
-import { LevelControl } from '@matter/main/clusters/level-control';
-import { ColorControl } from '@matter/main/clusters/color-control';
-import { WindowCovering } from '@matter/main/clusters/window-covering';
-import { Thermostat } from '@matter/main/clusters/thermostat';
-import { FanControl } from '@matter/main/clusters/fan-control';
-import { DoorLock } from '@matter/main/clusters/door-lock';
-import { ModeSelect } from '@matter/main/clusters/mode-select';
-import { ValveConfigurationAndControl } from '@matter/main/clusters/valve-configuration-and-control';
-import { PumpConfigurationAndControl } from '@matter/main/clusters/pump-configuration-and-control';
-import { SmokeCoAlarm } from '@matter/main/clusters/smoke-co-alarm';
-import { Switch } from '@matter/main/clusters/switch';
-import { BooleanStateConfiguration } from '@matter/main/clusters/boolean-state-configuration';
-import { PowerTopology } from '@matter/main/clusters/power-topology';
-import { ElectricalPowerMeasurement } from '@matter/main/clusters/electrical-power-measurement';
-import { ElectricalEnergyMeasurement } from '@matter/main/clusters/electrical-energy-measurement';
-import { AirQuality } from '@matter/main/clusters/air-quality';
-import { ConcentrationMeasurement } from '@matter/main/clusters/concentration-measurement';
-import { OccupancySensing } from '@matter/main/clusters/occupancy-sensing';
-import { ThermostatUserInterfaceConfiguration } from '@matter/main/clusters/thermostat-user-interface-configuration';
-import { OperationalState } from '@matter/main/clusters/operational-state';
-import { DeviceEnergyManagement } from '@matter/main/clusters/device-energy-management';
-import { DeviceEnergyManagementMode } from '@matter/main/clusters/device-energy-management-mode';
-
-// @matter behaviors
-import { DescriptorServer } from '@matter/main/behaviors/descriptor';
-import { PowerSourceServer } from '@matter/main/behaviors/power-source';
-import { BridgedDeviceBasicInformationServer } from '@matter/main/behaviors/bridged-device-basic-information';
-import { GroupsServer } from '@matter/main/behaviors/groups';
-import { ScenesManagementServer } from '@matter/main/behaviors/scenes-management';
-import { PumpConfigurationAndControlServer } from '@matter/main/behaviors/pump-configuration-and-control';
-import { SwitchServer } from '@matter/main/behaviors/switch';
-import { BooleanStateServer } from '@matter/main/behaviors/boolean-state';
-import { PowerTopologyServer } from '@matter/main/behaviors/power-topology';
-import { ElectricalPowerMeasurementServer } from '@matter/main/behaviors/electrical-power-measurement';
-import { ElectricalEnergyMeasurementServer } from '@matter/main/behaviors/electrical-energy-measurement';
-import { TemperatureMeasurementServer } from '@matter/main/behaviors/temperature-measurement';
-import { RelativeHumidityMeasurementServer } from '@matter/main/behaviors/relative-humidity-measurement';
-import { PressureMeasurementServer } from '@matter/main/behaviors/pressure-measurement';
-import { FlowMeasurementServer } from '@matter/main/behaviors/flow-measurement';
-import { IlluminanceMeasurementServer } from '@matter/main/behaviors/illuminance-measurement';
-import { OccupancySensingServer } from '@matter/main/behaviors/occupancy-sensing';
-import { AirQualityServer } from '@matter/main/behaviors/air-quality';
-import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/main/behaviors/carbon-monoxide-concentration-measurement';
-import { CarbonDioxideConcentrationMeasurementServer } from '@matter/main/behaviors/carbon-dioxide-concentration-measurement';
-import { NitrogenDioxideConcentrationMeasurementServer } from '@matter/main/behaviors/nitrogen-dioxide-concentration-measurement';
-import { OzoneConcentrationMeasurementServer } from '@matter/main/behaviors/ozone-concentration-measurement';
-import { FormaldehydeConcentrationMeasurementServer } from '@matter/main/behaviors/formaldehyde-concentration-measurement';
-import { Pm1ConcentrationMeasurementServer } from '@matter/main/behaviors/pm1-concentration-measurement';
-import { Pm25ConcentrationMeasurementServer } from '@matter/main/behaviors/pm25-concentration-measurement';
-import { Pm10ConcentrationMeasurementServer } from '@matter/main/behaviors/pm10-concentration-measurement';
-import { RadonConcentrationMeasurementServer } from '@matter/main/behaviors/radon-concentration-measurement';
-import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/main/behaviors/total-volatile-organic-compounds-concentration-measurement';
-import { FanControlServer } from '@matter/main/behaviors/fan-control';
-import { ResourceMonitoring } from '@matter/main/clusters/resource-monitoring';
-import { HepaFilterMonitoringServer } from '@matter/main/behaviors/hepa-filter-monitoring';
-import { ActivatedCarbonFilterMonitoringServer } from '@matter/main/behaviors/activated-carbon-filter-monitoring';
-import { ThermostatUserInterfaceConfigurationServer } from '@matter/main/behaviors/thermostat-user-interface-configuration';
-import { DeviceEnergyManagementServer } from '@matter/main/behaviors/device-energy-management';
 
 export type PrimitiveTypes = boolean | number | bigint | string | object | undefined | null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -305,7 +302,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Represents a MatterbridgeEndpoint.
    *
-   * @constructor
+   * @class MatterbridgeEndpoint
    * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the endpoint.
    * @param {MatterbridgeEndpointOptions} [options] - The options for the device.
    * @param {boolean} [debug] - Debug flag.
@@ -815,7 +812,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Serializes the Matterbridge device into a serialized object.
    *
-   * @param {MatterbridgeEndpoint} device
+   * @param {MatterbridgeEndpoint} device - The Matterbridge device to serialize.
    *
    * @returns {SerializedMatterbridgeEndpoint | undefined} The serialized Matterbridge device object.
    */
@@ -846,8 +843,8 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Deserializes the device into a serialized object.
    *
-   * @param serializedDevice
-   * @returns The deserialized MatterbridgeDevice.
+   * @param {SerializedMatterbridgeEndpoint} serializedDevice - The serialized Matterbridge device object.
+   * @returns {MatterbridgeEndpoint | undefined} The deserialized Matterbridge device.
    */
   static deserialize(serializedDevice: SerializedMatterbridgeEndpoint): MatterbridgeEndpoint | undefined {
     const device = new MatterbridgeEndpoint(serializedDevice.deviceTypes as AtLeastOne<DeviceTypeDefinition>, { uniqueStorageKey: serializedDevice.endpointName, endpointId: serializedDevice.endpoint }, false);
@@ -877,7 +874,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default power source wired cluster server.
    *
-   * @param wiredCurrentType - The type of wired current (default: PowerSource.WiredCurrentType.Ac)
+   * @param {PowerSource.WiredCurrentType} wiredCurrentType - The type of wired current (default: PowerSource.WiredCurrentType.Ac)
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerSource.WiredCurrentType = PowerSource.WiredCurrentType.Ac) {
@@ -894,11 +891,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default power source replaceable battery cluster server.
    *
-   * @param batPercentRemaining - The remaining battery percentage (default: 100).
-   * @param batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
-   * @param batVoltage - The battery voltage (default: 1500).
-   * @param batReplacementDescription - The battery replacement description (default: 'Battery type').
-   * @param batQuantity - The battery quantity (default: 1).
+   * @param {number} batPercentRemaining - The remaining battery percentage (default: 100).
+   * @param {PowerSource.BatChargeLevel} batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
+   * @param {number} batVoltage - The battery voltage (default: 1500).
+   * @param {string} batReplacementDescription - The description of the battery replacement (default: 'Battery type').
+   * @param {number} batQuantity - The quantity of the battery (default: 1).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultPowerSourceReplaceableBatteryClusterServer(batPercentRemaining = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage = 1500, batReplacementDescription = 'Battery type', batQuantity = 1) {
@@ -922,9 +919,9 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default power source rechargeable battery cluster server.
    *
-   * @param batPercentRemaining - The remaining battery percentage (default: 100).
-   * @param batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
-   * @param batVoltage - The battery voltage (default: 1500).
+   * @param {number} [batPercentRemaining] - The remaining battery percentage (default: 100).
+   * @param {PowerSource.BatChargeLevel} [batChargeLevel] - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
+   * @param {number} [batVoltage] - The battery voltage (default: 1500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining = 100, batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok, batVoltage = 1500) {
@@ -949,16 +946,16 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Setup the default Basic Information Cluster Server attributes for the server node.
    *
-   * @param deviceName - The name of the device.
-   * @param serialNumber - The serial number of the device.
-   * @param vendorId - The vendor ID of the device.
-   * @param vendorName - The vendor name of the device.
-   * @param productId - The product ID of the device.
-   * @param productName - The product name of the device.
-   * @param softwareVersion - The software version of the device. Default is 1.
-   * @param softwareVersionString - The software version string of the device. Default is 'v.1.0.0'.
-   * @param hardwareVersion - The hardware version of the device. Default is 1.
-   * @param hardwareVersionString - The hardware version string of the device. Default is 'v.1.0.0'.
+   * @param {string} deviceName - The name of the device.
+   * @param {string} serialNumber - The serial number of the device.
+   * @param {number} vendorId - The vendor ID of the device.
+   * @param {string} vendorName - The name of the vendor.
+   * @param {number} productId - The product ID of the device.
+   * @param {string} productName - The name of the product.
+   * @param {number} [softwareVersion] - The software version of the device. Default is 1.
+   * @param {string} [softwareVersionString] - The software version string of the device. Default is '1.0.0'.
+   * @param {number} [hardwareVersion] - The hardware version of the device. Default is 1.
+   * @param {string} [hardwareVersionString] - The hardware version string of the device. Default is '1.0.0'.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultBasicInformationClusterServer(
@@ -999,15 +996,15 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default BridgedDeviceBasicInformationClusterServer for the aggregator endpoints.
    *
-   * @param deviceName - The name of the device.
-   * @param serialNumber - The serial number of the device.
-   * @param vendorId - The vendor ID of the device.
-   * @param vendorName - The name of the vendor.
-   * @param productName - The name of the product.
-   * @param softwareVersion - The software version of the device. Default is 1.
-   * @param softwareVersionString - The software version string of the device. Default is 'v.1.0.0'.
-   * @param hardwareVersion - The hardware version of the device. Default is 1.
-   * @param hardwareVersionString - The hardware version string of the device. Default is 'v.1.0.0'.
+   * @param {string} deviceName - The name of the device.
+   * @param {string} serialNumber - The serial number of the device.
+   * @param {number} vendorId - The vendor ID of the device.
+   * @param {string} vendorName - The name of the vendor.
+   * @param {string} productName - The name of the product.
+   * @param {number} [softwareVersion] - The software version of the device. Default is 1.
+   * @param {string} [softwareVersionString] - The software version string of the device. Default is '1.0.0'.
+   * @param {number} [hardwareVersion] - The hardware version of the device. Default is 1.
+   * @param {string} [hardwareVersionString] - The hardware version string of the device. Default is '1.0.0'.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks The bridgedNode device type must be added to the deviceTypeList of the Descriptor cluster.
@@ -1203,13 +1200,13 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default color control cluster server with features Xy, HueSaturation and ColorTemperature.
    *
-   * @param currentX - The current X value (range 0-65279).
-   * @param currentY - The current Y value (range 0-65279).
-   * @param currentHue - The current hue value (range: 0-254).
-   * @param currentSaturation - The current saturation value (range: 0-254).
-   * @param colorTemperatureMireds - The color temperature in mireds (default range 147-500).
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default range 147).
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default range 500).
+   * @param {number} currentX - The current X value (range 0-65279).
+   * @param {number} currentY - The current Y value (range 0-65279).
+   * @param {number} currentHue - The current hue value (range: 0-254).
+   * @param {number} currentSaturation - The current saturation value (range: 0-254).
+   * @param {number} colorTemperatureMireds - The color temperature in mireds (default range 147-500).
+   * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default range 147).
+   * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default range 500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks colorMode and enhancedColorMode persist across restarts.
@@ -1245,11 +1242,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a Xy color control cluster server with feature Xy and ColorTemperature.
    *
-   * @param currentX - The current X value.
-   * @param currentY - The current Y value.
-   * @param colorTemperatureMireds - The color temperature in mireds.
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   * @param {number} currentX - The current X value (range 0-65279).
+   * @param {number} currentY - The current Y value (range 0-65279).
+   * @param {number} colorTemperatureMireds - The color temperature in mireds (default range 147-500).
+   * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default range 147).
+   * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default range 500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -1285,11 +1282,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default hue and saturation control cluster server with feature HueSaturation and ColorTemperature.
    *
-   * @param currentHue - The current hue value.
-   * @param currentSaturation - The current saturation value.
-   * @param colorTemperatureMireds - The color temperature in mireds.
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds.
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds.
+   * @param {number} currentHue - The current hue value (range: 0-254).
+   * @param {number} currentSaturation - The current saturation value (range: 0-254).
+   * @param {number} colorTemperatureMireds - The color temperature in mireds (default range 147-500).
+   * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default range 147).
+   * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default range 500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks colorMode and enhancedColorMode persist across restarts.
@@ -1323,9 +1320,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a color temperature color control cluster server with feature ColorTemperature.
    * This cluster server is used for devices that only support color temperature control.
    *
-   * @param colorTemperatureMireds - The color temperature in mireds. Defaults to 250.
-   * @param colorTempPhysicalMinMireds - The physical minimum color temperature in mireds. Defaults to 147.
-   * @param colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds. Defaults to 500.
+   * @param {number} colorTemperatureMireds - The color temperature in mireds (default range 147-500).
+   * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default range 147).
+   * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default range 500).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks colorMode and enhancedColorMode persist across restarts.
@@ -1521,7 +1518,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Retrieves the status of the window covering.
    *
-   * @returns The global operational status of the window covering or undefined.
+   * @returns {WindowCovering.MovementStatus | undefined} The movement status of the window covering, or undefined if not available.
    */
   getWindowCoveringStatus(): WindowCovering.MovementStatus | undefined {
     const status = this.getAttribute(WindowCovering.Cluster.id, 'operationalStatus', this.log);
@@ -1645,6 +1642,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default thermostat user interface configuration cluster server.
    *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    * @remarks
    * The default values are:
    * - temperatureDisplayMode: ThermostatUserInterfaceConfiguration.TemperatureDisplayMode.Celsius (writeble).
@@ -1688,7 +1686,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a fan control cluster server with features MultiSpeed, Auto, and Step.
    *
    * @param {FanControl.FanMode} [fanMode] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
-   * @param fanModeSequence
+   * @param {FanControl.FanModeSequence} [fanModeSequence] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHighAuto`.
    * @param {number} [percentSetting] - The initial percent setting. Defaults to 0.
    * @param {number} [percentCurrent] - The initial percent current. Defaults to 0.
    * @param {number} [speedMax] - The maximum speed setting. Defaults to 10.
@@ -2346,7 +2344,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | null} maxMeasuredValue - The maximum measured value of illuminance.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
-   * @remark The default value for the illuminance measurement is null.
+   * @remarks The default value for the illuminance measurement is null.
    * This attribute SHALL indicate the illuminance in Lux (symbol lx) as follows:
    * •  MeasuredValue = 10,000 x log10(illuminance) + 1,
    *    where 1 lx <= illuminance <= 3.576 Mlx, corresponding to a MeasuredValue in the range 1 to 0xFFFE.
@@ -2383,7 +2381,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} holdTimeMax - The maximum hold time in seconds. Default is 300.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
-   * @remark The default value for the occupancy sensor type is PIR.
+   * @remarks The default value for the occupancy sensor type is PIR.
    */
   createDefaultOccupancySensingClusterServer(occupied = false, holdTime = 30, holdTimeMin = 1, holdTimeMax = 300) {
     this.behaviors.require(OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared), getDefaultOccupancySensingClusterServer(occupied, holdTime, holdTimeMin, holdTimeMax));

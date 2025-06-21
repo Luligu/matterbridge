@@ -4,7 +4,7 @@
  * @file waterHeater.ts
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
- * @date 2025-05-18
+ * @created 2025-05-18
  * @version 1.1.0
  * @license Apache-2.0
  *
@@ -48,11 +48,11 @@ export class WaterHeater extends MatterbridgeEndpoint {
    * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit. Defaults to 20.
    * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit. Defaults to 80.
    * @param {{ immersionElement1?: boolean; immersionElement2?: boolean; heatPump?: boolean; boiler?: boolean; other?: boolean }} [heaterTypes] - Indicates the heat sources that the water heater can call on for heating. Defaults to { immersionElement1: true }.
-   * @param heaterTypes.immersionElement1
-   * @param heaterTypes.immersionElement2
-   * @param heaterTypes.heatPump
-   * @param heaterTypes.boiler
-   * @param heaterTypes.other
+   * @param {boolean} heaterTypes.immersionElement1 - Indicates if the water heater has an immersion element 1. Defaults to true.
+   * @param {boolean} heaterTypes.immersionElement2 - Indicates if the water heater has an immersion element 2.
+   * @param {boolean} heaterTypes.heatPump - Indicates if the water heater has a heat pump.
+   * @param {boolean} heaterTypes.boiler - Indicates if the water heater has a boiler.
+   * @param {boolean} heaterTypes.other - Indicates if the water heater has other types of heating sources.
    * @param {number} [tankPercentage] - The current tank percentage of the WaterHeaterManagement cluster. Defaults to 90.
    */
   constructor(
@@ -78,17 +78,17 @@ export class WaterHeater extends MatterbridgeEndpoint {
    * Creates a default WaterHeaterManagement Cluster Server.
    *
    * @param {{ immersionElement1?: boolean; immersionElement2?: boolean; heatPump?: boolean; boiler?: boolean; other?: boolean }} [heaterTypes] - Indicates the heat sources that the water heater can call on for heating. Defaults to { immersionElement1: true }.
-   * @param heaterTypes.immersionElement1
-   * @param heaterTypes.immersionElement2
-   * @param heaterTypes.heatPump
-   * @param heaterTypes.boiler
-   * @param heaterTypes.other
+   * @param {boolean} heaterTypes.immersionElement1 - Indicates if the water heater has an immersion element 1. Defaults to true.
+   * @param {boolean} heaterTypes.immersionElement2 - Indicates if the water heater has an immersion element 2.
+   * @param {boolean} heaterTypes.heatPump - Indicates if the water heater has a heat pump.
+   * @param {boolean} heaterTypes.boiler - Indicates if the water heater has a boiler.
+   * @param {boolean} heaterTypes.other - Indicates if the water heater has other types of heating sources.
    * @param {{ immersionElement1?: boolean; immersionElement2?: boolean; heatPump?: boolean; boiler?: boolean; other?: boolean }} [heatDemand] - Indicates if the water heater is heating water. Defaults to all heat sources unset.
-   * @param heatDemand.immersionElement1
-   * @param heatDemand.immersionElement2
-   * @param heatDemand.heatPump
-   * @param heatDemand.boiler
-   * @param heatDemand.other
+   * @param {boolean} heatDemand.immersionElement1 - Indicates if the water heater is heating water with immersion element 1. Defaults to false.
+   * @param {boolean} heatDemand.immersionElement2 - Indicates if the water heater is heating water with immersion element 2.
+   * @param {boolean} heatDemand.heatPump - Indicates if the water heater is heating water with a heat pump.
+   * @param {boolean} heatDemand.boiler - Indicates if the water heater is heating water with a boiler.
+   * @param {boolean} heatDemand.other - Indicates if the water heater is heating water with other types of heating sources.
    * @param {number} [tankPercentage] - The current tank percentage of the WaterHeaterManagement cluster. Defaults to 100.
    * @param {WaterHeaterManagement.BoostState} [boostState] - The current boost state of the WaterHeaterManagement cluster. Defaults to Inactive.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.

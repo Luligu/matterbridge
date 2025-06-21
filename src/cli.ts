@@ -1,10 +1,9 @@
-// #!/usr/bin/env node
 /**
  * This file contains the CLI entry point of Matterbridge.
  *
  * @file cli.ts
  * @author Luca Liguori
- * @date 2023-12-29
+ * @created 2023-12-29
  * @version 2.0.1
  * @license Apache-2.0
  *
@@ -30,7 +29,7 @@ import { EventEmitter } from 'node:events';
 import { inspect } from 'node:util';
 
 // AnsiLogger module
-import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, TimestampFormat, YELLOW } from './logger/export.js';
+import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, TimestampFormat, YELLOW } from 'node-ansi-logger';
 
 // Matterbridge
 import { getIntParameter, hasParameter } from './utils/export.js';
@@ -320,6 +319,7 @@ async function shutdown() {
   await stopCpuMemoryCheck();
 
   cliEmitter.emit('shutdown');
+  // eslint-disable-next-line n/no-process-exit
   process.exit(0);
 }
 

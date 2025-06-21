@@ -3,7 +3,7 @@
  *
  * @file matterbridgePlatform.ts
  * @author Luca Liguori
- * @date 2024-03-21
+ * @created 2024-03-21
  * @version 1.2.1
  * @license Apache-2.0
  *
@@ -22,23 +22,22 @@
  * limitations under the License.
  */
 
+// Node.js module
+import path from 'node:path';
+
+// AnsiLogger module
+import { EndpointNumber } from '@matter/main';
+// AnsiLogger module
+import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
+// Storage module
+import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
+// Matter
+
 // Matterbridge
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 import { isValidArray, isValidObject, isValidString } from './utils/export.js';
-
-// AnsiLogger module
-import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from './logger/export.js';
-
-// Storage module
-import { NodeStorage, NodeStorageManager } from './storage/export.js';
-
-// Matter
-import { EndpointNumber } from '@matter/main';
-
-// Node.js module
-import path from 'node:path';
 
 // Platform types
 export type PlatformConfigValue = string | number | boolean | bigint | object | undefined | null;
@@ -120,6 +119,7 @@ export class MatterbridgePlatform {
       this.context = context;
       this.context.remove('endpointMap'); // Remove the old endpointMap TODO: remove in future versions
       this.log.debug(`Created context for plugin ${this.config.name}`);
+      return;
     });
 
     // create the selectDevice storage for the plugin platform
@@ -128,6 +128,7 @@ export class MatterbridgePlatform {
       const selectDevice = await context.get<{ serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[]>('selectDevice', []);
       for (const device of selectDevice) this.selectDevice.set(device.serial, device);
       this.log.debug(`Loaded ${this.selectDevice.size} selectDevice for plugin ${this.config.name}`);
+      return;
     });
 
     // create the selectEntity storage for the plugin platform
@@ -136,11 +137,13 @@ export class MatterbridgePlatform {
       const selectEntity = await context.get<{ name: string; description: string; icon?: string }[]>('selectEntity', []);
       for (const entity of selectEntity) this.selectEntity.set(entity.name, entity);
       this.log.debug(`Loaded ${this.selectEntity.size} selectEntity for plugin ${this.config.name}`);
+      return;
     });
 
     // Create the `ready` promise for the platform
     this.ready = Promise.all([this._contextReady, this._selectDeviceContextReady, this._selectEntityContextReady]).then(() => {
       this.log.debug(`MatterbridgePlatform for plugin ${this.config.name} is fully initialized`);
+      return;
     });
   }
 
