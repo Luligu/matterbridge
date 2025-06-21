@@ -4,7 +4,7 @@
  * @file solarPower.ts
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
- * @date 2025-06-13
+ * @date 2025-06-14
  * @version 1.0.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
