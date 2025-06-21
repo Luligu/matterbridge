@@ -8,7 +8,7 @@ If you like this project and find it useful, please consider giving it a star on
   <img src="bmc-button.svg" alt="Buy me a coffee" width="120">
 </a>
 
-## [3.0.7] - 2025-06-??
+## [3.0.7] - 2025-06-21
 
 ### Breaking Changes
 
@@ -16,7 +16,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
-- [template]: Added the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template).
+- [template]: Added the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template). It supports Dev Container and Vitest.
+- [platform]: Add getDevices() method to retrieve the registered devices in MatterbridgePlatform.
 
 ### Changed
 

@@ -16,7 +16,7 @@
 
 ## How to create your plugin
 
-The easiest way is to clone the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template) that has **Dev Container support for instant development environment** and all tools and extensions (like Node.js, npm, TypeScript, ESLint, Prettier, Jest) already loaded and configured.
+The easiest way is to clone the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template) that has **Dev Container support for instant development environment** and all tools and extensions (like Node.js, npm, TypeScript, ESLint, Prettier, Jest and Vitest) already loaded and configured.
 
 Then change the name (keep matterbridge- at the beginning of the name), version, description, author, homepage, repository, bugs and funding in the package.json.
 
@@ -24,9 +24,9 @@ It is possible to add two custom properties to the package.json: **help** and **
 
 Add your plugin logic in module.ts.
 
-The Matterbridge Plugin Template has an already configured Jest test (coverage 100%) that you can expand while you add your own plugin logic.
+The Matterbridge Plugin Template has an already configured Jest / Vitest test unit (coverage 100%) that you can expand while you add your own plugin logic.
 
-It also has a workflow configured to run on push and pull request that build, lint and test the plugin on node 18, 20, 22 and 24 with ubuntu, macOS and windows.
+It also has a workflow configured to run on push and pull request that build, lint and test the plugin on node 20, 22 and 24 with ubuntu, macOS and windows.
 
 ## Guidelines on imports/exports
 
@@ -139,7 +139,7 @@ npm run build
 then add the plugin to Matterbridge
 
 ```
-matterbridge -add .\
+matterbridge -add .
 ```
 
 ## MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform api
