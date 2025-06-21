@@ -1,6 +1,7 @@
 // src\base.test.ts
 
 /* eslint-disable jest/no-commented-out-tests */
+/* eslint-disable jsdoc/no-undefined-types */
 
 import { rmSync } from 'node:fs';
 import path from 'node:path';

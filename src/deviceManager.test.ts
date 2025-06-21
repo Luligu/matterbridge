@@ -44,7 +44,7 @@ rmSync(path.join('test', 'DeviceManager'), { recursive: true, force: true });
 /**
  * Waits for the `isOnline` property to become `true`.
  *
- * @param matterbridge
+ * @param {Matterbridge} matterbridge - The Matterbridge instance to check.
  * @param {number} timeout - The maximum time to wait in milliseconds.
  * @returns {Promise<void>} A promise that resolves when `isOnline` becomes `true` or rejects if the timeout is reached.
  */

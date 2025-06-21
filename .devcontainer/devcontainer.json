@@ -8,6 +8,12 @@
   "image": "mcr.microsoft.com/vscode/devcontainers/typescript-node:latest",
   // Mount the local matterbridge and node_modules workspace folder to the container's workspace volumes to improve performance
   "mounts": ["source=${localWorkspaceFolderBasename}-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume"],
+  /* At the moment not working in WSL 2
+  "runArgs": [
+    // Use the host's network to allow Matterbridge to communicate with other devices on the network
+    "--network=host"
+  ],
+  */
   // On startup, update npm, pnpm, install the dev of matterbridge and install the dependencies from package.json
   "postCreateCommand": "npm install -g npm@latest pnpm@latest npm-check-updates rimraf shx && sudo chown -R node:node node_modules && sudo chmod g+s node_modules && npm install && npm run build && npm outdated || true",
   "customizations": {

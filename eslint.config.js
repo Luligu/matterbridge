@@ -110,16 +110,9 @@ export default defineConfig([
       '@typescript-eslint/no-unused-vars': 'off', // Disable TypeScript rule for unused variables in test files
       '@typescript-eslint/no-explicit-any': 'off', // Allow 'any' type in test files
       '@typescript-eslint/no-empty-function': 'off', // Allow empty functions in test files
-
-      'import/order': 'off', // Disable import order rule in test files
-      'jsdoc/no-undefined-types': 'off', // Disable JSDoc rule in test files
       'jsdoc/require-jsdoc': 'off', // Disable JSDoc rule in test files
-      'jsdoc/require-returns': 'off', // Disable JSDoc rule in test files
-      'jsdoc/require-returns-type': 'off', // Disable JSDoc rule in test files
-      'jsdoc/require-returns-description': 'off', // Disable JSDoc rule in test files
-      'jsdoc/require-param-type': 'off', // Disable JSDoc rule in test files
-      'jsdoc/require-param-description': 'off', // Disable JSDoc rule in test files
-      'jsdoc/check-tag-names': 'off', // Disable JSDoc rule in test files
+      'import/order': 'off', // Disable import order rule in test files
+
       // Recommended Jest rules
       ...pluginJest.configs.recommended.rules,
     },
@@ -144,6 +137,7 @@ export default defineConfig([
       '@typescript-eslint/no-unused-vars': 'off', // Disable TypeScript rule for unused variables in test files
       '@typescript-eslint/no-explicit-any': 'off', // Allow 'any' type in test files
       '@typescript-eslint/no-empty-function': 'off', // Allow empty functions in test files
+      'jsdoc/require-jsdoc': 'off', // Disable JSDoc rule in test files
 
       // Recommended Vitest rules
       ...pluginVitest.configs.recommended.rules,

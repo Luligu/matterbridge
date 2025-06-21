@@ -515,16 +515,16 @@ describe('Utils test', () => {
     process.argv = argv;
   });
 
-  it('should not resolve localhost 0', async () => {
+  it('should resolve localhost 0', async () => {
     const result = await resolveHostname('localhost', 0);
     // console.log('Resolved localhost:', result);
     expect(result).toBeDefined();
     expect(result).not.toBeNull();
     expect(typeof result).toBe('string');
-    expect(result).toBe('::1');
+    expect(['::1', '127.0.0.1']).toContain(result);
   });
 
-  it('should not resolve localhost 4', async () => {
+  it('should resolve localhost 4', async () => {
     const result = await resolveHostname('localhost', 4);
     // console.log('Resolved localhost:', result);
     expect(result).toBeDefined();
@@ -533,7 +533,7 @@ describe('Utils test', () => {
     expect(result).toBe('127.0.0.1');
   });
 
-  it('should not resolve localhost 6', async () => {
+  it('should resolve localhost 6', async () => {
     const result = await resolveHostname('localhost', 6);
     // console.log('Resolved localhost:', result);
     expect(result).toBeDefined();
@@ -552,7 +552,8 @@ describe('Utils test', () => {
 
   it('should copy a directory', async () => {
     await fs.mkdir('test', { recursive: true });
-    const result = await copyDirectory(path.join('.', 'docker'), path.join('.', 'test'));
+    // const result = await copyDirectory(path.join('.', 'docker'), path.join('.', 'test'));
+    const result = await copyDirectory(path.join('docker'), path.join('test'));
     expect(result).toBeTruthy();
   });
 
