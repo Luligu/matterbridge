@@ -1,8 +1,6 @@
 // src\utils\colorUtils.test.ts
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { jest } from '@jest/globals';
 
-import { hslColorToRgbColor, kelvinToMired, kelvinToRGB, miredToKelvin, rgbColorToHslColor, rgbColorToXYColor, xyColorToRgbColor, xyToHsl } from './colorUtils.js';
+import { hslColorToRgbColor, kelvinToMired, kelvinToRGB, miredToKelvin, rgbColorToHslColor, rgbColorToXYColor, xyColorToRgbColor, xyToHsl } from './colorUtils.ts';
 
 /* prettier-ignore */
 const colors = [

@@ -1,9 +1,5 @@
 // src\frontend.express.test.ts
 
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 process.argv = [
   'node',
   'frontend.test.js',
@@ -32,8 +28,8 @@ import { rmSync } from 'node:fs';
 import os from 'node:os';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.js';
-import { waiter } from './utils/export.js';
+import { Matterbridge } from './matterbridge.ts';
+import { waiter } from './utils/export.ts';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   return undefined as never;
@@ -327,6 +323,7 @@ describe('Matterbridge frontend express with http', () => {
 
   test('GET /api/download-backup', async () => {
     try {
+      // eslint-disable-next-line n/no-unsupported-features/node-builtins
       await fs.access(path.join(os.tmpdir(), `matterbridge.backup.zip`), fs.constants.F_OK);
     } catch (error) {
       await fs.copyFile('./src/mock/test.zip.txt', path.join(os.tmpdir(), `matterbridge.backup.zip`));

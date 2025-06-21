@@ -5,6 +5,7 @@
  * @author Luca Liguori
  * @date 2025-05-01
  * @version 1.1.0
+ * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -18,7 +19,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 // Matterbridge
@@ -130,6 +131,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    *
    * @param {ServiceArea.Area[]} [supportedAreas] - The supported areas for the ServiceArea cluster. Defaults to a predefined set of areas.
    * @param {number[]} [selectedAreas] - The selected areas for the ServiceArea cluster. Defaults to an empty array (all areas allowed).
+   * @param {number} [currentArea] - The current area of the ServiceArea cluster. Defaults to 1 (Living).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultServiceAreaClusterServer(supportedAreas?: ServiceArea.Area[], selectedAreas?: number[], currentArea?: number): this {

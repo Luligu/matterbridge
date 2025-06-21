@@ -1,14 +1,16 @@
-# Ignore build files
-dist
-node_modules
-build
-coverage
+# .prettierignore
+# This file specifies directories and files that should be ignored by prettier formatting
 
-# Ignore frontend
+# Ignore specific directories
+.git/
+coverage/
+dist/
+jest/
+node_modules/
+
+# Ignore specific files
+**/*.html
+
+# Package specific directories and files that should be ignored
 frontend
 
-# Ignore docker
-docker
-
-# Ignore all HTML files:
-**/*.html

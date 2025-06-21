@@ -5,6 +5,7 @@
  * @author Luca Liguori
  * @date 2025-06-08
  * @version 1.0.0
+ * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -18,7 +19,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 // AnsiLogger module
@@ -32,6 +33,7 @@ import { promises as fs } from 'node:fs';
  *
  * @param {string} path - The path to the directory to create.
  * @param {string} name - The name of the directory.
+ * @param {Logger} log
  * @returns {Promise<void>} A promise that resolves when the directory has been created or already exists.
  */
 export async function createDirectory(path: string, name: string, log: Logger): Promise<void> {

@@ -5,6 +5,7 @@
  * @author Luca Liguori
  * @date 2023-10-05
  * @version 1.3.0
+ * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
  *
@@ -18,7 +19,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 import { assert } from 'node:console';
@@ -317,9 +318,10 @@ export function testColors(): void {
 */
 /**
  * Converts CIE color space to RGB color space
- * @param {Number} x
- * @param {Number} y
- * @param {Number} brightness - Ranges from 1 to 254
+ *
+ * @param {number} x
+ * @param {number} y
+ * @param {number} brightness - Ranges from 1 to 254
  * @return {Array} Array that contains the color values for red, green and blue
  * From: https://github.com/usolved/cie-rgb-converter/blob/master/cie_rgb_converter.js
  */
@@ -378,9 +380,10 @@ export function cie_to_rgb(x: number, y: number, brightness = 254): RGB {
 */
 /**
  * Converts RGB color space to CIE color space
- * @param {Number} red
- * @param {Number} green
- * @param {Number} blue
+ *
+ * @param {number} red
+ * @param {number} green
+ * @param {number} blue
  * @return {Array} Array that contains the CIE color values for x and y
  * From: https://github.com/usolved/cie-rgb-converter/blob/master/cie_rgb_converter.js
  */

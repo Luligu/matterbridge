@@ -1,24 +1,19 @@
 // src\matterbridge.test.ts
 
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', path.join('test', 'MatterbridgeGlobal'), '-profile', 'Jest', '-logger', 'debug', '-matterlogger', 'debug'];
 
 import { jest } from '@jest/globals';
+import os from 'node:os';
+import path from 'node:path';
+import { rmSync } from 'node:fs';
 
-// Import necessary modules
 import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/main';
 import { ExposedFabricInformation } from '@matter/main/protocol';
 import { AnsiLogger, Logger, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
-import os from 'node:os';
 
-import { getParameter, hasParameter, waiter } from './utils/export.js';
-import { Matterbridge } from './matterbridge.js';
-import { plg, RegisteredPlugin, SessionInformation } from './matterbridgeTypes.js';
-import path from 'node:path';
-import { rmSync } from 'node:fs';
+import { getParameter, hasParameter, waiter } from './utils/export.ts';
+import { Matterbridge } from './matterbridge.ts';
+import { plg, RegisteredPlugin, SessionInformation } from './matterbridgeTypes.ts';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   // eslint-disable-next-line no-console

@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+// #!/usr/bin/env node
 /**
  * This file contains the CLI entry point of Matterbridge.
  *
@@ -6,6 +6,7 @@
  * @author Luca Liguori
  * @date 2023-12-29
  * @version 2.0.1
+ * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
  *
@@ -19,21 +20,21 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
-
-// Matterbridge
-import { Matterbridge } from './matterbridge.js';
-import { getIntParameter, hasParameter } from './utils/export.js';
-
-// AnsiLogger module
-import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, TimestampFormat, YELLOW } from './logger/export.js';
 
 // Node modules
 import type { HeapProfiler, InspectorNotification, Session } from 'node:inspector';
 import os from 'node:os';
 import { EventEmitter } from 'node:events';
 import { inspect } from 'node:util';
+
+// AnsiLogger module
+import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, TimestampFormat, YELLOW } from './logger/export.js';
+
+// Matterbridge
+import { getIntParameter, hasParameter } from './utils/export.js';
+import { Matterbridge } from './matterbridge.js';
 
 export const cliEmitter = new EventEmitter();
 
@@ -78,6 +79,9 @@ const formatOsUpTime = (seconds: number): string => {
   return `${seconds} second${seconds !== 1 ? 's' : ''}`;
 };
 
+/**
+ * Starts the CPU and memory check interval.
+ */
 async function startCpuMemoryCheck() {
   // const os = await import('node:os');
 
@@ -144,6 +148,9 @@ async function startCpuMemoryCheck() {
   memoryCheckInterval = setInterval(interval, getIntParameter('memoryinterval') ?? 10 * 1000).unref();
 }
 
+/**
+ * Stops the CPU and memory check interval.
+ */
 async function stopCpuMemoryCheck() {
   log.debug(`***Cpu memory check stopped. Peak cpu: ${CYAN}${peakCpu.toFixed(2)} %${db}. Peak rss: ${CYAN}${formatMemoryUsage(peakRss)}${db}.`);
   clearInterval(memoryCheckInterval);
@@ -285,6 +292,9 @@ function triggerGarbageCollection() {
   }
 }
 
+/**
+ * Registers event handlers for the Matterbridge instance.
+ */
 function registerHandlers() {
   log.debug('Registering event handlers...');
   if (instance) instance.on('shutdown', async () => shutdown());
@@ -299,6 +309,9 @@ function registerHandlers() {
   log.debug('Registered event handlers');
 }
 
+/**
+ * Shuts down the Matterbridge instance and exits the process.
+ */
 async function shutdown() {
   log.debug('Received shutdown event, exiting...');
 
@@ -310,12 +323,18 @@ async function shutdown() {
   process.exit(0);
 }
 
+/**
+ *
+ */
 async function restart() {
   log.debug('Received restart event, loading...');
   instance = await Matterbridge.loadInstance(true);
   registerHandlers();
 }
 
+/**
+ *
+ */
 async function update() {
   log.debug('Received update event, updating...');
   // TODO: Implement update logic outside of matterbridge
@@ -323,16 +342,25 @@ async function update() {
   registerHandlers();
 }
 
+/**
+ * Starts the CPU and memory check when the -startmemorycheck parameter is passed.
+ */
 async function start() {
   log.debug('Received start memory check event');
   await startCpuMemoryCheck();
 }
 
+/**
+ * Stops the CPU and memory check when the -stopmemorycheck parameter is passed.
+ */
 async function stop() {
   log.debug('Received stop memory check event');
   await stopCpuMemoryCheck();
 }
 
+/**
+ * Main function that initializes the Matterbridge instance and starts the CLI.
+ */
 async function main() {
   log.debug(`Cli main() started`);
 

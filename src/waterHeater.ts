@@ -6,6 +6,7 @@
  * @contributor Ludovic BOUÉ
  * @date 2025-05-18
  * @version 1.1.0
+ * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -19,13 +20,10 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 // Matterbridge
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { waterHeater } from './matterbridgeDeviceTypes.js';
-import { MatterbridgeServer } from './matterbridgeBehaviors.js';
 
 // Matter.js
 import { MaybePromise } from '@matter/main';
@@ -35,17 +33,26 @@ import { WaterHeaterMode } from '@matter/main/clusters/water-heater-mode';
 import { WaterHeaterManagementServer } from '@matter/main/behaviors/water-heater-management';
 import { WaterHeaterModeServer } from '@matter/main/behaviors/water-heater-mode';
 
+import { MatterbridgeServer } from './matterbridgeBehaviors.js';
+import { waterHeater } from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+
 export class WaterHeater extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the WaterHeater class.
    *
    * @param {string} name - The name of the water heater.
    * @param {string} serial - The serial number of the water heater.
-   * @param {number} [waterTemperature=50] - The current water temperature. Defaults to 50.
-   * @param {number} [targetWaterTemperature=55] - The target water temperature. Defaults to 55.
-   * @param {number} [minHeatSetpointLimit=20] - The minimum heat setpoint limit. Defaults to 20.
-   * @param {number} [maxHeatSetpointLimit=80] - The maximum heat setpoint limit. Defaults to 80.
+   * @param {number} [waterTemperature] - The current water temperature. Defaults to 50.
+   * @param {number} [targetWaterTemperature] - The target water temperature. Defaults to 55.
+   * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit. Defaults to 20.
+   * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit. Defaults to 80.
    * @param {{ immersionElement1?: boolean; immersionElement2?: boolean; heatPump?: boolean; boiler?: boolean; other?: boolean }} [heaterTypes] - Indicates the heat sources that the water heater can call on for heating. Defaults to { immersionElement1: true }.
+   * @param heaterTypes.immersionElement1
+   * @param heaterTypes.immersionElement2
+   * @param heaterTypes.heatPump
+   * @param heaterTypes.boiler
+   * @param heaterTypes.other
    * @param {number} [tankPercentage] - The current tank percentage of the WaterHeaterManagement cluster. Defaults to 90.
    */
   constructor(
@@ -71,7 +78,17 @@ export class WaterHeater extends MatterbridgeEndpoint {
    * Creates a default WaterHeaterManagement Cluster Server.
    *
    * @param {{ immersionElement1?: boolean; immersionElement2?: boolean; heatPump?: boolean; boiler?: boolean; other?: boolean }} [heaterTypes] - Indicates the heat sources that the water heater can call on for heating. Defaults to { immersionElement1: true }.
+   * @param heaterTypes.immersionElement1
+   * @param heaterTypes.immersionElement2
+   * @param heaterTypes.heatPump
+   * @param heaterTypes.boiler
+   * @param heaterTypes.other
    * @param {{ immersionElement1?: boolean; immersionElement2?: boolean; heatPump?: boolean; boiler?: boolean; other?: boolean }} [heatDemand] - Indicates if the water heater is heating water. Defaults to all heat sources unset.
+   * @param heatDemand.immersionElement1
+   * @param heatDemand.immersionElement2
+   * @param heatDemand.heatPump
+   * @param heatDemand.boiler
+   * @param heatDemand.other
    * @param {number} [tankPercentage] - The current tank percentage of the WaterHeaterManagement cluster. Defaults to 100.
    * @param {WaterHeaterManagement.BoostState} [boostState] - The current boost state of the WaterHeaterManagement cluster. Defaults to Inactive.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.

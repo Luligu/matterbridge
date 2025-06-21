@@ -5,6 +5,7 @@
  * @author Luca Liguori
  * @date 2023-12-29
  * @version 1.6.0
+ * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
  *
@@ -18,7 +19,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 // Node.js modules
@@ -262,6 +263,7 @@ export class Matterbridge extends EventEmitter {
 
   /**
    * Retrieves the list of Matterbridge devices.
+   *
    * @returns {MatterbridgeEndpoint[]} An array of MatterbridgeDevice objects.
    */
   getDevices(): MatterbridgeEndpoint[] {
@@ -270,6 +272,7 @@ export class Matterbridge extends EventEmitter {
 
   /**
    * Retrieves the list of registered plugins.
+   *
    * @returns {RegisteredPlugin[]} An array of RegisteredPlugin objects.
    */
   getPlugins(): RegisteredPlugin[] {
@@ -278,6 +281,7 @@ export class Matterbridge extends EventEmitter {
 
   /**
    * Set the logger logLevel for the Matterbridge classes and call onChangeLoggerLevel() for each plugin.
+   *
    * @param {LogLevel} logLevel The logger logLevel to set.
    */
   async setLogLevel(logLevel: LogLevel) {
@@ -300,9 +304,9 @@ export class Matterbridge extends EventEmitter {
     this.log.debug(`WebSocketServer logger global callback set to ${callbackLogLevel}`);
   }
 
-  /** ***********************************************************************************************************************************/
+  /** */
   /**                                              loadInstance() and cleanup() methods                                                 */
-  /** ***********************************************************************************************************************************/
+  /** */
 
   /**
    * Loads an instance of the Matterbridge class.
@@ -474,6 +478,7 @@ export class Matterbridge extends EventEmitter {
     // Certificate management
     const pairingFilePath = path.join(this.matterbridgeCertDirectory, 'pairing.json');
     try {
+      // eslint-disable-next-line n/no-unsupported-features/node-builtins
       await fs.access(pairingFilePath, fs.constants.R_OK);
       const pairingFileContent = await fs.readFile(pairingFilePath, 'utf8');
       const pairingFileJson = JSON.parse(pairingFileContent) as {
@@ -763,6 +768,7 @@ export class Matterbridge extends EventEmitter {
 
   /**
    * Parses the command line arguments and performs the corresponding actions.
+   *
    * @private
    * @returns {Promise<void>} A promise that resolves when the command line arguments have been processed, or the process exits.
    */
@@ -1252,7 +1258,7 @@ export class Matterbridge extends EventEmitter {
    * Creates a Matter File Logger.
    *
    * @param {string} filePath - The path to the log file.
-   * @param {boolean} [unlink=false] - Whether to unlink the log file before creating a new one.
+   * @param {boolean} [unlink] - Whether to unlink the log file before creating a new one.
    * @returns {Function} - A function that logs formatted messages to the log file.
    */
   public async createMatterFileLogger(filePath: string, unlink = false) {
@@ -1367,8 +1373,9 @@ export class Matterbridge extends EventEmitter {
 
   /**
    * Cleans up the Matterbridge instance.
+   *
    * @param {string} message - The cleanup message.
-   * @param {boolean} [restart=false] - Indicates whether to restart the instance after cleanup. Default is `false`.
+   * @param {boolean} [restart] - Indicates whether to restart the instance after cleanup. Default is `false`.
    * @returns A promise that resolves when the cleanup is completed.
    */
   protected async cleanup(message: string, restart = false): Promise<void> {
@@ -1565,7 +1572,7 @@ export class Matterbridge extends EventEmitter {
    *
    * @param {RegisteredPlugin} plugin - The plugin to configure.
    * @param {MatterbridgeEndpoint} device - The device to associate with the plugin.
-   * @param {boolean} [start=false] - Whether to start the server node after adding the device.
+   * @param {boolean} [start] - Whether to start the server node after adding the device.
    * @returns {Promise<void>} A promise that resolves when the server node for the accessory plugin is created and configured.
    */
   private async createAccessoryPlugin(plugin: RegisteredPlugin, device: MatterbridgeEndpoint, start = false): Promise<void> {
@@ -1585,7 +1592,7 @@ export class Matterbridge extends EventEmitter {
    * Creates and configures the server node for a dynamic plugin.
    *
    * @param {RegisteredPlugin} plugin - The plugin to configure.
-   * @param {boolean} [start=false] - Whether to start the server node after adding the aggregator node.
+   * @param {boolean} [start] - Whether to start the server node after adding the aggregator node.
    * @returns {Promise<void>} A promise that resolves when the server node for the dynamic plugin is created and configured.
    */
   private async createDynamicPlugin(plugin: RegisteredPlugin, start = false): Promise<void> {
@@ -1602,6 +1609,7 @@ export class Matterbridge extends EventEmitter {
 
   /**
    * Starts the Matterbridge in bridge mode.
+   *
    * @private
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
@@ -1678,6 +1686,7 @@ export class Matterbridge extends EventEmitter {
 
   /**
    * Starts the Matterbridge in childbridge mode.
+   *
    * @private
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
@@ -1768,6 +1777,7 @@ export class Matterbridge extends EventEmitter {
 
   /**
    * Starts the Matterbridge controller.
+   *
    * @private
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
@@ -1979,12 +1989,13 @@ const commissioningController = new CommissioningController({
     */
   }
 
-  /** ***********************************************************************************************************************************/
+  /**                                                                                                                                   */
   /**                                                     Matter.js methods                                                             */
-  /** ***********************************************************************************************************************************/
+  /**                                                                                                                                   */
 
   /**
    * Starts the matter storage with name Matterbridge, create the matterbridge context and performs a backup.
+   *
    * @returns {Promise<void>} - A promise that resolves when the storage is started.
    */
   private async startMatterStorage(): Promise<void> {
@@ -2025,6 +2036,7 @@ const commissioningController = new CommissioningController({
 
   /**
    * Stops the matter storage.
+   *
    * @returns {Promise<void>} A promise that resolves when the storage is stopped.
    */
   private async stopMatterStorage(): Promise<void> {
@@ -2088,9 +2100,9 @@ const commissioningController = new CommissioningController({
    * Creates a server node.
    *
    * @param {StorageContext} storageContext - The storage context for the server node.
-   * @param {number} [port=5540] - The port number for the server node. Defaults to 5540.
-   * @param {number} [passcode=20242025] - The passcode for the server node. Defaults to 20242025.
-   * @param {number} [discriminator=3850] - The discriminator for the server node. Defaults to 3850.
+   * @param {number} [port] - The port number for the server node. Defaults to 5540.
+   * @param {number} [passcode] - The passcode for the server node. Defaults to 20242025.
+   * @param {number} [discriminator] - The discriminator for the server node. Defaults to 3850.
    * @returns {Promise<ServerNode<ServerNode.RootEndpoint>>} A promise that resolves to the created server node.
    */
   private async createServerNode(storageContext: StorageContext, port = 5540, passcode = 20242025, discriminator = 3850): Promise<ServerNode<ServerNode.RootEndpoint>> {
@@ -2344,7 +2356,6 @@ const commissioningController = new CommissioningController({
    * Starts the 15 minutes timer to advice that advertising for the specified server node is ended.
    *
    * @param {ServerNode} [matterServerNode] - The server node to start.
-   * @param {string} storeId - The store ID of the server node.
    */
   private startEndAdvertiseTimer(matterServerNode: ServerNode) {
     if (this.endAdvertiseTimeout) {
@@ -2393,7 +2404,7 @@ const commissioningController = new CommissioningController({
    * Stops the specified server node.
    *
    * @param {ServerNode} matterServerNode - The server node to stop.
-   * @param {number} [timeout=30000] - The timeout in milliseconds for stopping the server node. Defaults to 30 seconds.
+   * @param {number} [timeout] - The timeout in milliseconds for stopping the server node. Defaults to 30 seconds.
    * @returns {Promise<void>} A promise that resolves when the server node has stopped.
    */
   private async stopServerNode(matterServerNode: ServerNode, timeout = 30000): Promise<void> {
@@ -2572,7 +2583,7 @@ const commissioningController = new CommissioningController({
    * Removes all bridged endpoints from the specified plugin.
    *
    * @param {string} pluginName - The name of the plugin.
-   * @param {number} [delay=0] - The delay in milliseconds between removing each bridged endpoint (default: 0).
+   * @param {number} [delay] - The delay in milliseconds between removing each bridged endpoint (default: 0).
    * @returns {Promise<void>} A promise that resolves when all bridged endpoints have been removed.
    *
    * @remarks
@@ -2670,6 +2681,7 @@ const commissioningController = new CommissioningController({
 
   /**
    * Sets the reachability of the specified aggregator node bridged devices and trigger.
+   *
    * @param {Endpoint<AggregatorEndpoint>} aggregatorNode - The aggregator node to set the reachability for.
    * @param {boolean} reachable - A boolean indicating the reachability status to set.
    */

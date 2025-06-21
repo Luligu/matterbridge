@@ -1,33 +1,21 @@
 // jest.config.js
-/*
 
-How to install:
-  npm install --save-dev jest ts-jest @types/jest eslint-plugin-jest
+// This Jest configuration is designed for a TypeScript project using ESM modules with ts-jest.
 
-Add package.json scripts:
-  "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-  "test:verbose": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose",
-  "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+import { createDefaultEsmPreset } from 'ts-jest';
 
-*/
+// Create an ESM configuration to process TypeScript files (.ts/.mts/.tsx/.mtsx).
+const presetConfig = createDefaultEsmPreset({
+  tsconfig: './tsconfig.jest.json',
+});
 
-export default {
-  preset: 'ts-jest/presets/default-esm',
-  testEnvironment: 'node',
-  extensionsToTreatAsEsm: ['.ts'],
-  moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
-  },
-  transform: {
-    '^.+\\.ts$': [
-      'ts-jest',
-      {
-        useESM: true,
-        tsconfig: 'tsconfig.jest.json',
-      },
-    ],
-  },
-  transformIgnorePatterns: ['/node_modules/'],
-  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/frontend/', '/src/crypto/'],
-  coveragePathIgnorePatterns: ['/node_modules/', '/dist/', '/frontend/', '/src/mock/'],
+const jestConfig = {
+  ...presetConfig,
+  testEnvironment: 'node', // Use Node.js environment for testing
+  moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' }, // Handle ESM imports by removing the .js extension
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/frontend/', '/src/crypto/', '/src/mock/', '/vitest/'], // Ignore specific paths for test files
+  coveragePathIgnorePatterns: ['/node_modules/', '/dist/', '/frontend/', '/src/crypto/', '/src/mock/', '/vitest/'], // Ignore specific paths for test and coverage
+  maxWorkers: '100%', // Use all available CPU cores for running tests
 };
+
+export default jestConfig;

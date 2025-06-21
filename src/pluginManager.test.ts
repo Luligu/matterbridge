@@ -1,7 +1,4 @@
 // src\pluginManager.test.ts
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-homedir', path.join('test', 'PluginManager')];
 
@@ -26,12 +23,12 @@ import { promises as fs, rmSync } from 'node:fs';
 import path from 'node:path';
 import { AnsiLogger, db, er, LogLevel, nf, nt } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.js';
-import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.js';
-import { PluginManager } from './pluginManager.js';
-import { waiter } from './utils/export.js';
-import { DeviceManager } from './deviceManager.js';
-import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.js';
+import { Matterbridge } from './matterbridge.ts';
+import { plg, RegisteredPlugin, typ } from './matterbridgeTypes.ts';
+import { PluginManager } from './pluginManager.ts';
+import { waiter } from './utils/export.ts';
+import { DeviceManager } from './deviceManager.ts';
+import { MatterbridgePlatform, PlatformConfig } from './matterbridgePlatform.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

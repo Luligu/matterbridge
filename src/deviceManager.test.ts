@@ -1,21 +1,18 @@
 // src\deviceManager.test.ts
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'info', '-matterlogger', 'info', '-bridge', '-frontend', '0', '-homedir', path.join('test', 'DeviceManager')];
 
 import { jest } from '@jest/globals';
-import { AnsiLogger, BLUE, db, er, LogLevel, nf, nt, pl, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, er, LogLevel } from 'node-ansi-logger';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 
-import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { DeviceManager } from './deviceManager.js';
-import { PluginManager } from './pluginManager.js';
-import { contactSensor, occupancySensor } from './matterbridgeDeviceTypes.js';
-import { dev } from './matterbridgeTypes.js';
+import { Matterbridge } from './matterbridge.ts';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
+import { DeviceManager } from './deviceManager.ts';
+import { PluginManager } from './pluginManager.ts';
+import { contactSensor, occupancySensor } from './matterbridgeDeviceTypes.ts';
+import { dev } from './matterbridgeTypes.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -46,6 +43,8 @@ rmSync(path.join('test', 'DeviceManager'), { recursive: true, force: true });
 
 /**
  * Waits for the `isOnline` property to become `true`.
+ *
+ * @param matterbridge
  * @param {number} timeout - The maximum time to wait in milliseconds.
  * @returns {Promise<void>} A promise that resolves when `isOnline` becomes `true` or rejects if the timeout is reached.
  */

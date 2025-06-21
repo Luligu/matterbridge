@@ -5,6 +5,7 @@
  * @author Luca Liguori
  * @date 2025-01-13
  * @version 1.0.2
+ * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -18,7 +19,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 // @matter
@@ -41,71 +42,80 @@ import multer from 'multer';
 import { AnsiLogger, LogLevel, TimestampFormat, stringify, debugStringify, CYAN, db, er, nf, rs, UNDERLINE, UNDERLINEOFF, wr, YELLOW, nt } from './logger/export.js';
 
 // Matterbridge
-import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout } from './utils/export.js';
+import { createZip, isValidArray, isValidNumber, isValidObject, isValidString, isValidBoolean, withTimeout, hasParameter } from './utils/export.js';
 import { ApiClusters, ApiClustersResponse, ApiDevices, BaseRegisteredPlugin, MatterbridgeInformation, plg, RegisteredPlugin, SystemInformation } from './matterbridgeTypes.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { hasParameter } from './utils/export.js';
 import { PlatformConfig } from './matterbridgePlatform.js';
 import { capitalizeFirstLetter } from './matterbridgeEndpointHelpers.js';
 import spawn from './utils/spawn.js';
 
 /**
  * Websocket message ID for logging.
+ *
  * @constant {number}
  */
 export const WS_ID_LOG = 0;
 
 /**
  * Websocket message ID indicating a refresh is needed.
+ *
  * @constant {number}
  */
 export const WS_ID_REFRESH_NEEDED = 1;
 
 /**
  * Websocket message ID indicating a restart is needed.
+ *
  * @constant {number}
  */
 export const WS_ID_RESTART_NEEDED = 2;
 
 /**
  * Websocket message ID indicating a cpu update.
+ *
  * @constant {number}
  */
 export const WS_ID_CPU_UPDATE = 3;
 
 /**
  * Websocket message ID indicating a memory update.
+ *
  * @constant {number}
  */
 export const WS_ID_MEMORY_UPDATE = 4;
 
 /**
  * Websocket message ID indicating an uptime update.
+ *
  * @constant {number}
  */
 export const WS_ID_UPTIME_UPDATE = 5;
 
 /**
  * Websocket message ID indicating a snackbar message.
+ *
  * @constant {number}
  */
 export const WS_ID_SNACKBAR = 6;
 
 /**
  * Websocket message ID indicating matterbridge has un update available.
+ *
  * @constant {number}
  */
 export const WS_ID_UPDATE_NEEDED = 7;
 
 /**
  * Websocket message ID indicating a state update.
+ *
  * @constant {number}
  */
 export const WS_ID_STATEUPDATE = 8;
 
 /**
  * Websocket message ID indicating to close a permanent snackbar message.
+ *
  * @constant {number}
  */
 export const WS_ID_CLOSE_SNACKBAR = 9;
@@ -116,6 +126,7 @@ export const WS_ID_CLOSE_SNACKBAR = 9;
  * curl -k http://127.0.0.1:8101/api/updates/sys/check
  * perform:
  * curl -k http://127.0.0.1:8101/api/updates/sys/perform
+ *
  * @constant {number}
  */
 export const WS_ID_SHELLY_SYS_UPDATE = 100;
@@ -126,6 +137,7 @@ export const WS_ID_SHELLY_SYS_UPDATE = 100;
  * curl -k http://127.0.0.1:8101/api/updates/main/check
  * perform:
  * curl -k http://127.0.0.1:8101/api/updates/main/perform
+ *
  * @constant {number}
  */
 export const WS_ID_SHELLY_MAIN_UPDATE = 101;
@@ -498,6 +510,7 @@ export class Frontend {
     this.expressApp.get('/api/download-mblog', async (req, res) => {
       this.log.debug(`The frontend sent /api/download-mblog ${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile)}`);
       try {
+        // eslint-disable-next-line n/no-unsupported-features/node-builtins
         await fs.access(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), fs.constants.F_OK);
         const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile), 'utf8');
         await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterbrideLoggerFile), data, 'utf-8');
@@ -519,6 +532,7 @@ export class Frontend {
     this.expressApp.get('/api/download-mjlog', async (req, res) => {
       this.log.debug(`The frontend sent /api/download-mjlog ${path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbrideLoggerFile)}`);
       try {
+        // eslint-disable-next-line n/no-unsupported-features/node-builtins
         await fs.access(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), fs.constants.F_OK);
         const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, this.matterbridge.matterLoggerFile), 'utf8');
         await fs.writeFile(path.join(os.tmpdir(), this.matterbridge.matterLoggerFile), data, 'utf-8');
@@ -539,6 +553,7 @@ export class Frontend {
     this.expressApp.get('/api/shellydownloadsystemlog', async (req, res) => {
       this.log.debug('The frontend sent /api/shellydownloadsystemlog');
       try {
+        // eslint-disable-next-line n/no-unsupported-features/node-builtins
         await fs.access(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), fs.constants.F_OK);
         const data = await fs.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'utf8');
         await fs.writeFile(path.join(os.tmpdir(), 'shelly.log'), data, 'utf-8');
@@ -811,6 +826,7 @@ export class Frontend {
 
   /**
    * Retrieves the reachable attribute.
+   *
    * @param {MatterbridgeDevice} device - The MatterbridgeDevice object.
    * @returns {boolean} The reachable attribute.
    */
@@ -824,6 +840,7 @@ export class Frontend {
 
   /**
    * Retrieves the power source attribute.
+   *
    * @param {MatterbridgeEndpoint} endpoint - The MatterbridgeDevice object.
    * @returns {'ac' | 'dc' | 'ok' | 'warning' | 'critical' | undefined} The power source attribute.
    */
@@ -853,6 +870,7 @@ export class Frontend {
 
   /**
    * Retrieves the cluster text description from a given device.
+   *
    * @param {MatterbridgeDevice} device - The MatterbridgeDevice object.
    * @returns {string} The attributes description of the cluster servers in the device.
    */
@@ -972,6 +990,7 @@ export class Frontend {
 
   /**
    * Retrieves the base registered plugins sanitized for res.json().
+   *
    * @returns {BaseRegisteredPlugin[]} An array of BaseRegisteredPlugin.
    */
   private getBaseRegisteredPlugins(): BaseRegisteredPlugin[] {
@@ -1015,6 +1034,7 @@ export class Frontend {
 
   /**
    * Retrieves the devices from Matterbridge.
+   *
    * @param {string} [pluginName] - The name of the plugin to filter devices by.
    * @returns {Promise<ApiDevices[]>} A promise that resolves to an array of ApiDevices.
    */
@@ -1050,7 +1070,7 @@ export class Frontend {
    *
    * @param {string} pluginName - The name of the plugin.
    * @param {number} endpointNumber - The endpoint number.
-   * @returns {Promise<ApiClustersResponse | undefined>} A promise that resolves to the clusters or undefined if not found.
+   * @returns {ApiClustersResponse | undefined} A promise that resolves to the clusters or undefined if not found.
    */
   private getClusters(pluginName: string, endpointNumber: number): ApiClustersResponse | undefined {
     const endpoint = this.matterbridge.devices.array().find((d) => d.plugin === pluginName && d.maybeNumber === endpointNumber);
@@ -1183,6 +1203,7 @@ export class Frontend {
                 if (plugin) {
                   // The plugin is not registered
                   this.wssSendSnackbarMessage(`Added plugin ${packageName}`, 5, 'success');
+                  // eslint-disable-next-line promise/no-nesting
                   this.matterbridge.plugins.load(plugin, true, 'The plugin has been added', true).then(() => {
                     this.wssSendSnackbarMessage(`Started plugin ${packageName}`, 5, 'success');
                     this.wssSendRefreshRequired('plugins');
@@ -1851,6 +1872,7 @@ export class Frontend {
   /**
    * Sends a need to restart WebSocket message to all connected clients.
    *
+   * @param snackbar
    */
   wssSendRestartRequired(snackbar = true) {
     this.log.debug('Sending a restart required message to all connected clients');
@@ -1882,6 +1904,7 @@ export class Frontend {
   /**
    * Sends a cpu update message to all connected clients.
    *
+   * @param cpuUsage
    */
   wssSendCpuUpdate(cpuUsage: number) {
     if (hasParameter('debug')) this.log.debug('Sending a cpu update message to all connected clients');
@@ -1896,6 +1919,13 @@ export class Frontend {
   /**
    * Sends a memory update message to all connected clients.
    *
+   * @param totalMemory
+   * @param freeMemory
+   * @param rss
+   * @param heapTotal
+   * @param heapUsed
+   * @param external
+   * @param arrayBuffers
    */
   wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string) {
     if (hasParameter('debug')) this.log.debug('Sending a memory update message to all connected clients');
@@ -1910,6 +1940,8 @@ export class Frontend {
   /**
    * Sends an uptime update message to all connected clients.
    *
+   * @param systemUptime
+   * @param processUptime
    */
   wssSendUptimeUpdate(systemUptime: string, processUptime: string) {
     if (hasParameter('debug')) this.log.debug('Sending a uptime update message to all connected clients');
@@ -1923,10 +1955,10 @@ export class Frontend {
 
   /**
    * Sends an open snackbar message to all connected clients.
+   *
    * @param {string} message - The message to send.
    * @param {number} timeout - The timeout in seconds for the snackbar message.
    * @param {'info' | 'warning' | 'error' | 'success'} severity - The severity of the snackbar message (default info).
-   *
    */
   wssSendSnackbarMessage(message: string, timeout = 5, severity: 'info' | 'warning' | 'error' | 'success' = 'info') {
     this.log.debug('Sending a snackbar message to all connected clients');
@@ -1940,8 +1972,8 @@ export class Frontend {
 
   /**
    * Sends a close snackbar message to all connected clients.
-   * @param {string} message - The message to send.
    *
+   * @param {string} message - The message to send.
    */
   wssSendCloseSnackbarMessage(message: string) {
     this.log.debug('Sending a close snackbar message to all connected clients');
@@ -1979,10 +2011,10 @@ export class Frontend {
 
   /**
    * Sends a message to all connected clients.
+   *
    * @param {number} id - The message id.
    * @param {string} method - The message method.
    * @param {Record<string, string | number | boolean>} params - The message parameters.
-   *
    */
   wssBroadcastMessage(id: number, method?: string, params?: Record<string, string | number | boolean>) {
     this.log.debug(`Sending a broadcast message id ${id} method ${method} params ${debugStringify(params ?? {})} to all connected clients`);

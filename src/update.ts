@@ -5,6 +5,7 @@
  * @author Luca Liguori
  * @date 2025-02-24
  * @version 1.0.0
+ * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -18,7 +19,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 // AnsiLogger module
@@ -63,7 +64,7 @@ export async function checkUpdates(matterbridge: Matterbridge): Promise<void> {
  * If there is an error retrieving the latest version, logs an error message.
  *
  * @param {Matterbridge} matterbridge - The Matterbridge instance.
- * @returns {Promise<String | undefined>} A promise that resolves when the latest version is retrieved.
+ * @returns {Promise<string | undefined>} A promise that resolves when the latest version is retrieved.
  */
 export async function getMatterbridgeLatestVersion(matterbridge: Matterbridge): Promise<string | undefined> {
   const { getNpmPackageVersion } = await import('./utils/network.js');

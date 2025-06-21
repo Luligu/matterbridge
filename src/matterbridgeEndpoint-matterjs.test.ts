@@ -1,9 +1,9 @@
 // src\matterbridgeEndpoint.test.ts
 
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
+import { rmSync } from 'node:fs';
+import path from 'node:path';
+
 import { DeviceTypeId, VendorId, ServerNode, Endpoint, StorageContext, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Logger, NamedHandler } from '@matter/main';
 import {
   ColorControl,
@@ -67,8 +67,6 @@ import {
   WaterHeaterModeServer,
   WindowCoveringServer,
 } from '@matter/node/behaviors';
-import { rmSync } from 'node:fs';
-import path from 'node:path';
 import { AnsiLogger, er, hk, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import {
@@ -88,8 +86,8 @@ import {
   MatterbridgeLiftWindowCoveringServer,
   MatterbridgeLiftTiltWindowCoveringServer,
   MatterbridgeDeviceEnergyManagementModeServer,
-} from './matterbridgeBehaviors.js';
-import { Matterbridge } from './matterbridge.js';
+} from './matterbridgeBehaviors.ts';
+import { Matterbridge } from './matterbridge.ts';
 import {
   lightSensor,
   occupancySensor,
@@ -105,12 +103,12 @@ import {
   laundryWasher,
   extendedColorLight,
   waterHeater,
-} from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
-import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
-import { WaterHeater } from './waterHeater.js';
-import { Evse, MatterbridgeEnergyEvseServer } from './evse.js';
+} from './matterbridgeDeviceTypes.ts';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
+import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbridgeEndpointHelpers.ts';
+import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './roboticVacuumCleaner.ts';
+import { WaterHeater } from './waterHeater.ts';
+import { Evse, MatterbridgeEnergyEvseServer } from './evse.ts';
 
 const MATTER_PORT = 6001;
 const HOMEDIR = 'EndpointMatterJs';

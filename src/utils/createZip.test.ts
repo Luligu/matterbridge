@@ -4,7 +4,7 @@ import { jest } from '@jest/globals';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
-import { createZip } from './createZip.js';
+import { createZip } from './createZip.ts';
 
 describe('createZip', () => {
   beforeEach(() => {

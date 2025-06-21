@@ -1,15 +1,11 @@
 // src\cli.error.test.ts
 
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 process.argv = ['node', './cli.js', '-memorycheck', '-frontend', '0', '-profile', 'JestCli', '-debug', '-logger', 'debug', '-matterlogger', 'debug'];
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.js';
+import { Matterbridge } from './matterbridge.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -36,12 +32,12 @@ if (!debug) {
 }
 
 const loadInstance = jest.spyOn(Matterbridge, 'loadInstance').mockImplementation(async (_initialize?: boolean) => {
-  console.log('mockImplementation of Matterbridge.loadInstance() called');
+  // console.log('mockImplementation of Matterbridge.loadInstance() called');
   throw new Error('Mock implementation of loadInstance called.'); // Simulate an error by throwing an exception
 });
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
-  console.log('mockImplementation of process.exit() called');
+  // console.log('mockImplementation of process.exit() called');
   return undefined as never; // Prevent actual exit during tests
 });
 

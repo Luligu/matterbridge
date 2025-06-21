@@ -1,8 +1,5 @@
 // src\matterbridgeEndpoint-default.test.ts
 
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { jest } from '@jest/globals';
 import { Lifecycle } from '@matter/main';
 import {
@@ -63,8 +60,8 @@ import { AnsiLogger, BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 import path from 'node:path';
 import { rmSync } from 'node:fs';
 
-import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { Matterbridge } from './matterbridge.ts';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
 import {
   airPurifier,
   airQualitySensor,
@@ -90,8 +87,8 @@ import {
   waterFreezeDetector,
   waterLeakDetector,
   waterValve,
-} from './matterbridgeDeviceTypes.js';
-import { updateAttribute } from './matterbridgeEndpointHelpers.js';
+} from './matterbridgeDeviceTypes.ts';
+import { updateAttribute } from './matterbridgeEndpointHelpers.ts';
 
 const MATTER_PORT = 6002;
 const HOMEDIR = 'EndpointDefault';
@@ -129,6 +126,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
 
   /**
    * Waits for the `isOnline` property to become `true`.
+   *
    * @param {number} timeout - The maximum time to wait in milliseconds.
    * @returns {Promise<void>} A promise that resolves when `isOnline` becomes `true` or rejects if the timeout is reached.
    */

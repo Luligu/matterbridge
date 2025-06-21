@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable jest/no-conditional-expect */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'JestPlatform'];
 
@@ -10,12 +8,13 @@ import os from 'node:os';
 import { AnsiLogger, CYAN, db, er, LogLevel, pl, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
-import { Matterbridge } from './matterbridge.js';
-import { MatterbridgePlatform } from './matterbridgePlatform.js';
-import { contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Environment, StorageService } from '@matter/main';
-import { waiter } from './utils/export.js';
+
+import { Matterbridge } from './matterbridge.ts';
+import { MatterbridgePlatform } from './matterbridgePlatform.ts';
+import { contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.ts';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
+import { waiter } from './utils/export.ts';
 
 describe('Matterbridge platform', () => {
   let matterbridge: Matterbridge;

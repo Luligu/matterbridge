@@ -1,6 +1,4 @@
 // src\matterbridgeAccessoryPlatform.test.ts
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'JestAccessory'];
 
@@ -8,8 +6,8 @@ import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeAccessoryPlatform } from './matterbridgeAccessoryPlatform.js';
-import { MatterbridgePlatform } from './matterbridgePlatform.js';
+import { MatterbridgeAccessoryPlatform } from './matterbridgeAccessoryPlatform.ts';
+import { MatterbridgePlatform } from './matterbridgePlatform.ts';
 
 describe('Matterbridge accessory platform', () => {
   let matterbridge: Matterbridge;

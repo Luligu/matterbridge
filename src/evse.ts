@@ -6,6 +6,7 @@
  * @contributor Ludovic BOUÉ
  * @date 2025-05-27
  * @version 1.1.0
+ * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -19,7 +20,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 // @matter
@@ -46,8 +47,8 @@ export class Evse extends MatterbridgeEndpoint {
    * @param {EnergyEvse.State} [state] - The current state of the EVSE. Defaults to NotPluggedIn.
    * @param {EnergyEvse.SupplyState} [supplyState] - The supply state of the EVSE. Defaults to Disabled.
    * @param {EnergyEvse.FaultState} [faultState] - The fault state of the EVSE. Defaults to NoError.
-   * @param {number} [absMinPower=0] - Indicate the minimum electrical power that the ESA can consume when switched on. Defaults to `0` if not provided.
-   * @param {number} [absMaxPower=0] - Indicate the maximum electrical power that the ESA can consume when switched on. Defaults to `0` if not provided.
+   * @param {number} [absMinPower] - Indicate the minimum electrical power that the ESA can consume when switched on. Defaults to `0` if not provided.
+   * @param {number} [absMaxPower] - Indicate the maximum electrical power that the ESA can consume when switched on. Defaults to `0` if not provided.
    */
   constructor(
     name: string,
@@ -76,6 +77,9 @@ export class Evse extends MatterbridgeEndpoint {
   /**
    * Creates a default EnergyEvseServer Cluster Server.
    *
+   * @param state
+   * @param supplyState
+   * @param faultState
    */
   createDefaultEnergyEvseClusterServer(state?: EnergyEvse.State, supplyState?: EnergyEvse.SupplyState, faultState?: EnergyEvse.FaultState): this {
     this.behaviors.require(MatterbridgeEnergyEvseServer, {

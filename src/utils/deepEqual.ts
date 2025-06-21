@@ -6,6 +6,7 @@
  * @author Luca Liguori
  * @date 2025-02-16
  * @version 1.0.0
+ * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -19,7 +20,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -31,7 +32,7 @@
  *
  * @param {any} a The first value to compare.
  * @param {any} b The second value to compare.
- * @param {string[]} [excludeProperties=[]] An array of property names to exclude from the comparison in objects.
+ * @param {string[]} [excludeProperties] An array of property names to exclude from the comparison in objects.
  * @returns {boolean} True if the values are deeply equal, excluding any specified properties; otherwise, false.
  *
  * Note: This function utilizes recursion for deep comparison of nested structures and includes a debugging

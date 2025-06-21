@@ -1,7 +1,5 @@
 // src\utils\utils.test.ts
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { jest } from '@jest/globals';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
@@ -33,7 +31,7 @@ import {
   isValidArray,
   isValidNull,
   isValidUndefined,
-} from './export.js';
+} from './export.ts';
 
 describe('Utils test', () => {
   let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;

@@ -5,6 +5,7 @@
  * @author Luca Liguori
  * @date 2024-07-14
  * @version 1.1.2
+ * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -18,7 +19,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 // AnsiLogger module
@@ -147,6 +148,7 @@ export class PluginManager {
 
   /**
    * Resolves the name of a plugin by loading and parsing its package.json file.
+   *
    * @param {string} pluginPath - The path to the plugin or the path to the plugin's package.json file.
    * @returns The path to the resolved package.json file, or null if the package.json file is not found or does not contain a name.
    */
@@ -327,6 +329,7 @@ export class PluginManager {
 
   /**
    * Loads and parse the plugin package.json and returns it.
+   *
    * @param {RegisteredPlugin} plugin - The plugin to load the package from.
    * @returns A Promise that resolves to the package.json object or null if the package.json could not be loaded.
    */
@@ -652,6 +655,7 @@ export class PluginManager {
 
   /**
    * Loads a plugin and returns the corresponding MatterbridgePlatform instance.
+   *
    * @param {RegisteredPlugin} plugin - The plugin to load.
    * @param {boolean} start - Optional flag indicating whether to start the plugin after loading. Default is false.
    * @param {string} message - Optional message to pass to the plugin when starting.
@@ -816,8 +820,8 @@ export class PluginManager {
    *
    * @param {RegisteredPlugin} plugin - The plugin to shut down.
    * @param {string} [reason] - The reason for shutting down the plugin.
-   * @param {boolean} [removeAllDevices=false] - Whether to remove all devices associated with the plugin.
-   * @param {boolean} [force=false] - Whether to force the shutdown even if the plugin is not loaded or started.
+   * @param {boolean} [removeAllDevices] - Whether to remove all devices associated with the plugin.
+   * @param {boolean} [force] - Whether to force the shutdown even if the plugin is not loaded or started.
    * @returns {Promise<RegisteredPlugin | undefined>} A promise that resolves to the shut down plugin object, or undefined if the shutdown failed.
    */
   async shutdown(plugin: RegisteredPlugin, reason?: string, removeAllDevices = false, force = false): Promise<RegisteredPlugin | undefined> {
@@ -919,7 +923,7 @@ export class PluginManager {
    * the error and rejects the promise.
    *
    * @param {RegisteredPlugin} plugin - The plugin whose configuration is to be saved.
-   * @param {boolean} [restartRequired=false] - Indicates whether a restart is required after saving the configuration.
+   * @param {boolean} [restartRequired] - Indicates whether a restart is required after saving the configuration.
    * @returns {Promise<void>} A promise that resolves when the configuration is successfully saved, or rejects if an error occurs.
    * @throws {Error} If the plugin's configuration is not found.
    */
@@ -955,7 +959,7 @@ export class PluginManager {
    *
    * @param {RegisteredPlugin} plugin - The plugin whose configuration is to be saved.
    * @param {PlatformConfig} config - The configuration data to be saved.
-   * @param {boolean} [restartRequired=false] - Indicates whether a restart is required after saving the configuration.
+   * @param {boolean} [restartRequired] - Indicates whether a restart is required after saving the configuration.
    * @returns {Promise<void>} A promise that resolves when the configuration is successfully saved, or returns if an error occurs.
    */
   async saveConfigFromJson(plugin: RegisteredPlugin, config: PlatformConfig, restartRequired = false): Promise<void> {

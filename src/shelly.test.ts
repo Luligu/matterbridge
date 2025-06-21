@@ -1,14 +1,12 @@
 // src\shelly.test.ts
+
 /* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { jest } from '@jest/globals';
 import http, { IncomingMessage, ServerResponse } from 'node:http';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
-import { Matterbridge } from './matterbridge.js';
-import { getShelly, postShelly, setVerifyIntervalSecs, setVerifyTimeoutSecs } from './shelly.js';
+import { Matterbridge } from './matterbridge.ts';
+import { getShelly, postShelly, setVerifyIntervalSecs, setVerifyTimeoutSecs } from './shelly.ts';
 
 const log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 

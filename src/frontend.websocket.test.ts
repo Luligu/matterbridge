@@ -1,9 +1,5 @@
 // src\frontend.websocket.test.ts
 
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 process.argv = [
   'node',
   'frontend.test.js',
@@ -35,12 +31,12 @@ import WebSocket from 'ws';
 import { LogLevel as MatterLogLevel } from '@matter/main';
 import { Identify } from '@matter/main/clusters';
 
-import { Matterbridge } from './matterbridge.js';
-import { wait, waiter } from './utils/export.js';
-import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
-import { plg, RegisteredPlugin } from './matterbridgeTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { WS_ID_CLOSE_SNACKBAR, WS_ID_CPU_UPDATE, WS_ID_LOG, WS_ID_MEMORY_UPDATE, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, WS_ID_SNACKBAR, WS_ID_STATEUPDATE, WS_ID_UPDATE_NEEDED, WS_ID_UPTIME_UPDATE } from './frontend.js';
+import { Matterbridge } from './matterbridge.ts';
+import { wait, waiter } from './utils/export.ts';
+import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.ts';
+import { plg, RegisteredPlugin } from './matterbridgeTypes.ts';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
+import { WS_ID_CLOSE_SNACKBAR, WS_ID_CPU_UPDATE, WS_ID_LOG, WS_ID_MEMORY_UPDATE, WS_ID_REFRESH_NEEDED, WS_ID_RESTART_NEEDED, WS_ID_SNACKBAR, WS_ID_STATEUPDATE, WS_ID_UPDATE_NEEDED, WS_ID_UPTIME_UPDATE } from './frontend.ts';
 import spawn from './utils/spawn.ts';
 
 jest.unstable_mockModule('./shelly.ts', () => ({

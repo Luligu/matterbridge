@@ -5,6 +5,7 @@
  * @author Luca Liguori
  * @date 2023-12-29
  * @version 1.0.5
+ * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025 Luca Liguori.
  *
@@ -18,7 +19,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 // Matterbridge
@@ -36,6 +37,7 @@ import { AnsiLogger } from './logger/export.js';
 export class MatterbridgeDynamicPlatform extends MatterbridgePlatform {
   /**
    * Creates an instance of MatterbridgeDynamicPlatform.
+   *
    * @param {Matterbridge} matterbridge - The Matterbridge instance.
    * @param {AnsiLogger} log - The logger instance.
    * @param {PlatformConfig} config - The platform configuration.

@@ -5,6 +5,7 @@
  * @author Luca Liguori
  * @date 2024-02-17
  * @version 1.0.0
+ * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -18,7 +19,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 // Node.js modules
@@ -32,6 +33,7 @@ import { AnsiLogger, idn, LogLevel, rs, TimestampFormat } from '../logger/export
 
 /**
  * Retrieves the IPv4 address of the first non-internal network interface.
+ *
  * @returns {string | undefined} The IPv4 address of the selected network interface, or undefined if not found.
  */
 export function getIpv4InterfaceAddress(): string | undefined {
@@ -57,6 +59,7 @@ export function getIpv4InterfaceAddress(): string | undefined {
 
 /**
  * Retrieves the IPv6 address of the first non-internal network interface.
+ *
  * @returns {string | undefined} The IPv4 address of the selected network interface, or undefined if not found.
  */
 export function getIpv6InterfaceAddress(): string | undefined {
@@ -82,6 +85,7 @@ export function getIpv6InterfaceAddress(): string | undefined {
 
 /**
  * Retrieves the mac address of the first non-internal network interface.
+ *
  * @returns {string | undefined} The mac address, or undefined if not found.
  */
 export function getMacAddress(): string | undefined {
@@ -106,9 +110,11 @@ export function getMacAddress(): string | undefined {
 
 /**
  * Logs the available network interfaces and their details.
- * @param {boolean} log - Whether to enable logging of network interface details (default is true).
+ *
+ * @param {boolean} [debug] - Whether to enable logging of network interface details (default is true).
+ * @returns {void}
  */
-export function logInterfaces(debug = true): void {
+export function logInterfaces(debug = true) {
   const log = new AnsiLogger({ logName: 'MatterbridgeUtils', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
 
   log.logLevel = LogLevel.INFO;
@@ -129,7 +135,7 @@ export function logInterfaces(debug = true): void {
  * Resolves the given hostname to an IP address.
  *
  * @param {string} hostname - The hostname to resolve.
- * @param {0 | 4 | 6} [family=4] - The address family to use (0 for any, 4 for IPv4, 6 for IPv6). Default is 4.
+ * @param {0 | 4 | 6} [family] - The address family to use (0 for any, 4 for IPv4, 6 for IPv6). Default is 4.
  * @returns {Promise<string | null>} - A promise that resolves to the IP address or null if not found.
  *
  * @remarks
@@ -150,8 +156,8 @@ export async function resolveHostname(hostname: string, family: 0 | 4 | 6 = 4): 
  * Retrieves the version of an npm package from the npm registry.
  *
  * @param {string} packageName - The name of the npm package.
- * @param {string} [tag='latest'] - The tag of the package version to retrieve (default is 'latest').
- * @param {number} [timeout=10000] - The timeout duration in milliseconds (default is 10000ms).
+ * @param {string} [tag] - The tag of the package version to retrieve (default is 'latest').
+ * @param {number} [timeout] - The timeout duration in milliseconds (default is 10000ms).
  * @returns {Promise<string>} A promise that resolves to the version string of the package.
  * @throws {Error} If the request fails or the tag is not found.
  */
@@ -206,6 +212,7 @@ export async function getNpmPackageVersion(packageName: string, tag = 'latest', 
 
 /**
  * Retrieves the path to the global Node.js modules directory.
+ *
  * @returns A promise that resolves to the path of the global Node.js modules directory.
  */
 export async function getGlobalNodeModules(): Promise<string> {

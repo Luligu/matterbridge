@@ -1,10 +1,6 @@
 // src\matterbridge.matterjs.test.ts
 
 /* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-empty-function */
-
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const MATTER_PORT = 6010;
 const HOMEDIR = 'MatterbridgeMatterjs';
@@ -18,8 +14,7 @@ import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
 import { Environment, FabricIndex, NodeLifecycle } from '@matter/main';
 
-import { Matterbridge } from './matterbridge.js';
-import { waiter } from './utils/export.js';
+import { Matterbridge } from './matterbridge.ts';
 import { FabricAction } from '@matter/main/protocol';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {

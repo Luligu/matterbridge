@@ -5,6 +5,7 @@
  * @author Luca Liguori
  * @date 2025-02-19
  * @version 1.1.0
+ * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *
@@ -18,7 +19,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -121,6 +122,7 @@ export async function getShellyMainUpdate(matterbridge: Matterbridge): Promise<v
 
 /**
  * Triggers Shelly main updates.
+ *
  * @param {Matterbridge} matterbridge - The Matterbridge instance.
  * @returns {Promise<void>} A promise that resolves when the operation is complete.
  */
@@ -142,6 +144,7 @@ export async function triggerShellyMainUpdate(matterbridge: Matterbridge): Promi
 
 /**
  * Verifies Shelly update.
+ *
  * @param {Matterbridge} matterbridge - The Matterbridge instance.
  * @param {string} api - The api to call: /api/updates/sys/status or /api/updates/main/status
  * @param {string} name - The name of the update.
@@ -183,8 +186,14 @@ export async function verifyShellyUpdate(matterbridge: Matterbridge, api: string
 
 /**
  * Triggers Shelly change network configuration.
+ *
  * @param {Matterbridge} matterbridge - The Matterbridge instance.
  * @param {object} config - The network configuration.
+ * @param config.type
+ * @param config.ip
+ * @param config.subnet
+ * @param config.gateway
+ * @param config.dns
  * @returns {Promise<void>} A promise that resolves when the operation is complete.
  */
 export async function triggerShellyChangeIp(matterbridge: Matterbridge, config: { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string }): Promise<void> {
@@ -212,6 +221,7 @@ export async function triggerShellyChangeIp(matterbridge: Matterbridge, config: 
 
 /**
  * Triggers Shelly system reboot.
+ *
  * @param {Matterbridge} matterbridge - The Matterbridge instance.
  * @returns {Promise<void>} A promise that resolves when the operation is complete.
  */
@@ -302,6 +312,7 @@ export async function createShellySystemLog(matterbridge: Matterbridge): Promise
 
 /**
  * Perform a GET to Shelly board apis.
+ *
  * @param {string} api - The api to call:
  *
  *      /api/updates/sys/check => [{name:string; ...}]
@@ -317,7 +328,7 @@ export async function createShellySystemLog(matterbridge: Matterbridge): Promise
  *      /api/reset/hard => reboot on success    Hard reset makes soft reset + removing both directories .matterbridge Matterbridge + reboot
  *
  *
- * @param {number} [timeout=60000] - The timeout duration in milliseconds (default is 60000ms).
+ * @param {number} [timeout] - The timeout duration in milliseconds (default is 60000ms).
  * @returns {Promise<any>} A promise that resolves to the response.
  * @throws {Error} If the request fails.
  */
@@ -372,6 +383,7 @@ export async function getShelly(api: string, timeout = 60000): Promise<any> {
 
 /**
  * Perform a POST request to Shelly board apis.
+ *
  * @param {string} api - The api to call:
  *
  *     Set static ip
@@ -389,7 +401,8 @@ export async function getShelly(api: string, timeout = 60000): Promise<any> {
  *     curl -H "Content-Type: application/json" -X POST http://127.0.0.1:8101/api/network/connection/static
  *        -d '{"interface": "end0", "addr": "192.168.1.64", "mask": "255.255.255.0", "gw": "192.168.1.1", "dns": "192.168.1.1"}'
  *
- * @param {number} [timeout=60000] - The timeout duration in milliseconds (default is 60000ms).
+ * @param data
+ * @param {number} [timeout] - The timeout duration in milliseconds (default is 60000ms).
  * @returns {Promise<any>} A promise that resolves to the response.
  * @throws {Error} If the request fails.
  */

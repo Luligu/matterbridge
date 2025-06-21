@@ -1,9 +1,5 @@
 // src\evse.test.ts
 
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import { jest } from '@jest/globals';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
@@ -18,11 +14,11 @@ import { Identify, PowerSource, ElectricalEnergyMeasurement, ElectricalPowerMeas
 import { EnergyEvseServer, EnergyEvseModeServer, DeviceEnergyManagementModeServer } from '@matter/node/behaviors';
 
 // Matterbridge
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
-import { MatterbridgeDeviceEnergyManagementModeServer } from './matterbridgeBehaviors.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
+import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.ts';
+import { MatterbridgeDeviceEnergyManagementModeServer } from './matterbridgeBehaviors.ts';
 
-import { Evse, MatterbridgeEnergyEvseServer, MatterbridgeEnergyEvseModeServer } from './evse.js';
+import { Evse, MatterbridgeEnergyEvseServer, MatterbridgeEnergyEvseModeServer } from './evse.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

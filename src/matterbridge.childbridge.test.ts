@@ -1,10 +1,7 @@
 // src\matterbridge.childbridge.test.ts
 
-/* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable no-console */
 /* eslint-disable jest/no-conditional-expect */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 process.argv = [
   'node',
@@ -31,17 +28,18 @@ process.argv = [
 
 import { jest } from '@jest/globals';
 import path from 'node:path';
-import { Environment } from '@matter/main';
-import { BasicInformationServer } from '@matter/main/behaviors';
+import { rmSync } from 'node:fs';
 import { AnsiLogger, db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
-import { Matterbridge } from './matterbridge.js';
-import { waiter } from './utils/export.js';
-import { PluginManager } from './pluginManager.js';
-import { rmSync } from 'node:fs';
-import { dev, plg } from './matterbridgeTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { pressureSensor } from './matterbridgeDeviceTypes.js';
+import { Environment } from '@matter/main';
+import { BasicInformationServer } from '@matter/main/behaviors';
+
+import { Matterbridge } from './matterbridge.ts';
+import { waiter } from './utils/export.ts';
+import { PluginManager } from './pluginManager.ts';
+import { dev, plg } from './matterbridgeTypes.ts';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
+import { pressureSensor } from './matterbridgeDeviceTypes.ts';
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   console.log('mockImplementation of process.exit() called');

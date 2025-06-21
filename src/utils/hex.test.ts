@@ -1,5 +1,5 @@
 // src\utils\hex.test.ts
-import { bufferToHex, hexToBuffer } from './hex.js';
+import { bufferToHex, hexToBuffer } from './hex.ts';
 
 describe('bufferToHex()', () => {
   it('throws error for non-ArrayBufferLike input', () => {
@@ -24,9 +24,7 @@ describe('bufferToHex()', () => {
 
 describe('hexToBuffer()', () => {
   it('should throw TypeError if input is not a string', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(() => hexToBuffer(123 as any)).toThrow(TypeError);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(() => hexToBuffer(123 as any)).toThrow('Expected a string for hex input');
   });
 

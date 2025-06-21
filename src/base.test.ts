@@ -1,18 +1,15 @@
 // src\base.test.ts
 
 /* eslint-disable jest/no-commented-out-tests */
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
-// Import necessary modules and types
-import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 
+import { jest } from '@jest/globals';
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+
 // matter.js
-import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main/';
+import { Endpoint, DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
 import { MdnsService } from '@matter/main/protocol';
 import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
 import { RootEndpoint } from '@matter/main/endpoints/root';

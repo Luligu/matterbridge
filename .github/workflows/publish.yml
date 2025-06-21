@@ -7,7 +7,7 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-  
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -20,16 +20,16 @@ jobs:
 
       - name: Clean cache
         run: npm cache clean --force
-  
+
       - name: Verify Node.js version
         run: node -v
-    
+
       - name: Verify Npm version
         run: npm -v
-                  
+
       - name: Install dependencies
         run: npm ci
-    
+
       - name: Lint the project
         run: npm run lint
 

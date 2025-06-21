@@ -1,26 +1,22 @@
 // src\waterHeater.test.ts
 
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-import { jest } from '@jest/globals';
-import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 import { inspect } from 'node:util';
-
-import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { MatterbridgeWaterHeaterManagementServer, MatterbridgeWaterHeaterModeServer, WaterHeater } from './waterHeater.js';
-import { MatterbridgeThermostatServer } from './matterbridgeBehaviors.js';
-import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.js';
+import { jest } from '@jest/globals';
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { DeviceTypeId, VendorId, ServerNode, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, Environment } from '@matter/main';
 import { RootEndpoint } from '@matter/main/endpoints';
 import { MdnsService } from '@matter/main/protocol';
 import { Identify, PowerSource, Thermostat, WaterHeaterManagement } from '@matter/main/clusters';
 import { ThermostatServer, WaterHeaterManagementServer, WaterHeaterModeServer } from '@matter/node/behaviors';
+
+import { Matterbridge } from './matterbridge.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
+import { MatterbridgeWaterHeaterManagementServer, MatterbridgeWaterHeaterModeServer, WaterHeater } from './waterHeater.ts';
+import { MatterbridgeThermostatServer } from './matterbridgeBehaviors.ts';
+import { invokeBehaviorCommand } from './matterbridgeEndpointHelpers.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;

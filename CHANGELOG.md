@@ -14,7 +14,16 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [DevContainer]: Added support for Matterbridge Dev Container with optimized Named Volume for node_modules.
+- [GitHub]: Added GitHub issue templates for bug reports and feature requests.
+- [Systemd]: Added systemd service file for Matterbridge.
+- [Eslint]: Refactored ESLint configuration for TypeScript and improve plugin integration.
+- [Eslint]: Added plugin eslint-plugin-promise, eslint-plugin-jsdoc and @vitest/eslint-plugin.
+- [Vitest]: Added Vitest for TypeScript project test. It will replace Jest that doesn't work correctly with ESM module mock.
+
 ### Changed
+
+- [package]: Updated dependencies and refactored scripts.
 
 ### Fixed
 

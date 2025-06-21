@@ -1,9 +1,7 @@
 // src\cli.test.ts
 
-/* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 process.argv = ['node', './cli.js', '-memorycheck', '-inspect', '-snapshotinterval', '60000', '-frontend', '0', '-profile', 'JestCli', '-debug', '-logger', 'debug', '-matterlogger', 'debug'];
 
 import { jest } from '@jest/globals';
@@ -11,6 +9,7 @@ import os from 'node:os';
 import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, YELLOW } from 'node-ansi-logger';
 
 import { Matterbridge } from './matterbridge.js';
+// eslint-disable-next-line n/no-missing-import
 import { MockMatterbridge } from './mock/mockMatterbridge.js';
 import { HeapProfiler, InspectorNotification, Session } from 'node:inspector';
 
@@ -39,19 +38,19 @@ if (!debug) {
 }
 
 const loadInstance = jest.spyOn(Matterbridge, 'loadInstance').mockImplementation(async (_initialize?: boolean) => {
-  console.log('mockImplementation of Matterbridge.loadInstance() called');
+  // console.log('mockImplementation of Matterbridge.loadInstance() called');
   return MockMatterbridge.loadInstance() as unknown as Matterbridge; // Simulate a successful load by returning an instance of MockMatterbridge
 });
 
 const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
-  console.log('mockImplementation of process.exit() called');
+  // console.log('mockImplementation of process.exit() called');
   return undefined as never; // Prevent actual exit during tests
 });
 
 const postSpy = jest.spyOn(Session.prototype, 'post').mockImplementation((method, callback?: (err: Error | null, params?: object) => void) => {
-  console.log(`mockImplementation of Session.post() called with method: ${method}`);
+  // console.log(`mockImplementation of Session.post() called with method: ${method}`);
   if (typeof callback === 'function') {
-    console.log(`mockImplementation of Session.post() callback called with null`);
+    // console.log(`mockImplementation of Session.post() callback called with null`);
     callback(null, { profile: '' }); // call callback with no error
   }
 });

@@ -5,6 +5,7 @@
  * @author Luca Liguori
  * @date 2024-03-21
  * @version 1.2.1
+ * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -18,7 +19,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 // Matterbridge
@@ -147,6 +148,7 @@ export class MatterbridgePlatform {
    * This method must be overridden in the extended class.
    * It is called when the platform is started.
    * Use this method to create the MatterbridgeEndpoints and call this.registerDevice().
+   *
    * @param {string} [reason] - The reason for starting.
    * @throws {Error} - Throws an error if the method is not overridden.
    */
@@ -175,6 +177,7 @@ export class MatterbridgePlatform {
    * This method can be overridden in the extended class. In this case always call super.onShutdown() to save the selects, run checkEndpointNumbers() and cleanup memory.
    * It is called when the platform is shutting down.
    * Use this method to clean up any resources you used in the constructor or onStart.
+   *
    * @param {string} [reason] - The reason for shutting down.
    */
   async onShutdown(reason?: string) {
@@ -200,6 +203,7 @@ export class MatterbridgePlatform {
 
   /**
    * Called when the logger level is changed.
+   *
    * @param {LogLevel} logLevel The new logger level.
    */
   async onChangeLoggerLevel(logLevel: LogLevel) {
@@ -208,6 +212,7 @@ export class MatterbridgePlatform {
 
   /**
    * Called when a plugin config includes an action button or an action button with text field.
+   *
    * @param {string} action The action triggered by the button in plugin config.
    * @param {string} value The value of the field of the action button.
    * @param {string} id The id of the schema associated with the action.
@@ -236,6 +241,7 @@ export class MatterbridgePlatform {
 
   /**
    * Called when the plugin config has been updated.
+   *
    * @param {PlatformConfig} config The new plugin config.
    */
   async onConfigChanged(config: PlatformConfig) {
@@ -244,6 +250,7 @@ export class MatterbridgePlatform {
 
   /**
    * Retrieves the devices registered with the platform.
+   *
    * @returns {MatterbridgeEndpoint[]} The registered devices.
    */
   getDevices(): MatterbridgeEndpoint[] {
@@ -252,6 +259,7 @@ export class MatterbridgePlatform {
 
   /**
    * Checks if a device with this name is already registered in the platform.
+   *
    * @param {string} deviceName - The device name to check.
    * @returns {boolean} True if the device is already registered, false otherwise.
    */
@@ -261,6 +269,7 @@ export class MatterbridgePlatform {
 
   /**
    * Registers a device with the Matterbridge platform.
+   *
    * @param {MatterbridgeEndpoint} device - The device to register.
    */
   async registerDevice(device: MatterbridgeEndpoint) {
@@ -279,6 +288,7 @@ export class MatterbridgePlatform {
 
   /**
    * Unregisters a device registered with the Matterbridge platform.
+   *
    * @param {MatterbridgeEndpoint} device - The device to unregister.
    */
   async unregisterDevice(device: MatterbridgeEndpoint) {
@@ -290,7 +300,7 @@ export class MatterbridgePlatform {
   /**
    * Unregisters all devices registered with the Matterbridge platform.
    *
-   * @param {number} [delay=0] - The delay in milliseconds between removing each bridged endpoint (default: 0).
+   * @param {number} [delay] - The delay in milliseconds between removing each bridged endpoint (default: 0).
    */
   async unregisterAllDevices(delay = 0) {
     await this.matterbridge.removeAllBridgedEndpoints(this.name, delay);
@@ -422,6 +432,7 @@ export class MatterbridgePlatform {
 
   /**
    * Verifies if the Matterbridge version meets the required version.
+   *
    * @param {string} requiredVersion - The required version to compare against.
    * @returns {boolean} True if the Matterbridge version meets or exceeds the required version, false otherwise.
    */
@@ -454,9 +465,8 @@ export class MatterbridgePlatform {
    * The blacklist has priority over the whitelist.
    *
    * @param {string | string[]} device - The device name(s) to validate.
-   * @param {boolean} [log=true] - Whether to log the validation result.
+   * @param {boolean} [log] - Whether to log the validation result.
    * @returns {boolean} - Returns true if the device is allowed, false otherwise.
-   *
    */
   validateDevice(device: string | string[], log = true): boolean {
     if (!Array.isArray(device)) device = [device];
@@ -486,9 +496,8 @@ export class MatterbridgePlatform {
    *
    * @param {string} device - The device to which the entity belongs.
    * @param {string} entity - The entity to validate.
-   * @param {boolean} [log=true] - Whether to log the validation result.
+   * @param {boolean} [log] - Whether to log the validation result.
    * @returns {boolean} - Returns true if the entity is allowed, false otherwise.
-   *
    */
   validateEntity(device: string, entity: string, log = true): boolean {
     if (isValidArray(this.config.entityBlackList, 1) && this.config.entityBlackList.find((e) => e === entity)) {

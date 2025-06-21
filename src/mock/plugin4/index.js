@@ -1,6 +1,7 @@
-import { MatterbridgeAccessoryPlatform, MatterbridgeEndpoint, onOffSwitch } from 'matterbridge';
-import { temperatureSensor } from '../../matterbridgeDeviceTypes';
+// eslint-disable-next-line n/no-missing-import
+import { MatterbridgeAccessoryPlatform, MatterbridgeEndpoint, temperatureSensor } from 'matterbridge';
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 export default function initializePlugin(matterbridge, log, config) {
   return new MockPlatform(matterbridge, log, config);
 }

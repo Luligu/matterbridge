@@ -1,7 +1,5 @@
 // src\utils\copyDirectory.test.ts
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { jest } from '@jest/globals';
 import { AnsiLogger } from 'node-ansi-logger';
 

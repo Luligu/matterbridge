@@ -5,6 +5,7 @@
  * @author Luca Liguori
  * @date 2024-10-01
  * @version 2.1.1
+ * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -18,7 +19,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 // AnsiLogger module
@@ -303,10 +304,11 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Represents a MatterbridgeEndpoint.
+   *
    * @constructor
    * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the endpoint.
-   * @param {MatterbridgeEndpointOptions} [options={}] - The options for the device.
-   * @param {boolean} [debug=false] - Debug flag.
+   * @param {MatterbridgeEndpointOptions} [options] - The options for the device.
+   * @param {boolean} [debug] - Debug flag.
    */
   constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false) {
     let deviceTypeList: { deviceType: number; revision: number }[] = [];
@@ -385,8 +387,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Loads an instance of the MatterbridgeEndpoint class.
    *
    * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The DeviceTypeDefinition(s) of the device.
-   * @param {MatterbridgeEndpointOptions} [options={}] - The options for the device.
-   * @param {boolean} [debug=false] - Debug flag.
+   * @param {MatterbridgeEndpointOptions} [options] - The options for the device.
+   * @param {boolean} [debug] - Debug flag.
    * @returns {Promise<MatterbridgeEndpoint>} MatterbridgeEndpoint instance.
    */
   static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug = false) {
@@ -501,6 +503,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Triggers an event on the specified cluster.
+   *
    * @param {ClusterId} cluster - The ID of the cluster.
    * @param {string} event - The name of the event to trigger.
    * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} payload - The payload to pass to the event.
@@ -664,8 +667,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {string} endpointName - The name of the new endpoint to add.
    * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The device types to add.
-   * @param {MatterbridgeEndpointOptions} [options={}] - The options for the endpoint.
-   * @param {boolean} [debug=false] - Whether to enable debug logging.
+   * @param {MatterbridgeEndpointOptions} [options] - The options for the endpoint.
+   * @param {boolean} [debug] - Whether to enable debug logging.
    * @returns {MatterbridgeEndpoint} - The child endpoint that was found or added.
    *
    * @example
@@ -716,9 +719,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {string} endpointName - The name of the new enpoint to add.
    * @param {DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>} definition - The device types to add.
-   * @param {ClusterId[]} [serverList=[]] - The list of cluster IDs to include.
-   * @param {MatterbridgeEndpointOptions} [options={}] - The options for the device.
-   * @param {boolean} [debug=false] - Whether to enable debug logging.
+   * @param {ClusterId[]} [serverList] - The list of cluster IDs to include.
+   * @param {MatterbridgeEndpointOptions} [options] - The options for the device.
+   * @param {boolean} [debug] - Whether to enable debug logging.
    * @returns {MatterbridgeEndpoint} - The child endpoint that was found or added.
    *
    * @example
@@ -812,8 +815,9 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Serializes the Matterbridge device into a serialized object.
    *
-   * @param pluginName - The name of the plugin.
-   * @returns The serialized Matterbridge device object.
+   * @param {MatterbridgeEndpoint} device
+   *
+   * @returns {SerializedMatterbridgeEndpoint | undefined} The serialized Matterbridge device object.
    */
   static serialize(device: MatterbridgeEndpoint): SerializedMatterbridgeEndpoint | undefined {
     if (!device.serialNumber || !device.deviceName || !device.uniqueId) return;
@@ -842,6 +846,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Deserializes the device into a serialized object.
    *
+   * @param serializedDevice
    * @returns The deserialized MatterbridgeDevice.
    */
   static deserialize(serializedDevice: SerializedMatterbridgeEndpoint): MatterbridgeEndpoint | undefined {
@@ -1056,8 +1061,8 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default identify cluster server with the specified identify time and type.
    *
-   * @param {number} [identifyTime=0] - The time to identify the server. Defaults to 0.
-   * @param {Identify.IdentifyType} [identifyType=Identify.IdentifyType.None] - The type of identification. Defaults to Identify.IdentifyType.None.
+   * @param {number} [identifyTime] - The time to identify the server. Defaults to 0.
+   * @param {Identify.IdentifyType} [identifyType] - The type of identification. Defaults to Identify.IdentifyType.None.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultIdentifyClusterServer(identifyTime = 0, identifyType = Identify.IdentifyType.None) {
@@ -1070,6 +1075,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default groups cluster server.
+   *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultGroupsClusterServer() {
@@ -1079,6 +1085,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default scenes management cluster server.
+   *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks The scenes management cluster server is still provisional and so not yet implemented.
@@ -1091,11 +1098,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default OnOff cluster server for light devices with feature Lighting.
    *
-   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
-   * @param {boolean} [globalSceneControl=false] - The global scene control state.
-   * @param {number} [onTime=0] - The on time value.
-   * @param {number} [offWaitTime=0] - The off wait time value.
-   * @param {OnOff.StartUpOnOff | null} [startUpOnOff=null] - The start-up OnOff state. Null means previous state.
+   * @param {boolean} [onOff] - The initial state of the OnOff cluster.
+   * @param {boolean} [globalSceneControl] - The global scene control state.
+   * @param {number} [onTime] - The on time value.
+   * @param {number} [offWaitTime] - The off wait time value.
+   * @param {OnOff.StartUpOnOff | null} [startUpOnOff] - The start-up OnOff state. Null means previous state.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultOnOffClusterServer(onOff = false, globalSceneControl = false, onTime = 0, offWaitTime = 0, startUpOnOff: OnOff.StartUpOnOff | null = null) {
@@ -1112,7 +1119,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates an OnOff cluster server without features.
    *
-   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   * @param {boolean} [onOff] - The initial state of the OnOff cluster.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createOnOffClusterServer(onOff = false) {
@@ -1125,7 +1132,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a DeadFront OnOff cluster server with feature DeadFrontBehavior.
    *
-   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   * @param {boolean} [onOff] - The initial state of the OnOff cluster.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDeadFrontOnOffClusterServer(onOff = false) {
@@ -1138,7 +1145,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates an OffOnly OnOff cluster server with feature OffOnly.
    *
-   * @param {boolean} [onOff=false] - The initial state of the OnOff cluster.
+   * @param {boolean} [onOff] - The initial state of the OnOff cluster.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createOffOnlyOnOffClusterServer(onOff = false) {
@@ -1151,11 +1158,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default level control cluster server for light devices with feature OnOff and Lighting.
    *
-   * @param {number} [currentLevel=254] - The current level (default: 254).
-   * @param {number} [minLevel=1] - The minimum level (default: 1).
-   * @param {number} [maxLevel=254] - The maximum level (default: 254).
-   * @param {number | null} [onLevel=null] - The on level (default: null).
-   * @param {number | null} [startUpCurrentLevel=null] - The startUp on level (default: null).
+   * @param {number} [currentLevel] - The current level (default: 254).
+   * @param {number} [minLevel] - The minimum level (default: 1).
+   * @param {number} [maxLevel] - The maximum level (default: 254).
+   * @param {number | null} [onLevel] - The on level (default: null).
+   * @param {number | null} [startUpCurrentLevel] - The startUp on level (default: null).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultLevelControlClusterServer(currentLevel = 254, minLevel = 1, maxLevel = 254, onLevel: number | null = null, startUpCurrentLevel: number | null = null) {
@@ -1177,8 +1184,8 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a level control cluster server without features.
    *
-   * @param {number} [currentLevel=254] - The current level (default: 254).
-   * @param {number | null} [onLevel=null] - The on level (default: null).
+   * @param {number} [currentLevel] - The current level (default: 254).
+   * @param {number | null} [onLevel] - The on level (default: null).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createLevelControlClusterServer(currentLevel = 254, onLevel: number | null = null) {
@@ -1471,6 +1478,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Sets the lift current and target position and the status of a window covering.
+   *
    * @param {number} current - The current position of the window covering.
    * @param {number} target - The target position of the window covering.
    * @param {WindowCovering.MovementStatus} status - The movement status of the window covering.
@@ -1493,6 +1501,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Sets the status of the window covering.
+   *
    * @param {WindowCovering.MovementStatus} status - The movement status to set.
    */
   async setWindowCoveringStatus(status: WindowCovering.MovementStatus) {
@@ -1542,14 +1551,14 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default thermostat cluster server with features Heating, Cooling and AutoMode.
    *
-   * @param {number} [localTemperature=23] - The local temperature value in degrees Celsius. Defaults to 23°.
-   * @param {number} [occupiedHeatingSetpoint=21] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
-   * @param {number} [occupiedCoolingSetpoint=25] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
-   * @param {number} [minSetpointDeadBand=1] - The minimum setpoint dead band value. Defaults to 1°.
-   * @param {number} [minHeatSetpointLimit=0] - The minimum heat setpoint limit value. Defaults to 0°.
-   * @param {number} [maxHeatSetpointLimit=50] - The maximum heat setpoint limit value. Defaults to 50°.
-   * @param {number} [minCoolSetpointLimit=0] - The minimum cool setpoint limit value. Defaults to 0°.
-   * @param {number} [maxCoolSetpointLimit=50] - The maximum cool setpoint limit value. Defaults to 50°.
+   * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
+   * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
+   * @param {number} [occupiedCoolingSetpoint] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
+   * @param {number} [minSetpointDeadBand] - The minimum setpoint dead band value. Defaults to 1°.
+   * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
+   * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit value. Defaults to 50°.
+   * @param {number} [minCoolSetpointLimit] - The minimum cool setpoint limit value. Defaults to 0°.
+   * @param {number} [maxCoolSetpointLimit] - The maximum cool setpoint limit value. Defaults to 50°.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultThermostatClusterServer(
@@ -1587,6 +1596,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default heating thermostat cluster server with feature Heating.
+   *
    * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
    * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
    * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
@@ -1610,6 +1620,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default cooling thermostat cluster server with feature Cooling.
+   *
    * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
    * @param {number} [occupiedCoolingSetpoint] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
    * @param {number} [minCoolSetpointLimit] - The minimum cool setpoint limit value. Defaults to 0°.
@@ -1652,10 +1663,10 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default fan control cluster server with features Auto, and Step.
    *
-   * @param {FanControl.FanMode} [fanMode=FanControl.FanMode.Off] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
-   * @param {FanControl.FanModeSequence} [fanModeSequence=FanControl.FanModeSequence.OffLowMedHighAuto] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHighAuto`.
-   * @param {number} [percentSetting=0] - The initial percent setting. Defaults to 0.
-   * @param {number} [percentCurrent=0] - The initial percent current. Defaults to 0.
+   * @param {FanControl.FanMode} [fanMode] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @param {FanControl.FanModeSequence} [fanModeSequence] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHighAuto`.
+   * @param {number} [percentSetting] - The initial percent setting. Defaults to 0.
+   * @param {number} [percentCurrent] - The initial percent current. Defaults to 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -1676,12 +1687,13 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a fan control cluster server with features MultiSpeed, Auto, and Step.
    *
-   * @param {FanControl.FanMode} [fanMode=FanControl.FanMode.Off] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
-   * @param {number} [percentSetting=0] - The initial percent setting. Defaults to 0.
-   * @param {number} [percentCurrent=0] - The initial percent current. Defaults to 0.
-   * @param {number} [speedMax=10] - The maximum speed setting. Defaults to 10.
-   * @param {number} [speedSetting=0] - The initial speed setting. Defaults to 0.
-   * @param {number} [speedCurrent=0] - The initial speed current. Defaults to 0.
+   * @param {FanControl.FanMode} [fanMode] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @param fanModeSequence
+   * @param {number} [percentSetting] - The initial percent setting. Defaults to 0.
+   * @param {number} [percentCurrent] - The initial percent current. Defaults to 0.
+   * @param {number} [speedMax] - The maximum speed setting. Defaults to 10.
+   * @param {number} [speedSetting] - The initial speed setting. Defaults to 0.
+   * @param {number} [speedCurrent] - The initial speed current. Defaults to 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -1716,10 +1728,10 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a base fan control cluster server without features.
    *
-   * @param {FanControl.FanMode} [fanMode=FanControl.FanMode.Off] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
-   * @param {FanControl.FanModeSequence} [fanModeSequence=FanControl.FanModeSequence.OffLowMedHigh] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHigh`.
-   * @param {number} [percentSetting=0] - The initial percent setting. Defaults to 0.
-   * @param {number} [percentCurrent=0] - The initial percent current. Defaults to 0.
+   * @param {FanControl.FanMode} [fanMode] - The fan mode to set. Defaults to `FanControl.FanMode.Off`.
+   * @param {FanControl.FanModeSequence} [fanModeSequence] - The fan mode sequence to set. Defaults to `FanControl.FanModeSequence.OffLowMedHigh`.
+   * @param {number} [percentSetting] - The initial percent setting. Defaults to 0.
+   * @param {number} [percentCurrent] - The initial percent current. Defaults to 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -1791,8 +1803,8 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default door lock cluster server.
    *
-   * @param {DoorLock.LockState} [lockState=DoorLock.LockState.Locked] - The initial state of the lock (default: Locked).
-   * @param {DoorLock.LockType} [lockType=DoorLock.LockType.DeadBolt] - The type of the lock (default: DeadBolt).
+   * @param {DoorLock.LockState} [lockState] - The initial state of the lock (default: Locked).
+   * @param {DoorLock.LockType} [lockType] - The type of the lock (default: DeadBolt).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -1816,8 +1828,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {string} description - The description of the mode select cluster.
    * @param {ModeSelect.ModeOption[]} supportedModes - The list of supported modes.
-   * @param {number} [currentMode=0] - The current mode (default: 0).
-   * @param {number} [startUpMode=0] - The startup mode (default: 0).
+   * @param {number} [currentMode] - The current mode (default: 0).
+   * @param {number} [startUpMode] - The startup mode (default: 0).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -1837,8 +1849,8 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates the default Valve Configuration And Control cluster server with features Level.
    *
-   * @param {ValveConfigurationAndControl.ValveState} [valveState=ValveConfigurationAndControl.ValveState.Closed] - The valve state to set. Defaults to `ValveConfigurationAndControl.ValveState.Closed`.
-   * @param {number} [valveLevel=0] - The valve level to set. Defaults to 0.
+   * @param {ValveConfigurationAndControl.ValveState} [valveState] - The valve state to set. Defaults to `ValveConfigurationAndControl.ValveState.Closed`.
+   * @param {number} [valveLevel] - The valve level to set. Defaults to 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultValveConfigurationAndControlClusterServer(valveState = ValveConfigurationAndControl.ValveState.Closed, valveLevel = 0) {
@@ -1861,7 +1873,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates the default PumpConfigurationAndControl cluster server with features ConstantSpeed.
    *
-   * @param {PumpConfigurationAndControl.OperationMode} [pumpMode=PumpConfigurationAndControl.OperationMode.Normal] - The pump mode to set. Defaults to `PumpConfigurationAndControl.OperationMode.Normal`.
+   * @param {PumpConfigurationAndControl.OperationMode} [pumpMode] - The pump mode to set. Defaults to `PumpConfigurationAndControl.OperationMode.Normal`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultPumpConfigurationAndControlClusterServer(pumpMode = PumpConfigurationAndControl.OperationMode.Normal) {
@@ -1998,7 +2010,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Triggers a switch event on the specified endpoint.
    *
    * @param {string} event - The type of event to trigger. Possible values are 'Single', 'Double', 'Long' for momentarySwitch and 'Press', 'Release' for latchingSwitch.
-   * @param {Endpoint} endpoint - The endpoint on which to trigger the event (default the device endpoint).
+   * @param {AnsiLogger} log - Optional logger to log the event.
    * @returns {boolean} - A boolean indicating whether the event was successfully triggered.
    */
   async triggerSwitchEvent(event: 'Single' | 'Double' | 'Long' | 'Press' | 'Release', log?: AnsiLogger): Promise<boolean> {
@@ -2108,12 +2120,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @remarks Supports the enableDisableAlarm command.
    *
-   * @param {boolean} [sensorFault=false] - Optional boolean value indicating the sensor fault state. Defaults to `false` if not provided.
-   * @param {number} [currentSensitivityLevel=0] - The current sensitivity level. Defaults to `0` if not provided.
-   * @param {number} [supportedSensitivityLevels=2] - The number of supported sensitivity levels. Defaults to `2` if not provided (min 2, max 10).
-   * @param {number} [defaultSensitivityLevel=0] - The default sensitivity level. Defaults to `0` if not provided.
+   * @param {boolean} [sensorFault] - Optional boolean value indicating the sensor fault state. Defaults to `false` if not provided.
+   * @param {number} [currentSensitivityLevel] - The current sensitivity level. Defaults to `0` if not provided.
+   * @param {number} [supportedSensitivityLevels] - The number of supported sensitivity levels. Defaults to `2` if not provided (min 2, max 10).
+   * @param {number} [defaultSensitivityLevel] - The default sensitivity level. Defaults to `0` if not provided.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   *
    */
   createDefaultBooleanStateConfigurationClusterServer(sensorFault = false, currentSensitivityLevel = 0, supportedSensitivityLevels = 2, defaultSensitivityLevel = 0) {
     this.behaviors.require(
@@ -2136,11 +2147,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default Device Energy Management Cluster Server with feature PowerForecastReporting and with the specified ESA type, ESA canGenerate, ESA state, and power limits.
    *
-   * @param {DeviceEnergyManagement.EsaType} [esaType=DeviceEnergyManagement.EsaType.Other] - The ESA type. Defaults to `DeviceEnergyManagement.EsaType.Other`.
-   * @param {boolean} [esaCanGenerate=false] - Indicates if the ESA can generate energy. Defaults to `false`.
-   * @param {DeviceEnergyManagement.EsaState} [esaState=DeviceEnergyManagement.EsaState.Online] - The ESA state. Defaults to `DeviceEnergyManagement.EsaState.Online`.
-   * @param {number} [absMinPower=0] - The absolute minimum power in mW. Defaults to `0`.
-   * @param {number} [absMaxPower=0] - The absolute maximum power in mW. Defaults to `0`.
+   * @param {DeviceEnergyManagement.EsaType} [esaType] - The ESA type. Defaults to `DeviceEnergyManagement.EsaType.Other`.
+   * @param {boolean} [esaCanGenerate] - Indicates if the ESA can generate energy. Defaults to `false`.
+   * @param {DeviceEnergyManagement.EsaState} [esaState] - The ESA state. Defaults to `DeviceEnergyManagement.EsaState.Online`.
+   * @param {number} [absMinPower] - The absolute minimum power in mW. Defaults to `0`.
+   * @param {number} [absMaxPower] - The absolute maximum power in mW. Defaults to `0`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -2415,8 +2426,8 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default TotalVolatileOrganicCompoundsConcentrationMeasurement cluster server with feature LevelIndication.
-
-  * @param {ConcentrationMeasurement.LevelValue} levelValue - The level value of the measurement (default to ConcentrationMeasurement.LevelValue.Unknown).
+   
+   * @param {ConcentrationMeasurement.LevelValue} levelValue - The level value of the measurement (default to ConcentrationMeasurement.LevelValue.Unknown).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The measurement medium (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */

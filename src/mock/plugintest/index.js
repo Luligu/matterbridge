@@ -1,6 +1,7 @@
-import { MatterbridgeAccessoryPlatform, MatterbridgeEndpoint, onOffSwitch } from 'matterbridge';
-import { pressureSensor } from '../../matterbridgeDeviceTypes';
+// eslint-disable-next-line n/no-missing-import
+import { MatterbridgeAccessoryPlatform, MatterbridgeEndpoint, pressureSensor } from 'matterbridge';
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function initializePlugin(matterbridge, log, config) {
   return new MockPlatform(matterbridge, log, config);
 }

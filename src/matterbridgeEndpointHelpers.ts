@@ -5,6 +5,7 @@
  * @author Luca Liguori
  * @date 2024-10-01
  * @version 2.1.0
+ * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
  *
@@ -18,7 +19,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. *
+ * limitations under the License.
  */
 
 // @matter
@@ -251,6 +252,13 @@ export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
 /**
  * Invokes a command on the specified behavior of the endpoint. Used ONLY in Jest tests.
  *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to invoke the command on.
+ * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
+ * @param {keyof MatterbridgeEndpointCommands} command - The command to invoke.
+ * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The parameters to pass to the command.
+ *
+ * @returns {Promise<boolean>} A promise that resolves to true if the command was invoked successfully, false otherwise.
+ *
  * @deprecated Used ONLY in Jest tests.
  */
 export async function invokeBehaviorCommand(
@@ -348,9 +356,8 @@ export function addOptionalClusterServers(endpoint: MatterbridgeEndpoint) {
  *
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the cluster servers to.
  * @param {ClusterId[]} serverList - The list of cluster IDs to add.
- * @returns void
  */
-export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: ClusterId[]): void {
+export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: ClusterId[]) {
   if (serverList.includes(PowerSource.Cluster.id)) endpoint.createDefaultPowerSourceWiredClusterServer();
   if (serverList.includes(Identify.Cluster.id)) endpoint.createDefaultIdentifyClusterServer();
   if (serverList.includes(Groups.Cluster.id)) endpoint.createDefaultGroupsClusterServer();
@@ -629,10 +636,11 @@ export async function subscribeAttribute(
  * Triggers an event on the specified cluster.
  *
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to trigger the event on.
- * @param {ClusterId} clusterId - The ID of the cluster.
+ * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The ID of the cluster.
  * @param {string} event - The name of the event to trigger.
  * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} payload - The payload to pass to the event.
  * @param {AnsiLogger} [log] - Optional logger for logging information.
+ *
  * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the event was successfully triggered.
  */
 export async function triggerEvent(

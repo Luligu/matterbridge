@@ -5,6 +5,7 @@
  * @author Luca Liguori
  * @date 2025-02-16
  * @version 1.0.0
+ * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
  *

@@ -1,11 +1,9 @@
 // src\utils\wait.test.ts
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
-import { waiter, wait, withTimeout, log } from './wait.js';
+import { waiter, wait, withTimeout, log } from './wait.ts';
 
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
@@ -167,6 +165,7 @@ describe('wait()', () => {
 
   it('resolves without debug when debug=false', async () => {
     const resolved = jest.fn();
+    // eslint-disable-next-line promise/catch-or-return
     wait(300, 'test-op', false).then(resolved);
     expect(log.debug).not.toHaveBeenCalled();
     await Promise.resolve();
@@ -234,7 +233,7 @@ describe('withTimeout()', () => {
 
   it('should rejects with the original error if promise rejects before timeout', async () => {
     const originalError = new Error('failure');
-    const promise = new Promise<string>((_, reject) => {
+    const promise = new Promise<string>((resolve, reject) => {
       setTimeout(() => reject(originalError), 50);
     });
     const wrapped = withTimeout(promise, 100);
@@ -245,7 +244,7 @@ describe('withTimeout()', () => {
 
   it('should not rejects with the original error if promise rejects before timeout', async () => {
     const originalError = new Error('failure');
-    const promise = new Promise<string>((_, reject) => {
+    const promise = new Promise<string>((resolve, reject) => {
       setTimeout(() => reject(originalError), 50);
     });
     const wrapped = withTimeout(promise, 100, false);
@@ -271,7 +270,7 @@ describe('withTimeout()', () => {
   });
 
   it('clears timer upon rejection to avoid leaks', async () => {
-    const promise = new Promise<string>((_, reject) => {
+    const promise = new Promise<string>((resolve, reject) => {
       setTimeout(() => reject(new Error('fail')), 50);
     });
     const wrapped = withTimeout(promise, 100);
