@@ -1,7 +1,5 @@
 // src\singledevice.test.ts
 
-/* eslint-disable jsdoc/no-undefined-types */
-
 // Import necessary modules and types
 import { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
