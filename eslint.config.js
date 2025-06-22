@@ -51,6 +51,8 @@ export default defineConfig([
       'promise/catch-or-return': 'warn', // Ensure promises are either caught or returned
       'promise/no-nesting': 'warn', // Avoid nesting promises
       'jsdoc/tag-lines': ['error', 'any', { startLines: 1, endLines: 0 }], // Require a blank line before JSDoc comments
+      'jsdoc/check-tag-names': ['warn', { definedTags: ['created', 'contributor', 'remarks'] }], // Allow custom tags
+      'jsdoc/no-undefined-types': 'off',
       'prettier/prettier': 'warn', // Use Prettier for formatting
     },
   },
@@ -85,8 +87,6 @@ export default defineConfig([
           caughtErrorsIgnorePattern: '^_', // Ignore unused caught errors starting with _
         },
       ],
-      'jsdoc/no-undefined-types': 'off',
-      'jsdoc/check-tag-names': ['warn', { definedTags: ['created', 'contributor', 'remarks'] }], // Allow custom tags
     },
   },
   {
