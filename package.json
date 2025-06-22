@@ -157,7 +157,7 @@
     "glob": "11.0.3",
     "multer": "2.0.1",
     "node-ansi-logger": "3.0.1",
-    "node-persist-manager": "1.0.8",
+    "node-persist-manager": "2.0.0",
     "ws": "8.18.2"
   },
   "devDependencies": {
@@ -174,7 +174,7 @@
     "eslint-config-prettier": "10.1.5",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-jest": "29.0.1",
-    "eslint-plugin-jsdoc": "^51.1.0",
+    "eslint-plugin-jsdoc": "51.1.2",
     "eslint-plugin-n": "17.20.0",
     "eslint-plugin-prettier": "5.5.0",
     "eslint-plugin-promise": "7.2.1",
