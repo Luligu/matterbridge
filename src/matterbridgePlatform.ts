@@ -63,15 +63,22 @@ export type PlatformSchema = Record<string, PlatformSchemaValue>;
  *
  */
 export class MatterbridgePlatform {
+  /** The Matterbridge instance of this Platform. */
   matterbridge: Matterbridge;
+  /** The logger instance for this platform. */
   log: AnsiLogger;
+  /** The configuration for this platform. */
   config: PlatformConfig = {};
-  name = ''; // Will be set by the loadPlugin() method using the package.json value.
-  type = ''; // Will be set by the extending classes.
-  version = '1.0.0'; // Will be set by the loadPlugin() method using the package.json value.
+  /** The name of the platform. Will be set by the loadPlugin() method using the package.json value. */
+  name = '';
+  /** The type of the platform. Will be set by the extending classes. */
+  type = '';
+  /** The version of the platform. Will be set by the loadPlugin() method using the package.json value */
+  version = '1.0.0';
 
-  // Platform storage
+  /** Platform node storage manager. */
   storage: NodeStorageManager;
+  /** Platform context storage. */
   context?: NodeStorage;
 
   // Device and entity select in the plugin config UI
@@ -82,11 +89,13 @@ export class MatterbridgePlatform {
   private _contextReady: Promise<void>;
   private _selectDeviceContextReady: Promise<void>;
   private _selectEntityContextReady: Promise<void>;
+  /** The ready promise for the platform, which resolves when the platform is fully initialized. */
   ready: Promise<void>;
 
-  // Registered devices
-  private readonly _registeredEndpoints = new Map<string, MatterbridgeEndpoint>(); // uniqueId, MatterbridgeEndpoint
-  private readonly _registeredEndpointsByName = new Map<string, MatterbridgeEndpoint>(); // deviceName, MatterbridgeEndpoint
+  /** Registered MatterbridgeEndpoint Map by uniqueId */
+  private readonly _registeredEndpoints = new Map<string, MatterbridgeEndpoint>();
+  /** Registered MatterbridgeEndpoint Map by deviceName */
+  private readonly _registeredEndpointsByName = new Map<string, MatterbridgeEndpoint>();
 
   /**
    * Creates an instance of the base MatterbridgePlatform.
@@ -103,7 +112,7 @@ export class MatterbridgePlatform {
     this.config = config;
 
     // create the NodeStorageManager for the plugin platform
-    if (!isValidString(this.config.name) || this.config.name === '') throw new Error('Platform: the plugin name is missing or invalid.');
+    if (!isValidString(this.config.name, 1)) throw new Error('Platform: the plugin name is missing or invalid.');
     this.log.debug(`Creating storage for plugin ${this.config.name} in ${path.join(this.matterbridge.matterbridgeDirectory, this.config.name)}`);
     this.storage = new NodeStorageManager({
       dir: path.join(this.matterbridge.matterbridgeDirectory, this.config.name),
@@ -117,7 +126,6 @@ export class MatterbridgePlatform {
     this.log.debug(`Creating context for plugin ${this.config.name}`);
     this._contextReady = this.storage.createStorage('context').then((context) => {
       this.context = context;
-      this.context.remove('endpointMap'); // Remove the old endpointMap TODO: remove in future versions
       this.log.debug(`Created context for plugin ${this.config.name}`);
       return;
     });
