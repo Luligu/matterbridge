@@ -1,5 +1,9 @@
 // src\evse.test.ts
 
+const MATTER_PORT = 6004;
+const NAME = 'Evse';
+const HOMEDIR = path.join('jest', NAME);
+
 import { jest } from '@jest/globals';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
@@ -44,22 +48,21 @@ if (!debug) {
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
 
-describe('Matterbridge EVSE', () => {
-  const name = 'Evse';
+// Cleanup the matter environment
+rmSync(HOMEDIR, { recursive: true, force: true });
 
-  const log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+describe('Matterbridge EVSE', () => {
+  const log = new AnsiLogger({ logName: NAME, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
   const environment = Environment.default;
   let server: ServerNode<ServerNode.RootEndpoint>;
   let device: MatterbridgeEndpoint;
 
   beforeAll(async () => {
-    // Cleanup the matter environment
-    rmSync(path.join('test', name), { recursive: true, force: true });
     // Setup the matter environment
     environment.vars.set('log.level', MatterLogLevel.DEBUG);
     environment.vars.set('log.format', MatterLogFormat.ANSI);
-    environment.vars.set('path.root', path.join('test', name));
+    environment.vars.set('path.root', HOMEDIR);
     environment.vars.set('runtime.signals', false);
     environment.vars.set('runtime.exitcode', false);
   }, 30000);
@@ -79,10 +82,10 @@ describe('Matterbridge EVSE', () => {
   test('create the server node', async () => {
     // Create the server node
     server = await ServerNode.create({
-      id: name + 'ServerNode',
+      id: NAME + 'ServerNode',
 
       productDescription: {
-        name: name + 'ServerNode',
+        name: NAME + 'ServerNode',
         deviceType: DeviceTypeId(RootEndpoint.deviceType),
         vendorId: VendorId(0xfff1),
         productId: 0x8001,
@@ -93,15 +96,15 @@ describe('Matterbridge EVSE', () => {
         vendorId: VendorId(0xfff1),
         vendorName: 'Matterbridge',
         productId: 0x8001,
-        productName: 'Matterbridge ' + name,
-        nodeLabel: name + 'ServerNode',
+        productName: 'Matterbridge ' + NAME,
+        nodeLabel: NAME + 'ServerNode',
         hardwareVersion: 1,
         softwareVersion: 1,
         reachable: true,
       },
 
       network: {
-        port: 5580,
+        port: MATTER_PORT,
       },
     });
     expect(server).toBeDefined();

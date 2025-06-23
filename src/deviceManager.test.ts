@@ -1,6 +1,10 @@
 // src\deviceManager.test.ts
 
-process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'info', '-matterlogger', 'info', '-bridge', '-frontend', '0', '-homedir', path.join('test', 'DeviceManager')];
+const MATTER_PORT = 6005;
+const NAME = 'DeviceManager';
+const HOMEDIR = path.join('jest', NAME);
+
+process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'info', '-matterlogger', 'info', '-bridge', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
 
 import { jest } from '@jest/globals';
 import { AnsiLogger, BLUE, er, LogLevel } from 'node-ansi-logger';
@@ -39,7 +43,7 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync(path.join('test', 'DeviceManager'), { recursive: true, force: true });
+rmSync(HOMEDIR, { recursive: true, force: true });
 
 /**
  * Waits for the `isOnline` property to become `true`.

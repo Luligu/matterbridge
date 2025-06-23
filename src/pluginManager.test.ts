@@ -1,6 +1,10 @@
 // src\pluginManager.test.ts
 
-process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-homedir', path.join('test', 'PluginManager')];
+const MATTER_PORT = 6006;
+const NAME = 'PluginManager';
+const HOMEDIR = path.join('jest', NAME);
+
+process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-logger', 'debug', '-matterlogger', 'debug', '-test', '-frontend', '0', '-homedir', HOMEDIR, '-port', MATTER_PORT.toString()];
 
 import { jest } from '@jest/globals';
 
@@ -55,7 +59,7 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync(path.join('test', 'PluginManager'), { recursive: true, force: true });
+rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('PluginManager', () => {
   let matterbridge: Matterbridge;

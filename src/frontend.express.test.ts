@@ -1,24 +1,10 @@
 // src\frontend.express.test.ts
 
-process.argv = [
-  'node',
-  'frontend.test.js',
-  '-logger',
-  'debug',
-  '-matterlogger',
-  'debug',
-  '-bridge',
-  '-homedir',
-  path.join('test', 'FrontendExpress'),
-  '-profile',
-  'JestFrontendExpress',
-  '-port',
-  '5555',
-  '-passcode',
-  '123456',
-  '-discriminator',
-  '3860',
-];
+const MATTER_PORT = 6007;
+const NAME = 'FrontendExpress';
+const HOMEDIR = path.join('jest', NAME);
+
+process.argv = ['node', 'frontend.test.js', '-logger', 'debug', '-matterlogger', 'debug', '-bridge', '-homedir', HOMEDIR, '-profile', 'JestFrontendExpress', '-port', MATTER_PORT.toString(), '-passcode', '123456', '-discriminator', '3860'];
 
 import { expect, jest } from '@jest/globals';
 import http from 'node:http';
@@ -60,7 +46,7 @@ if (!debug) {
 }
 
 // Cleanup the matter environment
-rmSync(path.join('test', 'FrontendExpress'), { recursive: true, force: true });
+rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge frontend express with http', () => {
   let matterbridge: Matterbridge;

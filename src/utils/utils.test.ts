@@ -555,9 +555,8 @@ describe('Utils test', () => {
   });
 
   it('should copy a directory', async () => {
-    await fs.mkdir('test', { recursive: true });
-    // const result = await copyDirectory(path.join('.', 'docker'), path.join('.', 'test'));
-    const result = await copyDirectory(path.join('docker'), path.join('test'));
+    await fs.mkdir(path.join('jest', 'CopyDir'), { recursive: true });
+    const result = await copyDirectory(path.join('docker'), path.join('jest', 'CopyDir'));
     expect(result).toBeTruthy();
   });
 

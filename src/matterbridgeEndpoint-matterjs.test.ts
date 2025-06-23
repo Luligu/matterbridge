@@ -1,5 +1,9 @@
 // src\matterbridgeEndpoint.test.ts
 
+const MATTER_PORT = 6011;
+const NAME = 'EndpointMatterJs';
+const HOMEDIR = path.join('jest', NAME);
+
 import { jest } from '@jest/globals';
 import { rmSync } from 'node:fs';
 import path from 'node:path';
@@ -110,9 +114,6 @@ import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, 
 import { WaterHeater } from './waterHeater.ts';
 import { Evse, MatterbridgeEnergyEvseServer } from './evse.ts';
 
-const MATTER_PORT = 6001;
-const HOMEDIR = 'EndpointMatterJs';
-
 let loggerLogSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.log>;
 let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
 let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
@@ -136,8 +137,10 @@ if (!debug) {
   consoleWarnSpy = jest.spyOn(console, 'warn');
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
+// Cleanup the matter environment
+rmSync(HOMEDIR, { recursive: true, force: true });
 
-describe('Matterbridge ' + HOMEDIR, () => {
+describe('Matterbridge ' + NAME, () => {
   let matterbridge: Matterbridge;
   let context: StorageContext;
   let server: ServerNode<ServerNode.RootEndpoint>;
@@ -158,17 +161,14 @@ describe('Matterbridge ' + HOMEDIR, () => {
   let evse: MatterbridgeEndpoint;
 
   beforeAll(async () => {
-    // Cleanup the matter environment
-    rmSync(path.join('test', HOMEDIR), { recursive: true, force: true });
-
     // Create a MatterbridgeEdge instance
     matterbridge = await Matterbridge.loadInstance(false);
     matterbridge.log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
-    matterbridge.matterbridgeDirectory = path.join('test', HOMEDIR);
+    matterbridge.matterbridgeDirectory = HOMEDIR;
     // Setup matter environment
     matterbridge.environment.vars.set('log.level', MatterLogLevel.INFO);
     matterbridge.environment.vars.set('log.format', MatterLogFormat.ANSI);
-    matterbridge.environment.vars.set('path.root', path.join('test', HOMEDIR));
+    matterbridge.environment.vars.set('path.root', HOMEDIR);
     matterbridge.environment.vars.set('runtime.signals', false);
     matterbridge.environment.vars.set('runtime.exitcode', false);
     await (matterbridge as any).startMatterStorage();
@@ -191,7 +191,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
   const deviceType = extendedColorLight;
 
   test('create a context for server node', async () => {
-    expect(matterbridge.environment.vars.get('path.root')).toBe(path.join('test', HOMEDIR));
+    expect(matterbridge.environment.vars.get('path.root')).toBe(HOMEDIR);
     context = await (matterbridge as any).createServerNodeContext('Matterbridge', deviceType.name, DeviceTypeId(deviceType.code), VendorId(0xfff1), 'Matterbridge', 0x8000, 'Matterbridge ' + deviceType.name.replace('MA-', ''));
     expect(context).toBeDefined();
   });

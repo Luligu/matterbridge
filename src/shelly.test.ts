@@ -7,6 +7,7 @@ import http, { IncomingMessage, ServerResponse } from 'node:http';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { Matterbridge } from './matterbridge.ts';
 import { getShelly, postShelly, setVerifyIntervalSecs, setVerifyTimeoutSecs } from './shelly.ts';
+import path from 'node:path';
 
 const log = new AnsiLogger({ logName: 'Matterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
@@ -104,7 +105,7 @@ describe('getMatterbridgeLatestVersion', () => {
     matterbridgeMock = {
       matterbridgeVersion: '1.0.0',
       matterbridgeInformation: {},
-      matterbridgeDirectory: 'test',
+      matterbridgeDirectory: path.join('jest', 'Shelly'),
       log,
       frontend: {
         wssSendRefreshRequired: jest.fn(),

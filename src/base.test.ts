@@ -2,6 +2,10 @@
 
 /* eslint-disable jest/no-commented-out-tests */
 
+const MATTER_PORT = 6001;
+const NAME = 'BaseTest';
+const HOMEDIR = path.join('jest', NAME);
+
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 
@@ -41,9 +45,6 @@ if (!debug) {
   consoleErrorSpy = jest.spyOn(console, 'error');
 }
 
-const MATTER_PORT = 6001;
-const NAME = 'BaseTest';
-
 /**
  * Waits for the `isOnline` property to become `true`.
  * This function checks the `isOnline` property of the provided server node at regular intervals until it becomes `true` or the specified timeout is reached.
@@ -71,6 +72,9 @@ async function waitForOnline(server: ServerNode<ServerNode.RootEndpoint>, timeou
   });
 }
 
+// Cleanup the matter environment
+rmSync(HOMEDIR, { recursive: true, force: true });
+
 describe('Matterbridge ' + NAME, () => {
   const log = new AnsiLogger({ logName: NAME, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
@@ -80,12 +84,10 @@ describe('Matterbridge ' + NAME, () => {
   let device: MatterbridgeEndpoint;
 
   beforeAll(async () => {
-    // Cleanup the matter environment
-    rmSync(path.join('test', NAME), { recursive: true, force: true });
     // Setup the matter environment
     environment.vars.set('log.level', MatterLogLevel.DEBUG);
     environment.vars.set('log.format', MatterLogFormat.ANSI);
-    environment.vars.set('path.root', path.join('test', NAME));
+    environment.vars.set('path.root', HOMEDIR);
     environment.vars.set('runtime.signals', false);
     environment.vars.set('runtime.exitcode', false);
   }, 30000);
@@ -94,8 +96,6 @@ describe('Matterbridge ' + NAME, () => {
     // Clear all mocks
     jest.clearAllMocks();
   });
-
-  afterEach(async () => {});
 
   afterAll(async () => {
     // Restore all mocks

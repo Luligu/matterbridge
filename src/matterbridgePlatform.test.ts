@@ -1,20 +1,24 @@
 /* eslint-disable jest/no-conditional-expect */
 
-process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-profile', 'JestPlatform'];
+const NAME = 'MatterbridgePlatform';
+const HOMEDIR = path.join('jest', NAME);
+
+process.argv = ['node', 'matterbridge.test.js', '-frontend', '0', '-homedir', HOMEDIR, '-profile', 'JestPlatform'];
 
 import { jest } from '@jest/globals';
 import path from 'node:path';
-import os from 'node:os';
 import { AnsiLogger, CYAN, db, er, LogLevel, pl, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
-
-import { Environment, StorageService } from '@matter/main';
 
 import { Matterbridge } from './matterbridge.ts';
 import { MatterbridgePlatform } from './matterbridgePlatform.ts';
 import { contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.ts';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.ts';
 import { waiter } from './utils/export.ts';
+import { rmSync } from 'node:fs';
+
+// Cleanup the matter environment
+rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge platform', () => {
   let matterbridge: Matterbridge;
@@ -101,21 +105,6 @@ describe('Matterbridge platform', () => {
     expect(log.log).toBeDefined();
     expect(log.log).toHaveBeenCalled();
     expect(log.log).toHaveBeenCalledWith(LogLevel.INFO, 'Hello, world!');
-  });
-
-  test('should clear JestPlatform', async () => {
-    // Clear all storage contexts
-    const environment = Environment.default;
-    environment.vars.set('path.root', path.join(os.homedir(), '.matterbridge', 'matterstorage.JestPlatform'));
-    const matterStorageService = environment.get(StorageService);
-    expect(matterStorageService).toBeDefined();
-    const matterStorageManager = await matterStorageService.open('Matterbridge');
-    expect(matterStorageManager).toBeDefined();
-    await matterStorageManager?.createContext('persist').clearAll();
-    await matterStorageManager?.createContext('events')?.clearAll();
-    await matterStorageManager?.createContext('fabrics')?.clearAll();
-    await matterStorageManager?.createContext('root')?.clearAll();
-    await matterStorageManager?.createContext('sessions')?.clearAll();
   });
 
   test('should create an instance of Matterbridge', async () => {

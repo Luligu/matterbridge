@@ -1,5 +1,9 @@
 // src\frontend.websocket.test.ts
 
+const MATTER_PORT = 6008;
+const NAME = 'FrontendWebsocket';
+const HOMEDIR = path.join('jest', NAME);
+
 process.argv = [
   'node',
   'frontend.test.js',
@@ -11,11 +15,11 @@ process.argv = [
   'info',
   '-bridge',
   '-homedir',
-  path.join('test', 'FrontendWebsocket'),
+  HOMEDIR,
   '-profile',
   'JestFrontendWebsocket',
   '-port',
-  '5555',
+  MATTER_PORT.toString(),
   '-passcode',
   '123456',
   '-discriminator',
@@ -81,7 +85,7 @@ if (!debug) {
 let WS_ID = 10050;
 
 // Cleanup the matter environment
-rmSync(path.join('test', 'FrontendWebsocket'), { recursive: true, force: true });
+rmSync(HOMEDIR, { recursive: true, force: true });
 
 describe('Matterbridge frontend', () => {
   let matterbridge: Matterbridge;
