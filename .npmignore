@@ -38,11 +38,7 @@ vite.config.*
 *.log
 
 # Package specific directories and files that should be ignored
-TODO.md
-matterbridge.service
 docker
 systemd
-matterstorage
-matterstorage.backup
 heap_profile
 crypto

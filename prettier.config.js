@@ -8,7 +8,7 @@ export default {
   useTabs: false,
   semi: true,
   singleQuote: true, // default false
-  quoteProps: 'preserve', // default 'as-needed'
+  quoteProps: 'preserve', // default 'as-needed'. Other 'consistent'
   jsxSingleQuote: false,
   trailingComma: 'all',
   bracketSpacing: true,

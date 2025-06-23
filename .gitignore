@@ -19,7 +19,6 @@ temp/
 
 # Package specific directories and files that should be ignored
 heap_profile
-
 TODO.md
 crypto
 test

@@ -16,7 +16,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [DevContainer]: Added support for the **Matterbridge Dev Container** with an optimized named volume for `node_modules`.
 - [GitHub]: Added GitHub issue templates for bug reports and feature requests.
-- [Systemd]: Added a systemd service file for Matterbridge.
+- [Systemd]: Added a systemd service file for Matterbridge in the systemd directory.
 - [ESLint]: Refactored ESLint configuration for TypeScript and improved plugin integration.
 - [ESLint]: Added the plugins `eslint-plugin-promise`, `eslint-plugin-jsdoc`, and `@vitest/eslint-plugin`.
 - [Vitest]: Added Vitest for TypeScript project testing. It will replace Jest, which does not work correctly with ESM module mocks.
@@ -24,8 +24,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
-- [package]: Updated dependencies and refactored scripts.
+- [package]: Updated package to Automator v. 2.0.0.
+- [package]: Updated dependencies.
 - [storage]: Bumped `node-storage-manager` to 2.0.0.
+- [logger]: Bumped `node-ansi-logger` to 3.1.1.
 
 ### Fixed
 
